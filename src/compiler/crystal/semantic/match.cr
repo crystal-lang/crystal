@@ -49,7 +49,12 @@ module Crystal
     # Def free variables, unbound (`def (X, Y) ...`)
     property def_free_vars : Array(String)?
 
-    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil)
+    # The type that represents `self` (overriding `instantiated_type`), used to
+    # resolve restrictions properly when a macro def is about to be copied to a
+    # subtype
+    property self_restriction_type : Type?
+
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil, @self_restriction_type = nil)
     end
 
     def get_free_var(name)
@@ -91,7 +96,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup, @self_restriction_type)
     end
   end
 
@@ -148,7 +153,7 @@ module Crystal
       end
     end
 
-    def each
+    def each(&)
       @success && @matches.try &.each do |match|
         yield match
       end

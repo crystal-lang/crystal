@@ -4,6 +4,8 @@
 # `UInt32`s. The total number of bits stored is set at creation and is
 # immutable.
 #
+# NOTE: To use `BitArray`, you must explicitly import it with `require "bit_array"`
+#
 # ### Example
 #
 # ```
@@ -54,7 +56,7 @@ struct BitArray
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
     # representation and their hashes for equivalent BitArrays after a downsize as the
     # discarded bits may not have been zeroed.
-    return LibC.memcmp(@bits, other.@bits, bytesize) == 0
+    LibC.memcmp(@bits, other.@bits, bytesize) == 0
   end
 
   def unsafe_fetch(index : Int) : Bool
@@ -227,6 +229,69 @@ struct BitArray
     c == 1
   end
 
+  # Returns the index of the first appearance of *obj* in `self`
+  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  #
+  # ```
+  # ba = BitArray.new(16)
+  # ba[5] = ba[11] = true
+  # ba.index(true)             # => 5
+  # ba.index(true, offset: 8)  # => 11
+  # ba.index(true, offset: 12) # => nil
+  # ```
+  def index(obj : Bool, offset : Int = 0) : Int32?
+    offset = check_index_out_of_bounds(offset) { return nil }
+    start_bit_index, start_sub_index = offset.divmod(32)
+    end_bit_index, end_sub_index = (@size - 1).divmod(32)
+
+    if start_bit_index == end_bit_index
+      check_index_in_bits(start_bit_index, start_sub_index, end_sub_index)
+    else
+      check_index_in_bits(start_bit_index, start_sub_index, 31)
+      (start_bit_index + 1..end_bit_index - 1).each do |i|
+        check_index_in_bits(i, 0, 31)
+      end
+      check_index_in_bits(end_bit_index, 0, end_sub_index)
+    end
+  end
+
+  private macro check_index_in_bits(bits_index, from, to)
+    bits = @bits[{{ bits_index }}]
+    bits = ~bits if !obj
+    bits &= uint32_mask({{ from }}, {{ to }})
+    return {{ bits_index }} * 32 + bits.trailing_zeros_count if bits != 0
+  end
+
+  # Returns the index of the last appearance of *obj* in `self`, or
+  # `nil` if *obj* is not in `self`.
+  #
+  # If *offset* is given, the search starts from that index towards the
+  # first elements in `self`.
+  #
+  # ```
+  # ba = BitArray.new(16)
+  # ba[5] = ba[11] = true
+  # ba.rindex(true)            # => 11
+  # ba.rindex(true, offset: 8) # => 5
+  # ba.rindex(true, offset: 4) # => nil
+  # ```
+  def rindex(obj : Bool, offset : Int = size - 1) : Int32?
+    offset = check_index_out_of_bounds(offset) { return nil }
+    start_bit_index, start_sub_index = offset.divmod(32)
+
+    check_rindex_in_bits(start_bit_index, 0, start_sub_index)
+    (start_bit_index - 1).downto(0) do |i|
+      check_rindex_in_bits(i, 0, 31)
+    end
+  end
+
+  private macro check_rindex_in_bits(bits_index, from, to)
+    bits = @bits[{{ bits_index }}]
+    bits = ~bits if !obj
+    bits &= uint32_mask({{ from }}, {{ to }})
+    return {{ bits_index }} * 32 + 31 - bits.leading_zeros_count if bits != 0
+  end
+
   # Returns the number of times that *item* is present in the bit array.
   #
   # ```
@@ -243,11 +308,21 @@ struct BitArray
 
   # :inherit:
   def tally : Hash(Bool, Int32)
-    tallies = Hash(Bool, Int32).new
+    tally(Hash(Bool, Int32).new)
+  end
+
+  # :inherit:
+  def tally(hash)
     ones_count = count(true)
-    tallies[true] = ones_count if ones_count > 0
-    tallies[false] = @size - ones_count if ones_count < @size
-    tallies
+    if ones_count > 0
+      count = hash.fetch(true) { typeof(hash[true]).zero }
+      hash[true] = count + ones_count
+    end
+    if ones_count < @size
+      count = hash.fetch(false) { typeof(hash[false]).zero }
+      hash[false] = count + @size - ones_count
+    end
+    hash
   end
 
   # :inherit:
@@ -411,10 +486,10 @@ struct BitArray
     return self if size <= 1
 
     if size <= 32
-      @bits.value = Intrinsics.bitreverse32(@bits.value) >> (32 - size)
+      @bits.value = @bits.value.bit_reverse >> (32 - size)
     elsif size <= 64
       more_bits = @bits.as(UInt64*)
-      more_bits.value = Intrinsics.bitreverse64(more_bits.value) >> (64 - size)
+      more_bits.value = more_bits.value.bit_reverse >> (64 - size)
     else
       # 3 or more groups of bits
       offset = (-size) % 32
@@ -428,17 +503,18 @@ struct BitArray
         #     hgfedcba mlkjihgf nopqrstu
         #     hgfedcba fghijklm nopqrstu
         (malloc_size - 1).downto(1) do |i|
-          @bits[i] = Intrinsics.bitreverse32((@bits[i] << offset) | (@bits[i - 1] >> (32 - offset)))
+          # fshl(a, b, count) = (a << count) | (b >> (N - count))
+          @bits[i] = Intrinsics.fshl32(@bits[i], @bits[i - 1], offset).bit_reverse
         end
 
         # last group:
         #
         #     edcba000 fghijklm nopqrstu
         #     000abcde fghijklm nopqrstu
-        @bits[0] = Intrinsics.bitreverse32(@bits[0] << offset)
+        @bits[0] = (@bits[0] << offset).bit_reverse
       else
         # no padding; do only the bit reverses
-        Slice.new(@bits, malloc_size).map! { |x| Intrinsics.bitreverse32(x) }
+        Slice.new(@bits, malloc_size).map! &.bit_reverse
       end
 
       # reversing all groups themselves:
@@ -465,7 +541,8 @@ struct BitArray
       temp = @bits[0]
       malloc_size = self.malloc_size
       (malloc_size - 1).times do |i|
-        @bits[i] = (@bits[i] >> n) | (@bits[i + 1] << (32 - n))
+        # fshr(a, b, count) = (b >> count) | (a << (N - count))
+        @bits[i] = Intrinsics.fshr32(@bits[i + 1], @bits[i], n)
       end
 
       end_sub_index = (size - 1) % 32 + 1
@@ -503,11 +580,11 @@ struct BitArray
         #
         #     BA...... ........ ........ ........ -> ........ ........ ........ .GFEDCBA
         #     00000000 00000000 00000000 000GFEDC -> 00000000 00000000 00000000 000.....
-        temp = (@bits[malloc_size - 1] << (n - end_sub_index)) | (@bits[malloc_size - 2] >> (32 + end_sub_index - n))
+        temp = Intrinsics.fshl32(@bits[malloc_size - 1], @bits[malloc_size - 2], n - end_sub_index)
       end
 
       (malloc_size - 1).downto(1) do |i|
-        @bits[i] = (@bits[i] << n) | (@bits[i - 1] >> (32 - n))
+        @bits[i] = Intrinsics.fshl32(@bits[i], @bits[i - 1], n)
       end
       @bits[0] = (@bits[0] << n) | temp
 
@@ -568,7 +645,7 @@ struct BitArray
     bit_index_and_sub_index(index) { raise IndexError.new }
   end
 
-  private def bit_index_and_sub_index(index)
+  private def bit_index_and_sub_index(index, &)
     index = check_index_out_of_bounds(index) do
       return yield
     end

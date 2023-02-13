@@ -95,7 +95,7 @@ class Crystal::Command
     when command == "eval"
       options.shift
       eval
-    when command == "i" || command == "interactive"
+    when command.in?("i", "interactive")
       options.shift
       {% if flag?(:without_interpreter) %}
         STDERR.puts "Crystal was compiled without interpreter support"
@@ -140,6 +140,14 @@ class Crystal::Command
     exit 1
   rescue ex : Crystal::Error
     report_warnings
+
+    # This unwraps nested errors which could be caused by `require` which wraps
+    # errors in order to trace the require path. The causes are listed similarly
+    # to `#inspect_with_backtrace` but without the backtrace.
+    while cause = ex.cause
+      error ex.message, exit_code: nil
+      ex = cause
+    end
 
     error ex.message
   rescue ex : OptionParser::Exception
@@ -210,7 +218,7 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable(config.output_filename)
 
-    result = config.compile output_filename
+    config.compile output_filename
 
     unless config.compiler.no_codegen?
       report_warnings
@@ -242,10 +250,10 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            {% unless flag?(:win32) || flag?(:wasm32) %}
+            {% unless flag?(:wasm32) %}
               # Ignore the signal so we don't exit the running process
               # (the running process can still handle this signal)
-              ::Signal::INT.ignore # do
+              Process.ignore_interrupts!
             {% end %}
           end
         end
@@ -353,7 +361,7 @@ class Crystal::Command
 
       unless no_codegen
         valid_emit_values = Compiler::EmitTarget.names
-        valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
+        valid_emit_values.map!(&.gsub('_', '-').downcase)
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
@@ -592,30 +600,26 @@ class Crystal::Command
   end
 
   private def setup_compiler_warning_options(opts, compiler)
-    compiler.warnings_exclude << Crystal.normalize_path "lib"
-    warnings_exclude_default = true
-    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
-      compiler.warnings = case w
-                          when "all"
-                            Crystal::Warnings::All
-                          when "none"
-                            Crystal::Warnings::None
-                          else
-                            error "--warnings should be all, or none"
-                            raise "unreachable"
-                          end
+    opts.on("--warnings all|none", "Which warnings to detect. (default: all)") do |w|
+      compiler.warnings.level = case w
+                                when "all"
+                                  Crystal::WarningLevel::All
+                                when "none"
+                                  Crystal::WarningLevel::None
+                                else
+                                  error "--warnings should be all, or none"
+                                  raise "unreachable"
+                                end
     end
     opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
-      compiler.error_on_warnings = true
+      compiler.warnings.error_on_warnings = true
     end
     opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
-      if warnings_exclude_default
-        # if an --exclude-warnings is used explicitly, then we remove the default value
-        compiler.warnings_exclude.clear
-        warnings_exclude_default = false
-      end
-      compiler.warnings_exclude << Crystal.normalize_path f
+      compiler.warnings.exclude_lib_path = false
+      compiler.warnings.exclude_path(f)
     end
+
+    compiler.warnings.exclude_lib_path = true
   end
 
   private def validate_emit_values(values)

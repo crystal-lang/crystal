@@ -203,7 +203,12 @@ function Exec-Process {
         }
     }
 
+    # workaround to obtain the exit status properly: https://stackoverflow.com/a/23797762
+    $hnd = $Process.Handle
     Wait-Process -Id $Process.Id
+
+    # and return it properly too: https://stackoverflow.com/a/50202663
+    $host.SetShouldExit($Process.ExitCode)
     Exit $Process.ExitCode
 }
 

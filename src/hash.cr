@@ -842,7 +842,7 @@ class Hash(K, V)
   end
 
   # Yields each non-deleted Entry with its index inside `@entries`.
-  protected def each_entry_with_index : Nil
+  protected def each_entry_with_index(&) : Nil
     return if @size == 0
 
     @first.upto(entries_size - 1) do |i|
@@ -1012,7 +1012,7 @@ class Hash(K, V)
   # h.put(1, "uno") { "didn't exist" } # => "one"
   # h.put(2, "two") { |key| key.to_s } # => "2"
   # ```
-  def put(key : K, value : V)
+  def put(key : K, value : V, &)
     updated_entry = upsert(key, value)
     updated_entry ? updated_entry.value : yield key
   end
@@ -1102,8 +1102,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h.dig? "a", "b" # => [10, 20, 30]
+  # h.dig? "a", "x" # => nil
   # ```
   def dig?(key : K, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -1121,8 +1121,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h.dig "a", "b" # => [10, 20, 30]
+  # h.dig "a", "x" # raises KeyError
   # ```
   def dig(key : K, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
@@ -1181,7 +1181,7 @@ class Hash(K, V)
   # h.fetch("bar") { "default value" }  # => "default value"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry.value : yield key
   end
@@ -1227,7 +1227,7 @@ class Hash(K, V)
   # hash.key_for("bar") { |value| value.upcase } # => "foo"
   # hash.key_for("qux") { |value| value.upcase } # => "QUX"
   # ```
-  def key_for(value)
+  def key_for(value, &)
     each do |k, v|
       return k if v == value
     end
@@ -1253,7 +1253,7 @@ class Hash(K, V)
   # h.fetch("foo", nil)                          # => nil
   # h.delete("baz") { |key| "#{key} not found" } # => "baz not found"
   # ```
-  def delete(key)
+  def delete(key, &)
     entry = delete_impl(key)
     entry ? entry.value : yield key
   end
@@ -1466,11 +1466,8 @@ class Hash(K, V)
     {% end %}
 
     each do |k, v|
-      if other.has_key?(k)
-        other[k] = yield k, other[k], v
-      else
-        other[k] = v
-      end
+      entry = other.find_entry(k)
+      other[k] = entry ? yield(k, entry.value, v) : v
     end
   end
 
@@ -1502,9 +1499,9 @@ class Hash(K, V)
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(& : K, V ->) : self
-    each do |key, value|
-      delete(key) if yield(key, value)
+  def reject!(& : K, V -> _)
+    each_entry_with_index do |entry, index|
+      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
     end
     self
   end
@@ -1551,9 +1548,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    hash = {} of K => V
-    keys.each { |k| hash[k] = self[k] if has_key?(k) }
-    hash
+    keys.each_with_object({} of K => V) do |k, memo|
+      entry = find_entry(k)
+      memo[k] = entry.value if entry
+    end
   end
 
   # :ditto:
@@ -1571,8 +1569,16 @@ class Hash(K, V)
   # h1 == h2 == h3 == h4 # => true
   # h1                   # => {"a" => 1, "c" => 3}
   # ```
+  def select!(keys : Indexable) : self
+    each_key { |k| delete(k) unless k.in?(keys) }
+    self
+  end
+
+  # :ditto:
   def select!(keys : Enumerable) : self
-    each { |k, v| delete(k) unless keys.includes?(k) }
+    # Convert enumerable to a set to prevent exhaustion of elements
+    key_set = keys.to_set
+    each_key { |k| delete(k) unless k.in?(key_set) }
     self
   end
 
@@ -1773,7 +1779,7 @@ class Hash(K, V)
   # hash.shift { true } # => true
   # hash                # => {}
   # ```
-  def shift
+  def shift(&)
     first_entry = first_entry?
     if first_entry
       delete_entry_and_update_counts(@first)
@@ -2019,7 +2025,7 @@ class Hash(K, V)
       @index = @hash.@first
     end
 
-    def base_next
+    def base_next(&)
       while true
         if @index < @hash.entries_size
           entry = @hash.entries[@index]

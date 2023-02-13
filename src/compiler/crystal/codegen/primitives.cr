@@ -100,20 +100,20 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
     case op
-    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    when "<"  then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
-    when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
-    when ">"  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
-    when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
+    when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
+    when "<"  then builder.icmp LLVM::IntPredicate::ULT, p1, p2
+    when "<=" then builder.icmp LLVM::IntPredicate::ULE, p1, p2
+    when ">"  then builder.icmp LLVM::IntPredicate::UGT, p1, p2
+    when ">=" then builder.icmp LLVM::IntPredicate::UGE, p1, p2
     else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
     case op
-    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+    when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
     else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
@@ -203,7 +203,7 @@ class Crystal::CodeGenVisitor
     )
     codegen_raise_overflow_cond overflow
 
-    return codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
+    codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
   end
 
   def codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
@@ -726,17 +726,6 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_allocate(node, target_def, call_args)
     type = node.type
 
-    # Edge case: if a virtual struct has only one concrete subclass, its
-    # type indirection (how we represent it for codegen) turns out not to be
-    # a union type but just a single type. In that case we just need to create
-    # this concrete type, without creating the base type and then casting it back.
-    if type.is_a?(VirtualType) && type.struct?
-      indirect_type = type.remove_indirection
-      if !indirect_type.is_a?(UnionType)
-        return @last = allocate_aggregate indirect_type
-      end
-    end
-
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     allocate_aggregate base_type
@@ -759,7 +748,7 @@ class Crystal::CodeGenVisitor
 
     old_debug_location = @current_debug_location
     if @debug.line_numbers? && (location = node.location)
-      set_current_debug_location(node.location)
+      set_current_debug_location(location)
     end
 
     if type.element_type.has_inner_pointers?
@@ -829,7 +818,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def set_aggregate_field(node, target_def, call_args)
+  def set_aggregate_field(node, target_def, call_args, &)
     call_arg = call_args[1]
     original_call_arg = call_arg
 
@@ -837,7 +826,7 @@ class Crystal::CodeGenVisitor
     if (extra = node.extra)
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
-      request_value { accept extra }
+      request_value(extra)
       call_arg = @last
       context.vars["value"] = existing_value if existing_value
     end

@@ -4,7 +4,7 @@ require "semantic_version"
 
 module Crystal
   class MacroInterpreter
-    private def find_source_file(filename)
+    private def find_source_file(filename, &)
       # Support absolute paths
       if filename.starts_with?('/')
         filename = "#{filename}.cr" unless filename.ends_with?(".cr")
@@ -37,7 +37,7 @@ module Crystal
       filename
     end
 
-    delegate report_warning_at, to: @program
+    delegate warnings, to: @program
 
     def interpret_top_level_call(node)
       interpret_top_level_call?(node) ||
@@ -158,6 +158,31 @@ module Crystal
       end
     end
 
+    def interpret_constant(arg, type, name)
+      case type = type.lookup_path parse_path(arg, name)
+      when Const
+        type.value
+      when Type
+        TypeNode.new(type)
+      else
+        NilLiteral.new
+      end
+    end
+
+    def interpret_has_constant?(arg, type, name)
+      BoolLiteral.new !!type.lookup_path parse_path(arg, name)
+    end
+
+    private def parse_path(arg, name) : Path
+      parser = @program.new_parser name
+      parser.next_token
+      path = parser.parse_path
+      parser.check :EOF
+      @last = path
+    rescue ex : Crystal::SyntaxException
+      arg.raise "Invalid constant name: #{name.inspect}"
+    end
+
     def interpret_parse_type(node)
       interpret_check_args_toplevel do |arg|
         arg.accept self
@@ -170,7 +195,7 @@ module Crystal
         arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
 
         begin
-          parser = Crystal::Parser.new type_name
+          parser = @program.new_parser type_name
           parser.next_token
           type = parser.parse_bare_proc_type
           parser.check :EOF
@@ -232,7 +257,16 @@ module Crystal
       end
       cmd = cmd.join " "
 
-      result = `#{cmd}`
+      begin
+        result = `#{cmd}`
+      rescue exc : File::Error | IO::Error
+        # Taking the os_error message to avoid duplicating the "error executing process: "
+        # prefix of the error message and ensure uniqueness between all error messages.
+        node.raise "error executing command: #{cmd}: #{exc.os_error.try(&.message) || exc.message}"
+      rescue exc
+        node.raise "error executing command: #{cmd}: #{exc.message}"
+      end
+
       if $?.success?
         @last = MacroId.new(result)
       elsif result.empty?
@@ -342,9 +376,9 @@ module Crystal
 
     def to_string(context)
       case self
-      when StringLiteral then return self.value
-      when SymbolLiteral then return self.value
-      when MacroId       then return self.value
+      when StringLiteral then self.value
+      when SymbolLiteral then self.value
+      when MacroId       then self.value
       else
         raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
       end
@@ -518,21 +552,21 @@ module Crystal
       to_number <=> other.to_number
     end
 
-    def bool_bin_op(method, args, named_args, block)
+    def bool_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         BoolLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def num_bin_op(method, args, named_args, block)
+    def num_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         NumberLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def int_bin_op(method, args, named_args, block)
+    def int_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         me = to_number
@@ -1073,7 +1107,7 @@ module Crystal
       end
     end
 
-    def interpret_map(interpreter)
+    def interpret_map(interpreter, &)
       ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
         yield num
       end
@@ -1173,8 +1207,8 @@ module Crystal
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.var.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.var.annotations(type) : self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1342,6 +1376,16 @@ module Crystal
         interpret_check_args { default_value || Nop.new }
       when "restriction"
         interpret_check_args { restriction || Nop.new }
+      when "annotation"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          self.annotation(type)
+        end
+      when "annotations"
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end
@@ -1364,7 +1408,7 @@ module Crystal
       when "block_arg"
         interpret_check_args { @block_arg || Nop.new }
       when "accepts_block?"
-        interpret_check_args { BoolLiteral.new(@yields != nil) }
+        interpret_check_args { BoolLiteral.new(@block_arity != nil) }
       when "return_type"
         interpret_check_args { @return_type || Nop.new }
       when "free_vars"
@@ -1390,8 +1434,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1629,12 +1673,13 @@ module Crystal
       when "constant"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#constant'")
-          TypeNode.constant(type, value)
+          interpreter.interpret_constant arg, type, value
         end
       when "has_constant?"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#has_constant?'")
-          TypeNode.has_constant?(type, value)
+
+          interpreter.interpret_has_constant? arg, type, value
         end
       when "methods"
         interpret_check_args { TypeNode.methods(type) }
@@ -1648,8 +1693,8 @@ module Crystal
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.type.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.type.annotations(type) : self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1891,22 +1936,6 @@ module Crystal
       else
         names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
         ArrayLiteral.new names
-      end
-    end
-
-    def self.has_constant?(type, name)
-      BoolLiteral.new(type.types.has_key?(name))
-    end
-
-    def self.constant(type, name)
-      type = type.types[name]?
-      case type
-      when Const
-        type.value
-      when Type
-        TypeNode.new(type)
-      else
-        NilLiteral.new
       end
     end
 
@@ -2189,7 +2218,7 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
-        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpreter.warnings.add_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
         interpret_check_args { BoolLiteral.new(@global) }
       when "global?"
         interpret_check_args { BoolLiteral.new(@global) }
@@ -2490,7 +2519,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
         case arg = from
         when Crystal::NumberLiteral
           index = arg.to_number.to_i
-          value = object.elements[index]? || Crystal::NilLiteral.new
+          object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
           range = arg.interpret_to_nilable_range(interpreter)
           begin
@@ -2532,14 +2561,22 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
   when "+"
     interpret_check_args(node: object) do |arg|
       case arg
-      when Crystal::TupleLiteral
-        other_elements = arg.elements
-      when Crystal::ArrayLiteral
-        other_elements = arg.elements
+      when Crystal::TupleLiteral then other_elements = arg.elements
+      when Crystal::ArrayLiteral then other_elements = arg.elements
       else
         arg.raise "argument to `#{klass}#+` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
       end
       klass.new(object.elements + other_elements)
+    end
+  when "-"
+    interpret_check_args(node: object) do |arg|
+      case arg
+      when Crystal::TupleLiteral then other_elements = arg.elements
+      when Crystal::ArrayLiteral then other_elements = arg.elements
+      else
+        arg.raise "argument to `#{klass}#-` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
+      end
+      klass.new(object.elements - other_elements)
     end
   else
     nil
@@ -2665,8 +2702,28 @@ private def filter(object, klass, block, interpreter, keep = true)
   end)
 end
 
-private def fetch_annotation(node, method, args, named_args, block)
+private def fetch_annotation(node, method, args, named_args, block, &)
   interpret_check_args(node: node) do |arg|
+    unless arg.is_a?(Crystal::TypeNode)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
+    end
+
+    type = arg.type
+    unless type.is_a?(Crystal::AnnotationType)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
+    end
+
+    value = yield type
+    value || Crystal::NilLiteral.new
+  end
+end
+
+private def fetch_annotations(node, method, args, named_args, block, &)
+  interpret_check_args(node: node, min_count: 0) do |arg|
+    unless arg
+      return yield(nil) || Crystal::NilLiteral.new
+    end
+
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
     end

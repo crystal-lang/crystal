@@ -170,6 +170,28 @@ class HTTP::Server
       respond_with_status(HTTP::Status.new(status), message)
     end
 
+    # Sends a redirect to *location*.
+    #
+    # The value of *location* gets encoded with `URI.encode`.
+    #
+    # The *status* determines the HTTP status code which can be
+    # `HTTP::Status::FOUND` (`302`) for a temporary redirect or
+    # `HTTP::Status::MOVED_PERMANENTLY` (`301`) for a permanent redirect.
+    #
+    # The response gets closed.
+    #
+    # Raises `IO::Error` if the response is closed or headers were already
+    # sent.
+    def redirect(location : String | URI, status : HTTP::Status = :found)
+      check_headers
+
+      self.status = status
+      headers["Location"] = String.build do |io|
+        URI.encode(location.to_s, io) { |byte| URI.reserved?(byte) || URI.unreserved?(byte) }
+      end
+      close
+    end
+
     private def check_headers
       raise IO::Error.new "Closed stream" if @original_output.closed?
       if wrote_headers?

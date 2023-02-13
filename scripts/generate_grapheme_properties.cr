@@ -7,7 +7,7 @@ require "ecr"
 
 record RRange, low : Int32, high : Int32, prop : String
 
-UCD_ROOT = "http://www.unicode.org/Public/"
+UCD_ROOT = "http://www.unicode.org/Public/#{Unicode::VERSION}/ucd/"
 
 def shapeup(arr)
   i = 0
@@ -46,14 +46,10 @@ end
 
 def parse_emoji(body)
   emoji = Array(RRange).new
-  extended = false
   body.each_line do |line|
     next unless line = line.strip.presence
-    unless extended
-      extended = line.ends_with?("Extended_Pictographic ; No")
-      next unless extended
-    end
     next if line.starts_with?('#')
+    next unless line.includes?("; Extended_Pictographic")
 
     data = line.split.first.split(';')
     fields = data.first.split("..")
@@ -65,10 +61,10 @@ def parse_emoji(body)
   shapeup(emoji)
 end
 
-body = HTTP::Client.get("#{UCD_ROOT}UCD/latest/ucd/auxiliary/GraphemeBreakProperty.txt").body
+body = HTTP::Client.get("#{UCD_ROOT}auxiliary/GraphemeBreakProperty.txt").body
 props = parse_graphemes_data(body)
 
-body = HTTP::Client.get("#{UCD_ROOT}13.0.0/ucd/emoji/emoji-data.txt").body
+body = HTTP::Client.get("#{UCD_ROOT}emoji/emoji-data.txt").body
 props["ExtendedPictographic"] = parse_emoji(body)
 
 props_data = props.values.flatten.sort! { |a, b| a.low <=> b.low }

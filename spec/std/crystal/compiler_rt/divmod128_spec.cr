@@ -68,16 +68,16 @@ describe "__udivti3" do
   test__udivti3(0, 1, 0)
   test__udivti3(2, 1, 2)
 
-  test__udivti3(make_tu(0x0, 0x8000000000000000), 1, make_tu(0x0, 0x8000000000000000))
-  test__udivti3(make_tu(0x0, 0x8000000000000000), 2, make_tu(0x0, 0x4000000000000000))
-  test__udivti3(make_tu(0xffffffffffffffff, 0xffffffffffffffff), 2, make_tu(0x7fffffffffffffff, 0xffffffffffffffff))
+  test__udivti3(make_tu(0x0, 0x8000000000000000u64), 1, make_tu(0x0, 0x8000000000000000u64))
+  test__udivti3(make_tu(0x0, 0x8000000000000000u64), 2, make_tu(0x0, 0x4000000000000000u64))
+  test__udivti3(make_tu(0xffffffffffffffffu64, 0xffffffffffffffffu64), 2, make_tu(0x7fffffffffffffffu64, 0xffffffffffffffffu64))
 end
 
 describe "__umodti3" do
   test__umodti3(0, 1, 0)
   test__umodti3(2, 1, 0)
 
-  test__umodti3(make_tu(0x0, 0x8000000000000000), 1, 0)
-  test__umodti3(make_tu(0x0, 0x8000000000000000), 2, 0)
-  test__umodti3(make_tu(0xffffffffffffffff, 0xffffffffffffffff), 2, 1)
+  test__umodti3(make_tu(0x0, 0x8000000000000000u64), 1, 0)
+  test__umodti3(make_tu(0x0, 0x8000000000000000u64), 2, 0)
+  test__umodti3(make_tu(0xffffffffffffffffu64, 0xffffffffffffffffu64), 2, 1)
 end

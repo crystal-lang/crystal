@@ -3,7 +3,7 @@ require "spec"
 private class SpecEnumerable
   include Enumerable(Int32)
 
-  def each
+  def each(&)
     yield 1
     yield 2
     yield 3
@@ -523,8 +523,8 @@ describe "Enumerable" do
     it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
     it "groups can group by size (like the doc example)" do
-      %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-                                                           5 => ["Alice"]})
+      %w(Alice Bob Ary).group_by(&.size).should eq({3 => ["Bob", "Ary"],
+                                                    5 => ["Alice"]})
     end
   end
 
@@ -625,12 +625,12 @@ describe "Enumerable" do
 
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
-      hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }
+      hash = ["Anna", "Ary", "Alice"].index_by(&.size)
       hash.should eq({4 => "Anna", 3 => "Ary", 5 => "Alice"})
     end
 
     it "overrides values if a value is returned twice" do
-      hash = ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
+      hash = ["Anna", "Ary", "Alice", "Bob"].index_by(&.size)
       hash.should eq({4 => "Anna", 3 => "Bob", 5 => "Alice"})
     end
   end
@@ -1246,7 +1246,7 @@ describe "Enumerable" do
       it "returns a hash with counts according to the value" do
         hash = {} of Char => Int32
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
@@ -1256,7 +1256,7 @@ describe "Enumerable" do
       it "updates existing hash with counts according to the value" do
         hash = {'a' => 1, 'b' => 1, 'c' => 1, 'd' => 1}
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1}
@@ -1266,7 +1266,7 @@ describe "Enumerable" do
       it "ignores the default value" do
         hash = Hash(Char, Int32).new(100)
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
@@ -1276,7 +1276,7 @@ describe "Enumerable" do
       it "returns a hash with Int64 counts according to the value" do
         hash = {} of Char => Int64
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
@@ -1293,9 +1293,9 @@ describe "Enumerable" do
 
   describe "to_h" do
     it "for tuples" do
-      hash = Tuple.new({:a, 1}, {:c, 2}).to_h
-      hash.should be_a(Hash(Symbol, Int32))
-      hash.should eq({:a => 1, :c => 2})
+      hash = Tuple.new({"a", 1}, {"c", 2}).to_h
+      hash.should be_a(Hash(String, Int32))
+      hash.should eq({"a" => 1, "c" => 2})
 
       hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
       hash.should be_a(Hash(Int32 | Char, Float64 | String))
@@ -1303,7 +1303,7 @@ describe "Enumerable" do
     end
 
     it "for array" do
-      [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
+      [['a', 'b'], ['c', 'd']].to_h.should eq({'a' => 'b', 'c' => 'd'})
     end
 
     it "with block" do

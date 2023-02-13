@@ -27,7 +27,7 @@ end
 
 describe Crystal::SyntaxHighlighter::Colorize do
   describe ".highlight" do
-    it_highlights %(foo = bar("baz\#{PI + 1}") # comment), "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
+    it_highlights %(foo = bar("baz\#{PI + 1}") # comment), %(foo \e[91m=\e[0m bar(\e[93m"baz\#{\e[0m\e[36mPI\e[0m \e[91m+\e[0m \e[35m1\e[0m\e[93m}"\e[0m) \e[90m# comment\e[0m)
 
     it_highlights "foo", "foo"
     it_highlights "foo bar", "foo bar"
@@ -73,15 +73,44 @@ describe Crystal::SyntaxHighlighter::Colorize do
     it_highlights "def foo", %(\e[91mdef\e[0m \e[92mfoo\e[0m)
 
     %w(
-      + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
-      >> << % [] []? []= <=> ===
+      [] []? []= <=>
+      + - * /
+      == < <= > >= != =~ !~
+      & | ^ ~ ** >> << %
+    ).each do |op|
+      it_highlights %(def #{op}), %(\e[91mdef\e[0m \e[92m#{op}\e[0m)
+    end
+
+    it_highlights %(def //), %(\e[91mdef\e[0m \e[92m/\e[0m\e[92m/\e[0m)
+
+    %w(
+      + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
+      >> << % [] []? []= <=> === && ||
+      += -= *= /= //= &= |= ^= **= >>= <<= %= &+= &-= &*= &&= ||=
     ).each do |op|
       it_highlights "1 #{op} 2", %(\e[35m1\e[0m \e[91m#{op}\e[0m \e[35m2\e[0m)
     end
 
+    it_highlights %(1/2), %(\e[35m1\e[0m\e[91m/\e[0m\e[35m2\e[0m)
+    it_highlights %(1 /2), %(\e[35m1\e[0m \e[91m/\e[0m\e[35m2\e[0m)
+    it_highlights %(1/ 2), %(\e[35m1\e[0m\e[91m/\e[0m \e[35m2\e[0m)
+
+    it_highlights %(a/b), %(a\e[91m/\e[0mb)
+    it_highlights %(a/ b), %(a\e[91m/\e[0m b)
+    it_highlights %(a / b), %(a \e[91m/\e[0m b)
+
+    it_highlights %(a /b/), %(a \e[93m/b/\e[0m)
+
+    it_highlights %($1), %($1)
+    it_highlights %($2?), %($2?)
+    it_highlights %($?), %($?)
+    it_highlights %($~), %($~)
+
     it_highlights %("foo"), %(\e[93m"foo"\e[0m)
     it_highlights %("<>"), %(\e[93m"<>"\e[0m)
-    it_highlights %("foo\#{bar}baz"), %(\e[93m"foo\#{bar}baz"\e[0m)
+    it_highlights %("foo\#{bar}baz"), %(\e[93m"foo\#{\e[0mbar\e[93m}baz"\e[0m)
+    it_highlights %("foo\#{[1, bar, "str"]}baz"), %(\e[93m"foo\#{\e[0m[\e[35m1\e[0m, bar, \e[93m"str"\e[0m]\e[93m}baz"\e[0m)
+    it_highlights %("nest1\#{foo + "nest2\#{1 + 1}bar"}baz"), %(\e[93m"nest1\#{\e[0mfoo \e[91m+\e[0m \e[93m"nest2\#{\e[0m\e[35m1\e[0m \e[91m+\e[0m \e[35m1\e[0m\e[93m}bar"\e[0m\e[93m}baz"\e[0m)
     it_highlights "/foo/xim", %(\e[93m/foo/\e[0mxim)
     it_highlights "`foo`", %(\e[93m`foo`\e[0m)
     it_highlights "%(foo)", %(\e[93m%(foo)\e[0m)
@@ -98,13 +127,13 @@ describe Crystal::SyntaxHighlighter::Colorize do
 
     it_highlights "Set{1, 2, 3}", %(\e[36mSet\e[0m{\e[35m1\e[0m, \e[35m2\e[0m, \e[35m3\e[0m})
 
-    it_highlights <<-CR, <<-ANSI
+    it_highlights <<-CRYSTAL, <<-ANSI
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
         bar
         BAR
-      CR
+      CRYSTAL
       foo, bar \e[91m=\e[0m \e[93m<<-FOO\e[0m, \e[93m<<-BAR\e[0m
       \e[93m  foo
         FOO\e[0m
@@ -114,18 +143,18 @@ describe Crystal::SyntaxHighlighter::Colorize do
   end
 
   describe ".highlight!" do
-    it_highlights! %(foo = bar("baz\#{PI + 1}") # comment), "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
+    it_highlights! %(foo = bar("baz\#{PI + 1}") # comment), %(foo \e[91m=\e[0m bar(\e[93m"baz\#{\e[0m\e[36mPI\e[0m \e[91m+\e[0m \e[35m1\e[0m\e[93m}"\e[0m) \e[90m# comment\e[0m)
 
-    it_highlights! <<-CR
+    it_highlights! <<-CRYSTAL
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
-      CR
+      CRYSTAL
 
-    it_highlights! <<-CR
+    it_highlights! <<-CRYSTAL
       foo, bar = <<-FOO, <<-BAR
         foo
-      CR
+      CRYSTAL
 
     it_highlights! "\"foo"
     it_highlights! "%w[foo"

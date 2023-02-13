@@ -27,6 +27,8 @@ require "./repl"
 class Crystal::Repl::LocalVars
   record Key, name : String, block_level : Int32
 
+  getter block_level : Int32
+
   def initialize(@context : Context)
     @types = {} of Key => Type
     @name_to_index = {} of Key => Int32

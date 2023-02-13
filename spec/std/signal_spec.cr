@@ -1,4 +1,4 @@
-{% skip_file if flag?(:wasm32) %}
+{% skip_file if flag?(:win32) || flag?(:wasm32) %}
 
 require "spec"
 require "signal"

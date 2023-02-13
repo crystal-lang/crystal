@@ -102,8 +102,7 @@ class String
   # Instances of this type can be acquired via `String#each_grapheme` or `String#graphemes`.
   #
   # The algorithm to determine boundaries between grapheme clusters is specified
-  # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Boundaries),
-  # and implemented in Version Unicode 13.0.0.
+  # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries).
   @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   struct Grapheme
     # For efficiency reasons we avoid allocating a string for graphemes consisting
@@ -189,7 +188,7 @@ class String
     # an E_Modifier class codepoint and an incorrectly missing break between two
     # REGIONAL_INDICATOR class code points if such support does not exist in the caller.
     #
-    # The rules are graphically displayed in a table on https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.html
+    # The rules are graphically displayed in a table on https://www.unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakTest.html
     #
     # The implementation is inspired by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
     def self.break?(lbc : Property, tbc : Property) : Bool

@@ -35,7 +35,7 @@ describe "Semantic: class" do
   end
 
   it "types generic of generic type" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         def set
           @coco = 2
@@ -833,7 +833,7 @@ describe "Semantic: class" do
 
       Foo.new 'a'
       ),
-      "no overload matches"
+      "expected argument #1 to 'Foo.new' to be Int32, not Char"
   end
 
   it "correctly types #680" do
@@ -1116,7 +1116,7 @@ describe "Semantic: class" do
   end
 
   it "errors if inherits from metaclass" do
-    assert_error <<-CR, "Foo.class is not a class, it's a metaclass"
+    assert_error <<-CRYSTAL, "Foo.class is not a class, it's a metaclass"
       class Foo
       end
 
@@ -1124,7 +1124,7 @@ describe "Semantic: class" do
 
       class Bar < FooClass
       end
-      CR
+      CRYSTAL
   end
 
   it "can use short name for top-level type" do

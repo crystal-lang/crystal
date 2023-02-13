@@ -18,7 +18,7 @@ module Crystal
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
-      parser = Parser.new(code)
+      parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
@@ -859,9 +859,7 @@ module Crystal
 
             position_at_end while_block
 
-            request_value(false) do
-              accept node.body
-            end
+            discard_value(node.body)
             br while_block
           end
         else
@@ -883,9 +881,7 @@ module Crystal
 
             position_at_end body_block
 
-            request_value(false) do
-              accept node.body
-            end
+            discard_value(node.body)
             br while_block
 
             position_at_end fail_block
@@ -910,9 +906,7 @@ module Crystal
     end
 
     def visit(node : Not)
-      request_value do
-        accept node.exp
-      end
+      request_value(node.exp)
       @last = codegen_cond node.exp.type.remove_indirection
       @last = not @last
       false
@@ -978,9 +972,7 @@ module Crystal
 
     def accept_control_expression(node)
       if exp = node.exp
-        request_value do
-          accept exp
-        end
+        request_value(exp)
         exp.type? || @program.nil
       else
         @last = llvm_nil
@@ -1027,9 +1019,7 @@ module Crystal
         return false
       end
 
-      request_value do
-        accept value
-      end
+      request_value(value)
 
       return if value.no_returns?
 
@@ -1165,6 +1155,7 @@ module Crystal
 
         if value = node.value
           codegen_assign(var, value, node)
+          return false
         end
       when Global
         node.raise "BUG: there should be no use of global variables other than $~ and $?"
@@ -1280,9 +1271,7 @@ module Crystal
     end
 
     def visit(node : Cast)
-      request_value do
-        accept node.obj
-      end
+      request_value(node.obj)
 
       last_value = @last
 
@@ -1329,9 +1318,7 @@ module Crystal
     end
 
     def visit(node : NilableCast)
-      request_value do
-        accept node.obj
-      end
+      request_value(node.obj)
 
       last_value = @last
 
@@ -1415,7 +1402,7 @@ module Crystal
       codegen_type_filter node, &.filter_by_responds_to(node.name)
     end
 
-    def codegen_type_filter(node)
+    def codegen_type_filter(node, &)
       accept node.obj
       obj_type = node.obj.type
 
@@ -1508,14 +1495,11 @@ module Crystal
       old_scope = block_context.vars["%scope"]?
 
       if node_scope = node.scope
-        request_value do
-          accept node_scope
-        end
+        request_value(node_scope)
         block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
       end
 
       # First accept all yield expressions and assign them to block vars
-      i = 0
       unless node.exps.empty?
         exp_values = Array({LLVM::Value, Type}).new(node.exps.size)
 
@@ -1523,9 +1507,7 @@ module Crystal
         # assigning them to the block vars yet because we might have
         # a nested yield that would override a block argument's value
         node.exps.each_with_index do |exp, i|
-          request_value do
-            accept exp
-          end
+          request_value(exp)
 
           if exp.is_a?(Splat)
             tuple_type = exp.type.as(TupleInstanceType)
@@ -1590,10 +1572,9 @@ module Crystal
           context.next_phi = phi
           context.closure_parent_context = block_context.closure_parent_context
 
-          @needs_value = true
           set_ensure_exception_handler(block)
 
-          accept block.body
+          request_value(block.body)
         end
 
         phi.add @last, block.body.type?, last: true
@@ -1655,7 +1636,7 @@ module Crystal
       make_fun type, null, null
     end
 
-    def in_main
+    def in_main(&)
       old_builder = self.builder
       old_position = old_builder.insert_block
       old_llvm_mod = @llvm_mod
@@ -1701,7 +1682,7 @@ module Crystal
       block_value
     end
 
-    def define_main_function(name, arg_types, return_type, needs_alloca = false)
+    def define_main_function(name, arg_types, return_type, needs_alloca = false, &)
       if @llvm_mod != @main_mod
         raise "wrong usage of define_main_function: you must put it inside an `in_main` block"
       end
@@ -1940,7 +1921,7 @@ module Crystal
       in_alloca_block { builder.alloca type, name }
     end
 
-    def in_alloca_block
+    def in_alloca_block(&)
       old_block = insert_block
       position_at_end alloca_block
       value = yield
@@ -1969,7 +1950,7 @@ module Crystal
     # debug_codegen_log { {"Lorem %d", [an_int_llvm_value] of LLVM::Value} }
     # ```
     #
-    def debug_codegen_log(file = __FILE__, line = __LINE__)
+    def debug_codegen_log(file = __FILE__, line = __LINE__, &)
       return unless ENV["CRYSTAL_DEBUG_CODEGEN"]?
       printf_args = yield || ""
       printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
@@ -2006,7 +1987,7 @@ module Crystal
       @last = type_ptr
     end
 
-    def allocate_tuple(type)
+    def allocate_tuple(type, &)
       struct_type = alloca llvm_type(type)
       type.tuple_types.each_with_index do |tuple_type, i|
         exp_type, value = yield tuple_type, i
@@ -2057,7 +2038,7 @@ module Crystal
       generic_malloc(type) { crystal_malloc_atomic_fun }
     end
 
-    def generic_malloc(type)
+    def generic_malloc(type, &)
       size = type.size
 
       if malloc_fun = yield
@@ -2077,7 +2058,7 @@ module Crystal
       generic_array_malloc(type, count) { crystal_malloc_atomic_fun }
     end
 
-    def generic_array_malloc(type, count)
+    def generic_array_malloc(type, count, &)
       size = builder.mul type.size, count
 
       if malloc_fun = yield
@@ -2162,32 +2143,18 @@ module Crystal
       len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
 
       pointer = cast_to_void_pointer pointer
-      res = call @program.memset(@llvm_mod, llvm_context),
-        if LibLLVM::IS_LT_70
-          [pointer, value, len_arg, int32(4), int1(0)]
-        else
-          [pointer, value, len_arg, int1(0)]
-        end
+      res = call @program.memset(@llvm_mod, llvm_context), [pointer, value, len_arg, int1(0)]
 
-      unless LibLLVM::IS_LT_70
-        LibLLVM.set_instr_param_alignment(res, 1, 4)
-      end
+      LibLLVM.set_instr_param_alignment(res, 1, 4)
 
       res
     end
 
     def memcpy(dest, src, len, align, volatile)
-      res = call @program.memcpy(@llvm_mod, llvm_context),
-        if LibLLVM::IS_LT_70
-          [dest, src, len, int32(align), volatile]
-        else
-          [dest, src, len, volatile]
-        end
+      res = call @program.memcpy(@llvm_mod, llvm_context), [dest, src, len, volatile]
 
-      unless LibLLVM::IS_LT_70
-        LibLLVM.set_instr_param_alignment(res, 1, align)
-        LibLLVM.set_instr_param_alignment(res, 2, align)
-      end
+      LibLLVM.set_instr_param_alignment(res, 1, align)
+      LibLLVM.set_instr_param_alignment(res, 2, align)
 
       res
     end
@@ -2265,13 +2232,25 @@ module Crystal
       end
     end
 
-    def request_value(request = true)
+    def request_value(request : Bool = true, &)
       old_needs_value = @needs_value
       @needs_value = request
       begin
         yield
       ensure
         @needs_value = old_needs_value
+      end
+    end
+
+    def request_value(node : ASTNode)
+      request_value do
+        accept node
+      end
+    end
+
+    def discard_value(node : ASTNode)
+      request_value(false) do
+        accept node
       end
     end
 
@@ -2320,12 +2299,7 @@ module Crystal
       len_type = bits64? ? llvm_context.int64 : llvm_context.int32
 
       llvm_mod.functions[name]? || begin
-        arg_types =
-          if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int32, llvm_context.int1]
-          else
-            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
-          end
+        arg_types = [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
 
         llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
@@ -2336,12 +2310,7 @@ module Crystal
       len_type = bits64? ? llvm_context.int64 : llvm_context.int32
 
       llvm_mod.functions[name]? || begin
-        arg_types =
-          if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int32, llvm_context.int1]
-          else
-            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
-          end
+        arg_types = [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
 
         llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end

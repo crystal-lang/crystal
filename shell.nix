@@ -19,13 +19,13 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 10, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 11, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-20.03";
-    url = "https://github.com/NixOS/nixpkgs/archive/2d580cd2793a7b5f4b8b6b88fb2ccec700ee1ae6.tar.gz";
-    sha256 = "1nbanzrir1y0yi2mv70h60sars9scwmm0hsxnify2ldpczir9n37";
+    name = "nixpkgs-22.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/22.05.tar.gz";
+    sha256 = "0d643wp3l77hv2pmg2fi7vyxn4rwy0iyr8djcw1h5x72315ck9ik";
   }) {
     inherit system;
   };
@@ -52,38 +52,59 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1-darwin-universal.tar.gz";
-      sha256 = "sha256:0ckbsgr1y64w0yj80dn8v7zi6zqdlpin35l742rrblhzbdhdkalw";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1-darwin-universal.tar.gz";
+      sha256 = "sha256:04x30yxib5xnpddvabywr0696biq1v2wak2jfxkiqhc9zikh2cfn";
+    };
+
+    aarch64-darwin = {
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1-darwin-universal.tar.gz";
+      sha256 = "sha256:04x30yxib5xnpddvabywr0696biq1v2wak2jfxkiqhc9zikh2cfn";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:1j5b2f4s2g8c1x7mhvsdzzjw878x0kkbrih4plxlzg3hmijvrnwj";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:0mk3mszvlyh1d3j1apagz3bhidwpyhbzmk0hbnz2mshb2fk9dxly";
     };
   }.${pkgs.stdenv.system});
 
   pkgconfig = pkgs.pkgconfig;
 
   llvm_suite = ({
+    llvm_14 = {
+      llvm = pkgs.llvm_14;
+      extra = [ pkgs.lld_14 ]; # lldb marked as broken
+    };
+    llvm_13 = {
+      llvm = pkgs.llvm_13;
+      extra = [ pkgs.lld_13 ]; # lldb marked as broken
+    };
+    llvm_12 = {
+      llvm = pkgs.llvm_12;
+      extra = [ pkgs.lld_12 pkgs.lldb_12 ];
+    };
+    llvm_11 = {
+      llvm = pkgs.llvm_11;
+      extra = [ pkgs.lld_11 pkgs.lldb_11 ];
+    };
     llvm_10 = {
       llvm = pkgs.llvm_10;
       extra = [ pkgs.lld_10 pkgs.lldb_10 ];
     };
     llvm_9 = {
       llvm = pkgs.llvm_9;
-      extra = [ ]; # lldb it fails to compile on Darwin
+      extra = [ pkgs.lld_9 ]; # lldb marked as broken
     };
     llvm_8 = {
       llvm = pkgs.llvm_8;
-      extra = [ ]; # lldb it fails to compile on Darwin
+      extra = [ pkgs.lld_8 ]; # lldb marked as broken
     };
     llvm_7 = {
-      llvm = pkgs.llvm;
-      extra = [ pkgs.lldb ];
+      llvm = pkgs.llvm_7;
+      extra = [ pkgs.lld_7 ]; # lldb it fails to compile on Darwin
     };
     llvm_6 = {
       llvm = pkgs.llvm_6;
-      extra = [ ]; # lldb it fails to compile on Darwin
+      extra = [ pkgs.lld_6 ]; # lldb it fails to compile on Darwin
     };
   }."llvm_${toString llvm}");
 
@@ -108,7 +129,7 @@ let
 
   stdLibDeps = with pkgs; [
       boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre zlib
-    ] ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv ];
+    ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
 
   tools = [ pkgs.hostname pkgs.git llvm_suite.extra ];
 in
@@ -123,7 +144,7 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.libffi
   ];
 
-  LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
+  LLVM_CONFIG = "${llvm_suite.llvm.dev}/bin/llvm-config";
 
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }

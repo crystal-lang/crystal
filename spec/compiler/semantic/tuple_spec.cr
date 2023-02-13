@@ -397,6 +397,16 @@ describe "Semantic: tuples" do
       "recursive splat expansion"
   end
 
+  it "doesn't trigger recursive splat expansion error (#7164)" do
+    assert_no_errors %(
+      def call(*args)
+        call({1})
+      end
+
+      call(1)
+      )
+  end
+
   it "allows tuple covariance" do
     assert_type(%(
       class Obj

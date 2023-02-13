@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "spec/helpers/iterate"
 require "json"
 require "big"
 require "big/json"
@@ -19,6 +20,12 @@ enum JSONSpecFlagEnum
   OneHundred
 end
 
+private record FooPrivate, x : Int32 do
+  def self.new(json : JSON::PullParser)
+    new(Int32.new(json))
+  end
+end
+
 describe "JSON serialization" do
   describe "from_json" do
     it "does String.from_json" do
@@ -31,6 +38,14 @@ describe "JSON serialization" do
 
     it "does UInt64.from_json" do
       UInt64.from_json(UInt64::MAX.to_s).should eq(UInt64::MAX)
+    end
+
+    it "does UInt128.from_json" do
+      UInt128.from_json(UInt128::MAX.to_s).should eq(UInt128::MAX)
+    end
+
+    it "does Int128.from_json" do
+      Int128.from_json(Int128::MAX.to_s).should eq(Int128::MAX)
     end
 
     it "raises ParserException for overflow UInt64.from_json" do
@@ -138,13 +153,23 @@ describe "JSON serialization" do
     it "does for tuple" do
       tuple = Tuple(Int32, String).from_json(%([1, "hello"]))
       tuple.should eq({1, "hello"})
-      tuple.should be_a(Tuple(Int32, String))
+      typeof(tuple).should eq(Tuple(Int32, String))
+    end
+
+    it "does for tuple with file-private type" do
+      tuple = Tuple(FooPrivate).from_json %([1])
+      tuple.should eq({FooPrivate.new(1)})
+      typeof(tuple).should eq(Tuple(FooPrivate))
+    end
+
+    it "does for empty tuple" do
+      typeof(Tuple.new).from_json("[]").should eq(Tuple.new)
     end
 
     it "does for named tuple" do
       tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32, y: String))
     end
 
     it "does for empty named tuple" do
@@ -156,25 +181,31 @@ describe "JSON serialization" do
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello", "x": null}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with spaces in key (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_json %{{"a": 1, "xyz b-23": 2}}
       tuple.should eq({a: 1, "xyz b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz b-23": Int32))
     end
 
     it "does for named tuple with spaces in key and quote char (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_json %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
       tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32))
+    end
+
+    it "does for named tuple with file-private type" do
+      tuple = NamedTuple(a: FooPrivate).from_json %({"a": 1})
+      tuple.should eq({a: FooPrivate.new(1)})
+      typeof(tuple).should eq(NamedTuple(a: FooPrivate))
     end
 
     it "does for BigInt" do
@@ -420,7 +451,7 @@ describe "JSON serialization" do
     it "deserializes unions of the same kind and remains stable" do
       str = [Int32::MAX, Int64::MAX].to_json
       value = Array(Int32 | Int64).from_json(str)
-      value.all? { |x| x.should be_a(Int64) }
+      value.all?(&.should(be_a(Int64)))
     end
 
     it "deserializes Time" do
@@ -476,6 +507,10 @@ describe "JSON serialization" do
 
     it "does for Int32" do
       1.to_json.should eq("1")
+    end
+
+    it "does for Int128" do
+      Int128::MAX.to_json.should eq(Int128::MAX.to_s)
     end
 
     it "does for Float64" do

@@ -75,9 +75,7 @@ class Crystal::CodeGenVisitor
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
 
     global = declare_const(const)
-    request_value do
-      accept const.value
-    end
+    request_value(const.value)
 
     const_type = const.value.type
     if const_type.passed_by_value?
@@ -105,9 +103,7 @@ class Crystal::CodeGenVisitor
       set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
 
       alloca_vars const.fake_def.try(&.vars), const.fake_def
-      request_value do
-        accept const.value
-      end
+      request_value(const.value)
     end
 
     const_type = const.value.type
@@ -161,9 +157,7 @@ class Crystal::CodeGenVisitor
 
           alloca_vars const.fake_def.try(&.vars), const.fake_def
 
-          request_value do
-            accept const.value
-          end
+          request_value(const.value)
 
           if const.value.type.passed_by_value?
             @last = load @last

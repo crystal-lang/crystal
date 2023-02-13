@@ -29,7 +29,8 @@ struct Slice(T)
   # If `T` is a `Number` then this is equivalent to
   # `Number.slice` (numbers will be coerced to the type `T`)
   #
-  # See also: `Number.slice`.
+  # * `Number.slice` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
@@ -102,7 +103,7 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice # => Slice[10, 11, 12]
   # ```
-  def self.new(size : Int, *, read_only = false)
+  def self.new(size : Int, *, read_only = false, &)
     pointer = Pointer.malloc(size) { |i| yield i }
     new(pointer, size, read_only: read_only)
   end
@@ -343,7 +344,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def shuffle!(random = Random::DEFAULT) : self
+  def shuffle!(random : Random = Random::DEFAULT) : self
     check_writable
     super
   end

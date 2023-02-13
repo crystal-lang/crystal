@@ -33,17 +33,20 @@ module Crystal
     #
     # To:
     #
-    #     ary = ::Array(typeof(1, ::Enumerable.element_type(exp2), ::Enumerable.element_type(exp3), 4)).new(2)
+    #     temp1 = exp2
+    #     temp2 = exp3
+    #     ary = ::Array(typeof(1, ::Enumerable.element_type(temp1), ::Enumerable.element_type(temp2), 4)).new(2)
     #     ary << 1
-    #     ary.concat(exp2)
-    #     ary.concat(exp3)
+    #     ary.concat(temp1)
+    #     ary.concat(temp2)
     #     ary << 4
     #     ary
     def expand(node : ArrayLiteral)
+      elem_temp_vars, elem_temp_var_count = complex_elem_temp_vars(node.elements)
       if node_of = node.of
         type_var = node_of
       else
-        type_var = typeof_exp(node)
+        type_var = typeof_exp(node, elem_temp_vars)
       end
 
       capacity = node.elements.count { |elem| !elem.is_a?(Splat) }
@@ -53,20 +56,27 @@ module Crystal
       if node.elements.any?(Splat)
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+        ary_instance = Call.new(generic, "new", NumberLiteral.new(capacity).at(node)).at(node)
 
-        exps = Array(ASTNode).new(node.elements.size + 2)
+        exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 2)
+        elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
+          next unless elem_temp_var
+          elem_exp = node.elements[i]
+          elem_exp = elem_exp.exp if elem_exp.is_a?(Splat)
+          exps << Assign.new(elem_temp_var, elem_exp.clone).at(elem_temp_var)
+        end
         exps << Assign.new(ary_var.clone, ary_instance).at(node)
 
-        node.elements.each do |elem|
+        node.elements.each_with_index do |elem, i|
+          temp_var = elem_temp_vars.try &.[i]
           if elem.is_a?(Splat)
-            exps << Call.new(ary_var.clone, "concat", elem.exp.clone).at(node)
+            exps << Call.new(ary_var.clone, "concat", (temp_var || elem.exp).clone).at(node)
           else
-            exps << Call.new(ary_var.clone, "<<", elem.clone).at(node)
+            exps << Call.new(ary_var.clone, "<<", (temp_var || elem).clone).at(node)
           end
         end
 
-        exps << ary_var.clone
+        exps << ary_var
 
         Expressions.new(exps).at(node)
       elsif capacity.zero?
@@ -74,17 +84,23 @@ module Crystal
       else
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+        ary_instance = Call.new(generic, "unsafe_build", NumberLiteral.new(capacity).at(node)).at(node)
 
-        buffer = Call.new(ary_var, "to_unsafe")
+        buffer = Call.new(ary_var, "to_unsafe").at(node)
         buffer_var = new_temp_var.at(node)
 
-        exps = Array(ASTNode).new(node.elements.size + 3)
+        exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 3)
+        elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
+          next unless elem_temp_var
+          elem_exp = node.elements[i]
+          exps << Assign.new(elem_temp_var, elem_exp.clone).at(elem_temp_var)
+        end
         exps << Assign.new(ary_var.clone, ary_instance).at(node)
         exps << Assign.new(buffer_var, buffer).at(node)
 
         node.elements.each_with_index do |elem, i|
-          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
+          temp_var = elem_temp_vars.try &.[i]
+          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), (temp_var || elem).clone).at(node)
         end
 
         exps << ary_var.clone
@@ -93,16 +109,38 @@ module Crystal
       end
     end
 
-    def typeof_exp(node : ArrayLiteral)
-      type_exps = node.elements.map do |elem|
+    def complex_elem_temp_vars(elems : Array, &)
+      temp_vars = nil
+      count = 0
+
+      elems.each_with_index do |elem, i|
+        elem = yield elem
+        elem = elem.exp if elem.is_a?(Splat)
+        next if elem.is_a?(Var) || elem.is_a?(InstanceVar) || elem.is_a?(ClassVar) || elem.simple_literal?
+
+        temp_vars ||= Array(Var?).new(elems.size, nil)
+        temp_vars[i] = new_temp_var.at(elem)
+        count += 1
+      end
+
+      {temp_vars, count}
+    end
+
+    def complex_elem_temp_vars(elems : Array(ASTNode))
+      complex_elem_temp_vars(elems, &.itself)
+    end
+
+    def typeof_exp(node : ArrayLiteral, temp_vars : Array(Var?)? = nil)
+      type_exps = node.elements.map_with_index do |elem, i|
+        temp_var = temp_vars.try &.[i]
         if elem.is_a?(Splat)
-          Call.new(Path.global("Enumerable").at(node), "element_type", elem.exp.clone).at(node)
+          Call.new(Path.global("Enumerable").at(node), "element_type", (temp_var || elem.exp).clone).at(node)
         else
-          elem.clone
+          (temp_var || elem).clone
         end
       end
 
-      TypeOf.new(type_exps).at(node.location)
+      TypeOf.new(type_exps).at(node)
     end
 
     # Converts an array-like literal to creating a container and storing the values:
@@ -132,79 +170,55 @@ module Crystal
     #     ary << 4
     #     ary
     #
-    # If `T` is an uninstantiated generic type, its type argument is injected by
-    # `MainVisitor` with a `typeof`.
-    def expand_named(node : ArrayLiteral)
-      temp_var = new_temp_var
+    # If `T` is an uninstantiated generic type, injects a `typeof` with the
+    # element types.
+    def expand_named(node : ArrayLiteral, generic_type : ASTNode?)
+      elem_temp_vars, elem_temp_var_count = complex_elem_temp_vars(node.elements)
+      if generic_type
+        type_of = typeof_exp(node, elem_temp_vars)
+        node_name = Generic.new(generic_type, type_of).at(node)
+      else
+        node_name = node.name
+      end
 
-      constructor = Call.new(node.name, "new").at(node)
-
+      constructor = Call.new(node_name, "new").at(node)
       if node.elements.empty?
         return constructor
       end
 
-      exps = Array(ASTNode).new(node.elements.size + 2)
-      exps << Assign.new(temp_var.clone, constructor).at(node)
-      node.elements.each do |elem|
+      ary_var = new_temp_var.at(node)
+
+      exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 2)
+      elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
+        next unless elem_temp_var
+        elem_exp = node.elements[i]
+        elem_exp = elem_exp.exp if elem_exp.is_a?(Splat)
+        exps << Assign.new(elem_temp_var, elem_exp.clone).at(elem_temp_var)
+      end
+      exps << Assign.new(ary_var.clone, constructor).at(node)
+
+      node.elements.each_with_index do |elem, i|
+        temp_var = elem_temp_vars.try &.[i]
         if elem.is_a?(Splat)
           yield_var = new_temp_var
-          each_body = Call.new(temp_var.clone, "<<", yield_var.clone).at(node)
+          each_body = Call.new(ary_var.clone, "<<", yield_var.clone).at(node)
           each_block = Block.new(args: [yield_var], body: each_body).at(node)
-          exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
+          exps << Call.new((temp_var || elem.exp).clone, "each", block: each_block).at(node)
         else
-          exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+          exps << Call.new(ary_var.clone, "<<", (temp_var || elem).clone).at(node)
         end
       end
-      exps << temp_var.clone
+
+      exps << ary_var
 
       Expressions.new(exps).at(node)
     end
 
-    # Converts a hash literal into creating a Hash and assigning keys and values:
+    # Converts a hash literal into creating a Hash and assigning keys and values.
     #
-    # From:
-    #
-    #     {} of K => V
-    #
-    # To:
-    #
-    #     Hash(K, V).new
-    #
-    # From:
-    #
-    #     {a => b, c => d}
-    #
-    # To:
-    #
-    #     hash = ::Hash(typeof(a, c), typeof(b, d)).new
-    #     hash[a] = b
-    #     hash[c] = d
-    #     hash
+    # Equivalent to a hash-like literal using `::Hash`.
     def expand(node : HashLiteral)
-      if of = node.of
-        type_vars = [of.key, of.value] of ASTNode
-      else
-        typeof_key = TypeOf.new(node.entries.map { |x| x.key.clone.as(ASTNode) }).at(node)
-        typeof_value = TypeOf.new(node.entries.map { |x| x.value.clone.as(ASTNode) }).at(node)
-        type_vars = [typeof_key, typeof_value] of ASTNode
-      end
-
-      generic = Generic.new(Path.global("Hash"), type_vars).at(node)
-      constructor = Call.new(generic, "new").at(node)
-
-      if node.entries.empty?
-        constructor
-      else
-        temp_var = new_temp_var
-
-        exps = Array(ASTNode).new(node.entries.size + 2)
-        exps << Assign.new(temp_var.clone, constructor).at(node)
-        node.entries.each do |entry|
-          exps << Call.new(temp_var.clone, "[]=", entry.key.clone, entry.value.clone).at(node)
-        end
-        exps << temp_var.clone
-        Expressions.new(exps).at(node)
-      end
+      expand_named(node, Path.global("Hash"))
     end
 
     # Converts a hash-like literal into creating a Hash and assigning keys and values:
@@ -219,6 +233,14 @@ module Crystal
     #
     # From:
     #
+    #     {} of K => V
+    #
+    # To:
+    #
+    #     ::Hash(K, V).new
+    #
+    # From:
+    #
     #     T{a => b, c => d}
     #
     # To:
@@ -228,24 +250,54 @@ module Crystal
     #     hash[c] = d
     #     hash
     #
-    # If `T` is an uninstantiated generic type, its type arguments are injected
-    # by `MainVisitor` with `typeof`s.
-    def expand_named(node : HashLiteral)
-      constructor = Call.new(node.name, "new").at(node)
+    # Or if `T` is an uninstantiated generic type:
+    #
+    #     hash = T(typeof(a, c), typeof(b, d)).new
+    #     hash[a] = b
+    #     hash[c] = d
+    #     hash
+    def expand_named(node : HashLiteral, generic_type : ASTNode?)
+      key_temp_vars, key_temp_var_count = complex_elem_temp_vars(node.entries, &.key)
+      value_temp_vars, value_temp_var_count = complex_elem_temp_vars(node.entries, &.value)
 
-      if node.entries.empty?
-        return constructor
+      if of = node.of
+        # `generic_type` is nil here
+        type_vars = [of.key, of.value] of ASTNode
+        generic = Generic.new(Path.global("Hash"), type_vars).at(node)
+      elsif generic_type
+        # `node.entries` is non-empty here
+        typeof_key = TypeOf.new(node.entries.map_with_index { |x, i| (key_temp_vars.try(&.[i]) || x.key).clone.as(ASTNode) }).at(node)
+        typeof_value = TypeOf.new(node.entries.map_with_index { |x, i| (value_temp_vars.try(&.[i]) || x.value).clone.as(ASTNode) }).at(node)
+        generic = Generic.new(generic_type, [typeof_key, typeof_value] of ASTNode).at(node)
+      else
+        generic = node.name
       end
 
-      temp_var = new_temp_var
+      constructor = Call.new(generic, "new").at(node)
+      return constructor if node.entries.empty?
 
-      exps = Array(ASTNode).new(node.entries.size + 2)
-      exps << Assign.new(temp_var.clone, constructor).at(node)
-      node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
+      hash_var = new_temp_var
+
+      exps = Array(ASTNode).new(node.entries.size + key_temp_var_count + value_temp_var_count + 2)
+      key_temp_vars.try &.each_with_index do |key_temp_var, i|
+        next unless key_temp_var
+        key_exp = node.entries[i].key
+        exps << Assign.new(key_temp_var, key_exp.clone).at(key_temp_var)
       end
-      exps << temp_var.clone
+      value_temp_vars.try &.each_with_index do |value_temp_var, i|
+        next unless value_temp_var
+        value_exp = node.entries[i].value
+        exps << Assign.new(value_temp_var, value_exp.clone).at(value_temp_var)
+      end
+      exps << Assign.new(hash_var.clone, constructor).at(node)
 
+      node.entries.each_with_index do |entry, i|
+        key_exp = key_temp_vars.try(&.[i]) || entry.key
+        value_exp = value_temp_vars.try(&.[i]) || entry.value
+        exps << Call.new(hash_var.clone, "[]=", key_exp.clone, value_exp.clone).at(node)
+      end
+
+      exps << hash_var
       Expressions.new(exps).at(node)
     end
 
@@ -377,7 +429,7 @@ module Crystal
     def expand(node : RangeLiteral)
       path = Path.global("Range").at(node)
       bool = BoolLiteral.new(node.exclusive?).at(node)
-      Call.new(path, "new", [node.from, node.to, bool]).at(node)
+      Call.new(path, "new", node.from, node.to, bool).at(node)
     end
 
     # Convert an interpolation to a call to `String.interpolation`
@@ -579,6 +631,48 @@ module Crystal
       final_exp
     end
 
+    # Convert a `select` statement into a `case` statement based on `Channel.select`
+    #
+    # From:
+    #
+    #     select
+    #     when foo then body
+    #     when x = bar then x.baz
+    #     end
+    #
+    # To:
+    #
+    #     %index, %value = ::Channel.select({foo_select_action, bar_select_action})
+    #     case %index
+    #     when 0
+    #       body
+    #     when 1
+    #       x = value.as(typeof(foo))
+    #       x.baz
+    #     else
+    #       ::raise("BUG: invalid select index")
+    #     end
+    #
+    #
+    # If there's an `else` branch, use `Channel.non_blocking_select`.
+    #
+    # From:
+    #
+    #     select
+    #     when foo then body
+    #     else qux
+    #     end
+    #
+    # To:
+    #
+    #     %index, %value = ::Channel.non_blocking_select({foo_select_action})
+    #     case %index
+    #     when 0
+    #       body
+    #     else
+    #       qux
+    #     end
+    #
     def expand(node : Select)
       index_name = @program.new_temp_var_name
       value_name = @program.new_temp_var_name
@@ -616,13 +710,14 @@ module Crystal
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
+        case_else = Call.new(nil, "raise", StringLiteral.new("BUG: invalid select index"), global: true).at(node)
       end
 
-      call_name = node.else ? "non_blocking_select" : "select"
-      call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
-
-      call = Call.new(channel, call_name, call_args).at(node)
+      call = Call.new(
+        channel,
+        node.else ? "non_blocking_select" : "select",
+        TupleLiteral.new(tuple_values).at(node),
+      ).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
       a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)

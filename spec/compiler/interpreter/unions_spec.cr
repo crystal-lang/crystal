@@ -4,21 +4,21 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "unions" do
     it "put and remove from union, together with is_a? (truthy case)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         a = 1 == 1 ? 2 : true
         a.is_a?(Int32) ? a : 4
-        CODE
+        CRYSTAL
     end
 
     it "put and remove from union, together with is_a? (falsey case)" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         a = 1 == 2 ? 2 : true
         a.is_a?(Int32) ? true : a
-        CODE
+        CRYSTAL
     end
 
     it "returns union type" do
-      interpret(<<-CODE).should eq('a')
+      interpret(<<-CRYSTAL).should eq('a')
         def foo
           if 1 == 1
             return 'a'
@@ -33,19 +33,19 @@ describe Crystal::Repl::Interpreter do
         else
           'b'
         end
-        CODE
+        CRYSTAL
     end
 
     it "put and remove from union in local var" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         a = 1 == 1 ? 2 : true
         a = 3
         a.is_a?(Int32) ? a : 4
-        CODE
+        CRYSTAL
     end
 
     it "put and remove from union in instance var" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo
           @x : Int32 | Char
 
@@ -69,26 +69,26 @@ describe Crystal::Repl::Interpreter do
         else
           10
         end
-      CODE
+      CRYSTAL
     end
 
     it "discards is_a?" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         a = 1 == 1 ? 2 : true
         a.is_a?(Int32)
         3
-        CODE
+        CRYSTAL
     end
 
     it "converts from NilableType to NonGenericClassType" do
-      interpret(<<-CODE).should eq("a")
+      interpret(<<-CRYSTAL).should eq("a")
         a = 1 == 1 ? "a" : nil
         a || "b"
-        CODE
+        CRYSTAL
     end
 
     it "puts union inside union" do
-      interpret(<<-CODE).should eq('a'.ord)
+      interpret(<<-CRYSTAL).should eq('a'.ord)
         a = 'a' || 1 || true
         case a
         in Char
@@ -98,7 +98,7 @@ describe Crystal::Repl::Interpreter do
         in Bool
           20
         end
-        CODE
+        CRYSTAL
     end
   end
 end

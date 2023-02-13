@@ -74,4 +74,6 @@ class Process::Status
     # define __WTERMSIG(status) ((status) & 0x7f)
     @exit_status & 0x7f
   end
+
+  def_equals_and_hash @exit_status
 end

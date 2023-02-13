@@ -5,59 +5,54 @@ lib LibIntrinsics
   fun debugtrap = "llvm.debugtrap"
 
   {% if flag?(:bits64) %}
-    {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, align : UInt32, is_volatile : Bool)
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
+    fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, align : UInt32, is_volatile : Bool)
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
+    fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool)
-    {% else %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
-    {% end %}
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
+    fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
   {% else %}
-    {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, align : UInt32, is_volatile : Bool)
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
+    fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, align : UInt32, is_volatile : Bool)
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
+    fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
 
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, align : UInt32, is_volatile : Bool)
-    {% else %}
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
-      fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
-      fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
-
-      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
-      fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
-    {% end %}
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
+    fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
   {% end %}
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_read_cycle_counter)] {% end %}
   fun read_cycle_counter = "llvm.readcyclecounter" : UInt64
 
-  fun bitreverse64 = "llvm.bitreverse.i64"(id : UInt64) : UInt64
-  fun bitreverse32 = "llvm.bitreverse.i32"(id : UInt32) : UInt32
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse8)] {% end %}
+  fun bitreverse8 = "llvm.bitreverse.i8"(id : UInt8) : UInt8
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse16)] {% end %}
   fun bitreverse16 = "llvm.bitreverse.i16"(id : UInt16) : UInt16
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse32)] {% end %}
+  fun bitreverse32 = "llvm.bitreverse.i32"(id : UInt32) : UInt32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse64)] {% end %}
+  fun bitreverse64 = "llvm.bitreverse.i64"(id : UInt64) : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse128)] {% end %}
+  fun bitreverse128 = "llvm.bitreverse.i128"(id : UInt128) : UInt128
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap16)] {% end %}
+  fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap32)] {% end %}
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
 
-  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap16)] {% end %}
-  fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap64)] {% end %}
+  fun bswap64 = "llvm.bswap.i64"(id : UInt64) : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap128)] {% end %}
+  fun bswap128 = "llvm.bswap.i128"(id : UInt128) : UInt128
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_popcount8)] {% end %}
   fun popcount8 = "llvm.ctpop.i8"(src : Int8) : Int8
@@ -71,6 +66,7 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_popcount64)] {% end %}
   fun popcount64 = "llvm.ctpop.i64"(src : Int64) : Int64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_popcount128)] {% end %}
   fun popcount128 = "llvm.ctpop.i128"(src : Int128) : Int128
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_countleading8)] {% end %}
@@ -85,6 +81,7 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_countleading64)] {% end %}
   fun countleading64 = "llvm.ctlz.i64"(src : Int64, zero_is_undef : Bool) : Int64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_countleading128)] {% end %}
   fun countleading128 = "llvm.ctlz.i128"(src : Int128, zero_is_undef : Bool) : Int128
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_counttrailing8)] {% end %}
@@ -98,7 +95,39 @@ lib LibIntrinsics
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_counttrailing64)] {% end %}
   fun counttrailing64 = "llvm.cttz.i64"(src : Int64, zero_is_undef : Bool) : Int64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_counttrailing128)] {% end %}
   fun counttrailing128 = "llvm.cttz.i128"(src : Int128, zero_is_undef : Bool) : Int128
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl8)] {% end %}
+  fun fshl8 = "llvm.fshl.i8"(a : UInt8, b : UInt8, count : UInt8) : UInt8
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl16)] {% end %}
+  fun fshl16 = "llvm.fshl.i16"(a : UInt16, b : UInt16, count : UInt16) : UInt16
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl32)] {% end %}
+  fun fshl32 = "llvm.fshl.i32"(a : UInt32, b : UInt32, count : UInt32) : UInt32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl64)] {% end %}
+  fun fshl64 = "llvm.fshl.i64"(a : UInt64, b : UInt64, count : UInt64) : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl128)] {% end %}
+  fun fshl128 = "llvm.fshl.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr8)] {% end %}
+  fun fshr8 = "llvm.fshr.i8"(a : UInt8, b : UInt8, count : UInt8) : UInt8
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr16)] {% end %}
+  fun fshr16 = "llvm.fshr.i16"(a : UInt16, b : UInt16, count : UInt16) : UInt16
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr32)] {% end %}
+  fun fshr32 = "llvm.fshr.i32"(a : UInt32, b : UInt32, count : UInt32) : UInt32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr64)] {% end %}
+  fun fshr64 = "llvm.fshr.i64"(a : UInt64, b : UInt64, count : UInt64) : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr128)] {% end %}
+  fun fshr128 = "llvm.fshr.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
 
   fun va_start = "llvm.va_start"(ap : Void*)
   fun va_end = "llvm.va_end"(ap : Void*)
@@ -128,51 +157,55 @@ module Intrinsics
   end
 
   macro memcpy(dest, src, len, is_volatile)
-    {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-      LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, 0, {{is_volatile}})
-    {% else %}
-      LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, {{is_volatile}})
-    {% end %}
+    LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, {{is_volatile}})
   end
 
   macro memmove(dest, src, len, is_volatile)
-    {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-      LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, 0, {{is_volatile}})
-    {% else %}
-      LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, {{is_volatile}})
-    {% end %}
+    LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, {{is_volatile}})
   end
 
   macro memset(dest, val, len, is_volatile)
-    {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-      LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, 0, {{is_volatile}})
-    {% else %}
-      LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
-    {% end %}
+    LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
   end
 
   def self.read_cycle_counter
     LibIntrinsics.read_cycle_counter
   end
 
-  def self.bitreverse64(id) : UInt64
-    LibIntrinsics.bitreverse64(id)
-  end
-
-  def self.bitreverse32(id) : UInt32
-    LibIntrinsics.bitreverse32(id)
+  def self.bitreverse8(id) : UInt8
+    LibIntrinsics.bitreverse8(id)
   end
 
   def self.bitreverse16(id) : UInt16
     LibIntrinsics.bitreverse16(id)
   end
 
+  def self.bitreverse32(id) : UInt32
+    LibIntrinsics.bitreverse32(id)
+  end
+
+  def self.bitreverse64(id) : UInt64
+    LibIntrinsics.bitreverse64(id)
+  end
+
+  def self.bitreverse128(id) : UInt128
+    LibIntrinsics.bitreverse128(id)
+  end
+
+  def self.bswap16(id) : UInt16
+    LibIntrinsics.bswap16(id)
+  end
+
   def self.bswap32(id) : UInt32
     LibIntrinsics.bswap32(id)
   end
 
-  def self.bswap16(id)
-    LibIntrinsics.bswap16(id)
+  def self.bswap64(id) : UInt64
+    LibIntrinsics.bswap64(id)
+  end
+
+  def self.bswap128(id) : UInt128
+    LibIntrinsics.bswap128(id)
   end
 
   def self.popcount8(src) : Int8
@@ -233,6 +266,46 @@ module Intrinsics
 
   macro counttrailing128(src, zero_is_undef)
     LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
+  end
+
+  def self.fshl8(a, b, count) : UInt8
+    LibIntrinsics.fshl8(a, b, count)
+  end
+
+  def self.fshl16(a, b, count) : UInt16
+    LibIntrinsics.fshl16(a, b, count)
+  end
+
+  def self.fshl32(a, b, count) : UInt32
+    LibIntrinsics.fshl32(a, b, count)
+  end
+
+  def self.fshl64(a, b, count) : UInt64
+    LibIntrinsics.fshl64(a, b, count)
+  end
+
+  def self.fshl128(a, b, count) : UInt128
+    LibIntrinsics.fshl128(a, b, count)
+  end
+
+  def self.fshr8(a, b, count) : UInt8
+    LibIntrinsics.fshr8(a, b, count)
+  end
+
+  def self.fshr16(a, b, count) : UInt16
+    LibIntrinsics.fshr16(a, b, count)
+  end
+
+  def self.fshr32(a, b, count) : UInt32
+    LibIntrinsics.fshr32(a, b, count)
+  end
+
+  def self.fshr64(a, b, count) : UInt64
+    LibIntrinsics.fshr64(a, b, count)
+  end
+
+  def self.fshr128(a, b, count) : UInt128
+    LibIntrinsics.fshr128(a, b, count)
   end
 
   macro va_start(ap)

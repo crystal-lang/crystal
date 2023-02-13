@@ -65,6 +65,9 @@ response = HTTP::Client.post("https://api.github.com/graphql",
     "Authorization" => "bearer #{api_token}",
   }
 )
+unless response.success?
+  abort "GitHub API response: #{response.status}\n#{response.body}"
+end
 
 module LabelNameConverter
   def self.from_json(pull : JSON::PullParser)
@@ -77,12 +80,15 @@ end
 record PullRequest,
   number : Int32,
   title : String,
-  mergedAt : Time?,
+  merged_at : Time?,
   permalink : String,
   author : String?,
   labels : Array(String) do
   include JSON::Serializable
   include Comparable(self)
+
+  @[JSON::Field(key: "mergedAt")]
+  @merged_at : Time?
 
   @[JSON::Field(root: "login")]
   @author : String?
@@ -117,7 +123,7 @@ record PullRequest,
       labels.includes?("security") ? 0 : 1,
       labels.includes?("breaking-change") ? 0 : 1,
       labels.includes?("kind:bug") ? 0 : 1,
-      mergedAt || Time.unix(0),
+      merged_at || Time.unix(0),
     }
   end
 end
@@ -141,7 +147,7 @@ array = parser.on_key! "data" do
 end
 
 changelog = File.read("CHANGELOG.md")
-array.select! { |pr| pr.mergedAt && !changelog.index(pr.permalink) }
+array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
 sections = array.group_by { |pr|
   pr.labels.each do |label|
     case label

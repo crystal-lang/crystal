@@ -10,7 +10,7 @@
 # class Three
 #   include Enumerable(Int32)
 #
-#   def each
+#   def each(&)
 #     yield 1
 #     yield 2
 #     yield 3
@@ -190,7 +190,7 @@ module Enumerable(T)
 
       def same_as?(key) : Bool
         return false unless @initialized
-        return false if key == Alone || key == Drop
+        return false if key.in?(Alone, Drop)
         @key == key
       end
 
@@ -201,7 +201,7 @@ module Enumerable(T)
     end
   end
 
-  private def chunks_internal(original_block : T -> U) forall U
+  private def chunks_internal(original_block : T -> U, &) forall U
     acc = Chunk::Accumulator(T, U).new
     each do |val|
       key = original_block.call(val)
@@ -231,7 +231,7 @@ module Enumerable(T)
     ary = [] of typeof((yield Enumerable.element_type(self)).not_nil!)
     each do |e|
       v = yield e
-      unless v.is_a?(Nil)
+      unless v.nil?
         ary << v
       end
     end
@@ -299,7 +299,7 @@ module Enumerable(T)
   # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
   # implementation for the special case of `count == 2` which avoids heap
   # allocations.
-  def each_cons(count : Int, reuse = false)
+  def each_cons(count : Int, reuse = false, &)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
       # we use an initial capacity of double the count, because a second
@@ -310,7 +310,7 @@ module Enumerable(T)
     end
   end
 
-  private def each_cons_internal(count : Int, reuse, cons)
+  private def each_cons_internal(count : Int, reuse, cons, &)
     each do |elem|
       cons << elem
       cons.shift if cons.size > count
@@ -385,11 +385,11 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_slice(count : Int, reuse = false)
+  def each_slice(count : Int, reuse = false, &)
     each_slice_internal(count, Array(T), reuse) { |slice| yield slice }
   end
 
-  private def each_slice_internal(count : Int, type, reuse)
+  private def each_slice_internal(count : Int, type, reuse, &)
     if reuse
       unless reuse.is_a?(Array)
         reuse = type.new(count)
@@ -446,7 +446,7 @@ module Enumerable(T)
   # User # 1: Alice
   # User # 2: Bob
   # ```
-  def each_with_index(offset = 0)
+  def each_with_index(offset = 0, &)
     i = offset
     each do |elem|
       yield elem, i
@@ -730,7 +730,7 @@ module Enumerable(T)
   # [1, 2, 3, 4, 5].reduce { |acc, i| "#{acc}-#{i}" } # => "1-2-3-4-5"
   # [1].reduce { |acc, i| "#{acc}-#{i}" }             # => 1
   # ```
-  def reduce
+  def reduce(&)
     memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
@@ -748,7 +748,7 @@ module Enumerable(T)
   # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }             # => 25
   # [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) } # => [3, 2, 1]
   # ```
-  def reduce(memo)
+  def reduce(memo, &)
     each do |elem|
       memo = yield memo, elem
     end
@@ -761,7 +761,7 @@ module Enumerable(T)
   # ```
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
-  def reduce?
+  def reduce?(&)
     memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
@@ -933,7 +933,7 @@ module Enumerable(T)
   # (1), (2), (3), (4), (5)
   # ```
   @[Deprecated(%(Use `#join(io : IO, separator = "", & : T, IO ->) instead`))]
-  def join(separator, io : IO)
+  def join(separator, io : IO, &)
     join(io, separator) do |elem, io|
       yield elem, io
     end
@@ -1389,7 +1389,7 @@ module Enumerable(T)
   # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
   # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
   # ```
-  def sample(n : Int, random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
     # Unweighted reservoir sampling:
@@ -1425,7 +1425,7 @@ module Enumerable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 3
   # ```
-  def sample(random = Random::DEFAULT) : T
+  def sample(random : Random = Random::DEFAULT) : T
     value = uninitialized T
     found = false
 
@@ -1766,7 +1766,7 @@ module Enumerable(T)
   # words.each { |word| word.chars.tally_by(hash, &.downcase) }
   # hash # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
-  def tally_by(hash)
+  def tally_by(hash, &)
     each_with_object(hash) do |item, hash|
       value = yield item
 
@@ -1942,7 +1942,7 @@ module Enumerable(T)
   # 2 -- 5 -- 8
   # 3 -- nil -- nil
   # ```
-  def zip?(*others : Indexable | Iterable | Iterator)
+  def zip?(*others : Indexable | Iterable | Iterator, &)
     Enumerable.zip?(self, others) do |elems|
       yield elems
     end

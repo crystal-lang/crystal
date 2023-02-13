@@ -1,4 +1,4 @@
-def retry(n = 5)
+def retry(n = 5, &)
   exception = nil
   n.times do |i|
     yield

@@ -430,6 +430,158 @@ describe "Range" do
       x = r.sample
       r.should contain(x)
     end
+
+    it "samples with n = 0" do
+      (1..3).sample(0).empty?.should be_true
+    end
+
+    context "for an integer range" do
+      it "samples an inclusive range without n" do
+        value = (1..3).sample
+        (1 <= value <= 3).should be_true
+      end
+
+      it "samples an exclusive range without n" do
+        value = (1...3).sample
+        (1 <= value <= 2).should be_true
+      end
+
+      it "samples an inclusive range with n = 1" do
+        values = (1..3).sample(1)
+        values.size.should eq(1)
+        (1 <= values.first <= 3).should be_true
+      end
+
+      it "samples an exclusive range with n = 1" do
+        values = (1...3).sample(1)
+        values.size.should eq(1)
+        (1 <= values.first <= 2).should be_true
+      end
+
+      it "samples an inclusive range with n > 1" do
+        values = (1..10).sample(5)
+        values.size.should eq(5)
+        values.uniq.size.should eq(5)
+        values.all? { |value| 1 <= value <= 10 }.should be_true
+      end
+
+      it "samples an exclusive range with n > 1" do
+        values = (1...10).sample(5)
+        values.size.should eq(5)
+        values.uniq.size.should eq(5)
+        values.all? { |value| 1 <= value <= 9 }.should be_true
+      end
+
+      it "samples an inclusive range with n > 16" do
+        values = (1..1000).sample(100)
+        values.size.should eq(100)
+        values.uniq.size.should eq(100)
+        values.all? { |value| 1 <= value <= 1000 }.should be_true
+      end
+
+      it "samples an inclusive range with n equal to or bigger than the available values" do
+        values = (1..10).sample(20)
+        values.size.should eq(10)
+        values.uniq.size.should eq(10)
+        values.all? { |value| 1 <= value <= 10 }.should be_true
+      end
+
+      it "raises on invalid range without n" do
+        expect_raises ArgumentError do
+          (1..0).sample
+        end
+      end
+
+      it "raises on invalid range with n = 0" do
+        expect_raises ArgumentError do
+          (1..0).sample(0)
+        end
+      end
+
+      it "raises on invalid range with n = 1" do
+        expect_raises ArgumentError do
+          (1..0).sample(1)
+        end
+      end
+
+      it "raises on invalid range with n > 1" do
+        expect_raises ArgumentError do
+          (1..0).sample(10)
+        end
+      end
+
+      it "raises on exclusive range that would underflow" do
+        expect_raises ArgumentError do
+          (1_u8...0_u8).sample(10)
+        end
+      end
+    end
+
+    context "for a float range" do
+      it "samples an inclusive range without n" do
+        value = (1.0..2.0).sample
+        (1.0 <= value <= 2.0).should be_true
+      end
+
+      it "samples an exclusive range without n" do
+        value = (1.0...2.0).sample
+        (1.0 <= value < 2.0).should be_true
+      end
+
+      it "samples an inclusive range with n = 1" do
+        values = (1.0..2.0).sample(1)
+        values.size.should eq(1)
+        (1.0 <= values.first <= 2.0).should be_true
+      end
+
+      it "samples an exclusive range with n = 1" do
+        values = (1.0..2.0).sample(1)
+        values.size.should eq(1)
+        (1.0 <= values.first < 2.0).should be_true
+      end
+
+      it "samples an inclusive range with n > 1" do
+        values = (1.0..2.0).sample(10)
+        values.size.should eq(10)
+        values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+
+      it "samples an exclusive range with n > 1" do
+        values = (1.0...2.0).sample(10)
+        values.size.should eq(10)
+        values.all? { |value| 1.0 <= value < 2.0 }.should be_true
+      end
+
+      it "samples an inclusive range with n >= 1 and begin == end" do
+        values = (1.0..1.0).sample(3)
+        values.size.should eq(1)
+        values.first.should eq(1.0)
+      end
+
+      it "samples an inclusive range with n > 16" do
+        values = (1.0..2.0).sample(100)
+        values.size.should eq(100)
+        values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+
+      it "raises on invalid range with n = 0" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(0)
+        end
+      end
+
+      it "raises on invalid range with n = 1" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(1)
+        end
+      end
+
+      it "raises on invalid range with n > 1" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(10)
+        end
+      end
+    end
   end
 
   describe "#step" do

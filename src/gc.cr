@@ -93,8 +93,11 @@ module GC
   # If *pointer* was allocated with `malloc_atomic`, the same constraints apply.
   #
   # The return value is a pointer that may be identical to *pointer* or different.
-  def self.realloc(pointer : Void*, size : Int) : Void*
-    realloc(pointer, LibC::SizeT.new(size))
+  #
+  # WARNING: Memory allocated using `Pointer.malloc` must be reallocated using
+  # `Pointer#realloc` instead.
+  def self.realloc(pointer : T*, size : Int) : T* forall T
+    realloc(pointer.as(Void*), LibC::SizeT.new(size)).as(T*)
   end
 end
 

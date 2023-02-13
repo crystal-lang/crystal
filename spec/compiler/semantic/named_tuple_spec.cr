@@ -165,7 +165,7 @@ describe "Semantic: named tuples" do
 
       foo({x: 1, y: 'a'})
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be NamedTuple(x: Int32, y: Int32), not NamedTuple(x: Int32, y: Char)"
   end
 
   it "doesn't match type restriction with instance" do
@@ -177,7 +177,7 @@ describe "Semantic: named tuples" do
 
       Foo({a: Int32}).foo({a: 1.1})
       ),
-      "no overload matches"
+      "expected argument #1 to 'Foo(NamedTuple(a: Int32)).foo' to be NamedTuple(a: Int32), not NamedTuple(a: Float64)"
   end
 
   it "matches in type restriction and gets free var" do

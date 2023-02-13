@@ -259,7 +259,7 @@ module Indexable::Mutable(T)
   # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
   # a                          # => [3, 2, 4, 5, 1]
   # ```
-  def shuffle!(random = Random::DEFAULT) : self
+  def shuffle!(random : Random = Random::DEFAULT) : self
     (size - 1).downto(1) do |i|
       j = random.rand(i + 1)
       swap(i, j)

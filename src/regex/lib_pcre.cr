@@ -2,6 +2,16 @@
 lib LibPCRE
   alias Int = LibC::Int
 
+  CASELESS      = 0x00000001
+  MULTILINE     = 0x00000002
+  DOTALL        = 0x00000004
+  EXTENDED      = 0x00000008
+  ANCHORED      = 0x00000010
+  UTF8          = 0x00000800
+  NO_UTF8_CHECK = 0x00002000
+  DUPNAMES      = 0x00080000
+  UCP           = 0x20000000
+
   type Pcre = Void*
   type PcreExtra = Void*
   fun compile = pcre_compile(pattern : UInt8*, options : Int, errptr : UInt8**, erroffset : Int*, tableptr : Void*) : Pcre
@@ -22,15 +32,5 @@ lib LibPCRE
   INFO_NAMECOUNT     = 8
   INFO_NAMETABLE     = 9
 
-  alias Malloc = LibC::SizeT -> Void*
-  alias Free = Void* ->
-
-  $pcre_malloc : Malloc
-  $pcre_free : Free
+  $free = pcre_free : Void* ->
 end
-
-# TODO(interpreted): remove this unless
-{% unless flag?(:interpreted) %}
-  LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
-  LibPCRE.pcre_free = ->GC.free(Void*)
-{% end %}

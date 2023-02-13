@@ -290,6 +290,16 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      f32_to_u32_bang: {
+        pop_values: [value : Float32],
+        push:       true,
+        code:       value.to_u32!,
+      },
+      f32_to_u64_bang: {
+        pop_values: [value : Float32],
+        push:       true,
+        code:       value.to_u64!,
+      },
       f64_to_i8: {
         pop_values: [value : Float64],
         push:       true,
@@ -349,6 +359,12 @@ require "./repl"
         overflow:   true,
         code:       value.to_u32,
       },
+      f64_to_u32_bang: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   false,
+        code:       value.to_u32!,
+      },
       f64_to_u64: {
         pop_values: [value : Float64],
         push:       true,
@@ -359,6 +375,11 @@ require "./repl"
         pop_values: [value : Float64],
         push:       true,
         code:       value.to_i64!,
+      },
+      f64_to_u64_bang: {
+        pop_values: [value : Float64],
+        push:       true,
+        code:       value.to_u64!,
       },
       f64_to_f32: {
         pop_values: [value : Float64],
@@ -1248,11 +1269,11 @@ require "./repl"
         end,
       },
       put_metaclass: {
-        operands:   [size : Int32, struct_type : Bool],
+        operands:   [size : Int32, union_type : Bool],
         push:       true,
         code:       begin
           type_id =
-            if struct_type
+            if union_type
               (stack - size).as(Int32*).value
             else
               (stack - size).as(Void**).value.as(Int32*).value
@@ -1264,7 +1285,7 @@ require "./repl"
       },
       # >>> Allocate (2)
 
-      # <<< Unions (5)
+      # <<< Unions (7)
       put_in_union: {
         operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
         code:       begin
@@ -1348,7 +1369,17 @@ require "./repl"
           value
         end,
       },
-      # >>> Unions (5)
+      get_union_type_id: {
+        operands:   [union_size : Int32],
+        push:       true,
+        code:       (stack - union_size).as(Int32*).value,
+      },
+      put_union_type_id: {
+        operands:   [type_id : Int32, union_size : Int32],
+        push:       false,
+        code:       (stack - union_size).as(Int32*).value = type_id,
+      },
+      # >>> Unions (7)
 
       # <<< is_a? (3)
       reference_is_a: {
@@ -1620,163 +1651,73 @@ require "./repl"
       },
 
       {% if flag?(:bits64) %}
-        {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, 0, true)
-              else
-                LibIntrinsics.memset(dest, val, len, 0, false)
-              end
-            end,
-          },
-        {% else %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, true)
-              else
-                LibIntrinsics.memset(dest, val, len, false)
-              end
-            end,
-          },
-        {% end %}
+        interpreter_intrinsics_memcpy: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memcpy(dest, src, len, true)
+            else
+              LibIntrinsics.memcpy(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memmove: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memmove(dest, src, len, true)
+            else
+              LibIntrinsics.memmove(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memset: {
+          pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memset(dest, val, len, true)
+            else
+              LibIntrinsics.memset(dest, val, len, false)
+            end
+          end,
+        },
       {% else %}
-        {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, 0, true)
-              else
-                LibIntrinsics.memset(dest, val, len, 0, false)
-              end
-            end,
-          },
-        {% else %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, true)
-              else
-                LibIntrinsics.memset(dest, val, len, false)
-              end
-            end,
-          },
-        {% end %}
+        interpreter_intrinsics_memcpy: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memcpy(dest, src, len, true)
+            else
+              LibIntrinsics.memcpy(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memmove: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memmove(dest, src, len, true)
+            else
+              LibIntrinsics.memmove(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memset: {
+          pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memset(dest, val, len, true)
+            else
+              LibIntrinsics.memset(dest, val, len, false)
+            end
+          end,
+        },
       {% end %}
 
       interpreter_intrinsics_debugtrap: {
@@ -1789,128 +1730,63 @@ require "./repl"
         },
       {% end %}
 
-      interpreter_intrinsics_bswap32: {
-        pop_values: [id : UInt32],
-        push:       true,
-        code:       LibIntrinsics.bswap32(id),
-      },
-      interpreter_intrinsics_bswap16: {
-        pop_values: [id : UInt16],
-        push:       true,
-        code:       LibIntrinsics.bswap16(id),
-      },
       interpreter_intrinsics_read_cycle_counter: {
         push:       true,
         code:       LibIntrinsics.read_cycle_counter,
       },
-      interpreter_intrinsics_popcount8: {
-        pop_values: [value : Int8],
-        push:       true,
-        code:       LibIntrinsics.popcount8(value),
-      },
-      interpreter_intrinsics_popcount16: {
-        pop_values: [value : Int16],
-        push:       true,
-        code:       LibIntrinsics.popcount16(value),
-      },
-      interpreter_intrinsics_popcount32: {
-        pop_values: [value : Int32],
-        push:       true,
-        code:       LibIntrinsics.popcount32(value),
-      },
-      interpreter_intrinsics_popcount64: {
-        pop_values: [value : Int64],
-        push:       true,
-        code:       LibIntrinsics.popcount64(value),
-      },
-      interpreter_intrinsics_countleading8: {
-        pop_values: [src : Int8, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading8(src, true)
-          else
-            LibIntrinsics.countleading8(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_countleading16: {
-        pop_values: [src : Int16, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading16(src, true)
-          else
-            LibIntrinsics.countleading16(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_countleading32: {
-        pop_values: [src : Int32, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading32(src, true)
-          else
-            LibIntrinsics.countleading32(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_countleading64: {
-        pop_values: [src : Int64, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading64(src, true)
-          else
-            LibIntrinsics.countleading64(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing8: {
-        pop_values: [src : Int8, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing8(src, true)
-          else
-            LibIntrinsics.counttrailing8(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing16: {
-        pop_values: [src : Int16, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing16(src, true)
-          else
-            LibIntrinsics.counttrailing16(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing32: {
-        pop_values: [src : Int32, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing32(src, true)
-          else
-            LibIntrinsics.counttrailing32(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing64: {
-        pop_values: [src : Int64, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing64(src, true)
-          else
-            LibIntrinsics.counttrailing64(src, false)
-          end
-        end,
-      },
+
+      {% for n in [8, 16, 32, 64, 128] %}
+        interpreter_intrinsics_bitreverse{{n}}: {
+          pop_values: [value : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.bitreverse{{n}}(value),
+        },
+        {% unless n == 8 %}
+          interpreter_intrinsics_bswap{{n}}: {
+            pop_values: [value : UInt{{n}}],
+            push:       true,
+            code:       LibIntrinsics.bswap{{n}}(value),
+          },
+        {% end %}
+        interpreter_intrinsics_popcount{{n}}: {
+          pop_values: [value : Int{{n}}],
+          push:       true,
+          code:       LibIntrinsics.popcount{{n}}(value),
+        },
+        interpreter_intrinsics_countleading{{n}}: {
+          pop_values: [src : Int{{n}}, zero_is_undef : Bool],
+          push:       true,
+          code:       begin
+            if zero_is_undef
+              LibIntrinsics.countleading{{n}}(src, true)
+            else
+              LibIntrinsics.countleading{{n}}(src, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_counttrailing{{n}}: {
+          pop_values: [src : Int{{n}}, zero_is_undef : Bool],
+          push:       true,
+          code:       begin
+            if zero_is_undef
+              LibIntrinsics.counttrailing{{n}}(src, true)
+            else
+              LibIntrinsics.counttrailing{{n}}(src, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_fshl{{n}}: {
+          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.fshl{{n}}(a, b, count),
+        },
+        interpreter_intrinsics_fshr{{n}}: {
+          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.fshr{{n}}(a, b, count),
+        },
+      {% end %}
+
       libm_ceil_f32: {
         pop_values: [value : Float32],
         push:       true,
@@ -2044,12 +1920,12 @@ require "./repl"
       libm_powi_f32: {
         pop_values: [value : Float32, power : Int32],
         push:       true,
-        code:       LibM.powi_f32(value, power),
+        code:       {% if flag?(:win32) %} LibM.pow_f32(value, power.to_f32) {% else %} LibM.powi_f32(value, power) {% end %},
       },
       libm_powi_f64: {
         pop_values: [value : Float64, power : Int32],
         push:       true,
-        code:       LibM.powi_f64(value, power),
+        code:       {% if flag?(:win32) %} LibM.pow_f64(value, power.to_f64) {% else %} LibM.powi_f64(value, power) {% end %},
       },
       libm_min_f32: {
         pop_values: [value1 : Float32, value2 : Float32],

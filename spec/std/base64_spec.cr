@@ -48,6 +48,12 @@ describe "Base64" do
     assert_prints base64_strict_encode(slice), "AQEBAQE="
   end
 
+  it "encodes empty slice" do
+    slice = Bytes.empty
+    assert_prints base64_encode(slice), ""
+    assert_prints base64_strict_encode(slice), ""
+  end
+
   it "encodes static array" do
     array = uninitialized StaticArray(UInt8, 5)
     (0...5).each { |i| array[i] = 1_u8 }

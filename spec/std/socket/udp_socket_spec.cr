@@ -130,7 +130,16 @@ describe UDPSocket, tags: "network" do
                  raise "Unsupported IP address family: #{family}"
                end
 
-        udp.join_group(addr)
+        begin
+          udp.join_group(addr)
+        rescue e : Socket::Error
+          if e.os_error == Errno::ENODEV
+            pending!("Multicast device selection not available on this host")
+          else
+            raise e
+          end
+        end
+
         udp.multicast_loopback = true
         udp.multicast_loopback?.should eq(true)
 

@@ -13,9 +13,9 @@ private def test__mulodi4(a : Int64, b : Int64, expected : Int64, expected_overf
   end
 end
 
-private HEX_0_7FFFFFFFFFFFFFFF = 0x7FFFFFFFFFFFFFFF.to_i64!
-private HEX_0_8000000000000001 = 0x8000000000000001.to_i64!
-private HEX_0_8000000000000000 = 0x8000000000000000.to_i64!
+private HEX_0_7FFFFFFFFFFFFFFF = 0x7FFFFFFFFFFFFFFFi64
+private HEX_0_8000000000000001 = 0x8000000000000001u64.to_i64!
+private HEX_0_8000000000000000 = 0x8000000000000000u64.to_i64!
 
 describe "__mulodi4" do
   test__mulodi4(0, 0, 0, 0)

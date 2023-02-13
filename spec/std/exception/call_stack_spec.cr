@@ -33,13 +33,13 @@ describe "Backtrace" do
       source_path = Path.new(source_file)
       source_path.absolute?.should be_true
 
-      File.write source_file, <<-EOF
+      File.write source_file, <<-CRYSTAL
         def callee1
           puts caller.join('\n')
         end
 
         callee1
-        EOF
+        CRYSTAL
       _, output, _ = compile_and_run_file(source_file)
 
       output.should match /\A(#{Regex.escape(source_path.to_s)}):/

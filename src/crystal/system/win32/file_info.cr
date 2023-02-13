@@ -1,4 +1,4 @@
-struct Crystal::System::FileInfo < ::File::Info
+module Crystal::System::FileInfo
   protected getter file_attributes
 
   def initialize(@file_attributes : LibC::BY_HANDLE_FILE_INFORMATION, @file_type : LibC::DWORD)
@@ -27,11 +27,11 @@ struct Crystal::System::FileInfo < ::File::Info
     @reparse_tag = LibC::DWORD.new(0)
   end
 
-  def size : Int64
+  def system_size : Int64
     ((@file_attributes.nFileSizeHigh.to_u64 << 32) | @file_attributes.nFileSizeLow.to_u64).to_i64
   end
 
-  def permissions : ::File::Permissions
+  def system_permissions : ::File::Permissions
     if @file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_READONLY
       permissions = ::File::Permissions.new(0o444)
     else
@@ -45,7 +45,7 @@ struct Crystal::System::FileInfo < ::File::Info
     end
   end
 
-  def type : ::File::Type
+  def system_type : ::File::Type
     case @file_type
     when LibC::FILE_TYPE_PIPE
       ::File::Type::Pipe
@@ -66,31 +66,27 @@ struct Crystal::System::FileInfo < ::File::Info
     end
   end
 
-  def flags : ::File::Flags
+  def system_flags : ::File::Flags
     ::File::Flags::None
   end
 
-  def modification_time : ::Time
+  def system_modification_time : ::Time
     Time.from_filetime(@file_attributes.ftLastWriteTime)
   end
 
-  def owner_id : String
+  def system_owner_id : String
     "0"
   end
 
-  def group_id : String
+  def system_group_id : String
     "0"
   end
 
-  def same_file?(other : ::File::Info) : Bool
+  def system_same_file?(other : self) : Bool
     return false if type.symlink? || type.pipe? || type.character_device?
 
     @file_attributes.dwVolumeSerialNumber == other.file_attributes.dwVolumeSerialNumber &&
       @file_attributes.nFileIndexHigh == other.file_attributes.nFileIndexHigh &&
       @file_attributes.nFileIndexLow == other.file_attributes.nFileIndexLow
-  end
-
-  private def to_windows_path(path : String) : LibC::LPWSTR
-    path.check_no_null_byte.to_utf16.to_unsafe
   end
 end

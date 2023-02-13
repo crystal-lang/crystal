@@ -3,6 +3,8 @@
 # as its main interface, which calls `to_s` and surrounds it with the necessary escape codes
 # when it comes to obtaining a string representation of the object.
 #
+# NOTE: To use `Colorize`, you must explicitly import it with `require "colorize"`
+#
 # Its first argument changes the foreground color:
 #
 # ```
@@ -146,7 +148,7 @@ module Colorize
   # io = IO::Memory.new
   # Colorize.with.green.surround(io) do
   #   io << "green"
-  #   Colorize.reset
+  #   Colorize.reset(io)
   #   io << " default"
   # end
   # ```
@@ -294,7 +296,7 @@ module Colorize
   end
 end
 
-private def each_code(mode : Colorize::Mode)
+private def each_code(mode : Colorize::Mode, &)
   yield '1' if mode.bold?
   yield '2' if mode.dim?
   yield '4' if mode.underline?
@@ -436,7 +438,7 @@ struct Colorize::Object(T)
   #
   # io.to_s # returns a colorful string where "colorful" is red, "hello" green, "world" blue and " string" red again
   # ```
-  def surround(io = STDOUT)
+  def surround(io = STDOUT, &)
     return yield io unless @enabled
 
     Object.surround(io, to_named_tuple) do |io|
@@ -458,7 +460,7 @@ struct Colorize::Object(T)
     mode: Mode::None,
   }
 
-  protected def self.surround(io, color)
+  protected def self.surround(io, color, &)
     last_color = @@last_color
     must_append_end = append_start(io, color)
     @@last_color = color

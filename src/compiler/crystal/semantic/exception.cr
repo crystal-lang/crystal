@@ -140,7 +140,7 @@ module Crystal
 
     def default_message
       if line_number = @line_number
-        "#{@warning ? "warning" : "error"} in line #{@line_number}"
+        "#{@warning ? "warning" : "error"} in line #{line_number}"
       end
     end
 

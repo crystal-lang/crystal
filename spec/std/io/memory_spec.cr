@@ -81,10 +81,10 @@ describe IO::Memory do
           io2 = IO::Memory.new
           io2.set_encoding "UTF-16LE"
 
-          io1.write_utf8 "abc😂".to_slice
+          io1.write_string "abc😂".to_slice
           io1.to_s io2
           byte_slice = io2.to_slice
-          utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))
+          utf16_slice = byte_slice.unsafe_slice_of(UInt16)
 
           String.from_utf16(utf16_slice).should eq "abc😂"
           byte_slice.should eq Bytes[0x61, 0, 0x62, 0, 0x63, 0, 0x3D, 0xD8, 0x02, 0xDE]

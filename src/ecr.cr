@@ -16,6 +16,8 @@
 # tag: `<%# hello %>`. An ECR tag can be inserted directly (i.e. the tag itself may be
 # escaped) by using a second `%` like so: `<%% a = b %>` or `<%%= foo %>`.
 #
+# NOTE: To use `ECR`, you must explicitly import it with `require "ecr"`
+#
 # Quick Example:
 #
 # Create a simple ECR file named `greeter.ecr`:

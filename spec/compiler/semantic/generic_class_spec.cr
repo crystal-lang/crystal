@@ -655,14 +655,14 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't duplicate overload on generic class with class method (#2385)" do
-    error = assert_error <<-CR
+    error = assert_error <<-CRYSTAL
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      CR
+      CRYSTAL
 
     error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
@@ -963,7 +963,7 @@ describe "Semantic: generic class" do
 
       Gen(3).new("a")
       ),
-      "no overload matches"
+      "expected argument #1 to 'Gen(3).new' to be T, not String"
   end
 
   it "doesn't crash when matching restriction against number literal (2) (#3157)" do

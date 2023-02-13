@@ -35,12 +35,6 @@ class Crystal::Loader
     end
   end
 
-  SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
-                               ".dylib"
-                             {% else %}
-                               ".so"
-                             {% end %}
-
   # Parses linker arguments in the style of `ld`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
     libnames = [] of String
@@ -71,6 +65,14 @@ class Crystal::Loader
     end
   end
 
+  def self.library_filename(libname : String) : String
+    {% if flag?(:darwin) %}
+      "lib#{libname}.dylib"
+    {% else %}
+      "lib#{libname}.so"
+    {% end %}
+  end
+
   def find_symbol?(name : String) : Handle?
     @handles.each do |handle|
       address = LibC.dlsym(handle, name)
@@ -78,11 +80,20 @@ class Crystal::Loader
     end
   end
 
-  def load_file(path : String | ::Path) : Handle
+  def load_file(path : String | ::Path) : Nil
     load_file?(path) || raise LoadError.new_dl_error "cannot load #{path}"
   end
 
-  def load_library(libname : String) : Handle
+  def load_file?(path : String | ::Path) : Bool
+    handle = open_library(path.to_s)
+    return false unless handle
+
+    @handles << handle
+    @loaded_libraries << path.to_s
+    true
+  end
+
+  def load_library(libname : String) : Nil
     load_library?(libname) || raise LoadError.new_dl_error "cannot find -l#{libname}"
   end
 

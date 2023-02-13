@@ -12,6 +12,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   property! scope : Type
   setter scope
 
+  property vars : MetaVars
+
   @path_lookup : Type?
   @untyped_def : Def?
   @typed_def : Def?
@@ -49,7 +51,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
         if @program.requires.add?(filename)
-          parser = Parser.new File.read(filename), @program.string_pool
+          parser = @program.new_parser(File.read(filename))
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
           parsed_nodes = parser.parse
@@ -326,7 +328,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     true
   end
 
-  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true)
+  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true, &)
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
@@ -424,7 +426,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return expanded
     end
 
-    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
+    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node)
 
     skip_macro_exception = nil
 
@@ -445,7 +447,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     generated_nodes
   end
 
-  def eval_macro(node)
+  def eval_macro(node, &)
     yield
   rescue ex : MacroRaiseException
     node.raise ex.message, exception_type: MacroRaiseException
@@ -453,7 +455,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.raise "expanding macro", ex
   end
 
-  def process_annotations(annotations)
+  def process_annotations(annotations, &)
     annotations.try &.each do |ann|
       annotation_type = lookup_annotation(ann)
       validate_annotation(annotation_type, ann)
@@ -554,7 +556,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @exp_nest > 0
   end
 
-  def pushing_type(type : ModuleType)
+  def pushing_type(type : ModuleType, &)
     old_type = @current_type
     @current_type = type
     read_annotations

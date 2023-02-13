@@ -6,8 +6,8 @@
 #
 # An integer literal is an optional `+` or `-` sign, followed by
 # a sequence of digits and underscores, optionally followed by a suffix.
-# If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
-# in which the number fits:
+# If no suffix is present, the literal's type is `Int32`, or `Int64` if the
+# number doesn't fit into an `Int32`:
 #
 # ```
 # 1 # Int32
@@ -25,9 +25,13 @@
 # +10 # Int32
 # -20 # Int32
 #
-# 2147483648          # Int64
-# 9223372036854775808 # UInt64
+# 2147483648 # Int64
 # ```
+#
+# Literals without a suffix that are larger than `Int64::MAX` represent a
+# `UInt64` if the number fits, e.g. `9223372036854775808` and
+# `0x80000000_00000000`. This behavior is deprecated and will become an error in
+# the future.
 #
 # The underscore `_` before the suffix is optional.
 #
@@ -546,6 +550,7 @@ struct Int
     UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
+  # Calls the given block with each integer value from self down to `to`.
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
@@ -556,6 +561,7 @@ struct Int
     end
   end
 
+  # Get an iterator for counting down from self to `to`.
   def downto(to)
     DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
@@ -722,7 +728,7 @@ struct Int
     end
   end
 
-  private def internal_to_s(base, precision, upcase = false)
+  private def internal_to_s(base, precision, upcase = false, &)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).
@@ -872,6 +878,30 @@ struct Int8
     Intrinsics.popcount8(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self).to_i8!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    self
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading8(self, false)
@@ -879,6 +909,32 @@ struct Int8
 
   def trailing_zeros_count
     Intrinsics.counttrailing8(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_i8!).to_i8!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_i8!).to_i8!
   end
 
   def clone
@@ -923,6 +979,30 @@ struct Int16
     Intrinsics.popcount16(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self).to_i16!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self).to_i16!
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading16(self, false)
@@ -930,6 +1010,32 @@ struct Int16
 
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_i16!).to_i16!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_i16!).to_i16!
   end
 
   def clone
@@ -974,6 +1080,30 @@ struct Int32
     Intrinsics.popcount32(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self).to_i32!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self).to_i32!
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading32(self, false)
@@ -981,6 +1111,32 @@ struct Int32
 
   def trailing_zeros_count
     Intrinsics.counttrailing32(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_i32!).to_i32!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_i32!).to_i32!
   end
 
   def clone
@@ -1025,6 +1181,30 @@ struct Int64
     Intrinsics.popcount64(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self).to_i64!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self).to_i64!
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading64(self, false)
@@ -1032,6 +1212,32 @@ struct Int64
 
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_i64!).to_i64!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_i64!).to_i64!
   end
 
   def clone
@@ -1078,6 +1284,30 @@ struct Int128
     Intrinsics.popcount128(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self).to_i128!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self).to_i128!
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading128(self, false)
@@ -1085,6 +1315,32 @@ struct Int128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_i128!).to_i128!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_i128!).to_i128!
   end
 
   def clone
@@ -1133,6 +1389,30 @@ struct UInt8
     Intrinsics.popcount8(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    self
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading8(self, false)
@@ -1140,6 +1420,32 @@ struct UInt8
 
   def trailing_zeros_count
     Intrinsics.counttrailing8(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_u8!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_u8!)
   end
 
   def clone
@@ -1188,6 +1494,30 @@ struct UInt16
     Intrinsics.popcount16(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self)
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading16(self, false)
@@ -1195,6 +1525,32 @@ struct UInt16
 
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_u16!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_u16!)
   end
 
   def clone
@@ -1243,6 +1599,30 @@ struct UInt32
     Intrinsics.popcount32(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self)
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading32(self, false)
@@ -1250,6 +1630,32 @@ struct UInt32
 
   def trailing_zeros_count
     Intrinsics.counttrailing32(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_u32!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_u32!)
   end
 
   def clone
@@ -1298,6 +1704,30 @@ struct UInt64
     Intrinsics.popcount64(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self)
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading64(self, false)
@@ -1305,6 +1735,32 @@ struct UInt64
 
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_u64!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_u64!)
   end
 
   def clone
@@ -1355,6 +1811,30 @@ struct UInt128
     Intrinsics.popcount128(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self)
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading128(self, false)
@@ -1362,6 +1842,32 @@ struct UInt128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_u128!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_u128!)
   end
 
   def clone

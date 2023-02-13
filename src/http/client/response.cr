@@ -110,7 +110,7 @@ class HTTP::Client
       end
     end
 
-    def self.from_io(io, ignore_body = false, decompress = true)
+    def self.from_io(io, ignore_body = false, decompress = true, &)
       from_io?(io, ignore_body, decompress) do |response|
         if response
           yield response

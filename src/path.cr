@@ -225,7 +225,9 @@ struct Path
       "."
     else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
       return String.new(slice[0, 1]) if pos == -1
-      return anchor.to_s if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
+      if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
+        return anchor.to_s
+      end
       String.new(slice[0, pos + 1])
     end
   end
@@ -526,7 +528,7 @@ struct Path
     PartIterator.new(self)
   end
 
-  private def each_part_separator_index
+  private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
     start_pos = reader.pos
 
@@ -623,7 +625,7 @@ struct Path
       end
 
       @reader = reader
-      return 0
+      0
     end
   end
 
@@ -1031,7 +1033,7 @@ struct Path
       end
     end
 
-    return path
+    path
   end
 
   # :ditto:

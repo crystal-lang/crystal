@@ -12,6 +12,12 @@ require "crystal/system/thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
+  @event_loop = Crystal::EventLoop.create
+
+  def self.event_loop
+    Thread.current.scheduler.@event_loop
+  end
+
   def self.current_fiber : Fiber
     Thread.current.scheduler.@current
   end
@@ -130,11 +136,7 @@ class Crystal::Scheduler
 
   private def fatal_resume_error(fiber, message)
     Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
-    {% unless flag?(:win32) %}
-      # FIXME: Enable when caller is supported on win32
-      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
-    {% end %}
-
+    caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
     exit 1
   end
 
@@ -158,7 +160,7 @@ class Crystal::Scheduler
         end
         break
       else
-        Crystal::EventLoop.run_once
+        @event_loop.run_once
       end
     end
 
@@ -173,7 +175,10 @@ class Crystal::Scheduler
   end
 
   protected def yield : Nil
-    sleep(0.seconds)
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      sleep(0.seconds)
+    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil

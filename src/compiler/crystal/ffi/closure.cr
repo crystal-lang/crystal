@@ -3,7 +3,7 @@ require "./ffi"
 module Crystal::FFI
   struct Closure
     def initialize(call_interface : CallInterface, closure_fun : LibFFI::ClosureFun, user_data : Void*)
-      @closure = LibFFI.closure_alloc(sizeof(LibFFI::Closure), out @code)
+      @closure = LibFFI.closure_alloc(LibFFI::SIZEOF_CLOSURE, out @code)
       unless @closure
         raise "Error on LibFFI.closure_alloc"
       end

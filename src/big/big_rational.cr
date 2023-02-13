@@ -5,6 +5,8 @@ require "big"
 # denominator and the numerator have no common factors, and that the
 # denominator is positive. Zero has the unique representation 0/1.
 #
+# NOTE: To use `BigRational`, you must explicitly import it with `require "big"`
+#
 # ```
 # require "big"
 #
@@ -74,7 +76,7 @@ struct BigRational < Number
   end
 
   # :nodoc:
-  def self.new
+  def self.new(&)
     LibGMP.mpq_init(out mpq)
     yield pointerof(mpq)
     new(mpq)

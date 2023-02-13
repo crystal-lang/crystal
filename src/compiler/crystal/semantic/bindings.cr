@@ -1,7 +1,6 @@
 module Crystal
   class ASTNode
     property! dependencies : Array(ASTNode)
-    property freeze_type : Type?
     property observers : Array(ASTNode)?
     property enclosing_call : Call?
 
@@ -14,7 +13,7 @@ module Crystal
     end
 
     def type?
-      @type || @freeze_type
+      @type || freeze_type
     end
 
     def type(*, with_autocast = false)
@@ -41,7 +40,7 @@ module Crystal
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
-      if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
+      if !type.no_return? && (freeze_type = self.freeze_type) && !type.implements?(freeze_type)
         raise_frozen_type freeze_type, type, self
       end
       @type = type
@@ -55,11 +54,11 @@ module Crystal
       set_type type
     rescue ex : FrozenTypeException
       # See if we can find where the mismatched type came from
-      if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
+      if from && !ex.inner && (freeze_type = self.freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
         other_type = type.union_types.find { |type| type != freeze_type }
         trace = from.find_owner_trace(freeze_type.program, other_type)
         ex.inner = trace
-      elsif from && !ex.inner && (freeze_type = @freeze_type)
+      elsif from && !ex.inner && (freeze_type = self.freeze_type)
         trace = from.find_owner_trace(freeze_type.program, type)
         ex.inner = trace
       end
@@ -69,6 +68,10 @@ module Crystal
       else
         ::raise ex
       end
+    end
+
+    def freeze_type
+      nil
     end
 
     def raise_frozen_type(freeze_type, invalid_type, from)
@@ -103,25 +106,23 @@ module Crystal
       @type
     end
 
-    def bind_to(node : ASTNode)
+    def bind_to(node : ASTNode) : Nil
       bind(node) do |dependencies|
         dependencies.push node
         node.add_observer self
-        node
       end
     end
 
-    def bind_to(nodes : Array)
+    def bind_to(nodes : Indexable) : Nil
       return if nodes.empty?
 
       bind do |dependencies|
         dependencies.concat nodes
         nodes.each &.add_observer self
-        nodes.first
       end
     end
 
-    def bind(from = nil)
+    def bind(from = nil, &)
       # Quick check to provide a better error message when assigning a type
       # to a variable whose type is frozen
       if self.is_a?(MetaTypeVar) && (freeze_type = self.freeze_type) && from &&
@@ -131,16 +132,12 @@ module Crystal
 
       dependencies = @dependencies ||= [] of ASTNode
 
-      node = yield dependencies
+      yield dependencies
 
-      if dependencies.size == 1
-        new_type = node.type?
-      else
-        new_type = Type.merge dependencies
-      end
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
-      if new_type && (freeze_type = @freeze_type)
+      if new_type && (freeze_type = self.freeze_type)
         new_type = restrict_type_to_freeze_type(freeze_type, new_type)
       end
 
@@ -152,9 +149,8 @@ module Crystal
       propagate
     end
 
-    def unbind_all
-      @dependencies.try &.each &.remove_observer(self)
-      @dependencies = nil
+    def type_from_dependencies : Type?
+      Type.merge dependencies
     end
 
     def unbind_from(nodes : Nil)
@@ -208,10 +204,10 @@ module Crystal
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      new_type = Type.merge dependencies
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
-      if new_type && (freeze_type = @freeze_type)
+      if new_type && (freeze_type = self.freeze_type)
         new_type = restrict_type_to_freeze_type(freeze_type, new_type)
       end
 
@@ -399,7 +395,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -438,7 +452,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -545,7 +577,7 @@ module Crystal
           node_type = node.type?
           return unless node_type
 
-          if node.is_a?(Path) && (target_const = node.target_const)
+          if node.is_a?(Path) && node.target_const
             node.raise "can't use constant as type for NamedTuple"
           end
 
@@ -692,8 +724,6 @@ module Crystal
   end
 
   class ReadInstanceVar
-    property! visitor : MainVisitor
-
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type
@@ -702,12 +732,21 @@ module Crystal
         if obj_type.is_a?(UnionType)
           obj_type.program.type_merge(
             obj_type.union_types.map do |union_type|
-              visitor.lookup_instance_var(self, union_type).type
+              lookup_instance_var(union_type).type
             end
           )
         else
-          visitor.lookup_instance_var(self, obj_type).type
+          lookup_instance_var(obj_type).type
         end
+    end
+
+    private def lookup_instance_var(type)
+      ivar = type.lookup_instance_var(self)
+      unless ivar
+        similar_name = type.lookup_similar_instance_var_name(name)
+        type.program.undefined_instance_variable(self, type, similar_name)
+      end
+      ivar
     end
   end
 

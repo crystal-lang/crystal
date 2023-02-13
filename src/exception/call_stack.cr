@@ -1,7 +1,7 @@
-{% if flag?(:win32) %}
-  require "./call_stack/stackwalk"
-{% elsif flag?(:interpreted) %}
+{% if flag?(:interpreted) %}
   require "./call_stack/interpreter"
+{% elsif flag?(:win32) %}
+  require "./call_stack/stackwalk"
 {% elsif flag?(:wasm32) %}
   require "./call_stack/null"
 {% else %}

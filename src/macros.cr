@@ -1,21 +1,25 @@
-# Defines a **`Struct`** with the given name and properties.
+# Defines a **`Struct`** type called *name* with the given *properties*.
 #
 # The generated struct has a constructor with the given properties
 # in the same order as declared. The struct only provides getters,
 # not setters, making it immutable by default.
 #
-# The properties can be type declarations or assignments.
-#
-# You can pass a block to this macro, that will be inserted inside
-# the struct definition.
-#
 # ```
 # record Point, x : Int32, y : Int32
 #
-# Point.new 1, 2 # => #<Point(@x=1, @y=2)>
+# p = Point.new 1, 2 # => #<Point(@x=1, @y=2)>
+# p.x                # => 1
+# p.y                # => 2
 # ```
 #
-# An example with the block version:
+# The *properties* are a sequence of type declarations (`x : Int32`, `x : Int32 = 0`)
+# or assigns (`x = 0`).
+# They declare instance variables and respective getter methods of their name with
+# optional type restrictions and default value.
+#
+# When passing a block to this macro its body is inserted inside
+# the struct definition. This allows to define additional methods or include modules
+# into the record type (reopening the type would work as well).
 #
 # ```
 # record Person, first_name : String, last_name : String do
@@ -47,7 +51,7 @@
 # Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 #
-# This macro also provides a `copy_with` method which returns
+# This macro also provides a `#copy_with` method which returns
 # a copy of the record with the provided properties altered.
 #
 # ```

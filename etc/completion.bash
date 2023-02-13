@@ -13,7 +13,7 @@ _crystal_compgen_options(){
 _crystal_compgen_sources(){
     local IFS=$'\n'
     local pattern=$1
-    compopt -o filenames
+    type compopt &> /dev/null && compopt -o filenames
     COMPREPLY=( $(compgen -f -o plusdirs -X '!*.cr' -- "${pattern}") )
 }
 
@@ -21,7 +21,7 @@ _crystal_compgen_sources(){
 _crystal_compgen_files(){
     local IFS=$'\n'
     local pattern=$1
-    compopt -o filenames
+    type compopt &> /dev/null && compopt -o filenames
     COMPREPLY=( $(compgen -o default -- "${pattern}") )
 }
 

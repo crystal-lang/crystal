@@ -293,7 +293,7 @@ end
                            } %}
         # Returns `self` converted to `{{type}}`.
         # Raises `OverflowError` in case of overflow.
-        @[Primitive(:convert)]
+        @[::Primitive(:convert)]
         @[Raises]
         def {{name.id}} : {{type}}
         end
@@ -304,7 +304,7 @@ end
         # {% elsif type < Int %} the result is undefined.
         # {% else %} infinity is returned.
         # {% end %}
-        @[Primitive(:unchecked_convert)]
+        @[::Primitive(:unchecked_convert)]
         def {{name.id}}! : {{type}}
         end
       {% end %}
@@ -320,7 +320,7 @@ end
                            } %}
           # Returns `true` if `self` is {{desc.id}} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
           # or if `self` and *other* are unordered{% end %}.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end
         {% end %}
@@ -340,7 +340,7 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[Primitive(:convert)]
+      @[::Primitive(:convert)]
       def unsafe_chr : Char
       end
 
@@ -348,50 +348,50 @@ end
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
           # Raises `OverflowError` in case of overflow.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           @[Raises]
           def {{op.id}}(other : {{int2.id}}) : self
           end
 
           # Returns the result of {{desc.id}} `self` and *other*.
           # In case of overflow a wrapping is performed.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def &{{op.id}}(other : {{int2.id}}) : self
           end
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def |(other : {{int2.id}}) : self
         end
 
         # Returns the result of performing a bitwise AND of `self`'s and *other*'s bits.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def &(other : {{int2.id}}) : self
         end
 
         # Returns the result of performing a bitwise XOR of `self`'s and *other*'s bits.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def ^(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_shl(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_shr(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_div(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_mod(other : {{int2.id}}) : self
         end
       {% end %}
@@ -399,7 +399,7 @@ end
       {% for float in floats %}
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def {{op.id}}(other : {{float.id}}) : {{float.id}}
           end
         {% end %}
@@ -412,19 +412,19 @@ end
       {% for num in nums %}
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def {{op.id}}(other : {{num.id}}) : self
           end
         {% end %}
 
         # Returns the float division of `self` and *other*.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def fdiv(other : {{num.id}}) : self
         end
       {% end %}
 
       # Returns the result of division `self` and *other*.
-      @[Primitive(:binary)]
+      @[::Primitive(:binary)]
       def /(other : {{float.id}}) : {{float.id}}
       end
     end

@@ -1,6 +1,7 @@
 require "./client"
 require "./headers"
 
+# NOTE: To use `WebSocket`, you must explicitly import it with `require "http/web_socket"`
 class HTTP::WebSocket
   getter? closed = false
 
@@ -98,7 +99,7 @@ class HTTP::WebSocket
     @ws.pong(message)
   end
 
-  def stream(binary = true, frame_size = 1024)
+  def stream(binary = true, frame_size = 1024, &)
     check_open
     @ws.stream(binary: binary, frame_size: frame_size) do |io|
       yield io

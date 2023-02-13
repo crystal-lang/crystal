@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "b421c5a3f857247ed88251d0c6dbcca7337c4648"
+    default: "b668df09ead5cbad9fdbff8ba3c5c0878fc99cbe"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1"
 
 defaults:
   environment: &env
@@ -73,7 +73,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -272,7 +272,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -428,7 +428,7 @@ jobs:
       - image: manastech/s3cmd:2.2-alpine
     environment:
       <<: *env
-      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJDEDGK6MQ
     steps:
       - attach_workspace:
           at: /tmp/workspace

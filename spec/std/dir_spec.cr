@@ -1,6 +1,7 @@
 require "./spec_helper"
+require "../support/env"
 
-private def unset_tempdir
+private def unset_tempdir(&)
   {% if flag?(:windows) %}
     old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
     begin
@@ -72,6 +73,13 @@ describe "Dir" do
       expect_raises(File::Error, "Error opening directory: '#{datapath("dir", "f1.txt", "/").inspect_unquoted}'") do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
+    end
+  end
+
+  pending_win32 "tests info on existing directory" do
+    Dir.open(datapath) do |dir|
+      info = dir.info
+      info.directory?.should be_true
     end
   end
 
@@ -185,6 +193,14 @@ describe "Dir" do
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
         datapath("dir", "subdir", "f1.txt"),
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/f2.txt"].sort.should eq [
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/*.txt"].sort.should eq [
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
     end
@@ -492,8 +508,41 @@ describe "Dir" do
     end
   end
 
-  it ".current" do
-    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+  describe ".current" do
+    it "matches shell" do
+      Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+    end
+
+    # Skip spec on Windows due to weak support for symlinks and $PWD.
+    {% unless flag?(:win32) %}
+      it "follows $PWD" do
+        with_tempfile "current-pwd" do |path|
+          Dir.mkdir_p path
+          # Resolve any symbolic links in path caused by tmpdir being a link.
+          # For example on macOS, /tmp is a symlink to /private/tmp.
+          path = File.real_path(path)
+
+          target_path = File.join(path, "target")
+          link_path = File.join(path, "link")
+          Dir.mkdir_p target_path
+          File.symlink(target_path, link_path)
+
+          Dir.cd(link_path) do
+            with_env({"PWD" => nil}) do
+              Dir.current.should eq target_path
+            end
+
+            with_env({"PWD" => link_path}) do
+              Dir.current.should eq link_path
+            end
+
+            with_env({"PWD" => "/some/other/path"}) do
+              Dir.current.should eq target_path
+            end
+          end
+        end
+      end
+    {% end %}
   end
 
   describe ".tempdir" do

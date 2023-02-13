@@ -1,5 +1,9 @@
-int foo();
+#include "../visibility.h"
 
-int bar() {
+LOCAL int foo() {
+  return 42;
+}
+
+EXPORT int bar() {
   return foo() + 100;
 }

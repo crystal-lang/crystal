@@ -10,22 +10,23 @@ module Crystal::Playground
   class Session
     getter tag : Int32
 
-    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32)
+    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @host : String? = "localhost")
       @running_process_filename = ""
       @tag = 0
     end
 
-    def self.instrument_and_prelude(session_key, port, tag, source)
+    def self.instrument_and_prelude(session_key, port, tag, source, host : String? = "localhost")
+      # TODO: figure out how syntax warnings should be reported
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
       Log.info { "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}" }
 
-      prelude = %(
+      prelude = <<-CRYSTAL
         require "compiler/crystal/tools/playground/agent"
 
         class Crystal::Playground::Agent
-          @@instance = Crystal::Playground::Agent.new("ws://localhost:#{port}/agent/#{session_key}/#{tag}", #{tag})
+          @@instance = Crystal::Playground::Agent.new("ws://#{host}:#{port}/agent/#{session_key}/#{tag}", #{tag})
 
           def self.instance
             @@instance
@@ -35,7 +36,7 @@ module Crystal::Playground
         def _p
           Crystal::Playground::Agent.instance
         end
-        )
+        CRYSTAL
 
       [
         Compiler::Source.new("playground_prelude", prelude),
@@ -48,7 +49,7 @@ module Crystal::Playground
 
       @tag = tag
       begin
-        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source)
+        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source, host: @host)
       rescue ex : Crystal::CodeError
         send_exception ex, tag
         return
@@ -118,14 +119,12 @@ module Crystal::Playground
     end
 
     def send(message)
-      begin
-        @ws.send(message)
-      rescue ex : IO::Error
-        Log.warn { "Unable to send message (session=#{@session_key})." }
-      end
+      @ws.send(message)
+    rescue ex : IO::Error
+      Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 
-    def send_with_json_builder
+    def send_with_json_builder(&)
       send(JSON.build do |json|
         json.object do
           yield json
@@ -225,21 +224,19 @@ module Crystal::Playground
     end
 
     def content
-      begin
-        extname = File.extname(@filename)
-        content = if extname == ".cr"
-                    crystal_source_to_markdown(@filename)
-                  else
-                    File.read(@filename)
-                  end
+      extname = File.extname(@filename)
+      content = if extname == ".cr"
+                  crystal_source_to_markdown(@filename)
+                else
+                  File.read(@filename)
+                end
 
-        if extname == ".md" || extname == ".cr"
-          content = Markd.to_html(content)
-        end
-        content
-      rescue e
-        e.message || "Error: generating content for #{@filename}"
+      if extname.in?(".md", ".cr")
+        content = Markd.to_html(content)
       end
+      content
+    rescue e
+      e.message || "Error: generating content for #{@filename}"
     end
 
     def to_s(io : IO) : Nil
@@ -393,6 +390,22 @@ module Crystal::Playground
   class EnvironmentHandler
     include HTTP::Handler
 
+    DEFAULT_SOURCE = <<-CRYSTAL
+      def find_string(text, word)
+        (0..text.size-word.size).each do |i|
+          { i, text[i..i+word.size-1] }
+          if text[i..i+word.size-1] == word
+            return i
+          end
+        end
+
+        nil
+      end
+
+      find_string "Crystal is awesome!", "awesome"
+      find_string "Crystal is awesome!", "not sure"
+      CRYSTAL
+
     def initialize(@server : Playground::Server)
     end
 
@@ -400,31 +413,17 @@ module Crystal::Playground
       case {context.request.method, context.request.resource}
       when {"GET", "/environment.js"}
         context.response.headers["Content-Type"] = "application/javascript"
-        context.response.puts %(Environment = {})
 
-        context.response.puts %(Environment.version = #{Crystal::Config.description.inspect})
-
-        defaultSource = <<-CR
-          def find_string(text, word)
-            (0..text.size-word.size).each do |i|
-              { i, text[i..i+word.size-1] }
-              if text[i..i+word.size-1] == word
-                return i
-              end
-            end
-
-            nil
-          end
-
-          find_string "Crystal is awesome!", "awesome"
-          find_string "Crystal is awesome!", "not sure"
-          CR
-        context.response.puts "Environment.defaultSource = #{defaultSource.inspect}"
+        context.response.puts <<-JS
+          Environment = {}
+          Environment.version = #{Crystal::Config.description.inspect}
+          Environment.defaultSource = #{DEFAULT_SOURCE.inspect}
+          JS
 
         if source = @server.source
-          context.response.puts "Environment.source = #{source.code.inspect};"
+          context.response.puts "Environment.source = #{source.code.inspect}"
         else
-          context.response.puts "Environment.source = null;"
+          context.response.puts "Environment.source = null"
         end
       else
         call_next(context)
@@ -478,7 +477,7 @@ module Crystal::Playground
           ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port)
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, host: @host)
           Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
 
           ws.on_message do |message|
@@ -518,6 +517,7 @@ module Crystal::Playground
 
       address = server.bind_tcp @host || Socket::IPAddress::LOOPBACK, @port
       @port = address.port
+      @host = address.address
 
       puts "Listening on http://#{address}"
       if address.unspecified?
@@ -529,12 +529,14 @@ module Crystal::Playground
       rescue ex
         raise Playground::Error.new(ex.message)
       end
+    rescue e : Socket::BindError
+      raise Playground::Error.new(e.message)
     end
 
     private def accept_request?(origin)
       case @host
-      when nil
-        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
+      when nil, "localhost", "127.0.0.1"
+        origin.in?("http://localhost:#{@port}", "http://127.0.0.1:#{@port}")
       when "0.0.0.0"
         true
       else

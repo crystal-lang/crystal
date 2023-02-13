@@ -228,6 +228,7 @@ describe "BigInt" do
   it "does modulo" do
     (10.to_big_i % 3.to_big_i).should eq(1.to_big_i)
     (10.to_big_i % 3).should eq(1.to_big_i)
+    (10.to_big_i % 3u8).should eq(1.to_big_i)
     (10 % 3.to_big_i).should eq(1.to_big_i)
   end
 
@@ -504,12 +505,12 @@ describe "BigInt" do
       big = BigInt.new("9" * 32)
       expect_raises(OverflowError) { big.to_i64 }
       expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(-8814407033341083649) # 99999999999999999999999999999999 - 5421010862428*(2**64)
-      big.to_u64!.should eq(9632337040368467967)  # 99999999999999999999999999999999 - 5421010862427*(2**64)
+      big.to_i64!.should eq(-8814407033341083649)   # 99999999999999999999999999999999 - 5421010862428*(2**64)
+      big.to_u64!.should eq(9632337040368467967u64) # 99999999999999999999999999999999 - 5421010862427*(2**64)
     end
 
     it "between 63 and 64 bits" do
-      big = BigInt.new(i = 9999999999999999999)
+      big = BigInt.new(i = 9999999999999999999u64)
       expect_raises(OverflowError) { big.to_i64 }
       big.to_u64.should eq(i)
       big.to_i64!.should eq(-8446744073709551617) # 9999999999999999999 - 2**64
@@ -529,7 +530,7 @@ describe "BigInt" do
       big.to_i64.should eq(i)
       expect_raises(OverflowError) { big.to_u64 }
       big.to_i64!.should eq(i)
-      big.to_u64!.should eq(18446744073709541617) # -9999 + 2**64
+      big.to_u64!.should eq(18446744073709541617u64) # -9999 + 2**64
     end
 
     it "negative between 32 and 63 bits" do
@@ -537,7 +538,7 @@ describe "BigInt" do
       big.to_i64.should eq(i)
       expect_raises(OverflowError) { big.to_u64 }
       big.to_i64!.should eq(i)
-      big.to_u64!.should eq(18446734073709551617) # -9999999999999 + 2**64
+      big.to_u64!.should eq(18446734073709551617u64) # -9999999999999 + 2**64
     end
 
     it "negative between 63 and 64 bits" do
@@ -552,8 +553,8 @@ describe "BigInt" do
       big = BigInt.new("-" + "9" * 20)
       expect_raises(OverflowError) { big.to_i64 }
       expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(-7766279631452241919) # -9999999999999999999 + 5*(2**64)
-      big.to_u64!.should eq(10680464442257309697) # -9999999999999999999 + 6*(2**64)
+      big.to_i64!.should eq(-7766279631452241919)    # -9999999999999999999 + 5*(2**64)
+      big.to_u64!.should eq(10680464442257309697u64) # -9999999999999999999 + 6*(2**64)
 
       big = BigInt.new("-" + "9" * 32)
       expect_raises(OverflowError) { big.to_i64 }
@@ -631,6 +632,29 @@ describe "BigInt" do
         -123.to_big_i.digits
       end
     end
+  end
+
+  describe "#divisible_by?" do
+    it { 0.to_big_i.divisible_by?(0).should be_true }
+    it { 0.to_big_i.divisible_by?(1).should be_true }
+    it { 0.to_big_i.divisible_by?(-1).should be_true }
+    it { 0.to_big_i.divisible_by?(0.to_big_i).should be_true }
+    it { 0.to_big_i.divisible_by?(1.to_big_i).should be_true }
+    it { 0.to_big_i.divisible_by?((-1).to_big_i).should be_true }
+
+    it { 135.to_big_i.divisible_by?(0).should be_false }
+    it { 135.to_big_i.divisible_by?(1).should be_true }
+    it { 135.to_big_i.divisible_by?(2).should be_false }
+    it { 135.to_big_i.divisible_by?(3).should be_true }
+    it { 135.to_big_i.divisible_by?(4).should be_false }
+    it { 135.to_big_i.divisible_by?(5).should be_true }
+    it { 135.to_big_i.divisible_by?(135).should be_true }
+    it { 135.to_big_i.divisible_by?(270).should be_false }
+
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("4294967296".to_big_i).should be_true }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("8589934592".to_big_i).should be_false }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("23283064365386962890625".to_big_i).should be_true }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("116415321826934814453125".to_big_i).should be_false }
   end
 end
 

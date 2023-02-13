@@ -137,18 +137,28 @@ module IO::ByteFormat
           buffer.to_slice.copy_to(bytes)
         end
 
-        def self.decode(type : {{type.id}}.class, io : IO)
+        def self.decode(int : {{type.id}}.class, io : IO)
           buffer = uninitialized UInt8[{{bytesize}}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
           buffer.unsafe_as({{type.id}})
         end
 
-        def self.decode(type : {{type.id}}.class, bytes : Bytes)
+        def self.decode(int : {{type.id}}.class, bytes : Bytes)
           buffer = uninitialized UInt8[{{bytesize}}]
           bytes.copy_to(buffer.to_unsafe, {{bytesize}})
           buffer.reverse! unless SystemEndian == self
           buffer.unsafe_as({{type.id}})
+        end
+
+        @[Deprecated("Use `.decode(int : {{type.id}}.class, io : IO)` instead")]
+        def self.decode(*, type : {{type.id}}.class, io : IO)
+          decode(type, io)
+        end
+
+        @[Deprecated("Use `.decode(int : {{type.id}}.class, bytes : Bytes)` instead")]
+        def self.decode(*, type : {{type.id}}.class, bytes : Bytes)
+          decode(type, bytes)
         end
       {% end %}
     end

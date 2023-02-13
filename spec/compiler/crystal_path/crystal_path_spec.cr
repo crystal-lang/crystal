@@ -4,9 +4,9 @@ require "spec/helpers/iterate"
 
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
-    crystal_path = Crystal::CrystalPath.new([path])
     results = results.map { |result| ::Path[__DIR__, result].normalize.to_s }
     Dir.cd(__DIR__) do
+      crystal_path = Crystal::CrystalPath.new([path])
       matches = crystal_path.find search, relative_to: relative_to
       matches.should eq(results), file: file, line: line
     end
@@ -15,8 +15,8 @@ end
 
 private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, expected_relative_to = nil, file = __FILE__, line = __LINE__)
   it "doesn't finds #{search.inspect}", file, line do
-    crystal_path = Crystal::CrystalPath.new([path])
     Dir.cd(__DIR__) do
+      crystal_path = Crystal::CrystalPath.new([path])
       error = expect_raises Crystal::CrystalPath::NotFoundError do
         crystal_path.find search, relative_to: relative_to
       end

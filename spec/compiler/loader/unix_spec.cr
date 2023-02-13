@@ -28,12 +28,14 @@ describe Crystal::Loader do
     end
 
     it "parses file paths" do
-      expect_raises(Crystal::Loader::LoadError, /#{Dir.current}\/foobar\.o.+(No such file or directory|image not found)/) do
+      exc = expect_raises(Crystal::Loader::LoadError, /no such file|image not found|cannot open/i) do
         Crystal::Loader.parse(["foobar.o"], search_paths: [] of String)
       end
-      expect_raises(Crystal::Loader::LoadError, /#{Dir.current}\/foo\/bar\.o.+(No such file or directory|image not found)/) do
+      exc.message.should contain File.join(Dir.current, "foobar.o")
+      exc = expect_raises(Crystal::Loader::LoadError, /no such file|image not found|cannot open/i) do
         Crystal::Loader.parse(["-l", "foo/bar.o"], search_paths: [] of String)
       end
+      exc.message.should contain File.join(Dir.current, "foo", "bar.o")
     end
   end
 
@@ -90,22 +92,20 @@ describe Crystal::Loader do
       FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
     end
 
-    describe "#load_file" do
+    describe "#load_file?" do
       it "finds function symbol" do
         loader = Crystal::Loader.new([] of String)
-        lib_handle = loader.load_file(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, "libfoo#{Crystal::Loader::SHARED_LIBRARY_EXTENSION}"))
-        lib_handle.should_not be_nil
+        loader.load_file?(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, Crystal::Loader.library_filename("foo"))).should be_true
         loader.find_symbol?("foo").should_not be_nil
       ensure
         loader.close_all if loader
       end
     end
 
-    describe "#load_library" do
+    describe "#load_library?" do
       it "library name" do
         loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-        lib_handle = loader.load_library("foo")
-        lib_handle.should_not be_nil
+        loader.load_library?("foo").should be_true
         loader.find_symbol?("foo").should_not be_nil
       ensure
         loader.close_all if loader
@@ -113,8 +113,7 @@ describe Crystal::Loader do
 
       it "full path" do
         loader = Crystal::Loader.new([] of String)
-        lib_handle = loader.load_library(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, "libfoo#{Crystal::Loader::SHARED_LIBRARY_EXTENSION}"))
-        lib_handle.should_not be_nil
+        loader.load_library?(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, Crystal::Loader.library_filename("foo"))).should be_true
         loader.find_symbol?("foo").should_not be_nil
       ensure
         loader.close_all if loader
@@ -125,8 +124,7 @@ describe Crystal::Loader do
         it "does not implicitly find dependencies" do
           build_c_dynlib(compiler_datapath("loader", "bar.c"))
           loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-          lib_handle = loader.load_library("bar")
-          lib_handle.should_not be_nil
+          loader.load_library?("bar").should be_true
           loader.find_symbol?("bar").should_not be_nil
           loader.find_symbol?("foo").should be_nil
         ensure
@@ -138,11 +136,11 @@ describe Crystal::Loader do
         build_c_dynlib(compiler_datapath("loader", "foo2.c"))
 
         help_loader1 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-        help_loader1.load_library("foo")
+        help_loader1.load_library?("foo").should be_true
         foo_address = help_loader1.find_symbol?("foo").should_not be_nil
 
         help_loader2 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-        help_loader2.load_library("foo2")
+        help_loader2.load_library?("foo2").should be_true
         foo2_address = help_loader2.find_symbol?("foo").should_not be_nil
 
         foo_address.should_not eq foo2_address

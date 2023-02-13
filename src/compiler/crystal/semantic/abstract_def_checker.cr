@@ -111,18 +111,27 @@ class Crystal::AbstractDefChecker
   # Returns `true` if `ancestor_type` implements `method` of `base` when computing
   # that information to check whether `target_type` implements `method` of `base`.
   def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type, method_free_vars)
+    implemented = false
+    found_param_match = false
     ancestor_type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
         def_free_vars = free_var_nodes(a_def)
 
         if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
-          check_return_type(target_type, ancestor_type, a_def, base, method)
-          return true
+          unless implemented
+            check_return_type(target_type, ancestor_type, a_def, base, method)
+            implemented = true
+          end
+
+          unless found_param_match || target_type.abstract? || target_type.module?
+            check_positional_param_names(a_def, base, method)
+            found_param_match = true if same_parameters?(a_def, method)
+          end
         end
       end
     end
-    false
+    implemented
   end
 
   # Returns `true` if the method `t1#m1` implements `t2#m2` when computing
@@ -131,7 +140,7 @@ class Crystal::AbstractDefChecker
   def implements?(target_type : Type, t1 : Type, m1 : Def, free_vars1, t2 : Type, m2 : Def, free_vars2)
     return false if m1.abstract?
     return false unless m1.name == m2.name
-    return false unless m1.yields == m2.yields
+    return false unless m1.block_arity == m2.block_arity
 
     m1_args, m1_kargs = def_arg_ranges(m1)
     m2_args, m2_kargs = def_arg_ranges(m2)
@@ -272,6 +281,45 @@ class Crystal::AbstractDefChecker
     true
   end
 
+  def same_parameters?(m1 : Def, m2 : Def)
+    return false unless m1.args.size == m2.args.size
+
+    splat_index = m1.splat_index
+    return false unless splat_index == m2.splat_index
+
+    named_args1 = nil
+    named_args2 = nil
+
+    m1.args.each_with_index do |arg1, i|
+      arg2 = m2.args[i]
+
+      if splat_index
+        if i > splat_index
+          # named parameters may be in any order
+          (named_args1 ||= [] of String) << arg1.external_name
+          (named_args2 ||= [] of String) << arg2.external_name
+          next
+        elsif i == splat_index
+          # single splat name may be different; bare splats must agree
+          return false unless (arg1.external_name != "") == (arg2.external_name != "")
+          next
+        end
+      end
+
+      # positional parameter name must agree
+      return false unless arg1.external_name == arg2.external_name
+    end
+
+    if named_args1 && named_args2
+      named_args1.sort!
+      named_args2.sort!
+      return false unless named_args1 == named_args2
+    end
+
+    # double splat name may be different
+    m1.double_splat.nil? == m2.double_splat.nil?
+  end
+
   # Checks that the return type of `type#method` matches that of `base_type#base_method`
   # when computing that information for `target_type` (`type` is an ancestor of `target_type`).
   def check_return_type(target_type : Type, type : Type, method : Def, base_type : Type, base_method : Def)
@@ -317,6 +365,18 @@ class Crystal::AbstractDefChecker
     unless return_type.implements?(base_return_type)
       report_error(return_type_node, "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}")
       return
+    end
+  end
+
+  def check_positional_param_names(impl_method : Def, base_type : Type, base_method : Def)
+    impl_param_count = impl_method.splat_index || impl_method.args.size
+    base_param_count = base_method.splat_index || base_method.args.size
+    {impl_param_count, base_param_count}.min.times do |i|
+      impl_param = impl_method.args[i]
+      base_param = base_method.args[i]
+      unless impl_param.external_name == base_param.external_name
+        @program.warnings.add_warning(impl_param, "positional parameter '#{impl_param.external_name}' corresponds to parameter '#{base_param.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
+      end
     end
   end
 

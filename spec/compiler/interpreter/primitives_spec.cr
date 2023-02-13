@@ -95,68 +95,74 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "uses a string pool" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         "a".object_id == "a".object_id
-      CODE
+      CRYSTAL
     end
 
     it "precomputes string literal length" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         "旅".@length
-      CODE
+      CRYSTAL
     end
   end
 
   context "local variables" do
     it "interprets variable set" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
       a = 1
-      CODE
+      CRYSTAL
+    end
+
+    it "interprets variable set with type restriction (#13023)" do
+      interpret(<<-CRYSTAL).should eq(1)
+      a : Int32 = 1
+      CRYSTAL
     end
 
     it "interprets variable set and get" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
       a = 1
       a
-      CODE
+      CRYSTAL
     end
 
     it "interprets variable set and get, second local var" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
       x = 10
       a = 1
       a
-      CODE
+      CRYSTAL
     end
 
     it "interprets variable set and get with operations" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
       a = 1
       b = 2
       c = 3
       a + b + c
-      CODE
+      CRYSTAL
     end
 
     it "interprets uninitialized" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         a = uninitialized Int32
         a = 3
         a
-        CODE
+        CRYSTAL
     end
 
     it "doesn't declare variable with no type" do
-      interpret(<<-CODE).should eq(nil)
+      interpret(<<-CRYSTAL).should eq(nil)
       x = nil
       if x
         y = x
       end
-      CODE
+      CRYSTAL
     end
 
     it "doesn't declare variable with no type inside method" do
-      interpret(<<-CODE).should eq(nil)
+      interpret(<<-CRYSTAL).should eq(nil)
         def foo(x)
           if x
             y = x
@@ -164,25 +170,25 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo(nil)
-      CODE
+      CRYSTAL
     end
 
     it "assigns to underscore" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         _ = (a = 1)
         a
-      CODE
+      CRYSTAL
     end
 
     it "doesn't discard underscore right hand side" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         a = (_ = 1)
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets at the class level" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         x = 0
 
         class Foo
@@ -198,7 +204,14 @@ describe Crystal::Repl::Interpreter do
         end
 
         x
-      CODE
+      CRYSTAL
+    end
+
+    it "interprets local variable declaration (#12229)" do
+      interpret(<<-CRYSTAL).should eq(1)
+      a : Int32 = 1
+      a
+      CRYSTAL
     end
   end
 
@@ -286,18 +299,18 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "discards conversion" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
       1.to_i8!
       3
-      CODE
+      CRYSTAL
     end
 
     it "discards conversion with local var" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
       x = 1
       x.to_i8!
       3
-      CODE
+      CRYSTAL
     end
   end
 
@@ -309,7 +322,7 @@ describe Crystal::Repl::Interpreter do
       assert_overflows 1_i16 + 32767
       assert_overflows 1_u32 + 4294967295
       assert_overflows 1_i32 + 2147483647
-      assert_overflows 1_u64 + 18446744073709551615
+      assert_overflows 1_u64 + 18446744073709551615u64
       assert_overflows 1_i64 + 9223372036854775807
     end
 
@@ -321,7 +334,7 @@ describe Crystal::Repl::Interpreter do
       assert_overflows 1_u32 - 2
       assert_overflows 1_i32 - 2147483650
       assert_overflows 1_u64 - 2
-      assert_overflows 1_i64 - 9223372036854775810
+      assert_overflows 1_i64 - 9223372036854775810u64
     end
 
     context "*" do
@@ -482,7 +495,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets Int32.unsafe_shl(Int32) with self" do
-      interpret(<<-CODE).should eq(4)
+      interpret(<<-CRYSTAL).should eq(4)
         struct Int32
           def shl2
             unsafe_shl(2)
@@ -491,7 +504,7 @@ describe Crystal::Repl::Interpreter do
 
         a = 1
         a.shl2
-        CODE
+        CRYSTAL
     end
   end
 
@@ -673,11 +686,11 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets UInt64.unsafe_mod(UInt64)" do
-      interpret(<<-CODE).should eq(906272454103984)
+      interpret(<<-CRYSTAL).should eq(906272454103984)
         a = 10097976637018756016_u64
         b = 9007199254740992_u64
         a.unsafe_mod(b)
-        CODE
+        CRYSTAL
     end
 
     it "discards comparison" do
@@ -739,7 +752,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for nilable proc type (true)" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         a =
           if 1 == 1
             nil
@@ -747,11 +760,11 @@ describe Crystal::Repl::Interpreter do
             ->{ 1 }
           end
         !a
-        CODE
+        CRYSTAL
     end
 
     it "interprets not for nilable proc type (false)" do
-      interpret(<<-CODE).should eq(false)
+      interpret(<<-CRYSTAL).should eq(false)
         a =
           if 1 == 1
             ->{ 1 }
@@ -759,21 +772,21 @@ describe Crystal::Repl::Interpreter do
             nil
           end
         !a
-        CODE
+        CRYSTAL
     end
 
     it "interprets not for generic class instance type" do
-      interpret(<<-CODE).should eq(false)
+      interpret(<<-CRYSTAL).should eq(false)
         class Foo(T)
         end
 
         foo = Foo(Int32).new
         !foo
-        CODE
+        CRYSTAL
     end
 
     it "interprets not for nilable type (false)" do
-      interpret(<<-CODE).should eq(false)
+      interpret(<<-CRYSTAL).should eq(false)
         class Foo
         end
 
@@ -786,11 +799,11 @@ describe Crystal::Repl::Interpreter do
             nil
           end
         !a
-        CODE
+        CRYSTAL
     end
 
     it "interprets not for nilable type (true)" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         class Foo
         end
 
@@ -803,7 +816,65 @@ describe Crystal::Repl::Interpreter do
             "a"
           end
         !a
-        CODE
+        CRYSTAL
+    end
+
+    it "interprets not for module (#12918)" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule; end
+
+        class One
+          include MyModule
+        end
+
+        !One.new.as(MyModule)
+        CRYSTAL
+    end
+
+    it "interprets not for generic module" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule(T); end
+
+        class One
+          include MyModule(Int32)
+        end
+
+        !One.new.as(MyModule(Int32))
+        CRYSTAL
+    end
+
+    it "interprets not for generic module metaclass" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule(T); end
+
+        !MyModule(Int32)
+        CRYSTAL
+    end
+
+    it "interprets not for generic class instance metaclass" do
+      interpret(<<-CRYSTAL).should eq(false)
+        class MyClass(T); end
+
+        !MyClass(Int32)
+        CRYSTAL
+    end
+
+    it "does math primitive on union" do
+      interpret(<<-CRYSTAL).should eq(3)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test) &+ 2
+        CRYSTAL
+    end
+
+    it "does math convert on union" do
+      interpret(<<-CRYSTAL).should eq(1)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test).to_i64!
+        CRYSTAL
     end
   end
 end

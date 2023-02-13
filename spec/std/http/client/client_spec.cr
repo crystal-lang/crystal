@@ -3,9 +3,10 @@ require "../../socket/spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
+require "http/log"
 require "log/spec"
 
-private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
+private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
     spawn do
@@ -179,7 +180,27 @@ module HTTP
       end
     end
 
-    it "will retry a broken socket" do
+    it "ensures closing the response when breaking out of block" do
+      server = HTTP::Server.new { }
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new(address.address, address.port)
+        response = nil
+
+        exc = Exception.new("")
+        expect_raises Exception do
+          client.get("/") do |r|
+            response = r
+            raise exc
+          end
+        end.should be exc
+
+        response.try(&.body_io?.try(&.closed?)).should be_true
+      end
+    end
+
+    pending_win32 "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
@@ -237,6 +258,59 @@ module HTTP
       end
     end
 
+    it "will not retry when closed (non-block) (#12464)" do
+      requests = 0
+
+      client = HTTP::Client.new("127.0.0.1", 0)
+      client.before_request do
+        requests += 1
+        raise IO::Error.new("foobar")
+      end
+
+      expect_raises(IO::Error, "foobar") do
+        client.not_nil!.get(path: "/")
+      end
+      requests.should eq 1
+    end
+
+    it "will not retry when closed (block) (#12464)" do
+      requests = 0
+
+      client = HTTP::Client.new("127.0.0.1", 0)
+      client.before_request do
+        requests += 1
+        raise IO::Error.new("foobar")
+      end
+
+      expect_raises(IO::Error, "foobar") do
+        client.not_nil!.get(path: "/") { }
+      end
+      requests.should eq 1
+    end
+
+    it "retry does not affect implicit compression (#11354)" do
+      server = HTTP::Server.new do |context|
+        context.response.headers["Content-Encoding"] = "gzip"
+        context.response.output.print "\u001F\x8B\b\u0000\u0000\u0000\u0000\u0000\u0004\u0003+\xCFH,I-K-\u0002\u0000\xB3C\u0011N\b\u0000\u0000\u0000"
+        context.response.output.close
+        io = context.response.@io.as(Socket)
+        io.linger = 0 # with linger 0 the socket will be RST on close
+        io.close
+      end
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new("127.0.0.1", address.port)
+        # First request establishes the server connection, but the server
+        # immediately closes it after sending the response.
+        client.get(path: "/")
+
+        # Second request tries to re-use the connection which fails (due to the
+        # server's hang up) and then it retries by establishing a new connection.
+        client.get(path: "/").body.should eq "whatever"
+      end
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
@@ -276,28 +350,28 @@ module HTTP
       # the server if the socket is closed.
       test_server("localhost", 0, 0.5, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::TimeoutError, "Read timed out") do
+        expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSARecv timed out" {% else %} "Read timed out" {% end %}) do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
         end
       end
     end
 
-    it "tests write_timeout" do
+    pending_win32 "tests write_timeout" do
       # Here we don't want to write a response on the server side because
       # it doesn't make sense to try to write because the client will already
       # timeout on read. Writing a response could lead on an exception in
       # the server if the socket is closed.
       test_server("localhost", 0, 0, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::TimeoutError, "Write timed out") do
+        expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSASend timed out" {% else %} "Write timed out" {% end %}) do
           client.write_timeout = 0.001
           client.post("/", body: "a" * 5_000_000)
         end
       end
     end
 
-    it "tests connect_timeout" do
+    pending_win32 "tests connect_timeout" do
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
@@ -326,13 +400,13 @@ module HTTP
     end
 
     it "works with IO" do
-      io_response = IO::Memory.new <<-RESPONSE.gsub('\n', "\r\n")
+      io_response = IO::Memory.new <<-HTTP.gsub('\n', "\r\n")
       HTTP/1.1 200 OK
       Content-Type: text/plain
       Content-Length: 3
 
       Hi!
-      RESPONSE
+      HTTP
       io_request = IO::Memory.new
       io = IO::Stapled.new(io_response, io_request)
       client = Client.new(io)
@@ -401,7 +475,7 @@ module HTTP
   end
 
   class SubClient < HTTP::Client
-    def around_exec(request)
+    def around_exec(request, &)
       raise "from subclass"
       yield
     end

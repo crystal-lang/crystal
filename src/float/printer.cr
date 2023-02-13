@@ -2,12 +2,11 @@ require "./printer/*"
 
 # :nodoc:
 #
-# `Float::Printer` is based on Grisu3 algorithm described in the 2004 paper
-# "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
-# Florian Loitsch.
+# `Float::Printer` is based on the [Dragonbox](https://github.com/jk-jeon/dragonbox)
+# algorithm developed by Junekey Jeon around 2020-2021.
 module Float::Printer
   extend self
-  BUFFER_SIZE = 128
+  BUFFER_SIZE = 17 # maximum number of decimal digits required
 
   # Converts `Float` *v* to a string representation and prints it onto *io*.
   #
@@ -19,6 +18,11 @@ module Float::Printer
   def print(v : Float64 | Float32, io : IO, *, point_range = -3..15) : Nil
     d = IEEE.to_uint(v)
 
+    if IEEE.nan?(d)
+      io << "NaN"
+      return
+    end
+
     if IEEE.sign(d) < 0
       io << '-'
       v = -v
@@ -26,33 +30,32 @@ module Float::Printer
 
     if v == 0.0
       io << "0.0"
-    elsif IEEE.special?(d)
-      if IEEE.inf?(d)
-        io << "Infinity"
-      else
-        io << "NaN"
-      end
+    elsif IEEE.inf?(d)
+      io << "Infinity"
     else
       internal(v, io, point_range)
     end
   end
 
   private def internal(v : Float64 | Float32, io : IO, point_range)
-    buffer = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
-    success, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
+    significand, decimal_exponent = Dragonbox.to_decimal(v)
 
-    unless success
-      # grisu3 does not work for ~0.5% of floats
-      # when this happens, fallback to another, slower approach
-      if v.is_a?(Float64)
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
-      else
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
-      end
-      len = LibC.strlen(buffer)
-      io.write_string buffer.to_slice[0, len]
-      return
+    # generate `significand.to_s` in a reasonably fast manner
+    str = uninitialized UInt8[BUFFER_SIZE]
+    ptr = str.to_unsafe + BUFFER_SIZE
+    while significand > 0
+      ptr -= 1
+      ptr.value = 48_u8 &+ significand.unsafe_mod(10).to_u8!
+      significand = significand.unsafe_div(10)
     end
+
+    # remove trailing zeros
+    buffer = str.to_slice[ptr - str.to_unsafe..]
+    while buffer.size > 1 && buffer.unsafe_fetch(buffer.size - 1) === '0'
+      buffer = buffer[..-2]
+      decimal_exponent += 1
+    end
+    length = buffer.size
 
     point = decimal_exponent + length
 

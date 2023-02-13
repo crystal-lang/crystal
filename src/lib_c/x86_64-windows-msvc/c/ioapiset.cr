@@ -14,4 +14,11 @@ lib LibC
     dwMilliseconds : DWORD,
     fAlertable : BOOL
   ) : BOOL
+  fun CancelIoEx(
+    hFile : HANDLE,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
+  fun CancelIo(
+    hFile : HANDLE
+  ) : BOOL
 end

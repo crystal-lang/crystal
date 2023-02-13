@@ -136,9 +136,9 @@ class File < IO::FileDescriptor
   #
   # File.symlink("foo", "bar")
   # File.info?("bar", follow_symlinks: false).try(&.type.symlink?) # => true
-  #
-  # Use `#info` if the `File` is already open.
   # ```
+  #
+  # Use `IO::FileDescriptor#info` if the file is already open.
   def self.info?(path : Path | String, follow_symlinks = true) : Info?
     Crystal::System::File.info?(path.to_s, follow_symlinks)
   end
@@ -156,9 +156,9 @@ class File < IO::FileDescriptor
   #
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
-  #
-  # Use `#info` if the `File` is already open.
   # ```
+  #
+  # Use `IO::FileDescriptor#info` if the file is already open.
   def self.info(path : Path | String, follow_symlinks = true) : Info
     Crystal::System::File.info(path.to_s, follow_symlinks)
   end
@@ -412,7 +412,8 @@ class File < IO::FileDescriptor
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches an unlimited number of arbitrary characters including `/`.
+  # * `**` matches directories recursively if followed by `/`.
+  #   If this path segment contains any other characters, it is the same as the usual `*`.
   # * `?` matches any one character excluding `/`.
   # * character sets:
   #   * `[abc]` matches any one of these character.
@@ -610,8 +611,14 @@ class File < IO::FileDescriptor
   end
 
   # Resolves the real path of *path* by following symbolic links.
+  def self.realpath(path : Path | String) : String
+    Crystal::System::File.realpath(path.to_s)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `.realpath` instead.")]
   def self.real_path(path : Path | String) : String
-    Crystal::System::File.real_path(path.to_s)
+    realpath(path)
   end
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
@@ -652,7 +659,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -696,7 +703,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
     open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
@@ -788,7 +795,7 @@ class File < IO::FileDescriptor
   # File.join({"foo/", "/bar/", "/baz"})   # => "foo/bar/baz"
   # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
-  def self.join(parts : Array | Tuple) : String
+  def self.join(parts : Enumerable) : String
     Path.new(parts).to_s
   end
 
