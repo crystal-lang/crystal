@@ -1,4 +1,6 @@
 # Levenshtein distance methods.
+#
+# NOTE: To use `Levenshtein`, you must explicitly import it with `require "levenshtein"`
 module Levenshtein
   # Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
   #

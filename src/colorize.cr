@@ -3,6 +3,8 @@
 # as its main interface, which calls `to_s` and surrounds it with the necessary escape codes
 # when it comes to obtaining a string representation of the object.
 #
+# NOTE: To use `Colorize`, you must explicitly import it with `require "colorize"`
+#
 # Its first argument changes the foreground color:
 #
 # ```

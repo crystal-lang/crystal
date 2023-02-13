@@ -3,6 +3,8 @@
 #
 # This module conforms to [RFC 4180](https://tools.ietf.org/html/rfc4180).
 #
+# NOTE: To use `CSV` or its children, you must explicitly import it with `require "csv"`
+#
 # ### Parsing
 #
 # Several ways of parsing CSV are provided. The most straight-forward, but
