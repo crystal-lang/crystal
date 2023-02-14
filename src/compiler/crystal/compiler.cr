@@ -621,9 +621,8 @@ module Crystal
             linker_not_found File::NotFoundError, linker_name
           end
         end
-        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
         code = status.normal_exit? ? status.exit_code : 1
-        error "execution of command failed with #{msg}: `#{command}`", exit_code: code
+        error "execution of command failed with exit status #{status}: #{command}", exit_code: code
       end
     end
 
