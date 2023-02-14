@@ -207,7 +207,7 @@ describe Crystal::System::File do
         Dir.mkdir tempdir
         existing_path = Path[tempdir, "A789abcdeZ"]
         File.touch existing_path
-        fd, path = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
+        fd, path = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]))
         path.should eq File.join(tempdir, "AfghijklmZ")
       ensure
         File.from_fd(path, fd).close if fd && path
