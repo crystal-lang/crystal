@@ -1,8 +1,9 @@
+require "network_server"
 require "http/headers"
 require "http/status"
 require "http/cookie"
 
-class HTTP::Server
+class HTTP::Server < NetworkServer
   # The response to configure and write to in an `HTTP::Server` handler.
   #
   # The response `status` and `headers` must be configured before writing
