@@ -1164,6 +1164,10 @@ describe "Enumerable" do
       [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
       ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
     end
+
+    it "slices" do
+      [Slice[1, 2], Slice[3, 'a', 'b', 'c']].sum.should eq(Slice[1, 2, 3, 'a', 'b', 'c'])
+    end
   end
 
   describe "product" do

@@ -1556,6 +1556,9 @@ module Enumerable(T)
     {% elsif T < Array %}
       # optimize for array
       flat_map &.itself
+    {% elsif T < Slice && @type < Indexable %}
+      # optimize for slice
+      Slice.join(self)
     {% else %}
       sum additive_identity(Reflect(T))
     {% end %}
