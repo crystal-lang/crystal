@@ -54,9 +54,9 @@ module Crystal::System::File
     perm = ::File::Permissions.new(0o600)
 
     prefix = ::File.join(dir, prefix || "")
+    bytesize = prefix.bytesize + 8 + (suffix.try(&.bytesize) || 0)
 
     100.times do
-      bytesize = prefix.bytesize + 8 + (suffix.try(&.bytesize) || 0)
       path = String.build(bytesize) do |io|
         io << prefix
         8.times do
