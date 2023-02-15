@@ -67,7 +67,7 @@ class HTTP::WebSocket
   def on_binary(&@on_binary : Bytes ->)
   end
 
-  # Called when the server closes a client's connection.
+  # Called when the client closes the connection.
   def on_close(&@on_close : CloseCode, String ->)
   end
 
