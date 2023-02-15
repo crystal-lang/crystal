@@ -12,5 +12,5 @@ def build_c_dynlib(c_filename, target_dir = SPEC_CRYSTAL_LOADER_LIB_PATH)
     `#{ENV["CC"]? || "cc"} -shared -fvisibility=hidden #{Process.quote(c_filename)} -o #{Process.quote(o_filename)}`
   {% end %}
 
-  raise "BUG: failed to compile dyanmic library" unless $?.success?
+  raise "BUG: failed to compile dynamic library" unless $?.success?
 end
