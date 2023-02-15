@@ -2,7 +2,7 @@
   require "c/ntstatus"
 {% end %}
 
-# The reason a process terminates.
+# The reason why a process terminated.
 #
 # This enum provides a platform-independent way to query any exceptions that
 # occurred upon a process's termination, via `Process::Status#exit_reason`.
@@ -99,7 +99,7 @@ class Process::Status
     end
   {% end %}
 
-  # Returns a platform-independent reason that the process terminated.
+  # Returns a platform-independent reason why the process terminated.
   def exit_reason : ExitReason
     {% if flag?(:win32) %}
       # TODO: perhaps this should cover everything that SEH can handle?

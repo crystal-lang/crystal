@@ -97,37 +97,37 @@ describe Process::Status do
       end
 
       it "returns Aborted" do
-        Process::Status.new(0x40000015_u32).exit_reason.aborted?.should be_true
+        Process::Status.new(LibC::STATUS_FATAL_APP_EXIT).exit_reason.aborted?.should be_true
       end
 
       it "returns Interrupted" do
-        Process::Status.new(0xC000013A_u32).exit_reason.interrupted?.should be_true
+        Process::Status.new(LibC::STATUS_CONTROL_C_EXIT).exit_reason.interrupted?.should be_true
       end
 
       it "returns Breakpoint" do
-        Process::Status.new(0x80000003_u32).exit_reason.breakpoint?.should be_true
+        Process::Status.new(LibC::STATUS_BREAKPOINT).exit_reason.breakpoint?.should be_true
       end
 
       it "returns AccessViolation" do
-        Process::Status.new(0xC0000005_u32).exit_reason.access_violation?.should be_true
-        Process::Status.new(0xC00000FD_u32).exit_reason.access_violation?.should be_true
+        Process::Status.new(LibC::STATUS_ACCESS_VIOLATION).exit_reason.access_violation?.should be_true
+        Process::Status.new(LibC::STATUS_STACK_OVERFLOW).exit_reason.access_violation?.should be_true
       end
 
       it "returns BadMemoryAccess" do
-        Process::Status.new(0x80000002_u32).exit_reason.bad_memory_access?.should be_true
+        Process::Status.new(LibC::STATUS_DATATYPE_MISALIGNMENT).exit_reason.bad_memory_access?.should be_true
       end
 
       it "returns BadInstruction" do
-        Process::Status.new(0xC000001D_u32).exit_reason.bad_instruction?.should be_true
-        Process::Status.new(0xC0000096_u32).exit_reason.bad_instruction?.should be_true
+        Process::Status.new(LibC::STATUS_ILLEGAL_INSTRUCTION).exit_reason.bad_instruction?.should be_true
+        Process::Status.new(LibC::STATUS_PRIVILEGED_INSTRUCTION).exit_reason.bad_instruction?.should be_true
       end
 
       it "returns FloatException" do
-        Process::Status.new(0xC000008E_u32).exit_reason.float_exception?.should be_true
-        Process::Status.new(0xC000008F_u32).exit_reason.float_exception?.should be_true
-        Process::Status.new(0xC0000090_u32).exit_reason.float_exception?.should be_true
-        Process::Status.new(0xC0000091_u32).exit_reason.float_exception?.should be_true
-        Process::Status.new(0xC0000093_u32).exit_reason.float_exception?.should be_true
+        Process::Status.new(LibC::STATUS_FLOAT_DIVIDE_BY_ZERO).exit_reason.float_exception?.should be_true
+        Process::Status.new(LibC::STATUS_FLOAT_INEXACT_RESULT).exit_reason.float_exception?.should be_true
+        Process::Status.new(LibC::STATUS_FLOAT_INVALID_OPERATION).exit_reason.float_exception?.should be_true
+        Process::Status.new(LibC::STATUS_FLOAT_OVERFLOW).exit_reason.float_exception?.should be_true
+        Process::Status.new(LibC::STATUS_FLOAT_UNDERFLOW).exit_reason.float_exception?.should be_true
       end
     end
   {% elsif flag?(:unix) && !flag?(:wasi) %}
