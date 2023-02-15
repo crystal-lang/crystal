@@ -7,8 +7,10 @@ def build_c_dynlib(c_filename, target_dir = SPEC_CRYSTAL_LOADER_LIB_PATH)
 
   {% if flag?(:msvc) %}
     o_basename = o_filename.rchop(".lib")
-    `cl.exe /nologo /LD #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_basename}")} #{Process.quote("/Fe#{o_basename}")}`.should be_truthy
+    `cl.exe /nologo /LD #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_basename}")} #{Process.quote("/Fe#{o_basename}")}`
   {% else %}
-    `#{ENV["CC"]? || "cc"} -shared -fvisibility=hidden #{Process.quote(c_filename)} -o #{Process.quote(o_filename)}`.should be_truthy
+    `#{ENV["CC"]? || "cc"} -shared -fvisibility=hidden #{Process.quote(c_filename)} -o #{Process.quote(o_filename)}`
   {% end %}
+
+  raise "BUG: failed to compile dyanmic library" unless $?.success?
 end
