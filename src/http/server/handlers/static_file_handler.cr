@@ -165,8 +165,8 @@ class HTTP::StaticFileHandler
         finish = finish_string.to_i64? || return
       end
       unless start
-        start = file_size - finish
-        finish = file_size
+        start = {file_size - finish, 0_i64}.max
+        finish = file_size - 1
       end
 
       range = (start..finish)

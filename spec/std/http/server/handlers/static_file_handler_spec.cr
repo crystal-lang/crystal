@@ -203,13 +203,40 @@ describe HTTP::StaticFileHandler do
         response.body.should eq "world\n"
       end
 
-      it "serves an open-start byte range" do
-        headers = HTTP::Headers{"Range" => "bytes=-6"}
+      describe "suffix range" do
+        it "partial" do
+          headers = HTTP::Headers{"Range" => "bytes=-6"}
 
-        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+          response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
-        response.status_code.should eq(206)
-        response.body.should eq "world\n"
+          response.status_code.should eq(206)
+          response.body.should eq "world\n"
+        end
+
+        it "more bytes than content" do
+          headers = HTTP::Headers{"Range" => "bytes=-15"}
+
+          response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+          response.status_code.should eq(206)
+          response.body.should eq "Hello world\n"
+        end
+
+        it "zero" do
+          headers = HTTP::Headers{"Range" => "bytes=-0"}
+
+          response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+          response.status_code.should eq(400)
+        end
+
+        it "negative size" do
+          headers = HTTP::Headers{"Range" => "bytes=--2"}
+
+          response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+          response.status_code.should eq(400)
+        end
       end
 
       it "serves multiple byte ranges (separator without whitespace)" do
