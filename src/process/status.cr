@@ -151,7 +151,7 @@ class Process::Status
         ExitReason::Unknown
       end
     {% else %}
-      ExitReason::Normal
+      raise NotImplementedError.new("Process::Status#exit_reason")
     {% end %}
   end
 
