@@ -19,7 +19,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process#exists?")
   end
 
-  def terminate
+  def terminate(*, graceful)
     raise NotImplementedError.new("Process#terminate")
   end
 

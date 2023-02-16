@@ -21,8 +21,8 @@ struct Crystal::System::Process
   # Whether the process is still registered in the system.
   # def exists? : Bool
 
-  # Asks this process to terminate gracefully.
-  # def terminate
+  # Asks this process to terminate.
+  # def terminate(*, graceful)
 
   # Terminates the current process immediately.
   # def self.exit(status : Int)

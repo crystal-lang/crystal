@@ -966,8 +966,8 @@ module Crystal
       # This is the case of a yield when there's a captured block
       if block.fun_literal
         block_arg_name = typed_def.block_arg.not_nil!.name
-        block_var = Var.new(block_arg_name).at(node.location)
-        call = Call.new(block_var, "call", node.exps).at(node.location)
+        block_var = Var.new(block_arg_name).at(node)
+        call = Call.new(block_var, "call", node.exps).at(node)
         call.accept self
         node.bind_to call
         node.expanded = call
@@ -1396,14 +1396,14 @@ module Crystal
           next
         end
 
-        temp_var = @program.new_temp_var.at(arg.location)
-        assign = Assign.new(temp_var, exp).at(arg.location)
+        temp_var = @program.new_temp_var.at(arg)
+        assign = Assign.new(temp_var, exp).at(arg)
         exps << assign
         case arg
         when Splat
-          arg.exp = temp_var.clone.at(arg.location)
+          arg.exp = temp_var.clone.at(arg)
         when DoubleSplat
-          arg.exp = temp_var.clone.at(arg.location)
+          arg.exp = temp_var.clone.at(arg)
         else
           next
         end
@@ -1557,7 +1557,7 @@ module Crystal
 
       temp_name = @program.new_temp_var_name
 
-      new_call = Call.new(node.obj, "new").at(node.location)
+      new_call = Call.new(node.obj, "new").at(node)
 
       new_assign = Assign.new(Var.new(temp_name).at(node), new_call).at(node)
       exps << new_assign
@@ -1738,7 +1738,7 @@ module Crystal
       if const.is_a?(Path) && const.target_const
         obj = node.obj.clone.at(node.obj)
         const = node.const.clone.at(node.const)
-        comp = Call.new(const, "===", obj).at(node.location)
+        comp = Call.new(const, "===", obj).at(node)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -2936,7 +2936,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        generic_type = TypeNode.new(type).at(node) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)
@@ -2947,7 +2947,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        generic_type = TypeNode.new(type).at(node) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)

@@ -36,8 +36,8 @@ _resolve_symlinks() {
     _assert_no_path_cycles "$@" || return
 
     local dir_context path
-    path=$(readlink -- "$1")
-    if [ $? = 0 ]; then
+
+    if path=$(readlink -- "$1"); then
         dir_context=$(dirname -- "$1")
         _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
     else
@@ -82,14 +82,14 @@ canonicalize_path() {
 }
 
 _canonicalize_dir_path() {
-    (cd "$1" 2>/dev/null && pwd -P)
+    { cd "$1" 2>/dev/null && pwd -P; }
 }
 
 _canonicalize_file_path() {
     local dir file
     dir=$(dirname -- "$1")
     file=$(basename -- "$1")
-    (cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+    { cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file"; }
 }
 
 ##############################################################################
@@ -117,7 +117,7 @@ __has_colors() {
 __error_msg() {
   if __has_colors; then
     # bold red coloring
-    printf '%b\n' "\033[31;1m$@\033[0m" 1>&2
+    printf '%b\n' "\033[31;1m$*\033[0m" 1>&2
   else
     printf '%b\n' "$@" 1>&2
   fi
@@ -125,7 +125,7 @@ __error_msg() {
 __warning_msg() {
   if __has_colors; then
     # brown coloring
-    printf '%b\n' "\033[33m$@\033[0m" 1>&2
+    printf '%b\n' "\033[33m$*\033[0m" 1>&2
   else
     printf '%b\n' "$@" 1>&2
   fi
@@ -138,13 +138,12 @@ CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
 export CRYSTAL_PATH="${CRYSTAL_PATH:-lib:$CRYSTAL_ROOT/src}"
-if [ -n "${CRYSTAL_PATH##*$CRYSTAL_ROOT/src*}" ]; then
+if [ -n "${CRYSTAL_PATH##*"$CRYSTAL_ROOT"/src*}" ]; then
   __warning_msg "CRYSTAL_PATH env variable does not contain $CRYSTAL_ROOT/src"
 fi
 
 export CRYSTAL_HAS_WRAPPER=true
-
-export CRYSTAL="${CRYSTAL:-"crystal"}"
+: "${CRYSTAL=crystal}"
 
 PARENT_CRYSTAL="$CRYSTAL"
 
@@ -177,9 +176,9 @@ fi
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
   __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
-elif ! command -v $PARENT_CRYSTAL > /dev/null; then
+elif ! command -v "$PARENT_CRYSTAL" > /dev/null; then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
 else
-  exec $PARENT_CRYSTAL "$@"
+  exec "$PARENT_CRYSTAL" "$@"
 fi

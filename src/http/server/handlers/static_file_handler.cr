@@ -8,6 +8,8 @@ require "mime"
 # This handler can send precompressed content, if the client accepts it, and a file
 # with the same name and `.gz` extension appended is found in the same directory.
 # Precompressed files are only served if they are newer than the original file.
+#
+# NOTE: To use `StaticFileHandler`, you must explicitly import it with `require "http"`
 class HTTP::StaticFileHandler
   include HTTP::Handler
 
