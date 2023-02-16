@@ -197,7 +197,7 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/crystal: $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib -D use_pcre
+	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib -D use_pcre2
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(call check_llvm_config)
