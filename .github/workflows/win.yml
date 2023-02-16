@@ -15,7 +15,7 @@ jobs:
           make deps
       - name: Cross-compile Crystal
         run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter
+          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter -Duse_pcre
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v3
