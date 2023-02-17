@@ -4,6 +4,7 @@ require "crystal/thread_local_value"
 # :nodoc:
 module Regex::PCRE2
   @re : LibPCRE2::Code*
+  @jit : Bool
 
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
@@ -11,19 +12,21 @@ module Regex::PCRE2
       raise ArgumentError.new(error_message)
     end
 
-    jit_compile
+    @jit = jit_compile
   end
 
-  private def jit_compile : Nil
+  private def jit_compile : Bool
     ret = LibPCRE2.jit_compile(@re, LibPCRE2::JIT_COMPLETE)
     if ret < 0
       case error = LibPCRE2::Error.new(ret)
       when .jit_badoption?
         # okay
+        return false
       else
         raise ArgumentError.new("Regex JIT compile error: #{error}")
       end
     end
+    true
   end
 
   protected def self.compile(source, options, &)
@@ -153,7 +156,7 @@ module Regex::PCRE2
   private def match_data(str, byte_index, options)
     match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
     match_context = LibPCRE2.match_context_create(nil)
-    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*))
+    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*)) if @jit
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, match_context)
 
     if match_count < 0
