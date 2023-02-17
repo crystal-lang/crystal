@@ -31,7 +31,7 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@7315a94840631165970262a99c72cfb48a65d25d # v1.12.0
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
         uses: actions/checkout@v3
