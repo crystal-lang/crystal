@@ -20,19 +20,44 @@
 class Crystal::Loader
   alias Handle = Void*
 
-  SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
-                               ".dylib"
-                             {% else %}
-                               ".so"
-                             {% end %}
+  class LoadError
+    def self.new_dl_error(message)
+      if char_pointer = LibC.dlerror
+        new(String.build do |io|
+          io << message
+          io << " ("
+          io.write_string(Slice.new(char_pointer, LibC.strlen(char_pointer)))
+          io << ")"
+        end)
+      else
+        new message
+      end
+    end
+  end
 
   # Parses linker arguments in the style of `ld`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
     libnames = [] of String
     file_paths = [] of String
-    OptionParser.parse(args) do |parser|
+
+    # `man ld(1)` on Linux:
+    #
+    # > -L searchdir
+    # > ... The directories are searched in the order in which they are
+    # specified on the command line. Directories specified on the command line
+    # are searched before the default directories.
+    #
+    # `man ld(1)` on macOS:
+    #
+    # > -Ldir
+    # > ... Directories specified with -L are searched in the order they appear
+    # > on the command line and before the default search path...
+    extra_search_paths = [] of String
+
+    # OptionParser removes items from the args array, so we dup it here in order to produce a meaningful error message.
+    OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
-        search_paths << directory
+        extra_search_paths << directory
       end
       parser.on("-l LIBNAME", "--library LIBNAME", "Search for library LIBNAME") do |libname|
         libnames << libname
@@ -45,7 +70,23 @@ class Crystal::Loader
       end
     end
 
-    self.new(search_paths, libnames, file_paths)
+    search_paths = extra_search_paths + search_paths
+
+    begin
+      self.new(search_paths, libnames, file_paths)
+    rescue exc : LoadError
+      exc.args = args
+      exc.search_paths = search_paths
+      raise exc
+    end
+  end
+
+  def self.library_filename(libname : String) : String
+    {% if flag?(:darwin) %}
+      "lib#{libname}.dylib"
+    {% else %}
+      "lib#{libname}.so"
+    {% end %}
   end
 
   def find_symbol?(name : String) : Handle?
@@ -55,12 +96,31 @@ class Crystal::Loader
     end
   end
 
-  def load_file(path : String | ::Path) : Handle
-    load_file?(path) || raise LoadError.new String.new(LibC.dlerror)
+  def load_file(path : String | ::Path) : Nil
+    load_file?(path) || raise LoadError.new_dl_error "cannot load #{path}"
+  end
+
+  def load_file?(path : String | ::Path) : Bool
+    handle = open_library(path.to_s)
+    return false unless handle
+
+    @handles << handle
+    @loaded_libraries << path.to_s
+    true
+  end
+
+  def load_library(libname : String) : Nil
+    load_library?(libname) || raise LoadError.new_dl_error "cannot find -l#{libname}"
   end
 
   private def open_library(path : String)
     LibC.dlopen(path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+  end
+
+  def load_current_program_handle
+    if program_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+      @handles << program_handle
+    end
   end
 
   # Closes all libraries loaded with this loader instance.
@@ -70,6 +130,7 @@ class Crystal::Loader
     @handles.each do |handle|
       LibC.dlclose(handle)
     end
+    @handles.clear
   end
 
   # Returns a list of directories used as the default search paths

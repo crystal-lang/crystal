@@ -13,7 +13,7 @@ require "uri"
 class HTTP::WebSocket::Protocol
   GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-  @[Flags]
+  @[::Flags]
   enum Flags : UInt8
     FINAL = 0x80
     RSV1  = 0x40
@@ -76,7 +76,7 @@ class HTTP::WebSocket::Protocol
 
     def flush(final = true) : Nil
       @websocket.send(
-        @buffer + (@pos % @buffer.size),
+        @buffer[0...@pos],
         @opcode,
         flags: final ? Flags::FINAL : Flags::None,
         flush: final
@@ -94,7 +94,7 @@ class HTTP::WebSocket::Protocol
     send(data, Opcode::BINARY)
   end
 
-  def stream(binary = true, frame_size = 1024)
+  def stream(binary = true, frame_size = 1024, &)
     stream_io = StreamIO.new(self, binary, frame_size)
     yield(stream_io)
     stream_io.flush
@@ -140,9 +140,32 @@ class HTTP::WebSocket::Protocol
     mask_array = key.unsafe_as(StaticArray(UInt8, 4))
     @io.write mask_array.to_slice
 
-    data.each_with_index do |byte, index|
-      mask = mask_array[index & 0b11] # x & 0b11 == x % 4
-      @io.write_byte(byte ^ mask)
+    write_masked_data(data, mask_array)
+  end
+
+  private def write_masked_data(data, mask_array)
+    # We are going to write the data, masked, into a temporary buffer.
+    masked_data = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+
+    # We'll do it by chunks of at most IO::DEFAULT_BUFFER_SIZE
+    remaining_data = data
+    until remaining_data.empty?
+      # How much data can we write?
+      # Either IO::DEFAULT_BUFFER_SIZE or whatever remains.
+      chunk_size = Math.min(remaining_data.size, IO::DEFAULT_BUFFER_SIZE)
+
+      # Mask the data
+      chunk = remaining_data[0, chunk_size]
+      chunk.each_with_index do |byte, index|
+        mask = mask_array[index & 0b11] # x & 0b11 == x % 4
+        masked_data[index] = byte ^ mask
+      end
+
+      # Write the masked data
+      @io.write(masked_data.to_slice[0, chunk_size])
+
+      # Discard the written data
+      remaining_data = remaining_data[chunk_size..]
     end
   end
 

@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "big"
 require "spec/helpers/iterate"
+require "../support/number"
 
 private macro it_converts_to_s(num, str, **opts)
   it {{ "converts #{num} to #{str}" }} do
@@ -188,11 +189,9 @@ describe "Int" do
 
       it_converts_to_s 18446744073709551615_u64, "18446744073709551615"
 
-      {% unless flag?(:win32) %}
-        it_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
-        it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
-        it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
-      {% end %}
+      it_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
+      it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
+      it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
     end
 
     context "base and upcase parameters" do
@@ -381,6 +380,50 @@ describe "Int" do
     it { (8000 << -1).should eq(4000) }
   end
 
+  describe "#rotate_left" do
+    it { 0x87654321_u32.rotate_left(1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_left(2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_left(-1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_left(-2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_left(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_left(1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_left(2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_left(-1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_left(-2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_left(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = ({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1)).rotate_left(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1))
+      end
+    {% end %}
+  end
+
+  describe "#rotate_right" do
+    it { 0x87654321_u32.rotate_right(1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_right(2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_right(-1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_right(-2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_right(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_right(1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_right(2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_right(-1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_right(-2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_right(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = {{ int }}.new(1).rotate_right(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1))
+      end
+    {% end %}
+  end
+
   describe "to" do
     it "does upwards" do
       a = 0
@@ -413,49 +456,49 @@ describe "Int" do
     it "String overload" do
       Int8.new("1").should be_a(Int8)
       Int8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int8: " 1 ") do
         Int8.new(" 1 ", whitespace: false)
       end
 
       Int16.new("1").should be_a(Int16)
       Int16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int16: " 1 ") do
         Int16.new(" 1 ", whitespace: false)
       end
 
       Int32.new("1").should be_a(Int32)
       Int32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int32: " 1 ") do
         Int32.new(" 1 ", whitespace: false)
       end
 
       Int64.new("1").should be_a(Int64)
       Int64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int64: " 1 ") do
         Int64.new(" 1 ", whitespace: false)
       end
 
       UInt8.new("1").should be_a(UInt8)
       UInt8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt8: " 1 ") do
         UInt8.new(" 1 ", whitespace: false)
       end
 
       UInt16.new("1").should be_a(UInt16)
       UInt16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt16: " 1 ") do
         UInt16.new(" 1 ", whitespace: false)
       end
 
       UInt32.new("1").should be_a(UInt32)
       UInt32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt32: " 1 ") do
         UInt32.new(" 1 ", whitespace: false)
       end
 
       UInt64.new("1").should be_a(UInt64)
       UInt64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt64: " 1 ") do
         UInt64.new(" 1 ", whitespace: false)
       end
     end
@@ -515,28 +558,15 @@ describe "Int" do
       (Int16::MIN / -1).should eq(-(Int16::MIN.to_f64))
       (Int32::MIN / -1).should eq(-(Int32::MIN.to_f64))
       (Int64::MIN / -1).should eq(-(Int64::MIN.to_f64))
+      (Int128::MIN / -1).should eq(-(Int128::MIN.to_f64))
 
       (UInt8::MIN / -1).should eq(0)
-    end
-
-    pending_win32 "divides Int128::MIN by -1" do
-      (Int128::MIN / -1).should eq(-(Int128::MIN.to_f64))
     end
   end
 
   describe "floor division //" do
     it "preserves type of lhs" do
-      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
-        ({{type}}.new(7) // 2).should be_a({{type}})
-        ({{type}}.new(7) // 2.0).should be_a({{type}})
-        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
-      {% end %}
-    end
-
-    # Missing symbols: __floattidf, __floatuntidf, __fixdfti, __fixsfti, __fixunsdfti, __fixunssfti, __floatuntisf, __floattisf
-    # These symbols are all required to convert U/Int128s to Floats
-    pending_win32 "preserves type of lhs (128-bit)" do
-      {% for type in [UInt128, Int128] %}
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
         ({{type}}.new(7) // 2).should be_a({{type}})
         ({{type}}.new(7) // 2.0).should be_a({{type}})
         ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
@@ -740,6 +770,52 @@ describe "Int" do
     iter.next.should be_a(Iterator::Stop)
   end
 
+  describe "#bit_reverse" do
+    it { 0x12_u8.bit_reverse.should eq(0x48_u8) }
+    it { 0x1234_u16.bit_reverse.should eq(0x2C48_u16) }
+    it { 0x12345678_u32.bit_reverse.should eq(0x1E6A2C48_u32) }
+    it { 0x123456789ABCDEF0_u64.bit_reverse.should eq(0x0F7B3D591E6A2C48_u64) }
+    it { 1.to_u128.bit_reverse.should eq(1.to_u128 << 127) }
+    it { (1.to_u128 << 127).bit_reverse.should eq(0x1.to_u128) }
+    it { 0x12345678.to_u128.bit_reverse.should eq(0x1E6A2C48.to_u128 << 96) }
+
+    it { 0x12_i8.bit_reverse.should eq(0x48_i8) }
+    it { 0x1234_i16.bit_reverse.should eq(0x2C48_i16) }
+    it { 0x12345678_i32.bit_reverse.should eq(0x1E6A2C48_i32) }
+    it { 0x123456789ABCDEF0_i64.bit_reverse.should eq(0x0F7B3D591E6A2C48_i64) }
+    it { 1.to_i128.bit_reverse.should eq(1.to_i128 << 127) }
+    it { (1.to_i128 << 127).bit_reverse.should eq(0x1.to_i128) }
+    it { 0x12345678.to_i128.bit_reverse.should eq(0x1E6A2C48.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.bit_reverse.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.bit_reverse.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
+  describe "#byte_swap" do
+    it { 0x12_u8.byte_swap.should eq(0x12_u8) }
+    it { 0x1234_u16.byte_swap.should eq(0x3412_u16) }
+    it { 0x12345678_u32.byte_swap.should eq(0x78563412_u32) }
+    it { 0x123456789ABCDEF0_u64.byte_swap.should eq(0xF0DEBC9A78563412_u64) }
+    it { 1.to_u128.byte_swap.should eq(1.to_u128 << 120) }
+    it { (1.to_u128 << 127).byte_swap.should eq(0x80.to_u128) }
+    it { 0x12345678.to_u128.byte_swap.should eq(0x78563412.to_u128 << 96) }
+
+    it { 0x12_i8.byte_swap.should eq(0x12_i8) }
+    it { 0x1234_i16.byte_swap.should eq(0x3412_i16) }
+    it { 0x12345678_i32.byte_swap.should eq(0x78563412_i32) }
+    it { 0x123456789ABCDEF0_i64.byte_swap.should eq(0xF0DEBC9A78563412_u64.to_i64!) }
+    it { 1.to_i128.byte_swap.should eq(1.to_i128 << 120) }
+    it { (1.to_i128 << 127).byte_swap.should eq(0x80.to_i128) }
+    it { 0x12345678.to_i128.byte_swap.should eq(0x78563412.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.byte_swap.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.byte_swap.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
   describe "#popcount" do
     it { 5_i8.popcount.should eq(2) }
     it { 127_i8.popcount.should eq(7) }
@@ -785,13 +861,13 @@ describe "Int" do
   it "compares signed vs. unsigned integers" do
     {% begin %}
       signed_ints = [
-        Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, {% unless flag?(:win32) %} Int128::MAX, {% end %}
-        Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, {% unless flag?(:win32) %} Int128::MIN, {% end %}
-        Int8.zero, Int16.zero, Int32.zero, Int64.zero, {% unless flag?(:win32) %} Int128.zero, {% end %}
+        Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX,
+        Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, Int128::MIN,
+        Int8.zero, Int16.zero, Int32.zero, Int64.zero, Int128.zero,
       ]
       unsigned_ints = [
-        UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, {% unless flag?(:win32) %} UInt128::MAX, {% end %}
-        UInt8.zero, UInt16.zero, UInt32.zero, UInt64.zero, {% unless flag?(:win32) %} UInt128.zero, {% end %}
+        UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, UInt128::MAX,
+        UInt8.zero, UInt16.zero, UInt32.zero, UInt64.zero, UInt128.zero,
       ]
 
       big_signed_ints = signed_ints.map &.to_big_i
@@ -875,15 +951,11 @@ describe "Int" do
     end
 
     it "works for maximums" do
-      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
-      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
-    end
-
-    # Missing symbol __floatuntidf on windows
-    pending_win32 "works for u/int128 maximums" do
-      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
+      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse!)
     end
 
     it "works for non-Int32" do

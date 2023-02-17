@@ -29,7 +29,7 @@ describe IO::ARGF do
     str = argf.gets_to_end
     str.should eq("\n67890\n")
 
-    argv.empty?.should be_true
+    argv.should be_empty
 
     argf.read_byte.should be_nil
 
@@ -84,7 +84,7 @@ describe IO::ARGF do
       argv.should eq([path2])
 
       argf.gets(chomp: false).should eq("67890\n")
-      argv.empty?.should be_true
+      argv.should be_empty
 
       argf.gets(chomp: false).should be_nil
 

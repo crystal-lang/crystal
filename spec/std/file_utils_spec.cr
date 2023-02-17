@@ -294,7 +294,7 @@ describe "FileUtils" do
       end
     end
 
-    it "doesn't return error on non existing file" do
+    it "doesn't return error on nonexistent file" do
       with_tempfile("rm_rf-nonexistent") do |path|
         test_with_string_and_path(path) do |arg|
           FileUtils.rm_rf(arg).should be_nil
@@ -302,7 +302,7 @@ describe "FileUtils" do
       end
     end
 
-    it "doesn't return error on non existing files" do
+    it "doesn't return error on nonexistent files" do
       with_tempfile("rm_rf-nonexistent") do |path1|
         path2 = File.join(path1, "a")
         test_with_string_and_path(path1, path2) do |*args|
@@ -468,7 +468,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rmdir with an non existing path" do
+  it "tests rmdir with an nonexistent path" do
     with_tempfile("rmdir-nonexistent") do |path|
       test_with_string_and_path(path) do |arg|
         expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
@@ -478,7 +478,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rmdir with multiple non existing path" do
+  it "tests rmdir with multiple nonexistent path" do
     with_tempfile("rmdir-nonexistent") do |path|
       test_with_string_and_path("#{path}1", "#{path}2") do |*args|
         expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}1'") do
@@ -514,7 +514,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rm with non existing path" do
+  it "tests rm with nonexistent path" do
     with_tempfile("rm-nonexistent") do |path|
       test_with_string_and_path(path) do |arg|
         expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
@@ -536,7 +536,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rm with some non existing paths" do
+  it "tests rm with some nonexistent paths" do
     with_tempfile("rm-nonexistent1", "rm-nonexistent2") do |path1, path2|
       test_with_string_and_path(path1, path2) do |arg1, arg2|
         File.write(path1, "")

@@ -144,11 +144,21 @@ describe "Array" do
     it "does with even larger arrays" do
       ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
     end
+
+    context "with different types" do
+      it "small array" do
+        ([1, 2, 3, 'c'] - [2, nil]).should eq [1, 3, 'c']
+      end
+
+      it "big array" do
+        (((1..64).to_a + ['c']) - ((2..63).to_a + [nil])).should eq [1, 64, 'c']
+      end
+    end
   end
 
   it "does *" do
-    (([] of Int32) * 10).empty?.should be_true
-    ([1, 2, 3] * 0).empty?.should be_true
+    (([] of Int32) * 10).should be_empty
+    ([1, 2, 3] * 0).should be_empty
     ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
@@ -449,7 +459,7 @@ describe "Array" do
     end
 
     it "works with mixed types" do
-      [1, "a", 1.0, :a].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, :a})
+      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, 'a'})
     end
   end
 
@@ -1147,16 +1157,16 @@ describe "Array" do
       a = [1, 2, 3]
       a.shuffle!
       b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should be_true }
+      3.times { a.should contain(b.shift) }
     end
 
     it "shuffle" do
       a = [1, 2, 3]
       b = a.shuffle
-      a.same?(b).should be_false
+      a.should_not be(b)
       a.should eq([1, 2, 3])
 
-      3.times { b.includes?(a.shift).should be_true }
+      3.times { b.should contain(a.shift) }
     end
 
     it "shuffle! with random" do
@@ -1319,7 +1329,7 @@ describe "Array" do
     it "truncates with index and count == 0" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(2, 0).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index and count, not enough elements" do
@@ -1331,7 +1341,7 @@ describe "Array" do
     it "truncates with index == size and count" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(6, 1).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index < 0 and count" do
@@ -1366,21 +1376,21 @@ describe "Array" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]
       b = a.uniq
       b.should eq([1, 2, 3, 4, 5])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with block" do
       a = [-1, 1, 0, 2, -2]
       b = a.uniq &.abs
       b.should eq([-1, 0, 2])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with true" do
       a = [1, 2, 3]
       b = a.uniq { true }
       b.should eq([1])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs large array" do
@@ -1496,6 +1506,14 @@ describe "Array" do
         a.clear
       end
       a.@capacity.should eq(3)
+    end
+
+    it "unshift of large array does not corrupt elements" do
+      a = Array.new(300, &.itself)
+      a.@capacity.should eq(300)
+      a.unshift 1
+      a.@capacity.should be > 300
+      a[-1].should eq(299)
     end
   end
 
@@ -1801,9 +1819,9 @@ describe "Array" do
 
   describe "transpose" do
     it "transposes elements" do
-      [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
-      [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
-      [[:a]].transpose.should eq([[:a]])
+      [['a', 'b'], ['c', 'd'], ['e', 'f']].transpose.should eq([['a', 'c', 'e'], ['b', 'd', 'f']])
+      [['a', 'c', 'e'], ['b', 'd', 'f']].transpose.should eq([['a', 'b'], ['c', 'd'], ['e', 'f']])
+      [['a']].transpose.should eq([['a']])
     end
 
     it "transposes union of arrays" do
@@ -1817,9 +1835,9 @@ describe "Array" do
 
     it "transposes empty array" do
       e = [] of Array(Int32)
-      e.transpose.empty?.should be_true
-      [e].transpose.empty?.should be_true
-      [e, e, e].transpose.empty?.should be_true
+      e.transpose.should be_empty
+      [e].transpose.should be_empty
+      [e, e, e].transpose.should be_empty
     end
 
     it "raises IndexError error when size of element is invalid" do
@@ -2039,6 +2057,32 @@ describe "Array" do
 
     expect_raises(ArgumentError, "Attempt to skip negative size") do
       ary.skip(-1)
+    end
+  end
+
+  describe "capacity re-sizing" do
+    it "initializes an array capacity to INITIAL_CAPACITY" do
+      a = [] of Int32
+      a.push(1)
+      a.@capacity.should eq(3)
+    end
+
+    it "doubles capacity for arrays smaller than CAPACITY_THRESHOLD" do
+      a = Array.new(255, 1)
+      a.push(1)
+      a.@capacity.should eq(255 * 2)
+    end
+
+    it "uses slow growth heuristic for arrays larger than CAPACITY_THRESHOLD" do
+      a = Array.new(512, 1)
+      a.push(1)
+      # ~63% larger
+      a.@capacity.should eq(832)
+
+      b = Array.new(4096, 1)
+      b.push(1)
+      # ~30% larger, starts converging toward 25%
+      b.@capacity.should eq(5312)
     end
   end
 end

@@ -6,6 +6,8 @@
 #
 # This handler also logs the exceptions to the specified logger or
 # the logger for the source "http.server" by default.
+#
+# NOTE: To use `ErrorHandler`, you must explicitly import it with `require "http"`
 class HTTP::ErrorHandler
   include HTTP::Handler
 
@@ -13,22 +15,20 @@ class HTTP::ErrorHandler
   end
 
   def call(context) : Nil
-    begin
-      call_next(context)
-    rescue ex : HTTP::Server::ClientError
-      @log.debug(exception: ex.cause) { ex.message }
-    rescue ex : Exception
-      @log.error(exception: ex) { "Unhandled exception" }
-      unless context.response.closed? || context.response.wrote_headers?
-        if @verbose
-          context.response.reset
-          context.response.status = :internal_server_error
-          context.response.content_type = "text/plain"
-          context.response.print("ERROR: ")
-          context.response.puts(ex.inspect_with_backtrace)
-        else
-          context.response.respond_with_status(:internal_server_error)
-        end
+    call_next(context)
+  rescue ex : HTTP::Server::ClientError
+    @log.debug(exception: ex.cause) { ex.message }
+  rescue ex : Exception
+    @log.error(exception: ex) { "Unhandled exception" }
+    unless context.response.closed? || context.response.wrote_headers?
+      if @verbose
+        context.response.reset
+        context.response.status = :internal_server_error
+        context.response.content_type = "text/plain"
+        context.response.print("ERROR: ")
+        context.response.puts(ex.inspect_with_backtrace)
+      else
+        context.response.respond_with_status(:internal_server_error)
       end
     end
   end

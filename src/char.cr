@@ -400,7 +400,7 @@ struct Char
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase(options = Unicode::CaseOptions::None) : Char
+  def downcase(options : Unicode::CaseOptions = :none) : Char
     Unicode.downcase(self, options)
   end
 
@@ -409,7 +409,7 @@ struct Char
   # This method takes into account the possibility that an downcase
   # version of a char might result in multiple chars, like for
   # 'İ', which results in 'i' and a dot mark.
-  def downcase(options = Unicode::CaseOptions::None)
+  def downcase(options : Unicode::CaseOptions = :none, &)
     Unicode.downcase(self, options) { |char| yield char }
   end
 
@@ -427,7 +427,7 @@ struct Char
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase(options = Unicode::CaseOptions::None) : Char
+  def upcase(options : Unicode::CaseOptions = :none) : Char
     Unicode.upcase(self, options)
   end
 
@@ -441,7 +441,7 @@ struct Char
   # 'z'.upcase { |v| puts v } # prints 'Z'
   # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'L'
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options : Unicode::CaseOptions = :none, &)
     Unicode.upcase(self, options) { |char| yield char }
   end
 
@@ -450,29 +450,70 @@ struct Char
     hasher.char(self)
   end
 
-  # Returns a Char that is one codepoint bigger than this char's codepoint.
+  # Returns the successor codepoint after this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'a'.succ # => 'b'
   # 'あ'.succ # => 'ぃ'
   # ```
   #
-  # This method allows creating a `Range` of chars.
+  # This does not always return `codepoint + 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uD7FF'.succ # => '\uE000'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::MAX`.
+  #
+  # * `#pred` returns the predecessor codepoint.
   def succ : Char
-    (ord + 1).chr
+    case self
+    when '\uD7FF'
+      '\uE000'
+    when MAX
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord + 1).unsafe_chr
+    end
   end
 
-  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  # Returns the predecessor codepoint before this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
+  #
+  # This does not always return `codepoint - 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uE000'.pred # => '\uD7FF'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::ZERO`.
+  #
+  # * `#succ` returns the successor codepoint.
   def pred : Char
-    (ord - 1).chr
+    case self
+    when '\uE000'
+      '\uD7FF'
+    when ZERO
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord - 1).unsafe_chr
+    end
   end
 
   # Returns `true` if this char is an ASCII control character.
+  #
+  # This includes the *C0 control codes* (`U+0000` through `U+001F`) and the
+  # *Delete* character (`U+007F`).
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -484,7 +525,7 @@ struct Char
   # end
   # ```
   def ascii_control? : Bool
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    ord < 0x20 || ord == 0x7F
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -522,7 +563,7 @@ struct Char
   # '😀'.inspect      # => "'\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` additionally escapes all non-ASCII characters.
@@ -555,7 +596,7 @@ struct Char
   # '😀'.dump      # => "'\\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` only escapes non-printable characters.
@@ -574,7 +615,7 @@ struct Char
     io << dump
   end
 
-  private def dump_or_inspect
+  private def dump_or_inspect(&)
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
@@ -604,7 +645,7 @@ struct Char
   # digits wrapped in curly braces and no leading zeros.
   #
   # ```
-  # 'a'.unicode_escape      # => "\\u00E1"
+  # 'a'.unicode_escape      # => "\\u0061"
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"
@@ -681,7 +722,7 @@ struct Char
     to_i?(base)
   end
 
-  {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
+  {% for type in %w(i8 i16 i64 i128 u8 u16 u32 u64 u128) %}
     # See also: `to_i`.
     def to_{{type.id}}(base : Int = 10)
       to_i(base).to_{{type.id}}
@@ -763,7 +804,7 @@ struct Char
   # 129
   # 130
   # ```
-  def each_byte : Nil
+  def each_byte(&) : Nil
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
     c = ord
@@ -834,10 +875,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 

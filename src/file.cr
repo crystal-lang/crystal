@@ -11,14 +11,25 @@ require "crystal/system/file"
 # content = file.gets_to_end
 # file.close
 #
-# # Implicit close with `open`
+# # Implicit close with `open` and a block:
 # content = File.open("path/to/file") do |file|
 #   file.gets_to_end
 # end
 #
-# # Shortcut:
+# # Shortcut of the above:
 # content = File.read("path/to/file")
+#
+# # Write to a file by opening with a "write mode" specified.
+# File.open("path/to/file", "w") do |file|
+#   file.print "hello"
+# end
+# # Content of file on disk will now be "hello".
+#
+# # Shortcut of the above:
+# File.write("path/to/file", "hello")
 # ```
+#
+# See `new` for various options *mode* can be.
 #
 # ## Temporary Files
 #
@@ -88,24 +99,22 @@ class File < IO::FileDescriptor
   # *mode* must be one of the following file open modes:
   #
   # ```text
-  # Mode | Description
-  # -----+------------------------------------------------------
-  # r    | Read-only, starts at the beginning of the file.
-  # r+   | Read-write, starts at the beginning of the file.
-  # w    | Write-only, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exist.
-  # w+   | Read-write, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exist.
-  # a    | Write-only, starts at the end of the file,
-  #      | creates a new file if the file doesn't exist.
-  # a+   | Read-write, starts at the end of the file,
-  #      | creates a new file if the file doesn't exist.
-  # rb   | Same as 'r' but in binary file mode.
-  # wb   | Same as 'w' but in binary file mode.
-  # ab   | Same as 'a' but in binary file mode.
+  # Mode       | Description
+  # -----------+------------------------------------------------------
+  # r rb       | Read-only, starts at the beginning of the file.
+  # r+ r+b rb+ | Read-write, starts at the beginning of the file.
+  # w wb       | Write-only, truncates existing file to zero length or
+  #            | creates a new file if the file doesn't exist.
+  # w+ w+b wb+ | Read-write, truncates existing file to zero length or
+  #            | creates a new file if the file doesn't exist.
+  # a ab       | Write-only, all writes seek to the end of the file,
+  #            | creates a new file if the file doesn't exist.
+  # a+ a+b ab+ | Read-write, all writes seek to the end of the file,
+  #            | creates a new file if the file doesn't exist.
   # ```
   #
-  # In binary file mode, line endings are not converted to CRLF on Windows.
+  # Line endings are preserved on all platforms. The `b` mode flag has no
+  # effect; it is provided only for POSIX compatibility.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)
@@ -128,6 +137,8 @@ class File < IO::FileDescriptor
   # File.symlink("foo", "bar")
   # File.info?("bar", follow_symlinks: false).try(&.type.symlink?) # => true
   # ```
+  #
+  # Use `IO::FileDescriptor#info` if the file is already open.
   def self.info?(path : Path | String, follow_symlinks = true) : Info?
     Crystal::System::File.info?(path.to_s, follow_symlinks)
   end
@@ -146,6 +157,8 @@ class File < IO::FileDescriptor
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
+  #
+  # Use `IO::FileDescriptor#info` if the file is already open.
   def self.info(path : Path | String, follow_symlinks = true) : Info
     Crystal::System::File.info(path.to_s, follow_symlinks)
   end
@@ -315,6 +328,8 @@ class File < IO::FileDescriptor
   # File.chown("foo", gid: 100)                        # changes foo's gid
   # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
   # ```
+  #
+  # Use `#chown` if the `File` is already open.
   def self.chown(path : Path | String, uid : Int = -1, gid : Int = -1, follow_symlinks = false) : Nil
     Crystal::System::File.chown(path.to_s, uid, gid, follow_symlinks)
   end
@@ -331,6 +346,8 @@ class File < IO::FileDescriptor
   # File.chmod("foo", 0o700)
   # File.info("foo").permissions.value # => 0o700
   # ```
+  #
+  # Use `#chmod` if the `File` is already open.
   def self.chmod(path : Path | String, permissions : Int | Permissions) : Nil
     Crystal::System::File.chmod(path.to_s, permissions)
   end
@@ -343,7 +360,19 @@ class File < IO::FileDescriptor
   # File.delete("./bar") # raises File::NotFoundError (No such file or directory)
   # ```
   def self.delete(path : Path | String) : Nil
-    Crystal::System::File.delete(path.to_s)
+    Crystal::System::File.delete(path.to_s, raise_on_missing: true)
+  end
+
+  # Deletes the file at *path*.
+  # Returns `false` if the file does not exist.
+  #
+  # ```
+  # File.write("foo", "")
+  # File.delete?("./foo") # => true
+  # File.delete?("./bar") # => false
+  # ```
+  def self.delete?(path : Path | String) : Bool
+    Crystal::System::File.delete(path.to_s, raise_on_missing: false)
   end
 
   # Returns *filename*'s extension, or an empty string if it has no extension.
@@ -383,7 +412,8 @@ class File < IO::FileDescriptor
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches an unlimited number of arbitrary characters including `/`.
+  # * `**` matches directories recursively if followed by `/`.
+  #   If this path segment contains any other characters, it is the same as the usual `*`.
   # * `?` matches any one character excluding `/`.
   # * character sets:
   #   * `[abc]` matches any one of these character.
@@ -581,8 +611,14 @@ class File < IO::FileDescriptor
   end
 
   # Resolves the real path of *path* by following symbolic links.
+  def self.realpath(path : Path | String) : String
+    Crystal::System::File.realpath(path.to_s)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `.realpath` instead.")]
   def self.real_path(path : Path | String) : String
-    Crystal::System::File.real_path(path.to_s)
+    realpath(path)
   end
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
@@ -623,7 +659,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -667,7 +703,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
     open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
@@ -733,10 +769,11 @@ class File < IO::FileDescriptor
       open(dst, "wb") do |d|
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
-      end
+        d.flush # need to flush in case permissions are read-only
 
-      # Set the permissions after the content is written in case src permissions is read-only
-      chmod(dst, s.info.permissions)
+        # Set the permissions after the content is written in case src permissions is read-only
+        d.chmod(s.info.permissions)
+      end
     end
   end
 
@@ -758,7 +795,7 @@ class File < IO::FileDescriptor
   # File.join({"foo/", "/bar/", "/baz"})   # => "foo/bar/baz"
   # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
-  def self.join(parts : Array | Tuple) : String
+  def self.join(parts : Enumerable) : String
     Path.new(parts).to_s
   end
 
@@ -779,6 +816,8 @@ class File < IO::FileDescriptor
   end
 
   # Sets the access and modification times of *filename*.
+  #
+  # Use `#utime` if the `File` is already open.
   def self.utime(atime : Time, mtime : Time, filename : Path | String) : Nil
     Crystal::System::File.utime(atime, mtime, filename.to_s)
   end
@@ -787,6 +826,8 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
+  #
+  # Use `#touch` if the `File` is already open.
   def self.touch(filename : Path | String, time : Time = Time.utc) : Nil
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
@@ -829,6 +870,40 @@ class File < IO::FileDescriptor
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << '>'
+  end
+
+  # Changes the owner of the specified file.
+  #
+  # ```
+  # file.chown(1001, 100)
+  # file.chown(gid: 100)
+  # ```
+  def chown(uid : Int = -1, gid : Int = -1) : Nil
+    Crystal::System::File.fchown(@path, fd, uid, gid)
+  end
+
+  # Changes the permissions of the specified file.
+  #
+  # ```
+  # file.chmod(0o755)
+  # file.info.permissions.value # => 0o755
+  #
+  # file.chmod(0o700)
+  # file.info.permissions.value # => 0o700
+  # ```
+  def chmod(permissions : Int | Permissions) : Nil
+    Crystal::System::File.fchmod(@path, fd, permissions)
+  end
+
+  # Sets the access and modification times
+  def utime(atime : Time, mtime : Time) : Nil
+    Crystal::System::File.futimens(@path, fd, atime, mtime)
+  end
+
+  # Attempts to set the access and modification times
+  # to the value given in *time*.
+  def touch(time : Time = Time.utc) : Nil
+    utime time, time
   end
 
   # Deletes this file.

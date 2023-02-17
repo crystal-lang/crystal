@@ -220,13 +220,23 @@ module LLVM
     Appending
     Internal
     Private
-    DLLImport
-    DLLExport
+    DLLImport # obsolete
+    DLLExport # obsolete
     ExternalWeak
     Ghost
     Common
     LinkerPrivate
     LinkerPrivateWeak
+  end
+
+  enum DLLStorageClass
+    Default
+
+    # Function to be imported from DLL.
+    DLLImport
+
+    # Function to be accessible from DLL.
+    DLLExport
   end
 
   enum IntPredicate
@@ -351,30 +361,6 @@ module LLVM
     HiUser         = 0xff
   end
 
-  enum AtomicOrdering
-    NotAtomic              = 0
-    Unordered              = 1
-    Monotonic              = 2
-    Acquire                = 4
-    Release                = 5
-    AcquireRelease         = 6
-    SequentiallyConsistent = 7
-  end
-
-  enum AtomicRMWBinOp
-    Xchg
-    Add
-    Sub
-    And
-    Nand
-    Or
-    Xor
-    Max
-    Min
-    UMax
-    UMin
-  end
-
   enum DIFlags : UInt32
     Zero                = 0
     Private             = 1
@@ -444,10 +430,6 @@ module LLVM
     end
   end
 
-  enum ModuleFlag : Int32
-    Warning = 2
-  end
-
   struct Metadata
     enum Type : UInt32
       Dbg                   =  0 # "dbg"
@@ -481,3 +463,5 @@ module LLVM
     end
   end
 end
+
+require "./enums/*"

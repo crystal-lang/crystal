@@ -84,7 +84,7 @@ describe "Struct" do
     foo = StructSpec::FooStruct.new
     bar = StructSpec::BarStruct.new
     set = Set{foo, bar}
-    set.includes?(foo).should be_true
-    set.includes?(bar).should be_true
+    set.should contain(foo)
+    set.should contain(bar)
   end
 end

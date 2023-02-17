@@ -10,7 +10,7 @@ struct LLVM::FunctionCollection
     Function.new(func)
   end
 
-  def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false)
+  def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false, &)
     func = add(name, arg_types, ret_type, varargs)
     yield func
     func
@@ -26,7 +26,7 @@ struct LLVM::FunctionCollection
     func ? Function.new(func) : nil
   end
 
-  def each : Nil
+  def each(&) : Nil
     f = LibLLVM.get_first_function(@mod)
     while f
       yield LLVM::Function.new f

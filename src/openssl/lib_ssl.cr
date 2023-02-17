@@ -8,8 +8,16 @@ require "./lib_crypto"
   lib LibSSL
     {% if flag?(:win32) %}
       {% from_libressl = false %}
-      {% ssl_version = env("CRYSTAL_OPENSSL_VERSION") %}
-      {% raise "Cannot determine OpenSSL version, make sure the environment variable `CRYSTAL_OPENSSL_VERSION` is set" unless ssl_version %}
+      {% ssl_version = nil %}
+      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+        {% unless ssl_version %}
+          {% config_path = "#{dir.id}\\openssl_VERSION" %}
+          {% if config_version = read_file?(config_path) %}
+            {% ssl_version = config_version.chomp %}
+          {% end %}
+        {% end %}
+      {% end %}
+      {% ssl_version ||= "0.0.0" %}
     {% else %}
       {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
                          (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
@@ -253,6 +261,7 @@ lib LibSSL
 
     fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
     fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
+    fun ssl_ctx_set_alpn_protos = SSL_CTX_set_alpn_protos(ctx : SSLContext, protos : Char*, protos_len : Int) : Int
   {% end %}
 
   {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}

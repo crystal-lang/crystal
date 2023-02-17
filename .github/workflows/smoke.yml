@@ -45,8 +45,8 @@ jobs:
         target:
           - aarch64-darwin
           - arm-linux-gnueabihf
-          - i386-linux-musl
           - i386-linux-gnu
+          - i386-linux-musl
           - x86_64-dragonfly
           - x86_64-freebsd
           - x86_64-netbsd
@@ -54,7 +54,10 @@ jobs:
 
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Build fresh compiler
+        run: bin/ci with_build_env make
 
       - name: Run smoke test
         run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}

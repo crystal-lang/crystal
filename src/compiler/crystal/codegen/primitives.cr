@@ -100,20 +100,20 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
     case op
-    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    when "<"  then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
-    when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
-    when ">"  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
-    when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
+    when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
+    when "<"  then builder.icmp LLVM::IntPredicate::ULT, p1, p2
+    when "<=" then builder.icmp LLVM::IntPredicate::ULE, p1, p2
+    when ">"  then builder.icmp LLVM::IntPredicate::UGT, p1, p2
+    when ">=" then builder.icmp LLVM::IntPredicate::UGE, p1, p2
     else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
     case op
-    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+    when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
     else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
@@ -203,7 +203,7 @@ class Crystal::CodeGenVisitor
     )
     codegen_raise_overflow_cond overflow
 
-    return codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
+    codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
   end
 
   def codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
@@ -260,22 +260,54 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_out_of_range(target_type : IntegerType, arg_type : FloatType, arg)
-    if arg_type.kind == :f32 && target_type.kind == :u128
-      # since Float32::MAX < UInt128::MAX
-      # the range checking is replaced by a positive check only
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, llvm_type(arg_type).const_float(0))
+    min_value, max_value = target_type.range
+    max_value = case arg_type.kind
+                when .f32?
+                  float32_upper_bound(max_value)
+                when .f64?
+                  float64_upper_bound(max_value)
+                else
+                  raise "BUG: unknown float type"
+                end
+
+    # we allow one comparison to be unordered so that NaNs are caught
+    # !(arg >= min_value) || arg > max_value
+    or(
+      builder.fcmp(LLVM::RealPredicate::ULT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
+      builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
+    )
+  end
+
+  private def float32_upper_bound(int_max_value)
+    case int_max_value
+    when UInt128
+      # `Float32::MAX < UInt128::MAX`, so we use `Float32::MAX` instead as the
+      # upper bound in order to reject positive infinity
+      int_max_value.class.new(Float32::MAX)
+    when Int32, UInt32, Int64, UInt64, Int128
+      # if the float type has fewer bits of precision than the integer type
+      # then the upper bound would mistakenly allow values near the upper limit,
+      # e.g. 2147483647_i32 -> 2147483648_f32, because the bound itself is
+      # rounded to the nearest even-significand number in the `int_to_float`
+      # call above; we choose the predecessor as the upper bound, i.e.
+      # 2147483520_f32, ensuring it is exact when converted back to an integer
+      int_max_value.class.new(int_max_value.to_f32.prev_float)
     else
-      min_value, max_value = target_type.range
-      # arg < min_value || arg > max_value
-      or(
-        builder.fcmp(LLVM::RealPredicate::OLT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
-        builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
-      )
+      int_max_value
+    end
+  end
+
+  private def float64_upper_bound(int_max_value)
+    case int_max_value
+    when Int64, UInt64, Int128, UInt128
+      int_max_value.class.new(int_max_value.to_f64.prev_float)
+    else
+      int_max_value
     end
   end
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : IntegerType, arg)
-    if arg_type.kind == :u128 && target_type.kind == :f32
+    if arg_type.kind.u128? && target_type.kind.f32?
       # since Float32::MAX < UInt128::MAX
       # the value will be outside of the float range if
       # arg > Float32::MAX
@@ -580,7 +612,7 @@ class Crystal::CodeGenVisitor
             when "*"         then builder.fmul p1, p2
             when "/", "fdiv" then builder.fdiv p1, p2
             when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!="        then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "!="        then return builder.fcmp LLVM::RealPredicate::UNE, p1, p2
             when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
             when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
             when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
@@ -636,7 +668,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_convert(from_type : IntegerType, to_type : FloatType, arg, *, checked : Bool)
     if checked
-      if from_type.kind == :u128 && to_type.kind == :f32
+      if from_type.kind.u128? && to_type.kind.f32?
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
@@ -694,17 +726,6 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_allocate(node, target_def, call_args)
     type = node.type
 
-    # Edge case: if a virtual struct has only one concrete subclass, its
-    # type indirection (how we represent it for codegen) turns out not to be
-    # a union type but just a single type. In that case we just need to create
-    # this concrete type, without creating the base type and then casting it back.
-    if type.is_a?(VirtualType) && type.struct?
-      indirect_type = type.remove_indirection
-      if !indirect_type.is_a?(UnionType)
-        return @last = allocate_aggregate indirect_type
-      end
-    end
-
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     allocate_aggregate base_type
@@ -727,7 +748,7 @@ class Crystal::CodeGenVisitor
 
     old_debug_location = @current_debug_location
     if @debug.line_numbers? && (location = node.location)
-      set_current_debug_location(node.location)
+      set_current_debug_location(location)
     end
 
     if type.element_type.has_inner_pointers?
@@ -797,7 +818,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def set_aggregate_field(node, target_def, call_args)
+  def set_aggregate_field(node, target_def, call_args, &)
     call_arg = call_args[1]
     original_call_arg = call_arg
 
@@ -805,7 +826,7 @@ class Crystal::CodeGenVisitor
     if (extra = node.extra)
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
-      request_value { accept extra }
+      request_value(extra)
       call_arg = @last
       context.vars["value"] = existing_value if existing_value
     end
@@ -945,6 +966,9 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
+    location = @call_location
+    set_current_debug_location(location) if location && @debug.line_numbers?
+
     closure_ptr = call_args[0]
 
     # For non-closure args we use byval attribute and other things
@@ -977,10 +1001,7 @@ class Crystal::CodeGenVisitor
     ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-    old_needs_value = @needs_value
-    @needs_value = true
-
-    phi_value = Phi.open(self, node, @needs_value) do |phi|
+    Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
 
@@ -1017,9 +1038,6 @@ class Crystal::CodeGenVisitor
       target_def.abi_info = old_abi_info
       target_def.c_calling_convention = old_c_calling_convention
     end
-
-    old_needs_value = @needs_value
-    phi_value
   end
 
   def codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
@@ -1133,11 +1151,12 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_cmpxchg(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
-    failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
+    ptr, cmp, new, success_ordering, failure_ordering = call_args
 
-    pointer, cmp, new = call_args
-    value = builder.cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    success_ordering = atomic_ordering_get_const(call.args[-2], success_ordering)
+    failure_ordering = atomic_ordering_get_const(call.args[-1], failure_ordering)
+
+    value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_ptr = alloca llvm_type(node.type)
     store extract_value(value, 0), gep(value_ptr, 0, 0)
     store extract_value(value, 1), gep(value_ptr, 0, 1)
@@ -1146,17 +1165,20 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_atomicrmw(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    op = atomicrwm_bin_op_from_symbol_literal(call.args[0])
-    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    op, ptr, val, ordering, _ = call_args
+
+    op = atomicrwm_bin_op_get_const(call.args[0], op)
+    ordering = atomic_ordering_get_const(call.args[-2], ordering)
     singlethread = bool_from_bool_literal(call.args[-1])
 
-    _, pointer, val = call_args
-    builder.atomicrmw(op, pointer, val, ordering, singlethread)
+    builder.atomicrmw(op, ptr, val, ordering, singlethread)
   end
 
   def codegen_primitive_fence(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    ordering = atomic_ordering_from_symbol_literal(call.args[0])
+    ordering, _ = call_args
+
+    ordering = atomic_ordering_get_const(call.args[0], ordering)
     singlethread = bool_from_bool_literal(call.args[1])
 
     builder.fence(ordering, singlethread)
@@ -1165,10 +1187,10 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_load_atomic(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
-    volatile = bool_from_bool_literal(call.args[-1])
+    ptr, ordering, _ = call_args
 
-    ptr = call_args.first
+    ordering = atomic_ordering_get_const(call.args[-2], ordering)
+    volatile = bool_from_bool_literal(call.args[-1])
 
     inst = builder.load(ptr)
     inst.ordering = ordering
@@ -1179,10 +1201,10 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_store_atomic(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
-    volatile = bool_from_bool_literal(call.args[-1])
+    ptr, value, ordering, _ = call_args
 
-    ptr, value = call_args
+    ordering = atomic_ordering_get_const(call.args[-2], ordering)
+    volatile = bool_from_bool_literal(call.args[-1])
 
     inst = builder.store(value, ptr)
     inst.ordering = ordering
@@ -1217,30 +1239,39 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def atomic_ordering_from_symbol_literal(node)
-    unless node.is_a?(SymbolLiteral)
-      node.raise "BUG: expected symbol literal"
-    end
+  def atomic_ordering_get_const(node, llvm_arg)
+    node.raise "atomic ordering must be a constant" unless llvm_arg.constant?
 
-    ordering = LLVM::AtomicOrdering.parse?(node.value)
-    unless ordering
-      node.raise "unknown atomic ordering: #{node.value}"
+    if node.type.implements?(@program.enum) && llvm_arg.type.kind.integer? && llvm_arg.type.int_width == 32
+      # any `Int32` enum will do, it is up to `Atomic::Ops` to use appropriate
+      # parameter restrictions so that things don't go bad
+      LLVM::AtomicOrdering.new(llvm_arg.const_int_get_sext_value.to_i32!)
+    elsif node.is_a?(SymbolLiteral)
+      # TODO: remove once support for 1.4 is dropped
+      op = LLVM::AtomicOrdering.parse?(node.value)
+      unless op
+        node.raise "unknown atomic ordering: #{node.value}"
+      end
+      op
+    else
+      node.raise "BUG: unknown atomic ordering: #{node}"
     end
-
-    ordering
   end
 
-  def atomicrwm_bin_op_from_symbol_literal(node)
-    unless node.is_a?(SymbolLiteral)
-      node.raise "BUG: expected symbol literal"
-    end
+  def atomicrwm_bin_op_get_const(node, llvm_arg)
+    node.raise "atomic rwm bin op must be a constant" unless llvm_arg.constant?
 
-    op = LLVM::AtomicRMWBinOp.parse?(node.value)
-    unless op
-      node.raise "unknown atomic rwm bin op: #{node.value}"
+    if node.type.implements?(@program.enum) && llvm_arg.type.kind.integer? && llvm_arg.type.int_width == 32
+      LLVM::AtomicRMWBinOp.new(llvm_arg.const_int_get_sext_value.to_i32!)
+    elsif node.is_a?(SymbolLiteral)
+      op = LLVM::AtomicRMWBinOp.parse?(node.value)
+      unless op
+        node.raise "unknown atomic rwm bin op: #{node.value}"
+      end
+      op
+    else
+      node.raise "BUG: unknown atomic rwm bin op: #{node}"
     end
-
-    op
   end
 
   def bool_from_bool_literal(node)

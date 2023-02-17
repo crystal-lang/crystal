@@ -20,14 +20,26 @@ describe "Char" do
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
   end
 
-  describe "succ" do
-    it { 'a'.succ.should eq('b') }
-    it { 'あ'.succ.should eq('ぃ') }
+  it "#succ" do
+    'a'.succ.should eq('b')
+    'あ'.succ.should eq('ぃ')
+
+    '\uD7FF'.succ.should eq '\uE000'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::MAX.succ
+    end
   end
 
-  describe "pred" do
-    it { 'b'.pred.should eq('a') }
-    it { 'ぃ'.pred.should eq('あ') }
+  it "#pred" do
+    'b'.pred.should eq('a')
+    'ぃ'.pred.should eq('あ')
+
+    '\uE000'.pred.should eq '\uD7FF'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::ZERO.pred
+    end
   end
 
   describe "+" do
@@ -225,31 +237,37 @@ describe "Char" do
     '1'.to_i16.should eq(1i16)
     '1'.to_i32.should eq(1i32)
     '1'.to_i64.should eq(1i64)
+    '1'.to_i128.should eq(1i128)
 
     expect_raises(ArgumentError) { 'a'.to_i8 }
     expect_raises(ArgumentError) { 'a'.to_i16 }
     expect_raises(ArgumentError) { 'a'.to_i32 }
     expect_raises(ArgumentError) { 'a'.to_i64 }
+    expect_raises(ArgumentError) { 'a'.to_i128 }
 
     'a'.to_i8?.should be_nil
     'a'.to_i16?.should be_nil
     'a'.to_i32?.should be_nil
     'a'.to_i64?.should be_nil
+    'a'.to_i128?.should be_nil
 
     '1'.to_u8.should eq(1u8)
     '1'.to_u16.should eq(1u16)
     '1'.to_u32.should eq(1u32)
     '1'.to_u64.should eq(1u64)
+    '1'.to_u128.should eq(1u128)
 
     expect_raises(ArgumentError) { 'a'.to_u8 }
     expect_raises(ArgumentError) { 'a'.to_u16 }
     expect_raises(ArgumentError) { 'a'.to_u32 }
     expect_raises(ArgumentError) { 'a'.to_u64 }
+    expect_raises(ArgumentError) { 'a'.to_u128 }
 
     'a'.to_u8?.should be_nil
     'a'.to_u16?.should be_nil
     'a'.to_u32?.should be_nil
     'a'.to_u64?.should be_nil
+    'a'.to_u128?.should be_nil
   end
 
   it "does to_i with 16 base" do
@@ -435,10 +453,12 @@ describe "Char" do
     'a'.number?.should be_false
   end
 
-  it "does ascii_control?" do
+  it "#ascii_control?" do
     'ù'.ascii_control?.should be_false
     'a'.ascii_control?.should be_false
     '\u0019'.ascii_control?.should be_true
+    '\u007F'.ascii_control?.should be_true
+    '\u0080'.ascii_control?.should be_false
   end
 
   it "does mark?" do

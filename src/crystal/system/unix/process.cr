@@ -22,8 +22,8 @@ struct Crystal::System::Process
     !@channel.closed? && Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    Crystal::System::Process.signal(@pid, LibC::SIGTERM)
+  def terminate(*, graceful)
+    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
   def self.exit(status)
@@ -56,6 +56,22 @@ struct Crystal::System::Process
   def self.signal(pid, signal)
     ret = LibC.kill(pid, signal)
     raise RuntimeError.from_errno("kill") if ret < 0
+  end
+
+  def self.on_interrupt(&handler : ->) : Nil
+    ::Signal::INT.trap { |_signal| handler.call }
+  end
+
+  def self.ignore_interrupts! : Nil
+    ::Signal::INT.ignore
+  end
+
+  def self.restore_interrupts! : Nil
+    ::Signal::INT.reset
+  end
+
+  def self.start_interrupt_loop : Nil
+    # do nothing; `Crystal::Signal.start_loop` takes care of this
   end
 
   def self.exists?(pid)
@@ -114,6 +130,28 @@ struct Crystal::System::Process
     end
 
     pid
+  end
+
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork(&)
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    if pid = fork
+      return pid
+    end
+
+    begin
+      yield
+      LibC._exit 0
+    rescue ex
+      ex.inspect_with_backtrace STDERR
+      STDERR.flush
+      LibC._exit 1
+    ensure
+      LibC._exit 254 # not reached
+    end
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)

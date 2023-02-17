@@ -1,4 +1,3 @@
-@[Link("dl")]
 lib LibC
   RTLD_LAZY    = 0x1
   RTLD_NOW     = 0x2

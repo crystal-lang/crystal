@@ -1,6 +1,6 @@
 require "../spec_helper"
 require "http/server"
-require "http/client/response"
+require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 
@@ -56,7 +56,7 @@ describe HTTP::Server do
   it "closes the server" do
     server = HTTP::Server.new { }
     address = server.bind_unused_port
-    ch = Channel(Symbol).new
+    ch = Channel(SpecChannelStatus).new
 
     spawn do
       server.listen
@@ -78,10 +78,10 @@ describe HTTP::Server do
     sleep 0.1
     server.close
 
-    ch.receive.should eq(:end)
+    ch.receive.end?.should be_true
   end
 
-  it "reuses the TCP port (SO_REUSEPORT)" do
+  pending_win32 "reuses the TCP port (SO_REUSEPORT)" do
     s1 = HTTP::Server.new { |ctx| }
     address = s1.bind_unused_port(reuse_port: true)
 
@@ -121,12 +121,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -153,12 +153,12 @@ describe HTTP::Server do
 
     run_server(server) do
       TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
+        socket << requestize(<<-HTTP
           POST / HTTP/1.1
           Expect: 100-continue
           Content-Length: 5
 
-          REQUEST
+          HTTP
         )
         socket << "\r\n"
         socket.flush
@@ -368,8 +368,8 @@ describe HTTP::Server do
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
         ensure
-          File.delete(path1) if File.exists?(path1)
-          File.delete(path2) if File.exists?(path2)
+          File.delete?(path1)
+          File.delete?(path2)
         end
       end
     end
@@ -472,7 +472,7 @@ describe HTTP::Server do
     end
   end
 
-  describe "#remote_address / #local_address" do
+  pending_win32 describe: "#remote_address / #local_address" do
     it "for http server" do
       remote_address = nil
       local_address = nil

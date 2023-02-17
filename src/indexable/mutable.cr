@@ -185,7 +185,7 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
-  # a.fill(2, 3) { |i| i * i * i } # => [1, 2, 8, 27, 125, 6]
+  # a.fill(2, 3) { |i| i * i * i } # => [1, 2, 8, 27, 64, 6]
   # ```
   def fill(start : Int, count : Int, & : Int32 -> T) : self
     return self if count <= 0
@@ -205,7 +205,7 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
-  # a.fill(2..4) { |i| i * i * i } # => [1, 2, 8, 27, 125, 6]
+  # a.fill(2..4) { |i| i * i * i } # => [1, 2, 8, 27, 64, 6]
   # ```
   def fill(range : Range, & : Int32 -> T) : self
     fill(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new) do |i|
@@ -259,7 +259,7 @@ module Indexable::Mutable(T)
   # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
   # a                          # => [3, 2, 4, 5, 1]
   # ```
-  def shuffle!(random = Random::DEFAULT) : self
+  def shuffle!(random : Random = Random::DEFAULT) : self
     (size - 1).downto(1) do |i|
       j = random.rand(i + 1)
       swap(i, j)
@@ -453,7 +453,7 @@ module Indexable::Mutable(T)
   #
   # ```
   # a = %w(apple pear fig)
-  # a.usntable_sort_by! { |word| word.size }
+  # a.unstable_sort_by! { |word| word.size }
   # a # => ["fig", "pear", "apple"]
   # ```
   #

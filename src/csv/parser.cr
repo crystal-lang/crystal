@@ -20,7 +20,7 @@ class CSV::Parser
   end
 
   # Yields each of the remaining rows as an `Array(String)`.
-  def each_row : Nil
+  def each_row(&) : Nil
     while row = next_row
       yield row
     end

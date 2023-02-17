@@ -51,6 +51,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(%r( )), %(/\\ /)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
+  expect_to_s %(foo x: 1, y: 2, &.bar), %(foo(x: 1, y: 2, &.bar))
   expect_to_s %(foo { |i| i.bar { i } }), "foo do |i|\n  i.bar do\n    i\n  end\nend"
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
   expect_to_s %(foo(3, &.*(2)))
@@ -69,7 +70,9 @@ describe "ASTNode#to_s" do
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
   expect_to_s "def foo(x : T = 1)\nend"
+  expect_to_s "def foo(@[Foo] x : T = 1)\nend"
   expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
+  expect_to_s "def foo(x : X, @[Foo] y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
   expect_to_s %(foo : (A | B).class)
   expect_to_s %[%("\#{foo}")], %["\\"\#{foo}\\""]
@@ -81,24 +84,42 @@ describe "ASTNode#to_s" do
   expect_to_s "_foo.bar"
   expect_to_s "1.responds_to?(:to_s)"
   expect_to_s "1.responds_to?(:\"&&\")"
+  expect_to_s "macro foo(&block)\nend"
+  expect_to_s "macro foo(&)\nend"
+  expect_to_s "macro foo(*, __var var)\nend"
+  expect_to_s "macro foo(*, var)\nend"
+  expect_to_s "macro foo(*var)\nend"
+  expect_to_s "macro foo(@[Foo] &)\nend"
+  expect_to_s "macro foo(@[Foo] &block)\nend"
   expect_to_s "macro foo(x, *y)\nend"
+  expect_to_s "macro foo(x, @[Foo] *y)\nend"
+  expect_to_s "macro foo(@[Foo] x, @[Foo] *y)\nend"
   expect_to_s "{ {1, 2, 3} }"
   expect_to_s "{ {1 => 2} }"
   expect_to_s "{ {1, 2, 3} => 4 }"
   expect_to_s "{ {foo: 2} }"
   expect_to_s "def foo(*args)\nend"
+  expect_to_s "def foo(@[Foo] *args)\nend"
   expect_to_s "def foo(*args : _)\nend"
   expect_to_s "def foo(**args)\nend"
+  expect_to_s "def foo(@[Foo] **args)\nend"
   expect_to_s "def foo(**args : T)\nend"
   expect_to_s "def foo(x, **args)\nend"
+  expect_to_s "def foo(x, @[Foo] **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
+  expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
   expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
   expect_to_s "def foo(& : (->))\nend"
+  expect_to_s "macro foo(@[Foo] id)\nend"
   expect_to_s "macro foo(**args)\nend"
+  expect_to_s "macro foo(@[Foo] **args)\nend"
   expect_to_s "macro foo(x, **args)\nend"
+  expect_to_s "macro foo(x, @[Foo] **args)\nend"
   expect_to_s "def foo(x y)\nend"
+  expect_to_s "def foo(@[Foo] x y)\nend"
   expect_to_s %(foo("bar baz": 2))
   expect_to_s %(Foo("bar baz": Int32))
+  expect_to_s %(Foo())
   expect_to_s %({"foo bar": 1})
   expect_to_s %(def foo("bar baz" qux)\nend)
   expect_to_s "foo()"
@@ -116,15 +137,18 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n\\{%@type %}\nend"
   expect_to_s "enum A : B\nend"
   expect_to_s "# doc\ndef foo\nend", emit_doc: true
+  expect_to_s "class Foo\n  # doc\n  def foo\n  end\nend", emit_doc: true
   expect_to_s "foo[x, y, a: 1, b: 2]"
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
   expect_to_s %(lib Foo\nend)
+  expect_to_s %(lib LibC\n  fun getchar(Int, Float)\nend)
   expect_to_s %(fun foo(a : Void, b : Void, ...) : Void\n\nend)
   expect_to_s %(lib Foo\n  struct Foo\n    a : Void\n    b : Void\n  end\nend)
   expect_to_s %(lib Foo\n  union Foo\n    a : Int\n    b : Int32\n  end\nend)
   expect_to_s %(lib Foo\n  FOO = 0\nend)
   expect_to_s %(lib LibC\n  fun getch = "get.char"\nend)
+  expect_to_s %(lib Foo::Bar\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
   expect_to_s %(alias Foo::Bar = Void)
@@ -146,6 +170,8 @@ describe "ASTNode#to_s" do
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
   expect_to_s %(begin\n  ()\nend)
+  expect_to_s %(if 1\n  begin\n    2\n  end\nelse\n  begin\n    3\n  end\nend)
+  expect_to_s %(foo do\n  begin\n    bar\n  end\nend)
   expect_to_s %q("\e\0\""), %q("\e\u0000\"")
   expect_to_s %q("#{1}\0"), %q("#{1}\u0000")
   expect_to_s %q(%r{\/\0}), %q(/\/\0/)
@@ -190,4 +216,11 @@ describe "ASTNode#to_s" do
   expect_to_s %[あ.い, う.え.お = 1, 2]
   expect_to_s "-> : Int32 do\nend"
   expect_to_s "->(x : Int32, y : Bool) : Char do\n  'a'\nend"
+  expect_to_s "->::foo(Int32, String)"
+  expect_to_s "->::Foo::Bar.foo"
+  expect_to_s "yield(1)"
+  expect_to_s "def foo\n  yield\nend", "def foo(&)\n  yield\nend"
+  expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
+  expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
+  expect_to_s "macro foo(x)\n  yield\nend"
 end

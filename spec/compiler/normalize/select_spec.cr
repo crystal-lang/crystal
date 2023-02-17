@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Normalize: case" do
   it "normalizes select with call" do
-    assert_expand "select; when foo; body; when bar; baz; end", <<-CODE
+    assert_expand "select; when foo; body; when bar; baz; end", <<-CRYSTAL
       __temp_1, __temp_2 = ::Channel.select({foo_select_action, bar_select_action})
       case __temp_1
       when 0
@@ -12,11 +12,11 @@ describe "Normalize: case" do
       else
         ::raise("BUG: invalid select index")
       end
-      CODE
+      CRYSTAL
   end
 
   it "normalizes select with assign" do
-    assert_expand "select; when x = foo; x + 1; end", <<-CODE
+    assert_expand "select; when x = foo; x + 1; end", <<-CRYSTAL
       __temp_1, __temp_2 = ::Channel.select({foo_select_action})
       case __temp_1
       when 0
@@ -25,11 +25,11 @@ describe "Normalize: case" do
       else
         ::raise("BUG: invalid select index")
       end
-      CODE
+      CRYSTAL
   end
 
   it "normalizes select with else" do
-    assert_expand "select; when foo; body; else; baz; end", <<-CODE
+    assert_expand "select; when foo; body; else; baz; end", <<-CRYSTAL
       __temp_1, __temp_2 = ::Channel.non_blocking_select({foo_select_action})
       case __temp_1
       when 0
@@ -37,11 +37,11 @@ describe "Normalize: case" do
       else
         baz
       end
-      CODE
+      CRYSTAL
   end
 
   it "normalizes select with assign and question method" do
-    assert_expand "select; when x = foo?; x + 1; end", <<-CODE
+    assert_expand "select; when x = foo?; x + 1; end", <<-CRYSTAL
       __temp_1, __temp_2 = ::Channel.select({foo_select_action?})
       case __temp_1
       when 0
@@ -50,11 +50,11 @@ describe "Normalize: case" do
       else
         ::raise("BUG: invalid select index")
       end
-      CODE
+      CRYSTAL
   end
 
   it "normalizes select with assign and bang method" do
-    assert_expand "select; when x = foo!; x + 1; end", <<-CODE
+    assert_expand "select; when x = foo!; x + 1; end", <<-CRYSTAL
       __temp_1, __temp_2 = ::Channel.select({foo_select_action!})
       case __temp_1
       when 0
@@ -63,6 +63,6 @@ describe "Normalize: case" do
       else
         ::raise("BUG: invalid select index")
       end
-      CODE
+      CRYSTAL
   end
 end

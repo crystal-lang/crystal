@@ -1,5 +1,6 @@
 require "c/fcntl"
 require "io/evented"
+require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
@@ -63,27 +64,19 @@ module Crystal::System::FileDescriptor
     r
   end
 
+  def self.system_info(fd)
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
+
+    if ret != 0
+      raise IO::Error.from_errno("Unable to get info")
+    end
+
+    ::File::Info.new(stat)
+  end
+
   private def system_info
-    {% begin %}
-      # On some systems, the symbols `fstat` and `lstat` are not part of the GNU
-      # shared library `libc.so` and instead provided by `libc_noshared.a`.
-      # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
-      # which we use for interpreted mode.
-      # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
-      # Linking against the internal counterparts `__fxstat` and `__lxstat` directly
-      # should work in both interpreted and compiled mode.
-      {% if LibC.has_method?(:__fxstat) %}
-        ret = LibC.__fxstat(1, fd, out stat)
-      {% else %}
-        ret = LibC.fstat(fd, out stat)
-      {% end %}
-
-      if ret != 0
-        raise IO::Error.from_errno("Unable to get info")
-      end
-
-      FileInfo.new(stat)
-    {% end %}
+    FileDescriptor.system_info fd
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
@@ -195,5 +188,44 @@ module Crystal::System::FileDescriptor
     io.close_on_exec = true
     io.sync = true
     io
+  end
+
+  private def system_echo(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
+      mode.c_lflag = enable ? (mode.c_lflag | flags) : (mode.c_lflag & ~flags)
+      if LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  private def system_raw(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      if enable
+        LibC.cfmakeraw(pointerof(mode))
+      else
+        mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
+        mode.c_oflag |= LibC::OPOST
+        mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
+      end
+      if LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  @[AlwaysInline]
+  private def system_console_mode(&)
+    if LibC.tcgetattr(fd, out mode) != 0
+      raise IO::Error.from_errno("tcgetattr")
+    end
+
+    before = mode
+    ret = yield mode
+    LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
+    ret
   end
 end

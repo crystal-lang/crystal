@@ -3,15 +3,7 @@ require "openssl"
 require "../../../support/finalize"
 
 class OpenSSL::SSL::Context
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-
-    previous_def
-  end
+  include FinalizeCounter
 end
 
 describe OpenSSL::SSL::Context do
@@ -211,11 +203,11 @@ describe OpenSSL::SSL::Context do
   {% end %}
 
   it "calls #finalize on insecure client context" do
-    assert_finalizes(:insecure_client_ctx) { OpenSSL::SSL::Context::Client.insecure }
+    assert_finalizes("insecure_client_ctx") { OpenSSL::SSL::Context::Client.insecure }
   end
 
   it "calls #finalize on insecure server context" do
-    assert_finalizes(:insecure_server_ctx) { OpenSSL::SSL::Context::Server.insecure }
+    assert_finalizes("insecure_server_ctx") { OpenSSL::SSL::Context::Server.insecure }
   end
 
   describe ".from_hash" do
@@ -265,6 +257,12 @@ describe OpenSSL::SSL::Context do
       expect_raises(OpenSSL::Error, /SSL_CTX_load_verify_locations: error:.*:No such file or directory/) do
         OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => nonexistent})
       end
+    end
+  end
+
+  describe OpenSSL::SSL::VerifyMode do
+    it ".parse none (#7455)" do
+      OpenSSL::SSL::VerifyMode.parse("none").should eq OpenSSL::SSL::VerifyMode::NONE
     end
   end
 end

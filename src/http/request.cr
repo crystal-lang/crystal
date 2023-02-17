@@ -12,6 +12,8 @@ require "socket"
 # When creating a request with a `String` or `Bytes` its body
 # will be a `IO::Memory` wrapping these, and the `Content-Length`
 # header will be set appropriately.
+#
+# NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
 class HTTP::Request
   property method : String
   property headers : Headers
@@ -113,7 +115,7 @@ class HTTP::Request
   end
 
   def body=(@body : Nil)
-    @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
+    @headers["Content-Length"] = "0" if @method.in?("POST", "PUT")
   end
 
   def to_io(io)
@@ -333,7 +335,7 @@ class HTTP::Request
 
     require_comma = false
     while reader.has_next?
-      case char = reader.current_char
+      case reader.current_char
       when ' ', '\t'
         reader.next_char
       when ','
@@ -375,7 +377,7 @@ class HTTP::Request
     reader.next_char
 
     while reader.has_next?
-      case char = reader.current_char
+      case reader.current_char
       when '!', '\u{23}'..'\u{7E}', '\u{80}'..'\u{FF}'
         reader.next_char
       when '"'

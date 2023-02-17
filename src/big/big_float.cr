@@ -4,6 +4,8 @@ require "big"
 # A `BigFloat` can represent arbitrarily large floats.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# NOTE: To use `BigFloat`, you must explicitly import it with `require "big"`
 struct BigFloat < Float
   include Comparable(Int)
   include Comparable(BigFloat)
@@ -76,7 +78,7 @@ struct BigFloat < Float
   def initialize(@mpf : LibGMP::MPF)
   end
 
-  def self.new
+  def self.new(&)
     LibGMP.mpf_init(out mpf)
     yield pointerof(mpf)
     new(mpf)
@@ -149,14 +151,17 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_abs(mpf, self) }
   end
 
+  # Rounds towards positive infinity.
   def ceil : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_ceil(mpf, self) }
   end
 
+  # Rounds towards negative infinity.
   def floor : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_floor(mpf, self) }
   end
 
+  # Rounds towards zero.
   def trunc : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_trunc(mpf, self) }
   end
@@ -280,29 +285,56 @@ struct BigFloat < Float
   end
 
   def to_s(io : IO) : Nil
-    cstr = LibGMP.mpf_get_str(nil, out expptr, 10, 0, self)
+    cstr = LibGMP.mpf_get_str(nil, out decimal_exponent, 10, 0, self)
     length = LibC.strlen(cstr)
-    decimal_set = false
-    io << '-' if self < 0
-    if expptr == 0
-      io << 0
-    elsif expptr < 0
-      io << 0 << '.'
-      decimal_set = true
-      expptr.abs.times { io << 0 }
+    buffer = Slice.new(cstr, length)
+
+    # add negative sign
+    if buffer[0]? == 45 # '-'
+      io << '-'
+      buffer = buffer[1..]
+      length -= 1
     end
-    expptr += 1 if self < 0
-    length.times do |i|
-      next if cstr[i] == 45 # '-'
-      if i == expptr
-        io << '.'
-        decimal_set = true
-      end
-      io << cstr[i].unsafe_chr
+
+    point = decimal_exponent
+    exp = point
+    exp_mode = point > 15 || point < -3
+    point = 1 if exp_mode
+
+    # add leading zero
+    io << '0' if point < 1
+
+    # add integer part digits
+    if decimal_exponent > 0 && !exp_mode
+      # whole number but not big enough to be exp form
+      io.write_string buffer[0, {decimal_exponent, length}.min]
+      buffer = buffer[{decimal_exponent, length}.min...]
+      (point - length).times { io << '0' }
+    elsif point > 0
+      io.write_string buffer[0, point]
+      buffer = buffer[point...]
     end
-    (expptr - length).times { io << 0 } if expptr > 0
-    if !decimal_set
-      io << ".0"
+
+    io << '.'
+
+    # add leading zeros after point
+    if point < 0
+      (-point).times { io << '0' }
+    end
+
+    # add fractional part digits
+    io.write_string buffer
+
+    # print trailing 0 if whole number or exp notation of power of ten
+    if (decimal_exponent >= length && !exp_mode) || (exp != point && length == 1)
+      io << '0'
+    end
+
+    # exp notation
+    if exp != point
+      io << 'e'
+      io << '+' if exp > 0
+      (exp - 1).to_s(io)
     end
   end
 

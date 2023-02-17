@@ -43,10 +43,14 @@ describe "colorize" do
 
   it "colorizes foreground with 8-bit color" do
     colorize("hello").fore(Colorize::Color256.new(123u8)).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello").fore(123u8).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello", 123_u8).to_s.should eq("\e[38;5;123mhello\e[0m")
   end
 
   it "colorizes foreground with true color" do
     colorize("hello").fore(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello").fore(12u8, 34u8, 56u8).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello", 12u8, 34u8, 56u8).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes background" do
@@ -70,10 +74,12 @@ describe "colorize" do
 
   it "colorizes background with 8-bit color" do
     colorize("hello").back(Colorize::Color256.new(123u8)).to_s.should eq("\e[48;5;123mhello\e[0m")
+    colorize("hello").back(123u8).to_s.should eq("\e[48;5;123mhello\e[0m")
   end
 
   it "colorizes background with true color" do
     colorize("hello").back(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
+    colorize("hello").back(12u8, 34u8, 56u8).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes mode" do
@@ -116,12 +122,6 @@ describe "colorize" do
   it "raises on unknown background color" do
     expect_raises ArgumentError, "Unknown color: brown" do
       colorize("hello").back(:brown)
-    end
-  end
-
-  it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
-      colorize("hello").mode(:bad)
     end
   end
 

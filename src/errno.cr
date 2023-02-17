@@ -4,6 +4,8 @@ require "c/string"
 lib LibC
   {% if flag?(:linux) || flag?(:dragonfly) %}
     fun __errno_location : Int*
+  {% elsif flag?(:wasi) %}
+    $errno : Int
   {% elsif flag?(:darwin) || flag?(:freebsd) %}
     fun __error : Int*
   {% elsif flag?(:netbsd) || flag?(:openbsd) %}
@@ -43,6 +45,8 @@ enum Errno
   def self.value : self
     {% if flag?(:linux) || flag?(:dragonfly) %}
       Errno.new LibC.__errno_location.value
+    {% elsif flag?(:wasi) %}
+      Errno.new LibC.errno
     {% elsif flag?(:darwin) || flag?(:bsd) %}
       Errno.new LibC.__error.value
     {% elsif flag?(:win32) %}

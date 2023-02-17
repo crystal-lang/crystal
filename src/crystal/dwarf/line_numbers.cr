@@ -14,7 +14,7 @@ module Crystal
       ConstAddPc       =  8
       FixedAdvancePc   =  9
       SetPrologueEnd   = 10
-      SetEpiloqueBegin = 11
+      SetEpilogueBegin = 11
       SetIsa           = 12
     end
 
@@ -486,7 +486,7 @@ module Crystal
               registers.op_index = 0_u32
             when LNS::SetPrologueEnd
               registers.prologue_end = true
-            when LNS::SetEpiloqueBegin
+            when LNS::SetEpilogueBegin
               registers.epilogue_begin = true
             when LNS::SetIsa
               registers.isa = DWARF.read_unsigned_leb128(@io)

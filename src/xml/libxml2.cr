@@ -317,7 +317,12 @@ end
 LibXML.xmlGcMemSetup(
   ->GC.free,
   ->GC.malloc(LibC::SizeT),
-  ->GC.malloc(LibC::SizeT),
+  # TODO(interpreted): remove this condition
+  {% if flag?(:interpreted) %}
+    ->GC.malloc(LibC::SizeT)
+  {% else %}
+    ->GC.malloc_atomic(LibC::SizeT)
+  {% end %},
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
     len = LibC.strlen(str) + 1

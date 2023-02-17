@@ -57,6 +57,10 @@ struct OpenSSL::BIO
               1
             when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP, LibCrypto::CTRL_EOF
               0
+            when LibCrypto::CTRL_SET_KTLS_SEND
+              0
+            when LibCrypto::CTRL_GET_KTLS_SEND, LibCrypto::CTRL_GET_KTLS_RECV
+              0
             else
               STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
               0

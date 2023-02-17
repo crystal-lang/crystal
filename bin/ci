@@ -115,10 +115,11 @@ build() {
         i=$((i + 1))
       done
 
+      with_build_env 'make primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
       with_build_env 'make docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
+      with_build_env 'make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
       ;;
   esac
 
@@ -127,15 +128,14 @@ build() {
 }
 
 format() {
-  with_build_env 'make clean crystal threads=1'
-  with_build_env './bin/crystal tool format --check samples spec src'
+  with_build_env 'make clean crystal format threads=1 check=1'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.2.2-1 crystal;popd'
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.7.2-1 crystal;popd'
 
   # These commands may take a few minutes to run due to the large size of the repositories.
   # This restriction has been made on GitHub's request because updating shallow
@@ -188,7 +188,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:1.2.2}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:1.7.2}"
 
   case $ARCH in
     x86_64)

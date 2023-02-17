@@ -92,4 +92,25 @@ describe "Semantic: method_missing" do
       end
       )) { int32 }
   end
+
+  it "doesn't look up method_missing in with_yield_scope if call has a receiver (#12097)" do
+    assert_error(%(
+      class Foo
+        macro method_missing(method)
+          def {{method}}
+            1
+          end
+        end
+      end
+
+      def run
+        with Foo.new yield
+      end
+
+      run do
+        foo.bar
+      end
+      ),
+      "undefined method 'bar' for Int32")
+  end
 end

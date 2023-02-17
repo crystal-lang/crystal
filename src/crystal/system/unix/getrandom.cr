@@ -3,6 +3,21 @@
 require "c/unistd"
 require "./syscall"
 
+{% if flag?(:interpreted) %}
+  lib LibC
+    fun getrandom(buf : Void*, buflen : SizeT, flags : UInt32) : LibC::SSizeT
+  end
+
+  module Crystal::System::Syscall
+    GRND_NONBLOCK = 1u32
+
+    # TODO: Implement syscall for interpreter
+    def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
+      LibC.getrandom(buf, buflen, flags)
+    end
+  end
+{% end %}
+
 module Crystal::System::Random
   @@initialized = false
   @@getrandom_available = false
@@ -11,7 +26,7 @@ module Crystal::System::Random
   private def self.init
     @@initialized = true
 
-    if sys_getrandom(Bytes.new(16)) >= 0
+    if has_sys_getrandom
       @@getrandom_available = true
     else
       urandom = ::File.open("/dev/urandom", "r")
@@ -21,6 +36,13 @@ module Crystal::System::Random
       urandom.sync = true # don't buffer bytes
       @@urandom = urandom
     end
+  end
+
+  private def self.has_sys_getrandom
+    sys_getrandom(Bytes.new(16))
+    true
+  rescue
+    false
   end
 
   # Reads n random bytes using the Linux `getrandom(2)` syscall.
@@ -62,15 +84,15 @@ module Crystal::System::Random
       end
 
       read_bytes = sys_getrandom(buf[0, chunk_size])
-      raise RuntimeError.from_errno("getrandom") if read_bytes == -1
 
       buf += read_bytes
     end
   end
 
   # Low-level wrapper for the `getrandom(2)` syscall, returns the number of
-  # bytes read or `-1` if an error occurred (or the syscall isn't available)
-  # and sets `Errno.value`.
+  # bytes read or the errno as a negative number if an error occurred (or the
+  # syscall isn't available). The GRND_NONBLOCK=1 flag is passed as last argument,
+  # so that it returns -EAGAIN if the requested entropy was not available.
   #
   # We use the kernel syscall instead of the `getrandom` C function so any
   # binary compiled for Linux will always use getrandom if the kernel is 3.17+
@@ -78,9 +100,14 @@ module Crystal::System::Random
   # portable).
   private def self.sys_getrandom(buf : Bytes)
     loop do
-      read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), 0)
-      if read_bytes < 0 && (Errno.value == Errno::EINTR || Errno.value == Errno::EAGAIN)
-        ::Fiber.yield
+      read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), Syscall::GRND_NONBLOCK)
+      if read_bytes < 0
+        err = Errno.new(-read_bytes.to_i)
+        if err.in?(Errno::EINTR, Errno::EAGAIN)
+          ::Fiber.yield
+        else
+          raise RuntimeError.from_os_error("getrandom", err)
+        end
       else
         return read_bytes
       end

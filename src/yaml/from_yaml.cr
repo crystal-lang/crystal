@@ -12,7 +12,7 @@ def Object.from_yaml(string_or_io : String | IO)
   new(YAML::ParseContext.new, parse_yaml(string_or_io))
 end
 
-def Array.from_yaml(string_or_io : String | IO)
+def Array.from_yaml(string_or_io : String | IO, &)
   new(YAML::ParseContext.new, parse_yaml(string_or_io)) do |element|
     yield element
   end
@@ -103,7 +103,7 @@ def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ary
 end
 
-def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.kind}"
   end
@@ -128,7 +128,7 @@ def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ary
 end
 
-def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.kind}"
   end
@@ -153,7 +153,7 @@ def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   hash
 end
 
-def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
   unless node.is_a?(YAML::Nodes::Mapping)
     node.raise "Expected mapping, not #{node.kind}"
   end
@@ -187,9 +187,13 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
-      %found{key.id} = false
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
     YAML::Schema::Core.each(node) do |key, value|
@@ -197,8 +201,10 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(ctx, value)
-            %found{key.id} = true
+            %var{key.id} = self[{{ key.symbolize }}].new(ctx, value)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
         # ignore the key
@@ -206,16 +212,18 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     end
 
     {% for key, type in T %}
-      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        node.raise "Missing yaml attribute: #{{{key.id.stringify}}}"
-      end
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          node.raise "Missing yaml attribute: #{ {{ key.id.stringify }} }"
+        end
+      {% end %}
     {% end %}
 
-    {
-      {% for key, type in T %}
-        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
+    NamedTuple.new(
+      {% for key in T.keys %}
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
-    }
+    )
   {% end %}
 end
 
@@ -336,18 +344,24 @@ module Time::EpochMillisConverter
 end
 
 module YAML::ArrayConverter(Converter)
+  private struct WithInstance(T)
+    def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+      unless node.is_a?(YAML::Nodes::Sequence)
+        node.raise "Expected sequence, not #{node.kind}"
+      end
+
+      ary = Array(typeof(@converter.from_yaml(ctx, node))).new
+
+      node.each do |value|
+        ary << @converter.from_yaml(ctx, value)
+      end
+
+      ary
+    end
+  end
+
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
-    unless node.is_a?(YAML::Nodes::Sequence)
-      node.raise "Expected sequence, not #{node.kind}"
-    end
-
-    ary = Array(typeof(Converter.from_yaml(ctx, node))).new
-
-    node.each do |value|
-      ary << Converter.from_yaml(ctx, value)
-    end
-
-    ary
+    WithInstance.new(Converter).from_yaml(ctx, node)
   end
 end
 

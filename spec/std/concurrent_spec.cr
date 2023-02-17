@@ -76,7 +76,7 @@ describe "concurrent" do
       spawn do
         3.times do |i|
           sleep 40.milliseconds
-          chan.send (i + 1)
+          chan.send(i + 1)
         end
       end
       spawn do

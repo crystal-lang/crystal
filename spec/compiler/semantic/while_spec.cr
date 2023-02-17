@@ -171,7 +171,7 @@ describe "Semantic: while" do
       )) { int32 }
   end
 
-  it "restricts type after while with not and and (#4242)" do
+  it "restricts type after `while` with `not` and `and` (#4242)" do
     assert_type(%(
       a = nil
       b = nil

@@ -98,6 +98,32 @@ describe "Semantic: pointer" do
       "recursive pointerof expansion"
   end
 
+  it "detects recursive pointerof expansion (3)" do
+    assert_error <<-CRYSTAL, "recursive pointerof expansion"
+      x = {1}
+      x = pointerof(x)
+      CRYSTAL
+  end
+
+  it "detects recursive pointerof expansion (4)" do
+    assert_error <<-CRYSTAL, "recursive pointerof expansion"
+      x = 1
+      x = {pointerof(x)}
+      CRYSTAL
+  end
+
+  it "doesn't crash if pointerof expansion type has generic splat parameter (#11808)" do
+    assert_type(<<-CRYSTAL) { pointer_of(union_of int32, generic_class("Foo", string)) }
+      class Foo(*T)
+      end
+
+      x = 1
+      pointer = pointerof(x)
+      x = Foo(String).new
+      pointer
+      CRYSTAL
+  end
+
   it "can assign nil to void pointer" do
     assert_type(%(
       ptr = Pointer(Void).malloc(1_u64)
@@ -156,7 +182,7 @@ describe "Semantic: pointer" do
   end
 
   it "can assign pointerof virtual type (#8216)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       class Base
       end
 
@@ -167,7 +193,7 @@ describe "Semantic: pointer" do
 
       x : Pointer(Base)
       x = pointerof(u)
-      CR
+      CRYSTAL
   end
 
   it "errors with non-matching generic value with value= (#10211)" do

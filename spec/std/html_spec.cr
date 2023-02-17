@@ -42,9 +42,9 @@ describe "HTML" do
     end
 
     it "unescapes with invalid entities" do
-      str = HTML.unescape("&&lt;&amp&gt;&quot&abcdefghijklmn &ThisIsNotAnEntitiy;")
+      str = HTML.unescape("&&lt;&amp&gt;&quot&abcdefghijklmn &ThisIsNotAnEntity;")
 
-      str.should eq("&<&>\"&abcdefghijklmn &ThisIsNotAnEntitiy;")
+      str.should eq("&<&>\"&abcdefghijklmn &ThisIsNotAnEntity;")
     end
 
     it "unescapes hex encoded chars" do

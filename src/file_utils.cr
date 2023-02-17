@@ -1,3 +1,4 @@
+# NOTE: To use `FileUtils`, you must explicitly import it with `require "file_utils"`
 module FileUtils
   extend self
 
@@ -24,7 +25,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : Path | String)
+  def cd(path : Path | String, &)
     Dir.cd(path) { yield }
   end
 
@@ -425,10 +426,8 @@ module FileUtils
   # FileUtils.rm_rf("non_existent_file")
   # ```
   def rm_rf(path : Path | String) : Nil
-    begin
-      rm_r(path)
-    rescue File::Error
-    end
+    rm_r(path)
+  rescue File::Error
   end
 
   # Deletes a list of files or directories *paths*.

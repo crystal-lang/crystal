@@ -8,6 +8,8 @@ require "mime"
 # This handler can send precompressed content, if the client accepts it, and a file
 # with the same name and `.gz` extension appended is found in the same directory.
 # Precompressed files are only served if they are newer than the original file.
+#
+# NOTE: To use `StaticFileHandler`, you must explicitly import it with `require "http"`
 class HTTP::StaticFileHandler
   include HTTP::Handler
 
@@ -54,8 +56,9 @@ class HTTP::StaticFileHandler
     expanded_path = request_path.expand("/")
 
     file_path = @public_dir.join(expanded_path.to_kind(Path::Kind.native))
-    is_dir = Dir.exists? file_path
-    is_file = !is_dir && File.exists?(file_path)
+    file_info = File.info? file_path
+    is_dir = file_info && file_info.directory?
+    is_file = file_info && file_info.file?
 
     if request_path != expanded_path || is_dir && !is_dir_path
       redirect_path = expanded_path
@@ -67,11 +70,13 @@ class HTTP::StaticFileHandler
       return
     end
 
+    return call_next(context) unless file_info
+
     if @directory_listing && is_dir
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
     elsif is_file
-      last_modified = modification_time(file_path)
+      last_modified = file_info.modification_time
       add_cache_headers(context.response.headers, last_modified)
 
       if cache_request?(context, last_modified)
@@ -85,21 +90,22 @@ class HTTP::StaticFileHandler
       if context.request.headers.includes_word?("Accept-Encoding", "gzip")
         gz_file_path = "#{file_path}.gz"
 
-        if File.exists?(gz_file_path) &&
+        if (gz_file_info = File.info?(gz_file_path)) &&
            # Allow small time drift. In some file systems, using `gz --keep` to
            # compress the file will keep the modification time of the original file
            # but truncating some decimals
-           last_modified - modification_time(gz_file_path) < 1.millisecond
+           last_modified - gz_file_info.modification_time < 1.millisecond
           file_path = gz_file_path
+          file_info = gz_file_info
           context.response.headers["Content-Encoding"] = "gzip"
         end
       end
 
-      context.response.content_length = File.size(file_path)
+      context.response.content_length = file_info.size
       File.open(file_path) do |file|
         IO.copy(file, context.response)
       end
-    else
+    else # Not a normal file (FIFO/device/socket)
       call_next(context)
     end
   end
@@ -111,10 +117,7 @@ class HTTP::StaticFileHandler
   end
 
   private def redirect_to(context, url)
-    context.response.status = :found
-
-    url = URI.encode_path(url.to_s)
-    context.response.headers.add "Location", url
+    context.response.redirect url.to_s
   end
 
   private def add_cache_headers(response_headers : HTTP::Headers, last_modified : Time) : Nil
@@ -144,12 +147,8 @@ class HTTP::StaticFileHandler
     %{W/"#{modification_time.to_unix}"}
   end
 
-  private def modification_time(file_path)
-    File.info(file_path).modification_time
-  end
-
   record DirectoryListing, request_path : String, path : String do
-    def each_entry
+    def each_entry(&)
       Dir.each_child(path) do |entry|
         yield entry
       end

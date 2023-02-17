@@ -142,9 +142,9 @@ module Crystal
 
       case other
       when NilType
-        return nil
+        nil
       when UnionType
-        return Type.merge(other.union_types.reject &.nil_type?)
+        other.program.union_of(other.union_types.reject &.nil_type?)
       else
         other
       end
@@ -346,7 +346,7 @@ module Crystal
       new_filters
     end
 
-    def each
+    def each(&)
       pos.each do |key, value|
         yield key, value
       end

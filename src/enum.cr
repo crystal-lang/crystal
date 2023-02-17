@@ -86,12 +86,43 @@
 #   puts "Got blue"
 # end
 # ```
+#
+# ### Changing the Base Type
+#
+# The type of the underlying enum value is `Int32` by default, but it can be changed to any type in `Int::Primitive`.
+#
+# ```
+# enum Color : UInt8
+#   Red
+#   Green
+#   Blue
+# end
+#
+# Color::Red.value # : UInt8
+# ```
 struct Enum
   include Comparable(self)
 
   # Returns *value*.
   def self.new(value : self)
     value
+  end
+
+  # Returns the underlying value held by the enum instance.
+  #
+  # ```
+  # enum Color
+  #   Red
+  #   Green
+  #   Blue
+  # end
+  #
+  # Color::Red.value   # => 0
+  # Color::Green.value # => 1
+  # Color::Blue.value  # => 2
+  # ```
+  def value : Int
+    previous_def
   end
 
   # Appends a `String` representation of this enum member to the given *io*.
@@ -101,23 +132,14 @@ struct Enum
     {% if @type.annotation(Flags) %}
       if value == 0
         io << "None"
+      elsif name = member_name
+        io << name
       else
-        found = false
-        {% for member in @type.constants %}
-          {% if member.stringify != "All" %}
-            if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
-              io << " | " if found
-              io << {{member.stringify}}
-              found = true
-            end
-          {% end %}
-        {% end %}
-        io << value unless found
+        stringify_names(io, " | ")
       end
     {% else %}
       io << to_s
     {% end %}
-    nil
   end
 
   # Returns a `String` representation of this enum member.
@@ -139,15 +161,77 @@ struct Enum
     {% if @type.annotation(Flags) %}
       String.build { |io| to_s(io) }
     {% else %}
-      # Can't use `case` here because case with duplicate values do
-      # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
-      {% for member, i in @type.constants %}
-        if value == {{@type.constant(member)}}
-          return {{member.stringify}}
+      member_name || value.to_s
+    {% end %}
+  end
+
+  # Returns an unambiguous `String` representation of this enum member.
+  # In the case of a single member value, this is the fully qualified name of
+  # the member (equvalent to `#to_s` with the enum name as prefix).
+  # In the case of multiple members (for a flags enum), it's a call to `Enum.[]`
+  # for recreating the same value.
+  #
+  # If the value can't be represented fully by named members, the remainig value
+  # is appended.
+  #
+  # ```
+  # Color::Red                     # => Color:Red
+  # IOMode::None                   # => IOMode::None
+  # (IOMode::Read | IOMode::Write) # => IOMode[Read, Write]
+  #
+  # Color.new(10) # => Color[10]
+  # ```
+  def inspect(io : IO) : Nil
+    {% if @type.annotation(Flags) %}
+      if value == 0
+        io << {{ "#{@type}::None" }}
+      elsif name = member_name
+        io << {{ "#{@type}::" }} << name
+      else
+        io << {{ "#{@type}[" }}
+        stringify_names(io, ", ")
+        io << "]"
+      end
+    {% else %}
+      inspect_single(io)
+    {% end %}
+  end
+
+  private def stringify_names(io, separator) : Nil
+    remaining_value = self.value
+    {% for member in @type.constants %}
+      {% if member.stringify != "All" %}
+        if {{@type.constant(member)}} != 0 && remaining_value.bits_set? {{@type.constant(member)}}
+          unless remaining_value == self.value
+            io << separator
+          end
+          io << {{member.stringify}}
+          remaining_value &= ~{{@type.constant(member)}}
         end
       {% end %}
+    {% end %}
 
-      value.to_s
+    unless remaining_value.zero?
+      io << separator unless remaining_value == self.value
+      io << remaining_value
+    end
+  end
+
+  private def inspect_single(io) : Nil
+    if name = member_name
+      io << {{ "#{@type}::" }} << name
+    else
+      io << {{ "#{@type}[" }} << value << "]"
+    end
+  end
+
+  private def member_name
+    # Can't use `case` here because case with duplicate values do
+    # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
+    {% for member in @type.constants %}
+      if value == {{@type.constant(member)}}
+        return {{member.stringify}}
+      end
     {% end %}
   end
 
@@ -429,11 +513,23 @@ struct Enum
   # Color.parse?("BLUE")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
+  #
+  # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
     {% begin %}
       case string.camelcase.downcase
+      # Temporarily map all constants to their normalized value in order to
+      # avoid duplicates in the `case` conditions.
+      # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
+      # The first matching member is chosen, like with symbol autocasting.
+      # That's different from the predicate methods which return true for the last matching member.
+      {% constants = {} of _ => _ %}
       {% for member in @type.constants %}
-        when {{member.stringify.camelcase.downcase}}
+        {% key = member.stringify.camelcase.downcase %}
+        {% constants[key] = member unless constants[key] %}
+      {% end %}
+      {% for name, member in constants %}
+        when {{name}}
           new({{@type.constant(member)}})
       {% end %}
       else
@@ -449,12 +545,36 @@ struct Enum
   # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator)
   #
   # ```
-  # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
+  # IOMode.flags(Read, Write) # => IOMode[Read, Write]
   # ```
+  #
+  # * `Enum.[]` is a more advanced alternative which also allows int and symbol parameters.
   macro flags(*values)
     {% for value, i in values %}\
       {% if i != 0 %} | {% end %}\
       {{ @type }}::{{ value }}{% end %}\
+  end
+
+  # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator).
+  #
+  # Arguments can be the name of a member, a symbol representing a member name or a numerical value.
+  #
+  # ```
+  # IOMode[Read]             # => IOMode[Read]
+  # IOMode[1]                # => IOMode[Read]
+  # IOMode[Read, Write]      # => IOMode[Read, Write]
+  # IOMode[Read, 64]         # => IOMode[Read, 64]
+  # IOMode[Read, :write, 64] # => IOMode[Read, Write, 64]
+  # ```
+  macro [](*values)
+    {% for value, i in values %}\
+      {% if i != 0 %} | {% end %}\
+      {% if value.is_a?(Path) %} \
+        {{ @type }}::{{ value }} \
+      {% else %} \
+        {{ @type }}.new({{value}}) \
+      {% end %} \
+    {% end %}\
   end
 
   # Iterates each member of the enum.

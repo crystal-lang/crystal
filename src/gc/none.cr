@@ -1,7 +1,5 @@
-{% unless flag?(:win32) %}
-  @[Link("pthread")]
-  lib LibC
-  end
+{% if flag?(:win32) %}
+  require "c/process"
 {% end %}
 
 module GC
@@ -47,26 +45,38 @@ module GC
   end
 
   def self.stats : GC::Stats
-    zero = LibC::ULong.new(0)
-    Stats.new(zero, zero, zero, zero, zero)
+    Stats.new(
+      # collections: 0,
+      # bytes_found: 0,
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      total_bytes: 0)
   end
 
   def self.prof_stats
-    zero = LibC::ULong.new(0)
     ProfStats.new(
-      heap_size: zero,
-      free_bytes: zero,
-      unmapped_bytes: zero,
-      bytes_since_gc: zero,
-      bytes_before_gc: zero,
-      non_gc_bytes: zero,
-      gc_no: zero,
-      markers_m1: zero,
-      bytes_reclaimed_since_gc: zero,
-      reclaimed_bytes_before_gc: zero)
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      bytes_before_gc: 0,
+      non_gc_bytes: 0,
+      gc_no: 0,
+      markers_m1: 0,
+      bytes_reclaimed_since_gc: 0,
+      reclaimed_bytes_before_gc: 0)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
+  {% elsif !flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)

@@ -12,7 +12,7 @@ private class BufferedWrapper < IO
     @called_unbuffered_read = false
   end
 
-  def self.new(io)
+  def self.new(io, &)
     buffered_io = new(io)
     yield buffered_io
     buffered_io.flush
@@ -409,7 +409,7 @@ describe "IO::Buffered" do
   it "shouldn't call unbuffered read if reading to an empty slice" do
     str = IO::Memory.new("foo")
     io = BufferedWrapper.new(str)
-    io.read(Bytes.new(0))
+    io.read(Bytes[])
     io.called_unbuffered_read.should be_false
   end
 

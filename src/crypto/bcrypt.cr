@@ -29,6 +29,8 @@ require "./subtle"
 # Last but not least: beware of denial of services! Always protect your
 # application using an external strategy (eg: rate limiting), otherwise
 # endpoints that verifies bcrypt hashes will be an easy target.
+#
+# NOTE: To use `Bcrypt`, you must explicitly import it with `require "crypto/bcrypt"`
 class Crypto::Bcrypt
   class Error < Exception
   end
@@ -47,6 +49,13 @@ class Crypto::Bcrypt
     0x64657253, 0x63727944, 0x6f756274,
   )
 
+  # Hashes the *password* using bcrypt algorithm using salt obtained via `Random::Secure.random_bytes(SALT_SIZE)`.
+  #
+  # ```
+  # require "crypto/bcrypt"
+  #
+  # Crypto::Bcrypt.hash_secret "secret"
+  # ```
   def self.hash_secret(password, cost = DEFAULT_COST) : String
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
@@ -54,6 +63,14 @@ class Crypto::Bcrypt
     new(passwordb, saltb, cost).to_s
   end
 
+  # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* and *cost*.
+  #
+  # ```
+  # require "crypto/bcrypt"
+  #
+  # password = Crypto::Bcrypt.new "secret", "salt_of_16_chars"
+  # password.digest
+  # ```
   def self.new(password : String, salt : String, cost = DEFAULT_COST)
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
@@ -65,6 +82,14 @@ class Crypto::Bcrypt
   getter salt : Bytes
   getter cost : Int32
 
+  # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* in bytes and *cost*.
+  #
+  # ```
+  # require "crypto/bcrypt"
+  #
+  # password = Crypto::Bcrypt.new "secret".to_slice, "salt_of_16_chars".to_slice
+  # password.digest
+  # ```
   def initialize(@password : Bytes, @salt : Bytes, @cost = DEFAULT_COST)
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == SALT_SIZE

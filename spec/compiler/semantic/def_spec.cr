@@ -121,7 +121,7 @@ describe "Semantic: def" do
 
       foo 1 || 1.5
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
   end
 
   it "reports no overload matches 2" do
@@ -134,7 +134,7 @@ describe "Semantic: def" do
 
       foo(1 || 'a', 1 || 1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
   end
 
   it "reports no block given" do
@@ -259,7 +259,9 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ), "no overload matches", inject_primitives: true
+      ),
+      "expected argument #1 to 'foo' to be Pointer(Node), not Node",
+      inject_primitives: true
   end
 
   it "says can only defined def on types and self" do
@@ -373,7 +375,7 @@ describe "Semantic: def" do
 
       Foo.bar
       ),
-      "no overload matches 'foo'"
+      "expected argument #1 to 'foo' to be String, not Int32"
   end
 
   it "gives correct error for methods in Class" do
@@ -555,10 +557,10 @@ describe "Semantic: def" do
   end
 
   it "points error at name (#6937)" do
-    ex = assert_error <<-CODE,
+    ex = assert_error <<-CRYSTAL,
       1.
         foobar
-      CODE
+      CRYSTAL
       "undefined method"
     ex.line_number.should eq(2)
     ex.column_number.should eq(3)

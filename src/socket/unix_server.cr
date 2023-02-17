@@ -4,6 +4,8 @@ require "./unix_socket"
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
+# NOTE: To use `UNIXServer`, you must explicitly import it with `require "socket"`
+#
 # Example usage:
 # ```
 # require "socket"
@@ -39,6 +41,7 @@ class UNIXServer < UNIXSocket
       raise error
     end
 
+    return if type == Type::DGRAM
     listen(backlog) do |error|
       close
       raise error
@@ -54,7 +57,7 @@ class UNIXServer < UNIXSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+  def self.open(path, type : Type = Type::STREAM, backlog = 128, &)
     server = new(path, type, backlog)
     begin
       yield server
@@ -80,7 +83,7 @@ class UNIXServer < UNIXSocket
     super()
   ensure
     if delete && (path = @path)
-      File.delete(path) if File.exists?(path)
+      File.delete?(path)
       @path = nil
     end
   end

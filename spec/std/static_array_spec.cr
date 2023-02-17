@@ -129,7 +129,7 @@ describe "StaticArray" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.includes?(i + 1).should be_true
+      a.should contain(i + 1)
     end
   end
 

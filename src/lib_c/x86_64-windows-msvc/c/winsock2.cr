@@ -1,12 +1,13 @@
 require "./ws2def"
 require "./basetsd"
 require "./guiddef"
+require "./winbase"
 
 @[Link("WS2_32")]
 lib LibC
   alias SOCKET = UINT_PTR
 
-  # -2147195266 is the value after convertion to long, actual value 2147772030 with type unsigned
+  # -2147195266 is the value after conversion to long, actual value 2147772030 with type unsigned
   FIONBIO = -2147195266
 
   struct WSAData
@@ -65,13 +66,8 @@ lib LibC
   WSA_INVALID_EVENT       = Pointer(WSAEVENT).null
   WSA_MAXIMUM_WAIT_EVENTS = MAXIMUM_WAIT_OBJECTS
   WSA_WAIT_FAILED         = WAIT_FAILED
-  STATUS_WAIT_0           = 0_i64
-  WAIT_OBJECT_0           = ((STATUS_WAIT_0) + 0)
   WSA_WAIT_EVENT_0        = WAIT_OBJECT_0
-  STATUS_USER_APC         = 0xc0
-  WAIT_IO_COMPLETION      = STATUS_USER_APC
   WSA_WAIT_IO_COMPLETION  = WAIT_IO_COMPLETION
-  WAIT_TIMEOUT            = 258_i64
   WSA_WAIT_TIMEOUT        = WAIT_TIMEOUT
   WSA_INFINITE            = INFINITE
 
@@ -114,6 +110,11 @@ lib LibC
   WSA_FLAG_OVERLAPPED = 0x01
 
   alias WSAOVERLAPPED_COMPLETION_ROUTINE = Proc(DWORD, DWORD, WSAOVERLAPPED*, DWORD, Void)
+
+  struct Linger
+    l_onoff : UShort
+    l_linger : UShort
+  end
 
   fun accept(s : SOCKET, addr : Sockaddr*, addrlen : Int*) : SOCKET
   fun bind(s : SOCKET, addr : Sockaddr*, namelen : Int) : Int

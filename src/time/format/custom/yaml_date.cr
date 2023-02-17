@@ -44,19 +44,19 @@ struct Time::Format
       if (year = consume_number?(4)) && char?('-')
         @year = year
       else
-        return nil
+        return false
       end
 
       if (month = consume_number?(2)) && char?('-')
         @month = month
       else
-        return nil
+        return false
       end
 
       if day = consume_number?(2)
         @day = day
       else
-        return nil
+        return false
       end
 
       case current_char
@@ -71,7 +71,7 @@ struct Time::Format
         end
       else
         if @reader.has_next?
-          return nil
+          return false
         end
       end
 
@@ -82,19 +82,19 @@ struct Time::Format
       if (hour = consume_number?(2)) && char?(':')
         @hour = hour
       else
-        return nil
+        return false
       end
 
       if (minute = consume_number?(2)) && char?(':')
         @minute = minute
       else
-        return nil
+        return false
       end
 
       if second = consume_number?(2)
         @second = second
       else
-        return nil
+        return false
       end
 
       second_fraction?
@@ -105,10 +105,10 @@ struct Time::Format
         begin
           time_zone_z_or_offset(force_zero_padding: false, force_minutes: false)
         rescue Time::Format::Error
-          return nil
+          return false
         end
 
-        return nil if @reader.has_next?
+        return false if @reader.has_next?
       end
 
       true

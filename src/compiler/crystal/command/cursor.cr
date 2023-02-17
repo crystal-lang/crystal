@@ -7,30 +7,29 @@
 class Crystal::Command
   private def implementations
     cursor_command("tool implementations") do |location, config, result|
-      result = ImplementationsVisitor.new(location).process(result)
+      ImplementationsVisitor.new(location).process(result)
     end
   end
 
   private def context
     cursor_command("tool context") do |location, config, result|
-      result = ContextVisitor.new(location).process(result)
+      ContextVisitor.new(location).process(result)
     end
   end
 
   private def expand
     cursor_command("tool expand", no_cleanup: true, wants_doc: true) do |location, config, result|
-      result = ExpandVisitor.new(location).process(result)
+      ExpandVisitor.new(location).process(result)
     end
   end
 
-  private def cursor_command(command, no_cleanup = false, wants_doc = false)
-    config, result = compile_no_codegen command, cursor_command: true, no_cleanup: no_cleanup, wants_doc: wants_doc
+  private def cursor_command(command, no_cleanup = false, wants_doc = false, &)
+    config, result = compile_no_codegen command,
+      cursor_command: true,
+      no_cleanup: no_cleanup,
+      wants_doc: wants_doc
 
     format = config.output_format
-
-    file = ""
-    line = ""
-    col = ""
 
     loc = config.cursor_location.not_nil!.split(':')
     if loc.size != 3

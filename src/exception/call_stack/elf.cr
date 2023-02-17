@@ -1,18 +1,23 @@
 require "crystal/elf"
-require "c/link"
+{% unless flag?(:wasm32) %}
+  require "c/link"
+{% end %}
 
 struct Exception::CallStack
-  protected def self.load_debug_info_impl
+  protected def self.load_debug_info_impl : Nil
+    base_address : LibC::Elf_Addr = 0
     phdr_callback = LibC::DlPhdrCallback.new do |info, size, data|
-      # The first entry is the header for the current program
-      read_dwarf_sections(info.value.addr)
+      # The first entry is the header for the current program.
+      # Note that we avoid allocating here and just store the base address
+      # to be passed to self.read_dwarf_sections when dl_iterate_phdr returns.
+      # Calling self.read_dwarf_sections from this callback may lead to reallocations
+      # and deadlocks due to the internal lock held by dl_iterate_phdr (#10084).
+      data.as(Pointer(LibC::Elf_Addr)).value = info.value.addr
       1
     end
 
-    # GC needs to be disabled around dl_iterate_phdr in freebsd (#10084)
-    {% if flag?(:freebsd) %} GC.disable {% end %}
-    LibC.dl_iterate_phdr(phdr_callback, nil)
-    {% if flag?(:freebsd) %} GC.enable {% end %}
+    LibC.dl_iterate_phdr(phdr_callback, pointerof(base_address))
+    self.read_dwarf_sections(base_address)
   end
 
   protected def self.read_dwarf_sections(base_address = 0)

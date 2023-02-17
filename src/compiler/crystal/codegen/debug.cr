@@ -36,7 +36,7 @@ module Crystal
       if @program.has_flag?("windows")
         # Windows uses CodeView instead of DWARF
         mod.add_flag(
-          LLVM::ModuleFlag::Warning,
+          LibLLVM::ModuleFlagBehavior::Warning,
           "CodeView",
           mod.context.int32.const_int(1)
         )
@@ -44,14 +44,14 @@ module Crystal
         # DebugInfo generation in LLVM by default uses a higher version of dwarf
         # than OS X currently understands. Android has the same problem.
         mod.add_flag(
-          LLVM::ModuleFlag::Warning,
+          LibLLVM::ModuleFlagBehavior::Warning,
           "Dwarf Version",
           mod.context.int32.const_int(2)
         )
       end
 
       mod.add_flag(
-        LLVM::ModuleFlag::Warning,
+        LibLLVM::ModuleFlagBehavior::Warning,
         "Debug Info Version",
         mod.context.int32.const_int(LLVM::DEBUG_METADATA_VERSION)
       )
@@ -340,7 +340,7 @@ module Crystal
       end
     end
 
-    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
+    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, &)
       location = location.try &.expanded_location
       return false unless location
 
