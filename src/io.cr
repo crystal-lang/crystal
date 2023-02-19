@@ -1155,70 +1155,26 @@ abstract class IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst) : Int64
-    buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     count = 0_i64
+    {% if LibC.has_method?(:copy_file_range) %}
+      if src.is_a?(File) && dst.is_a?(File)
+        dst.write(src.read_buffer)
+        count += src.read_buffer.size
+        src.skip(src.read_buffer.size)
+        dst.flush
+
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SSizeT::MAX, 0)
+        return count + len unless len == -1 # fallback to buffer copying on errno
+      end
+    {% end %}
+
+    buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
       count &+= len
     end
     count
   end
-
-  {% if LibC.has_method?(:copy_file_range) %}
-    # Copy all contents from *src* to *dst*.
-    #
-    # Uses the `copy_file_range` optimization on supported platforms
-    def self.copy(src : File, dst : File, limit : Int) : UInt64
-      raise ArgumentError.new("Negative limit") if limit < 0
-      return 0_u64 if limit.zero?
-
-      remaining = limit = limit.to_u64
-      if limit < src.read_buffer.size
-        dst.write(src.read_buffer[0, limit])
-        src.skip(limit)
-        return limit
-      end
-
-      dst.write(src.read_buffer)
-      remaining -= src.read_buffer.size
-      src.skip(src.read_buffer.size)
-      dst.flush
-
-      while remaining > 0
-        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
-        if len == -1
-          raise IO::Error.from_errno "copy_file_range"
-        end
-        break if len.zero?
-        remaining -= len
-      end
-
-      limit - remaining
-    end
-
-    # Copy at most *limit* bytes from *src* to *dst*.
-    #
-    # Uses the `copy_file_range` optimization on supported platforms
-    def self.copy(src : File, dst : File) : UInt64
-      count = 0_u64
-
-      dst.write(src.read_buffer)
-      count += src.read_buffer.size
-      src.skip(src.read_buffer.size)
-      dst.flush
-
-      loop do
-        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SSizeT::MAX, 0)
-        if len == -1
-          raise IO::Error.from_errno "copy_file_range"
-        end
-        break if len.zero?
-        count += len
-      end
-
-      count
-    end
-  {% end %}
 
   # Copy at most *limit* bytes from *src* to *dst*.
   #
@@ -1233,10 +1189,23 @@ abstract class IO
   def self.copy(src, dst, limit : Int) : Int64
     raise ArgumentError.new("Negative limit") if limit < 0
 
-    limit = limit.to_i64
+    remaining = limit = limit.to_i64
+
+    {% if LibC.has_method?(:copy_file_range) %}
+      if src.is_a?(File) && dst.is_a?(File)
+        len = Math.min(limit, src.read_buffer.size) # if copying less than the read buffer size
+        dst.write(src.read_buffer[0, len])
+        src.skip(len)
+        remaining -= len
+        return limit if remaining.zero?
+        dst.flush
+
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
+        return remaining - len unless len == -1 # fallback to buffer copying on errno
+      end
+    {% end %}
 
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
-    remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]
       remaining &-= len
