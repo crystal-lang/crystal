@@ -1159,12 +1159,14 @@ abstract class IO
     {% if LibC.has_method?(:copy_file_range) %}
       if src.is_a?(File) && dst.is_a?(File)
         dst.write(src.unsafe_read_buffer)
-        count += src.unsafe_read_buffer.size
+        count &+= src.unsafe_read_buffer.size
         src.skip(src.unsafe_read_buffer.size)
         dst.flush
 
-        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SSizeT::MAX, 0)
-        return count + len unless len == -1 # fallback to buffer copying on errno
+        while (len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SSizeT::MAX, 0)) > 0 # fallback to buffer copying on error
+          count &+= len
+        end
+        return count unless count.zero? # copy_file_range can return 0 on virtual FS files (e.g. /proc), if so then fallback
       end
     {% end %}
 
@@ -1196,12 +1198,14 @@ abstract class IO
         len = Math.min(limit, src.unsafe_read_buffer.size) # if copying less than the read buffer size
         dst.write(src.unsafe_read_buffer[0, len])
         src.skip(len)
-        remaining -= len
+        remaining &-= len
         return limit if remaining.zero?
         dst.flush
 
-        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
-        return remaining - len unless len == -1 # fallback to buffer copying on errno
+        while (len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)) > 0 # fallback to buffer copying on error
+          remaining &-= len
+          return limit if remaining.zero?
+        end
       end
     {% end %}
 
