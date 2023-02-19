@@ -257,7 +257,7 @@ module IO::Buffered
   end
 
   # Unsafe, direct access to the underlying read buffer.
-  def read_buffer
+  protected def unsafe_read_buffer
     @in_buffer_rem
   end
 

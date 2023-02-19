@@ -1158,9 +1158,9 @@ abstract class IO
     count = 0_i64
     {% if LibC.has_method?(:copy_file_range) %}
       if src.is_a?(File) && dst.is_a?(File)
-        dst.write(src.read_buffer)
-        count += src.read_buffer.size
-        src.skip(src.read_buffer.size)
+        dst.write(src.unsafe_read_buffer)
+        count += src.unsafe_read_buffer.size
+        src.skip(src.unsafe_read_buffer.size)
         dst.flush
 
         len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SSizeT::MAX, 0)
@@ -1193,8 +1193,8 @@ abstract class IO
 
     {% if LibC.has_method?(:copy_file_range) %}
       if src.is_a?(File) && dst.is_a?(File)
-        len = Math.min(limit, src.read_buffer.size) # if copying less than the read buffer size
-        dst.write(src.read_buffer[0, len])
+        len = Math.min(limit, src.unsafe_read_buffer.size) # if copying less than the read buffer size
+        dst.write(src.unsafe_read_buffer[0, len])
         src.skip(len)
         remaining -= len
         return limit if remaining.zero?
