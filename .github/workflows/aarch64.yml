@@ -12,7 +12,7 @@ jobs:
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make crystal
+          args: make crystal FLAGS=-Duse_pcre
       - name: Upload Crystal executable
         uses: actions/upload-artifact@v3
         with:
@@ -36,7 +36,7 @@ jobs:
       - name: Run stdlib specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make std_spec
+          args: make std_spec FLAGS=-Duse_pcre
   aarch64-musl-test-compiler:
     needs: aarch64-musl-build
     runs-on: [linux, ARM64]
@@ -53,7 +53,7 @@ jobs:
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make primitives_spec compiler_spec FLAGS=-Dwithout_ffi
+          args: make primitives_spec compiler_spec FLAGS="-Dwithout_ffi -Duse_pcre"
   aarch64-gnu-build:
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
@@ -87,7 +87,7 @@ jobs:
       - name: Run stdlib specs
         uses: docker://jhass/crystal:1.0.0-build
         with:
-          args: make std_spec
+          args: make std_spec FLAGS=-Duse_pcre
   aarch64-gnu-test-compiler:
     needs: aarch64-gnu-build
     runs-on: [linux, ARM64]
@@ -104,4 +104,4 @@ jobs:
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-build
         with:
-          args: make primitives_spec compiler_spec
+          args: make primitives_spec compiler_spec FLAGS=-Duse_pcre
