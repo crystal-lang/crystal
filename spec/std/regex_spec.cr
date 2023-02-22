@@ -211,7 +211,9 @@ describe "Regex" do
       {% else %}
         # Can't use regex literal because the *LIMIT_DEPTH verb is not supported in libpcre (only libpcre2)
         # and thus the compiler doesn't recognize it.
-        str.matches?(Regex.new("(*LIMIT_DEPTH=8192)^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"))
+        regex = Regex.new("(*LIMIT_DEPTH=8192)^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$")
+        pending! "PCRE2 JIT mode not available." unless regex.@jit
+        str.matches?(regex)
       {% end %}
       # We don't care whether this actually matches or not, it's just to make
       # sure the engine does not stack overflow with a large string.
