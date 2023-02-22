@@ -179,7 +179,7 @@ lib LibPCRE2
 
   fun get_error_message = pcre2_get_error_message_8(errorcode : Int, buffer : UInt8*, bufflen : LibC::SizeT) : Int
 
-  fun compile = pcre2_compile_8(pattern : UInt8*, length : LibC::SizeT, options : UInt32, errorcode : LibC::SizeT*, erroroffset : Int*, ccontext : CompileContext*) : Code*
+  fun compile = pcre2_compile_8(pattern : UInt8*, length : LibC::SizeT, options : UInt32, errorcode : Int*, erroroffset : LibC::SizeT*, ccontext : CompileContext*) : Code*
   fun code_free = pcre2_code_free_8(code : Code*) : Void
 
   type MatchContext = Void*

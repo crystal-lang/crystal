@@ -176,7 +176,7 @@ module Regex::PCRE2
 
   module MatchData
     # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : UInt64*, @group_size : Int32)
+    def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : LibC::SizeT*, @group_size : Int32)
     end
 
     private def byte_range(n, &)
