@@ -42,6 +42,7 @@ jobs:
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
+            libs/pcre2-8.lib
             libs/iconv.lib
             libs/gc.lib
             libs/ffi.lib
