@@ -254,7 +254,8 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none?
+        # TODO: wasm32 shouldn't require single_module. But not using it somehow messes up with imports from named modules.
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none? || program.has_flag? "wasm32"
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -315,15 +316,16 @@ module Crystal
         target_machine.emit_obj_to_file llvm_mod, object_name
       end
 
-      _, command, args = linker_command(program, [object_name], output_filename, nil)
-      print_command(command, args)
+      linker_commands(program, [object_name], output_filename, nil).each do |(_, command, args)|
+        print_command(command, args)
+      end
     end
 
     private def print_command(command, args)
       stdout.puts command.sub(%("${@}"), args && Process.quote(args))
     end
 
-    private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
+    private def linker_commands(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "msvc"
         lib_flags = program.lib_flags
         # Execute and expand `subcommands`.
@@ -379,15 +381,29 @@ module Crystal
           cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        {cl, cmd, nil}
+        [{cl, cmd, nil}]
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
+        if @release
+          link_flags += " --strip-all --compress-relocations"
+        end
+        opt_flags = "--asyncify --pass-arg=asyncify-ignore-imports"
+        if @release
+          opt_flags += " -Oz --all-features"
+        end
+        if @debug
+          opt_flags += " -g"
+        end
+        output = Process.quote_posix(output_filename)
+        [
+          {"wasm-ld", %(wasm-ld "${@}" -o #{output} #{link_flags} -lc #{program.lib_flags}), object_names},
+          {"wasm-opt", %(wasm-opt "${@}" -o #{output} #{opt_flags}), [output]},
+        ]
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        {CC, %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+        [{CC, %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}]
       end
     end
 
@@ -419,7 +435,9 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          run_linker *linker_command(program, object_names, output_filename, output_dir, expand: true)
+          linker_commands(program, object_names, output_filename, output_dir, expand: true).each do |command|
+            run_linker *command
+          end
         end
       end
 
