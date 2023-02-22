@@ -207,8 +207,10 @@ lib LibPCRE2
   fun get_ovector_pointer = pcre2_get_ovector_pointer_8(match_data : MatchData*) : LibC::SizeT*
   fun get_ovector_count = pcre2_get_ovector_count_8(match_data : MatchData*) : UInt32
 
-  # void *private_malloc(Int, void *);
-  # void  private_free(void *, void *);
-  fun general_context_create = pcre2_general_context_create_8(private_malloc : Void*, private_free : Void*, memory_data : Void*) : GeneralContext
+  fun general_context_create = pcre2_general_context_create_8(
+    private_malloc : LibC::SizeT, Void* -> Void,
+    private_free : Void*, Void* -> Void,
+    memory_data : Void*
+  ) : GeneralContext
   fun config = pcre2_config_8(what : UInt32, where : Void*) : Int
 end
