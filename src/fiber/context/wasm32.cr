@@ -57,12 +57,12 @@
 #    b. store the current stack_pointer global on context.stack_top.
 #    c. update the current position of the asyncify buffer to be just after the header
 #    d. update the end position  of the asyncify buffer to be the current stack top
-#    e. mark Fiber.is_manipulating_stack_with_asyncify = true
+#    e. mark Fiber.manipulating_stack_with_asyncify = true
 #    f. begin stack unwinding with LibAsyncify.start_unwind() and returns.
 # 4. As a consequence of the Asyncify transformation, all functions behave differently and instead
 #    of executing, they will write their local stack to the Asyncify buffer and return.
 # 5. At some point execution will arrive at Fiber.wrap_with_fibers again. We know that we are
-#    unwinding as Fiber.is_manipulating_stack_with_asyncify is marked. This means we have to either
+#    unwinding as Fiber.manipulating_stack_with_asyncify? is marked. This means we have to either
 #    start a new fiber or rewind into a previously running fiber. If there is a asyncify buffer, then
 #    setup the rewinding process. Then call into the fiber main function. If it's null, then this is
 #    the main fiber, just call the original block.
@@ -112,7 +112,7 @@ class Fiber
   class_property next_context : Context*?
 
   # :nodoc:
-  class_property is_manipulating_stack_with_asyncify = false
+  class_property? manipulating_stack_with_asyncify = false
 
   struct Context
     property stack_low : Void* = get_main_stack_low
@@ -134,8 +134,8 @@ class Fiber
   # :nodoc:
   @[NoInline]
   def self.swapcontext(current_context, new_context) : Nil
-    if Fiber.is_manipulating_stack_with_asyncify
-      Fiber.is_manipulating_stack_with_asyncify = false
+    if Fiber.manipulating_stack_with_asyncify?
+      Fiber.manipulating_stack_with_asyncify = false
       LibAsyncify.stop_rewind
       return
     end
@@ -151,7 +151,7 @@ class Fiber
     ctx_data_ptr[3] = current_context.value.stack_top
 
     asyncify_data_ptr = (ctx_data_ptr + 2).as(LibAsyncify::Data*)
-    Fiber.is_manipulating_stack_with_asyncify = true
+    Fiber.manipulating_stack_with_asyncify = true
     LibAsyncify.start_unwind(asyncify_data_ptr)
   end
 
@@ -160,8 +160,8 @@ class Fiber
   def self.wrap_with_fibers(&block : -> T) : T forall T
     result = block.call
 
-    while Fiber.is_manipulating_stack_with_asyncify
-      Fiber.is_manipulating_stack_with_asyncify = false
+    while Fiber.manipulating_stack_with_asyncify?
+      Fiber.manipulating_stack_with_asyncify = false
       LibAsyncify.stop_unwind
 
       next_context = Fiber.next_context.not_nil!
@@ -171,7 +171,7 @@ class Fiber
 
       asyncify_data_ptr = (ctx_data_ptr + 2).as(LibAsyncify::Data*)
       unless asyncify_data_ptr.value.current_location == Pointer(Void).null
-        Fiber.is_manipulating_stack_with_asyncify = true
+        Fiber.manipulating_stack_with_asyncify = true
         LibAsyncify.start_rewind(asyncify_data_ptr)
       end
 
@@ -184,6 +184,6 @@ class Fiber
       end
     end
 
-    return result
+    result
   end
 end
