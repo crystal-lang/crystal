@@ -22,7 +22,7 @@ jobs:
           wasmtime-version: "2.0.0"
 
       - name: Install Binaryen
-        run: apt-get install -y binaryen
+        run: apt-get update && apt-get install -y binaryen
 
       - name: Install LLVM 13
         run: |
