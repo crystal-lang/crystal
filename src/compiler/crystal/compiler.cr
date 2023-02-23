@@ -385,7 +385,10 @@ module Crystal
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
         if @release
-          link_flags += " --strip-all --compress-relocations"
+          link_flags += " --compress-relocations"
+        end
+        if @release && !@debug
+          link_flags += " --strip-all"
         end
         opt_flags = "--asyncify --pass-arg=asyncify-ignore-imports"
         if @release
