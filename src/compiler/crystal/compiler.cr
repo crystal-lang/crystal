@@ -384,19 +384,12 @@ module Crystal
         [{cl, cmd, nil}]
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        if @release
-          link_flags += " --compress-relocations"
-        end
-        if @debug.none?
-          link_flags += " --strip-all"
-        end
+        link_flags += " --compress-relocations" if @release
+        link_flags += " --strip-all" if @debug.none?
+
         opt_flags = "--asyncify --pass-arg=asyncify-ignore-imports"
-        if @release
-          opt_flags += " -Os --all-features"
-        end
-        unless @debug.none?
-          opt_flags += " -g"
-        end
+        opt_flags += " -Os --all-features" if @release
+        opt_flags += " -g" unless @debug.none?
         output = Process.quote_posix(output_filename)
         [
           {"wasm-ld", %(wasm-ld "${@}" -o #{output} #{link_flags} -lc #{program.lib_flags}), object_names},
