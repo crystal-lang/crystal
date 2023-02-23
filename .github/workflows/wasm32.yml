@@ -4,6 +4,9 @@ on: [push, pull_request]
 
 env:
   SPEC_SPLIT_DOTS: 160
+  TRAVIS_OS_NAME: linux
+  ARCH: x86_64
+  ARCH_CMD: linux64
 
 jobs:
   wasm32-test:
@@ -17,6 +20,9 @@ jobs:
         uses: mwilliamson/setup-wasmtime-action@v2
         with:
           wasmtime-version: "2.0.0"
+
+      - name: Install Binaryen
+        run: sudo apt-get install -y binaryen
 
       - name: Install LLVM 13
         run: |
