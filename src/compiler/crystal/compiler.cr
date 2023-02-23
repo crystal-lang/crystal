@@ -387,14 +387,14 @@ module Crystal
         if @release
           link_flags += " --compress-relocations"
         end
-        if @release && !@debug
+        if @debug.none?
           link_flags += " --strip-all"
         end
         opt_flags = "--asyncify --pass-arg=asyncify-ignore-imports"
         if @release
           opt_flags += " -Os --all-features"
         end
-        if @debug
+        unless @debug.none?
           opt_flags += " -g"
         end
         output = Process.quote_posix(output_filename)
