@@ -47,6 +47,43 @@ module Crystal::System::File
     m | o
   end
 
+  LOWER_ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz".to_slice
+
+  def self.mktemp(prefix : String?, suffix : String?, dir : String, random : ::Random = ::Random::DEFAULT) : {LibC::Int, String}
+    mode = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL
+    perm = ::File::Permissions.new(0o600)
+
+    prefix = ::File.join(dir, prefix || "")
+    bytesize = prefix.bytesize + 8 + (suffix.try(&.bytesize) || 0)
+
+    100.times do
+      path = String.build(bytesize) do |io|
+        io << prefix
+        8.times do
+          io.write_byte LOWER_ALPHANUM.sample(random)
+        end
+        io << suffix
+      end
+
+      fd, errno = open(path, mode, perm)
+
+      if errno.none?
+        return {fd, path}
+      elsif error_is_file_exists?(errno)
+        # retry
+        next
+      else
+        raise ::File::Error.from_os_error("Error creating temporary file", errno, file: path)
+      end
+    end
+
+    raise ::File::AlreadyExistsError.new("Error creating temporary file", file: "#{prefix}********#{suffix}")
+  end
+
+  private def self.error_is_file_exists?(errno)
+    Errno.value.in?(Errno::EEXIST, WinError::ERROR_ALREADY_EXISTS)
+  end
+
   # Closes the internal file descriptor without notifying libevent.
   # This is directly used after the fork of a process to close the
   # parent's Crystal::Signal.@@pipe reference before re initializing
