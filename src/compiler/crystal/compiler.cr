@@ -397,7 +397,7 @@ module Crystal
         output = Process.quote_posix(output_filename)
         [
           {"wasm-ld", %(wasm-ld "${@}" -o #{output} #{link_flags} -lc #{program.lib_flags}), object_names},
-          {"wasm-opt", %(wasm-opt "${@}" -o #{output} #{opt_flags}), [output]},
+          {"wasm-opt", %(wasm-opt #{output} -o #{output} #{opt_flags}), nil},
         ]
       else
         link_flags = @link_flags || ""
