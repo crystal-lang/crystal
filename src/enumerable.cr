@@ -631,8 +631,7 @@ module Enumerable(T)
 
   # Returns an `Array` with chunks in the given size.
   # Last chunk can be smaller depending on the number of remaining items
-  # [1, 2, 3].in_groups_of(2, 0) # => [[1, 2], [3, 0]]
-  # [1, 2, 3].in_groups_of(2)    # => [[1, 2], [3]]
+  # [1, 2, 3].in_slices_of(2)    # => [[1, 2], [3]]
   # ```
   def in_slices_of(size : Int) : Array(Array(T))
     raise ArgumentError.new("Size must be positive") if size <= 0
