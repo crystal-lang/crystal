@@ -389,7 +389,7 @@ module Crystal
         end
         opt_flags = "--asyncify --pass-arg=asyncify-ignore-imports"
         if @release
-          opt_flags += " -Oz --all-features"
+          opt_flags += " -Os --all-features"
         end
         if @debug
           opt_flags += " -g"
