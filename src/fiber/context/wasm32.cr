@@ -1,10 +1,10 @@
 {% skip_file unless flag?(:wasm32) %}
 
-# WebAssmbly as built by LLVM has 3 stacks:
+# WebAssembly as built by LLVM has 3 stacks:
 # - A value stack for low level operations. Wasm is a stack machine. For example: to write data to
-#   memory you first push the target address, then the value, then performr the 'store' instruction.
+#   memory you first push the target address, then the value, then perform the 'store' instruction.
 # - A stack with private frames. Each function has access to a stack frame accessed with the local.get
-#   and local.set instructions. These frames are private and can't be manipuled outside of the function.
+#   and local.set instructions. These frames are private and can't be manipulated outside of the function.
 # - A shadow stack in the main memory. It is controlled by a stack_pointer global and grows down. This
 #   is not a feature of WebAssembly, just a convention that LLVM uses.
 #
@@ -13,11 +13,11 @@
 #
 # Here we use an alternative implementation on top of Binaryen's Asyncify pass. It is a static transformation
 # on the WebAssembly file that must be performed after the Crystal program is compiled. It rewrites every
-# relevant function so that it writes its stack frame to memory and rewinds to the called, as well as
+# relevant function so that it writes its stack frame to memory and rewinds to the caller, as well as
 # recovering the stack from memory. It is all controlled by a global state variable.
 # Please read more details at https://github.com/WebAssembly/binaryen/blob/main/src/passes/Asyncify.cpp.
 #
-# Stack switching is acomplished by the cooperation between two functions: Fiber.swapcontext and
+# Stack switching is accomplished by the cooperation between two functions: Fiber.swapcontext and
 # Fiber.wrap_with_fibers. Before they are explained, the memory layout must be understood:
 #
 # +--------+--------+------------------+----------------
@@ -46,7 +46,7 @@
 #  - [1] => A pointer to the Fiber instance
 #  - [2] => The current position on the asyncify buffer (starts after the header, grows up)
 #  - [4] => The end position on the asyncify buffer (the current stack top)
-# On the main stack all of them are garanteed to start null.
+# On the main stack all of them are guaranteed to start null.
 #
 # Stack switching should happens as follows:
 #
