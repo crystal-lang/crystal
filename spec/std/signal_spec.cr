@@ -40,15 +40,17 @@ describe "Signal" do
 
   it "CHLD.trap is called after default Crystal child handler" do
     chan = Channel(Process).new
+    existed = Channel(Bool).new
 
     Signal::CHLD.trap do
       child_process = chan.receive
-      Process.exists?(child_process.pid).should be_false
+      existed.send(Process.exists?(child_process.pid))
     end
 
     child = Process.new("true", shell: true)
     child.wait # doesn't block forever
     chan.send(child)
+    existed.receive.should be_false
   ensure
     Signal::CHLD.reset
   end
