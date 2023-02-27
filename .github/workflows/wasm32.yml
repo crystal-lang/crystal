@@ -47,7 +47,7 @@ jobs:
         run: make crystal # TODO: Remove this after next version update
 
       - name: Build spec/wasm32_std_spec.cr
-        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Duse_pcre
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Duse_pcre --release
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
