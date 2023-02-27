@@ -4,9 +4,6 @@ on: [push, pull_request]
 
 env:
   SPEC_SPLIT_DOTS: 160
-  TRAVIS_OS_NAME: linux
-  ARCH: x86_64
-  ARCH_CMD: linux64
 
 jobs:
   wasm32-test:
@@ -42,7 +39,7 @@ jobs:
           rm wasm32-wasi-libs.tar.gz
 
       - name: Build fresh compiler
-        run: bin/ci with_build_env make # TODO: Remove this after next version update
+        run: make crystal # TODO: Remove this after next version update
 
       - name: Build spec/wasm32_std_spec.cr
         run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Duse_pcre
