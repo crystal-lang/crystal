@@ -85,7 +85,7 @@ class HTTP::WebSocket
 
   # Sends a PING frame. Received pings will call `#on_ping`.
   #
-  # It's possible to send a PING frame, which the other party must respond to with a PONG.
+  # The receiving party must respond with a PONG.
   def ping(message = nil)
     check_open
     @ws.ping(message)
