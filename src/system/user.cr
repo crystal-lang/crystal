@@ -2,6 +2,8 @@ require "crystal/system/user"
 
 # Represents a user on the host system.
 #
+# NOTE: To use User, you must explicitly import it with `require "system/user"`
+#
 # Users can be retrieved by either username or their user ID:
 #
 # ```

@@ -3,6 +3,8 @@ require "./benchmark/**"
 # The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time and memory taken for each task.
 #
+# NOTE: To use `Benchmark`, you must explicitly import it with `require "benchmark"`
+#
 # ### Measure the number of iterations per second of each task
 #
 # ```

@@ -50,8 +50,8 @@ struct Crystal::System::Process
     Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    raise NotImplementedError.new("Process.kill")
+  def terminate(*, graceful)
+    LibC.TerminateProcess(@process_handle, 1)
   end
 
   def self.exit(status)

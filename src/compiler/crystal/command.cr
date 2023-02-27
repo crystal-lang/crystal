@@ -282,24 +282,45 @@ class Crystal::Command
       puts "Execute: #{elapsed_time}"
     end
 
-    case status
-    when .normal_exit?
-      exit error_on_exit ? 1 : status.exit_code
-    when .signal_exit?
-      case signal = status.exit_signal
-      when .kill?
-        STDERR.puts "Program was killed"
-      when .segv?
-        STDERR.puts "Program exited because of a segmentation fault (11)"
-      when .int?
-        # OK, bubbled from the sub-program
-      else
-        STDERR.puts "Program received and didn't handle signal #{signal} (#{signal.value})"
-      end
-    else
-      STDERR.puts "Program exited abnormally, the cause is unknown"
+    if status.exit_reason.normal? && !error_on_exit
+      exit status.exit_code
     end
+
+    if message = exit_message(status)
+      STDERR.puts message
+      STDERR.flush
+    end
+
     exit 1
+  end
+
+  private def exit_message(status)
+    case status.exit_reason
+    when .aborted?
+      if status.signal_exit?
+        signal = status.exit_signal
+        if signal.kill?
+          "Program was killed"
+        else
+          "Program received and didn't handle signal #{signal} (#{signal.value})"
+        end
+      else
+        "Program exited abnormally"
+      end
+    when .breakpoint?
+      "Program hit a breakpoint and no debugger was attached"
+    when .access_violation?, .bad_memory_access?
+      # NOTE: this only happens with the empty prelude, because the stdlib
+      # runtime catches those exceptions and then exits _normally_ with exit
+      # code 11 or 1
+      "Program exited because of an invalid memory access"
+    when .bad_instruction?
+      "Program exited because of an invalid instruction"
+    when .float_exception?
+      "Program exited because of a floating-point system exception"
+    when .unknown?
+      "Program exited abnormally, the cause is unknown"
+    end
   end
 
   record CompilerConfig,

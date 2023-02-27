@@ -4,6 +4,8 @@
 
 # An HTTP Client.
 #
+# NOTE: To use `Client`, you must explicitly import it with `require "http/client"`
+#
 # ### One-shot usage
 #
 # Without a block, an `HTTP::Client::Response` is returned and the response's body

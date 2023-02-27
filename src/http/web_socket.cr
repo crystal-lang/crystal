@@ -1,6 +1,7 @@
 require "./client"
 require "./headers"
 
+# NOTE: To use `WebSocket`, you must explicitly import it with `require "http/web_socket"`
 class HTTP::WebSocket
   getter? closed = false
 
@@ -139,7 +140,7 @@ class HTTP::WebSocket
       end
 
       case info.opcode
-      when .ping?
+      in .ping?
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
@@ -147,25 +148,25 @@ class HTTP::WebSocket
           pong(message) unless closed?
           @current_message.clear
         end
-      when .pong?
+      in .pong?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_pong.try &.call(@current_message.to_s)
           @current_message.clear
         end
-      when .text?
+      in .text?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_message.try &.call(@current_message.to_s)
           @current_message.clear
         end
-      when .binary?
+      in .binary?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_binary.try &.call(@current_message.to_slice)
           @current_message.clear
         end
-      when .close?
+      in .close?
         @current_message.write @buffer[0, info.size]
         if info.final
           @current_message.rewind
@@ -184,7 +185,7 @@ class HTTP::WebSocket
           @current_message.clear
           break
         end
-      when Protocol::Opcode::CONTINUATION
+      in .continuation?
         # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
     end

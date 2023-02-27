@@ -12,6 +12,11 @@ describe Crystal::Loader do
       loader.search_paths.should eq ["/foo/bar/baz", "qux"]
     end
 
+    it "prepends directory paths before default search paths" do
+      loader = Crystal::Loader.parse(%w(-Lfoo -Lbar), search_paths: %w(baz quux))
+      loader.search_paths.should eq %w(foo bar baz quux)
+    end
+
     it "parses static" do
       expect_raises(Crystal::Loader::LoadError, "static libraries are not supported by Crystal's runtime loader") do
         Crystal::Loader.parse(["-static"], search_paths: [] of String)

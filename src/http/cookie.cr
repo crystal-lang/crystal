@@ -2,6 +2,8 @@ require "./common"
 
 module HTTP
   # Represents a cookie with all its attributes. Provides convenient access and modification of them.
+  #
+  # NOTE: To use `Cookie`, you must explicitly import it with `require "http/cookie"`
   class Cookie
     # Possible values for the `SameSite` cookie as described in the [Same-site Cookies Draft](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1).
     enum SameSite
@@ -273,6 +275,8 @@ module HTTP
 
   # Represents a collection of cookies as it can be present inside
   # a HTTP request or response.
+  #
+  # NOTE: To use `Cookies`, you must explicitly import it with `require "http/cookie"`
   class Cookies
     include Enumerable(Cookie)
 
