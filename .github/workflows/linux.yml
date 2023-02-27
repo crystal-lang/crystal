@@ -16,15 +16,18 @@ jobs:
     strategy:
       matrix:
         crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2]
-        env: ["USE_PCRE1=true"]
+        env: 
+          USE_PCRE1: true
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
             flags: -Dwithout_ffi
-            env: USE_PCRE1=true
+            env:
+              USE_PCRE1: true
           - crystal_bootstrap_version: 1.1.1
             flags: -Dwithout_ffi
-            env: USE_PCRE1=true
+            env:
+              USE_PCRE1: true
           - crystal_bootstrap_version: 1.7.2
             env: ""
     steps:
@@ -38,7 +41,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: FLAGS=${{ matrix.flags }} ${{ matrix.env}} bin/ci build
+        run: FLAGS=${{ matrix.flags }} ${{ matrix.env }} bin/ci build
 
   x86_64-musl-test:
     env:
