@@ -19,7 +19,10 @@ jobs:
           wasmtime-version: "2.0.0"
 
       - name: Install Binaryen
-        run: apt-get update && apt-get install -y binaryen
+        run: |
+          curl -LO https://github.com/WebAssembly/binaryen/releases/download/version_112/binaryen-version_112-x86_64-linux.tar.gz
+          tar -xf binaryen-version_112-x86_64-linux.tar.gz
+          mv binaryen-version_112/bin/wasm-opt /usr/bin/
 
       - name: Install LLVM 13
         run: |
