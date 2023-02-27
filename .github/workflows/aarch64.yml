@@ -12,7 +12,7 @@ jobs:
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make crystal PCRE1=true
+          args: make crystal
       - name: Upload Crystal executable
         uses: actions/upload-artifact@v3
         with:
@@ -63,7 +63,7 @@ jobs:
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-build
         with:
-          args: make crystal PCRE1=true
+          args: make crystal
       - name: Upload Crystal executable
         uses: actions/upload-artifact@v3
         with:
