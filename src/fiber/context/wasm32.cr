@@ -170,7 +170,7 @@ class Fiber
       set_stack_pointer next_context.value.stack_top
 
       asyncify_data_ptr = (ctx_data_ptr + 2).as(LibAsyncify::Data*)
-      unless asyncify_data_ptr.value.current_location == Pointer(Void).null
+      unless asyncify_data_ptr.value.current_location.null?
         Fiber.manipulating_stack_with_asyncify = true
         LibAsyncify.start_rewind(asyncify_data_ptr)
       end
