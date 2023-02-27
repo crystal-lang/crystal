@@ -384,8 +384,7 @@ module Crystal
         [{cl, cmd, nil}]
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        link_flags += " --compress-relocations" if @release
-        link_flags += " --strip-all" if @debug.none?
+        link_flags += " --compress-relocations --strip-all" if @debug.none?
 
         opt_flags = "--asyncify"
         opt_flags += " -Os --all-features" if @release
