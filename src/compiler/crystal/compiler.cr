@@ -386,7 +386,7 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " --compress-relocations --strip-all" if @debug.none?
 
-        opt_flags = "--asyncify"
+        opt_flags = "--asyncify --all-features"
         opt_flags += " -Os" if @release
         opt_flags += " -g" unless @debug.none?
         output = Process.quote_posix(output_filename)
