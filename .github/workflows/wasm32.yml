@@ -38,8 +38,8 @@ jobs:
       - name: Download wasm32 libs
         run: |
           mkdir wasm32-wasi-libs
-          curl -LO https://github.com/lbguilherme/wasm-libs/releases/download/0.0.2/wasm32-wasi-libs.tar.gz
-          echo "114dd08b776c92e15b4ec83178fa486dc436e24b7f662c3241a8cdf2506fe426  wasm32-wasi-libs.tar.gz" | sha256sum -c -
+          curl -LO https://github.com/lbguilherme/wasm-libs/releases/download/0.0.3/wasm32-wasi-libs.tar.gz
+          echo "cd36f319f8f9f9cd08f723d10e6ec2b92f2e44d3ce3b20344b8041386d85c261  wasm32-wasi-libs.tar.gz" | sha256sum -c -
           tar -f wasm32-wasi-libs.tar.gz -C wasm32-wasi-libs -xz
           rm wasm32-wasi-libs.tar.gz
 
@@ -47,7 +47,7 @@ jobs:
         run: make crystal # TODO: Remove this after next version update
 
       - name: Build spec/wasm32_std_spec.cr
-        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Duse_pcre --release
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi --release
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
