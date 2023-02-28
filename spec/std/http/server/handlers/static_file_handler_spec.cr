@@ -310,6 +310,13 @@ describe HTTP::StaticFileHandler do
         response.status_code.should eq(400)
       end
 
+      it "start >= file_size" do
+        headers = HTTP::Headers{"Range" => "bytes=12-"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(416)
+      end
+
       it "start > end" do
         headers = HTTP::Headers{"Range" => "bytes=2-1"}
         response = handle HTTP::Request.new("GET", "/range.txt", headers)

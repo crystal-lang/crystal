@@ -108,8 +108,8 @@ class HTTP::StaticFileHandler
 
           # If any of the ranges start beyond the end of the file, we return an
           # HTTP 416 Range Not Satisfiable.
-          # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests#partial_request_responses
-          if ranges.any? { |range| range.begin > file_info.size }
+          # See https://www.rfc-editor.org/rfc/rfc9110.html#section-14.1.2-11.1
+          if ranges.any? { |range| range.begin >= file_info.size }
             context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
             context.response.status = :range_not_satisfiable
             context.response.close
