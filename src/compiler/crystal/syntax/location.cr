@@ -9,6 +9,32 @@ class Crystal::Location
   def initialize(@filename : String | VirtualFile | Nil, @line_number : Int32, @column_number : Int32)
   end
 
+  # Returns a location from a string representation. Used by compiler tools like
+  # `context` and `implementations`.
+  def self.parse(cursor : String, *, expand : Bool = false) : self
+    file_and_line, colon, col = cursor.rpartition(':')
+    raise ArgumentError.new "cursor location must be file:line:column" if colon.empty?
+
+    file, colon, line = file_and_line.rpartition(':')
+    raise ArgumentError.new "cursor location must be file:line:column" if colon.empty?
+
+    raise ArgumentError.new "cursor location must be file:line:column" if file.empty? || line.empty? || col.empty?
+
+    file = File.expand_path(file) if expand
+
+    line_number = line.to_i? || 0
+    if line_number <= 0
+      raise ArgumentError.new "line must be a positive integer, not #{line}"
+    end
+
+    column_number = col.to_i? || 0
+    if column_number <= 0
+      raise ArgumentError.new "column must be a positive integer, not #{col}"
+    end
+
+    new(file, line_number, column_number)
+  end
+
   # Returns the directory name of this location's filename. If
   # the filename is a VirtualFile, this is invoked on its expanded
   # location.
