@@ -103,8 +103,19 @@ class HTTP::StaticFileHandler
 
       File.open(file_path) do |file|
         if range_header = context.request.headers["Range"]?
-          range_header = range_header.lchop?("bytes=") || return context.response.respond_with_status :range_not_satisfiable
-          ranges = parse_ranges(range_header, file_info.size) || return context.response.respond_with_status :bad_request
+          range_header = range_header.lchop?("bytes=")
+          unless range_header
+            context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
+            context.response.status = :range_not_satisfiable
+            context.response.close
+            return
+          end
+
+          ranges = parse_ranges(range_header, file_info.size)
+          unless ranges
+            context.response.respond_with_status :bad_request
+            return
+          end
 
           if file_info.size.zero? && ranges.size == 1 && ranges[0].begin.zero?
             context.response.status = :ok
@@ -120,6 +131,8 @@ class HTTP::StaticFileHandler
             context.response.close
             return
           end
+
+          ranges.map! { |range| range.begin..(Math.min(range.end, file_info.size - 1)) }
 
           context.response.status = :partial_content
 

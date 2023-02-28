@@ -184,6 +184,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 0-2/12"
         response.body.should eq "Hel"
       end
 
@@ -192,6 +193,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 0-0/12"
         response.body.should eq "H"
       end
 
@@ -200,6 +202,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/empty.txt", headers)
 
         response.status_code.should eq(200)
+        response.headers["Content-Range"]?.should be_nil
         response.body.should eq ""
       end
 
@@ -208,6 +211,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 6-11/12"
         response.body.should eq "world\n"
       end
 
@@ -218,6 +222,7 @@ describe HTTP::StaticFileHandler do
           response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
           response.status_code.should eq(206)
+          response.headers["Content-Range"]?.should eq "bytes 6-11/12"
           response.body.should eq "world\n"
         end
 
@@ -227,6 +232,7 @@ describe HTTP::StaticFileHandler do
           response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
           response.status_code.should eq(206)
+          response.headers["Content-Range"]?.should eq "bytes 0-11/12"
           response.body.should eq "Hello world\n"
         end
 
@@ -236,6 +242,7 @@ describe HTTP::StaticFileHandler do
           response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
           response.status_code.should eq(400)
+          response.headers["Content-Range"]?.should be_nil
         end
 
         it "negative size" do
@@ -244,6 +251,7 @@ describe HTTP::StaticFileHandler do
           response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
           response.status_code.should eq(400)
+          response.headers["Content-Range"]?.should be_nil
         end
       end
 
@@ -253,6 +261,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should be_nil
         count = 0
         MIME::Multipart.parse(response) do |headers, part|
           chunk = part.gets_to_end
@@ -275,6 +284,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should be_nil
         count = 0
         MIME::Multipart.parse(response) do |headers, part|
           chunk = part.gets_to_end
@@ -297,6 +307,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq 206
+        response.headers["Content-Range"]?.should eq "bytes 6-11/12"
         response.body.should eq "world\n"
       end
 
@@ -323,6 +334,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(416)
+        response.headers["Content-Range"]?.should eq "bytes */12"
       end
 
       it "start > end" do
@@ -351,6 +363,7 @@ describe HTTP::StaticFileHandler do
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
         response.status_code.should eq(416)
+        response.headers["Content-Range"]?.should eq "bytes */12"
       end
 
       it "multiple dashes" do
