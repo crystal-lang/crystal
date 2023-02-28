@@ -22,8 +22,8 @@ describe "Math" do
   end
 
   describe "Order-related functions" do
-    Math.min(2.1, 2.11).should eq(2.1)
-    Math.max(3.2, 3.11).should eq(3.2)
+    it { Math.min(2.1, 2.11).should eq(2.1) }
+    it { Math.max(3.2, 3.11).should eq(3.2) }
   end
 
   pending "Functions for computing quotient and remainder" do

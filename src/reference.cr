@@ -1,3 +1,7 @@
+{% if flag?(:preview_mt) %}
+  require "crystal/thread_local_value"
+{% end %}
+
 # `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
