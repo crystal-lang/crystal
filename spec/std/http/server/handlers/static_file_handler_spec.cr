@@ -271,7 +271,7 @@ describe HTTP::StaticFileHandler do
           when "bytes 6-7/12"
             chunk.should eq "wo"
           else
-            raise "Unknown range: #{range.inspect}"
+            fail "Unknown range: #{range.inspect}"
           end
           count += 1
         end
@@ -294,7 +294,7 @@ describe HTTP::StaticFileHandler do
           when "bytes 6-7/12"
             chunk.should eq "wo"
           else
-            raise "Unknown range: #{range.inspect}"
+            fail "Unknown range: #{range.inspect}"
           end
           count += 1
         end
