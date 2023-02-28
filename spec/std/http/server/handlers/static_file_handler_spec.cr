@@ -195,6 +195,14 @@ describe HTTP::StaticFileHandler do
         response.body.should eq "H"
       end
 
+      it "serves zero bytes" do
+        headers = HTTP::Headers{"Range" => "bytes=0-0"}
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(200)
+        response.body.should eq ""
+      end
+
       it "serves an open-ended byte range" do
         headers = HTTP::Headers{"Range" => "bytes=6-"}
         response = handle HTTP::Request.new("GET", "/range.txt", headers)

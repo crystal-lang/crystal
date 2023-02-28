@@ -106,6 +106,11 @@ class HTTP::StaticFileHandler
           range_header = range_header.lchop?("bytes=") || return context.response.respond_with_status :range_not_satisfiable
           ranges = parse_ranges(range_header, file_info.size) || return context.response.respond_with_status :bad_request
 
+          if file_info.size.zero? && ranges.size == 1 && ranges[0].begin.zero?
+            context.response.status = :ok
+            return
+          end
+
           # If any of the ranges start beyond the end of the file, we return an
           # HTTP 416 Range Not Satisfiable.
           # See https://www.rfc-editor.org/rfc/rfc9110.html#section-14.1.2-11.1
