@@ -722,31 +722,18 @@ module Math
     value1 <= value2 ? value1 : value2
   end
 
-  # Computes the next highest power of 2 of *v*.
+  # Computes the smallest nonnegative power of 2 that is greater than or equal
+  # to *v*.
+  #
+  # The returned value has the same type as the argument. Raises `OverflowError`
+  # if the result does not fit into the argument's type.
   #
   # ```
   # Math.pw2ceil(33) # => 64
+  # Math.pw2ceil(64) # => 64
+  # Math.pw2ceil(-5) # => 1
   # ```
-  def pw2ceil(v : Int32)
-    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v += v == -1 ? 2 : 1
-  end
-
-  def pw2ceil(v : Int64)
-    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v |= v >> 32
-    v += v == -1 ? 2 : 1
+  def pw2ceil(v : Int::Primitive) : Int::Primitive
+    v.next_power_of_two
   end
 end
