@@ -47,9 +47,7 @@ require "./option_parser"
 require "./path"
 require "./random/**"
 require "./semantic_version"
-{% unless flag?(:win32) %}
-  require "./signal"
-{% end %}
+require "./signal/unix"
 require "./string_pool"
 require "./string_scanner"
 require "./unicode/unicode"
