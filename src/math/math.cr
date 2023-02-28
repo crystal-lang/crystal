@@ -733,7 +733,7 @@ module Math
   # Math.pw2ceil(64) # => 64
   # Math.pw2ceil(-5) # => 1
   # ```
-  def pw2ceil(v : Int::Primitive) : Int::Primitive
+  def pw2ceil(v : Int::Primitive)
     v.next_power_of_two
   end
 end
