@@ -317,6 +317,14 @@ describe Process do
     end
   end
 
+  describe ".on_interrupt" do
+    it "compiles" do
+      typeof(Process.on_interrupt { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
   describe "#signal" do
     pending_win32 "kills a process" do
       process = Process.new(*standing_command)
@@ -345,6 +353,8 @@ describe Process do
   ensure
     process.try(&.wait)
   end
+
+  typeof(Process.new(*standing_command).terminate(graceful: false))
 
   pending_win32 ".exists?" do
     # We can't reliably check whether it ever returns false, since we can't predict

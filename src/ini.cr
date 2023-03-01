@@ -1,3 +1,4 @@
+# NOTE: To use `INI`, you must explicitly import it with `require "ini"`
 module INI
   # Exception thrown on an INI parse error.
   class ParseException < Exception

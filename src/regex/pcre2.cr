@@ -1,8 +1,10 @@
 require "./lib_pcre2"
+require "crystal/thread_local_value"
 
 # :nodoc:
 module Regex::PCRE2
   @re : LibPCRE2::Code*
+  @jit : Bool
 
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
@@ -10,19 +12,21 @@ module Regex::PCRE2
       raise ArgumentError.new(error_message)
     end
 
-    jit_compile
+    @jit = jit_compile
   end
 
-  private def jit_compile : Nil
+  private def jit_compile : Bool
     ret = LibPCRE2.jit_compile(@re, LibPCRE2::JIT_COMPLETE)
     if ret < 0
       case error = LibPCRE2::Error.new(ret)
       when .jit_badoption?
         # okay
+        return false
       else
         raise ArgumentError.new("Regex JIT compile error: #{error}")
       end
     end
+    true
   end
 
   protected def self.compile(source, options, &)
@@ -134,26 +138,25 @@ module Regex::PCRE2
   end
 
   class_getter general_context do
-    LibPCRE2.general_context_create(->(size : LibC::Int, data : Void*) { GC.malloc(size) }.pointer, ->(pointer : Void*, data : Void*) { GC.free(pointer) }.pointer, nil)
+    LibPCRE2.general_context_create(->(size, _data) { GC.malloc(size) }, ->(pointer, _data) { GC.free(pointer) }, nil)
   end
 
   # Returns a JIT stack that's shared in the current thread.
   #
   # Only a single `match` function can run per thread at any given time, so there
   # can't be any concurrent access to the JIT stack.
-  @[ThreadLocal]
-  class_getter jit_stack : LibPCRE2::JITStack do
-    jit_stack = LibPCRE2.jit_stack_create(32_768, 1_048_576, Regex::PCRE2.general_context)
-    if jit_stack.null?
-      raise "Error allocating JIT stack"
+  @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack).new
+
+  def self.jit_stack
+    @@jit_stack.get do
+      LibPCRE2.jit_stack_create(32_768, 1_048_576, general_context) || raise "Error allocating JIT stack"
     end
-    jit_stack
   end
 
   private def match_data(str, byte_index, options)
     match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
     match_context = LibPCRE2.match_context_create(nil)
-    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*))
+    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*)) if @jit
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, match_context)
 
     if match_count < 0
@@ -176,7 +179,7 @@ module Regex::PCRE2
 
   module MatchData
     # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : UInt64*, @group_size : Int32)
+    def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : LibC::SizeT*, @group_size : Int32)
     end
 
     private def byte_range(n, &)

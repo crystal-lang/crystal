@@ -21,8 +21,8 @@ struct Crystal::System::Process
   # Whether the process is still registered in the system.
   # def exists? : Bool
 
-  # Asks this process to terminate gracefully.
-  # def terminate
+  # Asks this process to terminate.
+  # def terminate(*, graceful)
 
   # Terminates the current process immediately.
   # def self.exit(status : Int)
@@ -41,6 +41,20 @@ struct Crystal::System::Process
 
   # Sends a *signal* to the processes identified by the given *pids*.
   # def self.signal(pid : Int, signal : Int)
+
+  # Installs *handler* as the new handler for interrupt requests. Removes any
+  # previously set interrupt handler.
+  # def self.on_interrupt(&handler : ->)
+
+  # Ignores all interrupt requests. Removes any custom interrupt handler set
+  # def self.ignore_interrupts!
+
+  # Restores default handling of interrupt requests.
+  # def self.restore_interrupts!
+
+  # Spawns a fiber responsible for executing interrupt handlers on the main
+  # thread.
+  # def self.start_interrupt_loop
 
   # Whether the process identified by *pid* is still registered in the system.
   # def self.exists?(pid : Int) : Bool

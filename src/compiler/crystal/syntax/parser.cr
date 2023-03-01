@@ -2239,7 +2239,7 @@ module Crystal
         node.expressions.concat(pieces)
       else
         string = combine_pieces(pieces, delimiter_state)
-        node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
+        node.expressions.push(StringLiteral.new(string).at(node).at_end(token_end_location))
       end
 
       node.heredoc_indent = delimiter_state.heredoc_indent
@@ -3497,11 +3497,11 @@ module Crystal
       when .op_star?
         next_token_skip_space
         exp = parse_expression
-        exp = Splat.new(exp).at(exp.location)
+        exp = Splat.new(exp).at(exp)
       when .op_star_star?
         next_token_skip_space
         exp = parse_expression
-        exp = DoubleSplat.new(exp).at(exp.location)
+        exp = DoubleSplat.new(exp).at(exp)
       else
         exp = parse_expression
       end
@@ -5754,7 +5754,7 @@ module Crystal
                 raise "top-level fun parameter must have a name", @token
               end
               param_type = parse_union_type
-              params << Arg.new("", nil, param_type).at(param_type.location)
+              params << Arg.new("", nil, param_type).at(param_type)
             end
 
             if @token.type.op_comma?
@@ -5946,8 +5946,6 @@ module Crystal
             else
               parse_c_struct_or_union_fields exps
             end
-          when Keyword::ELSE
-            break
           when Keyword::END
             break
           else

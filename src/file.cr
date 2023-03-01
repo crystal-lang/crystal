@@ -94,6 +94,11 @@ class File < IO::FileDescriptor
     super(fd, blocking)
   end
 
+  # :nodoc:
+  def self.from_fd(path : String, fd : Int, *, blocking = false, encoding = nil, invalid = nil)
+    new(path, fd, blocking: blocking, encoding: encoding, invalid: invalid)
+  end
+
   # Opens the file named by *filename*.
   #
   # *mode* must be one of the following file open modes:
