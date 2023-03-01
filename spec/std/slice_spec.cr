@@ -87,7 +87,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice[3] = 1 }
   end
 
-  it "does +" do
+  it "#+(Int)" do
     slice = Slice.new(3) { |i| i + 1 }
 
     slice1 = slice + 1
@@ -840,6 +840,62 @@ describe "Slice" do
       (Bytes[1, 3, 3] <=> Bytes[1, 2, 3]).should be > 0
       (Bytes[1, 2, 3] <=> Bytes[1, 2, 3, 4]).should be < 0
       (Bytes[1, 2, 3, 4] <=> Bytes[1, 2, 3]).should be > 0
+    end
+  end
+
+  describe "#+(Slice)" do
+    it "concatenates two slices" do
+      a = Slice[1, 2]
+      b = a + Slice[3, 4, 5]
+      b.should be_a(Slice(Int32))
+      b.should eq(Slice[1, 2, 3, 4, 5])
+      a.should eq(Slice[1, 2])
+
+      c = Slice[1, 2] + Slice['a', 'b', 'c']
+      c.should be_a(Slice(Int32 | Char))
+      c.should eq(Slice[1, 2, 'a', 'b', 'c'])
+    end
+  end
+
+  describe ".join" do
+    it "concatenates an indexable of slices" do
+      a = Slice.join([Slice[1, 2], Slice[3, 4, 5]])
+      a.should be_a(Slice(Int32))
+      a.should eq(Slice[1, 2, 3, 4, 5])
+
+      b = Slice.join({Slice[1, 2], Slice['a', 'b', 'c']})
+      b.should be_a(Slice(Int32 | Char))
+      b.should eq(Slice[1, 2, 'a', 'b', 'c'])
+
+      c = Slice.join(Deque{Slice[1, 2], Slice['a', 'b', 'c'], Slice["d", "e"], Slice[3, "f"]})
+      c.should be_a(Slice(Int32 | Char | String))
+      c.should eq(Slice[1, 2, 'a', 'b', 'c', "d", "e", 3, "f"])
+    end
+
+    it "concatenates a slice of slices" do
+      a = Slice[1]
+      b = Slice['a']
+      c = Slice["xyz"]
+
+      Slice.join(Slice[a, b, c]).should eq(Slice[1, 'a', "xyz"])
+    end
+
+    it "concatenates an empty indexable of slices" do
+      a = Slice.join(Array(Slice(Int32)).new)
+      a.should be_a(Slice(Int32))
+      a.should be_empty
+
+      b = Slice.join(Deque(Slice(Int32)).new)
+      b.should be_a(Slice(Int32))
+      b.should be_empty
+    end
+  end
+
+  describe ".additive_identity" do
+    it "returns an empty slice" do
+      a = Slice(Int32).additive_identity
+      a.should be_a(Slice(Int32))
+      a.should be_empty
     end
   end
 end

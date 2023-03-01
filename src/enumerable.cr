@@ -965,6 +965,35 @@ module Enumerable(T)
     ary
   end
 
+  private def quickselect_internal(data : Array(T), left : Int, right : Int, k : Int) : T
+    loop do
+      return data[left] if left == right
+      pivot_index = left + (right - left)//2
+      pivot_index = quickselect_partition_internal(data, left, right, pivot_index)
+      if k == pivot_index
+        return data[k]
+      elsif k < pivot_index
+        right = pivot_index - 1
+      else
+        left = pivot_index + 1
+      end
+    end
+  end
+
+  private def quickselect_partition_internal(data : Array(T), left : Int, right : Int, pivot_index : Int) : Int
+    pivot_value = data[pivot_index]
+    data.swap(pivot_index, right)
+    store_index = left
+    (left...right).each do |i|
+      if compare_or_raise(data[i], pivot_value) < 0
+        data.swap(store_index, i)
+        store_index += 1
+      end
+    end
+    data.swap(right, store_index)
+    store_index
+  end
+
   # Returns the element with the maximum value in the collection.
   #
   # It compares using `>` so it will work for any type that supports that method.
@@ -982,6 +1011,30 @@ module Enumerable(T)
   # Like `max` but returns `nil` if the collection is empty.
   def max? : T?
     max_by? &.itself
+  end
+
+  # Returns an array of the maximum *count* elements, sorted descending.
+  #
+  # It compares using `<=>` so it will work for any type that supports that method.
+  #
+  # ```
+  # [7, 5, 2, 4, 9].max(3)                 # => [9, 7, 5]
+  # %w[Eve Alice Bob Mallory Carol].max(2) # => ["Mallory", "Eve"]
+  # ```
+  #
+  # Returns all elements sorted descending if *count* is greater than the number
+  # of elements in the source.
+  #
+  # Raises `Enumerable::ArgumentError` if *count* is negative or if any elements
+  # are not comparable.
+  def max(count : Int) : Array(T)
+    raise ArgumentError.new("Count must be positive") if count < 0
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    count = n if count > n
+    (0...count).map do |i|
+      quickselect_internal(data, 0, n - 1, n - 1 - i)
+    end
   end
 
   # Returns the element for which the passed block returns with the maximum value.
@@ -1071,6 +1124,30 @@ module Enumerable(T)
   # Like `min` but returns `nil` if the collection is empty.
   def min? : T?
     min_by? &.itself
+  end
+
+  # Returns an array of the minimum *count* elements, sorted ascending.
+  #
+  # It compares using `<=>` so it will work for any type that supports that method.
+  #
+  # ```
+  # [7, 5, 2, 4, 9].min(3)                 # => [2, 4, 5]
+  # %w[Eve Alice Bob Mallory Carol].min(2) # => ["Alice", "Bob"]
+  # ```
+  #
+  # Returns all elements sorted ascending if *count* is greater than the number
+  # of elements in the source.
+  #
+  # Raises `Enumerable::ArgumentError` if *count* is negative or if any elements
+  # are not comparable.
+  def min(count : Int) : Array(T)
+    raise ArgumentError.new("Count must be positive") if count < 0
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    count = n if count > n
+    (0...count).map do |i|
+      quickselect_internal(data, 0, n - 1, i)
+    end
   end
 
   # Returns the element for which the passed block returns with the minimum value.
@@ -1556,6 +1633,9 @@ module Enumerable(T)
     {% elsif T < Array %}
       # optimize for array
       flat_map &.itself
+    {% elsif T < Slice && @type < Indexable %}
+      # optimize for slice
+      Slice.join(self)
     {% else %}
       sum additive_identity(Reflect(T))
     {% end %}

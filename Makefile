@@ -128,7 +128,7 @@ llvm_ext: $(LLVM_EXT_OBJ)
 
 .PHONY: format
 format: ## Format sources
-	./bin/crystal tool format$(if $(check), --check) src spec samples
+	./bin/crystal tool format$(if $(check), --check) src spec samples scripts
 
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
@@ -188,7 +188,7 @@ $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr
+	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
 $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
@@ -197,7 +197,9 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/crystal: $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
+	# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
+	# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
+	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(call check_llvm_config)

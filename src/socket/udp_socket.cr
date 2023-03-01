@@ -15,6 +15,8 @@ require "./ip_socket"
 # This implementation supports both IPv4 and IPv6 addresses. For IPv4 addresses you must use
 # `Socket::Family::INET` family (default) or `Socket::Family::INET6` for IPv6 # addresses.
 #
+# NOTE: To use `UDPSocket`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 #
 # ```
