@@ -58,8 +58,8 @@ describe Crystal::Formatter do
   assert_format ":\"foo\"", ":foo"
   assert_format %(:"\\c\\n\\""), %(:"c\\n\\"")
   assert_format %(:"\\\\c\\n\\""), %(:"\\\\c\\n\\"")
-  assert_format %(:"\\"\\'\\#\\f\\n\\r\\t\\v"), %(:"\\"\\'\\#\\f\\n\\r\\t\\v")
-  assert_format %(:"\\a\\'\\g\\f\\l\\r\\q\\v"), %(:"a\\'g\\fl\\rq\\v")
+  assert_format %(:"\\"\\'\\#\\f\\n\\r\\t\\v\\a\\b\\e"), %(:"\\"\\'\\#\\f\\n\\r\\t\\v\\a\\b\\e")
+  assert_format %(:"\\c\\'\\g\\f\\l\\r\\q\\v"), %(:"c\\'g\\fl\\rq\\v")
 
   assert_format "()"
   assert_format "(())"
