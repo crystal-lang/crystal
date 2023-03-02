@@ -1466,6 +1466,13 @@ module Crystal
 
       indent do
         next_token
+
+        # this formats `def foo # ...` to `def foo(&) # ...` for yielding
+        # methods before consuming the comment line
+        if node.block_arity && node.args.empty? && !node.block_arg && !node.double_splat
+          write "(&)"
+        end
+
         skip_space consume_newline: false
         next_token_skip_space if @token.type.op_eq?
       end
@@ -1517,7 +1524,6 @@ module Crystal
     def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat, yields)
       # If there are no args, remove extra "()"
       if args.empty? && !block_arg && !double_splat && !variadic
-        write "(&)" if yields
         if @token.type.op_lparen?
           next_token_skip_space_or_newline
           check :OP_RPAREN

@@ -266,44 +266,48 @@ describe "Math" do
 
   # div rem
 
-  # pw2ceil
-
   describe ".pw2ceil" do
-    it "Int32" do
-      Math.pw2ceil(-1).should eq 1
-      Math.pw2ceil(33).should eq(64)
-      Math.pw2ceil(128).should eq(128)
-      Math.pw2ceil(0).should eq 1
-      Math.pw2ceil(1).should eq 1
-      Math.pw2ceil(2).should eq 2
-      Math.pw2ceil(3).should eq 4
-      Math.pw2ceil(4).should eq 4
-      Math.pw2ceil(5).should eq 8
-      # 1073741824 is the largest power of 2 that fits into Int32
-      Math.pw2ceil(1073741824).should eq 1073741824
-      Math.pw2ceil(1073741824 - 1).should eq 1073741824
-      expect_raises(OverflowError) do
-        Math.pw2ceil(1073741824 + 1)
-      end
-    end
+    {% for int in %w(Int8 Int16 Int32 Int64 Int128) %}
+      it {{ int }} do
+        Math.pw2ceil({{ int.id }}::MIN).should eq 1
+        Math.pw2ceil({{ int.id }}::MIN + 1).should eq 1
+        Math.pw2ceil({{ int.id }}.new(-11)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(-1)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(0)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(1)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(2)).should eq 2
+        Math.pw2ceil({{ int.id }}.new(3)).should eq 4
+        Math.pw2ceil({{ int.id }}.new(4)).should eq 4
+        Math.pw2ceil({{ int.id }}.new(5)).should eq 8
+        Math.pw2ceil({{ int.id }}.new(32)).should eq(32)
+        Math.pw2ceil({{ int.id }}.new(33)).should eq(64)
+        Math.pw2ceil({{ int.id }}.new(64)).should eq(64)
 
-    it "Int64" do
-      Math.pw2ceil(-1_i64).should eq 1
-      Math.pw2ceil(33_i64).should eq(64)
-      Math.pw2ceil(128_i64).should eq(128)
-      Math.pw2ceil(0_i64).should eq 1
-      Math.pw2ceil(1_i64).should eq 1
-      Math.pw2ceil(2_i64).should eq 2
-      Math.pw2ceil(3_i64).should eq 4
-      Math.pw2ceil(4_i64).should eq 4
-      Math.pw2ceil(5_i64).should eq 8
-      # 4611686018427387904 is the largest power of 2 that fits into Int64
-      Math.pw2ceil(4611686018427387904).should eq 4611686018427387904
-      Math.pw2ceil(4611686018427387904 - 1).should eq 4611686018427387904
-      expect_raises(OverflowError) do
-        Math.pw2ceil(4611686018427387904 + 1)
+        Math.pw2ceil({{ int.id }}::MAX // 2).should eq({{ int.id }}::MAX // 2 + 1)
+        Math.pw2ceil({{ int.id }}::MAX // 2 + 1).should eq({{ int.id }}::MAX // 2 + 1)
+        expect_raises(OverflowError) { Math.pw2ceil({{ int.id }}::MAX // 2 + 2) }
+        expect_raises(OverflowError) { Math.pw2ceil({{ int.id }}::MAX) }
       end
-    end
+    {% end %}
+
+    {% for uint in %w(UInt8 UInt16 UInt32 UInt64 UInt128) %}
+      it {{ uint }} do
+        Math.pw2ceil({{ uint.id }}.new(0)).should eq 1
+        Math.pw2ceil({{ uint.id }}.new(1)).should eq 1
+        Math.pw2ceil({{ uint.id }}.new(2)).should eq 2
+        Math.pw2ceil({{ uint.id }}.new(3)).should eq 4
+        Math.pw2ceil({{ uint.id }}.new(4)).should eq 4
+        Math.pw2ceil({{ uint.id }}.new(5)).should eq 8
+        Math.pw2ceil({{ uint.id }}.new(32)).should eq(32)
+        Math.pw2ceil({{ uint.id }}.new(33)).should eq(64)
+        Math.pw2ceil({{ uint.id }}.new(64)).should eq(64)
+
+        Math.pw2ceil({{ uint.id }}::MAX // 2).should eq({{ uint.id }}::MAX // 2 + 1)
+        Math.pw2ceil({{ uint.id }}::MAX // 2 + 1).should eq({{ uint.id }}::MAX // 2 + 1)
+        expect_raises(OverflowError) { Math.pw2ceil({{ uint.id }}::MAX // 2 + 2) }
+        expect_raises(OverflowError) { Math.pw2ceil({{ uint.id }}::MAX) }
+      end
+    {% end %}
   end
 
   # ** (float and int)
