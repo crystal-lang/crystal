@@ -36,10 +36,33 @@ module HTML
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
+  @[AlwaysInline]
   def self.escape(string : String, io : IO) : Nil
-    string.each_char do |char|
-      io << SUBSTITUTIONS.fetch(char, char)
+    escape(string.to_slice, io)
+  end
+
+  # Same as `escape(String, IO)` but accepts `Bytes` instead of `String`.
+  #
+  # WARNING: The slice is assumed to be valid UTF-8.
+  def self.escape(string : Bytes, io : IO) : Nil
+    last_copy_at : Int32 = 0
+    string.each_with_index do |byte, index|
+      str = case byte
+            when '&'  then "&amp;"
+            when '<'  then "&lt;"
+            when '>'  then "&gt;"
+            when '"'  then "&quot;"
+            when '\'' then "&#39;"
+            else
+              nil
+            end
+      if str
+        io.write_string(string[last_copy_at, index &- last_copy_at])
+        last_copy_at = index
+        io << str
+      end
     end
+    io.write_string(string[last_copy_at, string.size &- last_copy_at])
   end
 
   # These replacements permit compatibility with old numeric entities that
