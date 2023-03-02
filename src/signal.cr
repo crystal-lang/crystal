@@ -23,17 +23,29 @@ require "crystal/system/signal"
 #
 # WARNING: An uncaught exception in a signal handler is a fatal error.
 #
-# ## Non-POSIX platform support
+# ## Portability
 #
-# Only `ABRT`, `FPE`, `ILL`, `INT`, `SEGV`, and `TERM` are guaranteed to exist
-# on non-POSIX platforms, such as Windows. Additionally, `#trap`, `#reset`, and
-# `#ignore` may not be implemented at all. The standard library provides several
-# platform-agnostic APIs to achieve common signal-related tasks:
+# The set of available signals is platform-dependent. Only signals that exist on
+# the target platform are available as members of this enum.
 #
-# * `Process.on_interrupt` may replace `INT.trap`;
-# * `Process#terminate` may replace `Process#signal` with a `TERM` or `KILL`
-#   argument;
-# * `Process::Status#exit_reason` may replace `Process::Status#exit_signal`.
+# * `ABRT`, `FPE`, `ILL`, `INT`, `SEGV`, and `TERM` are guaranteed to exist
+#   on all platforms.
+# * `PWR`, `STKFLT`, and `UNUSED` only exist on Linux.
+# * `BREAK` only exists on Windows.
+# * All other signals exist on all POSIX platforms.
+#
+# The methods `#trap`, `#reset`, and `#ignore` may not be implemented at all on
+# non-POSIX systems.
+#
+# The standard library provides several platform-agnostic APIs to achieve tasks
+# that are typically solved with signals on POSIX systems:
+#
+# * The portable API for responding to an interrupt signal (`INT.trap`) is
+#   `Process.on_interrupt`.
+# * The portable API for sending a `TERM` or `KILL` signal to a process is
+#   `Process#terminate`.
+# * The portable API for retrieving the exit signal of a process
+#   (`Process::Status#exit_signal`) is `Process::Status#exit_reason`.
 enum Signal : Int32
   # Signals required by the ISO C standard. Since every supported platform must
   # bind against a C runtime library, these constants must be defined at all
@@ -93,8 +105,8 @@ enum Signal : Int32
   # check child processes using `Process.exists?`. Trying to use waitpid with a
   # zero or negative value won't work.
   #
-  # NOTE: `Process.on_interrupt` is preferred over `Signal::INT.trap`, as the
-  # former also works on Windows.
+  # NOTE: `Process.on_interrupt` is preferred over `Signal::INT.trap` as a
+  # portable alternative which also works on Windows.
   def trap(&handler : Signal ->) : Nil
     {% if @type.has_constant?("CHLD") %}
       if self == CHLD

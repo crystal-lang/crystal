@@ -307,7 +307,8 @@ class Process
   # Sends *signal* to this process.
   #
   # NOTE: `#terminate` is preferred over `signal(Signal::TERM)` and
-  # `signal(Signal::KILL)`, as the former also works on Windows.
+  # `signal(Signal::KILL)` as a portable alternative which also works on
+  # Windows.
   def signal(signal : Signal) : Nil
     Crystal::System::Process.signal(@process_info.pid, signal)
   end
