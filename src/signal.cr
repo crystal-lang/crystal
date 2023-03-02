@@ -21,13 +21,23 @@ require "crystal/system/signal"
 # sleep 3
 # ```
 #
-# NOTE: `Process.on_interrupt` is preferred over `Signal::INT.trap`, as the
-# former also works on Windows.
-#
 # WARNING: An uncaught exception in a signal handler is a fatal error.
+#
+# ## Non-POSIX platform support
+#
+# Only `ABRT`, `FPE`, `ILL`, `INT`, `SEGV`, and `TERM` are guaranteed to exist
+# on non-POSIX platforms, such as Windows. Additionally, `#trap`, `#reset`, and
+# `#ignore` may not be implemented at all. The standard library provides several
+# platform-agnostic APIs to achieve common signal-related tasks:
+#
+# * `Process.on_interrupt` may replace `INT.trap`;
+# * `Process#terminate` may replace `Process#signal` with a `TERM` or `KILL`
+#   argument;
+# * `Process::Status#exit_reason` may replace `Process::Status#exit_signal`.
 enum Signal : Int32
   # Signals required by the ISO C standard. Since every supported platform must
-  # bind against a C runtime, these constants must be defined at all times
+  # bind against a C runtime library, these constants must be defined at all
+  # times, even when the platform does not support POSIX signals
 
   INT  = LibC::SIGINT
   ILL  = LibC::SIGILL
@@ -82,6 +92,9 @@ enum Signal : Int32
   # before the custom handler is called, hence a custom `CHLD` handler must
   # check child processes using `Process.exists?`. Trying to use waitpid with a
   # zero or negative value won't work.
+  #
+  # NOTE: `Process.on_interrupt` is preferred over `Signal::INT.trap`, as the
+  # former also works on Windows.
   def trap(&handler : Signal ->) : Nil
     {% if @type.has_constant?("CHLD") %}
       if self == CHLD
