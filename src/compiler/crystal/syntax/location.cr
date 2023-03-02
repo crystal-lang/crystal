@@ -12,11 +12,8 @@ class Crystal::Location
   # Returns a location from a string representation. Used by compiler tools like
   # `context` and `implementations`.
   def self.parse(cursor : String, *, expand : Bool = false) : self
-    file_and_line, colon, col = cursor.rpartition(':')
-    raise ArgumentError.new "cursor location must be file:line:column" if colon.empty?
-
-    file, colon, line = file_and_line.rpartition(':')
-    raise ArgumentError.new "cursor location must be file:line:column" if colon.empty?
+    file_and_line, _, col = cursor.rpartition(':')
+    file, _, line = file_and_line.rpartition(':')
 
     raise ArgumentError.new "cursor location must be file:line:column" if file.empty? || line.empty? || col.empty?
 
