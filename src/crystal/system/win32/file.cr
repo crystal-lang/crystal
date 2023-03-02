@@ -200,8 +200,21 @@ module Crystal::System::File
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
-    # TODO: support directory symlinks (copy Go's stdlib logic here)
-    if LibC.CreateSymbolicLinkW(System.to_wstr(new_path), System.to_wstr(old_path), LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) == 0
+    win_old_path = System.to_wstr(old_path)
+    win_new_path = System.to_wstr(new_path)
+    info = info?(old_path, true)
+    flags = info.try(&.type.directory?) ? LibC::SYMBOLIC_LINK_FLAG_DIRECTORY : 0
+
+    result = LibC.CreateSymbolicLinkW(win_new_path, win_old_path, flags | LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)
+
+    # If we get an error like ERROR_INVALID_PARAMETER, it means that we have an
+    # older Windows. Retry without SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
+    # flag.
+    if result == 0 && WinError.value == WinError::ERROR_INVALID_PARAMETER
+      result = LibC.CreateSymbolicLinkW(win_new_path, win_old_path, flags)
+    end
+
+    if result == 0
       raise ::File::Error.from_winerror("Error creating symlink", file: old_path, other: new_path)
     end
   end
