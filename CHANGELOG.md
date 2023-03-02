@@ -1,3 +1,26 @@
+# 1.7.3
+
+## Standard Library
+
+### Text
+
+- Do not use `@[ThreadLocal]` for PCRE2's JIT stack ([#13056](https://github.com/crystal-lang/crystal/pull/13056), thanks @HertzDevil)
+- Fix `libpcre2` bindings with arch-dependent types (`SizeT`) ([#13088](https://github.com/crystal-lang/crystal/pull/13088), thanks @straight-shoota)
+- Fix `libpcre2` bindings function pointers ([#13090](https://github.com/crystal-lang/crystal/pull/13090), thanks @straight-shoota)
+- Fix PCRE2 do not allocate JIT stack if unavailable ([#13100](https://github.com/crystal-lang/crystal/pull/13100), thanks @straight-shoota)
+- Backport PCRE2 fixes to 1.7 ([#13136](https://github.com/crystal-lang/crystal/pull/13136), thanks @straight-shoota)
+
+## Compiler
+
+### Generics
+
+- Explicitly treat unbound type vars in generic class methods as free variables ([#13125](https://github.com/crystal-lang/crystal/pull/13125), thanks @HertzDevil)
+
+## Other
+
+- [CI] Fix add PCRE2 to GHA cache for win job ([#13089](https://github.com/crystal-lang/crystal/pull/13089), thanks @straight-shoota)
+- [CI] Pin `use_pcre` in build environments where PCRE2 is not yet available ([#13102](https://github.com/crystal-lang/crystal/pull/13102), thanks @straight-shoota)
+
 # 1.7.2 (2023-01-23)
 ## Standard Library
 
