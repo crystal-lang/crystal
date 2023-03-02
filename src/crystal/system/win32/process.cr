@@ -81,13 +81,18 @@ struct Crystal::System::Process
 
   private def self.each_entry(&)
     h = LibC.CreateToolhelp32Snapshot(LibC::TH32CS_SNAPPROCESS, 0)
-    pe = LibC::PROCESSENTRY32W.new(dwSize: sizeof(LibC::PROCESSENTRY32W))
+    raise RuntimeError.from_winerror("CreateToolhelp32Snapshot") if h == LibC::INVALID_HANDLE_VALUE
 
-    if LibC.Process32FirstW(h, pointerof(pe)) != 0
-      while true
-        yield pe
-        break if LibC.Process32NextW(h, pointerof(pe)) == 0
+    begin
+      pe = LibC::PROCESSENTRY32W.new(dwSize: sizeof(LibC::PROCESSENTRY32W))
+      if LibC.Process32FirstW(h, pointerof(pe)) != 0
+        while true
+          yield pe
+          break if LibC.Process32NextW(h, pointerof(pe)) == 0
+        end
       end
+    ensure
+      LibC.CloseHandle(h)
     end
   end
 
