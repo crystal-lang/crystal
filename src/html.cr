@@ -36,14 +36,13 @@ module HTML
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
-  @[AlwaysInline]
   def self.escape(string : String, io : IO) : Nil
     escape(string.to_slice, io)
   end
 
   # Same as `escape(String, IO)` but accepts `Bytes` instead of `String`.
   #
-  # WARNING: The slice is assumed to be valid UTF-8.
+  # The slice is assumed to be valid UTF-8.
   def self.escape(string : Bytes, io : IO) : Nil
     last_copy_at : Int32 = 0
     string.each_with_index do |byte, index|
