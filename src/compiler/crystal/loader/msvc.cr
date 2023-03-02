@@ -5,9 +5,10 @@ require "crystal/system/win32/library_archive"
 # `link.exe`, using the Win32 DLL API.
 #
 # * Only dynamic libraries can be loaded. Static libraries and object files
-#   are unsupported. in particular, `LibC.printf` and `LibC.snprintf`are inline
-#   functions in `legacy-stdio_definitions.lib` since VS2015, so they are never
-#   found by the loader.
+#   are unsupported. in particular, `LibC.printf` and `LibC.snprintf` are inline
+#   functions in `legacy_stdio_definitions.lib` since VS2015, so they are never
+#   found by the loader. As a temporary workaround, we re-export these two
+#   functions via `etc/msvc/win32_interpreter_stub.c`.
 # * Unlike the Unix counterpart, symbols in the current module do not clash with
 #   the ones in DLLs or their corresponding import libraries.
 
