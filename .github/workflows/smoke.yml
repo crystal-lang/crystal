@@ -7,12 +7,14 @@
 #
 # ```terminal-session
 # $ find src/lib_c -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sort
+# aarch64-android
 # aarch64-darwin
 # aarch64-linux-gnu
 # aarch64-linux-musl
 # arm-linux-gnueabihf
 # i386-linux-gnu
 # i386-linux-musl
+# wasm32-wasi
 # x86_64-darwin
 # x86_64-dragonfly
 # x86_64-freebsd
@@ -43,6 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         target:
+          - aarch64-android
           - aarch64-darwin
           - arm-linux-gnueabihf
           - i386-linux-gnu
