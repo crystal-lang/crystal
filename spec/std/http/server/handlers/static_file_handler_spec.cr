@@ -274,7 +274,7 @@ describe HTTP::StaticFileHandler do
 
   it "still serve compressed content when modification time is very close" do
     modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
-    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.microsecond
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.millisecond
 
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
     response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false
