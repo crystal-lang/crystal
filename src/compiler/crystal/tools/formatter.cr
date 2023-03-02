@@ -456,7 +456,7 @@ module Crystal
     end
 
     def normalize_symbols
-      valid_escape_sequences = ['\\', '"', '\'', '#', 'b', 'f', 'n', 'r', 't', 'v', '0']
+      valid_escape_sequences = ['\\', '"', '\'', '#', 'a', 'b', 'e', 'f', 'n', 'r', 't', 'v', '0']
       str = @token.raw
       escape = false
       index = 0
