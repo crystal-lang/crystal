@@ -1,6 +1,7 @@
 require "c/processthreadsapi"
 require "c/handleapi"
 require "c/synchapi"
+require "c/tlhelp32"
 require "process/shell"
 require "crystal/atomic_semaphore"
 
@@ -71,7 +72,23 @@ struct Crystal::System::Process
   end
 
   def self.ppid
-    raise NotImplementedError.new("Process.ppid")
+    pid = self.pid
+    each_entry do |pe|
+      return pe.th32ParentProcessID if pe.th32ProcessID == pid
+    end
+    raise RuntimeError.new("Cannot locate current process")
+  end
+
+  private def self.each_entry(&)
+    h = LibC.CreateToolhelp32Snapshot(LibC::TH32CS_SNAPPROCESS, 0)
+    pe = LibC::PROCESSENTRY32W.new(dwSize: sizeof(LibC::PROCESSENTRY32W))
+
+    if LibC.Process32FirstW(h, pointerof(pe)) != 0
+      while true
+        yield pe
+        break if LibC.Process32NextW(h, pointerof(pe)) == 0
+      end
+    end
   end
 
   def self.signal(pid, signal)

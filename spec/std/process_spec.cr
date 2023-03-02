@@ -357,11 +357,13 @@ describe Process do
   typeof(Process.new(*standing_command).terminate(graceful: false))
 
   pending_win32 ".exists?" do
-    # We can't reliably check whether it ever returns false, since we can't predict
-    # how PIDs are used by the system, a new process might be spawned in between
-    # reaping the one we would spawn and checking for it, using the now available
-    # pid.
-    Process.exists?(Process.ppid).should be_true
+    {% unless flag?(:win32) %}
+      # We can't reliably check whether it ever returns false, since we can't predict
+      # how PIDs are used by the system, a new process might be spawned in between
+      # reaping the one we would spawn and checking for it, using the now available
+      # pid.
+      Process.exists?(Process.ppid).should be_true
+    {% end %}
 
     process = Process.new(*standing_command)
     process.exists?.should be_true
