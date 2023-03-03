@@ -173,7 +173,7 @@ module Regex::PCRE2
   end
 
   def finalize
-    @match_data.get?.try do |match_data|
+    @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
   end
