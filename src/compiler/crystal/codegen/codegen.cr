@@ -1597,7 +1597,7 @@ module Crystal
       func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
       func = check_main_fun check_fun_name, func
       value = call func, [value] of LLVM::Value
-      bit_cast value, llvm_proc_type(type)
+      bit_cast value, llvm_proc_type(type).pointer
     end
 
     def create_check_proc_is_not_closure_fun(fun_name)

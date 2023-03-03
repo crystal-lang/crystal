@@ -849,7 +849,7 @@ class Crystal::CodeGenVisitor
   def union_field_ptr(union_type, field_type, pointer)
     ptr = aggregate_index llvm_type(union_type), pointer, 0
     if field_type.is_a?(ProcInstanceType)
-      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer
+      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer.pointer
     else
       cast_to_pointer ptr, field_type
     end
@@ -1001,7 +1001,7 @@ class Crystal::CodeGenVisitor
 
     Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
+      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type).pointer
 
       # When invoking a Proc that has extern structs as arguments or return type, it's tricky:
       # closures are never generated with C ABI because C doesn't support closures.
@@ -1027,7 +1027,7 @@ class Crystal::CodeGenVisitor
       target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
+      real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type).pointer
       real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
