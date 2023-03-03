@@ -123,10 +123,15 @@ module Regex::PCRE2
   private def match_impl(str, byte_index, options)
     match_data = match_data(str, byte_index, options) || return
 
-    ovector = LibPCRE2.get_ovector_pointer(match_data)
     ovector_count = LibPCRE2.get_ovector_count(match_data)
+    ovector = Slice.new(LibPCRE2.get_ovector_pointer(match_data), ovector_count &* 2)
 
-    ::Regex::MatchData.new(self, @re, str, byte_index, ovector, ovector_count.to_i32 - 1)
+    # We need to dup the ovector because `match_data` is re-used for subsequent
+    # matches (see `@match_data`).
+    # Dup brings the ovector data into the realm of the GC.
+    ovector = ovector.dup
+
+    ::Regex::MatchData.new(self, @re, str, byte_index, ovector.to_unsafe, ovector_count.to_i32 &- 1)
   end
 
   private def matches_impl(str, byte_index, options)
@@ -159,8 +164,26 @@ module Regex::PCRE2
     end
   end
 
+  # Match data is shared per instance and thread.
+  #
+  # Match data contains a buffer for backtracking when matching in interpreted mode (non-JIT).
+  # This buffer is heap-allocated and should be re-used for subsequent matches.
+  @match_data = Crystal::ThreadLocalValue(LibPCRE2::MatchData*).new
+
+  private def match_data
+    @match_data.get do
+      LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
+    end
+  end
+
+  def finalize
+    @match_data.get?.try do |match_data|
+      LibPCRE2.match_data_free(match_data)
+    end
+  end
+
   private def match_data(str, byte_index, options)
-    match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
+    match_data = self.match_data
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
 
     if match_count < 0
