@@ -142,7 +142,7 @@ module Regex::PCRE2
     end
   end
 
-  class_getter match_context : LibPCRE2::MatchContext do
+  class_getter match_context : LibPCRE2::MatchContext* do
     match_context = LibPCRE2.match_context_create(nil)
     LibPCRE2.jit_stack_assign(match_context, ->(_data) { Regex::PCRE2.jit_stack }, nil)
     match_context
@@ -152,7 +152,7 @@ module Regex::PCRE2
   #
   # Only a single `match` function can run per thread at any given time, so there
   # can't be any concurrent access to the JIT stack.
-  @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack).new
+  @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack*).new
 
   def self.jit_stack
     @@jit_stack.get do
