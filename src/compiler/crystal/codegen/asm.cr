@@ -54,7 +54,7 @@ class Crystal::CodeGenVisitor
     constraints = constraints.to_s
 
     value = fun_type.inline_asm(node.text, constraints, node.volatile?, node.alignstack?, node.can_throw?)
-    value = LLVM::Function.from_value(value)
+    value = LLVM::Function.from_value(value, fun_type)
     asm_value = call value, input_values
 
     if ptrofs = node.output_ptrofs

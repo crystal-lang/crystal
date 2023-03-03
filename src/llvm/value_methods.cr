@@ -1,7 +1,4 @@
 module LLVM::ValueMethods
-  def initialize(@unwrap : LibLLVM::ValueRef)
-  end
-
   def name=(name)
     LibLLVM.set_value_name(self, name)
   end

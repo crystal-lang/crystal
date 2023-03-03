@@ -1001,7 +1001,8 @@ class Crystal::CodeGenVisitor
 
     Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type).pointer
+      real_fun_llvm_type = llvm_proc_type(context.type)
+      real_fun_ptr = bit_cast fun_ptr, real_fun_llvm_type.pointer
 
       # When invoking a Proc that has extern structs as arguments or return type, it's tricky:
       # closures are never generated with C ABI because C doesn't support closures.
@@ -1013,11 +1014,11 @@ class Crystal::CodeGenVisitor
       old_c_calling_convention = target_def.c_calling_convention
 
       if c_calling_convention
-        null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
+        null_fun_ptr, null_fun_llvm_type, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
-        null_fun_ptr, null_args = real_fun_ptr, closure_args
+        null_fun_ptr, null_fun_llvm_type, null_args = real_fun_ptr, real_fun_llvm_type, closure_args
       end
-      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr)
+      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr, null_fun_llvm_type)
 
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
@@ -1027,8 +1028,9 @@ class Crystal::CodeGenVisitor
       target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type).pointer
-      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
+      real_fun_llvm_type = llvm_closure_type(context.type)
+      real_fun_ptr = bit_cast fun_ptr, real_fun_llvm_type.pointer
+      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr, real_fun_llvm_type)
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
@@ -1083,7 +1085,7 @@ class Crystal::CodeGenVisitor
     null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
     target_def.c_calling_convention = true
 
-    {null_fun_ptr, null_args}
+    {null_fun_ptr, null_fun_llvm_type, null_args}
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)

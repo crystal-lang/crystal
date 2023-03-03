@@ -3,8 +3,23 @@ require "./value_methods"
 struct LLVM::Function
   include LLVM::ValueMethods
 
+  getter function_type : LLVM::Type
+
+  @[Deprecated("Pass also the type of the function")]
+  def initialize(@unwrap : LibLLVM::ValueRef)
+    @function_type = Type.new LibLLVM.get_element_type(LibLLVM.type_of(value))
+  end
+
+  def initialize(@unwrap : LibLLVM::ValueRef, @function_type : LLVM::Type)
+  end
+
+  @[Deprecated("Pass also the type of the function")]
   def self.from_value(value : LLVM::ValueMethods)
-    new(value.to_unsafe)
+    new(value.to_unsafe, Type.new LibLLVM.get_element_type(LibLLVM.type_of(value)))
+  end
+
+  def self.from_value(value : LLVM::ValueMethods, type : LLVM::Type)
+    new(value.to_unsafe, type)
   end
 
   def basic_blocks
@@ -66,10 +81,6 @@ struct LLVM::Function
         LibLLVM.get_attribute(params[index.to_i - 1])
       end
     {% end %}
-  end
-
-  def function_type
-    Type.new LibLLVM.get_element_type(LibLLVM.type_of(self))
   end
 
   def return_type
