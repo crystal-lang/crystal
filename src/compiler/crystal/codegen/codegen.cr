@@ -1974,18 +1974,24 @@ module Crystal
     def allocate_aggregate(type)
       struct_type = llvm_struct_type(type)
       if type.passed_by_value?
-        @last = alloca struct_type
+        type_ptr = alloca struct_type
       else
         if type.is_a?(InstanceVarContainer) && !type.struct? &&
            type.all_instance_vars.each_value.any? &.type.has_inner_pointers?
-          @last = malloc struct_type
+          type_ptr = malloc struct_type
         else
-          @last = malloc_atomic struct_type
+          type_ptr = malloc_atomic struct_type
         end
       end
-      memset @last, int8(0), struct_type.size
-      type_ptr = @last
+
+      memset type_ptr, int8(0), struct_type.size
       run_instance_vars_initializers(type, type, type_ptr)
+
+      unless type.struct?
+        type_id_ptr = aggregate_index(struct_type, type_ptr, 0)
+        store type_id(type), type_id_ptr
+      end
+
       @last = type_ptr
     end
 
