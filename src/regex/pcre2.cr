@@ -141,6 +141,12 @@ module Regex::PCRE2
     LibPCRE2.general_context_create(->(size, _data) { GC.malloc(size) }, ->(pointer, _data) { GC.free(pointer) }, nil)
   end
 
+  class_getter match_context : LibPCRE2::MatchContext do
+    match_context = LibPCRE2.match_context_create(nil)
+    LibPCRE2.jit_stack_assign(match_context, ->(_data) { Regex::PCRE2.jit_stack }, nil)
+    match_context
+  end
+
   # Returns a JIT stack that's shared in the current thread.
   #
   # Only a single `match` function can run per thread at any given time, so there
@@ -155,9 +161,7 @@ module Regex::PCRE2
 
   private def match_data(str, byte_index, options)
     match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
-    match_context = LibPCRE2.match_context_create(nil)
-    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*)) if @jit
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, match_context)
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)
