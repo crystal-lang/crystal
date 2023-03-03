@@ -730,11 +730,6 @@ class Crystal::CodeGenVisitor
 
     allocate_aggregate base_type
 
-    unless type.struct?
-      type_id_ptr = aggregate_index(llvm_struct_type(type), @last, 0)
-      store type_id(base_type), type_id_ptr
-    end
-
     if type.is_a?(VirtualType)
       @last = upcast(@last, type, base_type)
     end
