@@ -142,10 +142,6 @@ module Regex::PCRE2
     end
   end
 
-  class_getter general_context do
-    LibPCRE2.general_context_create(->(size, _data) { GC.malloc(size) }, ->(pointer, _data) { GC.free(pointer) }, nil)
-  end
-
   class_getter match_context : LibPCRE2::MatchContext do
     match_context = LibPCRE2.match_context_create(nil)
     LibPCRE2.jit_stack_assign(match_context, ->(_data) { Regex::PCRE2.jit_stack }, nil)
@@ -160,7 +156,7 @@ module Regex::PCRE2
 
   def self.jit_stack
     @@jit_stack.get do
-      LibPCRE2.jit_stack_create(32_768, 1_048_576, general_context) || raise "Error allocating JIT stack"
+      LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
     end
   end
 
@@ -172,7 +168,7 @@ module Regex::PCRE2
 
   private def match_data
     @match_data.get do
-      LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
+      LibPCRE2.match_data_create_from_pattern(@re, nil)
     end
   end
 
