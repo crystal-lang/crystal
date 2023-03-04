@@ -587,6 +587,18 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
+    # #13091
+    assert_format <<-CRYSTAL,
+      def foo # bar
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(&) # bar
+        yield
+      end
+      CRYSTAL
+
     assert_format <<-CRYSTAL,
       def foo(x)
         yield

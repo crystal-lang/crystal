@@ -272,18 +272,14 @@ describe HTTP::StaticFileHandler do
     response.headers["Content-Encoding"].should eq("gzip")
   end
 
-  # Android only has 10-millisecond precision, and `StaticFileHandler` does not
-  # allow time drifts more than 1 millisecond
-  {% unless flag?(:android) %}
-    it "still serve compressed content when modification time is very close" do
-      modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
-      File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.microsecond
+  it "still serve compressed content when modification time is very close" do
+    modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.millisecond
 
-      headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
-      response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false
-      response.headers["Content-Encoding"].should eq("gzip")
-    end
-  {% end %}
+    headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
+    response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false
+    response.headers["Content-Encoding"].should eq("gzip")
+  end
 
   it "doesn't serve compressed content if older than raw file" do
     modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
