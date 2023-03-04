@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - aarch64-android
+          - aarch64-linux-android
           - aarch64-darwin
           - arm-linux-gnueabihf
           - i386-linux-gnu
