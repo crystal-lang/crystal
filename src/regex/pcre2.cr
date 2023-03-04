@@ -196,7 +196,7 @@ module Regex::PCRE2
       selected_range = nil
       exists = false
       @regex.each_capture_group do |number, name_entry|
-        if name_entry[2, group_name.bytesize]? == group_name.to_slice
+        if name_entry[2, group_name.bytesize]? == group_name.to_slice && name_entry[2 + group_name.bytesize].zero?
           exists = true
           range = byte_range(number) { nil }
           if (range && selected_range && range.begin > selected_range.begin) || !selected_range
