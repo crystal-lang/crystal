@@ -147,6 +147,9 @@ lib LibLLVM
   {% end %}
   fun build_landing_pad = LLVMBuildLandingPad(builder : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt32, name : UInt8*) : ValueRef
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : UInt8*) : ValueRef
+  {% unless LibLLVM::IS_LT_80 %}
+    fun build_load2 = LLVMBuildLoad2(builder : BuilderRef, ty : TypeRef, ptr : ValueRef, name : UInt8*) : ValueRef
+  {% end %}
   fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef

@@ -159,7 +159,7 @@ class Crystal::CodeGenVisitor
           # (because the closure data is a pointer) and so we must load the
           # real value first.
           if args.first.type.is_a?(PrimitiveType)
-            primitive_params[0] = load(primitive_params[0])
+            primitive_params[0] = load(llvm_type(args.first.type), primitive_params[0])
           end
 
           codegen_primitive(nil, body, target_def, primitive_params)
@@ -225,13 +225,13 @@ class Crystal::CodeGenVisitor
       ret_type = abi_info.return_type
       if cast = ret_type.cast
         casted_last = bit_cast @last, cast.pointer
-        last = load casted_last
+        last = load cast, casted_last
         ret last
         return
       end
 
       if (attr = ret_type.attr) && attr == LLVM::Attribute::StructRet
-        store load(@last), context.fun.params[0]
+        store load(llvm_type(target_def.body.type), @last), context.fun.params[0]
         ret
         return
       end
@@ -446,12 +446,12 @@ class Crystal::CodeGenVisitor
          (parent_vars = closure_parent_context.closure_vars)
         parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
         parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
-        parent_closure = load(parent_closure_ptr, "parent")
+        parent_closure = load(parent_closure_type.pointer, parent_closure_ptr, "parent")
         setup_closure_vars(def_vars, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
       elsif closure_self = context.closure_self
         offset = context.closure_parent_context ? 1 : 0
         self_value = gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
-        self_value = load(self_value) unless context.type.passed_by_value?
+        self_value = load(llvm_type(closure_self), self_value) unless context.type.passed_by_value?
         self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
       end
     end

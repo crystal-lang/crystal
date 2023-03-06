@@ -126,6 +126,7 @@ class Crystal::CodeGenVisitor
       types_needing_cast.each_with_index do |type_needing_cast, i|
         # Find compatible type
         compatible_type = target_type.union_types.find! { |ut| type_needing_cast.implements?(ut) }
+        llvm_compatible_type = llvm_type(compatible_type)
 
         matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
         cmp_result = equal?(value_type_id, type_id(type_needing_cast))
@@ -135,9 +136,9 @@ class Crystal::CodeGenVisitor
 
         # Store value
         casted_value = cast_to_pointer(union_value_ptr, type_needing_cast)
-        compatible_ptr = alloca llvm_type(compatible_type)
+        compatible_ptr = alloca llvm_compatible_type
         assign(compatible_ptr, compatible_type, type_needing_cast, casted_value)
-        store_in_union target_type, target_pointer, compatible_type, load(compatible_ptr)
+        store_in_union target_type, target_pointer, compatible_type, load(llvm_compatible_type, compatible_ptr)
         br exit_label
 
         position_at_end doesnt_match_label
@@ -197,7 +198,7 @@ class Crystal::CodeGenVisitor
   def assign_distinct(target_pointer, target_type : VirtualType, value_type : MixedUnionType, value)
     _, union_value_ptr = union_type_and_value_pointer(value, value_type)
     casted_value = cast_to_pointer(union_value_ptr, target_type)
-    store load(casted_value), target_pointer
+    store load(llvm_type(target_type), casted_value), target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : VirtualType, value_type : Type, value)
@@ -212,7 +213,7 @@ class Crystal::CodeGenVisitor
     # Can happen when assigning Foo+.class <- Bar.class | Baz.class with Bar < Foo and Baz < Foo
     _, union_value_ptr = union_type_and_value_pointer(value, value_type)
     casted_value = cast_to_pointer(union_value_ptr, target_type)
-    store load(casted_value), target_pointer
+    store load(llvm_type(target_type), casted_value), target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value)
@@ -269,26 +270,28 @@ class Crystal::CodeGenVisitor
     # In that case we can simply get the union value and cast it to the target type.
     # Cast of a non-void proc to a void proc
     _, union_value_ptr = union_type_and_value_pointer(value, value_type)
-    value = bit_cast(union_value_ptr, llvm_type(target_type).pointer)
-    store load(value), target_pointer
+    value = cast_to_pointer(union_value_ptr, target_type)
+    store load(llvm_type(target_type), value), target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
     raise "BUG: trying to assign #{target_type} (#{target_type.class}) <- #{value_type} (#{value_type.class})"
   end
 
-  def downcast(value, to_type, from_type : VoidType, already_loaded)
+  def downcast(value, to_type, from_type : VoidType, already_loaded, *, extern = false)
     value
   end
 
-  def downcast(value, to_type, from_type : Type, already_loaded)
+  # *extern* is only used in `CodeGenVisitor#read_instance_var`, and it is
+  # irrelevant whenever `already_loaded == true`
+  def downcast(value, to_type, from_type : Type, already_loaded, *, extern = false)
     return llvm_nil if @builder.end
 
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
     unless already_loaded
-      value = to_lhs(value, from_type)
+      value = extern ? extern_to_lhs(value, from_type) : to_lhs(value, from_type)
     end
     if from_type != to_type
       value = downcast_distinct value, to_type, from_type
@@ -413,13 +416,13 @@ class Crystal::CodeGenVisitor
 
   def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
     _, value_ptr = union_type_and_value_pointer(value, from_type)
-    load cast_to_pointer(value_ptr, to_type)
+    load(llvm_type(to_type), cast_to_pointer(value_ptr, to_type))
   end
 
   def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
     _, value_ptr = union_type_and_value_pointer(value, from_type)
     value = cast_to_pointer(value_ptr, @program.int8)
-    value = load(value)
+    value = load(llvm_context.int8, value)
     trunc value, llvm_context.int1
   end
 

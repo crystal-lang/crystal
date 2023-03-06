@@ -17,10 +17,10 @@ class Increment < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
     current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
-    cell_val = builder.load current_cell_ptr, "cell_value"
+    cell_val = builder.load program.cell_type, current_cell_ptr, "cell_value"
     increment_amount = program.cell_type.const_int(@amount)
     new_cell_val = builder.add cell_val, increment_amount, "cell_value"
     builder.store new_cell_val, current_cell_ptr
@@ -37,7 +37,7 @@ class DataIncrement < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
     increment_amount = program.ctx.int32.const_int(@amount)
     new_cell_index = builder.add cell_index, increment_amount, "new_cell_index"
 
@@ -52,7 +52,7 @@ class Read < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
     current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
     getchar = program.mod.functions["getchar"]
@@ -69,10 +69,10 @@ class Write < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
     current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
-    cell_val = builder.load current_cell_ptr, "cell_value"
+    cell_val = builder.load program.cell_type, current_cell_ptr, "cell_value"
     cell_val_as_char = builder.sext cell_val, program.ctx.int32, "cell_val_as_char"
 
     putchar = program.mod.functions["putchar"]
@@ -99,9 +99,9 @@ class Loop < Instruction
     loop_after = func.basic_blocks.append "loop_after"
 
     builder.position_at_end loop_header
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
     current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
-    cell_val = builder.load current_cell_ptr, "cell_value"
+    cell_val = builder.load program.cell_type, current_cell_ptr, "cell_value"
     zero = program.cell_type.const_int(0)
     cell_val_is_zero = builder.icmp LLVM::IntPredicate::EQ, cell_val, zero
 

@@ -860,11 +860,7 @@ class Crystal::CodeGenVisitor
     name = external.real_name
     var = declare_lib_var name, node.type, external.thread_local?
 
-    @last = call_args[0]
-
-    if external.type.passed_by_value?
-      @last = load @last
-    end
+    @last = extern_to_rhs(call_args[0], external.type)
 
     store @last, var
 
@@ -877,11 +873,7 @@ class Crystal::CodeGenVisitor
     external = target_def.as(External)
     var = get_external_var(external)
 
-    if external.type.passed_by_value?
-      @last = var
-    else
-      @last = load var
-    end
+    @last = extern_to_lhs(var, external.type)
 
     @last = check_c_fun node.type, @last
 
@@ -910,7 +902,10 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
-    load(gep @llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
+    string = llvm_type(@program.string)
+    table_type = string.array(@symbol_table_values.size)
+    string_ptr = gep table_type, @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0]
+    load(string, string_ptr)
   end
 
   def codegen_primitive_class(node, target_def, call_args)
@@ -979,15 +974,10 @@ class Crystal::CodeGenVisitor
 
     proc_type = context.type.as(ProcInstanceType)
     target_def.args.size.times do |i|
-      arg = args[i]
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
-      args[i] = upcast arg, proc_arg_type, target_def_arg_type
-      if proc_arg_type.passed_by_value?
-        closure_args << load(args[i])
-      else
-        closure_args << args[i]
-      end
+      args[i] = arg = upcast args[i], proc_arg_type, target_def_arg_type
+      closure_args << to_rhs(arg, proc_arg_type)
     end
 
     fun_ptr = builder.extract_value closure_ptr, 0
@@ -1196,7 +1186,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_get_const(call.args[-2], ordering)
     volatile = bool_from_bool_literal(call.args[-1])
 
-    inst = builder.load(ptr)
+    inst = builder.load(llvm_type(node.type), ptr)
     inst.ordering = ordering
     inst.volatile = true if volatile
     set_alignment inst, node.type

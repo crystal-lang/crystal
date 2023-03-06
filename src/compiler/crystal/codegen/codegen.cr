@@ -1142,9 +1142,10 @@ module Crystal
         thread_local_fun.add_attribute LLVM::Attribute::NoInline
       end
       thread_local_fun = check_main_fun(fun_name, thread_local_fun)
-      indirection_ptr = alloca llvm_type(type).pointer
+      pointer_type = llvm_type(type).pointer
+      indirection_ptr = alloca pointer_type
       call thread_local_fun, indirection_ptr
-      load indirection_ptr
+      load pointer_type, indirection_ptr
     end
 
     def visit(node : TypeDeclaration)
@@ -1203,7 +1204,7 @@ module Crystal
 
         # Special variables always have an extra pointer
         already_loaded = (node.special_var? ? false : var.already_loaded)
-        @last = downcast var.pointer, node.type, var.type, already_loaded
+        @last = downcast var.pointer, node.type, var.type, already_loaded, extern: false
       elsif node.name == "self"
         if node.type.metaclass?
           @last = type_id(node.type)
@@ -1260,7 +1261,7 @@ module Crystal
       type = type.remove_typedef
       ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
-      @last = downcast ivar_ptr, node_type, ivar.type, false
+      @last = downcast ivar_ptr, node_type, ivar.type, false, extern: type.extern?
       if type.extern?
         # When reading the instance variable of a C struct or union
         # we need to convert C functions to Crystal procs. This
@@ -1630,7 +1631,7 @@ module Crystal
       closure_ptr = alloca struct_type
       store fun_ptr, aggregate_index(struct_type, closure_ptr, 0)
       store ctx_ptr, aggregate_index(struct_type, closure_ptr, 1)
-      load(closure_ptr)
+      load(struct_type, closure_ptr)
     end
 
     def make_nilable_fun(type)
@@ -1869,8 +1870,7 @@ module Crystal
 
         if self_closured
           offset = parent_closure_type ? 1 : 0
-          self_value = llvm_self
-          self_value = load self_value if current_context.type.passed_by_value?
+          self_value = to_rhs(llvm_self, current_context.type)
 
           store self_value, gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
 
@@ -2191,11 +2191,20 @@ module Crystal
     end
 
     def to_lhs(value, type)
-      type.passed_by_value? ? value : load value
+      # `llvm_embedded_type` needed for void-like types
+      type.passed_by_value? ? value : load(llvm_embedded_type(type), value)
     end
 
     def to_rhs(value, type)
-      type.passed_by_value? ? load value : value
+      type.passed_by_value? ? load(llvm_embedded_type(type), value) : value
+    end
+
+    def extern_to_lhs(value, type)
+      type.passed_by_value? ? value : load(llvm_embedded_c_type(type), value)
+    end
+
+    def extern_to_rhs(value, type)
+      type.passed_by_value? ? load(llvm_embedded_c_type(type), value) : value
     end
 
     # *type* is the pointee type of *ptr* (not the type of the returned

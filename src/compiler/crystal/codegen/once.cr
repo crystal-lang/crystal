@@ -18,16 +18,16 @@ class Crystal::CodeGenVisitor
 
   def run_once(flag, func)
     once_fun = main_fun(ONCE)
+    once_init_fun = main_fun(ONCE_INIT)
 
     once_state_global = @llvm_mod.globals[ONCE_STATE]? || begin
-      once_init_fun = main_fun(ONCE_INIT)
       global = @llvm_mod.globals.add(once_init_fun.return_type, ONCE_STATE)
       global.linkage = LLVM::Linkage::External
       global
     end
 
     call main_fun(ONCE), [
-      load(once_state_global),
+      load(once_init_fun.return_type, once_state_global),
       flag,
       bit_cast(func.to_value, once_fun.params.last.type),
     ]
