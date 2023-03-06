@@ -19,7 +19,9 @@ defaults:
     - run: bin/ci prepare_system
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
-    - run: bin/ci build
+    - run:
+        command: bin/ci build
+        no_output_timeout: 30m
     - run:
         when: always
         command: |
