@@ -49,7 +49,7 @@ class LLVM::Builder
     Value.new phi_node
   end
 
-  def call(func, name : String = "")
+  def call(func : LLVM::Function, name : String = "")
     # check_func(func)
 
     {% if LibLLVM::IS_LT_80 %}
@@ -59,7 +59,14 @@ class LLVM::Builder
     {% end %}
   end
 
-  def call(func, arg : LLVM::Value, name : String = "")
+  def call(type : LLVM::Type, func : LLVM::Function, name : String = "")
+    # check_type("call", type)
+    # check_func(func)
+
+    Value.new LibLLVM.build_call2(self, type, func, nil, 0, name)
+  end
+
+  def call(func : LLVM::Function, arg : LLVM::Value, name : String = "")
     # check_func(func)
     # check_value(arg)
 
@@ -71,11 +78,28 @@ class LLVM::Builder
     {% end %}
   end
 
-  def call(func, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
+  def call(type : LLVM::Type, func : LLVM::Function, arg : LLVM::Value, name : String = "")
+    # check_type("call", type)
+    # check_func(func)
+    # check_value(arg)
+
+    value = arg.to_unsafe
+    Value.new LibLLVM.build_call2(self, type, func, pointerof(value), 1, name)
+  end
+
+  def call(func : LLVM::Function, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
     # check_func(func)
     # check_values(args)
 
     Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
+  end
+
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
+    # check_type("call", type)
+    # check_func(func)
+    # check_values(args)
+
+    Value.new LibLLVMExt.build_call2(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
   end
 
   def alloca(type, name = "")
@@ -136,6 +160,7 @@ class LLVM::Builder
     end
 
     def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+      # check_type({{method_name}}, type)
       # check_value(value)
 
       \{% if LibLLVM::IS_LT_80 %}
@@ -157,6 +182,7 @@ class LLVM::Builder
     end
 
     def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index : LLVM::Value, name = "")
+      # check_type({{method_name}}, type)
       # check_value(value)
 
       indices = pointerof(index).as(LibLLVM::ValueRef*)
@@ -181,6 +207,7 @@ class LLVM::Builder
     end
 
     def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+      # check_type({{method_name}}, type)
       # check_value(value)
 
       indices = uninitialized LLVM::Value[2]
@@ -284,6 +311,13 @@ class LLVM::Builder
     # check_func(fn)
 
     Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
+  end
+
+  def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
+    # check_type("invoke", type)
+    # check_func(fn)
+
+    Value.new LibLLVMExt.build_invoke2 self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
   end
 
   def switch(value, otherwise, cases)

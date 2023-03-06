@@ -128,7 +128,7 @@ class Crystal::CodeGenVisitor
     return global if const.initializer
 
     init_function_name = "~#{const.initialized_llvm_name}"
-    func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
+    func = typed_fun?(@main_mod, init_function_name) || create_initialize_const_function(init_function_name, const)
     func = check_main_fun init_function_name, func
 
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
@@ -223,7 +223,7 @@ class Crystal::CodeGenVisitor
     end
 
     read_function_name = "~#{const.llvm_name}:read"
-    func = @main_mod.functions[read_function_name]? || create_read_const_function(read_function_name, const)
+    func = typed_fun?(@main_mod, read_function_name) || create_read_const_function(read_function_name, const)
     func = check_main_fun read_function_name, func
     call func
   end

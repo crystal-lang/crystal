@@ -1,49 +1,60 @@
 require "./codegen"
 
 class Crystal::CodeGenVisitor
-  def target_def_fun(target_def, self_type) : LLVM::Function
+  def typed_fun?(mod : LLVM::Module, name : String) : LLVMTypedFunction?
+    if func = mod.functions[name]?
+      LLVMTypedFunction.new(@fun_types[{mod, name}], func)
+    end
+  end
+
+  def add_typed_fun(mod : LLVM::Module, name : String, type : LLVM::Type) : LLVMTypedFunction
+    func = mod.functions.add(name, type)
+    @fun_types[{mod, name}] = type
+    LLVMTypedFunction.new(type, func)
+  end
+
+  def fetch_typed_fun(mod : LLVM::Module, name : String, & : -> LLVM::Type) : LLVMTypedFunction
+    typed_fun?(mod, name) || add_typed_fun(mod, name, yield)
+  end
+
+  def target_def_fun(target_def, self_type) : LLVMTypedFunction
     mangled_name = target_def.mangled_name(@program, self_type)
     self_type_mod = type_module(self_type).mod
 
-    func = self_type_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
+    func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
     check_mod_fun self_type_mod, mangled_name, func
   end
 
   def main_fun(name)
-    func = @main_mod.functions[name]?
-    unless func
-      raise "BUG: #{name} is not defined"
-    end
-
+    func = typed_fun?(@main_mod, name) || raise "BUG: #{name} is not defined"
     check_main_fun name, func
   end
 
-  def check_main_fun(name, func)
+  def check_main_fun(name, func : LLVMTypedFunction) : LLVMTypedFunction
     check_mod_fun @main_mod, name, func
   end
 
-  def check_mod_fun(mod, name, func)
-    return func if @llvm_mod == mod
-    @llvm_mod.functions[name]? || declare_fun(name, func)
+  def check_mod_fun(mod, name, func : LLVMTypedFunction) : LLVMTypedFunction
+    if @llvm_mod == mod
+      func
+    elsif existing_func = @llvm_mod.functions[name]?
+      LLVMTypedFunction.new(@fun_types[{@llvm_mod, name}], existing_func)
+    else
+      declare_fun(name, func)
+    end
   end
 
-  def declare_fun(mangled_name, func)
-    param_types = @llvm_typer.copy_types(func.params.types)
-    return_type = @llvm_typer.copy_type(func.return_type)
+  def declare_fun(mangled_name, func : LLVMTypedFunction) : LLVMTypedFunction
+    type = @llvm_typer.copy_type(func.type)
+    typed_fun = add_typed_fun(@llvm_mod, mangled_name, type)
 
-    new_fun = @llvm_mod.functions.add(
-      mangled_name,
-      param_types,
-      return_type,
-      func.varargs?
-    )
-
-    func.params.to_a.each_with_index do |p1, index|
+    new_fun = typed_fun.func
+    func.func.params.to_a.each_with_index do |p1, index|
       attrs = new_fun.attributes(index + 1)
       new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
     end
 
-    new_fun
+    typed_fun
   end
 
   def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module_info = type_module(self_type), is_fun_literal = false, is_closure = false)
@@ -213,7 +224,7 @@ class Crystal::CodeGenVisitor
         end
       end
 
-      context.fun
+      LLVMTypedFunction.new(context.fun_type, context.fun)
     end
   end
 
@@ -329,8 +340,9 @@ class Crystal::CodeGenVisitor
 
     # This is the case where we declared a fun that was not used and now we
     # are defining its body.
-    if existing_fun = @llvm_mod.functions[mangled_name]?
-      context.fun = existing_fun
+    if existing_fun = typed_fun?(@llvm_mod, mangled_name)
+      context.fun = existing_fun.func
+      context.fun_type = existing_fun.type
       return args
     end
 
@@ -408,7 +420,10 @@ class Crystal::CodeGenVisitor
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
-    context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs?)
+    fun_type = LLVM::Type.function(llvm_args_types, llvm_return_type, target_def.varargs?)
+    typed_fun = add_typed_fun(@llvm_mod, mangled_name, fun_type)
+    context.fun = typed_fun.func
+    context.fun_type = typed_fun.type
 
     if @debug.variables?
       context.fun.add_attribute LLVM::Attribute::NoInline

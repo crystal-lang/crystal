@@ -56,7 +56,7 @@ class Read < Instruction
     current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
     getchar = program.mod.functions["getchar"]
-    input_char = builder.call getchar, "input_char"
+    input_char = builder.call program.func_types["getchar"], getchar, "input_char"
     input_byte = builder.trunc input_char, program.ctx.int8, "input_byte"
     builder.store input_byte, current_cell_ptr
 
@@ -76,7 +76,7 @@ class Write < Instruction
     cell_val_as_char = builder.sext cell_val, program.ctx.int32, "cell_val_as_char"
 
     putchar = program.mod.functions["putchar"]
-    builder.call putchar, cell_val_as_char
+    builder.call program.func_types["putchar"], putchar, cell_val_as_char
 
     bb
   end
@@ -127,6 +127,7 @@ class Program
   getter! cells_ptr : LLVM::Value
   getter! cell_index_ptr : LLVM::Value
   getter! func : LLVM::Function
+  getter func_types = {} of String => LLVM::Type
 
   def initialize(@instructions : Array(Instruction))
     @ctx = LLVM::Context.new
@@ -208,10 +209,16 @@ class Program
   end
 
   def declare_c_functions(mod)
-    mod.functions.add "calloc", [@ctx.int32, @ctx.int32], @ctx.void_pointer
-    mod.functions.add "free", [@ctx.void_pointer], @ctx.void
-    mod.functions.add "putchar", [@ctx.int32], @ctx.int32
-    mod.functions.add "getchar", ([] of LLVM::Type), @ctx.int32
+    declare_c_function mod, "calloc", [@ctx.int32, @ctx.int32], @ctx.void_pointer
+    declare_c_function mod, "free", [@ctx.void_pointer], @ctx.void
+    declare_c_function mod, "putchar", [@ctx.int32], @ctx.int32
+    declare_c_function mod, "getchar", ([] of LLVM::Type), @ctx.int32
+  end
+
+  def declare_c_function(mod, name, param_types, return_type)
+    func_type = LLVM::Type.function(param_types, return_type)
+    func_types[name] = func_type
+    mod.functions.add name, func_type
   end
 
   def create_main(mod)
@@ -225,7 +232,7 @@ class Program
 
     calloc = mod.functions["calloc"]
     call_args = [@ctx.int32.const_int(NUM_CELLS), @ctx.int32.const_int(CELL_SIZE_IN_BYTES)]
-    @cells_ptr = builder.call calloc, call_args, "cells"
+    @cells_ptr = builder.call func_types["calloc"], calloc, call_args, "cells"
 
     @cell_index_ptr = builder.alloca @ctx.int32, "cell_index_ptr"
     zero = @ctx.int32.const_int(0)
@@ -236,7 +243,7 @@ class Program
     builder.position_at_end bb
 
     free = mod.functions["free"]
-    builder.call free, cells_ptr
+    builder.call func_types["free"], free, cells_ptr
 
     zero = @ctx.int32.const_int(0)
     builder.ret zero

@@ -180,7 +180,7 @@ class Crystal::CodeGenVisitor
       end
 
     llvm_fun = binary_overflow_fun "llvm.#{llvm_op}.with.overflow.i#{calc_width}", calc_type
-    res_with_overflow = builder.call(llvm_fun, [e1, e2])
+    res_with_overflow = builder.call(llvm_fun.type, llvm_fun.func, [e1, e2])
 
     result = extract_value res_with_overflow, 0
     overflow = extract_value res_with_overflow, 1
@@ -356,7 +356,7 @@ class Crystal::CodeGenVisitor
     op_overflow = new_block "overflow"
     op_normal = new_block "normal"
 
-    overflow_condition = builder.call(llvm_expect_i1_fun, [overflow_condition, llvm_false])
+    overflow_condition = builder.call(llvm_expect_i1_fun.type, llvm_expect_i1_fun.func, [overflow_condition, llvm_false])
     cond overflow_condition, op_overflow, op_normal
 
     position_at_end op_overflow
@@ -366,15 +366,18 @@ class Crystal::CodeGenVisitor
   end
 
   private def binary_overflow_fun(fun_name, llvm_operand_type)
-    llvm_mod.functions[fun_name]? ||
-      llvm_mod.functions.add(fun_name, [llvm_operand_type, llvm_operand_type],
-        llvm_context.struct([llvm_operand_type, llvm_context.int1]))
+    fetch_typed_fun(@llvm_mod, fun_name) do
+      LLVM::Type.function(
+        [llvm_operand_type, llvm_operand_type],
+        @llvm_context.struct([llvm_operand_type, @llvm_context.int1]),
+      )
+    end
   end
 
   private def llvm_expect_i1_fun
-    llvm_mod.functions["llvm.expect.i1"]? ||
-      llvm_mod.functions.add("llvm.expect.i1", [llvm_context.int1, llvm_context.int1],
-        llvm_context.int1)
+    fetch_typed_fun(@llvm_mod, "llvm.expect.i1") do
+      LLVM::Type.function([@llvm_context.int1, @llvm_context.int1], @llvm_context.int1)
+    end
   end
 
   # The below methods (lt, lte, gt, gte, eq, ne) perform
@@ -849,7 +852,7 @@ class Crystal::CodeGenVisitor
   def union_field_ptr(union_type, field_type, pointer)
     ptr = aggregate_index llvm_type(union_type), pointer, 0
     if field_type.is_a?(ProcInstanceType)
-      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer
+      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer.pointer
     else
       cast_to_pointer ptr, field_type
     end
@@ -920,7 +923,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_class_with_type(type : VirtualType, value)
     type_id = type_id(value, type)
     metaclass_fun_name = "~metaclass"
-    func = @main_mod.functions[metaclass_fun_name]? || create_metaclass_fun(metaclass_fun_name)
+    func = typed_fun?(@main_mod, metaclass_fun_name) || create_metaclass_fun(metaclass_fun_name)
     func = check_main_fun metaclass_fun_name, func
     call func, [type_id] of LLVM::Value
   end
@@ -991,7 +994,8 @@ class Crystal::CodeGenVisitor
 
     Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
+      real_fun_llvm_type = llvm_proc_type(context.type)
+      real_fun_ptr = bit_cast fun_ptr, real_fun_llvm_type.pointer
 
       # When invoking a Proc that has extern structs as arguments or return type, it's tricky:
       # closures are never generated with C ABI because C doesn't support closures.
@@ -1003,13 +1007,13 @@ class Crystal::CodeGenVisitor
       old_c_calling_convention = target_def.c_calling_convention
 
       if c_calling_convention
-        null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
+        null_fun_ptr, null_fun_llvm_type, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
-        null_fun_ptr, null_args = real_fun_ptr, closure_args
+        null_fun_ptr, null_fun_llvm_type, null_args = real_fun_ptr, real_fun_llvm_type, closure_args
       end
-      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr)
+      null_fun = LLVMTypedFunction.new(null_fun_llvm_type, LLVM::Function.from_value(null_fun_ptr))
 
-      value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
+      value = codegen_call_or_invoke(node, target_def, nil, null_fun, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
 
       # Reset abi_info + c_calling_convention so the closure part is generated as usual
@@ -1017,10 +1021,11 @@ class Crystal::CodeGenVisitor
       target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
-      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
+      real_fun_llvm_type = llvm_closure_type(context.type)
+      real_fun_ptr = bit_cast fun_ptr, real_fun_llvm_type.pointer
+      real_fun = LLVMTypedFunction.new(real_fun_llvm_type, LLVM::Function.from_value(real_fun_ptr))
       closure_args.insert(0, ctx_ptr)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
 
       target_def.abi_info = old_abi_info
@@ -1073,7 +1078,7 @@ class Crystal::CodeGenVisitor
     null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
     target_def.c_calling_convention = true
 
-    {null_fun_ptr, null_args}
+    {null_fun_ptr, null_fun_llvm_type, null_args}
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
