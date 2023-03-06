@@ -35,7 +35,7 @@ module Regex::PCRE
                 else
                   raise "unreachable"
                 end
-        options ^= option
+        options &= ~option
       end
     end
 

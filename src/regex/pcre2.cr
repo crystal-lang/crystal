@@ -57,7 +57,7 @@ module Regex::PCRE2
                 else
                   raise "unreachable"
                 end
-        options ^= option
+        options &= ~option
       end
     end
     unless options.none?
