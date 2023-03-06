@@ -12,7 +12,7 @@ Please see [LICENSE](/LICENSE) for additional copyright and licensing informatio
 
 Crystal compiler links the following libraries, which have their own license:
 
-  * [LLVM][] - [BSD-3, effectively][]
+  * [LLVM][] - [Apache-2.0 with LLVM exceptions][]
   * [PCRE or PCRE2][] - [BSD-3][]
   * [libevent2][] - [BSD-3][]
   * [libiconv][] - [LGPLv3][]
@@ -24,7 +24,7 @@ Crystal compiler calls the following tools as external process on compiling, whi
 
 Crystal standard library uses the following libraries, which have their own licenses:
 
-  * [LLVM][] - [BSD-3, effectively][]
+  * [LLVM][] - [Apache-2.0 with LLVM exceptions][]
   * [PCRE or PCRE2][] - [BSD-3][]
   * [libevent2][] - [BSD-3][]
   * [libiconv][] - [LGPLv3][]
@@ -48,8 +48,8 @@ Crystal playground includes the following libraries, which have their own licens
 
 <!-- licenses -->
 [Apache-2.0]: https://www.openssl.org/source/apache-license-2.0.txt
+[Apache-2.0 with LLVM exceptions]: https://raw.githubusercontent.com/llvm/llvm-project/main/llvm/LICENSE.TXT
 [BSD-3]: https://opensource.org/licenses/BSD-3-Clause
-[BSD-3, effectively]: http://releases.llvm.org/2.8/LICENSE.TXT
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [LGPLv3]: https://www.gnu.org/licenses/lgpl-3.0.en.html
 [MIT]: https://opensource.org/licenses/MIT
