@@ -21,21 +21,27 @@ module Regex::PCRE
 
   private def pcre_options(options)
     flag = 0
-    options.each do |option|
-      flag |= case option
-              when .ignore_case?   then LibPCRE::CASELESS
-              when .multiline?     then LibPCRE::DOTALL | LibPCRE::MULTILINE
-              when .extended?      then LibPCRE::EXTENDED
-              when .anchored?      then LibPCRE::ANCHORED
-              when .utf_8?         then LibPCRE::UTF8
-              when .no_utf8_check? then LibPCRE::NO_UTF8_CHECK
-              when .dupnames?      then LibPCRE::DUPNAMES
-              when .ucp?           then LibPCRE::UCP
-              else
-                # Unnamed values are explicitly used PCRE options, just pass them through:
-                option.value
-              end
+    Regex::Options.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .ignore_case?   then LibPCRE::CASELESS
+                when .multiline?     then LibPCRE::DOTALL | LibPCRE::MULTILINE
+                when .extended?      then LibPCRE::EXTENDED
+                when .anchored?      then LibPCRE::ANCHORED
+                when .utf_8?         then LibPCRE::UTF8
+                when .no_utf8_check? then LibPCRE::NO_UTF8_CHECK
+                when .dupnames?      then LibPCRE::DUPNAMES
+                when .ucp?           then LibPCRE::UCP
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
     end
+
+    # Unnamed values are explicitly used PCRE options, just pass them through:
+    flag |= options.value
+
     flag
   end
 

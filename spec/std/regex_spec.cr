@@ -9,6 +9,22 @@ describe "Regex" do
     it "raises exception with invalid regex" do
       expect_raises(ArgumentError) { Regex.new("+") }
     end
+
+    describe "options" do
+      it "regular" do
+        Regex.new("", Regex::Options::ANCHORED).options.anchored?.should be_true
+      end
+
+      it "unnamed option" do
+        {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+          Regex.new("^/foo$", Regex::Options.new(0x00000020)).matches?("/foo\n").should be_false
+        {% else %}
+          expect_raises ArgumentError, "Unknown Regex::Option value: 32" do
+            Regex.new("", Regex::Options.new(32))
+          end
+        {% end %}
+      end
+    end
   end
 
   it "#options" do
