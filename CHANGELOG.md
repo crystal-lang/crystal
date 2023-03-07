@@ -9,6 +9,9 @@
 - Fix `libpcre2` bindings function pointers ([#13090](https://github.com/crystal-lang/crystal/pull/13090), thanks @straight-shoota)
 - Fix PCRE2 do not allocate JIT stack if unavailable ([#13100](https://github.com/crystal-lang/crystal/pull/13100), thanks @straight-shoota)
 - Backport PCRE2 fixes to 1.7 ([#13136](https://github.com/crystal-lang/crystal/pull/13136), thanks @straight-shoota)
+- Fix `MatchData#[]` named capture with identical prefix ([#13147](https://github.com/crystal-lang/crystal/pull/13147), thanks @straight-shoota)
+- Fix `Regex::Option` behaviour for unnamed members ([#13155](https://github.com/crystal-lang/crystal/pull/13155), thanks @straight-shoota)
+- **(performance)** Improve PCRE2 match performance for JIT and interpreted ([#13146](https://github.com/crystal-lang/crystal/pull/13146), thanks @straight-shoota)
 
 ## Compiler
 
