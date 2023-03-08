@@ -569,7 +569,7 @@ class Crystal::CodeGenVisitor
           pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
 
           if fun_proc
-            fun_ptr = pointer_cast(value, llvm_context.void_pointer)
+            fun_ptr = cast_to_void_pointer(value)
             value = make_fun(var_type, fun_ptr, llvm_context.void_pointer.null)
           end
 

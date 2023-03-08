@@ -339,7 +339,7 @@ class Crystal::CodeGenVisitor
 
   def downcast_distinct(value, to_type : PointerInstanceType, from_type : PointerInstanceType)
     # cast of a pointer being cast to Void*
-    pointer_cast value, llvm_context.void_pointer
+    cast_to_void_pointer value
   end
 
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)

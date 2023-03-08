@@ -193,7 +193,7 @@ module Crystal
       pointer_cast value, llvm_type(type).pointer
     end
 
-    def cast_to_void_pointer(pointer)
+    def cast_to_void_pointer(pointer : LLVM::ValueMethods)
       pointer_cast pointer, llvm_context.void_pointer
     end
 

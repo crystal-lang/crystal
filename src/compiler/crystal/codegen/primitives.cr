@@ -1140,7 +1140,7 @@ class Crystal::CodeGenVisitor
 
   def check_c_fun(type, value)
     if type.proc?
-      make_fun(type, pointer_cast(value, llvm_context.void_pointer), llvm_context.void_pointer.null)
+      make_fun(type, cast_to_void_pointer(value), llvm_context.void_pointer.null)
     else
       value
     end

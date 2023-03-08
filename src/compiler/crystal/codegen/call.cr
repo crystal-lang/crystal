@@ -236,8 +236,8 @@ class Crystal::CodeGenVisitor
   def codegen_direct_abi_call(call_arg_type, call_arg, abi_arg_type)
     if cast = abi_arg_type.cast
       final_value = alloca cast
-      final_value_casted = pointer_cast final_value, llvm_context.void_pointer
-      gep_call_arg = pointer_cast gep(llvm_type(call_arg_type), call_arg, 0, 0), llvm_context.void_pointer
+      final_value_casted = cast_to_void_pointer final_value
+      gep_call_arg = cast_to_void_pointer gep(llvm_type(call_arg_type), call_arg, 0, 0)
       size = @abi.size(abi_arg_type.type)
       size = @program.bits64? ? int64(size) : int32(size)
       align = @abi.align(abi_arg_type.type)
@@ -253,8 +253,8 @@ class Crystal::CodeGenVisitor
   # and *replace* the call argument by a pointer to the allocated memory
   def codegen_indirect_abi_call(call_arg, abi_arg_type)
     final_value = alloca abi_arg_type.type
-    final_value_casted = pointer_cast final_value, llvm_context.void_pointer
-    call_arg_casted = pointer_cast call_arg, llvm_context.void_pointer
+    final_value_casted = cast_to_void_pointer final_value
+    call_arg_casted = cast_to_void_pointer call_arg
     size = @abi.size(abi_arg_type.type)
     size = @program.bits64? ? int64(size) : int32(size)
     align = @abi.align(abi_arg_type.type)
@@ -513,7 +513,7 @@ class Crystal::CodeGenVisitor
     external = target_def.try &.c_calling_convention?
 
     if external && (external.type.proc? || external.type.is_a?(NilableProcType))
-      fun_ptr = pointer_cast(@last, llvm_context.void_pointer)
+      fun_ptr = cast_to_void_pointer(@last)
       ctx_ptr = llvm_context.void_pointer.null
       return @last = make_fun(external.type, fun_ptr, ctx_ptr)
     end
@@ -528,9 +528,9 @@ class Crystal::CodeGenVisitor
           if cast = abi_return.cast
             cast1 = alloca cast
             store @last, cast1
-            cast2 = pointer_cast cast1, llvm_context.void_pointer
+            cast2 = cast_to_void_pointer(cast1)
             final_value = alloca abi_return.type
-            final_value_casted = pointer_cast final_value, llvm_context.void_pointer
+            final_value_casted = cast_to_void_pointer final_value
             size = @abi.size(abi_return.type)
             size = @program.@program.bits64? ? int64(size) : int32(size)
             align = @abi.align(abi_return.type)
