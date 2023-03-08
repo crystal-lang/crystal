@@ -3,6 +3,7 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   class Context
     property fun : LLVM::Function
+    property fun_type : LLVM::Type
     property fun_debug_params = [] of LibLLVM::MetadataRef
     property type : Type
     property vars : Hash(String, LLVMVar)
@@ -20,7 +21,7 @@ class Crystal::CodeGenVisitor
     property closure_parent_context : Context?
     property closure_self : Type?
 
-    def initialize(@fun, @type, @vars = LLVMVars.new)
+    def initialize(@fun, @fun_type, @type, @vars = LLVMVars.new)
       @closure_skip_parent = false
     end
 
@@ -37,7 +38,7 @@ class Crystal::CodeGenVisitor
     end
 
     def clone
-      context = Context.new @fun, @type, @vars
+      context = Context.new @fun, @fun_type, @type, @vars
       context.return_type = @return_type
       context.return_phi = @return_phi
       context.break_phi = @break_phi
