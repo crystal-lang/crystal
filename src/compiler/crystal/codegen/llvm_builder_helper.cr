@@ -113,24 +113,6 @@ module Crystal
       builder.inbounds_gep type, ptr, index0, index1, name
     end
 
-    def call(func : LLVM::Function, name : String = "")
-      call(func, [] of LLVM::Value, name)
-    end
-
-    def call(func : LLVM::Function, arg : LLVM::Value, name : String = "")
-      call(func, [arg], name)
-    end
-
-    def call(func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
-      if catch_pad = @catch_pad
-        funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
-      else
-        funclet = LLVM::OperandBundleDef.null
-      end
-
-      builder.call(func, args, bundle: funclet, name: name)
-    end
-
     def call(func : LLVMTypedFunction, name : String = "")
       call(func, [] of LLVM::Value, name)
     end
@@ -147,16 +129,6 @@ module Crystal
       end
 
       builder.call(func.type, func.func, args, bundle: funclet, name: name)
-    end
-
-    def invoke(func : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
-      if catch_pad = @catch_pad
-        funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
-      else
-        funclet = LLVM::OperandBundleDef.null
-      end
-
-      builder.invoke(func, args, a_then, a_catch, bundle: funclet, name: name)
     end
 
     def invoke(func : LLVMTypedFunction, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
