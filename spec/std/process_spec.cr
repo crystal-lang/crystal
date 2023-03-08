@@ -325,26 +325,28 @@ describe Process do
     end
   end
 
-  describe "#signal" do
-    pending_win32 "kills a process" do
-      process = Process.new(*standing_command)
-      process.signal(Signal::KILL).should be_nil
-    ensure
-      process.try &.wait
-    end
+  {% unless flag?(:win32) %}
+    describe "#signal(Signal::KILL)" do
+      it "kills a process" do
+        process = Process.new(*standing_command)
+        process.signal(Signal::KILL).should be_nil
+      ensure
+        process.try &.wait
+      end
 
-    pending_win32 "kills many process" do
-      process1 = Process.new(*standing_command)
-      process2 = Process.new(*standing_command)
-      process1.signal(Signal::KILL).should be_nil
-      process2.signal(Signal::KILL).should be_nil
-    ensure
-      process1.try &.wait
-      process2.try &.wait
+      it "kills many process" do
+        process1 = Process.new(*standing_command)
+        process2 = Process.new(*standing_command)
+        process1.signal(Signal::KILL).should be_nil
+        process2.signal(Signal::KILL).should be_nil
+      ensure
+        process1.try &.wait
+        process2.try &.wait
+      end
     end
-  end
+  {% end %}
 
-  pending_win32 "#terminate" do
+  it "#terminate" do
     process = Process.new(*standing_command)
     process.exists?.should be_true
     process.terminated?.should be_false
@@ -368,7 +370,7 @@ describe Process do
     process.terminated?.should be_false
 
     # Kill, zombie now
-    process.signal(Signal::KILL)
+    process.terminate
     process.exists?.should be_true
     process.terminated?.should be_false
 
@@ -381,7 +383,7 @@ describe Process do
   pending_win32 ".pgid" do
     process = Process.new(*standing_command)
     Process.pgid(process.pid).should be_a(Int64)
-    process.signal(Signal::KILL)
+    process.terminate
     Process.pgid.should eq(Process.pgid(Process.pid))
   ensure
     process.try(&.wait)
