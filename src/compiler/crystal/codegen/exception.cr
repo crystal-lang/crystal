@@ -289,7 +289,9 @@ class Crystal::CodeGenVisitor
       unreachable
     else
       raise_fun = main_fun(RAISE_NAME)
-      codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj.not_nil!, raise_fun.func.params.first.type)], true, @program.no_return)
+      raise_fun_arg_type = raise_fun.func.params.first.type # Void* or LibUnwind::Exception*
+      raise_fun_arg = pointer_cast(unwind_ex_obj.not_nil!, raise_fun_arg_type)
+      codegen_call_or_invoke(node, nil, nil, raise_fun, [raise_fun_arg], true, @program.no_return)
     end
   end
 
