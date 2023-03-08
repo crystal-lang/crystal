@@ -175,7 +175,7 @@ lib LibLLVM
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
-  fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
+  fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : BasicBlockRef) : Char*
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
