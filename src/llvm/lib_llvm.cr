@@ -410,6 +410,9 @@ lib LibLLVM
   fun float_type_in_context = LLVMFloatTypeInContext(ContextRef) : TypeRef
   fun double_type_in_context = LLVMDoubleTypeInContext(ContextRef) : TypeRef
   fun struct_type_in_context = LLVMStructTypeInContext(c : ContextRef, element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
+  {% unless LibLLVM::IS_LT_150 %}
+    fun pointer_type_in_context = LLVMPointerTypeInContext(ContextRef, address_space : UInt) : TypeRef
+  {% end %}
 
   fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : UInt8*, length : UInt32, dont_null_terminate : Int32) : ValueRef
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef

@@ -507,7 +507,11 @@ module Crystal
       when .double?
         @llvm_context.double
       when .pointer?
+        {% if LibLLVM::IS_LT_150 %}
         copy_type(type.element_type).pointer
+        {% else %}
+          @llvm_context.pointer
+        {% end %}
       when .array?
         copy_type(type.element_type).array(type.array_size)
       when .vector?
