@@ -90,7 +90,7 @@ module Crystal
       int_type = llvm_context.int((union_size * 8).to_i32)
 
       bool_as_extended_int = builder.zext(value, int_type)
-      casted_value_ptr = bit_cast(union_value(struct_type, union_pointer), int_type.pointer)
+      casted_value_ptr = pointer_cast(union_value(struct_type, union_pointer), int_type.pointer)
       store bool_as_extended_int, casted_value_ptr
     end
 
@@ -100,7 +100,7 @@ module Crystal
       value = union_value_type.null
 
       store type_id(value, @program.nil), union_type_id(struct_type, union_pointer)
-      casted_value_ptr = bit_cast union_value(struct_type, union_pointer), union_value_type.pointer
+      casted_value_ptr = pointer_cast union_value(struct_type, union_pointer), union_value_type.pointer
       store value, casted_value_ptr
     end
 

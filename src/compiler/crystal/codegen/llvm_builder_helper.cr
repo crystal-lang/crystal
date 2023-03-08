@@ -157,10 +157,6 @@ module Crystal
       builder.ret value
     end
 
-    def cast_to_void_pointer(pointer)
-      bit_cast pointer, llvm_context.void_pointer
-    end
-
     def extend_int(from_type, to_type, value)
       from_type.signed? ? builder.sext(value, llvm_type(to_type)) : builder.zext(value, llvm_type(to_type))
     end
@@ -194,8 +190,25 @@ module Crystal
     end
 
     def cast_to_pointer(value, type)
-      bit_cast value, llvm_type(type).pointer
+      pointer_cast value, llvm_type(type).pointer
     end
+
+    def cast_to_void_pointer(pointer)
+      pointer_cast pointer, llvm_context.void_pointer
+    end
+
+    # *type* must be a pointer type; on LLVM 15.0 or above *type* is not
+    # evaluated at all and *value* is returned unchanged, because all opaque
+    # pointer types (in the same context) are identical
+    {% if LibLLVM::IS_LT_150 %}
+      def pointer_cast(value : LLVM::ValueMethods, type : LLVM::Type)
+        bit_cast(value, type)
+      end
+    {% else %}
+      macro pointer_cast(value, type)
+        \{{ value }}
+      end
+    {% end %}
 
     delegate llvm_type, llvm_struct_type, llvm_arg_type, llvm_embedded_type,
       llvm_c_type, llvm_c_return_type, llvm_return_type, llvm_embedded_c_type,

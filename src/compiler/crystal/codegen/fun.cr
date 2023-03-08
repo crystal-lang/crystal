@@ -117,7 +117,7 @@ class Crystal::CodeGenVisitor
           clear_current_debug_location if @debug.line_numbers?
           void_ptr = context.fun.params.first
           closure_type = llvm_typer.copy_type(context.closure_type.not_nil!)
-          closure_ptr = bit_cast void_ptr, closure_type.pointer
+          closure_ptr = pointer_cast void_ptr, closure_type.pointer
           setup_closure_vars target_def.vars, context.closure_vars.not_nil!, self.context, closure_type, closure_ptr
         else
           context.reset_closure
@@ -240,7 +240,7 @@ class Crystal::CodeGenVisitor
       abi_info = abi_info(target_def)
       ret_type = abi_info.return_type
       if cast = ret_type.cast
-        casted_last = bit_cast @last, cast.pointer
+        casted_last = pointer_cast @last, cast.pointer
         last = load cast, casted_last
         ret last
         return
@@ -482,11 +482,6 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def fun_literal_closure_ptr
-    void_ptr = context.fun.params.first
-    bit_cast void_ptr, llvm_typer.copy_type(context.closure_type.not_nil!).pointer
-  end
-
   def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
     offset = is_closure ? 1 : 0
 
@@ -550,7 +545,7 @@ class Crystal::CodeGenVisitor
           context.vars[arg.name] = LLVMVar.new(value, var_type)
         else
           pointer = alloca(llvm_type(var_type), arg.name)
-          casted_pointer = bit_cast pointer, value.type.pointer
+          casted_pointer = pointer_cast pointer, value.type.pointer
           store value, casted_pointer
           pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
@@ -574,8 +569,8 @@ class Crystal::CodeGenVisitor
           pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
 
           if fun_proc
-            value = bit_cast(value, llvm_context.void_pointer)
-            value = make_fun(var_type, value, llvm_context.void_pointer.null)
+            fun_ptr = pointer_cast(value, llvm_context.void_pointer)
+            value = make_fun(var_type, fun_ptr, llvm_context.void_pointer.null)
           end
 
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
