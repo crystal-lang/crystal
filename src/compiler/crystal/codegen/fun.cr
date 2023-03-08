@@ -96,7 +96,7 @@ class Crystal::CodeGenVisitor
         set_current_debug_location target_def if @debug.line_numbers?
 
         {% if LibLLVM::IS_LT_150 %}
-        context.fun.add_attribute LLVM::Attribute::UWTable
+          context.fun.add_attribute LLVM::Attribute::UWTable
         {% else %}
           context.fun.add_attribute LLVM::Attribute::UWTable, value: LLVM::UWTableKind::Async
         {% end %}
@@ -307,7 +307,12 @@ class Crystal::CodeGenVisitor
       end
       llvm_arg_type
     end
-    llvm_return_type = llvm_return_type(target_def.type)
+
+    llvm_return_type = {% if LibLLVM::IS_LT_150 %}
+                         llvm_return_type(target_def.type)
+                       {% else %}
+                         target_def.llvm_intrinsic? ? llvm_intrinsic_return_type(target_def.type) : llvm_return_type(target_def.type)
+                       {% end %}
 
     if is_closure
       llvm_args_types.insert(0, llvm_context.void_pointer)
