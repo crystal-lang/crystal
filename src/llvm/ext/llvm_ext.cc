@@ -390,11 +390,6 @@ void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) 
   llvm::WriteBitcodeToFile(*m, OS, true, &moduleSummaryIndex, true);
 }
 
-// Missing LLVMNormalizeTargetTriple in LLVM <= 7.0
-char *LLVMExtNormalizeTargetTriple(const char* triple) {
-  return strdup(Triple::normalize(StringRef(triple)).c_str());
-}
-
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {
   return reinterpret_cast<TargetMachine *>(P);
 }

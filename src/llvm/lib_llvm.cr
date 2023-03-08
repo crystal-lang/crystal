@@ -195,6 +195,7 @@ lib LibLLVM
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
   fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
   fun get_target_from_triple = LLVMGetTargetFromTriple(triple : UInt8*, target : TargetRef*, error_message : UInt8**) : Int32
+  fun normalize_target_triple = LLVMNormalizeTargetTriple(triple : Char*) : Char*
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*

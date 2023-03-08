@@ -156,7 +156,6 @@ lib LibLLVMExt
 
   fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
 
-  fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
   fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder : DIBuilder, lo : UInt64, count : UInt64) : LibLLVM::MetadataRef
 
   fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
