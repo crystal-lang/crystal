@@ -2213,7 +2213,8 @@ module Crystal
     end
 
     private def c_memset_fun
-      name = @program.bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+      p0 = {% if LibLLVM::IS_LT_150 %} "p0i8" {% else %} "p0" {% end %}
+      name = "llvm.memset.#{p0}.#{@program.bits64? ? "i64" : "i32"}"
       fetch_typed_fun(@llvm_mod, name) do
         len_type = @program.bits64? ? @llvm_context.int64 : @llvm_context.int32
         arg_types = [@llvm_context.void_pointer, @llvm_context.int8, len_type, @llvm_context.int1]
@@ -2222,7 +2223,8 @@ module Crystal
     end
 
     private def c_memcpy_fun
-      name = @program.bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+      p0 = {% if LibLLVM::IS_LT_150 %} "p0i8" {% else %} "p0" {% end %}
+      name = "llvm.memcpy.#{p0}.#{p0}.#{@program.bits64? ? "i64" : "i32"}"
       fetch_typed_fun(@llvm_mod, name) do
         len_type = @program.bits64? ? @llvm_context.int64 : @llvm_context.int32
         arg_types = [@llvm_context.void_pointer, @llvm_context.void_pointer, len_type, @llvm_context.int1]
