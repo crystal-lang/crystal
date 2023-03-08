@@ -43,6 +43,16 @@ struct LLVM::Function
     {% end %}
   end
 
+  def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex, *, value)
+    return if attribute.value == 0
+
+    context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
+    attribute.each_kind do |kind|
+      attribute_ref = LibLLVM.create_enum_attribute(context, kind, value.to_u64)
+      LibLLVM.add_attribute_at_index(self, index, attribute_ref)
+    end
+  end
+
   def add_target_dependent_attribute(name, value)
     LibLLVM.add_target_dependent_function_attr self, name, value
   end
