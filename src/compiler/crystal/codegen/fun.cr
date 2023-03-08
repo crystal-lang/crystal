@@ -98,7 +98,7 @@ class Crystal::CodeGenVisitor
         {% if LibLLVM::IS_LT_150 %}
           context.fun.add_attribute LLVM::Attribute::UWTable
         {% else %}
-          context.fun.add_attribute LLVM::Attribute::UWTable, value: LLVM::UWTableKind::Sync
+          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.has_flag?("aarch64") ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
         {% end %}
 
         if @program.has_flag?("darwin")
