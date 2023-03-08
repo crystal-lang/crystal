@@ -20,16 +20,18 @@ class Crystal::CodeGenVisitor
     once_fun = main_fun(ONCE)
     once_init_fun = main_fun(ONCE_INIT)
 
+    # both of these should be Void*
+    once_state_type = once_init_fun.type.return_type
+    once_initializer_type = once_fun.func.params.last.type
+
     once_state_global = @llvm_mod.globals[ONCE_STATE]? || begin
-      global = @llvm_mod.globals.add(once_init_fun.type.return_type, ONCE_STATE)
+      global = @llvm_mod.globals.add(once_state_type, ONCE_STATE)
       global.linkage = LLVM::Linkage::External
       global
     end
 
-    call once_fun, [
-      load(once_init_fun.type.return_type, once_state_global),
-      flag,
-      bit_cast(func.func.to_value, once_fun.func.params.last.type),
-    ]
+    state = load(once_state_type, once_state_global)
+    initializer = pointer_cast(func.func.to_value, once_initializer_type)
+    call once_fun, [state, flag, initializer]
   end
 end
