@@ -74,7 +74,7 @@ class Crystal::CodeGenVisitor
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
             when "throw_info"
-              cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
+              cast_to_void_pointer void_ptr_throwinfo
             when "va_arg"
               codegen_va_arg call, node, target_def, call_args
             else

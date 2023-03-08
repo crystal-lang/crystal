@@ -185,11 +185,11 @@ module Crystal
       end
     end
 
-    def cast_to(value, type)
-      bit_cast value, llvm_type(type)
+    def cast_to(value : LLVM::ValueMethods, type : Type)
+      pointer_cast value, llvm_type(type)
     end
 
-    def cast_to_pointer(value, type)
+    def cast_to_pointer(value : LLVM::ValueMethods, type : Type)
       pointer_cast value, llvm_type(type).pointer
     end
 

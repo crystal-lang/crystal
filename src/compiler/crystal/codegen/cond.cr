@@ -54,7 +54,7 @@ class Crystal::CodeGenVisitor
           next unless union_type.is_a?(PointerInstanceType)
 
           is_pointer = equal? type_id, type_id(union_type)
-          pointer_value = load(llvm_type(union_type), pointer_cast value_ptr, llvm_type(union_type).pointer)
+          pointer_value = load(llvm_type(union_type), cast_to_pointer(value_ptr, union_type))
           pointer_null = null_pointer?(pointer_value)
           cond = and cond, not(and(is_pointer, pointer_null))
         end

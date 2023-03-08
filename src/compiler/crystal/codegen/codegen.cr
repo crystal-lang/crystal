@@ -2281,7 +2281,7 @@ module Crystal
             # For a struct we need to cast the second part of the union to the base type
             _, value_ptr = union_type_and_value_pointer(pointer, _type)
             target_type = type.base_type
-            pointer = pointer_cast value_ptr, llvm_type(target_type).pointer
+            pointer = cast_to_pointer value_ptr, target_type
           else
             # Nothing, there's only one subclass so it's the struct already
           end
