@@ -606,9 +606,9 @@ module Crystal
       the_fun = check_main_fun fun_literal_name, the_fun
 
       set_current_debug_location(node) if @debug.line_numbers?
-      fun_ptr = bit_cast(the_fun.func, llvm_context.void_pointer)
+      fun_ptr = cast_to_void_pointer(the_fun.func)
       if is_closure
-        ctx_ptr = bit_cast(context.closure_ptr.not_nil!, llvm_context.void_pointer)
+        ctx_ptr = cast_to_void_pointer(context.closure_ptr.not_nil!)
       else
         ctx_ptr = llvm_context.void_pointer.null
       end
@@ -655,9 +655,9 @@ module Crystal
       last_fun = target_def_fun(node.call.target_def, owner)
 
       set_current_debug_location(node) if @debug.line_numbers?
-      fun_ptr = bit_cast(last_fun.func, llvm_context.void_pointer)
+      fun_ptr = cast_to_void_pointer(last_fun.func)
       if call_self && !owner.metaclass? && !owner.is_a?(LibType)
-        ctx_ptr = bit_cast(call_self, llvm_context.void_pointer)
+        ctx_ptr = cast_to_void_pointer(call_self)
       else
         ctx_ptr = llvm_context.void_pointer.null
       end
@@ -1607,7 +1607,7 @@ module Crystal
       func = typed_fun?(@main_mod, check_fun_name) || create_check_proc_is_not_closure_fun(check_fun_name)
       func = check_main_fun check_fun_name, func
       value = call func, [value] of LLVM::Value
-      bit_cast value, llvm_proc_type(type).pointer
+      pointer_cast value, llvm_proc_type(type).pointer
     end
 
     def create_check_proc_is_not_closure_fun(fun_name)
@@ -2072,7 +2072,7 @@ module Crystal
         pointer = call_c_malloc size
       end
 
-      bit_cast pointer, type.pointer
+      pointer_cast pointer, type.pointer
     end
 
     def array_malloc(type, count)
@@ -2093,7 +2093,7 @@ module Crystal
       end
 
       memset pointer, int8(0), size
-      bit_cast pointer, type.pointer
+      pointer_cast pointer, type.pointer
     end
 
     def crystal_malloc_fun
@@ -2281,7 +2281,7 @@ module Crystal
             # For a struct we need to cast the second part of the union to the base type
             _, value_ptr = union_type_and_value_pointer(pointer, _type)
             target_type = type.base_type
-            pointer = bit_cast value_ptr, llvm_type(target_type).pointer
+            pointer = cast_to_pointer value_ptr, target_type
           else
             # Nothing, there's only one subclass so it's the struct already
           end

@@ -74,7 +74,7 @@ class Crystal::CodeGenVisitor
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
             when "throw_info"
-              cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
+              cast_to_void_pointer void_ptr_throwinfo
             when "va_arg"
               codegen_va_arg call, node, target_def, call_args
             else
@@ -852,7 +852,7 @@ class Crystal::CodeGenVisitor
   def union_field_ptr(union_type, field_type, pointer)
     ptr = aggregate_index llvm_type(union_type), pointer, 0
     if field_type.is_a?(ProcInstanceType)
-      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer.pointer
+      pointer_cast ptr, @llvm_typer.proc_type(field_type).pointer.pointer
     else
       cast_to_pointer ptr, field_type
     end
@@ -995,7 +995,7 @@ class Crystal::CodeGenVisitor
     Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_llvm_type = llvm_proc_type(context.type)
-      real_fun_ptr = bit_cast fun_ptr, real_fun_llvm_type.pointer
+      real_fun_ptr = pointer_cast fun_ptr, real_fun_llvm_type.pointer
 
       # When invoking a Proc that has extern structs as arguments or return type, it's tricky:
       # closures are never generated with C ABI because C doesn't support closures.
@@ -1022,7 +1022,7 @@ class Crystal::CodeGenVisitor
 
       position_at_end ctx_is_not_null_block
       real_fun_llvm_type = llvm_closure_type(context.type)
-      real_fun_ptr = bit_cast fun_ptr, real_fun_llvm_type.pointer
+      real_fun_ptr = pointer_cast fun_ptr, real_fun_llvm_type.pointer
       real_fun = LLVMTypedFunction.new(real_fun_llvm_type, LLVM::Function.from_value(real_fun_ptr))
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun, closure_args, true, target_def.type, true, proc_type)
@@ -1075,7 +1075,7 @@ class Crystal::CodeGenVisitor
     end
 
     null_fun_llvm_type = LLVM::Type.function(null_fun_types, null_fun_return_type)
-    null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
+    null_fun_ptr = pointer_cast fun_ptr, null_fun_llvm_type.pointer
     target_def.c_calling_convention = true
 
     {null_fun_ptr, null_fun_llvm_type, null_args}
@@ -1140,7 +1140,7 @@ class Crystal::CodeGenVisitor
 
   def check_c_fun(type, value)
     if type.proc?
-      make_fun(type, bit_cast(value, llvm_context.void_pointer), llvm_context.void_pointer.null)
+      make_fun(type, cast_to_void_pointer(value), llvm_context.void_pointer.null)
     else
       value
     end

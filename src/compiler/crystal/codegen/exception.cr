@@ -149,8 +149,11 @@ class Crystal::CodeGenVisitor
 
         # We call __crystal_get_exception to get the actual crystal `Exception` object.
         get_exception_fun = main_fun(GET_EXCEPTION_NAME)
+        get_exception_arg_type = get_exception_fun.type.params_types.first # Void* or LibUnwind::Exception*
+        get_exception_arg = pointer_cast(unwind_ex_obj, get_exception_arg_type)
+
         set_current_debug_location node if @debug.line_numbers?
-        caught_exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, get_exception_fun.type.params_types.first)]
+        caught_exception_ptr = call get_exception_fun, [get_exception_arg]
         caught_exception = int2ptr caught_exception_ptr, llvm_typer.type_id_pointer
       end
 
@@ -286,7 +289,9 @@ class Crystal::CodeGenVisitor
       unreachable
     else
       raise_fun = main_fun(RAISE_NAME)
-      codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj.not_nil!, raise_fun.func.params.first.type)], true, @program.no_return)
+      raise_fun_arg_type = raise_fun.func.params.first.type # Void* or LibUnwind::Exception*
+      raise_fun_arg = pointer_cast(unwind_ex_obj.not_nil!, raise_fun_arg_type)
+      codegen_call_or_invoke(node, nil, nil, raise_fun, [raise_fun_arg], true, @program.no_return)
     end
   end
 
