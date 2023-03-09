@@ -33,11 +33,11 @@ describe Crystal::Loader do
     end
 
     it "parses file paths" do
-      exc = expect_raises(Crystal::Loader::LoadError, /no such file|image not found|cannot open/i) do
+      exc = expect_raises(Crystal::Loader::LoadError, /no such file|not found|cannot open/i) do
         Crystal::Loader.parse(["foobar.o"], search_paths: [] of String)
       end
       exc.message.should contain File.join(Dir.current, "foobar.o")
-      exc = expect_raises(Crystal::Loader::LoadError, /no such file|image not found|cannot open/i) do
+      exc = expect_raises(Crystal::Loader::LoadError, /no such file|not found|cannot open/i) do
         Crystal::Loader.parse(["-l", "foo/bar.o"], search_paths: [] of String)
       end
       exc.message.should contain File.join(Dir.current, "foo", "bar.o")
@@ -52,7 +52,11 @@ describe Crystal::Loader do
           search_paths.should eq ["/usr/lib", "/usr/local/lib"]
         {% else %}
           search_paths[0, 2].should eq ["ld1", "ld2"]
-          search_paths[-2..].should eq ["/lib", "/usr/lib"]
+          {% if flag?(:android) %}
+            search_paths[-2..].should eq ["/vendor/lib", "/system/lib"]
+          {% else %}
+            search_paths[-2..].should eq ["/lib", "/usr/lib"]
+          {% end %}
         {% end %}
       end
     end
@@ -63,6 +67,8 @@ describe Crystal::Loader do
         {% if flag?(:darwin) %}
           search_paths[0, 2].should eq ["ld1", "ld2"]
           search_paths[-2..].should eq ["/usr/lib", "/usr/local/lib"]
+        {% elsif flag?(:android) %}
+          search_paths[-2..].should eq ["/vendor/lib", "/system/lib"]
         {% else %}
           search_paths[-2..].should eq ["/lib", "/usr/lib"]
         {% end %}

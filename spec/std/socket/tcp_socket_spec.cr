@@ -42,7 +42,13 @@ describe TCPSocket, tags: "network" do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPSocket.new(address, -12)
         end
-        error.os_error.should eq({% if flag?(:win32) %}WinError::WSATYPE_NOT_FOUND{% elsif flag?(:linux) %}Errno.new(LibC::EAI_SERVICE){% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif flag?(:linux) && !flag?(:android) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
       end
 
       it "raises when port is zero" do
@@ -70,6 +76,8 @@ describe TCPSocket, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
@@ -82,6 +90,8 @@ describe TCPSocket, tags: "network" do
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}

@@ -13,6 +13,13 @@ require "mime"
 class HTTP::StaticFileHandler
   include HTTP::Handler
 
+  # In some file systems, using `gz --keep` to compress the file will keep the
+  # modification time of the original file but truncating some decimals. We
+  # serve the gzipped file nonetheless if the .gz file is modified by a duration
+  # of `TIME_DRIFT` before the original file. This value should match the
+  # granularity of the underlying file system's modification times
+  private TIME_DRIFT = 10.milliseconds
+
   @public_dir : Path
 
   # Creates a handler that will serve files in the given *public_dir*, after
@@ -91,10 +98,7 @@ class HTTP::StaticFileHandler
         gz_file_path = "#{file_path}.gz"
 
         if (gz_file_info = File.info?(gz_file_path)) &&
-           # Allow small time drift. In some file systems, using `gz --keep` to
-           # compress the file will keep the modification time of the original file
-           # but truncating some decimals
-           last_modified - gz_file_info.modification_time < 1.millisecond
+           last_modified - gz_file_info.modification_time < TIME_DRIFT
           file_path = gz_file_path
           file_info = gz_file_info
           context.response.headers["Content-Encoding"] = "gzip"
