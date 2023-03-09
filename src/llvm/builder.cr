@@ -49,6 +49,7 @@ class LLVM::Builder
     Value.new phi_node
   end
 
+  @[Deprecated("Pass the function type of `func` as well (equal to `func.function_type`)")]
   def call(func : LLVM::Function, name : String = "")
     # check_func(func)
 
@@ -66,6 +67,7 @@ class LLVM::Builder
     Value.new LibLLVM.build_call2(self, type, func, nil, 0, name)
   end
 
+  @[Deprecated("Pass the function type of `func` as well (equal to `func.function_type`)")]
   def call(func : LLVM::Function, arg : LLVM::Value, name : String = "")
     # check_func(func)
     # check_value(arg)
@@ -87,6 +89,7 @@ class LLVM::Builder
     Value.new LibLLVM.build_call2(self, type, func, pointerof(value), 1, name)
   end
 
+  @[Deprecated("Pass the function type of `func` as well (equal to `func.function_type`)")]
   def call(func : LLVM::Function, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
     # check_func(func)
     # check_values(args)
@@ -115,6 +118,7 @@ class LLVM::Builder
     Value.new LibLLVM.build_store(self, value, ptr)
   end
 
+  @[Deprecated("Pass the pointee of `ptr` as well (equal to `ptr.type.element_type`)")]
   def load(ptr : LLVM::Value, name = "")
     # check_value(ptr)
 
@@ -149,6 +153,7 @@ class LLVM::Builder
   end
 
   {% for method_name in %w(gep inbounds_gep) %}
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`)")]
     def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
 
@@ -170,6 +175,7 @@ class LLVM::Builder
       \{% end %}
     end
 
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`)")]
     def {{method_name.id}}(value : LLVM::Value, index : LLVM::Value, name = "")
       # check_value(value)
 
@@ -193,6 +199,7 @@ class LLVM::Builder
       \{% end %}
     end
 
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`)")]
     def {{method_name.id}}(value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
       # check_value(value)
 
@@ -307,6 +314,7 @@ class LLVM::Builder
     LibLLVMExt.build_catch_ret(self, pad, basic_block)
   end
 
+  @[Deprecated("Pass the function type of `fn` as well (equal to `fn.function_type`)")]
   def invoke(fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
     # check_func(fn)
 

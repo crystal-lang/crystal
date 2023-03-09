@@ -21,6 +21,6 @@ struct LLVM::ParameterCollection
   end
 
   def types
-    @function.function_type.params_types
+    to_a.map(&.type)
   end
 end
