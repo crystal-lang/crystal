@@ -317,26 +317,36 @@ describe Process do
     end
   end
 
-  describe "#signal" do
-    pending_win32 "kills a process" do
-      process = Process.new(*standing_command)
-      process.signal(Signal::KILL).should be_nil
-    ensure
-      process.try &.wait
-    end
-
-    pending_win32 "kills many process" do
-      process1 = Process.new(*standing_command)
-      process2 = Process.new(*standing_command)
-      process1.signal(Signal::KILL).should be_nil
-      process2.signal(Signal::KILL).should be_nil
-    ensure
-      process1.try &.wait
-      process2.try &.wait
+  describe ".on_interrupt" do
+    it "compiles" do
+      typeof(Process.on_interrupt { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
     end
   end
 
-  pending_win32 "#terminate" do
+  {% unless flag?(:win32) %}
+    describe "#signal(Signal::KILL)" do
+      it "kills a process" do
+        process = Process.new(*standing_command)
+        process.signal(Signal::KILL).should be_nil
+      ensure
+        process.try &.wait
+      end
+
+      it "kills many process" do
+        process1 = Process.new(*standing_command)
+        process2 = Process.new(*standing_command)
+        process1.signal(Signal::KILL).should be_nil
+        process2.signal(Signal::KILL).should be_nil
+      ensure
+        process1.try &.wait
+        process2.try &.wait
+      end
+    end
+  {% end %}
+
+  it "#terminate" do
     process = Process.new(*standing_command)
     process.exists?.should be_true
     process.terminated?.should be_false
@@ -345,6 +355,8 @@ describe Process do
   ensure
     process.try(&.wait)
   end
+
+  typeof(Process.new(*standing_command).terminate(graceful: false))
 
   pending_win32 ".exists?" do
     # We can't reliably check whether it ever returns false, since we can't predict
@@ -358,7 +370,7 @@ describe Process do
     process.terminated?.should be_false
 
     # Kill, zombie now
-    process.signal(Signal::KILL)
+    process.terminate
     process.exists?.should be_true
     process.terminated?.should be_false
 
@@ -371,7 +383,7 @@ describe Process do
   pending_win32 ".pgid" do
     process = Process.new(*standing_command)
     Process.pgid(process.pid).should be_a(Int64)
-    process.signal(Signal::KILL)
+    process.terminate
     Process.pgid.should eq(Process.pgid(Process.pid))
   ensure
     process.try(&.wait)
@@ -403,7 +415,7 @@ describe Process do
   {% end %}
 
   describe ".chroot" do
-    {% if flag?(:unix) %}
+    {% if flag?(:unix) && !flag?(:android) %}
       it "raises when unprivileged" do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
           begin

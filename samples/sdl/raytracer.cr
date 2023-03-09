@@ -202,7 +202,7 @@ def render(scene, surface)
   surface.update_rect 0, 0, 0, 0
 end
 
-Signal::INT.trap { exit }
+Process.on_interrupt { exit }
 
 scene = Scene.new(
   [

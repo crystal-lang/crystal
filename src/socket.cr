@@ -116,8 +116,16 @@ class Socket < IO
   # sock.bind 1234
   # ```
   def bind(port : Int)
-    Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "::#{port}") { |errno| errno }
+    if family.inet?
+      address = "0.0.0.0"
+      address_and_port = "0.0.0.0:#{port}"
+    else
+      address = "::"
+      address_and_port = "[::]:#{port}"
+    end
+
+    Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
+      system_bind(addrinfo, address_and_port) { |errno| errno }
     end
   end
 
@@ -140,7 +148,7 @@ class Socket < IO
 
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
-  def listen(backlog : Int = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN, &)
     system_listen(backlog) { |err| yield err }
   end
 
@@ -387,7 +395,7 @@ class Socket < IO
     raise Socket::Error.from_errno("getsockopt")
   end
 
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     system_getsockopt(fd, optname, optval, level) { |value| yield value }
   end
 

@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "d8c44c0a2c977bfb90363923047f2c64cef3bf8e"
+    default: "dd0ef752b995c04b5e3bf80e474881ba107e4476"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.7.0/crystal-1.7.0-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1"
 
 defaults:
   environment: &env
@@ -19,7 +19,9 @@ defaults:
     - run: bin/ci prepare_system
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
-    - run: bin/ci build
+    - run:
+        command: bin/ci build
+        no_output_timeout: 30m
     - run:
         when: always
         command: |

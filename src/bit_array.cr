@@ -4,6 +4,8 @@
 # `UInt32`s. The total number of bits stored is set at creation and is
 # immutable.
 #
+# NOTE: To use `BitArray`, you must explicitly import it with `require "bit_array"`
+#
 # ### Example
 #
 # ```
@@ -643,7 +645,7 @@ struct BitArray
     bit_index_and_sub_index(index) { raise IndexError.new }
   end
 
-  private def bit_index_and_sub_index(index)
+  private def bit_index_and_sub_index(index, &)
     index = check_index_out_of_bounds(index) do
       return yield
     end

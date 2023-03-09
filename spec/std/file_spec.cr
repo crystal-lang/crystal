@@ -191,17 +191,20 @@ describe "File" do
     end
   end
 
-  describe "link" do
-    it "creates a hard link" do
-      with_tempfile("hard_link_source.txt", "hard_link_target.txt") do |in_path, out_path|
-        File.write(in_path, "")
-        File.link(in_path, out_path)
-        File.exists?(out_path).should be_true
-        File.symlink?(out_path).should be_false
-        File.same?(in_path, out_path).should be_true
+  # hard links are practically unavailable on Android
+  {% unless flag?(:android) %}
+    describe "link" do
+      it "creates a hard link" do
+        with_tempfile("hard_link_source.txt", "hard_link_target.txt") do |in_path, out_path|
+          File.write(in_path, "")
+          File.link(in_path, out_path)
+          File.exists?(out_path).should be_true
+          File.symlink?(out_path).should be_false
+          File.same?(in_path, out_path).should be_true
+        end
       end
     end
-  end
+  {% end %}
 
   describe "same?" do
     it "compares following symlinks only if requested" do
@@ -1478,8 +1481,8 @@ describe "File" do
     it "does to_s" do
       perm = File::Permissions.flags(OwnerAll, GroupRead, GroupWrite, OtherRead)
       perm.to_s.should eq("rwxrw-r-- (0o764)")
-      perm.inspect.should eq("rwxrw-r-- (0o764)")
-      perm.pretty_inspect.should eq("rwxrw-r-- (0o764)")
+      perm.inspect.should eq("File::Permissions[OtherRead, GroupWrite, GroupRead, OwnerExecute, OwnerWrite, OwnerRead]")
+      perm.pretty_inspect.should eq("File::Permissions[OtherRead, GroupWrite, GroupRead, OwnerExecute, OwnerWrite, OwnerRead]")
     end
   end
 end

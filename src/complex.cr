@@ -3,6 +3,8 @@
 # The a is the real part of the number, and the b is the imaginary part of
 # the number.
 #
+# NOTE: To use `Complex`, you must explicitly import it with `require "complex"`
+#
 # ```
 # require "complex"
 #

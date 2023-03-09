@@ -424,11 +424,17 @@ module Crystal
 
         if value = node.value
           type_assign(var, value, node)
+
+          node.bind_to value
+        else
+          node.type = @program.nil
         end
       when InstanceVar
         if @untyped_def
           node.raise "declaring the type of an instance variable must be done at the class level"
         end
+
+        node.type = @program.nil
       when ClassVar
         if @untyped_def
           node.raise "declaring the type of a class variable must be done at the class level"
@@ -439,11 +445,11 @@ module Crystal
         class_var = lookup_class_var(var)
         var.var = class_var
         class_var.thread_local = true if thread_local
+
+        node.type = @program.nil
       else
         raise "Bug: unexpected var type: #{var.class}"
       end
-
-      node.type = @program.nil
 
       false
     end
@@ -960,8 +966,8 @@ module Crystal
       # This is the case of a yield when there's a captured block
       if block.fun_literal
         block_arg_name = typed_def.block_arg.not_nil!.name
-        block_var = Var.new(block_arg_name).at(node.location)
-        call = Call.new(block_var, "call", node.exps).at(node.location)
+        block_var = Var.new(block_arg_name).at(node)
+        call = Call.new(block_var, "call", node.exps).at(node)
         call.accept self
         node.bind_to call
         node.expanded = call
@@ -1390,14 +1396,14 @@ module Crystal
           next
         end
 
-        temp_var = @program.new_temp_var.at(arg.location)
-        assign = Assign.new(temp_var, exp).at(arg.location)
+        temp_var = @program.new_temp_var.at(arg)
+        assign = Assign.new(temp_var, exp).at(arg)
         exps << assign
         case arg
         when Splat
-          arg.exp = temp_var.clone.at(arg.location)
+          arg.exp = temp_var.clone.at(arg)
         when DoubleSplat
-          arg.exp = temp_var.clone.at(arg.location)
+          arg.exp = temp_var.clone.at(arg)
         else
           next
         end
@@ -1507,7 +1513,7 @@ module Crystal
       end
     end
 
-    def check_lib_call_arg(method, arg_index)
+    def check_lib_call_arg(method, arg_index, &)
       method_arg = method.args[arg_index]?
       return unless method_arg
 
@@ -1551,7 +1557,7 @@ module Crystal
 
       temp_name = @program.new_temp_var_name
 
-      new_call = Call.new(node.obj, "new").at(node.location)
+      new_call = Call.new(node.obj, "new").at(node)
 
       new_assign = Assign.new(Var.new(temp_name).at(node), new_call).at(node)
       exps << new_assign
@@ -1732,7 +1738,7 @@ module Crystal
       if const.is_a?(Path) && const.target_const
         obj = node.obj.clone.at(node.obj)
         const = node.const.clone.at(node.const)
-        comp = Call.new(const, "===", obj).at(node.location)
+        comp = Call.new(const, "===", obj).at(node)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -2179,7 +2185,7 @@ module Crystal
       filter_vars(filters) { |filter| filter }
     end
 
-    def filter_vars(filters)
+    def filter_vars(filters, &)
       filters.try &.each do |name, filter|
         existing_var = @vars[name]
         filtered_var = MetaVar.new(name)
@@ -2249,7 +2255,7 @@ module Crystal
       @unreachable = true
     end
 
-    def with_block_kind(kind : BlockKind)
+    def with_block_kind(kind : BlockKind, &)
       old_block_kind, @last_block_kind = last_block_kind, kind
       old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind.ensure?
       yield
@@ -2930,7 +2936,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        generic_type = TypeNode.new(type).at(node) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)
@@ -2941,7 +2947,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        generic_type = TypeNode.new(type).at(node) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)
@@ -3011,7 +3017,7 @@ module Crystal
       expand(node) { @program.literal_expander.expand_named node, generic_type }
     end
 
-    def expand(node)
+    def expand(node, &)
       expanded = yield
       expanded.accept self
       node.expanded = expanded
@@ -3226,7 +3232,7 @@ module Crystal
       @needs_type_filters > 0
     end
 
-    def request_type_filters
+    def request_type_filters(&)
       @type_filters = nil
       @needs_type_filters += 1
       begin
@@ -3236,7 +3242,7 @@ module Crystal
       end
     end
 
-    def ignoring_type_filters
+    def ignoring_type_filters(&)
       needs_type_filters, @needs_type_filters = @needs_type_filters, 0
       begin
         yield

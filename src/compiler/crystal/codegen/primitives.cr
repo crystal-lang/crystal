@@ -819,7 +819,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def set_aggregate_field(node, target_def, call_args)
+  def set_aggregate_field(node, target_def, call_args, &)
     call_arg = call_args[1]
     original_call_arg = call_arg
 

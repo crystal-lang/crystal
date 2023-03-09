@@ -3,8 +3,10 @@
 require "spec"
 require "system/group"
 
-GROUP_NAME = {{ `id -gn`.stringify.chomp }}
-GROUP_ID   = {{ `id -g`.stringify.chomp }}
+GROUP_NAME         = {{ `id -gn`.stringify.chomp }}
+GROUP_ID           = {{ `id -g`.stringify.chomp }}
+INVALID_GROUP_NAME = "this_group_does_not_exist"
+INVALID_GROUP_ID   = {% if flag?(:android) %}"8888"{% else %}"1234567"{% end %}
 
 describe System::Group do
   describe ".find_by(*, name)" do
@@ -18,7 +20,7 @@ describe System::Group do
 
     it "raises on nonexistent group" do
       expect_raises System::Group::NotFoundError, "No such group" do
-        System::Group.find_by(name: "this_group_does_not_exist")
+        System::Group.find_by(name: INVALID_GROUP_NAME)
       end
     end
   end
@@ -34,7 +36,7 @@ describe System::Group do
 
     it "raises on nonexistent group name" do
       expect_raises System::Group::NotFoundError, "No such group" do
-        System::Group.find_by(id: "1234567")
+        System::Group.find_by(id: INVALID_GROUP_ID)
       end
     end
   end
@@ -49,7 +51,7 @@ describe System::Group do
     end
 
     it "returns nil on nonexistent group" do
-      group = System::Group.find_by?(name: "this_group_does_not_exist")
+      group = System::Group.find_by?(name: INVALID_GROUP_NAME)
       group.should eq(nil)
     end
   end
@@ -64,7 +66,7 @@ describe System::Group do
     end
 
     it "returns nil on nonexistent group id" do
-      group = System::Group.find_by?(id: "1234567")
+      group = System::Group.find_by?(id: INVALID_GROUP_ID)
       group.should eq(nil)
     end
   end

@@ -46,7 +46,7 @@ struct Crystal::Iconv
     end
   end
 
-  def self.new(from : String, to : String, invalid : Symbol? = nil)
+  def self.new(from : String, to : String, invalid : Symbol? = nil, &)
     iconv = new(from, to, invalid)
     begin
       yield iconv

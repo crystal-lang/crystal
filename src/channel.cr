@@ -288,7 +288,7 @@ class Channel(T)
     receive_impl { return nil }
   end
 
-  private def receive_impl
+  private def receive_impl(&)
     receiver = Receiver(T).new
 
     @lock.lock
@@ -421,11 +421,28 @@ class Channel(T)
   end
 
   private def self.select_impl(ops : Indexable(SelectAction), non_blocking)
+    # ops_locks is a duplicate of ops that can be sorted without disturbing the
+    # index positions of ops
+    if ops.responds_to?(:unstable_sort_by!)
+      # If the collection type implements `unstable_sort_by!` we can dup it.
+      # This applies to two types:
+      # * `Array`: `Array#to_a` does not dup and would return the same instance,
+      #   thus we'd be sorting ops and messing up the index positions.
+      # * `StaticArray`: This avoids a heap allocation because we can dup a
+      #   static array on the stack.
+      ops_locks = ops.dup
+    elsif ops.responds_to?(:to_static_array)
+      # If the collection type implements `to_static_array` we can create a
+      # copy without allocating an array. This applies to `Tuple` types, which
+      # the compiler generates for `select` expressions.
+      ops_locks = ops.to_static_array
+    else
+      ops_locks = ops.to_a
+    end
+
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
-    ops_locks = ops
-      .to_a
-      .unstable_sort_by!(&.lock_object_id)
+    ops_locks.unstable_sort_by!(&.lock_object_id)
 
     each_skip_duplicates(ops_locks, &.lock)
 
@@ -474,7 +491,7 @@ class Channel(T)
     raise "BUG: Fiber was awaken from select but no action was activated"
   end
 
-  private def self.each_skip_duplicates(ops_locks)
+  private def self.each_skip_duplicates(ops_locks, &)
     # Avoid deadlocks from trying to lock the same lock twice.
     # `ops_lock` is sorted by `lock_object_id`, so identical onces will be in
     # a row and we skip repeats while iterating.

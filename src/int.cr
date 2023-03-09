@@ -448,6 +448,22 @@ struct Int
     end
   end
 
+  # :nodoc:
+  def next_power_of_two : self
+    one = self.class.new!(1)
+
+    bits = sizeof(self) * 8
+    shift = bits &- (self &- 1).leading_zeros_count
+    if self.is_a?(Int::Signed)
+      shift = 0 if shift >= bits &- 1
+    else
+      shift = 0 if shift == bits
+    end
+
+    result = one << shift
+    result >= self ? result : raise OverflowError.new
+  end
+
   # Returns the greatest common divisor of `self` and *other*. Signed
   # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
@@ -728,7 +744,7 @@ struct Int
     end
   end
 
-  private def internal_to_s(base, precision, upcase = false)
+  private def internal_to_s(base, precision, upcase = false, &)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).

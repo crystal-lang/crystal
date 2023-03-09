@@ -114,6 +114,12 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "interprets variable set with type restriction (#13023)" do
+      interpret(<<-CRYSTAL).should eq(1)
+      a : Int32 = 1
+      CRYSTAL
+    end
+
     it "interprets variable set and get" do
       interpret(<<-CRYSTAL).should eq(1)
       a = 1
@@ -850,6 +856,24 @@ describe Crystal::Repl::Interpreter do
         class MyClass(T); end
 
         !MyClass(Int32)
+        CRYSTAL
+    end
+
+    it "does math primitive on union" do
+      interpret(<<-CRYSTAL).should eq(3)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test) &+ 2
+        CRYSTAL
+    end
+
+    it "does math convert on union" do
+      interpret(<<-CRYSTAL).should eq(1)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test).to_i64!
         CRYSTAL
     end
   end

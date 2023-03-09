@@ -2,6 +2,8 @@ require "crystal/system/group"
 
 # Represents a group of users on the host system.
 #
+# NOTE: To use Group, you must explicitly import it with `require "system/group"`
+#
 # Groups can be retrieved by either group name or their group ID:
 #
 # ```

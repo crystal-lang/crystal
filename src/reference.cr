@@ -1,3 +1,7 @@
+{% if flag?(:preview_mt) %}
+  require "crystal/thread_local_value"
+{% end %}
+
 # `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
@@ -152,7 +156,7 @@ class Reference
     end
   end
 
-  private def exec_recursive(method)
+  private def exec_recursive(method, &)
     hash = ExecRecursive.hash
     key = {object_id, method}
     if hash[key]?
@@ -202,7 +206,7 @@ class Reference
   #   end
   # end
   # ```
-  private def exec_recursive_clone
+  private def exec_recursive_clone(&)
     hash = ExecRecursiveClone.hash
     clone_object_id = hash[object_id]?
     unless clone_object_id

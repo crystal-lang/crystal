@@ -237,31 +237,37 @@ describe "Char" do
     '1'.to_i16.should eq(1i16)
     '1'.to_i32.should eq(1i32)
     '1'.to_i64.should eq(1i64)
+    '1'.to_i128.should eq(1i128)
 
     expect_raises(ArgumentError) { 'a'.to_i8 }
     expect_raises(ArgumentError) { 'a'.to_i16 }
     expect_raises(ArgumentError) { 'a'.to_i32 }
     expect_raises(ArgumentError) { 'a'.to_i64 }
+    expect_raises(ArgumentError) { 'a'.to_i128 }
 
     'a'.to_i8?.should be_nil
     'a'.to_i16?.should be_nil
     'a'.to_i32?.should be_nil
     'a'.to_i64?.should be_nil
+    'a'.to_i128?.should be_nil
 
     '1'.to_u8.should eq(1u8)
     '1'.to_u16.should eq(1u16)
     '1'.to_u32.should eq(1u32)
     '1'.to_u64.should eq(1u64)
+    '1'.to_u128.should eq(1u128)
 
     expect_raises(ArgumentError) { 'a'.to_u8 }
     expect_raises(ArgumentError) { 'a'.to_u16 }
     expect_raises(ArgumentError) { 'a'.to_u32 }
     expect_raises(ArgumentError) { 'a'.to_u64 }
+    expect_raises(ArgumentError) { 'a'.to_u128 }
 
     'a'.to_u8?.should be_nil
     'a'.to_u16?.should be_nil
     'a'.to_u32?.should be_nil
     'a'.to_u64?.should be_nil
+    'a'.to_u128?.should be_nil
   end
 
   it "does to_i with 16 base" do

@@ -36,7 +36,7 @@ class YAML::PullParser
 
   # Creates a parser, yields it to the block, and closes
   # the parser at the end of it.
-  def self.new(content)
+  def self.new(content, &)
     parser = new(content)
     yield parser ensure parser.close
   end
@@ -126,7 +126,7 @@ class YAML::PullParser
 
   # Reads a "stream start" event, yields to the block,
   # and then reads a "stream end" event.
-  def read_stream
+  def read_stream(&)
     read_stream_start
     value = yield
     read_stream_end
@@ -135,7 +135,7 @@ class YAML::PullParser
 
   # Reads a "document start" event, yields to the block,
   # and then reads a "document end" event.
-  def read_document
+  def read_document(&)
     read_document_start
     value = yield
     read_document_end
@@ -144,7 +144,7 @@ class YAML::PullParser
 
   # Reads a "sequence start" event, yields to the block,
   # and then reads a "sequence end" event.
-  def read_sequence
+  def read_sequence(&)
     read_sequence_start
     value = yield
     read_sequence_end
@@ -153,7 +153,7 @@ class YAML::PullParser
 
   # Reads a "mapping start" event, yields to the block,
   # and then reads a "mapping end" event.
-  def read_mapping
+  def read_mapping(&)
     read_mapping_start
     value = yield
     read_mapping_end

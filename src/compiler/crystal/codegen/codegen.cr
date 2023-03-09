@@ -1167,6 +1167,7 @@ module Crystal
 
         if value = node.value
           codegen_assign(var, value, node)
+          return false
         end
       when Global
         node.raise "BUG: there should be no use of global variables other than $~ and $?"
@@ -1413,7 +1414,7 @@ module Crystal
       codegen_type_filter node, &.filter_by_responds_to(node.name)
     end
 
-    def codegen_type_filter(node)
+    def codegen_type_filter(node, &)
       accept node.obj
       obj_type = node.obj.type
 
@@ -1648,7 +1649,7 @@ module Crystal
       make_fun type, null, null
     end
 
-    def in_main
+    def in_main(&)
       old_builder = self.builder
       old_position = old_builder.insert_block
       old_llvm_mod = @llvm_mod
@@ -1696,7 +1697,7 @@ module Crystal
       block_value
     end
 
-    def define_main_function(name, arg_types : Array(LLVM::Type), return_type : LLVM::Type, needs_alloca : Bool = false)
+    def define_main_function(name, arg_types : Array(LLVM::Type), return_type : LLVM::Type, needs_alloca : Bool = false, &)
       define_main_function(name, LLVM::Type.function(arg_types, return_type), needs_alloca) { |func| yield func }
     end
 
@@ -1939,7 +1940,7 @@ module Crystal
       in_alloca_block { builder.alloca type, name }
     end
 
-    def in_alloca_block
+    def in_alloca_block(&)
       old_block = insert_block
       position_at_end alloca_block
       value = yield
@@ -1968,7 +1969,7 @@ module Crystal
     # debug_codegen_log { {"Lorem %d", [an_int_llvm_value] of LLVM::Value} }
     # ```
     #
-    def debug_codegen_log(file = __FILE__, line = __LINE__)
+    def debug_codegen_log(file = __FILE__, line = __LINE__, &)
       return unless ENV["CRYSTAL_DEBUG_CODEGEN"]?
       printf_args = yield || ""
       printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
@@ -2011,7 +2012,7 @@ module Crystal
       @last = type_ptr
     end
 
-    def allocate_tuple(type)
+    def allocate_tuple(type, &)
       struct_type = llvm_type(type)
       tuple = alloca struct_type
       type.tuple_types.each_with_index do |tuple_type, i|
@@ -2063,7 +2064,7 @@ module Crystal
       generic_malloc(type) { crystal_malloc_atomic_fun }
     end
 
-    def generic_malloc(type)
+    def generic_malloc(type, &)
       size = type.size
 
       if malloc_fun = yield
@@ -2083,7 +2084,7 @@ module Crystal
       generic_array_malloc(type, count) { crystal_malloc_atomic_fun }
     end
 
-    def generic_array_malloc(type, count)
+    def generic_array_malloc(type, count, &)
       size = builder.mul type.size, count
 
       if malloc_fun = yield
@@ -2168,32 +2169,17 @@ module Crystal
       len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
 
       pointer = cast_to_void_pointer pointer
-      res = call c_memset_fun,
-        if LibLLVM::IS_LT_70
-          [pointer, value, len_arg, int32(4), int1(0)]
-        else
-          [pointer, value, len_arg, int1(0)]
-        end
-
-      unless LibLLVM::IS_LT_70
-        LibLLVM.set_instr_param_alignment(res, 1, 4)
-      end
+      res = call c_memset_fun, [pointer, value, len_arg, int1(0)]
+      LibLLVM.set_instr_param_alignment(res, 1, 4)
 
       res
     end
 
     def memcpy(dest, src, len, align, volatile)
-      res = call c_memcpy_fun,
-        if LibLLVM::IS_LT_70
-          [dest, src, len, int32(align), volatile]
-        else
-          [dest, src, len, volatile]
-        end
+      res = call c_memcpy_fun, [dest, src, len, volatile]
 
-      unless LibLLVM::IS_LT_70
-        LibLLVM.set_instr_param_alignment(res, 1, align)
-        LibLLVM.set_instr_param_alignment(res, 2, align)
-      end
+      LibLLVM.set_instr_param_alignment(res, 1, align)
+      LibLLVM.set_instr_param_alignment(res, 2, align)
 
       res
     end
@@ -2319,7 +2305,7 @@ module Crystal
       end
     end
 
-    def request_value(request : Bool = true)
+    def request_value(request : Bool = true, &)
       old_needs_value = @needs_value
       @needs_value = request
       begin

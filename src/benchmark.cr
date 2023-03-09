@@ -3,6 +3,8 @@ require "./benchmark/**"
 # The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time and memory taken for each task.
 #
+# NOTE: To use `Benchmark`, you must explicitly import it with `require "benchmark"`
+#
 # ### Measure the number of iterations per second of each task
 #
 # ```
@@ -85,7 +87,7 @@ module Benchmark
 
   # Main interface of the `Benchmark` module. Yields a `Job` to which
   # one can report the benchmarks. See the module's description.
-  def bm
+  def bm(&)
     {% if !flag?(:release) %}
       puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
@@ -103,7 +105,7 @@ module Benchmark
   # those stages in seconds. For more detail on these stages see
   # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
   # displayed and updated as they are calculated, otherwise all at once after they finished.
-  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?, &)
     {% if !flag?(:release) %}
       puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
@@ -116,7 +118,7 @@ module Benchmark
   end
 
   # Returns the time used to execute the given block.
-  def measure(label = "") : BM::Tms
+  def measure(label = "", &) : BM::Tms
     t0, r0 = Process.times, Time.monotonic
     yield
     t1, r1 = Process.times, Time.monotonic
@@ -133,7 +135,7 @@ module Benchmark
   # ```
   # Benchmark.realtime { "a" * 100_000 } # => 00:00:00.0005840
   # ```
-  def realtime : Time::Span
+  def realtime(&) : Time::Span
     Time.measure { yield }
   end
 
@@ -142,7 +144,7 @@ module Benchmark
   # ```
   # Benchmark.memory { Array(Int32).new } # => 32
   # ```
-  def memory
+  def memory(&)
     bytes_before_measure = GC.stats.total_bytes
     yield
     (GC.stats.total_bytes - bytes_before_measure).to_i64

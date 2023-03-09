@@ -16,7 +16,7 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
-  def self.unsafe_each
+  def self.unsafe_each(&)
     threads.unsafe_each { |thread| yield thread }
   end
 
@@ -48,7 +48,7 @@ class Thread
     Thread.threads.push(self)
   end
 
-  private def detach
+  private def detach(&)
     if @detached.compare_and_set(0, 1).last
       yield
     end

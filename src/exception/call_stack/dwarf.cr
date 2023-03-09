@@ -11,7 +11,7 @@ struct Exception::CallStack
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
   # :nodoc:
-  def self.load_debug_info
+  def self.load_debug_info : Nil
     return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
     unless @@dwarf_loaded
@@ -45,7 +45,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.parse_function_names_from_dwarf(info, strings, line_strings)
+  protected def self.parse_function_names_from_dwarf(info, strings, line_strings, &)
     info.each do |code, abbrev, attributes|
       next unless abbrev && abbrev.tag.subprogram?
       name = low_pc = high_pc = nil

@@ -13,7 +13,7 @@ private def processed_expand_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-private def run_expand_tool(code)
+private def run_expand_tool(code, &)
   cursor_location = nil
 
   code.lines.each_with_index do |line, line_number_0|
@@ -41,7 +41,7 @@ private def assert_expand(code, expected_result)
   assert_expand(code, expected_result) { }
 end
 
-private def assert_expand(code, expected_result)
+private def assert_expand(code, expected_result, &)
   run_expand_tool code do |result|
     result.status.should eq("ok")
     result.message.should eq("#{expected_result.size} expansion#{expected_result.size >= 2 ? "s" : ""} found")
@@ -59,7 +59,7 @@ private def assert_expand_simple(code, expanded, original = code.delete('‸'))
   assert_expand_simple(code, expanded, original) { }
 end
 
-private def assert_expand_simple(code, expanded, original = code.delete('‸'))
+private def assert_expand_simple(code, expanded, original = code.delete('‸'), &)
   assert_expand(code, [[original, expanded]]) { |result| yield result.expansions.not_nil![0] }
 end
 

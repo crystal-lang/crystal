@@ -34,7 +34,7 @@ class Crystal::Program
     parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, visibility, &.parse(mode)
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public)
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public, &)
     parser = @program.new_parser(generated_source, var_scopes: [vars.dup])
     parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
     parser.macro_expansion_pragmas = macro_expansion_pragmas

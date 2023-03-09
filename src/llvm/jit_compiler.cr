@@ -12,7 +12,7 @@ class LLVM::JITCompiler
     @finalized = false
   end
 
-  def self.new(mod)
+  def self.new(mod, &)
     jit = new(mod)
     yield jit ensure jit.dispose
   end

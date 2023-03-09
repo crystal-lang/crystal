@@ -62,11 +62,11 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def with_cloned_context(new_context = @context)
+  def with_cloned_context(new_context = @context, &)
     with_context(new_context.clone) { |ctx| yield ctx }
   end
 
-  def with_context(new_context)
+  def with_context(new_context, &)
     old_context = @context
     @context = new_context
     value = yield old_context

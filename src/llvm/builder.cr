@@ -53,11 +53,7 @@ class LLVM::Builder
   def call(func : LLVM::Function, name : String = "")
     # check_func(func)
 
-    {% if LibLLVM::IS_LT_80 %}
-      Value.new LibLLVM.build_call(self, func, nil, 0, name)
-    {% else %}
-      Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
-    {% end %}
+    Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
   end
 
   def call(type : LLVM::Type, func : LLVM::Function, name : String = "")
@@ -73,11 +69,7 @@ class LLVM::Builder
     # check_value(arg)
 
     value = arg.to_unsafe
-    {% if LibLLVM::IS_LT_80 %}
-      Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
-    {% else %}
-      Value.new LibLLVM.build_call2(self, func.function_type, func, pointerof(value), 1, name)
-    {% end %}
+    Value.new LibLLVM.build_call2(self, func.function_type, func, pointerof(value), 1, name)
   end
 
   def call(type : LLVM::Type, func : LLVM::Function, arg : LLVM::Value, name : String = "")

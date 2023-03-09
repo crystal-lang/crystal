@@ -34,7 +34,7 @@ module Indexable(T)
   # a.fetch(2) { :default_value }    # => :default_value
   # a.fetch(2) { |index| index * 3 } # => 6
   # ```
-  def fetch(index : Int)
+  def fetch(index : Int, &)
     index = check_index_out_of_bounds(index) do
       return yield index
     end
@@ -595,7 +595,7 @@ module Indexable(T)
   # ```text
   # 2 -- 3 --
   # ```
-  def each_index(*, start : Int, count : Int)
+  def each_index(*, start : Int, count : Int, &)
     # We cannot use `normalize_start_and_count` here because `self` may be
     # mutated to contain enough elements during iteration even if there weren't
     # initially `count` elements.
@@ -720,7 +720,7 @@ module Indexable(T)
   # a.equals?(b) { |x, y| x == y.size } # => true
   # a.equals?(b) { |x, y| x == y }      # => false
   # ```
-  def equals?(other)
+  def equals?(other, &)
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other[i])
@@ -729,7 +729,7 @@ module Indexable(T)
   end
 
   # :inherited:
-  def first
+  def first(&)
     size == 0 ? yield : unsafe_fetch(0)
   end
 
@@ -809,7 +809,7 @@ module Indexable(T)
   # ([1, 2, 3]).last { 4 }   # => 3
   # ([] of Int32).last { 4 } # => 4
   # ```
-  def last
+  def last(&)
     size == 0 ? yield : unsafe_fetch(size - 1)
   end
 
@@ -928,7 +928,7 @@ module Indexable(T)
     check_index_out_of_bounds(index) { raise IndexError.new }
   end
 
-  private def check_index_out_of_bounds(index)
+  private def check_index_out_of_bounds(index, &)
     index += size if index < 0
     if 0 <= index < size
       index
@@ -941,12 +941,12 @@ module Indexable(T)
     Indexable.normalize_start_and_count(start, count, size)
   end
 
-  private def normalize_start_and_count(start, count)
+  private def normalize_start_and_count(start, count, &)
     Indexable.normalize_start_and_count(start, count, size) { yield }
   end
 
   # :nodoc:
-  def self.normalize_start_and_count(start, count, collection_size)
+  def self.normalize_start_and_count(start, count, collection_size, &)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     start += collection_size if start < 0
     if 0 <= start <= collection_size
@@ -1021,7 +1021,7 @@ module Indexable(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false) : Nil
+  def each_permutation(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size > n
 
@@ -1114,7 +1114,7 @@ module Indexable(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_combination(size : Int = self.size, reuse = false) : Nil
+  def each_combination(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size > n
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1224,7 +1224,7 @@ module Indexable(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
+  def each_repeated_combination(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size > n && n == 0
     raise ArgumentError.new("Size must be positive") if size < 0
