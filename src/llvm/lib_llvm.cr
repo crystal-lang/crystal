@@ -19,6 +19,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_150 = {{LibLLVM::VERSION.starts_with?("15.0")}}
     IS_140 = {{LibLLVM::VERSION.starts_with?("14.0")}}
     IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
@@ -42,6 +43,8 @@ end
     IS_LT_110 = {{compare_versions(LibLLVM::VERSION, "11.0.0") < 0}}
     IS_LT_120 = {{compare_versions(LibLLVM::VERSION, "12.0.0") < 0}}
     IS_LT_130 = {{compare_versions(LibLLVM::VERSION, "13.0.0") < 0}}
+    IS_LT_140 = {{compare_versions(LibLLVM::VERSION, "14.0.0") < 0}}
+    IS_LT_150 = {{compare_versions(LibLLVM::VERSION, "15.0.0") < 0}}
   end
 {% end %}
 
@@ -407,6 +410,9 @@ lib LibLLVM
   fun float_type_in_context = LLVMFloatTypeInContext(ContextRef) : TypeRef
   fun double_type_in_context = LLVMDoubleTypeInContext(ContextRef) : TypeRef
   fun struct_type_in_context = LLVMStructTypeInContext(c : ContextRef, element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
+  {% unless LibLLVM::IS_LT_150 %}
+    fun pointer_type_in_context = LLVMPointerTypeInContext(ContextRef, address_space : UInt) : TypeRef
+  {% end %}
 
   fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : UInt8*, length : UInt32, dont_null_terminate : Int32) : ValueRef
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef

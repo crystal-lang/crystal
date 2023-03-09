@@ -198,7 +198,8 @@ module Crystal
     end
 
     delegate llvm_type, llvm_struct_type, llvm_arg_type, llvm_embedded_type,
-      llvm_c_type, llvm_c_return_type, llvm_return_type, llvm_embedded_c_type, to: llvm_typer
+      llvm_c_type, llvm_c_return_type, llvm_return_type, llvm_embedded_c_type,
+      llvm_intrinsic_return_type, to: llvm_typer
 
     def llvm_proc_type(type)
       llvm_typer.proc_type(type.as(ProcInstanceType))

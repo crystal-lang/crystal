@@ -42,7 +42,11 @@ struct LLVM::Type
   end
 
   def pointer : LLVM::Type
-    Type.new LibLLVM.pointer_type(self, 0)
+    {% if LibLLVM::IS_LT_150 %}
+      Type.new LibLLVM.pointer_type(self, 0)
+    {% else %}
+      Type.new LibLLVM.pointer_type_in_context(LibLLVM.get_type_context(self), 0)
+    {% end %}
   end
 
   def array(count) : LLVM::Type
@@ -85,8 +89,14 @@ struct LLVM::Type
 
   def element_type : LLVM::Type
     case kind
-    when Kind::Array, Kind::Vector, Kind::Pointer
+    when Kind::Array, Kind::Vector
       Type.new LibLLVM.get_element_type(self)
+    when Kind::Pointer
+      {% if LibLLVM::IS_LT_150 %}
+        Type.new LibLLVM.get_element_type(self)
+      {% else %}
+        raise "Typed pointers are unavailable on LLVM 15.0 or above"
+      {% end %}
     else
       raise "Not a sequential type"
     end

@@ -95,7 +95,12 @@ class Crystal::CodeGenVisitor
         emit_def_debug_metadata target_def unless @debug.none?
         set_current_debug_location target_def if @debug.line_numbers?
 
-        context.fun.add_attribute LLVM::Attribute::UWTable
+        {% if LibLLVM::IS_LT_150 %}
+          context.fun.add_attribute LLVM::Attribute::UWTable
+        {% else %}
+          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.has_flag?("aarch64") ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
+        {% end %}
+
         if @program.has_flag?("darwin")
           # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
           {% if compare_versions(Crystal::LLVM_VERSION, "8.0.0") < 0 %}
@@ -302,7 +307,12 @@ class Crystal::CodeGenVisitor
       end
       llvm_arg_type
     end
-    llvm_return_type = llvm_return_type(target_def.type)
+
+    llvm_return_type = {% if LibLLVM::IS_LT_150 %}
+                         llvm_return_type(target_def.type)
+                       {% else %}
+                         target_def.llvm_intrinsic? ? llvm_intrinsic_return_type(target_def.type) : llvm_return_type(target_def.type)
+                       {% end %}
 
     if is_closure
       llvm_args_types.insert(0, llvm_context.void_pointer)
