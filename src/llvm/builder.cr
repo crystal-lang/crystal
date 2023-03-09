@@ -114,22 +114,14 @@ class LLVM::Builder
   def load(ptr : LLVM::Value, name = "")
     # check_value(ptr)
 
-    {% if LibLLVM::IS_LT_80 %}
-      Value.new LibLLVM.build_load(self, ptr, name)
-    {% else %}
-      Value.new LibLLVM.build_load2(self, ptr.type.element_type, ptr, name)
-    {% end %}
+    Value.new LibLLVM.build_load2(self, ptr.type.element_type, ptr, name)
   end
 
   def load(type : LLVM::Type, ptr : LLVM::Value, name = "")
     # check_type("load", type)
     # check_value(ptr)
 
-    {% if LibLLVM::IS_LT_80 %}
-      Value.new LibLLVM.build_load(self, ptr, name)
-    {% else %}
-      Value.new LibLLVM.build_load2(self, type, ptr, name)
-    {% end %}
+    Value.new LibLLVM.build_load2(self, type, ptr, name)
   end
 
   def store_volatile(value, ptr)
@@ -149,22 +141,14 @@ class LLVM::Builder
     def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
 
-      \{% if LibLLVM::IS_LT_80 %}
-        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
-      \{% else %}
-        Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
-      \{% end %}
+      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
     def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
       # check_type({{method_name}}, type)
       # check_value(value)
 
-      \{% if LibLLVM::IS_LT_80 %}
-        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
-      \{% else %}
-        Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
-      \{% end %}
+      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
     @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
@@ -172,11 +156,7 @@ class LLVM::Builder
       # check_value(value)
 
       indices = pointerof(index).as(LibLLVM::ValueRef*)
-      \{% if LibLLVM::IS_LT_80 %}
-        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
-      \{% else %}
-        Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices, 1, name)
-      \{% end %}
+      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices, 1, name)
     end
 
     def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index : LLVM::Value, name = "")
@@ -184,11 +164,7 @@ class LLVM::Builder
       # check_value(value)
 
       indices = pointerof(index).as(LibLLVM::ValueRef*)
-      \{% if LibLLVM::IS_LT_80 %}
-        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
-      \{% else %}
-        Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices, 1, name)
-      \{% end %}
+      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices, 1, name)
     end
 
     @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
@@ -198,11 +174,7 @@ class LLVM::Builder
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      \{% if LibLLVM::IS_LT_80 %}
-        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
-      \{% else %}
-        Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
-      \{% end %}
+      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
 
     def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
@@ -212,11 +184,7 @@ class LLVM::Builder
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      \{% if LibLLVM::IS_LT_80 %}
-        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
-      \{% else %}
-        Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
-      \{% end %}
+      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 
