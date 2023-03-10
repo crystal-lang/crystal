@@ -196,7 +196,7 @@ class LLVM::Builder
   end
 
   def add_handler(catch_switch_ref, handler)
-    LibLLVMExt.add_handler catch_switch_ref, handler
+    LibLLVM.add_handler catch_switch_ref, handler
   end
 
   def build_operand_bundle_def(name, values : Array(LLVM::Value))

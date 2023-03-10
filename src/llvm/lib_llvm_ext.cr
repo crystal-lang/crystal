@@ -133,9 +133,6 @@ lib LibLLVMExt
                                                    num_handlers : LibC::UInt,
                                                    name : LibC::Char*) : LibLLVM::ValueRef
 
-  fun add_handler = LLVMExtAddHandler(catch_switch_ref : LibLLVM::ValueRef,
-                                      handler : LibLLVM::BasicBlockRef) : Void
-
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef

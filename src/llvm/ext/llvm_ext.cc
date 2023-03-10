@@ -315,11 +315,6 @@ LLVMValueRef LLVMExtBuildCatchSwitch(
                                                  NumHandlers, Name));
 }
 
-void LLVMExtAddHandler(LLVMValueRef CatchSwitchRef, LLVMBasicBlockRef Handler) {
-  Value *CatchSwitch = unwrap(CatchSwitchRef);
-  cast<CatchSwitchInst>(CatchSwitch)->addHandler(unwrap(Handler));
-}
-
 OperandBundleDef *LLVMExtBuildOperandBundleDef(
     const char *Name, LLVMValueRef *Inputs, unsigned NumInputs) {
   return new OperandBundleDef(Name, makeArrayRef(unwrap(Inputs), NumInputs));
