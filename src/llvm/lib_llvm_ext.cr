@@ -117,8 +117,6 @@ lib LibLLVMExt
 
   fun set_current_debug_location = LLVMExtSetCurrentDebugLocation(LibLLVM::BuilderRef, Int, Int, LibLLVM::MetadataRef, LibLLVM::MetadataRef)
 
-  fun set_ordering = LLVMExtSetOrdering(value : LibLLVM::ValueRef, ordering : LLVM::AtomicOrdering)
-
   fun build_catch_pad = LLVMExtBuildCatchPad(builder : LibLLVM::BuilderRef,
                                              parent_pad : LibLLVM::ValueRef,
                                              arg_count : LibC::UInt,

@@ -296,6 +296,7 @@ lib LibLLVM
   fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : LLVM::CallConvention)
   fun set_instruction_call_convention = LLVMSetInstructionCallConv(instr : ValueRef, cc : LLVM::CallConvention)
   fun get_instruction_call_convention = LLVMGetInstructionCallConv(instr : ValueRef) : LLVM::CallConvention
+  fun set_ordering = LLVMSetOrdering(memory_access_inst : ValueRef, ordering : LLVM::AtomicOrdering)
   fun get_int_type_width = LLVMGetIntTypeWidth(ty : TypeRef) : UInt32
   fun is_packed_struct = LLVMIsPackedStruct(ty : TypeRef) : Int32
   fun get_struct_name = LLVMGetStructName(ty : TypeRef) : UInt8*

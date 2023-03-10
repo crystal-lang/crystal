@@ -290,15 +290,6 @@ LLVMAttributeRef LLVMExtCreateTypeAttribute(
 }
 #endif
 
-void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
-  Value *P = unwrap<Value>(MemAccessInst);
-  AtomicOrdering O = (AtomicOrdering) Ordering;
-
-  if (LoadInst *LI = dyn_cast<LoadInst>(P))
-    return LI->setOrdering(O);
-  return cast<StoreInst>(P)->setOrdering(O);
-}
-
 LLVMValueRef LLVMExtBuildCatchPad(
     LLVMBuilderRef B, LLVMValueRef ParentPad, unsigned ArgCount,
     LLVMValueRef *LLArgs, const char *Name) {

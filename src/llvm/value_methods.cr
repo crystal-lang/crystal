@@ -86,7 +86,7 @@ module LLVM::ValueMethods
   end
 
   def ordering=(ordering)
-    LibLLVMExt.set_ordering(self, ordering)
+    LibLLVM.set_ordering(self, ordering)
   end
 
   def alignment=(bytes)
