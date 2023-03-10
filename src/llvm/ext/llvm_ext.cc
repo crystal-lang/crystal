@@ -290,26 +290,6 @@ LLVMAttributeRef LLVMExtCreateTypeAttribute(
 }
 #endif
 
-LLVMValueRef LLVMExtBuildCmpxchg(
-    LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
-    LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
-#if LLVM_VERSION_GE(13, 0)
-  return wrap(
-    unwrap(B)->CreateAtomicCmpXchg(
-      unwrap(PTR),
-      unwrap(Cmp),
-      unwrap(New),
-      llvm::MaybeAlign(),
-      (llvm::AtomicOrdering)SuccessOrdering,
-      (llvm::AtomicOrdering)FailureOrdering
-    )
-  );
-#else
-  return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
-    (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
-#endif
-}
-
 void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
   Value *P = unwrap<Value>(MemAccessInst);
   AtomicOrdering O = (AtomicOrdering) Ordering;

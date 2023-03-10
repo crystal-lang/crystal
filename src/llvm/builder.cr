@@ -227,8 +227,8 @@ class LLVM::Builder
     Value.new LibLLVM.build_atomicrmw(self, op, ptr, val, ordering, singlethread ? 1 : 0)
   end
 
-  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
-    Value.new LibLLVMExt.build_cmpxchg(self, pointer, cmp, new, success_ordering, failure_ordering)
+  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering, singlethread : Bool = false)
+    Value.new LibLLVM.build_atomic_cmp_xchg(self, pointer, cmp, new, success_ordering, failure_ordering, singlethread ? 1 : 0)
   end
 
   def fence(ordering, singlethread, name = "")

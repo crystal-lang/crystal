@@ -93,6 +93,7 @@ lib LibLLVM
   fun build_array_malloc = LLVMBuildArrayMalloc(builder : BuilderRef, type : TypeRef, val : ValueRef, name : UInt8*) : ValueRef
   fun build_ashr = LLVMBuildAShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_atomicrmw = LLVMBuildAtomicRMW(builder : BuilderRef, op : LLVM::AtomicRMWBinOp, ptr : ValueRef, val : ValueRef, ordering : LLVM::AtomicOrdering, singlethread : Int32) : ValueRef
+  fun build_atomic_cmp_xchg = LLVMBuildAtomicCmpXchg(builder : BuilderRef, ptr : ValueRef, cmp : ValueRef, new : ValueRef, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering, single_thread : Int) : ValueRef
   fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
   {% if LibLLVM::IS_LT_110 %}
