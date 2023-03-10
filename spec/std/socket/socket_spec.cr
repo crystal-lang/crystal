@@ -21,7 +21,7 @@ describe Socket, tags: "network" do
 
   describe "#tty?" do
     it "with non TTY" do
-      Socket.unix.tty?.should be_false
+      Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP).tty?.should be_false
     end
   end
 
