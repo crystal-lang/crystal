@@ -306,45 +306,45 @@ describe "Number" do
   end
 
   describe "#round_even" do
-    -2.5.round_even.should eq -2.0
-    -1.5.round_even.should eq -2.0
-    -1.0.round_even.should eq -1.0
-    -0.9.round_even.should eq -1.0
-    -0.5.round_even.should eq -0.0
-    -0.1.round_even.should eq 0.0
-    0.0.round_even.should eq 0.0
-    0.1.round_even.should eq 0.0
-    0.5.round_even.should eq 0.0
-    0.9.round_even.should eq 1.0
-    1.0.round_even.should eq 1.0
-    1.5.round_even.should eq 2.0
-    2.5.round_even.should eq 2.0
+    it { -2.5.round_even.should eq -2.0 }
+    it { -1.5.round_even.should eq -2.0 }
+    it { -1.0.round_even.should eq -1.0 }
+    it { -0.9.round_even.should eq -1.0 }
+    it { -0.5.round_even.should eq -0.0 }
+    it { -0.1.round_even.should eq 0.0 }
+    it { 0.0.round_even.should eq 0.0 }
+    it { 0.1.round_even.should eq 0.0 }
+    it { 0.5.round_even.should eq 0.0 }
+    it { 0.9.round_even.should eq 1.0 }
+    it { 1.0.round_even.should eq 1.0 }
+    it { 1.5.round_even.should eq 2.0 }
+    it { 2.5.round_even.should eq 2.0 }
 
-    1.round_even.should eq 1
-    1.round_even.should be_a(Int32)
-    1_u8.round_even.should be_a(UInt8)
-    1_f32.round_even.should be_a(Float32)
+    it { 1.round_even.should eq 1 }
+    it { 1.round_even.should be_a(Int32) }
+    it { 1_u8.round_even.should be_a(UInt8) }
+    it { 1_f32.round_even.should be_a(Float32) }
   end
 
   describe "#round_away" do
-    -2.5.round_away.should eq -3.0
-    -1.5.round_away.should eq -2.0
-    -1.0.round_away.should eq -1.0
-    -0.9.round_away.should eq -1.0
-    -0.5.round_away.should eq -1.0
-    -0.1.round_away.should eq 0.0
-    0.0.round_away.should eq 0.0
-    0.1.round_away.should eq 0.0
-    0.5.round_away.should eq 1.0
-    0.9.round_away.should eq 1.0
-    1.0.round_away.should eq 1.0
-    1.5.round_away.should eq 2.0
-    2.5.round_away.should eq 3.0
+    it { -2.5.round_away.should eq -3.0 }
+    it { -1.5.round_away.should eq -2.0 }
+    it { -1.0.round_away.should eq -1.0 }
+    it { -0.9.round_away.should eq -1.0 }
+    it { -0.5.round_away.should eq -1.0 }
+    it { -0.1.round_away.should eq 0.0 }
+    it { 0.0.round_away.should eq 0.0 }
+    it { 0.1.round_away.should eq 0.0 }
+    it { 0.5.round_away.should eq 1.0 }
+    it { 0.9.round_away.should eq 1.0 }
+    it { 1.0.round_away.should eq 1.0 }
+    it { 1.5.round_away.should eq 2.0 }
+    it { 2.5.round_away.should eq 3.0 }
 
-    1.round_away.should eq 1
-    1.round_away.should be_a(Int32)
-    1_u8.round_away.should be_a(UInt8)
-    1_f32.round_away.should be_a(Float32)
+    it { 1.round_away.should eq 1 }
+    it { 1.round_away.should be_a(Int32) }
+    it { 1_u8.round_away.should be_a(UInt8) }
+    it { 1_f32.round_away.should be_a(Float32) }
   end
 
   it "gives the absolute value" do

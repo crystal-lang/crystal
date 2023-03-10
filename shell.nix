@@ -128,7 +128,7 @@ let
   };
 
   stdLibDeps = with pkgs; [
-      boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre zlib
+      boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre2 zlib
     ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
 
   tools = [ pkgs.hostname pkgs.git llvm_suite.extra ];
