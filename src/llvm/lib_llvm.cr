@@ -102,6 +102,9 @@ lib LibLLVM
     fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
   {% end %}
   fun build_call2 = LLVMBuildCall2(builder : BuilderRef, type : TypeRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
+  fun build_catch_pad = LLVMBuildCatchPad(b : BuilderRef, parent_pad : ValueRef, args : ValueRef*, num_args : UInt, name : Char*) : ValueRef
+  fun build_catch_ret = LLVMBuildCatchRet(b : BuilderRef, catch_pad : ValueRef, bb : BasicBlockRef) : ValueRef
+  fun build_catch_switch = LLVMBuildCatchSwitch(b : BuilderRef, parent_pad : ValueRef, unwind_bb : BasicBlockRef, num_handlers : UInt, name : Char*) : ValueRef
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef) : ValueRef
   fun build_exact_sdiv = LLVMBuildExactSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : UInt8*) : ValueRef

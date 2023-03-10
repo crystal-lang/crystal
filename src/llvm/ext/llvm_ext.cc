@@ -290,31 +290,6 @@ LLVMAttributeRef LLVMExtCreateTypeAttribute(
 }
 #endif
 
-LLVMValueRef LLVMExtBuildCatchPad(
-    LLVMBuilderRef B, LLVMValueRef ParentPad, unsigned ArgCount,
-    LLVMValueRef *LLArgs, const char *Name) {
-  Value **Args = unwrap(LLArgs);
-  return wrap(unwrap(B)->CreateCatchPad(
-      unwrap(ParentPad), ArrayRef<Value *>(Args, ArgCount), Name));
-}
-
-LLVMValueRef LLVMExtBuildCatchRet(
-    LLVMBuilderRef B, LLVMValueRef Pad, LLVMBasicBlockRef BB) {
-  return wrap(unwrap(B)->CreateCatchRet(cast<CatchPadInst>(unwrap(Pad)),
-                                              unwrap(BB)));
-}
-
-LLVMValueRef LLVMExtBuildCatchSwitch(
-    LLVMBuilderRef B, LLVMValueRef ParentPad, LLVMBasicBlockRef BB,
-    unsigned NumHandlers, const char *Name) {
-  if (ParentPad == nullptr) {
-    Type *Ty = Type::getTokenTy(unwrap(B)->getContext());
-    ParentPad = wrap(Constant::getNullValue(Ty));
-  }
-  return wrap(unwrap(B)->CreateCatchSwitch(unwrap(ParentPad), unwrap(BB),
-                                                 NumHandlers, Name));
-}
-
 OperandBundleDef *LLVMExtBuildOperandBundleDef(
     const char *Name, LLVMValueRef *Inputs, unsigned NumInputs) {
   return new OperandBundleDef(Name, makeArrayRef(unwrap(Inputs), NumInputs));

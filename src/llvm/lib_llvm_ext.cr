@@ -117,22 +117,6 @@ lib LibLLVMExt
 
   fun set_current_debug_location = LLVMExtSetCurrentDebugLocation(LibLLVM::BuilderRef, Int, Int, LibLLVM::MetadataRef, LibLLVM::MetadataRef)
 
-  fun build_catch_pad = LLVMExtBuildCatchPad(builder : LibLLVM::BuilderRef,
-                                             parent_pad : LibLLVM::ValueRef,
-                                             arg_count : LibC::UInt,
-                                             args : LibLLVM::ValueRef*,
-                                             name : LibC::Char*) : LibLLVM::ValueRef
-
-  fun build_catch_ret = LLVMExtBuildCatchRet(builder : LibLLVM::BuilderRef,
-                                             pad : LibLLVM::ValueRef,
-                                             basic_block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
-
-  fun build_catch_switch = LLVMExtBuildCatchSwitch(builder : LibLLVM::BuilderRef,
-                                                   parent_pad : LibLLVM::ValueRef,
-                                                   basic_block : LibLLVM::BasicBlockRef,
-                                                   num_handlers : LibC::UInt,
-                                                   name : LibC::Char*) : LibLLVM::ValueRef
-
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef
