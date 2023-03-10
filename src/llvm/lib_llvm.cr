@@ -170,6 +170,9 @@ lib LibLLVM
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
+  {% unless LibLLVM::IS_LT_120 %}
+    fun create_type_attribute = LLVMCreateTypeAttribute(ctx : ContextRef, kind_id : UInt, ty : TypeRef) : AttributeRef
+  {% end %}
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
   fun delete_function = LLVMDeleteFunction(fn : ValueRef)
   fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
