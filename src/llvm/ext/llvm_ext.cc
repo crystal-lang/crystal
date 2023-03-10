@@ -1,17 +1,12 @@
-#include "llvm/IR/DIBuilder.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Support/CBindingWrapping.h"
-#include <llvm-c/Core.h>
+#include <llvm/IR/DIBuilder.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Support/CBindingWrapping.h>
 #include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
-#include <llvm/ADT/Triple.h>
-#include <llvm-c/TargetMachine.h>
-#include <llvm/Target/TargetMachine.h>
-#include <llvm-c/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
@@ -27,7 +22,6 @@ using namespace llvm;
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
 #include <llvm/Target/CodeGenCWrappers.h>
-#include <llvm-c/DebugInfo.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Analysis/ModuleSummaryAnalysis.h>
 
@@ -241,20 +235,6 @@ LLVMMetadataRef LLVMExtDIBuilderCreatePointerType(
                                              None,
                                              Name);
   return wrap(T);
-}
-
-LLVMMetadataRef LLVMTemporaryMDNode2(
-    LLVMContextRef C, LLVMMetadataRef *MDs, unsigned Count) {
-  return wrap(MDTuple::getTemporary(*unwrap(C),
-                                    ArrayRef<Metadata *>(unwrap(MDs), Count))
-                  .release());
-}
-
-void LLVMMetadataReplaceAllUsesWith2(
-  LLVMMetadataRef MD, LLVMMetadataRef New) {
-  auto *Node = unwrap<MDNode>(MD);
-  Node->replaceAllUsesWith(unwrap<MDNode>(New));
-  MDNode::deleteTemporary(Node);
 }
 
 void LLVMExtSetCurrentDebugLocation(
