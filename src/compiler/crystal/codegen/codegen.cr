@@ -1701,7 +1701,7 @@ module Crystal
       define_main_function(name, LLVM::Type.function(arg_types, return_type), needs_alloca) { |func| yield func }
     end
 
-    def define_main_function(name, type : LLVM::Type, needs_alloca : Bool = false)
+    def define_main_function(name, type : LLVM::Type, needs_alloca : Bool = false, &)
       if @llvm_mod != @main_mod
         raise "wrong usage of define_main_function: you must put it inside an `in_main` block"
       end
