@@ -335,7 +335,9 @@ module Crystal::System::Socket
   end
 
   private def system_tty?
-    LibC.isatty(fd) == 1
+    LibC._isatty(
+      LibC._open_osfhandle(fd, 0)
+    ) != 0
   end
 
   private def unbuffered_read(slice : Bytes)

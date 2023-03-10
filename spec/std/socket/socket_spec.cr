@@ -19,6 +19,12 @@ describe Socket, tags: "network" do
     end
   end
 
+  describe "#tty?" do
+    it "with non TTY" do
+      Socket.unix.tty?.should be_false
+    end
+  end
+
   pending_win32 ".accept" do
     client_done = Channel(Nil).new
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)

@@ -7,6 +7,7 @@ lib LibC
   fun _isatty(fd : Int) : Int
   fun _close(fd : Int) : Int
   fun _wopen(filename : WCHAR*, oflag : Int, ...) : Int
+  fun _open_osfhandle(osfhandle : UINT_PTR, flags : Int) : Int
   fun _waccess_s(path : WCHAR*, mode : Int) : ErrnoT
   fun _wchmod(filename : WCHAR*, pmode : Int) : Int
   fun _wunlink(filename : WCHAR*) : Int
