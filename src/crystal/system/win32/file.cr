@@ -39,6 +39,11 @@ module Crystal::System::File
     )
 
     if handle == LibC::INVALID_HANDLE_VALUE
+      # Map ERROR_FILE_EXISTS to Errno::EEXIST to avoid changing semantics of other systems
+      if WinError.value.error_file_exists?
+        Errno.value = Errno::EEXIST
+      end
+
       return {-1, Errno.value}
     end
 
