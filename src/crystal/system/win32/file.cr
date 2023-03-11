@@ -63,20 +63,19 @@ module Crystal::System::File
   end
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
-    access = disposition = attributes = 0
+    disposition = 0
 
-    case flags & (LibC::O_RDONLY | LibC::O_WRONLY | LibC::O_RDWR)
-    when LibC::O_RDONLY then access = LibC::GENERIC_READ
-    when LibC::O_WRONLY then access = LibC::GENERIC_WRITE
-    when LibC::O_RDWR   then access = LibC::GENERIC_READ | LibC::GENERIC_WRITE
-    end
+    access = if flags & LibC::O_WRONLY > 0
+               LibC::GENERIC_WRITE
+             elsif flags & LibC::O_RDWR > 0
+               LibC::GENERIC_READ | LibC::GENERIC_WRITE
+             else
+               LibC::GENERIC_READ
+             end
 
     if flags & LibC::O_APPEND > 0
       access |= LibC::FILE_APPEND_DATA
-      attributes &= ~LibC::FILE_FLAG_BACKUP_SEMANTICS
     end
-
-    share = LibC::DEFAULT_SHARE_MODE
 
     case flags & (LibC::O_CREAT | LibC::O_EXCL | LibC::O_TRUNC)
     when 0, LibC::O_EXCL                                                            then disposition = LibC::OPEN_EXISTING
@@ -86,7 +85,7 @@ module Crystal::System::File
     when LibC::O_CREAT | LibC::O_TRUNC                                              then disposition = LibC::CREATE_ALWAYS
     end
 
-    attributes |= LibC::FILE_ATTRIBUTE_NORMAL
+    attributes = LibC::FILE_ATTRIBUTE_NORMAL
     unless perm.owner_write?
       attributes |= LibC::FILE_ATTRIBUTE_READONLY
     end
@@ -105,7 +104,7 @@ module Crystal::System::File
     when LibC::O_RANDOM     then attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
     end
 
-    {access, disposition, attributes, share}
+    {access, disposition, attributes, LibC::DEFAULT_SHARE_MODE}
   end
 
   NOT_FOUND_ERRORS = {
