@@ -16,6 +16,4 @@ lib LibC
   fun _pipe(pfds : Int*, psize : UInt, textmode : Int) : Int
   fun _dup2(fd1 : Int, fd2 : Int) : Int
   fun _commit(fd : Int) : Int
-
-  FILE_APPEND_DATA = 0x00000004
 end

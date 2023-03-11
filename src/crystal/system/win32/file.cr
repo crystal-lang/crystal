@@ -47,13 +47,17 @@ module Crystal::System::File
       return {-1, Errno.value}
     end
 
-    fd = LibC._open_osfhandle handle, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_RDWR | LibC::O_BINARY
+    fd = LibC._open_osfhandle handle, flags
 
     if fd == -1
       return {-1, Errno.value}
     end
 
-    LibC._setmode fd, LibC::O_BINARY
+    if flags & LibC::O_BINARY > 0
+      LibC._setmode fd, LibC::O_BINARY
+    elsif flags & LibC::O_TEXT > 0
+      LibC._setmode fd, LibC::O_TEXT
+    end
 
     {fd, Errno::NONE}
   end
