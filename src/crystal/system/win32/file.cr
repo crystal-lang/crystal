@@ -26,11 +26,77 @@ module Crystal::System::File
   end
 
   def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    flags |= LibC::O_BINARY | LibC::O_NOINHERIT
+    access, disposition, attributes, share = self.posix_to_open_opts flags, perm
 
-    fd = LibC._wopen(System.to_wstr(filename), flags, perm)
+    handle = LibC.CreateFileW(
+      System.to_wstr(filename),
+      access,
+      share, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
 
-    {fd, fd == -1 ? Errno.value : Errno::NONE}
+    if handle == LibC::INVALID_HANDLE_VALUE
+      return {-1, Errno.value}
+    end
+
+    fd = LibC._open_osfhandle handle, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_RDWR | LibC::O_BINARY
+
+    if fd == -1
+      return {-1, Errno.value}
+    end
+
+    LibC._setmode fd, LibC::O_BINARY
+
+    {fd, Errno::NONE}
+  end
+
+  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
+    access = disposition = attributes = 0
+
+    case flags & (LibC::O_RDONLY | LibC::O_WRONLY | LibC::O_RDWR)
+    when LibC::O_RDONLY then access = LibC::GENERIC_READ
+    when LibC::O_WRONLY then access = LibC::GENERIC_WRITE
+    when LibC::O_RDWR   then access = LibC::GENERIC_READ | LibC::GENERIC_WRITE
+    end
+
+    if flags & LibC::O_APPEND > 0
+      access |= LibC::FILE_APPEND_DATA
+      attributes &= ~LibC::FILE_FLAG_BACKUP_SEMANTICS
+    end
+
+    share = LibC::DEFAULT_SHARE_MODE
+
+    case flags & (LibC::O_CREAT | LibC::O_EXCL | LibC::O_TRUNC)
+    when 0, LibC::O_EXCL                                                            then disposition = LibC::OPEN_EXISTING
+    when LibC::O_CREAT                                                              then disposition = LibC::OPEN_ALWAYS
+    when LibC::O_CREAT | LibC::O_EXCL, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_EXCL then disposition = LibC::CREATE_NEW
+    when LibC::O_TRUNC, LibC::O_TRUNC | LibC::O_EXCL                                then disposition = LibC::TRUNCATE_EXISTING
+    when LibC::O_CREAT | LibC::O_TRUNC                                              then disposition = LibC::CREATE_ALWAYS
+    end
+
+    attributes |= LibC::FILE_ATTRIBUTE_NORMAL
+    unless perm.owner_write?
+      attributes |= LibC::FILE_ATTRIBUTE_READONLY
+    end
+
+    if flags & LibC::O_TEMPORARY > 0
+      attributes |= LibC::FILE_FLAG_DELETE_ON_CLOSE | LibC::FILE_ATTRIBUTE_TEMPORARY
+      access |= LibC::DELETE
+    end
+
+    if flags & LibC::O_SHORT_LIVED > 0
+      attributes |= LibC::FILE_ATTRIBUTE_TEMPORARY
+    end
+
+    case flags & (LibC::O_SEQUENTIAL | LibC::O_RANDOM)
+    when LibC::O_SEQUENTIAL then attributes |= LibC::FILE_FLAG_SEQUENTIAL_SCAN
+    when LibC::O_RANDOM     then attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
+    end
+
+    {access, disposition, attributes, share}
   end
 
   NOT_FOUND_ERRORS = {

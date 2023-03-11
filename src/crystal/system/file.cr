@@ -81,7 +81,7 @@ module Crystal::System::File
   end
 
   private def self.error_is_file_exists?(errno)
-    Errno.value.in?(Errno::EEXIST, WinError::ERROR_ALREADY_EXISTS)
+    Errno.value.in?(Errno::EEXIST, Errno::ENOENT, WinError::ERROR_ALREADY_EXISTS, WinError::ERROR_FILE_EXISTS)
   end
 
   # Closes the internal file descriptor without notifying libevent.

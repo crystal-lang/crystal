@@ -517,6 +517,15 @@ describe "File" do
       end
     end
 
+    it "deletes an open file" do
+      with_tempfile("delete-file.txt") do |filename|
+        file = File.open filename, "w"
+        File.exists?(file.path).should be_true
+        file.delete
+        File.exists?(file.path).should be_false
+      end
+    end
+
     it "deletes? a file" do
       with_tempfile("delete-file.txt") do |filename|
         File.open(filename, "w") { }
