@@ -911,7 +911,7 @@ struct Int8
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x12_i8.byte_swap     # => 0x12
+  # 0x12_i8.byte_swap # => 0x12
   # ```
   def byte_swap : self
     self
@@ -1011,7 +1011,7 @@ struct Int16
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_i16.byte_swap     # => 0x3412
+  # 0x1234_i16.byte_swap # => 0x3412
   # ```
   def byte_swap : self
     Intrinsics.bswap16(self).to_i16!
@@ -1111,7 +1111,7 @@ struct Int32
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x12345678_i32.byte_swap     # => 0x78563412
+  # 0x12345678_i32.byte_swap # => 0x78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap32(self).to_i32!
@@ -1314,7 +1314,7 @@ struct Int128
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x123456789_i128.byte_swap  # ＝> -0x7698badcff0000000000000000000000
+  # 0x123456789_i128.byte_swap # ＝> -0x7698badcff0000000000000000000000
   # ```
   def byte_swap : self
     Intrinsics.bswap128(self).to_i128!
@@ -1418,7 +1418,7 @@ struct UInt8
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x12_u8.byte_swap     # => 0x12
+  # 0x12_u8.byte_swap # => 0x12
   # ```
   def byte_swap : self
     self
@@ -1522,7 +1522,7 @@ struct UInt16
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x1234_u16.byte_swap # => 0x3412
   # ```
   def byte_swap : self
     Intrinsics.bswap16(self)
@@ -1626,7 +1626,7 @@ struct UInt32
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x12345678_u32.byte_swap     # => 0x78563412
+  # 0x12345678_u32.byte_swap # => 0x78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap32(self)
@@ -1836,7 +1836,7 @@ struct UInt128
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x123456789ABCDEF013579BDF2468ACE0_u128.byte_swap  # ＝> 0xE0AC6824DF9B5713F0DEBC9A78563412
+  # 0x123456789ABCDEF013579BDF2468ACE0_u128.byte_swap # ＝> 0xE0AC6824DF9B5713F0DEBC9A78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap128(self)
