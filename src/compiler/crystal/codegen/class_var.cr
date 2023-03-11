@@ -82,7 +82,7 @@ class Crystal::CodeGenVisitor
 
   def initialize_class_var(class_var : MetaTypeVar, initializer : ClassVarInitializer)
     init_func = create_initialize_class_var_function(class_var, initializer)
-    init_func = check_main_fun(init_func.name, init_func) if init_func
+    init_func = check_main_fun(init_func.func.name, init_func) if init_func
 
     # For unsafe class var we just initialize them without
     # using a flag to know if they were initialized
@@ -116,7 +116,7 @@ class Crystal::CodeGenVisitor
     node = initializer.node
     init_function_name = "~#{class_var_global_initialized_name(class_var)}"
 
-    @main_mod.functions[init_function_name]? || begin
+    typed_fun?(@main_mod, init_function_name) || begin
       global = declare_class_var(class_var)
 
       discard = false
@@ -155,7 +155,7 @@ class Crystal::CodeGenVisitor
 
       if discard
         class_var.simple_initializer = true
-        new_func.delete
+        new_func.func.delete
         nil
       else
         new_func
@@ -199,7 +199,7 @@ class Crystal::CodeGenVisitor
 
     func = create_read_class_var_function(class_var, initializer)
     if func
-      func = check_main_fun func.name, func
+      func = check_main_fun func.func.name, func
       call func
     else
       get_class_var_global(class_var)
@@ -216,7 +216,7 @@ class Crystal::CodeGenVisitor
   def read_virtual_class_var_ptr(class_var, owner)
     self_type_id = type_id(llvm_self, owner)
     read_function_name = "~#{class_var_global_name(class_var)}:read"
-    func = @main_mod.functions[read_function_name]? ||
+    func = typed_fun?(@main_mod, read_function_name) ||
            create_read_virtual_class_var_ptr_function(read_function_name, class_var, owner)
     func = check_main_fun read_function_name, func
     call func, self_type_id
@@ -263,7 +263,7 @@ class Crystal::CodeGenVisitor
   def read_virtual_metaclass_class_var_ptr(class_var, owner)
     self_type_id = type_id(llvm_self, owner)
     read_function_name = "~#{class_var_global_name(class_var)}:read"
-    func = @main_mod.functions[read_function_name]? ||
+    func = typed_fun?(@main_mod, read_function_name) ||
            create_read_virtual_metaclass_var_ptr_function(read_function_name, class_var, owner)
     func = check_main_fun read_function_name, func
     call func, self_type_id
@@ -308,7 +308,7 @@ class Crystal::CodeGenVisitor
 
   def create_read_class_var_function(class_var, initializer)
     fun_name = "~#{class_var_global_name(class_var)}:read"
-    if func = @main_mod.functions[fun_name]?
+    if func = typed_fun?(@main_mod, fun_name)
       return func
     end
 
@@ -320,7 +320,7 @@ class Crystal::CodeGenVisitor
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(class_var.type).pointer) do |func|
         set_internal_fun_debug_location(func, fun_name, initializer.node.location)
-        init_func = check_main_fun init_func.name, init_func
+        init_func = check_main_fun init_func.func.name, init_func
         ret lazy_initialize_class_var(initializer.node, init_func, global, initialized_flag)
       end
     end

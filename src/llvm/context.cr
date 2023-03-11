@@ -59,8 +59,20 @@ class LLVM::Context
     Type.new LibLLVM.double_type_in_context(self)
   end
 
+  def pointer : Type
+    {% if LibLLVM::IS_LT_150 %}
+      {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
+    {% else %}
+      Type.new LibLLVM.pointer_type_in_context(self, 0)
+    {% end %}
+  end
+
   def void_pointer : Type
-    int8.pointer
+    {% if LibLLVM::IS_LT_150 %}
+      int8.pointer
+    {% else %}
+      pointer
+    {% end %}
   end
 
   def struct(name : String, packed = false, &) : Type
