@@ -8,7 +8,6 @@
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
-#include <llvm/ADT/Triple.h>
 #include <llvm-c/TargetMachine.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm-c/ExecutionEngine.h>
@@ -26,10 +25,21 @@ using namespace llvm;
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
+// TODO: remove after #13177
+#if LLVM_VERSION_GE(16, 0)
+#include <llvm/TargetParser/Triple.h>
+#else
+#include <llvm/ADT/Triple.h>
+#endif
+
 #include <llvm/Target/CodeGenCWrappers.h>
 #include <llvm-c/DebugInfo.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Analysis/ModuleSummaryAnalysis.h>
+
+#if LLVM_VERSION_GE(16, 0)
+#define makeArrayRef ArrayRef
+#endif
 
 typedef DIBuilder *DIBuilderRef;
 #define DIArray DINodeArray
@@ -238,7 +248,11 @@ LLVMMetadataRef LLVMExtDIBuilderCreatePointerType(
     uint64_t SizeInBits, uint64_t AlignInBits, const char *Name) {
   DIDerivedType *T = Dref->createPointerType(unwrapDI<DIType>(PointeeType),
                                              SizeInBits, AlignInBits,
+#if LLVM_VERSION_GE(16, 0)
+                                             std::nullopt,
+#else
                                              None,
+#endif
                                              Name);
   return wrap(T);
 }
@@ -457,7 +471,7 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
          .setOptLevel((CodeGenOpt::Level)options.OptLevel)
          .setTargetOptions(targetOptions);
   bool JIT;
-  if (Optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
+  if (auto CM = unwrap(options.CodeModel, JIT))
     builder.setCodeModel(*CM);
   if (options.MCJMM)
     builder.setMCJITMemoryManager(
