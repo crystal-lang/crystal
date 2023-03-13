@@ -45,7 +45,9 @@ lib LibC
   fun NtCurrentTeb : NT_TIB*
   fun GetCurrentThread : HANDLE
   fun GetCurrentThreadId : DWORD
-  fun GetCurrentThreadStackLimits(lowLimit : ULONG_PTR*, highLimit : ULONG_PTR*) : Void
+  {% if LibC::WIN32_WINNT >= LibC::WIN32_WINNT_WIN8 %}
+    fun GetCurrentThreadStackLimits(lowLimit : ULONG_PTR*, highLimit : ULONG_PTR*) : Void
+  {% end %}
   fun GetCurrentProcess : HANDLE
   fun GetCurrentProcessId : DWORD
   fun OpenProcess(dwDesiredAccess : DWORD, bInheritHandle : BOOL, dwProcessId : DWORD) : HANDLE

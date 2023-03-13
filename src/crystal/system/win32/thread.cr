@@ -113,15 +113,15 @@ class Thread
   end
 
   private def stack_address : Void*
-    {% if flag? :win7 %}
+    {% if LibC.has_method?("GetCurrentThreadStackLimits") %}
+      LibC.GetCurrentThreadStackLimits(out low_limit, out high_limit)
+      Pointer(Void).new(low_limit)
+    {% else %}
       tib = LibC.NtCurrentTeb
       high_limit = tib.value.stackBase
       LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION))
       low_limit = mbi.allocationBase
       low_limit
-    {% else %}
-      LibC.GetCurrentThreadStackLimits(out low_limit, out high_limit)
-      Pointer(Void).new(low_limit)
     {% end %}
   end
 

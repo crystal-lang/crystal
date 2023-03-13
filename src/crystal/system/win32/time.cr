@@ -17,13 +17,11 @@ module Crystal::System::Time
   BIAS_TO_OFFSET_FACTOR = -60
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    # TODO: Needs a check if `GetSystemTimePreciseAsFileTime` is actually available (only >= Windows 8)
-    # and use `GetSystemTimeAsFileTime` as fallback.
-    {% if flag? :win7 %}
-      LibC.GetSystemTimeAsFileTime(out filetime)
+    {% if LibC.has_method?("GetSystemTimePreciseAsFileTime") %}
+      LibC.GetSystemTimePreciseAsFileTime(out filetime)
       filetime_to_seconds_and_nanoseconds(filetime)
     {% else %}
-      LibC.GetSystemTimePreciseAsFileTime(out filetime)
+      LibC.GetSystemTimeAsFileTime(out filetime)
       filetime_to_seconds_and_nanoseconds(filetime)
     {% end %}
   end
