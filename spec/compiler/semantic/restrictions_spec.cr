@@ -1221,6 +1221,18 @@ describe "Restrictions" do
       CR
   end
 
+  it "sets number as unbound generic type var (#13110)" do
+    assert_type(<<-CR) { generic_class "Foo", 1.int32 }
+      class Foo(T)
+        def self.foo(x : Foo(T))
+          x
+        end
+      end
+
+      Foo.foo(Foo(1).new)
+      CR
+  end
+
   it "restricts aliased typedef type (#9474)" do
     assert_type(%(
       lib A
