@@ -26,12 +26,12 @@ module Crystal::System::File
   end
 
   def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    access, disposition, attributes, share = self.posix_to_open_opts flags, perm
+    access, disposition, attributes = self.posix_to_open_opts flags, perm
 
     handle = LibC.CreateFileW(
       System.to_wstr(filename),
       access,
-      share, # UNIX semantics
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
       nil,
       disposition,
       attributes,
@@ -40,11 +40,7 @@ module Crystal::System::File
 
     if handle == LibC::INVALID_HANDLE_VALUE
       # Map ERROR_FILE_EXISTS to Errno::EEXIST to avoid changing semantics of other systems
-      if WinError.value.error_file_exists?
-        Errno.value = Errno::EEXIST
-      end
-
-      return {-1, Errno.value}
+      return {-1, WinError.value.error_file_exists? ? Errno::EEXIST : Errno.value}
     end
 
     fd = LibC._open_osfhandle handle, flags
@@ -63,26 +59,28 @@ module Crystal::System::File
   end
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
-    disposition = 0
-
-    access = if flags & LibC::O_WRONLY > 0
-               LibC::GENERIC_WRITE
-             elsif flags & LibC::O_RDWR > 0
-               LibC::GENERIC_READ | LibC::GENERIC_WRITE
-             else
-               LibC::GENERIC_READ
-             end
+    access = 0
+    access |= LibC::GENERIC_WRITE unless flags == LibC::O_RDONLY
+    access |= LibC::GENERIC_READ unless flags & LibC::O_WRONLY > 0
 
     if flags & LibC::O_APPEND > 0
       access |= LibC::FILE_APPEND_DATA
     end
 
-    case flags & (LibC::O_CREAT | LibC::O_EXCL | LibC::O_TRUNC)
-    when 0, LibC::O_EXCL                                                            then disposition = LibC::OPEN_EXISTING
-    when LibC::O_CREAT                                                              then disposition = LibC::OPEN_ALWAYS
-    when LibC::O_CREAT | LibC::O_EXCL, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_EXCL then disposition = LibC::CREATE_NEW
-    when LibC::O_TRUNC, LibC::O_TRUNC | LibC::O_EXCL                                then disposition = LibC::TRUNCATE_EXISTING
-    when LibC::O_CREAT | LibC::O_TRUNC                                              then disposition = LibC::CREATE_ALWAYS
+    if flags & LibC::O_TRUNC > 0
+      if flags & LibC::O_CREAT > 0
+        disposition = LibC::CREATE_ALWAYS
+      else
+        disposition = LibC::TRUNCATE_EXISTING
+      end
+    elsif flags & LibC::O_CREAT > 0
+      if flags & LibC::O_EXCL > 0
+        disposition = LibC::CREATE_NEW
+      else
+        disposition = LibC::OPEN_ALWAYS
+      end
+    else
+      disposition = LibC::OPEN_EXISTING
     end
 
     attributes = LibC::FILE_ATTRIBUTE_NORMAL
@@ -104,7 +102,7 @@ module Crystal::System::File
     when LibC::O_RANDOM     then attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
     end
 
-    {access, disposition, attributes, LibC::DEFAULT_SHARE_MODE}
+    {access, disposition, attributes}
   end
 
   NOT_FOUND_ERRORS = {
