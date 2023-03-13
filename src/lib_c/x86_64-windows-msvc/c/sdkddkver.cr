@@ -5,9 +5,9 @@ lib LibC
 
   # add other version flags here, or use mechanisms other than flags
   {% if flag?(:win7) %}
-    WIN32_WINNT = WIN32_WINNT_WIN7
+    WIN32_WINNT = {{ WIN32_WINNT_WIN7 }}
   {% else %}
-    # TODO - detect host version using `cmd.exe /c ver` or some other way.
-    WIN32_WINNT = WIN32_WINNT_WIN10
+    # TODO - detect host version using `cmd.exe /c ver`, environment variable or some other way.
+    WIN32_WINNT = {{ WIN32_WINNT_WIN10 }}
   {% end %}
 end
