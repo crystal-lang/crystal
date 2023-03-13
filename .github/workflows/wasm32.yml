@@ -2,6 +2,10 @@ name: WebAssembly CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   SPEC_SPLIT_DOTS: 160
 
