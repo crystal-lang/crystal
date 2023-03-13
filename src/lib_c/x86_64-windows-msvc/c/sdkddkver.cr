@@ -7,8 +7,10 @@ lib LibC
   {% if flag?(:win7) %}
     WIN32_WINNT = WIN32_WINNT_WIN7
   {% else %}
-    {% ver_str = `cmd.exe /c ver` %}
-    {% major, minor = ver_str.gsub(/.*?(\d+)\.(\d+).*/m, "").split %}
+    # We can't just search for "OS Version" because systeminfo output is localized
+    {% sysinfo_str = `systeminfo /fo csv /nh` %}
+    {% ver_str = sysinfo_str.split(',')[2] %}
+    {% major, minor = ver_str.gsub(/.*?(\d+)\.(\d+).*/m, "\\1 \\2").split %}
     WIN32_WINNT = {{ major.to_i * 0x100 + minor.to_i }}
   {% end %}
 end
