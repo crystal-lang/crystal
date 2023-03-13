@@ -49,9 +49,9 @@ module Crystal::System::File
       return {-1, Errno.value}
     end
 
-    if flags & LibC::O_BINARY > 0
+    if flags.bits_set? LibC::O_BINARY
       LibC._setmode fd, LibC::O_BINARY
-    elsif flags & LibC::O_TEXT > 0
+    elsif flags.bits_set? LibC::O_TEXT
       LibC._setmode fd, LibC::O_TEXT
     end
 
@@ -61,20 +61,20 @@ module Crystal::System::File
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
     access = 0
     access |= LibC::GENERIC_WRITE unless flags == LibC::O_RDONLY
-    access |= LibC::GENERIC_READ unless flags & LibC::O_WRONLY > 0
+    access |= LibC::GENERIC_READ unless flags.bits_set? LibC::O_WRONLY
 
-    if flags & LibC::O_APPEND > 0
+    if flags.bits_set? LibC::O_APPEND
       access |= LibC::FILE_APPEND_DATA
     end
 
-    if flags & LibC::O_TRUNC > 0
-      if flags & LibC::O_CREAT > 0
+    if flags.bits_set? LibC::O_TRUNC
+      if flags.bits_set? LibC::O_CREAT
         disposition = LibC::CREATE_ALWAYS
       else
         disposition = LibC::TRUNCATE_EXISTING
       end
-    elsif flags & LibC::O_CREAT > 0
-      if flags & LibC::O_EXCL > 0
+    elsif flags.bits_set? LibC::O_CREAT
+      if flags.bits_set? LibC::O_EXCL
         disposition = LibC::CREATE_NEW
       else
         disposition = LibC::OPEN_ALWAYS
@@ -88,18 +88,19 @@ module Crystal::System::File
       attributes |= LibC::FILE_ATTRIBUTE_READONLY
     end
 
-    if flags & LibC::O_TEMPORARY > 0
+    if flags.bits_set? LibC::O_TEMPORARY
       attributes |= LibC::FILE_FLAG_DELETE_ON_CLOSE | LibC::FILE_ATTRIBUTE_TEMPORARY
       access |= LibC::DELETE
     end
 
-    if flags & LibC::O_SHORT_LIVED > 0
+    if flags.bits_set? LibC::O_SHORT_LIVED
       attributes |= LibC::FILE_ATTRIBUTE_TEMPORARY
     end
 
-    case flags & (LibC::O_SEQUENTIAL | LibC::O_RANDOM)
-    when LibC::O_SEQUENTIAL then attributes |= LibC::FILE_FLAG_SEQUENTIAL_SCAN
-    when LibC::O_RANDOM     then attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
+    if flags.bits_set? LibC::O_SEQUENTIAL
+      attributes |= LibC::FILE_FLAG_SEQUENTIAL_SCAN
+    elsif flags.bits_set? LibC::O_RANDOM
+      attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
     end
 
     {access, disposition, attributes}
