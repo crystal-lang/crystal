@@ -7,10 +7,7 @@ lib LibC
   {% if flag?(:win7) %}
     WIN32_WINNT = WIN32_WINNT_WIN7
   {% else %}
-    # We can't just search for "OS Version" because systeminfo output is localized
-    {% sysinfo_str = `systeminfo /fo csv /nh` %}
-    {% ver_str = sysinfo_str.split(',')[2] %}
-    {% major, minor = ver_str.gsub(/.*?(\d+)\.(\d+).*/m, "\\1 \\2").split %}
-    WIN32_WINNT = {{ major.to_i * 0x100 + minor.to_i }}
+    # TODO - detect host version using `cmd.exe /c ver` or some other way.
+    WIN32_WINNT = WIN32_WINNT_WIN10
   {% end %}
 end
