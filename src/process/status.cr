@@ -178,6 +178,9 @@ class Process::Status
   # received and didn't handle. Will raise if `signal_exit?` is `false`.
   #
   # Available only on Unix-like operating systems.
+  #
+  # NOTE: `#exit_reason` is preferred over this method as a portable alternative
+  # which also works on Windows.
   def exit_signal : Signal
     {% if flag?(:unix) && !flag?(:wasm32) %}
       Signal.from_value(signal_code)

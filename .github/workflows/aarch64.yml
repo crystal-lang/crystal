@@ -2,6 +2,10 @@ name: AArch64 CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   aarch64-musl-build:
     runs-on: [linux, ARM64]

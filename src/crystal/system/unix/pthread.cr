@@ -59,8 +59,8 @@ class Thread
     end
   end
 
-  {% if flag?(:android) || flag?(:openbsd) %}
-    # no thread local storage (TLS) for OpenBSD or Android,
+  {% if flag?(:openbsd) %}
+    # no thread local storage (TLS) for OpenBSD,
     # we use pthread's specific storage (TSS) instead:
     @@current_key : LibC::PthreadKeyT
 

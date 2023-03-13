@@ -15,7 +15,7 @@
 #
 # OTHERS: On other systems, we add the linker annotation here to make sure libpthread is loaded
 # before libgc which looks up symbols from libpthread.
-{% unless flag?(:win32) || flag?(:musl) || flag?(:darwin) || (flag?(:interpreted) && flag?(:gnu)) %}
+{% unless flag?(:win32) || flag?(:musl) || flag?(:darwin) || flag?(:android) || (flag?(:interpreted) && flag?(:gnu)) %}
   @[Link("pthread")]
 {% end %}
 
@@ -158,7 +158,7 @@ module GC
       # This implements `String#starts_with?` without allocating a `String` (#11728)
       format_string = Slice.new(msg, Math.min(LibC.strlen(msg), start.bytesize))
       unless format_string == start.to_slice
-        LibC.printf msg, v
+        Crystal::System.print_error msg, v
       end
     end
   end

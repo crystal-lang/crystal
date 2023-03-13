@@ -585,6 +585,14 @@ struct BigInt < Int
     LibGMP.scan1(self, 0)
   end
 
+  # :nodoc:
+  def next_power_of_two : self
+    one = BigInt.new(1)
+    return one if self <= 0
+
+    popcount == 1 ? self : one << bit_length
+  end
+
   def to_i : Int32
     to_i32
   end
@@ -846,6 +854,20 @@ module Math
   # Calculates the integer square root of *value*.
   def isqrt(value : BigInt)
     BigInt.new { |mpz| LibGMP.sqrt(mpz, value) }
+  end
+
+  # Computes the smallest nonnegative power of 2 that is greater than or equal
+  # to *v*.
+  #
+  # The returned value has the same type as the argument.
+  #
+  # ```
+  # Math.pw2ceil(33) # => 64
+  # Math.pw2ceil(64) # => 64
+  # Math.pw2ceil(-5) # => 1
+  # ```
+  def pw2ceil(v : BigInt) : BigInt
+    v.next_power_of_two
   end
 end
 

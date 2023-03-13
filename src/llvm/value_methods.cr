@@ -16,19 +16,16 @@ module LLVM::ValueMethods
 
   def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context, type : LLVM::Type? = nil)
     return if attribute.value == 0
-    {% if LibLLVM.has_constant?(:AttributeRef) %}
-      attribute.each_kind do |kind|
-        if type && LLVM::Attribute.requires_type?(kind)
-          attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
-        else
-          attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
-        end
 
-        LibLLVM.add_call_site_attribute(self, index, attribute_ref)
+    attribute.each_kind do |kind|
+      if type && LLVM::Attribute.requires_type?(kind)
+        attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
+      else
+        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
       end
-    {% else %}
-      LibLLVM.add_instr_attribute(self, index, attribute)
-    {% end %}
+
+      LibLLVM.add_call_site_attribute(self, index, attribute_ref)
+    end
   end
 
   def constant?

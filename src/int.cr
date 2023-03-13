@@ -448,6 +448,22 @@ struct Int
     end
   end
 
+  # :nodoc:
+  def next_power_of_two : self
+    one = self.class.new!(1)
+
+    bits = sizeof(self) * 8
+    shift = bits &- (self &- 1).leading_zeros_count
+    if self.is_a?(Int::Signed)
+      shift = 0 if shift >= bits &- 1
+    else
+      shift = 0 if shift == bits
+    end
+
+    result = one << shift
+    result >= self ? result : raise OverflowError.new
+  end
+
   # Returns the greatest common divisor of `self` and *other*. Signed
   # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
@@ -895,8 +911,7 @@ struct Int8
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x12_i8.byte_swap # => 0x12
   # ```
   def byte_swap : self
     self
@@ -996,8 +1011,7 @@ struct Int16
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x1234_i16.byte_swap # => 0x3412
   # ```
   def byte_swap : self
     Intrinsics.bswap16(self).to_i16!
@@ -1097,8 +1111,7 @@ struct Int32
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x12345678_i32.byte_swap # => 0x78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap32(self).to_i32!
@@ -1198,8 +1211,8 @@ struct Int64
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x12345678_i64.byte_swap         # => 0x7856341200000000
+  # 0x123456789ABCDEF0_i64.byte_swap # => -0xf21436587a9cbee
   # ```
   def byte_swap : self
     Intrinsics.bswap64(self).to_i64!
@@ -1301,8 +1314,7 @@ struct Int128
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x123456789_i128.byte_swap # ＝> -0x7698badcff0000000000000000000000
   # ```
   def byte_swap : self
     Intrinsics.bswap128(self).to_i128!
@@ -1406,8 +1418,7 @@ struct UInt8
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x12_u8.byte_swap # => 0x12
   # ```
   def byte_swap : self
     self
@@ -1511,8 +1522,7 @@ struct UInt16
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x1234_u16.byte_swap # => 0x3412
   # ```
   def byte_swap : self
     Intrinsics.bswap16(self)
@@ -1616,8 +1626,7 @@ struct UInt32
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x12345678_u32.byte_swap # => 0x78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap32(self)
@@ -1721,8 +1730,7 @@ struct UInt64
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x123456789ABCDEF0_u64.byte_swap # => 0xF0DEBC9A78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap64(self)
@@ -1828,8 +1836,7 @@ struct UInt128
   # Has no effect on 8-bit integers.
   #
   # ```
-  # 0x1234_u16.byte_swap     # => 0x3412
-  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # 0x123456789ABCDEF013579BDF2468ACE0_u128.byte_swap # ＝> 0xE0AC6824DF9B5713F0DEBC9A78563412
   # ```
   def byte_swap : self
     Intrinsics.bswap128(self)
