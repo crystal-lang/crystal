@@ -1,5 +1,6 @@
 require "./basetsd"
 require "c/wtypesbase"
+require "c/sdkddkver"
 
 lib LibC
   CREATE_UNICODE_ENVIRONMENT = 0x00000400
