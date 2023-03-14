@@ -1,4 +1,5 @@
 require "c/wincrypt"
+require "openssl"
 
 module Crystal::System::Crypto
   # heavily based on cURL's code for importing system certificates on Windows:
@@ -29,7 +30,8 @@ module Crystal::System::Crypto
 
       encoded = Slice.new(cert_context.value.pbCertEncoded, cert_context.value.cbCertEncoded)
       until encoded.empty?
-        cert, encoded = OpenSSL::X509::Certificate.from_der(encoded)
+        cert, encoded = OpenSSL::X509::Certificate.from_der?(encoded)
+        break unless cert
         yield cert
       end
     end

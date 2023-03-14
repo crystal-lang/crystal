@@ -28,13 +28,17 @@ module OpenSSL::X509
       @cert
     end
 
-    # Decodes an ASN.1/DER-encoded certificate from *bytes*. Returns the decoded
-    # certificate and the remaining bytes.
-    def self.from_der(bytes : Bytes) : {self, Bytes}
+    # Attempts to decode an ASN.1/DER-encoded certificate from *bytes*.
+    #
+    # Returns the decoded certificate and the remaining bytes on success.
+    # Returns `nil` and *bytes* unchanged on failure.
+    def self.from_der?(bytes : Bytes) : {self?, Bytes}
       ptr = bytes.to_unsafe
-      x509 = LibCrypto.d2i_X509(nil, pointerof(ptr), bytes.size)
-      raise OpenSSL::Error.new("d2i_X509") unless x509
-      {new(x509), bytes[ptr - bytes.to_unsafe..]}
+      if x509 = LibCrypto.d2i_X509(nil, pointerof(ptr), bytes.size)
+        {new(x509), bytes[ptr - bytes.to_unsafe..]}
+      else
+        {nil, bytes}
+      end
     end
 
     def subject : X509::Name
