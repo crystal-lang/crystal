@@ -2,7 +2,6 @@ require "c/winnt"
 require "c/win_def"
 require "c/int_safe"
 require "c/minwinbase"
-require "c/sdkddkver"
 
 lib LibC
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
