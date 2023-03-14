@@ -73,13 +73,13 @@ struct Crystal::System::Process
 
   def self.ppid
     pid = self.pid
-    each_entry do |pe|
+    each_process_entry do |pe|
       return pe.th32ParentProcessID if pe.th32ProcessID == pid
     end
     raise RuntimeError.new("Cannot locate current process")
   end
 
-  private def self.each_entry(&)
+  private def self.each_process_entry(&)
     h = LibC.CreateToolhelp32Snapshot(LibC::TH32CS_SNAPPROCESS, 0)
     raise RuntimeError.from_winerror("CreateToolhelp32Snapshot") if h == LibC::INVALID_HANDLE_VALUE
 
