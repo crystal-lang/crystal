@@ -2,6 +2,8 @@ require "c/wincrypt"
 require "openssl"
 
 module Crystal::System::Crypto
+  private ServerAuthOID = "1.3.6.1.5.5.7.3.1"
+
   # heavily based on cURL's code for importing system certificates on Windows:
   # https://github.com/curl/curl/blob/2f17a9b654121dd1ecf4fc043c6d08a9da3522db/lib/vtls/openssl.c#L3015-L3157
   private def self.each_system_certificate(store_name : String, &)
@@ -9,6 +11,7 @@ module Crystal::System::Crypto
 
     return unless cert_store = LibC.CertOpenSystemStoreW(nil, System.to_wstr(store_name))
 
+    eku = Pointer(LibC::CERT_USAGE).null
     cert_context = Pointer(LibC::CERT_CONTEXT).null
     while cert_context = LibC.CertEnumCertificatesInStore(cert_store, cert_context)
       next unless cert_context.value.dwCertEncodingType == LibC::X509_ASN_ENCODING
@@ -21,10 +24,10 @@ module Crystal::System::Crypto
 
       # look for the serverAuth OID if extended key usage exists
       if LibC.CertGetEnhancedKeyUsage(cert_context, 0, nil, out eku_size) != 0
-        eku = Pointer(UInt8).malloc(eku_size).as(LibC::CERT_USAGE*)
+        eku = eku.as(UInt8*).realloc(eku_size).as(LibC::CERT_USAGE*)
         next unless LibC.CertGetEnhancedKeyUsage(cert_context, 0, eku, pointerof(eku_size)) != 0
         next unless (0...eku.value.cUsageIdentifier).any? do |i|
-          String.new(eku.value.rgpszUsageIdentifier[i]) == "1.3.6.1.5.5.7.3.1"
+          LibC.strcmp(eku.value.rgpszUsageIdentifier[i], ServerAuthOID) == 0
         end
       end
 
