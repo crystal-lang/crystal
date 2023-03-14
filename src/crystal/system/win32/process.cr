@@ -151,7 +151,7 @@ struct Crystal::System::Process
 
   def self.exists?(pid)
     handle = LibC.OpenProcess(LibC::PROCESS_QUERY_INFORMATION, 0, pid)
-    return false if handle.nil?
+    return false unless handle
     begin
       if LibC.GetExitCodeProcess(handle, out exit_code) == 0
         raise RuntimeError.from_winerror("GetExitCodeProcess")
