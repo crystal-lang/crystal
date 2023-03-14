@@ -227,6 +227,8 @@ abstract class OpenSSL::SSL::Context
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
+    # OpenSSL does not support reading from the system root certificate store on
+    # Windows, so we have to import them ourselves
     {% if flag?(:win32) %}
       Crystal::System::Crypto.populate_system_root_certificates(self)
     {% end %}
