@@ -4,14 +4,22 @@ struct LLVM::FunctionCollection
 
   def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false)
     # check_types_context(name, arg_types, ret_type)
-
-    fun_type = LLVM::Type.function(arg_types, ret_type, varargs)
-    func = LibLLVM.add_function(@mod, name, fun_type)
-    Function.new(func)
+    add(name, LLVM::Type.function(arg_types, ret_type, varargs))
   end
 
   def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false, &)
     func = add(name, arg_types, ret_type, varargs)
+    yield func
+    func
+  end
+
+  def add(name, fun_type : LLVM::Type)
+    func = LibLLVM.add_function(@mod, name, fun_type)
+    Function.new(func)
+  end
+
+  def add(name, fun_type : LLVM::Type, &)
+    func = add(name, fun_type)
     yield func
     func
   end

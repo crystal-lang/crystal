@@ -19,6 +19,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_150 = {{LibLLVM::VERSION.starts_with?("15.0")}}
     IS_140 = {{LibLLVM::VERSION.starts_with?("14.0")}}
     IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
@@ -33,6 +34,8 @@ end
     IS_LT_110 = {{compare_versions(LibLLVM::VERSION, "11.0.0") < 0}}
     IS_LT_120 = {{compare_versions(LibLLVM::VERSION, "12.0.0") < 0}}
     IS_LT_130 = {{compare_versions(LibLLVM::VERSION, "13.0.0") < 0}}
+    IS_LT_140 = {{compare_versions(LibLLVM::VERSION, "14.0.0") < 0}}
+    IS_LT_150 = {{compare_versions(LibLLVM::VERSION, "15.0.0") < 0}}
   end
 {% end %}
 
@@ -95,10 +98,6 @@ lib LibLLVM
   fun build_atomicrmw = LLVMBuildAtomicRMW(builder : BuilderRef, op : LLVM::AtomicRMWBinOp, ptr : ValueRef, val : ValueRef, ordering : LLVM::AtomicOrdering, singlethread : Int32) : ValueRef
   fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
-  {% if LibLLVM::IS_LT_110 %}
-    # LLVMBuildCall is deprecated in favor of LLVMBuildCall2, in preparation for opaque pointer types.
-    fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
-  {% end %}
   fun build_call2 = LLVMBuildCall2(builder : BuilderRef, type : TypeRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef) : ValueRef
   fun build_exact_sdiv = LLVMBuildExactSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
@@ -113,18 +112,14 @@ lib LibLLVM
   fun build_fpext = LLVMBuildFPExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
   fun build_fptrunc = LLVMBuildFPTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
   fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
-  fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
-  fun build_inbounds_gep = LLVMBuildInBoundsGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
+  fun build_gep2 = LLVMBuildGEP2(builder : BuilderRef, ty : TypeRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
+  fun build_inbounds_gep2 = LLVMBuildInBoundsGEP2(builder : BuilderRef, ty : TypeRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
   fun build_global_string_ptr = LLVMBuildGlobalStringPtr(builder : BuilderRef, str : UInt8*, name : UInt8*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : LLVM::IntPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
-  {% if LibLLVM::IS_LT_110 %}
-    # LLVMBuildInvoke is deprecated in favor of LLVMBuildInvoke2, in preparation for opaque pointer types.
-    fun build_invoke = LLVMBuildInvoke(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
-  {% end %}
   fun build_invoke2 = LLVMBuildInvoke2(builder : BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
   fun build_landing_pad = LLVMBuildLandingPad(builder : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt32, name : UInt8*) : ValueRef
-  fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : UInt8*) : ValueRef
+  fun build_load2 = LLVMBuildLoad2(builder : BuilderRef, ty : TypeRef, ptr : ValueRef, name : UInt8*) : ValueRef
   fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
@@ -177,7 +172,6 @@ lib LibLLVM
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
   fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
-  fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
@@ -365,6 +359,9 @@ lib LibLLVM
   fun float_type_in_context = LLVMFloatTypeInContext(ContextRef) : TypeRef
   fun double_type_in_context = LLVMDoubleTypeInContext(ContextRef) : TypeRef
   fun struct_type_in_context = LLVMStructTypeInContext(c : ContextRef, element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
+  {% unless LibLLVM::IS_LT_150 %}
+    fun pointer_type_in_context = LLVMPointerTypeInContext(ContextRef, address_space : UInt) : TypeRef
+  {% end %}
 
   fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : UInt8*, length : UInt32, dont_null_terminate : Int32) : ValueRef
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef

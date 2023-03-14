@@ -277,8 +277,9 @@ describe "Code gen: primitives" do
           list = VaList.new
           list.next(Int32)
         ))
+        type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
         str = mod.to_s
-        str.should contain("va_arg %VaList* %list")
+        str.should contain("va_arg #{type} %list")
       end
 
       it "works with C code" do

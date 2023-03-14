@@ -428,6 +428,13 @@ module LLVM
       PreserveAccessIndex   = 27 # "llvm.preserve.*.access.index"
     end
   end
+
+  enum UWTableKind
+    None    = 0 # No unwind table requested
+    Sync    = 1 # "Synchronous" unwind tables
+    Async   = 2 # "Asynchronous" unwind tables (instr precise)
+    Default = 2
+  end
 end
 
 require "./enums/*"

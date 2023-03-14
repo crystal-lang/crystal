@@ -2,6 +2,10 @@ name: Linux CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
@@ -69,6 +73,9 @@ jobs:
           base_image: ubuntu-22.04
         - llvm_version: 14.0.0
           llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+          base_image: ubuntu-22.04
+        - llvm_version: 15.0.6
+          llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz
           base_image: ubuntu-22.04
     runs-on: ${{ matrix.base_image }}
     name: "Test LLVM ${{ matrix.llvm_version }} (${{ matrix.base_image }})"
@@ -178,7 +185,7 @@ jobs:
         run: echo $GITHUB_SHA > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
