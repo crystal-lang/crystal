@@ -205,6 +205,10 @@ module Crystal::System::File
     info = info?(old_path, true)
     flags = info.try(&.type.directory?) ? LibC::SYMBOLIC_LINK_FLAG_DIRECTORY : 0
 
+    # Symlink on Windows required the SeCreateSymbolicLink privilege. But in the Windows 10
+    # Creators Update (1703), Microsoft added the SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
+    # flag, that allows creation symlink without SeCreateSymbolicLink privilege if the computer
+    # is in Developer Mode.
     result = LibC.CreateSymbolicLinkW(win_new_path, win_old_path, flags | LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)
 
     # If we get an error like ERROR_INVALID_PARAMETER, it means that we have an
