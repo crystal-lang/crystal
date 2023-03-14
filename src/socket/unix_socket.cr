@@ -2,6 +2,8 @@
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
+# NOTE: To use `UNIXSocket`, you must explicitly import it with `require "socket"`
+#
 # Example usage:
 # ```
 # require "socket"

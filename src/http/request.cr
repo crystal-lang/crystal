@@ -12,6 +12,8 @@ require "socket"
 # When creating a request with a `String` or `Bytes` its body
 # will be a `IO::Memory` wrapping these, and the `Content-Length`
 # header will be set appropriately.
+#
+# NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
 class HTTP::Request
   property method : String
   property headers : Headers

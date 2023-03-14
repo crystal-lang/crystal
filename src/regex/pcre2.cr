@@ -1,8 +1,10 @@
 require "./lib_pcre2"
+require "crystal/thread_local_value"
 
 # :nodoc:
 module Regex::PCRE2
   @re : LibPCRE2::Code*
+  @jit : Bool
 
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
@@ -10,19 +12,21 @@ module Regex::PCRE2
       raise ArgumentError.new(error_message)
     end
 
-    jit_compile
+    @jit = jit_compile
   end
 
-  private def jit_compile : Nil
+  private def jit_compile : Bool
     ret = LibPCRE2.jit_compile(@re, LibPCRE2::JIT_COMPLETE)
     if ret < 0
       case error = LibPCRE2::Error.new(ret)
       when .jit_badoption?
         # okay
+        return false
       else
         raise ArgumentError.new("Regex JIT compile error: #{error}")
       end
     end
+    true
   end
 
   protected def self.compile(source, options, &)
@@ -39,19 +43,25 @@ module Regex::PCRE2
 
   private def pcre2_options(options)
     flag = 0
-    options.each do |option|
-      flag |= case option
-              when .ignore_case?   then LibPCRE2::CASELESS
-              when .multiline?     then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
-              when .extended?      then LibPCRE2::EXTENDED
-              when .anchored?      then LibPCRE2::ANCHORED
-              when .utf_8?         then LibPCRE2::UTF
-              when .no_utf8_check? then LibPCRE2::NO_UTF_CHECK
-              when .dupnames?      then LibPCRE2::DUPNAMES
-              when .ucp?           then LibPCRE2::UCP
-              else
-                raise "unreachable"
-              end
+    Regex::Options.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .ignore_case?   then LibPCRE2::CASELESS
+                when .multiline?     then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .extended?      then LibPCRE2::EXTENDED
+                when .anchored?      then LibPCRE2::ANCHORED
+                when .utf_8?         then LibPCRE2::UTF
+                when .no_utf8_check? then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?      then LibPCRE2::DUPNAMES
+                when .ucp?           then LibPCRE2::UCP
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+    unless options.none?
+      raise ArgumentError.new("Unknown Regex::Option value: #{options}")
     end
     flag
   end
@@ -119,10 +129,15 @@ module Regex::PCRE2
   private def match_impl(str, byte_index, options)
     match_data = match_data(str, byte_index, options) || return
 
-    ovector = LibPCRE2.get_ovector_pointer(match_data)
     ovector_count = LibPCRE2.get_ovector_count(match_data)
+    ovector = Slice.new(LibPCRE2.get_ovector_pointer(match_data), ovector_count &* 2)
 
-    ::Regex::MatchData.new(self, @re, str, byte_index, ovector, ovector_count.to_i32 - 1)
+    # We need to dup the ovector because `match_data` is re-used for subsequent
+    # matches (see `@match_data`).
+    # Dup brings the ovector data into the realm of the GC.
+    ovector = ovector.dup
+
+    ::Regex::MatchData.new(self, @re, str, byte_index, ovector.to_unsafe, ovector_count.to_i32 &- 1)
   end
 
   private def matches_impl(str, byte_index, options)
@@ -133,28 +148,45 @@ module Regex::PCRE2
     end
   end
 
-  class_getter general_context do
-    LibPCRE2.general_context_create(->(size : LibC::Int, data : Void*) { GC.malloc(size) }.pointer, ->(pointer : Void*, data : Void*) { GC.free(pointer) }.pointer, nil)
+  class_getter match_context : LibPCRE2::MatchContext* do
+    match_context = LibPCRE2.match_context_create(nil)
+    LibPCRE2.jit_stack_assign(match_context, ->(_data) { Regex::PCRE2.jit_stack }, nil)
+    match_context
   end
 
   # Returns a JIT stack that's shared in the current thread.
   #
   # Only a single `match` function can run per thread at any given time, so there
   # can't be any concurrent access to the JIT stack.
-  @[ThreadLocal]
-  class_getter jit_stack : LibPCRE2::JITStack do
-    jit_stack = LibPCRE2.jit_stack_create(32_768, 1_048_576, Regex::PCRE2.general_context)
-    if jit_stack.null?
-      raise "Error allocating JIT stack"
+  @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack*).new
+
+  def self.jit_stack
+    @@jit_stack.get do
+      LibPCRE2.jit_stack_create(32_768, 1_048_576, nil) || raise "Error allocating JIT stack"
     end
-    jit_stack
+  end
+
+  # Match data is shared per instance and thread.
+  #
+  # Match data contains a buffer for backtracking when matching in interpreted mode (non-JIT).
+  # This buffer is heap-allocated and should be re-used for subsequent matches.
+  @match_data = Crystal::ThreadLocalValue(LibPCRE2::MatchData*).new
+
+  private def match_data
+    @match_data.get do
+      LibPCRE2.match_data_create_from_pattern(@re, nil)
+    end
+  end
+
+  def finalize
+    @match_data.consume_each do |match_data|
+      LibPCRE2.match_data_free(match_data)
+    end
   end
 
   private def match_data(str, byte_index, options)
-    match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
-    match_context = LibPCRE2.match_context_create(nil)
-    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*))
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, match_context)
+    match_data = self.match_data
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)
@@ -176,7 +208,7 @@ module Regex::PCRE2
 
   module MatchData
     # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : UInt64*, @group_size : Int32)
+    def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : LibC::SizeT*, @group_size : Int32)
     end
 
     private def byte_range(n, &)
@@ -193,7 +225,7 @@ module Regex::PCRE2
       selected_range = nil
       exists = false
       @regex.each_capture_group do |number, name_entry|
-        if name_entry[2, group_name.bytesize]? == group_name.to_slice
+        if name_entry[2, group_name.bytesize]? == group_name.to_slice && name_entry[2 + group_name.bytesize].zero?
           exists = true
           range = byte_range(number) { nil }
           if (range && selected_range && range.begin > selected_range.begin) || !selected_range

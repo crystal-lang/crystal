@@ -1,6 +1,8 @@
 # The OAuth module provides an `OAuth2::Client` as specified
 # by [RFC 6749](https://tools.ietf.org/html/rfc6749).
 #
+# NOTE: To use `OAuth2`, you must explicitly import it with `require "oauth2"`
+#
 # ### Performing HTTP client requests with OAuth2 authentication
 #
 # Assuming you have an access token, you can setup an `HTTP::Client`

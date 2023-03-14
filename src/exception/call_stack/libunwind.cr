@@ -33,7 +33,7 @@ struct Exception::CallStack
   {% end %}
 
   def self.setup_crash_handler
-    Signal.setup_segfault_handler
+    Crystal::System::Signal.setup_segfault_handler
   end
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}

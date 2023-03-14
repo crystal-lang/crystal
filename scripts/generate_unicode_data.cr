@@ -100,7 +100,7 @@ def new_alternate_range(first_codepoint, last_codepoint)
   AlternateRange.new(first_codepoint, last_codepoint.not_nil! + 1)
 end
 
-def strides(entries, targets)
+def strides(entries, targets, &)
   strides = [] of Stride
 
   entries = entries.select { |entry| targets.includes?(yield entry) }

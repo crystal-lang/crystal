@@ -2,6 +2,8 @@
 #
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
+#
+# NOTE: To use `Headers`, you must explicitly import it with `require "http/headers"`
 struct HTTP::Headers
   include Enumerable({String, Array(String)})
 

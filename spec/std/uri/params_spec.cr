@@ -4,7 +4,7 @@ require "uri/params"
 class URI
   describe Params do
     describe ".new" do
-      Params.new.should eq(Params.parse(""))
+      it { Params.new.should eq(Params.parse("")) }
     end
 
     describe ".parse" do

@@ -4,6 +4,8 @@ require "mime/multipart"
 # Contains utilities for parsing `multipart/form-data` messages, which are
 # commonly used for encoding HTML form data.
 #
+# NOTE: To use `FormData`, you must explicitly import it with `require "http"`
+#
 # ### Examples
 #
 # Commonly, you'll want to parse a from response from a HTTP request, and

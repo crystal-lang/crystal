@@ -305,6 +305,10 @@ class Process
   end
 
   # Sends *signal* to this process.
+  #
+  # NOTE: `#terminate` is preferred over `signal(Signal::TERM)` and
+  # `signal(Signal::KILL)` as a portable alternative which also works on
+  # Windows.
   def signal(signal : Signal) : Nil
     Crystal::System::Process.signal(@process_info.pid, signal)
   end
@@ -343,9 +347,17 @@ class Process
     @process_info.release
   end
 
-  # Asks this process to terminate gracefully
-  def terminate : Nil
-    @process_info.terminate
+  # Asks this process to terminate.
+  #
+  # If *graceful* is true, prefers graceful termination over abrupt termination
+  # if supported by the system.
+  #
+  # * On Unix-like systems, this causes `Signal::TERM` to be sent to the process
+  #   instead of `Signal::KILL`.
+  # * On Windows, this parameter has no effect and graceful termination is
+  #   unavailable. The terminated process has an exit status of 1.
+  def terminate(*, graceful : Bool = true) : Nil
+    @process_info.terminate(graceful: graceful)
   end
 
   private def channel

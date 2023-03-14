@@ -12,6 +12,11 @@ describe Crystal::Loader do
       loader.search_paths.should eq [%q(C:\foo\bar), "baz"]
     end
 
+    it "prepends directory paths before default search paths" do
+      loader = Crystal::Loader.parse(%w(/LIBPATH:foo /LIBPATH:bar), search_paths: %w(baz quux))
+      loader.search_paths.should eq %w(foo bar baz quux)
+    end
+
     it "parses file paths" do
       expect_raises(Crystal::Loader::LoadError, "cannot find foobar.lib") do
         Crystal::Loader.parse(["foobar.lib"], search_paths: [] of String)

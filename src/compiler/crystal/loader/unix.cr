@@ -40,10 +40,24 @@ class Crystal::Loader
     libnames = [] of String
     file_paths = [] of String
 
+    # `man ld(1)` on Linux:
+    #
+    # > -L searchdir
+    # > ... The directories are searched in the order in which they are
+    # specified on the command line. Directories specified on the command line
+    # are searched before the default directories.
+    #
+    # `man ld(1)` on macOS:
+    #
+    # > -Ldir
+    # > ... Directories specified with -L are searched in the order they appear
+    # > on the command line and before the default search path...
+    extra_search_paths = [] of String
+
     # OptionParser removes items from the args array, so we dup it here in order to produce a meaningful error message.
     OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
-        search_paths << directory
+        extra_search_paths << directory
       end
       parser.on("-l LIBNAME", "--library LIBNAME", "Search for library LIBNAME") do |libname|
         libnames << libname
@@ -55,6 +69,8 @@ class Crystal::Loader
         file_paths.concat args
       end
     end
+
+    search_paths = extra_search_paths + search_paths
 
     begin
       self.new(search_paths, libnames, file_paths)
@@ -126,13 +142,18 @@ class Crystal::Loader
       default_search_paths.concat env_library_path.split(Process::PATH_DELIMITER, remove_empty: true)
     end
 
-    {% if flag?(:linux) || flag?(:bsd) %}
+    {% if (flag?(:linux) && !flag?(:android)) || flag?(:bsd) %}
       read_ld_conf(default_search_paths)
     {% end %}
 
     {% if flag?(:darwin) %}
       default_search_paths << "/usr/lib"
       default_search_paths << "/usr/local/lib"
+    {% elsif flag?(:android) %}
+      default_search_paths << "/vendor/lib64" if File.directory?("/vendor/lib64")
+      default_search_paths << "/system/lib64" if File.directory?("/system/lib64")
+      default_search_paths << "/vendor/lib"
+      default_search_paths << "/system/lib"
     {% else %}
       {% if flag?(:linux) %}
         default_search_paths << "/lib64" if File.directory?("/lib64")

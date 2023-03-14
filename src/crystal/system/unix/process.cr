@@ -8,7 +8,7 @@ struct Crystal::System::Process
   getter pid : LibC::PidT
 
   def initialize(@pid : LibC::PidT)
-    @channel = Crystal::SignalChildHandler.wait(@pid)
+    @channel = Crystal::System::SignalChildHandler.wait(@pid)
   end
 
   def release
@@ -22,8 +22,8 @@ struct Crystal::System::Process
     !@channel.closed? && Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    Crystal::System::Process.signal(@pid, LibC::SIGTERM)
+  def terminate(*, graceful)
+    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
   def self.exit(status)
@@ -71,7 +71,7 @@ struct Crystal::System::Process
   end
 
   def self.start_interrupt_loop : Nil
-    # do nothing; `Crystal::Signal.start_loop` takes care of this
+    # do nothing; `Crystal::System::Signal.start_loop` takes care of this
   end
 
   def self.exists?(pid)
@@ -110,7 +110,7 @@ struct Crystal::System::Process
       pid = nil
       if will_exec
         # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::Signal.after_fork_before_exec
+        Crystal::System::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else

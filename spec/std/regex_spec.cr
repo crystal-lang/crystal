@@ -9,6 +9,22 @@ describe "Regex" do
     it "raises exception with invalid regex" do
       expect_raises(ArgumentError) { Regex.new("+") }
     end
+
+    describe "options" do
+      it "regular" do
+        Regex.new("", Regex::Options::ANCHORED).options.anchored?.should be_true
+      end
+
+      it "unnamed option" do
+        {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+          Regex.new("^/foo$", Regex::Options.new(0x00000020)).matches?("/foo\n").should be_false
+        {% else %}
+          expect_raises ArgumentError, "Unknown Regex::Option value: 32" do
+            Regex.new("", Regex::Options.new(32))
+          end
+        {% end %}
+      end
+    end
   end
 
   it "#options" do
@@ -211,7 +227,9 @@ describe "Regex" do
       {% else %}
         # Can't use regex literal because the *LIMIT_DEPTH verb is not supported in libpcre (only libpcre2)
         # and thus the compiler doesn't recognize it.
-        str.matches?(Regex.new("(*LIMIT_DEPTH=8192)^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"))
+        regex = Regex.new("(*LIMIT_DEPTH=8192)^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$")
+        pending! "PCRE2 JIT mode not available." unless regex.@jit
+        str.matches?(regex)
       {% end %}
       # We don't care whether this actually matches or not, it's just to make
       # sure the engine does not stack overflow with a large string.
