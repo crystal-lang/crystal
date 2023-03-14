@@ -49,11 +49,8 @@ module Crystal::System::File
       return {-1, Errno.value}
     end
 
-    if flags.bits_set? LibC::O_BINARY
-      LibC._setmode fd, LibC::O_BINARY
-    elsif flags.bits_set? LibC::O_TEXT
-      LibC._setmode fd, LibC::O_TEXT
-    end
+    # Only binary mode is supported
+    LibC._setmode fd, LibC::O_BINARY
 
     {fd, Errno::NONE}
   end
