@@ -3,6 +3,11 @@ require "c/winbase"
 lib LibC
   fun GetNativeSystemInfo(system_info : SYSTEM_INFO*)
 
+  fun GetSystemTimeAsFileTime(time : FILETIME*)
+  {% if LibC::WIN32_WINNT >= LibC::WIN32_WINNT_WIN8 %}
+    fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
+  {% end %}
+
   struct PROCESSOR_INFO
     wProcessorArchitecture : WORD
     wReserved : WORD

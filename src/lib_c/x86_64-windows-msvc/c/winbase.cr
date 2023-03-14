@@ -16,11 +16,6 @@ lib LibC
   fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
 
-  fun GetSystemTimeAsFileTime(time : FILETIME*)
-  {% if LibC::WIN32_WINNT >= LibC::WIN32_WINNT_WIN8 %}
-    fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
-  {% end %}
-
   SYMBOLIC_LINK_FLAG_DIRECTORY                 = 0x1
   SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 0x2
 
