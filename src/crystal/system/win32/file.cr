@@ -56,9 +56,13 @@ module Crystal::System::File
   end
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
-    access = 0
-    access |= LibC::GENERIC_WRITE unless flags == LibC::O_RDONLY
-    access |= LibC::GENERIC_READ unless flags.bits_set? LibC::O_WRONLY
+    access = if flags.bits_set? LibC::O_WRONLY
+               LibC::GENERIC_WRITE
+             elsif flags.bits_set? LibC::O_RDWR
+               LibC::GENERIC_READ | LibC::GENERIC_WRITE
+             else
+               LibC::GENERIC_READ
+             end
 
     if flags.bits_set? LibC::O_APPEND
       access |= LibC::FILE_APPEND_DATA
