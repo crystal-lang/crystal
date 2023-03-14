@@ -10,17 +10,5 @@ lib LibC
   MEM_RELEASE  = 0x8000
 
   fun VirtualFree(lpAddress : Void*, dwSize : SizeT, dwFreeType : DWORD) : BOOL
-
-  struct MEMORY_BASIC_INFORMATION
-    baseAddress : Void*
-    allocationBase : Void*
-    allocationProtect : DWORD
-    partitionId : WORD
-    regionSize : SizeT
-    state : DWORD
-    protect : DWORD
-    type : DWORD
-  end
-
   fun VirtualQuery(lpAddress : Void*, lpBuffer : MEMORY_BASIC_INFORMATION*, dwLength : SizeT)
 end

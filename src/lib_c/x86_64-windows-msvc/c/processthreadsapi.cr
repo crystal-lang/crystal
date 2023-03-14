@@ -33,16 +33,6 @@ lib LibC
     hStdError : HANDLE
   end
 
-  struct NT_TIB
-    exceptionList : Void*
-    stackBase : Void*
-    stackLimit : Void*
-    subSystemTib : Void*
-    fiberData : Void*
-    arbitraryUserPointer : Void*
-    pvSelf : NT_TIB*
-  end
-
   fun NtCurrentTeb : NT_TIB*
   fun GetCurrentThread : HANDLE
   fun GetCurrentThreadId : DWORD
