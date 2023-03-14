@@ -221,6 +221,7 @@ lib LibSSL
   fun ssl_ctx_get_verify_mode = SSL_CTX_get_verify_mode(ctx : SSLContext) : VerifyMode
   fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
+  fun ssl_ctx_get_cert_store = SSL_CTX_get_cert_store(ctx : SSLContext) : LibCrypto::X509_STORE
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
   {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
