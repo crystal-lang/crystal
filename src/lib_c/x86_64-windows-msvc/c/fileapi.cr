@@ -69,9 +69,6 @@ lib LibC
                   lpSecurityAttributes : SECURITY_ATTRIBUTES*, dwCreationDisposition : DWORD,
                   dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
 
-  fun _open_osfhandle(osfhandle : HANDLE, flags : LibC::Int) : LibC::Int
-  fun _setmode(fd : LibC::Int, mode : LibC::Int) : LibC::Int
-
   fun ReadFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToRead : DWORD, lpNumberOfBytesRead : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
 
   MAX_PATH = 260
