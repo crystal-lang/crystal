@@ -62,7 +62,7 @@ module OpenSSL::X509
 
     # Returns the name of the signature algorithm.
     def signature_algorithm : String
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+      {% if LibCrypto.has_method?(:obj_find_sigid_algs) %}
         sigid = LibCrypto.x509_get_signature_nid(@cert)
         result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
         raise "Could not determine certificate signature algorithm" if result == 0
@@ -87,7 +87,7 @@ module OpenSSL::X509
       raise ArgumentError.new "Could not find digest for #{algorithm_name.inspect}" if algo_type.null?
       hash = Bytes.new(64) # EVP_MAX_MD_SIZE for SHA512
       result = LibCrypto.x509_digest(@cert, algo_type, hash, out size)
-      raise "Could not generate certificate hash" unless result == 1
+      raise Error.new "Could not generate certificate hash" unless result == 1
 
       hash[0, size]
     end

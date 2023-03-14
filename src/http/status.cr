@@ -4,6 +4,8 @@
 #
 # It provides constants for the defined HTTP status codes as well as helper
 # methods to easily identify the type of response.
+#
+# NOTE: To use `Status`, you must explicitly import it with `require "http/status"`
 enum HTTP::Status
   CONTINUE                        = 100
   SWITCHING_PROTOCOLS             = 101
@@ -74,8 +76,8 @@ enum HTTP::Status
   # ```
   # require "http/status"
   #
-  # HTTP::Status.new(100)  # => CONTINUE
-  # HTTP::Status.new(202)  # => ACCEPTED
+  # HTTP::Status.new(100)  # => HTTP::Status::CONTINUE
+  # HTTP::Status.new(202)  # => HTTP::Status::ACCEPTED
   # HTTP::Status.new(123)  # => 123
   # HTTP::Status.new(1000) # raises ArgumentError
   # ```

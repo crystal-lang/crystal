@@ -62,27 +62,27 @@ describe "Semantic: metaclass" do
   end
 
   it "types Object and Class metaclasses" do
-    assert_type("Object.class") { class_type }
-    assert_type("Class.class") { class_type }
+    assert_type("Object.class", inject_primitives: true) { class_type }
+    assert_type("Class.class", inject_primitives: true) { class_type }
   end
 
   it "types Reference metaclass" do
     assert_type("Reference") { program.reference.metaclass }
-    assert_type("Reference.class") { class_type }
+    assert_type("Reference.class", inject_primitives: true) { class_type }
   end
 
   it "types generic class metaclass" do
     assert_type("Pointer") { pointer.metaclass }
-    assert_type("Pointer.class") { class_type }
+    assert_type("Pointer.class", inject_primitives: true) { class_type }
     assert_type("Pointer(Int32)") { pointer_of(int32).metaclass }
-    assert_type("Pointer(Int32).class") { class_type }
+    assert_type("Pointer(Int32).class", inject_primitives: true) { class_type }
   end
 
   it "types generic module metaclass" do
     assert_type("module Foo(T); end; Foo") { types["Foo"].metaclass }
-    assert_type("module Foo(T); end; Foo.class") { class_type }
+    assert_type("module Foo(T); end; Foo.class", inject_primitives: true) { class_type }
     assert_type("module Foo(T); end; Foo(Int32)") { generic_module("Foo", int32).metaclass }
-    assert_type("module Foo(T); end; Foo(Int32).class") { class_type }
+    assert_type("module Foo(T); end; Foo(Int32).class", inject_primitives: true) { class_type }
   end
 
   it "types metaclass superclass" do
@@ -132,6 +132,18 @@ describe "Semantic: metaclass" do
       foo_class = mod.types["Foo"].metaclass
       bar_class = mod.types["Bar"].metaclass
       bar_class.should be_a_proper_subtype_of(foo_class)
+    end
+
+    it "virtual metaclass type with virtual type (#12628)" do
+      mod = semantic(%(
+        class Base; end
+        class Impl < Base; end
+        )).program
+
+      base = mod.types["Base"]
+      base.virtual_type!.metaclass.implements?(base).should be_false
+      base.virtual_type!.metaclass.implements?(base.metaclass).should be_true
+      base.virtual_type!.metaclass.implements?(base.metaclass.virtual_type!).should be_true
     end
 
     it "generic classes (1)" do
@@ -245,5 +257,29 @@ describe "Semantic: metaclass" do
       bar_int32_class.implements?(foo_class).should be_false
       bar_class.implements?(foo_class).should be_false
     end
+  end
+
+  it "can't reopen as struct" do
+    assert_error <<-CRYSTAL, "Bar is not a struct, it's a metaclass"
+      class Foo
+      end
+
+      alias Bar = Foo.class
+
+      struct Bar
+      end
+      CRYSTAL
+  end
+
+  it "can't reopen as module" do
+    assert_error <<-CRYSTAL, "Bar is not a module, it's a metaclass"
+      class Foo
+      end
+
+      alias Bar = Foo.class
+
+      module Bar
+      end
+      CRYSTAL
   end
 end

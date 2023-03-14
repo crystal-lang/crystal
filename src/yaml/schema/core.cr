@@ -128,7 +128,7 @@ module YAML::Schema::Core
 
   # If `node` parses to a null value, returns `nil`, otherwise
   # invokes the given block.
-  def self.parse_null_or(node : YAML::Nodes::Node)
+  def self.parse_null_or(node : YAML::Nodes::Node, &)
     if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node)
       nil
     else
@@ -140,7 +140,7 @@ module YAML::Schema::Core
   # values, resolving merge keys (<<) when found (keys and
   # values of the resolved merge mappings are yielded,
   # recursively).
-  def self.each(node : YAML::Nodes::Mapping)
+  def self.each(node : YAML::Nodes::Mapping, &)
     # We can't just traverse the nodes and invoke yield because
     # yield can't recurse. So, we use a stack of {Mapping, index}.
     # We pop from the stack and traverse the mapping values.
@@ -266,13 +266,13 @@ module YAML::Schema::Core
       raise(YAML::ParseException.new("Invalid timestamp", *location))
   end
 
-  protected def self.process_scalar_tag(scalar)
+  protected def self.process_scalar_tag(scalar, &)
     process_scalar_tag(scalar, scalar.tag) do |value|
       yield value
     end
   end
 
-  protected def self.process_scalar_tag(source, tag)
+  protected def self.process_scalar_tag(source, tag, &)
     case tag
     when "tag:yaml.org,2002:binary"
       yield parse_binary(source.value, source.location)

@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "../spec_helper"
 require "http/web_socket"
+require "http/server"
 require "random/secure"
 require "../../support/fibers"
 require "../../support/ssl"
@@ -156,7 +157,7 @@ describe HTTP::WebSocket do
     it "read very long packet" do
       data = Bytes.new(10 + 0x010000)
 
-      header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0]
+      header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00]
       data.copy_from(header)
 
       io = IO::Memory.new(data)
@@ -181,8 +182,8 @@ describe HTTP::WebSocket do
 
   describe "send" do
     it "sends long data with correct header" do
-      size = UInt16::MAX.to_u64 + 1
-      big_string = "a" * size
+      big_string = "abcdefghijklmnopqrstuvwxyz" * (IO::DEFAULT_BUFFER_SIZE // 4)
+      size = big_string.size
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.send(big_string)
@@ -193,7 +194,7 @@ describe HTTP::WebSocket do
       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        bytes[10 + i].should eq('a'.ord)
+        bytes[10 + i].should eq(big_string[i].ord)
       end
     end
 
@@ -219,9 +220,9 @@ describe HTTP::WebSocket do
       bytes = io.to_slice
       bytes.size.should eq(4 * 2 + 512 * 3) # two frames with 2 bytes header, 2 bytes size, 3 * 512 bytes content in total
       first_frame, second_frame = {bytes[0, (4 + 1024)], bytes + (4 + 1024)}
-      (first_frame[0] & 0x80).should eq(0)   # FINAL bit unset
-      (first_frame[0] & 0x0f).should eq(0x2) # BINARY frame
-      first_frame[1].should eq(126)          # extended size
+      (first_frame[0] & 0x80).should eq(0x00) # FINAL bit unset
+      (first_frame[0] & 0x0f).should eq(0x02) # BINARY frame
+      first_frame[1].should eq(126)           # extended size
       received_size = 0
       2.times { |i| received_size <<= 8; received_size += first_frame[2 + i] }
       received_size.should eq(1024)
@@ -229,9 +230,9 @@ describe HTTP::WebSocket do
         bytes[4 + i].should eq('a'.ord)
       end
 
-      (second_frame[0] & 0x80).should_not eq(0) # FINAL bit set
-      (second_frame[0] & 0x0f).should eq(0x0)   # CONTINUATION frame
-      second_frame[1].should eq(126)            # extended size
+      (second_frame[0] & 0x80).should_not eq(0x00) # FINAL bit set
+      (second_frame[0] & 0x0f).should eq(0x00)     # CONTINUATION frame
+      second_frame[1].should eq(126)               # extended size
       received_size = 0
       2.times { |i| received_size <<= 8; received_size += second_frame[2 + i] }
       received_size.should eq(512)
@@ -240,13 +241,29 @@ describe HTTP::WebSocket do
       end
     end
 
+    it "sends less data than the frame size if necessary" do
+      io = IO::Memory.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.stream do |io| # default frame size of 1024
+        io.write("hello world".to_slice)
+      end
+
+      bytes = io.to_slice
+      bytes.size.should eq(2 + 11) # one frame with 1 byte header, 1 byte size, "hello world" bytes content in total
+      first_frame = bytes
+      (first_frame[0] & 0x80).should_not eq(0x00) # FINAL bit set
+      (first_frame[0] & 0x0f).should eq(0x02)     # BINARY frame
+      first_frame[1].should eq(11)                # non-extended size
+      (bytes + 2).should eq "hello world".to_slice
+    end
+
     it "sets opcode of first frame to binary if stream is called with binary = true" do
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.stream(binary: true) { |io| }
 
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x2) # BINARY frame
+      (bytes[0] & 0x0f).should eq(0x02) # BINARY frame
     end
   end
 
@@ -268,8 +285,8 @@ describe HTTP::WebSocket do
     end
 
     it "sends long data with correct header" do
-      size = UInt16::MAX.to_u64 + 1
-      big_string = "a" * size
+      big_string = "abcdefghijklmnopqrstuvwxyz" * (IO::DEFAULT_BUFFER_SIZE // 4)
+      size = big_string.size
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
       ws.send(big_string)
@@ -281,7 +298,7 @@ describe HTTP::WebSocket do
       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq('a'.ord)
+        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq(big_string[i].ord)
       end
     end
   end
@@ -292,8 +309,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(4020)
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(2)            # 2 bytes code
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x02)          # 2 bytes code
       bytes[2].should eq(0x0f)
       bytes[3].should eq(0xb4)
     end
@@ -304,8 +321,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(nil, message)
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(5)            # 2 + message.bytesize
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x05)          # 2 + message.bytesize
       bytes[2].should eq(0x03)
       bytes[3].should eq(0xe8)
       String.new(bytes[4..6]).should eq(message)
@@ -317,8 +334,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(4020, message)
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(6)            # 2 + message.bytesize
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x06)          # 2 + message.bytesize
       bytes[2].should eq(0x0f)
       bytes[3].should eq(0xb4)
       String.new(bytes[4..7]).should eq(message)
@@ -329,12 +346,12 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(0)
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x00)
     end
   end
 
-  each_ip_family do |family, _, any_address|
+  each_ip_family do |family, local_address|
     it "negotiates over HTTP correctly" do
       address_chan = Channel(Socket::IPAddress).new
       close_chan = Channel({Int32, String}).new
@@ -357,7 +374,7 @@ describe HTTP::WebSocket do
         end
 
         http_server = http_ref = HTTP::Server.new([ws_handler])
-        address = http_server.bind_tcp(any_address, 0)
+        address = http_server.bind_tcp(local_address, 0)
         address_chan.send(address)
         http_server.listen
       end
@@ -403,7 +420,7 @@ describe HTTP::WebSocket do
 
         http_server = http_ref = HTTP::Server.new([ws_handler])
 
-        address = http_server.bind_tls(any_address, context: server_context)
+        address = http_server.bind_tls(local_address, context: server_context)
         address_chan.send(address)
         http_server.listen
       end
@@ -546,4 +563,63 @@ describe HTTP::WebSocket do
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost"), headers: HTTP::Headers{"X-TEST_HEADER" => "some-text"}))
+end
+
+private def integration_setup(&)
+  bin_ch = Channel(Bytes).new
+  txt_ch = Channel(String).new
+  ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+    ws.on_binary { |bytes| bin_ch.send bytes }
+    ws.on_message { |bytes| txt_ch.send bytes }
+  end
+  server = HTTP::Server.new [ws_handler]
+  address = server.bind_unused_port
+  spawn server.listen
+  wsoc = HTTP::WebSocket.new("http://#{address}")
+
+  yield wsoc, bin_ch, txt_ch
+ensure
+  server.close if server
+end
+
+describe "Websocket integration tests" do
+  # default frame size is 1024, but be explicit here in case the default changes in the future
+
+  it "streams less than the buffer frame size" do
+    integration_setup do |wsoc, bin_ch, _|
+      bytes = "hello test world".to_slice
+      wsoc.stream(frame_size: 1024, &.write(bytes))
+      received = bin_ch.receive
+      received.should eq bytes
+    end
+  end
+
+  it "streams single messages more than the buffer frame size" do
+    integration_setup do |wsoc, bin_ch, _|
+      bytes = ("hello test world" * 80).to_slice
+      bytes.size.should be > 1024
+      wsoc.stream(frame_size: 1024, &.write(bytes))
+      received = bin_ch.receive
+      received.should eq bytes
+    end
+  end
+
+  it "streams single messages made up of multiple parts that eventually become more than the buffer frame size" do
+    integration_setup do |wsoc, bin_ch, _|
+      bytes = "hello test world".to_slice
+      wsoc.stream(frame_size: 1024) { |io| 80.times { io.write bytes } }
+      received = bin_ch.receive
+      received.size.should be > 1024
+      received.should eq ("hello test world" * 80).to_slice
+    end
+  end
+
+  it "sends single text messages" do
+    integration_setup do |wsoc, _, txt_ch|
+      wsoc.send "hello text"
+      wsoc.send "hello again"
+      txt_ch.receive.should eq "hello text"
+      txt_ch.receive.should eq "hello again"
+    end
+  end
 end

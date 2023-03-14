@@ -1,4 +1,5 @@
-require "./regex/*"
+require "./regex/engine"
+require "./regex/match_data"
 
 # A `Regex` represents a regular expression, a pattern that describes the
 # contents of strings. A `Regex` can determine whether or not a string matches
@@ -79,7 +80,8 @@ require "./regex/*"
 # have their own language for describing strings.
 #
 # Many programming languages and tools implement their own regular expression
-# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library
+# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library, with
+# [JIT complication](http://www.pcre.org/original/doc/html/pcrejit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
 # alternation - but the feature set of PCRE extends far beyond these, and we
@@ -194,6 +196,8 @@ require "./regex/*"
 # `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
 # unique names within a single `Regex`.
 class Regex
+  include Regex::Engine
+
   # List of metacharacters that need to be escaped.
   #
   # See `Regex.needs_escape?` and `Regex.escape`.
@@ -225,6 +229,8 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
     # :nodoc:
     DUPNAMES = 0x00080000
+    # :nodoc:
+    UCP = 0x20000000
   end
 
   # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
@@ -250,16 +256,8 @@ class Regex
   # options = Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
   # Regex.new("dog", options) # => /dog/ix
   # ```
-  def initialize(source : String, @options : Options = Options::None)
-    # PCRE's pattern must have their null characters escaped
-    source = source.gsub('\u{0}', "\\0")
-    @source = source
-
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
-    raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
-    @extra = LibPCRE.study(@re, 0, out studyerrptr)
-    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
-    LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
+  def self.new(source : String, options : Options = Options::None)
+    new(_source: source, _options: options)
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
@@ -270,12 +268,7 @@ class Regex
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
   def self.error?(source) : String?
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
-    if re
-      nil
-    else
-      "#{String.new(errptr)} at #{erroffset}"
-    end
+    Engine.error_impl(source)
   end
 
   # Returns `true` if *char* need to be escaped, `false` otherwise.
@@ -467,12 +460,10 @@ class Regex
   # ```
   def match(str, pos = 0, options = Regex::Options::None) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
-      match = match_at_byte_index(str, byte_index, options)
+      $~ = match_at_byte_index(str, byte_index, options)
     else
-      match = nil
+      $~ = nil
     end
-
-    $~ = match
   end
 
   # Match at byte index. Matches a regular expression against `String`
@@ -486,17 +477,11 @@ class Regex
   # /(.)(.)/.match_at_byte_index("クリスタル", 3).try &.[2] # => "ス"
   # ```
   def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None) : MatchData?
-    return ($~ = nil) if byte_index > str.bytesize
-
-    ovector_size = (@captures + 1) * 3
-    ovector = Pointer(Int32).malloc(ovector_size)
-    if internal_matches?(str, byte_index, options, ovector, ovector_size)
-      match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
+    if byte_index > str.bytesize
+      $~ = nil
     else
-      match = nil
+      $~ = match_impl(str, byte_index, options)
     end
-
-    $~ = match
   end
 
   # Match at character index. It behaves like `#match`, however it returns `Bool` value.
@@ -522,14 +507,7 @@ class Regex
   def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
     return false if byte_index > str.bytesize
 
-    internal_matches?(str, byte_index, options, nil, 0)
-  end
-
-  # Calls `pcre_exec` C function, and handles returning value.
-  private def internal_matches?(str, byte_index, options, ovector, ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK), ovector, ovector_size)
-    # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
-    ret >= 0
+    matches_impl(str, byte_index, options)
   end
 
   # Returns a `Hash` where the values are the names of capture groups and the
@@ -542,27 +520,8 @@ class Regex
   # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
   # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
-  def name_table : Hash(UInt16, String)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
-    table_pointer = Pointer(UInt8).null
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer).as(Pointer(Int32)))
-    name_table = table_pointer.to_slice(name_entry_size*name_count)
-
-    lookup = Hash(UInt16, String).new
-
-    name_count.times do |i|
-      capture_offset = i * name_entry_size
-      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
-
-      name_offset = capture_offset + 2
-      checked = name_table[name_offset, name_entry_size - 3]
-      name = String.new(checked.to_unsafe)
-
-      lookup[capture_number] = name
-    end
-
-    lookup
+  def name_table : Hash(Int32, String)
+    name_table_impl
   end
 
   # Returns the number of (named & non-named) capture groups.
@@ -574,8 +533,7 @@ class Regex
   # /(.)|(.)/.capture_count    # => 2
   # ```
   def capture_count : Int32
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_CAPTURECOUNT, out capture_count)
-    capture_count
+    capture_count_impl
   end
 
   # Convert to `String` in subpattern format. Produces a `String` which can be

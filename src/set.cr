@@ -68,7 +68,7 @@ struct Set(T)
   # s.compare_by_identity?  # => true
   # s.includes?("fo" + "o") # => false # not the same String instance
   # ```
-  def compare_by_identity
+  def compare_by_identity : self
     @hash.compare_by_identity
     self
   end
@@ -81,7 +81,7 @@ struct Set(T)
   end
 
   # Alias for `add`
-  def <<(object : T)
+  def <<(object : T) : self
     add object
   end
 
@@ -93,7 +93,7 @@ struct Set(T)
   # s.add(8)
   # s.includes? 8 # => true
   # ```
-  def add(object : T)
+  def add(object : T) : self
     @hash[object] = nil
     self
   end
@@ -203,7 +203,7 @@ struct Set(T)
   # Set{1, 1, 3, 5} & Set{1, 2, 3}               # => Set{1, 3}
   # Set{'a', 'b', 'b', 'z'} & Set{'a', 'b', 'c'} # => Set{'a', 'b'}
   # ```
-  def &(other : Set)
+  def &(other : Set) : Set(T)
     smallest, largest = self, other
     if largest.size < smallest.size
       smallest, largest = largest, smallest
@@ -224,7 +224,7 @@ struct Set(T)
   # ```
   #
   # See also: `#concat` to add elements from a set to `self`.
-  def |(other : Set(U)) forall U
+  def |(other : Set(U)) : Set(T | U) forall U
     set = Set(T | U).new(Math.max(size, other.size))
     each { |value| set.add value }
     other.each { |value| set.add value }
@@ -236,7 +236,7 @@ struct Set(T)
   # ```
   # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
   # ```
-  def +(other : Set(U)) forall U
+  def +(other : Set(U)) : Set(T | U) forall U
     self | other
   end
 
@@ -254,7 +254,7 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} - Set{2, 4}               # => Set{1, 3, 5}
   # Set{'a', 'b', 'b', 'z'} - Set{'a', 'b', 'c'} # => Set{'z'}
   # ```
-  def -(other : Set)
+  def -(other : Set) : Set(T)
     set = Set(T).new
     each do |value|
       set.add value unless other.includes?(value)
@@ -269,7 +269,7 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} - [2, 4]               # => Set{1, 3, 5}
   # Set{'a', 'b', 'b', 'z'} - ['a', 'b', 'c'] # => Set{'z'}
   # ```
-  def -(other : Enumerable)
+  def -(other : Enumerable) : Set(T)
     dup.subtract other
   end
 
@@ -280,7 +280,7 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} ^ Set{2, 4, 6}            # => Set{1, 3, 5, 6}
   # Set{'a', 'b', 'b', 'z'} ^ Set{'a', 'b', 'c'} # => Set{'z', 'c'}
   # ```
-  def ^(other : Set(U)) forall U
+  def ^(other : Set(U)) : Set(T | U) forall U
     set = Set(T | U).new
     each do |value|
       set.add value unless other.includes?(value)
@@ -298,7 +298,7 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} ^ [2, 4, 6]            # => Set{1, 3, 5, 6}
   # Set{'a', 'b', 'b', 'z'} ^ ['a', 'b', 'c'] # => Set{'z', 'c'}
   # ```
-  def ^(other : Enumerable(U)) forall U
+  def ^(other : Enumerable(U)) : Set(T | U) forall U
     set = Set(T | U).new(self)
     other.each do |value|
       if includes?(value)
@@ -317,7 +317,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'}.subtract Set{'a', 'b', 'c'} # => Set{'z'}
   # Set{1, 2, 3, 4, 5}.subtract [2, 4, 6]               # => Set{1, 3, 5}
   # ```
-  def subtract(other : Enumerable)
+  def subtract(other : Enumerable) : self
     other.each do |value|
       delete value
     end
@@ -329,7 +329,7 @@ struct Set(T)
   # ```
   # Set{1, 5} == Set{1, 5} # => true
   # ```
-  def ==(other : Set)
+  def ==(other : Set) : Bool
     same?(other) || @hash == other.@hash
   end
 
@@ -352,19 +352,19 @@ struct Set(T)
   # ```
   #
   # See also: `Object#===`.
-  def ===(object : T)
+  def ===(object : T) : Bool
     includes? object
   end
 
   # Returns a new `Set` with all of the same elements.
-  def dup
+  def dup : Set(T)
     set = Set(T).new(using_hash: @hash.dup)
     set.compare_by_identity if compare_by_identity?
     set
   end
 
   # Returns a new `Set` with all of the elements cloned.
-  def clone
+  def clone : Set(T)
     clone = Set(T).new(self.size)
     clone.compare_by_identity if compare_by_identity?
     each do |element|
@@ -378,7 +378,7 @@ struct Set(T)
   # ```
   # Set{1, 5}.to_a # => [1,5]
   # ```
-  def to_a
+  def to_a : Array(T)
     @hash.keys
   end
 

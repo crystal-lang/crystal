@@ -29,7 +29,7 @@ class JSON::Builder
 
   # Starts a document.
   def start_document : Nil
-    case state = @state.last
+    case @state.last
     when StartState
       @state[-1] = DocumentStartState.new
     when DocumentEndState
@@ -41,7 +41,7 @@ class JSON::Builder
 
   # Signals the end of a JSON document.
   def end_document : Nil
-    case state = @state.last
+    case @state.last
     when StartState
       raise JSON::Error.new("Empty JSON")
     when DocumentStartState
@@ -56,7 +56,7 @@ class JSON::Builder
     flush
   end
 
-  def document
+  def document(&)
     start_document
     yield.tap { end_document }
   end
@@ -187,7 +187,7 @@ class JSON::Builder
 
   # Writes the start of an array, invokes the block,
   # and the writes the end of it.
-  def array
+  def array(&)
     start_array
     yield.tap { end_array }
   end
@@ -219,7 +219,7 @@ class JSON::Builder
 
   # Writes the start of an object, invokes the block,
   # and the writes the end of it.
-  def object
+  def object(&)
     start_object
     yield.tap { end_object }
   end
@@ -255,7 +255,7 @@ class JSON::Builder
   # Writes an object's field and then invokes the block.
   # This is equivalent of invoking `string(value)` and then
   # invoking the block.
-  def field(name)
+  def field(name, &)
     string(name)
     yield
   end
@@ -290,7 +290,7 @@ class JSON::Builder
     state.is_a?(ObjectState) && state.name
   end
 
-  private def scalar(string = false)
+  private def scalar(string = false, &)
     start_scalar(string)
     yield.tap { end_scalar(string) }
   end
@@ -400,7 +400,7 @@ module JSON
   # end
   # string # => %<{"name":"foo","values":[1,2,3]}>
   # ```
-  def self.build(indent = nil)
+  def self.build(indent = nil, &)
     String.build do |str|
       build(str, indent) do |json|
         yield json
@@ -409,7 +409,7 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil) : Nil
+  def self.build(io : IO, indent = nil, &) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do

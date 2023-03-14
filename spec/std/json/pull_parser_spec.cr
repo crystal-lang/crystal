@@ -36,7 +36,7 @@ class JSON::PullParser
     read_next
   end
 
-  def assert(value : String)
+  def assert(value : String, &)
     kind.should eq(JSON::PullParser::Kind::String)
     string_value.should eq(value)
     read_next
@@ -61,7 +61,7 @@ class JSON::PullParser
     end
   end
 
-  def assert_array
+  def assert_array(&)
     kind.should eq(JSON::PullParser::Kind::BeginArray)
     read_next
     yield
@@ -73,7 +73,7 @@ class JSON::PullParser
     assert_array { }
   end
 
-  def assert_object
+  def assert_object(&)
     kind.should eq(JSON::PullParser::Kind::BeginObject)
     read_next
     yield
@@ -411,6 +411,11 @@ describe JSON::PullParser do
     it "reads > UInt64::MAX" do
       pull = JSON::PullParser.new(UInt64::MAX.to_s + "0")
       pull.read?(UInt64).should be_nil
+    end
+
+    it "reads == UInt64::MAX" do
+      pull = JSON::PullParser.new(UInt64::MAX.to_s)
+      pull.read?(UInt64).should eq(UInt64::MAX)
     end
 
     it "reads > Float64::MAX" do

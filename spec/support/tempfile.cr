@@ -1,4 +1,7 @@
 require "file_utils"
+{% if flag?(:msvc) %}
+  require "crystal/system/win32/visual_studio"
+{% end %}
 
 SPEC_TEMPFILE_PATH    = File.join(Dir.tempdir, "cr-spec-#{Random.new.hex(4)}")
 SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
@@ -18,7 +21,7 @@ SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 #
 # If the environment variable `SPEC_TEMPFILE_CLEANUP` is set to `0`, no paths
 # will be cleaned up, enabling easier debugging.
-def with_tempfile(*paths, file = __FILE__)
+def with_tempfile(*paths, file = __FILE__, &)
   calling_spec = File.basename(file).rchop("_spec.cr")
   paths = paths.map { |path| File.join(SPEC_TEMPFILE_PATH, calling_spec, path) }
   FileUtils.mkdir_p(File.join(SPEC_TEMPFILE_PATH, calling_spec))
@@ -34,7 +37,7 @@ def with_tempfile(*paths, file = __FILE__)
   end
 end
 
-def with_temp_executable(name, file = __FILE__)
+def with_temp_executable(name, file = __FILE__, &)
   {% if flag?(:win32) %}
     name += ".exe"
   {% end %}
@@ -43,13 +46,23 @@ def with_temp_executable(name, file = __FILE__)
   end
 end
 
-def with_temp_c_object_file(c_code, file = __FILE__)
-  obj_ext = {{ flag?(:win32) ? ".obj" : ".o" }}
-  with_tempfile("temp_c.c", "temp_c#{obj_ext}", file: file) do |c_filename, o_filename|
+def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
+  obj_ext = {{ flag?(:msvc) ? ".obj" : ".o" }}
+  with_tempfile("#{filename}.c", "#{filename}#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
-    {% if flag?(:win32) %}
-      `cl.exe /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
+    {% if flag?(:msvc) %}
+      # following is based on `Crystal::Compiler#linker_command`
+      cl = "cl.exe"
+
+      if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
+        # we won't be cross-compiling the specs binaries, so host and target
+        # bits are identical
+        bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+        cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, "cl.exe").to_s)
+      end
+
+      `#{cl} /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
     {% else %}
       `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
     {% end %}

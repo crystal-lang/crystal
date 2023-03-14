@@ -32,6 +32,17 @@ class Crystal::Codegen::Target
     else
       # no need to tweak the architecture
     end
+
+    if linux? && environment_parts.size == 1
+      case @vendor
+      when "suse", "redhat", "slackware", "amazon", "unknown", "montavista", "mti"
+        # Build string instead of setting it as "linux-gnu"
+        # since "linux6E" & "linuxspe" are available.
+        @environment = "#{@environment}-gnu"
+      else
+        # no need to tweak the environment
+      end
+    end
   end
 
   def environment_parts
@@ -59,6 +70,8 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .android?
+      "android"
     else
       environment
     end
@@ -92,8 +105,16 @@ class Crystal::Codegen::Target
     @environment.starts_with?("netbsd")
   end
 
+  def android?
+    environment_parts.any? &.starts_with?("android")
+  end
+
   def linux?
     @environment.starts_with?("linux")
+  end
+
+  def wasi?
+    @environment.starts_with?("wasi")
   end
 
   def bsd?
@@ -101,7 +122,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux?
+    macos? || bsd? || linux? || wasi?
   end
 
   def gnu?
@@ -144,6 +165,8 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "wasm32"
+      LLVM.init_webassembly
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end

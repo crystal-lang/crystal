@@ -294,7 +294,7 @@ describe "FileUtils" do
       end
     end
 
-    it "doesn't return error on non existing file" do
+    it "doesn't return error on nonexistent file" do
       with_tempfile("rm_rf-nonexistent") do |path|
         test_with_string_and_path(path) do |arg|
           FileUtils.rm_rf(arg).should be_nil
@@ -302,7 +302,7 @@ describe "FileUtils" do
       end
     end
 
-    it "doesn't return error on non existing files" do
+    it "doesn't return error on nonexistent files" do
       with_tempfile("rm_rf-nonexistent") do |path1|
         path2 = File.join(path1, "a")
         test_with_string_and_path(path1, path2) do |*args|
@@ -468,7 +468,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rmdir with an non existing path" do
+  it "tests rmdir with an nonexistent path" do
     with_tempfile("rmdir-nonexistent") do |path|
       test_with_string_and_path(path) do |arg|
         expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
@@ -478,7 +478,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rmdir with multiple non existing path" do
+  it "tests rmdir with multiple nonexistent path" do
     with_tempfile("rmdir-nonexistent") do |path|
       test_with_string_and_path("#{path}1", "#{path}2") do |*args|
         expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}1'") do
@@ -514,7 +514,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rm with non existing path" do
+  it "tests rm with nonexistent path" do
     with_tempfile("rm-nonexistent") do |path|
       test_with_string_and_path(path) do |arg|
         expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
@@ -536,7 +536,7 @@ describe "FileUtils" do
     end
   end
 
-  it "tests rm with some non existing paths" do
+  it "tests rm with some nonexistent paths" do
     with_tempfile("rm-nonexistent1", "rm-nonexistent2") do |path1, path2|
       test_with_string_and_path(path1, path2) do |arg1, arg2|
         File.write(path1, "")
@@ -549,75 +549,78 @@ describe "FileUtils" do
     end
   end
 
-  describe ".ln" do
-    it "creates a hardlink" do
-      with_tempfile("ln_src", "ln_dst") do |path1, path2|
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          FileUtils.touch(path1)
-          FileUtils.ln(arg1, arg2)
-          File.exists?(path2).should be_true
-          File.symlink?(path2).should be_false
-          FileUtils.rm_rf([path1, path2])
-        end
-      end
-    end
-
-    it "creates a hardlink inside a destination dir" do
-      with_tempfile("ln_src", "ln_dst_dir") do |path1, path2|
-        path2 += File::SEPARATOR
-        path3 = File.join(path2, File.basename(path1))
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          FileUtils.touch(path1)
-          FileUtils.mkdir(path2)
-          FileUtils.ln(arg1, arg2)
-          File.exists?(path3).should be_true
-          File.symlink?(path3).should be_false
-          FileUtils.rm_rf([path1, path2])
-        end
-      end
-    end
-
-    it "creates multiple hardlinks inside a destination dir" do
-      with_tempfile("ln_src_1", "ln_src_2", "ln_src_3", "ln_dst_dir") do |path1, path2, path3, dir_path|
-        paths = [path1, path2, path3]
-        dir_path += File::SEPARATOR
-        test_with_string_and_path(path1, path2, path3, dir_path) do |arg1, arg2, arg3, arg4|
-          paths.each { |path| FileUtils.touch(path) }
-          FileUtils.mkdir(dir_path)
-          FileUtils.ln([arg1, arg2, arg3], arg4)
-
-          paths.each do |path|
-            link_path = File.join(dir_path, File.basename(path))
-            File.exists?(link_path).should be_true
-            File.symlink?(link_path).should be_false
-          end
-          FileUtils.rm_rf(dir_path)
-        end
-      end
-    end
-
-    it "fails with a nonexistent source" do
-      with_tempfile("ln_src_missing", "ln_dst_missing") do |path1, path2|
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          expect_raises(File::NotFoundError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+  # hard links are practically unavailable on Android
+  {% unless flag?(:android) %}
+    describe ".ln" do
+      it "creates a hardlink" do
+        with_tempfile("ln_src", "ln_dst") do |path1, path2|
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            FileUtils.touch(path1)
             FileUtils.ln(arg1, arg2)
+            File.exists?(path2).should be_true
+            File.symlink?(path2).should be_false
+            FileUtils.rm_rf([path1, path2])
           end
         end
       end
-    end
 
-    it "fails with an extant destination" do
-      with_tempfile("ln_src", "ln_dst_exists") do |path1, path2|
-        FileUtils.touch([path1, path2])
-
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+      it "creates a hardlink inside a destination dir" do
+        with_tempfile("ln_src", "ln_dst_dir") do |path1, path2|
+          path2 += File::SEPARATOR
+          path3 = File.join(path2, File.basename(path1))
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            FileUtils.touch(path1)
+            FileUtils.mkdir(path2)
             FileUtils.ln(arg1, arg2)
+            File.exists?(path3).should be_true
+            File.symlink?(path3).should be_false
+            FileUtils.rm_rf([path1, path2])
+          end
+        end
+      end
+
+      it "creates multiple hardlinks inside a destination dir" do
+        with_tempfile("ln_src_1", "ln_src_2", "ln_src_3", "ln_dst_dir") do |path1, path2, path3, dir_path|
+          paths = [path1, path2, path3]
+          dir_path += File::SEPARATOR
+          test_with_string_and_path(path1, path2, path3, dir_path) do |arg1, arg2, arg3, arg4|
+            paths.each { |path| FileUtils.touch(path) }
+            FileUtils.mkdir(dir_path)
+            FileUtils.ln([arg1, arg2, arg3], arg4)
+
+            paths.each do |path|
+              link_path = File.join(dir_path, File.basename(path))
+              File.exists?(link_path).should be_true
+              File.symlink?(link_path).should be_false
+            end
+            FileUtils.rm_rf(dir_path)
+          end
+        end
+      end
+
+      it "fails with a nonexistent source" do
+        with_tempfile("ln_src_missing", "ln_dst_missing") do |path1, path2|
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            expect_raises(File::NotFoundError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+              FileUtils.ln(arg1, arg2)
+            end
+          end
+        end
+      end
+
+      it "fails with an extant destination" do
+        with_tempfile("ln_src", "ln_dst_exists") do |path1, path2|
+          FileUtils.touch([path1, path2])
+
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+              FileUtils.ln(arg1, arg2)
+            end
           end
         end
       end
     end
-  end
+  {% end %}
 
   describe ".ln_s" do
     it "creates a symlink" do

@@ -109,7 +109,7 @@ class PrettyPrint
   # Creates a group of objects. Inside a group all breakable
   # objects are either turned into newlines or are output
   # as is, depending on the available width.
-  def group(indent = 0, open_obj = "", close_obj = "")
+  def group(indent = 0, open_obj = "", close_obj = "", &)
     text open_obj
     group_sub do
       nest(indent) do
@@ -119,7 +119,7 @@ class PrettyPrint
     text close_obj
   end
 
-  private def group_sub
+  private def group_sub(&)
     group = Group.new(@group_stack.last.depth + 1)
     @group_stack.push group
     @group_queue.enq group
@@ -134,7 +134,7 @@ class PrettyPrint
   end
 
   # Increases the indentation for breakables inside the current group.
-  def nest(indent = 1)
+  def nest(indent = 1, &)
     @indent += indent
     begin
       yield
@@ -157,7 +157,7 @@ class PrettyPrint
   # Appends a group that is surrounded by the given *left* and *right*
   # objects, and optionally is surrounded by the given breakable
   # objects.
-  def surround(left, right, left_break = "", right_break = "") : Nil
+  def surround(left, right, left_break = "", right_break = "", &) : Nil
     group(1, left, right) do
       breakable left_break if left_break
       yield
@@ -167,7 +167,7 @@ class PrettyPrint
 
   # Appends a list of elements surrounded by *left* and *right*
   # and separated by commas, yielding each element to the given block.
-  def list(left, elements, right) : Nil
+  def list(left, elements, right, &) : Nil
     group(1, left, right) do
       elements.each_with_index do |elem, i|
         comma if i > 0
@@ -298,7 +298,7 @@ class PrettyPrint
 
   # Creates a pretty printer and yields it to the block,
   # appending any output to the given *io*.
-  def self.format(io : IO, width : Int32, newline = "\n", indent = 0)
+  def self.format(io : IO, width : Int32, newline = "\n", indent = 0, &)
     printer = PrettyPrint.new(io, width, newline, indent)
     yield printer
     printer.flush

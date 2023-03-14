@@ -65,6 +65,9 @@ response = HTTP::Client.post("https://api.github.com/graphql",
     "Authorization" => "bearer #{api_token}",
   }
 )
+unless response.success?
+  abort "GitHub API response: #{response.status}\n#{response.body}"
+end
 
 module LabelNameConverter
   def self.from_json(pull : JSON::PullParser)
@@ -77,12 +80,15 @@ end
 record PullRequest,
   number : Int32,
   title : String,
-  mergedAt : Time?,
+  merged_at : Time?,
   permalink : String,
   author : String?,
   labels : Array(String) do
   include JSON::Serializable
   include Comparable(self)
+
+  @[JSON::Field(key: "mergedAt")]
+  @merged_at : Time?
 
   @[JSON::Field(root: "login")]
   @author : String?
@@ -117,7 +123,7 @@ record PullRequest,
       labels.includes?("security") ? 0 : 1,
       labels.includes?("breaking-change") ? 0 : 1,
       labels.includes?("kind:bug") ? 0 : 1,
-      mergedAt || Time.unix(0),
+      merged_at || Time.unix(0),
     }
   end
 end
@@ -141,16 +147,24 @@ array = parser.on_key! "data" do
 end
 
 changelog = File.read("CHANGELOG.md")
-array.select! { |pr| pr.mergedAt && !changelog.index(pr.permalink) }
+array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
 sections = array.group_by { |pr|
   pr.labels.each do |label|
     case label
     when .starts_with?("topic:lang")
       break "Language"
     when .starts_with?("topic:compiler")
-      break "Compiler"
+      if label == "topic:compiler"
+        break "Compiler"
+      else
+        break "Compiler: #{label.lchop("topic:compiler:").titleize}"
+      end
     when .starts_with?("topic:tools")
-      break "Tools"
+      if label == "topic:tools"
+        break "Tools"
+      else
+        break "Tools: #{label.lchop("topic:tools:").titleize}"
+      end
     when .starts_with?("topic:stdlib")
       if label == "topic:stdlib"
         break "Standard Library"
@@ -163,11 +177,17 @@ sections = array.group_by { |pr|
   end || "Other"
 }
 
-titles = sections.keys.sort!
+titles = [] of String
+["Language", "Standard Library", "Compiler", "Tools", "Other"].each do |main_section|
+  titles.concat sections.each_key.select(&.starts_with?(main_section)).to_a.sort!
+end
+sections.keys.sort!.each do |section|
+  titles << section unless titles.includes?(section)
+end
 last_title1 = nil
 
 titles.each do |title|
-  prs = sections[title]
+  prs = sections[title]? || next
   title1, _, title2 = title.partition(": ")
   if title2.presence
     if title1 != last_title1

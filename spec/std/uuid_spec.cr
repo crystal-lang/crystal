@@ -4,8 +4,20 @@ require "../support/string"
 
 describe "UUID" do
   describe "#==" do
-    UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
-    UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    it "matches identical UUIDs" do
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    end
+  end
+
+  describe "#<=>" do
+    it "correctly compares two UUIDs" do
+      uuid_1 = UUID.new("00330000-0000-0000-0000-000000000000")
+      uuid_2 = UUID.new("00000011-0000-0000-5500-000099000000")
+      (uuid_1 <=> uuid_2).should be > 0
+      (uuid_2 <=> uuid_1).should be < 0
+      (uuid_1 <=> uuid_1).should eq 0
+    end
   end
 
   describe "random initialize" do
@@ -90,6 +102,23 @@ describe "UUID" do
       UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("C20335C37F464126AAE9F665434AD12B").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").to_s.should eq("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892")
+    end
+  end
+
+  describe "parsing strings" do
+    it "returns a properly parsed UUID" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12b").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+    end
+
+    it "returns nil if it has the wrong number of characters" do
+      UUID.parse?("nope").should eq nil
+    end
+
+    it "returns nil if it has incorrect characters" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12?").should eq nil
+      UUID.parse?("lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+      UUID.parse?("lol!wut?asdfforktypoomglolwtfbbq").should eq nil
+      UUID.parse?("urn:uuid:lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
     end
   end
 

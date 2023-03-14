@@ -108,7 +108,7 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each : Nil
+  def each(&) : Nil
     {% if B == Nil %}
       {% raise "Can't each beginless range" %}
     {% end %}
@@ -160,7 +160,7 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each : Nil
+  def reverse_each(&) : Nil
     {% if E == Nil %}
       {% raise "Can't reverse_each endless range" %}
     {% end %}
@@ -362,7 +362,7 @@ struct Range(B, E)
   # the method simply calls `random.rand(self)`.
   #
   # Raises `ArgumentError` if `self` is an open range.
-  def sample(random = Random::DEFAULT)
+  def sample(random : Random = Random::DEFAULT)
     {% if B == Nil || E == Nil %}
       {% raise "Can't sample an open range" %}
     {% end %}
@@ -399,12 +399,81 @@ struct Range(B, E)
       raise ArgumentError.new("Can't sample an open range")
     end
 
-    return super unless n == 1
+    if n < 0
+      raise ArgumentError.new "Can't sample negative number of elements"
+    end
 
-    if empty?
-      [] of B
+    # For a range of integers we can do much better
+    {% if B < Int && E < Int %}
+      min = self.begin
+      max = self.end
+
+      if exclusive? ? max <= min : max < min
+        raise ArgumentError.new "Invalid range for rand: #{self}"
+      end
+
+      max -= 1 if exclusive?
+
+      available = max - min + 1
+
+      # When a big chunk of elements is going to be needed, it's
+      # faster to just traverse the entire range than hitting
+      # a lot of duplicates because or random.
+      if n >= available // 4
+        return super
+      end
+
+      possible = Math.min(n, available)
+
+      # If we must return all values in the range...
+      if possible == available
+        result = Array(B).new(possible) { |i| min + i }
+        result.shuffle!(random)
+        return result
+      end
+
+      range_sample(n, random)
+    {% elsif B < Float && E < Float %}
+      min = self.begin
+      max = self.end
+
+      if exclusive? ? max <= min : max < min
+        raise ArgumentError.new "Invalid range for rand: #{self}"
+      end
+
+      if min == max
+        return [min]
+      end
+
+      range_sample(n, random)
+    {% else %}
+      case n
+      when 0
+        [] of B
+      when 1
+        [sample(random)]
+      else
+        super
+      end
+    {% end %}
+  end
+
+  private def range_sample(n, random)
+    if n <= 16
+      # For a small requested amount doing a linear lookup is faster
+      result = Array(B).new(n)
+      until result.size == n
+        value = sample(random)
+        result << value unless result.includes?(value)
+      end
+      result
     else
-      [sample(random)]
+      # Otherwise using a Set is faster
+      result = Set(B).new(n)
+      until result.size == n
+        result << sample(random)
+      end
+      result.to_a
     end
   end
 
@@ -434,8 +503,8 @@ struct Range(B, E)
   # time instead of linear.
   #
   # ```
-  # (3..8).size  # => 5
-  # (3...8).size # => 6
+  # (3..8).size  # => 6
+  # (3...8).size # => 5
   # ```
   def size
     {% if B == Nil || E == Nil %}
@@ -507,7 +576,7 @@ struct Range(B, E)
       begin_value = @range.begin
 
       return stop if !begin_value.nil? && @current <= begin_value
-      return @current = @current.pred
+      @current = @current.pred
     end
   end
 

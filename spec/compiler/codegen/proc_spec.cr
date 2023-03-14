@@ -9,6 +9,14 @@ describe "Code gen: proc" do
     run("f = ->(x : Int32) { x &+ 1 }; f.call(41)").to_i.should eq(42)
   end
 
+  it "call proc literal with return type" do
+    run(<<-CRYSTAL).to_b.should be_true
+      f = -> : Int32 | Float64 { 1 }
+      x = f.call
+      x.is_a?(Int32) && x == 1
+      CRYSTAL
+  end
+
   it "call proc pointer" do
     run("def foo; 1; end; x = ->foo; x.call").to_i.should eq(1)
   end
@@ -885,6 +893,76 @@ describe "Code gen: proc" do
       proc_b = get_proc_b
       proc_b.call
       proc_a.call
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->var.foo`" do
+    run(%(
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      var = Foo.new(1)
+      proc = ->var.foo
+      var = Foo.new(2)
+      proc.call
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->@ivar.foo`" do
+    run(%(
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      class Test
+        @ivar = Foo.new(1)
+
+        def test
+          proc = ->@ivar.foo
+          @ivar = Foo.new(2)
+          proc.call
+        end
+      end
+
+      Test.new.test
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->@@cvar.foo`" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      class Test
+        @@cvar = Foo.new(1)
+
+        def self.test
+          proc = ->@@cvar.foo
+          @@cvar = Foo.new(2)
+          proc.call
+        end
+      end
+
+      Test.test
       )).to_i.should eq(1)
   end
 

@@ -77,7 +77,11 @@ class URI
   # * `.encode` is the reverse operation.
   # * `.decode_www_form` encodes plus to space by default.
   def self.decode(string : String, *, plus_to_space : Bool = false) : String
-    String.build { |io| decode(string, io, plus_to_space: plus_to_space) }
+    if needs_decode?(string, plus_to_space: plus_to_space)
+      String.build { |io| decode!(string, io, plus_to_space: plus_to_space) { false } }
+    else
+      string
+    end
   end
 
   # URL-decodes a string and writes the result to *io*.
@@ -257,17 +261,37 @@ class URI
   # by either `.decode(string : String, *, plus_to_space : Bool = false) : String` or
   # `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
+    unless needs_decode?(string, plus_to_space: plus_to_space)
+      io.write_string(string.to_slice)
+      return
+    end
+
+    decode!(string, io, plus_to_space: plus_to_space) do |byte|
+      yield byte
+    end
+  end
+
+  # Similar to the above, but it assumes there will be chars to decode (% or +).
+  private def self.decode!(string : String, io : IO, *, plus_to_space : Bool, &block) : Nil
     i = 0
     bytesize = string.bytesize
-    buffer = IO::Memory.new(bytesize)
+
+    if io.encoding == "UTF-8"
+      target_io = io
+    else
+      io_memory = IO::Memory.new(bytesize)
+      target_io = io_memory
+    end
 
     while i < bytesize
       byte = string.to_unsafe[i]
       char = byte.unsafe_chr
-      i = decode_one(string, bytesize, i, byte, char, buffer, plus_to_space) { |byte| yield byte }
+      i = decode_one(string, bytesize, i, byte, char, target_io, plus_to_space) { |byte| yield byte }
     end
 
-    io.write_string(buffer.to_slice)
+    if io_memory
+      io.write_string(io_memory.to_slice)
+    end
   end
 
   # URL-encodes *string* and writes the result to an `IO`.
@@ -306,7 +330,7 @@ class URI
 
   # :nodoc:
   # Unencodes one character. Private API
-  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false)
+  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false, &)
     if plus_to_space && char == '+'
       io.write_byte ' '.ord.to_u8
       i += 1
@@ -346,5 +370,12 @@ class URI
     io.write_byte byte
     i += 1
     i
+  end
+
+  # Checks if there's any chars that actually needs decoding.
+  # If not, decoding a string can be done much faster, because
+  # it's just the same string.
+  private def self.needs_decode?(string : String, *, plus_to_space : Bool) : Bool
+    string.includes?('%') || (plus_to_space && string.includes?('+'))
   end
 end

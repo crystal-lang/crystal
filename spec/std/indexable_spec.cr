@@ -8,9 +8,9 @@ private class SafeIndexable
   def initialize(@size : Int32, @offset = 0_i32)
   end
 
-  def unsafe_fetch(i) : Int32
-    raise IndexError.new unless 0 <= i < size
-    (i + @offset).to_i
+  def unsafe_fetch(index) : Int32
+    raise IndexError.new unless 0 <= index < size
+    (index + @offset).to_i
   end
 end
 
@@ -22,8 +22,8 @@ private class SafeNestedIndexable
   def initialize(@size : Int32, @inner_size : Int32)
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
     SafeIndexable.new(@inner_size)
   end
 end
@@ -36,9 +36,9 @@ private class SafeStringIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i) : String
-    raise IndexError.new unless 0 <= i < size
-    i.to_s
+  def unsafe_fetch(index) : String
+    raise IndexError.new unless 0 <= index < size
+    index.to_s
   end
 end
 
@@ -50,9 +50,9 @@ private class SafeMixedIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i) : String | Int32
-    raise IndexError.new unless 0 <= i < size
-    i.to_s
+  def unsafe_fetch(index) : String | Int32
+    raise IndexError.new unless 0 <= index < size
+    index.to_s
   end
 end
 
@@ -64,12 +64,12 @@ private class SafeRecursiveIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i) : SafeRecursiveIndexable | Int32
-    raise IndexError.new unless 0 <= i < size
-    if (i % 2) == 0
-      SafeRecursiveIndexable.new(i)
+  def unsafe_fetch(index) : SafeRecursiveIndexable | Int32
+    raise IndexError.new unless 0 <= index < size
+    if (index % 2) == 0
+      SafeRecursiveIndexable.new(index)
     else
-      i
+      index
     end
   end
 end
@@ -93,6 +93,28 @@ describe Indexable do
     end
   end
 
+  describe "#index!" do
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.index!(1, 0_i64).should eq 1
+      indexable.index!(1, 0_i64).should be_a(Int64)
+    end
+
+    it "raises if no element is found" do
+      indexable = SafeIndexable.new(3)
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(0, -100) }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(0, -4) }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(0, 1) }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(0, 3) }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(0, 100) }
+
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(-4) { true } }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(3) { true } }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(2) { false } }
+      expect_raises(Enumerable::NotFoundError) { indexable.index!(-3) { false } }
+    end
+  end
+
   describe "#rindex" do
     it "does rindex with big negative offset" do
       indexable = SafeIndexable.new(3)
@@ -108,6 +130,28 @@ describe Indexable do
       indexable = SafeIndexable.new(3)
       indexable.rindex(1, 2_i64).should eq 1
       indexable.rindex(1, 2_i64).should be_a(Int64)
+    end
+  end
+
+  describe "#rindex!" do
+    it "does rindex with big negative offset" do
+      indexable = SafeIndexable.new(3)
+      expect_raises Enumerable::NotFoundError do
+        indexable.rindex!(0, -100)
+      end
+    end
+
+    it "does rindex with big offset" do
+      indexable = SafeIndexable.new(3)
+      expect_raises Enumerable::NotFoundError do
+        indexable.rindex!(0, 100)
+      end
+    end
+
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex!(1, 2_i64).should eq 1
+      indexable.rindex!(1, 2_i64).should be_a(Int64)
     end
   end
 
@@ -304,10 +348,10 @@ describe Indexable do
       elems.should eq([{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}])
 
       elems = SafeIndexable.new(2).cartesian_product(SafeIndexable.new(0))
-      elems.empty?.should be_true
+      elems.should be_empty
 
       elems = SafeIndexable.new(0).cartesian_product(SafeIndexable.new(3))
-      elems.empty?.should be_true
+      elems.should be_empty
     end
 
     it "does with >1 other Indexables" do
@@ -325,7 +369,7 @@ describe Indexable do
       elems.should eq([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]])
 
       elems = Indexable.cartesian_product(SafeNestedIndexable.new(2, 0))
-      elems.empty?.should be_true
+      elems.should be_empty
 
       elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 3))
       elems.should eq([[] of Int32])
@@ -351,18 +395,28 @@ describe Indexable do
       r = [] of Int32 | String
       indexable = SafeIndexable.new(3)
       indexable.each_cartesian(SafeStringIndexable.new(0)) { |a, b| r << a; r << b }
-      r.empty?.should be_true
+      r.should be_empty
 
       r = [] of Int32 | String
       indexable = SafeIndexable.new(0)
       indexable.each_cartesian(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
-      r.empty?.should be_true
+      r.should be_empty
     end
 
     it "does with 1 other Indexable, without block" do
       iter = SafeIndexable.new(3).each_cartesian(SafeStringIndexable.new(2))
       iter.next.should eq({0, "0"})
       iter.next.should eq({0, "1"})
+      iter.next.should eq({1, "0"})
+      iter.next.should eq({1, "1"})
+      iter.next.should eq({2, "0"})
+      iter.next.should eq({2, "1"})
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with 1 other Indexable, without block, combined with select" do
+      iter = SafeIndexable.new(3).each_cartesian(SafeStringIndexable.new(2))
+      iter = iter.select { |(x, y)| x > 0 }
       iter.next.should eq({1, "0"})
       iter.next.should eq({1, "1"})
       iter.next.should eq({2, "0"})
@@ -404,15 +458,15 @@ describe Indexable do
 
       r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
-      r.empty?.should be_true
+      r.should be_empty
 
       r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
-      r.empty?.should be_true
+      r.should be_empty
 
       r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(0, 0)) { |v| r.concat(v) }
-      r.empty?.should be_true
+      r.should be_empty
     end
 
     it "does with reuse = true, with block" do
@@ -447,6 +501,22 @@ describe Indexable do
       iter.next.should eq([0, 0])
       iter.next.should eq([0, 1])
       iter.next.should eq([0, 2])
+      iter.next.should eq([1, 0])
+      iter.next.should eq([1, 1])
+      iter.next.should eq([1, 2])
+      iter.next.should eq([2, 0])
+      iter.next.should eq([2, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(0, 3))
+      iter.next.should eq([] of Int32)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with an Indexable of Indexables, without block, combined with select" do
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 3))
+      iter = iter.select { |(x, y)| x > 0 }
       iter.next.should eq([1, 0])
       iter.next.should eq([1, 1])
       iter.next.should eq([1, 2])

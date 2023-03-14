@@ -96,6 +96,11 @@ describe BigRational do
     r.to_big_f.should be_close(f, 0.001)
   end
 
+  it "#to_big_r" do
+    r = br(10, 3)
+    r.to_big_r.should eq(r)
+  end
+
   it "Int#to_big_r" do
     3.to_big_r.should eq(br(3, 1))
   end

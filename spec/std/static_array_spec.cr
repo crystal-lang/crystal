@@ -63,6 +63,16 @@ describe "StaticArray" do
     end
   end
 
+  describe "<=>" do
+    it "correctly compares two static arrays" do
+      array1 = StaticArray(Int32, 3).new(5)
+      array2 = StaticArray(Int32, 3).new(7)
+      (array1 <=> array2).should be < 0
+      (array2 <=> array1).should be > 0
+      (array1 <=> array1).should eq 0
+    end
+  end
+
   describe "values_at" do
     it "returns the given indexes" do
       StaticArray(Int32, 4).new { |i| i + 1 }.values_at(1, 0, 2).should eq({2, 1, 3})
@@ -81,22 +91,34 @@ describe "StaticArray" do
   end
 
   describe "#fill" do
-    it "replaces all values, without block" do
-      a = StaticArray(Int32, 3).new { |i| i + 1 }
-      expected = StaticArray[0, 0, 0]
-      a.fill(0).should eq(expected)
-      a.should eq(expected)
+    it "replaces values in a subrange" do
+      a = StaticArray[0, 1, 2, 3, 4]
+      a.fill(7)
+      a.should eq(StaticArray[7, 7, 7, 7, 7])
 
-      expected = StaticArray[2, 2, 2]
-      a.fill(2).should eq(expected)
-      a.should eq(expected)
-    end
+      a = StaticArray[0, 1, 2, 3, 4]
+      a.fill(7, 1, 2)
+      a.should eq(StaticArray[0, 7, 7, 3, 4])
 
-    it "replaces all values, with block" do
-      a = StaticArray(Int32, 4).new { |i| i + 1 }
-      expected = StaticArray[0, 1, 4, 9]
-      a.fill { |i| i * i }.should eq(expected)
-      a.should eq(expected)
+      a = StaticArray[0, 1, 2, 3, 4]
+      a.fill(7, 2..3)
+      a.should eq(StaticArray[0, 1, 7, 7, 4])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill { |i| i + 7 }
+      a.should eq(StaticArray[7, 8, 9, 10, 11])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill(offset: 2) { |i| i * i }
+      a.should eq(StaticArray[4, 9, 16, 25, 36])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill(1, 2) { |i| i + 7 }
+      a.should eq(StaticArray[0, 8, 9, 0, 0])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill(2..3) { |i| i + 7 }
+      a.should eq(StaticArray[0, 0, 9, 10, 0])
     end
   end
 
@@ -107,7 +129,7 @@ describe "StaticArray" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.includes?(i + 1).should be_true
+      a.should contain(i + 1)
     end
   end
 
@@ -231,6 +253,70 @@ describe "StaticArray" do
     b[0].should eq(a[0])
     b[0].should_not be(a[0])
   end
+
+  {% for sort in ["sort".id, "unstable_sort".id] %}
+    describe {{ "##{sort}" }} do
+      it "sort without block" do
+        a = StaticArray[3, 4, 1, 2, 5, 6]
+        b = a.{{ sort }}
+        b.should eq(StaticArray[1, 2, 3, 4, 5, 6])
+        a.should_not eq(b)
+      end
+
+      it "sort with a block" do
+        a = StaticArray["foo", "a", "hello"]
+        b = a.{{ sort }} { |x, y| x.size <=> y.size }
+        b.should eq(StaticArray["a", "foo", "hello"])
+        a.should_not eq(b)
+      end
+    end
+
+    describe {{ "##{sort}!" }} do
+      it "sort! without block" do
+        a = StaticArray[3, 4, 1, 2, 5, 6]
+        a.{{ sort }}!
+        a.should eq(StaticArray[1, 2, 3, 4, 5, 6])
+      end
+
+      it "sort! with a block" do
+        a = StaticArray["foo", "a", "hello"]
+        a.{{ sort }}! { |x, y| x.size <=> y.size }
+        a.should eq(StaticArray["a", "foo", "hello"])
+      end
+    end
+
+    # StaticArray#sort_by and #sort_by! don't compile on aarch64-darwin and
+    # aarch64-linux-musl due to a codegen error caused by LLVM < 13.0.0.
+    # See https://github.com/crystal-lang/crystal/issues/11358 for details.
+    {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin) || flag?(:android)) %}
+      describe "{{ sort }}_by" do
+        it "sorts by" do
+          a = StaticArray["foo", "a", "hello"]
+          b = a.{{ sort }}_by(&.size)
+          b.should eq(StaticArray["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+      end
+
+      describe "{{ sort }}_by!" do
+        it "sorts by!" do
+          a = StaticArray["foo", "a", "hello"]
+          a.{{ sort }}_by!(&.size)
+          a.should eq(StaticArray["a", "foo", "hello"])
+        end
+
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = StaticArray["foo", "a", "hello"]
+          a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
+      end
+    {% else %}
+      pending "{{ sort }}_by"
+      pending "{{ sort }}_by!"
+    {% end %}
+  {% end %}
 
   it_iterates "#each", [1, 2, 3], StaticArray[1, 2, 3].each
   it_iterates "#reverse_each", [3, 2, 1], StaticArray[1, 2, 3].reverse_each

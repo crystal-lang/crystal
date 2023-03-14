@@ -26,11 +26,11 @@ describe "Semantic: c union" do
   end
 
   it "types union setter via pointer" do
-    assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x = 1") { int32 }
+    assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x = 1", inject_primitives: true) { int32 }
   end
 
   it "types union getter via pointer" do
-    assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x") { int32 }
+    assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x", inject_primitives: true) { int32 }
   end
 
   it "errors if setting closure" do

@@ -79,7 +79,7 @@ module Crystal::System::Socket
       raise ::Socket::Error.from_wsa_error("WSASocketW")
     end
 
-    Crystal::EventLoop.create_completion_port LibC::HANDLE.new(socket)
+    Crystal::Scheduler.event_loop.create_completion_port LibC::HANDLE.new(socket)
 
     socket
   end
@@ -92,7 +92,7 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_connect(addr, timeout = nil)
+  private def system_connect(addr, timeout = nil, &)
     if type.stream?
       system_connect_stream(addr, timeout) { |error| yield error }
     else
@@ -100,7 +100,7 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_connect_stream(addr, timeout)
+  private def system_connect_stream(addr, timeout, &)
     address = LibC::SockaddrIn6.new
     address.sin6_family = family
     address.sin6_port = 0
@@ -131,20 +131,20 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_connect_connectionless(addr, timeout)
+  private def system_connect_connectionless(addr, timeout, &)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
       yield ::Socket::Error.from_wsa_error("connect")
     end
   end
 
-  private def system_bind(addr, addrstr)
+  private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog)
+  private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
       yield ::Socket::Error.from_errno("Listen failed")
     end
@@ -281,7 +281,7 @@ module Crystal::System::Socket
     val
   end
 
-  def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
 
@@ -335,13 +335,13 @@ module Crystal::System::Socket
   end
 
   private def system_tty?
-    LibC.isatty(fd) == 1
+    false
   end
 
   private def unbuffered_read(slice : Bytes)
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = overlapped_read(fd, "WSARecv") do |overlapped|
+    bytes_read = overlapped_operation(fd, "WSARecv", read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
     end

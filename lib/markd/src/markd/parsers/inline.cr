@@ -43,7 +43,7 @@ module Markd::Parser
             when '*', '_'
               handle_delim(char, node)
             when '\'', '"'
-              @options.smart && handle_delim(char, node)
+              @options.smart? && handle_delim(char, node)
             when '['
               open_bracket(node)
             when '!'
@@ -226,7 +226,8 @@ module Markd::Parser
         elsif !opener.bracket_after
           # Empty or missing second label means to use the first label as the reference.
           # The reference must not contain a bracket. If we know there's a bracket, we don't even bother checking it.
-          ref_label = normalize_refernence(@text.byte_slice(opener.index, start_pos - opener.index))
+          byte_count = start_pos - opener.index
+          ref_label = byte_count > 0 ? normalize_refernence(@text.byte_slice(opener.index, byte_count)) : nil
         end
 
         if label_size == 0
@@ -445,7 +446,7 @@ module Markd::Parser
 
     private def string(node : Node)
       if text = match_main
-        if @options.smart
+        if @options.smart?
           text = text.gsub(Rule::ELLIPSIS, '\u{2026}')
             .gsub(Rule::DASH) do |chars|
               en_count = em_count = 0

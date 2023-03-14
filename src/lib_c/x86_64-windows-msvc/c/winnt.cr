@@ -78,4 +78,94 @@ lib LibC
     # (STANDARD_RIGHTS_WRITE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY) & ~SYNCHRONIZE
     WRITE = 0x20006
   end
+
+  struct CONTEXT
+    p1Home : DWORD64
+    p2Home : DWORD64
+    p3Home : DWORD64
+    p4Home : DWORD64
+    p5Home : DWORD64
+    p6Home : DWORD64
+    contextFlags : DWORD
+    mxCsr : DWORD
+    segCs : WORD
+    segDs : WORD
+    segEs : WORD
+    segFs : WORD
+    segGs : WORD
+    segSs : WORD
+    eFlags : DWORD
+    dr0 : DWORD64
+    dr1 : DWORD64
+    dr2 : DWORD64
+    dr3 : DWORD64
+    dr6 : DWORD64
+    dr7 : DWORD64
+    rax : DWORD64
+    rcx : DWORD64
+    rdx : DWORD64
+    rbx : DWORD64
+    rsp : DWORD64
+    rbp : DWORD64
+    rsi : DWORD64
+    rdi : DWORD64
+    r8 : DWORD64
+    r9 : DWORD64
+    r10 : DWORD64
+    r11 : DWORD64
+    r12 : DWORD64
+    r13 : DWORD64
+    r14 : DWORD64
+    r15 : DWORD64
+    rip : DWORD64
+    fltSave : UInt8[512]           # DUMMYUNIONNAME
+    vectorRegister : UInt8[16][26] # M128A[26]
+    vectorControl : DWORD64
+    debugControl : DWORD64
+    lastBranchToRip : DWORD64
+    lastBranchFromRip : DWORD64
+    lastExceptionToRip : DWORD64
+    lastExceptionFromRip : DWORD64
+  end
+
+  {% if flag?(:x86_64) %}
+    CONTEXT_AMD64 = DWORD.new!(0x00100000)
+
+    CONTEXT_CONTROL         = CONTEXT_AMD64 | 0x00000001
+    CONTEXT_INTEGER         = CONTEXT_AMD64 | 0x00000002
+    CONTEXT_SEGMENTS        = CONTEXT_AMD64 | 0x00000004
+    CONTEXT_FLOATING_POINT  = CONTEXT_AMD64 | 0x00000008
+    CONTEXT_DEBUG_REGISTERS = CONTEXT_AMD64 | 0x00000010
+
+    CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT
+  {% elsif flag?(:i386) %}
+    CONTEXT_i386 = DWORD.new!(0x00010000i64)
+    CONTEXT_i486 = DWORD.new!(0x00010000i64)
+
+    CONTEXT_CONTROL            = CONTEXT_i386 | 0x00000001
+    CONTEXT_INTEGER            = CONTEXT_i386 | 0x00000002
+    CONTEXT_SEGMENTS           = CONTEXT_i386 | 0x00000004
+    CONTEXT_FLOATING_POINT     = CONTEXT_i386 | 0x00000008
+    CONTEXT_DEBUG_REGISTERS    = CONTEXT_i386 | 0x00000010
+    CONTEXT_EXTENDED_REGISTERS = CONTEXT_i386 | 0x00000020
+
+    CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS
+  {% end %}
+
+  fun RtlCaptureContext(contextRecord : CONTEXT*)
+
+  struct EXCEPTION_RECORD64
+    exceptionCode : DWORD
+    exceptionFlags : DWORD
+    exceptionRecord : DWORD64
+    exceptionAddress : DWORD64
+    numberParameters : DWORD
+    __unusedAlignment : DWORD
+    exceptionInformation : DWORD64[15]
+  end
+
+  struct EXCEPTION_POINTERS
+    exceptionRecord : EXCEPTION_RECORD64*
+    contextRecord : CONTEXT*
+  end
 end

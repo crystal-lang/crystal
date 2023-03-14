@@ -17,7 +17,7 @@ function ModalDialog(options) {
 
   $("body").append(
     this.modalDom = $("<div>").addClass("modal modal-fixed-footer")
-      .append(this.modalContenDom = $("<div>").addClass("modal-content"))
+      .append(this.modalContentDom = $("<div>").addClass("modal-content"))
       .append($("<div>").addClass("modal-footer")
         .append($("<a>").text("Close")
           .addClass("modal-action modal-close waves-effect waves-green btn-flat")
@@ -39,7 +39,7 @@ function ModalDialog(options) {
 
   this.append = function() {
     for(var i = 0; i < arguments.length; i++) {
-      this.modalContenDom.append(arguments[i]);
+      this.modalContentDom.append(arguments[i]);
     }
     return this;
   }.bind(this);
@@ -294,7 +294,22 @@ Playground.Session = function(options) {
     tabSize: 2,
     viewportMargin: Infinity,
     dragDrop: false, // dragDrop functionality is implemented to capture drop anywhere and replace source
-    value: options.source
+    value: options.source,
+    // indent using spaces, see https://github.com/codemirror/codemirror5/issues/988
+    extraKeys: {
+      Tab: (cm) => {
+        if (cm.getMode().name === 'null') {
+          cm.execCommand('insertTab');
+        } else {
+          if (cm.somethingSelected()) {
+            cm.execCommand('indentMore');
+          } else {
+            cm.execCommand('insertSoftTab');
+          }
+        }
+      },
+      'Shift-Tab': (cm) => cm.execCommand('indentLess')
+    }
   });
   this.editor._playgroundSession = this;
 

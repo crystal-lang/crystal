@@ -1,6 +1,8 @@
 require "./openssl/lib_ssl"
 require "./openssl/error"
 
+# NOTE: To use `OpenSSL`, you must explicitly import it with `require "openssl"`
+#
 # ## OpenSSL Integration
 #
 # - TLS sockets need a context, potentially with keys (required for servers) and configuration.
@@ -70,7 +72,7 @@ module OpenSSL
     alias Options = LibSSL::Options
     alias VerifyMode = LibSSL::VerifyMode
     alias ErrorType = LibSSL::SSLError
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+    {% if LibCrypto.has_constant?(:X509VerifyFlags) %}
       alias X509VerifyFlags = LibCrypto::X509VerifyFlags
     {% end %}
 

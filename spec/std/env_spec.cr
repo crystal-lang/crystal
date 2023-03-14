@@ -131,6 +131,7 @@ describe "ENV" do
       ENV["1"] = "2"
       ENV.fetch("1") { |k| k + "block" }.should eq("2")
       ENV.fetch("2") { |k| k + "block" }.should eq("2block")
+      ENV.fetch("3") { 4 }.should eq(4)
     ensure
       ENV.delete("1")
     end

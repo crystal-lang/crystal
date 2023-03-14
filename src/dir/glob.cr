@@ -56,7 +56,7 @@ class Dir
   # :nodoc:
   module Globber
     record DirectoriesOnly
-    record ConstantEntry, path : String
+    record ConstantEntry, path : String, merged : Bool
     record EntryMatch, pattern : String do
       def matches?(string) : Bool
         File.match?(pattern, string)
@@ -113,7 +113,7 @@ class Dir
       else
         file = parts.pop
         if constant_entry?(file)
-          list << ConstantEntry.new file
+          list << ConstantEntry.new file, false
         elsif !file.empty?
           list << EntryMatch.new file
         end
@@ -129,7 +129,7 @@ class Dir
           when ConstantDirectory
             list[-1] = ConstantDirectory.new File.join(dir, last.path)
           when ConstantEntry
-            list[-1] = ConstantEntry.new File.join(dir, last.path)
+            list[-1] = ConstantEntry.new File.join(dir, last.path), true
           else
             list << ConstantDirectory.new dir
           end
@@ -147,7 +147,7 @@ class Dir
 
     private def self.constant_entry?(file)
       file.each_char do |char|
-        return false if char == '*' || char == '?'
+        return false if char.in?('*', '?')
       end
 
       true
@@ -214,7 +214,9 @@ class Dir
             end
           end
         in ConstantEntry
-          next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
+          unless cmd.merged
+            next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
+          end
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
         in ConstantDirectory
@@ -263,7 +265,9 @@ class Dir
 
               case next_cmd
               when ConstantEntry
-                yield fullpath if next_cmd.path == entry.name
+                unless next_cmd.merged
+                  yield fullpath if next_cmd.path == entry.name
+                end
               when EntryMatch
                 yield fullpath if next_cmd.matches?(entry.name)
               end
@@ -318,10 +322,10 @@ class Dir
       File.join(path, entry)
     end
 
-    private def self.each_child(path)
+    private def self.each_child(path, &)
       Dir.open(path || Dir.current) do |dir|
         while entry = read_entry(dir)
-          next if entry.name == "." || entry.name == ".."
+          next if entry.name.in?(".", "..")
           yield entry
         end
       end

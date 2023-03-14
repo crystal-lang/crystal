@@ -52,8 +52,8 @@ class Fiber
 
   @context : Context
   @stack : Void*
-  @resume_event : Crystal::Event?
-  @timeout_event : Crystal::Event?
+  @resume_event : Crystal::EventLoop::Event?
+  @timeout_event : Crystal::EventLoop::Event?
   # :nodoc:
   property timeout_select_action : Channel::TimeoutAction?
   protected property stack_bottom : Void*
@@ -76,7 +76,7 @@ class Fiber
   end
 
   # :nodoc:
-  def self.unsafe_each
+  def self.unsafe_each(&)
     fibers.unsafe_each { |fiber| yield fiber }
   end
 
@@ -87,7 +87,13 @@ class Fiber
   # *name* is an optional and used only as an internal reference.
   def initialize(@name : String? = nil, &@proc : ->)
     @context = Context.new
-    @stack, @stack_bottom = Fiber.stack_pool.checkout
+    @stack, @stack_bottom =
+      {% if flag?(:interpreted) %}
+        # For interpreted mode we don't need a new stack, the stack is held by the interpreter
+        {Pointer(Void).null, Pointer(Void).null}
+      {% else %}
+        Fiber.stack_pool.checkout
+      {% end %}
 
     fiber_main = ->(f : Fiber) { f.run }
 
@@ -118,7 +124,16 @@ class Fiber
   # :nodoc:
   def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
-    @context = Context.new(_fiber_get_stack_top)
+
+    # TODO: should creating a new context for the main fiber also be platform specific?
+    # It's the same for all platforms except for the interpreted mode.
+    @context =
+      {% if flag?(:interpreted) %}
+        # In interpreted mode the stack_top variable actually points to a fiber
+        Context.new(Crystal::Interpreter.current_fiber)
+      {% else %}
+        Context.new(_fiber_get_stack_top)
+      {% end %}
     thread.gc_thread_handler, @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
     @current_thread.set(thread)
@@ -140,6 +155,8 @@ class Fiber
   ensure
     {% if flag?(:preview_mt) %}
       Crystal::Scheduler.enqueue_free_stack @stack
+    {% elsif flag?(:interpreted) %}
+      # For interpreted mode we don't need a new stack, the stack is held by the interpreter
     {% else %}
       Fiber.stack_pool.release(@stack)
     {% end %}
@@ -176,7 +193,7 @@ class Fiber
   # The fiber's proc has terminated, and the fiber is now considered dead. The
   # fiber is impossible to resume, ever.
   def dead? : Bool
-    @alive == false
+    !@alive
   end
 
   # Immediately resumes execution of this fiber.
@@ -200,20 +217,20 @@ class Fiber
   # Adds this fiber to the scheduler's runnables queue for the current thread.
   #
   # This signals to the scheduler that the fiber is eligible for being resumed
-  # the next time it has the opportunity to reschedule to an other fiber. There
+  # the next time it has the opportunity to reschedule to another fiber. There
   # are no guarantees when that will happen.
   def enqueue : Nil
     Crystal::Scheduler.enqueue(self)
   end
 
   # :nodoc:
-  def resume_event : Crystal::Event
-    @resume_event ||= Crystal::EventLoop.create_resume_event(self)
+  def resume_event : Crystal::EventLoop::Event
+    @resume_event ||= Crystal::Scheduler.event_loop.create_resume_event(self)
   end
 
   # :nodoc:
-  def timeout_event : Crystal::Event
-    @timeout_event ||= Crystal::EventLoop.create_timeout_event(self)
+  def timeout_event : Crystal::EventLoop::Event
+    @timeout_event ||= Crystal::Scheduler.event_loop.create_timeout_event(self)
   end
 
   # :nodoc:

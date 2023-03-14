@@ -22,7 +22,7 @@ module Crystal::System::Socket
     {% end %}
   end
 
-  private def system_connect(addr, timeout = nil)
+  private def system_connect(addr, timeout = nil, &)
     timeout = timeout.seconds unless timeout.is_a? ::Time::Span | Nil
     loop do
       if LibC.connect(fd, addr, addr.size) == 0
@@ -43,13 +43,13 @@ module Crystal::System::Socket
 
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
-  private def system_bind(addr, addrstr)
+  private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog)
+  private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
       yield ::Socket::Error.from_errno("Listen failed")
     end
@@ -126,7 +126,7 @@ module Crystal::System::Socket
     end
 
     if Errno.value == Errno::ENOPROTOOPT
-      return false
+      false
     else
       raise ::Socket::Error.from_errno("getsockopt")
     end
@@ -156,7 +156,7 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval), pointerof(optsize))
     yield optval if ret == 0

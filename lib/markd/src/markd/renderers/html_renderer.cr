@@ -12,7 +12,7 @@ module Markd
       if entering
         newline
         tag(tag_name, attrs(node))
-        # toc(node) if @options.toc
+        toc(node) if @options.toc
       else
         tag(tag_name, end_tag: true)
         newline
@@ -21,31 +21,44 @@ module Markd
 
     def code(node : Node, entering : Bool)
       tag("code") do
-        output(node.text)
+        code_body(node)
       end
+    end
+
+    def code_body(node : Node)
+      output(node.text)
     end
 
     def code_block(node : Node, entering : Bool)
       languages = node.fence_language ? node.fence_language.split : nil
       code_tag_attrs = attrs(node)
-      pre_tag_attrs = if @options.prettyprint
+      pre_tag_attrs = if @options.prettyprint?
                         {"class" => "prettyprint"}
                       else
                         nil
                       end
 
-      if languages && languages.size > 0 && (lang = languages[0]) && !lang.empty?
+      lang = code_block_language(languages)
+      if lang
         code_tag_attrs ||= {} of String => String
-        code_tag_attrs["class"] = "language-#{escape(lang.strip)}"
+        code_tag_attrs["class"] = "language-#{escape(lang)}"
       end
 
       newline
       tag("pre", pre_tag_attrs) do
         tag("code", code_tag_attrs) do
-          output(node.text)
+          code_block_body(node, lang)
         end
       end
       newline
+    end
+
+    def code_block_language(languages)
+      languages.try(&.first?).try(&.strip.presence)
+    end
+
+    def code_block_body(node : Node, lang : String?)
+      output(node.text)
     end
 
     def thematic_break(node : Node, entering : Bool)
@@ -97,7 +110,7 @@ module Markd
         attrs = attrs(node)
         destination = node.data["destination"].as(String)
 
-        unless @options.safe && potentially_unsafe(destination)
+        unless @options.safe? && potentially_unsafe(destination)
           attrs ||= {} of String => String
           destination = resolve_uri(destination, node)
           attrs["href"] = escape(destination)
@@ -128,7 +141,7 @@ module Markd
       if entering
         if @disable_tag == 0
           destination = node.data["destination"].as(String)
-          if @options.safe && potentially_unsafe(destination)
+          if @options.safe? && potentially_unsafe(destination)
             literal(%(<img src="" alt=""))
           else
             destination = resolve_uri(destination, node)
@@ -149,13 +162,13 @@ module Markd
 
     def html_block(node : Node, entering : Bool)
       newline
-      content = @options.safe ? "<!-- raw HTML omitted -->" : node.text
+      content = @options.safe? ? "<!-- raw HTML omitted -->" : node.text
       literal(content)
       newline
     end
 
     def html_inline(node : Node, entering : Bool)
-      content = @options.safe ? "<!-- raw HTML omitted -->" : node.text
+      content = @options.safe? ? "<!-- raw HTML omitted -->" : node.text
       literal(content)
     end
 
@@ -222,14 +235,18 @@ module Markd
     private def toc(node : Node)
       return unless node.type.heading?
 
-      title = URI.encode(node.text)
-
-      @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#) << title %("></a>)
+      {% if Crystal::VERSION < "1.2.0" %}
+        title = URI.encode(node.first_child.text)
+        @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#anchor-) << title << %("></a>)
+      {% else %}
+        title = URI.encode_path(node.first_child.text)
+        @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#anchor-) << title << %("></a>)
+      {% end %}
       @last_output = ">"
     end
 
     private def attrs(node : Node)
-      if @options.source_pos && (pos = node.source_pos)
+      if @options.source_pos? && (pos = node.source_pos)
         {"data-source-pos" => "#{pos[0][0]}:#{pos[0][1]}-#{pos[1][0]}:#{pos[1][1]}"}
       else
         nil

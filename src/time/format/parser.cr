@@ -22,6 +22,7 @@ struct Time::Format
     @calendar_week_week : Int32?
     @calendar_week_year : Int32?
     @day_of_week : Time::DayOfWeek?
+    @day_of_year : Int32?
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -67,7 +68,20 @@ struct Time::Format
         # If all components of a week date are available, they are used to create a Time instance
         time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       else
-        time = Time.local @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+        if day_of_year = @day_of_year
+          raise "Invalid day of year" unless day_of_year.in?(1..Time.days_in_year(@year))
+          days_per_month = Time.leap_year?(@year) ? DAYS_MONTH_LEAP : DAYS_MONTH
+          month = 1
+          day = day_of_year
+          while day > days_per_month[month]
+            day -= days_per_month[month]
+            month += 1
+          end
+        else
+          month = @month
+          day = @day
+        end
+        time = Time.local @year, month, day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       end
 
       time = time.shift 0, @nanosecond_offset
@@ -213,8 +227,7 @@ struct Time::Format
     end
 
     def day_of_year_zero_padded
-      # TODO
-      consume_number(3)
+      @day_of_year = consume_number(3)
     end
 
     def hour_24_zero_padded
@@ -324,7 +337,7 @@ struct Time::Format
     end
 
     def time_zone(with_seconds = false)
-      case char = current_char
+      case current_char
       when 'Z'
         time_zone_z
       when 'U'
@@ -342,7 +355,7 @@ struct Time::Format
     end
 
     def time_zone_z_or_offset(**options)
-      case char = current_char
+      case current_char
       when 'Z', 'z'
         time_zone_z
       when '-', '+'
@@ -446,7 +459,7 @@ struct Time::Format
     end
 
     def time_zone_rfc2822
-      case char = current_char
+      case current_char
       when '-', '+'
         time_zone_offset(allow_colon: false)
       else
@@ -461,7 +474,7 @@ struct Time::Format
     end
 
     def time_zone_name(zone = false)
-      case char = current_char
+      case current_char
       when '-', '+'
         time_zone_offset
       else
@@ -489,6 +502,14 @@ struct Time::Format
     end
 
     def char(char, *alternatives)
+      unless @reader.has_next?
+        if alternatives.empty?
+          raise "Expected #{char.inspect} but the end of the input was reached"
+        else
+          raise "Expected one of #{char.inspect}, #{alternatives.join(", ", &.inspect)} but reached the input end"
+        end
+      end
+
       unless char?(char, *alternatives)
         raise "Unexpected char: #{current_char.inspect}"
       end

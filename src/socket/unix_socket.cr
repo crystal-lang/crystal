@@ -2,6 +2,8 @@
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
+# NOTE: To use `UNIXSocket`, you must explicitly import it with `require "socket"`
+#
 # Example usage:
 # ```
 # require "socket"
@@ -37,7 +39,7 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM)
+  def self.open(path, type : Type = Type::STREAM, &)
     sock = new(path, type)
     begin
       yield sock
@@ -63,25 +65,29 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    fds = uninitialized Int32[2]
+    {% if flag?(:wasm32) %}
+      raise NotImplementedError.new "UNIXSocket.pair"
+    {% else %}
+      fds = uninitialized Int32[2]
 
-    socktype = type.value
-    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      socktype = type.value
+      {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
       socktype |= LibC::SOCK_CLOEXEC
+      {% end %}
+
+      if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
+        raise Socket::Error.new("socketpair:")
+      end
+
+      {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
     {% end %}
-
-    if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
-      raise Socket::Error.new("socketpair:")
-    end
-
-    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
   # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.
-  def self.pair(type : Type = Type::STREAM)
+  def self.pair(type : Type = Type::STREAM, &)
     left, right = pair(type)
     begin
       yield left, right

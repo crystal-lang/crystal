@@ -22,6 +22,18 @@ describe HTTP::StaticFileHandler do
     response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
   end
 
+  it "handles forbidden characters in windows paths" do
+    response = handle HTTP::Request.new("GET", "/foo\\bar.txt"), ignore_body: false
+    response.status_code.should eq 404
+
+    # This file can't be checkout out from git on Windows, thus we need to create it here.
+    File.touch(Path[datapath("static_file_handler"), Path.posix("back\\slash.txt")])
+    response = handle HTTP::Request.new("GET", "/back\\slash.txt"), ignore_body: false
+    response.status_code.should eq 200
+  ensure
+    File.delete(Path[datapath("static_file_handler"), Path.posix("back\\slash.txt")])
+  end
+
   it "adds Etag header" do
     response = handle HTTP::Request.new("GET", "/test.txt")
     response.headers["Etag"].should match(/W\/"\d+"$/)
@@ -262,7 +274,7 @@ describe HTTP::StaticFileHandler do
 
   it "still serve compressed content when modification time is very close" do
     modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
-    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.microsecond
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.millisecond
 
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
     response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false

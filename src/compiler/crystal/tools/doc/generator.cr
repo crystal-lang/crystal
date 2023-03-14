@@ -1,4 +1,5 @@
-require "../../../../../lib/markd/src/markd"
+require "markd"
+require "crystal/syntax_highlighter/html"
 
 class Crystal::Doc::Generator
   getter program : Program
@@ -89,6 +90,8 @@ class Crystal::Doc::Generator
     main_index = Main.new(raw_body, Type.new(self, @program), project_info)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+
+    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info)
   end
 
   def generate_sitemap(types)
@@ -143,7 +146,7 @@ class Crystal::Doc::Generator
     # Don't include lib types or types inside a lib type
     return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
 
-    type.locations.try &.any? do |type_location|
+    !!type.locations.try &.any? do |type_location|
       must_include? type_location
     end
   end
@@ -176,7 +179,7 @@ class Crystal::Doc::Generator
     return false if nodoc? const
     return true if crystal_builtin?(const)
 
-    const.locations.try &.any? { |location| must_include? location }
+    !!const.locations.try &.any? { |location| must_include? location }
   end
 
   def must_include?(location : Crystal::Location)

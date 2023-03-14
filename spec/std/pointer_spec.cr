@@ -211,7 +211,7 @@ describe "Pointer" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.to_slice(3).includes?(i + 1).should be_true
+      a.to_slice(3).should contain(i + 1)
     end
   end
 

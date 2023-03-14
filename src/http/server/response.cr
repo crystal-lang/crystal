@@ -27,11 +27,19 @@ class HTTP::Server
     property output : IO
 
     # :nodoc:
-    setter version : String
+    def version=(version : String)
+      check_headers
+      @version = version
+    end
 
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
-    property status : HTTP::Status
+    getter status : HTTP::Status
+
+    def status=(status : HTTP::Status)
+      check_headers
+      @status = status
+    end
 
     # :nodoc:
     property upgrade_handler : (IO ->)?
@@ -60,11 +68,13 @@ class HTTP::Server
 
     # Convenience method to set the `Content-Type` header.
     def content_type=(content_type : String)
+      check_headers
       headers["Content-Type"] = content_type
     end
 
     # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int)
+      check_headers
       headers["Content-Length"] = content_length.to_s
     end
 
@@ -121,7 +131,18 @@ class HTTP::Server
       @output.closed?
     end
 
-    @status_message : String?
+    # Sets the status message.
+    def status_message=(status_message : String?)
+      check_headers
+      @status_message = status_message
+    end
+
+    # Returns the status message.
+    #
+    # Defaults to description of `#status`.
+    def status_message : String?
+      @status_message || @status.description
+    end
 
     # Sends *status* and *message* as response.
     #
@@ -149,15 +170,37 @@ class HTTP::Server
       respond_with_status(HTTP::Status.new(status), message)
     end
 
+    # Sends a redirect to *location*.
+    #
+    # The value of *location* gets encoded with `URI.encode`.
+    #
+    # The *status* determines the HTTP status code which can be
+    # `HTTP::Status::FOUND` (`302`) for a temporary redirect or
+    # `HTTP::Status::MOVED_PERMANENTLY` (`301`) for a permanent redirect.
+    #
+    # The response gets closed.
+    #
+    # Raises `IO::Error` if the response is closed or headers were already
+    # sent.
+    def redirect(location : String | URI, status : HTTP::Status = :found)
+      check_headers
+
+      self.status = status
+      headers["Location"] = String.build do |io|
+        URI.encode(location.to_s, io) { |byte| URI.reserved?(byte) || URI.unreserved?(byte) }
+      end
+      close
+    end
+
     private def check_headers
-      check_open
+      raise IO::Error.new "Closed stream" if @original_output.closed?
       if wrote_headers?
         raise IO::Error.new("Headers already sent")
       end
     end
 
     protected def write_headers
-      @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
+      @io << @version << ' ' << @status.code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"

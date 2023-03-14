@@ -68,11 +68,11 @@ class Crypto::Blowfish
   end
 
   @[AlwaysInline]
-  private def f(x)
-    d = x & 0xff_u32
-    c = (x >> 8) & 0xff_u32
-    b = (x >> 16) & 0xff_u32
-    a = (x >> 24) & 0xff_u32
+  private def f(x : UInt32)
+    d = x.to_u8!
+    c = (x >> 8).to_u8!
+    b = (x >> 16).to_u8!
+    a = (x >> 24).to_u8!
     ((@s.to_unsafe[a] &+ @s1[b]) ^ @s2[c]) &+ @s3[d]
   end
 

@@ -894,4 +894,44 @@ describe "Codegen: is_a?" do
       x.is_a?(Union(B, C))
     )).to_b.should be_false
   end
+
+  it "restricts union metaclass to metaclass (#12295)" do
+    run(%(
+      x = true ? Union(String | Int32) : String
+      if x.is_a?(String.class)
+        1
+      else
+        2
+      end
+    )).to_i.should eq(2)
+  end
+
+  it "does is_a? for generic type against generic class instance type (#12304)" do
+    run(%(
+      require "prelude"
+
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      a = B(Int32).new.as(A)
+      b = a.as(B)
+
+      b.is_a?(B(Int32))
+    )).to_b.should be_true
+  end
+
+  it "virtual metaclass type is not virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).is_a?(Base | Impl)
+      CRYSTAL
+  end
 end
