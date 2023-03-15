@@ -44,7 +44,7 @@ module HTML
   #
   # The slice is assumed to be valid UTF-8.
   def self.escape(string : Bytes, io : IO) : Nil
-    last_copy_at : Int32 = 0
+    last_copy_at = 0
     string.each_with_index do |byte, index|
       str = case byte
             when '&'  then "&amp;"
