@@ -903,7 +903,7 @@ describe "File" do
   end
 
   describe "fsync" do
-    pending_win32 "syncs OS file buffer to disk" do
+    it "syncs OS file buffer to disk" do
       with_tempfile("fsync.txt") do |path|
         File.open(path, "a") do |f|
           f.puts("333")
