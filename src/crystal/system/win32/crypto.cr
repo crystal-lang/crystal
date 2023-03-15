@@ -27,8 +27,8 @@ module Crystal::System::Crypto
         eku = eku.as(UInt8*).realloc(eku_size).as(LibC::CERT_USAGE*)
         next unless LibC.CertGetEnhancedKeyUsage(cert_context, 0, eku, pointerof(eku_size)) != 0
         next unless (0...eku.value.cUsageIdentifier).any? do |i|
-          LibC.strcmp(eku.value.rgpszUsageIdentifier[i], ServerAuthOID) == 0
-        end
+                      LibC.strcmp(eku.value.rgpszUsageIdentifier[i], ServerAuthOID) == 0
+                    end
       end
 
       encoded = Slice.new(cert_context.value.pbCertEncoded, cert_context.value.cbCertEncoded)
