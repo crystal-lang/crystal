@@ -117,28 +117,6 @@ lib LibLLVMExt
 
   fun set_current_debug_location = LLVMExtSetCurrentDebugLocation(LibLLVM::BuilderRef, Int, Int, LibLLVM::MetadataRef, LibLLVM::MetadataRef)
 
-  fun build_cmpxchg = LLVMExtBuildCmpxchg(builder : LibLLVM::BuilderRef, pointer : LibLLVM::ValueRef, cmp : LibLLVM::ValueRef, new : LibLLVM::ValueRef, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering) : LibLLVM::ValueRef
-  fun set_ordering = LLVMExtSetOrdering(value : LibLLVM::ValueRef, ordering : LLVM::AtomicOrdering)
-
-  fun build_catch_pad = LLVMExtBuildCatchPad(builder : LibLLVM::BuilderRef,
-                                             parent_pad : LibLLVM::ValueRef,
-                                             arg_count : LibC::UInt,
-                                             args : LibLLVM::ValueRef*,
-                                             name : LibC::Char*) : LibLLVM::ValueRef
-
-  fun build_catch_ret = LLVMExtBuildCatchRet(builder : LibLLVM::BuilderRef,
-                                             pad : LibLLVM::ValueRef,
-                                             basic_block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
-
-  fun build_catch_switch = LLVMExtBuildCatchSwitch(builder : LibLLVM::BuilderRef,
-                                                   parent_pad : LibLLVM::ValueRef,
-                                                   basic_block : LibLLVM::BasicBlockRef,
-                                                   num_handlers : LibC::UInt,
-                                                   name : LibC::Char*) : LibLLVM::ValueRef
-
-  fun add_handler = LLVMExtAddHandler(catch_switch_ref : LibLLVM::ValueRef,
-                                      handler : LibLLVM::BasicBlockRef) : Void
-
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef
@@ -156,16 +134,8 @@ lib LibLLVMExt
 
   fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
 
-  fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
   fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder : DIBuilder, lo : UInt64, count : UInt64) : LibLLVM::MetadataRef
 
   fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
   fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
-
-  # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
-  {% if LibLLVM::IS_LT_130 %}
-    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
-  {% else %}
-    fun create_type_attribute = LLVMCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
-  {% end %}
 end

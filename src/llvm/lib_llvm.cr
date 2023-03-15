@@ -84,6 +84,7 @@ lib LibLLVM
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
+  fun add_handler = LLVMAddHandler(catch_switch : ValueRef, dest : BasicBlockRef)
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlagBehavior, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
@@ -96,9 +97,13 @@ lib LibLLVM
   fun build_array_malloc = LLVMBuildArrayMalloc(builder : BuilderRef, type : TypeRef, val : ValueRef, name : UInt8*) : ValueRef
   fun build_ashr = LLVMBuildAShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_atomicrmw = LLVMBuildAtomicRMW(builder : BuilderRef, op : LLVM::AtomicRMWBinOp, ptr : ValueRef, val : ValueRef, ordering : LLVM::AtomicOrdering, singlethread : Int32) : ValueRef
+  fun build_atomic_cmp_xchg = LLVMBuildAtomicCmpXchg(builder : BuilderRef, ptr : ValueRef, cmp : ValueRef, new : ValueRef, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering, single_thread : Int) : ValueRef
   fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
   fun build_call2 = LLVMBuildCall2(builder : BuilderRef, type : TypeRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
+  fun build_catch_pad = LLVMBuildCatchPad(b : BuilderRef, parent_pad : ValueRef, args : ValueRef*, num_args : UInt, name : Char*) : ValueRef
+  fun build_catch_ret = LLVMBuildCatchRet(b : BuilderRef, catch_pad : ValueRef, bb : BasicBlockRef) : ValueRef
+  fun build_catch_switch = LLVMBuildCatchSwitch(b : BuilderRef, parent_pad : ValueRef, unwind_bb : BasicBlockRef, num_handlers : UInt, name : Char*) : ValueRef
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef) : ValueRef
   fun build_exact_sdiv = LLVMBuildExactSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : UInt8*) : ValueRef
@@ -160,6 +165,9 @@ lib LibLLVM
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
+  {% unless LibLLVM::IS_LT_120 %}
+    fun create_type_attribute = LLVMCreateTypeAttribute(ctx : ContextRef, kind_id : UInt, ty : TypeRef) : AttributeRef
+  {% end %}
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
   fun delete_function = LLVMDeleteFunction(fn : ValueRef)
   fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
@@ -170,7 +178,7 @@ lib LibLLVM
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
-  fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
+  fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : BasicBlockRef) : Char*
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
@@ -189,6 +197,7 @@ lib LibLLVM
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
   fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
   fun get_target_from_triple = LLVMGetTargetFromTriple(triple : UInt8*, target : TargetRef*, error_message : UInt8**) : Int32
+  fun normalize_target_triple = LLVMNormalizeTargetTriple(triple : Char*) : Char*
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
@@ -288,6 +297,7 @@ lib LibLLVM
   fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : LLVM::CallConvention)
   fun set_instruction_call_convention = LLVMSetInstructionCallConv(instr : ValueRef, cc : LLVM::CallConvention)
   fun get_instruction_call_convention = LLVMGetInstructionCallConv(instr : ValueRef) : LLVM::CallConvention
+  fun set_ordering = LLVMSetOrdering(memory_access_inst : ValueRef, ordering : LLVM::AtomicOrdering)
   fun get_int_type_width = LLVMGetIntTypeWidth(ty : TypeRef) : UInt32
   fun is_packed_struct = LLVMIsPackedStruct(ty : TypeRef) : Int32
   fun get_struct_name = LLVMGetStructName(ty : TypeRef) : UInt8*
