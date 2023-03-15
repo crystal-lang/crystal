@@ -2,6 +2,10 @@ name: Windows CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   x86_64-linux-job:
     runs-on: ubuntu-latest
