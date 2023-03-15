@@ -213,6 +213,12 @@ describe "Regex::MatchData" do
         matchdata(re, "barfoo")["g1"].should eq("foo")
       end
 
+      it "named groups with same prefix" do
+        md = matchdata(/KEY_(?<key>\w+)\s+(?<keycode>.*)/, "KEY_POWER 116")
+        md["key"].should eq "POWER"
+        md["keycode"].should eq "116"
+      end
+
       it "raises exception when named group doesn't exist" do
         md = matchdata(/foo/, "foo")
         expect_raises(KeyError, "Capture group 'group' does not exist") { md["group"] }

@@ -536,8 +536,8 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # clean ups (don't depend on event loop):
-        ->Crystal::Signal.after_fork,
-        ->Crystal::SignalChildHandler.after_fork,
+        ->Crystal::System::Signal.after_fork,
+        ->Crystal::System::SignalChildHandler.after_fork,
 
         # reinit event loop:
         ->{ Crystal::Scheduler.event_loop.after_fork },
@@ -561,7 +561,7 @@ end
   {% if flag?(:win32) %}
     Crystal::System::Process.start_interrupt_loop
   {% else %}
-    Signal.setup_default_handlers
+    Crystal::System::Signal.setup_default_handlers
   {% end %}
 
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1

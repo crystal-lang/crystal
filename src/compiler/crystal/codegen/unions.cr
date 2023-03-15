@@ -58,48 +58,55 @@ module Crystal
     end
 
     def union_type_and_value_pointer(union_pointer, type : MixedUnionType)
-      {load(union_type_id(union_pointer)), union_value(union_pointer)}
+      struct_type = llvm_type(type)
+      {
+        load(llvm_context.int32, union_type_id(struct_type, union_pointer)),
+        union_value(struct_type, union_pointer),
+      }
     end
 
-    def union_type_id(union_pointer)
-      aggregate_index union_pointer, 0
+    def union_type_id(struct_type, union_pointer)
+      aggregate_index struct_type, union_pointer, 0
     end
 
-    def union_value(union_pointer)
-      aggregate_index union_pointer, 1
+    def union_value(struct_type, union_pointer)
+      aggregate_index struct_type, union_pointer, 1
     end
 
     def store_in_union(union_type, union_pointer, value_type, value)
-      store type_id(value, value_type), union_type_id(union_pointer)
-      casted_value_ptr = cast_to_pointer(union_value(union_pointer), value_type)
+      struct_type = llvm_type(union_type)
+      store type_id(value, value_type), union_type_id(struct_type, union_pointer)
+      casted_value_ptr = cast_to_pointer(union_value(struct_type, union_pointer), value_type)
       store value, casted_value_ptr
     end
 
-    def store_bool_in_union(union_type, union_pointer, value)
-      store type_id(value, @program.bool), union_type_id(union_pointer)
+    def store_bool_in_union(target_type, union_pointer, value)
+      struct_type = llvm_type(target_type)
+      store type_id(value, @program.bool), union_type_id(struct_type, union_pointer)
 
       # To store a boolean in a union
       # we sign-extend it to the size in bits of the union
-      union_value_type = @llvm_typer.union_value_type(union_type)
-      union_size = @llvm_typer.size_of(union_value_type)
+      union_size = @llvm_typer.size_of(struct_type.struct_element_types[1])
       int_type = llvm_context.int((union_size * 8).to_i32)
 
       bool_as_extended_int = builder.zext(value, int_type)
-      casted_value_ptr = bit_cast(union_value(union_pointer), int_type.pointer)
+      casted_value_ptr = pointer_cast(union_value(struct_type, union_pointer), int_type.pointer)
       store bool_as_extended_int, casted_value_ptr
     end
 
-    def store_nil_in_union(union_pointer, target_type)
-      union_value_type = @llvm_typer.union_value_type(target_type)
+    def store_nil_in_union(target_type, union_pointer)
+      struct_type = llvm_type(target_type)
+      union_value_type = struct_type.struct_element_types[1]
       value = union_value_type.null
 
-      store type_id(value, @program.nil), union_type_id(union_pointer)
-      casted_value_ptr = bit_cast union_value(union_pointer), union_value_type.pointer
+      store type_id(value, @program.nil), union_type_id(struct_type, union_pointer)
+      casted_value_ptr = pointer_cast union_value(struct_type, union_pointer), union_value_type.pointer
       store value, casted_value_ptr
     end
 
-    def store_void_in_union(union_pointer, target_type)
-      store type_id(@program.void), union_type_id(union_pointer)
+    def store_void_in_union(target_type, union_pointer)
+      struct_type = llvm_type(target_type)
+      store type_id(@program.void), union_type_id(struct_type, union_pointer)
     end
 
     def assign_distinct_union_types(target_pointer, target_type, value_type, value)
@@ -114,7 +121,7 @@ module Crystal
       # - cast the target pointer to Pointer(A | B)
       # - store the A | B from the first pointer into the casted target pointer
       casted_target_pointer = cast_to_pointer target_pointer, value_type
-      store load(value), casted_target_pointer
+      store load(llvm_type(value_type), value), casted_target_pointer
     end
 
     def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)

@@ -37,6 +37,10 @@ class Process
   end
 
   # Returns the process identifier of the parent process of the current process.
+  #
+  # On Windows, the parent is associated only at process creation time, and the
+  # system does not re-parent the current process if the parent terminates; thus
+  # `Process.exists?(Process.ppid)` is not guaranteed to be true.
   def self.ppid : Int64
     Crystal::System::Process.ppid.to_i64
   end
@@ -305,6 +309,10 @@ class Process
   end
 
   # Sends *signal* to this process.
+  #
+  # NOTE: `#terminate` is preferred over `signal(Signal::TERM)` and
+  # `signal(Signal::KILL)` as a portable alternative which also works on
+  # Windows.
   def signal(signal : Signal) : Nil
     Crystal::System::Process.signal(@process_info.pid, signal)
   end
