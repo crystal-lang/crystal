@@ -358,12 +358,16 @@ describe Process do
 
   typeof(Process.new(*standing_command).terminate(graceful: false))
 
-  pending_win32 ".exists?" do
-    # We can't reliably check whether it ever returns false, since we can't predict
-    # how PIDs are used by the system, a new process might be spawned in between
-    # reaping the one we would spawn and checking for it, using the now available
-    # pid.
-    Process.exists?(Process.ppid).should be_true
+  it ".exists?" do
+    # On Windows killing a parent process does not reparent its children to
+    # another existing process, so the following isn't guaranteed to work
+    {% unless flag?(:win32) %}
+      # We can't reliably check whether it ever returns false, since we can't predict
+      # how PIDs are used by the system, a new process might be spawned in between
+      # reaping the one we would spawn and checking for it, using the now available
+      # pid.
+      Process.exists?(Process.ppid).should be_true
+    {% end %}
 
     process = Process.new(*standing_command)
     process.exists?.should be_true
@@ -371,8 +375,14 @@ describe Process do
 
     # Kill, zombie now
     process.terminate
-    process.exists?.should be_true
-    process.terminated?.should be_false
+    {% if flag?(:win32) %}
+      # Windows has no concept of zombie processes
+      process.exists?.should be_false
+      process.terminated?.should be_true
+    {% else %}
+      process.exists?.should be_true
+      process.terminated?.should be_false
+    {% end %}
 
     # Reap, gone now
     process.wait
