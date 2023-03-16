@@ -247,8 +247,10 @@ module Crystal::System::File
     end
   end
 
+  private REALPATH_SYMLINK_LIMIT = 100
+
   def self.realpath(path : String) : String
-    # TODO: read links using https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
+    REALPATH_SYMLINK_LIMIT.times do
     win_path = System.to_wstr(path)
 
     realpath = System.retry_wstr_buffer do |buffer, small_buf|
@@ -262,11 +264,17 @@ module Crystal::System::File
       end
     end
 
-    unless exists? realpath
+      if symlink_info = symlink_info?(realpath)
+        new_path, is_relative = symlink_info
+        path = is_relative ? ::File.expand_path(new_path, ::File.dirname(realpath)) : new_path
+        next
+      end
+
+      return realpath if exists?(realpath)
       raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
     end
 
-    realpath
+    raise ::File::Error.new("Too many symbolic links", file: path)
   end
 
   def self.link(old_path : String, new_path : String) : Nil

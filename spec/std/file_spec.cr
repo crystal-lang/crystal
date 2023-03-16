@@ -603,14 +603,26 @@ describe "File" do
       end
     end
 
-    # TODO: see Crystal::System::File.realpath TODO
-    pending_win32 "expands paths of symlinks" do
+    it "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
         File.symlink(file_path, symlink_path)
         real_symlink_path = File.realpath(symlink_path)
         real_file_path = File.realpath(file_path)
         real_symlink_path.should eq(real_file_path)
+      end
+    end
+
+    it "expands multiple layers of symlinks" do
+      file_path = File.expand_path(datapath("test_file.txt"))
+      with_tempfile("symlink1.txt") do |symlink_path1|
+        with_tempfile("symlink2.txt") do |symlink_path2|
+          File.symlink(file_path, symlink_path1)
+          File.symlink(symlink_path1, symlink_path2)
+          real_symlink_path = File.realpath(symlink_path2)
+          real_file_path = File.realpath(file_path)
+          real_symlink_path.should eq(real_file_path)
+        end
       end
     end
   end
