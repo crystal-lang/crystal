@@ -387,8 +387,11 @@ describe "Dir" do
             File.join(path, "glob", "dir", "a.txt"),
           ]
         ensure
-          File.delete(non_link)
-          Dir.delete(link_dir)
+          # FIXME: `with_tempfile` will delete this symlink directory using
+          # `File.delete` otherwise, see #13194
+          {% if flag?(:win32) %}
+            Dir.delete(link_dir)
+          {% end %}
         end
       end
     end
