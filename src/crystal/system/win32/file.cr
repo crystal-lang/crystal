@@ -115,8 +115,6 @@ module Crystal::System::File
     WinError::ERROR_INVALID_NAME,
   }
 
-  REPARSE_TAG_NAME_SURROGATE_MASK = 1 << 29
-
   private def self.check_not_found_error(message, path)
     error = WinError.value
     if NOT_FOUND_ERRORS.includes? error
@@ -148,7 +146,7 @@ module Crystal::System::File
           raise RuntimeError.from_winerror("FindClose")
         end
 
-        if find_data.dwReserved0.bits_set? REPARSE_TAG_NAME_SURROGATE_MASK
+        if find_data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
           return ::File::Info.new(find_data)
         end
       end
@@ -251,18 +249,18 @@ module Crystal::System::File
 
   def self.realpath(path : String) : String
     REALPATH_SYMLINK_LIMIT.times do
-    win_path = System.to_wstr(path)
+      win_path = System.to_wstr(path)
 
-    realpath = System.retry_wstr_buffer do |buffer, small_buf|
-      len = LibC.GetFullPathNameW(win_path, buffer.size, buffer, nil)
-      if 0 < len < buffer.size
-        break String.from_utf16(buffer[0, len])
-      elsif small_buf && len > 0
-        next len
-      else
-        raise ::File::Error.from_winerror("Error resolving real path", file: path)
+      realpath = System.retry_wstr_buffer do |buffer, small_buf|
+        len = LibC.GetFullPathNameW(win_path, buffer.size, buffer, nil)
+        if 0 < len < buffer.size
+          break String.from_utf16(buffer[0, len])
+        elsif small_buf && len > 0
+          next len
+        else
+          raise ::File::Error.from_winerror("Error resolving real path", file: path)
+        end
       end
-    end
 
       if symlink_info = symlink_info?(realpath)
         new_path, is_relative = symlink_info

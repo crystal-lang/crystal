@@ -234,10 +234,14 @@ describe "File" do
   end
 
   describe "symlink?" do
-    # TODO: this fails depending on how Git checks out the repository
-    pending_win32 "gives true" do
-      File.symlink?(datapath("symlink.txt")).should be_true
-    end
+    # this fails depending on how Git checks out the repository, we only check
+    # in the test above that `symlink?` returns true for something created with
+    # Crystal's `File.symlink`
+    {% unless flag?(:win32) %}
+      it "gives true" do
+        File.symlink?(datapath("symlink.txt")).should be_true
+      end
+    {% end %}
 
     it "gives false" do
       File.symlink?(datapath("test_file.txt")).should be_false
@@ -431,10 +435,15 @@ describe "File" do
       info.type.should eq(File::Type::CharacterDevice)
     end
 
-    # TODO: this fails depending on how Git checks out the repository
-    pending_win32 "gets for a symlink" do
-      info = File.info(datapath("symlink.txt"), follow_symlinks: false)
-      info.type.should eq(File::Type::Symlink)
+    it "gets for a symlink" do
+      file_path = File.expand_path(datapath("test_file.txt"))
+      with_tempfile("symlink.txt") do |symlink_path|
+        File.symlink(file_path, symlink_path)
+        info = File.info(symlink_path, follow_symlinks: false)
+        info.type.should eq(File::Type::Symlink)
+        info = File.info(symlink_path, follow_symlinks: true)
+        info.type.should_not eq(File::Type::Symlink)
+      end
     end
 
     it "gets for open file" do
