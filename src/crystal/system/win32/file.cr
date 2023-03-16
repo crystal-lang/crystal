@@ -26,11 +26,85 @@ module Crystal::System::File
   end
 
   def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    flags |= LibC::O_BINARY | LibC::O_NOINHERIT
+    access, disposition, attributes = self.posix_to_open_opts flags, perm
 
-    fd = LibC._wopen(System.to_wstr(filename), flags, perm)
+    handle = LibC.CreateFileW(
+      System.to_wstr(filename),
+      access,
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
 
-    {fd, fd == -1 ? Errno.value : Errno::NONE}
+    if handle == LibC::INVALID_HANDLE_VALUE
+      # Map ERROR_FILE_EXISTS to Errno::EEXIST to avoid changing semantics of other systems
+      return {-1, WinError.value.error_file_exists? ? Errno::EEXIST : Errno.value}
+    end
+
+    fd = LibC._open_osfhandle handle, flags
+
+    if fd == -1
+      return {-1, Errno.value}
+    end
+
+    # Only binary mode is supported
+    LibC._setmode fd, LibC::O_BINARY
+
+    {fd, Errno::NONE}
+  end
+
+  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
+    access = if flags.bits_set? LibC::O_WRONLY
+               LibC::GENERIC_WRITE
+             elsif flags.bits_set? LibC::O_RDWR
+               LibC::GENERIC_READ | LibC::GENERIC_WRITE
+             else
+               LibC::GENERIC_READ
+             end
+
+    if flags.bits_set? LibC::O_APPEND
+      access |= LibC::FILE_APPEND_DATA
+    end
+
+    if flags.bits_set? LibC::O_TRUNC
+      if flags.bits_set? LibC::O_CREAT
+        disposition = LibC::CREATE_ALWAYS
+      else
+        disposition = LibC::TRUNCATE_EXISTING
+      end
+    elsif flags.bits_set? LibC::O_CREAT
+      if flags.bits_set? LibC::O_EXCL
+        disposition = LibC::CREATE_NEW
+      else
+        disposition = LibC::OPEN_ALWAYS
+      end
+    else
+      disposition = LibC::OPEN_EXISTING
+    end
+
+    attributes = LibC::FILE_ATTRIBUTE_NORMAL
+    unless perm.owner_write?
+      attributes |= LibC::FILE_ATTRIBUTE_READONLY
+    end
+
+    if flags.bits_set? LibC::O_TEMPORARY
+      attributes |= LibC::FILE_FLAG_DELETE_ON_CLOSE | LibC::FILE_ATTRIBUTE_TEMPORARY
+      access |= LibC::DELETE
+    end
+
+    if flags.bits_set? LibC::O_SHORT_LIVED
+      attributes |= LibC::FILE_ATTRIBUTE_TEMPORARY
+    end
+
+    if flags.bits_set? LibC::O_SEQUENTIAL
+      attributes |= LibC::FILE_FLAG_SEQUENTIAL_SCAN
+    elsif flags.bits_set? LibC::O_RANDOM
+      attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
+    end
+
+    {access, disposition, attributes}
   end
 
   NOT_FOUND_ERRORS = {
