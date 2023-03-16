@@ -5,6 +5,8 @@ require "c/sys/utime"
 require "c/sys/stat"
 require "c/winbase"
 require "c/handleapi"
+require "c/ntifs"
+require "c/winioctl"
 
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
@@ -297,8 +299,68 @@ module Crystal::System::File
     end
   end
 
+  private def self.symlink_info?(path)
+    handle = LibC.CreateFileW(
+      System.to_wstr(path),
+      LibC::FILE_READ_ATTRIBUTES,
+      LibC::DEFAULT_SHARE_MODE,
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS | LibC::FILE_FLAG_OPEN_REPARSE_POINT,
+      LibC::HANDLE.null
+    )
+
+    return nil if handle == LibC::INVALID_HANDLE_VALUE
+
+    begin
+      size = 0x40
+      buf = Pointer(UInt8).malloc(size)
+
+      while true
+        if LibC.DeviceIoControl(handle, LibC::FSCTL_GET_REPARSE_POINT, nil, 0, buf, size, out _, nil) != 0
+          reparse_data = buf.as(LibC::REPARSE_DATA_BUFFER*)
+          if reparse_data.value.reparseTag == LibC::IO_REPARSE_TAG_SYMLINK
+            symlink_data = reparse_data.value.dummyUnionName.symbolicLinkReparseBuffer
+            path_buffer = reparse_data.value.dummyUnionName.symbolicLinkReparseBuffer.pathBuffer.to_unsafe.as(UInt8*)
+            is_relative = symlink_data.flags.bits_set?(LibC::SYMLINK_FLAG_RELATIVE)
+
+            # the print name is not necessarily set; fall back to substitute
+            # name if unavailable
+            if (name_len = symlink_data.printNameLength) > 0
+              name_ptr = path_buffer + symlink_data.printNameOffset
+              name = String.from_utf16(Slice.new(name_ptr, name_len).unsafe_slice_of(UInt16))
+              return {name, is_relative}
+            end
+
+            name_len = symlink_data.substituteNameLength
+            name_ptr = path_buffer + symlink_data.substituteNameOffset
+            name = String.from_utf16(Slice.new(name_ptr, name_len).unsafe_slice_of(UInt16))
+            # remove the internal prefix for NT paths which shows up when  e.g.
+            # creating a symbolic link with an absolute source
+            # TODO: support the other possible paths, for example see
+            # https://github.com/golang/go/blob/ab28b834c4a38bd2295ee43eca4f9e38c28d54a2/src/os/file_windows.go#L362
+            if name.starts_with?(%q(\??\)) && name[5]? == ':'
+              name = name[4..]
+            end
+            return {name, is_relative}
+          else
+            raise ::File::Error.new("Not a symlink", file: path)
+          end
+        end
+
+        return nil if WinError.value != WinError::ERROR_MORE_DATA || size == LibC::MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+        size *= 2
+        buf = buf.realloc(size)
+      end
+    ensure
+      LibC.CloseHandle(handle)
+    end
+  end
+
   def self.readlink(path) : String
-    raise NotImplementedError.new("readlink")
+    info = symlink_info?(path) || raise ::File::Error.new("Cannot read link", file: path)
+    path, _is_relative = info
+    path
   end
 
   def self.rename(old_path : String, new_path : String) : ::File::Error?
