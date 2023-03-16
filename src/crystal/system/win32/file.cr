@@ -210,6 +210,10 @@ module Crystal::System::File
   def self.chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
     mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
 
+    unless exists?(path)
+      raise ::File::Error.from_os_error("Error changing permissions", Errno::ENOENT, file: path)
+    end
+
     path = realpath(path)
 
     attributes = LibC.GetFileAttributesW(System.to_wstr(path))
