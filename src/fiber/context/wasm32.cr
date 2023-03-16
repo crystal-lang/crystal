@@ -1,5 +1,7 @@
 {% skip_file unless flag?(:wasm32) %}
 
+require "crystal/asyncify"
+
 # WebAssembly as built by LLVM has 3 stacks:
 # - A value stack for low level operations. Wasm is a stack machine. For example: to write data to
 #   memory you first push the target address, then the value, then perform the 'store' instruction.
@@ -18,7 +20,7 @@
 # Please read more details at https://github.com/WebAssembly/binaryen/blob/main/src/passes/Asyncify.cpp.
 #
 # Stack switching is accomplished by the cooperation between two functions: Fiber.swapcontext and
-# Fiber.wrap_with_fibers. Before they are explained, the memory layout must be understood:
+# Crystal::Asyncify.wrap_main. Before they are explained, the memory layout must be understood:
 #
 # +--------+--------+------------------+----------------
 # | Unused | Data   | Main stack       | Heap ...
@@ -35,7 +37,7 @@
 # After that, the rest of the memory follows, used mainly by malloc. It is important to note that
 # during execution everything is just memory, there is no real difference between those sections.
 #
-# For our implementation of stack switching we manage this memory layout on every stack:
+# For our implementation of stack switching, this is the memory layout on every fiber stack:
 #
 # +--------+---------------------------+------------------------+
 # | Header | Asyncify buffer =>        |               <= Stack |
@@ -43,64 +45,29 @@
 #
 # The header stores 4 pointers as metadata:
 #  - [0] => A function pointer to fiber_main
-#  - [1] => A pointer to the Fiber instance
+#  - [1] => A the closure data of fiber_main
 #  - [2] => The current position on the asyncify buffer (starts after the header, grows up)
 #  - [4] => The end position on the asyncify buffer (the current stack top)
 # On the main stack all of them are guaranteed to start null.
 #
-# Stack switching should happens as follows:
+# Stack switching happens as follows:
 #
-# 1. CrystalMain should call Fiber.wrap_with_fibers, passing a proc to the main function.
-# 2. Fiber.wrap_with_fibers will call this proc immediately.
-# 3. At some point a new Fiber will be created and Fiber.swapcontext will be called. It will:
-#    a. store the new context at Fiber.@@next_context.
-#    b. store the current stack_pointer global on context.stack_top.
-#    c. update the current position of the asyncify buffer to be just after the header
-#    d. update the end position  of the asyncify buffer to be the current stack top
-#    e. mark Fiber.manipulating_stack_with_asyncify = true
-#    f. begin stack unwinding with LibAsyncify.start_unwind() and returns.
+# 1. CrystalMain calls Crystal::Asyncify.wrap_main, passing a proc to the main function. This
+#    proc is invoked immediately.
+# 2. At some point a new Fiber will be created and Fiber.swapcontext will be called. It will:
+#    a. store the current value of `__stack_pointer`.
+#    b. update the `__stack_pointer` global to the stack_top of the target context.
+#    c. update the asyncify buffer to be the region of memory between the header and the stack_top.
+#    d. trigger a stack unwinding, targeting the entrypoint and the asyncify buffer of the target
+#       fiber, if any.
 # 4. As a consequence of the Asyncify transformation, all functions behave differently and instead
 #    of executing, they will write their local stack to the Asyncify buffer and return.
-# 5. At some point execution will arrive at Fiber.wrap_with_fibers again. We know that we are
-#    unwinding as Fiber.manipulating_stack_with_asyncify? is marked. This means we have to either
-#    start a new fiber or rewind into a previously running fiber. If there is a asyncify buffer, then
-#    setup the rewinding process. Then call into the fiber main function. If it's null, then this is
-#    the main fiber, just call the original block.
+# 5. At some point execution will arrive at Crystal::Asyncify.wrap_main again. We stop the unwind
+#    process. If there is a target asyncify buffer, setup the rewinding process. Then call into the
+#    fiber main function, resuming or starting it.
 
 lib LibC
   $__data_end : UInt8
-end
-
-@[Link(wasm_import_module: "asyncify")]
-lib LibAsyncify
-  struct Data
-    current_location : Void*
-    end_location : Void*
-  end
-
-  fun start_unwind(data : Data*)
-  fun stop_unwind
-  fun start_rewind(data : Data*)
-  fun stop_rewind
-end
-
-private def get_stack_pointer
-  stack_pointer = uninitialized Void*
-  asm("
-    .globaltype __stack_pointer, i32
-    global.get __stack_pointer
-    local.set $0
-  " : "=r"(stack_pointer))
-
-  stack_pointer
-end
-
-private def set_stack_pointer(stack_pointer)
-  asm("
-    .globaltype __stack_pointer, i32
-    local.get $0
-    global.set __stack_pointer
-  " :: "r"(stack_pointer))
 end
 
 private def get_main_stack_low
@@ -108,14 +75,26 @@ private def get_main_stack_low
 end
 
 class Fiber
-  # :nodoc:
-  class_property next_context : Context*?
-
-  # :nodoc:
-  class_property? manipulating_stack_with_asyncify = false
-
   struct Context
     property stack_low : Void* = get_main_stack_low
+
+    private def ctx_data_ptr
+      @stack_low.as(Void**)
+    end
+
+    def asyncify_data_ptr
+      (ctx_data_ptr + 2).as(LibAsyncify::Data*)
+    end
+
+    def fiber_main
+      return nil if ctx_data_ptr[0].null?
+      Proc(Void).new(ctx_data_ptr[0], ctx_data_ptr[1])
+    end
+
+    def fiber_main=(value : ->)
+      ctx_data_ptr[0] = value.pointer
+      ctx_data_ptr[1] = value.closure_data
+    end
   end
 
   # :nodoc:
@@ -123,67 +102,34 @@ class Fiber
     @context.stack_top = stack_ptr.as(Void*)
     @context.stack_low = (stack_ptr.as(UInt8*) - StackPool::STACK_SIZE + 32).as(Void*)
     @context.resumable = 1
-
-    ctx_data_ptr = @context.stack_low.as(Void**)
-    ctx_data_ptr[0] = fiber_main.pointer
-    ctx_data_ptr[1] = self.as(Void*)
-    ctx_data_ptr[2] = Pointer(Void).null
-    ctx_data_ptr[3] = Pointer(Void).null
+    func = ->{
+      fiber_main.call(self)
+      Intrinsics.debugtrap # A fiber function shall never return
+    }
+    @context.fiber_main = func
+    asyncify_data_ptr = @context.asyncify_data_ptr
+    asyncify_data_ptr.value.current_location = Pointer(Void).null
+    asyncify_data_ptr.value.end_location = Pointer(Void).null
   end
 
   # :nodoc:
   @[NoInline]
-  def self.swapcontext(current_context, new_context) : Nil
-    if Fiber.manipulating_stack_with_asyncify?
-      Fiber.manipulating_stack_with_asyncify = false
-      LibAsyncify.stop_rewind
-      return
-    end
+  def self.swapcontext(current_context, next_context) : Nil
+    current_context.value.stack_top = Crystal::Asyncify.stack_pointer
+    Crystal::Asyncify.stack_pointer = next_context.value.stack_top
 
-    new_context.value.resumable = 0
     current_context.value.resumable = 1
-    Fiber.next_context = new_context
+    current_asyncify_data_ptr = current_context.value.asyncify_data_ptr
+    current_asyncify_data_ptr.value.current_location = (current_context.value.stack_low.as(Void**) + 4).as(Void*)
+    current_asyncify_data_ptr.value.end_location = current_context.value.stack_top
 
-    current_context.value.stack_top = get_stack_pointer
+    next_context.value.resumable = 0
+    next_asyncify_data_ptr = next_context.value.asyncify_data_ptr
 
-    ctx_data_ptr = current_context.value.stack_low.as(Void**)
-    ctx_data_ptr[2] = (ctx_data_ptr + 4).as(Void*)
-    ctx_data_ptr[3] = current_context.value.stack_top
-
-    asyncify_data_ptr = (ctx_data_ptr + 2).as(LibAsyncify::Data*)
-    Fiber.manipulating_stack_with_asyncify = true
-    LibAsyncify.start_unwind(asyncify_data_ptr)
-  end
-
-  # :nodoc:
-  @[NoInline]
-  def self.wrap_with_fibers(&block : -> T) : T forall T
-    result = block.call
-
-    while Fiber.manipulating_stack_with_asyncify?
-      Fiber.manipulating_stack_with_asyncify = false
-      LibAsyncify.stop_unwind
-
-      next_context = Fiber.next_context.not_nil!
-      ctx_data_ptr = next_context.value.stack_low.as(Void**)
-
-      set_stack_pointer next_context.value.stack_top
-
-      asyncify_data_ptr = (ctx_data_ptr + 2).as(LibAsyncify::Data*)
-      unless asyncify_data_ptr.value.current_location.null?
-        Fiber.manipulating_stack_with_asyncify = true
-        LibAsyncify.start_rewind(asyncify_data_ptr)
-      end
-
-      if ctx_data_ptr[0].null?
-        result = block.call
-      else
-        fiber_main = Proc(Fiber, Void).new(ctx_data_ptr[0], Pointer(Void).null)
-        fiber = ctx_data_ptr[1].as(Fiber)
-        fiber_main.call(fiber)
-      end
-    end
-
-    result
+    Crystal::Asyncify.unwind(
+      unwind_data: current_asyncify_data_ptr,
+      rewind_data: next_asyncify_data_ptr.value.current_location.null? ? nil : next_asyncify_data_ptr,
+      rewind_func: next_context.value.fiber_main || Crystal::Asyncify.main_func
+    )
   end
 end

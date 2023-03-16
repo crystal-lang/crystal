@@ -1,4 +1,5 @@
 require "./lib_wasi"
+require "crystal/asyncify"
 
 # This file serve as the entrypoint for WebAssembly applications compliant to the WASI spec.
 # See https://github.com/WebAssembly/WASI/blob/snapshot-01/design/application-abi.md.
@@ -29,7 +30,9 @@ end
 
 # `__main_argc_argv` is called by wasi-libc's `__main_void` with the program arguments.
 fun __main_argc_argv(argc : Int32, argv : UInt8**) : Int32
-  Fiber.wrap_with_fibers do
-    main(argc, argv)
+  ret = 0
+  Crystal::Asyncify.wrap_main do
+    ret = main(argc, argv)
   end
+  ret
 end

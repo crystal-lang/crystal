@@ -17,16 +17,12 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v3
 
-      - name: Install wasmtime
-        uses: mwilliamson/setup-wasmtime-action@v2
-        with:
-          wasmtime-version: "6.0.1"
-
       - name: Install Binaryen
         run: |
           apt-get update
           apt-get install -y curl
           curl -LO https://github.com/WebAssembly/binaryen/releases/download/version_112/binaryen-version_112-x86_64-linux.tar.gz
+          echo "25a94f8129a532b4d84b6fa305ae630bcbd379d56416c895b3daa48d5fb2523e  binaryen-version_112-x86_64-linux.tar.gz" | sha256sum -c -
           tar -xf binaryen-version_112-x86_64-linux.tar.gz
           mv binaryen-version_112/bin/wasm-opt /usr/bin/
 
@@ -39,7 +35,7 @@ jobs:
           ./llvm.sh 13
           ln -s $(which wasm-ld-13) /usr/bin/wasm-ld
 
-      - name: Download wasm32 libs
+      - name: Download wasm32-wasi libs
         run: |
           mkdir wasm32-wasi-libs
           curl -LO https://github.com/lbguilherme/wasm-libs/releases/download/0.0.3/wasm32-wasi-libs.tar.gz
@@ -55,6 +51,11 @@ jobs:
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
+      - name: Install Wasmer
+        uses: wasmerio/setup-wasmer@v1
+        with:
+          version: "3.1.1"
+
       - name: Run wasm32_std_spec.wasm
         run: |
-          wasmtime run wasm32_std_spec.wasm
+          wasmer run --singlepass --enable-all wasm32_std_spec.wasm

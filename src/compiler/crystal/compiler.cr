@@ -386,14 +386,17 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " --compress-relocations --strip-all" if @debug.none?
 
-        opt_flags = "--asyncify --all-features"
-        opt_flags += " -Os" if @release
+        opt_flags = " --all-features"
         opt_flags += " -g" unless @debug.none?
+
         output = Process.quote_posix(output_filename)
+
         [
           {"wasm-ld", %(wasm-ld "${@}" -o #{output} #{link_flags} -lc #{program.lib_flags}), object_names},
-          {"wasm-opt", %(wasm-opt #{output} -o #{output} #{opt_flags}), nil},
-        ]
+          {"wasm-opt", %(wasm-opt #{output} -o #{output} --asyncify #{opt_flags}), nil},
+        ].tap do |cmds|
+          cmds << {"wasm-opt", %(wasm-opt #{output} -o #{output} -Oz #{opt_flags}), nil} if @release
+        end
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
