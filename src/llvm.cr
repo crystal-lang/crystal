@@ -108,7 +108,7 @@ module LLVM
   end
 
   def self.normalize_triple(triple : String) : String
-    normalized = LibLLVMExt.normalize_target_triple(triple)
+    normalized = LibLLVM.normalize_target_triple(triple)
     normalized = LLVM.string_and_dispose(normalized)
 
     normalized

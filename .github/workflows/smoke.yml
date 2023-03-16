@@ -30,6 +30,10 @@ name: Smoke tests
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   TRAVIS_OS_NAME: linux
   ARCH: x86_64

@@ -24,11 +24,16 @@ struct LLVM::Function
 
     context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
     attribute.each_kind do |kind|
-      if type && LLVM::Attribute.requires_type?(kind)
-        attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
-      else
-        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
-      end
+      LibLLVM.add_attribute_at_index(self, index, attribute_ref(context, kind, type))
+    end
+  end
+
+  def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex, *, value)
+    return if attribute.value == 0
+
+    context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
+    attribute.each_kind do |kind|
+      attribute_ref = LibLLVM.create_enum_attribute(context, kind, value.to_u64)
       LibLLVM.add_attribute_at_index(self, index, attribute_ref)
     end
   end
@@ -47,16 +52,19 @@ struct LLVM::Function
     attrs
   end
 
+  @[Deprecated]
   def function_type
     Type.new LibLLVM.get_element_type(LibLLVM.type_of(self))
   end
 
+  @[Deprecated]
   def return_type
-    function_type.return_type
+    Type.new(LibLLVM.get_element_type(LibLLVM.type_of(self))).return_type
   end
 
+  @[Deprecated]
   def varargs?
-    function_type.varargs?
+    Type.new(LibLLVM.get_element_type(LibLLVM.type_of(self))).varargs?
   end
 
   def params
