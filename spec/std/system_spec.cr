@@ -3,7 +3,7 @@ require "system"
 
 describe System do
   describe "hostname" do
-    pending_win32 "returns current hostname" do
+    it "returns current hostname" do
       shell_hostname = `hostname`.strip
       pending! "`hostname` command was unsuccessful" unless $?.success?
 

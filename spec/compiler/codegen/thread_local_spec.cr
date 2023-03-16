@@ -3,7 +3,7 @@
 require "../../spec_helper"
 
 describe "Codegen: thread local" do
-  pending_win32 "works with class variables" do
+  it "works with class variables" do
     run(%(
     require "prelude"
 
