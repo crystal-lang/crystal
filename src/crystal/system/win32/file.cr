@@ -210,7 +210,7 @@ module Crystal::System::File
   def self.chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
     mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
 
-    # TODO: dereference symlinks
+    path = realpath(path)
 
     attributes = LibC.GetFileAttributesW(System.to_wstr(path))
     if attributes == LibC::INVALID_FILE_ATTRIBUTES
