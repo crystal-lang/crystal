@@ -1,5 +1,8 @@
 require "uri/punycode"
 require "log"
+{% if flag?(:win32) %}
+  require "crystal/system/win32/crypto"
+{% end %}
 
 # An `SSL::Context` represents a generic secure socket protocol configuration.
 #
@@ -223,6 +226,12 @@ abstract class OpenSSL::SSL::Context
     {% end %}
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+
+    # OpenSSL does not support reading from the system root certificate store on
+    # Windows, so we have to import them ourselves
+    {% if flag?(:win32) %}
+      Crystal::System::Crypto.populate_system_root_certificates(self)
+    {% end %}
   end
 
   # Overriding initialize or new in the child classes as public methods,
@@ -233,6 +242,12 @@ abstract class OpenSSL::SSL::Context
   protected def _initialize_insecure(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+
+    # since an insecure context on non-Windows systems still has access to the
+    # system certificates, we do the same for Windows
+    {% if flag?(:win32) %}
+      Crystal::System::Crypto.populate_system_root_certificates(self)
+    {% end %}
   end
 
   protected def self.insecure(method : LibSSL::SSLMethod)
