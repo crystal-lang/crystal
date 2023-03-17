@@ -17,7 +17,10 @@ class Dir
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # If *match_hidden* is `true` the pattern will match hidden files and folders.
+  # If *match_hidden* is `true` the pattern will match hidden files and
+  # directories. The default value is `false` and those hidden files are not
+  # returned. A file is considered to be hidden if its base name starts with a
+  # period (`.`) or if any platform-specific hidden file attribute is set.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false) : Array(String)
@@ -37,7 +40,10 @@ class Dir
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # If *match_hidden* is `true` the pattern will match hidden files and folders.
+  # If *match_hidden* is `true` the pattern will match hidden files and
+  # directories. The default value is `false` and those hidden files are not
+  # returned. A file is considered to be hidden if its base name starts with a
+  # period (`.`) or if any platform-specific hidden file attribute is set.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false, &block : String -> _)
@@ -195,7 +201,7 @@ class Dir
         in EntryMatch
           next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
-            next if !match_hidden && entry.name.starts_with?('.')
+            next if hidden_file?(entry, match_hidden)
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
         in DirectoryMatch
@@ -255,7 +261,7 @@ class Dir
 
             if entry = read_entry(dir)
               next if entry.name.in?(".", "..")
-              next if !match_hidden && entry.name.starts_with?('.')
+              next if hidden_file?(entry, match_hidden)
 
               if dir_path.bytesize == 0
                 fullpath = entry.name
@@ -339,6 +345,11 @@ class Dir
       # whether something is a directory or not, avoiding having to
       # call File.info? which is really expensive.
       Crystal::System::Dir.next_entry(dir.@dir, dir.path)
+    end
+
+    private def self.hidden_file?(entry, match_hidden)
+      return false if match_hidden
+      entry.name.starts_with?('.') || entry.hidden?
     end
   end
 end

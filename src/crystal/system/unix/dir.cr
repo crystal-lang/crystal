@@ -19,7 +19,9 @@ module Crystal::System::Dir
             when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
             else                                     false
             end
-      Entry.new(name, dir)
+
+      # TODO: support hidden files on macOS / HFS+: https://stackoverflow.com/a/15236292
+      Entry.new(name, dir, false)
     elsif Errno.value != Errno::NONE
       raise ::File::Error.from_errno("Error reading directory entries", file: path)
     else

@@ -54,7 +54,8 @@ module Crystal::System::Dir
   def self.data_to_entry(data)
     name = String.from_utf16(data.cFileName.to_unsafe)[0]
     dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
-    Entry.new(name, dir)
+    hidden = data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_HIDDEN)
+    Entry.new(name, dir, hidden)
   end
 
   def self.rewind(dir : DirHandle) : Nil

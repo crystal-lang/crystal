@@ -25,6 +25,14 @@ private def unset_tempdir(&)
   {% end %}
 end
 
+{% if flag?(:win32) %}
+  private def make_hidden(path)
+    wstr = Crystal::System.to_wstr(path)
+    attributes = LibC.GetFileAttributesW(wstr)
+    LibC.SetFileAttributesW(wstr, attributes | LibC::FILE_ATTRIBUTE_HIDDEN)
+  end
+{% end %}
+
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
     expect_raises(ArgumentError, "String contains null byte") do
@@ -433,6 +441,32 @@ describe "Dir" do
           datapath("dir", "dots", ".hidden", "f1.txt"),
         ].sort
       end
+
+      {% if flag?(:win32) %}
+        it "matches files with the hidden file attribute" do
+          with_tempfile("glob-system-hidden1") do |path|
+            visible_txt = File.join(path, "visible.txt")
+            hidden_txt = File.join(path, "hidden.txt")
+            visible_dir = File.join(path, "visible_dir")
+            hidden_dir = File.join(path, "hidden_dir")
+
+            FileUtils.mkdir_p(path)
+            File.write(visible_txt, "")
+            File.write(hidden_txt, "")
+            make_hidden(hidden_txt)
+            Dir.mkdir(visible_dir)
+            Dir.mkdir(hidden_dir)
+            make_hidden(hidden_dir)
+
+            Dir.glob("#{path}/*", match_hidden: true).sort.should eq [
+              visible_txt,
+              hidden_txt,
+              visible_dir,
+              hidden_dir,
+            ].sort
+          end
+        end
+      {% end %}
     end
 
     context "match_hidden: false" do
@@ -443,6 +477,30 @@ describe "Dir" do
       it "ignores hidden files recursively" do
         Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: false).size.should eq 0
       end
+
+      {% if flag?(:win32) %}
+        it "ignores files with the hidden file attribute" do
+          with_tempfile("glob-system-hidden2") do |path|
+            visible_txt = File.join(path, "visible.txt")
+            hidden_txt = File.join(path, "hidden.txt")
+            visible_dir = File.join(path, "visible_dir")
+            hidden_dir = File.join(path, "hidden_dir")
+
+            FileUtils.mkdir_p(path)
+            File.write(visible_txt, "")
+            File.write(hidden_txt, "")
+            make_hidden(hidden_txt)
+            Dir.mkdir(visible_dir)
+            Dir.mkdir(hidden_dir)
+            make_hidden(hidden_dir)
+
+            Dir.glob("#{path}/*", match_hidden: false).sort.should eq [
+              visible_txt,
+              visible_dir,
+            ].sort
+          end
+        end
+      {% end %}
     end
 
     context "with path" do
