@@ -16,4 +16,6 @@ lib LibC
   fun _pipe(pfds : Int*, psize : UInt, textmode : Int) : Int
   fun _dup2(fd1 : Int, fd2 : Int) : Int
   fun _commit(fd : Int) : Int
+  fun _open_osfhandle(osfhandle : HANDLE, flags : LibC::Int) : LibC::Int
+  fun _setmode(fd : LibC::Int, mode : LibC::Int) : LibC::Int
 end

@@ -517,6 +517,15 @@ describe "File" do
       end
     end
 
+    it "deletes an open file" do
+      with_tempfile("delete-file.txt") do |filename|
+        file = File.open filename, "w"
+        File.exists?(file.path).should be_true
+        file.delete
+        File.exists?(file.path).should be_false
+      end
+    end
+
     it "deletes? a file" do
       with_tempfile("delete-file.txt") do |filename|
         File.open(filename, "w") { }
@@ -903,7 +912,7 @@ describe "File" do
   end
 
   describe "fsync" do
-    pending_win32 "syncs OS file buffer to disk" do
+    it "syncs OS file buffer to disk" do
       with_tempfile("fsync.txt") do |path|
         File.open(path, "a") do |f|
           f.puts("333")
@@ -1053,10 +1062,8 @@ describe "File" do
       File.writable?("foo\0bar")
     end
 
-    pending_win32 "errors on executable?" do
-      expect_raises(ArgumentError, "String contains null byte") do
-        File.executable?("foo\0bar")
-      end
+    it_raises_on_null_byte "executable?" do
+      File.executable?("foo\0bar")
     end
 
     it_raises_on_null_byte "file?" do

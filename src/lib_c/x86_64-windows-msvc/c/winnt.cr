@@ -19,8 +19,11 @@ lib LibC
   FILE_ATTRIBUTE_READONLY      =   0x1
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 
-  FILE_READ_ATTRIBUTES  =   0x80
-  FILE_WRITE_ATTRIBUTES = 0x0100
+  FILE_APPEND_DATA = 0x00000004
+
+  DELETE                = 0x00010000
+  FILE_READ_ATTRIBUTES  =       0x80
+  FILE_WRITE_ATTRIBUTES =     0x0100
 
   # Memory protection constants
   PAGE_READWRITE = 0x04
@@ -167,5 +170,26 @@ lib LibC
   struct EXCEPTION_POINTERS
     exceptionRecord : EXCEPTION_RECORD64*
     contextRecord : CONTEXT*
+  end
+
+  struct NT_TIB
+    exceptionList : Void*
+    stackBase : Void*
+    stackLimit : Void*
+    subSystemTib : Void*
+    fiberData : Void*
+    arbitraryUserPointer : Void*
+    pvSelf : NT_TIB*
+  end
+
+  struct MEMORY_BASIC_INFORMATION
+    baseAddress : Void*
+    allocationBase : Void*
+    allocationProtect : DWORD
+    partitionId : WORD
+    regionSize : SizeT
+    state : DWORD
+    protect : DWORD
+    type : DWORD
   end
 end
