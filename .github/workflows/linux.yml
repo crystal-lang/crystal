@@ -77,6 +77,9 @@ jobs:
         - llvm_version: 15.0.6
           llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz
           base_image: ubuntu-22.04
+        - llvm_version: 16.0.0
+          llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+          base_image: ubuntu-22.04
     runs-on: ${{ matrix.base_image }}
     name: "Test LLVM ${{ matrix.llvm_version }} (${{ matrix.base_image }})"
     steps:
