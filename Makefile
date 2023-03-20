@@ -197,8 +197,8 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/crystal: $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
-	# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
+	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
+	@# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
 	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
