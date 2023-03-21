@@ -281,12 +281,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: llvm
-          key: llvm-libs-13.0.1-msvc-${{ env.VSCMD_VER }}
+          key: llvm-libs-15.0.7-msvc-${{ env.VSCMD_VER }}
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.1/llvm-13.0.1.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "EC6B80D82C384ACAD2DC192903A6CF2CDBAFFB889B84BFB98DA9D71E630FC834"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/llvm-15.0.7.src.tar.xz -OutFile llvm.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "4AD8B2CC8003C86D0078D15D987D84E3A739F24AAE9033865C027ABAE93EE7A4"
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
