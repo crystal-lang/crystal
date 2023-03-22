@@ -7,28 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  x86_64-linux-job:
-    runs-on: ubuntu-latest
-    container: crystallang/crystal:1.7.3-build
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v3
-
-      - name: Build C extensions
-        run: |
-          make deps
-      - name: Cross-compile Crystal
-        run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter -Duse_pcre2
-
-      - name: Upload Crystal object file
-        uses: actions/upload-artifact@v3
-        with:
-          name: objs
-          path: crystal.obj
-
-  x86_64-windows-job:
-    needs: x86_64-linux-job
+  x86_64-windows:
     runs-on: windows-2022
     steps:
       - name: Disable CRLF line ending substitution
