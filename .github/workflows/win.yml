@@ -290,6 +290,14 @@ jobs:
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
+      - name: Download LLVM's CMake files
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/cmake-15.0.7.src.tar.xz -OutFile cmake.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea"
+          7z x cmake.tar.xz
+          7z x cmake.tar
+          mv cmake-* cmake
       - name: Patch LLVM for VS 2019 16.7.0
         working-directory: ./llvm-src
         if: steps.cache-llvm.outputs.cache-hit != 'true'
