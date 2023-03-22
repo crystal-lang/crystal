@@ -1213,9 +1213,11 @@ struct Path
     reader.next_char
 
     # 2. Consume first path component
-    # The first component is either an IP address or a hostname.
+    # The first component is either an IPv4 address or a hostname.
+    # IPv6 addresses are converted into hostnames by replacing all `:`s with
+    # `-`s, and then appending `.ipv6-literal.net`, so raw IPv6 addresses cannot
+    # appear here.
     # Hostname follows the grammar of `reg-name` in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
-    # TODO: Add support for IPv6 address grammar
     return if separators.includes?(reader.current_char)
     while true
       char = reader.current_char

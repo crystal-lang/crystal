@@ -176,4 +176,25 @@ lib LibC
     exceptionRecord : EXCEPTION_RECORD64*
     contextRecord : CONTEXT*
   end
+
+  struct NT_TIB
+    exceptionList : Void*
+    stackBase : Void*
+    stackLimit : Void*
+    subSystemTib : Void*
+    fiberData : Void*
+    arbitraryUserPointer : Void*
+    pvSelf : NT_TIB*
+  end
+
+  struct MEMORY_BASIC_INFORMATION
+    baseAddress : Void*
+    allocationBase : Void*
+    allocationProtect : DWORD
+    partitionId : WORD
+    regionSize : SizeT
+    state : DWORD
+    protect : DWORD
+    type : DWORD
+  end
 end

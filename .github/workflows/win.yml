@@ -9,7 +9,7 @@ concurrency:
 jobs:
   x86_64-linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.7.2-build
+    container: crystallang/crystal:1.7.3-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
