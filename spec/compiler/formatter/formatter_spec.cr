@@ -719,6 +719,16 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(a, **b)
+        yield
+      end
+      CRYSTAL
+      def foo(a, **b, &)
+        yield
+      end
+      CRYSTAL
+
     assert_format "macro f\n  yield\n  {{ yield }}\nend", flags: %w[method_signature_yield]
   end
 
@@ -865,6 +875,12 @@ describe Crystal::Formatter do
       def foo(
         x
       )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL
+      def foo(a, **b)
         yield
       end
       CRYSTAL
