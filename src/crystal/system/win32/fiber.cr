@@ -24,7 +24,6 @@ module Crystal::System::Fiber
     # existence of the reserved area. Stack overflow detection works because
     # Windows will fail to allocate a new guard page for these fiber stacks.
 
-    LibC.GetNativeSystemInfo(out system_info)
     page_size = self.page_size
     total_reserved = page_size + RESERVED_STACK_SIZE
 
@@ -33,6 +32,7 @@ module Crystal::System::Fiber
     end
 
     if LibC.VirtualProtect(memory_pointer + RESERVED_STACK_SIZE, page_size, LibC::PAGE_READWRITE | LibC::PAGE_GUARD, out _) == 0
+      LibC.VirtualFree(memory_pointer, 0, LibC::MEM_RELEASE)
       raise RuntimeError.from_winerror("VirtualProtect")
     end
 
