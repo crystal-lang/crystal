@@ -52,7 +52,7 @@ struct Exception::CallStack
 
     # ensure that even in the case of stack overflow there is enough reserved
     # stack space for recovery
-    stack_size = LibC::DWORD.new!(0x10000)
+    stack_size = Crystal::System::Fiber::RESERVED_STACK_SIZE
     LibC.SetThreadStackGuarantee(pointerof(stack_size))
   end
 

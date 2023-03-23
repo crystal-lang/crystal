@@ -1,19 +1,42 @@
 require "c/memoryapi"
+require "c/sysinfoapi"
 require "c/winnt"
 
 module Crystal::System::Fiber
-  def self.allocate_stack(stack_size) : Void*
-    memory_pointer = LibC.VirtualAlloc(nil, stack_size, LibC::MEM_COMMIT | LibC::MEM_RESERVE, LibC::PAGE_READWRITE)
+  RESERVED_STACK_SIZE = LibC::DWORD.new(0x10000)
 
-    if memory_pointer.null?
+  def self.allocate_stack(stack_size) : Void*
+    # This reserves and commits a stack slightly larger than the given size,
+    # partitioned in ascending order of address values:
+    #
+    # * reserved (`RESERVED_STACK_SIZE`), made available by `LibC._resetstkoflw`
+    #   for last-minute error handling in case of stack overflow
+    # * guard (a single page), detects stack overflows
+    # * the actual usable stack (*stack_size*), grows upwards
+    #
+    # Only the usable region is returned, and this stack is treated like the
+    # ones on main fibers; a non-main `Fiber` never needs to know about the
+    # existence of the reserved area. Stack overflow detection works because
+    # Windows will fail to allocate a new guard page for these fiber stacks.
+
+    LibC.GetNativeSystemInfo(out system_info)
+    total_reserved = system_info.dwPageSize + RESERVED_STACK_SIZE
+
+    unless memory_pointer = LibC.VirtualAlloc(nil, stack_size + total_reserved, LibC::MEM_COMMIT | LibC::MEM_RESERVE, LibC::PAGE_READWRITE)
       raise RuntimeError.from_winerror("VirtualAlloc")
     end
 
-    memory_pointer
+    if LibC.VirtualProtect(memory_pointer + RESERVED_STACK_SIZE, system_info.dwPageSize, LibC::PAGE_READWRITE | LibC::PAGE_GUARD, out _) == 0
+      raise RuntimeError.from_winerror("VirtualProtect")
+    end
+
+    memory_pointer + total_reserved
   end
 
   def self.free_stack(stack : Void*, stack_size) : Nil
-    if LibC.VirtualFree(stack, 0, LibC::MEM_RELEASE) == 0
+    LibC.GetNativeSystemInfo(out system_info)
+    total_reserved = system_info.dwPageSize + RESERVED_STACK_SIZE
+    if LibC.VirtualFree(stack - total_reserved, 0, LibC::MEM_RELEASE) == 0
       raise RuntimeError.from_winerror("VirtualFree")
     end
   end
