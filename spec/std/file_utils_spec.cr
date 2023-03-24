@@ -239,7 +239,7 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "doesn't follow symlinks" do
+    it "doesn't follow symlinks" do
       with_tempfile("rm_r-removed", "rm_r-linked") do |removed_path, linked_path|
         link_path = File.join(removed_path, "link")
         file_path = File.join(linked_path, "file")

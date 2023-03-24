@@ -357,7 +357,10 @@ class File < IO::FileDescriptor
     Crystal::System::File.chmod(path.to_s, permissions)
   end
 
-  # Deletes the file at *path*. Deleting non-existent file will raise an exception.
+  # Deletes the file at *path*. Raises `File::Error` on failure.
+  #
+  # On Windows, this also deletes reparse points, including symbolic links,
+  # regardless of whether the reparse point is a directory.
   #
   # ```
   # File.write("foo", "")
@@ -368,8 +371,11 @@ class File < IO::FileDescriptor
     Crystal::System::File.delete(path.to_s, raise_on_missing: true)
   end
 
-  # Deletes the file at *path*.
-  # Returns `false` if the file does not exist.
+  # Deletes the file at *path*, or returns `false` if the file does not exist.
+  # Raises `File::Error` on other kinds of failure.
+  #
+  # On Windows, this also deletes reparse points, including symbolic links,
+  # regardless of whether the reparse point is a directory.
   #
   # ```
   # File.write("foo", "")

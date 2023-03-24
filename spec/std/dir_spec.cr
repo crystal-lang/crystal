@@ -143,18 +143,32 @@ describe "Dir" do
     end
   end
 
-  it "tests delete with an nonexistent path" do
-    with_tempfile("nonexistent") do |path|
-      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
-        Dir.delete(path)
+  describe ".delete" do
+    it "raises with an nonexistent path" do
+      with_tempfile("nonexistent") do |path|
+        expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
+          Dir.delete(path)
+        end
       end
     end
-  end
 
-  it "tests delete with a path that cannot be removed" do
-    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
-      Dir.delete(datapath)
+    it "raises with a path that cannot be removed" do
+      expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
+        Dir.delete(datapath)
+      end
     end
+
+    {% if flag?(:win32) %}
+      it "raises with symlink directory" do
+        with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
+          Dir.mkdir(target_path)
+          File.symlink(target_path, symlink_path)
+          expect_raises(File::Error, "Cannot remove directory that is a reparse point: '#{symlink_path.inspect_unquoted}'") do
+            Dir.delete(symlink_path)
+          end
+        end
+      end
+    {% end %}
   end
 
   describe "glob" do
