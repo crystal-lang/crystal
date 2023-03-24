@@ -46,14 +46,17 @@ module Regex::PCRE2
     Regex::Options.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?   then LibPCRE2::CASELESS
-                when .multiline?     then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
-                when .extended?      then LibPCRE2::EXTENDED
-                when .anchored?      then LibPCRE2::ANCHORED
-                when .utf_8?         then LibPCRE2::UTF
-                when .no_utf8_check? then LibPCRE2::NO_UTF_CHECK
-                when .dupnames?      then LibPCRE2::DUPNAMES
-                when .ucp?           then LibPCRE2::UCP
+                when .ignore_case?    then LibPCRE2::CASELESS
+                when .multiline?      then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .extended?       then LibPCRE2::EXTENDED
+                when .anchored?       then LibPCRE2::ANCHORED
+                when .dollar_endonly? then LibPCRE2::DOLLAR_ENDONLY
+                when .firstline?      then LibPCRE2::FIRSTLINE
+                when .utf_8?          then LibPCRE2::UTF
+                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?       then LibPCRE2::DUPNAMES
+                when .ucp?            then LibPCRE2::UCP
+                when .endanchored?    then LibPCRE2::ENDANCHORED
                 else
                   raise "unreachable"
                 end

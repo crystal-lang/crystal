@@ -208,9 +208,12 @@ class Regex
   }
 
   @[Flags]
-  enum Options
+  enum Options : UInt64
     # Case insensitive match.
-    IGNORE_CASE = 1
+    IGNORE_CASE = 0x00000001
+
+    DOTALL = 0x00000002
+
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
     # - `PCRE_DOTALL` changes the "`.`" meaning
     # - `PCRE_MULTILINE` changes "`^`" and "`$`" meanings
@@ -218,11 +221,21 @@ class Regex
     # Crystal modifies this meaning to have essentially one unique "`m`"
     # flag that activates both behaviours, so here we do the same by
     # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
-    MULTILINE = 6
+
+    # Multiline matching.
+    #
+    # Equivalent to `MULTILINE | DOTALL` in PCRE and PCRE2.
+    MULTILINE = 0x0000006
+
     # Ignore white space and `#` comments.
-    EXTENDED = 8
+    EXTENDED = 0x0000008
+
     # Force pattern anchoring.
-    ANCHORED = 16
+    ANCHORED = 0x00000010
+
+    DOLLAR_ENDONLY = 0x00000020
+    FIRSTLINE      = 0x00040000
+
     # :nodoc:
     UTF_8 = 0x00000800
     # :nodoc:
@@ -231,6 +244,9 @@ class Regex
     DUPNAMES = 0x00080000
     # :nodoc:
     UCP = 0x20000000
+
+    ENDANCHORED = 0x80000000
+    NO_JIT
   end
 
   # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.

@@ -24,14 +24,18 @@ module Regex::PCRE
     Regex::Options.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?   then LibPCRE::CASELESS
-                when .multiline?     then LibPCRE::DOTALL | LibPCRE::MULTILINE
-                when .extended?      then LibPCRE::EXTENDED
-                when .anchored?      then LibPCRE::ANCHORED
-                when .utf_8?         then LibPCRE::UTF8
-                when .no_utf8_check? then LibPCRE::NO_UTF8_CHECK
-                when .dupnames?      then LibPCRE::DUPNAMES
-                when .ucp?           then LibPCRE::UCP
+                when .ignore_case?    then LibPCRE::CASELESS
+                when .multiline?      then LibPCRE::DOTALL | LibPCRE::MULTILINE
+                when .extended?       then LibPCRE::EXTENDED
+                when .anchored?       then LibPCRE::ANCHORED
+                when .dollar_endonly? then LibPCRE::DOLLAR_ENDONLY
+                when .firstline?      then LibPCRE::FIRSTLINE
+                when .utf_8?          then LibPCRE::UTF8
+                when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
+                when .dupnames?       then LibPCRE::DUPNAMES
+                when .ucp?            then LibPCRE::UCP
+                when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .no_jit?         then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
                 else
                   raise "unreachable"
                 end
@@ -39,8 +43,9 @@ module Regex::PCRE
       end
     end
 
-    # Unnamed values are explicitly used PCRE options, just pass them through:
-    flag |= options.value
+    unless options.none?
+      raise ArgumentError.new("Unknown Regex::Option value: #{options}")
+    end
 
     flag
   end
