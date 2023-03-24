@@ -8,7 +8,7 @@ module Crystal::System::Fiber
   RESERVED_STACK_SIZE = LibC::DWORD.new(0x10000)
 
   # the reserved stack size, plus the size of a single page
-  private class_getter total_reserved_size : LibC::DWORD do
+  @@total_reserved_size : LibC::DWORD = begin
     LibC.GetNativeSystemInfo(out system_info)
     system_info.dwPageSize + RESERVED_STACK_SIZE
   end
@@ -21,7 +21,7 @@ module Crystal::System::Fiber
     # Detects stack overflows by guarding the top of the stack, similar to
     # `LibC.mprotect`. Windows will fail to allocate a new guard page for these
     # fiber stacks and trigger a stack overflow exception
-    if LibC.VirtualProtect(memory_pointer, total_reserved_size, LibC::PAGE_READWRITE | LibC::PAGE_GUARD, out _) == 0
+    if LibC.VirtualProtect(memory_pointer, @@total_reserved_size, LibC::PAGE_READWRITE | LibC::PAGE_GUARD, out _) == 0
       LibC.VirtualFree(memory_pointer, 0, LibC::MEM_RELEASE)
       raise RuntimeError.from_winerror("VirtualProtect")
     end
