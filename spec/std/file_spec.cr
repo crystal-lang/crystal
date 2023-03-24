@@ -234,15 +234,6 @@ describe "File" do
   end
 
   describe "symlink?" do
-    # this fails depending on how Git checks out the repository, we only check
-    # in the test above that `symlink?` returns true for something created with
-    # Crystal's `File.symlink`
-    {% unless flag?(:win32) %}
-      it "gives true" do
-        File.symlink?(datapath("symlink.txt")).should be_true
-      end
-    {% end %}
-
     it "gives false" do
       File.symlink?(datapath("test_file.txt")).should be_false
       File.symlink?(datapath("unknown_file.txt")).should be_false
