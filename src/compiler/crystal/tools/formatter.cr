@@ -1595,7 +1595,7 @@ module Crystal
         end
       elsif yields
         wrote_newline = format_def_arg(wrote_newline, false) do
-          write "&" if flag?("method_signature_yield")
+          write "&"
           skip_space_or_newline
         end
       end
