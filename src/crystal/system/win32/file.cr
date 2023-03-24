@@ -179,7 +179,10 @@ module Crystal::System::File
     info?(path, follow_symlinks) || raise ::File::Error.from_winerror("Unable to get file info", file: path)
   end
 
-  def self.exists?(path)
+  def self.exists?(path, *, follow_symlinks = true)
+    if follow_symlinks
+      path = realpath?(path) || return false
+    end
     accessible?(path, 0)
   end
 
@@ -210,7 +213,7 @@ module Crystal::System::File
   def self.chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
     mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
 
-    unless exists?(path)
+    unless exists?(path, follow_symlinks: false)
       raise ::File::Error.from_os_error("Error changing permissions", Errno::ENOENT, file: path)
     end
 
@@ -251,7 +254,7 @@ module Crystal::System::File
 
   private REALPATH_SYMLINK_LIMIT = 100
 
-  def self.realpath(path : String) : String
+  private def self.realpath?(path : String) : String?
     REALPATH_SYMLINK_LIMIT.times do
       win_path = System.to_wstr(path)
 
@@ -272,11 +275,14 @@ module Crystal::System::File
         next
       end
 
-      return realpath if exists?(realpath)
-      raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
+      return exists?(realpath, follow_symlinks: false) ? realpath : nil
     end
 
-    raise ::File::Error.new("Too many symbolic links", file: path)
+    raise ::File::Error.from_os_error("Too many symbolic links", Errno::ELOOP, file: path)
+  end
+
+  def self.realpath(path : String) : String
+    realpath?(path) || raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
   end
 
   def self.link(old_path : String, new_path : String) : Nil
