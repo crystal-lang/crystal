@@ -44,7 +44,12 @@ module Regex::PCRE
     end
 
     unless options.none?
-      raise ArgumentError.new("Unknown Regex::Option value: #{options}")
+      {% if flag?(:use_pcre) %}
+        # Unnamed values are explicitly used PCRE options, just pass them through:
+        flag |= options.value
+      {% else %}
+        raise ArgumentError.new("Unknown Regex::Option value: #{options}")
+      {% end %}
     end
 
     flag
