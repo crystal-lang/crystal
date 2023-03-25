@@ -96,6 +96,8 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libiconv
         run: |
+          sed -i 's|__declspec (dllimport) ||' libiconv\include\iconv.h
+
           echo '<Project>
             <PropertyGroup>
               <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
