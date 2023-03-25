@@ -158,17 +158,15 @@ describe "Dir" do
       end
     end
 
-    {% if flag?(:win32) %}
-      it "raises with symlink directory" do
-        with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
-          Dir.mkdir(target_path)
-          File.symlink(target_path, symlink_path)
-          expect_raises(File::Error, "Cannot remove directory that is a reparse point: '#{symlink_path.inspect_unquoted}'") do
-            Dir.delete(symlink_path)
-          end
+    it "raises with symlink directory" do
+      with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
+        Dir.mkdir(target_path)
+        File.symlink(target_path, symlink_path)
+        expect_raises(File::Error) do
+          Dir.delete(symlink_path)
         end
       end
-    {% end %}
+    end
   end
 
   describe "glob" do

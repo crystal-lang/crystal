@@ -544,15 +544,13 @@ describe "File" do
       end
     end
 
-    {% if flag?(:win32) %}
-      it "deletes a symlink directory" do
-        with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
-          Dir.mkdir(target_path)
-          File.symlink(target_path, symlink_path)
-          File.delete(symlink_path)
-        end
+    it "deletes a symlink directory" do
+      with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
+        Dir.mkdir(target_path)
+        File.symlink(target_path, symlink_path)
+        File.delete(symlink_path)
       end
-    {% end %}
+    end
   end
 
   describe "rename" do

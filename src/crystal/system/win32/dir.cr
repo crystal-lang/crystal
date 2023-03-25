@@ -134,7 +134,7 @@ module Crystal::System::Dir
 
     attributes = LibC.GetFileAttributesW(win_path)
     if attributes == LibC::INVALID_FILE_ATTRIBUTES
-      check_not_found_error("Unable to remove directory", path)
+      File.check_not_found_error("Unable to remove directory", path)
       raise ::File::Error.from_os_error("Unable to remove directory", Errno::ENOENT, file: path) if raise_on_missing
       return false
     end
@@ -149,20 +149,5 @@ module Crystal::System::Dir
 
     return true if LibC._wrmdir(win_path) == 0
     raise ::File::Error.from_errno("Unable to remove directory", file: path)
-  end
-
-  NOT_FOUND_ERRORS = {
-    WinError::ERROR_FILE_NOT_FOUND,
-    WinError::ERROR_PATH_NOT_FOUND,
-    WinError::ERROR_INVALID_NAME,
-  }
-
-  private def self.check_not_found_error(message, path)
-    error = WinError.value
-    if NOT_FOUND_ERRORS.includes? error
-      nil
-    else
-      raise ::File::Error.from_os_error(message, error, file: path)
-    end
   end
 end

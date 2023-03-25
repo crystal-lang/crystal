@@ -306,7 +306,7 @@ class Dir
   #
   # On Windows, also raises `File::Error` if *path* points to a directory that
   # is a reparse point, such as a symbolic link. Those directories can be
-  # deleted using `File.delete` instead.
+  # deleted using `File.delete?` instead.
   def self.delete?(path : Path | String) : Bool
     Crystal::System::Dir.delete(path.to_s, raise_on_missing: false)
   end

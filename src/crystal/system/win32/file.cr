@@ -115,7 +115,7 @@ module Crystal::System::File
 
   REPARSE_TAG_NAME_SURROGATE_MASK = 1 << 29
 
-  private def self.check_not_found_error(message, path)
+  def self.check_not_found_error(message, path)
     error = WinError.value
     if NOT_FOUND_ERRORS.includes? error
       nil
