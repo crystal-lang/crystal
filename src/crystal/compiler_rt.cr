@@ -87,6 +87,78 @@ require "./compiler_rt/divmod128.cr"
 
   # https://github.com/llvm/llvm-project/commit/d6216e2cd1a5e07f8509215ee5422ff5ee358da8
   {% if compare_versions(Crystal::LLVM_VERSION, "14.0.0") >= 0 %}
+    # the following overflow comparisons must be identical to the ones in
+    # `Crystal::CodeGenVisitor#codegen_out_of_range`
+
+    struct Int128
+      @[AlwaysInline]
+      def to_f32 : Float32
+        __floattisf(self)
+      end
+
+      @[AlwaysInline]
+      def to_f64 : Float64
+        __floattidf(self)
+      end
+    end
+
+    struct UInt128
+      @[AlwaysInline]
+      def to_f32 : Float32
+        # Float32::MAX.to_u128! (it is okay to use a literal here because
+        # support for LLVM 14 was added after 128-bit literals)
+        if self > 340282346638528859811704183484516925440_u128
+          raise OverflowError.new
+        end
+        __floatuntisf(self)
+      end
+
+      @[AlwaysInline]
+      def to_f64 : Float64
+        __floatuntidf(self)
+      end
+    end
+
+    struct Float32
+      @[AlwaysInline]
+      def to_i128 : Int128
+        # Int128::MIN.to_f32!..Int128::MAX.to_f32!.prev_float
+        if !(self >= -1.7014118e+38_f32) || self > 1.7014117e+38_f32
+          raise OverflowError.new
+        end
+        __fixsfti(self)
+      end
+
+      @[AlwaysInline]
+      def to_u128 : UInt128
+        # UInt128::MIN.to_f32!..Float32::MAX
+        if !(self >= 0_f32) || self > 3.4028235e+38_f32
+          raise OverflowError.new
+        end
+        __fixunssfti(self)
+      end
+    end
+
+    struct Float64
+      @[AlwaysInline]
+      def to_i128 : Int128
+        # Int128::MIN.to_f64!..Int128::MAX.to_f64!.prev_float
+        if !(self >= -1.7014118346046923e+38_f64) || self > 1.7014118346046921e+38_f64
+          raise OverflowError.new
+        end
+        __fixdfti(self)
+      end
+
+      @[AlwaysInline]
+      def to_u128 : UInt128
+        # UInt128::MIN.to_f64!..UInt128::MAX.to_f64!.prev_float
+        if !(self >= 0_f64) || self > 3.4028236692093843e+38_f64
+          raise OverflowError.new
+        end
+        __fixunsdfti(self)
+      end
+    end
+
     {% for v in [
                   {Int128, "to_f32", Float32, "__floattisf"},
                   {Int128, "to_f64", Float64, "__floattidf"},
@@ -100,14 +172,8 @@ require "./compiler_rt/divmod128.cr"
       {% type, method, ret, rt_method = v %}
       struct {{ type.id }}
         @[AlwaysInline]
-        def {{ method.id }} : {{ ret.id }}
-          raise OverflowError.new unless {{ ret.id }}::MIN <= self <= {{ ret.id }}::MAX
-          {{ ret.id }}.new!({{ rt_method.id }}(self))
-        end
-
-        @[AlwaysInline]
         def {{ method.id }}! : {{ ret.id }}
-          {{ ret.id }}.new!({{ rt_method.id }}(self))
+          {{ rt_method.id }}(self)
         end
       end
     {% end %}
