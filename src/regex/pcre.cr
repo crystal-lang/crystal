@@ -45,7 +45,7 @@ module Regex::PCRE
     end
 
     unless options.none?
-      {% if flag?(:use_pcre) %}
+      {% if flag?(:pcre_allow_all_options) %}
         # Unnamed values are explicitly used PCRE options, just pass them through:
         flag |= options.value
       {% else %}
