@@ -43,7 +43,7 @@ private macro assert_prints_codepoints(call, str, desc, *, file = __FILE__, line
     ) {{ call.block }}
   end.should %expectation, file: {{ file }}, line: {{ line }}
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:without_iconv) %}
     string_build_via_utf16 do |io|
       {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
         io,
