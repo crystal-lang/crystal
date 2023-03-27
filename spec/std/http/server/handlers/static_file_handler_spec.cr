@@ -178,7 +178,7 @@ describe HTTP::StaticFileHandler do
   end
 
   context "when a Range header is provided" do
-    describe "valid Range header" do
+    context "int range" do
       it "serves a byte range" do
         headers = HTTP::Headers{"Range" => "bytes=0-2"}
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
@@ -213,55 +213,6 @@ describe HTTP::StaticFileHandler do
         response.status_code.should eq(206)
         response.headers["Content-Range"]?.should eq "bytes 6-11/12"
         response.body.should eq "world\n"
-      end
-
-      describe "suffix range" do
-        it "partial" do
-          headers = HTTP::Headers{"Range" => "bytes=-6"}
-
-          response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-          response.status_code.should eq(206)
-          response.headers["Content-Range"]?.should eq "bytes 6-11/12"
-          response.body.should eq "world\n"
-        end
-
-        it "more bytes than content" do
-          headers = HTTP::Headers{"Range" => "bytes=-15"}
-
-          response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-          response.status_code.should eq(206)
-          response.headers["Content-Range"]?.should eq "bytes 0-11/12"
-          response.body.should eq "Hello world\n"
-        end
-
-        it "zero" do
-          headers = HTTP::Headers{"Range" => "bytes=-0"}
-
-          response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-          response.status_code.should eq(400)
-          response.headers["Content-Range"]?.should be_nil
-        end
-
-        it "empty file" do
-          headers = HTTP::Headers{"Range" => "bytes=-1"}
-
-          response = handle HTTP::Request.new("GET", "/empty.txt", headers)
-
-          response.status_code.should eq(200)
-          response.headers["Content-Range"]?.should be_nil
-        end
-
-        it "negative size" do
-          headers = HTTP::Headers{"Range" => "bytes=--2"}
-
-          response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-          response.status_code.should eq(400)
-          response.headers["Content-Range"]?.should be_nil
-        end
       end
 
       it "serves multiple byte ranges (separator without whitespace)" do
@@ -328,15 +279,6 @@ describe HTTP::StaticFileHandler do
         response.status_code.should eq 416
         response.headers["Content-Range"]?.should eq "bytes */12"
       end
-    end
-
-    describe "invalid Range header" do
-      it "byte number without dash" do
-        headers = HTTP::Headers{"Range" => "bytes=1"}
-        response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-        response.status_code.should eq(400)
-      end
 
       it "start >= file_size" do
         headers = HTTP::Headers{"Range" => "bytes=12-"}
@@ -344,6 +286,64 @@ describe HTTP::StaticFileHandler do
 
         response.status_code.should eq(416)
         response.headers["Content-Range"]?.should eq "bytes */12"
+      end
+    end
+
+    describe "suffix range" do
+      it "partial" do
+        headers = HTTP::Headers{"Range" => "bytes=-6"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 6-11/12"
+        response.body.should eq "world\n"
+      end
+
+      it "more bytes than content" do
+        headers = HTTP::Headers{"Range" => "bytes=-15"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.headers["Content-Range"]?.should eq "bytes 0-11/12"
+        response.body.should eq "Hello world\n"
+      end
+
+      it "zero" do
+        headers = HTTP::Headers{"Range" => "bytes=-0"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+        response.headers["Content-Range"]?.should be_nil
+      end
+
+      it "empty file" do
+        headers = HTTP::Headers{"Range" => "bytes=-1"}
+
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(200)
+        response.headers["Content-Range"]?.should be_nil
+      end
+
+      it "negative size" do
+        headers = HTTP::Headers{"Range" => "bytes=--2"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+        response.headers["Content-Range"]?.should be_nil
+      end
+    end
+
+    describe "invalid Range syntax" do
+      it "byte number without dash" do
+        headers = HTTP::Headers{"Range" => "bytes=1"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
       end
 
       it "start > end" do
