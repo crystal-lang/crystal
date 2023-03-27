@@ -226,7 +226,7 @@ describe "File" do
     it "creates a symbolic link" do
       in_path = datapath("test_file.txt")
       with_tempfile("test_file_link.txt") do |out_path|
-        File.symlink(File.real_path(in_path), out_path)
+        File.symlink(File.realpath(in_path), out_path)
         File.symlink?(out_path).should be_true
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
       end
@@ -234,11 +234,6 @@ describe "File" do
   end
 
   describe "symlink?" do
-    # TODO: this fails depending on how Git checks out the repository
-    pending_win32 "gives true" do
-      File.symlink?(datapath("symlink.txt")).should be_true
-    end
-
     it "gives false" do
       File.symlink?(datapath("test_file.txt")).should be_false
       File.symlink?(datapath("unknown_file.txt")).should be_false
@@ -254,7 +249,7 @@ describe "File" do
   end
 
   describe ".readlink" do
-    pending_win32 "reads link" do
+    it "reads link" do
       File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
     end
   end
@@ -393,17 +388,17 @@ describe "File" do
       end
     end
 
-    # See TODO in win32 Crystal::System::File.chmod
-    pending_win32 "follows symlinks" do
+    it "follows symlinks" do
       with_tempfile("chmod-destination.txt", "chmod-source.txt") do |source_path, target_path|
         File.write(source_path, "")
 
-        File.symlink(File.real_path(source_path), target_path)
+        File.symlink(File.realpath(source_path), target_path)
         File.symlink?(target_path).should be_true
 
+        File.chmod(source_path, 0o664)
         File.chmod(target_path, 0o444)
 
-        File.info(target_path).permissions.should eq(normalize_permissions(0o444, directory: false))
+        File.info(source_path).permissions.should eq(normalize_permissions(0o444, directory: false))
       end
     end
 
@@ -431,10 +426,15 @@ describe "File" do
       info.type.should eq(File::Type::CharacterDevice)
     end
 
-    # TODO: this fails depending on how Git checks out the repository
-    pending_win32 "gets for a symlink" do
-      info = File.info(datapath("symlink.txt"), follow_symlinks: false)
-      info.type.should eq(File::Type::Symlink)
+    it "gets for a symlink" do
+      file_path = File.expand_path(datapath("test_file.txt"))
+      with_tempfile("symlink.txt") do |symlink_path|
+        File.symlink(file_path, symlink_path)
+        info = File.info(symlink_path, follow_symlinks: false)
+        info.type.should eq(File::Type::Symlink)
+        info = File.info(symlink_path, follow_symlinks: true)
+        info.type.should_not eq(File::Type::Symlink)
+      end
     end
 
     it "gets for open file" do
@@ -603,14 +603,26 @@ describe "File" do
       end
     end
 
-    # TODO: see Crystal::System::File.realpath TODO
-    pending_win32 "expands paths of symlinks" do
+    it "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
         File.symlink(file_path, symlink_path)
         real_symlink_path = File.realpath(symlink_path)
         real_file_path = File.realpath(file_path)
         real_symlink_path.should eq(real_file_path)
+      end
+    end
+
+    it "expands multiple layers of symlinks" do
+      file_path = File.expand_path(datapath("test_file.txt"))
+      with_tempfile("symlink1.txt") do |symlink_path1|
+        with_tempfile("symlink2.txt") do |symlink_path2|
+          File.symlink(file_path, symlink_path1)
+          File.symlink(symlink_path1, symlink_path2)
+          real_symlink_path = File.realpath(symlink_path2)
+          real_file_path = File.realpath(file_path)
+          real_symlink_path.should eq(real_file_path)
+        end
       end
     end
   end

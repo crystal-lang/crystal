@@ -7,28 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  x86_64-linux-job:
-    runs-on: ubuntu-latest
-    container: crystallang/crystal:1.7.2-build
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v3
-
-      - name: Build C extensions
-        run: |
-          make deps
-      - name: Cross-compile Crystal
-        run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter -Duse_pcre2
-
-      - name: Upload Crystal object file
-        uses: actions/upload-artifact@v3
-        with:
-          name: objs
-          path: crystal.obj
-
-  x86_64-windows-job:
-    needs: x86_64-linux-job
+  x86_64-windows:
     runs-on: windows-2022
     steps:
       - name: Disable CRLF line ending substitution
@@ -36,6 +15,11 @@ jobs:
           git config --global core.autocrlf false
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.7.3"
 
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -112,6 +96,8 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libiconv
         run: |
+          sed -i 's|__declspec (dllimport) ||' libiconv\include\iconv.h
+
           echo '<Project>
             <PropertyGroup>
               <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
@@ -329,19 +315,10 @@ jobs:
           echo "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\.build\crystal.exe" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
 
-      - name: Download Crystal object file
-        uses: actions/download-artifact@v3
-        with:
-          name: objs
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
-      - name: Link Crystal executable
-        run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre2-8.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib ole32.lib shell32.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:0x800000 /ENTRY:wmainCRTStartup"
-          mkdir .build
-          mv crystal.exe .build/
 
-      - name: Re-build Crystal
+      - name: Build Crystal
         run: |
           bin/crystal.bat env
           make -f Makefile.win -B

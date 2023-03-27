@@ -28,6 +28,7 @@ lib LibC
   fun getpid : PidT
   fun getppid : PidT
   fun getuid : UidT
+  fun setuid(uid : UidT) : Int
   fun isatty(x0 : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
