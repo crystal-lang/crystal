@@ -189,9 +189,11 @@ class HTTP::StaticFileHandler
         # > When a selected representation has zero length, the only satisfiable
         # > form of range-spec in a GET request is a suffix-range with a non-zero suffix-length.
 
-        # This return value signals an unsatisfiable range.
         if start
+          # This return value signals an unsatisfiable range.
           return [1_i64..0_i64]
+        elsif finish <= 0
+          return
         else
           start = finish = 0_i64
         end

@@ -319,6 +319,15 @@ describe HTTP::StaticFileHandler do
         response.headers["Content-Range"]?.should be_nil
       end
 
+      it "zero" do
+        headers = HTTP::Headers{"Range" => "bytes=-0"}
+
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+        response.status_code.should eq(400)
+        response.headers["Content-Range"]?.should be_nil
+      end
+
       it "empty file" do
         headers = HTTP::Headers{"Range" => "bytes=-1"}
 
@@ -363,6 +372,13 @@ describe HTTP::StaticFileHandler do
       it "open range with negative end" do
         headers = HTTP::Headers{"Range" => "bytes=--2"}
         response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "open range with negative end" do
+        headers = HTTP::Headers{"Range" => "bytes=--2"}
+        response = handle HTTP::Request.new("GET", "/empty.txt", headers)
 
         response.status_code.should eq(400)
       end
