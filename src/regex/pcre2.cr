@@ -58,6 +58,7 @@ module Regex::PCRE2
                 when .dupnames?       then LibPCRE2::DUPNAMES
                 when .ucp?            then LibPCRE2::UCP
                 when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .no_jit?         then LibPCRE2::NO_JIT
                 else
                   raise "unreachable"
                 end
