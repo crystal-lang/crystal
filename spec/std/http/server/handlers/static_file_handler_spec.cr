@@ -201,8 +201,8 @@ describe HTTP::StaticFileHandler do
         headers = HTTP::Headers{"Range" => "bytes=0-0"}
         response = handle HTTP::Request.new("GET", "/empty.txt", headers)
 
-        response.status_code.should eq(200)
-        response.headers["Content-Range"]?.should be_nil
+        response.status_code.should eq(416)
+        response.headers["Content-Range"]?.should eq "bytes */0"
         response.body.should eq ""
       end
 
@@ -242,6 +242,15 @@ describe HTTP::StaticFileHandler do
           response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
           response.status_code.should eq(400)
+          response.headers["Content-Range"]?.should be_nil
+        end
+
+        it "empty file" do
+          headers = HTTP::Headers{"Range" => "bytes=-1"}
+
+          response = handle HTTP::Request.new("GET", "/empty.txt", headers)
+
+          response.status_code.should eq(200)
           response.headers["Content-Range"]?.should be_nil
         end
 

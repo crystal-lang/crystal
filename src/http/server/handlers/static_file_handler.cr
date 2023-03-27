@@ -185,7 +185,18 @@ class HTTP::StaticFileHandler
       else
         finish = finish_string.to_i64? || return
       end
-      unless start
+      if file_size.zero?
+        # > When a selected representation has zero length, the only satisfiable
+        # > form of range-spec in a GET request is a suffix-range with a non-zero suffix-length.
+
+        # This return value signals an unsatisfiable range.
+        if start
+          return [1_i64..0_i64]
+        else
+          start = finish = 0_i64
+        end
+      elsif !start
+        # suffix-range
         start = {file_size - finish, 0_i64}.max
         finish = file_size - 1
       end
