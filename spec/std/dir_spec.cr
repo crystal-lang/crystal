@@ -363,21 +363,20 @@ describe "Dir" do
     end
 
     it "matches symlinks" do
-      link = datapath("f1_link.txt")
-      non_link = datapath("non_link.txt")
+      with_tempfile "symlinks" do |path|
+        Dir.mkdir_p(path)
 
-      File.symlink(datapath("dir", "f1.txt"), link)
-      File.symlink(datapath("dir", "nonexisting"), non_link)
+        link = Path[path, "f1_link.txt"]
+        non_link = Path[path, "non_link.txt"]
 
-      begin
-        Dir["#{datapath}/*_link.txt"].sort.should eq [
-          datapath("f1_link.txt"),
-          datapath("non_link.txt"),
+        File.symlink(datapath("dir", "f1.txt"), link)
+        File.symlink(datapath("dir", "nonexisting"), non_link)
+
+        Dir["#{path}/*_link.txt"].sort.should eq [
+          link.to_s,
+          non_link.to_s,
         ].sort
-        Dir["#{datapath}/non_link.txt"].should eq [datapath("non_link.txt")]
-      ensure
-        File.delete link
-        File.delete non_link
+        Dir["#{path}/non_link.txt"].should eq [non_link.to_s]
       end
     end
 
@@ -393,18 +392,10 @@ describe "Dir" do
         File.write(non_link, "")
         File.symlink(target, link_dir)
 
-        begin
-          Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
-          Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
-            File.join(path, "glob", "dir", "a.txt"),
-          ]
-        ensure
-          # FIXME: `with_tempfile` will delete this symlink directory using
-          # `File.delete` otherwise, see #13194
-          {% if flag?(:win32) %}
-            Dir.delete(link_dir)
-          {% end %}
-        end
+        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
+        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
+          File.join(path, "glob", "dir", "a.txt"),
+        ]
       end
     end
 
