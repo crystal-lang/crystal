@@ -56,12 +56,12 @@ module HTML
               nil
             end
       if str
-        io.write_string(string[last_copy_at, index &- last_copy_at])
-        last_copy_at = index &+ 1
+        io.write_string(string[last_copy_at...index])
+        last_copy_at = index + 1
         io << str
       end
     end
-    io.write_string(string[last_copy_at, string.size &- last_copy_at])
+    io.write_string(string[last_copy_at..])
   end
 
   # These replacements permit compatibility with old numeric entities that
