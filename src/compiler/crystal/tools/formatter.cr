@@ -1,12 +1,12 @@
 require "../syntax"
 
 module Crystal
-  def self.format(source, filename = nil, report_warnings : IO? = nil)
-    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings)
+  def self.format(source, filename = nil, report_warnings : IO? = nil, flags : Array(String)? = nil)
+    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings, flags: flags)
   end
 
   class Formatter < Visitor
-    def self.format(source, filename = nil, report_warnings : IO? = nil)
+    def self.format(source, filename = nil, report_warnings : IO? = nil, flags : Array(String)? = nil)
       parser = Parser.new(source)
       parser.filename = filename
       nodes = parser.parse
@@ -17,7 +17,7 @@ module Crystal
         parser.warnings.report(report_warnings)
       end
 
-      formatter = new(source)
+      formatter = new(source, flags: flags)
       formatter.skip_space_or_newline
       nodes.accept formatter
       formatter.finish
@@ -102,7 +102,7 @@ module Crystal
     property indent
     property subformat_nesting = 0
 
-    def initialize(source)
+    def initialize(source, @flags : Array(String)? = nil)
       @lexer = Lexer.new(source)
       @lexer.comments_enabled = true
       @lexer.count_whitespace = true
@@ -156,6 +156,10 @@ module Crystal
 
       # Variables for when we format macro code without interpolation
       @vars = [Set(String).new]
+    end
+
+    def flag?(flag)
+      !!@flags.try(&.includes?(flag))
     end
 
     def end_visit_any(node)
@@ -1470,7 +1474,7 @@ module Crystal
         # this formats `def foo # ...` to `def foo(&) # ...` for yielding
         # methods before consuming the comment line
         if node.block_arity && node.args.empty? && !node.block_arg && !node.double_splat
-          write "(&)"
+          write "(&)" if flag?("method_signature_yield")
         end
 
         skip_space consume_newline: false
@@ -1517,7 +1521,7 @@ module Crystal
     end
 
     def format_def_args(node : Def | Macro)
-      yields = node.is_a?(Def) && !node.block_arity.nil?
+      yields = node.is_a?(Def) && !node.block_arity.nil? && flag?("method_signature_yield")
       format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat, yields
     end
 
@@ -1675,7 +1679,7 @@ module Crystal
       elsif @token.type.op_rparen? && has_more && !just_wrote_newline
         # if we found a `)` and there are still more parameters to write, it
         # must have been a missing `&` for a def that yields
-        write " "
+        write " " if flag?("method_signature_yield")
       end
 
       just_wrote_newline

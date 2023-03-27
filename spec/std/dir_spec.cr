@@ -362,7 +362,7 @@ describe "Dir" do
       ].sort
     end
 
-    pending_win32 "matches symlinks" do
+    it "matches symlinks" do
       link = datapath("f1_link.txt")
       non_link = datapath("non_link.txt")
 
@@ -381,19 +381,30 @@ describe "Dir" do
       end
     end
 
-    pending_win32 "matches symlink dir" do
+    it "matches symlink dir" do
       with_tempfile "symlink_dir" do |path|
-        Dir.mkdir_p(Path[path, "glob"])
         target = Path[path, "target"]
+        non_link = target / "a.txt"
+        link_dir = Path[path, "glob", "dir"]
+
+        Dir.mkdir_p(Path[path, "glob"])
         Dir.mkdir_p(target)
 
-        File.write(target / "a.txt", "")
-        File.symlink(target, Path[path, "glob", "dir"])
+        File.write(non_link, "")
+        File.symlink(target, link_dir)
 
-        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
-        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
-          "#{path}/glob/dir/a.txt",
-        ]
+        begin
+          Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
+          Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
+            File.join(path, "glob", "dir", "a.txt"),
+          ]
+        ensure
+          # FIXME: `with_tempfile` will delete this symlink directory using
+          # `File.delete` otherwise, see #13194
+          {% if flag?(:win32) %}
+            Dir.delete(link_dir)
+          {% end %}
+        end
       end
     end
 
