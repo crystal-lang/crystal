@@ -379,6 +379,13 @@ describe HTTP::StaticFileHandler do
 
         response.status_code.should eq(400)
       end
+
+      it "not a range" do
+        headers = HTTP::Headers{"Range" => "bytes=-"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
     end
   end
 

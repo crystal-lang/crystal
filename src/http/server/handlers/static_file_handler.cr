@@ -180,6 +180,7 @@ class HTTP::StaticFileHandler
       start = start_string.to_i64?
       return if start.nil? && !start_string.empty?
       if finish_string.empty?
+        return if start_string.empty?
         finish = file_size
       else
         finish = finish_string.to_i64? || return
