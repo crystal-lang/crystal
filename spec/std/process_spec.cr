@@ -428,6 +428,12 @@ describe Process do
     {% if flag?(:unix) && !flag?(:android) %}
       it "raises when unprivileged" do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
+          # Try to drop privileges. Ignoring any errors because dropping is only
+          # necessary for a privileged user and it doesn't matter when it fails
+          # for an unprivileged one.
+          # This particular UID is often attributed to the `nobody` user.
+          LibC.setuid(65534)
+
           begin
             Process.chroot(".")
             puts "FAIL"
