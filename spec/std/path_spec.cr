@@ -409,9 +409,6 @@ describe Path do
     assert_paths("\\\\%10%20\\share\\", nil, "\\\\%10%20\\share", &.drive)
     assert_paths("\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1\\", nil, "\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1", &.drive)
     assert_paths("\\\\127.0.0.1\\share\\", nil, "\\\\127.0.0.1\\share", &.drive)
-    pending do
-      assert_paths("\\\\2001:4860:4860::8888\\share\\", nil, "\\\\2001:4860:4860::8888\\share", &.drive)
-    end
   end
 
   describe "#root" do
