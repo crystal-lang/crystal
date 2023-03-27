@@ -63,7 +63,7 @@ module LLVM
 
     def each_kind(& : UInt32 ->)
       each do |member|
-        yield @@kind_ids[member.value]
+        yield @@kind_ids[member]
       end
     end
 
