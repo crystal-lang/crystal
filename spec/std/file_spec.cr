@@ -27,6 +27,14 @@ describe "File" do
     end
   end
 
+  it "raises if opening a non-existent file" do
+    with_tempfile("test_nonexistent.txt") do |file|
+      expect_raises(File::NotFoundError) do
+        File.open(file)
+      end
+    end
+  end
+
   it "reads entire file" do
     str = File.read datapath("test_file.txt")
     str.should eq("Hello World\n" * 20)
