@@ -200,7 +200,7 @@ module JSON
         {% end %}
 
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized {{value[:type]}} {% end %}
+          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
           %found{name} = false
         {% end %}
 
