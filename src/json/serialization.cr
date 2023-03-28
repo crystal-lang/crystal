@@ -219,19 +219,13 @@ module JSON
               begin
                 {% if value[:has_default] || value[:nilable] %} pull.read_null_or do {% else %} begin {% end %}
                   %var{name} =
-                    {% if value[:root] %}
-                      pull.on_key!({{value[:root]}}) do
-                    {% end %}
-
-                    {% if value[:converter] %}
-                      {{value[:converter]}}.from_json(pull)
-                    {% else %}
-                      ::Union({{value[:type]}}).new(pull)
-                    {% end %}
-
-                    {% if value[:root] %}
-                      end
-                    {% end %}
+                    {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
+                      {% if value[:converter] %}
+                        {{value[:converter]}}.from_json(pull)
+                      {% else %}
+                        ::Union({{value[:type]}}).new(pull)
+                      {% end %}
+                    end
                 end
                 %found{name} = true
               rescue exc : ::JSON::ParseException
