@@ -94,6 +94,12 @@ describe "Regex" do
       /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
       /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
     end
+
+    it "with invalid UTF-8" do
+      expect_raises(ArgumentError, "UTF-8 error") do
+        /([\w_\.@#\/\*])+/.match("\xFF\xFE")
+      end
+    end
   end
 
   describe "#match_at_byte_index" do
@@ -126,9 +132,9 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
-      md.begin.should eq 1
-      md.byte_begin.should eq 2
+      expect_raises(ArgumentError, "bad offset into UTF string") do
+        /foo/.match_at_byte_index("öfoo", 1)
+      end
 
       md = /foo/.match_at_byte_index("öfoo", 2).should_not be_nil
       md.begin.should eq 1
@@ -205,9 +211,9 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        /foo/.matches?("f\x96o").should be_false
-        /f\x96o/.matches?("f\x96o").should be_false
-        /f.o/.matches?("f\x96o").should be_true
+        expect_raises(ArgumentError, "UTF-8 error") do
+          /foo/.matches?("f\x96o")
+        end
       end
     end
 
@@ -253,7 +259,10 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      /foo/.matches_at_byte_index?("öfoo", 1).should be_true
+      expect_raises(ArgumentError, "bad offset into UTF string") do
+        /foo/.matches_at_byte_index?("öfoo", 1)
+      end
+      /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end
 
     pending "negative" do

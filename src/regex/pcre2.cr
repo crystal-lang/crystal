@@ -190,7 +190,7 @@ module Regex::PCRE2
 
   private def match_data(str, byte_index, options)
     match_data = self.match_data
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options), match_data, PCRE2.match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)

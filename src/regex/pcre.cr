@@ -106,7 +106,7 @@ module Regex::PCRE
 
   # Calls `pcre_exec` C function, and handles returning value.
   private def internal_matches?(str, byte_index, options, ovector, ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_options(options) | LibPCRE::NO_UTF8_CHECK, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_options(options), ovector, ovector_size)
 
     return true if ret >= 0
 
