@@ -196,8 +196,12 @@ module Regex::PCRE2
       case error = LibPCRE2::Error.new(match_count)
       when .nomatch?
         return
+      when .badutfoffset?, .utf8_validity?
+        error_message = PCRE2.get_error_message(error)
+        raise ArgumentError.new("Regex match error: #{error_message}")
       else
-        raise Exception.new("Regex match error: #{error}")
+        error_message = PCRE2.get_error_message(error)
+        raise Regex::Error.new("Regex match error: #{error_message}")
       end
     end
 
