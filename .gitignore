@@ -11,3 +11,4 @@
 # CI
 /coverage/
 /tmp/
+/.junit/
