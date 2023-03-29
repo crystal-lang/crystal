@@ -6,6 +6,20 @@ module Regex::PCRE2
   @re : LibPCRE2::Code*
   @jit : Bool
 
+  def self.version : String
+    String.new(24) do |pointer|
+      size = LibPCRE2.config(LibPCRE2::CONFIG_VERSION, pointer)
+      {size - 1, size - 1}
+    end
+  end
+
+  def self.version_number : {Int32, Int32}
+    version = self.version
+    dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
+    space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+  end
+
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
     @re = PCRE2.compile(source, pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::MATCH_INVALID_UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
