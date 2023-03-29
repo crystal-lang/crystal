@@ -96,9 +96,13 @@ describe "Regex" do
     end
 
     it "with invalid UTF-8" do
-      expect_raises(ArgumentError, "UTF-8 error") do
-        /([\w_\.@#\/\*])+/.match("\xFF\xFE")
-      end
+      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+        expect_raises(ArgumentError, "UTF-8 error") do
+          /([\w_\.@#\/\*])+/.match("\xFF\xFE")
+        end
+      {% else %}
+        /([\w_\.@#\/\*])+/.match("\xFF\xFE").should be_nil
+      {% end %}
     end
   end
 
@@ -132,9 +136,15 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      expect_raises(ArgumentError, "bad offset into UTF string") do
-        /foo/.match_at_byte_index("öfoo", 1)
-      end
+      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+        expect_raises(ArgumentError, "bad offset into UTF string") do
+          /foo/.match_at_byte_index("öfoo", 1)
+        end
+      {% else %}
+        md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
+        md.begin.should eq 1
+        md.byte_begin.should eq 2
+      {% end %}
 
       md = /foo/.match_at_byte_index("öfoo", 2).should_not be_nil
       md.begin.should eq 1
@@ -211,9 +221,17 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        expect_raises(ArgumentError, "UTF-8 error") do
-          /foo/.matches?("f\x96o")
-        end
+        {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+          expect_raises(ArgumentError, "UTF-8 error") do
+            /foo/.matches?("f\x96o")
+          end
+        {% else %}
+          /foo/.matches?("f\x96o").should be_false
+          /f\x96o/.matches?("f\x96o").should be_false
+          /f.o/.matches?("f\x96o").should be_false
+          /\bf\b/.matches?("f\x96o").should be_true
+          /\bo\b/.matches?("f\x96o").should be_true
+        {% end %}
       end
     end
 
@@ -259,9 +277,13 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      expect_raises(ArgumentError, "bad offset into UTF string") do
-        /foo/.matches_at_byte_index?("öfoo", 1)
-      end
+      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+        expect_raises(ArgumentError, "bad offset into UTF string") do
+          /foo/.matches_at_byte_index?("öfoo", 1)
+        end
+      {% else %}
+        /foo/.matches_at_byte_index?("öfoo", 1).should be_true
+      {% end %}
       /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end
 
