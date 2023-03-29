@@ -1,9 +1,13 @@
-/coverage/
-/.build/
 /Makefile.local
-/tmp/
+
+# Build artifacts
+/.build/
 /docs/
 /src/llvm/ext/llvm_ext.o
 /src/llvm/ext/llvm_ext.obj
 /src/llvm/ext/llvm_ext.dwo
 /man/*.gz
+
+# CI
+/coverage/
+/tmp/
