@@ -210,9 +210,9 @@ class Regex
   @[Flags]
   enum Options : UInt64
     # Case insensitive match.
-    IGNORE_CASE = 0x00000001
+    IGNORE_CASE = 0x0000_0001
 
-    DOTALL = 0x00000002
+    DOTALL = 0x0000_0002
 
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
     # - `PCRE_DOTALL` changes the "`.`" meaning
@@ -221,31 +221,32 @@ class Regex
     # Crystal modifies this meaning to have essentially one unique "`m`"
     # flag that activates both behaviours, so here we do the same by
     # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
+    # The same applies for PCRE2 except that the native values are 0x200 and 0x400.
 
     # Multiline matching.
     #
     # Equivalent to `MULTILINE | DOTALL` in PCRE and PCRE2.
-    MULTILINE = 0x0000006
+    MULTILINE = 0x0000_0006
 
     # Ignore white space and `#` comments.
-    EXTENDED = 0x0000008
+    EXTENDED = 0x0000_0008
 
     # Force pattern anchoring.
-    ANCHORED = 0x00000010
+    ANCHORED = 0x0000_0010
 
-    DOLLAR_ENDONLY = 0x00000020
-    FIRSTLINE      = 0x00040000
+    DOLLAR_ENDONLY = 0x0000_0020
+    FIRSTLINE      = 0x0004_0000
 
     # :nodoc:
-    UTF_8 = 0x00000800
+    UTF_8 = 0x0000_0800
     # :nodoc:
-    NO_UTF8_CHECK = 0x00002000
+    NO_UTF8_CHECK = 0x0000_2000
     # :nodoc:
-    DUPNAMES = 0x00080000
+    DUPNAMES = 0x000_80000
     # :nodoc:
-    UCP = 0x20000000
+    UCP = 0x2000_0000
 
-    ENDANCHORED = 0x80000000
+    ENDANCHORED = 0x8000_0000
     NO_JIT
   end
 
