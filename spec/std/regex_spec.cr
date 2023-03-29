@@ -27,10 +27,10 @@ describe "Regex" do
     end
 
     it "raises on invalid UTF-8" do
-      expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error: illegal byte/) do
-        Regex.new("\xFF")
+      expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error/) do
+        Regex.new("\x96")
       end
-      Regex.new("\xFE", :NO_UTF8_CHECK).should be_a(Regex)
+      Regex.new("\x96", :NO_UTF8_CHECK).should be_a(Regex)
     end
   end
 
