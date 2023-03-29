@@ -1,7 +1,7 @@
-coverage/
+/coverage/
 /.build/
 /Makefile.local
-/tmp
+/tmp/
 /docs/
 /src/llvm/ext/llvm_ext.o
 /src/llvm/ext/llvm_ext.obj
