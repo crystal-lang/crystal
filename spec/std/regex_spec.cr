@@ -25,6 +25,13 @@ describe "Regex" do
         {% end %}
       end
     end
+
+    it "raises on invalid UTF-8" do
+      expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error: illegal byte/) do
+        Regex.new("\xFF")
+      end
+      Regex.new("\xFE", :NO_UTF8_CHECK).should be_a(Regex)
+    end
   end
 
   it "#options" do

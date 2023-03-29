@@ -7,7 +7,7 @@ module Regex::PCRE
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, pcre_options(options) | LibPCRE::UTF8 | LibPCRE::NO_UTF8_CHECK | LibPCRE::DUPNAMES | LibPCRE::UCP, out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, pcre_options(options) | LibPCRE::UTF8 | LibPCRE::DUPNAMES | LibPCRE::UCP, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
     if @extra.null? && studyerrptr
@@ -53,7 +53,7 @@ module Regex::PCRE
   end
 
   protected def self.error_impl(source)
-    re = LibPCRE.compile(source, LibPCRE::UTF8 | LibPCRE::NO_UTF8_CHECK | LibPCRE::DUPNAMES, out errptr, out erroffset, nil)
+    re = LibPCRE.compile(source, LibPCRE::UTF8 | LibPCRE::DUPNAMES, out errptr, out erroffset, nil)
     if re
       {% unless flag?(:interpreted) %}
         LibPCRE.free.call re.as(Void*)
