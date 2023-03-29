@@ -33,11 +33,15 @@ module Regex::PCRE2
     if res = LibPCRE2.compile(source, source.bytesize, options, out errorcode, out erroroffset, nil)
       res
     else
-      message = String.new(256) do |buffer|
-        bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
-        {bytesize, 0}
-      end
+      message = get_error_message(errorcode)
       yield "#{message} at #{erroroffset}"
+    end
+  end
+
+  protected def self.get_error_message(errorcode)
+    String.new(256) do |buffer|
+      bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
+      {bytesize, 0}
     end
   end
 
