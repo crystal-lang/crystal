@@ -242,7 +242,7 @@ class Regex
     # :nodoc:
     NO_UTF8_CHECK = 0x0000_2000
     # :nodoc:
-    DUPNAMES = 0x000_80000
+    DUPNAMES = 0x0008_0000
     # :nodoc:
     UCP = 0x2000_0000
 
