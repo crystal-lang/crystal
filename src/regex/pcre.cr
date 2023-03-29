@@ -107,8 +107,19 @@ module Regex::PCRE
   # Calls `pcre_exec` C function, and handles returning value.
   private def internal_matches?(str, byte_index, options, ovector, ovector_size)
     ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_options(options) | LibPCRE::NO_UTF8_CHECK, ovector, ovector_size)
-    # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
-    ret >= 0
+
+    return true if ret >= 0
+
+    case error = LibPCRE::Error.new(ret)
+    when .nomatch?
+      return false
+    when .badutf8_offset?
+      raise ArgumentError.new("Regex match error: bad offset into UTF string")
+    when .badutf8?
+      raise ArgumentError.new("Regex match error: UTF-8 error")
+    else
+      raise Regex::Error.new("Regex match error: #{error}")
+    end
   end
 
   module MatchData

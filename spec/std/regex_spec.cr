@@ -223,7 +223,11 @@ describe "Regex" do
         LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
 
-        str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+        begin
+          str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+        rescue exc : Exception
+          exc.to_s.should eq("Regex match error: JIT_STACKLIMIT")
+        end
       {% else %}
         # Can't use regex literal because the *LIMIT_DEPTH verb is not supported in libpcre (only libpcre2)
         # and thus the compiler doesn't recognize it.

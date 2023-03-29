@@ -33,4 +33,46 @@ lib LibPCRE
   INFO_NAMETABLE     = 9
 
   $free = pcre_free : Void* ->
+
+  # Exec-time and get/set-time error codes
+  enum Error
+    NOMATCH         =  -1
+    NULL            =  -2
+    BADOPTION       =  -3
+    BADMAGIC        =  -4
+    UNKNOWN_OPCODE  =  -5
+    UNKNOWN_NODE    =  -5 # For backward compatibility
+    NOMEMORY        =  -6
+    NOSUBSTRING     =  -7
+    MATCHLIMIT      =  -8
+    CALLOUT         =  -9 # Never used by PCRE itself
+    BADUTF8         = -10 # Same for 8/16/32
+    BADUTF16        = -10 # Same for 8/16/32
+    BADUTF32        = -10 # Same for 8/16/32
+    BADUTF8_OFFSET  = -11 # Same for 8/16
+    BADUTF16_OFFSET = -11 # Same for 8/16
+    PARTIAL         = -12
+    BADPARTIAL      = -13
+    INTERNAL        = -14
+    BADCOUNT        = -15
+    DFA_UITEM       = -16
+    DFA_UCOND       = -17
+    DFA_UMLIMIT     = -18
+    DFA_WSSIZE      = -19
+    DFA_RECURSE     = -20
+    RECURSIONLIMIT  = -21
+    NULLWSLIMIT     = -22 # No longer actually used
+    BADNEWLINE      = -23
+    BADOFFSET       = -24
+    SHORTUTF8       = -25
+    SHORTUTF16      = -25 # Same for 8/16
+    RECURSELOOP     = -26
+    JIT_STACKLIMIT  = -27
+    BADMODE         = -28
+    BADENDIANNESS   = -29
+    DFA_BADRESTART  = -30
+    JIT_BADOPTION   = -31
+    BADLENGTH       = -32
+    UNSET           = -33
+  end
 end
