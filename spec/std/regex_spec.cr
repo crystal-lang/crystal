@@ -147,15 +147,15 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+      if {{ Regex::Engine.resolve.name == "Regex::PCRE" ? true : "Regex::Engine.version_number < {10, 34}".id }}
         expect_raises(ArgumentError, "bad offset into UTF string") do
           /foo/.match_at_byte_index("öfoo", 1)
         end
-      {% else %}
+      else
         md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
         md.begin.should eq 1
         md.byte_begin.should eq 2
-      {% end %}
+      end
 
       md = /foo/.match_at_byte_index("öfoo", 2).should_not be_nil
       md.begin.should eq 1
@@ -232,17 +232,17 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+        if {{ Regex::Engine.resolve.name == "Regex::PCRE" ? true : "Regex::Engine.version_number < {10, 34}".id }}
           expect_raises(ArgumentError, "UTF-8 error") do
             /foo/.matches?("f\x96o")
           end
-        {% else %}
+        else
           /foo/.matches?("f\x96o").should be_false
           /f\x96o/.matches?("f\x96o").should be_false
           /f.o/.matches?("f\x96o").should be_false
           /\bf\b/.matches?("f\x96o").should be_true
           /\bo\b/.matches?("f\x96o").should be_true
-        {% end %}
+        end
       end
     end
 
@@ -289,13 +289,13 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+      if {{ Regex::Engine.resolve.name == "Regex::PCRE" ? true : "Regex::Engine.version_number < {10, 34}".id }}
         expect_raises(ArgumentError, "bad offset into UTF string") do
           /foo/.matches_at_byte_index?("öfoo", 1)
         end
-      {% else %}
+      else
         /foo/.matches_at_byte_index?("öfoo", 1).should be_true
-      {% end %}
+      end
       /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end
 
