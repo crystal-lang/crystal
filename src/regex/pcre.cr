@@ -36,7 +36,7 @@ module Regex::PCRE
                 when .dupnames?       then LibPCRE::DUPNAMES
                 when .ucp?            then LibPCRE::UCP
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
-                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre2_compile`")
+                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre_compile`")
                 else
                   raise "unreachable"
                 end
@@ -55,17 +55,17 @@ module Regex::PCRE
     Regex::Options.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?    then raise ArgumentError.new("Invalid regex option IGNORE_CASE for `pcre2_match`")
-                when .multiline?      then raise ArgumentError.new("Invalid regex option MULTILINE for `pcre2_match`")
-                when .dotall?         then raise ArgumentError.new("Invalid regex option DOTALL for `pcre2_match`")
-                when .extended?       then raise ArgumentError.new("Invalid regex option EXTENDED for `pcre2_match`")
+                when .ignore_case?    then raise ArgumentError.new("Invalid regex option IGNORE_CASE for `pcre_exec`")
+                when .multiline?      then raise ArgumentError.new("Invalid regex option MULTILINE for `pcre_exec`")
+                when .dotall?         then raise ArgumentError.new("Invalid regex option DOTALL for `pcre_exec`")
+                when .extended?       then raise ArgumentError.new("Invalid regex option EXTENDED for `pcre_exec`")
                 when .anchored?       then LibPCRE::ANCHORED
-                when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre2_match`")
-                when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre2_match`")
-                when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre2_match`")
+                when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre_exec`")
+                when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre_exec`")
+                when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre_exec`")
                 when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
-                when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
-                when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
+                when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre_exec`")
+                when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre_exec`")
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
                 when .no_jit?         then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
                 else
