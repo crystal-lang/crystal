@@ -101,6 +101,26 @@ module Regex::PCRE2
     flag
   end
 
+  private def pcre2_match_options(options : Regex::MatchOptions)
+    flag = 0
+    Regex::MatchOptions.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .anchored?    then LibPCRE2::ANCHORED
+                when .endanchored? then LibPCRE2::ENDANCHORED
+                when .no_jit?      then LibPCRE2::NO_JIT
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+    unless options.none?
+      raise ArgumentError.new("Unknown Regex::MatchOption value: #{options}")
+    end
+    flag
+  end
+
   def finalize
     {% unless flag?(:interpreted) %}
       LibPCRE2.code_free @re

@@ -207,6 +207,10 @@ class Regex
     '=', '!', '<', '>', '|', ':', '-',
   }
 
+  # Represents compile options passed to `Regex.new`.
+  #
+  # This type is intended to be renamed to `CompileOptions`. Please use that
+  # name.
   @[Flags]
   enum Options : UInt64
     # Case insensitive match.
@@ -231,7 +235,7 @@ class Regex
     # Ignore white space and `#` comments.
     EXTENDED = 0x0000_0008
 
-    # Force pattern anchoring.
+    # Force pattern anchoring at the start of the subject.
     ANCHORED = 0x0000_0010
 
     DOLLAR_ENDONLY = 0x0000_0020
@@ -246,14 +250,40 @@ class Regex
     # :nodoc:
     UCP = 0x2000_0000
 
+    # Force pattern anchoring at the end of the subject.
+    #
+    # Unsupported with PCRE.
     ENDANCHORED = 0x8000_0000
+
+    # Disable JIT engine.
+    #
+    # Unsupported with PCRE.
     NO_JIT
   end
 
-  # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
+  alias CompileOptions = Options
+
+  # Represents options passed to regex match methods such as `Regex#match`.
+  @[Flags]
+  enum MatchOptions
+    # Force pattern anchoring at the start of the subject.
+    ANCHORED
+
+    # Force pattern anchoring at the end of the subject.
+    #
+    # Unsupported with PCRE.
+    ENDANCHORED
+
+    # Disable JIT engine.
+    #
+    # Unsupported with PCRE.
+    NO_JIT
+  end
+
+  # Returns a `Regex::CompileOptions` representing the optional flags applied to this `Regex`.
   #
   # ```
-  # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
+  # /ab+c/ix.options      # => Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::EXTENDED
   # /ab+c/ix.options.to_s # => "IGNORE_CASE | EXTENDED"
   # ```
   getter options : Options
@@ -268,9 +298,9 @@ class Regex
   # Creates a new `Regex` out of the given source `String`.
   #
   # ```
-  # Regex.new("^a-z+:\\s+\\w+")                   # => /^a-z+:\s+\w+/
-  # Regex.new("cat", Regex::Options::IGNORE_CASE) # => /cat/i
-  # options = Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
+  # Regex.new("^a-z+:\\s+\\w+")                          # => /^a-z+:\s+\w+/
+  # Regex.new("cat", Regex::CompileOptions::IGNORE_CASE) # => /cat/i
+  # options = Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::EXTENDED
   # Regex.new("dog", options) # => /dog/ix
   # ```
   def self.new(source : String, options : Options = Options::None)
@@ -475,12 +505,28 @@ class Regex
   # /(.)(.)/.match("abc", 1).try &.[2]   # => "c"
   # /(.)(.)/.match("クリスタル", 3).try &.[2] # => "ル"
   # ```
-  def match(str, pos = 0, options = Regex::Options::None) : MatchData?
+  def match(str, pos = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
       $~ = match_at_byte_index(str, byte_index, options)
     else
       $~ = nil
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match(str, pos = 0, *, options) : MatchData?
+    if byte_index = str.char_index_to_byte_index(pos)
+      $~ = match_at_byte_index(str, byte_index, options)
+    else
+      $~ = nil
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match(str, pos, _options) : MatchData?
+    match(str, pos, options: _options)
   end
 
   # Match at byte index. Matches a regular expression against `String`
@@ -493,12 +539,28 @@ class Regex
   # /(.)(.)/.match_at_byte_index("abc", 1).try &.[2]   # => "c"
   # /(.)(.)/.match_at_byte_index("クリスタル", 3).try &.[2] # => "ス"
   # ```
-  def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None) : MatchData?
+  def match_at_byte_index(str, byte_index = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : MatchData?
     if byte_index > str.bytesize
       $~ = nil
     else
       $~ = match_impl(str, byte_index, options)
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match_at_byte_index(str, byte_index = 0, *, options) : MatchData?
+    if byte_index > str.bytesize
+      $~ = nil
+    else
+      $~ = match_impl(str, byte_index, options)
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match_at_byte_index(str, byte_index, _options) : MatchData?
+    match_at_byte_index(str, byte_index, options: _options)
   end
 
   # Match at character index. It behaves like `#match`, however it returns `Bool` value.
@@ -511,7 +573,7 @@ class Regex
   # # `$~` is not set even if last match succeeds.
   # $~ # raises Exception
   # ```
-  def matches?(str, pos = 0, options = Regex::Options::None) : Bool
+  def matches?(str, pos = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
     if byte_index = str.char_index_to_byte_index(pos)
       matches_at_byte_index?(str, byte_index, options)
     else
@@ -519,12 +581,42 @@ class Regex
     end
   end
 
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches?(str, pos = 0, *, options) : Bool
+    if byte_index = str.char_index_to_byte_index(pos)
+      matches_at_byte_index?(str, byte_index, options)
+    else
+      false
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches?(str, pos, _options) : Bool
+    matches?(str, pos, options: _options)
+  end
+
   # Match at byte index. It behaves like `#match_at_byte_index`, however it returns `Bool` value.
   # It neither returns `MatchData` nor assigns it to the `$~` variable.
-  def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
+  def matches_at_byte_index?(str, byte_index = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
     return false if byte_index > str.bytesize
 
     matches_impl(str, byte_index, options)
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches_at_byte_index?(str, byte_index = 0, *, options) : Bool
+    return false if byte_index > str.bytesize
+
+    matches_impl(str, byte_index, options)
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches_at_byte_index?(str, byte_index, _options) : Bool
+    matches_at_byte_index?(str, byte_index, options: _options)
   end
 
   # Returns a `Hash` where the values are the names of capture groups and the

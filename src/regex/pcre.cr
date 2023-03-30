@@ -81,6 +81,27 @@ module Regex::PCRE
     flag
   end
 
+  private def pcre_match_options(options : Regex::MatchOptions)
+    flag = 0
+    Regex::MatchOptions.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .anchored?    then LibPCRE::ANCHORED
+                when .endanchored? then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .no_jit?      then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+
+    # Unnamed values are explicitly used PCRE options, just pass them through:
+    flag |= options.value
+
+    flag
+  end
+
   def finalize
     LibPCRE.free_study @extra
     {% unless flag?(:interpreted) %}

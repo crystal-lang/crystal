@@ -90,9 +90,16 @@ describe "Regex" do
       end
     end
 
-    it "with options" do
-      /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
-      /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
+        /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
+      end
+
+      it "Regex::Match options" do
+        /foo/.match(".foo", options: Regex::MatchOptions::ANCHORED).should be_nil
+        /foo/.match("foo", options: Regex::MatchOptions::ANCHORED).should_not be_nil
+      end
     end
   end
 
@@ -141,9 +148,16 @@ describe "Regex" do
       /foo/.match_at_byte_index("..foo", -2).should be_nil
     end
 
-    it "with options" do
-      /foo/.match_at_byte_index("..foo", 1, options: Regex::Options::ANCHORED).should be_nil
-      /foo/.match_at_byte_index(".foo", 1, options: Regex::Options::ANCHORED).should_not be_nil
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.match_at_byte_index("..foo", 1, options: Regex::Options::ANCHORED).should be_nil
+        /foo/.match_at_byte_index(".foo", 1, options: Regex::Options::ANCHORED).should_not be_nil
+      end
+
+      it "Regex::MatchOptions" do
+        /foo/.match_at_byte_index("..foo", 1, options: Regex::MatchOptions::ANCHORED).should be_nil
+        /foo/.match_at_byte_index(".foo", 1, options: Regex::MatchOptions::ANCHORED).should_not be_nil
+      end
     end
   end
 
@@ -211,9 +225,16 @@ describe "Regex" do
       end
     end
 
-    it "with options" do
-      /foo/.matches?(".foo", options: Regex::Options::ANCHORED).should be_false
-      /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.matches?(".foo", options: Regex::Options::ANCHORED).should be_false
+        /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
+      end
+
+      it "Regex::MatchOptions" do
+        /foo/.matches?(".foo", options: Regex::MatchOptions::ANCHORED).should be_false
+        /foo/.matches?("foo", options: Regex::MatchOptions::ANCHORED).should be_true
+      end
     end
 
     it "doesn't crash with a large single line string" do
@@ -257,9 +278,16 @@ describe "Regex" do
       /foo/.matches_at_byte_index?("..foo", -2).should be_false
     end
 
-    it "with options" do
-      /foo/.matches_at_byte_index?("..foo", 1, options: Regex::Options::ANCHORED).should be_false
-      /foo/.matches_at_byte_index?(".foo", 1, options: Regex::Options::ANCHORED).should be_true
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.matches_at_byte_index?("..foo", 1, options: Regex::Options::ANCHORED).should be_false
+        /foo/.matches_at_byte_index?(".foo", 1, options: Regex::Options::ANCHORED).should be_true
+      end
+
+      it "Regex::MatchOptions" do
+        /foo/.matches_at_byte_index?("..foo", 1, options: Regex::MatchOptions::ANCHORED).should be_false
+        /foo/.matches_at_byte_index?(".foo", 1, options: Regex::MatchOptions::ANCHORED).should be_true
+      end
     end
   end
 
