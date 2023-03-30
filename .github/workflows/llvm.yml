@@ -17,9 +17,6 @@ jobs:
       matrix:
         llvm_version: ["13.0.0", "14.0.0", "15.0.6"]
     name: "Test LLVM ${{ matrix.llvm_version }}"
-    env:
-      # LLVM_PATH is set by install-llvm-action
-      LLVM_CONFIG: "${{ env.LLVM_PATH }}/bin/llvm-config"
     steps:
       - name: Cache LLVM and Clang
         id: cache-llvm
@@ -35,6 +32,10 @@ jobs:
         with:
           version: "${{ matrix.llvm_version }}"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+
+      - name: Set LLVM_CONFIG
+        # LLVM_PATH is set by install-llvm-action
+        run: echo "LLVM_CONFIG=$LLVM_PATH/bin/llvm-config" >> $GITHUB_ENV
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
