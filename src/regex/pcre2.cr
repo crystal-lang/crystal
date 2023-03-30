@@ -23,7 +23,7 @@ module Regex::PCRE2
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
     options = pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
-    if version_number >= {10, 34}
+    if PCRE2.version_number >= {10, 34}
       options |= LibPCRE2::MATCH_INVALID_UTF
     end
     @re = PCRE2.compile(source, options) do |error_message|
