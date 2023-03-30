@@ -22,7 +22,11 @@ module Regex::PCRE2
 
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
-    @re = PCRE2.compile(source, pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::MATCH_INVALID_UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
+    options = pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
+    if version_number >= {10, 34}
+      options |= LibPCRE2::MATCH_INVALID_UTF
+    end
+    @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
     end
 
