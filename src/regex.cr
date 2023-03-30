@@ -212,8 +212,6 @@ class Regex
     # Case insensitive match.
     IGNORE_CASE = 0x0000_0001
 
-    DOTALL = 0x0000_0002
-
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
     # - `PCRE_DOTALL` changes the "`.`" meaning
     # - `PCRE_MULTILINE` changes "`^`" and "`$`" meanings
@@ -227,6 +225,8 @@ class Regex
     #
     # Equivalent to `MULTILINE | DOTALL` in PCRE and PCRE2.
     MULTILINE = 0x0000_0006
+
+    DOTALL = 0x0000_0002
 
     # Ignore white space and `#` comments.
     EXTENDED = 0x0000_0008
