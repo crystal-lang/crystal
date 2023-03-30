@@ -1,0 +1,36 @@
+name: Interpreter Test
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  test-interpreter_spec:
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.7.3-build
+    name: "Test Interpreter"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Test interpreter_spec
+        run: make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec
+
+  test-interpreter-std_spec:
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.7.3-build
+    name: "Test interpreter std_spec"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build compiler
+        run: make interpreter=1 release=1
+
+      - name: Run std_spec with interpreter
+        run: bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.xml
