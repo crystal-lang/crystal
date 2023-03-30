@@ -93,7 +93,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Install LLVM ${{ matrix.llvm_version }}
-        run: bin/ci with_build_env "sudo apt-get install libtinfo5" && mkdir -p llvm && curl -L ${{ matrix.llvm_url }} > llvm.tar.xz && tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
+        run: apt-get install libtinfo5 && mkdir -p llvm && curl -L ${{ matrix.llvm_url }} > llvm.tar.xz && tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
 
       - name: Test
         run: bin/ci with_build_env "make clean deps compiler_spec crystal std_spec LLVM_CONFIG=\$(pwd)/llvm/bin/llvm-config threads=1 junit_output=.junit/spec.xml"
