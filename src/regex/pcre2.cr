@@ -13,7 +13,7 @@ module Regex::PCRE2
     end
   end
 
-  def self.version_number : {Int32, Int32}
+  class_getter version_number : {Int32, Int32} = begin
     version = self.version
     dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
     space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
