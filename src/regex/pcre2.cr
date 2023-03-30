@@ -8,7 +8,7 @@ module Regex::PCRE2
 
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
-    @re = PCRE2.compile(source, pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
+    @re = PCRE2.compile(source, pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
       raise ArgumentError.new(error_message)
     end
 
@@ -41,7 +41,7 @@ module Regex::PCRE2
     end
   end
 
-  private def pcre2_options(options)
+  private def pcre2_compile_options(options)
     flag = 0
     Regex::Options.each do |option|
       if options.includes?(option)
@@ -57,6 +57,36 @@ module Regex::PCRE2
                 when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
                 when .dupnames?       then LibPCRE2::DUPNAMES
                 when .ucp?            then LibPCRE2::UCP
+                when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre2_compile`")
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+    unless options.none?
+      raise ArgumentError.new("Unknown Regex::Option value: #{options}")
+    end
+    flag
+  end
+
+  private def pcre2_match_options(options)
+    flag = 0
+    Regex::Options.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .ignore_case?    then raise ArgumentError.new("Invalid regex option IGNORE_CASE for `pcre2_match`")
+                when .multiline?      then raise ArgumentError.new("Invalid regex option MULTILINE for `pcre2_match`")
+                when .dotall?         then raise ArgumentError.new("Invalid regex option DOTALL for `pcre2_match`")
+                when .extended?       then raise ArgumentError.new("Invalid regex option EXTENDED for `pcre2_match`")
+                when .anchored?       then LibPCRE2::ANCHORED
+                when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre2_match`")
+                when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre2_match`")
+                when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre2_match`")
+                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
+                when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
                 when .no_jit?         then LibPCRE2::NO_JIT
                 else
@@ -191,7 +221,7 @@ module Regex::PCRE2
 
   private def match_data(str, byte_index, options)
     match_data = self.match_data
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)
