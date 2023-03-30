@@ -38,8 +38,8 @@ lib LibC
 
   struct SockaddrStorage
     ss_family : SaFamilyT
+    __ss_padding : StaticArray(Char, 118)
     __ss_align : ULong
-    __ss_padding : StaticArray(Char, 112)
   end
 
   struct Linger
