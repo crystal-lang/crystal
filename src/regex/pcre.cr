@@ -2,6 +2,17 @@ require "./lib_pcre"
 
 # :nodoc:
 module Regex::PCRE
+  def self.version : String
+    String.new(LibPCRE.version)
+  end
+
+  class_getter version_number : {Int32, Int32} = begin
+    version = self.version
+    dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
+    space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+  end
+
   private def initialize(*, _source source, _options @options)
     # PCRE's pattern must have their null characters escaped
     source = source.gsub('\u{0}', "\\0")

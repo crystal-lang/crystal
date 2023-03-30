@@ -22,6 +22,7 @@ lib LibPCRE
   fun full_info = pcre_fullinfo(code : Pcre, extra : PcreExtra, what : Int, where : Int*) : Int
   fun get_stringnumber = pcre_get_stringnumber(code : Pcre, string_name : UInt8*) : Int
   fun get_stringtable_entries = pcre_get_stringtable_entries(code : Pcre, name : UInt8*, first : UInt8**, last : UInt8**) : Int
+  fun version = pcre_version : LibC::Char*
 
   CONFIG_JIT = 9
 
