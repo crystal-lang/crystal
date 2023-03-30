@@ -465,6 +465,25 @@ module JSONNamespace
   end
 end
 
+module JSONDiscriminatorDefault
+  abstract class Shape
+    include JSON::Serializable
+    use_json_discriminator "type", {point: Point, circle: Circle}
+    property type = "point"
+  end
+
+  class Point < Shape
+    property x : Int32
+    property y : Int32
+  end
+
+  class Circle < Shape
+    property x : Int32
+    property y : Int32
+    property radius : Int32
+  end
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -1097,6 +1116,20 @@ describe "JSON mapping" do
       bar = bar.should be_a(JSONStrictDiscriminatorBar)
       bar.x.should be_a(JSONStrictDiscriminatorFoo)
       bar.y.should be_a(JSONStrictDiscriminatorFoo)
+    end
+
+    it "use default value" do
+      a = JSONDiscriminatorDefault::Shape.from_json(%({"x": 1, "y": 2}))
+      a.should be_a(JSONDiscriminatorDefault::Point)
+      a.x.should eq 1
+
+      b = JSONDiscriminatorDefault::Shape.from_json(%({"x": 1, "y": 2, "type": "point"}))
+      b.should be_a(JSONDiscriminatorDefault::Point)
+      b.x.should eq 1
+
+      c = JSONDiscriminatorDefault::Shape.from_json(%({"x": 1, "y": 2, "type": "circle", "radius": 3}))
+      c.should be_a(JSONDiscriminatorDefault::Circle)
+      c.as(JSONDiscriminatorDefault::Circle).radius.should eq 3
     end
   end
 

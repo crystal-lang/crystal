@@ -398,6 +398,25 @@ class YAMLStrictDiscriminatorBar < YAMLStrictDiscriminator
   property y : YAMLStrictDiscriminator
 end
 
+module YAMLDiscriminatorDefault
+  abstract class Shape
+    include YAML::Serializable
+    use_yaml_discriminator "type", {point: Point, circle: Circle}
+    property type = "point"
+  end
+
+  class Point < Shape
+    property x : Int32
+    property y : Int32
+  end
+
+  class Circle < Shape
+    property x : Int32
+    property y : Int32
+    property radius : Int32
+  end
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -998,6 +1017,20 @@ describe "YAML::Serializable" do
       bar = bar.should be_a(YAMLStrictDiscriminatorBar)
       bar.x.should be_a(YAMLStrictDiscriminatorFoo)
       bar.y.should be_a(YAMLStrictDiscriminatorFoo)
+    end
+
+    it "use default value" do
+      a = YAMLDiscriminatorDefault::Shape.from_yaml(%({"x": 1, "y": 2}))
+      a.should be_a(YAMLDiscriminatorDefault::Point)
+      a.x.should eq 1
+
+      b = YAMLDiscriminatorDefault::Shape.from_yaml(%({"x": 1, "y": 2, "type": "point"}))
+      b.should be_a(YAMLDiscriminatorDefault::Point)
+      b.x.should eq 1
+
+      c = YAMLDiscriminatorDefault::Shape.from_yaml(%({"x": 1, "y": 2, "type": "circle", "radius": 3}))
+      c.should be_a(YAMLDiscriminatorDefault::Circle)
+      c.as(YAMLDiscriminatorDefault::Circle).radius.should eq 3
     end
   end
 

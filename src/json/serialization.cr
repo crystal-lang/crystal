@@ -451,6 +451,17 @@ module JSON
           end
         end
 
+        discriminator_value ||= begin
+          \{% begin %}
+            \{% ivar = @type.instance_vars.find { |ivar| ivar.name.stringify == {{field.id.stringify}} } %}
+            \{% if ivar && ivar.has_default_value? %}
+              \{{ ivar.default_value }}
+            \{% else %}
+              nil
+            \{% end %}
+          \{% end %}
+        end
+
         unless discriminator_value
           raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
         end

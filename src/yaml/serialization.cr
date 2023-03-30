@@ -440,6 +440,34 @@ module YAML
           end
         end
 
+        discriminator_value = begin
+          \{% begin %}
+            \{% ivar = @type.instance_vars.find { |ivar| ivar.name.stringify == {{field.id.stringify}} } %}
+            \{% if ivar && ivar.has_default_value? %}
+              \{{ ivar.default_value }}
+            \{% else %}
+              nil
+            \{% end %}
+          \{% end %}
+        end
+
+        if discriminator_value
+          {% for key, value in mapping %}
+            {% if key.is_a?(Path) %}
+              {% key = key.resolve %}
+            {% end %}
+            {% if key.is_a?(NumberLiteral) %}
+              # An enum value is always a typed NumberLiteral and stringifies with type
+              # suffix unless it's Int32.
+              # TODO: Replace this workaround with NumberLiteral#to_number after the next release
+              {% key = key.id.split("_")[0] %}
+            {% end %}
+            if discriminator_value == {{key.id.stringify}}
+              return {{value.id}}.new(ctx, node)
+            end
+          {% end %}
+        end
+
         node.raise "Missing YAML discriminator field '{{field.id}}'"
       end
     end
