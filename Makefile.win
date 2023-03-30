@@ -104,6 +104,10 @@ compiler_spec: $(O)\compiler_spec.exe ## Run compiler specs
 primitives_spec: $(O)\primitives_spec.exe ## Run primitives specs
 	$(O)\primitives_spec $(SPEC_FLAGS)
 
+.PHONY: interpreter_spec
+interpreter_spec: $(O)\interpreter_spec ## Run interpreter specs
+	$(O)\interpreter_spec $(SPEC_FLAGS)
+
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)\std_spec.exe $(O)\compiler_spec.exe $(O)\crystal.exe
@@ -184,6 +188,11 @@ $(O)\compiler_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
+
+$(O)/interpreter_spec: $(SOURCES) $(SPEC_SOURCES)
+	$(eval interpreter=1)
+	@$(call MKDIR, "$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr
 
 $(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 	$(call check_llvm_config)
