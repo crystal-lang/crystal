@@ -7,7 +7,7 @@ module Regex::PCRE
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, pcre_options(options) | LibPCRE::UTF8 | LibPCRE::NO_UTF8_CHECK | LibPCRE::DUPNAMES | LibPCRE::UCP, out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, pcre_compile_options(options) | LibPCRE::UTF8 | LibPCRE::NO_UTF8_CHECK | LibPCRE::DUPNAMES | LibPCRE::UCP, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
     if @extra.null? && studyerrptr
@@ -19,19 +19,55 @@ module Regex::PCRE
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
-  private def pcre_options(options)
+  private def pcre_compile_options(options)
     flag = 0
     Regex::Options.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?   then LibPCRE::CASELESS
-                when .multiline?     then LibPCRE::DOTALL | LibPCRE::MULTILINE
-                when .extended?      then LibPCRE::EXTENDED
-                when .anchored?      then LibPCRE::ANCHORED
-                when .utf_8?         then LibPCRE::UTF8
-                when .no_utf8_check? then LibPCRE::NO_UTF8_CHECK
-                when .dupnames?      then LibPCRE::DUPNAMES
-                when .ucp?           then LibPCRE::UCP
+                when .ignore_case?    then LibPCRE::CASELESS
+                when .multiline?      then LibPCRE::DOTALL | LibPCRE::MULTILINE
+                when .dotall?         then LibPCRE::DOTALL
+                when .extended?       then LibPCRE::EXTENDED
+                when .anchored?       then LibPCRE::ANCHORED
+                when .dollar_endonly? then LibPCRE::DOLLAR_ENDONLY
+                when .firstline?      then LibPCRE::FIRSTLINE
+                when .utf_8?          then LibPCRE::UTF8
+                when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
+                when .dupnames?       then LibPCRE::DUPNAMES
+                when .ucp?            then LibPCRE::UCP
+                when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre_compile`")
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+
+    # Unnamed values are explicitly used PCRE options, just pass them through:
+    flag |= options.value
+
+    flag
+  end
+
+  private def pcre_match_options(options)
+    flag = 0
+    Regex::Options.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .ignore_case?    then raise ArgumentError.new("Invalid regex option IGNORE_CASE for `pcre_exec`")
+                when .multiline?      then raise ArgumentError.new("Invalid regex option MULTILINE for `pcre_exec`")
+                when .dotall?         then raise ArgumentError.new("Invalid regex option DOTALL for `pcre_exec`")
+                when .extended?       then raise ArgumentError.new("Invalid regex option EXTENDED for `pcre_exec`")
+                when .anchored?       then LibPCRE::ANCHORED
+                when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre_exec`")
+                when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre_exec`")
+                when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre_exec`")
+                when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
+                when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre_exec`")
+                when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre_exec`")
+                when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .no_jit?         then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
                 else
                   raise "unreachable"
                 end
@@ -106,7 +142,7 @@ module Regex::PCRE
 
   # Calls `pcre_exec` C function, and handles returning value.
   private def internal_matches?(str, byte_index, options, ovector, ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_options(options) | LibPCRE::NO_UTF8_CHECK, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_match_options(options) | LibPCRE::NO_UTF8_CHECK, ovector, ovector_size)
     # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
     ret >= 0
   end
