@@ -189,7 +189,7 @@ $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
 
-$(O)/interpreter_spec: $(SOURCES) $(SPEC_SOURCES)
+$(O)\interpreter_spec: $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@$(call MKDIR, "$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr
