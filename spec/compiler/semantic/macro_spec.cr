@@ -296,6 +296,81 @@ describe "Semantic: macro" do
     ex.to_s.should_not contain("expanding macro")
   end
 
+  it "executes raise inside macro, with node, pointing at the correct node (#7147)" do
+    ex = assert_error(<<-'CRYSTAL', "node '\"this\"' is here!")
+      macro raise_on(node)
+        {% node.raise "node '#{node}' is here!" %}
+      end
+
+      macro will_raise_soon(node)
+        # this is a helper macro
+        raise_on {{node}}
+      end
+
+      macro will_raise(node)
+        # this is a helper macro
+        will_raise_soon {{node}}
+      end
+
+      will_raise "this"
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 15"
+  end
+
+  it "executes raise inside more complex macro, with node, pointing at the correct node (#7147)" do
+    ex = assert_error(<<-'CRYSTAL', "Value method must be an instance method")
+      class ExampleClass
+        def self.value : Nil
+        end
+      end
+
+      module ExampleModule
+        macro calculate_value
+          {% begin %}
+            {%
+              if method = ExampleClass.class.methods.find &.name.stringify.==("value")
+                method.raise "Value method must be an instance method."
+              else
+                raise "BUG: Didn't find value method."
+              end
+            %}
+          {% end %}
+        end
+
+        class_getter value : Nil do
+          calculate_value
+        end
+      end
+
+      ExampleModule.value
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 2"
+  end
+
+  it "executes raise inside macro, with node, falls back on a different node if no location info is available (#7147)" do
+    ex = assert_error(<<-'CRYSTAL', "problem expanding macro 'will_raise'")
+      macro raise_on(node)
+        {% node.raise "node '#{node}' is here!" %}
+      end
+
+      macro will_raise_soon(node)
+        # this is a helper macro
+        raise_on {{node}}
+      end
+
+      macro will_raise(node)
+        # this is a helper macro
+        will_raise_soon {{node}}
+      end
+
+      will_raise :this
+    CRYSTAL
+
+    ex.to_s.should contain "macro defined in :10:3"
+  end
+
   it "executes raise inside macro, with empty message (#8631)" do
     assert_error(<<-CRYSTAL, "")
       macro foo
