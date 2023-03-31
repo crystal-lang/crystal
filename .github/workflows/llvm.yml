@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         llvm_version: ["13.0.0", "14.0.0", "15.0.6"]
-    name: "Test LLVM ${{ matrix.llvm_version }}"
+    name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
         uses: actions/checkout@v3
