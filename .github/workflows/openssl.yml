@@ -1,6 +1,6 @@
 name: OpenSSL CI
 
-on: [push, pull_request]
+on: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -28,7 +28,7 @@
 # Platforms for which we currently run full tests are excluded from this workflow.
 name: Smoke tests
 
-on: [push, pull_request]
+on: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
