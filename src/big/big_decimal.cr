@@ -220,10 +220,6 @@ struct BigDecimal < Number
     div other
   end
 
-  def /(other : BigDecimal) : BigDecimal
-    div other
-  end
-
   Number.expand_div [BigInt, BigFloat], BigDecimal
   Number.expand_div [BigRational], BigRational
 
