@@ -455,7 +455,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def eval_macro(node, &)
     yield
   rescue ex : MacroRaiseException
-    node.raise ex.message, exception_type: MacroRaiseException
+    raise ex
   rescue ex : Crystal::CodeError
     node.raise "expanding macro", ex
   end

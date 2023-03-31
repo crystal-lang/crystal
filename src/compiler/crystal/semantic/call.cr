@@ -1101,6 +1101,8 @@ class Crystal::Call
 
   def bubbling_exception(&)
     yield
+  rescue ex : Crystal::MacroRaiseException
+    ::raise ex
   rescue ex : Crystal::CodeError
     if obj = @obj
       if name == "initialize"
