@@ -1,4 +1,4 @@
-name: LLVM Test
+name: LLVM CI
 
 on: [push, pull_request]
 
