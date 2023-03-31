@@ -37,7 +37,7 @@ jobs:
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
       - name: Install libtinfo5
-        run: apt-get install -y libtinfo5
+        run: sudo apt-get install -y libtinfo5
         if: "${{ matrix.llvm_version == '16.0.0' }}"
 
       - name: Set LLVM_CONFIG
