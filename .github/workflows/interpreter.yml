@@ -19,18 +19,46 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Test interpreter_spec
-        run: make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec
+        run: make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec --junit_output .junit/interpreter_spec.xml
 
-  test-interpreter-std_spec:
+  build-interpreter:
     runs-on: ubuntu-22.04
     container:
       image: crystallang/crystal:1.7.3-build
-    name: "Test interpreter std_spec"
+    name: Build interpreter
     steps:
       - uses: actions/checkout@v3
 
       - name: Build compiler
         run: make interpreter=1 release=1
 
+      - name: Upload compiler artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: crystal-interpreter
+          path: |
+            .build/crystal
+
+  test-interpreter-std_spec:
+    needs: build-interpreter
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.7.3-build
+    strategy:
+      matrix:
+        part: [0, 1, 2, 3]
+    name: "Test std_spec with interpreter (${{ matrix.part }})"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download compiler artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: crystal-interpreter
+          path: .build/
+
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+
       - name: Run std_spec with interpreter
-        run: bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.xml
+        run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
