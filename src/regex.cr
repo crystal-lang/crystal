@@ -254,11 +254,6 @@ class Regex
     #
     # Unsupported with PCRE.
     ENDANCHORED = 0x8000_0000
-
-    # Disable JIT engine.
-    #
-    # Unsupported with PCRE.
-    NO_JIT
   end
 
   alias CompileOptions = Options
