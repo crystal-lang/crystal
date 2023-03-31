@@ -46,10 +46,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build libllvm_ext
-        run: make -B deps
+        run: make -B deps LLVM_CONFIG=$LLVM_PATH/bin/llvm-config
 
       - name: Test compiler_spec
-        run: make compiler_spec junit_output=.junit/compiler_spec.xml
+        run: make compiler_spec junit_output=.junit/compiler_spec.xml LLVM_CONFIG=$LLVM_PATH/bin/llvm-config
 
       - name: Integration test
-        run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
+        run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml LLVM_CONFIG=$LLVM_PATH/bin/llvm-config
