@@ -2059,7 +2059,18 @@ class Array(T)
     @capacity - @offset_to_buffer
   end
 
-  private def calculate_new_capacity(new_size = @capacity + 1)
+  # behaves like `calculate_new_capacity(@capacity + 1)`
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    if @capacity < CAPACITY_THRESHOLD
+      @capacity * 2
+    else
+      @capacity + (@capacity + 3 * CAPACITY_THRESHOLD) // 4
+    end
+  end
+
+  private def calculate_new_capacity(new_size)
     new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
     while new_capacity < new_size
       if new_capacity < CAPACITY_THRESHOLD
