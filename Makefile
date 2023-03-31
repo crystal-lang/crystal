@@ -198,7 +198,7 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec: $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
