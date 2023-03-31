@@ -58,7 +58,6 @@ module Regex::PCRE2
                 when .dupnames?       then LibPCRE2::DUPNAMES
                 when .ucp?            then LibPCRE2::UCP
                 when .endanchored?    then LibPCRE2::ENDANCHORED
-                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre2_compile`")
                 else
                   raise "unreachable"
                 end
@@ -88,7 +87,6 @@ module Regex::PCRE2
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
-                when .no_jit?         then LibPCRE2::NO_JIT
                 else
                   raise "unreachable"
                 end

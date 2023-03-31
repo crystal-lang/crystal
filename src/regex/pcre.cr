@@ -36,7 +36,6 @@ module Regex::PCRE
                 when .dupnames?       then LibPCRE::DUPNAMES
                 when .ucp?            then LibPCRE::UCP
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
-                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre_compile`")
                 else
                   raise "unreachable"
                 end
@@ -67,7 +66,6 @@ module Regex::PCRE
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre_exec`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre_exec`")
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
-                when .no_jit?         then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
                 else
                   raise "unreachable"
                 end
