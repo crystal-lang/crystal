@@ -200,6 +200,26 @@ struct BigDecimal < Number
     self * BigDecimal.new(other)
   end
 
+  def %(other : BigDecimal) : BigDecimal
+    if @scale > other.scale
+      scaled = other.scale_to(self)
+      BigDecimal.new(@value % scaled.value, @scale)
+    elsif @scale < other.scale
+      scaled = scale_to(other)
+      BigDecimal.new(scaled.value % other.value, other.scale)
+    else
+      BigDecimal.new(@value % other.value, @scale)
+    end
+  end
+
+  def %(other : Int)
+    self % BigDecimal.new(other)
+  end
+
+  def /(other : BigDecimal) : BigDecimal
+    div other
+  end
+
   def /(other : BigDecimal) : BigDecimal
     div other
   end
