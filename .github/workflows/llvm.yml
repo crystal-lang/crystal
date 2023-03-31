@@ -34,11 +34,13 @@ jobs:
           version: "${{ matrix.llvm_version }}"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
-      - run: ls -l $LLVM_PATH/bin
-
       - name: Set LLVM_CONFIG
         # LLVM_PATH is set by install-llvm-action
         run: echo "LLVM_CONFIG=$LLVM_PATH/bin/llvm-config" >> $GITHUB_ENV
+
+      - run: ls -l $LLVM_PATH/bin
+      - run: file $LLVM_PATH/bin/llvm-config
+      - run: file $LLVM_CONFIG
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
