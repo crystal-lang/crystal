@@ -15,15 +15,17 @@ module Crystal
     end
 
     def self.description
-      formatted_sha = "[#{build_commit}] " if build_commit
-      formatted_date = "(#{date})" unless date.empty?
+      details = [version]
+      details << "[#{build_commit}]" if build_commit
+      details << "(#{date})" unless date.empty?
+
+      development_msg = "\n\nThe compiler was not built in release mode." unless release_mode?
 
       <<-DOC
-        Crystal #{version} #{formatted_sha}#{formatted_date}
+        Crystal #{details.join(" ")}
 
         LLVM: #{llvm_version}
-        Default target: #{self.host_target}
-        Release mode: #{self.release_mode}
+        Default target: #{self.host_target}#{development_msg}
         DOC
     end
 
@@ -43,7 +45,7 @@ module Crystal
       end
     end
 
-    def self.release_mode
+    def self.release_mode?
       {{ flag?(:release) }}
     end
 
