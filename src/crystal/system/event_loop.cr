@@ -34,7 +34,7 @@ end
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
 {% elsif flag?(:unix) %}
-  require "./unix/event_loop_libevent"
+  require "./unix/event_loop"
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"
 {% else %}

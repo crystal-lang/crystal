@@ -6,6 +6,11 @@ lib LibC
     tv_usec : SusecondsT
   end
 
+  struct Timespec64
+    tv_sec : Int64
+    tv_usec : SusecondsT
+  end
+
   struct Timezone
     tz_minuteswest : Int
     tz_dsttime : Int
