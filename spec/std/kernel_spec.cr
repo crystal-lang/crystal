@@ -276,7 +276,7 @@ describe "hardware exception" do
     end
   {% end %}
 
-  pending_win32 "detects stack overflow on a fiber stack" do
+  it "detects stack overflow on a fiber stack" do
     status, _, error = compile_and_run_source <<-'CRYSTAL'
       def foo
         y = StaticArray(Int8, 512).new(0)

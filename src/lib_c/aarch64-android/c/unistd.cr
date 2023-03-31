@@ -30,6 +30,7 @@ lib LibC
   fun getpid : PidT
   fun getppid : PidT
   fun getuid : UidT
+  fun setuid(uid : UidT) : Int
   fun isatty(__fd : Int) : Int
   fun ttyname_r(__fd : Int, __buf : Char*, __buf_size : SizeT) : Int
   fun lchown(__path : Char*, __owner : UidT, __group : GidT) : Int
