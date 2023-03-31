@@ -36,6 +36,10 @@ jobs:
           version: "${{ matrix.llvm_version }}"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
+      - name: Install libtinfo5
+        run: apt-get install -y libtinfo5
+        if: "{{ matrix.llvm_version == '16.0.0' }}"
+
       - name: Set LLVM_CONFIG
         # LLVM_PATH is set by install-llvm-action
         run: echo "LLVM_CONFIG=$LLVM_PATH/bin/llvm-config" >> $GITHUB_ENV
