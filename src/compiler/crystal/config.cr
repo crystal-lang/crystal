@@ -16,11 +16,14 @@ module Crystal
 
     def self.description
       formatted_sha = "[#{build_commit}] " if build_commit
+      formatted_date = "(#{date})" unless date.empty?
+      release_msg = "\nRelease mode: false" unless release_mode
+
       <<-DOC
-        Crystal #{version} #{formatted_sha}(#{date})
+        Crystal #{version} #{formatted_sha}#{formatted_date}
 
         LLVM: #{llvm_version}
-        Default target: #{self.host_target}
+        Default target: #{self.host_target}#{release_msg}
         DOC
     end
 
@@ -38,6 +41,14 @@ module Crystal
       else
         ""
       end
+    end
+
+    def self.release_mode
+      {% if flag?(:release) %}
+        true
+      {% else %}
+        false
+      {% end %}
     end
 
     @@host_target : Crystal::Codegen::Target?
