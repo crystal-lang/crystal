@@ -27,6 +27,14 @@ describe "File" do
     end
   end
 
+  it "raises if opening a non-existent file" do
+    with_tempfile("test_nonexistent.txt") do |file|
+      expect_raises(File::NotFoundError) do
+        File.open(file)
+      end
+    end
+  end
+
   it "reads entire file" do
     str = File.read datapath("test_file.txt")
     str.should eq("Hello World\n" * 20)
@@ -879,7 +887,15 @@ describe "File" do
   pending_win32 "raises when reading a file with no permission" do
     with_tempfile("file.txt") do |path|
       File.touch(path)
-      File.chmod(path, 0)
+      File.chmod(path, File::Permissions::None)
+      {% if flag?(:unix) %}
+        # TODO: Find a better way to execute this spec when running as privileged
+        # user. Compiling a program and running a separate process would be a
+        # lot of overhead.
+        if LibC.getuid == 0
+          pending! "Spec cannot run as superuser"
+        end
+      {% end %}
       expect_raises(File::AccessDeniedError) { File.read(path) }
     end
   end

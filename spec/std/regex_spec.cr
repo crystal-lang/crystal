@@ -19,8 +19,8 @@ describe "Regex" do
         {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
           Regex.new("^/foo$", Regex::Options.new(0x00000020)).matches?("/foo\n").should be_false
         {% else %}
-          expect_raises ArgumentError, "Unknown Regex::Option value: 32" do
-            Regex.new("", Regex::Options.new(32))
+          expect_raises ArgumentError, "Unknown Regex::Option value: 64" do
+            Regex.new("", Regex::Options.new(0x00000040))
           end
         {% end %}
       end
