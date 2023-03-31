@@ -583,6 +583,13 @@ class Deque(T)
 
   private INITIAL_CAPACITY = 4
 
+  # behaves like `calculate_new_capacity(@capacity + 1)`
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    @capacity * 2
+  end
+
   private def calculate_new_capacity(new_size)
     new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
     while new_capacity < new_size
