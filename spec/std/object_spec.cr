@@ -162,6 +162,14 @@ private class DefEquals
   def_equals @x
 end
 
+private struct TestMutableStruct
+  getter x = 0
+
+  def foo
+    @x += 1
+  end
+end
+
 describe Object do
   describe "delegate" do
     it "delegates" do
@@ -542,6 +550,12 @@ describe Object do
       expect_raises(NilAssertionError, "custom message") do
         nil.not_nil!("custom message")
       end
+    end
+
+    it "does not copy its receiver when it is a value (#13263)" do
+      x = TestMutableStruct.new
+      x.not_nil!.foo.should eq(1)
+      x.not_nil!.foo.should eq(2)
     end
   end
 end
