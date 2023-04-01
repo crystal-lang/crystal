@@ -556,7 +556,7 @@ describe Object do
       x = TestMutableStruct.new
       x.not_nil!.foo.should eq(1)
       x.not_nil!.foo.should eq(2)
-      x.foo.should eq(2)
+      x.foo.should eq(3)
     end
   end
 end
