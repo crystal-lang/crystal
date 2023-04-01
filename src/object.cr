@@ -231,6 +231,7 @@ class Object
     # FIXME: the above param-less overload cannot be expressed as an optional
     # parameter here, because that would copy the receiver if it is a struct;
     # see https://github.com/crystal-lang/crystal/issues/13263#issuecomment-1492885817
+    # and also #13265
     self
   end
 
