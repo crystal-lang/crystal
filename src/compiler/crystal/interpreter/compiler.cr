@@ -1620,7 +1620,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                      begin
                        create_compiled_def(call, target_def)
                      rescue ex : Crystal::TypeException
-                       node.raise ex, inner: ex
+                       node.raise ex.message, inner: ex
                      end
       call compiled_def, node: node
 
@@ -1871,7 +1871,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                    begin
                      create_compiled_def(node, target_def)
                    rescue ex : Crystal::TypeException
-                     node.raise ex, inner: ex
+                     node.raise ex.message, inner: ex
                    end
 
     if (block = node.block) && !block.fun_literal

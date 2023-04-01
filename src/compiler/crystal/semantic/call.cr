@@ -1101,8 +1101,16 @@ class Crystal::Call
 
   def bubbling_exception(&)
     yield
-  rescue ex : Crystal::MacroRaiseException
+  rescue ex : Crystal::TopLevelMacroRaiseException
+    # Sets the last frame to the method call that includes the top level macro raise re-raised within `SemanticVisitor#eval_macro`.
+    # The first frame will be the actual actual `#raise` method call.
+    ex.inner = Crystal::MacroRaiseException.for_node self, ex.message
+
     ::raise ex
+  rescue ex : Crystal::MacroRaiseException
+    # Raise another exception on this node, keeping the original as the inner exception.
+    # This will insert this node into the trace as the new first frame.
+    self.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
     if obj = @obj
       if name == "initialize"
