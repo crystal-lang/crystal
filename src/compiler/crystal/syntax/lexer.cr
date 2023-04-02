@@ -117,7 +117,6 @@ module Crystal
         if char_sequence?('<', 'l', 'o', 'c', ':', column_increment: false)
           next_char_no_column_increment
           consume_loc_pragma
-          start = current_pos
         else
           if @doc_enabled && @comment_is_doc
             consume_doc
@@ -219,7 +218,7 @@ module Crystal
           when '='
             next_char :OP_LT_LT_EQ
           when '-'
-            consume_heredoc_start
+            consume_heredoc_start(start)
           else
             @token.type = :OP_LT_LT
           end
@@ -491,7 +490,6 @@ module Crystal
           @token.type = :OP_CARET
         end
       when '\''
-        start = current_pos
         line = @line_number
         column = @column_number
         @token.type = :CHAR
@@ -551,7 +549,6 @@ module Crystal
       when '0'..'9'
         scan_number start
       when '@'
-        start = current_pos
         case next_char
         when '['
           next_char :OP_AT_LSQUARE
@@ -562,7 +559,6 @@ module Crystal
           consume_variable :INSTANCE_VAR, start
         end
       when '$'
-        start = current_pos
         case next_char
         when '~'
           next_char :OP_DOLLAR_TILDE
@@ -1036,7 +1032,6 @@ module Crystal
         scan_ident(start)
       else
         if current_char.ascii_uppercase?
-          start = current_pos
           while ident_part?(next_char)
             # Nothing to do
           end
@@ -2485,9 +2480,7 @@ module Crystal
       end
     end
 
-    private def consume_heredoc_start
-      start = current_pos - 2
-
+    private def consume_heredoc_start(start)
       has_single_quote = false
       found_closing_single_quote = false
 
