@@ -188,7 +188,7 @@ $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --debug
+	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr --release
 
 $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
