@@ -164,15 +164,13 @@ module Crystal
           unknown_token
         end
       when '\n'
-        @token.type = :NEWLINE
-        next_char
+        next_char :NEWLINE
         incr_line_number
         reset_regex_flags = false
         consume_newlines
       when '\r'
         if next_char == '\n'
-          next_char
-          @token.type = :NEWLINE
+          next_char :NEWLINE
           incr_line_number
           reset_regex_flags = false
           consume_newlines
@@ -596,8 +594,7 @@ module Crystal
             return check_ident_or_keyword(:asm, start)
           when '?'
             next_char
-            next_char
-            @token.type = :IDENT
+            next_char :IDENT
             @token.value = :as_question
             return @token
           else
@@ -727,8 +724,7 @@ module Crystal
               # scan_ident
             end
           else
-            next_char
-            @token.type = :IDENT
+            next_char :IDENT
             @token.value = :in
             return @token
           end
@@ -990,32 +986,28 @@ module Crystal
           when 'D'
             if char_sequence?('I', 'R', '_', '_')
               unless ident_part_or_end?(peek_next_char)
-                next_char
-                @token.type = :MAGIC_DIR
+                next_char :MAGIC_DIR
                 return @token
               end
             end
           when 'E'
             if char_sequence?('N', 'D', '_', 'L', 'I', 'N', 'E', '_', '_')
               unless ident_part_or_end?(peek_next_char)
-                next_char
-                @token.type = :MAGIC_END_LINE
+                next_char :MAGIC_END_LINE
                 return @token
               end
             end
           when 'F'
             if char_sequence?('I', 'L', 'E', '_', '_')
               unless ident_part_or_end?(peek_next_char)
-                next_char
-                @token.type = :MAGIC_FILE
+                next_char :MAGIC_FILE
                 return @token
               end
             end
           when 'L'
             if char_sequence?('I', 'N', 'E', '_', '_')
               unless ident_part_or_end?(peek_next_char)
-                next_char
-                @token.type = :MAGIC_LINE
+                next_char :MAGIC_LINE
                 return @token
               end
             end
@@ -1098,8 +1090,7 @@ module Crystal
 
     def consume_whitespace
       start_pos = current_pos
-      @token.type = :SPACE
-      next_char
+      next_char :SPACE
       while true
         case current_char
         when ' ', '\t'
@@ -1154,8 +1145,7 @@ module Crystal
       if ident_part_or_end?(peek_next_char)
         scan_ident(start)
       else
-        next_char
-        @token.type = :IDENT
+        next_char :IDENT
         @token.value = keyword
       end
       @token
@@ -1442,8 +1432,7 @@ module Crystal
           @token.delimiter_state = delimiter_state.with_open_count_delta(-1)
         end
       when string_nest
-        next_char
-        @token.type = :STRING
+        next_char :STRING
         @token.value = string_nest.to_s
         @token.delimiter_state = delimiter_state.with_open_count_delta(+1)
       when '\\'
@@ -1451,8 +1440,7 @@ module Crystal
           if delimiter_state.kind.regex?
             char = next_char
             raise_unterminated_quoted delimiter_state if char == '\0'
-            next_char
-            @token.type = :STRING
+            next_char :STRING
             if char == '/' || char.ascii_whitespace?
               @token.value = char.to_s
             else
@@ -1486,21 +1474,18 @@ module Crystal
               string_token_escape_value "\e"
             when 'x'
               value = consume_string_hex_escape
-              next_char
-              @token.type = :STRING
+              next_char :STRING
               @token.value = String.new(1) do |buffer|
                 buffer[0] = value
                 {1, 0}
               end
             when 'u'
               value = consume_string_unicode_escape
-              next_char
-              @token.type = :STRING
+              next_char :STRING
               @token.value = value
             when '0', '1', '2', '3', '4', '5', '6', '7'
               value = consume_octal_escape(char)
-              next_char
-              @token.type = :STRING
+              next_char :STRING
               @token.value = String.new(1) do |buffer|
                 buffer[0] = value
                 {1, 0}
@@ -1544,16 +1529,13 @@ module Crystal
         if delimiter_state.allow_escapes
           if peek_next_char == '{'
             next_char
-            next_char
-            @token.type = :INTERPOLATION_START
+            next_char :INTERPOLATION_START
           else
-            next_char
-            @token.type = :STRING
+            next_char :STRING
             @token.value = "#"
           end
         else
-          next_char
-          @token.type = :STRING
+          next_char :STRING
           @token.value = "#"
         end
       when '\r', '\n'
@@ -1716,8 +1698,7 @@ module Crystal
       if current_char == '\\' && peek_next_char == '%'
         beginning_of_line = false
         next_char
-        next_char
-        @token.type = :MACRO_LITERAL
+        next_char :MACRO_LITERAL
         @token.value = "%"
         @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         @token.raw = "%"
@@ -1728,14 +1709,12 @@ module Crystal
         case next_char
         when '{'
           beginning_of_line = false
-          next_char
-          @token.type = :MACRO_EXPRESSION_START
+          next_char :MACRO_EXPRESSION_START
           @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         when '%'
           beginning_of_line = false
-          next_char
-          @token.type = :MACRO_CONTROL_START
+          next_char :MACRO_CONTROL_START
           @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
@@ -1826,8 +1805,7 @@ module Crystal
           when 'd'
             if whitespace && !ident_part_or_end?(peek_next_char) && peek_next_char != ':'
               if nest == 0 && control_nest == 0
-                next_char
-                @token.type = :MACRO_END
+                next_char :MACRO_END
                 @token.macro_state = Token::MacroState.default
                 return @token
               else
@@ -2287,8 +2265,7 @@ module Crystal
     end
 
     def string_token_escape_value(value)
-      next_char
-      @token.type = :STRING
+      next_char :STRING
       @token.value = value
     end
 
@@ -2315,8 +2292,7 @@ module Crystal
 
       if current_char == @token.delimiter_state.end
         @token.raw = current_char.to_s if @wants_raw
-        next_char
-        @token.type = :STRING_ARRAY_END
+        next_char :STRING_ARRAY_END
         return @token
       end
 
