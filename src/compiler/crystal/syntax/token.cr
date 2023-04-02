@@ -353,10 +353,6 @@ module Crystal
     def location=(@location)
     end
 
-    def token?(token)
-      @type.token? && @value == token
-    end
-
     def keyword?
       @type.ident? && @value.is_a?(Keyword)
     end
