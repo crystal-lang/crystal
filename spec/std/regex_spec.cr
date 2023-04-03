@@ -19,11 +19,18 @@ describe "Regex" do
         {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
           Regex.new("^/foo$", Regex::Options.new(0x00000020)).matches?("/foo\n").should be_false
         {% else %}
-          expect_raises ArgumentError, "Unknown Regex::Option value: 32" do
-            Regex.new("", Regex::Options.new(32))
+          expect_raises ArgumentError, "Unknown Regex::Option value: 64" do
+            Regex.new("", Regex::Options.new(0x00000040))
           end
         {% end %}
       end
+    end
+
+    it "raises on invalid UTF-8" do
+      expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error/) do
+        Regex.new("\x96")
+      end
+      Regex.new("\x96", :NO_UTF8_CHECK).should be_a(Regex)
     end
   end
 
@@ -94,6 +101,20 @@ describe "Regex" do
       /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
       /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
     end
+
+    it "with invalid UTF-8" do
+      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+        expect_raises(ArgumentError, "UTF-8 error") do
+          /([\w_\.@#\/\*])+/.match("\xFF\xFE")
+        end
+      {% else %}
+        if Regex::PCRE2.version_number < {10, 35}
+          pending! "Error in libpcre2 < 10.35"
+        else
+          /([\w_\.@#\/\*])+/.match("\xFF\xFE").should be_nil
+        end
+      {% end %}
+    end
   end
 
   describe "#match_at_byte_index" do
@@ -126,9 +147,15 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
-      md.begin.should eq 1
-      md.byte_begin.should eq 2
+      if Regex::Engine.version_number < {10, 34}
+        expect_raises(ArgumentError, "bad offset into UTF string") do
+          /foo/.match_at_byte_index("öfoo", 1)
+        end
+      else
+        md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
+        md.begin.should eq 1
+        md.byte_begin.should eq 2
+      end
 
       md = /foo/.match_at_byte_index("öfoo", 2).should_not be_nil
       md.begin.should eq 1
@@ -205,9 +232,17 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        /foo/.matches?("f\x96o").should be_false
-        /f\x96o/.matches?("f\x96o").should be_false
-        /f.o/.matches?("f\x96o").should be_true
+        if Regex::Engine.version_number < {10, 34}
+          expect_raises(ArgumentError, "UTF-8 error") do
+            /foo/.matches?("f\x96o")
+          end
+        else
+          /foo/.matches?("f\x96o").should be_false
+          /f\x96o/.matches?("f\x96o").should be_false
+          /f.o/.matches?("f\x96o").should be_false
+          /\bf\b/.matches?("f\x96o").should be_true
+          /\bo\b/.matches?("f\x96o").should be_true
+        end
       end
     end
 
@@ -223,7 +258,12 @@ describe "Regex" do
         LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
 
-        str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+        # This match may raise on JIT stack limit or not. If it raises, the error message should be the expected one.
+        begin
+          str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+        rescue exc : Exception
+          exc.to_s.should eq("Regex match error: JIT_STACKLIMIT")
+        end
       {% else %}
         # Can't use regex literal because the *LIMIT_DEPTH verb is not supported in libpcre (only libpcre2)
         # and thus the compiler doesn't recognize it.
@@ -249,7 +289,14 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      /foo/.matches_at_byte_index?("öfoo", 1).should be_true
+      if Regex::Engine.version_number < {10, 34}
+        expect_raises(ArgumentError, "bad offset into UTF string") do
+          /foo/.matches_at_byte_index?("öfoo", 1)
+        end
+      else
+        /foo/.matches_at_byte_index?("öfoo", 1).should be_true
+      end
+      /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end
 
     pending "negative" do

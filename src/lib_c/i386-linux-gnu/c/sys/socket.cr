@@ -54,10 +54,10 @@ lib LibC
   fun getsockname(fd : Int, addr : Sockaddr*, len : SocklenT*) : Int
   fun getsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT*) : Int
   fun listen(fd : Int, n : Int) : Int
-  fun recv(fd : Int, buf : Void*, n : Int, flags : Int) : SSizeT
-  fun recvfrom(fd : Int, buf : Void*, n : Int, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
-  fun send(fd : Int, buf : Void*, n : Int, flags : Int) : SSizeT
-  fun sendto(fd : Int, buf : Void*, n : Int, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
+  fun recv(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
+  fun recvfrom(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
+  fun send(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
+  fun sendto(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
   fun setsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(fd : Int, how : Int) : Int
   fun socket(domain : Int, type : Int, protocol : Int) : Int
