@@ -348,7 +348,7 @@ module Crystal
     end
 
     private def regex_options(node)
-      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value).at(node)).at(node)
+      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value.to_s).at(node)).at(node)
     end
 
     # Convert and to if:
