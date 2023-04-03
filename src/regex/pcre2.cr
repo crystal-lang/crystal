@@ -6,9 +6,27 @@ module Regex::PCRE2
   @re : LibPCRE2::Code*
   @jit : Bool
 
+  def self.version : String
+    String.new(24) do |pointer|
+      size = LibPCRE2.config(LibPCRE2::CONFIG_VERSION, pointer)
+      {size - 1, size - 1}
+    end
+  end
+
+  class_getter version_number : {Int32, Int32} = begin
+    version = self.version
+    dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
+    space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+  end
+
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
-    @re = PCRE2.compile(source, pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
+    options = pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
+    if PCRE2.version_number >= {10, 34}
+      options |= LibPCRE2::MATCH_INVALID_UTF
+    end
+    @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
     end
 
@@ -33,11 +51,15 @@ module Regex::PCRE2
     if res = LibPCRE2.compile(source, source.bytesize, options, out errorcode, out erroroffset, nil)
       res
     else
-      message = String.new(256) do |buffer|
-        bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
-        {bytesize, 0}
-      end
+      message = get_error_message(errorcode)
       yield "#{message} at #{erroroffset}"
+    end
+  end
+
+  protected def self.get_error_message(errorcode)
+    String.new(256) do |buffer|
+      bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
+      {bytesize, 0}
     end
   end
 
@@ -108,7 +130,7 @@ module Regex::PCRE2
   end
 
   protected def self.error_impl(source)
-    code = PCRE2.compile(source, LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
+    code = PCRE2.compile(source, LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
       return error_message
     end
 
@@ -221,14 +243,18 @@ module Regex::PCRE2
 
   private def match_data(str, byte_index, options)
     match_data = self.match_data
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options), match_data, PCRE2.match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)
       when .nomatch?
         return
+      when .badutfoffset?, .utf8_validity?
+        error_message = PCRE2.get_error_message(error)
+        raise ArgumentError.new("Regex match error: #{error_message}")
       else
-        raise Exception.new("Regex match error: #{error}")
+        error_message = PCRE2.get_error_message(error)
+        raise Regex::Error.new("Regex match error: #{error_message}")
       end
     end
 
