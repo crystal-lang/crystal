@@ -256,6 +256,9 @@ class Regex
     ENDANCHORED = 0x8000_0000
   end
 
+  # Represents compile options passed to `Regex.new`.
+  #
+  # This alias is supposed to replace `Options`.
   alias CompileOptions = Options
 
   # Represents options passed to regex match methods such as `Regex#match`.
