@@ -606,14 +606,13 @@ class Deque(T)
   end
 
   private def resize_to_capacity(capacity)
+    old_capacity, @capacity = @capacity, capacity
+
     unless @buffer
-      @capacity = capacity
       @buffer = Pointer(T).malloc(@capacity)
       return
     end
 
-    old_capacity = @capacity
-    @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
 
     finish = @start + @size
