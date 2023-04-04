@@ -2124,18 +2124,18 @@ module Crystal
           # ok
         when char == '\0'
           return nil
-        else
-          if char == '\'' && has_single_quote
+        when has_single_quote
+          if char == '\''
             found_closing_single_quote = true
             end_here = current_pos
             next_char
             break
-          elsif has_single_quote
-            # wait until another quote
           else
-            end_here = current_pos
-            break
+            # wait until another quote
           end
+        else
+          end_here = current_pos
+          break
         end
       end
 
