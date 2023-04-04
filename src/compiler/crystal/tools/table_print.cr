@@ -65,7 +65,7 @@ module Crystal
       @columns = [] of Column
     end
 
-    def build
+    def build(&)
       with self yield self
       render
     end
@@ -74,7 +74,7 @@ module Crystal
       @data << Separator.new
     end
 
-    def row
+    def row(&)
       @last_string_row = [] of Cell
       @data << last_string_row
       with self yield
@@ -86,7 +86,7 @@ module Crystal
       column_for_last_cell.will_render(cell)
     end
 
-    def cell(align : Alignment = :left, colspan = 1)
+    def cell(align : Alignment = :left, colspan = 1, &)
       cell(String::Builder.build { |io| yield io }, align, colspan)
     end
 

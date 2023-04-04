@@ -1121,7 +1121,7 @@ class Array(T)
   # `reject!` and `delete` implementation: returns a tuple {x, y}
   # with x being self/nil (modified, not modified)
   # and y being the last matching element, or nil
-  private def internal_delete
+  private def internal_delete(&)
     i1 = 0
     i2 = 0
     match = nil
@@ -1214,13 +1214,13 @@ class Array(T)
   # *arrays* as `Array`s.
   # Traversal of elements starts from the last given array.
   @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
-  def self.each_product(arrays : Array(Array), reuse = false)
+  def self.each_product(arrays : Array(Array), reuse = false, &)
     Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
   # :ditto:
   @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
-  def self.each_product(*arrays : Array, reuse = false)
+  def self.each_product(*arrays : Array, reuse = false, &)
     Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
@@ -1232,7 +1232,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size : Int = self.size, reuse = false) : Nil
+  def each_repeated_permutation(size : Int = self.size, reuse = false, &) : Nil
     n = self.size
     return if size != 0 && n == 0
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1269,7 +1269,7 @@ class Array(T)
   # ```
   #
   # See also: `#truncate`.
-  def pop
+  def pop(&)
     if @size == 0
       yield
     else
@@ -1392,9 +1392,17 @@ class Array(T)
   # a2 # => [1, 2, 3]
   # ```
   def replace(other : Array) : self
-    @size = other.size
-    resize_to_capacity(Math.pw2ceil(@size)) if @size > @capacity
+    if other.size > @capacity
+      reset_buffer_to_root_buffer
+      resize_to_capacity(calculate_new_capacity(other.size))
+    elsif other.size > remaining_capacity
+      shift_buffer_by(remaining_capacity - other.size)
+    elsif other.size < @size
+      (@buffer + other.size).clear(@size - other.size)
+    end
+
     @buffer.copy_from(other.to_unsafe, other.size)
+    @size = other.size
     self
   end
 
@@ -1461,7 +1469,7 @@ class Array(T)
   # ```
   #
   # See also: `#truncate`.
-  def shift
+  def shift(&)
     if @size == 0
       yield
     else
@@ -2051,6 +2059,7 @@ class Array(T)
     @capacity - @offset_to_buffer
   end
 
+  # behaves like `calculate_new_capacity(@capacity + 1)`
   private def calculate_new_capacity
     return INITIAL_CAPACITY if @capacity == 0
 
@@ -2059,6 +2068,18 @@ class Array(T)
     else
       @capacity + (@capacity + 3 * CAPACITY_THRESHOLD) // 4
     end
+  end
+
+  private def calculate_new_capacity(new_size)
+    new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
+    while new_capacity < new_size
+      if new_capacity < CAPACITY_THRESHOLD
+        new_capacity *= 2
+      else
+        new_capacity += (new_capacity + 3 * CAPACITY_THRESHOLD) // 4
+      end
+    end
+    new_capacity
   end
 
   private def increase_capacity

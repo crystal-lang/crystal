@@ -207,7 +207,7 @@ module Crystal::System::FileDescriptor
   end
 
   @[AlwaysInline]
-  private def system_console_mode(enable, on_mask, off_mask)
+  private def system_console_mode(enable, on_mask, off_mask, &)
     windows_handle = self.windows_handle
     if LibC.GetConsoleMode(windows_handle, out old_mode) == 0
       raise IO::Error.from_winerror("GetConsoleMode")

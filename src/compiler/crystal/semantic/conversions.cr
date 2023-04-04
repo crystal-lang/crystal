@@ -33,7 +33,7 @@ module Crystal::Conversions
     unsafe_call
   end
 
-  def self.try_to_unsafe(target, visitor)
+  def self.try_to_unsafe(target, visitor, &)
     unsafe_call = Call.new(target, "to_unsafe").at(target)
     begin
       unsafe_call.accept visitor

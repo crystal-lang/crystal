@@ -140,7 +140,7 @@ module Crystal
         end
       end
 
-      TypeOf.new(type_exps).at(node.location)
+      TypeOf.new(type_exps).at(node)
     end
 
     # Converts an array-like literal to creating a container and storing the values:
@@ -176,7 +176,7 @@ module Crystal
       elem_temp_vars, elem_temp_var_count = complex_elem_temp_vars(node.elements)
       if generic_type
         type_of = typeof_exp(node, elem_temp_vars)
-        node_name = Generic.new(generic_type, type_of).at(node.location)
+        node_name = Generic.new(generic_type, type_of).at(node)
       else
         node_name = node.name
       end
@@ -631,6 +631,48 @@ module Crystal
       final_exp
     end
 
+    # Convert a `select` statement into a `case` statement based on `Channel.select`
+    #
+    # From:
+    #
+    #     select
+    #     when foo then body
+    #     when x = bar then x.baz
+    #     end
+    #
+    # To:
+    #
+    #     %index, %value = ::Channel.select({foo_select_action, bar_select_action})
+    #     case %index
+    #     when 0
+    #       body
+    #     when 1
+    #       x = value.as(typeof(foo))
+    #       x.baz
+    #     else
+    #       ::raise("BUG: invalid select index")
+    #     end
+    #
+    #
+    # If there's an `else` branch, use `Channel.non_blocking_select`.
+    #
+    # From:
+    #
+    #     select
+    #     when foo then body
+    #     else qux
+    #     end
+    #
+    # To:
+    #
+    #     %index, %value = ::Channel.non_blocking_select({foo_select_action})
+    #     case %index
+    #     when 0
+    #       body
+    #     else
+    #       qux
+    #     end
+    #
     def expand(node : Select)
       index_name = @program.new_temp_var_name
       value_name = @program.new_temp_var_name

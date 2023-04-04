@@ -132,26 +132,14 @@ struct Enum
     {% if @type.annotation(Flags) %}
       if value == 0
         io << "None"
+      elsif name = member_name
+        io << name
       else
-        remaining_value = self.value
-        {% for member in @type.constants %}
-          {% if member.stringify != "All" %}
-            if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
-              io << " | " unless remaining_value == self.value
-              io << {{member.stringify}}
-              remaining_value &= ~{{@type.constant(member)}}
-            end
-          {% end %}
-        {% end %}
-        unless remaining_value.zero?
-          io << " | " unless remaining_value == self.value
-          io << remaining_value
-        end
+        stringify_names(io, " | ")
       end
     {% else %}
       io << to_s
     {% end %}
-    nil
   end
 
   # Returns a `String` representation of this enum member.
@@ -173,15 +161,77 @@ struct Enum
     {% if @type.annotation(Flags) %}
       String.build { |io| to_s(io) }
     {% else %}
-      # Can't use `case` here because case with duplicate values do
-      # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
-      {% for member, i in @type.constants %}
-        if value == {{@type.constant(member)}}
-          return {{member.stringify}}
+      member_name || value.to_s
+    {% end %}
+  end
+
+  # Returns an unambiguous `String` representation of this enum member.
+  # In the case of a single member value, this is the fully qualified name of
+  # the member (equvalent to `#to_s` with the enum name as prefix).
+  # In the case of multiple members (for a flags enum), it's a call to `Enum.[]`
+  # for recreating the same value.
+  #
+  # If the value can't be represented fully by named members, the remainig value
+  # is appended.
+  #
+  # ```
+  # Color::Red                     # => Color:Red
+  # IOMode::None                   # => IOMode::None
+  # (IOMode::Read | IOMode::Write) # => IOMode[Read, Write]
+  #
+  # Color.new(10) # => Color[10]
+  # ```
+  def inspect(io : IO) : Nil
+    {% if @type.annotation(Flags) %}
+      if value == 0
+        io << {{ "#{@type}::None" }}
+      elsif name = member_name
+        io << {{ "#{@type}::" }} << name
+      else
+        io << {{ "#{@type}[" }}
+        stringify_names(io, ", ")
+        io << "]"
+      end
+    {% else %}
+      inspect_single(io)
+    {% end %}
+  end
+
+  private def stringify_names(io, separator) : Nil
+    remaining_value = self.value
+    {% for member in @type.constants %}
+      {% if member.stringify != "All" %}
+        if {{@type.constant(member)}} != 0 && remaining_value.bits_set? {{@type.constant(member)}}
+          unless remaining_value == self.value
+            io << separator
+          end
+          io << {{member.stringify}}
+          remaining_value &= ~{{@type.constant(member)}}
         end
       {% end %}
+    {% end %}
 
-      value.to_s
+    unless remaining_value.zero?
+      io << separator unless remaining_value == self.value
+      io << remaining_value
+    end
+  end
+
+  private def inspect_single(io) : Nil
+    if name = member_name
+      io << {{ "#{@type}::" }} << name
+    else
+      io << {{ "#{@type}[" }} << value << "]"
+    end
+  end
+
+  private def member_name
+    # Can't use `case` here because case with duplicate values do
+    # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
+    {% for member in @type.constants %}
+      if value == {{@type.constant(member)}}
+        return {{member.stringify}}
+      end
     {% end %}
   end
 
@@ -287,20 +337,9 @@ struct Enum
   end
 
   # Returns `true` if this enum member's value includes *other*. This
-  # performs a logical "and" between this enum member's value and *other*'s,
-  # so instead of writing:
+  # performs a logical "and" between this enum member's value and *other*'s.
   #
-  # ```
-  # (member & value) != 0
-  # ```
-  #
-  # you can write:
-  #
-  # ```
-  # member.includes?(value)
-  # ```
-  #
-  # The above is mostly useful with flag enums.
+  # This is mostly useful for flag enums.
   #
   # For example:
   #
@@ -310,7 +349,7 @@ struct Enum
   # mode.includes?(IOMode::Async) # => false
   # ```
   def includes?(other : self) : Bool
-    (value & other.value) != 0
+    value.bits_set?(other.value)
   end
 
   # Returns `true` if this enum member and *other* have the same underlying value.
@@ -340,7 +379,7 @@ struct Enum
     {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
-        {% if member.stringify != "All" %}
+        {% if member.stringify != "All" && member.stringify != "None" %}
           if includes?(self.class.new({{@type.constant(member)}}))
             yield self.class.new({{@type.constant(member)}}), {{@type.constant(member)}}
           end
@@ -495,12 +534,36 @@ struct Enum
   # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator)
   #
   # ```
-  # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
+  # IOMode.flags(Read, Write) # => IOMode[Read, Write]
   # ```
+  #
+  # * `Enum.[]` is a more advanced alternative which also allows int and symbol parameters.
   macro flags(*values)
     {% for value, i in values %}\
       {% if i != 0 %} | {% end %}\
       {{ @type }}::{{ value }}{% end %}\
+  end
+
+  # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator).
+  #
+  # Arguments can be the name of a member, a symbol representing a member name or a numerical value.
+  #
+  # ```
+  # IOMode[Read]             # => IOMode[Read]
+  # IOMode[1]                # => IOMode[Read]
+  # IOMode[Read, Write]      # => IOMode[Read, Write]
+  # IOMode[Read, 64]         # => IOMode[Read, 64]
+  # IOMode[Read, :write, 64] # => IOMode[Read, Write, 64]
+  # ```
+  macro [](*values)
+    {% for value, i in values %}\
+      {% if i != 0 %} | {% end %}\
+      {% if value.is_a?(Path) %} \
+        {{ @type }}::{{ value }} \
+      {% else %} \
+        {{ @type }}.new({{value}}) \
+      {% end %} \
+    {% end %}\
   end
 
   # Iterates each member of the enum.

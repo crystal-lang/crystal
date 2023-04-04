@@ -1610,6 +1610,55 @@ module Crystal
           end
         end
 
+        describe "generic instance" do
+          it "prints generic type arguments" do
+            assert_macro("{{klass.name}}", "Foo(Int32, 3)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, 3.int32] of TypeVar))}
+            end
+          end
+
+          it "prints empty splat type var" do
+            assert_macro("{{klass.name}}", "Foo()") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([] of TypeVar))}
+            end
+          end
+
+          it "prints multiple arguments for splat type var" do
+            assert_macro("{{klass.name}}", "Foo(Int32, String)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, program.string] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (1)" do
+            assert_macro("{{klass.name}}", "Foo(Int32)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              generic_type.splat_index = 1
+              {klass: TypeNode.new(generic_type.instantiate([program.int32] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (2)" do
+            assert_macro("{{klass.name}}", "Foo(Int32)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([program.int32] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (3)" do
+            assert_macro("{{klass.name}}", "Foo(Int32, String)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U", "V"])
+              generic_type.splat_index = 1
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, program.string] of TypeVar))}
+            end
+          end
+        end
+
         describe :generic_args do
           describe true do
             it "includes the generic_args of the type" do
@@ -3208,13 +3257,7 @@ module Crystal
 
   describe ".system" do
     it "command does not exist" do
-      # FIXME: This inconsistency between Windows and POSIX is tracked in #12873
-      expect_raises(
-        {{ flag?(:win32) ? File::NotFoundError : Crystal::TypeException }},
-        {{ flag?(:win32) ? "Error executing process: 'commanddoesnotexist'" : "error executing command: commanddoesnotexist" }}
-      ) do
-        semantic %({{ `commanddoesnotexist` }})
-      end
+      assert_error %({{ `commanddoesnotexist` }}), "error executing command: commanddoesnotexist"
     end
 
     it "successful command" do

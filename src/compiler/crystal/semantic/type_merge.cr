@@ -66,7 +66,7 @@ module Crystal
       compact_types(types) { |type| type }
     end
 
-    def compact_types(objects) : Array(Type)
+    def compact_types(objects, &) : Array(Type)
       all_types = Array(Type).new(objects.size)
       objects.each { |obj| add_type all_types, yield(obj) }
       all_types.reject! &.no_return? if all_types.size > 1

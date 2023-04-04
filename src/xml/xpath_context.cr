@@ -8,16 +8,8 @@ class XML::XPathContext
 
   def evaluate(search_path : String)
     xpath = XML::Error.collect_generic(@errors) { LibXML.xmlXPathEvalExpression(search_path, self) }
-    unless xpath
-      {% if flag?(:arm) || flag?(:aarch64) %}
-        if errors = XML::Error.errors
-          raise errors.last
-        end
-      {% end %}
-      raise XML::Error.new("Error in '#{search_path}' expression", 0)
-    end
 
-    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath.value
+    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath
 
     case xpath.value.type
     when LibXML::XPathObjectType::STRING

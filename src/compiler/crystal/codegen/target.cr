@@ -70,6 +70,8 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .android?
+      "android"
     else
       environment
     end
@@ -101,6 +103,10 @@ class Crystal::Codegen::Target
 
   def netbsd?
     @environment.starts_with?("netbsd")
+  end
+
+  def android?
+    environment_parts.any? &.starts_with?("android")
   end
 
   def linux?

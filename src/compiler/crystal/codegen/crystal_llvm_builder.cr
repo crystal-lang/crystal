@@ -2,7 +2,7 @@ module Crystal
   class CrystalLLVMBuilder
     property end : Bool
 
-    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper, @printf : LLVM::Function)
+    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper, @printf : LLVMTypedFunction)
       @end = false
     end
 

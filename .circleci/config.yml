@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "d8c44c0a2c977bfb90363923047f2c64cef3bf8e"
+    default: "5ced0bc13de682688110387adc313fe02f96bab7"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.6.2/crystal-1.6.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.7.3/crystal-1.7.3-1"
 
 defaults:
   environment: &env
@@ -19,7 +19,9 @@ defaults:
     - run: bin/ci prepare_system
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
-    - run: bin/ci build
+    - run:
+        command: bin/ci build
+        no_output_timeout: 30m
     - run:
         when: always
         command: |
@@ -45,7 +47,9 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -87,7 +91,9 @@ jobs:
       - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -117,7 +123,9 @@ jobs:
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci with_build_env 'make crystal'
-      - run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+      - run:
+          command: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -470,7 +478,9 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
 
 workflows:
   version: 2

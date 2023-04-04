@@ -98,7 +98,7 @@ ARGF = IO::ARGF.new(ARGV, STDIN)
 #   # ...
 # end
 # ```
-def loop
+def loop(&)
   while true
     yield
   end
@@ -536,8 +536,8 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # clean ups (don't depend on event loop):
-        ->Crystal::Signal.after_fork,
-        ->Crystal::SignalChildHandler.after_fork,
+        ->Crystal::System::Signal.after_fork,
+        ->Crystal::System::SignalChildHandler.after_fork,
 
         # reinit event loop:
         ->{ Crystal::Scheduler.event_loop.after_fork },
@@ -558,8 +558,10 @@ end
     end
   end
 
-  {% unless flag?(:win32) %}
-    Signal.setup_default_handlers
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
   {% end %}
 
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1

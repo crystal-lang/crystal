@@ -2,6 +2,12 @@ require "spec"
 require "yaml"
 require "../../support/finalize"
 
+class YAMLAttrValue(T)
+  include YAML::Serializable
+
+  property value : T
+end
+
 record YAMLAttrPoint, x : Int32, y : Int32 do
   include YAML::Serializable
 end
@@ -94,12 +100,6 @@ class YAMLAttrPersonEmittingNullsByOptions
   property value2 : Int32?
 end
 
-class YAMLAttrWithBool
-  include YAML::Serializable
-
-  property value : Bool
-end
-
 class YAMLAttrWithTime
   include YAML::Serializable
 
@@ -148,12 +148,6 @@ class YAMLAttrWithTimeArray3
   property value : Array(Time)
 end
 
-class YAMLAttrWithPropertiesKey
-  include YAML::Serializable
-
-  property properties : Hash(String, String)
-end
-
 class YAMLAttrWithSimpleMapping
   include YAML::Serializable
 
@@ -166,11 +160,6 @@ class YAMLAttrWithKeywordsMapping
 
   property end : Int32
   property abstract : Int32
-end
-
-class YAMLAttrWithAny
-  include YAML::Serializable
-  property obj : YAML::Any
 end
 
 class YAMLAttrWithProblematicKeys
@@ -237,18 +226,6 @@ class YAMLAttrWithTimeEpochMillis
 
   @[YAML::Field(converter: Time::EpochMillisConverter)]
   property value : Time
-end
-
-class YAMLAttrWithNilableUnion
-  include YAML::Serializable
-
-  property value : Int32?
-end
-
-class YAMLAttrWithNilableUnion2
-  include YAML::Serializable
-
-  property value : Int32 | Nil
 end
 
 class YAMLAttrWithPresence
@@ -369,12 +346,6 @@ module YAMLNamespace
   end
 end
 
-class YAMLWithShape
-  include YAML::Serializable
-
-  property shape : YAMLShape
-end
-
 enum YAMLVariableDiscriminatorEnumFoo
   Foo = 4
 end
@@ -408,6 +379,23 @@ class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
 end
 
 class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLStrictDiscriminator
+  include YAML::Serializable
+  include YAML::Serializable::Strict
+
+  property type : String
+
+  use_yaml_discriminator "type", {foo: YAMLStrictDiscriminatorFoo, bar: YAMLStrictDiscriminatorBar}
+end
+
+class YAMLStrictDiscriminatorFoo < YAMLStrictDiscriminator
+end
+
+class YAMLStrictDiscriminatorBar < YAMLStrictDiscriminator
+  property x : YAMLStrictDiscriminator
+  property y : YAMLStrictDiscriminator
 end
 
 describe "YAML::Serializable" do
@@ -543,7 +531,7 @@ describe "YAML::Serializable" do
   end
 
   it "doesn't raises on false value when not-nil" do
-    yaml = YAMLAttrWithBool.from_yaml("---\nvalue: false\n")
+    yaml = YAMLAttrValue(Bool).from_yaml("---\nvalue: false\n")
     yaml.value.should be_false
   end
 
@@ -647,11 +635,11 @@ describe "YAML::Serializable" do
     yaml.to_yaml.should match(/\A---\nvalue: ?\n\z/)
   end
 
-  it "outputs YAML with properties key" do
+  it "outputs YAML with Hash" do
     input = {
-      properties: {"foo" => "bar"},
+      value: {"foo" => "bar"},
     }.to_yaml
-    yaml = YAMLAttrWithPropertiesKey.from_yaml(input)
+    yaml = YAMLAttrValue(Hash(String, String)).from_yaml(input)
     yaml.to_yaml.should eq(input)
   end
 
@@ -662,20 +650,20 @@ describe "YAML::Serializable" do
   end
 
   it "parses yaml with any" do
-    yaml = YAMLAttrWithAny.from_yaml("obj: hello")
-    yaml.obj.as_s.should eq("hello")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml("value: hello")
+    yaml.value.as_s.should eq("hello")
 
-    yaml = YAMLAttrWithAny.from_yaml({:obj => ["foo", "bar"]}.to_yaml)
-    yaml.obj[1].as_s.should eq("bar")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml({:value => ["foo", "bar"]}.to_yaml)
+    yaml.value[1].as_s.should eq("bar")
 
-    yaml = YAMLAttrWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
-    yaml.obj["foo"].as_s.should eq("bar")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml({:value => {:foo => :bar}}.to_yaml)
+    yaml.value["foo"].as_s.should eq("bar")
 
-    yaml = YAMLAttrWithAny.from_yaml("extra: &foo hello\nobj: *foo")
-    yaml.obj.as_s.should eq("hello")
+    yaml = YAMLAttrValue(YAML::Any).from_yaml("extra: &foo hello\nvalue: *foo")
+    yaml.value.as_s.should eq("hello")
 
-    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 6" do
-      YAMLAttrWithAny.from_yaml("obj: *foo")
+    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 8" do
+      YAMLAttrValue(YAML::Any).from_yaml("value: *foo")
     end
   end
 
@@ -877,29 +865,15 @@ describe "YAML::Serializable" do
   end
 
   it "parses nilable union" do
-    obj = YAMLAttrWithNilableUnion.from_yaml(%({"value": 1}))
+    obj = YAMLAttrValue(Int32?).from_yaml(%({"value": 1}))
     obj.value.should eq(1)
     obj.to_yaml.should eq("---\nvalue: 1\n")
 
-    obj = YAMLAttrWithNilableUnion.from_yaml(%({"value": null}))
+    obj = YAMLAttrValue(Int32?).from_yaml(%({"value": null}))
     obj.value.should be_nil
     obj.to_yaml.should eq("--- {}\n")
 
-    obj = YAMLAttrWithNilableUnion.from_yaml(%({}))
-    obj.value.should be_nil
-    obj.to_yaml.should eq("--- {}\n")
-  end
-
-  it "parses nilable union2" do
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({"value": 1}))
-    obj.value.should eq(1)
-    obj.to_yaml.should eq("---\nvalue: 1\n")
-
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({"value": null}))
-    obj.value.should be_nil
-    obj.to_yaml.should eq("--- {}\n")
-
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({}))
+    obj = YAMLAttrValue(Int32?).from_yaml(%({}))
     obj.value.should be_nil
     obj.to_yaml.should eq("--- {}\n")
   end
@@ -993,8 +967,8 @@ describe "YAML::Serializable" do
     end
 
     it "deserializes type which nests type with discriminator (#9849)" do
-      container = YAMLWithShape.from_yaml(%({"shape": {"type": "point", "x": 1, "y": 2}}))
-      point = container.shape.as(YAMLPoint)
+      container = YAMLAttrValue(YAMLShape).from_yaml(%({"value": {"type": "point", "x": 1, "y": 2}}))
+      point = container.value.as(YAMLPoint)
       point.x.should eq(1)
       point.y.should eq(2)
     end
@@ -1014,6 +988,16 @@ describe "YAML::Serializable" do
 
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
+    end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = YAMLStrictDiscriminator.from_yaml(%({"type": "foo"}))
+      foo = foo.should be_a(YAMLStrictDiscriminatorFoo)
+
+      bar = YAMLStrictDiscriminator.from_yaml(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(YAMLStrictDiscriminatorBar)
+      bar.x.should be_a(YAMLStrictDiscriminatorFoo)
+      bar.y.should be_a(YAMLStrictDiscriminatorFoo)
     end
   end
 

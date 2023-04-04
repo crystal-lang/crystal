@@ -4,6 +4,8 @@ require "big"
 # A `BigFloat` can represent arbitrarily large floats.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# NOTE: To use `BigFloat`, you must explicitly import it with `require "big"`
 struct BigFloat < Float
   include Comparable(Int)
   include Comparable(BigFloat)
@@ -76,7 +78,7 @@ struct BigFloat < Float
   def initialize(@mpf : LibGMP::MPF)
   end
 
-  def self.new
+  def self.new(&)
     LibGMP.mpf_init(out mpf)
     yield pointerof(mpf)
     new(mpf)

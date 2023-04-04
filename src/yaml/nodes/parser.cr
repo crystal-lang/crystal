@@ -5,7 +5,7 @@ class YAML::Nodes::Parser < YAML::Parser
     @anchors = {} of String => Node
   end
 
-  def self.new(content)
+  def self.new(content, &)
     parser = new(content)
     yield parser ensure parser.close
   end

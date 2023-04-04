@@ -330,7 +330,7 @@ class URI
 
   # :nodoc:
   # Unencodes one character. Private API
-  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false)
+  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false, &)
     if plus_to_space && char == '+'
       io.write_byte ' '.ord.to_u8
       i += 1

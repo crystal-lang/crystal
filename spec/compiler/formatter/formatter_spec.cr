@@ -1,10 +1,10 @@
 require "spec"
 require "../../../src/compiler/crystal/formatter"
 
-private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__)
+private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__)
   it "formats #{input.inspect}", file, line do
     output = "#{output}\n" unless strict
-    result = Crystal.format(input)
+    result = Crystal.format(input, flags: flags)
     unless result == output
       message = <<-ERROR
         Expected
@@ -102,6 +102,8 @@ describe Crystal::Formatter do
   assert_format "Set{ # foo\n  1,\n}"
   assert_format "begin\n  array[\n    0 # Zero\n  ]\nend"
   assert_format "begin\n  array[\n    0, # Zero\n  ]\nend"
+  assert_format "[\n  # foo\n] of String"
+  assert_format "[\n# foo\n] of String", "[\n  # foo\n] of String"
 
   assert_format "{1, 2, 3}"
   assert_format "{ {1, 2, 3} }"
@@ -209,6 +211,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  &@block)  \n  end", "def foo(&@block)\nend"
   assert_format "def   foo (  @select)  \n  end", "def foo(@select)\nend"
   assert_format "def   foo (  @@select)  \n  end", "def foo(@@select)\nend"
+  assert_format "def   foo (  bar  @select)  \n  end", "def foo(bar @select)\nend"
+  assert_format "def   foo (  bar  @@select)  \n  end", "def foo(bar @@select)\nend"
   assert_format "def foo(a, &@b)\nend"
   assert_format "def   foo (  x  =   1 )  \n  end", "def foo(x = 1)\nend"
   assert_format "def   foo (  x  :  Int32 )  \n  end", "def foo(x : Int32)\nend"
@@ -505,6 +509,8 @@ describe Crystal::Formatter do
   assert_format "foo.% bar"
   assert_format "foo.bar(&.%(baz))"
   assert_format "foo.bar(&.% baz)"
+  assert_format "if 1\n  foo(\n    bar\n    # comment\n  )\nend"
+  assert_format "if 1\n  foo(\n    bar,\n    # comment\n  )\nend"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"
@@ -545,6 +551,340 @@ describe Crystal::Formatter do
   assert_format "yield(\n1 , \n2)", "yield(\n  1,\n  2)"
 
   assert_format "with foo yield bar"
+
+  context "adds `&` to yielding methods that don't have a block parameter (#8764)" do
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo
+        yield
+      end
+      CRYSTAL
+      def foo(&)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo()
+        yield
+      end
+      CRYSTAL
+      def foo(&)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(&)
+        yield
+      end
+      CRYSTAL
+
+    # #13091
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo # bar
+        yield
+      end
+      CRYSTAL
+      def foo(&) # bar
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(x)
+        yield
+      end
+      CRYSTAL
+      def foo(x, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(x ,)
+        yield
+      end
+      CRYSTAL
+      def foo(x, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(x,
+      y)
+        yield
+      end
+      CRYSTAL
+      def foo(x,
+              y, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(x,
+      y,)
+        yield
+      end
+      CRYSTAL
+      def foo(x,
+              y, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(x
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(x,
+              &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(x,
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(x,
+              &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(
+      x)
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x, &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(
+      x, y)
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x, y, &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(
+      x,
+      y)
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x,
+        y, &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(
+      x,
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x,
+        &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+      def foo(a, **b)
+        yield
+      end
+      CRYSTAL
+      def foo(a, **b, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format "macro f\n  yield\n  {{ yield }}\nend", flags: %w[method_signature_yield]
+  end
+
+  context "does not add `&` without flag `method_signature_yield`" do
+    assert_format <<-CRYSTAL
+      def foo
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo()
+        yield
+      end
+      CRYSTAL
+      def foo
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(
+      )
+        yield
+      end
+      CRYSTAL
+      def foo
+        yield
+      end
+      CRYSTAL
+
+    # #13091
+    assert_format <<-CRYSTAL
+      def foo # bar
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL
+      def foo(x)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(x ,)
+        yield
+      end
+      CRYSTAL
+      def foo(x)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL
+      def foo(x,
+              y)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(x,
+      y,)
+        yield
+      end
+      CRYSTAL
+      def foo(x,
+              y)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(x
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(x)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(x,
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(x)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(
+      x)
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(
+      x, y)
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x, y
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(
+      x,
+      y)
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x,
+        y
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL
+      def foo(
+      x,
+      )
+        yield
+      end
+      CRYSTAL
+      def foo(
+        x
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL
+      def foo(a, **b)
+        yield
+      end
+      CRYSTAL
+  end
 
   assert_format "1   +   2", "1 + 2"
   assert_format "1   &+   2", "1 &+ 2"
@@ -1039,6 +1379,8 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
+  assert_format "lib Foo::Bar\nend"
+
   %w(foo foo= foo? foo!).each do |method|
     assert_format "->#{method}"
     assert_format "foo = 1\n->foo.#{method}"
@@ -1129,6 +1471,7 @@ describe Crystal::Formatter do
   assert_format "# foo\na = 1 # bar"
   assert_format "#### ###"
   assert_format "#######"
+  assert_format "x\n# foo\n\n# bar"
 
   assert_format "A = 1\nFOO = 2\n\nEX = 3", "A   = 1\nFOO = 2\n\nEX = 3"
   assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"
@@ -2240,4 +2583,29 @@ describe Crystal::Formatter do
       end
     end
     CRYSTAL
+
+  # #12964
+  assert_format <<-CRYSTAL
+    begin
+      begin
+        a
+        # b
+      end
+    end
+    CRYSTAL
+
+  it do
+    expect_raises(Crystal::SyntaxException) do
+      Crystal.format <<-CRYSTAL
+        lib A
+          struct B
+            {% begin %}
+              x : Int32
+              else
+            {% end %}
+          end
+        end
+        CRYSTAL
+    end
+  end
 end

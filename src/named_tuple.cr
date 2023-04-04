@@ -499,7 +499,7 @@ struct NamedTuple
   # name = Crystal
   # year = 2011
   # ```
-  def each : Nil
+  def each(&) : Nil
     {% for key in T %}
       yield {{key.symbolize}}, self[{{key.symbolize}}]
     {% end %}
@@ -520,7 +520,7 @@ struct NamedTuple
   # name
   # year
   # ```
-  def each_key : Nil
+  def each_key(&) : Nil
     {% for key in T %}
       yield {{key.symbolize}}
     {% end %}
@@ -541,7 +541,7 @@ struct NamedTuple
   # Crystal
   # 2011
   # ```
-  def each_value : Nil
+  def each_value(&) : Nil
     {% for key in T %}
       yield self[{{key.symbolize}}]
     {% end %}
@@ -562,7 +562,7 @@ struct NamedTuple
   # 1) name = Crystal
   # 2) year = 2011
   # ```
-  def each_with_index(offset = 0)
+  def each_with_index(offset = 0, &)
     i = offset
     each do |key, value|
       yield key, value, i
@@ -577,7 +577,7 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
-  def map
+  def map(&)
     {% if T.size == 0 %}
       [] of NoReturn
     {% else %}

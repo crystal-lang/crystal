@@ -21,4 +21,15 @@ lib LibC
   fun CancelIo(
     hFile : HANDLE
   ) : BOOL
+
+  fun DeviceIoControl(
+    hDevice : HANDLE,
+    dwIoControlCode : DWORD,
+    lpInBuffer : Void*,
+    nInBufferSize : DWORD,
+    lpOutBuffer : Void*,
+    nOutBufferSize : DWORD,
+    lpBytesReturned : DWORD*,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
 end

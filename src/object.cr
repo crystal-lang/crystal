@@ -175,7 +175,7 @@ class Object
   #   .select { |x| x % 2 == 0 }.tap { |x| puts "evens: #{x.inspect}" }
   #   .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
   # ```
-  def tap
+  def tap(&)
     yield self
     self
   end
@@ -189,7 +189,7 @@ class Object
   # # First program argument in downcase, or nil
   # ARGV[0]?.try &.downcase
   # ```
-  def try
+  def try(&)
     yield self
   end
 
@@ -220,7 +220,18 @@ class Object
   # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
   # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
   # Either way, consider instead raising a concrete exception with a descriptive message.
-  def not_nil!(message = nil)
+  def not_nil!
+    self
+  end
+
+  # :ditto:
+  #
+  # *message* has no effect. It is only used by `Nil#not_nil!(message = nil)`.
+  def not_nil!(message)
+    # FIXME: the above param-less overload cannot be expressed as an optional
+    # parameter here, because that would copy the receiver if it is a struct;
+    # see https://github.com/crystal-lang/crystal/issues/13263#issuecomment-1492885817
+    # and also #13265
     self
   end
 

@@ -120,7 +120,7 @@ module Crystal
       @last_is_falsey = false
     end
 
-    def compute_last_truthiness
+    def compute_last_truthiness(&)
       reset_last_status
       yield
       {@last_is_truthy, @last_is_falsey}
@@ -877,7 +877,7 @@ module Crystal
       transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name)
     end
 
-    def transform_is_a_or_responds_to(node)
+    def transform_is_a_or_responds_to(node, &)
       obj = node.obj
 
       if obj_type = obj.type?
