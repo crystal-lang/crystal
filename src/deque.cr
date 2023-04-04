@@ -590,14 +590,6 @@ class Deque(T)
     @capacity * 2
   end
 
-  private def calculate_new_capacity(new_size)
-    new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
-    while new_capacity < new_size
-      new_capacity *= 2
-    end
-    new_capacity
-  end
-
   private def resize_if_cant_insert
     new_capacity = calculate_new_capacity
     if new_capacity > @capacity
