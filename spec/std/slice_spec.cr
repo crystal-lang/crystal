@@ -553,6 +553,11 @@ describe "Slice" do
     a.to_unsafe.should eq(b.to_unsafe)
   end
 
+  it "#compact" do
+    Slice[1, "a", nil, 'b', nil].compact.should eq Slice[1, "a", 'b']
+    Slice[1, "a", nil, 'b', nil].compact.should be_a(Slice(Int32 | String | Char))
+  end
+
   describe "rotate!" do
     it do
       a = Slice[1, 2, 3]

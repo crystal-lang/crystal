@@ -719,15 +719,6 @@ class Array(T)
     {% end %}
   end
 
-  # Returns a copy of `self` with all `nil` elements removed.
-  #
-  # ```
-  # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
-  # ```
-  def compact
-    compact_map &.itself
-  end
-
   # Removes all `nil` elements from `self` and returns `self`.
   #
   # ```

@@ -874,6 +874,23 @@ struct Slice(T)
     end
   end
 
+  # :inherit:
+  def compact : Slice
+    {% if T >= Nil %}
+      slice = Slice.new(Pointer(typeof(Enumerable.element_type(self).not_nil!)).malloc(@size), @size)
+      index = 0
+      each do |e|
+        unless e.nil?
+          slice[index] = e
+          index += 1
+        end
+      end
+      slice[0, index]
+    {% else %}
+      dup
+    {% end %}
+  end
+
   # Returns this slice's pointer.
   #
   # ```

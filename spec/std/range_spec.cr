@@ -648,6 +648,11 @@ describe "Range" do
     end
   end
 
+  it "#compact" do
+    (1..3).compact.should eq 1..3
+    (..).compact.should eq(..)
+  end
+
   describe "size" do
     it "optimizes for int range" do
       (5..12).size.should eq(8)

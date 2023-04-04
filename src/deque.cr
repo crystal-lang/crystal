@@ -329,6 +329,19 @@ class Deque(T)
     value
   end
 
+  # :inherit:
+  def compact : Deque
+    {% if T >= Nil %}
+      deque = Deque(typeof(Enumerable.element_type(self).not_nil!)).new
+      each do |e|
+        deque << e unless e.nil?
+      end
+      deque
+    {% else %}
+      dup
+    {% end %}
+  end
+
   # Returns a new `Deque` that has exactly this deque's elements.
   # That is, it returns a shallow copy of this deque.
   def dup

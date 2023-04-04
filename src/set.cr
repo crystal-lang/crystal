@@ -373,6 +373,19 @@ struct Set(T)
     clone
   end
 
+  # :inherit:
+  def compact : Set
+    {% if T >= Nil %}
+      set = Set(typeof(Enumerable.element_type(self).not_nil!)).new
+      each do |e|
+        set << e unless e.nil?
+      end
+      set
+    {% else %}
+      dup
+    {% end %}
+  end
+
   # Returns the elements as an `Array`.
   #
   # ```
