@@ -576,10 +576,11 @@ class Deque(T)
     b = deque.@start + deque.size
     b -= deque.capacity if b > deque.capacity
     if a < b
-      yield Slice.new(deque.buffer + a, deque.size)
+      # TODO: this `typeof` is a workaround for 1.0.0; remove it eventually
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.size)
     else
-      yield Slice.new(deque.buffer + a, deque.capacity - a)
-      yield Slice.new(deque.buffer, b)
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.capacity - a)
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer, b)
     end
   end
 
