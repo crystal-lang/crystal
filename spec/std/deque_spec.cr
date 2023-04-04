@@ -37,7 +37,7 @@ end
 
 private alias RecursiveDeque = Deque(RecursiveDeque)
 
-# Yields `Deque{}`, `Deque{0}`, `Deque{0, 1}`, `Deque{0, 1, 2}`, ...,
+# Yields multiple forms of `Deque{}`, `Deque{0}`, `Deque{0, 1}`, `Deque{0, 1, 2}`, ...,
 # `Deque{0, 1, 2, ..., max_size - 1}`. All deques have *max_size* as their
 # capacity; each deque is yielded *max_size* times with a different start
 # position in the internal buffer. Every deque is a fresh instance.
