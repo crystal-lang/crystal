@@ -605,13 +605,6 @@ class Deque(T)
     end
   end
 
-  private def resize_if_cant_insert(insert_size)
-    new_capacity = calculate_new_capacity(@size + insert_size)
-    if new_capacity > @capacity
-      resize_to_capacity(new_capacity)
-    end
-  end
-
   private def resize_to_capacity(capacity)
     old_capacity, @capacity = @capacity, capacity
 
