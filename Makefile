@@ -1,3 +1,5 @@
+all:
+
 -include Makefile.local # for optional local options e.g. threads
 
 # Recipes for this Makefile
