@@ -12,15 +12,15 @@ describe "Regex" do
 
     describe "options" do
       it "regular" do
-        Regex.new("", Regex::Options::ANCHORED).options.anchored?.should be_true
+        Regex.new("", Regex::CompileOptions::ANCHORED).options.anchored?.should be_true
       end
 
       it "unnamed option" do
         {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-          Regex.new("^/foo$", Regex::Options.new(0x00000020)).matches?("/foo\n").should be_false
+          Regex.new("^/foo$", Regex::CompileOptions.new(0x00000020)).matches?("/foo\n").should be_false
         {% else %}
           expect_raises ArgumentError, "Unknown Regex::Option value: 64" do
-            Regex.new("", Regex::Options.new(0x00000040))
+            Regex.new("", Regex::CompileOptions.new(0x00000040))
           end
         {% end %}
       end
@@ -200,8 +200,8 @@ describe "Regex" do
       end
 
       it "anchored" do
-        Regex.new("foo", Regex::Options::ANCHORED).matches?("foo").should be_true
-        Regex.new("foo", Regex::Options::ANCHORED).matches?(".foo").should be_false
+        Regex.new("foo", Regex::CompileOptions::ANCHORED).matches?("foo").should be_true
+        Regex.new("foo", Regex::CompileOptions::ANCHORED).matches?(".foo").should be_false
       end
     end
 
@@ -391,18 +391,18 @@ describe "Regex" do
   end
 
   it "#==" do
-    regex = Regex.new("foo", Regex::Options::IGNORE_CASE)
-    (regex == Regex.new("foo", Regex::Options::IGNORE_CASE)).should be_true
+    regex = Regex.new("foo", Regex::CompileOptions::IGNORE_CASE)
+    (regex == Regex.new("foo", Regex::CompileOptions::IGNORE_CASE)).should be_true
     (regex == Regex.new("foo")).should be_false
-    (regex == Regex.new("bar", Regex::Options::IGNORE_CASE)).should be_false
+    (regex == Regex.new("bar", Regex::CompileOptions::IGNORE_CASE)).should be_false
     (regex == Regex.new("bar")).should be_false
   end
 
   it "#hash" do
-    hash = Regex.new("foo", Regex::Options::IGNORE_CASE).hash
-    hash.should eq(Regex.new("foo", Regex::Options::IGNORE_CASE).hash)
+    hash = Regex.new("foo", Regex::CompileOptions::IGNORE_CASE).hash
+    hash.should eq(Regex.new("foo", Regex::CompileOptions::IGNORE_CASE).hash)
     hash.should_not eq(Regex.new("foo").hash)
-    hash.should_not eq(Regex.new("bar", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("bar", Regex::CompileOptions::IGNORE_CASE).hash)
     hash.should_not eq(Regex.new("bar").hash)
   end
 

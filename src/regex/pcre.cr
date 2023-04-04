@@ -21,7 +21,7 @@ module Regex::PCRE
 
   private def pcre_compile_options(options)
     flag = 0
-    Regex::Options.each do |option|
+    Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?    then LibPCRE::CASELESS

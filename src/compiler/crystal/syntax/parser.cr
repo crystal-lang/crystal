@@ -2134,7 +2134,7 @@ module Crystal
     end
 
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
-      options = Regex::Options::None
+      options = Regex::CompileOptions::None
       token_end_location = nil
       while true
         case @token.type
@@ -2194,17 +2194,17 @@ module Crystal
     end
 
     def consume_regex_options
-      options = Regex::Options::None
+      options = Regex::CompileOptions::None
       while true
         case current_char
         when 'i'
-          options |= Regex::Options::IGNORE_CASE
+          options |= Regex::CompileOptions::IGNORE_CASE
           next_char
         when 'm'
-          options |= Regex::Options::MULTILINE
+          options |= Regex::CompileOptions::MULTILINE
           next_char
         when 'x'
-          options |= Regex::Options::EXTENDED
+          options |= Regex::CompileOptions::EXTENDED
           next_char
         else
           if 'a' <= current_char.downcase <= 'z'
