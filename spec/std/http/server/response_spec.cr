@@ -264,9 +264,13 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.headers["Foo"] = "Bar"
     response.cookies["Bar"] = "Foo"
+    response.status = HTTP::Status::USE_PROXY
+    response.status_message = "Baz"
     response.reset
     response.headers.should be_empty
     response.cookies.should be_empty
+    response.status.should eq HTTP::Status::OK
+    response.status_message.should eq "OK"
   end
 
   it "writes cookie headers" do
