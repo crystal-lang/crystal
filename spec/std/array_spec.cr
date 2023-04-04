@@ -541,6 +541,20 @@ describe "Array" do
       a.@capacity.should eq(6)
     end
 
+    it "concats indexable" do
+      a = [1, 2, 3]
+      a.concat(Slice.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(StaticArray(Int32, 97).new { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(Deque.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
+    end
+
     it "concats a union of arrays" do
       a = [1, '2']
       a.concat([3] || ['4'])
