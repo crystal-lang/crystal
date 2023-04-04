@@ -531,7 +531,7 @@ class Array(T)
       @size -= diff
     else
       # Need to grow
-      resize_to_capacity(Math.pw2ceil(@size + diff))
+      resize_if_cant_insert(diff)
       (@buffer + start + values.size).move_from(@buffer + start + count, size - start - count)
       (@buffer + start).copy_from(values.to_unsafe, values.size)
       @size += diff
@@ -2071,6 +2071,10 @@ class Array(T)
   end
 
   private def calculate_new_capacity(new_size)
+    # Resizing is done via `Pointer#realloc` on the root buffer, so the space
+    # between the root and real buffers remains untouched
+    new_size += @offset_to_buffer
+
     new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
     while new_capacity < new_size
       if new_capacity < CAPACITY_THRESHOLD
@@ -2118,13 +2122,11 @@ class Array(T)
   end
 
   private def resize_if_cant_insert(insert_size)
-    # Resize if we exceed the remaining capacity.
-    # `remaining_capacity - @size` is the actual number of slots we have
-    # to push new elements.
-    if insert_size > remaining_capacity - @size
-      # The new capacity that we need is what we already have occupied
-      # because of shift (`@offset_to_buffer`) plus my size plus the insert size.
-      resize_to_capacity(Math.pw2ceil(@offset_to_buffer + @size + insert_size))
+    # Resize if we exceed the remaining capacity. This is less than `@capacity`
+    # if the array has been shifted and `@offset_to_buffer` is nonzero
+    new_size = @size + insert_size
+    if new_size > remaining_capacity
+      resize_to_capacity(calculate_new_capacity(new_size))
     end
   end
 

@@ -445,6 +445,24 @@ describe "Array" do
       a[3..] = [4, 5, 6]
       a.should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.pop
+      a[4, 0] = [6]
+      a.should eq([1, 2, 3, 4, 6])
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      a[4, 0] = [6, 7, 8, 9]
+      a.should eq([2, 3, 4, 5, 6, 7, 8, 9])
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(1)
+    end
   end
 
   describe "values_at" do
