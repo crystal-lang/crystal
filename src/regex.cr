@@ -198,6 +198,9 @@ require "./regex/match_data"
 class Regex
   include Regex::Engine
 
+  class Error < Exception
+  end
+
   # List of metacharacters that need to be escaped.
   #
   # See `Regex.needs_escape?` and `Regex.escape`.
