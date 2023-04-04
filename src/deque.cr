@@ -592,10 +592,8 @@ class Deque(T)
 
   # behaves like `resize_if_cant_insert(1)`
   private def resize_if_cant_insert
-    new_capacity = calculate_new_capacity
-    # `>=` instead of `>` to ensure there is room for one element
-    if new_capacity >= @capacity
-      resize_to_capacity(new_capacity)
+    if @size >= @capacity
+      resize_to_capacity(calculate_new_capacity)
     end
   end
 
