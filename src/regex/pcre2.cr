@@ -6,9 +6,27 @@ module Regex::PCRE2
   @re : LibPCRE2::Code*
   @jit : Bool
 
+  def self.version : String
+    String.new(24) do |pointer|
+      size = LibPCRE2.config(LibPCRE2::CONFIG_VERSION, pointer)
+      {size - 1, size - 1}
+    end
+  end
+
+  class_getter version_number : {Int32, Int32} = begin
+    version = self.version
+    dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
+    space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+  end
+
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
-    @re = PCRE2.compile(source, pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
+    options = pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
+    if PCRE2.version_number >= {10, 34}
+      options |= LibPCRE2::MATCH_INVALID_UTF
+    end
+    @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
     end
 
@@ -33,27 +51,66 @@ module Regex::PCRE2
     if res = LibPCRE2.compile(source, source.bytesize, options, out errorcode, out erroroffset, nil)
       res
     else
-      message = String.new(256) do |buffer|
-        bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
-        {bytesize, 0}
-      end
+      message = get_error_message(errorcode)
       yield "#{message} at #{erroroffset}"
     end
   end
 
-  private def pcre2_options(options)
+  protected def self.get_error_message(errorcode)
+    String.new(256) do |buffer|
+      bytesize = LibPCRE2.get_error_message(errorcode, buffer, 256)
+      {bytesize, 0}
+    end
+  end
+
+  private def pcre2_compile_options(options)
     flag = 0
     Regex::Options.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?   then LibPCRE2::CASELESS
-                when .multiline?     then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
-                when .extended?      then LibPCRE2::EXTENDED
-                when .anchored?      then LibPCRE2::ANCHORED
-                when .utf_8?         then LibPCRE2::UTF
-                when .no_utf8_check? then LibPCRE2::NO_UTF_CHECK
-                when .dupnames?      then LibPCRE2::DUPNAMES
-                when .ucp?           then LibPCRE2::UCP
+                when .ignore_case?    then LibPCRE2::CASELESS
+                when .multiline?      then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .dotall?         then LibPCRE2::DOTALL
+                when .extended?       then LibPCRE2::EXTENDED
+                when .anchored?       then LibPCRE2::ANCHORED
+                when .dollar_endonly? then LibPCRE2::DOLLAR_ENDONLY
+                when .firstline?      then LibPCRE2::FIRSTLINE
+                when .utf_8?          then LibPCRE2::UTF
+                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?       then LibPCRE2::DUPNAMES
+                when .ucp?            then LibPCRE2::UCP
+                when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre2_compile`")
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+    unless options.none?
+      raise ArgumentError.new("Unknown Regex::Option value: #{options}")
+    end
+    flag
+  end
+
+  private def pcre2_match_options(options)
+    flag = 0
+    Regex::Options.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .ignore_case?    then raise ArgumentError.new("Invalid regex option IGNORE_CASE for `pcre2_match`")
+                when .multiline?      then raise ArgumentError.new("Invalid regex option MULTILINE for `pcre2_match`")
+                when .dotall?         then raise ArgumentError.new("Invalid regex option DOTALL for `pcre2_match`")
+                when .extended?       then raise ArgumentError.new("Invalid regex option EXTENDED for `pcre2_match`")
+                when .anchored?       then LibPCRE2::ANCHORED
+                when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre2_match`")
+                when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre2_match`")
+                when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre2_match`")
+                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
+                when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
+                when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .no_jit?         then LibPCRE2::NO_JIT
                 else
                   raise "unreachable"
                 end
@@ -73,7 +130,7 @@ module Regex::PCRE2
   end
 
   protected def self.error_impl(source)
-    code = PCRE2.compile(source, LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
+    code = PCRE2.compile(source, LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
       return error_message
     end
 
@@ -186,14 +243,18 @@ module Regex::PCRE2
 
   private def match_data(str, byte_index, options)
     match_data = self.match_data
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, PCRE2.match_context)
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_match_options(options), match_data, PCRE2.match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)
       when .nomatch?
         return
+      when .badutfoffset?, .utf8_validity?
+        error_message = PCRE2.get_error_message(error)
+        raise ArgumentError.new("Regex match error: #{error_message}")
       else
-        raise Exception.new("Regex match error: #{error}")
+        error_message = PCRE2.get_error_message(error)
+        raise Regex::Error.new("Regex match error: #{error_message}")
       end
     end
 

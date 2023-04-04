@@ -247,7 +247,8 @@ struct Pointer(T)
     if self.class == source.class
       Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
-      while (count -= 1) >= 0
+      while count > 0
+        count &-= 1
         self[count] = source[count]
       end
     end
