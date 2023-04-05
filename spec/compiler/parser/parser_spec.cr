@@ -2129,6 +2129,22 @@ module Crystal
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
+    %w(class module).each do |keyword|
+      assert_syntax_error %(#{keyword} Foo"a" end), %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo'a' end", %(unexpected token: "a" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo[1] end", %(unexpected token: "[" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo{1} end", %(unexpected token: "{" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo{|a|a} end", %(unexpected token: "{" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo->{} end", %(unexpected token: "->" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo->(x : Bar){}", %(unexpected token: "->" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo:Bar end", %(unexpected token: "Bar" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo:bar end", %(unexpected token: "bar" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo%x() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo%w() end", %(unexpected token: "STRING_ARRAY_START" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo%() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+    end
+    assert_syntax_error "class Foo < Bar:Qux end", %(unexpected token: "Qux" (expected ';' or newline))
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"

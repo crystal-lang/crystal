@@ -1681,7 +1681,8 @@ module Crystal
       next_token_skip_space_or_newline
       name_location = @token.location
 
-      name = parse_path
+      name = parse_path_no_skip_space
+      has_space_after_name = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1696,6 +1697,10 @@ module Crystal
         else
           superclass = parse_generic
         end
+      end
+
+      if superclass || type_vars || !has_space_after_name
+        consume_statement_end
       end
       skip_statement_end
 
@@ -1767,10 +1772,15 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_path
+      name = parse_path_no_skip_space
+      has_space_after_name = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
+
+      if type_vars || !has_space_after_name
+        consume_statement_end
+      end
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -5064,7 +5074,7 @@ module Crystal
 
     # Parse type path.
     # It also consumes prefix `::` to specify global path.
-    def parse_path
+    def parse_path_no_skip_space
       location = @token.location
 
       global = false
@@ -5073,7 +5083,12 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
+      parse_path(global, @token.location)
+    end
+
+    # :ditto:
+    def parse_path
+      path = parse_path_no_skip_space
       skip_space
       path
     end
@@ -6335,6 +6350,15 @@ module Crystal
       arg_name = "__arg#{@temp_arg_count}"
       @temp_arg_count += 1
       arg_name
+    end
+
+    def consume_statement_end
+      case @token.type
+      when .space?, .newline?, .op_semicolon?
+        next_token
+      else
+        unexpected_token "expected ';' or newline"
+      end
     end
   end
 
