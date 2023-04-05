@@ -138,13 +138,13 @@ describe "Regex" do
     end
 
     it "raises on non-match" do
-      expect_raises(Exception) { /Crystal/.match!("foo") }
+      expect_raises(Regex::Error) { /Crystal/.match!("foo") }
       expect_raises(NilAssertionError) { $~ }
     end
 
     context "with options" do
       it "Regex::Match options" do
-        expect_raises(Exception) { /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED) }
+        expect_raises(Regex::Error) { /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED) }
       end
     end
   end
