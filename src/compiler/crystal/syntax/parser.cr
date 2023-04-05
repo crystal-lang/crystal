@@ -1484,7 +1484,7 @@ module Crystal
         # keep going
       end
 
-      consume_terminator
+      consume_expression_delimiter
       skip_space_or_newline
 
       if @token.keyword?(:end)
@@ -3706,7 +3706,7 @@ module Crystal
         body = Nop.new
       else
         slash_is_regex!
-        consume_terminator
+        consume_expression_delimiter
         skip_statement_end
 
         end_location = token_end_location
@@ -5671,7 +5671,7 @@ module Crystal
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
-        consume_terminator
+        consume_expression_delimiter
         skip_statement_end
         ExternalVar.new(name, type, real_name)
       when .op_lcurly_lcurly?
@@ -5936,7 +5936,7 @@ module Crystal
       exps = [] of ASTNode
 
       while true
-        consume_terminator unless exps.empty?
+        consume_expression_delimiter unless exps.empty?
         skip_statement_end
         case @token.type
         when .ident?
@@ -5999,7 +5999,7 @@ module Crystal
       when .op_colon?
         next_token_skip_space_or_newline
         base_type = parse_bare_proc_type
-        consume_terminator
+        consume_expression_delimiter
         skip_statement_end
       when .op_semicolon?, .newline?
         skip_statement_end
@@ -6336,7 +6336,7 @@ module Crystal
       arg_name
     end
 
-    def consume_terminator
+    def consume_expression_delimiter
       skip_space
       case @token.type
       when .newline?, .op_semicolon?
