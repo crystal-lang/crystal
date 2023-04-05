@@ -5012,7 +5012,7 @@ class String
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
   def starts_with?(re : Regex) : Bool
-    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
+    !!($~ = re.match_at_byte_index(self, 0, Regex::MatchOptions::ANCHORED))
   end
 
   # Returns `true` if this string ends with the given *str*.

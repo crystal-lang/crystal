@@ -1,6 +1,6 @@
 require "../../support/syntax"
 
-private def regex(string, options = Regex::Options::None)
+private def regex(string, options = Regex::CompileOptions::None)
   RegexLiteral.new(StringLiteral.new(string), options)
 end
 
@@ -1197,10 +1197,10 @@ module Crystal
     it_parses "1.!(\n)", Not.new(1.int32)
 
     it_parses "/foo/", regex("foo")
-    it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
-    it_parses "/foo/m", regex("foo", Regex::Options::MULTILINE)
-    it_parses "/foo/x", regex("foo", Regex::Options::EXTENDED)
-    it_parses "/foo/imximx", regex("foo", Regex::Options::IGNORE_CASE | Regex::Options::MULTILINE | Regex::Options::EXTENDED)
+    it_parses "/foo/i", regex("foo", Regex::CompileOptions::IGNORE_CASE)
+    it_parses "/foo/m", regex("foo", Regex::CompileOptions::MULTILINE)
+    it_parses "/foo/x", regex("foo", Regex::CompileOptions::EXTENDED)
+    it_parses "/foo/imximx", regex("foo", Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::MULTILINE | Regex::CompileOptions::EXTENDED)
     it_parses "/fo\\so/", regex("fo\\so")
     it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
     it_parses "/(fo\#{\"bar\"}\#{1}o)/", RegexLiteral.new(StringInterpolation.new(["(fo".string, "bar".string, 1.int32, "o)".string] of ASTNode))

@@ -426,6 +426,23 @@ end
 class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
 end
 
+class JSONStrictDiscriminator
+  include JSON::Serializable
+  include JSON::Serializable::Strict
+
+  property type : String
+
+  use_json_discriminator "type", {foo: JSONStrictDiscriminatorFoo, bar: JSONStrictDiscriminatorBar}
+end
+
+class JSONStrictDiscriminatorFoo < JSONStrictDiscriminator
+end
+
+class JSONStrictDiscriminatorBar < JSONStrictDiscriminator
+  property x : JSONStrictDiscriminator
+  property y : JSONStrictDiscriminator
+end
+
 module JSONNamespace
   struct FooRequest
     include JSON::Serializable
@@ -1070,6 +1087,16 @@ describe "JSON mapping" do
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum8)
+    end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = JSONStrictDiscriminator.from_json(%({"type": "foo"}))
+      foo = foo.should be_a(JSONStrictDiscriminatorFoo)
+
+      bar = JSONStrictDiscriminator.from_json(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(JSONStrictDiscriminatorBar)
+      bar.x.should be_a(JSONStrictDiscriminatorFoo)
+      bar.y.should be_a(JSONStrictDiscriminatorFoo)
     end
   end
 

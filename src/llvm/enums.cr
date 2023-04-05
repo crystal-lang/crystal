@@ -61,15 +61,10 @@ module LLVM
     @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
     @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
 
-    def each_kind(&block)
-      return if value == 0
-      {% for member in @type.constants %}
-        {% if member.stringify != "All" %}
-          if includes?({{@type}}::{{member}})
-            yield @@kind_ids[{{@type}}::{{member}}]
-          end
-        {% end %}
-      {% end %}
+    def each_kind(& : UInt32 ->)
+      each do |member|
+        yield @@kind_ids[member]
+      end
     end
 
     private def self.kind_for_name(name : String)

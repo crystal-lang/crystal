@@ -518,9 +518,9 @@ module Crystal
 
   class RegexLiteral < ASTNode
     property value : ASTNode
-    property options : Regex::Options
+    property options : Regex::CompileOptions
 
-    def initialize(@value, @options = Regex::Options::None)
+    def initialize(@value, @options = Regex::CompileOptions::None)
     end
 
     def accept_children(visitor)

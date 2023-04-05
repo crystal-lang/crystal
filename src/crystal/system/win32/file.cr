@@ -41,8 +41,7 @@ module Crystal::System::File
     )
 
     if handle == LibC::INVALID_HANDLE_VALUE
-      # Map ERROR_FILE_EXISTS to Errno::EEXIST to avoid changing semantics of other systems
-      return {-1, WinError.value.error_file_exists? ? Errno::EEXIST : Errno.value}
+      return {-1, WinError.value.to_errno}
     end
 
     fd = LibC._open_osfhandle handle, flags

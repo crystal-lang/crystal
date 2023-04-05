@@ -144,6 +144,12 @@ describe Enum do
   it "does includes?" do
     (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::One).should be_true
     (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::Three).should be_false
+    SpecEnumFlags::One.includes?(SpecEnumFlags::None).should be_true
+    SpecEnumFlags::None.includes?(SpecEnumFlags::None).should be_true
+    SpecEnumFlags::None.includes?(SpecEnumFlags::One).should be_false
+    SpecEnumFlags::One.includes?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_false
+    (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
+    (SpecEnumFlags::One | SpecEnumFlags::Two | SpecEnumFlags::Three).includes?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
   end
 
   describe "each" do

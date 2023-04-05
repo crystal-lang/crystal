@@ -79,6 +79,8 @@ class HTTP::StaticFileHandler
 
     return call_next(context) unless file_info
 
+    context.response.headers["Accept-Ranges"] = "bytes"
+
     if @directory_listing && is_dir
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
@@ -105,13 +107,111 @@ class HTTP::StaticFileHandler
         end
       end
 
-      context.response.content_length = file_info.size
       File.open(file_path) do |file|
-        IO.copy(file, context.response)
+        if range_header = context.request.headers["Range"]?
+          range_header = range_header.lchop?("bytes=")
+          unless range_header
+            context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
+            context.response.status = :range_not_satisfiable
+            context.response.close
+            return
+          end
+
+          ranges = parse_ranges(range_header, file_info.size)
+          unless ranges
+            context.response.respond_with_status :bad_request
+            return
+          end
+
+          if file_info.size.zero? && ranges.size == 1 && ranges[0].begin.zero?
+            context.response.status = :ok
+            return
+          end
+
+          # If any of the ranges start beyond the end of the file, we return an
+          # HTTP 416 Range Not Satisfiable.
+          # See https://www.rfc-editor.org/rfc/rfc9110.html#section-14.1.2-11.1
+          if ranges.any? { |range| range.begin >= file_info.size }
+            context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
+            context.response.status = :range_not_satisfiable
+            context.response.close
+            return
+          end
+
+          ranges.map! { |range| range.begin..(Math.min(range.end, file_info.size - 1)) }
+
+          context.response.status = :partial_content
+
+          if ranges.size == 1
+            range = ranges.first
+            file.seek range.begin
+            context.response.headers["Content-Range"] = "bytes #{range.begin}-#{range.end}/#{file_info.size}"
+            IO.copy file, context.response, range.size
+          else
+            MIME::Multipart.build(context.response) do |builder|
+              content_type = context.response.headers["Content-Type"]?
+              context.response.headers["Content-Type"] = builder.content_type("byterange")
+
+              ranges.each do |range|
+                file.seek range.begin
+                headers = HTTP::Headers{
+                  "Content-Range"  => "bytes #{range.begin}-#{range.end}/#{file_info.size}",
+                  "Content-Length" => range.size.to_s,
+                }
+                headers["Content-Type"] = content_type if content_type
+                chunk_io = IO::Sized.new(file, range.size)
+                builder.body_part headers, chunk_io
+              end
+            end
+          end
+        else
+          context.response.status = :ok
+          context.response.content_length = file_info.size
+          IO.copy(file, context.response)
+        end
       end
     else # Not a normal file (FIFO/device/socket)
       call_next(context)
     end
+  end
+
+  # TODO: Optimize without lots of intermediary strings
+  private def parse_ranges(header, file_size)
+    ranges = [] of Range(Int64, Int64)
+    header.split(",") do |range|
+      start_string, dash, finish_string = range.lchop(' ').partition("-")
+      return if dash.empty?
+      start = start_string.to_i64?
+      return if start.nil? && !start_string.empty?
+      if finish_string.empty?
+        return if start_string.empty?
+        finish = file_size
+      else
+        finish = finish_string.to_i64? || return
+      end
+      if file_size.zero?
+        # > When a selected representation has zero length, the only satisfiable
+        # > form of range-spec in a GET request is a suffix-range with a non-zero suffix-length.
+
+        if start
+          # This return value signals an unsatisfiable range.
+          return [1_i64..0_i64]
+        elsif finish <= 0
+          return
+        else
+          start = finish = 0_i64
+        end
+      elsif !start
+        # suffix-range
+        start = {file_size - finish, 0_i64}.max
+        finish = file_size - 1
+      end
+
+      range = (start..finish)
+      return unless 0 <= range.begin <= range.end
+      ranges << range
+    end
+    ranges unless ranges.empty?
   end
 
   # given a full path of the request, returns the path
