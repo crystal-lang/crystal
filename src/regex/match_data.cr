@@ -61,9 +61,9 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match!(/r/).begin(0)        # => 1
-    # "Crystal".match!(/r(ys)/).begin(1)    # => 2
-    # "クリスタル".match!(/リ(ス)/).begin(0)  # => 1
+    # "Crystal".match!(/r/).begin(0)     # => 1
+    # "Crystal".match!(/r(ys)/).begin(1) # => 2
+    # "クリスタル".match!(/リ(ス)/).begin(0)    # => 1
     # "Crystal".match!(/r/).begin(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).begin(1) # IndexError: Capture group 1 was not matched
     # ```
@@ -80,9 +80,9 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match!(/r/).end(0)        # => 2
-    # "Crystal".match!(/r(ys)/).end(1)    # => 4
-    # "クリスタル".match!(/リ(ス)/).end(0)  # => 3
+    # "Crystal".match!(/r/).end(0)     # => 2
+    # "Crystal".match!(/r(ys)/).end(1) # => 4
+    # "クリスタル".match!(/リ(ス)/).end(0)    # => 3
     # "Crystal".match!(/r/).end(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).end(1) # IndexError: Capture group 1 was not matched
     # ```
@@ -99,9 +99,9 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match!(/r/).byte_begin(0)         # => 1
-    # "Crystal".match!(/r(ys)/).byte_begin(1)     # => 2
-    # "クリスタル".match!(/リ(ス)/).byte_begin(0)   # => 3
+    # "Crystal".match!(/r/).byte_begin(0)     # => 1
+    # "Crystal".match!(/r(ys)/).byte_begin(1) # => 2
+    # "クリスタル".match!(/リ(ス)/).byte_begin(0)    # => 3
     # "Crystal".match!(/r/).byte_begin(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).byte_begin(1) # IndexError: Capture group 1 was not matched
     # ```
@@ -119,9 +119,9 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match!(/r/).byte_end(0)         # => 2
-    # "Crystal".match!(/r(ys)/).byte_end(1)     # => 4
-    # "クリスタル".match!(/リ(ス)/).byte_end(0)   # => 9
+    # "Crystal".match!(/r/).byte_end(0)     # => 2
+    # "Crystal".match!(/r(ys)/).byte_end(1) # => 4
+    # "クリスタル".match!(/リ(ス)/).byte_end(0)    # => 9
     # "Crystal".match!(/r/).byte_end(1)     # IndexError: Invalid capture group index: 1
     # "Crystal".match!(/r(x)?/).byte_end(1) # IndexError: Capture group 1 was not matched
     # ```

@@ -536,8 +536,8 @@ class Regex
   # if matched.
   #
   # ```
-  # /(.)(.)(.)/.match!("abc")[2]        # => "b"
-  # /(.)(.)/.match!("abc", 1)[2]        # => "c"
+  # /(.)(.)(.)/.match!("abc")[2]   # => "b"
+  # /(.)(.)/.match!("abc", 1)[2]   # => "c"
   # /(.)(タ)/.match!("クリスタル", 3)[2] # raises Exception
   # ```
   def match!(str : String, pos : Int32 = 0, *, options : Regex::MatchOptions = :none) : MatchData
