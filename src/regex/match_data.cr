@@ -21,32 +21,32 @@ class Regex
     # Returns the original regular expression.
     #
     # ```
-    # "Crystal".match(/[p-s]/).not_nil!.regex # => /[p-s]/
+    # "Crystal".match!(/[p-s]/).regex # => /[p-s]/
     # ```
     getter regex : Regex
 
     # Returns the number of capture groups, including named capture groups.
     #
     # ```
-    # "Crystal".match(/[p-s]/).not_nil!.group_size          # => 0
-    # "Crystal".match(/r(ys)/).not_nil!.group_size          # => 1
-    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.group_size # => 2
+    # "Crystal".match!(/[p-s]/).group_size          # => 0
+    # "Crystal".match!(/r(ys)/).group_size          # => 1
+    # "Crystal".match!(/r(ys)(?<ok>ta)/).group_size # => 2
     # ```
     getter group_size : Int32
 
     # Returns the original string.
     #
     # ```
-    # "Crystal".match(/[p-s]/).not_nil!.string # => "Crystal"
+    # "Crystal".match!(/[p-s]/).string # => "Crystal"
     # ```
     getter string : String
 
     # Returns the number of elements in this match object.
     #
     # ```
-    # "Crystal".match(/[p-s]/).not_nil!.size          # => 1
-    # "Crystal".match(/r(ys)/).not_nil!.size          # => 2
-    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 3
+    # "Crystal".match!(/[p-s]/).size          # => 1
+    # "Crystal".match!(/r(ys)/).size          # => 2
+    # "Crystal".match!(/r(ys)(?<ok>ta)/).size # => 3
     # ```
     def size : Int32
       group_size + 1
@@ -61,11 +61,11 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match(/r/).not_nil!.begin(0)     # => 1
-    # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
-    # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
-    # "Crystal".match(/r/).not_nil!.begin(1)     # IndexError: Invalid capture group index: 1
-    # "Crystal".match(/r(x)?/).not_nil!.begin(1) # IndexError: Capture group 1 was not matched
+    # "Crystal".match!(/r/).begin(0)        # => 1
+    # "Crystal".match!(/r(ys)/).begin(1)    # => 2
+    # "クリスタル".match!(/リ(ス)/).begin(0)  # => 1
+    # "Crystal".match!(/r/).begin(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match!(/r(x)?/).begin(1) # IndexError: Capture group 1 was not matched
     # ```
     def begin(n = 0) : Int32
       @string.byte_index_to_char_index(byte_begin(n)).not_nil!
@@ -80,11 +80,11 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match(/r/).not_nil!.end(0)     # => 2
-    # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
-    # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
-    # "Crystal".match(/r/).not_nil!.end(1)     # IndexError: Invalid capture group index: 1
-    # "Crystal".match(/r(x)?/).not_nil!.end(1) # IndexError: Capture group 1 was not matched
+    # "Crystal".match!(/r/).end(0)        # => 2
+    # "Crystal".match!(/r(ys)/).end(1)    # => 4
+    # "クリスタル".match!(/リ(ス)/).end(0)  # => 3
+    # "Crystal".match!(/r/).end(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match!(/r(x)?/).end(1) # IndexError: Capture group 1 was not matched
     # ```
     def end(n = 0) : Int32
       @string.byte_index_to_char_index(byte_end(n)).not_nil!
@@ -99,11 +99,11 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match(/r/).not_nil!.byte_begin(0)     # => 1
-    # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
-    # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
-    # "Crystal".match(/r/).not_nil!.byte_begin(1)     # IndexError: Invalid capture group index: 1
-    # "Crystal".match(/r(x)?/).not_nil!.byte_begin(1) # IndexError: Capture group 1 was not matched
+    # "Crystal".match!(/r/).byte_begin(0)         # => 1
+    # "Crystal".match!(/r(ys)/).byte_begin(1)     # => 2
+    # "クリスタル".match!(/リ(ス)/).byte_begin(0)   # => 3
+    # "Crystal".match!(/r/).byte_begin(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match!(/r(x)?/).byte_begin(1) # IndexError: Capture group 1 was not matched
     # ```
     def byte_begin(n = 0) : Int32
       check_index_out_of_bounds n
@@ -119,11 +119,11 @@ class Regex
     # subpattern is unused.
     #
     # ```
-    # "Crystal".match(/r/).not_nil!.byte_end(0)     # => 2
-    # "Crystal".match(/r(ys)/).not_nil!.byte_end(1) # => 4
-    # "クリスタル".match(/リ(ス)/).not_nil!.byte_end(0)    # => 9
-    # "Crystal".match(/r/).not_nil!.byte_end(1)     # IndexError: Invalid capture group index: 1
-    # "Crystal".match(/r(x)?/).not_nil!.byte_end(1) # IndexError: Capture group 1 was not matched
+    # "Crystal".match!(/r/).byte_end(0)         # => 2
+    # "Crystal".match!(/r(ys)/).byte_end(1)     # => 4
+    # "クリスタル".match!(/リ(ス)/).byte_end(0)   # => 9
+    # "Crystal".match!(/r/).byte_end(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match!(/r(x)?/).byte_end(1) # IndexError: Capture group 1 was not matched
     # ```
     def byte_end(n = 0) : Int32
       check_index_out_of_bounds n
@@ -136,9 +136,9 @@ class Regex
     # When *n* is `0`, returns the match for the entire `Regex`.
     #
     # ```
-    # "Crystal".match(/r(ys)/).not_nil![0]? # => "rys"
-    # "Crystal".match(/r(ys)/).not_nil![1]? # => "ys"
-    # "Crystal".match(/r(ys)/).not_nil![2]? # => nil
+    # "Crystal".match!(/r(ys)/)[0]? # => "rys"
+    # "Crystal".match!(/r(ys)/)[1]? # => "ys"
+    # "Crystal".match!(/r(ys)/)[2]? # => nil
     # ```
     def []?(n : Int) : String?
       return unless valid_group?(n)
@@ -151,8 +151,8 @@ class Regex
     # if there is no *n*th capture group.
     #
     # ```
-    # "Crystal".match(/r(ys)/).not_nil![1] # => "ys"
-    # "Crystal".match(/r(ys)/).not_nil![2] # raises IndexError
+    # "Crystal".match!(/r(ys)/)[1] # => "ys"
+    # "Crystal".match!(/r(ys)/)[2] # raises IndexError
     # ```
     def [](n : Int) : String
       check_index_out_of_bounds n
@@ -165,15 +165,15 @@ class Regex
     # `nil` if there is no such named capture group.
     #
     # ```
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"]? # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"]? # => nil
+    # "Crystal".match!(/r(?<ok>ys)/)["ok"]? # => "ys"
+    # "Crystal".match!(/r(?<ok>ys)/)["ng"]? # => nil
     # ```
     #
     # When there are capture groups having same name, it returns the last
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
+    # "Crystal".match!(/(?<ok>Cr).*(?<ok>al)/)["ok"]? # => "al"
     # ```
     def []?(group_name : String) : String?
       fetch_impl(group_name) { nil }
@@ -183,15 +183,15 @@ class Regex
     # raises an `KeyError` if there is no such named capture group.
     #
     # ```
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises KeyError
+    # "Crystal".match!(/r(?<ok>ys)/)["ok"] # => "ys"
+    # "Crystal".match!(/r(?<ok>ys)/)["ng"] # raises KeyError
     # ```
     #
     # When there are capture groups having same name, it returns the last
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
+    # "Crystal".match!(/(?<ok>Cr).*(?<ok>al)/)["ok"] # => "al"
     # ```
     def [](group_name : String) : String
       fetch_impl(group_name) { |exists|
@@ -230,7 +230,7 @@ class Regex
     # starts at the start of the string, returns the empty string.
     #
     # ```
-    # "Crystal".match(/yst/).not_nil!.pre_match # => "Cr"
+    # "Crystal".match!(/yst/).pre_match # => "Cr"
     # ```
     def pre_match : String
       @string.byte_slice(0, byte_begin(0))
@@ -240,7 +240,7 @@ class Regex
     # at the end of the string, returns the empty string.
     #
     # ```
-    # "Crystal".match(/yst/).not_nil!.post_match # => "al"
+    # "Crystal".match!(/yst/).post_match # => "al"
     # ```
     def post_match : String
       @string.byte_slice(byte_end(0))
@@ -251,12 +251,12 @@ class Regex
     # It is a difference from `to_a` that the result array does not contain the match for the entire `Regex` (`self[0]`).
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match = "Crystal".match!(/(Cr)(?<name1>y)(st)(?<name2>al)/)
     # match.captures # => ["Cr", "st"]
     #
     # # When this regex has an optional group, result array may contain
     # # a `nil` if this group is not matched.
-    # match = "Crystal".match(/(Cr)(stal)?/).not_nil!
+    # match = "Crystal".match!(/(Cr)(stal)?/)
     # match.captures # => ["Cr", nil]
     # ```
     def captures : Array(String?)
@@ -273,12 +273,12 @@ class Regex
     # Returns a hash of named capture groups.
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match = "Crystal".match!(/(Cr)(?<name1>y)(st)(?<name2>al)/)
     # match.named_captures # => {"name1" => "y", "name2" => "al"}
     #
     # # When this regex has an optional group, result hash may contain
     # # a `nil` if this group is not matched.
-    # match = "Crystal".match(/(?<name1>Cr)(?<name2>stal)?/).not_nil!
+    # match = "Crystal".match!(/(?<name1>Cr)(?<name2>stal)?/)
     # match.named_captures # => {"name1" => "Cr", "name2" => nil}
     # ```
     def named_captures : Hash(String, String?)
@@ -297,12 +297,12 @@ class Regex
     # Convert this match data into an array.
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match = "Crystal".match!(/(Cr)(?<name1>y)(st)(?<name2>al)/)
     # match.to_a # => ["Crystal", "Cr", "y", "st", "al"]
     #
     # # When this regex has an optional group, result array may contain
     # # a `nil` if this group is not matched.
-    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match = "Crystal".match!(/(Cr)(?<name1>stal)?/)
     # match.to_a # => ["Cr", "Cr", nil]
     # ```
     def to_a : Array(String?)
@@ -312,12 +312,12 @@ class Regex
     # Convert this match data into a hash.
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match = "Crystal".match!(/(Cr)(?<name1>y)(st)(?<name2>al)/)
     # match.to_h # => {0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"}
     #
     # # When this regex has an optional group, result array may contain
     # # a `nil` if this group is not matched.
-    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match = "Crystal".match!(/(Cr)(?<name1>stal)?/)
     # match.to_h # => {0 => "Cr", 1 => "Cr", "name1" => nil}
     # ```
     def to_h : Hash(Int32 | String, String?)
