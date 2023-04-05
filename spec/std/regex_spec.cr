@@ -144,7 +144,9 @@ describe "Regex" do
 
     context "with options" do
       it "Regex::Match options" do
-        expect_raises(Regex::Error) { /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED) }
+        expect_raises(Regex::Error, "Match not found") do
+          /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED)
+        end
       end
     end
   end
