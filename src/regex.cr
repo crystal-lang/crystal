@@ -541,8 +541,8 @@ class Regex
   # /(.)(タ)/.match!("クリスタル", 3)[2] # raises Exception
   # ```
   def match!(str : String, pos : Int32 = 0, *, options : Regex::MatchOptions = :none) : MatchData
-    byte_index = str.char_index_to_byte_index(pos) || raise Error.new "no matches found"
-    $~ = match_at_byte_index(str, byte_index, options) || raise Error.new "no matches found"
+    byte_index = str.char_index_to_byte_index(pos) || raise Error.new "Match not found"
+    $~ = match_at_byte_index(str, byte_index, options) || raise Error.new "Match not found"
   end
 
   # Match at byte index. Matches a regular expression against `String`
