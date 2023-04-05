@@ -138,7 +138,7 @@ describe "Regex" do
     end
 
     it "raises on non-match" do
-      expect_raises(Regex::Error) { /Crystal/.match!("foo") }
+      expect_raises(Regex::Error, "Match not found") { /Crystal/.match!("foo") }
       expect_raises(NilAssertionError) { $~ }
     end
 
