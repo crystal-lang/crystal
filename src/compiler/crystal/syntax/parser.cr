@@ -1695,6 +1695,8 @@ module Crystal
           superclass = parse_generic
         end
       end
+
+      consume_statement_end
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -6343,6 +6345,15 @@ module Crystal
         next_token
       else
         unexpected_token %(expected ";" or newline)
+      end
+    end
+
+    def consume_statement_end
+      case @token.type
+      when .space?, .newline?, .op_semicolon?
+        next_token
+      else
+        unexpected_token "expected ';' or newline"
       end
     end
   end

@@ -2013,6 +2013,20 @@ module Crystal
       end
       CR
     assert_syntax_error "enum Foo : Int8 end", %(unexpected token: "end" (expected ";" or newline))
+    assert_syntax_error %(class Foo"a" end), %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+    assert_syntax_error "class Foo'a' end", %(unexpected token: "a" (expected ';' or newline))
+    assert_syntax_error "class Foo[1] end", %(unexpected token: "[" (expected ';' or newline))
+    assert_syntax_error "class Foo{1} end", %(unexpected token: "{" (expected ';' or newline))
+    assert_syntax_error "class Foo{|a|a} end", %(unexpected token: "{" (expected ';' or newline))
+    assert_syntax_error "class Foo {|a|a} end", %(unexpected token: "{" (expected ';' or newline))
+    assert_syntax_error "class Foo->{} end", %(unexpected token: "->" (expected ';' or newline))
+    assert_syntax_error "class Foo->(x : Bar){}", %(unexpected token: "->" (expected ';' or newline))
+    assert_syntax_error "class Foo:Bar end", %(unexpected token: "Bar" (expected ';' or newline))
+    assert_syntax_error "class Foo:bar end", %(unexpected token: "bar" (expected ';' or newline))
+    assert_syntax_error "class Foo%x() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+    assert_syntax_error "class Foo%w() end", %(unexpected token: "STRING_ARRAY_START" (expected ';' or newline))
+    assert_syntax_error "class Foo%() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+    assert_syntax_error "class Foo < Bar:Qux end", %(unexpected token: "Qux" (expected ';' or newline))
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"
