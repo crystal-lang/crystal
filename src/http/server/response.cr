@@ -61,6 +61,7 @@ class HTTP::Server
       @headers.clear
       @cookies = nil
       @status = :ok
+      @status_message = nil
       @wrote_headers = false
       @output = @original_output
       @original_output.reset
