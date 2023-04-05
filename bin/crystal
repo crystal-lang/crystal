@@ -173,6 +173,11 @@ if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
   export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
 fi
 
+# CRYSTAL_PATH has all symlinks resolved. In order to avoid issues with duplicate file
+# paths when the working directory is a symlink, we cd into the current directory
+# with symlinks resolved as well (see https://github.com/crystal-lang/crystal/issues/12969).
+cd "$(realpath "$(pwd)")"
+
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
   __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
