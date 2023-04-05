@@ -343,6 +343,14 @@ module Crystal
       end
     end
 
+    private def regex_new_call(node, value)
+      Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
+    end
+
+    private def regex_options(node)
+      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value.to_s).at(node)).at(node)
+    end
+
     # Convert and to if:
     #
     # From:
@@ -1017,14 +1025,6 @@ module Crystal
       else
         proc_literal
       end
-    end
-
-    private def regex_new_call(node, value)
-      Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
-    end
-
-    private def regex_options(node)
-      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value).at(node)).at(node)
     end
 
     def expand(node)
