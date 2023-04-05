@@ -10,7 +10,7 @@ class Time::Location
   end
 end
 
-def with_env(name, value)
+def with_env(name, value, &)
   previous = ENV[name]?
   begin
     ENV[name] = value
@@ -25,7 +25,7 @@ end
 
 ZONEINFO_ZIP = datapath("zoneinfo.zip")
 
-def with_zoneinfo(path = ZONEINFO_ZIP)
+def with_zoneinfo(path = ZONEINFO_ZIP, &)
   with_env("ZONEINFO", path) do
     Time::Location.__clear_location_cache
 

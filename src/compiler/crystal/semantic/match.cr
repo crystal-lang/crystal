@@ -69,7 +69,9 @@ module Crystal
 
     def has_def_free_var?(name)
       return false if get_free_var(name)
-      !!(@def_free_vars.try &.includes?(name))
+      return true if @def_free_vars.try &.includes?(name)
+
+      defining_type.metaclass? && defining_type.type_var?(name)
     end
 
     # Returns the type that corresponds to using `self` when looking
@@ -130,7 +132,7 @@ module Crystal
   struct Matches
     include Enumerable(Match)
 
-    property matches : ZeroOneOrMany(Match)
+    property matches : Array(Match)?
     property cover : Bool | Cover | Nil
     property owner : Type?
 
@@ -139,25 +141,32 @@ module Crystal
 
     def cover_all?
       cover = @cover
-      @success && !@matches.empty? && (cover == true || (cover.is_a?(Cover) && cover.all?))
+      matches = @matches
+      @success && matches && matches.size > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
     end
 
     def empty?
-      !@success || matches.empty?
+      return true unless @success
+
+      if matches = @matches
+        matches.empty?
+      else
+        true
+      end
     end
 
-    def each
-      @success && @matches.each do |match|
+    def each(&)
+      @success && @matches.try &.each do |match|
         yield match
       end
     end
 
     def size
-      @matches.size
+      @matches.try(&.size) || 0
     end
 
     def [](*args)
-      Matches.new(@matches.[*args], @cover, @owner, @success)
+      Matches.new(@matches.try &.[](*args), @cover, @owner, @success)
     end
   end
 end

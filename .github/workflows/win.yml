@@ -2,36 +2,24 @@ name: Windows CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  x86_64-linux-job:
-    runs-on: ubuntu-latest
-    container: crystallang/crystal:1.6.2-build
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v3
-
-      - name: Build C extensions
-        run: |
-          make deps
-      - name: Cross-compile Crystal
-        run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter
-
-      - name: Upload Crystal object file
-        uses: actions/upload-artifact@v3
-        with:
-          name: objs
-          path: crystal.obj
-
-  x86_64-windows-job:
-    needs: x86_64-linux-job
+  x86_64-windows:
     runs-on: windows-2022
     steps:
       - name: Disable CRLF line ending substitution
         run: |
           git config --global core.autocrlf false
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@7315a94840631165970262a99c72cfb48a65d25d # v1.12.0
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.7.3"
 
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -42,6 +30,7 @@ jobs:
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
+            libs/pcre2-8.lib
             libs/iconv.lib
             libs/gc.lib
             libs/ffi.lib
@@ -83,6 +72,19 @@ jobs:
         run: |
           cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
+      - name: Download libpcre2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: PCRE2Project/pcre2
+          ref: pcre2-10.42
+          path: pcre2
+      - name: Build libpcre2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./pcre2
+        run: |
+          cmake . -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DPCRE2_STATIC_RUNTIME=ON -DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
+          cmake --build . --config Release
       - name: Download libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -94,6 +96,8 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libiconv
         run: |
+          sed -i 's|__declspec (dllimport) ||' libiconv\include\iconv.h
+
           echo '<Project>
             <PropertyGroup>
               <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
@@ -230,6 +234,7 @@ jobs:
         run: |
           mkdir libs
           mv pcre/Release/pcre.lib libs/
+          mv pcre2/Release/pcre2-8-static.lib libs/pcre2-8.lib
           mv libiconv/output/x64/ReleaseStatic/libiconvStatic.lib libs/iconv.lib
           mv bdwgc/Release/gc.lib libs/
           mv libffi/win32/vs16_x64/x64/Release/libffi.lib libs/ffi.lib
@@ -278,15 +283,23 @@ jobs:
         uses: actions/cache@v3
         with:
           path: llvm
-          key: llvm-libs-13.0.1-msvc-${{ env.VSCMD_VER }}
+          key: llvm-libs-15.0.7-msvc-${{ env.VSCMD_VER }}
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.1/llvm-13.0.1.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "EC6B80D82C384ACAD2DC192903A6CF2CDBAFFB889B84BFB98DA9D71E630FC834"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/llvm-15.0.7.src.tar.xz -OutFile llvm.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "4AD8B2CC8003C86D0078D15D987D84E3A739F24AAE9033865C027ABAE93EE7A4"
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
+      - name: Download LLVM's CMake files
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/cmake-15.0.7.src.tar.xz -OutFile cmake.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea"
+          7z x cmake.tar.xz
+          7z x cmake.tar
+          mv cmake-* cmake
       - name: Patch LLVM for VS 2019 16.7.0
         working-directory: ./llvm-src
         if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -296,7 +309,7 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         working-directory: ./llvm-src
         run: |
-          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
+          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_BUILD_BENCHMARKS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_ENABLE_ZSTD=OFF
           cmake --build . --config Release
       - name: Gather LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -310,19 +323,10 @@ jobs:
           echo "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\.build\crystal.exe" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
 
-      - name: Download Crystal object file
-        uses: actions/download-artifact@v3
-        with:
-          name: objs
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
-      - name: Link Crystal executable
-        run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib ole32.lib shell32.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:0x800000 /ENTRY:wmainCRTStartup"
-          mkdir .build
-          mv crystal.exe .build/
 
-      - name: Re-build Crystal
+      - name: Build Crystal
         run: |
           bin/crystal.bat env
           make -f Makefile.win -B
@@ -331,7 +335,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: crystal-lang/shards
-          ref: v0.17.1
+          ref: v0.17.2
           path: shards
 
       - name: Download molinillo release

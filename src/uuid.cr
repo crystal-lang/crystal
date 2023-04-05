@@ -1,4 +1,6 @@
 # Represents a UUID (Universally Unique IDentifier).
+#
+# NOTE: To use `UUID`, you must explicitly import it with `require "uuid"`
 struct UUID
   include Comparable(UUID)
 
@@ -60,7 +62,7 @@ struct UUID
 
   # Creates UUID from 16-bytes slice. Raises if *slice* isn't 16 bytes long. See
   # `#initialize` for *variant* and *version*.
-  def self.new(slice : Slice(UInt8), variant = nil, version = nil)
+  def self.new(slice : Slice(UInt8), variant : Variant? = nil, version : Version? = nil)
     raise ArgumentError.new "Invalid bytes length #{slice.size}, expected 16" unless slice.size == 16
 
     bytes = uninitialized UInt8[16]
@@ -71,14 +73,14 @@ struct UUID
 
   # Creates another `UUID` which is a copy of *uuid*, but allows overriding
   # *variant* or *version*.
-  def self.new(uuid : UUID, variant = nil, version = nil)
+  def self.new(uuid : UUID, variant : Variant? = nil, version : Version? = nil)
     new(uuid.bytes, variant, version)
   end
 
   # Creates new UUID by decoding `value` string from hyphenated (ie `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
   # hexstring (ie `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
   # format, raising an `ArgumentError` if the string does not match any of these formats.
-  def self.new(value : String, variant = nil, version = nil)
+  def self.new(value : String, variant : Variant? = nil, version : Version? = nil)
     bytes = uninitialized UInt8[16]
 
     case value.size
@@ -110,7 +112,7 @@ struct UUID
   # Creates new UUID by decoding `value` string from hyphenated (ie `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
   # hexstring (ie `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
   # format, returning `nil` if the string does not match any of these formats.
-  def self.parse?(value : String, variant = nil, version = nil) : UUID?
+  def self.parse?(value : String, variant : Variant? = nil, version : Version? = nil) : UUID?
     bytes = uninitialized UInt8[16]
 
     case value.size
@@ -167,7 +169,7 @@ struct UUID
   #
   # It is strongly recommended to use a cryptographically random source for
   # *random*, such as `Random::Secure`.
-  def self.random(random = Random::Secure, variant = Variant::RFC4122, version = Version::V4) : self
+  def self.random(random : Random = Random::Secure, variant : Variant = :rfc4122, version : Version = :v4) : self
     new_bytes = uninitialized UInt8[16]
     random.random_bytes(new_bytes.to_slice)
 

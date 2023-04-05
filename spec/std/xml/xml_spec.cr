@@ -162,6 +162,9 @@ describe XML do
     xml = XML.parse(%(<people></foo>))
     xml.root.not_nil!.name.should eq("people")
     xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+
+    xml = XML.parse(%(<foo></foo>))
+    xml.errors.should be_nil
   end
 
   describe "#namespace" do

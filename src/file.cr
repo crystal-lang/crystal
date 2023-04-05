@@ -94,6 +94,11 @@ class File < IO::FileDescriptor
     super(fd, blocking)
   end
 
+  # :nodoc:
+  def self.from_fd(path : String, fd : Int, *, blocking = false, encoding = nil, invalid = nil)
+    new(path, fd, blocking: blocking, encoding: encoding, invalid: invalid)
+  end
+
   # Opens the file named by *filename*.
   #
   # *mode* must be one of the following file open modes:
@@ -163,7 +168,10 @@ class File < IO::FileDescriptor
     Crystal::System::File.info(path.to_s, follow_symlinks)
   end
 
-  # Returns `true` if *path* exists else returns `false`
+  # Returns whether the file given by *path* exists.
+  #
+  # Symbolic links are dereferenced, posibly recursively. Returns `false` if a
+  # symbolic link refers to a non-existent file.
   #
   # ```
   # File.delete("foo") if File.exists?("foo")
@@ -659,7 +667,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -703,7 +711,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
     open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line

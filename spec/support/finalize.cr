@@ -30,7 +30,7 @@ module FinalizeCounter
   end
 end
 
-def assert_finalizes(key : String)
+def assert_finalizes(key : String, &)
   FinalizeState.reset
   FinalizeState.count(key).should eq(0)
 

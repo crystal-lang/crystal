@@ -9,12 +9,7 @@ class LLVM::Context
   end
 
   def new_module(name : String) : Module
-    {% if LibLLVM::IS_38 %}
-      Module.new(LibLLVM.module_create_with_name_in_context(name, self), name, self)
-    {% else %}
-      # LLVM >= 3.9
-      Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
-    {% end %}
+    Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
   def new_builder : Builder
@@ -64,11 +59,23 @@ class LLVM::Context
     Type.new LibLLVM.double_type_in_context(self)
   end
 
-  def void_pointer : Type
-    int8.pointer
+  def pointer : Type
+    {% if LibLLVM::IS_LT_150 %}
+      {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
+    {% else %}
+      Type.new LibLLVM.pointer_type_in_context(self, 0)
+    {% end %}
   end
 
-  def struct(name : String, packed = false) : Type
+  def void_pointer : Type
+    {% if LibLLVM::IS_LT_150 %}
+      int8.pointer
+    {% else %}
+      pointer
+    {% end %}
+  end
+
+  def struct(name : String, packed = false, &) : Type
     llvm_struct = LibLLVM.struct_create_named(self, name)
     the_struct = Type.new llvm_struct
     element_types = (yield the_struct).as(Array(LLVM::Type))
@@ -105,12 +112,7 @@ class LLVM::Context
     if ret != 0 && msg
       raise LLVM.string_and_dispose(msg)
     end
-    {% if LibLLVM::IS_38 %}
-      Module.new(mod, "unknown", self)
-    {% else %}
-      # LLVM >= 3.9
-      Module.new(mod, self)
-    {% end %}
+    Module.new(mod, self)
   end
 
   def ==(other : self)

@@ -46,7 +46,27 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # Remember that the program depends on this require
     @program.record_require(filename, relative_to)
 
-    filenames = @program.find_in_path(filename, relative_to)
+    filenames = begin
+      @program.find_in_path(filename, relative_to)
+    rescue ex : CrystalPath::NotFoundError
+      message = "can't find file '#{ex.filename}'"
+      notes = [] of String
+
+      if ex.filename.starts_with? '.'
+        if relative_to
+          message += " relative to '#{relative_to}'"
+        end
+      else
+        notes << <<-NOTE
+          If you're trying to require a shard:
+          - Did you remember to run `shards install`?
+          - Did you make sure you're running the compiler in the same directory as your shard.yml?
+          NOTE
+      end
+
+      node.raise "#{message}\n\n#{notes.join("\n")}"
+    end
+
     if filenames
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
@@ -54,11 +74,17 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
           parser = @program.new_parser(File.read(filename))
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
-          parsed_nodes = parser.parse
-          parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
-          # We must type the node immediately, in case a file requires another
-          # *before* one of the files in `filenames`
-          parsed_nodes.accept self
+          begin
+            parsed_nodes = parser.parse
+            parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+            # We must type the node immediately, in case a file requires another
+            # *before* one of the files in `filenames`
+            parsed_nodes.accept self
+          rescue ex : CodeError
+            node.raise "while requiring \"#{node.string}\"", ex
+          rescue ex
+            raise Error.new "while requiring \"#{node.string}\"", ex
+          end
           nodes << FileNode.new(parsed_nodes, filename)
         end
       end
@@ -70,27 +96,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.expanded = expanded
     node.bind_to(expanded)
     false
-  rescue ex : CrystalPath::NotFoundError
-    message = "can't find file '#{ex.filename}'"
-    notes = [] of String
-
-    if ex.filename.starts_with? '.'
-      if relative_to
-        message += " relative to '#{relative_to}'"
-      end
-    else
-      notes << <<-NOTE
-          If you're trying to require a shard:
-          - Did you remember to run `shards install`?
-          - Did you make sure you're running the compiler in the same directory as your shard.yml?
-          NOTE
-    end
-
-    node.raise "#{message}\n\n#{notes.join("\n")}"
-  rescue ex : Crystal::CodeError
-    node.raise "while requiring \"#{node.string}\"", ex
-  rescue ex
-    raise Error.new("while requiring \"#{node.string}\"", ex)
   end
 
   def visit(node : ClassDef)
@@ -328,7 +333,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     true
   end
 
-  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true)
+  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true, &)
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
@@ -426,7 +431,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return expanded
     end
 
-    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
+    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node)
 
     skip_macro_exception = nil
 
@@ -447,7 +452,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     generated_nodes
   end
 
-  def eval_macro(node)
+  def eval_macro(node, &)
     yield
   rescue ex : MacroRaiseException
     node.raise ex.message, exception_type: MacroRaiseException
@@ -455,7 +460,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.raise "expanding macro", ex
   end
 
-  def process_annotations(annotations)
+  def process_annotations(annotations, &)
     annotations.try &.each do |ann|
       annotation_type = lookup_annotation(ann)
       validate_annotation(annotation_type, ann)
@@ -556,7 +561,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @exp_nest > 0
   end
 
-  def pushing_type(type : ModuleType)
+  def pushing_type(type : ModuleType, &)
     old_type = @current_type
     @current_type = type
     read_annotations

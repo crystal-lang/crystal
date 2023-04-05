@@ -2,7 +2,7 @@ require "../program"
 
 module Crystal
   class Program
-    def type_merge(types : Indexable(Type?)) : Type?
+    def type_merge(types : Array(Type?)) : Type?
       case types.size
       when 0
         nil
@@ -17,7 +17,7 @@ module Crystal
       end
     end
 
-    def type_merge(nodes : Indexable(ASTNode)) : Type?
+    def type_merge(nodes : Array(ASTNode)) : Type?
       case nodes.size
       when 0
         nil
@@ -66,7 +66,7 @@ module Crystal
       compact_types(types) { |type| type }
     end
 
-    def compact_types(objects) : Array(Type)
+    def compact_types(objects, &) : Array(Type)
       all_types = Array(Type).new(objects.size)
       objects.each { |obj| add_type all_types, yield(obj) }
       all_types.reject! &.no_return? if all_types.size > 1
@@ -161,11 +161,11 @@ module Crystal
   end
 
   class Type
-    def self.merge(nodes : Indexable(ASTNode)) : Type?
+    def self.merge(nodes : Array(ASTNode)) : Type?
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
 
-    def self.merge(types : Indexable(Type)) : Type?
+    def self.merge(types : Array(Type)) : Type?
       if types.size == 0
         nil
       else

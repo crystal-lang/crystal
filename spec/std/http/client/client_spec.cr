@@ -6,7 +6,7 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
-private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
+private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
     spawn do
@@ -357,7 +357,7 @@ module HTTP
       end
     end
 
-    pending_win32 "tests write_timeout" do
+    it "tests write_timeout" do
       # Here we don't want to write a response on the server side because
       # it doesn't make sense to try to write because the client will already
       # timeout on read. Writing a response could lead on an exception in
@@ -371,7 +371,7 @@ module HTTP
       end
     end
 
-    pending_win32 "tests connect_timeout" do
+    it "tests connect_timeout" do
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
@@ -400,13 +400,13 @@ module HTTP
     end
 
     it "works with IO" do
-      io_response = IO::Memory.new <<-RESPONSE.gsub('\n', "\r\n")
+      io_response = IO::Memory.new <<-HTTP.gsub('\n', "\r\n")
       HTTP/1.1 200 OK
       Content-Type: text/plain
       Content-Length: 3
 
       Hi!
-      RESPONSE
+      HTTP
       io_request = IO::Memory.new
       io = IO::Stapled.new(io_response, io_request)
       client = Client.new(io)
@@ -475,7 +475,7 @@ module HTTP
   end
 
   class SubClient < HTTP::Client
-    def around_exec(request)
+    def around_exec(request, &)
       raise "from subclass"
       yield
     end

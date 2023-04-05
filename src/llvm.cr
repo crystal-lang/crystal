@@ -95,26 +95,21 @@ module LLVM
     triple = string_and_dispose(chars)
     if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
       "x86_64-apple-macosx"
+    elsif triple =~ /aarch64-unknown-linux-android/
+      # remove API version
+      "aarch64-unknown-linux-android"
     else
       triple
     end
   end
 
   def self.host_cpu_name : String
-    {% unless LibLLVM::IS_LT_70 %}
-      String.new LibLLVM.get_host_cpu_name
-    {% else %}
-      raise "LibLLVM.host_cpu_name requires LLVM 7.0 or newer"
-    {% end %}
+    String.new LibLLVM.get_host_cpu_name
   end
 
   def self.normalize_triple(triple : String) : String
-    normalized = LibLLVMExt.normalize_target_triple(triple)
+    normalized = LibLLVM.normalize_target_triple(triple)
     normalized = LLVM.string_and_dispose(normalized)
-
-    # Fix LLVM not replacing empty triple parts with "unknown"
-    # This was fixed in LLVM 8
-    normalized = normalized.split('-').map { |c| c.presence || "unknown" }.join('-')
 
     normalized
   end

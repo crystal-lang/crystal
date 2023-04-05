@@ -18,6 +18,20 @@ struct StructIter
   end
 end
 
+private class MockIterator
+  include Iterator(Int32)
+
+  def initialize
+    @x = 0
+    @y = Slice(Int32).new(5)
+  end
+
+  def next
+    return stop if @x >= 3
+    @x += 1
+  end
+end
+
 describe Iterator do
   describe "Iterator.of" do
     it "creates singleton" do
@@ -526,6 +540,10 @@ describe Iterator do
       iter.next.should eq([4, 5, 6])
       iter.next.should eq([7, 8])
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "doesnt conflict with `::Slice` type" do
+      assert_iterates_iterator [1, 2, 3], MockIterator.new.each
     end
   end
 

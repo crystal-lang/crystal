@@ -31,8 +31,8 @@
 #
 # ```
 # language = {name: "Crystal", year: 2011}
-# language[:name]?         # => 1
-# typeof(language[:name]?) # => Int32
+# language[:name]?         # => "Crystal"
+# typeof(language[:name]?) # => String
 # ```
 #
 # `NamedTuple`'s own instance classes may also be indexed in a similar manner,
@@ -243,9 +243,9 @@ struct NamedTuple
   # Returns `nil` if not found.
   #
   # ```
-  # h = {a: {b: [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+  # h.dig? :a, :b, :c # => [10, 20]
+  # h.dig? "a", "x"   # => nil
   # ```
   def dig?(key : Symbol | String, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -262,9 +262,9 @@ struct NamedTuple
   # raises `KeyError`.
   #
   # ```
-  # h = {a: {b: [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+  # h.dig :a, :b, :c # => [10, 20]
+  # h.dig "a", "x"   # raises KeyError
   # ```
   def dig(key : Symbol | String, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
@@ -499,7 +499,7 @@ struct NamedTuple
   # name = Crystal
   # year = 2011
   # ```
-  def each : Nil
+  def each(&) : Nil
     {% for key in T %}
       yield {{key.symbolize}}, self[{{key.symbolize}}]
     {% end %}
@@ -520,7 +520,7 @@ struct NamedTuple
   # name
   # year
   # ```
-  def each_key : Nil
+  def each_key(&) : Nil
     {% for key in T %}
       yield {{key.symbolize}}
     {% end %}
@@ -541,7 +541,7 @@ struct NamedTuple
   # Crystal
   # 2011
   # ```
-  def each_value : Nil
+  def each_value(&) : Nil
     {% for key in T %}
       yield self[{{key.symbolize}}]
     {% end %}
@@ -562,7 +562,7 @@ struct NamedTuple
   # 1) name = Crystal
   # 2) year = 2011
   # ```
-  def each_with_index(offset = 0)
+  def each_with_index(offset = 0, &)
     i = offset
     each do |key, value|
       yield key, value, i
@@ -577,7 +577,7 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
-  def map
+  def map(&)
     {% if T.size == 0 %}
       [] of NoReturn
     {% else %}

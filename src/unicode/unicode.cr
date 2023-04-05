@@ -161,7 +161,7 @@ module Unicode
   end
 
   # :nodoc:
-  def self.upcase(char : Char, options : CaseOptions)
+  def self.upcase(char : Char, options : CaseOptions, &)
     result = check_upcase_ascii(char, options)
     if result
       yield result
@@ -231,7 +231,7 @@ module Unicode
   end
 
   # :nodoc:
-  def self.downcase(char : Char, options : CaseOptions)
+  def self.downcase(char : Char, options : CaseOptions, &)
     result = check_downcase_ascii(char, options)
     if result
       yield result
@@ -555,7 +555,7 @@ module Unicode
     end
   end
 
-  private def self.search_ranges(haystack, needle)
+  private def self.search_ranges(haystack, needle, &)
     value = haystack.bsearch { |v| needle <= v[1] }
     if value && value[0] <= needle <= value[1]
       yield value

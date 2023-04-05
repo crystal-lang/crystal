@@ -37,7 +37,7 @@ private struct LEBReader
   end
 end
 
-private def traverse_eh_table(leb, start, ip, actions)
+private def traverse_eh_table(leb, start, ip, actions, &)
   # Ref: https://chromium.googlesource.com/native_client/pnacl-libcxxabi/+/master/src/cxa_personality.cpp
 
   throw_offset = ip - 1 - start
@@ -105,7 +105,7 @@ end
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-    LibC.printf("EXITING: __crystal_raise called")
+    Crystal::System.print_error "EXITING: __crystal_raise called"
     LibC.exit(1)
   end
 {% elsif flag?(:arm) %}
@@ -160,20 +160,20 @@ end
 {% elsif flag?(:wasm32) %}
   # :nodoc:
   fun __crystal_personality
-    LibC.printf("EXITING: __crystal_personality called")
+    Crystal::System.print_error "EXITING: __crystal_personality called"
     LibC.exit(1)
   end
 
   # :nodoc:
   @[Raises]
   fun __crystal_raise(ex : Void*) : NoReturn
-    LibC.printf("EXITING: __crystal_raise called")
+    Crystal::System.print_error "EXITING: __crystal_raise called"
     LibC.exit(1)
   end
 
   # :nodoc:
   fun __crystal_get_exception(ex : Void*) : UInt64
-    LibC.printf("EXITING: __crystal_get_exception called")
+    Crystal::System.print_error "EXITING: __crystal_get_exception called"
     LibC.exit(1)
     0u64
   end
@@ -215,7 +215,7 @@ end
 
 {% if flag?(:wasm32) %}
   def raise(exception : Exception) : NoReturn
-    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    Crystal::System.print_error "EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}"
     LibIntrinsics.debugtrap
     LibC.exit(1)
   end

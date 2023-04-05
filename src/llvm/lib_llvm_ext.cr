@@ -14,7 +14,7 @@ lib LibLLVMExt
   type OperandBundleDefRef = Void*
 
   fun create_di_builder = LLVMExtNewDIBuilder(LibLLVM::ModuleRef) : DIBuilder
-  fun di_builder_finalize = LLVMExtDIBuilderFinalize(DIBuilder)
+  fun di_builder_finalize = LLVMDIBuilderFinalize(DIBuilder)
 
   fun di_builder_create_function = LLVMExtDIBuilderCreateFunction(
     builder : DIBuilder, scope : LibLLVM::MetadataRef, name : Char*,
@@ -104,40 +104,18 @@ lib LibLLVMExt
                                                                                                     file : LibLLVM::MetadataRef,
                                                                                                     line : UInt) : LibLLVM::MetadataRef
 
-  fun di_builder_create_unspecified_type = LLVMExtDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder,
-                                                                                 name : Void*,
-                                                                                 size : LibC::SizeT) : LibLLVM::MetadataRef
+  fun di_builder_create_unspecified_type = LLVMDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder,
+                                                                              name : Void*,
+                                                                              size : LibC::SizeT) : LibLLVM::MetadataRef
 
-  fun di_builder_create_lexical_block_file = LLVMExtDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
-                                                                                    scope : LibLLVM::MetadataRef,
-                                                                                    file_scope : LibLLVM::MetadataRef,
-                                                                                    discriminator : UInt32) : LibLLVM::MetadataRef
+  fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
+                                                                                 scope : LibLLVM::MetadataRef,
+                                                                                 file_scope : LibLLVM::MetadataRef,
+                                                                                 discriminator : UInt32) : LibLLVM::MetadataRef
 
   fun di_builder_replace_temporary = LLVMExtDIBuilderReplaceTemporary(builder : DIBuilder, from : LibLLVM::MetadataRef, to : LibLLVM::MetadataRef)
 
   fun set_current_debug_location = LLVMExtSetCurrentDebugLocation(LibLLVM::BuilderRef, Int, Int, LibLLVM::MetadataRef, LibLLVM::MetadataRef)
-
-  fun build_cmpxchg = LLVMExtBuildCmpxchg(builder : LibLLVM::BuilderRef, pointer : LibLLVM::ValueRef, cmp : LibLLVM::ValueRef, new : LibLLVM::ValueRef, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering) : LibLLVM::ValueRef
-  fun set_ordering = LLVMExtSetOrdering(value : LibLLVM::ValueRef, ordering : LLVM::AtomicOrdering)
-
-  fun build_catch_pad = LLVMExtBuildCatchPad(builder : LibLLVM::BuilderRef,
-                                             parent_pad : LibLLVM::ValueRef,
-                                             arg_count : LibC::UInt,
-                                             args : LibLLVM::ValueRef*,
-                                             name : LibC::Char*) : LibLLVM::ValueRef
-
-  fun build_catch_ret = LLVMExtBuildCatchRet(builder : LibLLVM::BuilderRef,
-                                             pad : LibLLVM::ValueRef,
-                                             basic_block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
-
-  fun build_catch_switch = LLVMExtBuildCatchSwitch(builder : LibLLVM::BuilderRef,
-                                                   parent_pad : LibLLVM::ValueRef,
-                                                   basic_block : LibLLVM::BasicBlockRef,
-                                                   num_handlers : LibC::UInt,
-                                                   name : LibC::Char*) : LibLLVM::ValueRef
-
-  fun add_handler = LLVMExtAddHandler(catch_switch_ref : LibLLVM::ValueRef,
-                                      handler : LibLLVM::BasicBlockRef) : Void
 
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,
@@ -154,19 +132,10 @@ lib LibLLVMExt
                                           bundle : LibLLVMExt::OperandBundleDefRef,
                                           name : LibC::Char*) : LibLLVM::ValueRef
 
-  {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-    fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
-  {% end %}
+  fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
 
-  fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
-  fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
   fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder : DIBuilder, lo : UInt64, count : UInt64) : LibLLVM::MetadataRef
 
   fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
   fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
-
-  {% unless LibLLVM::IS_38 %}
-    # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
-    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
-  {% end %}
 end

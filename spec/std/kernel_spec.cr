@@ -49,31 +49,31 @@ end
 
 describe "at_exit" do
   it "runs handlers on normal program ending" do
-    status, output, _ = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "handler code."
       end
-    CODE
+    CRYSTAL
 
     status.success?.should be_true
     output.should eq("handler code.")
   end
 
   it "runs handlers on explicit program ending" do
-    status, output, _ = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "handler code, exit code: #{exit_code}."
       end
 
       exit 42
-    CODE
+    CRYSTAL
 
     status.exit_code.should eq(42)
     output.should eq("handler code, exit code: 42.")
   end
 
   it "runs handlers in reverse order" do
-    status, output, _ = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "first handler code."
       end
@@ -81,14 +81,14 @@ describe "at_exit" do
       at_exit do
         print "second handler code."
       end
-    CODE
+    CRYSTAL
 
     status.success?.should be_true
     output.should eq("second handler code.first handler code.")
   end
 
   it "runs all handlers maximum once" do
-    status, output, _ = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "first handler code."
       end
@@ -103,14 +103,14 @@ describe "at_exit" do
       at_exit do
         print "third handler code."
       end
-    CODE
+    CRYSTAL
 
     status.success?.should be_true
     output.should eq("third handler code.second handler code, explicit exit!first handler code.")
   end
 
   it "allows handlers to change the exit code with explicit `exit` call" do
-    status, output, _ = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "first handler code, exit code: #{exit_code}."
       end
@@ -125,7 +125,7 @@ describe "at_exit" do
       at_exit do |exit_code|
         print "third handler code, exit code: #{exit_code}."
       end
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     status.exit_code.should eq(42)
@@ -133,7 +133,7 @@ describe "at_exit" do
   end
 
   it "allows handlers to change the exit code with explicit `exit` call (2)" do
-    status, output, _ = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "first handler code, exit code: #{exit_code}."
       end
@@ -150,7 +150,7 @@ describe "at_exit" do
       end
 
       exit 21
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     status.exit_code.should eq(42)
@@ -158,7 +158,7 @@ describe "at_exit" do
   end
 
   it "changes final exit code when an handler raises an error" do
-    status, output, error = compile_and_run_source <<-'CODE'
+    status, output, error = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "first handler code, exit code: #{exit_code}."
       end
@@ -173,7 +173,7 @@ describe "at_exit" do
       at_exit do |exit_code|
         print "third handler code, exit code: #{exit_code}."
       end
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     status.exit_code.should eq(1)
@@ -182,7 +182,7 @@ describe "at_exit" do
   end
 
   it "shows unhandled exceptions after at_exit handlers" do
-    status, _, error = compile_and_run_source <<-CODE
+    status, _, error = compile_and_run_source <<-CRYSTAL
       at_exit do
         STDERR.print "first handler code."
       end
@@ -192,27 +192,27 @@ describe "at_exit" do
       end
 
       raise "Kaboom!"
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     error.should contain("second handler code.first handler code.Unhandled exception: Kaboom!")
   end
 
   it "can get unhandled exception in at_exit handler" do
-    status, _, error = compile_and_run_source <<-CODE
+    status, _, error = compile_and_run_source <<-CRYSTAL
       at_exit do |_, ex|
         STDERR.print ex.try &.message
       end
 
       raise "Kaboom!"
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     error.should contain("Kaboom!Unhandled exception: Kaboom!")
   end
 
   it "allows at_exit inside at_exit" do
-    status, output, _ = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "1"
         at_exit do
@@ -226,16 +226,16 @@ describe "at_exit" do
           print "4"
         end
       end
-    CODE
+    CRYSTAL
 
     status.success?.should be_true
     output.should eq("3412")
   end
 
   it "prints unhandled exception with cause" do
-    status, _, error = compile_and_run_source <<-CODE
+    status, _, error = compile_and_run_source <<-CRYSTAL
       raise Exception.new("secondary", cause: Exception.new("primary"))
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     error.should contain "Unhandled exception: secondary"
@@ -245,9 +245,9 @@ end
 
 describe "hardware exception" do
   it "reports invalid memory access" do
-    status, _, error = compile_and_run_source <<-'CODE'
+    status, _, error = compile_and_run_source <<-'CRYSTAL'
       puts Pointer(Int64).null.value
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     error.should contain("Invalid memory access")
@@ -263,21 +263,21 @@ describe "hardware exception" do
       # the default stack size is 0.5G.  Setting a
       # smaller stack size with `ulimit -s 8192`
       # will address this.
-      status, _, error = compile_and_run_source <<-'CODE'
+      status, _, error = compile_and_run_source <<-'CRYSTAL'
       def foo
         y = StaticArray(Int8, 512).new(0)
         foo
       end
       foo
-    CODE
+    CRYSTAL
 
       status.success?.should be_false
       error.should contain("Stack overflow")
     end
   {% end %}
 
-  pending_win32 "detects stack overflow on a fiber stack" do
-    status, _, error = compile_and_run_source <<-'CODE'
+  it "detects stack overflow on a fiber stack" do
+    status, _, error = compile_and_run_source <<-'CRYSTAL'
       def foo
         y = StaticArray(Int8, 512).new(0)
         foo
@@ -288,7 +288,7 @@ describe "hardware exception" do
       end
 
       sleep 60.seconds
-    CODE
+    CRYSTAL
 
     status.success?.should be_false
     error.should contain("Stack overflow")

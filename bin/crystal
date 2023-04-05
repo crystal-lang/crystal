@@ -36,8 +36,8 @@ _resolve_symlinks() {
     _assert_no_path_cycles "$@" || return
 
     local dir_context path
-    path=$(readlink -- "$1")
-    if [ $? = 0 ]; then
+
+    if path=$(readlink -- "$1"); then
         dir_context=$(dirname -- "$1")
         _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
     else
@@ -82,14 +82,14 @@ canonicalize_path() {
 }
 
 _canonicalize_dir_path() {
-    (cd "$1" 2>/dev/null && pwd -P)
+    { cd "$1" 2>/dev/null && pwd -P; }
 }
 
 _canonicalize_file_path() {
     local dir file
     dir=$(dirname -- "$1")
     file=$(basename -- "$1")
-    (cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+    { cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file"; }
 }
 
 ##############################################################################
@@ -99,9 +99,8 @@ remove_path_item() {
   local path item
 
   path="$1"
-  item="$2"
 
-  printf "%s" "$path" | awk -v RS=: -v ORS=: '$0 != "'$item'"' | sed 's/:$//'
+  printf "%s" "$path" | awk -v item="$2" -v RS=: -v ORS=: '$0 != item' | sed 's/:$//'
 }
 
 ##############################################################################
@@ -118,7 +117,7 @@ __has_colors() {
 __error_msg() {
   if __has_colors; then
     # bold red coloring
-    printf '%b\n' "\033[31;1m$@\033[0m" 1>&2
+    printf '%b\n' "\033[31;1m$*\033[0m" 1>&2
   else
     printf '%b\n' "$@" 1>&2
   fi
@@ -126,7 +125,7 @@ __error_msg() {
 __warning_msg() {
   if __has_colors; then
     # brown coloring
-    printf '%b\n' "\033[33m$@\033[0m" 1>&2
+    printf '%b\n' "\033[33m$*\033[0m" 1>&2
   else
     printf '%b\n' "$@" 1>&2
   fi
@@ -139,32 +138,52 @@ CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
 export CRYSTAL_PATH="${CRYSTAL_PATH:-lib:$CRYSTAL_ROOT/src}"
-if [ -n "${CRYSTAL_PATH##*$CRYSTAL_ROOT/src*}" ]; then
+if [ -n "${CRYSTAL_PATH##*"$CRYSTAL_ROOT"/src*}" ]; then
   __warning_msg "CRYSTAL_PATH env variable does not contain $CRYSTAL_ROOT/src"
 fi
 
 export CRYSTAL_HAS_WRAPPER=true
+: "${CRYSTAL=crystal}"
 
-export CRYSTAL="${CRYSTAL:-"crystal"}"
+PARENT_CRYSTAL="$CRYSTAL"
+
+# check if the parent crystal command is a path that refers to this script
+if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_PATH" ]; then
+  # ignore it and use `crystal` as parent compiler command
+  PARENT_CRYSTAL="crystal"
+fi
+
+# check if the parent crystal command refers to this script
+if [ "$(realpath "$(command -v "$PARENT_CRYSTAL")")" = "$SCRIPT_PATH" ]; then
+  # remove the path to this script from PATH
+  NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
+  # if the PATH did not change it will lead to an infinite recursion => display error
+  if [ "$NEW_PATH" = "$PATH" ]; then
+    __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
+    exit 1
+  fi
+  # re-execute this script with the cleaned up PATH
+  export PATH="$NEW_PATH"
+  exec "$SCRIPT_PATH" "$@"
+fi
 
 if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
-  CRYSTAL_INSTALLED_LIBRARY_PATH="$(
-      export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
-      crystal env CRYSTAL_LIBRARY_PATH || echo ""
-    )"
+  CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL env CRYSTAL_LIBRARY_PATH || echo "")"
   export CRYSTAL_LIBRARY_PATH=${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
   export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
 fi
 
+# CRYSTAL_PATH has all symlinks resolved. In order to avoid issues with duplicate file
+# paths when the working directory is a symlink, we cd into the current directory
+# with symlinks resolved as well (see https://github.com/crystal-lang/crystal/issues/12969).
+cd "$(realpath "$(pwd)")"
+
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
   __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
-elif ! command -v $CRYSTAL > /dev/null; then
+elif ! command -v "$PARENT_CRYSTAL" > /dev/null; then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
-elif [ "$(command -v $CRYSTAL)" = "$SCRIPT_PATH" ] || [ "$(command -v $CRYSTAL)" = "bin/crystal" ]; then
-  export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
-  exec "$SCRIPT_PATH" "$@"
 else
-  exec $CRYSTAL "$@"
+  exec "$PARENT_CRYSTAL" "$@"
 fi

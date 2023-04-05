@@ -23,7 +23,7 @@ class Crystal::Command
     end
   end
 
-  private def cursor_command(command, no_cleanup = false, wants_doc = false)
+  private def cursor_command(command, no_cleanup = false, wants_doc = false, &)
     config, result = compile_no_codegen command,
       cursor_command: true,
       no_cleanup: no_cleanup,
@@ -31,27 +31,14 @@ class Crystal::Command
 
     format = config.output_format
 
-    loc = config.cursor_location.not_nil!.split(':')
-    if loc.size != 3
-      error "cursor location must be file:line:column"
+    begin
+      loc = Location.parse(config.cursor_location.not_nil!, expand: true)
+    rescue ex : ArgumentError
+      error ex.message
     end
-
-    file, line, col = loc
-
-    line_number = line.to_i? || 0
-    if line_number <= 0
-      error "line must be a positive integer, not #{line}"
-    end
-
-    column_number = col.to_i? || 0
-    if column_number <= 0
-      error "column must be a positive integer, not #{col}"
-    end
-
-    file = File.expand_path(file)
 
     result = @progress_tracker.stage("Tool (#{command.split(' ')[1]})") do
-      yield Location.new(file, line_number, column_number), config, result
+      yield loc, config, result
     end
 
     case format

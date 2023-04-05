@@ -1,12 +1,19 @@
 require "c/processthreadsapi"
 require "c/handleapi"
 require "c/synchapi"
+require "c/tlhelp32"
 require "process/shell"
+require "crystal/atomic_semaphore"
 
 struct Crystal::System::Process
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
+
+  @@interrupt_handler : Proc(Nil)?
+  @@interrupt_count = Crystal::AtomicSemaphore.new
+  @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
+  @@setup_interrupt_handler = Atomic::Flag.new
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
@@ -21,7 +28,7 @@ struct Crystal::System::Process
   end
 
   def wait
-    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != 0
+    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
 
@@ -44,8 +51,8 @@ struct Crystal::System::Process
     Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    raise NotImplementedError.new("Process.kill")
+  def terminate(*, graceful)
+    LibC.TerminateProcess(@process_handle, 1)
   end
 
   def self.exit(status)
@@ -65,16 +72,86 @@ struct Crystal::System::Process
   end
 
   def self.ppid
-    raise NotImplementedError.new("Process.ppid")
+    pid = self.pid
+    each_process_entry do |pe|
+      return pe.th32ParentProcessID if pe.th32ProcessID == pid
+    end
+    raise RuntimeError.new("Cannot locate current process")
+  end
+
+  private def self.each_process_entry(&)
+    h = LibC.CreateToolhelp32Snapshot(LibC::TH32CS_SNAPPROCESS, 0)
+    raise RuntimeError.from_winerror("CreateToolhelp32Snapshot") if h == LibC::INVALID_HANDLE_VALUE
+
+    begin
+      pe = LibC::PROCESSENTRY32W.new(dwSize: sizeof(LibC::PROCESSENTRY32W))
+      if LibC.Process32FirstW(h, pointerof(pe)) != 0
+        while true
+          yield pe
+          break if LibC.Process32NextW(h, pointerof(pe)) == 0
+        end
+      end
+    ensure
+      LibC.CloseHandle(h)
+    end
   end
 
   def self.signal(pid, signal)
     raise NotImplementedError.new("Process.signal")
   end
 
+  def self.on_interrupt(&@@interrupt_handler : ->) : Nil
+    restore_interrupts!
+    @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
+      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
+      @@interrupt_count.signal
+      1
+    end
+    LibC.SetConsoleCtrlHandler(handler, 1)
+  end
+
+  def self.ignore_interrupts! : Nil
+    remove_interrupt_handler
+    LibC.SetConsoleCtrlHandler(nil, 1)
+  end
+
+  def self.restore_interrupts! : Nil
+    remove_interrupt_handler
+    LibC.SetConsoleCtrlHandler(nil, 0)
+  end
+
+  private def self.remove_interrupt_handler
+    if old = @@win32_interrupt_handler
+      LibC.SetConsoleCtrlHandler(old, 0)
+      @@win32_interrupt_handler = nil
+    end
+  end
+
+  def self.start_interrupt_loop : Nil
+    return unless @@setup_interrupt_handler.test_and_set
+
+    spawn(name: "Interrupt signal loop") do
+      while true
+        @@interrupt_count.wait { sleep 50.milliseconds }
+
+        if handler = @@interrupt_handler
+          non_nil_handler = handler # if handler is closured it will also have the Nil type
+          spawn do
+            non_nil_handler.call
+          rescue ex
+            ex.inspect_with_backtrace(STDERR)
+            STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
+            STDERR.flush
+            LibC._exit(1)
+          end
+        end
+      end
+    end
+  end
+
   def self.exists?(pid)
     handle = LibC.OpenProcess(LibC::PROCESS_QUERY_INFORMATION, 0, pid)
-    return false if handle.nil?
+    return false unless handle
     begin
       if LibC.GetExitCodeProcess(handle, out exit_code) == 0
         raise RuntimeError.from_winerror("GetExitCodeProcess")
@@ -97,6 +174,10 @@ struct Crystal::System::Process
   end
 
   def self.fork
+    raise NotImplementedError.new("Process.fork")
+  end
+
+  def self.fork(&)
     raise NotImplementedError.new("Process.fork")
   end
 

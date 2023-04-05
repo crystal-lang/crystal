@@ -30,7 +30,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # This is different than `compiling_block`. Consider this code:
   #
   # ```
-  # def foo
+  # def foo(&)
   #   # When this is called from the top-level, `compiled_block`
   #   # will be the block given to `foo`, but `compiling_block`
   #   # will be `nil` because we are not compiling a block.
@@ -44,7 +44,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   #   end
   # end
   #
-  # def bar
+  # def bar(&)
   #   yield
   # end
   #
@@ -344,11 +344,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     in .u64?
       put_u64 value.to_u64, node: node
     in .i128?
-      # TODO: implement String#to_i128 and use it
-      put_i128 value.to_i64.to_i128!, node: node
+      put_i128 value.to_i128, node: node
     in .u128?
-      # TODO: implement String#to_i128 and use it
-      put_u128 value.to_u64.to_u128!, node: node
+      put_u128 value.to_u128, node: node
     in .f32?
       put_i32 value.to_f32.unsafe_as(Int32), node: node
     in .f64?
@@ -1084,7 +1082,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def dispatch_class_var(node : ClassVar)
+  private def dispatch_class_var(node : ClassVar, &)
     var = node.var
     owner = var.owner
 
@@ -1102,7 +1100,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode)
+  private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode, &)
     types = owner.all_subclasses.select { |t| t.is_a?(ClassVarContainer) }
     types.push(owner)
     types.sort_by! { |type| -type.depth }
@@ -1802,7 +1800,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = node.target_defs
-    if target_defs.empty?
+    unless target_defs
       node.raise "BUG: no target defs"
     end
 
@@ -2458,7 +2456,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = call.target_defs
-    if target_defs.empty?
+    unless target_defs
       call.raise "BUG: no target defs"
     end
 
@@ -3046,7 +3044,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def with_scope(scope : Type)
+  private def with_scope(scope : Type, &)
     old_scope = @scope
     @scope = scope
     begin
@@ -3409,7 +3407,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private macro nop
   end
 
-  private def with_node_override(node_override : ASTNode)
+  private def with_node_override(node_override : ASTNode, &)
     old_node_override = @node_override
     @node_override = node_override
     value = yield

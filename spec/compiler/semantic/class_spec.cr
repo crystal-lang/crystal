@@ -1116,7 +1116,7 @@ describe "Semantic: class" do
   end
 
   it "errors if inherits from metaclass" do
-    assert_error <<-CR, "Foo.class is not a class, it's a metaclass"
+    assert_error <<-CRYSTAL, "Foo.class is not a class, it's a metaclass"
       class Foo
       end
 
@@ -1124,7 +1124,7 @@ describe "Semantic: class" do
 
       class Bar < FooClass
       end
-      CR
+      CRYSTAL
   end
 
   it "can use short name for top-level type" do

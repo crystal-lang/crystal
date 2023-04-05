@@ -260,7 +260,7 @@ describe "Semantic: metaclass" do
   end
 
   it "can't reopen as struct" do
-    assert_error <<-CR, "Bar is not a struct, it's a metaclass"
+    assert_error <<-CRYSTAL, "Bar is not a struct, it's a metaclass"
       class Foo
       end
 
@@ -268,11 +268,11 @@ describe "Semantic: metaclass" do
 
       struct Bar
       end
-      CR
+      CRYSTAL
   end
 
   it "can't reopen as module" do
-    assert_error <<-CR, "Bar is not a module, it's a metaclass"
+    assert_error <<-CRYSTAL, "Bar is not a module, it's a metaclass"
       class Foo
       end
 
@@ -280,6 +280,6 @@ describe "Semantic: metaclass" do
 
       module Bar
       end
-      CR
+      CRYSTAL
   end
 end

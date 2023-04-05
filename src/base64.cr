@@ -68,7 +68,7 @@ module Base64
     count
   end
 
-  private def encode_with_new_lines(data)
+  private def encode_with_new_lines(data, &)
     inc = 0
     to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
       yield byte
@@ -199,7 +199,7 @@ module Base64
     (str_size * 3 / 4.0).to_i + 4
   end
 
-  private def to_base64(data, chars, pad = false)
+  private def to_base64(data, chars, pad = false, &)
     bytes = chars.to_unsafe
     size = data.size
     cstr = data.to_unsafe
@@ -208,7 +208,7 @@ module Base64
 
     # process bunch of full triples
     while cstr < endcstr
-      n = Intrinsics.bswap32(cstr.as(UInt32*).value)
+      n = cstr.as(UInt32*).value.byte_swap
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
       yield bytes[(n >> 14) & 63]

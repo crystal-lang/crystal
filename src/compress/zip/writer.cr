@@ -51,14 +51,14 @@ class Compress::Zip::Writer
 
   # Creates a new writer to the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, sync_close = false)
+  def self.open(io : IO, sync_close = false, &)
     writer = new(io, sync_close: sync_close)
     yield writer ensure writer.close
   end
 
   # Creates a new writer to the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : Path | String)
+  def self.open(filename : Path | String, &)
     writer = new(filename)
     yield writer ensure writer.close
   end
@@ -66,7 +66,7 @@ class Compress::Zip::Writer
   # Adds an entry that will have the given *filename* and current
   # time (`Time.utc`) and yields an `IO` to write that entry's
   # contents.
-  def add(filename : Path | String)
+  def add(filename : Path | String, &)
     add(Entry.new(filename.to_s)) do |io|
       yield io
     end
@@ -85,7 +85,7 @@ class Compress::Zip::Writer
   #
   # You can also set the Entry's time (which is `Time.utc` by default)
   #  and extra data before adding it to the zip stream.
-  def add(entry : Entry)
+  def add(entry : Entry, &)
     # bit 3: unknown compression size (not needed for STORED, by if left out it doesn't work...)
     entry.general_purpose_bit_flag |= (1 << 3)
     # bit 11: require UTF-8 set

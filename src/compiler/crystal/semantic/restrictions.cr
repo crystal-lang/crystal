@@ -288,7 +288,7 @@ module Crystal
     end
 
     # Yields each pair of corresponding parameters between `self` and *other*.
-    def each_corresponding_param(other : DefWithMetadata, self_named_args, other_named_args)
+    def each_corresponding_param(other : DefWithMetadata, self_named_args, other_named_args, &)
       self_arg_index = 0
       other_arg_index = 0
 
@@ -605,12 +605,68 @@ module Crystal
       false
     end
 
+    def restriction_of?(other : NumberLiteral, owner, self_free_vars = nil, other_free_vars = nil)
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      # ```
+      case self_type = owner.lookup_path(self)
+      when Const
+        self_type.value == other
+      when NumberLiteral
+        self_type == other
+      else
+        false
+      end
+    end
+
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       false
     end
   end
 
+  class NumberLiteral
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      # ```
+      case other_type = owner.lookup_path(other)
+      when Const
+        other_type.value == self
+      when NumberLiteral
+        other_type == self
+      else
+        false
+      end
+    end
+  end
+
   class Union
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       # For a union to be considered before another restriction,
       # all types in the union must be considered before
@@ -657,7 +713,20 @@ module Crystal
     end
 
     def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
-      return true if self == other
+      # The two `Foo(X)`s below are not equal because only one of them is bound
+      # and the other one is unbound, so we compare the free variables too:
+      # (`X` is an alias or a numeric constant)
+      #
+      # ```
+      # def foo(x : Foo(X)) forall X
+      # end
+      #
+      # def foo(x : Foo(X))
+      # end
+      # ```
+      #
+      # See also the todo in `Path#restriction_of?(Path)`
+      return true if self == other && self_free_vars == other_free_vars
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
       # Special case: NamedTuple against NamedTuple
@@ -1194,15 +1263,17 @@ module Crystal
           end
         when Path
           if first_name = other_type_var.single_name?
-            # If the free variable is already set to another
-            # number, there's no match
-            existing = context.get_free_var(first_name)
-            if existing && existing != type_var
-              return nil
-            end
+            if context.has_def_free_var?(first_name)
+              # If the free variable is already set to another
+              # number, there's no match
+              existing = context.get_free_var(first_name)
+              if existing && existing != type_var
+                return nil
+              end
 
-            context.set_free_var(first_name, type_var)
-            return type_var
+              context.set_free_var(first_name, type_var)
+              return type_var
+            end
           end
         else
           # Restriction is not possible (maybe return nil here?)
@@ -1410,6 +1481,10 @@ module Crystal
   end
 
   class AliasType
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       return true if self == other
 

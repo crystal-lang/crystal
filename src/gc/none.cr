@@ -1,3 +1,7 @@
+{% if flag?(:win32) %}
+  require "c/process"
+{% end %}
+
 module GC
   def self.init
   end
@@ -65,7 +69,14 @@ module GC
       reclaimed_bytes_before_gc: 0)
   end
 
-  {% unless flag?(:win32) || flag?(:wasm32) %}
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
+  {% elsif !flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)

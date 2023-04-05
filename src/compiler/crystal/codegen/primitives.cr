@@ -74,7 +74,7 @@ class Crystal::CodeGenVisitor
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
             when "throw_info"
-              cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
+              cast_to_void_pointer void_ptr_throwinfo
             when "va_arg"
               codegen_va_arg call, node, target_def, call_args
             else
@@ -180,7 +180,7 @@ class Crystal::CodeGenVisitor
       end
 
     llvm_fun = binary_overflow_fun "llvm.#{llvm_op}.with.overflow.i#{calc_width}", calc_type
-    res_with_overflow = builder.call(llvm_fun, [e1, e2])
+    res_with_overflow = builder.call(llvm_fun.type, llvm_fun.func, [e1, e2])
 
     result = extract_value res_with_overflow, 0
     overflow = extract_value res_with_overflow, 1
@@ -356,7 +356,7 @@ class Crystal::CodeGenVisitor
     op_overflow = new_block "overflow"
     op_normal = new_block "normal"
 
-    overflow_condition = builder.call(llvm_expect_i1_fun, [overflow_condition, llvm_false])
+    overflow_condition = builder.call(llvm_expect_i1_fun.type, llvm_expect_i1_fun.func, [overflow_condition, llvm_false])
     cond overflow_condition, op_overflow, op_normal
 
     position_at_end op_overflow
@@ -366,15 +366,18 @@ class Crystal::CodeGenVisitor
   end
 
   private def binary_overflow_fun(fun_name, llvm_operand_type)
-    llvm_mod.functions[fun_name]? ||
-      llvm_mod.functions.add(fun_name, [llvm_operand_type, llvm_operand_type],
-        llvm_context.struct([llvm_operand_type, llvm_context.int1]))
+    fetch_typed_fun(@llvm_mod, fun_name) do
+      LLVM::Type.function(
+        [llvm_operand_type, llvm_operand_type],
+        @llvm_context.struct([llvm_operand_type, @llvm_context.int1]),
+      )
+    end
   end
 
   private def llvm_expect_i1_fun
-    llvm_mod.functions["llvm.expect.i1"]? ||
-      llvm_mod.functions.add("llvm.expect.i1", [llvm_context.int1, llvm_context.int1],
-        llvm_context.int1)
+    fetch_typed_fun(@llvm_mod, "llvm.expect.i1") do
+      LLVM::Type.function([@llvm_context.int1, @llvm_context.int1], @llvm_context.int1)
+    end
   end
 
   # The below methods (lt, lte, gt, gte, eq, ne) perform
@@ -730,11 +733,6 @@ class Crystal::CodeGenVisitor
 
     allocate_aggregate base_type
 
-    unless type.struct?
-      type_id_ptr = aggregate_index(@last, 0)
-      store type_id(base_type), type_id_ptr
-    end
-
     if type.is_a?(VirtualType)
       @last = upcast(@last, type, base_type)
     end
@@ -798,19 +796,22 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_add(node, target_def, call_args)
-    gep call_args[0], call_args[1]
+    type = context.type.as(PointerInstanceType)
+
+    # `llvm_embedded_type` needed to treat `Void*` like `UInt8*`
+    gep llvm_embedded_type(type.element_type), call_args[0], call_args[1]
   end
 
   def struct_field_ptr(type, field_name, pointer)
     index = type.index_of_instance_var('@' + field_name).not_nil!
-    aggregate_index pointer, index
+    aggregate_index llvm_type(type), pointer, index
   end
 
   def codegen_primitive_struct_or_union_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do |field_type|
       type = context.type.as(NonGenericClassType)
       if type.extern_union?
-        union_field_ptr(field_type, call_args[0])
+        union_field_ptr(type, field_type, call_args[0])
       else
         name = target_def.name.rchop
         struct_field_ptr(type, name, call_args[0])
@@ -818,7 +819,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def set_aggregate_field(node, target_def, call_args)
+  def set_aggregate_field(node, target_def, call_args, &)
     call_arg = call_args[1]
     original_call_arg = call_arg
 
@@ -848,10 +849,10 @@ class Crystal::CodeGenVisitor
     original_call_arg
   end
 
-  def union_field_ptr(field_type, pointer)
-    ptr = aggregate_index pointer, 0
+  def union_field_ptr(union_type, field_type, pointer)
+    ptr = aggregate_index llvm_type(union_type), pointer, 0
     if field_type.is_a?(ProcInstanceType)
-      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer
+      pointer_cast ptr, @llvm_typer.proc_type(field_type).pointer.pointer
     else
       cast_to_pointer ptr, field_type
     end
@@ -862,11 +863,7 @@ class Crystal::CodeGenVisitor
     name = external.real_name
     var = declare_lib_var name, node.type, external.thread_local?
 
-    @last = call_args[0]
-
-    if external.type.passed_by_value?
-      @last = load @last
-    end
+    @last = extern_to_rhs(call_args[0], external.type)
 
     store @last, var
 
@@ -879,11 +876,7 @@ class Crystal::CodeGenVisitor
     external = target_def.as(External)
     var = get_external_var(external)
 
-    if external.type.passed_by_value?
-      @last = var
-    else
-      @last = load var
-    end
+    @last = extern_to_lhs(var, external.type)
 
     @last = check_c_fun node.type, @last
 
@@ -912,7 +905,10 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
-    load(gep @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
+    string = llvm_type(@program.string)
+    table_type = string.array(@symbol_table_values.size)
+    string_ptr = gep table_type, @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0]
+    load(string, string_ptr)
   end
 
   def codegen_primitive_class(node, target_def, call_args)
@@ -927,7 +923,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_class_with_type(type : VirtualType, value)
     type_id = type_id(value, type)
     metaclass_fun_name = "~metaclass"
-    func = @main_mod.functions[metaclass_fun_name]? || create_metaclass_fun(metaclass_fun_name)
+    func = typed_fun?(@main_mod, metaclass_fun_name) || create_metaclass_fun(metaclass_fun_name)
     func = check_main_fun metaclass_fun_name, func
     call func, [type_id] of LLVM::Value
   end
@@ -981,15 +977,10 @@ class Crystal::CodeGenVisitor
 
     proc_type = context.type.as(ProcInstanceType)
     target_def.args.size.times do |i|
-      arg = args[i]
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
-      args[i] = upcast arg, proc_arg_type, target_def_arg_type
-      if proc_arg_type.passed_by_value?
-        closure_args << load(args[i])
-      else
-        closure_args << args[i]
-      end
+      args[i] = arg = upcast args[i], proc_arg_type, target_def_arg_type
+      closure_args << to_rhs(arg, proc_arg_type)
     end
 
     fun_ptr = builder.extract_value closure_ptr, 0
@@ -1003,7 +994,8 @@ class Crystal::CodeGenVisitor
 
     Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
+      real_fun_llvm_type = llvm_proc_type(context.type)
+      real_fun_ptr = pointer_cast fun_ptr, real_fun_llvm_type.pointer
 
       # When invoking a Proc that has extern structs as arguments or return type, it's tricky:
       # closures are never generated with C ABI because C doesn't support closures.
@@ -1015,13 +1007,13 @@ class Crystal::CodeGenVisitor
       old_c_calling_convention = target_def.c_calling_convention
 
       if c_calling_convention
-        null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
+        null_fun_ptr, null_fun_llvm_type, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
-        null_fun_ptr, null_args = real_fun_ptr, closure_args
+        null_fun_ptr, null_fun_llvm_type, null_args = real_fun_ptr, real_fun_llvm_type, closure_args
       end
-      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr)
+      null_fun = LLVMTypedFunction.new(null_fun_llvm_type, LLVM::Function.from_value(null_fun_ptr))
 
-      value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
+      value = codegen_call_or_invoke(node, target_def, nil, null_fun, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
 
       # Reset abi_info + c_calling_convention so the closure part is generated as usual
@@ -1029,10 +1021,11 @@ class Crystal::CodeGenVisitor
       target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
-      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
+      real_fun_llvm_type = llvm_closure_type(context.type)
+      real_fun_ptr = pointer_cast fun_ptr, real_fun_llvm_type.pointer
+      real_fun = LLVMTypedFunction.new(real_fun_llvm_type, LLVM::Function.from_value(real_fun_ptr))
       closure_args.insert(0, ctx_ptr)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
 
       target_def.abi_info = old_abi_info
@@ -1065,7 +1058,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[index]
       case abi_arg_type.kind
       in .direct?
-        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type)
+        call_arg = codegen_direct_abi_call(arg.type, call_arg, abi_arg_type)
         if cast = abi_arg_type.cast
           null_fun_types << cast
         else
@@ -1082,17 +1075,20 @@ class Crystal::CodeGenVisitor
     end
 
     null_fun_llvm_type = LLVM::Type.function(null_fun_types, null_fun_return_type)
-    null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
+    null_fun_ptr = pointer_cast fun_ptr, null_fun_llvm_type.pointer
     target_def.c_calling_convention = true
 
-    {null_fun_ptr, null_args}
+    {null_fun_ptr, null_fun_llvm_type, null_args}
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
+    type = context.type.as(PointerInstanceType)
     p0 = ptr2int(call_args[0], llvm_context.int64)
     p1 = ptr2int(call_args[1], llvm_context.int64)
     sub = builder.sub p0, p1
-    builder.exact_sdiv sub, ptr2int(gep(call_args[0].type.null_pointer, 1), llvm_context.int64)
+    # `llvm_embedded_type` needed to treat `Void*` like `UInt8*`
+    offsetted = gep(llvm_embedded_type(type.element_type), call_args[0].type.null_pointer, 1)
+    builder.exact_sdiv sub, ptr2int(offsetted, llvm_context.int64)
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
@@ -1103,9 +1099,10 @@ class Crystal::CodeGenVisitor
   def codegen_tuple_indexer(type, value, index : Range)
     case type
     when TupleInstanceType
+      struct_type = llvm_type(type)
       tuple_types = type.tuple_types[index].map &.as(Type)
       allocate_tuple(@program.tuple_of(tuple_types).as(TupleInstanceType)) do |tuple_type, i|
-        ptr = aggregate_index value, index.begin + i
+        ptr = aggregate_index struct_type, value, index.begin + i
         tuple_value = to_lhs ptr, tuple_type
         {tuple_type, tuple_value}
       end
@@ -1123,10 +1120,10 @@ class Crystal::CodeGenVisitor
   def codegen_tuple_indexer(type, value, index : Int32)
     case type
     when TupleInstanceType
-      ptr = aggregate_index value, index
+      ptr = aggregate_index llvm_type(type), value, index
       to_lhs ptr, type.tuple_types[index]
     when NamedTupleInstanceType
-      ptr = aggregate_index value, index
+      ptr = aggregate_index llvm_type(type), value, index
       to_lhs ptr, type.entries[index].type
     else
       type = type.instance_type
@@ -1143,7 +1140,7 @@ class Crystal::CodeGenVisitor
 
   def check_c_fun(type, value)
     if type.proc?
-      make_fun(type, bit_cast(value, llvm_context.void_pointer), llvm_context.void_pointer.null)
+      make_fun(type, cast_to_void_pointer(value), llvm_context.void_pointer.null)
     else
       value
     end
@@ -1157,9 +1154,11 @@ class Crystal::CodeGenVisitor
     failure_ordering = atomic_ordering_get_const(call.args[-1], failure_ordering)
 
     value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
-    value_ptr = alloca llvm_type(node.type)
-    store extract_value(value, 0), gep(value_ptr, 0, 0)
-    store extract_value(value, 1), gep(value_ptr, 0, 1)
+    value_type = node.type.as(TupleInstanceType)
+    struct_type = llvm_type(value_type)
+    value_ptr = alloca struct_type
+    store extract_value(value, 0), gep(struct_type, value_ptr, 0, 0)
+    store extract_value(value, 1), gep(struct_type, value_ptr, 0, 1)
     value_ptr
   end
 
@@ -1192,7 +1191,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_get_const(call.args[-2], ordering)
     volatile = bool_from_bool_literal(call.args[-1])
 
-    inst = builder.load(ptr)
+    inst = builder.load(llvm_type(node.type), ptr)
     inst.ordering = ordering
     inst.volatile = true if volatile
     set_alignment inst, node.type

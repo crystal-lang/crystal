@@ -769,7 +769,7 @@ module Crystal
 
       defs = metaclass.lookup_defs(node.name)
       defs = defs.select do |a_def|
-        a_def_has_block = !!a_def.yields
+        a_def_has_block = !!a_def.block_arity
         call_has_block = !!(node.block || node.block_arg)
         next unless a_def_has_block == call_has_block
 

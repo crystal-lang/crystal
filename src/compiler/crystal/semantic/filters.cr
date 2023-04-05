@@ -1,7 +1,7 @@
 module Crystal
   class TypeFilteredNode < ASTNode
     def initialize(@filter : TypeFilter, @node : ASTNode)
-      @dependencies = ZeroOneOrMany.new(@node)
+      @dependencies = [@node] of ASTNode
       node.add_observer self
       update(@node)
     end
@@ -144,7 +144,7 @@ module Crystal
       when NilType
         nil
       when UnionType
-        Type.merge(other.union_types.reject &.nil_type?)
+        other.program.union_of(other.union_types.reject &.nil_type?)
       else
         other
       end
@@ -346,7 +346,7 @@ module Crystal
       new_filters
     end
 
-    def each
+    def each(&)
       pos.each do |key, value|
         yield key, value
       end

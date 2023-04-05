@@ -241,7 +241,7 @@ class String
   # end
   # str # => "ab"
   # ```
-  def self.new(capacity : Int)
+  def self.new(capacity : Int, &)
     check_capacity_in_bounds(capacity)
 
     str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
@@ -275,7 +275,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64) : self
+  def self.build(capacity = 64, &) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end
@@ -735,7 +735,7 @@ class String
     end
   end
 
-  private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
+  private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
     return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
 
     v, endptr = yield
@@ -1173,15 +1173,44 @@ class String
   # "hello".byte_slice(-2, 5)  # => "he"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
-  # "¥hello".byte_slice(0, 1)  # => "�" (invalid UTF-8 character)
-  # "¥hello".byte_slice(1, 1)  # => "�" (invalid UTF-8 character)
-  # "¥hello".byte_slice(1, 2)  # => "�h" (invalid UTF-8 character)
+  # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 1)  # => "\xA5" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 2)  # => "\xA5h" (invalid UTF-8 character)
   # "hello".byte_slice(6, 2)   # raises IndexError
   # "hello".byte_slice(-6, 2)  # raises IndexError
   # "hello".byte_slice(0, -2)  # raises ArgumentError
   # ```
   def byte_slice(start : Int, count : Int) : String
     byte_slice?(start, count) || raise IndexError.new
+  end
+
+  # Returns a new string built from byte in *range*.
+  #
+  # Byte indices can be negative to start counting from the end of the string.
+  # If the end index is bigger than `#bytesize`, only remaining bytes are returned.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Raises `IndexError` if the *range* begin is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice(0..2)   # => "hel"
+  # "hello".byte_slice(0..100) # => "hello"
+  # "hello".byte_slice(-2..3)  # => "l"
+  # "hello".byte_slice(-2..5)  # => "lo"
+  # "¥hello".byte_slice(0...2) # => "¥"
+  # "¥hello".byte_slice(2...4) # => "he"
+  # "¥hello".byte_slice(0..0)  # => "\xC2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1..1)  # => "\xA5" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1..2)  # => "\xA5h" (invalid UTF-8 character)
+  # "hello".byte_slice(6..2)   # raises IndexError
+  # "hello".byte_slice(-6..2)  # raises IndexError
+  # ```
+  def byte_slice(range : Range) : String
+    byte_slice(*Indexable.range_to_index_and_count(range, bytesize) || raise IndexError.new)
   end
 
   # Like `byte_slice(Int, Int)` but returns `Nil` if the *start* index is out of bounds.
@@ -1209,6 +1238,18 @@ class String
     end
   end
 
+  # Like `byte_slice(Range)` but returns `Nil` if *range* begin is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice?(0..2)   # => "hel"
+  # "hello".byte_slice?(0..100) # => "hello"
+  # "hello".byte_slice?(6..8)   # => nil
+  # "hello".byte_slice?(-6..2)  # => nil
+  # ```
+  def byte_slice?(range : Range) : String?
+    byte_slice?(*Indexable.range_to_index_and_count(range, bytesize) || return nil)
+  end
+
   # Returns a substring starting from the *start* byte.
   #
   # *start* can be negative to start counting
@@ -1226,7 +1267,7 @@ class String
   # "hello".byte_slice(2)  # => "llo"
   # "hello".byte_slice(-2) # => "lo"
   # "¥hello".byte_slice(2) # => "hello"
-  # "¥hello".byte_slice(1) # => "�hello" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1) # => "\xA5hello" (invalid UTF-8 character)
   # "hello".byte_slice(6)  # raises IndexError
   # "hello".byte_slice(-6) # raises IndexError
   # ```
@@ -1234,6 +1275,33 @@ class String
     count = bytesize - start
     raise IndexError.new if start > 0 && count < 0
     byte_slice start, count
+  end
+
+  # Returns a substring starting from the *start* byte.
+  #
+  # *start* can be negative to start counting
+  # from the end of the string.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Returns `nil` if *start* index is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice?(0)  # => "hello"
+  # "hello".byte_slice?(2)  # => "llo"
+  # "hello".byte_slice?(-2) # => "lo"
+  # "¥hello".byte_slice?(2) # => "hello"
+  # "¥hello".byte_slice?(1) # => "\xA5hello" (invalid UTF-8 character)
+  # "hello".byte_slice?(6)  # => nil
+  # "hello".byte_slice?(-6) # => nil
+  # ```
+  def byte_slice?(start : Int) : String?
+    count = bytesize - start
+    return nil if start > 0 && count < 0
+    byte_slice? start, count
   end
 
   # Returns the codepoint of the character at the given *index*.
@@ -2272,7 +2340,7 @@ class String
   # ```
   # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
   # ```
-  def sub(pattern : Regex) : String
+  def sub(pattern : Regex, &) : String
     sub_append(pattern) do |str, match, buffer|
       $~ = match
       buffer << yield str, match
@@ -2400,7 +2468,7 @@ class String
     end
   end
 
-  private def sub_append(pattern : Regex)
+  private def sub_append(pattern : Regex, &)
     match = pattern.match(self)
     return self unless match
 
@@ -2443,7 +2511,7 @@ class String
     end
   end
 
-  private def sub_index(index, replacement)
+  private def sub_index(index, replacement, &)
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
@@ -2493,7 +2561,7 @@ class String
     end
   end
 
-  private def sub_range(range, replacement)
+  private def sub_range(range, replacement, &)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
 
     from_index = char_index_to_byte_index(start)
@@ -2630,7 +2698,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex) : String
+  def gsub(pattern : Regex, &) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2772,7 +2840,7 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex)
+  private def gsub_append(pattern : Regex, &)
     byte_offset = 0
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
@@ -2811,7 +2879,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count : Int32
+  def count(&) : Int32
     count = 0
     each_char do |char|
       count += 1 if yield char
@@ -2842,7 +2910,7 @@ class String
   # ```
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
-  def delete : String
+  def delete(&) : String
     String.build(bytesize) do |buffer|
       each_char do |char|
         buffer << char unless yield char
@@ -2879,7 +2947,7 @@ class String
   # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
   # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
-  def squeeze : String
+  def squeeze(&) : String
     previous = nil
     String.build(bytesize) do |buffer|
       each_char do |char|
@@ -2958,17 +3026,27 @@ class String
   #
   # See also: `Nil#presence`.
   def presence : self?
-    self if !blank?
+    self unless blank?
   end
 
   # Returns `true` if this string is equal to `*other*.
   #
-  # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on. This means two strings containing invalid
+  # Equality is checked byte-per-byte: if any byte is different from the corresponding
+  # byte, it returns `false`. This means two strings containing invalid
   # UTF-8 byte sequences may compare unequal, even when they both produce the
   # Unicode replacement character at the same string indices.
   #
-  # See `#compare` for more comparison options.
+  # Thus equality is case-sensitive, as it is with the comparison operator (`#<=>`).
+  # `#compare` offers a case-insensitive alternative.
+  #
+  # ```
+  # "abcdef" == "abcde"   # => false
+  # "abcdef" == "abcdef"  # => true
+  # "abcdef" == "abcdefg" # => false
+  # "abcdef" == "ABCDEF"  # => false
+  #
+  # "abcdef".compare("ABCDEF", case_insensitive: true) == 0 # => true
+  # ```
   def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -2995,6 +3073,8 @@ class String
   # "abcdef" <=> "abcdefg" # => -1
   # "abcdef" <=> "ABCDEF"  # => 1
   # ```
+  #
+  # The comparison is case-sensitive. `#compare` is a case-insensitive alternative.
   def <=>(other : self) : Int32
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
@@ -3021,7 +3101,9 @@ class String
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
   # ```
-  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None) : Int32
+  #
+  # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
+  def compare(other : String, case_insensitive = false, options : Unicode::CaseOptions = :none) : Int32
     return self <=> other unless case_insensitive
 
     if single_byte_optimizable? && other.single_byte_optimizable?
@@ -3947,6 +4029,28 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+    ary = Array(String).new
+    split(separator, limit, remove_empty: remove_empty) do |string|
+      ary << string
+    end
+    ary
+  end
+
   # Splits the string after each regex *separator* and yields each part to a block.
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -3966,28 +4070,6 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
-  # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
-    ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
-      ary << string
-    end
-    ary
-  end
-
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
-  #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
-  #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
-  #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
-  #
-  # ```
-  # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
     if empty?
@@ -4490,7 +4572,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex) : self
+  def scan(pattern : Regex, &) : self
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -4517,7 +4599,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String) : self
+  def scan(pattern : String, &) : self
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
@@ -4546,7 +4628,7 @@ class String
   # end
   # array # => ['a', 'b', '☃']
   # ```
-  def each_char : Nil
+  def each_char(&) : Nil
     if single_byte_optimizable?
       each_byte do |byte|
         yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
@@ -4582,7 +4664,7 @@ class String
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def each_char_with_index(offset = 0)
+  def each_char_with_index(offset = 0, &)
     each_char do |char|
       yield char, offset
       offset += 1
@@ -4613,7 +4695,7 @@ class String
   # ```
   #
   # See also: `Char#ord`.
-  def each_codepoint
+  def each_codepoint(&)
     each_char do |char|
       yield char.ord
     end
@@ -4657,7 +4739,7 @@ class String
   # end
   # array # => [97, 98, 226, 152, 131]
   # ```
-  def each_byte
+  def each_byte(&)
     to_slice.each do |byte|
       yield byte
     end
@@ -4817,7 +4899,7 @@ class String
     end
   end
 
-  private def dump_or_inspect(io)
+  private def dump_or_inspect(io, &)
     io << '"'
     dump_or_inspect_unquoted(io) do |char, error|
       yield char, error
@@ -4825,7 +4907,7 @@ class String
     io << '"'
   end
 
-  private def dump_or_inspect_unquoted(io)
+  private def dump_or_inspect_unquoted(io, &)
     reader = Char::Reader.new(self)
     while reader.has_next?
       current_char = reader.current_char
@@ -4877,7 +4959,7 @@ class String
     end
   end
 
-  private def dump_or_inspect_char(char, error, io)
+  private def dump_or_inspect_char(char, error, io, &)
     if error
       dump_hex(error, io)
     elsif yield
@@ -4930,7 +5012,7 @@ class String
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
   def starts_with?(re : Regex) : Bool
-    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
+    !!($~ = re.match_at_byte_index(self, 0, Regex::MatchOptions::ANCHORED))
   end
 
   # Returns `true` if this string ends with the given *str*.
@@ -5136,7 +5218,7 @@ class String
     @bytesize == 0 || @length > 0
   end
 
-  protected def each_byte_index_and_char_index
+  protected def each_byte_index_and_char_index(&)
     byte_index = 0
     char_index = 0
 

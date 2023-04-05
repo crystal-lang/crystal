@@ -153,6 +153,8 @@ module Spec
     end
 
     def run
+      print_order_message
+
       internal_run
     end
 
@@ -231,10 +233,7 @@ module Spec
         top_n.each do |res|
           puts "  #{res.description}"
           res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
-          if Spec.use_colors?
-            res_elapsed = res_elapsed.colorize.bold
-          end
-          puts "    #{res_elapsed} seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          puts "    #{res_elapsed.colorize.bold} seconds #{Spec.relative_file(res.file)}:#{res.line}"
         end
       end
 
@@ -255,10 +254,6 @@ module Spec
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
 
-      if randomizer_seed = Spec.randomizer_seed
-        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
-      end
-
       unless failures_and_errors.empty?
         puts
         puts "Failed examples:"
@@ -267,6 +262,14 @@ module Spec
           print Spec.color("crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}", :error)
           puts Spec.color(" # #{fail.description}", :comment)
         end
+      end
+
+      print_order_message
+    end
+
+    def print_order_message
+      if randomizer_seed = Spec.randomizer_seed
+        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
       end
     end
 

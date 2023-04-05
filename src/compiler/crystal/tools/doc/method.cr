@@ -241,7 +241,7 @@ class Crystal::Doc::Method
         io << ", " if printed
         io << '&'
         arg_to_html block_arg, io, html: html
-      elsif @def.yields
+      elsif @def.block_arity
         io << ", " if printed
         io << '&'
       end
@@ -314,7 +314,7 @@ class Crystal::Doc::Method
   end
 
   def has_args?
-    !@def.args.empty? || @def.double_splat || @def.block_arg || @def.yields
+    !@def.args.empty? || @def.double_splat || @def.block_arg || @def.block_arity
   end
 
   def to_json(builder : JSON::Builder)

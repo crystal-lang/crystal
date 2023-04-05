@@ -770,6 +770,52 @@ describe "Int" do
     iter.next.should be_a(Iterator::Stop)
   end
 
+  describe "#bit_reverse" do
+    it { 0x12_u8.bit_reverse.should eq(0x48_u8) }
+    it { 0x1234_u16.bit_reverse.should eq(0x2C48_u16) }
+    it { 0x12345678_u32.bit_reverse.should eq(0x1E6A2C48_u32) }
+    it { 0x123456789ABCDEF0_u64.bit_reverse.should eq(0x0F7B3D591E6A2C48_u64) }
+    it { 1.to_u128.bit_reverse.should eq(1.to_u128 << 127) }
+    it { (1.to_u128 << 127).bit_reverse.should eq(0x1.to_u128) }
+    it { 0x12345678.to_u128.bit_reverse.should eq(0x1E6A2C48.to_u128 << 96) }
+
+    it { 0x12_i8.bit_reverse.should eq(0x48_i8) }
+    it { 0x1234_i16.bit_reverse.should eq(0x2C48_i16) }
+    it { 0x12345678_i32.bit_reverse.should eq(0x1E6A2C48_i32) }
+    it { 0x123456789ABCDEF0_i64.bit_reverse.should eq(0x0F7B3D591E6A2C48_i64) }
+    it { 1.to_i128.bit_reverse.should eq(1.to_i128 << 127) }
+    it { (1.to_i128 << 127).bit_reverse.should eq(0x1.to_i128) }
+    it { 0x12345678.to_i128.bit_reverse.should eq(0x1E6A2C48.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.bit_reverse.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.bit_reverse.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
+  describe "#byte_swap" do
+    it { 0x12_u8.byte_swap.should eq(0x12_u8) }
+    it { 0x1234_u16.byte_swap.should eq(0x3412_u16) }
+    it { 0x12345678_u32.byte_swap.should eq(0x78563412_u32) }
+    it { 0x123456789ABCDEF0_u64.byte_swap.should eq(0xF0DEBC9A78563412_u64) }
+    it { 1.to_u128.byte_swap.should eq(1.to_u128 << 120) }
+    it { (1.to_u128 << 127).byte_swap.should eq(0x80.to_u128) }
+    it { 0x12345678.to_u128.byte_swap.should eq(0x78563412.to_u128 << 96) }
+
+    it { 0x12_i8.byte_swap.should eq(0x12_i8) }
+    it { 0x1234_i16.byte_swap.should eq(0x3412_i16) }
+    it { 0x12345678_i32.byte_swap.should eq(0x78563412_i32) }
+    it { 0x123456789ABCDEF0_i64.byte_swap.should eq(0xF0DEBC9A78563412_u64.to_i64!) }
+    it { 1.to_i128.byte_swap.should eq(1.to_i128 << 120) }
+    it { (1.to_i128 << 127).byte_swap.should eq(0x80.to_i128) }
+    it { 0x12345678.to_i128.byte_swap.should eq(0x78563412.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.byte_swap.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.byte_swap.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
   describe "#popcount" do
     it { 5_i8.popcount.should eq(2) }
     it { 127_i8.popcount.should eq(7) }

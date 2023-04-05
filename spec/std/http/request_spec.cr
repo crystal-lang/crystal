@@ -480,7 +480,7 @@ module HTTP
     end
 
     it "doesn't raise on request with multiple Content_length headers" do
-      io = IO::Memory.new <<-REQ
+      io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1
         Host: host
         Content-Length: 5
@@ -488,12 +488,12 @@ module HTTP
         Content-Type: text/plain
 
         abcde
-        REQ
+        HTTP
       HTTP::Request.from_io(io)
     end
 
     it "raises if request has multiple and differing content-length headers" do
-      io = IO::Memory.new <<-REQ
+      io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1
         Host: host
         Content-Length: 5
@@ -501,7 +501,7 @@ module HTTP
         Content-Type: text/plain
 
         abcde
-        REQ
+        HTTP
       expect_raises(ArgumentError) do
         HTTP::Request.from_io(io)
       end

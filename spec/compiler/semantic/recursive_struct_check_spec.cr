@@ -186,13 +186,13 @@ describe "Semantic: recursive struct check" do
   end
 
   it "errors on private recursive type" do
-    assert_error <<-CR, "recursive struct Test detected"
+    assert_error <<-CRYSTAL, "recursive struct Test detected"
       private struct Test
         def initialize(@test : Test?)
         end
       end
 
       Test.new(Test.new(nil))
-      CR
+      CRYSTAL
   end
 end

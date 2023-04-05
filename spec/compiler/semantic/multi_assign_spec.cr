@@ -13,7 +13,7 @@ describe "Semantic: multi assign" do
     end
 
     it "doesn't error if assigning non-Indexable (#11414)" do
-      assert_no_errors <<-CR
+      assert_no_errors <<-CRYSTAL
         class Foo
           def [](index)
           end
@@ -24,11 +24,11 @@ describe "Semantic: multi assign" do
         end
 
         a, b, c = Foo.new
-        CR
+        CRYSTAL
     end
 
     it "errors if assigning non-Indexable to splat (#11414)" do
-      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo"
+      assert_error <<-CRYSTAL, "right-hand side of one-to-many assignment must be an Indexable, not Foo"
         require "prelude"
 
         class Foo
@@ -41,7 +41,7 @@ describe "Semantic: multi assign" do
         end
 
         a, *b, c = Foo.new
-        CR
+        CRYSTAL
     end
   end
 
@@ -94,7 +94,7 @@ describe "Semantic: multi assign" do
     end
 
     it "errors if assigning non-Indexable (#11414)" do
-      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
+      assert_error <<-CRYSTAL, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
         require "prelude"
 
         class Foo
@@ -107,11 +107,11 @@ describe "Semantic: multi assign" do
         end
 
         a, b, c = Foo.new
-        CR
+        CRYSTAL
     end
 
     it "errors if assigning non-Indexable to splat (#11414)" do
-      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
+      assert_error <<-CRYSTAL, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
         require "prelude"
 
         class Foo
@@ -124,12 +124,12 @@ describe "Semantic: multi assign" do
         end
 
         a, *b, c = Foo.new
-        CR
+        CRYSTAL
     end
   end
 
   it "can pass splat variable at top-level to macros (#11596)" do
-    assert_type(<<-CR) { tuple_of [int32, int32, int32] }
+    assert_type(<<-CRYSTAL) { tuple_of [int32, int32, int32] }
       struct Tuple
         def self.new(*args)
           args
@@ -142,6 +142,6 @@ describe "Semantic: multi assign" do
 
       a, *b, c = 1, 2, 3, 4, 5
       foo(b)
-      CR
+      CRYSTAL
   end
 end
