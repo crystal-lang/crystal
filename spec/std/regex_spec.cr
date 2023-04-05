@@ -124,6 +124,35 @@ describe "Regex" do
     end
   end
 
+  describe "#match!" do
+    it "returns match data" do
+      md = /(?<bar>.)(?<foo>.)/.match!("Crystal")
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = /foo/.match!("foo")
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises { /Crystal/.match!("foo") }
+      expect_raises(NilAssertionError) { $~ }
+    end
+
+    context "with options" do
+      it "deprecated Regex::Options" do
+        expect_raises { /foo/.match!(".foo", options: Regex::Options::ANCHORED) }
+      end
+
+      it "Regex::Match options" do
+        expect_raises { /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED) }
+      end
+    end
+  end
+
   describe "#match_at_byte_index" do
     it "assigns captures" do
       matchdata = /foo/.match_at_byte_index("..foo", 1)
