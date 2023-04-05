@@ -1966,7 +1966,6 @@ module Crystal
     assert_syntax_error "def f end", %(unexpected token: "end" (expected ";" or newline))
     assert_syntax_error "def foo : Int32 1 end", %(unexpected token: "1" (expected ";" or newline))
     assert_syntax_error "def foo(x : U) forall U end", %(unexpected token: "end" (expected ";" or newline))
-    assert_syntax_error "class Foo < Bar end", %(unexpected token: "end" (expected ";" or newline))
     assert_syntax_error <<-CR, %(unexpected token: "buzz" (expected ";" or newline))
       lib Foo
         struct Bar
