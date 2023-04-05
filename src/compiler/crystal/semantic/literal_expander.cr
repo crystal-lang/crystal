@@ -1,7 +1,7 @@
 module Crystal
   class LiteralExpander
     def initialize(@program : Program)
-      @regexes = [] of {String, Regex::Options}
+      @regexes = [] of {String, Regex::CompileOptions}
     end
 
     # Converts an array literal to creating an Array and storing the values:

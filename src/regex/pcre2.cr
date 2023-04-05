@@ -65,7 +65,7 @@ module Regex::PCRE2
 
   private def pcre2_compile_options(options)
     flag = 0
-    Regex::Options.each do |option|
+    Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?    then LibPCRE2::CASELESS
@@ -80,7 +80,6 @@ module Regex::PCRE2
                 when .dupnames?       then LibPCRE2::DUPNAMES
                 when .ucp?            then LibPCRE2::UCP
                 when .endanchored?    then LibPCRE2::ENDANCHORED
-                when .no_jit?         then raise ArgumentError.new("Invalid regex option NO_JIT for `pcre2_compile`")
                 else
                   raise "unreachable"
                 end
@@ -110,7 +109,6 @@ module Regex::PCRE2
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
-                when .no_jit?         then LibPCRE2::NO_JIT
                 else
                   raise "unreachable"
                 end
@@ -119,6 +117,26 @@ module Regex::PCRE2
     end
     unless options.none?
       raise ArgumentError.new("Unknown Regex::Option value: #{options}")
+    end
+    flag
+  end
+
+  private def pcre2_match_options(options : Regex::MatchOptions)
+    flag = 0
+    Regex::MatchOptions.each do |option|
+      if options.includes?(option)
+        flag |= case option
+                when .anchored?    then LibPCRE2::ANCHORED
+                when .endanchored? then LibPCRE2::ENDANCHORED
+                when .no_jit?      then LibPCRE2::NO_JIT
+                else
+                  raise "unreachable"
+                end
+        options &= ~option
+      end
+    end
+    unless options.none?
+      raise ArgumentError.new("Unknown Regex::MatchOption value: #{options}")
     end
     flag
   end
