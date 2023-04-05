@@ -143,10 +143,6 @@ describe "Regex" do
     end
 
     context "with options" do
-      it "deprecated Regex::Options" do
-        expect_raises(Exception) { /foo/.match!(".foo", options: Regex::Options::ANCHORED) }
-      end
-
       it "Regex::Match options" do
         expect_raises(Exception) { /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED) }
       end
