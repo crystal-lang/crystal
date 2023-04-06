@@ -1,6 +1,17 @@
 require "spec"
 require "big"
 
+private def with_precision(precision, &)
+  old_precision = BigFloat.default_precision
+  BigFloat.default_precision = precision
+
+  begin
+    yield
+  ensure
+    BigFloat.default_precision = old_precision
+  end
+end
+
 private def br(n, d)
   BigRational.new(n, d)
 end
@@ -33,6 +44,14 @@ describe BigRational do
 
     expect_raises(DivisionByZeroError) do
       BigRational.new(2, 0)
+    end
+  end
+
+  it "initializes from BigFloat with high precision" do
+    (0..12).each do |i|
+      bf = BigFloat.new(2.0, precision: 64) ** 64 + BigFloat.new(2.0, precision: 64) ** i
+      br = BigRational.new(bf)
+      br.should eq(bf)
     end
   end
 
