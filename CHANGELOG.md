@@ -17,6 +17,8 @@
 
 - **(breaking-change)** Fix `Enum#includes?` to require all bits set ([#13229](https://github.com/crystal-lang/crystal/pull/13229), thanks @straight-shoota)
 - **(breaking-change)** Deprecate `Enum.flags` ([#12900](https://github.com/crystal-lang/crystal/pull/12900), thanks @straight-shoota)
+- **(breaking-change)** Remove compile-time error for `Range#size`, `#each`, `#sample` ([#13278](https://github.com/crystal-lang/crystal/pull/13278), thanks @straight-shoota)
+- **(breaking-change)** Docs: Require all `Indexable`s to be stable ([#13061](https://github.com/crystal-lang/crystal/pull/13061), thanks @HertzDevil)
 - Add `Enum.[]` convenience constructor ([#12900](https://github.com/crystal-lang/crystal/pull/12900), thanks @straight-shoota)
 - Rename internal `Iterator::Slice` type to not conflict with `::Slice` ([#12983](https://github.com/crystal-lang/crystal/pull/12983), thanks @Blacksmoke16)
 - Fix `Array#replace` on shifted arrays ([#13256](https://github.com/crystal-lang/crystal/pull/13256), thanks @HertzDevil)
@@ -24,6 +26,7 @@
 - Add `Enum#inspect` ([#13004](https://github.com/crystal-lang/crystal/pull/13004), thanks @straight-shoota)
 - Add `Slice#+(Slice)` and `Slice.join` ([#12081](https://github.com/crystal-lang/crystal/pull/12081), thanks @HertzDevil)
 - Add `Enumerable#min(count)` and `#max(count)` ([#13057](https://github.com/crystal-lang/crystal/pull/13057), thanks @nthiad)
+- Fix `Array(T)#[]=(Int, Int, Array(T))` on shifted arrays ([#13275](https://github.com/crystal-lang/crystal/pull/13275), thanks @HertzDevil)
 
 ### Concurrency
 
@@ -34,6 +37,7 @@
 ### Files
 
 - **(breaking-change)** Deprecate `Termios` ([#12940](https://github.com/crystal-lang/crystal/pull/12940), thanks @HertzDevil)
+- **(breaking-change)** Windows: make `File.delete` remove symlink directories, not `Dir.delete` ([#13224](https://github.com/crystal-lang/crystal/pull/13224), thanks @HertzDevil)
 - Leverage `fileapi` for opening files on windows ([#13178](https://github.com/crystal-lang/crystal/pull/13178), thanks @Blacksmoke16)
 - Windows: fix error condition when `File.open` fails ([#13235](https://github.com/crystal-lang/crystal/pull/13235), thanks @HertzDevil)
 - Skip eacces spec for superuser ([#13227](https://github.com/crystal-lang/crystal/pull/13227), thanks @straight-shoota)
@@ -65,6 +69,7 @@
 - Handle `Range` requests in `HTTP::StaticFileHandler` ([#12886](https://github.com/crystal-lang/crystal/pull/12886), thanks @jgaskins, @straight-shoota)
 - Skip hostname spec if `hostname` command fails ([#12987](https://github.com/crystal-lang/crystal/pull/12987), thanks @Blacksmoke16)
 - Fix `Socket#tty?` to `false` on Windows ([#13175](https://github.com/crystal-lang/crystal/pull/13175), thanks @Blacksmoke16)
+- Fix `HTTP::Server::Response#reset` for `status_message` ([#13282](https://github.com/crystal-lang/crystal/pull/13282), thanks @straight-shoota)
 
 ### Numeric
 
@@ -118,6 +123,7 @@
 - **(breaking-change)** Fix PCRE crashing on invalid UTF-8 ([#13240](https://github.com/crystal-lang/crystal/pull/13240), thanks @straight-shoota)
 - **(breaking-change)** Switch default regex engine to PCRE2 ([#12978](https://github.com/crystal-lang/crystal/pull/12978), thanks @straight-shoota)
 - **(breaking-change)** Add more members to `Regex::Options` ([#13223](https://github.com/crystal-lang/crystal/pull/13223), thanks @straight-shoota)
+- **(breaking-change)** Add `Regex::MatchOptions` ([#13248](https://github.com/crystal-lang/crystal/pull/13248), thanks @straight-shoota)
 - Fix PCRE2 implementation and tests ([#13105](https://github.com/crystal-lang/crystal/pull/13105), thanks @straight-shoota)
 - Remove pending spec for `Path#drive` with IPv6 UNC host names ([#13190](https://github.com/crystal-lang/crystal/pull/13190), thanks @HertzDevil)
 
@@ -143,6 +149,7 @@
 - Dynamic library loader: search in `-L` directories before default ones ([#13069](https://github.com/crystal-lang/crystal/pull/13069), thanks @HertzDevil)
 - Simplify expectation of loader spec error messages ([#12858](https://github.com/crystal-lang/crystal/pull/12858), thanks @straight-shoota)
 - Add support for 128-bit literals in the interpreter ([#12859](https://github.com/crystal-lang/crystal/pull/12859), thanks @straight-shoota)
+- Fix interpreter `value_to_bool` for `NoReturn` ([#13290](https://github.com/crystal-lang/crystal/pull/13290), thanks @straight-shoota)
 
 ### Parser
 
@@ -159,6 +166,7 @@
 - Add comment for `LiteralExpander` `select` ([#12926](https://github.com/crystal-lang/crystal/pull/12926), thanks @straight-shoota)
 - Improve locations of some AST nodes ([#12933](https://github.com/crystal-lang/crystal/pull/12933), thanks @straight-shoota)
 - Refactor `SemanticVisitor` tighter `rescue` scope in `Require` visitor ([#12887](https://github.com/crystal-lang/crystal/pull/12887), thanks @straight-shoota)
+- Add specs for regex literal expansion ([#13253](https://github.com/crystal-lang/crystal/pull/13253), thanks @straight-shoota)
 
 ## Tools
 
@@ -213,6 +221,11 @@
 - Clean up `.gitignore` ([#13241](https://github.com/crystal-lang/crystal/pull/13241), thanks @straight-shoota)
 - [CI] Extract LLVM tests in separate workflow ([#13246](https://github.com/crystal-lang/crystal/pull/13246), thanks @straight-shoota)
 - [CI] Extract interpreter workflow and split `std_spec` execution ([#13267](https://github.com/crystal-lang/crystal/pull/13267), thanks @straight-shoota)
+- Avoid `test.cr` in root of repo conflicting with parser warning specs ([#13259](https://github.com/crystal-lang/crystal/pull/13259), thanks @Blacksmoke16)
+- Fix `bin/crystal` in symlink working directory ([#13281](https://github.com/crystal-lang/crystal/pull/13281), thanks @straight-shoota)
+- Fix `bin/crystal` when no global `crystal` command is installed ([#13286](https://github.com/crystal-lang/crystal/pull/13286), thanks @straight-shoota)
+- Makefile: Add `interpreter_spec` ([#13251](https://github.com/crystal-lang/crystal/pull/13251), thanks @straight-shoota)
+- Makefile: Add `all` target as default before including `Makfile.local` ([#13276](https://github.com/crystal-lang/crystal/pull/13276), thanks @straight-shoota)
 
 ## Other
 
