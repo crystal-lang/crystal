@@ -3,6 +3,7 @@
 ## Language
 
 - Fill docs for `TupleLiteral` ([#12927](https://github.com/crystal-lang/crystal/pull/12927), thanks @straight-shoota)
+- Allow namespaced `Path`s as type names for `lib` ([#12903](https://github.com/crystal-lang/crystal/pull/12903), thanks @HertzDevil)
 
 ## Standard Library
 
@@ -90,7 +91,7 @@
 ### Serialization
 
 - Remove obsolete error handling in `XPathContext` ([#13038](https://github.com/crystal-lang/crystal/pull/13038), thanks @straight-shoota)
-- Fix JSON, YAML `use_*_discriminator` for recursive struct types ([#13238](https://github.com/crystal-lang/crystal/pull/13238), thanks @HertzDevil)
+- **(breaking-change)** Fix JSON, YAML `use_*_discriminator` for recursive struct types ([#13238](https://github.com/crystal-lang/crystal/pull/13238), thanks @HertzDevil)
 - Add more specs for `YAML::Any#[]` and `#[]?` ([#11646](https://github.com/crystal-lang/crystal/pull/11646), thanks @straight-shoota)
 - Add `from_json` for 128-bit integers ([#13041](https://github.com/crystal-lang/crystal/pull/13041), thanks @straight-shoota)
 - Reduce JSON, YAML serializable test types ([#13042](https://github.com/crystal-lang/crystal/pull/13042), thanks @straight-shoota)
@@ -156,7 +157,6 @@
 - Fix `x @y` and `x @@y` in def parameters when `y` is reserved ([#12922](https://github.com/crystal-lang/crystal/pull/12922), thanks @HertzDevil)
 - Disallow empty exponents in number literals ([#12910](https://github.com/crystal-lang/crystal/pull/12910), thanks @HertzDevil)
 - Stricter checks for multiple assignment syntax ([#12919](https://github.com/crystal-lang/crystal/pull/12919), thanks @HertzDevil)
-- Allow namespaced `Path`s as type names for `lib` ([#12903](https://github.com/crystal-lang/crystal/pull/12903), thanks @HertzDevil)
 
 ### Semantic
 
