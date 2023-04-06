@@ -1,17 +1,6 @@
 require "spec"
 require "big"
 
-private def with_precision(precision, &)
-  old_precision = BigFloat.default_precision
-  BigFloat.default_precision = precision
-
-  begin
-    yield
-  ensure
-    BigFloat.default_precision = old_precision
-  end
-end
-
 private def br(n, d)
   BigRational.new(n, d)
 end
