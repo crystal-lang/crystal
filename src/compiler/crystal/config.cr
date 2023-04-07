@@ -15,18 +15,17 @@ module Crystal
     end
 
     def self.description
-      details = [version]
-      details << "[#{build_commit}]" if build_commit
-      details << "(#{date})" unless date.empty?
+      String.build do |io|
+        io << "Crystal " << version
+        io << " [" << build_commit << "]" if build_commit
+        io << " (" << date << ")" unless date.empty?
 
-      development_msg = "\n\nThe compiler was not built in release mode." unless release_mode?
+        io << "\n\nLLVM: " << llvm_version
+        io << "\nDefault target: " << host_target
 
-      <<-DOC
-        Crystal #{details.join(" ")}
-
-        LLVM: #{llvm_version}
-        Default target: #{self.host_target}#{development_msg}
-        DOC
+        io << "\n\nThe compiler was not built in release mode." unless release_mode?
+        io << "\n"
+      end
     end
 
     def self.build_commit
