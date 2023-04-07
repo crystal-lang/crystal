@@ -20,10 +20,10 @@ module Crystal
         io << " [" << build_commit << "]" if build_commit
         io << " (" << date << ")" unless date.empty?
 
+        io << "\n\nThe compiler was not built in release mode." unless release_mode?
+
         io << "\n\nLLVM: " << llvm_version
         io << "\nDefault target: " << host_target
-
-        io << "\n\nThe compiler was not built in release mode." unless release_mode?
         io << "\n"
       end
     end
