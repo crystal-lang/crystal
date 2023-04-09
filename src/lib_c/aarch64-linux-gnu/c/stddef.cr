@@ -1,3 +1,3 @@
 lib LibC
-  alias SizeT = ULongLong
+  alias SizeT = ULong
 end
