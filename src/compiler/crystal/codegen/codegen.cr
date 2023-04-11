@@ -105,7 +105,7 @@ module Crystal
     end
 
     def offset_of(type, element_index)
-      element_index = element_index.class.zero if type.extern_union?
+      return 0_u64 if type.extern_union?
       llvm_typer.offset_of(llvm_typer.llvm_type(type), element_index)
     end
 
