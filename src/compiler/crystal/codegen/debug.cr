@@ -159,7 +159,7 @@ module Crystal
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
       elements = di_builder.get_or_create_type_array(element_types)
       if type.extern_union?
-        debug_type = di_builder.create_union_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, elements)
+        debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 1, size, size, LLVM::DIFlags::Zero, elements)
       else
         debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, elements)
         unless type.struct?
