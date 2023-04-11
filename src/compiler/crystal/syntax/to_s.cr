@@ -994,9 +994,9 @@ module Crystal
         end
         @str << '/'
       end
-      @str << 'i' if node.options.includes? Regex::Options::IGNORE_CASE
-      @str << 'm' if node.options.includes? Regex::Options::MULTILINE
-      @str << 'x' if node.options.includes? Regex::Options::EXTENDED
+      @str << 'i' if node.options.ignore_case?
+      @str << 'm' if node.options.multiline?
+      @str << 'x' if node.options.extended?
       false
     end
 
