@@ -82,7 +82,7 @@ module Crystal
       @debug_files_per_module[@llvm_mod] ||= {} of DebugFilename => LibLLVM::MetadataRef
     end
 
-    def current_debug_file
+    private def current_debug_file
       # These debug files are only used for `DIBuilder#create_union_type`, even
       # though they are unneeded here, just as struct types don't need a file;
       # LLVM 12 or below produces an assertion failure that is now removed
