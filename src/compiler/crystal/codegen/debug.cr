@@ -83,11 +83,19 @@ module Crystal
     end
 
     def current_debug_file
-      filename = @current_debug_location.try(&.filename) || "??"
-      debug_files_cache[filename] ||= begin
-        file, dir = file_and_dir(filename)
-        di_builder.create_file(file, dir)
-      end
+      # These debug files are only used for `DIBuilder#create_union_type`, even
+      # though they are unneeded here, just as struct types don't need a file;
+      # LLVM 12 or below produces an assertion failure that is now removed
+      # (https://github.com/llvm/llvm-project/commit/ad60802a7187aa39b0374536be3fa176fe3d6256)
+      {% if LibLLVM::IS_LT_130 %}
+        filename = @current_debug_location.try(&.filename) || "??"
+        debug_files_cache[filename] ||= begin
+          file, dir = file_and_dir(filename)
+          di_builder.create_file(file, dir)
+        end
+      {% else %}
+        Pointer(Void).null.as(LibLLVM::MetadataRef)
+      {% end %}
     end
 
     def get_debug_type(type, original_type : Type)
@@ -259,7 +267,7 @@ module Crystal
         if ivar_debug_type = get_debug_type(ivar_type)
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-          next if offset > UInt64::MAX // 8u64 # TODO: Figure out why it is happening sometimes with offset
+
           member = di_builder.create_member_type(nil, "[#{idx}]", nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
