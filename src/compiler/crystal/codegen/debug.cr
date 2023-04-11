@@ -158,13 +158,13 @@ module Crystal
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
       elements = di_builder.get_or_create_type_array(element_types)
-      debug_type = if type.extern_union?
-                     di_builder.create_union_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, elements)
-                   else
-                     di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, elements)
-                   end
-      unless type.struct?
-        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
+      if type.extern_union?
+        debug_type = di_builder.create_union_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, elements)
+      else
+        debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, elements)
+        unless type.struct?
+          debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
+        end
       end
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
