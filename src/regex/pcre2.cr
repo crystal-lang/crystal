@@ -141,12 +141,6 @@ module Regex::PCRE2
     flag
   end
 
-  def finalize
-    {% unless flag?(:interpreted) %}
-      LibPCRE2.code_free @re
-    {% end %}
-  end
-
   protected def self.error_impl(source)
     code = PCRE2.compile(source, LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
       return error_message
@@ -257,6 +251,9 @@ module Regex::PCRE2
     @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
+    {% unless flag?(:interpreted) %}
+      LibPCRE2.code_free @re
+    {% end %}
   end
 
   private def match_data(str, byte_index, options)
@@ -277,12 +274,6 @@ module Regex::PCRE2
     end
 
     match_data
-  end
-
-  def self.config(what, type : T.class) : T forall T
-    value = uninitialized T
-    LibPCRE2.config(what, pointerof(value))
-    value
   end
 
   module MatchData
