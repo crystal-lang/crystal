@@ -36,6 +36,14 @@ describe BigRational do
     end
   end
 
+  it "initializes from BigFloat with high precision" do
+    (0..12).each do |i|
+      bf = BigFloat.new(2.0, precision: 64) ** 64 + BigFloat.new(2.0, precision: 64) ** i
+      br = BigRational.new(bf)
+      br.should eq(bf)
+    end
+  end
+
   it "#numerator" do
     br(10, 3).numerator.should eq(BigInt.new(10))
   end
