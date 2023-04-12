@@ -16,6 +16,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Assert using PCRE
         run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE'
+      - name: Show PCRE config
+        run: bin/crystal scripts/print_regex_config.cr
       - name: Run Regex specs
         run: bin/crystal spec --order=random spec/std/regex*
   pcre2:
@@ -31,5 +33,7 @@ jobs:
         run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE2'
       - name: Assert select PCRE
         run: bin/crystal eval -Duse_pcre 'abort unless Regex::Engine == Regex::PCRE'
+      - name: Show PCRE2 config
+        run: bin/crystal scripts/print_regex_config.cr
       - name: Run Regex specs
         run: bin/crystal spec --order=random spec/std/regex*
