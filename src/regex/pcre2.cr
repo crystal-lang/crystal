@@ -251,9 +251,7 @@ module Regex::PCRE2
     @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
-    {% unless flag?(:interpreted) %}
-      LibPCRE2.code_free @re
-    {% end %}
+    LibPCRE2.code_free @re
   end
 
   private def match_data(str, byte_index, options)
