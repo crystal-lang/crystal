@@ -34,9 +34,13 @@
   end
 
   def config(kind : String.class, what)
-    where = Bytes.new(LibPCRE2.config(what, nil) - 1)
-    LibPCRE2.config(what, where)
-    String.new(where).inspect
+    len = LibPCRE2.config(what, nil)
+    if len > 0
+      where = Bytes.new(len - 1)
+      LibPCRE2.config(what, where)
+      ret = String.new(where)
+    end
+    ret.inspect
   end
 
   def config(kind : Enum.class, what)
