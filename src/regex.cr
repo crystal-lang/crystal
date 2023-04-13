@@ -257,6 +257,9 @@ class Regex
     #
     # Unsupported with PCRE.
     ENDANCHORED = 0x8000_0000
+
+    # Do not check the pattern for valid UTF encoding.
+    NO_UTF_CHECK = NO_UTF8_CHECK
   end
 
   # Represents compile options passed to `Regex.new`.

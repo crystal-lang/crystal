@@ -43,7 +43,7 @@ module Regex::PCRE
                 when .dollar_endonly? then LibPCRE::DOLLAR_ENDONLY
                 when .firstline?      then LibPCRE::FIRSTLINE
                 when .utf_8?          then LibPCRE::UTF8
-                when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
+                when .no_utf_check?   then LibPCRE::NO_UTF8_CHECK
                 when .dupnames?       then LibPCRE::DUPNAMES
                 when .ucp?            then LibPCRE::UCP
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")

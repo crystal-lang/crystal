@@ -30,7 +30,7 @@ describe "Regex" do
       expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error/) do
         Regex.new("\x96")
       end
-      Regex.new("\x96", :NO_UTF8_CHECK).should be_a(Regex)
+      Regex.new("\x96", :NO_UTF_CHECK).should be_a(Regex)
     end
   end
 

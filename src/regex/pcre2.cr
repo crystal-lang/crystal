@@ -73,7 +73,7 @@ module Regex::PCRE2
                 when .dollar_endonly? then LibPCRE2::DOLLAR_ENDONLY
                 when .firstline?      then LibPCRE2::FIRSTLINE
                 when .utf_8?          then LibPCRE2::UTF
-                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .no_utf_check?   then LibPCRE2::NO_UTF_CHECK
                 when .dupnames?       then LibPCRE2::DUPNAMES
                 when .ucp?            then LibPCRE2::UCP
                 when .endanchored?    then LibPCRE2::ENDANCHORED
