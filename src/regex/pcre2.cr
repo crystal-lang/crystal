@@ -65,18 +65,19 @@ module Regex::PCRE2
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?    then LibPCRE2::CASELESS
-                when .multiline?      then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
-                when .dotall?         then LibPCRE2::DOTALL
-                when .extended?       then LibPCRE2::EXTENDED
-                when .anchored?       then LibPCRE2::ANCHORED
-                when .dollar_endonly? then LibPCRE2::DOLLAR_ENDONLY
-                when .firstline?      then LibPCRE2::FIRSTLINE
-                when .utf_8?          then LibPCRE2::UTF
-                when .no_utf_check?   then LibPCRE2::NO_UTF_CHECK
-                when .dupnames?       then LibPCRE2::DUPNAMES
-                when .ucp?            then LibPCRE2::UCP
-                when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .ignore_case?       then LibPCRE2::CASELESS
+                when .multiline?         then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .dotall?            then LibPCRE2::DOTALL
+                when .extended?          then LibPCRE2::EXTENDED
+                when .anchored?          then LibPCRE2::ANCHORED
+                when .dollar_endonly?    then LibPCRE2::DOLLAR_ENDONLY
+                when .firstline?         then LibPCRE2::FIRSTLINE
+                when .utf_8?             then LibPCRE2::UTF
+                when .no_utf_check?      then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?          then LibPCRE2::DUPNAMES
+                when .ucp?               then LibPCRE2::UCP
+                when .endanchored?       then LibPCRE2::ENDANCHORED
+                when .match_invalid_utf? then LibPCRE2::MATCH_INVALID_UTF
                 else
                   raise "unreachable"
                 end

@@ -260,6 +260,20 @@ class Regex
 
     # Do not check the pattern for valid UTF encoding.
     NO_UTF_CHECK = NO_UTF8_CHECK
+
+    # Enable matching against subjects containing invalid UTF bytes.
+    # Invalid bytes never match anything. The entire subject string is
+    # effectively split into segments of valid UTF.
+    #
+    # Read more in the [PCRE2 documentation](https://www.pcre.org/current/doc/html/pcre2unicode.html#matchinvalid).
+    #
+    # When this option is set, `MatchOptions::NO_UTF_CHECK` is ignored at match time.
+    #
+    # Unsupported with PCRE.
+    #
+    # NOTE: This option was introduced in PCRE2 10.34 but a bug that can lead to an
+    # infinite loop is only fixed in 10.36 (https://github.com/PCRE2Project/pcre2/commit/e0c6029a62db9c2161941ecdf459205382d4d379).
+    MATCH_INVALID_UTF
   end
 
   # Represents compile options passed to `Regex.new`.

@@ -113,6 +113,10 @@ describe "Regex" do
       expect_raises(ArgumentError, "UTF-8 error") do
         /([\w_\.@#\/\*])+/.match("\xFF\xFE")
       end
+
+      if Regex::Engine.version_number >= {10, 36}
+        Regex.new("([\\w_\\.@#\\/\\*])+", options: Regex::Options::MATCH_INVALID_UTF).match("\xFF\xFE").should be_nil
+      end
     end
   end
 
@@ -148,6 +152,12 @@ describe "Regex" do
     it "multibyte index" do
       expect_raises(ArgumentError, "bad offset into UTF string") do
         /foo/.match_at_byte_index("öfoo", 1)
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        md = Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).match_at_byte_index("öfoo", 1).should_not be_nil
+        md.begin.should eq 1
+        md.byte_begin.should eq 2
       end
 
       md = /foo/.match_at_byte_index("öfoo", 2).should_not be_nil
@@ -235,6 +245,14 @@ describe "Regex" do
         expect_raises(ArgumentError, "UTF-8 error") do
           /foo/.matches?("f\x96o")
         end
+
+        if Regex::Engine.version_number >= {10, 36}
+          Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_false
+          Regex.new("f\x96o", options: Regex::CompileOptions::MATCH_INVALID_UTF | Regex::CompileOptions::NO_UTF_CHECK).matches?("f\x96o").should be_false
+          Regex.new("f.o", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_false
+          Regex.new("\\bf\\b", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_true
+          Regex.new("\\bo\\b", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_true
+        end
       end
     end
 
@@ -290,6 +308,10 @@ describe "Regex" do
     it "multibyte index" do
       expect_raises(ArgumentError, "bad offset into UTF string") do
         /foo/.matches_at_byte_index?("öfoo", 1)
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches_at_byte_index?("öfoo", 1).should be_true
       end
       /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end

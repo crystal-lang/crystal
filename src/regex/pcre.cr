@@ -35,18 +35,19 @@ module Regex::PCRE
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?    then LibPCRE::CASELESS
-                when .multiline?      then LibPCRE::DOTALL | LibPCRE::MULTILINE
-                when .dotall?         then LibPCRE::DOTALL
-                when .extended?       then LibPCRE::EXTENDED
-                when .anchored?       then LibPCRE::ANCHORED
-                when .dollar_endonly? then LibPCRE::DOLLAR_ENDONLY
-                when .firstline?      then LibPCRE::FIRSTLINE
-                when .utf_8?          then LibPCRE::UTF8
-                when .no_utf_check?   then LibPCRE::NO_UTF8_CHECK
-                when .dupnames?       then LibPCRE::DUPNAMES
-                when .ucp?            then LibPCRE::UCP
-                when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .ignore_case?       then LibPCRE::CASELESS
+                when .multiline?         then LibPCRE::DOTALL | LibPCRE::MULTILINE
+                when .dotall?            then LibPCRE::DOTALL
+                when .extended?          then LibPCRE::EXTENDED
+                when .anchored?          then LibPCRE::ANCHORED
+                when .dollar_endonly?    then LibPCRE::DOLLAR_ENDONLY
+                when .firstline?         then LibPCRE::FIRSTLINE
+                when .utf_8?             then LibPCRE::UTF8
+                when .no_utf_check?      then LibPCRE::NO_UTF8_CHECK
+                when .dupnames?          then LibPCRE::DUPNAMES
+                when .ucp?               then LibPCRE::UCP
+                when .endanchored?       then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .match_invalid_utf? then raise ArgumentError.new("Regex::Option::MATCH_INVALID_UTF is not supported with PCRE")
                 else
                   raise "unreachable"
                 end
