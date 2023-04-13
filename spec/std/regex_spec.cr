@@ -115,8 +115,8 @@ describe "Regex" do
           /([\w_\.@#\/\*])+/.match("\xFF\xFE")
         end
       {% else %}
-        if Regex::PCRE2.version_number < {10, 35}
-          pending! "Error in libpcre2 < 10.35"
+        if Regex::PCRE2.version_number < {10, 36}
+          pending! "Error in libpcre2 < 10.36"
         else
           /([\w_\.@#\/\*])+/.match("\xFF\xFE").should be_nil
         end
