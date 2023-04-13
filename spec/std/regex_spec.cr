@@ -118,6 +118,11 @@ describe "Regex" do
         Regex.new("([\\w_\\.@#\\/\\*])+", options: Regex::Options::MATCH_INVALID_UTF).match("\xFF\xFE").should be_nil
       end
     end
+
+    it "skip invalid UTF check" do
+      # no exception raised
+      /f.o/.matches?("f\xFFo", options: Regex::MatchOptions::NO_UTF_CHECK)
+    end
   end
 
   describe "#match_at_byte_index" do

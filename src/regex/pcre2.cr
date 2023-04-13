@@ -103,7 +103,7 @@ module Regex::PCRE2
                 when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre2_match`")
                 when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre2_match`")
                 when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre2_match`")
-                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .no_utf_check?   then LibPCRE2::NO_UTF_CHECK
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
@@ -124,9 +124,10 @@ module Regex::PCRE2
     Regex::MatchOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .anchored?    then LibPCRE2::ANCHORED
-                when .endanchored? then LibPCRE2::ENDANCHORED
-                when .no_jit?      then LibPCRE2::NO_JIT
+                when .anchored?     then LibPCRE2::ANCHORED
+                when .endanchored?  then LibPCRE2::ENDANCHORED
+                when .no_jit?       then LibPCRE2::NO_JIT
+                when .no_utf_check? then LibPCRE2::NO_UTF_CHECK
                 else
                   raise "unreachable"
                 end

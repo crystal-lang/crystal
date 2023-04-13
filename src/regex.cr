@@ -296,6 +296,12 @@ class Regex
     #
     # Unsupported with PCRE.
     NO_JIT
+
+    # Do not check subject for valid UTF encoding.
+    #
+    # This option has no effect if the pattern was compiled with
+    # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
+    NO_UTF_CHECK
   end
 
   # Returns a `Regex::CompileOptions` representing the optional flags applied to this `Regex`.
