@@ -154,7 +154,7 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      if Regex::Engine.version_number < {10, 34}
+      if Regex::Engine.version_number < {10, 36}
         expect_raises(ArgumentError, "bad offset into UTF string") do
           /foo/.match_at_byte_index("öfoo", 1)
         end
@@ -246,7 +246,7 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        if Regex::Engine.version_number < {10, 34}
+        if Regex::Engine.version_number < {10, 36}
           expect_raises(ArgumentError, "UTF-8 error") do
             /foo/.matches?("f\x96o")
           end
@@ -310,7 +310,7 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      if Regex::Engine.version_number < {10, 34}
+      if Regex::Engine.version_number < {10, 36}
         expect_raises(ArgumentError, "bad offset into UTF string") do
           /foo/.matches_at_byte_index?("öfoo", 1)
         end
