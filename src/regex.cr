@@ -273,7 +273,7 @@ class Regex
     #
     # NOTE: This option was introduced in PCRE2 10.34 but a bug that can lead to an
     # infinite loop is only fixed in 10.36 (https://github.com/PCRE2Project/pcre2/commit/e0c6029a62db9c2161941ecdf459205382d4d379).
-    MATCH_INVALID_UTF
+    MATCH_INVALID_UTF = 0x1_0000_0000
   end
 
   # Represents compile options passed to `Regex.new`.
