@@ -23,11 +23,6 @@ module Regex::PCRE2
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
     options = pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
-    # MATCH_INVALID_UTF was introduced in 10.34 but a bug that can lead to an
-    # infinite loop is only fixed in 10.36 (https://github.com/PCRE2Project/pcre2/commit/e0c6029a62db9c2161941ecdf459205382d4d379).
-    if PCRE2.version_number >= {10, 36}
-      options |= LibPCRE2::MATCH_INVALID_UTF
-    end
     @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
     end
@@ -70,18 +65,19 @@ module Regex::PCRE2
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?    then LibPCRE2::CASELESS
-                when .multiline?      then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
-                when .dotall?         then LibPCRE2::DOTALL
-                when .extended?       then LibPCRE2::EXTENDED
-                when .anchored?       then LibPCRE2::ANCHORED
-                when .dollar_endonly? then LibPCRE2::DOLLAR_ENDONLY
-                when .firstline?      then LibPCRE2::FIRSTLINE
-                when .utf_8?          then LibPCRE2::UTF
-                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
-                when .dupnames?       then LibPCRE2::DUPNAMES
-                when .ucp?            then LibPCRE2::UCP
-                when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .ignore_case?       then LibPCRE2::CASELESS
+                when .multiline?         then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .dotall?            then LibPCRE2::DOTALL
+                when .extended?          then LibPCRE2::EXTENDED
+                when .anchored?          then LibPCRE2::ANCHORED
+                when .dollar_endonly?    then LibPCRE2::DOLLAR_ENDONLY
+                when .firstline?         then LibPCRE2::FIRSTLINE
+                when .utf_8?             then LibPCRE2::UTF
+                when .no_utf_check?      then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?          then LibPCRE2::DUPNAMES
+                when .ucp?               then LibPCRE2::UCP
+                when .endanchored?       then LibPCRE2::ENDANCHORED
+                when .match_invalid_utf? then LibPCRE2::MATCH_INVALID_UTF
                 else
                   raise "unreachable"
                 end
@@ -107,7 +103,7 @@ module Regex::PCRE2
                 when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre2_match`")
                 when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre2_match`")
                 when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre2_match`")
-                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .no_utf_check?   then LibPCRE2::NO_UTF_CHECK
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
@@ -128,9 +124,10 @@ module Regex::PCRE2
     Regex::MatchOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .anchored?    then LibPCRE2::ANCHORED
-                when .endanchored? then LibPCRE2::ENDANCHORED
-                when .no_jit?      then LibPCRE2::NO_JIT
+                when .anchored?     then LibPCRE2::ANCHORED
+                when .endanchored?  then LibPCRE2::ENDANCHORED
+                when .no_jit?       then LibPCRE2::NO_JIT
+                when .no_utf_check? then LibPCRE2::NO_UTF_CHECK
                 else
                   raise "unreachable"
                 end

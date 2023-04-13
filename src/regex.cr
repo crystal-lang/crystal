@@ -257,6 +257,23 @@ class Regex
     #
     # Unsupported with PCRE.
     ENDANCHORED = 0x8000_0000
+
+    # Do not check the pattern for valid UTF encoding.
+    NO_UTF_CHECK = NO_UTF8_CHECK
+
+    # Enable matching against subjects containing invalid UTF bytes.
+    # Invalid bytes never match anything. The entire subject string is
+    # effectively split into segments of valid UTF.
+    #
+    # Read more in the [PCRE2 documentation](https://www.pcre.org/current/doc/html/pcre2unicode.html#matchinvalid).
+    #
+    # When this option is set, `MatchOptions::NO_UTF_CHECK` is ignored at match time.
+    #
+    # Unsupported with PCRE.
+    #
+    # NOTE: This option was introduced in PCRE2 10.34 but a bug that can lead to an
+    # infinite loop is only fixed in 10.36 (https://github.com/PCRE2Project/pcre2/commit/e0c6029a62db9c2161941ecdf459205382d4d379).
+    MATCH_INVALID_UTF = 0x1_0000_0000
   end
 
   # Represents compile options passed to `Regex.new`.
@@ -279,6 +296,12 @@ class Regex
     #
     # Unsupported with PCRE.
     NO_JIT
+
+    # Do not check subject for valid UTF encoding.
+    #
+    # This option has no effect if the pattern was compiled with
+    # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
+    NO_UTF_CHECK
   end
 
   # Returns a `Regex::CompileOptions` representing the optional flags applied to this `Regex`.
