@@ -23,11 +23,6 @@ module Regex::PCRE2
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
     options = pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
-    # MATCH_INVALID_UTF was introduced in 10.34 but a bug that can lead to an
-    # infinite loop is only fixed in 10.36 (https://github.com/PCRE2Project/pcre2/commit/e0c6029a62db9c2161941ecdf459205382d4d379).
-    if PCRE2.version_number >= {10, 36}
-      options |= LibPCRE2::MATCH_INVALID_UTF
-    end
     @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
     end
