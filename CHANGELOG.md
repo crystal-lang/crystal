@@ -2,6 +2,7 @@
 
 ## Language
 
+- The compiler uses PCRE2 to validate regex literals ([#13084](https://github.com/crystal-lang/crystal/pull/13084), thanks @straight-shoota)
 - Fill docs for `TupleLiteral` ([#12927](https://github.com/crystal-lang/crystal/pull/12927), thanks @straight-shoota)
 - Allow namespaced `Path`s as type names for `lib` ([#12903](https://github.com/crystal-lang/crystal/pull/12903), thanks @HertzDevil)
 
