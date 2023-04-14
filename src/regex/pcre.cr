@@ -35,18 +35,19 @@ module Regex::PCRE
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?    then LibPCRE::CASELESS
-                when .multiline?      then LibPCRE::DOTALL | LibPCRE::MULTILINE
-                when .dotall?         then LibPCRE::DOTALL
-                when .extended?       then LibPCRE::EXTENDED
-                when .anchored?       then LibPCRE::ANCHORED
-                when .dollar_endonly? then LibPCRE::DOLLAR_ENDONLY
-                when .firstline?      then LibPCRE::FIRSTLINE
-                when .utf_8?          then LibPCRE::UTF8
-                when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
-                when .dupnames?       then LibPCRE::DUPNAMES
-                when .ucp?            then LibPCRE::UCP
-                when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .ignore_case?       then LibPCRE::CASELESS
+                when .multiline?         then LibPCRE::DOTALL | LibPCRE::MULTILINE
+                when .dotall?            then LibPCRE::DOTALL
+                when .extended?          then LibPCRE::EXTENDED
+                when .anchored?          then LibPCRE::ANCHORED
+                when .dollar_endonly?    then LibPCRE::DOLLAR_ENDONLY
+                when .firstline?         then LibPCRE::FIRSTLINE
+                when .utf_8?             then LibPCRE::UTF8
+                when .no_utf_check?      then LibPCRE::NO_UTF8_CHECK
+                when .dupnames?          then LibPCRE::DUPNAMES
+                when .ucp?               then LibPCRE::UCP
+                when .endanchored?       then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .match_invalid_utf? then raise ArgumentError.new("Regex::Option::MATCH_INVALID_UTF is not supported with PCRE")
                 else
                   raise "unreachable"
                 end
@@ -73,7 +74,7 @@ module Regex::PCRE
                 when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre_exec`")
                 when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre_exec`")
                 when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre_exec`")
-                when .no_utf8_check?  then LibPCRE::NO_UTF8_CHECK
+                when .no_utf_check?   then LibPCRE::NO_UTF8_CHECK
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre_exec`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre_exec`")
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
@@ -95,9 +96,10 @@ module Regex::PCRE
     Regex::MatchOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .anchored?    then LibPCRE::ANCHORED
-                when .endanchored? then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
-                when .no_jit?      then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
+                when .anchored?     then LibPCRE::ANCHORED
+                when .endanchored?  then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
+                when .no_jit?       then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
+                when .no_utf_check? then LibPCRE::NO_UTF8_CHECK
                 else
                   raise "unreachable"
                 end
