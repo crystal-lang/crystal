@@ -92,7 +92,7 @@
 ### Serialization
 
 - Remove obsolete error handling in `XPathContext` ([#13038](https://github.com/crystal-lang/crystal/pull/13038), thanks @straight-shoota)
-- **(breaking-change)** Fix JSON, YAML `use_*_discriminator` for recursive struct types ([#13238](https://github.com/crystal-lang/crystal/pull/13238), thanks @HertzDevil)
+- Fix JSON, YAML `use_*_discriminator` for recursive `Serializable::Strict` types ([#13238](https://github.com/crystal-lang/crystal/pull/13238), thanks @HertzDevil)
 - Add more specs for `YAML::Any#[]` and `#[]?` ([#11646](https://github.com/crystal-lang/crystal/pull/11646), thanks @straight-shoota)
 - Add `from_json` for 128-bit integers ([#13041](https://github.com/crystal-lang/crystal/pull/13041), thanks @straight-shoota)
 - Reduce JSON, YAML serializable test types ([#13042](https://github.com/crystal-lang/crystal/pull/13042), thanks @straight-shoota)
