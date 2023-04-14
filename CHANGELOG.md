@@ -131,6 +131,7 @@
 - Remove pending spec for `Path#drive` with IPv6 UNC host names ([#13190](https://github.com/crystal-lang/crystal/pull/13190), thanks @HertzDevil)
 - Remove `Regex::PCRE2#finalize` redefinition ([#13309](https://github.com/crystal-lang/crystal/pull/13309), thanks @HertzDevil)
 - Clarify behavior of strings with invalid UTF-8 byte sequences ([#13314](https://github.com/crystal-lang/crystal/pull/13314), thanks @HertzDevil)
+- Refer to PCRE2 in `Regex`'s summary ([#13318](https://github.com/crystal-lang/crystal/pull/13318), thanks @HertzDevil)
 
 ## Compiler
 
