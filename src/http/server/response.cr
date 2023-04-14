@@ -187,9 +187,15 @@ class HTTP::Server
       check_headers
 
       self.status = status
-      headers["Location"] = String.build do |io|
-        URI.encode(location.to_s, io) { |byte| URI.reserved?(byte) || URI.unreserved?(byte) }
-      end
+      headers["Location"] = if location.is_a? URI
+                              location.to_s
+                            else
+                              String.build do |io|
+                                URI.encode(location.to_s, io) do |byte|
+                                  URI.reserved?(byte) || URI.unreserved?(byte)
+                                end
+                              end
+                            end
       close
     end
 
