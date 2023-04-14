@@ -255,15 +255,15 @@ class LLVM::Builder
   end
 
   def catch_switch(parent_pad, basic_block, num_handlers, name = "")
-    Value.new LibLLVMExt.build_catch_switch(self, parent_pad, basic_block, num_handlers, name)
+    Value.new LibLLVM.build_catch_switch(self, parent_pad, basic_block, num_handlers, name)
   end
 
   def catch_pad(parent_pad, args : Array(LLVM::Value), name = "")
-    Value.new LibLLVMExt.build_catch_pad(self, parent_pad, args.size, args.to_unsafe.as(LibLLVM::ValueRef*), name)
+    Value.new LibLLVM.build_catch_pad(self, parent_pad, args.to_unsafe.as(LibLLVM::ValueRef*), args.size, name)
   end
 
   def add_handler(catch_switch_ref, handler)
-    LibLLVMExt.add_handler catch_switch_ref, handler
+    LibLLVM.add_handler catch_switch_ref, handler
   end
 
   def build_operand_bundle_def(name, values : Array(LLVM::Value))
@@ -271,7 +271,7 @@ class LLVM::Builder
   end
 
   def build_catch_ret(pad, basic_block)
-    LibLLVMExt.build_catch_ret(self, pad, basic_block)
+    LibLLVM.build_catch_ret(self, pad, basic_block)
   end
 
   @[Deprecated("Pass the function type of `fn` as well (equal to `fn.function_type`) in order to support LLVM 15+")]
@@ -302,8 +302,8 @@ class LLVM::Builder
     Value.new LibLLVM.build_atomicrmw(self, op, ptr, val, ordering, singlethread ? 1 : 0)
   end
 
-  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
-    Value.new LibLLVMExt.build_cmpxchg(self, pointer, cmp, new, success_ordering, failure_ordering)
+  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering, singlethread : Bool = false)
+    Value.new LibLLVM.build_atomic_cmp_xchg(self, pointer, cmp, new, success_ordering, failure_ordering, singlethread ? 1 : 0)
   end
 
   def fence(ordering, singlethread, name = "")

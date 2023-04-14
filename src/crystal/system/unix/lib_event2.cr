@@ -19,11 +19,7 @@ require "c/netdb"
 lib LibEvent2
   alias Int = LibC::Int
 
-  {% if flag?(:windows) %}
-    # TODO
-  {% else %}
-    alias EvutilSocketT = Int
-  {% end %}
+  alias EvutilSocketT = Int
 
   type EventBase = Void*
   type Event = Void*

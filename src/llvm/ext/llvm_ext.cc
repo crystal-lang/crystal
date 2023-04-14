@@ -1,17 +1,12 @@
-#include "llvm/IR/DIBuilder.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Support/CBindingWrapping.h"
-#include <llvm-c/Core.h>
+#include <llvm/IR/DIBuilder.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Support/CBindingWrapping.h>
 #include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
-#include <llvm/ADT/Triple.h>
-#include <llvm-c/TargetMachine.h>
-#include <llvm/Target/TargetMachine.h>
-#include <llvm-c/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
@@ -27,7 +22,6 @@ using namespace llvm;
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
 #include <llvm/Target/CodeGenCWrappers.h>
-#include <llvm-c/DebugInfo.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Analysis/ModuleSummaryAnalysis.h>
 
@@ -243,20 +237,6 @@ LLVMMetadataRef LLVMExtDIBuilderCreatePointerType(
   return wrap(T);
 }
 
-LLVMMetadataRef LLVMTemporaryMDNode2(
-    LLVMContextRef C, LLVMMetadataRef *MDs, unsigned Count) {
-  return wrap(MDTuple::getTemporary(*unwrap(C),
-                                    ArrayRef<Metadata *>(unwrap(MDs), Count))
-                  .release());
-}
-
-void LLVMMetadataReplaceAllUsesWith2(
-  LLVMMetadataRef MD, LLVMMetadataRef New) {
-  auto *Node = unwrap<MDNode>(MD);
-  Node->replaceAllUsesWith(unwrap<MDNode>(New));
-  MDNode::deleteTemporary(Node);
-}
-
 void LLVMExtSetCurrentDebugLocation(
   LLVMBuilderRef Bref, unsigned Line, unsigned Col, LLVMMetadataRef Scope,
   LLVMMetadataRef InlinedAt) {
@@ -273,80 +253,6 @@ void LLVMExtSetCurrentDebugLocation(
       DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
 #endif
-}
-
-#if LLVM_VERSION_LE(13, 0)
-// A backported LLVMCreateTypeAttribute for LLVM < 13
-// from https://github.com/llvm/llvm-project/blob/bb8ce25e88218be60d2a4ea9c9b0b721809eff27/llvm/lib/IR/Core.cpp#L167
-LLVMAttributeRef LLVMExtCreateTypeAttribute(
-  LLVMContextRef C, unsigned KindID, LLVMTypeRef Ty) {
-  auto &Ctx = *unwrap(C);
-  auto AttrKind = (Attribute::AttrKind)KindID;
-#if LLVM_VERSION_GE(12, 0)
-  return wrap(Attribute::get(Ctx, AttrKind, unwrap(Ty)));
-#else
-  return wrap(Attribute::get(Ctx, AttrKind));
-#endif
-}
-#endif
-
-LLVMValueRef LLVMExtBuildCmpxchg(
-    LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
-    LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
-#if LLVM_VERSION_GE(13, 0)
-  return wrap(
-    unwrap(B)->CreateAtomicCmpXchg(
-      unwrap(PTR),
-      unwrap(Cmp),
-      unwrap(New),
-      llvm::MaybeAlign(),
-      (llvm::AtomicOrdering)SuccessOrdering,
-      (llvm::AtomicOrdering)FailureOrdering
-    )
-  );
-#else
-  return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
-    (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
-#endif
-}
-
-void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
-  Value *P = unwrap<Value>(MemAccessInst);
-  AtomicOrdering O = (AtomicOrdering) Ordering;
-
-  if (LoadInst *LI = dyn_cast<LoadInst>(P))
-    return LI->setOrdering(O);
-  return cast<StoreInst>(P)->setOrdering(O);
-}
-
-LLVMValueRef LLVMExtBuildCatchPad(
-    LLVMBuilderRef B, LLVMValueRef ParentPad, unsigned ArgCount,
-    LLVMValueRef *LLArgs, const char *Name) {
-  Value **Args = unwrap(LLArgs);
-  return wrap(unwrap(B)->CreateCatchPad(
-      unwrap(ParentPad), ArrayRef<Value *>(Args, ArgCount), Name));
-}
-
-LLVMValueRef LLVMExtBuildCatchRet(
-    LLVMBuilderRef B, LLVMValueRef Pad, LLVMBasicBlockRef BB) {
-  return wrap(unwrap(B)->CreateCatchRet(cast<CatchPadInst>(unwrap(Pad)),
-                                              unwrap(BB)));
-}
-
-LLVMValueRef LLVMExtBuildCatchSwitch(
-    LLVMBuilderRef B, LLVMValueRef ParentPad, LLVMBasicBlockRef BB,
-    unsigned NumHandlers, const char *Name) {
-  if (ParentPad == nullptr) {
-    Type *Ty = Type::getTokenTy(unwrap(B)->getContext());
-    ParentPad = wrap(Constant::getNullValue(Ty));
-  }
-  return wrap(unwrap(B)->CreateCatchSwitch(unwrap(ParentPad), unwrap(BB),
-                                                 NumHandlers, Name));
-}
-
-void LLVMExtAddHandler(LLVMValueRef CatchSwitchRef, LLVMBasicBlockRef Handler) {
-  Value *CatchSwitch = unwrap(CatchSwitchRef);
-  cast<CatchSwitchInst>(CatchSwitch)->addHandler(unwrap(Handler));
 }
 
 OperandBundleDef *LLVMExtBuildOperandBundleDef(
@@ -388,11 +294,6 @@ void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) 
 
   llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
   llvm::WriteBitcodeToFile(*m, OS, true, &moduleSummaryIndex, true);
-}
-
-// Missing LLVMNormalizeTargetTriple in LLVM <= 7.0
-char *LLVMExtNormalizeTargetTriple(const char* triple) {
-  return strdup(Triple::normalize(StringRef(triple)).c_str());
 }
 
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {

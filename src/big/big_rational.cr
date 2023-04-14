@@ -23,9 +23,6 @@ struct BigRational < Number
   include Comparable(Int)
   include Comparable(Float)
 
-  private MANTISSA_BITS  = 53
-  private MANTISSA_SHIFT = (1_i64 << MANTISSA_BITS).to_f64
-
   # Creates a new `BigRational`.
   #
   # If *denominator* is 0, this will raise an exception.
@@ -47,12 +44,29 @@ struct BigRational < Number
   end
 
   # Creates a exact representation of float as rational.
-  def initialize(num : Float)
+  def initialize(num : Float::Primitive)
     # It ensures that `BigRational.new(f) == f`
     # It relies on fact, that mantissa is at most 53 bits
     frac, exp = Math.frexp num
-    ifrac = (frac.to_f64 * MANTISSA_SHIFT).to_i64
-    exp -= MANTISSA_BITS
+    ifrac = Math.ldexp(frac.to_f64, Float64::MANT_DIGITS).to_i64
+    exp -= Float64::MANT_DIGITS
+    initialize ifrac, 1
+    if exp >= 0
+      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
+    else
+      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
+    end
+  end
+
+  # :ditto:
+  def initialize(num : BigFloat)
+    frac, exp = Math.frexp num
+    prec = LibGMP.mpf_get_prec(frac)
+    # the mantissa has at most `prec + 1` bits, because the first fractional bit
+    # of `frac` is always 1, and `prec` variable bits follow
+    # TODO: use `Math.ldexp` after #11007
+    ifrac = BigFloat.new { |mpf| LibGMP.mpf_mul_2exp(mpf, frac, prec + 1) }.to_big_i
+    exp -= prec + 1
     initialize ifrac, 1
     if exp >= 0
       LibGMP.mpq_mul_2exp(out @mpq, self, exp)

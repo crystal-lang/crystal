@@ -25,7 +25,7 @@ describe Socket, tags: "network" do
     end
   end
 
-  pending_win32 ".accept" do
+  it ".accept" do
     client_done = Channel(Nil).new
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
 
@@ -65,7 +65,7 @@ describe Socket, tags: "network" do
     expect_raises(IO::TimeoutError) { server.accept? }
   end
 
-  pending_win32 "sends messages" do
+  it "sends messages" do
     port = unused_local_port
     server = Socket.tcp(Socket::Family::INET)
     server.bind("127.0.0.1", port)

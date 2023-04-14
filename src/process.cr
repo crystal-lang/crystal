@@ -37,6 +37,10 @@ class Process
   end
 
   # Returns the process identifier of the parent process of the current process.
+  #
+  # On Windows, the parent is associated only at process creation time, and the
+  # system does not re-parent the current process if the parent terminates; thus
+  # `Process.exists?(Process.ppid)` is not guaranteed to be true.
   def self.ppid : Int64
     Crystal::System::Process.ppid.to_i64
   end

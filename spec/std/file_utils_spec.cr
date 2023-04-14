@@ -239,7 +239,7 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "doesn't follow symlinks" do
+    it "doesn't follow symlinks" do
       with_tempfile("rm_r-removed", "rm_r-linked") do |removed_path, linked_path|
         link_path = File.join(removed_path, "link")
         file_path = File.join(linked_path, "file")
@@ -670,7 +670,7 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "works with a nonexistent source" do
+    it "works with a nonexistent source" do
       with_tempfile("ln_s_src_missing", "ln_s_dst_missing") do |path1, path2|
         test_with_string_and_path(path1, path2) do |arg1, arg2|
           FileUtils.ln_s(arg1, arg2)

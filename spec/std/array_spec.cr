@@ -445,6 +445,24 @@ describe "Array" do
       a[3..] = [4, 5, 6]
       a.should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.pop
+      a[4, 0] = [6]
+      a.should eq([1, 2, 3, 4, 6])
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      a[4, 0] = [6, 7, 8, 9]
+      a.should eq([2, 3, 4, 5, 6, 7, 8, 9])
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(1)
+    end
   end
 
   describe "values_at" do
@@ -960,11 +978,51 @@ describe "Array" do
     end
   end
 
-  it "does replace" do
-    a = [1, 2, 3]
-    b = [1]
-    b.replace a
-    b.should eq(a)
+  describe "#replace" do
+    it "replaces all elements" do
+      a = [1, 2, 3]
+      b = [4, 5, 6]
+      a.replace(b).should be(a)
+      a.should eq(b)
+    end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      b = [6, 7, 8, 9, 10]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+
+      a = [1, 2, 3, 4, 5]
+      a.shift(2)
+      b = [6, 7, 8, 9]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(1)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      b = [6, 7, 8, 9, 10, 11]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "clears unused elements if new size is smaller" do
+      a = [1, 2, 3, 4, 5]
+      b = [6, 7, 8]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+      a.unsafe_fetch(3).should eq(0)
+      a.unsafe_fetch(4).should eq(0)
+    end
   end
 
   it "does reverse with an odd number of elements" do

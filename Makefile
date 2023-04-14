@@ -1,3 +1,5 @@
+all:
+
 -include Makefile.local # for optional local options e.g. threads
 
 # Recipes for this Makefile
@@ -102,6 +104,10 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 primitives_spec: $(O)/primitives_spec ## Run primitives specs
 	$(O)/primitives_spec $(SPEC_FLAGS)
 
+.PHONY: interpreter_spec
+interpreter_spec: $(O)/interpreter_spec ## Run interpreter specs
+	$(O)/interpreter_spec $(SPEC_FLAGS)
+
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
@@ -194,11 +200,16 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
+$(O)/interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+	$(eval interpreter=1)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
+
 $(O)/crystal: $(DEPS) $(SOURCES)
 	$(call check_llvm_config)
 	@mkdir -p $(O)
-	# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
-	# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
+	@# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
+	@# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
 	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
