@@ -10,7 +10,7 @@ jobs:
   pcre:
     runs-on: ubuntu-latest
     name: "PCRE"
-    container: crystallang/crystal:1.7.3-alpine
+    container: crystallang/crystal:1.8.0-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -21,7 +21,7 @@ jobs:
   pcre2:
     runs-on: ubuntu-latest
     name: "PCRE2"
-    container: crystallang/crystal:1.7.3-alpine
+    container: crystallang/crystal:1.8.0-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
