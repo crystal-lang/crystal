@@ -13,6 +13,7 @@
 - Docs: Added note about imports where necessary ([#13026](https://github.com/crystal-lang/crystal/pull/13026), [#13066](https://github.com/crystal-lang/crystal/pull/13066), thanks @Tamnac, @straight-shoota)
 - Suppress compiler output in `compile_file` spec helper ([#13228](https://github.com/crystal-lang/crystal/pull/13228), thanks @straight-shoota)
 - Define equality for `Process::Status` and `OAuth::RequestToken` ([#13014](https://github.com/crystal-lang/crystal/pull/13014), thanks @HertzDevil)
+- Fix some Linux glibc bindings ([#13242](https://github.com/crystal-lang/crystal/pull/13242), [#13249](https://github.com/crystal-lang/crystal/pull/13249), thanks @ysbaddaden, @HertzDevil)
 
 ### Collection
 
@@ -59,7 +60,6 @@
 - Fix wrong default address when binding sockets ([#13006](https://github.com/crystal-lang/crystal/pull/13006), thanks @etra0)
 - Clarify WebSocket documentation ([#13096](https://github.com/crystal-lang/crystal/pull/13096), thanks @j8r)
 - Add `Socket::IPAddress#link_local?` ([#13204](https://github.com/crystal-lang/crystal/pull/13204), thanks @GeopJr)
-- Fix: LibC definition for `sys/socket.h` (`*-linux-gnu` targets) ([#13242](https://github.com/crystal-lang/crystal/pull/13242), thanks @ysbaddaden)
 - Clean up `back\slash.txt` in `HTTP::StaticFileHandler` specs ([#12984](https://github.com/crystal-lang/crystal/pull/12984), thanks @HertzDevil)
 - Add `MIME::Multipart.parse(HTTP::Client::Response, &)` ([#12890](https://github.com/crystal-lang/crystal/pull/12890), thanks @straight-shoota)
 - Replace `LibC.ntohs` and `htons` with native code ([#13027](https://github.com/crystal-lang/crystal/pull/13027), thanks @HertzDevil)
@@ -80,6 +80,7 @@
 - Add `Char.to_i128` and `.to_u128` ([#12958](https://github.com/crystal-lang/crystal/pull/12958), thanks @meatball133)
 - Docs: Add references to `Number` collection convenience constructors ([#13020](https://github.com/crystal-lang/crystal/pull/13020), thanks @straight-shoota)
 - Docs: Fix examples for `#byte_swap` with different int types ([#13154](https://github.com/crystal-lang/crystal/pull/13154), [#13180](https://github.com/crystal-lang/crystal/pull/13180), thanks @pan, @Blacksmoke16)
+- Make `BigRational.new(BigFloat)` exact ([#13295](https://github.com/crystal-lang/crystal/pull/13295), thanks @HertzDevil)
 
 ### Runtime
 
@@ -121,18 +122,23 @@
 
 ### Text
 
-- **(breaking-change)** Fix PCRE crashing on invalid UTF-8 ([#13240](https://github.com/crystal-lang/crystal/pull/13240), thanks @straight-shoota)
+- **(breaking-change)** Fix PCRE crashing on invalid UTF-8 ([#13240](https://github.com/crystal-lang/crystal/pull/13240), [#13311](https://github.com/crystal-lang/crystal/pull/13311), [#13313](https://github.com/crystal-lang/crystal/pull/13313), thanks @straight-shoota)
 - **(breaking-change)** Switch default regex engine to PCRE2 ([#12978](https://github.com/crystal-lang/crystal/pull/12978), thanks @straight-shoota)
 - **(breaking-change)** Add more members to `Regex::Options` ([#13223](https://github.com/crystal-lang/crystal/pull/13223), thanks @straight-shoota)
 - **(breaking-change)** Add `Regex::MatchOptions` ([#13248](https://github.com/crystal-lang/crystal/pull/13248), thanks @straight-shoota)
 - Fix PCRE2 implementation and tests ([#13105](https://github.com/crystal-lang/crystal/pull/13105), thanks @straight-shoota)
 - Remove pending spec for `Path#drive` with IPv6 UNC host names ([#13190](https://github.com/crystal-lang/crystal/pull/13190), thanks @HertzDevil)
+- Remove `Regex::PCRE2#finalize` redefinition ([#13309](https://github.com/crystal-lang/crystal/pull/13309), thanks @HertzDevil)
+- Clarify behavior of strings with invalid UTF-8 byte sequences ([#13314](https://github.com/crystal-lang/crystal/pull/13314), thanks @HertzDevil)
 
 ## Compiler
 
 - Escape filenames when running `crystal spec` with multiple files ([#12929](https://github.com/crystal-lang/crystal/pull/12929), thanks @HertzDevil)
-- Remove relative path to vendored shard `markd` ([#13040](https://github.com/crystal-lang/crystal/pull/13040), thanks @straight-shoota)
 - Handle ARM64 MSVC paths when cross-compiling on Windows ([#13073](https://github.com/crystal-lang/crystal/pull/13073), thanks @HertzDevil)
+- Use relative paths to vendored shards" ([#13315](https://github.com/crystal-lang/crystal/pull/13315), thanks @straight-shoota)
+
+### Debugger
+- Always use 0 for offsets of lib / extern union members ([#13305](https://github.com/crystal-lang/crystal/pull/13305), thanks @HertzDevil)
 
 ### Codegen
 
@@ -198,7 +204,7 @@
 - Makefile: refactor test recipe ([#12979](https://github.com/crystal-lang/crystal/pull/12979), thanks @straight-shoota)
 - Merge release branch for 1.7 into master ([#12998](https://github.com/crystal-lang/crystal/pull/12998), thanks @straight-shoota)
 - Update previous Crystal release - 1.7.2 ([#13001](https://github.com/crystal-lang/crystal/pull/13001), thanks @straight-shoota)
-- Update distribution-scripts ([#13051](https://github.com/crystal-lang/crystal/pull/13051), [#13068](https://github.com/crystal-lang/crystal/pull/13068), [#13188](https://github.com/crystal-lang/crystal/pull/13188), [#13213](https://github.com/crystal-lang/crystal/pull/13213), thanks @straight-shoota)
+- Update distribution-scripts ([#13051](https://github.com/crystal-lang/crystal/pull/13051), [#13068](https://github.com/crystal-lang/crystal/pull/13068), [#13188](https://github.com/crystal-lang/crystal/pull/13188), [#13213](https://github.com/crystal-lang/crystal/pull/13213), [#13298](https://github.com/crystal-lang/crystal/pull/13298), thanks @straight-shoota)
 - [CI] Use Ubuntu 22.04 base image for LLVM tests ([#13035](https://github.com/crystal-lang/crystal/pull/13035), thanks @straight-shoota)
 - Add instructions for other repos to pre-commit hook ([#10535](https://github.com/crystal-lang/crystal/pull/10535), thanks @straight-shoota)
 - Makefile: Add `./scripts` to `format` recipe ([#13064](https://github.com/crystal-lang/crystal/pull/13064), thanks @straight-shoota)
@@ -226,6 +232,7 @@
 - Fix `bin/crystal` when no global `crystal` command is installed ([#13286](https://github.com/crystal-lang/crystal/pull/13286), thanks @straight-shoota)
 - Makefile: Add `interpreter_spec` ([#13251](https://github.com/crystal-lang/crystal/pull/13251), thanks @straight-shoota)
 - Makefile: Add `all` target as default before including `Makfile.local` ([#13276](https://github.com/crystal-lang/crystal/pull/13276), thanks @straight-shoota)
+- Update shards 0.17.3 ([#13296](https://github.com/crystal-lang/crystal/pull/13296), thanks @straight-shoota)
 
 ## Other
 
