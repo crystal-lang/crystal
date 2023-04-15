@@ -335,6 +335,15 @@ class Regex
     new(_source: source, _options: options)
   end
 
+  # Creates a new `Regex` instance from a literal consisting of a *pattern* and the named parameter modifiers.
+  def self.literal(pattern : String, *, i : Bool = false, m : Bool = false, x : Bool = false) : self
+    options = CompileOptions::None
+    options |= :ignore_case if i
+    options |= :multiline if m
+    options |= :extended if x
+    new(pattern, options: options)
+  end
+
   # Determines Regex's source validity. If it is, `nil` is returned.
   # If it's not, a `String` containing the error message is returned.
   #

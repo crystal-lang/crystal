@@ -34,6 +34,14 @@ describe "Regex" do
     end
   end
 
+  it ".literal" do
+    Regex.literal("foo").should eq /foo/
+    Regex.literal("foo", i: true).should eq /foo/i
+    Regex.literal("foo", i: true, m: true).should eq /foo/im
+    Regex.literal("foo", i: true, m: true, x: true).should eq /foo/imx
+    Regex.literal("foo", x: true).should eq /foo/x
+  end
+
   it "#options" do
     /cat/.options.ignore_case?.should be_false
     /cat/i.options.ignore_case?.should be_true
