@@ -258,7 +258,7 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port=(val : Bool)
-    reuse_address = val
+    self.reuse_address = val
   end
 
   private def system_linger
