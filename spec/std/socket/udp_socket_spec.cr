@@ -159,7 +159,8 @@ describe UDPSocket, tags: "network" do
           sleep 100.milliseconds
           udp.close
         end
-        expect_raises(IO::Error, "Closed stream") { udp.receive }
+        expect_raises(IO::Error) { udp.receive }
+        udp.closed?.should be_true
       end
     end
   end
