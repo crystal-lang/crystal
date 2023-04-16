@@ -254,11 +254,11 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port?
-    false
+    reuse_address?
   end
 
   private def system_reuse_port=(val : Bool)
-    raise NotImplementedError.new("Socket#reuse_port=")
+    reuse_address = val
   end
 
   private def system_linger
