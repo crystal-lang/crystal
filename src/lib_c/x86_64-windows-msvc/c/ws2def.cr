@@ -114,6 +114,9 @@ lib LibC
   IPPROTO_IP = 0
   IPPROTO_IPV6 = 41
 
+  IP_MULTICAST_IF = 9
+  IPV6_MULTICAST_IF = 9
+
   IP_MULTICAST_TTL = 10
   IPV6_MULTICAST_HOPS = 10
 
@@ -125,11 +128,11 @@ lib LibC
 
   # JOIN and LEAVE are the same as ADD and DROP
   # https://learn.microsoft.com/en-us/windows/win32/winsock/ipproto-ipv6-socket-options
-  IPV6_ADD_MEMBERSHIP = 5
-  IPV6_JOIN_GROUP = 5
+  IPV6_ADD_MEMBERSHIP = 12
+  IPV6_JOIN_GROUP = 12
 
-  IPV6_DROP_MEMBERSHIP = 6
-  IPV6_LEAVE_GROUP = 6
+  IPV6_DROP_MEMBERSHIP = 13
+  IPV6_LEAVE_GROUP = 13
 
   enum IPPROTO
     IPPROTO_HOPOPTS  =   0 # IPv6 Hop-by-Hop options
