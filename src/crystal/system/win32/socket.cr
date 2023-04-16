@@ -86,7 +86,7 @@ module Crystal::System::Socket
 
   private def initialize_handle(handle)
     value = 1_u8
-    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(value), 1)
+    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_EXCLUSIVEADDRUSE, pointerof(value), 1)
     if ret == LibC::SOCKET_ERROR
       raise ::Socket::Error.from_wsa_error("setsockopt")
     end
@@ -254,11 +254,32 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port?
-    reuse_address?
+    getsockopt_bool LibC::SO_REUSEADDR
   end
 
   private def system_reuse_port=(val : Bool)
-    self.reuse_address = val
+    if val
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, false
+      setsockopt_bool LibC::SO_REUSEADDR, true
+    else
+      setsockopt_bool LibC::SO_REUSEADDR, false
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, true
+    end
+    val
+  end
+
+  # and SO_REUSEADDR is always assumed on windows
+  # confusingly, the SO_REUSEADDR flag on windows is the equivalent of SO_REUSEPORT on linux
+  macro finished
+    # the address component of a binding can always be reused on windows
+    def reuse_address? : Bool
+      true
+    end
+
+    # there is no effect on windows
+    def reuse_address=(val : Bool)
+      val
+    end
   end
 
   private def system_linger
