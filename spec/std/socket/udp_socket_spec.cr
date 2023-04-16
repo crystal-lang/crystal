@@ -72,7 +72,6 @@ describe UDPSocket, tags: "network" do
       server.close
     end
 
-    {% unless flag?(:win32) %}
     if {{ flag?(:darwin) }} && family == Socket::Family::INET6
       # Darwin is failing to join IPv6 multicast groups on older versions.
       # However this is known to work on macOS Mojave with Darwin 18.2.0.
@@ -163,10 +162,9 @@ describe UDPSocket, tags: "network" do
         expect_raises(IO::Error, "Closed stream") { udp.receive }
       end
     end
-    {% end %}
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:win32) %}
     it "sends broadcast message" do
       port = unused_local_port
 
