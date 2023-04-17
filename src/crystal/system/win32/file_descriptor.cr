@@ -65,7 +65,8 @@ module Crystal::System::FileDescriptor
 
   def self.windows_handle!(fd)
     ret = LibC._get_osfhandle(fd)
-    raise RuntimeError.from_errno("_get_osfhandle") if ret == -1 || ret == -2
+    raise RuntimeError.from_errno("_get_osfhandle") if ret == -1
+    raise RuntimeError.new("_get_osfhandle returned -2") if ret == -2
     LibC::HANDLE.new(ret)
   end
 
