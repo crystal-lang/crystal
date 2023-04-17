@@ -29,6 +29,8 @@ jobs:
             flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
           - crystal_bootstrap_version: 1.7.3
             flags: ""
+          - crystal_bootstrap_version: 1.8.0
+            flags: ""
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
