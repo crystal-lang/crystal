@@ -2583,6 +2583,24 @@ describe "String" do
   end
 
   describe "String.new(&)" do
+    it "creates with matching capacity" do
+      String.new(3) { |buf|
+        buf[0] = 'f'.ord.to_u8
+        buf[1] = 'o'.ord.to_u8
+        buf[2] = 'o'.ord.to_u8
+        {3, 3}
+      }.should eq "foo"
+    end
+
+    it "creates with excess capacity" do
+      String.new(5) { |buf|
+        buf[0] = 'f'.ord.to_u8
+        buf[1] = 'o'.ord.to_u8
+        buf[2] = 'o'.ord.to_u8
+        {3, 3}
+      }.should eq "foo"
+    end
+
     it "raises if string capacity is negative" do
       expect_raises(ArgumentError, "Negative capacity") do
         String.new(-1) { |buf| {0, 0} }
@@ -2608,15 +2626,15 @@ describe "String" do
     end
 
     {% unless flag?(:wasm32) %}
-      it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+      it "allocates buffer of correct size (#3332)" do
         String.new(255_u8) do |buffer|
-          LibGC.size(buffer).should be >= 255
+          LibGC.size(buffer).should be > 255
           {255, 0}
         end
       end
     {% end %}
 
-    it "raises on String.new if returned bytesize is greater than capacity" do
+    it "raises if returned bytesize is greater than capacity" do
       expect_raises ArgumentError, "Bytesize out of capacity bounds" do
         String.new(123) do |buffer|
           {124, 0}
