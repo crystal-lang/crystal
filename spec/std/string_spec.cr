@@ -2607,19 +2607,19 @@ describe "String" do
       end
     end
 
-    it "raises if capacity too big on new with UInt32::MAX" do
+    it "raises if capacity too big with UInt32::MAX" do
       expect_raises(ArgumentError, "Capacity too big") do
         String.new(UInt32::MAX) { {0, 0} }
       end
     end
 
-    it "raises if capacity too big on new with UInt32::MAX - String::HEADER_SIZE - 1" do
+    it "raises if capacity too big with UInt32::MAX - String::HEADER_SIZE - 1" do
       expect_raises(ArgumentError, "Capacity too big") do
         String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
       end
     end
 
-    it "raises if capacity too big on new with UInt64::MAX" do
+    it "raises if capacity too big with UInt64::MAX" do
       expect_raises(ArgumentError, "Capacity too big") do
         String.new(UInt64::MAX) { {0, 0} }
       end
