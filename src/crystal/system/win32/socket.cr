@@ -268,21 +268,6 @@ module Crystal::System::Socket
     val
   end
 
-  # SO_REUSEADDR, as used in posix, is always assumed on windows
-  # the SO_REUSEADDR flag on windows is the equivalent of SO_REUSEPORT on linux
-  # https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#application-strategies
-  macro finished
-    # the address component of a binding can always be reused on windows
-    def reuse_address? : Bool
-      true
-    end
-
-    # there is no effect on windows
-    def reuse_address=(val : Bool)
-      val
-    end
-  end
-
   private def system_linger
     v = LibC::Linger.new
     ret = getsockopt LibC::SO_LINGER, v
