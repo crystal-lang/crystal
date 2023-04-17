@@ -3137,6 +3137,15 @@ module Crystal
         end.should eq %(bar\n)
       end
 
+      it "print" do
+        String.build do |io|
+          assert_macro(%({% print foo %}), "") do |program|
+            program.stdout = io
+            {foo: "bar".string}
+          end
+        end.should eq %(bar)
+      end
+
       it "p" do
         String.build do |io|
           assert_macro(%({% p foo %}), "") do |program|

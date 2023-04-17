@@ -186,6 +186,10 @@ module Crystal::Macros
   def puts(*expressions) : Nop
   end
 
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def print(*expressions) : Nop
+  end
+
   # Same as `puts`.
   def p(*expressions) : Nop
   end
