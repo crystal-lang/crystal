@@ -1,7 +1,7 @@
 MKDIR = if not exist $1 mkdir $1
 RMDIR = if exist $1 rd /S /Q $1
 
-CRYSTAL := ../bin/crystal# Crystal compiler to use
+CRYSTAL := ..\bin\crystal.bat# Crystal compiler to use
 O := .build# Output directory
 
 BUILDABLE_SOURCES := $(wildcard *.cr llvm/*.cr compiler/*.cr)
