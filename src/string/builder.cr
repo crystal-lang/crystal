@@ -14,7 +14,6 @@ class String::Builder < IO
     # Make sure to also be able to hold
     # the header size plus the trailing zero byte
     capacity += String::HEADER_SIZE + 1
-    String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)
     @bytesize = 0
