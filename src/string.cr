@@ -146,7 +146,9 @@ class String
   TYPE_ID = "".crystal_type_id
 
   # :nodoc:
-  HEADER_SIZE = sizeof({Int32, Int32, Int32})
+  #
+  # Holds the offset to the first character byte.
+  HEADER_SIZE = offsetof(String, @c)
 
   include Comparable(self)
 
@@ -266,9 +268,18 @@ class String
       str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
-    str_header = str.as({Int32, Int32, Int32}*)
-    str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
-    str.as(String)
+    str.as(Pointer(typeof(TYPE_ID))).value = TYPE_ID
+    str = str.as(String)
+    str.initialize_header(bytesize.to_i, size.to_i)
+    str
+  end
+
+  # :nodoc:
+  #
+  # Initializes the header information of a `String` instance.
+  # The actual character content at `@c` is expected to be already filled and is
+  # unaffected by this method.
+  def initialize_header(@bytesize : Int32, @length : Int32 = 0)
   end
 
   # Builds a `String` by creating a `String::Builder` with the given initial capacity, yielding

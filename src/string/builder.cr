@@ -117,9 +117,10 @@ class String::Builder < IO
       resize_to_capacity(real_bytesize)
     end
 
-    header = @buffer.as({Int32, Int32, Int32}*)
-    header.value = {String::TYPE_ID, @bytesize - 1, 0}
-    @buffer.as(String)
+    @buffer.as(Pointer(typeof(String::TYPE_ID))).value = String::TYPE_ID
+    str = @buffer.as(String)
+    str.initialize_header((bytesize - 1).to_i)
+    str
   end
 
   private def real_bytesize
