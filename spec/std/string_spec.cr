@@ -1915,6 +1915,11 @@ describe "String" do
       "a  b".gsub(/\B/, "-").should eq "a - b"
       "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
     end
+
+    it "empty string" do
+      "ab".gsub("", "-").should eq "-a-b-"
+      "┬7".gsub("", "-").should eq "-┬-7-"
+    end
   end
 
   it "scans using $~" do
