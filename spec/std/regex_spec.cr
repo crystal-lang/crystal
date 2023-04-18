@@ -277,7 +277,8 @@ describe "Regex" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-        LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
+        jit_enabled = uninitialized LibC::Int
+        LibPCRE.config LibPCRE::CONFIG_JIT, pointerof(jit_enabled)
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
 
         # This match may raise on JIT stack limit or not. If it raises, the error message should be the expected one.
