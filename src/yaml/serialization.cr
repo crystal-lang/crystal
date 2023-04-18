@@ -207,7 +207,7 @@ module YAML
         # recursively defined serializable types
         {% for name, value in properties %}
           %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(::Nil, typeof(@{{name}}))
+                         nil.as(::Nil | typeof(@{{name}}))
                        {% else %}
                          uninitialized typeof(@{{name}})
                        {% end %}
