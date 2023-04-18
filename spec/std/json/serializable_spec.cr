@@ -468,13 +468,13 @@ end
 class JSONSomething
   include JSON::Serializable
 
-  property value : JSONAttrValue(Set(SomethingElse)?)?
+  property value : JSONAttrValue(Set(JSONSomethingElse)?)?
 end
 
 class JSONSomethingElse
   include JSON::Serializable
 
-  property value : JSONAttrValue(Set(SomethingElse)?)?
+  property value : JSONAttrValue(Set(JSONSomethingElse)?)?
 end
 
 describe "JSON mapping" do
