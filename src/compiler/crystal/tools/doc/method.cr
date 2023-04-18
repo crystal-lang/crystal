@@ -59,8 +59,13 @@ class Crystal::Doc::Method
     if def_doc
       ancestor_doc_info = nil
       # TODO: warn about `:inherit:` not finding an ancestor
-      inherit_def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m) { (ancestor_doc_info ||= self.ancestor_doc_info).try(&.doc) || break }
+      inherit_def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m) do
+        ancestor_doc_info ||= self.ancestor_doc_info
+        ancester_doc_info.try(&.doc) || break
+      end
 
+      # inherit_def_doc is nil when breaking from the gsub block which means
+      # no ancestor doc info was found
       if inherit_def_doc && !inherit_def_doc.same?(def_doc)
         return DocInfo.new(inherit_def_doc, nil)
       end
