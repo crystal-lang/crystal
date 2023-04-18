@@ -64,8 +64,7 @@ struct BigRational < Number
     prec = LibGMP.mpf_get_prec(frac)
     # the mantissa has at most `prec + 1` bits, because the first fractional bit
     # of `frac` is always 1, and `prec` variable bits follow
-    # TODO: use `Math.ldexp` after #11007
-    ifrac = BigFloat.new { |mpf| LibGMP.mpf_mul_2exp(mpf, frac, prec + 1) }.to_big_i
+    ifrac = Math.ldexp(frac, prec + 1).to_big_i
     exp -= prec + 1
     initialize ifrac, 1
     if exp >= 0
