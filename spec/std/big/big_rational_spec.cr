@@ -125,30 +125,46 @@ describe BigRational do
     BigDecimal.new("1.123").to_big_r.should eq(br(1123, 1000))
   end
 
-  it "#<=>(:BigRational) and Comparable" do
-    a = br(11, 3)
-    l = br(10, 3)
-    e = a
-    g = br(12, 3)
+  describe "#<=>" do
+    it "BigRational and Comparable" do
+      a = br(11, 3)
+      l = br(10, 3)
+      e = a
+      g = br(12, 3)
 
-    # verify things aren't swapped
-    [l, e, g].each { |o| (a <=> o).should eq(a.to_f <=> o.to_f) }
+      # verify things aren't swapped
+      [l, e, g].each { |o| (a <=> o).should eq(a.to_f <=> o.to_f) }
 
-    test_comp(a, l, e, g)
-  end
+      test_comp(a, l, e, g)
+    end
 
-  it "#<=>(:Int) and Comparable" do
-    test_comp(br(10, 2), 4_i32, 5_i32, 6_i32)
-    test_comp(br(10, 2), 4_i64, 5_i64, 6_i64)
-  end
+    it "Int and Comparable" do
+      test_comp(br(10, 2), 4_i32, 5_i32, 6_i32)
+      test_comp(br(10, 2), 4_i64, 5_i64, 6_i64)
+    end
 
-  it "#<=>(:BigInt) and Comparable" do
-    test_comp(br(10, 2), BigInt.new(4), BigInt.new(5), BigInt.new(6))
-  end
+    it "BigInt and Comparable" do
+      test_comp(br(10, 2), BigInt.new(4), BigInt.new(5), BigInt.new(6))
+    end
 
-  it "#<=>(:Float) and Comparable" do
-    test_comp(br(10, 2), 4.0_f32, 5.0_f32, 6.0_f32)
-    test_comp(br(10, 2), 4.0_f64, 5.0_f64, 6.0_f64)
+    it "Float and Comparable" do
+      test_comp(br(10, 2), 4.0_f32, 5.0_f32, 6.0_f32)
+      test_comp(br(10, 2), 4.0_f64, 5.0_f64, 6.0_f64)
+    end
+
+    it "compares against NaNs" do
+      (1.to_big_r <=> Float64::NAN).should be_nil
+      (1.to_big_r <=> Float32::NAN).should be_nil
+      (Float64::NAN <=> 1.to_big_r).should be_nil
+      (Float32::NAN <=> 1.to_big_r).should be_nil
+
+      typeof(1.to_big_r <=> Float64::NAN).should eq(Int32?)
+      typeof(1.to_big_r <=> Float32::NAN).should eq(Int32?)
+      typeof(Float64::NAN <=> 1.to_big_r).should eq(Int32?)
+      typeof(Float32::NAN <=> 1.to_big_r).should eq(Int32?)
+
+      typeof(1.to_big_r <=> 1.to_big_f).should eq(Int32)
+    end
   end
 
   it "#+" do
