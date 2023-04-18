@@ -262,6 +262,21 @@ describe BigDecimal do
     BigDecimal.new(3333.to_big_i, 7_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3000), 7))
 
     (-BigDecimal.new(3)).should eq(BigDecimal.new(-3))
+
+    (BigDecimal.new(5) % BigDecimal.new(2)).should eq(BigDecimal.new(1))
+    (BigDecimal.new(500) % BigDecimal.new(2)).should eq(BigDecimal.new(0))
+    (BigDecimal.new(500) % BigDecimal.new(2000)).should eq(BigDecimal.new(500))
+  end
+
+  it "handles modulus correctly" do
+    (BigDecimal.new(13.0) % BigDecimal.new(4.0)).should eq(BigDecimal.new(1.0))
+    (BigDecimal.new(13.0) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-3.0))
+    (BigDecimal.new(-13.0) % BigDecimal.new(4.0)).should eq(BigDecimal.new(3.0))
+    (BigDecimal.new(-13.0) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-1.0))
+    (BigDecimal.new(11.5) % BigDecimal.new(4.0)).should eq(BigDecimal.new(3.5))
+    (BigDecimal.new(11.5) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-0.5))
+    (BigDecimal.new(-11.5) % BigDecimal.new(4.0)).should eq(BigDecimal.new(0.5))
+    (BigDecimal.new(-11.5) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-3.5))
   end
 
   it "performs arithmetic with other number types" do
