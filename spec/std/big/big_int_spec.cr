@@ -40,6 +40,16 @@ describe "BigInt" do
     end
   end
 
+  it "raises if creating from infinity" do
+    expect_raises(ArgumentError, "can only construct from a finite number") { BigInt.new(Float32::INFINITY) }
+    expect_raises(ArgumentError, "can only construct from a finite number") { BigInt.new(Float64::INFINITY) }
+  end
+
+  it "raises if creating from NaN" do
+    expect_raises(ArgumentError, "can only construct from a finite number") { BigInt.new(Float32::NAN) }
+    expect_raises(ArgumentError, "can only construct from a finite number") { BigInt.new(Float64::NAN) }
+  end
+
   it "creates from float" do
     BigInt.new(12.3).to_s.should eq("12")
   end

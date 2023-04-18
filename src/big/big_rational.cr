@@ -45,6 +45,7 @@ struct BigRational < Number
 
   # Creates a exact representation of float as rational.
   def initialize(num : Float::Primitive)
+    raise ArgumentError.new "can only construct from a finite number" unless num.finite?
     # It ensures that `BigRational.new(f) == f`
     # It relies on fact, that mantissa is at most 53 bits
     frac, exp = Math.frexp num
