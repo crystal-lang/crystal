@@ -5951,6 +5951,7 @@ module Crystal
       exps = [] of ASTNode
 
       while true
+        break if @token.type.eof?
         consume_expression_delimiter unless exps.empty?
         skip_statement_end
         case @token.type
