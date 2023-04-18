@@ -2914,7 +2914,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\\n'"
         end
       end
       false
