@@ -16,6 +16,33 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "codegens lib union (#7335)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      lib Foo
+        union Bar
+          a : Int32
+          b : Int16
+          c : Int8
+        end
+      end
+
+      x = Foo::Bar.new
+      CRYSTAL
+  end
+
+  it "codegens extern union (#7335)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      @[Extern(union: true)]
+      struct Foo
+        @a = uninitialized Int32
+        @b = uninitialized Int16
+        @c = uninitialized Int8
+      end
+
+      x = Foo.new
+      CRYSTAL
+  end
+
   it "inlines instance var access through getter in debug mode" do
     run(%(
       struct Bar

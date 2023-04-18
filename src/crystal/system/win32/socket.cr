@@ -86,7 +86,7 @@ module Crystal::System::Socket
 
   private def initialize_handle(handle)
     value = 1_u8
-    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(value), 1)
+    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_EXCLUSIVEADDRUSE, pointerof(value), 1)
     if ret == LibC::SOCKET_ERROR
       raise ::Socket::Error.from_wsa_error("setsockopt")
     end
@@ -254,11 +254,18 @@ module Crystal::System::Socket
   end
 
   private def system_reuse_port?
-    false
+    getsockopt_bool LibC::SO_REUSEADDR
   end
 
   private def system_reuse_port=(val : Bool)
-    raise NotImplementedError.new("Socket#reuse_port=")
+    if val
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, false
+      setsockopt_bool LibC::SO_REUSEADDR, true
+    else
+      setsockopt_bool LibC::SO_REUSEADDR, false
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, true
+    end
+    val
   end
 
   private def system_linger

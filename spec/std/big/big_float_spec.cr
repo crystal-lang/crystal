@@ -87,6 +87,22 @@ describe "BigFloat" do
     end
   end
 
+  describe "#<=>" do
+    it "compares against NaNs" do
+      (1.to_big_f <=> Float64::NAN).should be_nil
+      (1.to_big_f <=> Float32::NAN).should be_nil
+      (Float64::NAN <=> 1.to_big_f).should be_nil
+      (Float32::NAN <=> 1.to_big_f).should be_nil
+
+      typeof(1.to_big_f <=> Float64::NAN).should eq(Int32?)
+      typeof(1.to_big_f <=> Float32::NAN).should eq(Int32?)
+      typeof(Float64::NAN <=> 1.to_big_f).should eq(Int32?)
+      typeof(Float32::NAN <=> 1.to_big_f).should eq(Int32?)
+
+      typeof(1.to_big_f <=> 1.to_big_f).should eq(Int32)
+    end
+  end
+
   describe "unary #-" do
     it do
       bf = "0.12345".to_big_f
