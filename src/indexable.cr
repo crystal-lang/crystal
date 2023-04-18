@@ -5,6 +5,22 @@
 # `-2` is the next to last element, and so on.
 #
 # Types including this module are typically `Array`-like types.
+#
+# ## Stability guarantees
+#
+# Several methods in `Indexable`, such as `#bsearch` and `#cartesian_product`,
+# require the collection to be _stable_; that is, calling `#each(&)` over and
+# over again should always yield the same elements, provided the collection is
+# not mutated between the calls. In particular, `#each(&)` itself should not
+# mutate the collection throughout the loop. Stability of an `Indexable` is
+# guaranteed if the following criteria are met:
+#
+# * `#unsafe_fetch` and `#size` do not mutate the collection
+# * `#each(&)` and `#each_index(&)` are not overridden
+#
+# The standard library assumes that all including types of `Indexable` are
+# always stable. It is undefined behavior to implement an `Indexable` that is
+# not stable or only conditionally stable.
 module Indexable(T)
   include Iterable(T)
   include Enumerable(T)

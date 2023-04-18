@@ -43,6 +43,10 @@ class Crystal::Repl::Compiler
     value_to_bool node, type.typedef
   end
 
+  private def value_to_bool(node : ASTNode, type : NoReturnType)
+    # Nothing to do
+  end
+
   private def value_to_bool(node : ASTNode, type : Type)
     node.raise "BUG: missing value_to_bool for #{type} (#{type.class})"
   end

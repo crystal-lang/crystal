@@ -45,7 +45,7 @@ lib LibC
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
   struct SigsetT
-    val : ULong[32] # (1024 / (8 * sizeof(long)))
+    val : ULong[32] # (1024 / (8 * sizeof(ULong)))
   end
 
   SA_ONSTACK = 0x08000000
@@ -56,7 +56,7 @@ lib LibC
     si_errno : Int
     si_code : Int
     si_addr : Void*              # Assuming the sigfault form of siginfo_t
-    __pad : StaticArray(Int, 25) # __SI_PAD_SIZE (29) - sizeof(void*) (4) = 25
+    __pad : StaticArray(Int, 27) # __SI_PAD_SIZE (29) - sizeof(void*) (4) = 25
   end
 
   alias SigactionHandlerT = (Int, SiginfoT*, Void*) ->
@@ -65,7 +65,7 @@ lib LibC
     sa_sigaction : SigactionHandlerT
     sa_mask : SigsetT
     sa_flags : Int
-    sa_restorer : Void*
+    sa_restorer : ->
   end
 
   struct StackT
