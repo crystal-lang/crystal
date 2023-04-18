@@ -364,7 +364,7 @@ class Deque(T)
     return unshift(value) if index == 0
     return push(value) if index == @size
 
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     rindex = @start + index
     rindex -= @capacity if rindex >= @capacity
 
@@ -475,7 +475,7 @@ class Deque(T)
   # a.push 3 # => Deque{1, 2, 3}
   # ```
   def push(value : T)
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     index = @start + @size
     index -= @capacity if index >= @capacity
     @buffer[index] = value
@@ -557,7 +557,7 @@ class Deque(T)
   # a.unshift 0 # => Deque{0, 1, 2}
   # ```
   def unshift(value : T) : self
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     @start -= 1
     @start += @capacity if @start < 0
     @buffer[@start] = value
@@ -584,15 +584,30 @@ class Deque(T)
     end
   end
 
-  private def increase_capacity
+  private INITIAL_CAPACITY = 4
+
+  # behaves like `calculate_new_capacity(@capacity + 1)`
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    @capacity * 2
+  end
+
+  # behaves like `resize_if_cant_insert(1)`
+  private def resize_if_cant_insert
+    if @size >= @capacity
+      resize_to_capacity(calculate_new_capacity)
+    end
+  end
+
+  private def resize_to_capacity(capacity)
+    old_capacity, @capacity = @capacity, capacity
+
     unless @buffer
-      @capacity = 4
       @buffer = Pointer(T).malloc(@capacity)
       return
     end
 
-    old_capacity = @capacity
-    @capacity *= 2
     @buffer = @buffer.realloc(@capacity)
 
     finish = @start + @size
