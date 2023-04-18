@@ -20,6 +20,7 @@ class Deque(T)
   @start = 0
   protected setter size
   protected getter buffer
+  protected getter capacity
 
   # Creates a new empty Deque
   def initialize
@@ -150,8 +151,8 @@ class Deque(T)
 
   # Removes all elements from `self`.
   def clear
-    halfs do |r|
-      (@buffer + r.begin).clear(r.end - r.begin)
+    Deque.half_slices(self) do |slice|
+      slice.to_unsafe.clear(slice.size)
     end
     @size = 0
     @start = 0
@@ -339,9 +340,9 @@ class Deque(T)
   #
   # Do not modify the deque while using this variant of `each`!
   def each(& : T ->) : Nil
-    halfs do |r|
-      r.each do |i|
-        yield @buffer[i]
+    Deque.half_slices(self) do |slice|
+      slice.each do |elem|
+        yield elem
       end
     end
   end
@@ -564,20 +565,22 @@ class Deque(T)
     self
   end
 
-  private def halfs(&)
+  # :nodoc:
+  def self.half_slices(deque : Deque, &)
     # For [----] yields nothing
-    # For contiguous [-012] yields 1...4
-    # For separated [234---01] yields 6...8, 0...3
+    # For contiguous [-012] yields @buffer[1...4]
+    # For separated [234---01] yields @buffer[6...8], @buffer[0...3]
 
-    return if empty?
-    a = @start
-    b = @start + size
-    b -= @capacity if b > @capacity
+    return if deque.empty?
+    a = deque.@start
+    b = deque.@start + deque.size
+    b -= deque.capacity if b > deque.capacity
     if a < b
-      yield a...b
+      # TODO: this `typeof` is a workaround for 1.0.0; remove it eventually
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.size)
     else
-      yield a...@capacity
-      yield 0...b
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.capacity - a)
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer, b)
     end
   end
 
