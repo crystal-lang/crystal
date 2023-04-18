@@ -160,7 +160,9 @@ lib LibGMP
 
   # # Conversion
   fun mpq_get_str = __gmpq_get_str(str : UInt8*, base : Int, op : MPQ*) : UInt8*
-  fun mpq_get_d = __gmpq_get_d(x : MPQ*) : Float64
+  fun mpq_get_d = __gmpq_get_d(op : MPQ*) : Double
+  fun mpq_set_d = __gmpq_set_d(rop : MPQ*, op : Double)
+  fun mpq_set_f = __gmpq_set_f(rop : MPQ*, op : MPF*)
 
   # # Compare
   fun mpq_cmp = __gmpq_cmp(x : MPQ*, o : MPQ*) : Int32
