@@ -192,7 +192,6 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
@@ -205,7 +204,11 @@ module YAML
         {% end %}
 
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
+          %var{name} = {% if value[:has_default] || value[:nilable] %}
+                         nil.as(typeof(nil, @{{name}}))
+                       {% else %}
+                         uninitialized typeof(@{{name}})
+                       {% end %}
           %found{name} = false
         {% end %}
 
@@ -226,10 +229,8 @@ module YAML
                     %var{name} =
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_yaml(ctx, value_node)
-                      {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                        {{value[:type]}}.new(ctx, value_node)
                       {% else %}
-                        ::Union({{value[:type]}}).new(ctx, value_node)
+                        typeof(@{{name}}).new(ctx, value_node)
                       {% end %}
                   end
 

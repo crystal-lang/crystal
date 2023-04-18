@@ -186,7 +186,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
@@ -200,7 +199,11 @@ module JSON
         {% end %}
 
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
+          %var{name} = {% if value[:has_default] || value[:nilable] %}
+                         nil.as(typeof(nil, @{{name}}))
+                       {% else %}
+                         uninitialized typeof(@{{name}})
+                       {% end %}
           %found{name} = false
         {% end %}
 
@@ -223,7 +226,7 @@ module JSON
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_json(pull)
                       {% else %}
-                        ::Union({{value[:type]}}).new(pull)
+                        typeof(@{{name}}).new(pull)
                       {% end %}
                     end
                 end
