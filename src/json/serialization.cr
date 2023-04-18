@@ -198,9 +198,11 @@ module JSON
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
           %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(typeof(nil, @{{name}}))
+                         nil.as(::Nil | typeof(@{{name}}))
                        {% else %}
                          uninitialized typeof(@{{name}})
                        {% end %}
@@ -291,7 +293,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                type:             ivar.type,
                 key:              ((ann && ann[:key]) || ivar).id.stringify,
                 root:             ann && ann[:root],
                 converter:        ann && ann[:converter],

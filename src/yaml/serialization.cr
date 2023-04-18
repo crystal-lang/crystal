@@ -203,9 +203,11 @@ module YAML
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
           %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(typeof(nil, @{{name}}))
+                         nil.as(::Nil, typeof(@{{name}}))
                        {% else %}
                          uninitialized typeof(@{{name}})
                        {% end %}
@@ -300,7 +302,6 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
             {%
               properties[ivar.id] = {
-                type:      ivar.type,
                 key:       ((ann && ann[:key]) || ivar).id.stringify,
                 converter: ann && ann[:converter],
                 emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
