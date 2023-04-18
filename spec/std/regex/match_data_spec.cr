@@ -400,6 +400,12 @@ describe "Regex::MatchData" do
       matchdata(/(Cr)(s)?/, "Crystal").captures.should eq(["Cr", nil])
       matchdata(/(Cr)(?<name1>s)?(tal)?/, "Crystal").captures.should eq(["Cr", nil])
     end
+
+    it "doesn't get named captures when there are more than 255" do
+      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
+      captures = Array.new(1000) { |i| {"c#{i}", "x"} }.to_h
+      matchdata(regex, "x" * 1000).captures.should eq([] of String)
+    end
   end
 
   describe "#named_captures" do
@@ -415,6 +421,12 @@ describe "Regex::MatchData" do
 
     it "gets a hash of named captures with duplicated name" do
       matchdata(/(?<name>Cr)y(?<name>s)/, "Crystal").named_captures.should eq({"name" => "s"})
+    end
+
+    it "gets more than 127 named captures" do
+      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
+      captures = Array.new(1000) { |i| {"c#{i}", "x"} }.to_h
+      matchdata(regex, "x" * 1000).named_captures.should eq(captures)
     end
   end
 
