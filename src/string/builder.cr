@@ -116,7 +116,7 @@ class String::Builder < IO
       resize_to_capacity(real_bytesize)
     end
 
-    @buffer.as(Pointer(typeof(String::TYPE_ID))).value = String::TYPE_ID
+    String.set_crystal_type_id(@buffer)
     str = @buffer.as(String)
     str.initialize_header((bytesize - 1).to_i)
     str

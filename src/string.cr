@@ -143,9 +143,6 @@ require "c/string"
 # remove the offending byte sequences first.
 class String
   # :nodoc:
-  TYPE_ID = "".crystal_type_id
-
-  # :nodoc:
   #
   # Holds the offset to the first character byte.
   HEADER_SIZE = offsetof(String, @c)
@@ -268,7 +265,7 @@ class String
       str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
-    str.as(Pointer(typeof(TYPE_ID))).value = TYPE_ID
+    set_crystal_type_id(str)
     str = str.as(String)
     str.initialize_header(bytesize.to_i, size.to_i)
     str
