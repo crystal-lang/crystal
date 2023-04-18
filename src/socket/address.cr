@@ -82,11 +82,13 @@ class Socket
     @addr : LibC::In6Addr | LibC::InAddr
 
     def initialize(@address : String, @port : Int32)
-      if addr = ip6?(address)
+      raise Error.new("Invalid port number: #{port}") unless 0 <= port <= UInt16::MAX
+
+      if addr = IPAddress.address_v6?(address)
         @addr = addr
         @family = Family::INET6
         @size = sizeof(LibC::SockaddrIn6)
-      elsif addr = ip4?(address)
+      elsif addr = IPAddress.address_v4?(address)
         @addr = addr
         @family = Family::INET
         @size = sizeof(LibC::SockaddrIn)
@@ -145,31 +147,38 @@ class Socket
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
       @addr = sockaddr.value.sin6_addr
-      @port =
-        {% if flag?(:dragonfly) %}
-          Intrinsics.bswap16(sockaddr.value.sin6_port).to_i
-        {% else %}
-          LibC.ntohs(sockaddr.value.sin6_port).to_i
-        {% end %}
+      @port = endian_swap(sockaddr.value.sin6_port).to_i
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
       @addr = sockaddr.value.sin_addr
-      @port =
-        {% if flag?(:dragonfly) %}
-          Intrinsics.bswap16(sockaddr.value.sin_port).to_i
-        {% else %}
-          LibC.ntohs(sockaddr.value.sin_port).to_i
-        {% end %}
+      @port = endian_swap(sockaddr.value.sin_port).to_i
     end
 
-    private def ip6?(address)
+    # Returns `true` if *address* is a valid IPv4 or IPv6 address.
+    def self.valid?(address : String) : Bool
+      valid_v4?(address) || valid_v6?(address)
+    end
+
+    # Returns `true` if *address* is a valid IPv6 address.
+    def self.valid_v6?(address : String) : Bool
+      !address_v6?(address).nil?
+    end
+
+    # :nodoc:
+    protected def self.address_v6?(address : String)
       addr = uninitialized LibC::In6Addr
       addr if LibC.inet_pton(LibC::AF_INET6, address, pointerof(addr)) == 1
     end
 
-    private def ip4?(address)
+    # Returns `true` if *address* is a valid IPv4 address.
+    def self.valid_v4?(address : String) : Bool
+      !address_v4?(address).nil?
+    end
+
+    # :nodoc:
+    protected def self.address_v4?(address : String)
       addr = uninitialized LibC::InAddr
       addr if LibC.inet_pton(LibC::AF_INET, address, pointerof(addr)) == 1
     end
@@ -210,7 +219,11 @@ class Socket
       in LibC::InAddr
         addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        addr8 = ipv6_addr8(addr)
+        num = addr8.unsafe_as(UInt128)
+        # TODO: Use UInt128 literals
+        num == (1_u128 << 120) ||                         # "::1"
+          num & UInt128::MAX >> 24 == 0x7fffff_u128 << 80 # "::ffff:127.0.0.1/104"
       end
     end
 
@@ -239,11 +252,26 @@ class Socket
       end
     end
 
+    # Returns `true` if this IP is a link-local address.
+    #
+    # IPv4 addresses in `169.254.0.0/16` reserved by [RFC 3927](https://www.rfc-editor.org/rfc/rfc3927) and Link-Local IPv6
+    # Unicast Addresses in `fe80::/10` reserved by [RFC 4291](https://tools.ietf.org/html/rfc4291) are considered link-local.
+    def link_local?
+      case addr = @addr
+      in LibC::InAddr
+        addr.s_addr & 0x000000ffff_u32 == 0x0000fea9_u32 # 169.254.0.0/16
+      in LibC::In6Addr
+        ipv6_addr8(addr).unsafe_as(UInt128) & 0xc0ff_u128 == 0x80fe_u128
+      end
+    end
+
     private def ipv6_addr8(addr : LibC::In6Addr)
       {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr8
       {% elsif flag?(:linux) && flag?(:musl) %}
         addr.__in6_union.__s6_addr
+      {% elsif flag?(:wasm32) %}
+        addr.s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
       {% elsif flag?(:win32) %}
@@ -285,11 +313,7 @@ class Socket
     private def to_sockaddr_in6(addr)
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
-      {% if flag?(:dragonfly) %}
-        sockaddr.value.sin6_port = Intrinsics.bswap16(port)
-      {% else %}
-        sockaddr.value.sin6_port = LibC.htons(port)
-      {% end %}
+      sockaddr.value.sin6_port = endian_swap(port.to_u16!)
       sockaddr.value.sin6_addr = addr
       sockaddr.as(LibC::Sockaddr*)
     end
@@ -297,13 +321,17 @@ class Socket
     private def to_sockaddr_in(addr)
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
-      {% if flag?(:dragonfly) %}
-        sockaddr.value.sin_port = Intrinsics.bswap16(port)
-      {% else %}
-        sockaddr.value.sin_port = LibC.htons(port)
-      {% end %}
+      sockaddr.value.sin_port = endian_swap(port.to_u16!)
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    private def endian_swap(x : UInt16) : UInt16
+      {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
+        x.byte_swap
+      {% else %}
+        x
+      {% end %}
     end
 
     # Returns `true` if *port* is a valid port number.
@@ -329,19 +357,31 @@ class Socket
     getter path : String
 
     # :nodoc:
-    MAX_PATH_SIZE = LibC::SockaddrUn.new.sun_path.size - 1
+    MAX_PATH_SIZE = {% if flag?(:wasm32) %}
+                      0
+                    {% else %}
+                      LibC::SockaddrUn.new.sun_path.size - 1
+                    {% end %}
 
     def initialize(@path : String)
       if @path.bytesize + 1 > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
       @family = Family::UNIX
-      @size = sizeof(LibC::SockaddrUn)
+      @size = {% if flag?(:wasm32) %}
+                1
+              {% else %}
+                sizeof(LibC::SockaddrUn)
+              {% end %}
     end
 
     # Creates an `UNIXSocket` from the internal OS representation.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : UNIXAddress
-      new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::UnixAddress.from"
+      {% else %}
+        new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
+      {% end %}
     end
 
     # Parses a `Socket::UNIXAddress` from an URI.
@@ -383,11 +423,13 @@ class Socket
       parse URI.parse(uri)
     end
 
-    protected def initialize(sockaddr : LibC::SockaddrUn*, size)
-      @family = Family::UNIX
-      @path = String.new(sockaddr.value.sun_path.to_unsafe)
-      @size = size || sizeof(LibC::SockaddrUn)
-    end
+    {% unless flag?(:wasm32) %}
+      protected def initialize(sockaddr : LibC::SockaddrUn*, size)
+        @family = Family::UNIX
+        @path = String.new(sockaddr.value.sun_path.to_unsafe)
+        @size = size || sizeof(LibC::SockaddrUn)
+      end
+    {% end %}
 
     def_equals_and_hash path
 
@@ -396,14 +438,19 @@ class Socket
     end
 
     def to_unsafe : LibC::Sockaddr*
-      sockaddr = Pointer(LibC::SockaddrUn).malloc
-      sockaddr.value.sun_family = family
-      sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
-      sockaddr.as(LibC::Sockaddr*)
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::UnixAddress#to_unsafe"
+      {% else %}
+        sockaddr = Pointer(LibC::SockaddrUn).malloc
+        sockaddr.value.sun_family = family
+        sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
+        sockaddr.as(LibC::Sockaddr*)
+      {% end %}
     end
   end
 
   # Returns `true` if the string represents a valid IPv4 or IPv6 address.
+  @[Deprecated("Use `IPAddress.valid?` instead")]
   def self.ip?(string : String)
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)

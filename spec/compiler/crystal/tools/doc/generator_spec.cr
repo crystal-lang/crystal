@@ -111,7 +111,7 @@ describe Doc::Generator do
           a_def = Def.new "foo"
           a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
           doc_method = Doc::Method.new generator, doc_type, a_def, false
-          doc_method.formatted_summary.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>\n\n)
+          doc_method.formatted_summary.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
         end
       end
 
@@ -125,7 +125,7 @@ describe Doc::Generator do
           a_def.doc = "Some Method"
           a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
           doc_method = Doc::Method.new generator, doc_type, a_def, false
-          doc_method.formatted_summary.should eq %(<p>Some Method</p>\n\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>\n\n)
+          doc_method.formatted_summary.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
         end
       end
     end
@@ -176,7 +176,7 @@ describe Doc::Generator do
           a_def = Def.new "foo"
           a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
           doc_method = Doc::Method.new generator, doc_type, a_def, false
-          doc_method.formatted_doc.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>\n\n)
+          doc_method.formatted_doc.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
         end
       end
 
@@ -190,7 +190,7 @@ describe Doc::Generator do
           a_def.doc = "Some Method"
           a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
           doc_method = Doc::Method.new generator, doc_type, a_def, false
-          doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>\n\n)
+          doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
         end
       end
     end
@@ -226,7 +226,7 @@ describe Doc::Generator do
       a_def = Def.new "foo"
       a_def.doc = "Some Method\n\nMore Data"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p>More Data</p>)
+      doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p>More Data</p>)
     end
   end
 

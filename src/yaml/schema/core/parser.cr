@@ -36,15 +36,15 @@ class YAML::Schema::Core::Parser < YAML::Parser
     Any.new(Core.parse_scalar(@pull_parser))
   end
 
-  def add_to_documents(documents, document)
+  def add_to_documents(documents, document) : Nil
     documents << document
   end
 
-  def add_to_document(document, node)
+  def add_to_document(document, node) : Nil
     document.as_a << node
   end
 
-  def add_to_sequence(sequence, node)
+  def add_to_sequence(sequence, node) : Nil
     sequence.as_a << node
   end
 
@@ -61,7 +61,6 @@ class YAML::Schema::Core::Parser < YAML::Parser
       key = parse_node
       raw_key = key.raw
 
-      location = @pull_parser.location
       value = parse_node
 
       if raw_key == "<<" && tag != "tag:yaml.org,2002:str"
@@ -87,7 +86,7 @@ class YAML::Schema::Core::Parser < YAML::Parser
     mapping
   end
 
-  def process_tag(tag)
+  def process_tag(tag, &)
     if value = process_collection_tag(@pull_parser, tag)
       yield value
     end

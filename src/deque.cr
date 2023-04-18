@@ -10,7 +10,7 @@
 # This Deque is implemented with a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array) used as a
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
-  include Indexable(T)
+  include Indexable::Mutable(T)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
   # side, instead of shifting all the items, only the start position is shifted. This can lead to configurations like:
@@ -20,6 +20,7 @@ class Deque(T)
   @start = 0
   protected setter size
   protected getter buffer
+  protected getter capacity
 
   # Creates a new empty Deque
   def initialize
@@ -77,7 +78,7 @@ class Deque(T)
   # ```
   # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
-  def self.new(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, & : Int32 -> T)
     if size < 0
       raise ArgumentError.new("Negative deque size: #{size}")
     end
@@ -136,29 +137,22 @@ class Deque(T)
     push(value)
   end
 
-  # Sets the given value at the given *index*.
-  #
-  # Raises `IndexError` if the deque had no previous value at the given *index*.
-  def []=(index : Int, value : T)
-    index += @size if index < 0
-    unless 0 <= index < @size
-      raise IndexError.new
-    end
-    index += @start
-    index -= @capacity if index >= @capacity
-    @buffer[index] = value
-  end
-
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     index += @start
     index -= @capacity if index >= @capacity
     @buffer[index]
   end
 
+  def unsafe_put(index : Int, value : T)
+    index += @start
+    index -= @capacity if index >= @capacity
+    @buffer[index] = value
+  end
+
   # Removes all elements from `self`.
   def clear
-    halfs do |r|
-      (@buffer + r.begin).clear(r.end - r.begin)
+    Deque.half_slices(self) do |slice|
+      slice.to_unsafe.clear(slice.size)
     end
     @size = 0
     @start = 0
@@ -205,7 +199,7 @@ class Deque(T)
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
-  # passed block returns `true`. Returns `self`.
+  # passed block is truthy. Returns `self`.
   #
   # ```
   # a = Deque{1, 6, 2, 4, 8}
@@ -214,7 +208,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#select`.
-  def select!
+  def select!(& : T ->) : self
     reject! { |elem| !yield(elem) }
   end
 
@@ -233,7 +227,7 @@ class Deque(T)
   end
 
   # Modifies `self`, deleting the elements in the collection for which the
-  # passed block returns `true`. Returns `self`.
+  # passed block is truthy. Returns `self`.
   #
   # ```
   # a = Deque{1, 6, 2, 4, 8}
@@ -242,7 +236,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#reject`.
-  def reject!
+  def reject!(& : T ->) : self
     internal_delete { |e| yield e }
     self
   end
@@ -264,7 +258,7 @@ class Deque(T)
 
   # `reject!` and `delete` implementation:
   # returns the last matching element, or nil
-  private def internal_delete
+  private def internal_delete(&)
     match = nil
     i = 0
     while i < @size
@@ -345,10 +339,10 @@ class Deque(T)
   # Yields each item in this deque, from first to last.
   #
   # Do not modify the deque while using this variant of `each`!
-  def each : Nil
-    halfs do |r|
-      r.each do |i|
-        yield @buffer[i]
+  def each(& : T ->) : Nil
+    Deque.half_slices(self) do |slice|
+      slice.each do |elem|
+        yield elem
       end
     end
   end
@@ -370,7 +364,7 @@ class Deque(T)
     return unshift(value) if index == 0
     return push(value) if index == @size
 
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     rindex = @start + index
     rindex -= @capacity if rindex >= @capacity
 
@@ -446,7 +440,7 @@ class Deque(T)
 
   # Removes and returns the last item, if not empty, otherwise executes
   # the given block and returns its value.
-  def pop
+  def pop(&)
     if @size == 0
       yield
     else
@@ -481,7 +475,7 @@ class Deque(T)
   # a.push 3 # => Deque{1, 2, 3}
   # ```
   def push(value : T)
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     index = @start + @size
     index -= @capacity if index >= @capacity
     @buffer[index] = value
@@ -489,11 +483,8 @@ class Deque(T)
     self
   end
 
-  # Rotates this deque in place so that the element at *n* becomes first.
-  #
-  # * For positive *n*, equivalent to `n.times { push(shift) }`.
-  # * For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
-  def rotate!(n : Int = 1)
+  # :inherit:
+  def rotate!(n : Int = 1) : Nil
     return if @size <= 1
     if @size == @capacity
       @start = (@start + n) % @capacity
@@ -527,7 +518,7 @@ class Deque(T)
 
   # Removes and returns the first item, if not empty, otherwise executes
   # the given block and returns its value.
-  def shift
+  def shift(&)
     if @size == 0
       yield
     else
@@ -555,12 +546,6 @@ class Deque(T)
     nil
   end
 
-  # Swaps the items at the indices *i* and *j*.
-  def swap(i, j) : self
-    self[i], self[j] = self[j], self[i]
-    self
-  end
-
   def to_s(io : IO) : Nil
     inspect(io)
   end
@@ -572,7 +557,7 @@ class Deque(T)
   # a.unshift 0 # => Deque{0, 1, 2}
   # ```
   def unshift(value : T) : self
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     @start -= 1
     @start += @capacity if @start < 0
     @buffer[@start] = value
@@ -580,32 +565,49 @@ class Deque(T)
     self
   end
 
-  private def halfs
+  # :nodoc:
+  def self.half_slices(deque : Deque, &)
     # For [----] yields nothing
-    # For contiguous [-012] yields 1...4
-    # For separated [234---01] yields 6...8, 0...3
+    # For contiguous [-012] yields @buffer[1...4]
+    # For separated [234---01] yields @buffer[6...8], @buffer[0...3]
 
-    return if empty?
-    a = @start
-    b = @start + size
-    b -= @capacity if b > @capacity
+    return if deque.empty?
+    a = deque.@start
+    b = deque.@start + deque.size
+    b -= deque.capacity if b > deque.capacity
     if a < b
-      yield a...b
+      # TODO: this `typeof` is a workaround for 1.0.0; remove it eventually
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.size)
     else
-      yield a...@capacity
-      yield 0...b
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.capacity - a)
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer, b)
     end
   end
 
-  private def increase_capacity
+  private INITIAL_CAPACITY = 4
+
+  # behaves like `calculate_new_capacity(@capacity + 1)`
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    @capacity * 2
+  end
+
+  # behaves like `resize_if_cant_insert(1)`
+  private def resize_if_cant_insert
+    if @size >= @capacity
+      resize_to_capacity(calculate_new_capacity)
+    end
+  end
+
+  private def resize_to_capacity(capacity)
+    old_capacity, @capacity = @capacity, capacity
+
     unless @buffer
-      @capacity = 4
       @buffer = Pointer(T).malloc(@capacity)
       return
     end
 
-    old_capacity = @capacity
-    @capacity *= 2
     @buffer = @buffer.realloc(@capacity)
 
     finish = @start + @size

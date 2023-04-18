@@ -4,7 +4,7 @@ abstract class YAML::Parser
     @pull_parser = PullParser.new(content)
   end
 
-  def self.new(content)
+  def self.new(content, &)
     parser = new(content)
     yield parser ensure parser.close
   end
@@ -122,7 +122,7 @@ abstract class YAML::Parser
     sequence
   end
 
-  protected def parse_sequence(sequence)
+  protected def parse_sequence(sequence, &)
     @pull_parser.read_sequence_start
 
     until @pull_parser.kind.sequence_end?
@@ -144,7 +144,7 @@ abstract class YAML::Parser
     mapping
   end
 
-  protected def parse_mapping(mapping)
+  protected def parse_mapping(mapping, &)
     @pull_parser.read_mapping_start
 
     until @pull_parser.kind.mapping_end?
@@ -157,7 +157,7 @@ abstract class YAML::Parser
   end
 
   # Closes this parser, freeing up resources.
-  def close
+  def close : Nil
     @pull_parser.close
   end
 

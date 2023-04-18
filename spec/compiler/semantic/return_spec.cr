@@ -10,7 +10,7 @@ describe "Semantic: return" do
   end
 
   it "infers return type with many returns (2)" do
-    assert_type("def foo; if 1 == 1; return 1; end; 'a'; end; foo") { union_of(int32, char) }
+    assert_type("def foo; if 1 == 1; return 1; end; 'a'; end; foo", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "errors on return in top level" do
@@ -179,6 +179,52 @@ describe "Semantic: return" do
         x.to_f
       end
       z
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
+  end
+
+  it "can use non-type free var in return type (#6543)" do
+    assert_type(<<-CRYSTAL) { generic_class "Foo", 1.int32 }
+      class Foo(A)
+      end
+
+      def foo(a : Foo(P)) : Foo(P) forall P
+        a
+      end
+
+      foo(Foo(1).new)
+      CRYSTAL
+  end
+
+  it "can use non-type free var in return type (2) (#6543)" do
+    assert_type(<<-CRYSTAL) { generic_class "Matrix", 3.int32, 4.int32 }
+      class Matrix(N, M)
+        def *(other : Matrix(M, P)) : Matrix(N, P) forall P
+          Matrix(N, P).new
+        end
+      end
+
+      Matrix(3, 2).new * Matrix(2, 4).new
+      CRYSTAL
+  end
+
+  it "errors if non-type free var cannot be inferred" do
+    assert_error <<-CRYSTAL, "undefined constant P"
+      class Foo(A)
+      end
+
+      def foo(a) : Foo(P) forall P
+        a
+      end
+
+      foo(Foo(1).new)
+      CRYSTAL
+  end
+
+  it "forms a tuple from multiple return values" do
+    assert_type("def foo; return 1, 1.0; end; foo") { tuple_of([int32, float64]) }
+  end
+
+  it "flattens splats inside multiple return values" do
+    assert_type("def foo; return 1, *{1.0, 'a'}, true; end; foo") { tuple_of([int32, float64, char, bool]) }
   end
 end

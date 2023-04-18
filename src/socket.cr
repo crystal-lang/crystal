@@ -116,8 +116,16 @@ class Socket < IO
   # sock.bind 1234
   # ```
   def bind(port : Int)
-    Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "::#{port}") { |errno| errno }
+    if family.inet?
+      address = "0.0.0.0"
+      address_and_port = "0.0.0.0:#{port}"
+    else
+      address = "::"
+      address_and_port = "[::]:#{port}"
+    end
+
+    Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
+      system_bind(addrinfo, address_and_port) { |errno| errno }
     end
   end
 
@@ -140,7 +148,7 @@ class Socket < IO
 
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
-  def listen(backlog : Int = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN, &)
     system_listen(backlog) { |err| yield err }
   end
 
@@ -264,55 +272,120 @@ class Socket < IO
     io << "#<#{self.class}:fd #{fd}>"
   end
 
-  def send_buffer_size : Int32
-    getsockopt LibC::SO_SNDBUF, 0
-  end
+  {% if flag?(:wasm32) %}
+    def send_buffer_size : Int32
+      raise NotImplementedError.new "Socket#send_buffer_size"
+    end
 
-  def send_buffer_size=(val : Int32)
-    setsockopt LibC::SO_SNDBUF, val
-    val
-  end
+    def send_buffer_size=(val : Int32)
+      raise NotImplementedError.new "Socket#send_buffer_size="
+    end
 
-  def recv_buffer_size : Int32
-    getsockopt LibC::SO_RCVBUF, 0
-  end
+    def recv_buffer_size : Int32
+      raise NotImplementedError.new "Socket#recv_buffer_size"
+    end
 
-  def recv_buffer_size=(val : Int32)
-    setsockopt LibC::SO_RCVBUF, val
-    val
-  end
+    def recv_buffer_size=(val : Int32)
+      raise NotImplementedError.new "Socket#recv_buffer_size="
+    end
 
-  def reuse_address? : Bool
-    getsockopt_bool LibC::SO_REUSEADDR
-  end
+    def reuse_address? : Bool
+      raise NotImplementedError.new "Socket#reuse_address?"
+    end
 
-  def reuse_address=(val : Bool)
-    setsockopt_bool LibC::SO_REUSEADDR, val
-  end
+    def reuse_address=(val : Bool)
+      raise NotImplementedError.new "Socket#reuse_address="
+    end
 
-  def reuse_port? : Bool
-    system_reuse_port?
-  end
+    def reuse_port? : Bool
+      raise NotImplementedError.new "Socket#reuse_port?"
+    end
 
-  def reuse_port=(val : Bool)
-    self.system_reuse_port = val
-  end
+    def reuse_port=(val : Bool)
+      raise NotImplementedError.new "Socket#reuse_port="
+    end
 
-  def broadcast? : Bool
-    getsockopt_bool LibC::SO_BROADCAST
-  end
+    def broadcast? : Bool
+      raise NotImplementedError.new "Socket#broadcast?"
+    end
 
-  def broadcast=(val : Bool)
-    setsockopt_bool LibC::SO_BROADCAST, val
-  end
+    def broadcast=(val : Bool)
+      raise NotImplementedError.new "Socket#broadcast="
+    end
 
-  def keepalive?
-    getsockopt_bool LibC::SO_KEEPALIVE
-  end
+    def keepalive?
+      raise NotImplementedError.new "Socket#keepalive?"
+    end
 
-  def keepalive=(val : Bool)
-    setsockopt_bool LibC::SO_KEEPALIVE, val
-  end
+    def keepalive=(val : Bool)
+      raise NotImplementedError.new "Socket#keepalive="
+    end
+  {% else %}
+    def send_buffer_size : Int32
+      getsockopt LibC::SO_SNDBUF, 0
+    end
+
+    def send_buffer_size=(val : Int32)
+      setsockopt LibC::SO_SNDBUF, val
+      val
+    end
+
+    def recv_buffer_size : Int32
+      getsockopt LibC::SO_RCVBUF, 0
+    end
+
+    def recv_buffer_size=(val : Int32)
+      setsockopt LibC::SO_RCVBUF, val
+      val
+    end
+
+    # SO_REUSEADDR, as used in posix, is always assumed on windows
+    # the SO_REUSEADDR flag on windows is the equivalent of SO_REUSEPORT on linux
+    # https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#application-strategies
+    {% if flag?(:win32) %}
+      # the address component of a binding can always be reused on windows
+      def reuse_address? : Bool
+        true
+      end
+
+      # there is no effect on windows
+      def reuse_address=(val : Bool)
+        val
+      end
+    {% else %}
+      def reuse_address? : Bool
+        getsockopt_bool LibC::SO_REUSEADDR
+      end
+
+      def reuse_address=(val : Bool)
+        setsockopt_bool LibC::SO_REUSEADDR, val
+      end
+    {% end %}
+
+    def reuse_port? : Bool
+      system_reuse_port?
+    end
+
+    def reuse_port=(val : Bool)
+      self.system_reuse_port = val
+    end
+
+    def broadcast? : Bool
+      getsockopt_bool LibC::SO_BROADCAST
+    end
+
+    def broadcast=(val : Bool)
+      setsockopt_bool LibC::SO_BROADCAST, val
+    end
+
+    def keepalive?
+      getsockopt_bool LibC::SO_KEEPALIVE
+    end
+
+    def keepalive=(val : Bool)
+      setsockopt_bool LibC::SO_KEEPALIVE, val
+    end
+  {% end %}
 
   def linger
     system_linger
@@ -337,7 +410,7 @@ class Socket < IO
     raise Socket::Error.from_errno("getsockopt")
   end
 
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     system_getsockopt(fd, optname, optval, level) { |value| yield value }
   end
 
@@ -369,7 +442,7 @@ class Socket < IO
   end
 
   def close_on_exec=(arg : Bool)
-    system_close_on_exec = arg
+    self.system_close_on_exec = arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)

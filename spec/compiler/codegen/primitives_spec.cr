@@ -54,44 +54,69 @@ describe "Code gen: primitives" do
     run(%("foo")).to_string.should eq("foo")
   end
 
-  it "codegens 1 + 2" do
-    run(%(require "prelude"; 1 + 2)).to_i.should eq(3)
-  end
+  describe "arithmetic primitives" do
+    # more detailed tests are done through the `primitives_spec` suite on a new
+    # generation of the compiler
 
-  it "codegens 1 &+ 2" do
-    run(%(1 &+ 2)).to_i.should eq(3)
-  end
+    it "codegens 1 + 2" do
+      run(%(require "prelude"; 1 + 2)).to_i.should eq(3)
+    end
 
-  it "codegens 1 - 2" do
-    run(%(require "prelude"; 1 - 2)).to_i.should eq(-1)
-  end
+    it "codegens 1 &+ 2" do
+      run(%(1 &+ 2)).to_i.should eq(3)
+    end
 
-  it "codegens 1 &- 2" do
-    run(%(1 &- 2)).to_i.should eq(-1)
-  end
+    it "codegens 1 - 2" do
+      run(%(require "prelude"; 1 - 2)).to_i.should eq(-1)
+    end
 
-  it "codegens 2 * 3" do
-    run(%(require "prelude"; 2 * 3)).to_i.should eq(6)
-  end
+    it "codegens 1 &- 2" do
+      run(%(1 &- 2)).to_i.should eq(-1)
+    end
 
-  it "codegens 2 &* 3" do
-    run(%(2 &* 3)).to_i.should eq(6)
-  end
+    it "codegens 2 * 3" do
+      run(%(require "prelude"; 2 * 3)).to_i.should eq(6)
+    end
 
-  it "codegens 8.unsafe_div 3" do
-    run(%(8.unsafe_div 3)).to_i.should eq(2)
-  end
+    it "codegens 2 &* 3" do
+      run(%(2 &* 3)).to_i.should eq(6)
+    end
 
-  it "codegens 8.unsafe_mod 3" do
-    run(%(10.unsafe_mod 3)).to_i.should eq(1)
-  end
+    it "codegens 8.unsafe_div 3" do
+      run(%(8.unsafe_div 3)).to_i.should eq(2)
+    end
 
-  it "codegens 16.unsafe_shr 2" do
-    run(%(16.unsafe_shr 2)).to_i.should eq(4)
-  end
+    it "codegens 8.unsafe_mod 3" do
+      run(%(10.unsafe_mod 3)).to_i.should eq(1)
+    end
 
-  it "codegens 16.unsafe_shl 2" do
-    run(%(16.unsafe_shl 2)).to_i.should eq(64)
+    it "codegens 16.unsafe_shr 2" do
+      run(%(16.unsafe_shr 2)).to_i.should eq(4)
+    end
+
+    it "codegens 16.unsafe_shl 2" do
+      run(%(16.unsafe_shl 2)).to_i.should eq(64)
+    end
+
+    it "codegens 1.to_i16!" do
+      run("1.to_i16!").to_i.should eq(1)
+    end
+
+    it "codegens 1.to_i16" do
+      run(%(require "prelude"; 1.to_i16)).to_i.should eq(1)
+    end
+
+    it "codegens 1.to_f!" do
+      run("1.to_f!").to_f64.should eq(1.0)
+    end
+
+    it "codegens 1.to_f" do
+      run(%(require "prelude"; 1.to_f)).to_f64.should eq(1.0)
+    end
+
+    it "skips bounds checking when to_i produces same type" do
+      run("1.to_i32").to_i.should eq(1)
+    end
   end
 
   it "defined method that calls primitive (bug)" do
@@ -252,8 +277,9 @@ describe "Code gen: primitives" do
           list = VaList.new
           list.next(Int32)
         ))
+        type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
         str = mod.to_s
-        str.should contain("va_arg %VaList* %list")
+        str.should contain("va_arg #{type} %list")
       end
 
       it "works with C code" do
@@ -283,5 +309,84 @@ describe "Code gen: primitives" do
           ), &.to_i.should eq(6))
       end
     {% end %}
+  end
+
+  describe "atomicrmw" do
+    it "codegens atomicrmw with enums" do
+      run(<<-CRYSTAL).to_i.should eq(3)
+        enum RMWBinOp
+          Add = 1
+        end
+
+        enum Ordering
+          SequentiallyConsistent = 7
+        end
+
+        @[Primitive(:atomicrmw)]
+        def atomicrmw(op : RMWBinOp, ptr : Int32*, val : Int32, ordering : Ordering, singlethread : Bool) : Int32
+        end
+
+        x = 1
+        atomicrmw(:add, pointerof(x), 2, :sequentially_consistent, false)
+        x
+        CRYSTAL
+    end
+
+    it "codegens atomicrmw with enums" do
+      run(<<-CRYSTAL).to_i.should eq(3)
+        enum RMWBinOp
+          Add = 1
+        end
+
+        enum Ordering
+          SequentiallyConsistent = 7
+        end
+
+        @[Primitive(:atomicrmw)]
+        def atomicrmw(op : RMWBinOp, ptr : Int32*, val : Int32, ordering : Ordering, singlethread : Bool) : Int32
+        end
+
+        x = 1
+        atomicrmw(RMWBinOp::Add, pointerof(x), 2, Ordering::SequentiallyConsistent, false)
+        x
+        CRYSTAL
+    end
+
+    # TODO: remove once support for 1.4 is dropped
+    it "codegens atomicrmw with symbols" do
+      run(<<-CRYSTAL).to_i.should eq(3)
+        @[Primitive(:atomicrmw)]
+        def atomicrmw(op : Symbol, ptr : Int32*, val : Int32, ordering : Symbol, singlethread : Bool) : Int32
+        end
+
+        x = 1
+        atomicrmw(:add, pointerof(x), 2, :sequentially_consistent, false)
+        x
+        CRYSTAL
+    end
+  end
+
+  it "allows @[Primitive] on method that has body" do
+    run(%(
+      module Moo
+        @[Primitive(:symbol_to_s)]
+        def self.symbol_to_s(symbol : Symbol) : String
+          untyped
+        end
+      end
+
+      Moo.symbol_to_s(:hello)
+      )).to_string.should eq("hello")
+  end
+
+  it "allows @[Primitive] on fun declarations" do
+    run(%(
+      lib LibFoo
+        @[Primitive(:enum_value)]
+        fun enum_value(x : Int32) : Int32
+      end
+
+      LibFoo.enum_value(1)
+      )).to_i.should eq(1)
   end
 end

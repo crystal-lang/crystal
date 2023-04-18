@@ -1,9 +1,8 @@
 require "../spec_helper"
+require "spec/helpers/iterate"
 require "json"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/json"
-{% end %}
+require "big"
+require "big/json"
 require "uuid"
 require "uuid/json"
 
@@ -21,6 +20,12 @@ enum JSONSpecFlagEnum
   OneHundred
 end
 
+private record FooPrivate, x : Int32 do
+  def self.new(json : JSON::PullParser)
+    new(Int32.new(json))
+  end
+end
+
 describe "JSON serialization" do
   describe "from_json" do
     it "does String.from_json" do
@@ -29,6 +34,24 @@ describe "JSON serialization" do
 
     it "does Path.from_json" do
       Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
+    end
+
+    it "does UInt64.from_json" do
+      UInt64.from_json(UInt64::MAX.to_s).should eq(UInt64::MAX)
+    end
+
+    it "does UInt128.from_json" do
+      UInt128.from_json(UInt128::MAX.to_s).should eq(UInt128::MAX)
+    end
+
+    it "does Int128.from_json" do
+      Int128.from_json(Int128::MAX.to_s).should eq(Int128::MAX)
+    end
+
+    it "raises ParserException for overflow UInt64.from_json" do
+      expect_raises(JSON::ParseException, "Can't read UInt64 at line 0, column 0") do
+        UInt64.from_json("1#{UInt64::MAX}")
+      end
     end
 
     it "does Array(Nil)#from_json" do
@@ -59,6 +82,22 @@ describe "JSON serialization" do
       Deque(String).from_json(%(["a", "b"])).should eq(Deque.new(["a", "b"]))
     end
 
+    it "does Iterator(String)#from_json" do
+      assert_iterates_iterator ["a", "b"], Iterator(String).from_json(%(["a", "b"]))
+    end
+
+    it "raises an error Iterator(String)#from_json with invalid types" do
+      expect_raises(JSON::ParseException) do
+        Iterator(String).from_json(%([1, 2])).to_a
+      end
+    end
+
+    it "raises an error Iterator(String)#from_json with invalid JSON" do
+      expect_raises(JSON::ParseException) do
+        Iterator(String).from_json(%(["a")).to_a
+      end
+    end
+
     it "does Hash(String, String)#from_json" do
       Hash(String, String).from_json(%({"foo": "x", "bar": "y"})).should eq({"foo" => "x", "bar" => "y"})
     end
@@ -79,15 +118,15 @@ describe "JSON serialization" do
       Hash(Float64, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23 => "x", 4.56 => "y"})
     end
 
-    pending_win32 "does Hash(BigInt, String)#from_json" do
+    it "does Hash(BigInt, String)#from_json" do
       Hash(BigInt, String).from_json(%({"12345678901234567890": "x"})).should eq({"12345678901234567890".to_big_i => "x"})
     end
 
-    pending_win32 "does Hash(BigFloat, String)#from_json" do
+    it "does Hash(BigFloat, String)#from_json" do
       Hash(BigFloat, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_f => "x"})
     end
 
-    pending_win32 "does Hash(BigDecimal, String)#from_json" do
+    it "does Hash(BigDecimal, String)#from_json" do
       Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
     end
 
@@ -114,59 +153,93 @@ describe "JSON serialization" do
     it "does for tuple" do
       tuple = Tuple(Int32, String).from_json(%([1, "hello"]))
       tuple.should eq({1, "hello"})
-      tuple.should be_a(Tuple(Int32, String))
+      typeof(tuple).should eq(Tuple(Int32, String))
+    end
+
+    it "does for tuple with file-private type" do
+      tuple = Tuple(FooPrivate).from_json %([1])
+      tuple.should eq({FooPrivate.new(1)})
+      typeof(tuple).should eq(Tuple(FooPrivate))
+    end
+
+    it "does for empty tuple" do
+      typeof(Tuple.new).from_json("[]").should eq(Tuple.new)
     end
 
     it "does for named tuple" do
       tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_json(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
     end
 
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello", "x": null}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
-    pending_win32 "does for BigInt" do
+    it "does for named tuple with spaces in key (#10918)" do
+      tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_json %{{"a": 1, "xyz b-23": 2}}
+      tuple.should eq({a: 1, "xyz b-23": 2})
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz b-23": Int32))
+    end
+
+    it "does for named tuple with spaces in key and quote char (#10918)" do
+      tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_json %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
+      tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32))
+    end
+
+    it "does for named tuple with file-private type" do
+      tuple = NamedTuple(a: FooPrivate).from_json %({"a": 1})
+      tuple.should eq({a: FooPrivate.new(1)})
+      typeof(tuple).should eq(NamedTuple(a: FooPrivate))
+    end
+
+    it "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    pending_win32 "raises for BigInt from unsupported types" do
+    it "raises for BigInt from unsupported types" do
       expect_raises(JSON::ParseException) { BigInt.from_json("true") }
       expect_raises(JSON::ParseException) { BigInt.from_json("1.23") }
       expect_raises(JSON::ParseException) { BigInt.from_json("[]") }
       expect_raises(JSON::ParseException) { BigInt.from_json("{}") }
     end
 
-    pending_win32 "does for BigFloat" do
+    it "does for BigFloat" do
       big = BigFloat.from_json("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    pending_win32 "does for BigFloat from int" do
+    it "does for BigFloat from int" do
       big = BigFloat.from_json("1234")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
     end
 
-    pending_win32 "does for BigFloat from string" do
+    it "does for BigFloat from string" do
       big = BigFloat.from_json(%("1234"))
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
     end
 
-    pending_win32 "raises for BigFloat from unsupported types" do
+    it "raises for BigFloat from unsupported types" do
       expect_raises(JSON::ParseException) { BigFloat.from_json("true") }
       expect_raises(JSON::ParseException) { BigFloat.from_json("[]") }
       expect_raises(JSON::ParseException) { BigFloat.from_json("{}") }
@@ -190,25 +263,25 @@ describe "JSON serialization" do
       uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
     end
 
-    pending_win32 "does for BigDecimal from int" do
+    it "does for BigDecimal from int" do
       big = BigDecimal.from_json("1234")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234"))
     end
 
-    pending_win32 "does for BigDecimal from float" do
+    it "does for BigDecimal from float" do
       big = BigDecimal.from_json("1234.05")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.05"))
     end
 
-    pending_win32 "does for BigDecimal from string" do
+    it "does for BigDecimal from string" do
       big = BigDecimal.from_json(%("1234.05"))
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.05"))
     end
 
-    pending_win32 "raises for BigDecimal from unsupported types" do
+    it "raises for BigDecimal from unsupported types" do
       expect_raises(JSON::ParseException) { BigDecimal.from_json("true") }
       expect_raises(JSON::ParseException) { BigDecimal.from_json("[]") }
       expect_raises(JSON::ParseException) { BigDecimal.from_json("{}") }
@@ -378,7 +451,7 @@ describe "JSON serialization" do
     it "deserializes unions of the same kind and remains stable" do
       str = [Int32::MAX, Int64::MAX].to_json
       value = Array(Int32 | Int64).from_json(str)
-      value.all? { |x| x.should be_a(Int64) }
+      value.all?(&.should(be_a(Int64)))
     end
 
     it "deserializes Time" do
@@ -434,6 +507,10 @@ describe "JSON serialization" do
 
     it "does for Int32" do
       1.to_json.should eq("1")
+    end
+
+    it "does for Int128" do
+      Int128::MAX.to_json.should eq(Int128::MAX.to_s)
     end
 
     it "does for Float64" do
@@ -503,6 +580,10 @@ describe "JSON serialization" do
       Set(Int32).new([1, 1, 2]).to_json.should eq("[1,2]")
     end
 
+    it "does for Iterator" do
+      (1..3).each.to_json.should eq("[1,2,3]")
+    end
+
     it "does for Hash" do
       {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
@@ -523,7 +604,7 @@ describe "JSON serialization" do
       {1.2 => 2, 3.4 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
     end
 
-    pending_win32 "does for Hash with BigInt keys" do
+    it "does for Hash with BigInt keys" do
       {123.to_big_i => 2}.to_json.should eq(%({"123":2}))
     end
 
@@ -609,17 +690,17 @@ describe "JSON serialization" do
       end
     end
 
-    pending_win32 "does for BigInt" do
+    it "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       big.to_json.should eq("123456789123456789123456789123456789123456789")
     end
 
-    pending_win32 "does for BigFloat" do
+    it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
     end
 
-    pending_win32 "does for BigDecimal" do
+    it "does for BigDecimal" do
       big = BigDecimal.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
     end

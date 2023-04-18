@@ -26,18 +26,28 @@ class IO::Hexdump < IO
   def initialize(@io : IO, @output : IO = STDERR, @read = false, @write = false)
   end
 
-  def read(buf : Bytes) : Int32
-    @io.read(buf).to_i32.tap do |read_bytes|
-      buf[0, read_bytes].hexdump(@output) if @read && read_bytes
+  def read(slice : Bytes) : Int32
+    @io.read(slice).to_i32.tap do |read_bytes|
+      slice[0, read_bytes].hexdump(@output) if @read && read_bytes
     end
   end
 
-  def write(buf : Bytes) : Nil
-    return if buf.empty?
+  def write(slice : Bytes) : Nil
+    return if slice.empty?
 
-    @io.write(buf).tap do
-      buf.hexdump(@output) if @write
+    @io.write(slice).tap do
+      slice.hexdump(@output) if @write
     end
+  end
+
+  @[Deprecated("Use `#read(slice : Bytes)` instead")]
+  def read(*, buf : Bytes) : Int32
+    read(buf)
+  end
+
+  @[Deprecated("Use `#write(slice : Bytes)` instead")]
+  def write(*, buf : Bytes) : Nil
+    write(buf)
   end
 
   delegate :peek, :close, :closed?, :flush, :tty?, :pos, :pos=, :seek, to: @io

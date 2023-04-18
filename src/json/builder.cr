@@ -28,8 +28,8 @@ class JSON::Builder
   end
 
   # Starts a document.
-  def start_document
-    case state = @state.last
+  def start_document : Nil
+    case @state.last
     when StartState
       @state[-1] = DocumentStartState.new
     when DocumentEndState
@@ -41,7 +41,7 @@ class JSON::Builder
 
   # Signals the end of a JSON document.
   def end_document : Nil
-    case state = @state.last
+    case @state.last
     when StartState
       raise JSON::Error.new("Empty JSON")
     when DocumentStartState
@@ -56,34 +56,34 @@ class JSON::Builder
     flush
   end
 
-  def document
+  def document(&)
     start_document
     yield.tap { end_document }
   end
 
   # Writes a `null` value.
-  def null
+  def null : Nil
     scalar do
       @io << "null"
     end
   end
 
   # Writes a boolean value.
-  def bool(value : Bool)
+  def bool(value : Bool) : Nil
     scalar do
       @io << value
     end
   end
 
   # Writes an integer.
-  def number(number : Int)
+  def number(number : Int) : Nil
     scalar do
       @io << number
     end
   end
 
   # Writes a float.
-  def number(number : Float)
+  def number(number : Float) : Nil
     scalar do
       case number
       when .nan?
@@ -100,7 +100,7 @@ class JSON::Builder
   # by invoking `to_s` on it.
   #
   # This method can also be used to write the name of an object field.
-  def string(value)
+  def string(value) : Nil
     string = value.to_s
 
     scalar(string: true) do
@@ -126,7 +126,7 @@ class JSON::Builder
         when '\t'
           escape = "\\t"
         when .ascii_control?
-          io.write string.to_slice[start_pos, reader.pos - start_pos]
+          io.write_string string.to_slice[start_pos, reader.pos - start_pos]
           io << "\\u"
           ord = char.ord
           io << '0' if ord < 0x1000
@@ -141,13 +141,13 @@ class JSON::Builder
           next
         end
 
-        io.write string.to_slice[start_pos, reader.pos - start_pos]
+        io.write_string string.to_slice[start_pos, reader.pos - start_pos]
         io << escape
         reader.next_char
         start_pos = reader.pos
       end
 
-      io.write string.to_slice[start_pos, reader.pos - start_pos]
+      io.write_string string.to_slice[start_pos, reader.pos - start_pos]
 
       io << '"'
     end
@@ -157,14 +157,14 @@ class JSON::Builder
   # the IO without processing. This is the only method that
   # might lead to invalid JSON being generated, so you must
   # be sure that *string* contains a valid JSON string.
-  def raw(string : String)
+  def raw(string : String) : Nil
     scalar do
       @io << string
     end
   end
 
   # Writes the start of an array.
-  def start_array
+  def start_array : Nil
     start_scalar
     increase_indent
     @state.push ArrayState.new(empty: true)
@@ -172,7 +172,7 @@ class JSON::Builder
   end
 
   # Writes the end of an array.
-  def end_array
+  def end_array : Nil
     case state = @state.last
     when ArrayState
       @state.pop
@@ -187,13 +187,13 @@ class JSON::Builder
 
   # Writes the start of an array, invokes the block,
   # and the writes the end of it.
-  def array
+  def array(&)
     start_array
     yield.tap { end_array }
   end
 
   # Writes the start of an object.
-  def start_object
+  def start_object : Nil
     start_scalar
     increase_indent
     @state.push ObjectState.new(empty: true, name: true)
@@ -201,7 +201,7 @@ class JSON::Builder
   end
 
   # Writes the end of an object.
-  def end_object
+  def end_object : Nil
     case state = @state.last
     when ObjectState
       unless state.name
@@ -219,7 +219,7 @@ class JSON::Builder
 
   # Writes the start of an object, invokes the block,
   # and the writes the end of it.
-  def object
+  def object(&)
     start_object
     yield.tap { end_object }
   end
@@ -235,12 +235,12 @@ class JSON::Builder
   end
 
   # :ditto:
-  def scalar(value : Int | Float)
+  def scalar(value : Int | Float) : Nil
     number(value)
   end
 
   # :ditto:
-  def scalar(value : String)
+  def scalar(value : String) : Nil
     string(value)
   end
 
@@ -255,7 +255,7 @@ class JSON::Builder
   # Writes an object's field and then invokes the block.
   # This is equivalent of invoking `string(value)` and then
   # invoking the block.
-  def field(name)
+  def field(name, &)
     string(name)
     yield
   end
@@ -290,7 +290,7 @@ class JSON::Builder
     state.is_a?(ObjectState) && state.name
   end
 
-  private def scalar(string = false)
+  private def scalar(string = false, &)
     start_scalar(string)
     yield.tap { end_scalar(string) }
   end
@@ -400,7 +400,7 @@ module JSON
   # end
   # string # => %<{"name":"foo","values":[1,2,3]}>
   # ```
-  def self.build(indent = nil)
+  def self.build(indent = nil, &)
     String.build do |str|
       build(str, indent) do |json|
         yield json
@@ -409,7 +409,7 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil) : Nil
+  def self.build(io : IO, indent = nil, &) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do

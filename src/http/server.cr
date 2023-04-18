@@ -15,6 +15,8 @@ require "log"
 # A server is initialized with a handler chain responsible for processing each
 # incoming request.
 #
+# NOTE: To use `Server`, you must explicitly import it with `require "http/server"`
+#
 # ```
 # require "http/server"
 #
@@ -480,7 +482,7 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close : Nil
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
@@ -514,7 +516,12 @@ class HTTP::Server
 
     @processor.process(io, io)
   ensure
-    io.close rescue IO::Error
+    {% begin %}
+      begin
+        io.close
+      rescue IO::Error{% unless flag?(:without_openssl) %} | OpenSSL::SSL::Error{% end %}
+      end
+    {% end %}
   end
 
   # This method handles exceptions raised at `Socket#accept?`.

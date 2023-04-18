@@ -1,7 +1,8 @@
 require "spec"
 require "yaml"
+require "../../support/string"
 
-private def assert_built(expected, expect_document_end = false)
+private def assert_built(expected, expect_document_end = false, *, file = __FILE__, line = __LINE__, &)
   # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
   # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
   # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
@@ -11,10 +12,7 @@ private def assert_built(expected, expect_document_end = false)
     end
   end
 
-  string = YAML.build do |yaml|
-    with yaml yield yaml
-  end
-  string.should eq(expected)
+  assert_prints YAML.build { |yaml| with yaml yield yaml }, expected, file: file, line: line
 end
 
 describe YAML::Builder do

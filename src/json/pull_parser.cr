@@ -79,8 +79,15 @@ class JSON::PullParser
 
   getter kind : Kind
   getter bool_value : Bool
-  getter int_value : Int64
-  getter float_value : Float64
+
+  def int_value : Int64
+    token.int_value
+  end
+
+  def float_value : Float64
+    token.float_value
+  end
+
   getter string_value : String
   getter raw_value : String
 
@@ -93,8 +100,6 @@ class JSON::PullParser
     @lexer = Lexer.new input
     @kind = :EOF
     @bool_value = false
-    @int_value = 0_i64
-    @float_value = 0.0
     @string_value = ""
     @raw_value = ""
     @object_stack = [] of ObjectStackKind
@@ -103,30 +108,30 @@ class JSON::PullParser
 
     next_token
     case token.kind
-    when .null?
+    in .null?
       @kind = :null
-    when .false?
+    in .false?
       @kind = :bool
       @bool_value = false
-    when .true?
+    in .true?
       @kind = :bool
       @bool_value = true
-    when .int?
+    in .int?
       @kind = :int
-      @int_value = token.int_value
       @raw_value = token.raw_value
-    when .float?
+    in .float?
       @kind = :float
-      @float_value = token.float_value
       @raw_value = token.raw_value
-    when .string?
+    in .string?
       @kind = :string
       @string_value = token.string_value
-    when .begin_array?
+    in .begin_array?
       begin_array
-    when .begin_object?
+    in .begin_object?
       begin_object
-    else
+    in .eof?
+      @kind = :eof
+    in .end_array?, .end_object?, .comma?, .colon?
       unexpected_token
     end
   end
@@ -149,7 +154,7 @@ class JSON::PullParser
   # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the array.
   #
   # If the array is empty, it does not yield.
-  def read_array
+  def read_array(&)
     read_begin_array
     until kind.end_array?
       yield
@@ -180,7 +185,7 @@ class JSON::PullParser
   # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the object.
   #
   # If the object is empty, it does not yield.
-  def read_object
+  def read_object(&)
     read_begin_object
     until kind.end_object?
       key_location = location
@@ -206,7 +211,7 @@ class JSON::PullParser
   # Reads an integer value.
   def read_int : Int64
     expect_kind :int
-    @int_value.tap { read_next }
+    int_value.tap { read_next }
   end
 
   # Reads a float value.
@@ -215,9 +220,9 @@ class JSON::PullParser
   def read_float : Float64
     case @kind
     when .int?
-      @int_value.to_f.tap { read_next }
+      int_value.to_f.tap { read_next }
     when .float?
-      @float_value.tap { read_next }
+      float_value.tap { read_next }
     else
       raise "expecting int or float but was #{@kind}"
     end
@@ -263,7 +268,7 @@ class JSON::PullParser
   # Reads the new value and fill the a JSON builder with it.
   #
   # Use this method with a `JSON::Builder` to read a JSON while building another one.
-  def read_raw(json)
+  def read_raw(json) : Nil
     case @kind
     when .null?
       read_next
@@ -327,17 +332,17 @@ class JSON::PullParser
   end
 
   # Reads an array or a null value, and returns it.
-  def read_array_or_null
+  def read_array_or_null(&)
     read_null_or { read_array { yield } }
   end
 
   # Reads an object or a null value, and returns it.
-  def read_object_or_null
+  def read_object_or_null(&)
     read_null_or { read_object { |key| yield key } }
   end
 
   # Reads a null value and returns it, or executes the given block if the value is not null.
-  def read_null_or
+  def read_null_or(&)
     if @kind.null?
       read_next
       nil
@@ -410,7 +415,7 @@ class JSON::PullParser
     # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.
     def read?(klass : {{type}}.class)
       {{type}}.new(int_value).tap { read_next } if kind.int?
-    rescue OverflowError
+    rescue JSON::ParseException | OverflowError
       nil
     end
   {% end %}
@@ -421,7 +426,7 @@ class JSON::PullParser
   def read?(klass : UInt64.class) : UInt64?
     # UInt64 is a special case due to exceeding bounds of @int_value
     UInt64.new(raw_value).tap { read_next } if kind.int?
-  rescue ArgumentError
+  rescue JSON::ParseException | ArgumentError
     nil
   end
 
@@ -431,8 +436,8 @@ class JSON::PullParser
   # If the value was actually an integer, it is converted to a float.
   def read?(klass : Float32.class) : Float32?
     return read_int.to_f32 if kind.int?
-    return float_value.to_f32.tap { read_next } if kind.float?
-  rescue OverflowError
+    return raw_value.to_f32.tap { read_next } if kind.float?
+  rescue exc : JSON::ParseException | ArgumentError
     nil
   end
 
@@ -443,6 +448,8 @@ class JSON::PullParser
   def read?(klass : Float64.class) : Float64?
     return read_int.to_f64 if kind.int?
     return read_float.to_f64 if kind.float?
+  rescue JSON::ParseException
+    nil
   end
 
   # Reads a `String` value and returns it.
@@ -473,13 +480,11 @@ class JSON::PullParser
         return
       when .int?
         @kind = :int
-        @int_value = token.int_value
         @raw_value = token.raw_value
         next_token_after_value
         return
       when .float?
         @kind = :float
-        @float_value = token.float_value
         @raw_value = token.raw_value
         next_token_after_value
         return
@@ -556,7 +561,7 @@ class JSON::PullParser
   #
   # It skips the whole value, not only the next lexer's token.
   # For example if the next value is an array, the whole array will be skipped.
-  def skip
+  def skip : Nil
     @lexer.skip = true
     skip_internal
     @lexer.skip = false

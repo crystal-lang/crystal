@@ -21,21 +21,19 @@ module Crystal
     end
 
     def self.run(args)
-      begin
-        config = parse_args(args)
-        InitProject.new(config).run
-      rescue ex : Init::FilesConflictError
-        STDERR.puts "Cannot initialize Crystal project, the following files would be overwritten:"
-        ex.conflicting_files.each do |path|
-          STDERR.puts "   #{"file".colorize(:red)} #{path} #{"already exist".colorize(:red)}"
-        end
-        STDERR.puts "You can use --force to overwrite those files,"
-        STDERR.puts "or --skip-existing to skip existing files and generate the others."
-        exit 1
-      rescue ex : Init::Error
-        STDERR.puts "Cannot initialize Crystal project: #{ex}"
-        exit 1
+      config = parse_args(args)
+      InitProject.new(config).run
+    rescue ex : Init::FilesConflictError
+      STDERR.puts "Cannot initialize Crystal project, the following files would be overwritten:"
+      ex.conflicting_files.each do |path|
+        STDERR.puts "   #{"file".colorize(:red)} #{path} #{"already exist".colorize(:red)}"
       end
+      STDERR.puts "You can use --force to overwrite those files,"
+      STDERR.puts "or --skip-existing to skip existing files and generate the others."
+      exit 1
+    rescue ex : Init::Error
+      STDERR.puts "Cannot initialize Crystal project: #{ex}"
+      exit 1
     end
 
     def self.parse_args(args)
@@ -132,7 +130,7 @@ module Crystal
       when !name[0].ascii_letter?            then raise Error.new("NAME must start with a letter")
       when name.index("--")                  then raise Error.new("NAME must not have consecutive dashes")
       when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
-      when !name.each_char.all? { |c| c.alphanumeric? || c == '-' || c == '_' }
+      when !name.each_char.all? { |c| c.alphanumeric? || c.in?('-', '_') }
         raise Error.new("NAME must only contain alphanumerical characters, underscores or dashes")
       else
         # name is valid
@@ -207,7 +205,17 @@ module Crystal
       end
 
       def module_name
-        config.name.split('-').map(&.camelcase).join("::")
+        View.module_name(config.name)
+      end
+
+      def self.module_name(name)
+        name
+          .gsub(/[-_]([^a-z])/i, "\\1")
+          .split('-')
+          .compact_map do |name|
+            name.camelcase if name[0]?.try(&.ascii_letter?)
+          end
+          .join("::")
       end
 
       abstract def path

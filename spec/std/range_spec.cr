@@ -1,9 +1,6 @@
 require "./spec_helper"
 require "spec/helpers/iterate"
-
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 
 struct RangeSpecIntWrapper
   include Comparable(self)
@@ -95,11 +92,11 @@ describe "Range" do
   end
 
   it "is empty with .. and begin > end" do
-    (1..0).to_a.empty?.should be_true
+    (1..0).to_a.should be_empty
   end
 
   it "is empty with ... and begin > end" do
-    (1...0).to_a.empty?.should be_true
+    (1...0).to_a.should be_empty
   end
 
   it "is not empty with .. and begin == end" do
@@ -120,7 +117,7 @@ describe "Range" do
       (1...11).step(2).sum.should eq 25
     end
 
-    pending_win32 "called with no block is specialized for performance (BigInt)" do
+    it "called with no block is specialized for performance (BigInt)" do
       (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
       (BigInt.new("1")..BigInt.new("1 000 000 000")).step(2).sum.should eq BigInt.new("250 000 000 000 000 000")
     end
@@ -145,6 +142,8 @@ describe "Range" do
       (0...ary.size).bsearch { |i| true }.should eq 0
       (0...ary.size).bsearch { |i| false }.should eq nil
 
+      (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
+
       ary = [0, 100, 100, 100, 200]
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 
@@ -158,7 +157,7 @@ describe "Range" do
       (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
     end
 
-    pending_win32 "BigInt" do
+    it "BigInt" do
       (BigInt.new("-10")...BigInt.new("10")).bsearch { |x| x >= -5 }.should eq BigInt.new("-5")
     end
 
@@ -181,7 +180,7 @@ describe "Range" do
 
       v = (0.0..1.0).bsearch { |x| x > 0 }.not_nil!
       v.should be_close(0, 0.0001)
-      (0 < v).should be_true
+      v.should be > 0
 
       (-1.0..0.0).bsearch { |x| x >= 0 }.should eq 0.0
       (-1.0...0.0).bsearch { |x| x >= 0 }.should be_nil
@@ -204,7 +203,7 @@ describe "Range" do
     end
   end
 
-  describe "each" do
+  describe "#each" do
     it "gives correct values with inclusive range" do
       range = -1..3
       arr = [] of Int32
@@ -237,10 +236,14 @@ describe "Range" do
     end
 
     it "raises on beginless" do
-      range = (true ? nil : 1)..4
       expect_raises(ArgumentError, "Can't each beginless range") do
-        range.each { }
+        (..4).each { }
       end
+      typeof((..4).each { |x| break x }).should eq Nil
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        (nil.as(Int32?)..4).each { }
+      end
+      typeof((nil.as(Int32?)..4).each { |x| break x }).should eq Int32?
     end
 
     it "doesn't have Nil as a type for endless each" do
@@ -252,7 +255,7 @@ describe "Range" do
     end
   end
 
-  describe "reverse_each" do
+  describe "#reverse_each" do
     it "gives correct values with inclusive range" do
       range = 'a'..'c'
       arr = [] of Char
@@ -275,9 +278,11 @@ describe "Range" do
     end
 
     it "raises on endless range" do
-      range = (3..(true ? nil : 1))
       expect_raises(ArgumentError, "Can't reverse_each endless range") do
-        range.reverse_each { }
+        (3..).reverse_each { }
+      end
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        (3..nil.as(Int32?)).reverse_each { }
       end
     end
 
@@ -292,7 +297,7 @@ describe "Range" do
     end
   end
 
-  describe "each iterator" do
+  describe "#each iterator" do
     it "does next with inclusive range" do
       a = 1..3
       iter = a.each
@@ -318,9 +323,11 @@ describe "Range" do
     end
 
     it "raises on beginless range" do
-      r = (true ? nil : 1)..3
       expect_raises(ArgumentError, "Can't each beginless range") do
-        r.each
+        (..3).each
+      end
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        (nil.as(Int32?)..3).each
       end
     end
 
@@ -329,11 +336,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).each.to_a.empty?.should be_true
+      (1..0).each.to_a.should be_empty
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).each.to_a.empty?.should be_true
+      (1...0).each.to_a.should be_empty
     end
 
     it "is not empty with .. and begin == end" do
@@ -345,7 +352,7 @@ describe "Range" do
     end
   end
 
-  describe "reverse_each iterator" do
+  describe "#reverse_each iterator" do
     it "does next with inclusive range" do
       a = 1..3
       iter = a.reverse_each
@@ -377,11 +384,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).reverse_each.to_a.empty?.should be_true
+      (1..0).reverse_each.to_a.should be_empty
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).reverse_each.to_a.empty?.should be_true
+      (1...0).reverse_each.to_a.should be_empty
     end
 
     it "is not empty with .. and begin == end" do
@@ -394,28 +401,40 @@ describe "Range" do
 
     it "raises on endless range" do
       expect_raises(ArgumentError, "Can't reverse_each endless range") do
-        (1..(true ? nil : 1)).reverse_each
+        (1..).reverse_each
+      end
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        (1..nil.as(Int32?)).reverse_each
       end
     end
   end
 
-  describe "sample" do
+  describe "#sample" do
     it "raises on open range" do
       expect_raises(ArgumentError, "Can't sample an open range") do
-        (1..(true ? nil : 1)).sample
+        (1..).sample
       end
       expect_raises(ArgumentError, "Can't sample an open range") do
-        ((true ? nil : 1)..1).sample
+        (1..nil.as(Int32?)).sample
       end
       expect_raises(ArgumentError, "Can't sample an open range") do
-        ((true ? nil : 1)..(true ? nil : 1)).sample
+        (..1).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (nil.as(Int32?)..1).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (..).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (nil.as(Int32?)..nil.as(Int32?)).sample
       end
     end
 
     it "samples a float range as a distribution" do
       r = (1.2..3.4)
       x = r.sample
-      r.includes?(x).should be_true
+      r.should contain(x)
 
       r.sample(Random.new(1)).should be_close(2.9317256017544837, 1e-12)
     end
@@ -423,13 +442,165 @@ describe "Range" do
     it "samples a range with nilable types" do
       r = ((true ? 1 : nil)..(true ? 4 : nil))
       x = r.sample
-      r.includes?(x).should be_true
+      r.should contain(x)
 
       ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
 
       r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
       x = r.sample
-      r.includes?(x).should be_true
+      r.should contain(x)
+    end
+
+    it "samples with n = 0" do
+      (1..3).sample(0).empty?.should be_true
+    end
+
+    context "for an integer range" do
+      it "samples an inclusive range without n" do
+        value = (1..3).sample
+        (1 <= value <= 3).should be_true
+      end
+
+      it "samples an exclusive range without n" do
+        value = (1...3).sample
+        (1 <= value <= 2).should be_true
+      end
+
+      it "samples an inclusive range with n = 1" do
+        values = (1..3).sample(1)
+        values.size.should eq(1)
+        (1 <= values.first <= 3).should be_true
+      end
+
+      it "samples an exclusive range with n = 1" do
+        values = (1...3).sample(1)
+        values.size.should eq(1)
+        (1 <= values.first <= 2).should be_true
+      end
+
+      it "samples an inclusive range with n > 1" do
+        values = (1..10).sample(5)
+        values.size.should eq(5)
+        values.uniq.size.should eq(5)
+        values.all? { |value| 1 <= value <= 10 }.should be_true
+      end
+
+      it "samples an exclusive range with n > 1" do
+        values = (1...10).sample(5)
+        values.size.should eq(5)
+        values.uniq.size.should eq(5)
+        values.all? { |value| 1 <= value <= 9 }.should be_true
+      end
+
+      it "samples an inclusive range with n > 16" do
+        values = (1..1000).sample(100)
+        values.size.should eq(100)
+        values.uniq.size.should eq(100)
+        values.all? { |value| 1 <= value <= 1000 }.should be_true
+      end
+
+      it "samples an inclusive range with n equal to or bigger than the available values" do
+        values = (1..10).sample(20)
+        values.size.should eq(10)
+        values.uniq.size.should eq(10)
+        values.all? { |value| 1 <= value <= 10 }.should be_true
+      end
+
+      it "raises on invalid range without n" do
+        expect_raises ArgumentError do
+          (1..0).sample
+        end
+      end
+
+      it "raises on invalid range with n = 0" do
+        expect_raises ArgumentError do
+          (1..0).sample(0)
+        end
+      end
+
+      it "raises on invalid range with n = 1" do
+        expect_raises ArgumentError do
+          (1..0).sample(1)
+        end
+      end
+
+      it "raises on invalid range with n > 1" do
+        expect_raises ArgumentError do
+          (1..0).sample(10)
+        end
+      end
+
+      it "raises on exclusive range that would underflow" do
+        expect_raises ArgumentError do
+          (1_u8...0_u8).sample(10)
+        end
+      end
+    end
+
+    context "for a float range" do
+      it "samples an inclusive range without n" do
+        value = (1.0..2.0).sample
+        (1.0 <= value <= 2.0).should be_true
+      end
+
+      it "samples an exclusive range without n" do
+        value = (1.0...2.0).sample
+        (1.0 <= value < 2.0).should be_true
+      end
+
+      it "samples an inclusive range with n = 1" do
+        values = (1.0..2.0).sample(1)
+        values.size.should eq(1)
+        (1.0 <= values.first <= 2.0).should be_true
+      end
+
+      it "samples an exclusive range with n = 1" do
+        values = (1.0..2.0).sample(1)
+        values.size.should eq(1)
+        (1.0 <= values.first < 2.0).should be_true
+      end
+
+      it "samples an inclusive range with n > 1" do
+        values = (1.0..2.0).sample(10)
+        values.size.should eq(10)
+        values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+
+      it "samples an exclusive range with n > 1" do
+        values = (1.0...2.0).sample(10)
+        values.size.should eq(10)
+        values.all? { |value| 1.0 <= value < 2.0 }.should be_true
+      end
+
+      it "samples an inclusive range with n >= 1 and begin == end" do
+        values = (1.0..1.0).sample(3)
+        values.size.should eq(1)
+        values.first.should eq(1.0)
+      end
+
+      it "samples an inclusive range with n > 16" do
+        values = (1.0..2.0).sample(100)
+        values.size.should eq(100)
+        values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+
+      it "raises on invalid range with n = 0" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(0)
+        end
+      end
+
+      it "raises on invalid range with n = 1" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(1)
+        end
+      end
+
+      it "raises on invalid range with n > 1" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(10)
+        end
+      end
     end
   end
 
@@ -457,6 +628,9 @@ describe "Range" do
     it_iterates "begin == end exclusive", [] of Int32, (1...1).step(1)
     it_iterates "begin.succ == end inclusive", [1, 2] of Int32, (1..2).step(1)
     it_iterates "begin.succ == end exclusive", [1] of Int32, (1...2).step(1)
+
+    it_iterates "Float step", [1.0, 1.5, 2.0, 2.5, 3.0], (1..3).step(by: 0.5)
+    it_iterates "Time::Span step", [1.minutes, 2.minutes, 3.minutes], (1.minutes..3.minutes).step(by: 1.minutes)
 
     describe "with #succ type" do
       range_basic = RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)
@@ -494,7 +668,7 @@ describe "Range" do
     end
   end
 
-  describe "size" do
+  describe "#size" do
     it "optimizes for int range" do
       (5..12).size.should eq(8)
       (5...12).size.should eq(7)
@@ -507,13 +681,19 @@ describe "Range" do
 
     it "raises on beginless range" do
       expect_raises(ArgumentError, "Can't calculate size of an open range") do
-        ((true ? nil : 1)..3).size
+        (..3).size
+      end
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        (nil.as(Int32?)..3).size
       end
     end
 
     it "raises on endless range" do
       expect_raises(ArgumentError, "Can't calculate size of an open range") do
-        (3..(true ? nil : 1)).size
+        (3..).size
+      end
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        (3..nil.as(Int32?)).size
       end
     end
   end

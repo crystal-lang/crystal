@@ -42,7 +42,11 @@ struct LLVM::Type
   end
 
   def pointer : LLVM::Type
-    Type.new LibLLVM.pointer_type(self, 0)
+    {% if LibLLVM::IS_LT_150 %}
+      Type.new LibLLVM.pointer_type(self, 0)
+    {% else %}
+      Type.new LibLLVM.pointer_type_in_context(LibLLVM.get_type_context(self), 0)
+    {% end %}
   end
 
   def array(count) : LLVM::Type
@@ -85,8 +89,14 @@ struct LLVM::Type
 
   def element_type : LLVM::Type
     case kind
-    when Kind::Array, Kind::Vector, Kind::Pointer
+    when Kind::Array, Kind::Vector
       Type.new LibLLVM.get_element_type(self)
+    when Kind::Pointer
+      {% if LibLLVM::IS_LT_150 %}
+        Type.new LibLLVM.get_element_type(self)
+      {% else %}
+        raise "Typed pointers are unavailable on LLVM 15.0 or above"
+      {% end %}
     else
       raise "Not a sequential type"
     end
@@ -154,12 +164,31 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false)
     value =
-      {% unless LibLLVM::IS_LT_70 %}
-        LibLLVM.get_inline_asm(self, asm_string, asm_string.size, constraints, constraints.size, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0), LibLLVM::InlineAsmDialect::Intel)
+      {% if LibLLVM::IS_LT_130 %}
+        LibLLVM.get_inline_asm(
+          self,
+          asm_string,
+          asm_string.size,
+          constraints,
+          constraints.size,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0),
+          LibLLVM::InlineAsmDialect::ATT
+        )
       {% else %}
-        LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+        LibLLVM.get_inline_asm(
+          self,
+          asm_string,
+          asm_string.size,
+          constraints,
+          constraints.size,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0),
+          LibLLVM::InlineAsmDialect::ATT,
+          (can_throw ? 1 : 0)
+        )
       {% end %}
     Value.new value
   end

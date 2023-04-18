@@ -22,7 +22,7 @@ class Compress::Zlib::Reader < IO
 
   # Creates a new reader from the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, sync_close = false, dict : Bytes? = nil)
+  def self.open(io : IO, sync_close = false, dict : Bytes? = nil, &)
     reader = new(io, sync_close: sync_close, dict: dict)
     yield reader ensure reader.close
   end
@@ -89,7 +89,7 @@ class Compress::Zlib::Reader < IO
     raise IO::Error.new "Can't flush Compress::Zlib::Reader"
   end
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -97,7 +97,7 @@ class Compress::Zlib::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind

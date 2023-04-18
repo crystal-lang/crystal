@@ -32,7 +32,7 @@ class URI
     #   # ...
     # end
     # ```
-    def self.parse(query : String)
+    def self.parse(query : String, &)
       return if query.empty?
 
       key = nil
@@ -42,7 +42,7 @@ class URI
       first_equal = true
       bytesize = query.bytesize
       while i < bytesize
-        byte = query.unsafe_byte_at(i)
+        byte = query.to_unsafe[i]
         char = byte.unsafe_chr
 
         case char
@@ -126,9 +126,21 @@ class URI
     # end
     # params # => "color=black&name=crystal&year=2012+-+today"
     # ```
-    def self.build(&block : Builder ->) : String
+    #
+    # By default spaces are outputted as `+`.
+    # If *space_to_plus* is `false` then they are outputted as `%20`:
+    #
+    # ```
+    # require "uri/params"
+    #
+    # params = URI::Params.build(space_to_plus: false) do |form|
+    #   form.add "year", "2012 - today"
+    # end
+    # params # => "year=2012%20-%20today"
+    # ```
+    def self.build(*, space_to_plus : Bool = true, &block : Builder ->) : String
       String.build do |io|
-        yield Builder.new(io)
+        yield Builder.new(io, space_to_plus: space_to_plus)
       end
     end
 
@@ -272,7 +284,7 @@ class URI
     # params.fetch("email") { raise "Email is missing" }              # raises "Email is missing"
     # params.fetch("non_existent_param") { "default computed value" } # => "default computed value"
     # ```
-    def fetch(name)
+    def fetch(name, &)
       return yield name unless has_key?(name)
       raw_params[name].first
     end
@@ -312,7 +324,7 @@ class URI
     # # item => keychain
     # # item => keynote
     # ```
-    def each
+    def each(&)
       raw_params.each do |name, values|
         values.each do |value|
           yield({name, value})
@@ -355,14 +367,36 @@ class URI
     # ```
     # require "uri/params"
     #
-    # params = URI::Params.parse("item=keychain&item=keynote&email=john@example.org")
-    # params.to_s # => "item=keychain&item=keynote&email=john%40example.org"
+    # params = URI::Params.parse("item=keychain&greeting=hello+world&email=john@example.org")
+    # params.to_s # => "item=keychain&greeting=hello+world&email=john%40example.org"
     # ```
-    def to_s(io : IO) : Nil
-      builder = Builder.new(io)
+    #
+    # By default spaces are outputted as `+`.
+    # If *space_to_plus* is `false` then they are outputted as `%20`:
+    #
+    # ```
+    # require "uri/params"
+    #
+    # params = URI::Params.parse("item=keychain&greeting=hello+world&email=john@example.org")
+    # params.to_s(space_to_plus: false) # => "item=keychain&greeting=hello%20world&email=john%40example.org"
+    # ```
+    def to_s(*, space_to_plus : Bool = true)
+      String.build do |io|
+        to_s(io, space_to_plus: space_to_plus)
+      end
+    end
+
+    # :ditto:
+    def to_s(io : IO, *, space_to_plus : Bool = true) : Nil
+      builder = Builder.new(io, space_to_plus: space_to_plus)
       each do |name, value|
         builder.add(name, value)
       end
+    end
+
+    def inspect(io : IO)
+      io << "URI::Params"
+      @raw_params.inspect(io)
     end
 
     # :nodoc:
@@ -375,7 +409,11 @@ class URI
     # Every parameter added is directly written to an `IO`,
     # where keys and values are properly escaped.
     class Builder
-      def initialize(@io : IO)
+      # Initializes this builder to write to the given *io*.
+      # `space_to_plus` controls how spaces are encoded:
+      # - if `true` (the default) they are converted to `+`
+      # - if `false` they are converted to `%20`
+      def initialize(@io : IO, *, @space_to_plus : Bool = true)
         @first = true
       end
 
@@ -383,9 +421,9 @@ class URI
       def add(key, value : String?)
         @io << '&' unless @first
         @first = false
-        URI.encode_www_form key, @io
+        URI.encode_www_form key, @io, space_to_plus: @space_to_plus
         @io << '='
-        URI.encode_www_form value, @io if value
+        URI.encode_www_form value, @io, space_to_plus: @space_to_plus if value
         self
       end
 

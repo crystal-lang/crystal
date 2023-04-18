@@ -1,6 +1,533 @@
 require "../../spec_helper"
 
+def assert_stricter(params1, params2, args, *, file = __FILE__, line = __LINE__)
+  assert_type(<<-CRYSTAL, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
+    def foo(#{params1}); 1; end
+    def foo(#{params2}); 'x'; end
+
+    def bar(#{params2}); 'x'; end
+    def bar(#{params1}); 1; end
+
+    a = foo(#{args})
+    b = bar(#{args})
+    {a, b}
+    CRYSTAL
+end
+
+def assert_unordered(params1, params2, args, *, file = __FILE__, line = __LINE__)
+  assert_type(<<-CRYSTAL, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
+    def foo(#{params1}); 1; end
+    def foo(#{params2}); 'x'; end
+
+    def bar(#{params2}); 1; end
+    def bar(#{params1}); 'x'; end
+
+    a = foo(#{args})
+    b = bar(#{args})
+    {a, b}
+    CRYSTAL
+end
+
 describe "Semantic: def overload" do
+  describe "compare_strictness" do
+    context "positional parameters" do
+      it "specificity" do
+        signatures = [
+          {2, 2, "x0, x1"},
+          {2, 3, "x0, x1, x2 = 0"},
+          {2, 4, "x0, x1, x2 = 0, x3 = 0"},
+          {2, 9, "x0, x1, x2 = 0, x3 = 0, *xs"},
+          {2, 9, "x0, x1, x2 = 0, *xs"},
+          {2, 9, "x0, x1, *xs"},
+          {1, 1, "x0"}, # incompatible with 6 defs above
+          {1, 2, "x0, x1 = 0"},
+          {1, 3, "x0, x1 = 0, x2 = 0"},
+          {1, 9, "x0, x1 = 0, x2 = 0, *xs"},
+          {1, 9, "x0, x1 = 0, *xs"},
+          {1, 9, "x0, *xs"},
+          {0, 0, ""},       # incompatible with 12 defs above
+          {0, 1, "x0 = 0"}, # incompatible with 6 defs above
+          {0, 2, "x0 = 0, x1 = 0"},
+          {0, 9, "x0 = 0, x1 = 0, *xs"},
+          {0, 9, "x0 = 0, *xs"},
+          {0, 9, "*xs"},
+        ]
+
+        signatures.each_combination(2, reuse: true) do |(x, y)|
+          min_count1, max_count1, params1 = x
+          min_count2, max_count2, params2 = y
+          next if min_count1 > max_count2 || min_count2 > max_count1
+          args = Array.new({min_count1, min_count2}.max) { "0" }.join(", ")
+
+          assert_stricter(params1, params2, args)
+        end
+      end
+
+      it "single splat vs single splat with restriction (#3134)" do
+        assert_stricter(
+          "*args : Int32",
+          "*args",
+          "1")
+      end
+
+      it "single splat restriction vs single splat with stricter restriction" do
+        assert_stricter(
+          "*args : Int32",
+          "*args : Int",
+          "1")
+      end
+
+      it "positional parameter with restriction vs single splat" do
+        assert_stricter(
+          "x : Int32",
+          "*args",
+          "1")
+
+        assert_stricter(
+          "x : Int32 = 0",
+          "*args",
+          "")
+      end
+
+      it "positional parameter vs single splat with restriction" do
+        assert_stricter(
+          "*args : Int32",
+          "x",
+          "1")
+      end
+
+      it "positional parameter with stricter restriction vs single splat with restriction" do
+        assert_stricter(
+          "x : Int32",
+          "*args : Int",
+          "1")
+      end
+
+      it "positional parameter with restriction vs single splat with stricter restriction" do
+        assert_stricter(
+          "*args : Int32",
+          "x : Int",
+          "1")
+      end
+    end
+
+    context "named parameters" do
+      it "specificity" do
+        signatures = [
+          {1, 1, "*, n"},
+          {1, 9, "*, n, **ns"},
+          {0, 0, ""},
+          {0, 1, "*, n = 0"},
+          {0, 9, "*, n = 0, **ns"},
+          {0, 9, "**ns"},
+        ]
+
+        signatures.each_combination(2, reuse: true) do |(x, y)|
+          min_count1, max_count1, params1 = x
+          min_count2, max_count2, params2 = y
+          next if min_count1 > max_count2 || min_count2 > max_count1
+          args = Array.new({min_count1, min_count2}.max) { "n: 0" }.join(", ")
+
+          assert_stricter(params1, params2, args)
+        end
+      end
+
+      it "double splat vs double splat with restriction" do
+        assert_stricter(
+          "**args : Int32",
+          "**args",
+          "x: 1")
+      end
+
+      it "double splat restriction vs double splat with stricter restriction" do
+        assert_stricter(
+          "**args : Int32",
+          "**args : Int",
+          "x: 1")
+      end
+
+      it "named parameter with restriction vs double splat (#5328)" do
+        assert_stricter(
+          "*, x : Int32",
+          "**opts",
+          "x: 1")
+
+        assert_stricter(
+          "*, x : Int32 = 0",
+          "**opts",
+          "")
+      end
+
+      it "named parameter vs double splat with restriction" do
+        assert_stricter(
+          "**opts : Int32",
+          "*, x",
+          "x: 1")
+      end
+
+      it "named parameter with stricter restriction vs double splat with restriction" do
+        assert_stricter(
+          "*, x : Int32",
+          "**opts : Int",
+          "x: 1")
+      end
+
+      it "named parameter with restriction vs double splat with stricter restriction" do
+        assert_stricter(
+          "**opts : Int32",
+          "*, x : Int",
+          "x: 1")
+      end
+    end
+
+    context "subsumption conflicts" do
+      it "positional vs positional" do
+        assert_unordered(
+          "x : Int32, y : Int",
+          "x : Int, y : Int32",
+          "1, 2")
+      end
+
+      it "positional vs single splat" do
+        assert_unordered(
+          "x : Int32, *args : Int",
+          "x : Int, *args : Int32",
+          "1, 2, 3, 4")
+
+        assert_unordered(
+          "x : Int32, *args : Number",
+          "*args : Int",
+          "1, 2, 3, 4")
+      end
+
+      it "positional vs named" do
+        assert_unordered(
+          "x : Int32, *, y : Int",
+          "x : Int, *, y : Int32",
+          "1, y: 2")
+      end
+
+      it "positional vs double splat" do
+        assert_unordered(
+          "x : Int32, **opts : Int",
+          "x : Int, **opts : Int32",
+          "1, y: 2, z: 3, w: 4")
+      end
+
+      it "single splat vs named" do
+        assert_unordered(
+          "*args : Int32, y : Int",
+          "*args : Int, y : Int32",
+          "1, 2, 3, y: 4")
+      end
+
+      it "single splat vs double splat" do
+        assert_unordered(
+          "*args : Int32, **opts : Int",
+          "*args : Int, **opts : Int32",
+          "1, 2, 3, y: 4, z: 5, w: 6")
+      end
+
+      it "named vs named" do
+        assert_unordered(
+          "*, x : Int32, y : Int",
+          "*, x : Int, y : Int32",
+          "x: 1, y: 2")
+      end
+
+      it "named vs double splat" do
+        assert_unordered(
+          "*, x : Int32, **opts : Int",
+          "*, x : Int, **opts : Int32",
+          "x: 1, y: 2, z: 3, w: 4")
+
+        assert_unordered(
+          "*, x : Int32, **opts : Number",
+          "**opts : Int",
+          "x: 1, y: 2, z: 3, w: 4")
+      end
+    end
+
+    context "subsumption has higher precedence over specificity" do
+      it "same positional parameter, required > optional" do
+        assert_stricter(
+          "x : Int32 = 0",
+          "x : Int",
+          "1")
+      end
+
+      it "same positional parameter, required > single splat" do
+        assert_stricter(
+          "*x : Int32",
+          "x : Int",
+          "1")
+      end
+
+      it "same positional parameter, optional > single splat" do
+        assert_stricter(
+          "*x : Int32",
+          "x : Int = 0",
+          "1")
+      end
+
+      it "positional vs (required positional > optional positional)" do
+        assert_stricter(
+          "x : Int32, y = 0",
+          "x : Int, y",
+          "1, 2")
+      end
+
+      it "positional vs (required positional > single splat)" do
+        assert_stricter(
+          "x : Int32, *args",
+          "x : Int, y",
+          "1, 2")
+      end
+
+      it "positional vs (optional positional > single splat)" do
+        assert_stricter(
+          "x : Int32, *args",
+          "x : Int, y = 0",
+          "1, 2")
+      end
+
+      it "positional vs (required named > optional named)" do
+        assert_stricter(
+          "x : Int32, *, y = 0",
+          "x : Int, *, y",
+          "1, y: 2")
+      end
+
+      it "positional vs (required named > double splat)" do
+        assert_stricter(
+          "x : Int32, **opts",
+          "x : Int, *, y",
+          "1, y: 2")
+      end
+
+      it "positional vs (optional named > double splat)" do
+        assert_stricter(
+          "x : Int32, **opts",
+          "x : Int, *, y = 0",
+          "1, y: 2")
+      end
+
+      it "single splat vs (required named > optional named)" do
+        assert_stricter(
+          "*args : Int32, y = 0",
+          "*args : Int, y",
+          "1, 2, 3, y: 4")
+      end
+
+      it "single splat vs (required named > double splat)" do
+        assert_stricter(
+          "*args : Int32, **opts",
+          "*args : Int, y",
+          "1, 2, 3, y: 4")
+      end
+
+      it "single splat vs (optional named > double splat)" do
+        assert_stricter(
+          "*args : Int32, **opts",
+          "*args : Int, y = 0",
+          "1, 2, 3, y: 4")
+      end
+
+      it "same named parameter, required > optional" do
+        assert_stricter(
+          "*, x : Int32 = 0",
+          "*, x : Int",
+          "x: 1")
+      end
+
+      it "same named parameter, required > double splat" do
+        assert_stricter(
+          "**opts : Int32",
+          "*, x : Int",
+          "x: 1")
+      end
+
+      it "same named parameter, optional > double splat" do
+        assert_stricter(
+          "**opts : Int32",
+          "*, x : Int = 0",
+          "x: 1")
+      end
+
+      it "named vs (required positional > optional positional)" do
+        assert_stricter(
+          "x = 0, *, y : Int32",
+          "x, *, y : Int",
+          "1, y: 2")
+      end
+
+      it "named vs (required positional > single splat)" do
+        assert_stricter(
+          "*args, y : Int32",
+          "x, *, y : Int",
+          "1, y: 2")
+      end
+
+      it "named vs (optional positional > single splat)" do
+        assert_stricter(
+          "*args, y : Int32",
+          "x = 0, *, y : Int",
+          "1, y: 2")
+      end
+
+      it "named vs (required named > optional named)" do
+        assert_stricter(
+          "*, x : Int32, y = 0",
+          "*, x : Int, y",
+          "x: 1, y: 2")
+      end
+
+      it "named vs (required named > double splat)" do
+        assert_stricter(
+          "*, x : Int32, **opts",
+          "*, x : Int, y",
+          "x: 1, y: 2")
+      end
+
+      it "named vs (optional named > double splat)" do
+        assert_stricter(
+          "*, x : Int32, **opts",
+          "*, x : Int, y = 0",
+          "x: 1, y: 2")
+      end
+
+      it "double splat vs (required positional > optional positional)" do
+        assert_stricter(
+          "x = 0, **opts : Int32",
+          "x, **opts : Int",
+          "1, y: 2, z: 3, w: 4")
+      end
+
+      it "double splat vs (required positional > single splat)" do
+        assert_stricter(
+          "*args, **opts : Int32",
+          "x, **opts : Int",
+          "1, y: 2, z: 3, w: 4")
+      end
+
+      it "double splat vs (optional positional > single splat)" do
+        assert_stricter(
+          "*args, **opts : Int32",
+          "x = 0, **opts : Int",
+          "1, y: 2, z: 3, w: 4")
+      end
+    end
+
+    context "specificity conflicts, positional vs named" do
+      it "(required > optional) vs (required > optional)" do
+        assert_unordered(
+          "x, *, y = 0",
+          "x = 0, *, y",
+          "1, y: 2")
+      end
+
+      it "(required > optional) vs (required > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "x = 0, *, y",
+          "1, y: 2")
+      end
+
+      it "(required > optional) vs (optional > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "x = 0, *, y = 0",
+          "1, y: 2")
+      end
+
+      it "(required > splat) vs (required > optional)" do
+        assert_unordered(
+          "x, *, y = 0",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(required > splat) vs (required > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(required > splat) vs (optional > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "*x, y = 0",
+          "1, y: 2")
+      end
+
+      it "(optional > splat) vs (required > optional)" do
+        assert_unordered(
+          "x = 0, *, y = 0",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(optional > splat) vs (required > splat)" do
+        assert_unordered(
+          "x = 0, **opts",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(optional > splat) vs (optional > splat)" do
+        assert_unordered(
+          "x = 0, **opts",
+          "*x, y = 0",
+          "1, y: 2")
+      end
+    end
+
+    context "specificity conflicts, named vs named" do
+      it "(required > optional) vs (required > optional)" do
+        assert_unordered(
+          "*, x, y = 0",
+          "*, y, x = 0",
+          "x: 1, y: 2")
+      end
+
+      it "(required > optional) vs (required > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y, x = 0",
+          "x: 1, y: 2")
+      end
+
+      it "(required > optional) vs (optional > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y = 0, x = 0",
+          "x: 1, y: 2")
+      end
+
+      it "(required > splat) vs (required > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y, **opts",
+          "x: 1, y: 2")
+      end
+
+      it "(required > splat) vs (optional > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y = 0, **opts",
+          "x: 1, y: 2")
+      end
+
+      it "(optional > splat) vs (optional > splat)" do
+        assert_unordered(
+          "*, x = 0, **opts",
+          "*, y = 0, **opts",
+          "x: 1, y: 2")
+      end
+    end
+  end
+
   it "types a call with overload" do
     assert_type("def foo; 1; end; def foo(x); 2.5; end; foo") { int32 }
   end
@@ -233,6 +760,27 @@ describe "Semantic: def overload" do
 
       foo([1], 1)
     ") { int32 }
+  end
+
+  it "does not consider global paths as free variables (1)" do
+    assert_error <<-CRYSTAL, "undefined constant ::Foo"
+      def foo(x : ::Foo) forall Foo
+      end
+
+      foo(1)
+      CRYSTAL
+  end
+
+  it "does not consider global paths as free variables (2)" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo, not Int32"
+      class Foo
+      end
+
+      def foo(x : ::Foo) forall Foo
+      end
+
+      foo(1)
+      CRYSTAL
   end
 
   it "prefers more specific overload than one with free variables" do
@@ -542,7 +1090,7 @@ describe "Semantic: def overload" do
 
       foo Foo(Int32 | Float64).new
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Foo(Int32), not Foo(Float64 | Int32)"
   end
 
   it "gets free variable from union restriction" do
@@ -726,7 +1274,7 @@ describe "Semantic: def overload" do
 
       foo({1, 2})
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be ::Tuple(X, Y, Z), not Tuple(Int32, Int32)"
   end
 
   it "matches tuples of different sizes" do
@@ -778,7 +1326,7 @@ describe "Semantic: def overload" do
 
       Bar.new.foo(1.5)
       ),
-      "no overload matches"
+      "expected argument #1 to 'Bar#foo' to be Int32, not Float64"
   end
 
   it "doesn't match with wrong number of type arguments (#313)" do
@@ -813,7 +1361,7 @@ describe "Semantic: def overload" do
 
       Foo.new('a')
       ),
-      "no overload matches"
+      "expected argument #1 to 'Foo.new' to be Int, not Char"
   end
 
   it "finds method after including module in generic module (#1201)" do
@@ -889,7 +1437,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
   end
 
   it "errors if no overload matches on union against named arg with external param name (#10516)" do
@@ -900,7 +1448,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
   end
 
   it "dispatches with named arg" do
@@ -1012,7 +1560,7 @@ describe "Semantic: def overload" do
 
       foo(1, 'a')
       ),
-      "no overload matches"
+      "expected argument #2 to 'foo' to be Int32, not Char"
   end
 
   it "errors when binding free variable to different types (2)" do
@@ -1025,7 +1573,7 @@ describe "Semantic: def overload" do
 
       foo(1, Gen(Char).new)
       ),
-      "no overload matches"
+      "expected argument #2 to 'foo' to be Gen(Int32), not Gen(Char)"
   end
 
   it "overloads with named argument (#4465)" do
@@ -1041,7 +1589,7 @@ describe "Semantic: def overload" do
 			end
 
 			do_something value: 7.as(Int32 | Char)
-			)) { union_of float64, bool }
+			), inject_primitives: true) { union_of float64, bool }
   end
 
   it "resets free vars after a partial match is rejected (#10270)" do
@@ -1094,11 +1642,39 @@ describe "Semantic: def overload" do
       x = uninitialized Foo
       foo(x)
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Bar, not Foo"
+  end
+
+  it "treats single splats with same restriction as equivalent (#12579)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(*x : Int32)
+        'a'
+      end
+
+      def foo(*x : Int32)
+        1
+      end
+
+      foo(1)
+      CRYSTAL
+  end
+
+  it "treats single splats with same restriction as equivalent (2) (#12579)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(*x : Int32)
+        'a'
+      end
+
+      def foo(*y : Int32)
+        1
+      end
+
+      foo(1)
+      CRYSTAL
   end
 end
 
-private def each_union_variant(t1, t2)
+private def each_union_variant(t1, t2, &)
   yield "#{t1} | #{t2}"
   yield "#{t2} | #{t1}"
   # yield "Union(#{t1}, #{t2})"

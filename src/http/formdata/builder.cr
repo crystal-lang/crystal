@@ -15,10 +15,16 @@ module HTTP::FormData
   # io.to_s # => "--aA47\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\njoe\r\n--aA47\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"test.txt\"\r\n\r\nfile contents\r\n--aA47--"
   # ```
   class Builder
+    private enum State
+      START
+      FIELD
+      FINISHED
+    end
+
     # Creates a new `FormData::Builder` which writes to *io*, using the
     # multipart boundary *boundary*.
     def initialize(@io : IO, @boundary = MIME::Multipart.generate_boundary)
-      @state = :START
+      @state = State::START
     end
 
     getter boundary
@@ -39,7 +45,7 @@ module HTTP::FormData
 
     # Adds a form part with the given *name* and *value*. *Headers* can
     # optionally be provided for the form part.
-    def field(name : String, value, headers : HTTP::Headers = HTTP::Headers.new)
+    def field(name : String, value, headers : HTTP::Headers = HTTP::Headers.new) : Nil
       file(name, IO::Memory.new(value.to_s), headers: headers)
     end
 
@@ -48,12 +54,12 @@ module HTTP::FormData
     # Content-Disposition header for the form part. Other headers can be added
     # using *headers*.
     def file(name : String, io, metadata : FileMetadata = FileMetadata.new, headers : HTTP::Headers = HTTP::Headers.new)
-      fail "Cannot add form part: already finished" if @state == :FINISHED
+      fail "Cannot add form part: already finished" if @state.finished?
 
       headers["Content-Disposition"] = generate_content_disposition(name, metadata)
 
       # We don't add a crlf before the first boundary if this is the first body part.
-      @io << "\r\n" unless @state == :START
+      @io << "\r\n" unless @state.start?
       @io << "--" << @boundary
       headers.each do |name, values|
         values.each do |value|
@@ -63,18 +69,21 @@ module HTTP::FormData
       @io << "\r\n\r\n"
       IO.copy(io, @io)
 
-      @state = :FIELD
+      @state = State::FIELD
     end
 
     # Finalizes the multipart message, this method must be called before the
     # generated multipart message written to the IO is considered valid.
-    def finish
-      fail "Cannot finish form-data: no body parts" if @state == :START
-      fail "Cannot finish form-data: already finished" if @state == :FINISHED
-
-      @io << "\r\n--" << @boundary << "--"
-
-      @state = :FINISHED
+    def finish : Nil
+      case @state
+      in .start?
+        fail "Cannot finish form-data: no body parts"
+      in .finished?
+        fail "Cannot finish form-data: already finished"
+      in .field?
+        @io << "\r\n--" << @boundary << "--"
+        @state = State::FINISHED
+      end
     end
 
     private def generate_content_disposition(name, metadata)

@@ -45,10 +45,71 @@ lib LibC
   SOCK_RDM       = 4
   SOCK_SEQPACKET = 5
 
+  SOL_SOCKET = 0xffff
+
+  SO_DEBUG       = 0x0001 # turn on debugging info recording
+  SO_ACCEPTCONN  = 0x0002 # socket has had listen()
+  SO_REUSEADDR   = 0x0004 # allow local address reuse
+  SO_KEEPALIVE   = 0x0008 # keep connections alive
+  SO_DONTROUTE   = 0x0010 # just use interface addresses
+  SO_BROADCAST   = 0x0020 # permit sending of broadcast msgs
+  SO_USELOOPBACK = 0x0040 # bypass hardware when possible
+  SO_LINGER      = 0x0080 # linger on close if data present
+  SO_OOBINLINE   = 0x0100 # leave received OOB data in line
+
+  SO_DONTLINGER       = ~SO_LINGER
+  SO_EXCLUSIVEADDRUSE = ~SO_REUSEADDR # disallow local address reuse
+
+  SO_SNDBUF    = 0x1001 # send buffer size
+  SO_RCVBUF    = 0x1002 # receive buffer size
+  SO_SNDLOWAT  = 0x1003 # send low-water mark
+  SO_RCVLOWAT  = 0x1004 # receive low-water mark
+  SO_SNDTIMEO  = 0x1005 # send timeout
+  SO_RCVTIMEO  = 0x1006 # receive timeout
+  SO_ERROR     = 0x1007 # get error status and clear
+  SO_TYPE      = 0x1008 # get socket type
+  SO_BSP_STATE = 0x1009 # get socket 5-tuple state
+
+  SO_GROUP_ID       = 0x2001 # ID of a socket group
+  SO_GROUP_PRIORITY = 0x2002 # the relative priority within a group
+  SO_MAX_MSG_SIZE   = 0x2003 # maximum message size
+
+  SO_CONDITIONAL_ACCEPT = 0x3002 # enable true conditional accept: connection is not ack-ed
+  # to the other side until conditional function returns CF_ACCEPT
+  SO_PAUSE_ACCEPT   = 0x3003 # pause accepting new connections
+  SO_COMPARTMENT_ID = 0x3004 # get/set the compartment for a socket
+
+  SO_RANDOMIZE_PORT      = 0x3005 # randomize assignment of wildcard ports
+  SO_PORT_SCALABILITY    = 0x3006 # enable port scalability
+  SO_REUSE_UNICASTPORT   = 0x3007 # defer ephemeral port allocation for outbound connections
+  SO_REUSE_MULTICASTPORT = 0x3008 # enable port reuse and disable unicast reception.
+
+  TCP_NODELAY = 0x0001
+
   struct Sockaddr
     sa_family : UInt8
     sa_data : Char[14]
   end
+
+  SS_MAXSIZE   = 128
+  SS_ALIGNSIZE =   8 # sizeof(Int64)
+
+  SS_PAD1SIZE = SS_ALIGNSIZE - 2                              # sizeof(USHORT)
+  SS_PAD2SIZE = SS_MAXSIZE - (2 + SS_PAD1SIZE + SS_ALIGNSIZE) # sizeof(USHORT)
+
+  struct SOCKADDR_STORAGE
+    ss_family : Short
+    __ss_pad1 : Char[SS_PAD1SIZE]
+    __ss_align : Int64
+    __ss_pad2 : Char[SS_PAD2SIZE]
+  end
+
+  IOC_UNIX     = 0x00000000
+  IOC_WS2      = 0x08000000
+  IOC_PROTOCOL = 0x10000000
+  IOC_VENDOR   = 0x18000000
+
+  SIO_GET_EXTENSION_FUNCTION_POINTER = IOC_INOUT | IOC_WS2 | 6
 
   IPPROTO_IP = 0
 
@@ -82,6 +143,18 @@ lib LibC
     IPPROTO_SCTP     = 132
     IPPROTO_RAW      = 255
     IPPROTO_MAX      = 256
+  end
+
+  INADDR_ANY = 0x00000000_u64
+
+  IOC_VOID  = 0x20000000 # no parameters
+  IOC_OUT   = 0x40000000 # copy out parameters
+  IOC_IN    = 0x80000000 # copy in parameters
+  IOC_INOUT = IOC_IN | IOC_OUT
+
+  struct WSABUF
+    len : ULong
+    buf : Char*
   end
 
   AI_PASSIVE     = 0x00000001 # Socket address will be used in bind() call

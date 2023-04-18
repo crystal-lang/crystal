@@ -97,7 +97,8 @@ module YAML
   #   @a : Int32
   # end
   #
-  # a = A.from_yaml("---\na: 1\nb: 2\n") # => A(@yaml_unmapped={"b" => 2_i64}, @a=1)
+  # a = A.from_yaml("---\na: 1\nb: 2\n") # => A(@yaml_unmapped={"b" => 2}, @a=1)
+  # a.yaml_unmapped["b"].raw.class       # => Int64
   # a.to_yaml                            # => "---\na: 1\nb: 2\n"
   # ```
   #
@@ -125,6 +126,28 @@ module YAML
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
   # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
+  #
+  # ### `after_initialize` method
+  #
+  # `#after_initialize` is a method that runs after an instance is deserialized
+  # from YAML. It can be used as a hook to post-process the initialized object.
+  #
+  # Example:
+  # ```
+  # require "yaml"
+  #
+  # class Person
+  #   include YAML::Serializable
+  #   getter name : String
+  #
+  #   def after_initialize
+  #     @name = @name.upcase
+  #   end
+  # end
+  #
+  # person = Person.from_yaml "---\nname: Jane\n"
+  # person.name # => "JANE"
+  # ```
   module Serializable
     annotation Options
     end
@@ -138,7 +161,7 @@ module YAML
       end
 
       private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-        ctx.read_alias(node, \{{@type}}) do |obj|
+        ctx.read_alias(node, self) do |obj|
           return obj
         end
 
@@ -182,7 +205,7 @@ module YAML
         {% end %}
 
         {% for name, value in properties %}
-          %var{name} = nil
+          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
           %found{name} = false
         {% end %}
 
@@ -198,20 +221,19 @@ module YAML
             case key
             {% for name, value in properties %}
               when {{value[:key]}}
-                %found{name} = true
                 begin
-                  %var{name} =
-                    {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
+                  {% if value[:has_default] && !value[:nilable] %} YAML::Schema::Core.parse_null_or(value_node) do {% else %} begin {% end %}
+                    %var{name} =
+                      {% if value[:converter] %}
+                        {{value[:converter]}}.from_yaml(ctx, value_node)
+                      {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                        {{value[:type]}}.new(ctx, value_node)
+                      {% else %}
+                        ::Union({{value[:type]}}).new(ctx, value_node)
+                      {% end %}
+                  end
 
-                    {% if value[:converter] %}
-                      {{value[:converter]}}.from_yaml(ctx, value_node)
-                    {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                      {{value[:type]}}.new(ctx, value_node)
-                    {% else %}
-                      ::Union({{value[:type]}}).new(ctx, value_node)
-                    {% end %}
-
-                  {% if value[:nilable] || value[:has_default] %} } {% end %}
+                  %found{name} = true
                 end
             {% end %}
             else
@@ -230,7 +252,7 @@ module YAML
 
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
-            if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
+            if !%found{name}
               node.raise "Missing YAML attribute: {{value[:key].id}}"
             end
           {% end %}
@@ -246,7 +268,7 @@ module YAML
               @{{name}} = %var{name}
             end
           {% else %}
-            @{{name}} = (%var{name}).as({{value[:type]}})
+            @{{name}} = %var{name}
           {% end %}
 
           {% if value[:presence] %}

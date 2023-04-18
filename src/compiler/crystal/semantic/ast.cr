@@ -12,15 +12,6 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def warning(message, inner = nil, exception_type = Crystal::TypeException)
-      # TODO extract message formatting from exceptions
-      String.build do |io|
-        exception = exception_type.for_node(self, message, inner)
-        exception.warning = true
-        exception.append_to_s(io, nil)
-      end
-    end
-
     def simple_literal?
       case self
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
@@ -28,6 +19,27 @@ module Crystal
         true
       else
         false
+      end
+    end
+
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
+    def supports_autocast?(number_autocast : Bool = true)
+      case self
+      when NumberLiteral, SymbolLiteral
+        true
+      else
+        if number_autocast
+          case self_type = self.type?
+          when IntegerType
+            self_type.kind.bytesize <= 64
+          when FloatType
+            self_type.kind.f32?
+          else
+            false
+          end
+        else
+          false
+        end
       end
     end
   end
@@ -102,6 +114,8 @@ module Crystal
   end
 
   class Arg
+    include Annotatable
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
@@ -126,9 +140,10 @@ module Crystal
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
+    property freeze_type : Type?
     property block_nest = 0
-    getter? raises = false
+    property? raises = false
     property? closure = false
     property? self_closured = false
     property? captured_block = false
@@ -150,6 +165,9 @@ module Crystal
 
     @macro_owner : Type?
 
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
+
     def macro_owner=(@macro_owner)
     end
 
@@ -166,30 +184,22 @@ module Crystal
       special_vars << name
     end
 
-    def raises=(value)
-      if value != @raises
-        @raises = value
-        @observers.try &.each do |obs|
-          if obs.is_a?(Call)
-            obs.raises = value
-          end
-        end
-      end
-    end
-
-    # Returns the minimum and maximum number of arguments that must
-    # be passed to this method.
+    # Returns the minimum and maximum number of positional arguments that must
+    # be passed to this method, assuming positional parameters are not matched
+    # by named arguments.
     def min_max_args_sizes
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
       splat_index = self.splat_index
       if splat_index
+        min_size = {default_value_index || splat_index, splat_index}.min
         if args[splat_index].name.empty?
-          min_size = {default_value_index || splat_index, splat_index}.min
           max_size = splat_index
         else
-          min_size -= 1 unless default_value_index && default_value_index < splat_index
+          if splat_restriction = args[splat_index].restriction
+            min_size += 1 unless splat_restriction.is_a?(Splat) || default_value_index.try(&.< splat_index)
+          end
           max_size = Int32::MAX
         end
       end
@@ -221,8 +231,8 @@ module Crystal
     def free_var?(node : Path)
       free_vars = @free_vars
       return false unless free_vars
-
-      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
     end
 
     def free_var?(any)
@@ -424,6 +434,8 @@ module Crystal
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
+    property freeze_type : Type?
+
     # True if we need to mark this variable as nilable
     # if this variable is read.
     property? nil_if_read = false
@@ -461,7 +473,6 @@ module Crystal
       # bind all previously related local vars to it so that
       # they get all types assigned to it.
       local_vars.each &.bind_to self
-      local_vars = nil
     end
 
     # True if this variable belongs to the given context
@@ -522,6 +533,8 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    property freeze_type : Type?
+
     # Flag used during codegen to indicate the initializer is simple
     # and doesn't require a call to a function
     property? simple_initializer = false
@@ -542,21 +555,27 @@ module Crystal
     # not when reading it.
     property? no_init_flag = false
 
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
+      kind.global?
     end
   end
 
@@ -596,6 +615,7 @@ module Crystal
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
+    property freeze_type : Type?
     property? visited = false
 
     getter(:break) { Var.new("%break") }
@@ -659,10 +679,17 @@ module Crystal
     property! resolved_type : AliasType
   end
 
+  class AnnotationDef
+    include Annotatable
+
+    property! resolved_type : AnnotationType
+  end
+
   class External < Def
     property real_name : String
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
+    property wasm_import_module : String?
 
     property? dead = false
     property? used = false
@@ -704,12 +731,18 @@ module Crystal
   end
 
   class NilReason
+    enum Reason
+      UsedBeforeInitialized
+      UsedSelfBeforeInitialized
+      InitializedInRescue
+    end
+
     getter name : String
-    getter reason : Symbol
+    getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
@@ -791,28 +824,12 @@ module Crystal
     def initialize(@name, @type)
     end
 
-    def class_desc
+    def self.class_desc
       "MetaVar"
     end
 
     def clone_without_location
       self
-    end
-  end
-
-  class NumberLiteral
-    def can_be_autocast_to?(other_type)
-      case {self.type, other_type}
-      when {IntegerType, IntegerType}
-        min, max = other_type.range
-        min <= integer_value <= max
-      when {IntegerType, FloatType}
-        true
-      when {FloatType, FloatType}
-        true
-      else
-        false
-      end
     end
   end
 

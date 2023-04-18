@@ -1,6 +1,7 @@
 require "spec"
 require "unicode"
 require "spec/helpers/iterate"
+require "../support/string"
 
 describe "Char" do
   describe "upcase" do
@@ -19,14 +20,26 @@ describe "Char" do
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
   end
 
-  describe "succ" do
-    it { 'a'.succ.should eq('b') }
-    it { 'あ'.succ.should eq('ぃ') }
+  it "#succ" do
+    'a'.succ.should eq('b')
+    'あ'.succ.should eq('ぃ')
+
+    '\uD7FF'.succ.should eq '\uE000'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::MAX.succ
+    end
   end
 
-  describe "pred" do
-    it { 'b'.pred.should eq('a') }
-    it { 'ぃ'.pred.should eq('あ') }
+  it "#pred" do
+    'b'.pred.should eq('a')
+    'ぃ'.pred.should eq('あ')
+
+    '\uE000'.pred.should eq '\uD7FF'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::ZERO.pred
+    end
   end
 
   describe "+" do
@@ -81,6 +94,22 @@ describe "Char" do
     it { ' '.ascii_letter?.should be_false }
   end
 
+  it "#letter?" do
+    'A'.letter?.should be_true # Unicode General Category Lu
+    'a'.letter?.should be_true # Unicode General Category Ll
+    'ǅ'.letter?.should be_true # Unicode General Category Lt
+    'ʰ'.letter?.should be_true # Unicode General Category Lm
+    'か'.letter?.should be_true # Unicode General Category Lo
+
+    'ः'.letter?.should be_false  # Unicode General Category M
+    '1'.letter?.should be_false  # Unicode General Category Nd
+    'Ⅰ'.letter?.should be_false  # Unicode General Category Nl
+    '_'.letter?.should be_false  # Unicode General Category P
+    '$'.letter?.should be_false  # Unicode General Category S
+    ' '.letter?.should be_false  # Unicode General Category Z
+    '\n'.letter?.should be_false # Unicode General Category C
+  end
+
   describe "alphanumeric?" do
     it { 'a'.alphanumeric?.should be_true }
     it { 'A'.alphanumeric?.should be_true }
@@ -107,30 +136,75 @@ describe "Char" do
     end
   end
 
-  it "dumps" do
-    'a'.dump.should eq("'a'")
-    '\\'.dump.should eq("'\\\\'")
-    '\e'.dump.should eq("'\\e'")
-    '\f'.dump.should eq("'\\f'")
-    '\n'.dump.should eq("'\\n'")
-    '\r'.dump.should eq("'\\r'")
-    '\t'.dump.should eq("'\\t'")
-    '\v'.dump.should eq("'\\v'")
-    'á'.dump.should eq("'\\u{e1}'")
-    '\u{81}'.dump.should eq("'\\u{81}'")
+  it "#dump" do
+    assert_prints 'a'.dump, %('a')
+    assert_prints '\\'.dump, %('\\\\')
+    assert_prints '\0'.dump, %('\\0')
+    assert_prints '\u0001'.dump, %('\\u0001')
+    assert_prints ' '.dump, %(' ')
+    assert_prints '\a'.dump, %('\\a')
+    assert_prints '\b'.dump, %('\\b')
+    assert_prints '\e'.dump, %('\\e')
+    assert_prints '\f'.dump, %('\\f')
+    assert_prints '\n'.dump, %('\\n')
+    assert_prints '\r'.dump, %('\\r')
+    assert_prints '\t'.dump, %('\\t')
+    assert_prints '\v'.dump, %('\\v')
+    assert_prints '\f'.dump, %('\\f')
+    assert_prints 'á'.dump, %('\\u00E1')
+    assert_prints '\uF8FF'.dump, %('\\uF8FF')
+    assert_prints '\u202A'.dump, %('\\u202A')
+    assert_prints '\u{81}'.dump, %('\\u0081')
+    assert_prints '\u{110BD}'.dump, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.dump, %('\\u{1F48E}')
+    assert_prints '\u00AD'.dump, %('\\u00AD')
   end
 
-  it "inspects" do
-    'a'.inspect.should eq("'a'")
-    '\\'.inspect.should eq("'\\\\'")
-    '\e'.inspect.should eq("'\\e'")
-    '\f'.inspect.should eq("'\\f'")
-    '\n'.inspect.should eq("'\\n'")
-    '\r'.inspect.should eq("'\\r'")
-    '\t'.inspect.should eq("'\\t'")
-    '\v'.inspect.should eq("'\\v'")
-    'á'.inspect.should eq("'á'")
-    '\u{81}'.inspect.should eq("'\\u{81}'")
+  it "#inspect" do
+    assert_prints 'a'.inspect, %('a')
+    assert_prints '\\'.inspect, %('\\\\')
+    assert_prints '\0'.inspect, %('\\0')
+    assert_prints '\u0001'.inspect, %('\\u0001')
+    assert_prints ' '.inspect, %(' ')
+    assert_prints '\a'.inspect, %('\\a')
+    assert_prints '\b'.inspect, %('\\b')
+    assert_prints '\e'.inspect, %('\\e')
+    assert_prints '\f'.inspect, %('\\f')
+    assert_prints '\n'.inspect, %('\\n')
+    assert_prints '\r'.inspect, %('\\r')
+    assert_prints '\t'.inspect, %('\\t')
+    assert_prints '\v'.inspect, %('\\v')
+    assert_prints '\f'.inspect, %('\\f')
+    assert_prints 'á'.inspect, %('á')
+    assert_prints '\uF8FF'.inspect, %('\\uF8FF')
+    assert_prints '\u202A'.inspect, %('\\u202A')
+    assert_prints '\u{81}'.inspect, %('\\u0081')
+    assert_prints '\u{110BD}'.inspect, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.inspect, %('\u{1F48E}')
+    assert_prints '\u00AD'.inspect, %('\\u00AD')
+  end
+
+  it "#unicode_escape" do
+    assert_prints 'a'.unicode_escape, %(\\u0061)
+    assert_prints '\\'.unicode_escape, %(\\u005C)
+    assert_prints '\0'.unicode_escape, %(\\u0000)
+    assert_prints '\u0001'.unicode_escape, %(\\u0001)
+    assert_prints ' '.unicode_escape, %(\\u0020)
+    assert_prints '\a'.unicode_escape, %(\\u0007)
+    assert_prints '\b'.unicode_escape, %(\\u0008)
+    assert_prints '\e'.unicode_escape, %(\\u001B)
+    assert_prints '\f'.unicode_escape, %(\\u000C)
+    assert_prints '\n'.unicode_escape, %(\\u000A)
+    assert_prints '\r'.unicode_escape, %(\\u000D)
+    assert_prints '\t'.unicode_escape, %(\\u0009)
+    assert_prints '\v'.unicode_escape, %(\\u000B)
+    assert_prints '\f'.unicode_escape, %(\\u000C)
+    assert_prints 'á'.unicode_escape, %(\\u00E1)
+    assert_prints '\uF8FF'.unicode_escape, %(\\uF8FF)
+    assert_prints '\u202A'.unicode_escape, %(\\u202A)
+    assert_prints '\u{81}'.unicode_escape, %(\\u0081)
+    assert_prints '\u{110BD}'.unicode_escape, %(\\u{110BD})
+    assert_prints '\u00AD'.unicode_escape, %(\\u00AD)
   end
 
   it "escapes" do
@@ -163,31 +237,37 @@ describe "Char" do
     '1'.to_i16.should eq(1i16)
     '1'.to_i32.should eq(1i32)
     '1'.to_i64.should eq(1i64)
+    '1'.to_i128.should eq(1i128)
 
     expect_raises(ArgumentError) { 'a'.to_i8 }
     expect_raises(ArgumentError) { 'a'.to_i16 }
     expect_raises(ArgumentError) { 'a'.to_i32 }
     expect_raises(ArgumentError) { 'a'.to_i64 }
+    expect_raises(ArgumentError) { 'a'.to_i128 }
 
     'a'.to_i8?.should be_nil
     'a'.to_i16?.should be_nil
     'a'.to_i32?.should be_nil
     'a'.to_i64?.should be_nil
+    'a'.to_i128?.should be_nil
 
     '1'.to_u8.should eq(1u8)
     '1'.to_u16.should eq(1u16)
     '1'.to_u32.should eq(1u32)
     '1'.to_u64.should eq(1u64)
+    '1'.to_u128.should eq(1u128)
 
     expect_raises(ArgumentError) { 'a'.to_u8 }
     expect_raises(ArgumentError) { 'a'.to_u16 }
     expect_raises(ArgumentError) { 'a'.to_u32 }
     expect_raises(ArgumentError) { 'a'.to_u64 }
+    expect_raises(ArgumentError) { 'a'.to_u128 }
 
     'a'.to_u8?.should be_nil
     'a'.to_u16?.should be_nil
     'a'.to_u32?.should be_nil
     'a'.to_u64?.should be_nil
+    'a'.to_u128?.should be_nil
   end
 
   it "does to_i with 16 base" do
@@ -286,12 +366,6 @@ describe "Char" do
     it "does for unicode" do
       '青'.bytesize.should eq(3)
     end
-
-    it "raises on codepoint bigger than 0x10ffff" do
-      expect_raises InvalidByteSequenceError do
-        (0x10ffff + 1).unsafe_chr.bytesize
-      end
-    end
   end
 
   describe "in_set?" do
@@ -338,12 +412,6 @@ describe "Char" do
     end
   end
 
-  it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
-    expect_raises InvalidByteSequenceError do
-      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
-    end
-  end
-
   it "does each_byte" do
     'a'.each_byte(&.should eq('a'.ord)).should be_nil
   end
@@ -385,10 +453,12 @@ describe "Char" do
     'a'.number?.should be_false
   end
 
-  it "does ascii_control?" do
+  it "#ascii_control?" do
     'ù'.ascii_control?.should be_false
     'a'.ascii_control?.should be_false
     '\u0019'.ascii_control?.should be_true
+    '\u007F'.ascii_control?.should be_true
+    '\u0080'.ascii_control?.should be_false
   end
 
   it "does mark?" do
@@ -400,6 +470,15 @@ describe "Char" do
     127.chr.ascii?.should be_true
     128.chr.ascii?.should be_false
     '酒'.ascii?.should be_false
+  end
+
+  it "#printable?" do
+    ' '.printable?.should be_true
+    'a'.printable?.should be_true
+    '酒'.printable?.should be_true
+    '\n'.printable?.should be_false
+    '\e'.printable?.should be_false
+    '\uF8FF'.printable?.should be_false
   end
 
   describe "clone" do

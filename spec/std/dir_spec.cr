@@ -1,6 +1,7 @@
 require "./spec_helper"
+require "../support/env"
 
-private def unset_tempdir
+private def unset_tempdir(&)
   {% if flag?(:windows) %}
     old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
     begin
@@ -75,12 +76,29 @@ describe "Dir" do
     end
   end
 
+  pending_win32 "tests info on existing directory" do
+    Dir.open(datapath) do |dir|
+      info = dir.info
+      info.directory?.should be_true
+    end
+  end
+
   it "tests mkdir and delete with a new path" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)
       Dir.exists?(path).should be_true
       Dir.delete(path)
       Dir.exists?(path).should be_false
+    end
+  end
+
+  it "tests mkdir and delete? with a new path" do
+    with_tempfile("mkdir") do |path|
+      Dir.mkdir(path, 0o700)
+      Dir.exists?(path).should be_true
+      Dir.delete?(path).should be_true
+      Dir.exists?(path).should be_false
+      Dir.delete?(path).should be_false
     end
   end
 
@@ -125,17 +143,29 @@ describe "Dir" do
     end
   end
 
-  it "tests delete with an nonexistent path" do
-    with_tempfile("nonexistent") do |path|
-      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
-        Dir.delete(path)
+  describe ".delete" do
+    it "raises with an nonexistent path" do
+      with_tempfile("nonexistent") do |path|
+        expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
+          Dir.delete(path)
+        end
       end
     end
-  end
 
-  it "tests delete with a path that cannot be removed" do
-    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
-      Dir.delete(datapath)
+    it "raises with a path that cannot be removed" do
+      expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
+        Dir.delete(datapath)
+      end
+    end
+
+    it "raises with symlink directory" do
+      with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
+        Dir.mkdir(target_path)
+        File.symlink(target_path, symlink_path)
+        expect_raises(File::Error) do
+          Dir.delete(symlink_path)
+        end
+      end
     end
   end
 
@@ -177,6 +207,48 @@ describe "Dir" do
         datapath("dir", "subdir", "f1.txt"),
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/f2.txt"].sort.should eq [
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/*.txt"].sort.should eq [
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+    end
+
+    it "tests double recursive matcher (#10807)" do
+      with_tempfile "glob-double-recurse" do |path|
+        Dir.mkdir_p path
+        Dir.cd(path) do
+          path1 = Path["x", "b", "x"]
+          Dir.mkdir_p path1
+          File.touch path1.join("file")
+
+          Dir["**/b/**/*"].sort.should eq [
+            path1.to_s,
+            path1.join("file").to_s,
+          ].sort
+        end
+      end
+    end
+
+    it "tests double recursive matcher, multiple paths" do
+      with_tempfile "glob-double-recurse2" do |path|
+        Dir.mkdir_p path
+        Dir.cd(path) do
+          p1 = Path["x", "a", "x", "c"]
+          p2 = Path["x", "a", "x", "a", "x", "c"]
+
+          Dir.mkdir_p p1
+          Dir.mkdir_p p2
+
+          Dir["**/a/**/c"].sort.should eq [
+            p1.to_s,
+            p2.to_s,
+          ].sort
+        end
+      end
     end
 
     it "tests a recursive glob with '?'" do
@@ -290,37 +362,39 @@ describe "Dir" do
       ].sort
     end
 
-    pending_win32 "matches symlinks" do
-      link = datapath("f1_link.txt")
-      non_link = datapath("non_link.txt")
+    it "matches symlinks" do
+      with_tempfile "symlinks" do |path|
+        Dir.mkdir_p(path)
 
-      File.symlink(datapath("dir", "f1.txt"), link)
-      File.symlink(datapath("dir", "nonexisting"), non_link)
+        link = Path[path, "f1_link.txt"]
+        non_link = Path[path, "non_link.txt"]
 
-      begin
-        Dir["#{datapath}/*_link.txt"].sort.should eq [
-          datapath("f1_link.txt"),
-          datapath("non_link.txt"),
+        File.symlink(datapath("dir", "f1.txt"), link)
+        File.symlink(datapath("dir", "nonexisting"), non_link)
+
+        Dir["#{path}/*_link.txt"].sort.should eq [
+          link.to_s,
+          non_link.to_s,
         ].sort
-        Dir["#{datapath}/non_link.txt"].should eq [datapath("non_link.txt")]
-      ensure
-        File.delete link
-        File.delete non_link
+        Dir["#{path}/non_link.txt"].should eq [non_link.to_s]
       end
     end
 
-    pending_win32 "matches symlink dir" do
+    it "matches symlink dir" do
       with_tempfile "symlink_dir" do |path|
-        Dir.mkdir_p(Path[path, "glob"])
         target = Path[path, "target"]
+        non_link = target / "a.txt"
+        link_dir = Path[path, "glob", "dir"]
+
+        Dir.mkdir_p(Path[path, "glob"])
         Dir.mkdir_p(target)
 
-        File.write(target / "a.txt", "")
-        File.symlink(target, Path[path, "glob", "dir"])
+        File.write(non_link, "")
+        File.symlink(target, link_dir)
 
         Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
         Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
-          "#{path}/glob/dir/a.txt",
+          File.join(path, "glob", "dir", "a.txt"),
         ]
       end
     end
@@ -448,8 +522,41 @@ describe "Dir" do
     end
   end
 
-  it ".current" do
-    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+  describe ".current" do
+    it "matches shell" do
+      Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+    end
+
+    # Skip spec on Windows due to weak support for symlinks and $PWD.
+    {% unless flag?(:win32) %}
+      it "follows $PWD" do
+        with_tempfile "current-pwd" do |path|
+          Dir.mkdir_p path
+          # Resolve any symbolic links in path caused by tmpdir being a link.
+          # For example on macOS, /tmp is a symlink to /private/tmp.
+          path = File.real_path(path)
+
+          target_path = File.join(path, "target")
+          link_path = File.join(path, "link")
+          Dir.mkdir_p target_path
+          File.symlink(target_path, link_path)
+
+          Dir.cd(link_path) do
+            with_env({"PWD" => nil}) do
+              Dir.current.should eq target_path
+            end
+
+            with_env({"PWD" => link_path}) do
+              Dir.current.should eq link_path
+            end
+
+            with_env({"PWD" => "/some/other/path"}) do
+              Dir.current.should eq target_path
+            end
+          end
+        end
+      end
+    {% end %}
   end
 
   describe ".tempdir" do
@@ -487,7 +594,7 @@ describe "Dir" do
     end.should be_nil
     dir.close
 
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain("f1.txt")
   end
 
   it "opens with open" do
@@ -499,7 +606,7 @@ describe "Dir" do
       end.should be_nil
     end
 
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain("f1.txt")
   end
 
   describe "#path" do
@@ -512,9 +619,9 @@ describe "Dir" do
 
   it "lists entries" do
     filenames = Dir.entries(datapath("dir"))
-    filenames.includes?(".").should be_true
-    filenames.includes?("..").should be_true
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain(".")
+    filenames.should contain("..")
+    filenames.should contain("f1.txt")
   end
 
   it "lists children" do
@@ -533,9 +640,9 @@ describe "Dir" do
       filenames << filename
     end
 
-    filenames.includes?(".").should be_true
-    filenames.includes?("..").should be_true
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain(".")
+    filenames.should contain("..")
+    filenames.should contain("f1.txt")
   end
 
   it "gets child iterator" do
@@ -546,9 +653,9 @@ describe "Dir" do
       filenames << filename
     end
 
-    filenames.includes?(".").should be_false
-    filenames.includes?("..").should be_false
-    filenames.includes?("f1.txt").should be_true
+    filenames.should_not contain(".")
+    filenames.should_not contain("..")
+    filenames.should contain("f1.txt")
   end
 
   it "double close doesn't error" do

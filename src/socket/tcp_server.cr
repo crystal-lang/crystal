@@ -2,6 +2,8 @@ require "./tcp_socket"
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
+# NOTE: To use `TCPServer`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 # ```
 # require "socket"
@@ -18,7 +20,9 @@ require "./tcp_socket"
 # ```
 #
 # Options:
-# - *backlog* to specify how many pending connections are allowed;
+# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *port* specific port to bind on, or `0` to receive an "ephemeral" (free, assigned by kernel) port.
+# - *backlog* to specify how many pending connections are allowed.
 # - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
 class TCPServer < TCPSocket
   include Socket::Server
@@ -62,7 +66,7 @@ class TCPServer < TCPSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false, &)
     server = new(host, port, backlog, reuse_port: reuse_port)
     begin
       yield server
@@ -75,7 +79,7 @@ class TCPServer < TCPSocket
   # block. Eventually closes the server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false, &)
     server = new(port, backlog, reuse_port: reuse_port)
     begin
       yield server

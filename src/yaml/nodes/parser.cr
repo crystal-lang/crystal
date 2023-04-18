@@ -5,7 +5,7 @@ class YAML::Nodes::Parser < YAML::Parser
     @anchors = {} of String => Node
   end
 
-  def self.new(content)
+  def self.new(content, &)
     parser = new(content)
     yield parser ensure parser.close
   end
@@ -46,7 +46,7 @@ class YAML::Nodes::Parser < YAML::Parser
     node.start_column = @pull_parser.start_column.to_i
   end
 
-  def end_value(node)
+  def end_value(node) : Nil
     node.end_line = @pull_parser.end_line.to_i
     node.end_column = @pull_parser.end_column.to_i
   end
@@ -72,15 +72,15 @@ class YAML::Nodes::Parser < YAML::Parser
     documents << document
   end
 
-  def add_to_document(document, node)
+  def add_to_document(document, node) : Nil
     document << node
   end
 
-  def add_to_sequence(sequence, node)
+  def add_to_sequence(sequence, node) : Nil
     sequence << node
   end
 
-  def add_to_mapping(mapping, key, value)
+  def add_to_mapping(mapping, key, value) : Nil
     mapping[key] = value
   end
 end

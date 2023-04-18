@@ -3,7 +3,7 @@ require "big"
 
 class JSON::Builder
   # Writes a big decimal.
-  def number(number : BigDecimal)
+  def number(number : BigDecimal) : Nil
     scalar do
       @io << number
     end
@@ -12,8 +12,14 @@ end
 
 struct BigInt
   def self.new(pull : JSON::PullParser)
-    pull.read_int
-    new(pull.raw_value)
+    case pull.kind
+    when .int?
+      value = pull.raw_value
+      pull.read_next
+    else
+      value = pull.read_string
+    end
+    new(value)
   end
 
   def self.from_json_object_key?(key : String) : BigInt?
@@ -26,7 +32,7 @@ struct BigInt
     to_s
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 end
@@ -34,12 +40,9 @@ end
 struct BigFloat
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when .int?
-      pull.read_int
+    when .int?, .float?
       value = pull.raw_value
-    when .float?
-      pull.read_float
-      value = pull.raw_value
+      pull.read_next
     else
       value = pull.read_string
     end
@@ -56,7 +59,7 @@ struct BigFloat
     to_s
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 end
@@ -64,12 +67,9 @@ end
 struct BigDecimal
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when .int?
-      pull.read_int
+    when .int?, .float?
       value = pull.raw_value
-    when .float?
-      pull.read_float
-      value = pull.raw_value
+      pull.read_next
     else
       value = pull.read_string
     end
@@ -86,7 +86,7 @@ struct BigDecimal
     to_s
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 end

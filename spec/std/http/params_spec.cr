@@ -1,4 +1,4 @@
-require "uri/params"
+require "http/params"
 require "spec"
 
 describe "HTTP::Params" do

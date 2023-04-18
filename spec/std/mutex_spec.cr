@@ -1,4 +1,5 @@
 require "spec"
+require "../support/fibers"
 
 describe Mutex do
   it "locks and unlocks" do

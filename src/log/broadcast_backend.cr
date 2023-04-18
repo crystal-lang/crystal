@@ -15,7 +15,7 @@ class Log::BroadcastBackend < Log::Backend
     super(:direct)
   end
 
-  def append(backend : Log::Backend, level : Severity)
+  def append(backend : Log::Backend, level : Severity) : Nil
     @backends[backend] = level
   end
 
@@ -36,18 +36,13 @@ class Log::BroadcastBackend < Log::Backend
 
   # :nodoc:
   def single_backend?
-    first_backend = @backends.first_key?
-    first_level = @backends[first_backend]
-
-    if first_backend && @backends.size == 1
-      {first_backend, first_level}
-    else
-      nil
+    if @backends.size == 1
+      @backends.first
     end
   end
 
   # :nodoc:
-  def remove(backend : Log::Backend)
+  def remove(backend : Log::Backend) : Nil
     @backends.delete(backend)
   end
 end

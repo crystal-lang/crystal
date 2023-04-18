@@ -18,7 +18,7 @@ module Crystal::System::Dir
       raise ::File::Error.from_os_error("Error opening directory", Errno::ENOENT, file: path)
     end
 
-    DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
+    DirHandle.new(LibC::INVALID_HANDLE_VALUE, System.to_wstr(path + "\\*"))
   end
 
   def self.next_entry(dir : DirHandle, path : String) : Entry?
@@ -27,11 +27,11 @@ module Crystal::System::Dir
       handle = LibC.FindFirstFileW(dir.query, out data)
       if handle != LibC::INVALID_HANDLE_VALUE
         dir.handle = handle
-        return data_to_entry(data)
+        data_to_entry(data)
       else
         error = WinError.value
         if error == WinError::ERROR_FILE_NOT_FOUND
-          return nil
+          nil
         else
           raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
@@ -39,11 +39,11 @@ module Crystal::System::Dir
     else
       # Use FindNextFile
       if LibC.FindNextFileW(dir.handle, out data_) != 0
-        return data_to_entry(data_)
+        data_to_entry(data_)
       else
         error = WinError.value
         if error == WinError::ERROR_NO_MORE_FILES
-          return nil
+          nil
         else
           raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
@@ -53,7 +53,9 @@ module Crystal::System::Dir
 
   def self.data_to_entry(data)
     name = String.from_utf16(data.cFileName.to_unsafe)[0]
-    dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
+    unless data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
+      dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
+    end
     Entry.new(name, dir)
   end
 
@@ -61,14 +63,30 @@ module Crystal::System::Dir
     close(dir)
   end
 
-  def self.close(dir : DirHandle, path : String) : Nil
-    return if dir.handle == LibC::INVALID_HANDLE_VALUE
+  def self.info(dir : DirHandle, path) : ::File::Info
+    if dir.handle == LibC::INVALID_HANDLE_VALUE
+      handle = LibC.FindFirstFileW(dir.query, out data)
+      begin
+        Crystal::System::FileDescriptor.system_info handle, LibC::FILE_TYPE_DISK
+      ensure
+        close(handle, path) rescue nil
+      end
+    else
+      Crystal::System::FileDescriptor.system_info dir.handle, LibC::FILE_TYPE_DISK
+    end
+  end
 
-    if LibC.FindClose(dir.handle) == 0
+  def self.close(dir : DirHandle, path : String) : Nil
+    close(dir.handle, path)
+    dir.handle = LibC::INVALID_HANDLE_VALUE
+  end
+
+  def self.close(handle : LibC::HANDLE, path : String) : Nil
+    return if handle == LibC::INVALID_HANDLE_VALUE
+
+    if LibC.FindClose(handle) == 0
       raise ::File::Error.from_winerror("Error closing directory", file: path)
     end
-
-    dir.handle = LibC::INVALID_HANDLE_VALUE
   end
 
   def self.current : String
@@ -85,7 +103,7 @@ module Crystal::System::Dir
   end
 
   def self.current=(path : String) : String
-    if LibC.SetCurrentDirectoryW(to_windows_path(path)) == 0
+    if LibC.SetCurrentDirectoryW(System.to_wstr(path)) == 0
       raise ::File::Error.from_winerror("Error while changing directory", file: path)
     end
 
@@ -108,18 +126,30 @@ module Crystal::System::Dir
   end
 
   def self.create(path : String, mode : Int32) : Nil
-    if LibC._wmkdir(to_windows_path(path)) == -1
+    if LibC._wmkdir(System.to_wstr(path)) == -1
       raise ::File::Error.from_errno("Unable to create directory", file: path)
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC._wrmdir(to_windows_path(path)) == -1
-      raise ::File::Error.from_errno("Unable to remove directory", file: path)
-    end
-  end
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    win_path = System.to_wstr(path)
 
-  private def self.to_windows_path(path : String) : LibC::LPWSTR
-    path.check_no_null_byte.to_utf16.to_unsafe
+    attributes = LibC.GetFileAttributesW(win_path)
+    if attributes == LibC::INVALID_FILE_ATTRIBUTES
+      File.check_not_found_error("Unable to remove directory", path)
+      raise ::File::Error.from_os_error("Unable to remove directory", Errno::ENOENT, file: path) if raise_on_missing
+      return false
+    end
+
+    # all reparse point directories should be deleted like a directory, not just
+    # symbolic links, so we don't care about the reparse tag here
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
+      # maintain consistency with POSIX, and treat all reparse points (including
+      # symbolic links) as non-directories
+      raise ::File::Error.new("Cannot remove directory that is a reparse point: '#{path.inspect_unquoted}'", file: path)
+    end
+
+    return true if LibC._wrmdir(win_path) == 0
+    raise ::File::Error.from_errno("Unable to remove directory", file: path)
   end
 end

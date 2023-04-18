@@ -1,5 +1,5 @@
 require "spec"
-require "socket/address"
+require "socket"
 require "../../support/win32"
 
 describe Socket::Address do
@@ -33,10 +33,19 @@ describe Socket::Address do
 end
 
 describe Socket::IPAddress do
+  c_port = {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
+             36895 # 0x901F
+           {% else %}
+             8080 # 0x1F90
+           {% end %}
+
   it "transforms an IPv4 address into a C struct and back" do
     addr1 = Socket::IPAddress.new("127.0.0.1", 8080)
-    addr2 = Socket::IPAddress.from(addr1.to_unsafe, addr1.size)
 
+    addr1_c = addr1.to_unsafe
+    addr1_c.as(LibC::SockaddrIn*).value.sin_port.should eq(c_port)
+
+    addr2 = Socket::IPAddress.from(addr1_c, addr1.size)
     addr2.family.should eq(addr1.family)
     addr2.port.should eq(addr1.port)
     typeof(addr2.address).should eq(String)
@@ -45,8 +54,11 @@ describe Socket::IPAddress do
 
   it "transforms an IPv6 address into a C struct and back" do
     addr1 = Socket::IPAddress.new("2001:db8:8714:3a90::12", 8080)
-    addr2 = Socket::IPAddress.from(addr1.to_unsafe, addr1.size)
 
+    addr1_c = addr1.to_unsafe
+    addr1_c.as(LibC::SockaddrIn6*).value.sin6_port.should eq(c_port)
+
+    addr2 = Socket::IPAddress.from(addr1_c, addr1.size)
     addr2.family.should eq(addr1.family)
     addr2.port.should eq(addr1.port)
     typeof(addr2.address).should eq(String)
@@ -56,6 +68,16 @@ describe Socket::IPAddress do
   it "won't resolve domains" do
     expect_raises(Socket::Error, /Invalid IP address/) do
       Socket::IPAddress.new("localhost", 1234)
+    end
+  end
+
+  it "errors on out of range port numbers" do
+    expect_raises(Socket::Error, /Invalid port number/) do
+      Socket::IPAddress.new("localhost", -1)
+    end
+
+    expect_raises(Socket::Error, /Invalid port number/) do
+      Socket::IPAddress.new("localhost", 65536)
     end
   end
 
@@ -99,6 +121,24 @@ describe Socket::IPAddress do
     end
   end
 
+  it ".valid_v6?" do
+    Socket::IPAddress.valid_v6?("::1").should be_true
+    Socket::IPAddress.valid_v6?("x").should be_false
+    Socket::IPAddress.valid_v6?("127.0.0.1").should be_false
+  end
+
+  it ".valid_v4?" do
+    Socket::IPAddress.valid_v4?("127.0.0.1").should be_true
+    Socket::IPAddress.valid_v4?("::1").should be_false
+    Socket::IPAddress.valid_v4?("x").should be_false
+  end
+
+  it ".valid?" do
+    Socket::IPAddress.valid?("127.0.0.1").should be_true
+    Socket::IPAddress.valid?("::1").should be_true
+    Socket::IPAddress.valid?("x").should be_false
+  end
+
   it "#loopback?" do
     Socket::IPAddress.new("127.0.0.1", 0).loopback?.should be_true
     Socket::IPAddress.new("127.255.255.254", 0).loopback?.should be_true
@@ -109,6 +149,9 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("::2", 0).loopback?.should be_false
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK, 0).loopback?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK6, 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:127.0.0.1", 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:127.0.1.1", 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:1.0.0.1", 0).loopback?.should be_false
   end
 
   it "#unspecified?" do
@@ -141,6 +184,23 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("2001:4860:4860::8888", 0).private?.should be_false
   end
 
+  it "#link_local?" do
+    Socket::IPAddress.new("0.0.0.0", 0).link_local?.should be_false
+    Socket::IPAddress.new("127.0.0.1", 0).link_local?.should be_false
+    Socket::IPAddress.new("10.0.0.0", 0).link_local?.should be_false
+    Socket::IPAddress.new("172.16.0.0", 0).link_local?.should be_false
+    Socket::IPAddress.new("192.168.0.0", 0).link_local?.should be_false
+
+    Socket::IPAddress.new("169.254.1.1", 0).link_local?.should be_true
+    Socket::IPAddress.new("169.254.254.255", 0).link_local?.should be_true
+
+    Socket::IPAddress.new("::1", 0).link_local?.should be_false
+    Socket::IPAddress.new("::", 0).link_local?.should be_false
+    Socket::IPAddress.new("fb84:8bf7:e905::1", 0).link_local?.should be_false
+
+    Socket::IPAddress.new("fe80::4860:4860:4860:1234", 0).link_local?.should be_true
+  end
+
   it "#==" do
     Socket::IPAddress.new("127.0.0.1", 8080).should eq Socket::IPAddress.new("127.0.0.1", 8080)
     Socket::IPAddress.new("127.0.0.1", 8080).hash.should eq Socket::IPAddress.new("127.0.0.1", 8080).hash
@@ -153,7 +213,7 @@ describe Socket::IPAddress do
   end
 end
 
-{% unless flag?(:win32) %}
+{% if flag?(:unix) %}
   describe Socket::UNIXAddress do
     it "transforms into a C struct and back" do
       path = "unix_address.sock"
@@ -276,9 +336,8 @@ describe Socket do
     Socket.ip?("1:2:3:4:5:6:7:8::").should be_false
     Socket.ip?("1:2:3:4:5:6:7::9").should be_false
     Socket.ip?("::1:2:3:4:5:6").should be_true
-    {% if flag?(:win32) %}
-      Socket.ip?("::1:2:3:4:5:6:7").should be_false
-    {% else %}
+    # FIXME: On older Windows versions, this returned `false`. It was apparently fixed in Windows Server 2022.
+    {% unless flag?(:win32) %}
       Socket.ip?("::1:2:3:4:5:6:7").should be_true
     {% end %}
     Socket.ip?("::1:2:3:4:5:6:7:8").should be_false

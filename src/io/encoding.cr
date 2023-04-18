@@ -1,4 +1,4 @@
-{% unless flag?(:win32) %}
+{% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
 
@@ -18,9 +18,14 @@ class IO
       end
     end
   end
+end
 
-  {% skip_file if flag?(:win32) %}
+{% if flag?(:without_iconv) %}
+  require "./encoding_stubs"
+  {% skip_file %}
+{% end %}
 
+class IO
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
@@ -224,17 +229,17 @@ class IO
       string
     end
 
-    def write(io)
+    def write(io) : Nil
       io.write @out_slice
       @out_slice = Bytes.empty
     end
 
-    def write(io, numbytes)
+    def write(io, numbytes) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
 
-    def advance(numbytes)
+    def advance(numbytes) : Nil
       @out_slice += numbytes
     end
 

@@ -10,4 +10,12 @@ struct Exception::CallStack
   def self.decode_function_name(pc)
     nil
   end
+
+  protected def self.decode_frame(pc)
+    nil
+  end
+
+  protected def self.unwind : Array(Void*)
+    [] of Void*
+  end
 end

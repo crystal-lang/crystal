@@ -98,7 +98,7 @@ ARGF = IO::ARGF.new(ARGV, STDIN)
 #   # ...
 # end
 # ```
-def loop
+def loop(&)
   while true
     yield
   end
@@ -142,14 +142,19 @@ end
 # being replaced by values from *args* formatted according to the specifier.
 #
 # Within the format string, any characters other than format specifiers
-# (specifiers beginning with `%`) are copied to the result.
-# The formatter supports positional format specifiers (`%.1f`),
-# formatted substitution (`%<name>.1f`) and plain substitution (`%{name}`).
+# (specifiers beginning with `%`) are copied to the result. The formatter
+# supports the following kinds of format specifiers:
 #
-# Substitutions expect the first argument to be a `Hash` or `NamedTuple` to
-# resolve substitution names.
-# Positional specifiers correspond to the positional values in the method
-# arguments, or the array supplied as first argument.
+# * Sequential (`%.1f`). The first `%` consumes the first argument, the second
+#   consumes the second argument, and so on.
+# * Positional (`%3$.1f`). The one-based argument index is specified as part of
+#   the flags.
+# * Named substitution (`%<name>.1f`, `%{name}`). The angle bracket form accepts
+#   flags and the curly bracket form doesn't. Exactly one `Hash` or `NamedTuple`
+#   must be passed as the argument.
+#
+# Mixing of different kinds of format specifiers is disallowed, except that the
+# two named forms may be used together.
 #
 # A simple format specifier consists of a percent sign, followed by optional flags,
 # width, and precision indicators, then terminated with a field type
@@ -165,6 +170,9 @@ end
 # ```text
 # %<name>[flags][width][.precision]type
 # ```
+#
+# The percent sign itself is escaped by `%%`. No format modifiers are allowed,
+# and no arguments are consumed.
 #
 # The field type controls how the corresponding argument value is to be
 # interpreted, while the flags modify that interpretation.
@@ -208,32 +216,48 @@ end
 #   s   | Argument is a string to be substituted. If the format
 #       | sequence contains a precision, at most that many characters
 #       | will be copied.
-#   %   | A percent sign itself will be displayed. No argument taken.
 # ```
 #
 # Flags modify the behavior of the format specifiers:
 #
 # ```text
 # Flag     | Applies to    | Meaning
-# ---------+---------------+--------------------------------------------
+# ---------+---------------+----------------------------------------------------
 # space    | bdiouxX       | Add a leading space character to
-#          | aAeEfgG       | non-negative numbers.
-#          | (numeric fmt) | For o, x, X, b, use
-#          |               | a minus sign with absolute value for
-#          |               | negative values.
-# ---------+---------------+--------------------------------------------
+#          | aAeEfgG       | non-negative numbers. Has no effect if the plus
+#          | (numeric fmt) | flag is also given.
+# ---------+---------------+----------------------------------------------------
+# #        | boxX          | Use an alternative format.
+#          | aAeEfgG       | For x, X, b, prefix any non-zero result with
+#          |               | 0x, 0X, or 0b respectively.
+#          |               | For o, prefix any non-zero result with 0o. Note
+#          |               | that this prefix is different from C and Ruby.
+#          |               | For a, A, e, E, f, g, G,
+#          |               | force a decimal point to be added,
+#          |               | even if no digits follow.
+#          |               | For g and G, do not remove trailing zeros.
+# ---------+---------------+----------------------------------------------------
 # +        | bdiouxX       | Add a leading plus sign to non-negative
 #          | aAeEfgG       | numbers.
-#          | (numeric fmt) | For o, x, X, b, use
-#          |               | a minus sign with absolute value for
-#          |               | negative values.
-# ---------+---------------+--------------------------------------------
+#          | (numeric fmt) |
+# ---------+---------------+----------------------------------------------------
 # -        | all           | Left-justify the result of this conversion.
-# ---------+---------------+--------------------------------------------
-# 0 (zero) | bdiouxX       | Pad with zeros, not spaces.
-#          | aAeEfgG       | For o, x, X, b, radix-1
-#          | (numeric fmt) | is used for negative numbers formatted as
-#          |               | complements.
+# ---------+---------------+----------------------------------------------------
+# 0 (zero) | bdiouxX       | Pad with zeros, not spaces. Has no effect if the
+#          | aAeEfgG       | number is left-justified, or a precision is given
+#          | (numeric fmt) | to an integer field type.
+# ---------+---------------+----------------------------------------------------
+# *        | all           | Use the next argument as the field width or
+#          |               | precision. If width is negative, set the minus flag
+#          |               | and use the argument's absolute value as field
+#          |               | width. If precision is negative, it is ignored.
+# ---------+---------------+----------------------------------------------------
+# 1$ 2$ 3$ | all           | As a flag, specifies the one-based argument index
+# ...      |               | for a positional format specifier.
+#          |               | Immediately after *, use the argument at the given
+#          |               | one-based index as the width or precision, instead
+#          |               | of the next argument. The entire format string must
+#          |               | also use positional format specifiers throughout.
 # ```
 #
 # Examples of flags:
@@ -263,7 +287,7 @@ end
 # sprintf "% x", 123  # => " 7b"
 # sprintf "% x", -123 # => "-7b"
 # sprintf "%X", 123   # => "7B"
-# sprintf "%#X", -123 # => "-7B"
+# sprintf "%#X", -123 # => "-0X7B"
 # ```
 #
 # Binary number conversion:
@@ -274,9 +298,10 @@ end
 # sprintf "%b", -123   # => "-1111011"
 # sprintf "%#b", 0     # => "0"
 # sprintf "% b", 123   # => " 1111011"
-# sprintf "%+ b", 123  # => "+ 1111011"
+# sprintf "%+ b", 123  # => "+1111011"
 # sprintf "% b", -123  # => "-1111011"
 # sprintf "%+ b", -123 # => "-1111011"
+# sprintf "%#b", 123   # => "0b1111011"
 # ```
 #
 # Floating point conversion:
@@ -310,8 +335,8 @@ end
 # sprintf "%-20d", 123  # => "123                 "
 # sprintf "%-+20d", 123 # => "+123                "
 # sprintf "%- 20d", 123 # => " 123                "
-# sprintf "%020x", -123 # => "00000000000000000-7b"
-# sprintf "%020X", -123 # => "00000000000000000-7B"
+# sprintf "%020x", -123 # => "-000000000000000007b"
+# sprintf "%020X", -123 # => "-000000000000000007B"
 # ```
 #
 # For numeric fields, the precision controls the number of decimal places
@@ -325,18 +350,18 @@ end
 # Precision for `d`, `o`, `x` and `b` is
 # minimum number of digits:
 # ```
-# sprintf "%20.8d", 123   # => "                 123"
-# sprintf "%020.8d", 123  # => "00000000000000000123"
-# sprintf "%20.8o", 123   # => "                 173"
-# sprintf "%020.8o", 123  # => "00000000000000000173"
-# sprintf "%20.8x", 123   # => "                  7b"
-# sprintf "%020.8x", 123  # => "0000000000000000007b"
-# sprintf "%20.8b", 123   # => "             1111011"
-# sprintf "%20.8d", -123  # => "                -123"
-# sprintf "%020.8d", -123 # => "0000000000000000-123"
-# sprintf "%20.8o", -123  # => "                -173"
-# sprintf "%20.8x", -123  # => "                 -7b"
-# sprintf "%20.8b", -11   # => "               -1011"
+# sprintf "%20.8d", 123   # => "            00000123"
+# sprintf "%020.8d", 123  # => "            00000123"
+# sprintf "%20.8o", 123   # => "            00000173"
+# sprintf "%020.8o", 123  # => "            00000173"
+# sprintf "%20.8x", 123   # => "            0000007b"
+# sprintf "%020.8x", 123  # => "            0000007b"
+# sprintf "%20.8b", 123   # => "            01111011"
+# sprintf "%20.8d", -123  # => "           -00000123"
+# sprintf "%020.8d", -123 # => "           -00000123"
+# sprintf "%20.8o", -123  # => "           -00000173"
+# sprintf "%20.8x", -123  # => "           -0000007b"
+# sprintf "%20.8b", -11   # => "           -00001011"
 # ```
 #
 # Precision for `e` is number of digits after the decimal point:
@@ -363,9 +388,10 @@ end
 #
 # Additional examples:
 # ```
-# sprintf "%d %04x", 123, 123             # => "123 007b"
-# sprintf "%08b '%4s'", 123, 123          # => "01111011 ' 123'"
-# sprintf "%+g:% g:%-g", 1.23, 1.23, 1.23 # => "+1.23: 1.23:1.23"
+# sprintf "%d %04x", 123, 123                 # => "123 007b"
+# sprintf "%08b '%4s'", 123, 123              # => "01111011 ' 123'"
+# sprintf "%+g:% g:%-g", 1.23, 1.23, 1.23     # => "+1.23: 1.23:1.23"
+# sprintf "%-3$*1$.*2$s", 10, 5, "abcdefghij" # => "abcde     "
 # ```
 def sprintf(format_string, *args) : String
   sprintf format_string, args
@@ -502,7 +528,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) %}
+{% unless flag?(:preview_mt) || flag?(:wasm32) %}
   class Process
     # :nodoc:
     #
@@ -510,11 +536,11 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # clean ups (don't depend on event loop):
-        ->Crystal::Signal.after_fork,
-        ->Crystal::SignalChildHandler.after_fork,
+        ->Crystal::System::Signal.after_fork,
+        ->Crystal::System::SignalChildHandler.after_fork,
 
         # reinit event loop:
-        ->Crystal::EventLoop.after_fork,
+        ->{ Crystal::Scheduler.event_loop.after_fork },
 
         # more clean ups (may depend on event loop):
         ->Random::DEFAULT.new_seed,
@@ -523,7 +549,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
+{% unless flag?(:interpreted) || flag?(:wasm32) %}
   # Background loop to cleanup unused fiber stacks.
   spawn(name: "Fiber Clean Loop") do
     loop do
@@ -532,20 +558,22 @@ end
     end
   end
 
-  Signal.setup_default_handlers
-  Signal.setup_segfault_handler
-{% end %}
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
+  {% end %}
 
-{% if !flag?(:win32) %}
-  # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
-  # this will make dwarf available on print_frame that is used by Crystal's segfault handler
+  # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+  # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
-  # - CRYSTAL_LOAD_DWARF=0 will never use dwarf information (See Exception::CallStack.load_dwarf)
-  # - CRYSTAL_LOAD_DWARF=1 will load dwarf on startup
-  # - Other values will load dwarf on demand: when the backtrace of the first exception is generated
-  Exception::CallStack.load_dwarf if ENV["CRYSTAL_LOAD_DWARF"]? == "1"
-{% end %}
+  # - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+  # - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+  # - Other values will load debug info on demand: when the backtrace of the first exception is generated
+  Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
+  Exception::CallStack.setup_crash_handler
 
-{% if flag?(:preview_mt) %}
-  Crystal::Scheduler.init_workers
+  {% if flag?(:preview_mt) %}
+    Crystal::Scheduler.init_workers
+  {% end %}
 {% end %}

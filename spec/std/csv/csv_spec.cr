@@ -13,7 +13,7 @@ describe CSV do
 
   it "works without headers" do
     csv = CSV.new("", headers: true)
-    csv.headers.empty?.should be_true
+    csv.headers.should be_empty
   end
 
   it "raises if trying to access before first row" do

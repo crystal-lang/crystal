@@ -1,19 +1,19 @@
 struct Time::Format
   module Pattern
-    def date_time_iso_8601
+    def date_time_iso_8601 : Nil
       year_month_day_iso_8601
       char? 'T'
       time_iso_8601
     end
 
-    def time_iso_8601
+    def time_iso_8601 : Nil
       hour_minute_second_iso8601
       time_zone_z_or_offset
     end
   end
 
   struct Parser
-    def year_month_day_iso_8601
+    def year_month_day_iso_8601 : Nil
       year
       extended_format = char? '-'
       if current_char == 'W'
@@ -58,7 +58,7 @@ struct Time::Format
       end
     end
 
-    def hour_minute_second_iso8601
+    def hour_minute_second_iso8601 : Nil
       hour_24_zero_padded
       decimal_seconds = Time::SECONDS_PER_HOUR
 
@@ -77,7 +77,7 @@ struct Time::Format
 
           second
 
-          if current_char == '.' || current_char == ','
+          if current_char.in?('.', ',')
             next_char
             second_fraction
           end
@@ -86,7 +86,7 @@ struct Time::Format
         end
       end
 
-      if current_char == '.' || current_char == ','
+      if current_char.in?('.', ',')
         next_char
 
         pos = @reader.pos
@@ -106,7 +106,7 @@ struct Time::Format
   end
 
   struct Formatter
-    def year_month_day_iso_8601
+    def year_month_day_iso_8601 : Nil
       year_month_day
     end
 
@@ -116,6 +116,11 @@ struct Time::Format
   end
 
   # The ISO 8601 date format.
+  #
+  # ```
+  # Time::Format::ISO_8601_DATE.parse("2016-02-15")                      # => 2016-02-15 00:00:00.0 UTC
+  # Time::Format::ISO_8601_DATE.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15"
+  # ```
   module ISO_8601_DATE
     # Parses a string into a `Time`.
     def self.parse(string, location : Time::Location? = Time::Location::UTC) : Time
@@ -140,6 +145,11 @@ struct Time::Format
   end
 
   # The ISO 8601 date time format.
+  #
+  # ```
+  # Time::Format::ISO_8601_DATE_TIME.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "2016-02-15T04:35:50Z"
+  # Time::Format::ISO_8601_DATE_TIME.parse("2016-02-15T04:35:50Z")            # => 2016-02-15 04:35:50.0 UTC
+  # ```
   module ISO_8601_DATE_TIME
     # Parses a string into a `Time`.
     def self.parse(string, location : Time::Location? = Time::Location::UTC) : Time
@@ -164,6 +174,11 @@ struct Time::Format
   end
 
   # The ISO 8601 time format.
+  #
+  # ```
+  # Time::Format::ISO_8601_TIME.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "04:35:50Z"
+  # Time::Format::ISO_8601_TIME.parse("04:35:50Z")                       # => 0001-01-01 04:35:50.0 UTC
+  # ```
   module ISO_8601_TIME
     # Parses a string into a `Time`.
     def self.parse(string, location : Time::Location? = Time::Location::UTC) : Time

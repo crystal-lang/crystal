@@ -13,23 +13,63 @@ module Crystal
 
     private DEFAULT_LIB_PATH = "lib"
 
-    def self.default_path
-      ENV["CRYSTAL_PATH"]? || begin
-        if Crystal::Config.path.blank?
-          DEFAULT_LIB_PATH
-        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
-          Crystal::Config.path
+    def self.default_paths : Array(String)
+      if path = ENV["CRYSTAL_PATH"]?
+        path_array = path.split(Process::PATH_DELIMITER, remove_empty: true)
+      elsif path = Crystal::Config.path.presence
+        path_array = path.split(Process::PATH_DELIMITER, remove_empty: true)
+        unless path_array.includes?(DEFAULT_LIB_PATH)
+          path_array.unshift DEFAULT_LIB_PATH
+        end
+      else
+        path_array = [DEFAULT_LIB_PATH]
+      end
+
+      expand_paths(path_array)
+
+      path_array
+    end
+
+    def self.default_path : String
+      default_paths.join(Process::PATH_DELIMITER)
+    end
+
+    # Expand `$ORIGIN` in the paths to the directory where the compiler binary
+    # is located (at runtime).
+    # For install locations like
+    #    `/path/prefix/bin/crystal`         for the compiler
+    #    `/path/prefix/share/crystal/src`   for the standard library
+    # the path `$ORIGIN/../share/crystal/src` resolves to
+    # the standard library location.
+    # This generic path can be passed into the compiler via CRYSTAL_CONFIG_PATH
+    # to produce a portable binary that resolves the standard library path
+    # relative to the compiler location, independent of the absolute path.
+    def self.expand_paths(paths, origin)
+      paths.map! do |path|
+        if (chopped = path.lchop?("$ORIGIN")) && chopped[0].in?(::Path::SEPARATORS)
+          if origin.nil?
+            raise "Missing executable path to expand $ORIGIN path"
+          end
+          File.join(origin, chopped)
         else
-          {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
+          path
         end
       end
     end
 
+    def self.expand_paths(paths)
+      origin = nil
+      if executable_path = Process.executable_path
+        origin = File.dirname(executable_path)
+      end
+      expand_paths(paths, origin)
+    end
+
     property entries : Array(String)
 
-    def initialize(path = CrystalPath.default_path, codegen_target = Config.host_target)
-      @entries = path.split(Process::PATH_DELIMITER).reject &.empty?
+    def initialize(@entries : Array(String) = CrystalPath.default_paths, codegen_target = Config.host_target)
       add_target_path(codegen_target)
+      @current_dir = Dir.current
     end
 
     private def add_target_path(codegen_target)
@@ -44,7 +84,7 @@ module Crystal
       end
     end
 
-    def find(filename, relative_to = nil) : Array(String)?
+    def find(filename, relative_to = nil) : Array(String)
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
 
       if filename.starts_with? '.'
@@ -79,7 +119,7 @@ module Crystal
       end
 
       each_file_expansion(filename, relative_to) do |path|
-        absolute_path = File.expand_path(path)
+        absolute_path = File.expand_path(path, dir: @current_dir)
         return absolute_path if File.exists?(absolute_path)
       end
 
@@ -151,7 +191,7 @@ module Crystal
       dirs.sort!
 
       files.each do |file|
-        files_accumulator << File.expand_path(file)
+        files_accumulator << File.expand_path(file, dir: @current_dir)
       end
 
       dirs.each do |subdir|

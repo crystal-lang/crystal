@@ -16,7 +16,7 @@ class Crystal::Command
   private def spec
     compiler = new_compiler
     link_flags = [] of String
-    OptionParser.parse(options) do |opts|
+    parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal spec [options] [files] [runtime_options]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
 
@@ -87,14 +87,15 @@ class Crystal::Command
 
     source_filename = File.expand_path("spec")
 
-    source = target_filenames.map { |filename|
-      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix}")
-    }.join('\n')
+    source = target_filenames.join('\n') do |filename|
+      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix.to_s.inspect_unquoted}")
+    end
     sources = [Compiler::Source.new(source_filename, source)]
 
     output_filename = Crystal.temp_executable "spec"
 
-    result = compiler.compile sources, output_filename
+    ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= Process.executable_path
+    compiler.compile sources, output_filename
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end

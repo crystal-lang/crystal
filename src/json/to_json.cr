@@ -25,7 +25,7 @@ class Object
 end
 
 struct Nil
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.null
   end
 
@@ -35,13 +35,13 @@ struct Nil
 end
 
 struct Bool
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.bool(self)
   end
 end
 
 struct Int
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 
@@ -51,7 +51,7 @@ struct Int
 end
 
 struct Float
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 
@@ -61,7 +61,7 @@ struct Float
 end
 
 class String
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.string(self)
   end
 
@@ -71,7 +71,7 @@ class String
 end
 
 struct Path
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     @name.to_json(json)
   end
 
@@ -81,7 +81,7 @@ struct Path
 end
 
 struct Symbol
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.string(to_s)
   end
 
@@ -91,7 +91,7 @@ struct Symbol
 end
 
 class Array
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.array do
       each &.to_json(json)
     end
@@ -99,7 +99,7 @@ class Array
 end
 
 class Deque
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.array do
       each &.to_json(json)
     end
@@ -107,6 +107,16 @@ class Deque
 end
 
 struct Set
+  def to_json(json : JSON::Builder) : Nil
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
+module Iterator(T)
+  # Converts the content of an iterator into a JSON array in lazy way.
+  # See `Iterator#from_json` for an example.
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -120,7 +130,7 @@ class Hash
   # Keys are serialized by invoking `to_json_object_key` on them.
   # Values are serialized with the usual `to_json(json : JSON::Builder)`
   # method.
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.object do
       each do |key, value|
         json.field key.to_json_object_key do
@@ -132,7 +142,7 @@ class Hash
 end
 
 struct Tuple
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.array do
       {% for i in 0...T.size %}
         self[{{i}}].to_json(json)
@@ -154,7 +164,7 @@ struct NamedTuple
 end
 
 struct Time::Format
-  def to_json(value : Time, json : JSON::Builder)
+  def to_json(value : Time, json : JSON::Builder) : Nil
     format(value).to_json(json)
   end
 end
@@ -263,13 +273,13 @@ struct Time
   # a time value.
   #
   # See `#from_json` for reference.
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.string(Time::Format::RFC_3339.format(self, fraction_digits: 0))
   end
 end
 
 # Converter to be used with `JSON::Serializable`
-# to serialize the `Array(T)` elements with the custom converter.
+# to serialize the elements of an `Array(T)` with the custom converter.
 #
 # ```
 # require "json"
@@ -285,18 +295,52 @@ end
 # timestamp.dates   # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
 # timestamp.to_json # => %({"dates":[1459859781,1567628762]})
 # ```
+#
+# `JSON::ArrayConverter.new` should be used if the nested converter is also an
+# instance instead of a type.
+#
+# ```
+# require "json"
+#
+# class TimestampArray
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: JSON::ArrayConverter.new(Time::Format.new("%b %-d, %Y")))]
+#   property dates : Array(Time)
+# end
+#
+# timestamp = TimestampArray.from_json(%({"dates":["Apr 5, 2016","Sep 4, 2019"]}))
+# timestamp.dates   # => [2016-04-05 00:00:00 UTC, 2019-09-04 00:00:00 UTC]
+# timestamp.to_json # => %({"dates":["Apr 5, 2016","Sep 4, 2019"]})
+# ```
+#
+# This implies that `JSON::ArrayConverter(T)` and
+# `JSON::ArrayConverter(T.class).new(T)` perform the same serializations.
 module JSON::ArrayConverter(Converter)
-  def self.to_json(values : Array, builder : JSON::Builder)
-    builder.array do
-      values.each do |value|
-        Converter.to_json(value, builder)
+  private struct WithInstance(T)
+    def initialize(@converter : T)
+    end
+
+    def to_json(values : Array, builder : JSON::Builder)
+      builder.array do
+        values.each do |value|
+          @converter.to_json(value, builder)
+        end
       end
     end
+  end
+
+  def self.new(converter : Converter)
+    WithInstance.new(converter)
+  end
+
+  def self.to_json(values : Array, builder : JSON::Builder)
+    WithInstance.new(Converter).to_json(values, builder)
   end
 end
 
 # Converter to be used with `JSON::Serializable`
-# to serialize the `Hash(K, V)` values elements with the custom converter.
+# to serialize the values of a `Hash(String, V)` with the custom converter.
 #
 # ```
 # require "json"
@@ -309,18 +353,52 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
-# timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC}
+# timestamp.to_json   # => %({"birthdays":{"foo":1459859781,"bar":1567628762}})
 # ```
+#
+# `JSON::HashValueConverter.new` should be used if the nested converter is also
+# an instance instead of a type.
+#
+# ```
+# require "json"
+#
+# class TimestampHash
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: JSON::HashValueConverter.new(Time::Format.new("%b %-d, %Y")))]
+#   property birthdays : Hash(String, Time)
+# end
+#
+# timestamp = TimestampHash.from_json(%({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}))
+# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00 UTC, "bar" => 2019-09-04 00:00:00 UTC}
+# timestamp.to_json   # => %({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}})
+# ```
+#
+# This implies that `JSON::HashValueConverter(T)` and
+# `JSON::HashValueConverter(T.class).new(T)` perform the same serializations.
 module JSON::HashValueConverter(Converter)
-  def self.to_json(values : Hash, builder : JSON::Builder)
-    builder.object do
-      values.each do |key, value|
-        builder.field key.to_json_object_key do
-          Converter.to_json(value, builder)
+  private struct WithInstance(T)
+    def initialize(@converter : T)
+    end
+
+    def to_json(values : Hash, builder : JSON::Builder)
+      builder.object do
+        values.each do |key, value|
+          builder.field key.to_json_object_key do
+            @converter.to_json(value, builder)
+          end
         end
       end
     end
+  end
+
+  def self.new(converter : Converter)
+    WithInstance.new(converter)
+  end
+
+  def self.to_json(values : Hash, builder : JSON::Builder)
+    WithInstance.new(Converter).to_json(values, builder)
   end
 end
 
@@ -343,7 +421,7 @@ end
 # person.to_json    # => %({"birth_date":1459859781})
 # ```
 module Time::EpochConverter
-  def self.to_json(value : Time, json : JSON::Builder)
+  def self.to_json(value : Time, json : JSON::Builder) : Nil
     json.number(value.to_unix)
   end
 end
@@ -367,7 +445,7 @@ end
 # timestamp.to_json # => %({"value":1459860483856})
 # ```
 module Time::EpochMillisConverter
-  def self.to_json(value : Time, json : JSON::Builder)
+  def self.to_json(value : Time, json : JSON::Builder) : Nil
     json.number(value.to_unix_ms)
   end
 end
@@ -394,7 +472,7 @@ end
 # raw.to_json # => %({"value":123456789876543212345678987654321})
 # ```
 module String::RawConverter
-  def self.to_json(value : String, json : JSON::Builder)
+  def self.to_json(value : String, json : JSON::Builder) : Nil
     json.raw(value)
   end
 end

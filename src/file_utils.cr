@@ -1,3 +1,4 @@
+# NOTE: To use `FileUtils`, you must explicitly import it with `require "file_utils"`
 module FileUtils
   extend self
 
@@ -10,7 +11,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd`
-  def cd(path : Path | String)
+  def cd(path : Path | String) : Nil
     Dir.cd(path)
   end
 
@@ -24,7 +25,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : Path | String)
+  def cd(path : Path | String, &)
     Dir.cd(path) { yield }
   end
 
@@ -89,7 +90,7 @@ module FileUtils
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def cp(src_path : Path | String, dest : Path | String) : Nil
-    dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
+    dest = Path[dest, File.basename(src_path)] if Dir.exists?(dest)
     File.copy(src_path, dest)
   end
 
@@ -147,7 +148,7 @@ module FileUtils
   # # Create a hard link, pointing from /tmp/foo.c to foo.c
   # FileUtils.ln("foo.c", "/tmp")
   # ```
-  def ln(src_path : Path | String, dest_path : Path | String)
+  def ln(src_path : Path | String, dest_path : Path | String) : Nil
     if Dir.exists?(dest_path)
       File.link(src_path, File.join(dest_path, File.basename(src_path)))
     else
@@ -183,7 +184,7 @@ module FileUtils
   # # Create a symbolic link pointing from /tmp/src to src
   # FileUtils.ln_s("src", "/tmp")
   # ```
-  def ln_s(src_path : Path | String, dest_path : Path | String)
+  def ln_s(src_path : Path | String, dest_path : Path | String) : Nil
     if Dir.exists?(dest_path)
       File.symlink(src_path, File.join(dest_path, File.basename(src_path)))
     else
@@ -217,7 +218,7 @@ module FileUtils
   # # Create a symbolic link pointing from bar.c to foo.c, even if bar.c already exists
   # FileUtils.ln_sf("foo.c", "bar.c")
   # ```
-  def ln_sf(src_path : Path | String, dest_path : Path | String)
+  def ln_sf(src_path : Path | String, dest_path : Path | String) : Nil
     if File.directory?(dest_path)
       dest_path = File.join(dest_path, File.basename(src_path))
     end
@@ -306,15 +307,20 @@ module FileUtils
 
   # Moves *src_path* to *dest_path*.
   #
+  # NOTE: If *src_path* and *dest_path* exist on different mounted filesystems,
+  # the file at *src_path* is copied to *dest_path* and then removed.
+  #
   # ```
   # require "file_utils"
   #
   # FileUtils.mv("afile", "afile.cr")
   # ```
-  #
-  # NOTE: Alias of `File.rename`
   def mv(src_path : Path | String, dest_path : Path | String) : Nil
-    File.rename(src_path, dest_path)
+    if error = Crystal::System::File.rename(src_path.to_s, dest_path.to_s)
+      raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
+      cp_r(src_path, dest_path)
+      rm_r(src_path)
+    end
   end
 
   # Moves every *srcs* to *dest*.
@@ -420,10 +426,8 @@ module FileUtils
   # FileUtils.rm_rf("non_existent_file")
   # ```
   def rm_rf(path : Path | String) : Nil
-    begin
-      rm_r(path)
-    rescue File::Error
-    end
+    rm_r(path)
+  rescue File::Error
   end
 
   # Deletes a list of files or directories *paths*.

@@ -4,8 +4,7 @@ module Crystal::Git
   # Tries to run git command with args.
   # Yields block if exec fails or process status is not success.
   def self.git_command(args, output : Process::Stdio = Process::Redirect::Close)
-    status = Process.run(executable, args, output: output)
-    return status.success?
+    Process.run(executable, args, output: output).success?
   rescue IO::Error
     false
   end

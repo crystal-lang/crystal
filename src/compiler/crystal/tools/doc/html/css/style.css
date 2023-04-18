@@ -84,25 +84,25 @@ body {
 }
 
 .sidebar input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
-  color: #C8C8C8;
+  color: #757575;
   font-size: 14px;
   text-indent: 2px;
 }
 
 .sidebar input::-moz-placeholder { /* Firefox 19+ */
-  color: #C8C8C8;
+  color: #757575;
   font-size: 14px;
   text-indent: 2px;
 }
 
 .sidebar input:-ms-input-placeholder { /* IE 10+ */
-  color: #C8C8C8;
+  color: #757575;
   font-size: 14px;
   text-indent: 2px;
 }
 
 .sidebar input:-moz-placeholder { /* Firefox 18- */
-  color: #C8C8C8;
+  color: #757575;
   font-size: 14px;
   text-indent: 2px;
 }

@@ -1,9 +1,10 @@
 require "./spec_helper"
 require "../../support/tempfile"
+require "../../support/win32"
 
-describe Socket do
+describe Socket, tags: "network" do
   describe ".unix" do
-    it "creates a unix socket" do
+    pending_win32 "creates a unix socket" do
       sock = Socket.unix
       sock.should be_a(Socket)
       sock.family.should eq(Socket::Family::UNIX)
@@ -11,6 +12,16 @@ describe Socket do
 
       sock = Socket.unix(Socket::Type::DGRAM)
       sock.type.should eq(Socket::Type::DGRAM)
+
+      expect_raises Socket::Error, "Protocol not supported" do
+        TCPSocket.new(family: :unix)
+      end
+    end
+  end
+
+  describe "#tty?" do
+    it "with non TTY" do
+      Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP).tty?.should be_false
     end
   end
 
@@ -76,7 +87,7 @@ describe Socket do
     server.try &.close
   end
 
-  it "sends datagram over unix socket" do
+  pending_win32 "sends datagram over unix socket" do
     with_tempfile("datagram_unix") do |path|
       server = Socket.unix(Socket::Type::DGRAM)
       server.bind Socket::UNIXAddress.new(path)
@@ -114,6 +125,22 @@ describe Socket do
         address.port.should be > 0
       ensure
         socket.try &.close
+      end
+
+      it "binds to port using default IP" do
+        socket = TCPSocket.new family
+        socket.bind unused_local_port
+        socket.listen
+
+        address = socket.local_address.as(Socket::IPAddress)
+        address.address.should eq(any_address)
+        address.port.should be > 0
+
+        socket.close
+
+        socket = UDPSocket.new family
+        socket.bind unused_local_port
+        socket.close
       end
     end
   end

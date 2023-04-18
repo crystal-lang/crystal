@@ -197,28 +197,11 @@ module Crystal
           {MacroId.new(entry.key), entry.value}
         end
       when RangeLiteral
-        exp.from.accept self
-        from = @last
-
-        unless from.is_a?(NumberLiteral)
-          node.raise "range begin #{exp.from} must evaluate to a NumberLiteral"
-        end
-
-        from = from.to_number.to_i
-
-        exp.to.accept self
-        to = @last
-
-        unless to.is_a?(NumberLiteral)
-          node.raise "range end #{exp.to} must evaluate to a NumberLiteral"
-        end
-
-        to = to.to_number.to_i
+        range = exp.interpret_to_range(self)
 
         element_var = node.vars[0]
         index_var = node.vars[1]?
 
-        range = Range.new(from, to, exp.exclusive?)
         range.each_with_index do |element, index|
           @vars[element_var.name] = NumberLiteral.new(element)
           if index_var
@@ -255,7 +238,7 @@ module Crystal
       visit_macro_for_array_like node, exp, exp.elements, &.itself
     end
 
-    def visit_macro_for_array_like(node, exp, entries)
+    def visit_macro_for_array_like(node, exp, entries, &)
       element_var = node.vars[0]
       index_var = node.vars[1]?
 
@@ -271,7 +254,7 @@ module Crystal
       @vars.delete index_var.name if index_var
     end
 
-    def visit_macro_for_hash_like(node, exp, entries)
+    def visit_macro_for_hash_like(node, exp, entries, &)
       key_var = node.vars[0]
       value_var = node.vars[1]?
       index_var = node.vars[2]?
@@ -440,6 +423,7 @@ module Crystal
 
       case matched_type
       when Const
+        @program.check_deprecated_constant(matched_type, node)
         matched_type.value
       when Type
         matched_type = matched_type.remove_alias
@@ -485,12 +469,12 @@ module Crystal
       end
     end
 
-    def resolve(node : Generic)
+    def resolve(node : Generic | Metaclass | ProcNotation)
       type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
       TypeNode.new(type)
     end
 
-    def resolve?(node : Generic)
+    def resolve?(node : Generic | Metaclass | ProcNotation)
       resolve(node)
     rescue Crystal::CodeError
       nil
@@ -535,9 +519,8 @@ module Crystal
 
     def visit(node : IsA)
       node.obj.accept self
-      const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      macro_type = @program.lookup_macro_type(node.const)
+      @last = BoolLiteral.new(@last.macro_is_a?(macro_type))
       false
     end
 

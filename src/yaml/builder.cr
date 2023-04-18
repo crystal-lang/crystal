@@ -42,7 +42,7 @@ class YAML::Builder
     LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
-      data_io.write(Slice.new(buffer, size))
+      data_io.write_string(Slice.new(buffer, size))
       1
     }, @box)
   end
@@ -61,13 +61,13 @@ class YAML::Builder
   end
 
   # Ends a YAML stream.
-  def end_stream
+  def end_stream : Nil
     emit stream_end
     flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
-  def stream
+  def stream(&)
     start_stream
     yield.tap { end_stream }
   end
@@ -83,7 +83,7 @@ class YAML::Builder
   end
 
   # Starts a document, invokes the block, and then ends it.
-  def document
+  def document(&)
     start_document
     yield.tap { end_document }
   end
@@ -96,39 +96,39 @@ class YAML::Builder
   end
 
   # Starts a sequence.
-  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a sequence.
-  def end_sequence
+  def end_sequence : Nil
     emit sequence_end
     decrease_nesting
   end
 
   # Starts a sequence, invokes the block, and the ends it.
-  def sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+  def sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY, &)
     start_sequence(anchor, tag, style)
     yield.tap { end_sequence }
   end
 
   # Starts a mapping.
-  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a mapping.
-  def end_mapping
+  def end_mapping : Nil
     emit mapping_end
     decrease_nesting
   end
 
   # Starts a mapping, invokes the block, and then ends it.
-  def mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+  def mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY, &)
     start_mapping(anchor, tag, style)
     yield.tap { end_mapping }
   end
@@ -185,7 +185,7 @@ class YAML::Builder
   end
 
   # Closes the builder, freeing up resources.
-  def close
+  def close : Nil
     finalize
     @closed = true
   end
@@ -239,7 +239,7 @@ module YAML
   # end
   # string # => "---\nfoo:\n- 1\n- 2\n"
   # ```
-  def self.build
+  def self.build(&)
     String.build do |str|
       build(str) do |yaml|
         yield yaml
@@ -248,7 +248,7 @@ module YAML
   end
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
-  def self.build(io : IO) : Nil
+  def self.build(io : IO, &) : Nil
     YAML::Builder.build(io) do |yaml|
       yaml.stream do
         yaml.document do

@@ -7,7 +7,7 @@ class XML::Node
   end
 
   # :ditto:
-  def initialize(node : LibXML::Doc*)
+  def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
     initialize(node.as(LibXML::Node*))
   end
 
@@ -294,23 +294,31 @@ class XML::Node
     end
   end
 
-  # Returns namespaces in scope for self – those defined on self element
+  # Returns namespaces defined on this node directly.
+  def namespace_definitions : Array(Namespace)
+    namespaces = [] of Namespace
+
+    ns = @node.value.ns_def
+    while ns
+      namespaces << Namespace.new(document, ns)
+      ns = ns.value.next
+    end
+
+    namespaces
+  end
+
+  # Returns namespaces in scope for this node – those defined on this node
   # directly or any ancestor node – as an `Array` of `XML::Namespace` objects.
   #
-  # Default namespaces (`"xmlns="` style) for self are included in this array;
-  # Default namespaces for ancestors, however, are not.
+  # Default namespaces (`"xmlns="` style) for this node are included in this
+  # array; default namespaces for ancestors, however, are not.
   #
   # See also `#namespaces`
   def namespace_scopes : Array(Namespace)
     scopes = [] of Namespace
 
-    ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
-
-    if ns_list
-      while ns_list.value
-        scopes << Namespace.new(document, ns_list.value)
-        ns_list += 1
-      end
+    each_namespace do |namespace|
+      scopes << namespace
     end
 
     scopes
@@ -321,7 +329,7 @@ class XML::Node
   #
   # This method returns the same namespaces as `#namespace_scopes`.
   #
-  # Returns namespaces in scope for self – those defined on self element
+  # Returns namespaces in scope for this node – those defined on this node
   # directly or any ancestor node – as a `Hash` of attribute-name/value pairs.
   #
   # NOTE: Note that the keys in this hash XML attributes that would be used to
@@ -440,7 +448,7 @@ class XML::Node
 
       save_ctx = LibXML.xmlSaveToIO(
         ->(ctx, buffer, len) {
-          Box(IO).unbox(ctx).write Slice.new(buffer, len)
+          Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
           len
         },
         ->(ctx) {
@@ -568,16 +576,10 @@ class XML::Node
     xpath(path, namespaces, variables).as(String)
   end
 
-  # :nodoc:
-  def errors=(errors)
-    @node.value._private = errors.as(Void*)
-  end
-
   # Returns the list of `XML::Error` found when parsing this document.
   # Returns `nil` if no errors were found.
   def errors : Array(XML::Error)?
-    ptr = @node.value._private
-    ptr ? (ptr.as(Array(XML::Error))) : nil
+    return @errors unless @errors.try &.empty?
   end
 
   private def check_no_null_byte(string)

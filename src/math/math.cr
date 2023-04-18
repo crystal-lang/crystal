@@ -443,7 +443,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for the given *order*.
   def besselj(order : Int32, value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj_f64(order, value).to_f32
     {% else %}
       LibM.besselj_f32(order, value)
@@ -462,7 +462,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for order 0.
   def besselj0(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj0_f64(value).to_f32
     {% else %}
       LibM.besselj0_f32(value)
@@ -481,7 +481,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for order 1.
   def besselj1(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj1_f64(value).to_f32
     {% else %}
       LibM.besselj1_f32(value)
@@ -500,7 +500,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for the given *order*.
   def bessely(order : Int32, value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely_f64(order, value).to_f32
     {% else %}
       LibM.bessely_f32(order, value)
@@ -519,7 +519,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for order 0.
   def bessely0(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely0_f64(value).to_f32
     {% else %}
       LibM.bessely0_f32(value)
@@ -538,7 +538,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for order 1.
   def bessely1(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely1_f64(value).to_f32
     {% else %}
       LibM.bessely1_f32(value)
@@ -656,8 +656,14 @@ module Math
 
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : Float32) : {Float32, Int32}
-    frac = LibM.frexp_f32(value, out exp)
-    {frac, exp}
+    {% if flag?(:win32) %}
+      # libucrt does not export `frexpf` and instead defines it like this
+      frac = LibM.frexp_f64(value, out exp)
+      {frac.to_f32, exp}
+    {% else %}
+      frac = LibM.frexp_f32(value, out exp)
+      {frac, exp}
+    {% end %}
   end
 
   # :ditto:
@@ -716,31 +722,18 @@ module Math
     value1 <= value2 ? value1 : value2
   end
 
-  # Computes the next highest power of 2 of *v*.
+  # Computes the smallest nonnegative power of 2 that is greater than or equal
+  # to *v*.
+  #
+  # The returned value has the same type as the argument. Raises `OverflowError`
+  # if the result does not fit into the argument's type.
   #
   # ```
   # Math.pw2ceil(33) # => 64
+  # Math.pw2ceil(64) # => 64
+  # Math.pw2ceil(-5) # => 1
   # ```
-  def pw2ceil(v : Int32)
-    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v += v == -1 ? 2 : 1
-  end
-
-  def pw2ceil(v : Int64)
-    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v |= v >> 32
-    v += v == -1 ? 2 : 1
+  def pw2ceil(v : Int::Primitive)
+    v.next_power_of_two
   end
 end

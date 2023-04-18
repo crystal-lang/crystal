@@ -1,5 +1,7 @@
 # The XML module allows parsing and generating [XML](https://www.w3.org/XML/) documents.
 #
+# NOTE: To use `XML`, you must explicitly import it with `require "xml"`
+#
 # ### Parsing
 #
 # `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML::Node` which represents all kinds of xml nodes.
@@ -52,14 +54,14 @@ module XML
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    from_ptr LibXML.xmlReadMemory(string, string.bytesize, nil, nil, options)
+    from_ptr { LibXML.xmlReadMemory(string, string.bytesize, nil, nil, options) }
   end
 
   # Parses an XML document from *io* with *options* into an `XML::Node`.
   #
   # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
-    from_ptr LibXML.xmlReadIO(
+    from_ptr { LibXML.xmlReadIO(
       ->(ctx, buffer, len) {
         LibC::Int.new(Box(IO).unbox(ctx).read Slice.new(buffer, len))
       },
@@ -68,7 +70,7 @@ module XML
       nil,
       nil,
       options,
-    )
+    ) }
   end
 
   # Parses an HTML document from *string* with *options* into an `XML::Node`.
@@ -76,14 +78,14 @@ module XML
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
+    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options) }
   end
 
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
   #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
-    from_ptr LibXML.htmlReadIO(
+    from_ptr { LibXML.htmlReadIO(
       ->(ctx, buffer, len) {
         LibC::Int.new(Box(IO).unbox(ctx).read Slice.new(buffer, len))
       },
@@ -92,15 +94,16 @@ module XML
       nil,
       nil,
       options,
-    )
+    ) }
   end
 
-  protected def self.from_ptr(doc : LibXML::Doc*)
+  protected def self.from_ptr(& : -> LibXML::Doc*)
+    errors = [] of XML::Error
+    doc = XML::Error.collect(errors) { yield }
+
     raise Error.new(LibXML.xmlGetLastError) unless doc
 
-    node = Node.new(doc)
-    XML::Error.set_errors(node)
-    node
+    Node.new(doc, errors)
   end
 end
 

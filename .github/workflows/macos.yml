@@ -2,19 +2,27 @@ name: macOS CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   SPEC_SPLIT_DOTS: 160
   CI_NIX_SHELL: true
 
 jobs:
-  test_macos:
-    runs-on: macos-latest
+  x86_64-darwin-test:
+    runs-on: macos-11
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
+      - uses: cachix/install-nix-action@v20
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.9.2/install
+          extra_nix_config: |
+            experimental-features = nix-command
+      - uses: cachix/cachix-action@v12
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
@@ -27,3 +35,6 @@ jobs:
 
       - name: Test
         run: bin/ci build
+
+      - name: Test interpreter
+        run: bin/ci with_build_env 'make interpreter_spec'

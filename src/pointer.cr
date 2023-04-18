@@ -8,7 +8,7 @@ require "c/string"
 # to implement efficient data structures. For example, both `Array` and `Hash` are
 # implemented using pointers.
 #
-# You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof` and by calling a C
+# You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof`, or by calling a C
 # function that returns a pointer.
 #
 # `pointerof(x)`, where *x* is a variable or an instance variable, returns a pointer to
@@ -20,6 +20,8 @@ require "c/string"
 # ptr.value = 2
 # x # => 2
 # ```
+#
+# Use `#value` to dereference the pointer.
 #
 # Note that a pointer is *falsey* if it's null (if its address is zero).
 #
@@ -213,8 +215,8 @@ struct Pointer(T)
     self
   end
 
-  # Copies *count* elements from `self` into *source*.
-  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from `self` into *target*.
+  # *target* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
@@ -245,7 +247,8 @@ struct Pointer(T)
     if self.class == source.class
       Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
-      while (count -= 1) >= 0
+      while count > 0
+        count &-= 1
         self[count] = source[count]
       end
     end
@@ -345,6 +348,9 @@ struct Pointer(T)
   # ptr = ptr.realloc(8)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
+  #
+  # WARNING: Memory allocated using `GC.malloc` or `GC.malloc_atomic` must be
+  # reallocated using `GC.realloc` instead.
   def realloc(size : Int)
     if size < 0
       raise ArgumentError.new("Negative size")
@@ -376,7 +382,7 @@ struct Pointer(T)
   # ptr.map!(4) { |value| value * 2 }
   # ptr # [2, 4, 6, 8]
   # ```
-  def map!(count : Int)
+  def map!(count : Int, & : T -> T)
     count.times do |i|
       self[i] = yield self[i]
     end
@@ -473,7 +479,7 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, &block : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr

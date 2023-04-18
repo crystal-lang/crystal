@@ -44,38 +44,38 @@ class Compress::Zip::File
   end
 
   # Opens a `Zip::File` for reading from the given *filename*.
-  def self.new(filename : String)
+  def self.new(filename : Path | String)
     new(::File.new(filename), sync_close: true)
   end
 
   # Opens a `Zip::File` for reading from the given *io*, yields
   # it to the given block, and closes it at the end.
-  def self.open(io : IO, sync_close = false)
+  def self.open(io : IO, sync_close = false, &)
     zip = new io, sync_close
     yield zip ensure zip.close
   end
 
   # Opens a `Zip::File` for reading from the given *filename*, yields
   # it to the given block, and closes it at the end.
-  def self.open(filename : String)
+  def self.open(filename : Path | String, &)
     zip = new filename
     yield zip ensure zip.close
   end
 
   # Returns the entry that has the given filename, or
   # raises `KeyError` if no such entry exists.
-  def [](filename : String) : Entry
+  def [](filename : Path | String) : Entry
     self[filename]? || raise(KeyError.new("Missing zip entry: #{filename}"))
   end
 
   # Returns the entry that has the given filename, or
   # `nil` if no such entry exists.
-  def []?(filename : String) : Entry?
-    @entries_by_filename[filename]?
+  def []?(filename : Path | String) : Entry?
+    @entries_by_filename[filename.to_s]?
   end
 
   # Closes this zip file.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
     if @sync_close
@@ -121,10 +121,10 @@ class Compress::Zip::File
       raise Error.new("Expected end of central directory header signature, not 0x#{signature.to_s(16)}")
     end
 
-    read Int16                     # number of this disk
-    read Int16                     # disk start
-    read Int16                     # number of entries in disk
-    entries_size = read Int16      # number of total entries
+    read UInt16                    # number of this disk
+    read UInt16                    # disk start
+    read UInt16                    # number of entries in disk
+    entries_size = read UInt16     # number of total entries
     read UInt32                    # size of the central directory
     directory_offset = read UInt32 # offset of central directory
     comment_length = read UInt16   # comment length
@@ -166,7 +166,7 @@ class Compress::Zip::File
 
     # Yields an `IO` to read this entry's contents.
     # Multiple entries can be opened and read concurrently.
-    def open
+    def open(&)
       @io.read_at(data_offset.to_i32, compressed_size.to_i32) do |io|
         io = decompressor_for(io, is_sized: true)
         checksum_reader = ChecksumReader.new(io, filename, verify: crc32)

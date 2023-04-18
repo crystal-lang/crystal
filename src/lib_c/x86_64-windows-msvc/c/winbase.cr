@@ -15,9 +15,6 @@ lib LibC
   fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
 
-  fun GetSystemTimeAsFileTime(time : FILETIME*)
-  fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
-
   SYMBOLIC_LINK_FLAG_DIRECTORY                 = 0x1
   SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 0x2
 
@@ -31,6 +28,11 @@ lib LibC
 
   INFINITE = 0xFFFFFFFF
 
+  WAIT_OBJECT_0      = 0x00000000_u32
+  WAIT_IO_COMPLETION = 0x000000C0_u32
+  WAIT_TIMEOUT       = 0x00000102_u32
+  WAIT_FAILED        = 0xFFFFFFFF_u32
+
   STARTF_USESTDHANDLES = 0x00000100
 
   MOVEFILE_REPLACE_EXISTING      =  0x1_u32
@@ -41,4 +43,6 @@ lib LibC
   MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x20_u32
 
   fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
+
+  fun GetBinaryTypeW(lpApplicationName : LPWSTR, lpBinaryType : DWORD*) : BOOL
 end

@@ -146,7 +146,7 @@ abstract class JSON::Lexer
     consume_string_with_buffer { }
   end
 
-  private def consume_string_with_buffer
+  private def consume_string_with_buffer(&)
     @buffer.clear
     yield
     while true
@@ -218,57 +218,43 @@ abstract class JSON::Lexer
   end
 
   private def consume_number
-    # TODO once overflow is the default the overflow custom logic can be refactored
-
     number_start
-
-    integer = 0_i64
-    negative = false
-    digits = 0
 
     if current_char == '-'
       append_number_char
-      negative = true
       next_char
     end
 
     case current_char
     when '0'
       append_number_char
-      next_char
-      case current_char
+      char = next_char
+      case char
       when '.'
-        consume_float(negative, integer, digits)
+        consume_float
       when 'e', 'E'
-        consume_exponent(negative, integer.to_f64, digits)
+        consume_exponent
       when '0'..'9'
         unexpected_char
       else
         @token.kind = :int
-        @token.int_value = 0_i64
         number_end
       end
     when '1'..'9'
-      digits = 1
       append_number_char
-      integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'
         append_number_char
-        integer &*= 10
-        integer &+= char - '0'
-        digits += 1
         char = next_char
       end
 
       case char
       when '.'
-        consume_float(negative, integer, digits)
+        consume_float
       when 'e', 'E'
-        consume_exponent(negative, integer.to_f64, digits)
+        consume_exponent
       else
         @token.kind = :int
-        @token.int_value = negative ? -integer : integer
         number_end
       end
     else
@@ -276,11 +262,8 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_float(negative, integer, digits)
-    # TODO once overflow is the default the overflow custom logic can be refactored
-
+  private def consume_float
     append_number_char
-    divisor = 1_u64
     char = next_char
 
     unless '0' <= char <= '9'
@@ -289,34 +272,19 @@ abstract class JSON::Lexer
 
     while '0' <= char <= '9'
       append_number_char
-      integer &*= 10
-      integer &+= char - '0'
-      divisor &*= 10
-      digits += 1
       char = next_char
     end
-    float = integer.to_f64 / divisor
 
-    if char == 'e' || char == 'E'
-      consume_exponent(negative, float, digits)
+    if char.in?('e', 'E')
+      consume_exponent
     else
       @token.kind = :float
-      # If there's a chance of overflow, we parse the raw string
-      if digits >= 18
-        @token.float_value = number_string.to_f64
-      else
-        @token.float_value = negative ? -float : float
-      end
       number_end
     end
   end
 
-  private def consume_exponent(negative, float, digits)
-    # TODO once overflow is the default the overflow custom logic can be refactored
-
+  private def consume_exponent
     append_number_char
-    exponent = 0
-    negative_exponent = false
 
     char = next_char
     if char == '+'
@@ -325,14 +293,11 @@ abstract class JSON::Lexer
     elsif char == '-'
       append_number_char
       char = next_char
-      negative_exponent = true
     end
 
     if '0' <= char <= '9'
       while '0' <= char <= '9'
         append_number_char
-        exponent *= 10
-        exponent += char - '0'
         char = next_char
       end
     else
@@ -340,16 +305,6 @@ abstract class JSON::Lexer
     end
 
     @token.kind = :float
-
-    exponent = -exponent if negative_exponent
-    float *= (10_f64 ** exponent)
-
-    # If there's a chance of overflow, we parse the raw string
-    if digits >= 18
-      @token.float_value = number_string.to_f64
-    else
-      @token.float_value = negative ? -float : float
-    end
 
     number_end
   end

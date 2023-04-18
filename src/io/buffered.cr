@@ -11,7 +11,7 @@ module IO::Buffered
   @sync = false
   @read_buffering = true
   @flush_on_newline = false
-  @buffer_size = 8192
+  @buffer_size = IO::DEFAULT_BUFFER_SIZE
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
@@ -176,6 +176,28 @@ module IO::Buffered
 
     if flush_on_newline? && byte === '\n'
       flush
+    end
+  end
+
+  # Returns the current position (in bytes) in this `IO`.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
+  # ```
+  def pos : Int64
+    flush
+    in_rem = @in_buffer_rem.size
+
+    # TODO In 2.0 we should make `unbuffered_pos` an abstract method of Buffered
+    if self.responds_to?(:unbuffered_pos)
+      self.unbuffered_pos - in_rem
+    else
+      super - in_rem
     end
   end
 

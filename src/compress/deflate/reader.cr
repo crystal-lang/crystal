@@ -33,7 +33,7 @@ class Compress::Deflate::Reader < IO
 
   # Creates a new reader from the given *io*, yields it to the given block,
   # and closes it at its end.
-  def self.open(io : IO, sync_close : Bool = false, dict : Bytes? = nil)
+  def self.open(io : IO, sync_close : Bool = false, dict : Bytes? = nil, &)
     reader = new(io, sync_close: sync_close, dict: dict)
     yield reader ensure reader.close
   end
@@ -46,7 +46,7 @@ class Compress::Deflate::Reader < IO
 
   # Creates an instance of Flate::Reader for the gzip format, yields it to the given block, and closes
   # it at its end.
-  def self.gzip(input, sync_close : Bool = false)
+  def self.gzip(input, sync_close : Bool = false, &)
     reader = gzip input, sync_close: sync_close
     yield reader ensure reader.close
   end
@@ -130,7 +130,7 @@ class Compress::Deflate::Reader < IO
   end
 
   # Closes this reader.
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -140,7 +140,7 @@ class Compress::Deflate::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind
@@ -148,7 +148,6 @@ class Compress::Deflate::Reader < IO
     initialize(@io, @sync_close, @dict)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end

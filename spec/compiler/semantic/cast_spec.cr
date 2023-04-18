@@ -221,6 +221,18 @@ describe "Semantic: cast" do
       )) { int32.metaclass }
   end
 
+  it "can cast to metaclass (2) (#11121)" do
+    assert_type(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      )) { types["A"].virtual_type.metaclass }
+  end
+
   # Later we might want casting something to Object to have a meaning
   # similar to casting to Void*, but for now it's useless.
   it "disallows casting to Object (#815)" do
@@ -383,5 +395,16 @@ describe "Semantic: cast" do
         x.as(Bar)
       end
       )) { nilable types["Bar"] }
+  end
+
+  it "doesn't eagerly try to check cast type (#12268)" do
+    assert_type(%(
+      bar = 1
+      if bar.is_a?(Char)
+        pointerof(bar).as(Pointer(typeof(bar)))
+      else
+        bar
+      end
+      )) { int32 }
   end
 end
