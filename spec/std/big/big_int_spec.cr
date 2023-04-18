@@ -61,6 +61,19 @@ describe "BigInt" do
     1.1.should_not eq(1.to_big_i)
 
     [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
+
+    (1.to_big_i <=> Float64::NAN).should be_nil
+    (1.to_big_i <=> Float32::NAN).should be_nil
+    (Float64::NAN <=> 1.to_big_i).should be_nil
+    (Float32::NAN <=> 1.to_big_i).should be_nil
+
+    typeof(1.to_big_i <=> Float64::NAN).should eq(Int32?)
+    typeof(1.to_big_i <=> Float32::NAN).should eq(Int32?)
+    typeof(Float64::NAN <=> 1.to_big_i).should eq(Int32?)
+    typeof(Float32::NAN <=> 1.to_big_i).should eq(Int32?)
+
+    typeof(1.to_big_i <=> 1.to_big_f).should eq(Int32)
+    typeof(1.to_big_f <=> 1.to_big_i).should eq(Int32)
   end
 
   it "divides and calculates the modulo" do

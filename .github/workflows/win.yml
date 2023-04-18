@@ -19,7 +19,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.7.3"
+          crystal: "1.8.0"
 
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -335,7 +335,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: crystal-lang/shards
-          ref: v0.17.2
+          ref: v0.17.3
           path: shards
 
       - name: Download molinillo release

@@ -13,18 +13,18 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.7.3-build
+      image: crystallang/crystal:1.8.0-build
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v3
 
       - name: Test interpreter_spec
-        run: make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec --junit_output .junit/interpreter_spec.xml
+        run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
 
   build-interpreter:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.7.3-build
+      image: crystallang/crystal:1.8.0-build
     name: Build interpreter
     steps:
       - uses: actions/checkout@v3
@@ -43,7 +43,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.7.3-build
+      image: crystallang/crystal:1.8.0-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]

@@ -531,7 +531,7 @@ class Array(T)
       @size -= diff
     else
       # Need to grow
-      resize_to_capacity(Math.pw2ceil(@size + diff))
+      resize_if_cant_insert(diff)
       (@buffer + start + values.size).move_from(@buffer + start + count, size - start - count)
       (@buffer + start).copy_from(values.to_unsafe, values.size)
       @size += diff
@@ -746,16 +746,35 @@ class Array(T)
   # ary.concat(["c", "d"])
   # ary # => ["a", "b", "c", "d"]
   # ```
-  def concat(other : Array) : self
+  def concat(other : Indexable) : self
     other_size = other.size
 
     resize_if_cant_insert(other_size)
 
-    (@buffer + @size).copy_from(other.to_unsafe, other_size)
+    concat_indexable(other)
 
     @size += other_size
 
     self
+  end
+
+  private def concat_indexable(other : Array | Slice | StaticArray)
+    (@buffer + @size).copy_from(other.to_unsafe, other.size)
+  end
+
+  private def concat_indexable(other : Deque)
+    ptr = @buffer + @size
+    Deque.half_slices(other) do |slice|
+      ptr.copy_from(slice.to_unsafe, slice.size)
+      ptr += slice.size
+    end
+  end
+
+  private def concat_indexable(other)
+    appender = (@buffer + @size).appender
+    other.each do |elem|
+      appender << elem
+    end
   end
 
   # :ditto:
@@ -2071,6 +2090,10 @@ class Array(T)
   end
 
   private def calculate_new_capacity(new_size)
+    # Resizing is done via `Pointer#realloc` on the root buffer, so the space
+    # between the root and real buffers remains untouched
+    new_size += @offset_to_buffer
+
     new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
     while new_capacity < new_size
       if new_capacity < CAPACITY_THRESHOLD
@@ -2118,13 +2141,11 @@ class Array(T)
   end
 
   private def resize_if_cant_insert(insert_size)
-    # Resize if we exceed the remaining capacity.
-    # `remaining_capacity - @size` is the actual number of slots we have
-    # to push new elements.
-    if insert_size > remaining_capacity - @size
-      # The new capacity that we need is what we already have occupied
-      # because of shift (`@offset_to_buffer`) plus my size plus the insert size.
-      resize_to_capacity(Math.pw2ceil(@offset_to_buffer + @size + insert_size))
+    # Resize if we exceed the remaining capacity. This is less than `@capacity`
+    # if the array has been shifted and `@offset_to_buffer` is nonzero
+    new_size = @size + insert_size
+    if new_size > remaining_capacity
+      resize_to_capacity(calculate_new_capacity(new_size))
     end
   end
 
