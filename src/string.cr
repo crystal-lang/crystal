@@ -2864,7 +2864,8 @@ class String
         yield str, match, buffer
 
         if str.bytesize == 0
-          byte_offset = index + 1
+          # The pattern matched an empty result. We must advance one character to avoid stagnation.
+          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
           last_byte_offset = index
         else
           byte_offset = index + str.bytesize
