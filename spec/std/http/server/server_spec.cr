@@ -81,7 +81,7 @@ describe HTTP::Server do
     ch.receive.end?.should be_true
   end
 
-  pending_win32 "reuses the TCP port (SO_REUSEPORT)" do
+  it "reuses the TCP port (SO_REUSEPORT)" do
     s1 = HTTP::Server.new { |ctx| }
     address = s1.bind_unused_port(reuse_port: true)
 
