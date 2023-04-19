@@ -1694,6 +1694,18 @@ module Crystal
         end
       end
 
+      describe "#warning" do
+        it "emits a warning at a specific node" do
+          assert_warning <<-CRYSTAL, "Oh noes"
+            macro test(node)
+              {% node.warning "Oh noes" %}
+            end
+
+            test 10
+          CRYSTAL
+        end
+      end
+
       it "executes instance_vars" do
         assert_macro("{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
           {x: TypeNode.new(program.string)}
@@ -3064,6 +3076,18 @@ module Crystal
 
     it "compares versions" do
       assert_macro %({{compare_versions("1.10.3", "1.2.3")}}), %(1)
+    end
+
+    describe "#warning" do
+      it "emits a top level warning" do
+        assert_warning <<-CRYSTAL, "Oh noes"
+          macro test
+            {% warning "Oh noes" %}
+          end
+
+          test
+        CRYSTAL
+      end
     end
 
     describe "#parse_type" do

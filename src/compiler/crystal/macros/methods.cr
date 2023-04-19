@@ -69,6 +69,8 @@ module Crystal
         interpret_system(node)
       when "raise"
         interpret_raise(node)
+      when "warning"
+        interpret_warning(node)
       when "file_exists?"
         interpret_file_exists?(node)
       when "read_file"
@@ -255,6 +257,10 @@ module Crystal
       macro_raise(node, node.args, self)
     end
 
+    def interpret_warning(node)
+      macro_warning(node, node.args, self)
+    end
+
     def interpret_file_exists?(node)
       interpret_check_args_toplevel do |arg|
         arg.accept self
@@ -382,6 +388,8 @@ module Crystal
         interpret_check_args { class_name }
       when "raise"
         macro_raise self, args, interpreter
+      when "warning"
+        macro_warning self, args, interpreter
       when "filename"
         interpret_check_args do
           filename = location.try &.original_filename
@@ -2676,6 +2684,18 @@ private def macro_raise(node, args, interpreter)
   msg = msg.join " "
 
   node.raise msg, exception_type: Crystal::MacroRaiseException
+end
+
+private def macro_warning(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  interpreter.warnings.add_warning_at(node.location, msg)
+
+  Crystal::NilLiteral.new
 end
 
 private def empty_no_return_array

@@ -30,7 +30,7 @@ describe "Regex" do
       expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error/) do
         Regex.new("\x96")
       end
-      Regex.new("\x96", :NO_UTF8_CHECK).should be_a(Regex)
+      Regex.new("\x96", :NO_UTF_CHECK).should be_a(Regex)
     end
   end
 
@@ -110,17 +110,18 @@ describe "Regex" do
     end
 
     it "with invalid UTF-8" do
-      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-        expect_raises(ArgumentError, "UTF-8 error") do
-          /([\w_\.@#\/\*])+/.match("\xFF\xFE")
-        end
-      {% else %}
-        if Regex::PCRE2.version_number < {10, 35}
-          pending! "Error in libpcre2 < 10.35"
-        else
-          /([\w_\.@#\/\*])+/.match("\xFF\xFE").should be_nil
-        end
-      {% end %}
+      expect_raises(ArgumentError, "UTF-8 error") do
+        /([\w_\.@#\/\*])+/.match("\xFF\xFE")
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        Regex.new("([\\w_\\.@#\\/\\*])+", options: Regex::Options::MATCH_INVALID_UTF).match("\xFF\xFE").should be_nil
+      end
+    end
+
+    it "skip invalid UTF check" do
+      # no exception raised
+      /f.o/.matches?("f\xFFo", options: Regex::MatchOptions::NO_UTF_CHECK)
     end
   end
 
@@ -181,12 +182,12 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      if Regex::Engine.version_number < {10, 34}
-        expect_raises(ArgumentError, "bad offset into UTF string") do
-          /foo/.match_at_byte_index("öfoo", 1)
-        end
-      else
-        md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
+      expect_raises(ArgumentError, "bad offset into UTF string") do
+        /foo/.match_at_byte_index("öfoo", 1)
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        md = Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).match_at_byte_index("öfoo", 1).should_not be_nil
         md.begin.should eq 1
         md.byte_begin.should eq 2
       end
@@ -273,16 +274,16 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        if Regex::Engine.version_number < {10, 34}
-          expect_raises(ArgumentError, "UTF-8 error") do
-            /foo/.matches?("f\x96o")
-          end
-        else
-          /foo/.matches?("f\x96o").should be_false
-          /f\x96o/.matches?("f\x96o").should be_false
-          /f.o/.matches?("f\x96o").should be_false
-          /\bf\b/.matches?("f\x96o").should be_true
-          /\bo\b/.matches?("f\x96o").should be_true
+        expect_raises(ArgumentError, "UTF-8 error") do
+          /foo/.matches?("f\x96o")
+        end
+
+        if Regex::Engine.version_number >= {10, 36}
+          Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_false
+          Regex.new("f\x96o", options: Regex::CompileOptions::MATCH_INVALID_UTF | Regex::CompileOptions::NO_UTF_CHECK).matches?("f\x96o").should be_false
+          Regex.new("f.o", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_false
+          Regex.new("\\bf\\b", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_true
+          Regex.new("\\bo\\b", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_true
         end
       end
     end
@@ -303,7 +304,8 @@ describe "Regex" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-        LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
+        jit_enabled = uninitialized LibC::Int
+        LibPCRE.config LibPCRE::CONFIG_JIT, pointerof(jit_enabled)
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
 
         # This match may raise on JIT stack limit or not. If it raises, the error message should be the expected one.
@@ -337,12 +339,12 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      if Regex::Engine.version_number < {10, 34}
-        expect_raises(ArgumentError, "bad offset into UTF string") do
-          /foo/.matches_at_byte_index?("öfoo", 1)
-        end
-      else
-        /foo/.matches_at_byte_index?("öfoo", 1).should be_true
+      expect_raises(ArgumentError, "bad offset into UTF string") do
+        /foo/.matches_at_byte_index?("öfoo", 1)
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches_at_byte_index?("öfoo", 1).should be_true
       end
       /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end
