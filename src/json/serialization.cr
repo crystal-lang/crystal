@@ -186,7 +186,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
@@ -199,8 +198,14 @@ module JSON
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
+          %var{name} = {% if value[:has_default] || value[:nilable] %}
+                         nil.as(::Nil | typeof(@{{name}}))
+                       {% else %}
+                         uninitialized typeof(@{{name}})
+                       {% end %}
           %found{name} = false
         {% end %}
 
@@ -223,7 +228,7 @@ module JSON
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_json(pull)
                       {% else %}
-                        ::Union({{value[:type]}}).new(pull)
+                        typeof(@{{name}}).new(pull)
                       {% end %}
                     end
                 end
@@ -288,7 +293,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                type:             ivar.type,
                 key:              ((ann && ann[:key]) || ivar).id.stringify,
                 root:             ann && ann[:root],
                 converter:        ann && ann[:converter],
