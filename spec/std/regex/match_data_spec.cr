@@ -402,9 +402,8 @@ describe "Regex::MatchData" do
     end
 
     it "doesn't get named captures when there are more than 255" do
-      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
-      captures = Array.new(1000) { |i| {"c#{i}", "x"} }.to_h
-      matchdata(regex, "x" * 1000).captures.should eq([] of String)
+      regex = Regex.new(Array.new(256) { |i| "(?<c#{i}>.)" }.join)
+      matchdata(regex, "x" * 256).captures.should eq([] of String)
     end
   end
 
@@ -424,9 +423,10 @@ describe "Regex::MatchData" do
     end
 
     it "gets more than 127 named captures" do
-      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
-      captures = Array.new(1000) { |i| {"c#{i}", "x"} }.to_h
-      matchdata(regex, "x" * 1000).named_captures.should eq(captures)
+      regex = Regex.new(Array.new(128) { |i| "(?<c#{i}>.)" }.join)
+      captures = matchdata(regex, "x" * 128).named_captures
+      captures.size.should eq(128)
+      128.times { |i| captures["c#{i}"].should eq("x") }
     end
   end
 
