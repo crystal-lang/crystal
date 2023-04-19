@@ -1734,7 +1734,7 @@ describe "String" do
     end
   end
 
-  describe "gsub" do
+  describe "#gsub" do
     it "gsubs char with char" do
       "foobar".gsub('o', 'e').should eq("feebar")
     end
@@ -1909,6 +1909,16 @@ describe "String" do
 
     it "ignores if backreferences: false" do
       "foo".gsub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xx\\0x")
+    end
+
+    it "empty match" do
+      "a  b".gsub(/\B/, "-").should eq "a - b"
+      "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
+    end
+
+    it "empty string" do
+      "ab".gsub("", "-").should eq "-a-b-"
+      "┬7".gsub("", "-").should eq "-┬-7-"
     end
   end
 
