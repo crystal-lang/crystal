@@ -925,12 +925,12 @@ class String
     includes?(str) ? str : nil
   end
 
-  def []?(regex : Regex) : String?
-    self[regex, 0]?
+  def []?(regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    self[regex, 0, options: options]?
   end
 
-  def []?(regex : Regex, group) : String?
-    match = match(regex)
+  def []?(regex : Regex, group, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match = match(regex, options: options)
     match[group]? if match
   end
 
@@ -944,12 +944,12 @@ class String
     self[str]?.not_nil!
   end
 
-  def [](regex : Regex) : String
-    self[regex]?.not_nil!
+  def [](regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    self[regex, options: options]?.not_nil!
   end
 
-  def [](regex : Regex, group) : String
-    self[regex, group]?.not_nil!
+  def [](regex : Regex, group, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    self[regex, group, options: options]?.not_nil!
   end
 
   # Returns the `Char` at the given *index*.
@@ -2347,8 +2347,8 @@ class String
   # ```
   # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
   # ```
-  def sub(pattern : Regex, &) : String
-    sub_append(pattern) do |str, match, buffer|
+  def sub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : String
+    sub_append(pattern, options) do |str, match, buffer|
       $~ = match
       buffer << yield str, match
     end
@@ -2392,11 +2392,11 @@ class String
   #
   # Raises `IndexError` if a named group referenced in *replacement* is not present
   # in *pattern*.
-  def sub(pattern : Regex, replacement, backreferences = true) : String
+  def sub(pattern : Regex, replacement, backreferences = true, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     if backreferences && replacement.is_a?(String) && replacement.has_back_references?
-      sub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
+      sub_append(pattern, options) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
     else
-      sub(pattern) { replacement }
+      sub(pattern, options: options) { replacement }
     end
   end
 
@@ -2408,8 +2408,10 @@ class String
   # "hello".sub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "hallo"
   # "hello".sub(/(he|l|o)/, {"l": "la"})             # => "hello"
   # ```
-  def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple) : String
-    sub(pattern) do |match|
+  def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    # FIXME: The options parameter should be a named-only parameter, but that breaks overload ordering (fixed with -Dpreview_overload_ordering).
+
+    sub(pattern, options: options) do |match|
       if hash.has_key?(match)
         hash[match]
       else
@@ -2475,8 +2477,8 @@ class String
     end
   end
 
-  private def sub_append(pattern : Regex, &)
-    match = pattern.match(self)
+  private def sub_append(pattern : Regex, options : Regex::MatchOptions, &)
+    match = pattern.match(self, options: options)
     return self unless match
 
     String.build(bytesize) do |buffer|
@@ -2705,8 +2707,8 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &) : String
-    gsub_append(pattern) do |string, match, buffer|
+  def gsub(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : String
+    gsub_append(pattern, options) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
     end
@@ -2750,11 +2752,11 @@ class String
   #
   # Raises `IndexError` if a named group referenced in *replacement* is not present
   # in *pattern*.
-  def gsub(pattern : Regex, replacement, backreferences = true) : String
+  def gsub(pattern : Regex, replacement, backreferences = true, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     if backreferences && replacement.is_a?(String) && replacement.has_back_references?
-      gsub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
+      gsub_append(pattern, options) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
     else
-      gsub(pattern) { replacement }
+      gsub(pattern, options: options) { replacement }
     end
   end
 
@@ -2768,8 +2770,10 @@ class String
   # # but "o" is not and so is not included
   # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "halala"
   # ```
-  def gsub(pattern : Regex, hash : Hash(String, _) | NamedTuple) : String
-    gsub(pattern) do |match|
+  def gsub(pattern : Regex, hash : Hash(String, _) | NamedTuple, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    # FIXME: The options parameter should be a named-only parameter, but that breaks overload ordering (fixed with -Dpreview_overload_ordering).
+
+    gsub(pattern, options: options) do |match|
       hash[match]?
     end
   end
@@ -2847,9 +2851,9 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex, &)
+  private def gsub_append(pattern : Regex, options : Regex::MatchOptions, &)
     byte_offset = 0
-    match = pattern.match_at_byte_index(self, byte_offset)
+    match = pattern.match_at_byte_index(self, byte_offset, options: options)
     return self unless match
 
     last_byte_offset = 0
@@ -2871,7 +2875,7 @@ class String
           last_byte_offset = byte_offset
         end
 
-        match = pattern.match_at_byte_index(self, byte_offset)
+        match = pattern.match_at_byte_index(self, byte_offset, options: options)
       end
 
       if last_byte_offset < bytesize
@@ -3177,14 +3181,14 @@ class String
   #
   # "Haystack" =~ 45 # => nil
   # ```
-  def =~(regex : Regex) : Int32?
-    match = regex.match(self)
+  def =~(regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = regex.match(self, options: options)
     $~ = match
     match.try &.begin(0)
   end
 
   # :ditto:
-  def =~(other) : Nil
+  def =~(other, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Nil
     nil
   end
 
@@ -3363,11 +3367,11 @@ class String
   end
 
   # :ditto:
-  def index(search : Regex, offset = 0) : Int32?
+  def index(search : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
-    self.match(search, offset).try &.begin
+    self.match(search, offset, options: options).try &.begin
   end
 
   # :ditto:
@@ -3470,12 +3474,12 @@ class String
   end
 
   # :ditto:
-  def rindex(search : Regex, offset = size) : Int32?
+  def rindex(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
     match_result = nil
-    scan(search) do |match_data|
+    scan(search, options: options) do |match_data|
       break if (index = match_data.begin) && index > offset
       match_result = match_data
     end
@@ -3486,8 +3490,8 @@ class String
   # :ditto:
   #
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
-  def rindex!(search : Regex, offset = size) : Int32
-    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  def rindex!(search : Regex, offset = size, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    rindex(search, offset, options: options) || raise Enumerable::NotFoundError.new
   end
 
   # :ditto:
@@ -3526,9 +3530,9 @@ class String
   end
 
   # :ditto:
-  def partition(search : Regex) : Tuple(String, String, String)
+  def partition(search : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Tuple(String, String, String)
     pre = mid = post = ""
-    case m = self.match(search)
+    case m = self.match(search, options: options)
     when .nil?
       pre = self
     else
@@ -3569,12 +3573,12 @@ class String
   end
 
   # :ditto:
-  def rpartition(search : Regex) : Tuple(String, String, String)
+  def rpartition(search : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Tuple(String, String, String)
     match_result = nil
     pos = self.size - 1
 
     while pos >= 0
-      self[pos..-1].scan(search) do |m|
+      self[pos..-1].scan(search, options: options) do |m|
         match_result = m
       end
       break unless match_result.nil?
@@ -4050,9 +4054,9 @@ class String
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None) : Array(String)
     ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
+    split(separator, limit, remove_empty: remove_empty, options: options) do |string|
       ary << string
     end
     ary
@@ -4078,7 +4082,7 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, options : Regex::MatchOptions = Regex::MatchOptions::None, &block : String -> _)
     if empty?
       yield "" unless remove_empty
       return
@@ -4099,7 +4103,7 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    while match = separator.match_at_byte_index(self, match_offset)
+    while match = separator.match_at_byte_index(self, match_offset, options: options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
       next_offset = index + match_bytesize
@@ -4557,8 +4561,8 @@ class String
   # "foo".match(/bar/) # => nil
   # $~                 # raises Exception
   # ```
-  def match(regex : Regex, pos = 0) : Regex::MatchData?
-    match = regex.match self, pos
+  def match(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Regex::MatchData?
+    match = regex.match self, pos, options: options
     $~ = match
     match
   end
@@ -4573,16 +4577,16 @@ class String
   # # `$~` is not set even if last match succeeds.
   # $~ # raises Exception
   # ```
-  def matches?(regex : Regex, pos = 0) : Bool
-    regex.matches? self, pos
+  def matches?(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
+    regex.matches? self, pos, options: options
   end
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex, &) : self
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : self
     byte_offset = 0
 
-    while match = pattern.match_at_byte_index(self, byte_offset)
+    while match = pattern.match_at_byte_index(self, byte_offset, options: options)
       index = match.byte_begin(0)
       $~ = match
       yield match
@@ -4596,9 +4600,9 @@ class String
 
   # Searches the string for instances of *pattern*,
   # returning an `Array` of `Regex::MatchData` for each match.
-  def scan(pattern : Regex) : Array(Regex::MatchData)
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Array(Regex::MatchData)
     matches = [] of Regex::MatchData
-    scan(pattern) do |match|
+    scan(pattern, options: options) do |match|
       matches << match
     end
     matches
@@ -5018,8 +5022,8 @@ class String
   # "h22".starts_with?(/[a-z]{2}/)  # => false
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
-  def starts_with?(re : Regex) : Bool
-    !!($~ = re.match_at_byte_index(self, 0, Regex::MatchOptions::ANCHORED))
+  def starts_with?(re : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
+    !!($~ = re.match_at_byte_index(self, 0, options: options | Regex::MatchOptions::ANCHORED))
   end
 
   # Returns `true` if this string ends with the given *str*.
@@ -5068,8 +5072,8 @@ class String
   # "22h".ends_with?(/[a-z]{2}/)  # => false
   # "22hh".ends_with?(/[a-z]{2}/) # => true
   # ```
-  def ends_with?(re : Regex) : Bool
-    !!($~ = /#{re}\z/.match(self))
+  def ends_with?(re : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
+    !!($~ = /#{re}\z/.match(self, options: options))
   end
 
   # Interpolates *other* into the string using top-level `::sprintf`.
