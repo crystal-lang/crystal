@@ -212,6 +212,14 @@ describe Time do
     time.utc?.should be_true
   end
 
+  it ".to_unix_ns" do
+    nanoseconds = 1439404155001457425
+    time = Time.unix_ns(nanoseconds)
+    time.should eq(Time.utc(2015, 8, 12, 18, 29, 15, nanosecond: 1457425))
+    time.to_unix_ns.should eq(nanoseconds)
+    time.utc?.should be_true
+  end
+
   describe ".local without arguments" do
     it "current time is similar in different locations" do
       (Time.local - Time.utc).should be_close(0.seconds, 1.second)
