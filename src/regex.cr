@@ -285,6 +285,14 @@ class Regex
   # This alias is supposed to replace `Options`.
   alias CompileOptions = Options
 
+  # Returns `true` if the regex engine supports all *options* flags when compiling a pattern.
+  def self.supports_compile_options?(options : CompileOptions) : Bool
+    options.each do |flag|
+      return false unless Engine.supports_compile_flag?(flag)
+    end
+    true
+  end
+
   # Represents options passed to regex match methods such as `Regex#match`.
   @[Flags]
   enum MatchOptions
@@ -306,6 +314,14 @@ class Regex
     # This option has no effect if the pattern was compiled with
     # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
     NO_UTF_CHECK
+  end
+
+  # Returns `true` if the regex engine supports all *options* flags when matching a pattern.
+  def self.supports_match_options?(options : MatchOptions) : Bool
+    options.each do |flag|
+      return false unless Engine.supports_match_flag?(flag)
+    end
+    true
   end
 
   # Returns a `Regex::CompileOptions` representing the optional flags applied to this `Regex`.

@@ -90,6 +90,10 @@ module Regex::PCRE2
     flag
   end
 
+  def self.supports_compile_flag?(options)
+    true
+  end
+
   private def pcre2_match_options(options)
     flag = 0
     Regex::Options.each do |option|
@@ -138,6 +142,10 @@ module Regex::PCRE2
       raise ArgumentError.new("Unknown Regex::MatchOption value: #{options}")
     end
     flag
+  end
+
+  def self.supports_match_flag?(options)
+    true
   end
 
   protected def self.error_impl(source)
