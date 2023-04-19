@@ -398,6 +398,12 @@ describe "Regex" do
     it "duplicate name" do
       /(?<foo>)(?<foo>)/.name_table.should eq({1 => "foo", 2 => "foo"})
     end
+
+    it "more than 255 groups" do
+      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
+      name_table = Array.new(1000) { |i| {i + 1, "c#{i}"} }.to_h
+      regex.name_table.should eq(name_table)
+    end
   end
 
   it "#capture_count" do
