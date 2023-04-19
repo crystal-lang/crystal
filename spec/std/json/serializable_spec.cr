@@ -468,13 +468,7 @@ end
 class JSONSomething
   include JSON::Serializable
 
-  property value : JSONAttrValue(Set(JSONSomethingElse)?)?
-end
-
-class JSONSomethingElse
-  include JSON::Serializable
-
-  property value : JSONAttrValue(Set(JSONSomethingElse)?)?
+  property value : JSONSomething?
 end
 
 describe "JSON mapping" do
@@ -1122,6 +1116,6 @@ describe "JSON mapping" do
 
   it "fixes #13337" do
     JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
-    JSONSomethingElse.from_json(%({"value":{}})).value.should_not be_nil
+    JSONAttrValue(JSONSomething).from_json(%({"value":{}})).value.should_not be_nil
   end
 end
