@@ -38,18 +38,6 @@ module IO::Overlapped
     write_timeout
   end
 
-  def overlapped_write(socket, method, &)
-    overlapped_operation(socket, method, write_timeout) do |operation|
-      yield operation
-    end
-  end
-
-  def overlapped_read(socket, method, &)
-    overlapped_operation(socket, method, read_timeout) do |operation|
-      yield operation
-    end
-  end
-
   def self.wait_queued_completions(timeout, &)
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
 
@@ -87,23 +75,23 @@ module IO::Overlapped
       CANCELLED
     end
 
-    @overlapped = LibC::WSAOVERLAPPED.new
+    @overlapped = LibC::OVERLAPPED.new
     @fiber : Fiber? = nil
     @state : State = :initialized
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
 
-    def self.run(socket, &)
+    def self.run(handle, &)
       operation = OverlappedOperation.new
       begin
         yield operation
       ensure
-        operation.done(socket)
+        operation.done(handle)
       end
     end
 
-    def self.schedule(overlapped : LibC::WSAOVERLAPPED*, &)
+    def self.schedule(overlapped : LibC::OVERLAPPED*, &)
       start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
       operation = Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
       operation.schedule { |fiber| yield fiber }
@@ -116,7 +104,7 @@ module IO::Overlapped
       pointerof(@overlapped)
     end
 
-    def result(socket, &)
+    def wsa_result(socket, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
@@ -142,12 +130,14 @@ module IO::Overlapped
       end
     end
 
-    protected def done(socket)
+    protected def done(handle)
       case @state
       when .started?
+        handle = LibC::HANDLE.new(handle) if handle.is_a?(LibC::SOCKET)
+
         # Microsoft documentation:
         # The application must not free or reuse the OVERLAPPED structure associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(LibC::HANDLE.new(socket), pointerof(@overlapped)) != 0
+        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
@@ -170,7 +160,7 @@ module IO::Overlapped
     Crystal::Scheduler.event_loop.dequeue(timeout_event)
   end
 
-  def overlapped_operation(socket, method, timeout, connreset_is_error = true, &)
+  def wsa_overlapped_operation(socket, method, timeout, connreset_is_error = true, &)
     OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
@@ -184,7 +174,7 @@ module IO::Overlapped
 
       schedule_overlapped(timeout)
 
-      operation.result(socket) do |error|
+      operation.wsa_result(socket) do |error|
         case error
         when .wsa_io_incomplete?
           raise TimeoutError.new("#{method} timed out")
@@ -192,45 +182,6 @@ module IO::Overlapped
           return 0_u32 unless connreset_is_error
         end
       end
-    end
-  end
-
-  def overlapped_connect(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
-      yield operation.start
-
-      schedule_overlapped(read_timeout || 1.seconds)
-
-      operation.result(socket) do |error|
-        case error
-        when .wsa_io_incomplete?, .wsaeconnrefused?
-          return ::Socket::ConnectError.from_os_error(method, error)
-        when .error_operation_aborted?
-          # FIXME: Not sure why this is necessary
-          return ::Socket::ConnectError.from_os_error(method, error)
-        end
-      end
-
-      nil
-    end
-  end
-
-  def overlapped_accept(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
-      yield operation.start
-
-      unless schedule_overlapped(read_timeout)
-        raise IO::TimeoutError.new("accept timed out")
-      end
-
-      operation.result(socket) do |error|
-        case error
-        when .wsa_io_incomplete?, .wsaenotsock?
-          return false
-        end
-      end
-
-      true
     end
   end
 end
