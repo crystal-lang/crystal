@@ -229,7 +229,9 @@ class Time::Location
             )
             info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
             info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
-            LibC.SetTimeZoneInformation(pointerof(info))
+            if LibC.SetTimeZoneInformation(pointerof(info)) == 0
+              pending! "Unable to set time zone" if WinError.value.error_privilege_not_held?
+            end
 
             location = Location.load_local
             location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
