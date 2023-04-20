@@ -104,6 +104,19 @@ module IO::Overlapped
       pointerof(@overlapped)
     end
 
+    def result(handle, &)
+      raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
+      result = LibC.GetOverlappedResult(handle, pointerof(@overlapped), out bytes, 0)
+      if result.zero?
+        error = WinError.value
+        yield error
+
+        raise IO::Error.from_os_error("GetOverlappedResult", error)
+      end
+
+      bytes
+    end
+
     def wsa_result(socket, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
@@ -158,6 +171,41 @@ module IO::Overlapped
     Crystal::Scheduler.reschedule
 
     Crystal::Scheduler.event_loop.dequeue(timeout_event)
+  end
+
+  def overlapped_operation(handle, method, timeout, *, writing = false, &)
+    OverlappedOperation.run(handle) do |operation|
+      result = yield operation.start
+
+      if result == 0
+        case error = WinError.value
+        when .error_handle_eof?
+          return 0
+        when .error_broken_pipe?
+          return 0
+        when .error_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .error_access_denied?
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}"
+        else
+          raise IO::Error.from_os_error(method, error)
+        end
+      end
+
+      schedule_overlapped(timeout)
+
+      operation.result(handle) do |error|
+        case error
+        when .error_io_incomplete?
+          raise IO::TimeoutError.new("#{method} timed out")
+        when .error_handle_eof?
+          return 0
+        when .error_broken_pipe?
+          # TODO: this is needed for `Process.run`, can we do without it?
+          return 0
+        end
+      end
+    end
   end
 
   def wsa_overlapped_operation(socket, method, timeout, connreset_is_error = true, &)

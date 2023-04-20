@@ -2,30 +2,48 @@ require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
 require "c/winnls"
+require "io/overlapped"
 
 module Crystal::System::FileDescriptor
+  include IO::Overlapped
+
   @volatile_fd : Atomic(LibC::Int)
+  @system_blocking = true
 
   private def unbuffered_read(slice : Bytes)
-    bytes_read = LibC._read(fd, slice, slice.size)
-    if bytes_read == -1
-      if Errno.value == Errno::EBADF
-        raise IO::Error.new "File not open for reading"
-      else
-        raise IO::Error.from_errno("Error reading file")
+    if system_blocking?
+      bytes_read = LibC._read(fd, slice, slice.size)
+      if bytes_read == -1
+        if Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for reading"
+        else
+          raise IO::Error.from_errno("Error reading file")
+        end
+      end
+      bytes_read
+    else
+      handle = windows_handle
+      overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
+        LibC.ReadFile(handle, slice, slice.size, nil, overlapped)
       end
     end
-    bytes_read
   end
 
   private def unbuffered_write(slice : Bytes)
     until slice.empty?
-      bytes_written = LibC._write(fd, slice, slice.size)
-      if bytes_written == -1
-        if Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing"
-        else
-          raise IO::Error.from_errno("Error writing file")
+      if system_blocking?
+        bytes_written = LibC._write(fd, slice, slice.size)
+        if bytes_written == -1
+          if Errno.value == Errno::EBADF
+            raise IO::Error.new "File not open for writing"
+          else
+            raise IO::Error.from_errno("Error writing file")
+          end
+        end
+      else
+        handle = windows_handle
+        bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
+          LibC.WriteFile(handle, slice, slice.size, nil, overlapped)
         end
       end
 
@@ -34,11 +52,17 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking?
-    true
+    @system_blocking
   end
 
   private def system_blocking=(blocking)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor#system_blocking=") unless blocking
+    unless blocking == @system_blocking
+      raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
+    end
+  end
+
+  private def system_blocking_init(value)
+    @system_blocking = value
   end
 
   private def system_close_on_exec?
@@ -125,11 +149,12 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
+    LibC.CancelIoEx(windows_handle, nil)
+
     file_descriptor_close
   end
 
   def file_descriptor_close
-    err = nil
     if LibC._close(fd) != 0
       case Errno.value
       when Errno::EINTR
@@ -140,14 +165,26 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  def self.pipe(read_blocking, write_blocking)
-    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC._pipe(pipe_fds, 8192, LibC::O_BINARY | LibC::O_NOINHERIT) != 0
-      raise IO::Error.from_errno("Could not create pipe")
-    end
+  private PIPE_BUFFER_SIZE = 8192
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+  def self.pipe(read_blocking, write_blocking)
+    pipe_name = ::Path.windows(::File.tempname("crystal", nil, dir: %q(\\.\pipe))).normalize.to_s
+    pipe_mode = 0 # PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT
+
+    w_pipe_flags = LibC::PIPE_ACCESS_OUTBOUND | LibC::FILE_FLAG_FIRST_PIPE_INSTANCE
+    w_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless write_blocking
+    w_pipe = LibC.CreateNamedPipeA(pipe_name, w_pipe_flags, pipe_mode, 1, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nil)
+    raise IO::Error.from_winerror("CreateNamedPipeA") if w_pipe == LibC::INVALID_HANDLE_VALUE
+    Crystal::Scheduler.event_loop.create_completion_port(w_pipe) unless write_blocking
+
+    r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
+    r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
+    r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
+    raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
+    Crystal::Scheduler.event_loop.create_completion_port(r_pipe) unless read_blocking
+
+    r = IO::FileDescriptor.new(LibC._open_osfhandle(r_pipe, 0), read_blocking)
+    w = IO::FileDescriptor.new(LibC._open_osfhandle(w_pipe, 0), write_blocking)
     w.sync = true
 
     {r, w}
@@ -187,7 +224,7 @@ module Crystal::System::FileDescriptor
       end
     end
 
-    io = IO::FileDescriptor.new(fd)
+    io = IO::FileDescriptor.new(fd, blocking: true)
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
     if console_handle

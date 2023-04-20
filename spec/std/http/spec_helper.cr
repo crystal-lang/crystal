@@ -61,29 +61,26 @@ end
 def run_handler(handler, &)
   done = Channel(Exception?).new
 
-  begin
-    IO::Stapled.pipe do |server_io, client_io|
-      processor = HTTP::Server::RequestProcessor.new(handler)
-      f = spawn do
-        processor.process(server_io, server_io)
-      rescue exc
-        done.send exc
-      else
-        done.send nil
-      end
+  IO::Stapled.pipe do |server_io, client_io|
+    processor = HTTP::Server::RequestProcessor.new(handler)
+    f = spawn do
+      processor.process(server_io, server_io)
+    rescue exc
+      done.send exc
+    else
+      done.send nil
+    end
 
-      client = HTTP::Client.new(client_io)
+    client = HTTP::Client.new(client_io)
 
-      begin
-        wait_until_blocked f
+    begin
+      wait_until_blocked f
 
-        yield client
-      ensure
-        processor.close
-        server_io.close
-        if exc = done.receive
-          raise exc
-        end
+      yield client
+    ensure
+      processor.close
+      if exc = done.receive
+        raise exc
       end
     end
   end
