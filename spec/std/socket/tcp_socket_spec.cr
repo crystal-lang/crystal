@@ -21,7 +21,7 @@ describe TCPSocket, tags: "network" do
             sock.local_address.port.should eq(port)
             sock.local_address.address.should eq(address)
 
-              client.remote_address.port.should eq(port)
+            client.remote_address.port.should eq(port)
             sock.remote_address.address.should eq address
           end
         end
