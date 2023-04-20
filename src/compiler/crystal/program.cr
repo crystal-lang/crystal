@@ -181,6 +181,7 @@ module Crystal
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.declare_instance_var("@bytesize", int32)
       string.declare_instance_var("@length", int32)
+      string.declare_instance_var("@code_range", int8)
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")

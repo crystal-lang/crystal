@@ -77,6 +77,7 @@ module Crystal
         @llvm_context.int32,                    # type_id
         @llvm_context.int32,                    # @bytesize
         @llvm_context.int32,                    # @length
+        @llvm_context.int8,                     # @code_range
         @llvm_context.int8.array(bytesize + 1), # @c
       ]
     end
