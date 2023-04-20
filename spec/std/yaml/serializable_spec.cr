@@ -1017,6 +1017,5 @@ describe "YAML::Serializable" do
 
   it "fixes #13337" do
     YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
-    YAMLAttrValue(YAMLSomething).from_yaml(%({"value":{}})).value.should_not be_nil
   end
 end

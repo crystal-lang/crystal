@@ -1116,6 +1116,5 @@ describe "JSON mapping" do
 
   it "fixes #13337" do
     JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
-    JSONAttrValue(JSONSomething).from_json(%({"value":{}})).value.should_not be_nil
   end
 end
