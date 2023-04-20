@@ -65,7 +65,7 @@ macro record(name, *properties, **kwargs)
   {% raise "macro `record` does not accept named arguments
     Did you mean:
 
-    record #{name}, #{(properties + kwargs.map{|name, value| "#{name} : #{value}"}).join(", ").id}
+    record #{name}, #{(properties + kwargs.map { |name, value| "#{name} : #{value}" }).join(", ").id}
     " unless kwargs.empty? %}
 
   struct {{name.id}}
