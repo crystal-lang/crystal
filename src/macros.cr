@@ -61,7 +61,17 @@
 # p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
 # p                  # => #<Point(@x=0, @y=2)>
 # ```
-macro record(name, *properties)
+macro record(name, *properties, **kwargs)
+  {% raise "#{name} does not accept named arguments
+    You probably wrote:
+
+      record #{name}, name: String
+
+    instead of:
+
+      record #{name}, name : String
+    " unless kwargs.empty? %}
+
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
