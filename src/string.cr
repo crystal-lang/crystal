@@ -277,6 +277,9 @@ class String
   # The actual character content at `@c` is expected to be already filled and is
   # unaffected by this method.
   def initialize_header(@bytesize : Int32, @length : Int32 = 0)
+    {% if @type.instance_vars.any? { |var| var.name == "code_range".id } %}
+      @code_range = 0
+    {% end %}
   end
 
   # Builds a `String` by creating a `String::Builder` with the given initial capacity, yielding
@@ -5121,14 +5124,7 @@ class String
   # "你好".ascii_only?    # => false
   # ```
   def ascii_only? : Bool
-    if @bytesize == size
-      each_byte do |byte|
-        return false unless byte < 0x80
-      end
-      true
-    else
-      false
-    end
+    single_byte_optimizable? && code_range.ascii_only?
   end
 
   # :nodoc:
@@ -5139,7 +5135,70 @@ class String
   # Returns `true` if this String is encoded correctly
   # according to the UTF-8 encoding.
   def valid_encoding? : Bool
-    Unicode.valid?(to_slice)
+    code_range.valid_utf8?
+  end
+
+  # Unknown = 0
+  # ASCII   = 1
+  # UTF8    = 2
+  # BROKEN  = 3
+
+  # :nodoc:
+  @[Flags]
+  enum CodeRange : Int8
+    CHECKED
+    VALID_UTF8
+    SINGLE_BYTE_OPTIMIZABLE
+
+    BROKEN         = CHECKED
+    ASCII_ONLY     = CHECKED | VALID_UTF8 | SINGLE_BYTE_OPTIMIZABLE
+    UTF8_MULTIBYTE = CHECKED | VALID_UTF8
+
+    def broken?
+      checked? && !valid_utf8?
+    end
+
+    # MULTIBYTE = 4
+    # NO_NULL_BYTE = 8
+  end
+
+  # |            | v | VALID | CHECKED || SINGLE BYTE | NO_NULL_BYTE
+  # |------------|---|-------|---------||-----------|
+  # | ascii_only | 7 | x     | x       || x         |
+  # | valid utf8 | 3 | x     | x       ||           |
+  # | broken     | 1 |       | x       || ?         |
+  # | unknown    | 0 |       |         ||           |
+
+  # |            | v | ASCII | VALID   |
+  # |------------|---|-------|---------|
+  # | ascii_only | 3 | x     | x       |
+  # | valid utf8 | 2 |       | x       |
+  # | broken     | 1 | x     |         |
+  # | unknown    | 0 |       |         |
+
+  # :nodoc:
+  def code_range : CodeRange
+    {% if @type.instance_vars.any? { |var| var.name == "code_range".id } %}
+      if @code_range == 0
+        code_range = calculate_code_range
+        @code_range = code_range.value
+      else
+        code_range = CodeRange.new(@code_range)
+      end
+      code_range
+    {% else %}
+      calculate_code_range
+    {% end %}
+  end
+
+  # :nodoc:
+  private def calculate_code_range
+    code_range = CodeRange::CHECKED
+    return code_range unless Unicode.valid?(to_slice)
+
+    code_range |= :valid_utf8
+    code_range |= :single_byte_optimizable if single_byte_optimizable?
+    code_range
   end
 
   # Returns a String where bytes that are invalid in the

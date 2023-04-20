@@ -2905,7 +2905,13 @@ describe "String" do
 
       # incomplete, 3-byte
       String.new(Bytes[0xE1]).valid_encoding?.should be_false
-      String.new(Bytes[0xE1, 0x00]).valid_encoding?.should be_false
+      s = String.new(Bytes[0xE1, 0x00])
+      begin
+        s.valid_encoding?.should be_false
+      rescue exc
+        s.code_range
+        raise exc
+      end
       String.new(Bytes[0xE1, 0xC2]).valid_encoding?.should be_false
       String.new(Bytes[0xE1, 0x80]).valid_encoding?.should be_false
       String.new(Bytes[0xE1, 0x80, 0x00]).valid_encoding?.should be_false

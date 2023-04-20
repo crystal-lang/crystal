@@ -2302,7 +2302,7 @@ module Crystal
           type_id(@program.string),
           int32(str.bytesize),
           int32(str.size),
-          int8(0),
+          int8(str.code_range.value),
           llvm_context.const_string(str),
         ]
         cast_to global, @program.string
