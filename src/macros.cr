@@ -62,14 +62,10 @@
 # p                  # => #<Point(@x=0, @y=2)>
 # ```
 macro record(name, *properties, **kwargs)
-  {% raise "#{name} does not accept named arguments
-    You probably wrote:
+  {% raise "macro `record` does not accept named arguments
+    Did you mean:
 
-      record #{name}, name: String
-
-    instead of:
-
-      record #{name}, name : String
+    record #{name}, #{(properties + kwargs.map{|name, value| "#{name} : #{value}"}).join(", ").id}
     " unless kwargs.empty? %}
 
   struct {{name.id}}
