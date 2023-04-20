@@ -541,7 +541,7 @@ describe "Regex" do
   end
 
   it ".supports_match_options?" do
-    Regex.supports_compile_options?(:anchored).should be_true
-    Regex.supports_compile_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
+    Regex.supports_match_options?(:anchored).should be_true
+    Regex.supports_match_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
   end
 end
