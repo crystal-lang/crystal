@@ -207,8 +207,6 @@ function Exec-Process {
     $hnd = $Process.Handle
     Wait-Process -Id $Process.Id
 
-    # and return it properly too: https://stackoverflow.com/a/50202663
-    $host.SetShouldExit($Process.ExitCode)
     Exit $Process.ExitCode
 }
 
