@@ -21,7 +21,7 @@ module Crystal
   # optionally generates an executable.
   class Compiler
     CC = ENV["CC"]? || "cc"
-    CL = "cl.exe"
+    CL = ENV["CC"]? || "cl.exe"
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -354,7 +354,7 @@ module Crystal
               # use exact path for compiler instead of relying on `PATH`
               # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
               target_bits = target_bits.sub("arm", "ARM")
-              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s)
+              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
             end
           end
         {% end %}
