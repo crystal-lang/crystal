@@ -525,13 +525,24 @@ class Crystal::Command
     first_filename = sources.first.filename
     first_file_ext = File.extname(first_filename)
     original_output_filename = File.basename(first_filename, first_file_ext)
+    {% if flag?(:win32) %}
+      original_output_filename = "#{original_output_filename}.exe"
+    {% end %}
 
     # Check if we'll overwrite the main source file
-    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
+    if !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
       error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
     end
 
-    output_filename ||= original_output_filename
+    if output_filename
+      {% if flag?(:win32) %}
+        output_file_ext = File.extname(output_filename)
+        output_filename = "#{File.basename(output_filename, output_file_ext)}.exe"
+      {% end %}
+    else
+      output_filename = original_output_filename
+    end
+
     output_format ||= "text"
     unless output_format.in?("text", "json")
       error "You have input an invalid format, only text and JSON are supported"
