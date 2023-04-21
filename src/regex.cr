@@ -557,7 +557,7 @@ class Regex
     match(str, pos, options: _options)
   end
 
-  # Matches a regular expression against `String` *str*. This starts at the character
+  # Matches a regular expression against *str*. This starts at the character
   # index *pos* if given, otherwise at the start of *str*. Returns a `Regex::MatchData`
   # if *str* matched, otherwise raises an exception. `$~` will contain the same value
   # if matched.
