@@ -1681,7 +1681,7 @@ module Crystal
       next_token_skip_space_or_newline
       name_location = @token.location
 
-      name = parse_path_no_skip_space
+      name = parse_path(skip_space: false)
       need_statement_end = true unless @token.type.space?
       skip_space
 
@@ -1775,7 +1775,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_path_no_skip_space
+      name = parse_path(skip_space: false)
       need_statement_end = true unless @token.type.space?
       skip_space
 
@@ -5077,7 +5077,7 @@ module Crystal
 
     # Parse type path.
     # It also consumes prefix `::` to specify global path.
-    def parse_path_no_skip_space
+    def parse_path(skip_space = true)
       location = @token.location
 
       global = false
@@ -5086,13 +5086,8 @@ module Crystal
         global = true
       end
 
-      parse_path(global, @token.location)
-    end
-
-    # :ditto:
-    def parse_path
-      path = parse_path_no_skip_space
-      skip_space
+      path = parse_path(global, @token.location)
+      self.skip_space if skip_space
       path
     end
 
