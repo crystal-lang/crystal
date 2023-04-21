@@ -449,11 +449,11 @@ module Crystal::System::Socket
   end
 
   private def system_tcp_keepalive_idle
-    getsockopt LibC::SO_KEEPALIVE, 0, level: ::Socket::Protocol::TCP
+    getsockopt LibC::TCP_KEEPIDLE, 0, level: ::Socket::Protocol::TCP
   end
 
   private def system_tcp_keepalive_idle=(val : Int)
-    setsockopt LibC::SO_KEEPALIVE, val, level: ::Socket::Protocol::TCP
+    setsockopt LibC::TCP_KEEPIDLE, val, level: ::Socket::Protocol::TCP
     val
   end
 
