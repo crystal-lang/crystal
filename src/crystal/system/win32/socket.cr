@@ -127,7 +127,19 @@ module Crystal::System::Socket
     end
 
     if error
-      yield error
+      return yield error
+    end
+
+    # from https://learn.microsoft.com/en-us/windows/win32/winsock/sol-socket-socket-options:
+    #
+    # > This option is used with the ConnectEx, WSAConnectByList, and
+    # > WSAConnectByName functions. This option updates the properties of the
+    # > socket after the connection is established. This option should be set
+    # > if the getpeername, getsockname, getsockopt, setsockopt, or shutdown
+    # > functions are to be used on the connected socket.
+    optname = LibC::SO_UPDATE_CONNECT_CONTEXT
+    if LibC.setsockopt(fd, LibC::SOL_SOCKET, optname, nil, 0) == LibC::SOCKET_ERROR
+      return yield ::Socket::Error.from_wsa_error("setsockopt #{optname}")
     end
   end
 

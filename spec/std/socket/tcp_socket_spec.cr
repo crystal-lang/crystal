@@ -21,10 +21,7 @@ describe TCPSocket, tags: "network" do
             sock.local_address.port.should eq(port)
             sock.local_address.address.should eq(address)
 
-            # FIXME: This should work on win32
-            {% unless flag?(:win32) %}
-              client.remote_address.port.should eq(port)
-            {% end %}
+            client.remote_address.port.should eq(port)
             sock.remote_address.address.should eq address
           end
         end
