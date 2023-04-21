@@ -472,7 +472,7 @@ describe HTTP::Server do
     end
   end
 
-  pending_win32 describe: "#remote_address / #local_address" do
+  describe "#remote_address / #local_address" do
     it "for http server" do
       remote_address = nil
       local_address = nil
