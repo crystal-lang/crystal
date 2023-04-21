@@ -525,9 +525,9 @@ class Crystal::Command
     first_filename = sources.first.filename
     first_file_ext = File.extname(first_filename)
     original_output_filename = File.basename(first_filename, first_file_ext)
-    {% if flag?(:win32) %}
+    if compiler.codegen_target.win32?
       original_output_filename = "#{original_output_filename}.exe"
-    {% end %}
+    end
 
     # Check if we'll overwrite the main source file
     if !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
@@ -535,10 +535,10 @@ class Crystal::Command
     end
 
     if output_filename
-      {% if flag?(:win32) %}
+      if compiler.codegen_target.win32?
         output_file_ext = File.extname(output_filename)
         output_filename = "#{File.join File.dirname(output_filename), File.basename(output_filename, output_file_ext)}.exe"
-      {% end %}
+      end
     else
       output_filename = original_output_filename
     end
