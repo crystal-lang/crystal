@@ -559,7 +559,7 @@ class Regex
 
   # Matches a regular expression against *str*. This starts at the character
   # index *pos* if given, otherwise at the start of *str*. Returns a `Regex::MatchData`
-  # if *str* matched, otherwise raises an exception. `$~` will contain the same value
+  # if *str* matched, otherwise raises `Regex::Error`. `$~` will contain the same value
   # if matched.
   #
   # ```
