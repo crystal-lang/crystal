@@ -4561,7 +4561,7 @@ class String
   end
 
   # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
-  # This will raise an exception if there are no matches.
+  # Raises `Regex::Error` if there are no matches.
   #
   # ```
   # "foo".match!(/foo/) # => Regex::MatchData("foo")
