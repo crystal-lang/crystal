@@ -205,6 +205,8 @@ struct Crystal::System::Process
 
     process_info = LibC::PROCESS_INFORMATION.new
 
+    command_args = ::Process.quote_windows(command_args) unless command_args.is_a?(String)
+
     if LibC.CreateProcessW(
          nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
@@ -228,7 +230,7 @@ struct Crystal::System::Process
     process_info
   end
 
-  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : String
+  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool)
     if shell
       if args
         raise NotImplementedError.new("Process with args and shell: true is not supported on Windows")
@@ -237,12 +239,67 @@ struct Crystal::System::Process
     else
       command_args = [command]
       command_args.concat(args) if args
-      ::Process.quote_windows(command_args)
+      command_args
     end
   end
 
+  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+    reopen_io(input, ORIGINAL_STDIN)
+    reopen_io(output, ORIGINAL_STDOUT)
+    reopen_io(error, ORIGINAL_STDERR)
+
+    ENV.clear if clear_env
+    env.try &.each do |key, val|
+      if val
+        ENV[key] = val
+      else
+        ENV.delete key
+      end
+    end
+
+    ::Dir.cd(chdir) if chdir
+
+    if command_args.is_a?(String)
+      command = System.to_wstr(command_args)
+      argv = [command]
+    else
+      command = System.to_wstr(command_args[0])
+      argv = command_args.map { |arg| System.to_wstr(arg) }
+    end
+    argv << Pointer(LibC::WCHAR).null
+
+    LibC._wexecvp(command, argv)
+  end
+
   def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    raise NotImplementedError.new("Process.exec")
+    try_replace(command_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0])
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    case errno
+    when Errno::EACCES, Errno::ENOENT
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
+    else
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
+    end
+  end
+
+  private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
+    src_io = to_real_fd(src_io)
+
+    dst_io.reopen(src_io)
+    dst_io.blocking = true
+    dst_io.close_on_exec = false
+  end
+
+  private def self.to_real_fd(fd : IO::FileDescriptor)
+    case fd
+    when STDIN  then ORIGINAL_STDIN
+    when STDOUT then ORIGINAL_STDOUT
+    when STDERR then ORIGINAL_STDERR
+    else             fd
+    end
   end
 
   def self.chroot(path)

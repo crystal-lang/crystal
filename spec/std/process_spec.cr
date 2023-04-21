@@ -414,15 +414,15 @@ describe Process do
         end
       end
     end
+  {% end %}
 
-    describe ".exec" do
-      it "gets error from exec" do
-        expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
-          Process.exec("foobarbaz")
-        end
+  describe ".exec" do
+    it "gets error from exec" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.exec("foobarbaz")
       end
     end
-  {% end %}
+  end
 
   describe ".chroot" do
     {% if flag?(:unix) && !flag?(:android) %}
