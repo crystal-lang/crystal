@@ -23,9 +23,6 @@ module Regex::PCRE2
   # :nodoc:
   def initialize(*, _source @source : String, _options @options)
     options = pcre2_compile_options(options) | LibPCRE2::UTF | LibPCRE2::DUPNAMES | LibPCRE2::UCP
-    if PCRE2.version_number >= {10, 34}
-      options |= LibPCRE2::MATCH_INVALID_UTF
-    end
     @re = PCRE2.compile(source, options) do |error_message|
       raise ArgumentError.new(error_message)
     end
@@ -68,18 +65,19 @@ module Regex::PCRE2
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .ignore_case?    then LibPCRE2::CASELESS
-                when .multiline?      then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
-                when .dotall?         then LibPCRE2::DOTALL
-                when .extended?       then LibPCRE2::EXTENDED
-                when .anchored?       then LibPCRE2::ANCHORED
-                when .dollar_endonly? then LibPCRE2::DOLLAR_ENDONLY
-                when .firstline?      then LibPCRE2::FIRSTLINE
-                when .utf_8?          then LibPCRE2::UTF
-                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
-                when .dupnames?       then LibPCRE2::DUPNAMES
-                when .ucp?            then LibPCRE2::UCP
-                when .endanchored?    then LibPCRE2::ENDANCHORED
+                when .ignore_case?       then LibPCRE2::CASELESS
+                when .multiline?         then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
+                when .dotall?            then LibPCRE2::DOTALL
+                when .extended?          then LibPCRE2::EXTENDED
+                when .anchored?          then LibPCRE2::ANCHORED
+                when .dollar_endonly?    then LibPCRE2::DOLLAR_ENDONLY
+                when .firstline?         then LibPCRE2::FIRSTLINE
+                when .utf_8?             then LibPCRE2::UTF
+                when .no_utf_check?      then LibPCRE2::NO_UTF_CHECK
+                when .dupnames?          then LibPCRE2::DUPNAMES
+                when .ucp?               then LibPCRE2::UCP
+                when .endanchored?       then LibPCRE2::ENDANCHORED
+                when .match_invalid_utf? then LibPCRE2::MATCH_INVALID_UTF
                 else
                   raise "unreachable"
                 end
@@ -105,7 +103,7 @@ module Regex::PCRE2
                 when .dollar_endonly? then raise ArgumentError.new("Invalid regex option DOLLAR_ENDONLY for `pcre2_match`")
                 when .firstline?      then raise ArgumentError.new("Invalid regex option FIRSTLINE for `pcre2_match`")
                 when .utf_8?          then raise ArgumentError.new("Invalid regex option UTF_8 for `pcre2_match`")
-                when .no_utf8_check?  then LibPCRE2::NO_UTF_CHECK
+                when .no_utf_check?   then LibPCRE2::NO_UTF_CHECK
                 when .dupnames?       then raise ArgumentError.new("Invalid regex option DUPNAMES for `pcre2_match`")
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
@@ -126,9 +124,10 @@ module Regex::PCRE2
     Regex::MatchOptions.each do |option|
       if options.includes?(option)
         flag |= case option
-                when .anchored?    then LibPCRE2::ANCHORED
-                when .endanchored? then LibPCRE2::ENDANCHORED
-                when .no_jit?      then LibPCRE2::NO_JIT
+                when .anchored?     then LibPCRE2::ANCHORED
+                when .endanchored?  then LibPCRE2::ENDANCHORED
+                when .no_jit?       then LibPCRE2::NO_JIT
+                when .no_utf_check? then LibPCRE2::NO_UTF_CHECK
                 else
                   raise "unreachable"
                 end
@@ -139,12 +138,6 @@ module Regex::PCRE2
       raise ArgumentError.new("Unknown Regex::MatchOption value: #{options}")
     end
     flag
-  end
-
-  def finalize
-    {% unless flag?(:interpreted) %}
-      LibPCRE2.code_free @re
-    {% end %}
   end
 
   protected def self.error_impl(source)
@@ -173,7 +166,7 @@ module Regex::PCRE2
   private def name_table_impl
     lookup = Hash(Int32, String).new
 
-    each_capture_group do |capture_number, name_entry|
+    each_named_capture_group do |capture_number, name_entry|
       lookup[capture_number] = String.new(name_entry.to_unsafe + 2)
     end
 
@@ -181,7 +174,7 @@ module Regex::PCRE2
   end
 
   # :nodoc:
-  def each_capture_group(&)
+  def each_named_capture_group(&)
     name_table = uninitialized UInt8*
     pattern_info(LibPCRE2::INFO_NAMETABLE, pointerof(name_table))
 
@@ -189,7 +182,7 @@ module Regex::PCRE2
 
     name_count = pattern_info(LibPCRE2::INFO_NAMECOUNT)
     name_count.times do
-      capture_number = (name_table[0] << 8) | name_table[1]
+      capture_number = (name_table[0].to_i << 8) | name_table[1]
 
       yield capture_number, Slice.new(name_table, name_entry_size)
 
@@ -257,6 +250,7 @@ module Regex::PCRE2
     @match_data.consume_each do |match_data|
       LibPCRE2.match_data_free(match_data)
     end
+    LibPCRE2.code_free @re
   end
 
   private def match_data(str, byte_index, options)
@@ -279,12 +273,6 @@ module Regex::PCRE2
     match_data
   end
 
-  def self.config(what, type : T.class) : T forall T
-    value = uninitialized T
-    LibPCRE2.config(what, pointerof(value))
-    value
-  end
-
   module MatchData
     # :nodoc:
     def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : LibC::SizeT*, @group_size : Int32)
@@ -303,7 +291,7 @@ module Regex::PCRE2
     private def fetch_impl(group_name : String, &)
       selected_range = nil
       exists = false
-      @regex.each_capture_group do |number, name_entry|
+      @regex.each_named_capture_group do |number, name_entry|
         if name_entry[2, group_name.bytesize]? == group_name.to_slice && name_entry[2 + group_name.bytesize].zero?
           exists = true
           range = byte_range(number) { nil }

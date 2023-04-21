@@ -465,6 +465,18 @@ module JSONNamespace
   end
 end
 
+class JSONSomething
+  include JSON::Serializable
+
+  property value : JSONAttrValue(Set(JSONSomethingElse)?)?
+end
+
+class JSONSomethingElse
+  include JSON::Serializable
+
+  property value : JSONAttrValue(Set(JSONSomethingElse)?)?
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -1106,5 +1118,10 @@ describe "JSON mapping" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
+    JSONSomethingElse.from_json(%({"value":{}})).value.should_not be_nil
   end
 end

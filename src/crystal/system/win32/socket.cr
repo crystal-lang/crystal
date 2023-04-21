@@ -86,7 +86,7 @@ module Crystal::System::Socket
 
   private def initialize_handle(handle)
     value = 1_u8
-    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(value), 1)
+    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_EXCLUSIVEADDRUSE, pointerof(value), 1)
     if ret == LibC::SOCKET_ERROR
       raise ::Socket::Error.from_wsa_error("setsockopt")
     end
@@ -253,12 +253,61 @@ module Crystal::System::Socket
     end
   end
 
+  private def system_send_buffer_size : Int
+    getsockopt LibC::SO_SNDBUF, 0
+  end
+
+  private def system_send_buffer_size=(val : Int)
+    setsockopt LibC::SO_SNDBUF, val
+  end
+
+  private def system_recv_buffer_size : Int
+    getsockopt LibC::SO_RCVBUF, 0
+  end
+
+  private def system_recv_buffer_size=(val : Int)
+    setsockopt LibC::SO_RCVBUF, val
+  end
+
+  # SO_REUSEADDR, as used in posix, is always assumed on windows
+  # the SO_REUSEADDR flag on windows is the equivalent of SO_REUSEPORT on linux
+  # https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#application-strategies
+  private def system_reuse_address? : Bool
+    true
+  end
+
+  private def system_reuse_address=(val : Bool)
+    raise NotImplementedError.new("Crystal::System::Socket#system_reuse_address=") unless val
+  end
+
   private def system_reuse_port?
-    false
+    getsockopt_bool LibC::SO_REUSEADDR
   end
 
   private def system_reuse_port=(val : Bool)
-    raise NotImplementedError.new("Socket#reuse_port=")
+    if val
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, false
+      setsockopt_bool LibC::SO_REUSEADDR, true
+    else
+      setsockopt_bool LibC::SO_REUSEADDR, false
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, true
+    end
+  end
+
+  private def system_broadcast? : Bool
+    getsockopt_bool LibC::SO_BROADCAST
+  end
+
+  private def system_broadcast=(val : Bool)
+    setsockopt_bool LibC::SO_BROADCAST, val
+  end
+
+  private def system_keepalive? : Bool
+    getsockopt_bool LibC::SO_KEEPALIVE
+  end
+
+  private def system_keepalive=(val : Bool)
+    setsockopt_bool LibC::SO_KEEPALIVE, val
   end
 
   private def system_linger

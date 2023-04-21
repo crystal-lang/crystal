@@ -142,8 +142,8 @@ struct BigInt < Int
     end
   end
 
-  def <=>(other : Float)
-    LibGMP.cmp_d(mpz, other)
+  def <=>(other : Float::Primitive)
+    LibGMP.cmp_d(mpz, other) unless other.nan?
   end
 
   def +(other : BigInt) : BigInt
@@ -832,7 +832,8 @@ struct Float
   include Comparable(BigInt)
 
   def <=>(other : BigInt)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Returns a `BigInt` representing this float (rounded using `floor`).

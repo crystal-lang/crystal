@@ -204,6 +204,7 @@ lib LibGMP
   # # Precision
   fun mpf_set_default_prec = __gmpf_set_default_prec(prec : BitcntT)
   fun mpf_get_default_prec = __gmpf_get_default_prec : BitcntT
+  fun mpf_get_prec = __gmpf_get_prec(op : MPF*) : BitcntT
 
   # # Conversion
   fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*
