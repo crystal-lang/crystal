@@ -1430,7 +1430,7 @@ class Object
   end
 
   protected def self.set_crystal_type_id(ptr)
-    ptr.as(LibC::SizeT*).value = LibC::SizeT.new(crystal_instance_type_id)
+    ptr.as(Pointer(typeof(crystal_instance_type_id))).value = crystal_instance_type_id
     ptr
   end
 end
