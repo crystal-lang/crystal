@@ -1682,11 +1682,11 @@ module Crystal
       name_location = @token.location
 
       name = parse_path(skip_space: false)
-      need_statement_end = true unless @token.type.space?
+      need_statement_end = !@token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
-      need_statement_end = true unless @token.type.space?
+      need_statement_end = !@token.type.space? if type_vars
       skip_space
 
       superclass = nil
@@ -1696,12 +1696,10 @@ module Crystal
         if @token.keyword?(:self)
           superclass = Self.new.at(@token.location)
           next_token
-          need_statement_end = true
         else
           superclass = parse_generic(skip_space: false)
-          need_statement_end = true unless @token.type.space?
-          skip_space
         end
+        need_statement_end = true
       end
 
       consume_statement_end if need_statement_end
@@ -1776,12 +1774,11 @@ module Crystal
 
       name_location = @token.location
       name = parse_path(skip_space: false)
-      need_statement_end = true unless @token.type.space?
+      need_statement_end = !@token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
-      need_statement_end = true unless @token.type.space?
-      skip_space
+      need_statement_end = true if type_vars
 
       consume_statement_end if need_statement_end
       skip_statement_end
