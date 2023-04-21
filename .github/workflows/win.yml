@@ -375,5 +375,4 @@ jobs:
         run: make -f Makefile.win primitives_spec
 
       - name: Build samples
-        working-directory: ./samples
-        run: make -f Makefile.win
+        run: make -f Makefile.win samples

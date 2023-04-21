@@ -1,3 +1,10 @@
+all:
+
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
+
+SHELL := cmd.exe
+
 MKDIR = if not exist $1 mkdir $1
 RMDIR = if exist $1 rd /S /Q $1
 
