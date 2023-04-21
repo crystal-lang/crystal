@@ -401,13 +401,7 @@ end
 class YAMLSomething
   include YAML::Serializable
 
-  property value : YAMLAttrValue(Set(YAMLSomethingElse)?)?
-end
-
-class YAMLSomethingElse
-  include YAML::Serializable
-
-  property value : YAMLAttrValue(Set(YAMLSomethingElse)?)?
+  property value : YAMLSomething?
 end
 
 describe "YAML::Serializable" do
@@ -1023,6 +1017,5 @@ describe "YAML::Serializable" do
 
   it "fixes #13337" do
     YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
-    YAMLSomethingElse.from_yaml(%({"value":{}})).value.should_not be_nil
   end
 end
