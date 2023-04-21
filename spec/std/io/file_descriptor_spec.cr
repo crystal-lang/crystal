@@ -18,7 +18,7 @@ describe IO::FileDescriptor do
     code = %q(puts "#{STDIN.blocking} #{STDIN.info.type}")
     compile_source(code) do |binpath|
       `#{shell_command %(#{Process.quote(binpath)} < #{Process.quote(binpath)})}`.chomp.should eq("true File")
-      `#{shell_command %(echo "" | #{Process.quote(binpath)})}`.chomp.should eq("#{ {{ flag?(:win32) }} } Pipe")
+      `#{shell_command %(echo "" | #{Process.quote(binpath)})}`.chomp.should eq("#{{{ flag?(:win32) }}} Pipe")
     end
   end
 
