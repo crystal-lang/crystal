@@ -537,7 +537,7 @@ class Crystal::Command
     if output_filename
       {% if flag?(:win32) %}
         output_file_ext = File.extname(output_filename)
-        output_filename = "#{File.basename(output_filename, output_file_ext)}.exe"
+        output_filename = "#{File.join File.dirname(output_filename), File.basename(output_filename, output_file_ext)}.exe"
       {% end %}
     else
       output_filename = original_output_filename
