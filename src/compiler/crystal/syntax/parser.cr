@@ -1682,7 +1682,7 @@ module Crystal
       name_location = @token.location
 
       name = parse_path_no_skip_space
-      has_space_after_name = @token.type.space?
+      space_after_name = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1699,7 +1699,7 @@ module Crystal
         end
       end
 
-      if superclass || type_vars || !has_space_after_name
+      if superclass || type_vars || !space_after_name
         consume_statement_end
       end
       skip_statement_end
@@ -1773,12 +1773,12 @@ module Crystal
 
       name_location = @token.location
       name = parse_path_no_skip_space
-      has_space_after_name = @token.type.space?
+      space_after_name = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
 
-      if type_vars || !has_space_after_name
+      if type_vars || !space_after_name
         consume_statement_end
       end
       skip_statement_end
