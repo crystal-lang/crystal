@@ -48,12 +48,14 @@ struct BigInt < Int
 
   # Creates a `BigInt` from the given *num*.
   def self.new(num : Int::Primitive)
-    if LibGMP::SI::MIN <= num <= LibGMP::SI::MAX
-      LibGMP.init_set_si(out mpz1, LibGMP::SI.new!(num))
-      new(mpz1)
-    elsif LibGMP::UI::MIN <= num <= LibGMP::UI::MAX
-      LibGMP.init_set_ui(out mpz2, LibGMP::UI.new!(num))
-      new(mpz2)
+    if LibGMP::SI::MIN <= num <= LibGMP::UI::MAX
+      if num <= LibGMP::SI::MAX
+        LibGMP.init_set_si(out mpz1, LibGMP::SI.new!(num))
+        new(mpz1)
+      else
+        LibGMP.init_set_ui(out mpz2, LibGMP::UI.new!(num))
+        new(mpz2)
+      end
     else
       negative = num < 0
       num = num.abs_unsigned
