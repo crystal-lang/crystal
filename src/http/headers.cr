@@ -2,6 +2,8 @@
 #
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
+#
+# NOTE: To use `Headers`, you must explicitly import it with `require "http/headers"`
 struct HTTP::Headers
   include Enumerable({String, Array(String)})
 
@@ -146,7 +148,7 @@ struct HTTP::Headers
     fetch(wrap(key)) { default }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     values = @hash[wrap(key)]?
     values ? concat(values) : yield key
   end
@@ -227,7 +229,7 @@ struct HTTP::Headers
     result.hash(hasher)
   end
 
-  def each
+  def each(&)
     @hash.each do |key, value|
       yield({key.name, cast(value)})
     end
@@ -307,7 +309,7 @@ struct HTTP::Headers
   # The serialization does *not* include a double CRLF sequence at the end.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar", "baz" => %w[qux qox]})
+  # headers = HTTP::Headers{"foo" => "bar", "baz" => %w[qux qox]}
   # headers.serialize # => "foo: bar\r\nbaz: qux\r\nbaz: qox\r\n"
   # ```
   def serialize : String

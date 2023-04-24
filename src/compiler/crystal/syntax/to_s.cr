@@ -110,7 +110,7 @@ module Crystal
       false
     end
 
-    def visit_interpolation(node)
+    def visit_interpolation(node, &)
       node.expressions.each do |exp|
         if exp.is_a?(StringLiteral)
           @str << yield exp.value
@@ -476,7 +476,7 @@ module Crystal
       end
     end
 
-    def in_parenthesis(need_parens)
+    def in_parenthesis(need_parens, &)
       if need_parens
         @str << '('
         yield
@@ -614,7 +614,7 @@ module Crystal
         @str << '.'
       end
       @str << node.name
-      if node.args.size > 0 || node.block_arg || node.double_splat
+      if node.args.size > 0 || node.block_arity || node.double_splat
         @str << '('
         printed_arg = false
         node.args.each_with_index do |arg, i|
@@ -633,7 +633,9 @@ module Crystal
           @current_arg_type = :block_arg
           @str << ", " if printed_arg
           block_arg.accept self
-          printed_arg = true
+        elsif node.block_arity
+          @str << ", " if printed_arg
+          @str << '&'
         end
         @str << ')'
       end
@@ -992,9 +994,9 @@ module Crystal
         end
         @str << '/'
       end
-      @str << 'i' if node.options.includes? Regex::Options::IGNORE_CASE
-      @str << 'm' if node.options.includes? Regex::Options::MULTILINE
-      @str << 'x' if node.options.includes? Regex::Options::EXTENDED
+      @str << 'i' if node.options.ignore_case?
+      @str << 'm' if node.options.multiline?
+      @str << 'x' if node.options.extended?
       false
     end
 
@@ -1104,7 +1106,7 @@ module Crystal
 
     def visit(node : LibDef)
       @str << "lib "
-      @str << node.name
+      node.name.accept self
       newline
       @inside_lib = true
       accept_with_indent(node.body)
@@ -1509,7 +1511,7 @@ module Crystal
       end
     end
 
-    def with_indent
+    def with_indent(&)
       @indent += 1
       yield
       @indent -= 1
@@ -1534,13 +1536,13 @@ module Crystal
       newline
     end
 
-    def inside_macro
+    def inside_macro(&)
       @inside_macro += 1
       yield
       @inside_macro -= 1
     end
 
-    def outside_macro
+    def outside_macro(&)
       old_inside_macro = @inside_macro
       @inside_macro = 0
       yield

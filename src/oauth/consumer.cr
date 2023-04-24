@@ -130,7 +130,7 @@ class OAuth::Consumer
     authenticate client, token.token, token.secret, nil
   end
 
-  private def post(oauth_token, token_shared_secret, extra_params, target_uri)
+  private def post(oauth_token, token_shared_secret, extra_params, target_uri, &)
     uri = URI.parse(target_uri)
 
     # If the target uri is absolute, we use that instead of the default values
@@ -155,7 +155,7 @@ class OAuth::Consumer
     OAuth.authenticate(client, token, token_secret, @consumer_key, @consumer_secret, extra_params)
   end
 
-  private def handle_response(response)
+  private def handle_response(response, &)
     case response.status_code
     when 200, 201
       yield

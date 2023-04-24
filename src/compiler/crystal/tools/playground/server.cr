@@ -124,7 +124,7 @@ module Crystal::Playground
       Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 
-    def send_with_json_builder
+    def send_with_json_builder(&)
       send(JSON.build do |json|
         json.object do
           yield json
@@ -172,12 +172,11 @@ module Crystal::Playground
       spawn do
         status = process.wait
         Log.info { "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})." }
-        exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
         send_with_json_builder do |json|
           json.field "type", "exit"
           json.field "tag", tag
-          json.field "status", exit_status
+          json.field "status", status.to_s
         end
       end
 
@@ -449,7 +448,7 @@ module Crystal::Playground
     end
 
     def start
-      playground_dir = File.dirname(__FILE__)
+      playground_dir = File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0])
       views_dir = File.join(playground_dir, "views")
       public_dir = File.join(playground_dir, "public")
 

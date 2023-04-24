@@ -4,7 +4,7 @@ require "semantic_version"
 
 module Crystal
   class MacroInterpreter
-    private def find_source_file(filename)
+    private def find_source_file(filename, &)
       # Support absolute paths
       if filename.starts_with?('/')
         filename = "#{filename}.cr" unless filename.ends_with?(".cr")
@@ -69,6 +69,8 @@ module Crystal
         interpret_system(node)
       when "raise"
         interpret_raise(node)
+      when "warning"
+        interpret_warning(node)
       when "file_exists?"
         interpret_file_exists?(node)
       when "read_file"
@@ -232,18 +234,31 @@ module Crystal
       end
       cmd = cmd.join " "
 
-      result = `#{cmd}`
+      begin
+        result = `#{cmd}`
+      rescue exc : File::Error | IO::Error
+        # Taking the os_error message to avoid duplicating the "error executing process: "
+        # prefix of the error message and ensure uniqueness between all error messages.
+        node.raise "error executing command: #{cmd}: #{exc.os_error.try(&.message) || exc.message}"
+      rescue exc
+        node.raise "error executing command: #{cmd}: #{exc.message}"
+      end
+
       if $?.success?
         @last = MacroId.new(result)
       elsif result.empty?
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}"
+        node.raise "error executing command: #{cmd}, got exit status #{$?}"
       else
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
+        node.raise "error executing command: #{cmd}, got exit status #{$?}:\n\n#{result}\n"
       end
     end
 
     def interpret_raise(node)
       macro_raise(node, node.args, self)
+    end
+
+    def interpret_warning(node)
+      macro_warning(node, node.args, self)
     end
 
     def interpret_file_exists?(node)
@@ -373,6 +388,8 @@ module Crystal
         interpret_check_args { class_name }
       when "raise"
         macro_raise self, args, interpreter
+      when "warning"
+        macro_warning self, args, interpreter
       when "filename"
         interpret_check_args do
           filename = location.try &.original_filename
@@ -518,21 +535,21 @@ module Crystal
       to_number <=> other.to_number
     end
 
-    def bool_bin_op(method, args, named_args, block)
+    def bool_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         BoolLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def num_bin_op(method, args, named_args, block)
+    def num_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         NumberLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def int_bin_op(method, args, named_args, block)
+    def int_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         me = to_number
@@ -1073,7 +1090,7 @@ module Crystal
       end
     end
 
-    def interpret_map(interpreter)
+    def interpret_map(interpreter, &)
       ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
         yield num
       end
@@ -2669,6 +2686,18 @@ private def macro_raise(node, args, interpreter)
   node.raise msg, exception_type: Crystal::MacroRaiseException
 end
 
+private def macro_warning(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  interpreter.warnings.add_warning_at(node.location, msg)
+
+  Crystal::NilLiteral.new
+end
+
 private def empty_no_return_array
   Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
 end
@@ -2683,7 +2712,7 @@ private def filter(object, klass, block, interpreter, keep = true)
   end)
 end
 
-private def fetch_annotation(node, method, args, named_args, block)
+private def fetch_annotation(node, method, args, named_args, block, &)
   interpret_check_args(node: node) do |arg|
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
@@ -2699,7 +2728,7 @@ private def fetch_annotation(node, method, args, named_args, block)
   end
 end
 
-private def fetch_annotations(node, method, args, named_args, block)
+private def fetch_annotations(node, method, args, named_args, block, &)
   interpret_check_args(node: node, min_count: 0) do |arg|
     unless arg
       return yield(nil) || Crystal::NilLiteral.new

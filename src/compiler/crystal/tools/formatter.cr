@@ -1,12 +1,12 @@
 require "../syntax"
 
 module Crystal
-  def self.format(source, filename = nil, report_warnings : IO? = nil)
-    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings)
+  def self.format(source, filename = nil, report_warnings : IO? = nil, flags : Array(String)? = nil)
+    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings, flags: flags)
   end
 
   class Formatter < Visitor
-    def self.format(source, filename = nil, report_warnings : IO? = nil)
+    def self.format(source, filename = nil, report_warnings : IO? = nil, flags : Array(String)? = nil)
       parser = Parser.new(source)
       parser.filename = filename
       nodes = parser.parse
@@ -17,7 +17,7 @@ module Crystal
         parser.warnings.report(report_warnings)
       end
 
-      formatter = new(source)
+      formatter = new(source, flags: flags)
       formatter.skip_space_or_newline
       nodes.accept formatter
       formatter.finish
@@ -102,7 +102,7 @@ module Crystal
     property indent
     property subformat_nesting = 0
 
-    def initialize(source)
+    def initialize(source, @flags : Array(String)? = nil)
       @lexer = Lexer.new(source)
       @lexer.comments_enabled = true
       @lexer.count_whitespace = true
@@ -156,6 +156,10 @@ module Crystal
 
       # Variables for when we format macro code without interpolation
       @vars = [Set(String).new]
+    end
+
+    def flag?(flag)
+      !!@flags.try(&.includes?(flag))
     end
 
     def end_visit_any(node)
@@ -319,7 +323,13 @@ module Crystal
       @indent = old_indent
 
       if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
+        # Right after the last expression but we didn't insert a newline yet
+        # so we are still missing a newline following by an indent and the "end" keyword
         write_line
+        write_indent
+      elsif has_newline && last_found_comment && @wrote_newline
+        # Right after the last expression and we did insert a newline (because of a comment)
+        # so we are still missing an indent and the "end" keyword
         write_indent
       end
 
@@ -821,7 +831,7 @@ module Crystal
         start_column = @indent + 2
 
         if elements.empty?
-          skip_space_or_newline
+          skip_space_or_newline(offset, last: true, at_least_one: true)
           write_token suffix
           return false
         end
@@ -1460,6 +1470,13 @@ module Crystal
 
       indent do
         next_token
+
+        # this formats `def foo # ...` to `def foo(&) # ...` for yielding
+        # methods before consuming the comment line
+        if node.block_arity && node.args.empty? && !node.block_arg && !node.double_splat
+          write "(&)" if flag?("method_signature_yield")
+        end
+
         skip_space consume_newline: false
         next_token_skip_space if @token.type.op_eq?
       end
@@ -1504,10 +1521,11 @@ module Crystal
     end
 
     def format_def_args(node : Def | Macro)
-      format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat
+      yields = node.is_a?(Def) && !node.block_arity.nil? && flag?("method_signature_yield")
+      format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat, yields
     end
 
-    def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
+    def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat, yields)
       # If there are no args, remove extra "()"
       if args.empty? && !block_arg && !double_splat && !variadic
         if @token.type.op_lparen?
@@ -1541,7 +1559,7 @@ module Crystal
       end
 
       args.each_with_index do |arg, i|
-        has_more = !last?(i, args) || double_splat || block_arg || variadic
+        has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
         wrote_newline = format_def_arg(wrote_newline, has_more) do
           if i == splat_index
             write_token :OP_STAR
@@ -1557,7 +1575,7 @@ module Crystal
       end
 
       if double_splat
-        wrote_newline = format_def_arg(wrote_newline, block_arg) do
+        wrote_newline = format_def_arg(wrote_newline, block_arg || yields) do
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -1574,6 +1592,11 @@ module Crystal
 
           to_skip += 1 if at_skip?
           block_arg.accept self
+        end
+      elsif yields
+        wrote_newline = format_def_arg(wrote_newline, false) do
+          write "&"
+          skip_space_or_newline
         end
       end
 
@@ -1620,7 +1643,7 @@ module Crystal
       end
     end
 
-    def format_def_arg(wrote_newline, has_more)
+    def format_def_arg(wrote_newline, has_more, &)
       write_indent if wrote_newline
 
       yield
@@ -1653,6 +1676,10 @@ module Crystal
         else
           write " " if has_more && !just_wrote_newline
         end
+      elsif @token.type.op_rparen? && has_more && !just_wrote_newline
+        # if we found a `)` and there are still more parameters to write, it
+        # must have been a missing `&` for a def that yields
+        write " " if flag?("method_signature_yield")
       end
 
       just_wrote_newline
@@ -1689,7 +1716,7 @@ module Crystal
         end
       end
 
-      format_def_args node.args, nil, nil, node.varargs?, nil
+      format_def_args node.args, nil, nil, node.varargs?, nil, false
 
       if return_type = node.return_type
         skip_space
@@ -2766,7 +2793,7 @@ module Crystal
         if @token.type.newline?
           ends_with_newline = true
         end
-        skip_space_or_newline
+        indent(base_indent + 2) { skip_space_or_newline(last: true, at_least_one: ends_with_newline) }
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
@@ -2958,8 +2985,9 @@ module Crystal
           if @token.type.newline? && has_newlines
             write ","
             write_line
-            write_indent(column)
             skip_space_or_newline(column + 2)
+            write_indent(column)
+            skip_space_or_newline(column)
           else
             found_comment |= skip_space_or_newline(column + 2)
             if has_newlines
@@ -3562,9 +3590,7 @@ module Crystal
 
       write_keyword :lib, " "
 
-      check :CONST
-      write node.name
-      next_token
+      accept node.name
 
       format_nested_with_end node.body
 
@@ -4447,7 +4473,7 @@ module Crystal
       false
     end
 
-    def visit_asm_parts(parts, colon_column) : Nil
+    def visit_asm_parts(parts, colon_column, &) : Nil
       write " "
       column = @column
 
@@ -4762,11 +4788,11 @@ module Crystal
           @wrote_double_newlines = true
         end
 
-        skip_space_or_newline
+        skip_space_or_newline(last: next_comes_end, at_least_one: true)
       end
     end
 
-    def indent
+    def indent(&)
       @indent += 2
       value = yield
       @indent -= 2
@@ -4777,7 +4803,7 @@ module Crystal
       indent { accept node }
     end
 
-    def indent(indent : Int)
+    def indent(indent : Int, &)
       old_indent = @indent
       @indent = indent
       value = yield
@@ -4794,7 +4820,7 @@ module Crystal
       no_indent { accept node }
     end
 
-    def no_indent
+    def no_indent(&)
       old_indent = @indent
       @indent = 0
       yield
@@ -4814,7 +4840,7 @@ module Crystal
       indent(indent, node)
     end
 
-    def write_indent(indent = @indent)
+    def write_indent(indent = @indent, &)
       write_indent(indent)
       indent(indent) { yield }
     end
@@ -5151,13 +5177,13 @@ module Crystal
       index == collection.size - 1
     end
 
-    def inside_macro
+    def inside_macro(&)
       @inside_macro += 1
       yield
       @inside_macro -= 1
     end
 
-    def outside_macro
+    def outside_macro(&)
       old_inside_macro = @inside_macro
       @inside_macro = 0
       yield
@@ -5181,13 +5207,13 @@ module Crystal
       end
     end
 
-    def inside_cond
+    def inside_cond(&)
       @inside_cond += 1
       yield
       @inside_cond -= 1
     end
 
-    def inside_call_or_assign
+    def inside_call_or_assign(&)
       @inside_call_or_assign += 1
       yield
       @inside_call_or_assign -= 1

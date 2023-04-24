@@ -353,8 +353,8 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
-# timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC}
+# timestamp.to_json   # => %({"birthdays":{"foo":1459859781,"bar":1567628762}})
 # ```
 #
 # `JSON::HashValueConverter.new` should be used if the nested converter is also
@@ -371,8 +371,8 @@ end
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}))
-# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00 UTC, "bar" => 2019-09-04 00:00:00 UTC)}
-# timestamp.to_json   # => {"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}}
+# timestamp.birthdays # => {"foo" => 2016-04-05 00:00:00 UTC, "bar" => 2019-09-04 00:00:00 UTC}
+# timestamp.to_json   # => %({"birthdays":{"foo":"Apr 5, 2016","bar":"Sep 4, 2019"}})
 # ```
 #
 # This implies that `JSON::HashValueConverter(T)` and

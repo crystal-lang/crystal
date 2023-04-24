@@ -69,7 +69,9 @@ module Crystal
 
     def has_def_free_var?(name)
       return false if get_free_var(name)
-      !!(@def_free_vars.try &.includes?(name))
+      return true if @def_free_vars.try &.includes?(name)
+
+      defining_type.metaclass? && defining_type.type_var?(name)
     end
 
     # Returns the type that corresponds to using `self` when looking
@@ -153,7 +155,7 @@ module Crystal
       end
     end
 
-    def each
+    def each(&)
       @success && @matches.try &.each do |match|
         yield match
       end

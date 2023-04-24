@@ -73,7 +73,7 @@ describe Crystal::SyntaxHighlighter::HTML do
       == < <= > >= != =~ !~
       & | ^ ~ ** >> << %
     ).each do |op|
-      it_highlights %(def #{op}), %(<span class="k">def</span> <span class="m">#{op}</span>)
+      it_highlights %(def #{op}), %(<span class="k">def</span> <span class="m">#{HTML.escape(op)}</span>)
     end
 
     it_highlights %(def //), %(<span class="k">def</span> <span class="m">/</span><span class="m">/</span>)

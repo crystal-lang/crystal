@@ -12,6 +12,8 @@ end
 # Value contains the actual value, and scale tells the decimal point place.
 # E.g. when value is `1234` and scale `2`, the result is `12.34`.
 #
+# NOTE: To use `BigDecimal`, you must explicitly import it with `require "big"`
+#
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
@@ -196,6 +198,22 @@ struct BigDecimal < Number
 
   def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
+  end
+
+  def %(other : BigDecimal) : BigDecimal
+    if @scale > other.scale
+      scaled = other.scale_to(self)
+      BigDecimal.new(@value % scaled.value, @scale)
+    elsif @scale < other.scale
+      scaled = scale_to(other)
+      BigDecimal.new(scaled.value % other.value, other.scale)
+    else
+      BigDecimal.new(@value % other.value, @scale)
+    end
+  end
+
+  def %(other : Int)
+    self % BigDecimal.new(other)
   end
 
   def /(other : BigDecimal) : BigDecimal
@@ -398,7 +416,7 @@ struct BigDecimal < Number
     round_impl { |rem, rem_range| rem.abs >= rem_range // 2 }
   end
 
-  private def round_impl
+  private def round_impl(&)
     return self if @scale <= 0 || zero?
 
     # `self == @value / 10 ** @scale == mantissa + (rem / 10 ** @scale)`

@@ -86,13 +86,13 @@ module Crystal::System::Socket
 
   private def initialize_handle(handle)
     value = 1_u8
-    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(value), 1)
+    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_EXCLUSIVEADDRUSE, pointerof(value), 1)
     if ret == LibC::SOCKET_ERROR
       raise ::Socket::Error.from_wsa_error("setsockopt")
     end
   end
 
-  private def system_connect(addr, timeout = nil)
+  private def system_connect(addr, timeout = nil, &)
     if type.stream?
       system_connect_stream(addr, timeout) { |error| yield error }
     else
@@ -100,7 +100,7 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_connect_stream(addr, timeout)
+  private def system_connect_stream(addr, timeout, &)
     address = LibC::SockaddrIn6.new
     address.sin6_family = family
     address.sin6_port = 0
@@ -127,24 +127,36 @@ module Crystal::System::Socket
     end
 
     if error
-      yield error
+      return yield error
+    end
+
+    # from https://learn.microsoft.com/en-us/windows/win32/winsock/sol-socket-socket-options:
+    #
+    # > This option is used with the ConnectEx, WSAConnectByList, and
+    # > WSAConnectByName functions. This option updates the properties of the
+    # > socket after the connection is established. This option should be set
+    # > if the getpeername, getsockname, getsockopt, setsockopt, or shutdown
+    # > functions are to be used on the connected socket.
+    optname = LibC::SO_UPDATE_CONNECT_CONTEXT
+    if LibC.setsockopt(fd, LibC::SOL_SOCKET, optname, nil, 0) == LibC::SOCKET_ERROR
+      return yield ::Socket::Error.from_wsa_error("setsockopt #{optname}")
     end
   end
 
-  private def system_connect_connectionless(addr, timeout)
+  private def system_connect_connectionless(addr, timeout, &)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
       yield ::Socket::Error.from_wsa_error("connect")
     end
   end
 
-  private def system_bind(addr, addrstr)
+  private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog)
+  private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
       yield ::Socket::Error.from_errno("Listen failed")
     end
@@ -253,12 +265,61 @@ module Crystal::System::Socket
     end
   end
 
+  private def system_send_buffer_size : Int
+    getsockopt LibC::SO_SNDBUF, 0
+  end
+
+  private def system_send_buffer_size=(val : Int)
+    setsockopt LibC::SO_SNDBUF, val
+  end
+
+  private def system_recv_buffer_size : Int
+    getsockopt LibC::SO_RCVBUF, 0
+  end
+
+  private def system_recv_buffer_size=(val : Int)
+    setsockopt LibC::SO_RCVBUF, val
+  end
+
+  # SO_REUSEADDR, as used in posix, is always assumed on windows
+  # the SO_REUSEADDR flag on windows is the equivalent of SO_REUSEPORT on linux
+  # https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#application-strategies
+  private def system_reuse_address? : Bool
+    true
+  end
+
+  private def system_reuse_address=(val : Bool)
+    raise NotImplementedError.new("Crystal::System::Socket#system_reuse_address=") unless val
+  end
+
   private def system_reuse_port?
-    false
+    getsockopt_bool LibC::SO_REUSEADDR
   end
 
   private def system_reuse_port=(val : Bool)
-    raise NotImplementedError.new("Socket#reuse_port=")
+    if val
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, false
+      setsockopt_bool LibC::SO_REUSEADDR, true
+    else
+      setsockopt_bool LibC::SO_REUSEADDR, false
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, true
+    end
+  end
+
+  private def system_broadcast? : Bool
+    getsockopt_bool LibC::SO_BROADCAST
+  end
+
+  private def system_broadcast=(val : Bool)
+    setsockopt_bool LibC::SO_BROADCAST, val
+  end
+
+  private def system_keepalive? : Bool
+    getsockopt_bool LibC::SO_KEEPALIVE
+  end
+
+  private def system_keepalive=(val : Bool)
+    setsockopt_bool LibC::SO_KEEPALIVE, val
   end
 
   private def system_linger
@@ -281,7 +342,7 @@ module Crystal::System::Socket
     val
   end
 
-  def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
 
@@ -335,7 +396,7 @@ module Crystal::System::Socket
   end
 
   private def system_tty?
-    LibC.isatty(fd) == 1
+    false
   end
 
   private def unbuffered_read(slice : Bytes)
@@ -400,11 +461,11 @@ module Crystal::System::Socket
   end
 
   private def system_tcp_keepalive_idle
-    getsockopt LibC::SO_KEEPALIVE, 0, level: ::Socket::Protocol::TCP
+    getsockopt LibC::TCP_KEEPIDLE, 0, level: ::Socket::Protocol::TCP
   end
 
   private def system_tcp_keepalive_idle=(val : Int)
-    setsockopt LibC::SO_KEEPALIVE, val, level: ::Socket::Protocol::TCP
+    setsockopt LibC::TCP_KEEPIDLE, val, level: ::Socket::Protocol::TCP
     val
   end
 

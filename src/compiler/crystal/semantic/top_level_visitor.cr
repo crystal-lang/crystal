@@ -453,7 +453,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node.location)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node)
         @method_added_running = false
       end
     end
@@ -496,15 +496,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
-    scope = current_type_scope(node)
+    scope, name, type = lookup_type_def(node)
 
-    type = scope.types[node.name]?
     if type
-      node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
+      unless type.is_a?(LibType)
+        node.raise "#{type} is not a lib, it's a #{type.type_desc}"
+      end
     else
-      type = LibType.new @program, scope, node.name
-      scope.types[node.name] = type
+      type = LibType.new @program, scope, name
+      scope.types[name] = type
     end
+
     node.resolved_type = type
 
     type.private = true if node.visibility.private?
@@ -525,7 +527,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
 
         if wasm_import_module && link_annotation.wasm_import_module
-          ann.raise "multiple wasm import modules specified for lib #{node.name}"
+          ann.raise "multiple wasm import modules specified for lib #{type}"
         end
 
         wasm_import_module = link_annotation.wasm_import_module
@@ -618,13 +620,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       unless enum_base_type.is_a?(IntegerType)
         base_type.raise "enum base type must be an integer type"
       end
-    else
-      enum_base_type = @program.int32
+
+      if enum_type && enum_base_type != enum_type.base_type
+        base_type.raise "enum #{name}'s base type is #{enum_type.base_type}, not #{enum_base_type}"
+      end
     end
 
-    all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
     existed = !!enum_type
-    enum_type ||= EnumType.new(@program, scope, name, enum_base_type)
+    enum_type ||= EnumType.new(@program, scope, name, enum_base_type || @program.int32)
 
     enum_type.private = true if node.visibility.private?
 
@@ -637,40 +640,32 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attach_doc enum_type, node, annotations
 
     pushing_type(enum_type) do
-      counter = enum_type.flags? ? 1 : 0
-      counter = interpret_enum_value(NumberLiteral.new(counter), enum_base_type)
-      counter, all_value, overflow = visit_enum_members(node, node.members, counter, all_value,
-        overflow: false,
-        existed: existed,
-        enum_type: enum_type,
-        enum_base_type: enum_base_type,
-        is_flags: enum_type.flags?)
-    end
-
-    num_members = enum_type.types.size
-    if num_members > 0 && enum_type.flags?
-      # skip None & All, they doesn't count as members for @[Flags] enums
-      num_members = enum_type.types.count { |(name, _)| !name.in?("None", "All") }
-    end
-
-    if num_members == 0
-      node.raise "enum #{node.name} must have at least one member"
+      visit_enum_members(node, node.members, existed, enum_type)
     end
 
     unless existed
-      if enum_type.flags?
-        unless enum_type.types["None"]?
-          none = NumberLiteral.new("0", enum_base_type.kind)
-          none.type = enum_type
-          enum_type.add_constant Arg.new("None", default_value: none)
+      num_members = enum_type.types.size
+      if num_members > 0 && enum_type.flags?
+        # skip None & All, they doesn't count as members for @[Flags] enums
+        num_members = enum_type.types.count { |(name, _)| !name.in?("None", "All") }
+      end
 
+      if num_members == 0
+        node.raise "enum #{node.name} must have at least one member"
+      end
+
+      if enum_type.flags?
+        unless enum_type.types.has_key?("None")
+          enum_type.add_constant("None", 0)
           define_enum_none_question_method(enum_type, node)
         end
 
-        unless enum_type.types["All"]?
-          all = NumberLiteral.new(all_value.to_s, enum_base_type.kind)
-          all.type = enum_type
-          enum_type.add_constant Arg.new("All", default_value: all)
+        unless enum_type.types.has_key?("All")
+          all_value = enum_type.base_type.kind.cast(0).as(Int::Primitive)
+          enum_type.types.each_value do |member|
+            all_value |= interpret_enum_value(member.as(Const).value, enum_type.base_type)
+          end
+          enum_type.add_constant("All", all_value)
         end
       end
 
@@ -680,43 +675,57 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def visit_enum_members(node, members, counter, all_value, overflow, **options)
-    members.each do |member|
-      counter, all_value, overflow =
-        visit_enum_member(node, member, counter, all_value, overflow, **options)
+  def visit_enum_members(node, members, existed, enum_type, previous_counter = nil)
+    members.reduce(previous_counter) do |counter, member|
+      visit_enum_member(node, member, existed, enum_type, counter)
     end
-    {counter, all_value, overflow}
   end
 
-  def visit_enum_member(node, member, counter, all_value, overflow, **options)
+  def visit_enum_member(node, member, existed, enum_type, previous_counter = nil)
     case member
     when MacroIf
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
-      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
+      visit_enum_member(node, expanded, existed, enum_type, previous_counter)
     when MacroExpression
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
-      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
+      visit_enum_member(node, expanded, existed, enum_type, previous_counter)
     when MacroFor
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
-      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
+      visit_enum_member(node, expanded, existed, enum_type, previous_counter)
     when Expressions
-      visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
+      visit_enum_members(node, member.expressions, existed, enum_type, previous_counter)
     when Arg
-      enum_type = options[:enum_type]
-      base_type = options[:enum_base_type]
-      is_flags = options[:is_flags]
-
-      if options[:existed]
+      if existed
         node.raise "can't reopen enum and add more constants to it"
       end
 
-      if default_value = member.default_value
-        counter = interpret_enum_value(default_value, base_type)
-      elsif overflow
-        member.raise "value of enum member #{member} would overflow the base type #{base_type}"
+      if enum_type.types.has_key?(member.name)
+        member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
       end
 
-      if is_flags && !@in_lib
+      if default_value = member.default_value
+        counter = interpret_enum_value(default_value, enum_type.base_type)
+      elsif previous_counter
+        if enum_type.flags?
+          if previous_counter == 0 # In case the member is set to 0
+            counter = 1
+          else
+            counter = previous_counter &* 2
+            unless (counter <=> previous_counter).sign == previous_counter.sign
+              member.raise "value of enum member #{member} would overflow the base type #{enum_type.base_type}"
+            end
+          end
+        else
+          counter = previous_counter &+ 1
+          unless counter > previous_counter
+            member.raise "value of enum member #{member} would overflow the base type #{enum_type.base_type}"
+          end
+        end
+      else
+        counter = enum_type.base_type.kind.cast(enum_type.flags? ? 1 : 0).as(Int::Primitive)
+      end
+
+      if enum_type.flags? && !@in_lib
         if member.name == "None" && counter != 0
           member.raise "flags enum can't redefine None member to non-0"
         elsif member.name == "All"
@@ -725,22 +734,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       if default_value.is_a?(Crystal::NumberLiteral)
-        enum_base_kind = base_type.kind
+        enum_base_kind = enum_type.base_type.kind
         if (enum_base_kind.i32?) && (enum_base_kind != default_value.kind)
           default_value.raise "enum value must be an Int32"
         end
       end
 
-      all_value |= counter
-      const_value = NumberLiteral.new(counter.to_s, base_type.kind)
-      member.default_value = const_value
-      if enum_type.types.has_key?(member.name)
-        member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
-      end
+      define_enum_question_method(enum_type, member, enum_type.flags?)
 
-      define_enum_question_method(enum_type, member, is_flags)
+      const_member = enum_type.add_constant(member.name, counter)
+      member.default_value = const_member.value
 
-      const_member = enum_type.add_constant member
       const_member.doc = member.doc
       check_ditto const_member, member.location
 
@@ -748,24 +752,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         const_member.add_location(member_location)
       end
 
-      const_value.type = enum_type
-      if is_flags
-        if counter == 0 # In case the member is set to 0
-          new_counter = 1
-          overflow = false
-        else
-          new_counter = counter &* 2
-          overflow = !default_value && counter.sign != new_counter.sign
-        end
-      else
-        new_counter = counter &+ 1
-        overflow = !default_value && counter > 0 && new_counter < 0
-      end
-      new_counter = overflow ? counter : new_counter
-      {new_counter, all_value, overflow}
+      counter
     else
       member.accept self
-      {counter, all_value, overflow}
+      previous_counter
     end
   end
 
@@ -1166,7 +1156,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     annotations.try(&.first?).try &.doc
   end
 
-  def process_def_annotations(node, annotations)
+  def process_def_annotations(node, annotations, &)
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.no_inline_annotation

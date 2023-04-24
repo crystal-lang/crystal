@@ -23,8 +23,11 @@ class Crystal::Loader
     libnames = [] of String
     file_paths = [] of String
 
-    # NOTE: `/LIBPATH` overrides the default paths, not the other way round
+    # NOTE: `/LIBPATH`s are prepended before the default paths:
     # (https://docs.microsoft.com/en-us/cpp/build/reference/libpath-additional-libpath)
+    #
+    # > ... The linker will first search in the path specified by this option,
+    # > and then search in the path specified in the LIB environment variable.
     extra_search_paths = [] of String
 
     args.each do |arg|
@@ -35,8 +38,10 @@ class Crystal::Loader
       end
     end
 
+    search_paths = extra_search_paths + search_paths
+
     begin
-      self.new(extra_search_paths + search_paths, libnames, file_paths)
+      self.new(search_paths, libnames, file_paths)
     rescue exc : LoadError
       exc.args = args
       exc.search_paths = search_paths

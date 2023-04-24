@@ -238,7 +238,7 @@ module Crystal
       visit_macro_for_array_like node, exp, exp.elements, &.itself
     end
 
-    def visit_macro_for_array_like(node, exp, entries)
+    def visit_macro_for_array_like(node, exp, entries, &)
       element_var = node.vars[0]
       index_var = node.vars[1]?
 
@@ -254,7 +254,7 @@ module Crystal
       @vars.delete index_var.name if index_var
     end
 
-    def visit_macro_for_hash_like(node, exp, entries)
+    def visit_macro_for_hash_like(node, exp, entries, &)
       key_var = node.vars[0]
       value_var = node.vars[1]?
       index_var = node.vars[2]?

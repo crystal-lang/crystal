@@ -98,12 +98,12 @@ require "c/string"
 #
 # ### Non UTF-8 valid strings
 #
-# String might end up being conformed of bytes which are an invalid
+# A string might end up being composed of bytes which form an invalid
 # byte sequence according to UTF-8. This can happen if the string is created
 # via one of the constructors that accept bytes, or when getting a string
-# from `String.build` or `IO::Memory`. No exception will be raised, but
-# invalid byte sequences, when asked as chars, will use the unicode replacement
-# char (value 0xFFFD). For example:
+# from `String.build` or `IO::Memory`. No exception will be raised, but every
+# byte that doesn't start a valid UTF-8 byte sequence is interpreted as though
+# it encodes the Unicode replacement character (U+FFFD) by itself. For example:
 #
 # ```
 # # here 255 is not a valid byte value in the UTF-8 encoding
@@ -134,12 +134,18 @@ require "c/string"
 # and having a program raise an exception or stop because of this
 # is not good. It's better if programs are more resilient, but
 # show a replacement character when there's an error in incoming data.
+#
+# Note that this interpretation only applies to methods inside Crystal; calling
+# `#to_slice` or `#to_unsafe`, e.g. when passing a string to a C library, will
+# expose the invalid UTF-8 byte sequences. In particular, `Regex`'s underlying
+# engine may reject strings that are not valid UTF-8, or it may invoke undefined
+# behavior on invalid strings. If this is undesired, `#scrub` could be used to
+# remove the offending byte sequences first.
 class String
   # :nodoc:
-  TYPE_ID = "".crystal_type_id
-
-  # :nodoc:
-  HEADER_SIZE = sizeof({Int32, Int32, Int32})
+  #
+  # Holds the offset to the first character byte.
+  HEADER_SIZE = offsetof(String, @c)
 
   include Comparable(self)
 
@@ -241,7 +247,7 @@ class String
   # end
   # str # => "ab"
   # ```
-  def self.new(capacity : Int)
+  def self.new(capacity : Int, &)
     check_capacity_in_bounds(capacity)
 
     str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
@@ -259,9 +265,18 @@ class String
       str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
-    str_header = str.as({Int32, Int32, Int32}*)
-    str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
-    str.as(String)
+    set_crystal_type_id(str)
+    str = str.as(String)
+    str.initialize_header(bytesize.to_i, size.to_i)
+    str
+  end
+
+  # :nodoc:
+  #
+  # Initializes the header information of a `String` instance.
+  # The actual character content at `@c` is expected to be already filled and is
+  # unaffected by this method.
+  def initialize_header(@bytesize : Int32, @length : Int32 = 0)
   end
 
   # Builds a `String` by creating a `String::Builder` with the given initial capacity, yielding
@@ -275,7 +290,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64) : self
+  def self.build(capacity = 64, &) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end
@@ -735,7 +750,7 @@ class String
     end
   end
 
-  private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
+  private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
     return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
 
     v, endptr = yield
@@ -2340,7 +2355,7 @@ class String
   # ```
   # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
   # ```
-  def sub(pattern : Regex) : String
+  def sub(pattern : Regex, &) : String
     sub_append(pattern) do |str, match, buffer|
       $~ = match
       buffer << yield str, match
@@ -2468,7 +2483,7 @@ class String
     end
   end
 
-  private def sub_append(pattern : Regex)
+  private def sub_append(pattern : Regex, &)
     match = pattern.match(self)
     return self unless match
 
@@ -2511,7 +2526,7 @@ class String
     end
   end
 
-  private def sub_index(index, replacement)
+  private def sub_index(index, replacement, &)
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
@@ -2561,7 +2576,7 @@ class String
     end
   end
 
-  private def sub_range(range, replacement)
+  private def sub_range(range, replacement, &)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
 
     from_index = char_index_to_byte_index(start)
@@ -2698,7 +2713,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex) : String
+  def gsub(pattern : Regex, &) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2800,7 +2815,8 @@ class String
         buffer << yield string
 
         if string.bytesize == 0
-          byte_offset = index + 1
+          # The pattern matched an empty result. We must advance one character to avoid stagnation.
+          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
           last_byte_offset = index
         else
           byte_offset = index + string.bytesize
@@ -2840,7 +2856,7 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex)
+  private def gsub_append(pattern : Regex, &)
     byte_offset = 0
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
@@ -2857,7 +2873,8 @@ class String
         yield str, match, buffer
 
         if str.bytesize == 0
-          byte_offset = index + 1
+          # The pattern matched an empty result. We must advance one character to avoid stagnation.
+          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
           last_byte_offset = index
         else
           byte_offset = index + str.bytesize
@@ -2879,7 +2896,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count : Int32
+  def count(&) : Int32
     count = 0
     each_char do |char|
       count += 1 if yield char
@@ -2910,7 +2927,7 @@ class String
   # ```
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
-  def delete : String
+  def delete(&) : String
     String.build(bytesize) do |buffer|
       each_char do |char|
         buffer << char unless yield char
@@ -2947,7 +2964,7 @@ class String
   # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
   # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
-  def squeeze : String
+  def squeeze(&) : String
     previous = nil
     String.build(bytesize) do |buffer|
       each_char do |char|
@@ -3045,7 +3062,7 @@ class String
   # "abcdef" == "abcdefg" # => false
   # "abcdef" == "ABCDEF"  # => false
   #
-  # "abcdef".compare("ABCDEF", case_sensitive: false) == 0 # => true
+  # "abcdef".compare("ABCDEF", case_insensitive: true) == 0 # => true
   # ```
   def ==(other : self) : Bool
     return true if same?(other)
@@ -4572,7 +4589,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex) : self
+  def scan(pattern : Regex, &) : self
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -4599,7 +4616,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String) : self
+  def scan(pattern : String, &) : self
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
@@ -4628,7 +4645,7 @@ class String
   # end
   # array # => ['a', 'b', '☃']
   # ```
-  def each_char : Nil
+  def each_char(&) : Nil
     if single_byte_optimizable?
       each_byte do |byte|
         yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
@@ -4664,7 +4681,7 @@ class String
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def each_char_with_index(offset = 0)
+  def each_char_with_index(offset = 0, &)
     each_char do |char|
       yield char, offset
       offset += 1
@@ -4695,7 +4712,7 @@ class String
   # ```
   #
   # See also: `Char#ord`.
-  def each_codepoint
+  def each_codepoint(&)
     each_char do |char|
       yield char.ord
     end
@@ -4739,7 +4756,7 @@ class String
   # end
   # array # => [97, 98, 226, 152, 131]
   # ```
-  def each_byte
+  def each_byte(&)
     to_slice.each do |byte|
       yield byte
     end
@@ -4899,7 +4916,7 @@ class String
     end
   end
 
-  private def dump_or_inspect(io)
+  private def dump_or_inspect(io, &)
     io << '"'
     dump_or_inspect_unquoted(io) do |char, error|
       yield char, error
@@ -4907,7 +4924,7 @@ class String
     io << '"'
   end
 
-  private def dump_or_inspect_unquoted(io)
+  private def dump_or_inspect_unquoted(io, &)
     reader = Char::Reader.new(self)
     while reader.has_next?
       current_char = reader.current_char
@@ -4959,7 +4976,7 @@ class String
     end
   end
 
-  private def dump_or_inspect_char(char, error, io)
+  private def dump_or_inspect_char(char, error, io, &)
     if error
       dump_hex(error, io)
     elsif yield
@@ -5012,7 +5029,7 @@ class String
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
   def starts_with?(re : Regex) : Bool
-    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
+    !!($~ = re.match_at_byte_index(self, 0, Regex::MatchOptions::ANCHORED))
   end
 
   # Returns `true` if this string ends with the given *str*.
@@ -5218,7 +5235,7 @@ class String
     @bytesize == 0 || @length > 0
   end
 
-  protected def each_byte_index_and_char_index
+  protected def each_byte_index_and_char_index(&)
     byte_index = 0
     char_index = 0
 
@@ -5254,11 +5271,17 @@ class String
   # Returns the underlying bytes of this String.
   #
   # The returned slice is read-only.
+  #
+  # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
+  # obtain a `String` that is guaranteed to be valid UTF-8.
   def to_slice : Bytes
     Slice.new(to_unsafe, bytesize, read_only: true)
   end
 
   # Returns a pointer to the underlying bytes of this String.
+  #
+  # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
+  # obtain a `String` that is guaranteed to be valid UTF-8.
   def to_unsafe : UInt8*
     pointerof(@c)
   end

@@ -105,7 +105,7 @@ struct Time::Span
   #
   # ```
   # Time::Span.new(days: 1)                                                   # => 1.00:00:00
-  # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 01:02:03
+  # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 1.02:03:00
   # Time::Span.new(days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5) # => 1.02:03:04.000000005
   # ```
   def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)

@@ -1,0 +1,55 @@
+name: LLVM CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  llvm_test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm_version: ["13.0.0", "14.0.0", "15.0.6"]
+    name: "LLVM ${{ matrix.llvm_version }}"
+    steps:
+      - name: Checkout Crystal source
+        uses: actions/checkout@v3
+
+      - name: Cache LLVM and Clang
+        id: cache-llvm
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/Program Files/LLVM
+            ./llvm
+          key: llvm-${{ matrix.llvm_version }}
+        if: "${{ !env.ACT }}"
+
+      - uses: KyleMayes/install-llvm-action@13d5d77cbf0bd7e35cb02a8f9ed4bb85bed3393b # v1.8.0
+        with:
+          version: "${{ matrix.llvm_version }}"
+          cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+
+      - name: Set LLVM_CONFIG
+        # LLVM_PATH is set by install-llvm-action
+        run: echo "LLVM_CONFIG=$LLVM_PATH/bin/llvm-config" >> $GITHUB_ENV
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.8.0"
+
+      - name: Build libllvm_ext
+        run: make -B deps
+
+      - name: Test compiler_spec
+        run: make compiler_spec junit_output=.junit/compiler_spec.xml
+
+      - name: Integration test
+        run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml

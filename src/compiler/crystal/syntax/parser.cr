@@ -142,7 +142,7 @@ module Crystal
       last = parse_expression
       skip_space
 
-      last_is_target = multi_assign_target?(last)
+      last_is_target = multi_assign_target?(last) || multi_assign_middle?(last)
 
       case @token.type
       when .op_comma?
@@ -184,7 +184,7 @@ module Crystal
         end
 
         last = parse_op_assign(allow_ops: false)
-        if assign_index == -1 && !multi_assign_target?(last)
+        if assign_index == -1 && !multi_assign_target?(last) && !multi_assign_middle?(last)
           unexpected_token
         end
 
@@ -236,14 +236,10 @@ module Crystal
 
     def multi_assign_target?(exp)
       case exp
-      when Underscore, Var, InstanceVar, ClassVar, Global, Assign
+      when Underscore, Var, InstanceVar, ClassVar, Global
         true
       when Call
-        !exp.has_parentheses? && (
-          (exp.args.empty? && !exp.named_args) ||
-            Lexer.setter?(exp.name) ||
-            exp.name.in?("[]", "[]=")
-        )
+        !exp.has_parentheses? && !exp.block && ((exp.args.empty? && !exp.named_args) || exp.name == "[]")
       else
         false
       end
@@ -254,7 +250,7 @@ module Crystal
       when Assign
         true
       when Call
-        exp.name.ends_with? '='
+        Lexer.setter?(exp.name) || exp.name == "[]="
       else
         false
       end
@@ -348,7 +344,7 @@ module Crystal
       atomic
     end
 
-    def parse_expression_suffix(location)
+    def parse_expression_suffix(location, &)
       slash_is_regex!
       next_token_skip_statement_end
       exp = parse_op_assign_no_control
@@ -783,8 +779,10 @@ module Crystal
                 block = call_args.block
                 block_arg = call_args.block_arg
                 named_args = call_args.named_args
+                has_parentheses = call_args.has_parentheses
               else
                 args = block = block_arg = named_args = nil
+                has_parentheses = false
               end
             end
 
@@ -796,6 +794,7 @@ module Crystal
             end
 
             atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
+            atomic.has_parentheses = has_parentheses
             atomic.name_location = name_location
             atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
@@ -1227,11 +1226,15 @@ module Crystal
       end
     end
 
-    def check_type_declaration
+    def check_type_declaration(&)
       if next_comes_colon_space?
         name = @token.value.to_s
         var = Var.new(name).at(@token.location).at_end(token_end_location)
-        next_token_skip_space
+        next_token
+        unless @token.type.space?
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
+        skip_space
         check :OP_COLON
         type_declaration = parse_type_declaration(var)
         set_visibility type_declaration
@@ -1268,18 +1271,18 @@ module Crystal
     end
 
     def new_node_check_type_declaration(klass)
-      new_node_check_type_declaration(klass) { }
-    end
-
-    def new_node_check_type_declaration(klass)
       name = @token.value.to_s
-      yield name
       var = klass.new(name).at(@token.location)
       var.end_location = token_end_location
       @wants_regex = false
-      next_token_skip_space
+      next_token
+      space_after_name = @token.type.space?
+      skip_space
 
       if @no_type_declaration == 0 && @token.type.op_colon?
+        unless space_after_name
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
         parse_type_declaration(var)
       else
         var
@@ -1318,7 +1321,7 @@ module Crystal
       type
     end
 
-    def check_not_inside_def(message)
+    def check_not_inside_def(message, &)
       if @def_nest == 0 && @fun_nest == 0
         yield
       else
@@ -1681,10 +1684,6 @@ module Crystal
       name = parse_path
       skip_space
 
-      unexpected_token unless @token.type.op_lt? ||     # Inheritance
-                              @token.type.op_lparen? || # Generic Arguments
-                              is_statement_end?
-
       type_vars, splat_index = parse_type_vars
 
       superclass = nil
@@ -1697,8 +1696,6 @@ module Crystal
         else
           superclass = parse_generic
         end
-
-        unexpected_token unless @token.type.space? || is_statement_end?
       end
       skip_statement_end
 
@@ -1716,10 +1713,6 @@ module Crystal
       class_def.end_location = end_location
       set_visibility class_def
       class_def
-    end
-
-    def is_statement_end?
-      @token.type.newline? || @token.type.op_semicolon? || @token.keyword?(:end)
     end
 
     def parse_type_vars
@@ -2141,7 +2134,7 @@ module Crystal
     end
 
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
-      options = Regex::Options::None
+      options = Regex::CompileOptions::None
       token_end_location = nil
       while true
         case @token.type
@@ -2201,17 +2194,17 @@ module Crystal
     end
 
     def consume_regex_options
-      options = Regex::Options::None
+      options = Regex::CompileOptions::None
       while true
         case current_char
         when 'i'
-          options |= Regex::Options::IGNORE_CASE
+          options |= Regex::CompileOptions::IGNORE_CASE
           next_char
         when 'm'
-          options |= Regex::Options::MULTILINE
+          options |= Regex::CompileOptions::MULTILINE
           next_char
         when 'x'
-          options |= Regex::Options::EXTENDED
+          options |= Regex::CompileOptions::EXTENDED
           next_char
         else
           if 'a' <= current_char.downcase <= 'z'
@@ -2246,7 +2239,7 @@ module Crystal
         node.expressions.concat(pieces)
       else
         string = combine_pieces(pieces, delimiter_state)
-        node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
+        node.expressions.push(StringLiteral.new(string).at(node).at_end(token_end_location))
       end
 
       node.heredoc_indent = delimiter_state.heredoc_indent
@@ -2921,7 +2914,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\\n'"
         end
       end
       false
@@ -3504,11 +3497,11 @@ module Crystal
       when .op_star?
         next_token_skip_space
         exp = parse_expression
-        exp = Splat.new(exp).at(exp.location)
+        exp = Splat.new(exp).at(exp)
       when .op_star_star?
         next_token_skip_space
         exp = parse_expression
-        exp = DoubleSplat.new(exp).at(exp.location)
+        exp = DoubleSplat.new(exp).at(exp)
       else
         exp = parse_expression
       end
@@ -3548,16 +3541,22 @@ module Crystal
 
       if @token.type.const?
         receiver = parse_path
+        last_was_space = false
       elsif @token.type.ident?
         check_valid_def_name
         name = @token.value.to_s
-        equals_sign, _ = consume_def_equals_sign_skip_space
+
+        equals_sign, _ = consume_def_equals_sign
         name = "#{name}=" if equals_sign
+        last_was_space = @token.type.space?
+        skip_space
       else
         check_valid_def_op_name
         name = @token.type.to_s
 
-        next_token_skip_space
+        next_token
+        last_was_space = @token.type.space?
+        skip_space
       end
 
       params = [] of Arg
@@ -3579,15 +3578,19 @@ module Crystal
           name = @token.value.to_s
 
           name_location = @token.location
-          equals_sign, _ = consume_def_equals_sign_skip_space
+          equals_sign, _ = consume_def_equals_sign
           name = "#{name}=" if equals_sign
+          last_was_space = @token.type.space?
+          skip_space
         else
           check DefOrMacroCheck2
           check_valid_def_op_name
           name = @token.type.to_s
 
           name_location = @token.location
-          next_token_skip_space
+          next_token
+          last_was_space = @token.type.space?
+          skip_space
         end
       else
         if receiver
@@ -3658,7 +3661,9 @@ module Crystal
           raise "named parameters must follow bare *", params.last.location.not_nil!
         end
 
-        next_token_skip_space
+        next_token
+        last_was_space = @token.type.space?
+        skip_space
         if @token.type.symbol?
           raise "a space is mandatory between ':' and return type", @token
         end
@@ -3685,6 +3690,9 @@ module Crystal
       end
 
       if @token.type.op_colon?
+        unless last_was_space
+          warnings.add_warning_at @token.location, "space required before colon in return type restriction (run `crystal tool format` to fix this)"
+        end
         next_token_skip_space
         return_type = parse_bare_proc_type
         end_location = return_type.end_location
@@ -3790,7 +3798,14 @@ module Crystal
       end
 
       if @token.type.op_amp?
-        next_token_skip_space_or_newline
+        next_token
+        space_after_amp = @token.type.space?
+        skip_space_or_newline
+
+        if @token.type.op_colon? && !space_after_amp # anonymous block arg without space
+          warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
+        end
+
         block_param = parse_block_param(extra_assigns, annotations)
         skip_space_or_newline
         # When block_param.name is empty, this is an anonymous parameter.
@@ -3939,6 +3954,9 @@ module Crystal
       end
 
       if @token.type.op_colon?
+        unless param_name.empty? || found_space
+          warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
+        end
         next_token_skip_space_or_newline
 
         location = @token.location
@@ -4012,8 +4030,12 @@ module Crystal
         # def method(select __arg0)
         #   @select = __arg0
         # end
-        if !external_name && invalid_internal_name?(param_name)
-          param_name, external_name = temp_arg_name, param_name
+        #
+        # The external name defaults to the internal one unless otherwise
+        # specified (i.e. `def method(foo @select)`).
+        if invalid_internal_name?(param_name)
+          external_name ||= param_name
+          param_name = temp_arg_name
         end
 
         ivar = InstanceVar.new(@token.value.to_s).at(location)
@@ -4033,8 +4055,9 @@ module Crystal
         end
 
         # Same case as :INSTANCE_VAR for things like @select
-        if !external_name && invalid_internal_name?(param_name)
-          param_name, external_name = temp_arg_name, param_name
+        if invalid_internal_name?(param_name)
+          external_name ||= param_name
+          param_name = temp_arg_name
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
@@ -4241,7 +4264,8 @@ module Crystal
       @wants_regex = false
       next_token
 
-      if @token.type.space?
+      name_followed_by_space = @token.type.space?
+      if name_followed_by_space
         # We don't want the next token to be a regex literal if the call's name is
         # a variable in the current scope (it's unlikely that there will be a method
         # with that name that accepts a regex as a first argument).
@@ -4322,6 +4346,9 @@ module Crystal
             end
           else
             if @no_type_declaration == 0 && @token.type.op_colon?
+              unless name_followed_by_space
+                warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+              end
               declare_var = parse_type_declaration(Var.new(name).at(location).at_end(end_location))
               end_location = declare_var.end_location
 
@@ -4363,7 +4390,7 @@ module Crystal
       comes_plus_or_minus
     end
 
-    def preserve_stop_on_do(new_value = false)
+    def preserve_stop_on_do(new_value = false, &)
       old_stop_on_do = @stop_on_do
       @stop_on_do = new_value
       value = yield
@@ -4399,7 +4426,7 @@ module Crystal
       end
     end
 
-    def parse_block2
+    def parse_block2(&)
       location = @token.location
 
       block_params = [] of Var
@@ -5140,7 +5167,7 @@ module Crystal
       named_args
     end
 
-    def parse_type_splat
+    def parse_type_splat(&)
       location = @token.location
 
       splat = false
@@ -5560,8 +5587,8 @@ module Crystal
       location = @token.location
       next_token_skip_space_or_newline
 
-      name = check_const
       name_location = @token.location
+      name = parse_path
       next_token_skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }
@@ -5727,7 +5754,7 @@ module Crystal
                 raise "top-level fun parameter must have a name", @token
               end
               param_type = parse_union_type
-              params << Arg.new("", nil, param_type).at(param_type.location)
+              params << Arg.new("", nil, param_type).at(param_type)
             end
 
             if @token.type.op_comma?
@@ -5919,8 +5946,6 @@ module Crystal
             else
               parse_c_struct_or_union_fields exps
             end
-          when Keyword::ELSE
-            break
           when Keyword::END
             break
           else
@@ -6142,14 +6167,19 @@ module Crystal
     end
 
     def consume_def_equals_sign_skip_space
+      result = consume_def_equals_sign
+      skip_space
+      result
+    end
+
+    def consume_def_equals_sign
       end_location = token_end_location
       next_token
       if @token.type.op_eq?
         end_location = token_end_location
-        next_token_skip_space
+        next_token
         {true, end_location}
       else
-        skip_space
         {false, end_location}
       end
     end
@@ -6157,7 +6187,7 @@ module Crystal
     # If *create_scope* is true, creates an isolated variable scope and returns
     # the yield result, resetting the scope afterwards. Otherwise simply returns
     # the yield result without touching the scopes.
-    def with_isolated_var_scope(create_scope = true)
+    def with_isolated_var_scope(create_scope = true, &)
       return yield unless create_scope
 
       begin
@@ -6170,7 +6200,7 @@ module Crystal
 
     # Creates a new variable scope with the same variables as the current scope,
     # and then returns the yield result, resetting the scope afterwards.
-    def with_lexical_var_scope
+    def with_lexical_var_scope(&)
       current_scope = @var_scopes.last.dup
       @var_scopes.push current_scope
       yield
@@ -6212,7 +6242,7 @@ module Crystal
       @var_scopes.last.includes? name
     end
 
-    def open(symbol, location = @token.location)
+    def open(symbol, location = @token.location, &)
       @unclosed_stack.push Unclosed.new(symbol, location)
       begin
         value = yield
@@ -6283,7 +6313,7 @@ module Crystal
       name == "self" || var_in_scope?(name)
     end
 
-    def push_visibility
+    def push_visibility(&)
       old_visibility = @visibility
       @visibility = nil
       value = yield

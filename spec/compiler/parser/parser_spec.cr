@@ -1,6 +1,6 @@
 require "../../support/syntax"
 
-private def regex(string, options = Regex::Options::None)
+private def regex(string, options = Regex::CompileOptions::None)
   RegexLiteral.new(StringLiteral.new(string), options)
 end
 
@@ -181,6 +181,7 @@ module Crystal
     it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
     it_parses "_, _ = 1, 2", MultiAssign.new([Underscore.new, Underscore.new] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32), Call.new("a".call, "[]", 1.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
+    it_parses "a[], a[] = 1, 2", MultiAssign.new([Call.new("a".call, "[]"), Call.new("a".call, "[]")] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [OpAssign.new("x".var, "+", 1.int32)] of ASTNode)] of ASTNode
     it_parses "a, b = 1, 2 if 3", If.new(3.int32, MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode))
@@ -227,6 +228,17 @@ module Crystal
     assert_syntax_error "*a, b, c, d, e = 1, 2", "Multiple assignment count mismatch"
     assert_syntax_error "a, b, c, d, *e = 1, 2, 3", "Multiple assignment count mismatch"
 
+    # #11442, #12911
+    assert_syntax_error "a, b.<="
+    assert_syntax_error "*a == 1"
+    assert_syntax_error "*a === 1"
+
+    assert_syntax_error "a {}, b = 1"
+    assert_syntax_error "a.b {}, c = 1"
+
+    assert_syntax_error "a.b(), c.d = 1"
+    assert_syntax_error "a.b, c.d() = 1"
+
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
     it_parses "def foo ; 1 ; end", Def.new("foo", body: 1.int32)
@@ -268,20 +280,11 @@ module Crystal
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(x @#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(x @@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
 
       assert_syntax_error "foo { |#{kw}| }", "cannot use '#{kw}' as a block parameter name", 1, 8
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
-    end
-
-    describe "literals in class definitions" do
-      # #11209
-      %w("a" 'a' [1] {1} {|a|a} ->{} ->(x : Bar){} :Bar :bar %x() %w() %()).each do |invalid|
-        assert_syntax_error "class Foo#{invalid}; end"
-        assert_syntax_error "class Foo#{invalid} < Baz; end"
-        assert_syntax_error "class Foo#{invalid} < self; end"
-        assert_syntax_error "class Foo < Baz#{invalid}; end"
-        assert_syntax_error "class Foo < self#{invalid}; end"
-      end
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -939,55 +942,57 @@ module Crystal
 
     it_parses "Foo::Bar", ["Foo", "Bar"].path
 
-    it_parses "lib LibC\nend", LibDef.new("LibC")
-    it_parses "lib LibC\nfun getchar\nend", LibDef.new("LibC", [FunDef.new("getchar")] of ASTNode)
-    it_parses "lib LibC\nfun getchar(...)\nend", LibDef.new("LibC", [FunDef.new("getchar", varargs: true)] of ASTNode)
-    it_parses "lib LibC\nfun getchar : Int\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)
-    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: Crystal::Union.new([ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
-    it_parses "lib LibC\nfun getchar(Int, Float)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("", restriction: "Int".path), Arg.new("", restriction: "Float".path)])] of ASTNode)
-    it_parses "lib LibC\nfun getchar(a : Int, b : Float)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)])] of ASTNode)
-    it_parses "lib LibC\nfun getchar(a : Int)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path)])] of ASTNode)
-    it_parses "lib LibC\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)], "Int".path)] of ASTNode)
-    it_parses "lib LibC; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)], "Int".path)] of ASTNode)
-    it_parses "lib LibC; fun foo(a : Int*); end", LibDef.new("LibC", [FunDef.new("foo", [Arg.new("a", restriction: "Int".path.pointer_of)])] of ASTNode)
-    it_parses "lib LibC; fun foo(a : Int**); end", LibDef.new("LibC", [FunDef.new("foo", [Arg.new("a", restriction: "Int".path.pointer_of.pointer_of)])] of ASTNode)
-    it_parses "lib LibC; fun foo : Int*; end", LibDef.new("LibC", [FunDef.new("foo", return_type: "Int".path.pointer_of)] of ASTNode)
-    it_parses "lib LibC; fun foo : Int**; end", LibDef.new("LibC", [FunDef.new("foo", return_type: "Int".path.pointer_of.pointer_of)] of ASTNode)
-    it_parses "lib LibC; fun foo(a : ::B, ::C -> ::D); end", LibDef.new("LibC", [FunDef.new("foo", [Arg.new("a", restriction: ProcNotation.new([Path.global("B"), Path.global("C")] of ASTNode, Path.global("D")))])] of ASTNode)
-    it_parses "lib LibC; type A = B; end", LibDef.new("LibC", [TypeDef.new("A", "B".path)] of ASTNode)
-    it_parses "lib LibC; type A = B*; end", LibDef.new("LibC", [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
-    it_parses "lib LibC; type A = B**; end", LibDef.new("LibC", [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)
-    it_parses "lib LibC; type A = B.class; end", LibDef.new("LibC", [TypeDef.new("A", Metaclass.new("B".path))] of ASTNode)
-    it_parses "lib LibC; struct Foo; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo")] of ASTNode)
-    it_parses "lib LibC; struct Foo; x : Int; y : Float; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", [TypeDeclaration.new("x".var, "Int".path), TypeDeclaration.new("y".var, "Float".path)] of ASTNode)] of ASTNode)
-    it_parses "lib LibC; struct Foo; x : Int*; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Expressions.from(TypeDeclaration.new("x".var, "Int".path.pointer_of)))] of ASTNode)
-    it_parses "lib LibC; struct Foo; x : Int**; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Expressions.from(TypeDeclaration.new("x".var, "Int".path.pointer_of.pointer_of)))] of ASTNode)
-    it_parses "lib LibC; struct Foo; x, y, z : Int; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", [TypeDeclaration.new("x".var, "Int".path), TypeDeclaration.new("y".var, "Int".path), TypeDeclaration.new("z".var, "Int".path)] of ASTNode)] of ASTNode)
-    it_parses "lib LibC; union Foo; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", union: true)] of ASTNode)
-    it_parses "lib LibC; enum Foo; A\nB; C\nD = 1; end end", LibDef.new("LibC", [EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
-    it_parses "lib LibC; enum Foo; A = 1; B; end end", LibDef.new("LibC", [EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
-    it_parses "lib LibC; Foo = 1; end", LibDef.new("LibC", [Assign.new("Foo".path, 1.int32)] of ASTNode)
-    it_parses "lib LibC\nfun getch = GetChar\nend", LibDef.new("LibC", [FunDef.new("getch", real_name: "GetChar")] of ASTNode)
-    it_parses %(lib LibC\nfun getch = "get.char"\nend), LibDef.new("LibC", [FunDef.new("getch", real_name: "get.char")] of ASTNode)
-    it_parses %(lib LibC\nfun getch = "get.char" : Int32\nend), LibDef.new("LibC", [FunDef.new("getch", return_type: "Int32".path, real_name: "get.char")] of ASTNode)
-    it_parses %(lib LibC\nfun getch = "get.char"(x : Int32)\nend), LibDef.new("LibC", [FunDef.new("getch", [Arg.new("x", restriction: "Int32".path)], real_name: "get.char")] of ASTNode)
-    it_parses "lib LibC\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("LibC", [ExternalVar.new("errno", "Int32".path), ExternalVar.new("errno2", "Int32".path)] of ASTNode)
-    it_parses "lib LibC\n$errno : B, C -> D\nend", LibDef.new("LibC", [ExternalVar.new("errno", ProcNotation.new(["B".path, "C".path] of ASTNode, "D".path))] of ASTNode)
-    it_parses "lib LibC\n$errno = Foo : Int32\nend", LibDef.new("LibC", [ExternalVar.new("errno", "Int32".path, "Foo")] of ASTNode)
-    it_parses "lib LibC\nalias Foo = Bar\nend", LibDef.new("LibC", [Alias.new("Foo".path, "Bar".path)] of ASTNode)
-    it_parses "lib LibC; struct Foo; include Bar; end; end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Include.new("Bar".path))] of ASTNode)
+    it_parses "lib LibC\nend", LibDef.new("LibC".path)
+    it_parses "lib LibC\nfun getchar\nend", LibDef.new("LibC".path, [FunDef.new("getchar")] of ASTNode)
+    it_parses "lib LibC\nfun getchar(...)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", varargs: true)] of ASTNode)
+    it_parses "lib LibC\nfun getchar : Int\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)
+    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar(Int, Float)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("", restriction: "Int".path), Arg.new("", restriction: "Float".path)])] of ASTNode)
+    it_parses "lib LibC\nfun getchar(a : Int, b : Float)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)])] of ASTNode)
+    it_parses "lib LibC\nfun getchar(a : Int)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path)])] of ASTNode)
+    it_parses "lib LibC\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)], "Int".path)] of ASTNode)
+    it_parses "lib LibC; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)], "Int".path)] of ASTNode)
+    it_parses "lib LibC; fun foo(a : Int*); end", LibDef.new("LibC".path, [FunDef.new("foo", [Arg.new("a", restriction: "Int".path.pointer_of)])] of ASTNode)
+    it_parses "lib LibC; fun foo(a : Int**); end", LibDef.new("LibC".path, [FunDef.new("foo", [Arg.new("a", restriction: "Int".path.pointer_of.pointer_of)])] of ASTNode)
+    it_parses "lib LibC; fun foo : Int*; end", LibDef.new("LibC".path, [FunDef.new("foo", return_type: "Int".path.pointer_of)] of ASTNode)
+    it_parses "lib LibC; fun foo : Int**; end", LibDef.new("LibC".path, [FunDef.new("foo", return_type: "Int".path.pointer_of.pointer_of)] of ASTNode)
+    it_parses "lib LibC; fun foo(a : ::B, ::C -> ::D); end", LibDef.new("LibC".path, [FunDef.new("foo", [Arg.new("a", restriction: ProcNotation.new([Path.global("B"), Path.global("C")] of ASTNode, Path.global("D")))])] of ASTNode)
+    it_parses "lib LibC; type A = B; end", LibDef.new("LibC".path, [TypeDef.new("A", "B".path)] of ASTNode)
+    it_parses "lib LibC; type A = B*; end", LibDef.new("LibC".path, [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
+    it_parses "lib LibC; type A = B**; end", LibDef.new("LibC".path, [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)
+    it_parses "lib LibC; type A = B.class; end", LibDef.new("LibC".path, [TypeDef.new("A", Metaclass.new("B".path))] of ASTNode)
+    it_parses "lib LibC; struct Foo; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo")] of ASTNode)
+    it_parses "lib LibC; struct Foo; x : Int; y : Float; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", [TypeDeclaration.new("x".var, "Int".path), TypeDeclaration.new("y".var, "Float".path)] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; struct Foo; x : Int*; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", Expressions.from(TypeDeclaration.new("x".var, "Int".path.pointer_of)))] of ASTNode)
+    it_parses "lib LibC; struct Foo; x : Int**; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", Expressions.from(TypeDeclaration.new("x".var, "Int".path.pointer_of.pointer_of)))] of ASTNode)
+    it_parses "lib LibC; struct Foo; x, y, z : Int; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", [TypeDeclaration.new("x".var, "Int".path), TypeDeclaration.new("y".var, "Int".path), TypeDeclaration.new("z".var, "Int".path)] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; union Foo; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", union: true)] of ASTNode)
+    it_parses "lib LibC; enum Foo; A\nB; C\nD = 1; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; enum Foo; A = 1; B; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; Foo = 1; end", LibDef.new("LibC".path, [Assign.new("Foo".path, 1.int32)] of ASTNode)
+    it_parses "lib LibC\nfun getch = GetChar\nend", LibDef.new("LibC".path, [FunDef.new("getch", real_name: "GetChar")] of ASTNode)
+    it_parses %(lib LibC\nfun getch = "get.char"\nend), LibDef.new("LibC".path, [FunDef.new("getch", real_name: "get.char")] of ASTNode)
+    it_parses %(lib LibC\nfun getch = "get.char" : Int32\nend), LibDef.new("LibC".path, [FunDef.new("getch", return_type: "Int32".path, real_name: "get.char")] of ASTNode)
+    it_parses %(lib LibC\nfun getch = "get.char"(x : Int32)\nend), LibDef.new("LibC".path, [FunDef.new("getch", [Arg.new("x", restriction: "Int32".path)], real_name: "get.char")] of ASTNode)
+    it_parses "lib LibC\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path), ExternalVar.new("errno2", "Int32".path)] of ASTNode)
+    it_parses "lib LibC\n$errno : B, C -> D\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", ProcNotation.new(["B".path, "C".path] of ASTNode, "D".path))] of ASTNode)
+    it_parses "lib LibC\n$errno = Foo : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path, "Foo")] of ASTNode)
+    it_parses "lib LibC\nalias Foo = Bar\nend", LibDef.new("LibC".path, [Alias.new("Foo".path, "Bar".path)] of ASTNode)
+    it_parses "lib LibC; struct Foo; include Bar; end; end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", Include.new("Bar".path))] of ASTNode)
 
-    it_parses "lib LibC\nfun SomeFun\nend", LibDef.new("LibC", [FunDef.new("SomeFun")] of ASTNode)
+    it_parses "lib LibC\nfun SomeFun\nend", LibDef.new("LibC".path, [FunDef.new("SomeFun")] of ASTNode)
+
+    it_parses "lib Foo::Bar\nend", LibDef.new(Path.new("Foo", "Bar"))
 
     it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", restriction: "Int32".path)], "Int64".path, body: "x".var)
     assert_syntax_error "fun foo(Int32); end", "top-level fun parameter must have a name"
     assert_syntax_error "fun Foo : Int64\nend"
 
-    it_parses "lib LibC; {{ 1 }}; end", LibDef.new("LibC", body: [MacroExpression.new(1.int32)] of ASTNode)
-    it_parses "lib LibC; {% if 1 %}2{% end %}; end", LibDef.new("LibC", body: [MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)
+    it_parses "lib LibC; {{ 1 }}; end", LibDef.new("LibC".path, body: [MacroExpression.new(1.int32)] of ASTNode)
+    it_parses "lib LibC; {% if 1 %}2{% end %}; end", LibDef.new("LibC".path, body: [MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)
 
-    it_parses "lib LibC; struct Foo; {{ 1 }}; end; end", LibDef.new("LibC", body: CStructOrUnionDef.new("Foo", Expressions.from([MacroExpression.new(1.int32)] of ASTNode)))
-    it_parses "lib LibC; struct Foo; {% if 1 %}2{% end %}; end; end", LibDef.new("LibC", body: CStructOrUnionDef.new("Foo", Expressions.from([MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)))
+    it_parses "lib LibC; struct Foo; {{ 1 }}; end; end", LibDef.new("LibC".path, body: CStructOrUnionDef.new("Foo", Expressions.from([MacroExpression.new(1.int32)] of ASTNode)))
+    it_parses "lib LibC; struct Foo; {% if 1 %}2{% end %}; end; end", LibDef.new("LibC".path, body: CStructOrUnionDef.new("Foo", Expressions.from([MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)))
 
     it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
     it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
@@ -1192,10 +1197,10 @@ module Crystal
     it_parses "1.!(\n)", Not.new(1.int32)
 
     it_parses "/foo/", regex("foo")
-    it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
-    it_parses "/foo/m", regex("foo", Regex::Options::MULTILINE)
-    it_parses "/foo/x", regex("foo", Regex::Options::EXTENDED)
-    it_parses "/foo/imximx", regex("foo", Regex::Options::IGNORE_CASE | Regex::Options::MULTILINE | Regex::Options::EXTENDED)
+    it_parses "/foo/i", regex("foo", Regex::CompileOptions::IGNORE_CASE)
+    it_parses "/foo/m", regex("foo", Regex::CompileOptions::MULTILINE)
+    it_parses "/foo/x", regex("foo", Regex::CompileOptions::EXTENDED)
+    it_parses "/foo/imximx", regex("foo", Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::MULTILINE | Regex::CompileOptions::EXTENDED)
     it_parses "/fo\\so/", regex("fo\\so")
     it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
     it_parses "/(fo\#{\"bar\"}\#{1}o)/", RegexLiteral.new(StringInterpolation.new(["(fo".string, "bar".string, 1.int32, "o)".string] of ASTNode))
@@ -1378,7 +1383,7 @@ module Crystal
     # This is useful for example when interpolating __FILE__ and __DIR__
     it_parses "\"foo\#{\"bar\"}baz\"", "foobarbaz".string
 
-    it_parses "lib LibFoo\nend\nif true\nend", [LibDef.new("LibFoo"), If.new(true.bool)]
+    it_parses "lib LibFoo\nend\nif true\nend", [LibDef.new("LibFoo".path), If.new(true.bool)]
 
     it_parses "foo(\n1\n)", Call.new(nil, "foo", 1.int32)
 
@@ -1552,7 +1557,7 @@ module Crystal
 
     assert_syntax_error "@[Foo(\"\": 1)]"
 
-    it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC", Annotation.new("Bar".path))
+    it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC".path, Annotation.new("Bar".path))
 
     it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
 

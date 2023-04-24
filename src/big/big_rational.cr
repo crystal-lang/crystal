@@ -5,6 +5,8 @@ require "big"
 # denominator and the numerator have no common factors, and that the
 # denominator is positive. Zero has the unique representation 0/1.
 #
+# NOTE: To use `BigRational`, you must explicitly import it with `require "big"`
+#
 # ```
 # require "big"
 #
@@ -20,9 +22,6 @@ struct BigRational < Number
   include Comparable(BigRational)
   include Comparable(Int)
   include Comparable(Float)
-
-  private MANTISSA_BITS  = 53
-  private MANTISSA_SHIFT = (1_i64 << MANTISSA_BITS).to_f64
 
   # Creates a new `BigRational`.
   #
@@ -45,12 +44,29 @@ struct BigRational < Number
   end
 
   # Creates a exact representation of float as rational.
-  def initialize(num : Float)
+  def initialize(num : Float::Primitive)
     # It ensures that `BigRational.new(f) == f`
     # It relies on fact, that mantissa is at most 53 bits
     frac, exp = Math.frexp num
-    ifrac = (frac.to_f64 * MANTISSA_SHIFT).to_i64
-    exp -= MANTISSA_BITS
+    ifrac = Math.ldexp(frac.to_f64, Float64::MANT_DIGITS).to_i64
+    exp -= Float64::MANT_DIGITS
+    initialize ifrac, 1
+    if exp >= 0
+      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
+    else
+      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
+    end
+  end
+
+  # :ditto:
+  def initialize(num : BigFloat)
+    frac, exp = Math.frexp num
+    prec = LibGMP.mpf_get_prec(frac)
+    # the mantissa has at most `prec + 1` bits, because the first fractional bit
+    # of `frac` is always 1, and `prec` variable bits follow
+    # TODO: use `Math.ldexp` after #11007
+    ifrac = BigFloat.new { |mpf| LibGMP.mpf_mul_2exp(mpf, frac, prec + 1) }.to_big_i
+    exp -= prec + 1
     initialize ifrac, 1
     if exp >= 0
       LibGMP.mpq_mul_2exp(out @mpq, self, exp)
@@ -74,7 +90,7 @@ struct BigRational < Number
   end
 
   # :nodoc:
-  def self.new
+  def self.new(&)
     LibGMP.mpq_init(out mpq)
     yield pointerof(mpq)
     new(mpq)
@@ -92,11 +108,11 @@ struct BigRational < Number
     LibGMP.mpq_cmp(mpq, other)
   end
 
-  def <=>(other : Float32 | Float64)
-    self <=> BigRational.new(other)
+  def <=>(other : Float::Primitive)
+    self <=> BigRational.new(other) unless other.nan?
   end
 
-  def <=>(other : Float)
+  def <=>(other : BigFloat)
     to_big_f <=> other.to_big_f
   end
 
@@ -351,7 +367,8 @@ struct Float
   end
 
   def <=>(other : BigRational)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 end
 

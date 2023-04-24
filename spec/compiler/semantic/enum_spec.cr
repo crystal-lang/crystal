@@ -354,6 +354,72 @@ describe "Semantic: enum" do
     enum_type.annotation(annotation_type).should_not be_nil
   end
 
+  it "reopens enum without base type (1)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo
+        X
+      end
+
+      enum Foo
+      end
+      CRYSTAL
+  end
+
+  it "reopens enum without base type (2)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo : UInt8
+        X
+      end
+
+      enum Foo
+      end
+      CRYSTAL
+  end
+
+  it "reopens enum with same base type (1)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo
+        X
+      end
+
+      enum Foo : Int32
+      end
+      CRYSTAL
+  end
+
+  it "reopens enum with same base type (2)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo : UInt8
+        X
+      end
+
+      enum Foo : UInt8
+      end
+      CRYSTAL
+  end
+
+  it "errors if reopening enum with different base type (1)" do
+    assert_error <<-CRYSTAL, "enum Foo's base type is Int32, not UInt8"
+      enum Foo
+        X
+      end
+
+      enum Foo : UInt8
+      end
+      CRYSTAL
+  end
+
+  it "errors if reopening enum with different base type (2)" do
+    assert_error <<-CRYSTAL, "enum Foo's base type is UInt8, not UInt16"
+      enum Foo : UInt8
+        X
+      end
+
+      enum Foo : UInt16
+      end
+      CRYSTAL
+  end
+
   it "can use macro expression inside enum" do
     assert_type(%(
       enum Foo
@@ -467,12 +533,50 @@ describe "Semantic: enum" do
 
   it "gives error on enum overflow" do
     assert_error %(
+      enum Foo : Int8
+        #{Array.new(129) { |i| "V#{i + 1}" }.join "\n"}
+      end
+      ),
+      "value of enum member V129 would overflow the base type Int8"
+  end
+
+  it "gives error on flags enum overflow" do
+    assert_error %(
       @[Flags]
       enum Foo : UInt8
         #{Array.new(9) { |i| "V#{i + 1}" }.join "\n"}
       end
       ),
       "value of enum member V9 would overflow the base type UInt8"
+  end
+
+  it "gives error on enum overflow after a member with value" do
+    assert_error <<-CRYSTAL, "value of enum member B would overflow the base type Int32"
+      enum Foo
+        A = 0x7FFFFFFF
+        B
+      end
+      CRYSTAL
+  end
+
+  it "gives error on signed flags enum overflow after a member with value" do
+    assert_error <<-CRYSTAL, "value of enum member B would overflow the base type Int32"
+      @[Flags]
+      enum Foo
+        A = 0x40000000
+        B
+      end
+      CRYSTAL
+  end
+
+  it "gives error on unsigned flags enum overflow after a member with value" do
+    assert_error <<-CRYSTAL, "value of enum member B would overflow the base type UInt32"
+      @[Flags]
+      enum Foo : UInt32
+        A = 0x80000000
+        B
+      end
+      CRYSTAL
   end
 
   it "doesn't overflow when going from negative to zero (#7874)" do

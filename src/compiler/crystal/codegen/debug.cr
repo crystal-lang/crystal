@@ -82,12 +82,20 @@ module Crystal
       @debug_files_per_module[@llvm_mod] ||= {} of DebugFilename => LibLLVM::MetadataRef
     end
 
-    def current_debug_file
-      filename = @current_debug_location.try(&.filename) || "??"
-      debug_files_cache[filename] ||= begin
-        file, dir = file_and_dir(filename)
-        di_builder.create_file(file, dir)
-      end
+    private def current_debug_file
+      # These debug files are only used for `DIBuilder#create_union_type`, even
+      # though they are unneeded here, just as struct types don't need a file;
+      # LLVM 12 or below produces an assertion failure that is now removed
+      # (https://github.com/llvm/llvm-project/commit/ad60802a7187aa39b0374536be3fa176fe3d6256)
+      {% if LibLLVM::IS_LT_130 %}
+        filename = @current_debug_location.try(&.filename) || "??"
+        debug_files_cache[filename] ||= begin
+          file, dir = file_and_dir(filename)
+          di_builder.create_file(file, dir)
+        end
+      {% else %}
+        Pointer(Void).null.as(LibLLVM::MetadataRef)
+      {% end %}
     end
 
     def get_debug_type(type, original_type : Type)
@@ -148,11 +156,8 @@ module Crystal
       ivars.each_with_index do |(name, ivar), idx|
         next if ivar.type.is_a?(NilType)
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
-          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
+          offset = type.extern_union? ? 0_u64 : @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-
-          # FIXME structs like LibC::PthreadMutexT generate huge offset values
-          next if offset > UInt64::MAX // 8u64
 
           member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
@@ -160,9 +165,14 @@ module Crystal
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
-      unless type.struct?
-        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
+      elements = di_builder.get_or_create_type_array(element_types)
+      if type.extern_union?
+        debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 1, size, size, LLVM::DIFlags::Zero, elements)
+      else
+        debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, elements)
+        unless type.struct?
+          debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
+        end
       end
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
@@ -257,7 +267,7 @@ module Crystal
         if ivar_debug_type = get_debug_type(ivar_type)
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-          next if offset > UInt64::MAX // 8u64 # TODO: Figure out why it is happening sometimes with offset
+
           member = di_builder.create_member_type(nil, "[#{idx}]", nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
@@ -285,9 +295,6 @@ module Crystal
         if ivar_debug_type = get_debug_type(ivar_type)
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-
-          # FIXME structs like LibC::PthreadMutexT generate huge offset values
-          next if offset > UInt64::MAX // 8u64
 
           member = di_builder.create_member_type(nil, ivar.name, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
@@ -340,7 +347,7 @@ module Crystal
       end
     end
 
-    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
+    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, &)
       location = location.try &.expanded_location
       return false unless location
 
@@ -492,7 +499,7 @@ module Crystal
       debug_alloca = alloca alloca.type, "dbg.#{arg_name}"
       store alloca, debug_alloca
       declare_parameter(arg_name, arg_type, arg_no, debug_alloca, location)
-      alloca = load debug_alloca
+      alloca = load alloca.type, debug_alloca
       set_current_debug_location old_debug_location
       alloca
     end

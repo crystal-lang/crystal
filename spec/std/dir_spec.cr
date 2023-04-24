@@ -1,7 +1,7 @@
 require "./spec_helper"
 require "../support/env"
 
-private def unset_tempdir
+private def unset_tempdir(&)
   {% if flag?(:windows) %}
     old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
     begin
@@ -143,17 +143,29 @@ describe "Dir" do
     end
   end
 
-  it "tests delete with an nonexistent path" do
-    with_tempfile("nonexistent") do |path|
-      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
-        Dir.delete(path)
+  describe ".delete" do
+    it "raises with an nonexistent path" do
+      with_tempfile("nonexistent") do |path|
+        expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
+          Dir.delete(path)
+        end
       end
     end
-  end
 
-  it "tests delete with a path that cannot be removed" do
-    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
-      Dir.delete(datapath)
+    it "raises with a path that cannot be removed" do
+      expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
+        Dir.delete(datapath)
+      end
+    end
+
+    it "raises with symlink directory" do
+      with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
+        Dir.mkdir(target_path)
+        File.symlink(target_path, symlink_path)
+        expect_raises(File::Error) do
+          Dir.delete(symlink_path)
+        end
+      end
     end
   end
 
@@ -350,37 +362,39 @@ describe "Dir" do
       ].sort
     end
 
-    pending_win32 "matches symlinks" do
-      link = datapath("f1_link.txt")
-      non_link = datapath("non_link.txt")
+    it "matches symlinks" do
+      with_tempfile "symlinks" do |path|
+        Dir.mkdir_p(path)
 
-      File.symlink(datapath("dir", "f1.txt"), link)
-      File.symlink(datapath("dir", "nonexisting"), non_link)
+        link = Path[path, "f1_link.txt"]
+        non_link = Path[path, "non_link.txt"]
 
-      begin
-        Dir["#{datapath}/*_link.txt"].sort.should eq [
-          datapath("f1_link.txt"),
-          datapath("non_link.txt"),
+        File.symlink(datapath("dir", "f1.txt"), link)
+        File.symlink(datapath("dir", "nonexisting"), non_link)
+
+        Dir["#{path}/*_link.txt"].sort.should eq [
+          link.to_s,
+          non_link.to_s,
         ].sort
-        Dir["#{datapath}/non_link.txt"].should eq [datapath("non_link.txt")]
-      ensure
-        File.delete link
-        File.delete non_link
+        Dir["#{path}/non_link.txt"].should eq [non_link.to_s]
       end
     end
 
-    pending_win32 "matches symlink dir" do
+    it "matches symlink dir" do
       with_tempfile "symlink_dir" do |path|
-        Dir.mkdir_p(Path[path, "glob"])
         target = Path[path, "target"]
+        non_link = target / "a.txt"
+        link_dir = Path[path, "glob", "dir"]
+
+        Dir.mkdir_p(Path[path, "glob"])
         Dir.mkdir_p(target)
 
-        File.write(target / "a.txt", "")
-        File.symlink(target, Path[path, "glob", "dir"])
+        File.write(non_link, "")
+        File.symlink(target, link_dir)
 
         Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
         Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
-          "#{path}/glob/dir/a.txt",
+          File.join(path, "glob", "dir", "a.txt"),
         ]
       end
     end

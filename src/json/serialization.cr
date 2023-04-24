@@ -98,8 +98,9 @@ module JSON
   #   @a : Int32
   # end
   #
-  # a = A.from_json(%({"a":1,"b":2})) # => A(@json_unmapped={"b" => 2_i64}, @a=1)
-  # a.to_json                         # => {"a":1,"b":2}
+  # a = A.from_json(%({"a":1,"b":2})) # => A(@json_unmapped={"b" => 2}, @a=1)
+  # a.json_unmapped["b"].raw.class    # => Int64
+  # a.to_json                         # => %({"a":1,"b":2})
   # ```
   #
   #
@@ -185,7 +186,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
@@ -198,8 +198,14 @@ module JSON
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = nil
+          %var{name} = {% if value[:has_default] || value[:nilable] %}
+                         nil.as(::Nil | typeof(@{{name}}))
+                       {% else %}
+                         uninitialized typeof(@{{name}})
+                       {% end %}
           %found{name} = false
         {% end %}
 
@@ -215,26 +221,18 @@ module JSON
           case key
           {% for name, value in properties %}
             when {{value[:key]}}
-              %found{name} = true
               begin
-                %var{name} =
-                  {% if value[:nilable] || value[:has_default] %} pull.read_null_or { {% end %}
-
-                  {% if value[:root] %}
-                    pull.on_key!({{value[:root]}}) do
-                  {% end %}
-
-                  {% if value[:converter] %}
-                    {{value[:converter]}}.from_json(pull)
-                  {% else %}
-                    ::Union({{value[:type]}}).new(pull)
-                  {% end %}
-
-                  {% if value[:root] %}
+                {% if value[:has_default] || value[:nilable] %} pull.read_null_or do {% else %} begin {% end %}
+                  %var{name} =
+                    {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
+                      {% if value[:converter] %}
+                        {{value[:converter]}}.from_json(pull)
+                      {% else %}
+                        typeof(@{{name}}).new(pull)
+                      {% end %}
                     end
-                  {% end %}
-
-                {% if value[:nilable] || value[:has_default] %} } {% end %}
+                end
+                %found{name} = true
               rescue exc : ::JSON::ParseException
                 raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
               end
@@ -247,7 +245,7 @@ module JSON
 
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
-            if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
+            if !%found{name}
               raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
             end
           {% end %}
@@ -263,7 +261,7 @@ module JSON
               @{{name}} = %var{name}
             end
           {% else %}
-            @{{name}} = (%var{name}).as({{value[:type]}})
+            @{{name}} = %var{name}
           {% end %}
 
           {% if value[:presence] %}
@@ -295,7 +293,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                type:             ivar.type,
                 key:              ((ann && ann[:key]) || ivar).id.stringify,
                 root:             ann && ann[:root],
                 converter:        ann && ann[:converter],

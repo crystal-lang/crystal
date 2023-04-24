@@ -431,8 +431,13 @@ describe "Lexer" do
   assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
   assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
 
-  assert_syntax_error "2e", "unexpected token: \"e\""
-  assert_syntax_error "2ef32", "unexpected token: \"ef32\""
+  assert_syntax_error "2e", "invalid decimal number exponent"
+  assert_syntax_error "2e+", "invalid decimal number exponent"
+  assert_syntax_error "2ef32", "invalid decimal number exponent"
+  assert_syntax_error "2e+@foo", "invalid decimal number exponent"
+  assert_syntax_error "2e+e", "invalid decimal number exponent"
+  assert_syntax_error "2e+f32", "invalid decimal number exponent"
+  assert_syntax_error "2e+-2", "invalid decimal number exponent"
   assert_syntax_error "2e+_2", "unexpected '_' in number"
 
   # Test for #11671

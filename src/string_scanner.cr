@@ -1,5 +1,7 @@
 # `StringScanner` provides for lexical scanning operations on a `String`.
 #
+# NOTE: To use `StringScanner`, you must explicitly import it with `require "string_scanner"`
+#
 # ### Example
 #
 # ```
@@ -90,7 +92,7 @@ class StringScanner
   # s.scan(/.*/)    # => ""
   # ```
   def scan(pattern) : String?
-    match(pattern, advance: true, options: Regex::Options::ANCHORED)
+    match(pattern, advance: true, options: Regex::MatchOptions::ANCHORED)
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
@@ -106,10 +108,10 @@ class StringScanner
   # s.scan_until(/g/)  # => "ing"
   # ```
   def scan_until(pattern) : String?
-    match(pattern, advance: true, options: Regex::Options::None)
+    match(pattern, advance: true, options: Regex::MatchOptions::None)
   end
 
-  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
+  private def match(pattern, advance = true, options = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -165,7 +167,7 @@ class StringScanner
   # s.check(/\w+/) # => "is"
   # ```
   def check(pattern) : String?
-    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+    match(pattern, advance: false, options: Regex::MatchOptions::ANCHORED)
   end
 
   # Returns the value that `#scan_until` would return, without advancing the
@@ -179,7 +181,7 @@ class StringScanner
   # s.check_until(/g/)  # => "test string"
   # ```
   def check_until(pattern) : String?
-    match(pattern, advance: false, options: Regex::Options::None)
+    match(pattern, advance: false, options: Regex::MatchOptions::None)
   end
 
   # Returns the *n*-th subgroup in the most recent match.

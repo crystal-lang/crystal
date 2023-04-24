@@ -9,7 +9,7 @@ private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = _
   end
 end
 
-private def with_precision(precision)
+private def with_precision(precision, &)
   old_precision = BigFloat.default_precision
   BigFloat.default_precision = precision
 
@@ -84,6 +84,22 @@ describe "BigFloat" do
       BigFloat.new(-32768_i16).to_s.should eq("-32768.0")
       BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648.0")
       BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9.223372036854775808e+18")
+    end
+  end
+
+  describe "#<=>" do
+    it "compares against NaNs" do
+      (1.to_big_f <=> Float64::NAN).should be_nil
+      (1.to_big_f <=> Float32::NAN).should be_nil
+      (Float64::NAN <=> 1.to_big_f).should be_nil
+      (Float32::NAN <=> 1.to_big_f).should be_nil
+
+      typeof(1.to_big_f <=> Float64::NAN).should eq(Int32?)
+      typeof(1.to_big_f <=> Float32::NAN).should eq(Int32?)
+      typeof(Float64::NAN <=> 1.to_big_f).should eq(Int32?)
+      typeof(Float32::NAN <=> 1.to_big_f).should eq(Int32?)
+
+      typeof(1.to_big_f <=> 1.to_big_f).should eq(Int32)
     end
   end
 
