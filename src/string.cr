@@ -4596,7 +4596,7 @@ class String
       $~ = match
       yield match
       match_bytesize = match.byte_end(0) - index
-      match_bytesize += 1 if match_bytesize == 0
+      match_bytesize += char_bytesize_at(byte_offset) if match_bytesize == 0
       byte_offset = index + match_bytesize
     end
 
