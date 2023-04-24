@@ -122,6 +122,10 @@ private class TestObject
   def self.test_annotation_count
     {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
   end
+
+  def self.do_set_crystal_type_id(ptr)
+    set_crystal_type_id(ptr)
+  end
 end
 
 private class DelegatedTestObject
@@ -558,5 +562,12 @@ describe Object do
       x.not_nil!.foo.should eq(2)
       x.foo.should eq(3)
     end
+  end
+
+  it ".set_crystal_type_id" do
+    ary = StaticArray[Int32::MAX, Int32::MAX]
+    TestObject.do_set_crystal_type_id(pointerof(ary))
+    ary[0].should eq TestObject.crystal_instance_type_id
+    ary[1].should eq Int32::MAX
   end
 end

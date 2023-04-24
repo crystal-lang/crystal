@@ -1,3 +1,16 @@
+# 1.8.1 (2023-04-20)
+
+## Standard Library
+
+### Serialization
+
+- Fix `JSON::Serializable` on certain recursively defined types ([#13344](https://github.com/crystal-lang/crystal/pull/13344), thanks @HertzDevil)
+
+### Text
+
+- Fix `String#gsub` with empty match at multibyte char ([#13342](https://github.com/crystal-lang/crystal/pull/13342), thanks @straight-shoota)
+- Fix PCRE2 `Regex` with more than 127 named capture groups ([#13349](https://github.com/crystal-lang/crystal/pull/13349), thanks @HertzDevil)
+
 # 1.8.0 (2023-04-14)
 
 ## Language

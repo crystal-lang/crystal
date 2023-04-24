@@ -398,6 +398,12 @@ class YAMLStrictDiscriminatorBar < YAMLStrictDiscriminator
   property y : YAMLStrictDiscriminator
 end
 
+class YAMLSomething
+  include YAML::Serializable
+
+  property value : YAMLSomething?
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -1007,5 +1013,9 @@ describe "YAML::Serializable" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
   end
 end

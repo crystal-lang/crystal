@@ -57,15 +57,17 @@ class Crystal::Doc::Method
   private def compute_doc_info : DocInfo?
     def_doc = @def.doc
     if def_doc
-      has_inherit = def_doc =~ /^\s*:inherit:\s*$/m
-      if has_inherit
-        ancestor_info = self.ancestor_doc_info
-        if ancestor_info
-          def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m, ancestor_info.doc.not_nil!)
-          return DocInfo.new(def_doc, nil)
-        end
+      ancestor_doc_info = nil
+      # TODO: warn about `:inherit:` not finding an ancestor
+      inherit_def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m) do
+        ancestor_doc_info ||= self.ancestor_doc_info
+        ancestor_doc_info.try(&.doc) || break
+      end
 
-        # TODO: warn about `:inherit:` not finding an ancestor
+      # inherit_def_doc is nil when breaking from the gsub block which means
+      # no ancestor doc info was found
+      if inherit_def_doc && !inherit_def_doc.same?(def_doc)
+        return DocInfo.new(inherit_def_doc, nil)
       end
 
       if @def.name.starts_with?(PSEUDO_METHOD_PREFIX)
