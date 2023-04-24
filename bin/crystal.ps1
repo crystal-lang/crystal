@@ -35,6 +35,37 @@ function Resolve-RealPath {
     $realPath
 }
 
+# adopted from https://stackoverflow.com/a/15669365
+function Write-StdErr {
+<#
+.SYNOPSIS
+Writes text to stderr when running in a regular console window,
+to the host''s error stream otherwise.
+
+.DESCRIPTION
+Writing to true stderr allows you to write a well-behaved CLI
+as a PS script that can be invoked from a batch file, for instance.
+
+Note that PS by default sends ALL its streams to *stdout* when invoked from
+cmd.exe.
+#>
+    param(
+        [Parameter(Mandatory)] [string] $Line,
+        $ForegroundColor
+    )
+    if ($Host.Name -eq 'ConsoleHost') {
+        if ($ForegroundColor) {
+            [Console]::ForegroundColor = $ForegroundColor
+        }
+        [Console]::Error.WriteLine($Line)
+        if ($ForegroundColor) {
+            [Console]::ResetColor()
+        }
+    } else {
+        [void] $host.ui.WriteErrorLine($Line)
+    }
+}
+
 # https://stackoverflow.com/a/43030126
 function Invoke-WithEnvironment {
 <#
@@ -225,7 +256,7 @@ Invoke-WithEnvironment @{
     CRYSTAL_LIBRARY_PATH = $env:CRYSTAL_LIBRARY_PATH
 } {
     if (!$env:CRYSTAL_PATH.Contains("$CrystalRoot\src")) {
-        Write-Host "CRYSTAL_PATH env variable does not contain $CrystalRoot\src" -ForegroundColor DarkYellow
+        Write-StdErr "CRYSTAL_PATH env variable does not contain $CrystalRoot\src" -ForegroundColor DarkYellow
     }
 
     if (!$env:CRYSTAL_CONFIG_LIBRARY_PATH -or !$env:CRYSTAL_LIBRARY_PATH) {
@@ -238,12 +269,12 @@ Invoke-WithEnvironment @{
     }
 
     if (Test-Path -Path "$CrystalDir/crystal.exe" -PathType Leaf) {
-        Write-Host "Using compiled compiler at $($CrystalDir.Replace($pwd, "."))\crystal.exe" -ForegroundColor DarkYellow
+        Write-StdErr "Using compiled compiler at $($CrystalDir.Replace($pwd, "."))\crystal.exe" -ForegroundColor DarkYellow
         Exec-Process "$CrystalDir/crystal.exe" $CrystalArgs
     } else {
         $CrystalCmd = Get-Command $env:CRYSTAL -CommandType ExternalScript, Application -ErrorAction SilentlyContinue
         if (!$CrystalCmd) {
-            Write-Host 'You need to have a crystal executable in your path! or set CRYSTAL env variable' -ForegroundColor Red
+            Write-StdErr 'You need to have a crystal executable in your path! or set CRYSTAL env variable' -ForegroundColor Red
             Exit 1
         } else {
             $CrystalInstalledDir = Split-Path -Path $CrystalCmd.Path -Parent
