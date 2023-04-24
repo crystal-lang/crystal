@@ -1686,8 +1686,11 @@ module Crystal
       skip_space
 
       type_vars, splat_index = parse_type_vars
-      need_statement_end = !@token.type.space? if type_vars
-      skip_space
+
+      if type_vars
+        need_statement_end = !@token.type.space?
+        skip_space
+      end
 
       superclass = nil
 
