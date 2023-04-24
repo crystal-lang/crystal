@@ -47,7 +47,7 @@ struct BigRational < Number
   #
   # Raises `ArgumentError` if *num* is not finite.
   def self.new(num : Float::Primitive)
-    raise ArgumentError.new "can only construct from a finite number" unless num.finite?
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new { |mpq| LibGMP.mpq_set_d(mpq, num) }
   end
 
