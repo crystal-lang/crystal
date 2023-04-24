@@ -525,14 +525,16 @@ class Crystal::Command
     if output_filename
       if compiler.codegen_target.win32?
         # foo -> foo.exe
-        # foo.bar -> foo.exe
+        # foo.bar -> foo.bar
         # foo.exe -> foo.exe
-        # foo.tar.gz -> foo.tar.exe
-        output_filename = "#{output_filename.rchop(File.extname(output_filename))}.exe"
+        # foo.tar.gz -> foo.tar.gz
+        if File.extname(output_filename).empty?
+          output_filename = "#{output_filename}.exe"
+        end
       end
     else
       first_filename = sources.first.filename
-      output_filename = File.basename(first_filename, File.extname(first_filename))
+      output_filename = Path[first_filename].stem
       if compiler.codegen_target.win32?
         output_filename = "#{output_filename}.exe"
       end
