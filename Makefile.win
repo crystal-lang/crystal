@@ -44,9 +44,9 @@ RC := rc.exe
 GLOB = $(shell dir $1 /B /S)
 MKDIR = if not exist $1 mkdir $1
 CP = copy /B /Y $1 $2
-CPDIR = robocopy /E /NJH /NJS $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+CPDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
 INSTALL = copy /B /Y $1 $2
-INSTALLDIR = robocopy /E /NJH /NJS $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+INSTALLDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
 MV = move /Y $1 $2
 RM = if exist $1 del /F /Q $1
 RMDIR = if exist $1 rd /S /Q $1
@@ -207,7 +207,7 @@ $(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 
 $(O)\crystal.res: $(O)\crystal.rc
 	@$(call MKDIR,"$(O)")
-	$(RC) /Fo "$@" "$<"
+	$(RC) /nologo /Fo "$@" "$<"
 
 $(O)\crystal.rc: $(MAKEFILE_LIST)
 	@$(call MKDIR,"$(O)")
@@ -215,7 +215,7 @@ $(O)\crystal.rc: $(MAKEFILE_LIST)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	$(call check_llvm_config)
-	$(CXX) /c $(CXXFLAGS) "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
+	$(CXX) /nologo /c $(CXXFLAGS) "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
