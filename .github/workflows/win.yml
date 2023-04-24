@@ -373,3 +373,6 @@ jobs:
 
       - name: Run primitives specs
         run: make -f Makefile.win primitives_spec
+
+      - name: Build samples
+        run: make -f Makefile.win samples
