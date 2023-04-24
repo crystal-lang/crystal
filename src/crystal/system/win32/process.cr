@@ -182,9 +182,7 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    ret = LibC._get_osfhandle(io.fd)
-    raise RuntimeError.from_winerror("_get_osfhandle") if ret == -1
-    source_handle = LibC::HANDLE.new(ret)
+    source_handle = FileDescriptor.windows_handle!(io.fd)
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
