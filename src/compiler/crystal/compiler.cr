@@ -332,7 +332,7 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        linker = MSVC
+        linker = MSVC_LINKER
         link_args = [] of String
 
         # if the compiler and the target both have the `msvc` flag, we are not
