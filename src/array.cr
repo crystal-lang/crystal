@@ -2224,12 +2224,9 @@ class Array(T)
 
     def self.element_type(ary)
       case ary
-      when Array
-        element_type(ary.first)
-      when Iterator
-        elem = element_type(ary.next)
-        raise "" if elem.is_a?(Iterator::Stop)
-        elem
+      when Array, Iterator
+        ary.each { |elem| return element_type(elem) }
+        ::raise ""
       else
         ary
       end
