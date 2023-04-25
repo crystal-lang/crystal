@@ -1,7 +1,7 @@
 module Spec
   # :nodoc:
   struct EqualExpectation(T)
-    def initialize(@expected_value : T)
+    def initialize(@expected_value : T, @type_safe : Bool = false)
     end
 
     def match(actual_value)
@@ -17,7 +17,7 @@ module Spec
           actual_value.size == expected_value.size
       else
         actual_value == @expected_value
-      end
+      end && (!@type_safe || actual_value.class == T)
     end
 
     def failure_message(actual_value)
@@ -304,8 +304,13 @@ module Spec
   # Expectations are used by `Spec::ObjectExtensions#should` and `Spec::ObjectExtensions#should_not`.
   module Expectations
     # Creates an `Expectation` that passes if actual equals *value* (`==`).
-    def eq(value)
+    def eq?(value)
       Spec::EqualExpectation.new value
+    end
+
+    # Creates an `Expectation` that passes if actual equals *value* (`==`) and its class equals `value.class`.
+    def eq(value)
+      Spec::EqualExpectation.new value, type_safe: true
     end
 
     # Creates an `Expectation` that passes if actual and *value* are identical (`.same?`).

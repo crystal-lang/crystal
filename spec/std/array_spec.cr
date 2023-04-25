@@ -477,7 +477,7 @@ describe "Array" do
     end
 
     it "works with mixed types" do
-      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, 'a'})
+      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq?({1, "a", 1.0, 'a'})
     end
   end
 
@@ -526,7 +526,7 @@ describe "Array" do
   it "does compact!" do
     a = [1, nil, 2, nil, 3]
     b = a.compact!
-    b.should eq([1, 2, 3])
+    b.should eq([1, 2, 3] of Int32?)
     b.should be(a)
   end
 
@@ -1772,8 +1772,7 @@ describe "Array" do
           b = 'a'..'c'
           c = ('x'..'z').each
           r = a.zip(a || b || c)
-          r.should be_a(Array({Int32, Int32 | Char}))
-          r.should eq([{1, 1}, {2, 2}, {3, 3}])
+          r.should eq([{1, 1}, {2, 2}, {3, 3}] of {Int32, Int32 | Char})
         end
       end
     end
@@ -1849,8 +1848,7 @@ describe "Array" do
             b = 'a'..'c'
             c = ('x'..'z').each
             r = a.zip?(a || b || c)
-            r.should be_a(Array({Int32, Int32 | Char | Nil}))
-            r.should eq([{1, 1}, {2, 2}, {3, 3}])
+            r.should eq([{1, 1}, {2, 2}, {3, 3}] of {Int32, Int32 | Char | Nil})
           end
         end
       end
@@ -1968,8 +1966,8 @@ describe "Array" do
 
     it "transposes union of arrays" do
       [[1, 2], [1.0, 2.0]].transpose.should eq([[1, 1.0], [2, 2.0]])
-      [[1, 2.0], [1, 2.0]].transpose.should eq([[1, 1], [2.0, 2.0]])
-      [[1, 1.0], ['a', "aaa"]].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
+      [[1, 2.0], [1, 2.0]].transpose.should eq([[1, 1] of Float64 | Int32, [2.0, 2.0] of Float64 | Int32])
+      [[1, 1.0], ['a', "aaa"]].transpose.should eq([[1, 'a'] of Char | Float64 | Int32 | String, [1.0, "aaa"] of Char | Float64 | Int32 | String])
 
       typeof([[1.0], [1]].transpose).should eq(Array(Array(Int32 | Float64)))
       typeof([[1, 1.0], ['a', "aaa"]].transpose).should eq(Array(Array(String | Int32 | Float64 | Char)))
@@ -1988,9 +1986,9 @@ describe "Array" do
     end
 
     it "transposes array of tuples" do
-      [{1, 1.0}].transpose.should eq([[1], [1.0]])
+      [{1, 1.0}].transpose.should eq([[1] of Float64 | Int32, [1.0] of Float64 | Int32])
       [{1}, {1.0}].transpose.should eq([[1, 1.0]])
-      [{1, 1.0}, {'a', "aaa"}].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
+      [{1, 1.0}, {'a', "aaa"}].transpose.should eq([[1, 'a'] of Char | Float64 | Int32 | String, [1.0, "aaa"] of Char | Float64 | Int32 | String])
 
       typeof([{1, 1.0}].transpose).should eq(Array(Array(Int32 | Float64)))
       typeof([{1}, {1.0}].transpose).should eq(Array(Array(Int32 | Float64)))
@@ -2175,8 +2173,8 @@ describe "Array" do
     a = Array.new(1, 1_i64)
     b = Array.new(1, 1_i64)
     b << 2_i64 << 3_i64
-    a.should eq([1])
-    b.should eq([1, 2, 3])
+    a.should eq([1] of Int64)
+    b.should eq([1, 2, 3] of Int64)
   end
 
   it "flattens" do
