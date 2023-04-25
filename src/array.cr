@@ -2227,7 +2227,9 @@ class Array(T)
       when Array
         element_type(ary.first)
       when Iterator
-        element_type(ary.next)
+        elem = element_type(ary.next)
+        raise "" if elem.is_a?(Iterator::Stop)
+        elem
       else
         ary
       end
