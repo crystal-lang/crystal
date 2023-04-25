@@ -184,6 +184,23 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("2001:4860:4860::8888", 0).private?.should be_false
   end
 
+  it "#link_local?" do
+    Socket::IPAddress.new("0.0.0.0", 0).link_local?.should be_false
+    Socket::IPAddress.new("127.0.0.1", 0).link_local?.should be_false
+    Socket::IPAddress.new("10.0.0.0", 0).link_local?.should be_false
+    Socket::IPAddress.new("172.16.0.0", 0).link_local?.should be_false
+    Socket::IPAddress.new("192.168.0.0", 0).link_local?.should be_false
+
+    Socket::IPAddress.new("169.254.1.1", 0).link_local?.should be_true
+    Socket::IPAddress.new("169.254.254.255", 0).link_local?.should be_true
+
+    Socket::IPAddress.new("::1", 0).link_local?.should be_false
+    Socket::IPAddress.new("::", 0).link_local?.should be_false
+    Socket::IPAddress.new("fb84:8bf7:e905::1", 0).link_local?.should be_false
+
+    Socket::IPAddress.new("fe80::4860:4860:4860:1234", 0).link_local?.should be_true
+  end
+
   it "#==" do
     Socket::IPAddress.new("127.0.0.1", 8080).should eq Socket::IPAddress.new("127.0.0.1", 8080)
     Socket::IPAddress.new("127.0.0.1", 8080).hash.should eq Socket::IPAddress.new("127.0.0.1", 8080).hash

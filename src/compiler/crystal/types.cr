@@ -2072,21 +2072,27 @@ module Crystal
       generic_type.append_full_name(io)
       if generic_args
         io << '('
-        type_vars.each_value.with_index do |type_var, i|
-          io << ", " if i > 0
+        first = true
+        type_vars.each_with_index do |(_, type_var), i|
           if type_var.is_a?(Var)
             if i == splat_index
               tuple = type_var.type.as(TupleInstanceType)
-              tuple.tuple_types.join(io, ", ") do |tuple_type|
+              tuple.tuple_types.each do |tuple_type|
+                io << ", " unless first
+                first = false
                 tuple_type = tuple_type.devirtualize unless codegen
                 tuple_type.to_s_with_options(io, codegen: codegen)
               end
             else
+              io << ", " unless first
+              first = false
               type_var_type = type_var.type
               type_var_type = type_var_type.devirtualize unless codegen
               type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
+            io << ", " unless first
+            first = false
             type_var.to_s(io)
           end
         end

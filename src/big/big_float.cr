@@ -103,8 +103,8 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_z(self, other)
   end
 
-  def <=>(other : Float32 | Float64)
-    LibGMP.mpf_cmp_d(self, other.to_f64)
+  def <=>(other : Float::Primitive)
+    LibGMP.mpf_cmp_d(self, other) unless other.nan?
   end
 
   def <=>(other : Number)
@@ -387,10 +387,6 @@ end
 struct Number
   include Comparable(BigFloat)
 
-  def <=>(other : BigFloat)
-    -(other <=> self)
-  end
-
   def +(other : BigFloat)
     other + self
   end
@@ -409,6 +405,19 @@ struct Number
 
   def to_big_f : BigFloat
     BigFloat.new(self)
+  end
+end
+
+struct Int
+  def <=>(other : BigFloat)
+    -(other <=> self)
+  end
+end
+
+struct Float
+  def <=>(other : BigFloat)
+    cmp = other <=> self
+    -cmp if cmp
   end
 end
 

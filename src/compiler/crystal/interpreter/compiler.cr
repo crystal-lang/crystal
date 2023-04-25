@@ -1550,6 +1550,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Not)
+    node.type = @context.program.no_return unless node.type?
+
     exp = node.exp
     exp.accept self
     return false unless @wants_value

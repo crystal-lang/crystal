@@ -61,6 +61,19 @@ describe "BigInt" do
     1.1.should_not eq(1.to_big_i)
 
     [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
+
+    (1.to_big_i <=> Float64::NAN).should be_nil
+    (1.to_big_i <=> Float32::NAN).should be_nil
+    (Float64::NAN <=> 1.to_big_i).should be_nil
+    (Float32::NAN <=> 1.to_big_i).should be_nil
+
+    typeof(1.to_big_i <=> Float64::NAN).should eq(Int32?)
+    typeof(1.to_big_i <=> Float32::NAN).should eq(Int32?)
+    typeof(Float64::NAN <=> 1.to_big_i).should eq(Int32?)
+    typeof(Float32::NAN <=> 1.to_big_i).should eq(Int32?)
+
+    typeof(1.to_big_i <=> 1.to_big_f).should eq(Int32)
+    typeof(1.to_big_f <=> 1.to_big_i).should eq(Int32)
   end
 
   it "divides and calculates the modulo" do
@@ -665,5 +678,23 @@ describe "BigInt Math" do
 
   it "isqrt" do
     Math.isqrt(BigInt.new("1" + "0"*48)).should eq(BigInt.new("1" + "0"*24))
+  end
+
+  it "pw2ceil" do
+    Math.pw2ceil("-100000000000000000000000000000000".to_big_i).should eq(1.to_big_i)
+    Math.pw2ceil(-1234567.to_big_i).should eq(1.to_big_i)
+    Math.pw2ceil(-1.to_big_i).should eq(1.to_big_i)
+    Math.pw2ceil(0.to_big_i).should eq(1.to_big_i)
+    Math.pw2ceil(1.to_big_i).should eq(1.to_big_i)
+    Math.pw2ceil(2.to_big_i).should eq(2.to_big_i)
+    Math.pw2ceil(3.to_big_i).should eq(4.to_big_i)
+    Math.pw2ceil(4.to_big_i).should eq(4.to_big_i)
+    Math.pw2ceil(5.to_big_i).should eq(8.to_big_i)
+    Math.pw2ceil(32.to_big_i).should eq(32.to_big_i)
+    Math.pw2ceil(33.to_big_i).should eq(64.to_big_i)
+    Math.pw2ceil(64.to_big_i).should eq(64.to_big_i)
+    Math.pw2ceil(2.to_big_i ** 12345 - 1).should eq(2.to_big_i ** 12345)
+    Math.pw2ceil(2.to_big_i ** 12345).should eq(2.to_big_i ** 12345)
+    Math.pw2ceil(2.to_big_i ** 12345 + 1).should eq(2.to_big_i ** 12346)
   end
 end

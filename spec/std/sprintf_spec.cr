@@ -1,8 +1,6 @@
 require "./spec_helper"
 require "../support/string"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 
 # use same name for `sprintf` and `IO#printf` so that `assert_prints` can be leveraged
 private def fprintf(format, *args)
@@ -368,7 +366,7 @@ describe "::sprintf" do
       assert_sprintf "%d", Int64::MIN, "-9223372036854775808"
     end
 
-    pending_win32 "works with BigInt" do
+    it "works with BigInt" do
       assert_sprintf "%d", 123.to_big_i, "123"
       assert_sprintf "%300.250d", 10.to_big_i ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
       assert_sprintf "%- #300.250X", 16.to_big_i ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"

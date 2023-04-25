@@ -239,7 +239,7 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "doesn't follow symlinks" do
+    it "doesn't follow symlinks" do
       with_tempfile("rm_r-removed", "rm_r-linked") do |removed_path, linked_path|
         link_path = File.join(removed_path, "link")
         file_path = File.join(linked_path, "file")
@@ -549,75 +549,78 @@ describe "FileUtils" do
     end
   end
 
-  describe ".ln" do
-    it "creates a hardlink" do
-      with_tempfile("ln_src", "ln_dst") do |path1, path2|
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          FileUtils.touch(path1)
-          FileUtils.ln(arg1, arg2)
-          File.exists?(path2).should be_true
-          File.symlink?(path2).should be_false
-          FileUtils.rm_rf([path1, path2])
-        end
-      end
-    end
-
-    it "creates a hardlink inside a destination dir" do
-      with_tempfile("ln_src", "ln_dst_dir") do |path1, path2|
-        path2 += File::SEPARATOR
-        path3 = File.join(path2, File.basename(path1))
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          FileUtils.touch(path1)
-          FileUtils.mkdir(path2)
-          FileUtils.ln(arg1, arg2)
-          File.exists?(path3).should be_true
-          File.symlink?(path3).should be_false
-          FileUtils.rm_rf([path1, path2])
-        end
-      end
-    end
-
-    it "creates multiple hardlinks inside a destination dir" do
-      with_tempfile("ln_src_1", "ln_src_2", "ln_src_3", "ln_dst_dir") do |path1, path2, path3, dir_path|
-        paths = [path1, path2, path3]
-        dir_path += File::SEPARATOR
-        test_with_string_and_path(path1, path2, path3, dir_path) do |arg1, arg2, arg3, arg4|
-          paths.each { |path| FileUtils.touch(path) }
-          FileUtils.mkdir(dir_path)
-          FileUtils.ln([arg1, arg2, arg3], arg4)
-
-          paths.each do |path|
-            link_path = File.join(dir_path, File.basename(path))
-            File.exists?(link_path).should be_true
-            File.symlink?(link_path).should be_false
-          end
-          FileUtils.rm_rf(dir_path)
-        end
-      end
-    end
-
-    it "fails with a nonexistent source" do
-      with_tempfile("ln_src_missing", "ln_dst_missing") do |path1, path2|
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          expect_raises(File::NotFoundError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+  # hard links are practically unavailable on Android
+  {% unless flag?(:android) %}
+    describe ".ln" do
+      it "creates a hardlink" do
+        with_tempfile("ln_src", "ln_dst") do |path1, path2|
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            FileUtils.touch(path1)
             FileUtils.ln(arg1, arg2)
+            File.exists?(path2).should be_true
+            File.symlink?(path2).should be_false
+            FileUtils.rm_rf([path1, path2])
           end
         end
       end
-    end
 
-    it "fails with an extant destination" do
-      with_tempfile("ln_src", "ln_dst_exists") do |path1, path2|
-        FileUtils.touch([path1, path2])
-
-        test_with_string_and_path(path1, path2) do |arg1, arg2|
-          expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+      it "creates a hardlink inside a destination dir" do
+        with_tempfile("ln_src", "ln_dst_dir") do |path1, path2|
+          path2 += File::SEPARATOR
+          path3 = File.join(path2, File.basename(path1))
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            FileUtils.touch(path1)
+            FileUtils.mkdir(path2)
             FileUtils.ln(arg1, arg2)
+            File.exists?(path3).should be_true
+            File.symlink?(path3).should be_false
+            FileUtils.rm_rf([path1, path2])
+          end
+        end
+      end
+
+      it "creates multiple hardlinks inside a destination dir" do
+        with_tempfile("ln_src_1", "ln_src_2", "ln_src_3", "ln_dst_dir") do |path1, path2, path3, dir_path|
+          paths = [path1, path2, path3]
+          dir_path += File::SEPARATOR
+          test_with_string_and_path(path1, path2, path3, dir_path) do |arg1, arg2, arg3, arg4|
+            paths.each { |path| FileUtils.touch(path) }
+            FileUtils.mkdir(dir_path)
+            FileUtils.ln([arg1, arg2, arg3], arg4)
+
+            paths.each do |path|
+              link_path = File.join(dir_path, File.basename(path))
+              File.exists?(link_path).should be_true
+              File.symlink?(link_path).should be_false
+            end
+            FileUtils.rm_rf(dir_path)
+          end
+        end
+      end
+
+      it "fails with a nonexistent source" do
+        with_tempfile("ln_src_missing", "ln_dst_missing") do |path1, path2|
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            expect_raises(File::NotFoundError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+              FileUtils.ln(arg1, arg2)
+            end
+          end
+        end
+      end
+
+      it "fails with an extant destination" do
+        with_tempfile("ln_src", "ln_dst_exists") do |path1, path2|
+          FileUtils.touch([path1, path2])
+
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+              FileUtils.ln(arg1, arg2)
+            end
           end
         end
       end
     end
-  end
+  {% end %}
 
   describe ".ln_s" do
     it "creates a symlink" do
@@ -667,7 +670,7 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "works with a nonexistent source" do
+    it "works with a nonexistent source" do
       with_tempfile("ln_s_src_missing", "ln_s_dst_missing") do |path1, path2|
         test_with_string_and_path(path1, path2) do |arg1, arg2|
           FileUtils.ln_s(arg1, arg2)

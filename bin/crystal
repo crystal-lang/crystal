@@ -153,8 +153,11 @@ if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_P
   PARENT_CRYSTAL="crystal"
 fi
 
+PARENT_CRYSTAL_COMMAND=$(realpath "$(command -v "$PARENT_CRYSTAL" 2> /dev/null)" 2> /dev/null)
+PARENT_CRYSTAL_EXISTS=$(test !$?)
+
 # check if the parent crystal command refers to this script
-if [ "$(realpath "$(command -v "$PARENT_CRYSTAL")")" = "$SCRIPT_PATH" ]; then
+if [ "$PARENT_CRYSTAL_COMMAND" = "$SCRIPT_PATH" ]; then
   # remove the path to this script from PATH
   NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
   # if the PATH did not change it will lead to an infinite recursion => display error
@@ -162,23 +165,33 @@ if [ "$(realpath "$(command -v "$PARENT_CRYSTAL")")" = "$SCRIPT_PATH" ]; then
     __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
     exit 1
   fi
-  # re-execute this script with the cleaned up PATH
-  export PATH="$NEW_PATH"
-  exec "$SCRIPT_PATH" "$@"
+  PARENT_CRYSTAL_COMMAND=$(realpath "$(PATH=$NEW_PATH command -v "$PARENT_CRYSTAL" 2> /dev/null)" 2> /dev/null)
+  PARENT_CRYSTAL_EXISTS=$(test !$?)
+  if [ "$PARENT_CRYSTAL_COMMAND" = "$SCRIPT_PATH" ]; then
+    __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
+    exit 1
+  fi
 fi
 
-if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
-  CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL env CRYSTAL_LIBRARY_PATH || echo "")"
-  export CRYSTAL_LIBRARY_PATH=${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
-  export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
+if ($PARENT_CRYSTAL_EXISTS); then
+  if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
+    CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL_COMMAND env CRYSTAL_LIBRARY_PATH 2> /dev/null || echo "")"
+    export CRYSTAL_LIBRARY_PATH=${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
+    export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
+  fi
 fi
+
+# CRYSTAL_PATH has all symlinks resolved. In order to avoid issues with duplicate file
+# paths when the working directory is a symlink, we cd into the current directory
+# with symlinks resolved as well (see https://github.com/crystal-lang/crystal/issues/12969).
+cd "$(realpath "$(pwd)")"
 
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
   __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
-elif ! command -v "$PARENT_CRYSTAL" > /dev/null; then
+elif !($PARENT_CRYSTAL_EXISTS); then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
 else
-  exec "$PARENT_CRYSTAL" "$@"
+  exec "$PARENT_CRYSTAL_COMMAND" "$@"
 fi

@@ -1610,6 +1610,55 @@ module Crystal
           end
         end
 
+        describe "generic instance" do
+          it "prints generic type arguments" do
+            assert_macro("{{klass.name}}", "Foo(Int32, 3)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, 3.int32] of TypeVar))}
+            end
+          end
+
+          it "prints empty splat type var" do
+            assert_macro("{{klass.name}}", "Foo()") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([] of TypeVar))}
+            end
+          end
+
+          it "prints multiple arguments for splat type var" do
+            assert_macro("{{klass.name}}", "Foo(Int32, String)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, program.string] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (1)" do
+            assert_macro("{{klass.name}}", "Foo(Int32)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              generic_type.splat_index = 1
+              {klass: TypeNode.new(generic_type.instantiate([program.int32] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (2)" do
+            assert_macro("{{klass.name}}", "Foo(Int32)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([program.int32] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (3)" do
+            assert_macro("{{klass.name}}", "Foo(Int32, String)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U", "V"])
+              generic_type.splat_index = 1
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, program.string] of TypeVar))}
+            end
+          end
+        end
+
         describe :generic_args do
           describe true do
             it "includes the generic_args of the type" do
@@ -1642,6 +1691,18 @@ module Crystal
               end
             end
           end
+        end
+      end
+
+      describe "#warning" do
+        it "emits a warning at a specific node" do
+          assert_warning <<-CRYSTAL, "Oh noes"
+            macro test(node)
+              {% node.warning "Oh noes" %}
+            end
+
+            test 10
+          CRYSTAL
         end
       end
 
@@ -1863,126 +1924,6 @@ module Crystal
         end
         assert_macro("{{x >= String}}", "true") do |program|
           {x: TypeNode.new(program.reference)}
-        end
-      end
-
-      describe "#constant" do
-        it "global path" do
-          assert_type(%(
-            ID = 10
-
-            class A
-              class B
-              end
-            end
-
-            {{ A::B.constant("::ID") == 10 ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "global path with extra ::" do
-          assert_macro_error %({{ @type.constant "::::ID" }}), %(Invalid constant name: "::::ID")
-        end
-
-        it "const within another type from the top level" do
-          assert_type(%(
-            class A
-              class B
-                ID = 10
-              end
-            end
-
-            {{ @type.constant("A::B::ID") == 10 ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "const within another type from the top level with extra ::" do
-          assert_macro_error %({{ @type.constant "A::::::B::::ID" }}), %(Invalid constant name: "A::::::B::::ID")
-        end
-
-        it "type within another type from the top level" do
-          assert_type(%(
-            class A
-              class B
-              end
-            end
-
-            {{ @type.constant("A::B").class? ? 1 : 'f' }}
-          )) { int32 }
-        end
-      end
-
-      describe "#has_constant?" do
-        it "global path with extra ::" do
-          assert_macro_error %({{ @type.has_constant? "::::ID" }}), %(Invalid constant name: "::::ID")
-        end
-
-        it "global path" do
-          assert_type(%(
-            class A
-              class B
-              end
-            end
-
-            {{ A::B.has_constant?("::A") ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "type on the top level" do
-          assert_type(%(
-            class A
-            end
-
-            {{ @type.has_constant?("A") ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "constant within a type from that type" do
-          assert_type(%(
-            class A
-              ID = 10
-            end
-
-            {{ A.has_constant?("ID") ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "type within another type" do
-          assert_type(%(
-            class A
-              class B
-              end
-            end
-
-            {{ A.has_constant?("B") ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "type within another type from the top level" do
-          assert_type(%(
-            class A
-              class B
-              end
-            end
-
-            {{ @type.has_constant?("A::B") ? 1 : 'f' }}
-          )) { int32 }
-        end
-
-        it "type within another type from the top level with extra ::" do
-          assert_macro_error %(class A; class B; end; end; {{ @type.has_constant? "A::::::B" }}), %(Invalid constant name: "A::::::B")
-        end
-
-        it "constant within a nested type from the top level" do
-          assert_type(%(
-            class A
-              class B
-                ID = 20
-              end
-            end
-
-            {{ @type.has_constant?("A::B::ID") ? 1 : 'f' }}
-          )) { int32 }
         end
       end
 
@@ -3135,6 +3076,18 @@ module Crystal
 
     it "compares versions" do
       assert_macro %({{compare_versions("1.10.3", "1.2.3")}}), %(1)
+    end
+
+    describe "#warning" do
+      it "emits a top level warning" do
+        assert_warning <<-CRYSTAL, "Oh noes"
+          macro test
+            {% warning "Oh noes" %}
+          end
+
+          test
+        CRYSTAL
+      end
     end
 
     describe "#parse_type" do

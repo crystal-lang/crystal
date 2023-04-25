@@ -53,7 +53,9 @@ module Crystal::System::Dir
 
   def self.data_to_entry(data)
     name = String.from_utf16(data.cFileName.to_unsafe)[0]
-    dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
+    unless data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
+      dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
+    end
     Entry.new(name, dir)
   end
 
@@ -130,12 +132,24 @@ module Crystal::System::Dir
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    return true if LibC._wrmdir(System.to_wstr(path)) == 0
+    win_path = System.to_wstr(path)
 
-    if !raise_on_missing && Errno.value == Errno::ENOENT
-      false
-    else
-      raise ::File::Error.from_errno("Unable to remove directory", file: path)
+    attributes = LibC.GetFileAttributesW(win_path)
+    if attributes == LibC::INVALID_FILE_ATTRIBUTES
+      File.check_not_found_error("Unable to remove directory", path)
+      raise ::File::Error.from_os_error("Unable to remove directory", Errno::ENOENT, file: path) if raise_on_missing
+      return false
     end
+
+    # all reparse point directories should be deleted like a directory, not just
+    # symbolic links, so we don't care about the reparse tag here
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
+      # maintain consistency with POSIX, and treat all reparse points (including
+      # symbolic links) as non-directories
+      raise ::File::Error.new("Cannot remove directory that is a reparse point: '#{path.inspect_unquoted}'", file: path)
+    end
+
+    return true if LibC._wrmdir(win_path) == 0
+    raise ::File::Error.from_errno("Unable to remove directory", file: path)
   end
 end

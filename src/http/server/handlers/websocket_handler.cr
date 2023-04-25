@@ -5,7 +5,7 @@ require "http/web_socket"
 #
 # NOTE: To use `WebSocketHandler`, you must explicitly import it with `require "http"`
 #
-# When a request can be upgraded, the associated `HTTP::Websocket` and
+# When a request can be upgraded, the associated `HTTP::WebSocket` and
 # `HTTP::Server::Context` will be yielded to the block. For example:
 #
 # ```

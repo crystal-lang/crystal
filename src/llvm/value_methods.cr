@@ -16,19 +16,22 @@ module LLVM::ValueMethods
 
   def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context, type : LLVM::Type? = nil)
     return if attribute.value == 0
-    {% if LibLLVM.has_constant?(:AttributeRef) %}
-      attribute.each_kind do |kind|
-        if type && LLVM::Attribute.requires_type?(kind)
-          attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
-        else
-          attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
-        end
 
-        LibLLVM.add_call_site_attribute(self, index, attribute_ref)
-      end
-    {% else %}
-      LibLLVM.add_instr_attribute(self, index, attribute)
-    {% end %}
+    attribute.each_kind do |kind|
+      LibLLVM.add_call_site_attribute(self, index, attribute_ref(context, kind, type))
+    end
+  end
+
+  private def attribute_ref(context, kind, type)
+    if type.is_a?(Type) && Attribute.requires_type?(kind)
+      {% if LibLLVM::IS_LT_120 %}
+        raise "Type arguments are only supported on LLVM 12.0 or above"
+      {% else %}
+        LibLLVM.create_type_attribute(context, kind, type)
+      {% end %}
+    else
+      LibLLVM.create_enum_attribute(context, kind, 0)
+    end
   end
 
   def constant?
@@ -89,7 +92,7 @@ module LLVM::ValueMethods
   end
 
   def ordering=(ordering)
-    LibLLVMExt.set_ordering(self, ordering)
+    LibLLVM.set_ordering(self, ordering)
   end
 
   def alignment=(bytes)

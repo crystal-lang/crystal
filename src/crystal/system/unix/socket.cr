@@ -120,7 +120,31 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_reuse_port?
+  private def system_send_buffer_size : Int
+    getsockopt LibC::SO_SNDBUF, 0
+  end
+
+  private def system_send_buffer_size=(val : Int)
+    setsockopt LibC::SO_SNDBUF, val
+  end
+
+  private def system_recv_buffer_size : Int
+    getsockopt LibC::SO_RCVBUF, 0
+  end
+
+  private def system_recv_buffer_size=(val : Int)
+    setsockopt LibC::SO_RCVBUF, val
+  end
+
+  private def system_reuse_address? : Bool
+    getsockopt_bool LibC::SO_REUSEADDR
+  end
+
+  private def system_reuse_address=(val : Bool)
+    setsockopt_bool LibC::SO_REUSEADDR, val
+  end
+
+  private def system_reuse_port? : Bool
     system_getsockopt(fd, LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
@@ -134,6 +158,22 @@ module Crystal::System::Socket
 
   private def system_reuse_port=(val : Bool)
     setsockopt_bool LibC::SO_REUSEPORT, val
+  end
+
+  private def system_broadcast? : Bool
+    getsockopt_bool LibC::SO_BROADCAST
+  end
+
+  private def system_broadcast=(val : Bool)
+    setsockopt_bool LibC::SO_BROADCAST, val
+  end
+
+  private def system_keepalive? : Bool
+    getsockopt_bool LibC::SO_KEEPALIVE
+  end
+
+  private def system_keepalive=(val : Bool)
+    setsockopt_bool LibC::SO_KEEPALIVE, val
   end
 
   private def system_linger
