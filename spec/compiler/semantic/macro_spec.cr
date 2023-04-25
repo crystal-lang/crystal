@@ -373,6 +373,7 @@ describe "Semantic: macro" do
           ex.to_s.scan("error in line").size.should eq 2
         end
 
+        # TODO: Remove this spec once symbols literals have their location fixed
         it "points to caller when missing node location information (#7147)" do
           ex = assert_error(<<-'CRYSTAL', "foo")
             macro macro_raise_on(arg)
