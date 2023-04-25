@@ -2266,7 +2266,7 @@ describe "String" do
     end
   end
 
-  describe "scan" do
+  describe "#scan" do
     it "does without block" do
       a = "cruel world"
       a.scan(/\w+/).map(&.[0]).should eq(["cruel", "world"])
@@ -2302,6 +2302,10 @@ describe "String" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
       "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
+    end
+
+    it "works when match is empty, multibyte char" do
+      "\u{80}\u{800}\u{10000}".scan(/()/).map(&.begin).should eq([0, 1, 2, 3])
     end
 
     it "works with strings with block" do
