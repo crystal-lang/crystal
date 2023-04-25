@@ -114,22 +114,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?("dup3") %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
-      flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.fd, self.fd, flags) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-    {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC._dup2(other.fd, self.fd) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
-      end
-    {% end %}
+    # Windows doesn't implement the CLOEXEC flag
+    if LibC._dup2(other.fd, self.fd) == -1
+      raise IO::Error.from_errno("Could not reopen file descriptor")
+    end
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
