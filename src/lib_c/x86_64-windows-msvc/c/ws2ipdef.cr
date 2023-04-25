@@ -17,6 +17,18 @@ lib LibC
     sin_zero : StaticArray(CHAR, 8)
   end
 
+  # https://learn.microsoft.com/en-us/windows/win32/api/ws2ipdef/ns-ws2ipdef-ip_mreq
+  struct IpMreq
+    imr_multiaddr : InAddr
+    imr_interface : InAddr
+  end
+
+  # https://learn.microsoft.com/en-us/windows/win32/api/ws2ipdef/ns-ws2ipdef-ipv6_mreq
+  struct Ipv6Mreq
+    ipv6mr_multiaddr : In6Addr
+    ipv6mr_interface : ULong
+  end
+
   TCP_EXPEDITED_1122       = 0x0002
   TCP_KEEPALIVE            =      3
   TCP_MAXSEG               =      4

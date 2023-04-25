@@ -47,21 +47,42 @@ struct BigInt < Int
   end
 
   # Creates a `BigInt` from the given *num*.
-  def initialize(num : Int::Signed)
-    if LibC::Long::MIN <= num <= LibC::Long::MAX
-      LibGMP.init_set_si(out @mpz, num)
+  def self.new(num : Int::Primitive)
+    if LibGMP::SI::MIN <= num <= LibGMP::UI::MAX
+      if num <= LibGMP::SI::MAX
+        LibGMP.init_set_si(out mpz1, LibGMP::SI.new!(num))
+        new(mpz1)
+      else
+        LibGMP.init_set_ui(out mpz2, LibGMP::UI.new!(num))
+        new(mpz2)
+      end
     else
-      LibGMP.init_set_str(out @mpz, num.to_s, 10)
+      negative = num < 0
+      num = num.abs_unsigned
+      capacity = (num.bit_length - 1) // (sizeof(LibGMP::MpLimb) * 8) + 1
+
+      unsafe_build(capacity) do |limbs|
+        appender = limbs.to_unsafe.appender
+        limbs.size.times do
+          appender << LibGMP::MpLimb.new!(num)
+          num = num.unsafe_shr(sizeof(LibGMP::MpLimb) * 8)
+        end
+        {capacity, negative}
+      end
     end
   end
 
-  # :ditto:
-  def initialize(num : Int::Unsigned)
-    if num <= LibC::ULong::MAX
-      LibGMP.init_set_ui(out @mpz, num)
-    else
-      LibGMP.init_set_str(out @mpz, num.to_s, 10)
-    end
+  private def self.unsafe_build(capacity : Int, & : Slice(LibGMP::MpLimb) -> {Int, Bool})
+    # https://gmplib.org/manual/Initializing-Integers:
+    #
+    # > In preparation for an operation, GMP often allocates one limb more than
+    # > ultimately needed. To make sure GMP will not perform reallocation for x,
+    # > you need to add the number of bits in mp_limb_t to n.
+    LibGMP.init2(out mpz, (capacity + 1) * sizeof(LibGMP::MpLimb) * 8)
+    limbs = LibGMP.limbs_write(pointerof(mpz), capacity)
+    size, negative = yield Slice.new(limbs, capacity)
+    LibGMP.limbs_finish(pointerof(mpz), size * (negative ? -1 : 1))
+    new(mpz)
   end
 
   # :ditto:
@@ -121,8 +142,8 @@ struct BigInt < Int
     end
   end
 
-  def <=>(other : Float)
-    LibGMP.cmp_d(mpz, other)
+  def <=>(other : Float::Primitive)
+    LibGMP.cmp_d(mpz, other) unless other.nan?
   end
 
   def +(other : BigInt) : BigInt
@@ -811,7 +832,8 @@ struct Float
   include Comparable(BigInt)
 
   def <=>(other : BigInt)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Returns a `BigInt` representing this float (rounded using `floor`).

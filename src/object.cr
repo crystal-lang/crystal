@@ -220,7 +220,18 @@ class Object
   # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
   # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
   # Either way, consider instead raising a concrete exception with a descriptive message.
-  def not_nil!(message = nil)
+  def not_nil!
+    self
+  end
+
+  # :ditto:
+  #
+  # *message* has no effect. It is only used by `Nil#not_nil!(message = nil)`.
+  def not_nil!(message)
+    # FIXME: the above param-less overload cannot be expressed as an optional
+    # parameter here, because that would copy the receiver if it is a struct;
+    # see https://github.com/crystal-lang/crystal/issues/13263#issuecomment-1492885817
+    # and also #13265
     self
   end
 
@@ -1419,7 +1430,7 @@ class Object
   end
 
   protected def self.set_crystal_type_id(ptr)
-    ptr.as(LibC::SizeT*).value = LibC::SizeT.new(crystal_instance_type_id)
+    ptr.as(Pointer(typeof(crystal_instance_type_id))).value = crystal_instance_type_id
     ptr
   end
 end
