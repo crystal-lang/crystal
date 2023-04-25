@@ -184,9 +184,9 @@ module IO::Overlapped
       if result == 0
         case error = WinError.value
         when .error_handle_eof?
-          return 0
+          return 0_u32
         when .error_broken_pipe?
-          return 0
+          return 0_u32
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
@@ -206,10 +206,10 @@ module IO::Overlapped
         when .error_io_incomplete?
           raise IO::TimeoutError.new("#{method} timed out")
         when .error_handle_eof?
-          return 0
+          return 0_u32
         when .error_broken_pipe?
           # TODO: this is needed for `Process.run`, can we do without it?
-          return 0
+          return 0_u32
         end
       end
     end
