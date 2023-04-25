@@ -81,6 +81,7 @@ module IO::Overlapped
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
+    property? synchronous = false
 
     def self.run(handle, &)
       operation = OverlappedOperation.new
@@ -149,8 +150,11 @@ module IO::Overlapped
         handle = LibC::HANDLE.new(handle) if handle.is_a?(LibC::SOCKET)
 
         # Microsoft documentation:
-        # The application must not free or reuse the OVERLAPPED structure associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        # The application must not free or reuse the OVERLAPPED structure
+        # associated with the canceled I/O operations until they have completed
+        # (this applies even to asynchronous operations that completed
+        # synchronously)
+        if synchronous? || LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
@@ -175,7 +179,7 @@ module IO::Overlapped
 
   def overlapped_operation(handle, method, timeout, *, writing = false, &)
     OverlappedOperation.run(handle) do |operation|
-      result = yield operation.start
+      result, value = yield operation.start
 
       if result == 0
         case error = WinError.value
@@ -190,6 +194,9 @@ module IO::Overlapped
         else
           raise IO::Error.from_os_error(method, error)
         end
+      else
+        operation.synchronous = true
+        return value
       end
 
       schedule_overlapped(timeout)

@@ -24,7 +24,8 @@ module Crystal::System::FileDescriptor
     else
       handle = windows_handle
       overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
-        LibC.ReadFile(handle, slice, slice.size, nil, overlapped)
+        ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
+        {ret, byte_count}
       end
     end
   end
@@ -43,7 +44,8 @@ module Crystal::System::FileDescriptor
       else
         handle = windows_handle
         bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
-          LibC.WriteFile(handle, slice, slice.size, nil, overlapped)
+          ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+          {ret, byte_count}
         end
       end
 
@@ -149,7 +151,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
-    LibC.CancelIoEx(windows_handle, nil)
+    LibC.CancelIoEx(windows_handle, nil) unless system_blocking?
 
     file_descriptor_close
   end

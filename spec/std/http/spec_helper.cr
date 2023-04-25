@@ -79,9 +79,7 @@ def run_handler(handler, &)
       yield client
     ensure
       processor.close
-      {% unless flag?(:win32) %}
-        server_io.close
-      {% end %}
+      server_io.close
       if exc = done.receive
         raise exc
       end
