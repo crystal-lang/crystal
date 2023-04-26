@@ -237,7 +237,7 @@ describe "Enumerable" do
 
     it "nil 2 case" do
       result = [nil, nil, 1, 1, nil].chunk(&.itself).to_a
-      result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
+      result.should eq [{nil, [nil, nil] of Int32?}, {1, [1, 1] of Int32?}, {nil, [nil] of Int32?}]
     end
 
     it "reuses true" do
@@ -300,7 +300,7 @@ describe "Enumerable" do
 
     it "nil 2 case" do
       result = [nil, nil, 1, 1, nil].chunks(&.itself)
-      result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
+      result.should eq [{nil, [nil, nil] of Int32?}, {1, [1, 1] of Int32?}, {nil, [nil] of Int32?}]
     end
   end
 
@@ -1100,7 +1100,7 @@ describe "Enumerable" do
 
   describe "minmax?" do
     it "returns two nils if empty" do
-      ([] of Int32).minmax?.should eq({nil, nil})
+      ([] of Int32).minmax?.should eq({nil.as(Int32?), nil.as(Int32?)})
     end
 
     it "raises if not comparable" do
@@ -1116,7 +1116,7 @@ describe "Enumerable" do
 
   describe "minmax_by?" do
     it "returns two nils if empty" do
-      ([] of Int32).minmax_by? { |x| -x }.should eq({nil, nil})
+      ([] of Int32).minmax_by? { |x| -x }.should eq({nil.as(Int32?), nil.as(Int32?)})
     end
   end
 
@@ -1132,7 +1132,7 @@ describe "Enumerable" do
 
   describe "minmax_of?" do
     it "returns two nils if empty" do
-      ([] of Int32).minmax_of? { |x| -x }.should eq({nil, nil})
+      ([] of Int32).minmax_of? { |x| -x }.should eq({nil.as(Int32?), nil.as(Int32?)})
     end
   end
 
@@ -1573,7 +1573,7 @@ describe "Enumerable" do
 
   describe "zip?" do
     it "works for Iterators as receiver" do
-      SpecCountUpIterator.new(3).zip?(1..2, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, nil, 4}])
+      SpecCountUpIterator.new(3).zip?(1..2, 2..4).should eq([{0, 1, 2.as(Int32?)}, {1, 2, 3.as(Int32?)}, {2, nil, 4.as(Int32?)}])
     end
   end
 end

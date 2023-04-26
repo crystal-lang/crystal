@@ -76,13 +76,13 @@ describe Atomic do
       atomic = Atomic(String?).new(nil)
       string = "hello"
 
-      atomic.compare_and_set(string, "foo").should eq({nil, false})
+      atomic.compare_and_set(string, "foo").should eq(Tuple(String?, Bool).new(nil, false))
       atomic.get.should be_nil
 
-      atomic.compare_and_set(nil, string).should eq({nil, true})
+      atomic.compare_and_set(nil, string).should eq(Tuple(String?, Bool).new(nil, true))
       atomic.get.should be(string)
 
-      atomic.compare_and_set(string, nil).should eq({string, true})
+      atomic.compare_and_set(string, nil).should eq(Tuple(String?, Bool).new(string, true))
       atomic.get.should be_nil
     end
 
@@ -111,16 +111,16 @@ describe Atomic do
 
       atomic = Atomic(Array(Int32) | Array(String)).new(arr1)
 
-      atomic.compare_and_set(arr2, ["foo"]).should eq({arr1, false})
+      atomic.compare_and_set(arr2, ["foo"]).should eq(Tuple(Array(Int32) | Array(String), Bool).new(arr1, false))
       atomic.get.should be(arr1)
 
-      atomic.compare_and_set(arr1, arr2).should eq({arr1, true})
+      atomic.compare_and_set(arr1, arr2).should eq(Tuple(Array(Int32) | Array(String), Bool).new(arr1, true))
       atomic.get.should be(arr2)
 
-      atomic.compare_and_set(arr2, arr1).should eq({arr2, true})
+      atomic.compare_and_set(arr2, arr1).should eq(Tuple(Array(Int32) | Array(String), Bool).new(arr2, true))
       atomic.get.should be(arr1)
 
-      atomic.compare_and_set([1], arr2).should eq({arr1, false})
+      atomic.compare_and_set([1], arr2).should eq(Tuple(Array(Int32) | Array(String), Bool).new(arr1, false))
       atomic.get.should be(arr1)
     end
 

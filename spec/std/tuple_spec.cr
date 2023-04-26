@@ -123,7 +123,7 @@ describe "Tuple" do
     end
 
     it "works with mixed types" do
-      {1, "a", 1.0, false}.values_at(0, 1, 2, 3).should eq({1, "a", 1.0, false})
+      {1, "a", 1.0, false}.values_at(0, 1, 2, 3).should eq(Tuple(Bool | Float64 | Int32 | String, Bool | Float64 | Int32 | String, Bool | Float64 | Int32 | String, Bool | Float64 | Int32 | String).new(1, "a", 1.0, false))
     end
   end
 
@@ -212,8 +212,7 @@ describe "Tuple" do
     typeof(Tuple.new).new.should eq(Tuple.new)
 
     t = Tuple(Int32 | String, Int32 | String).new(1, "a")
-    t.should eq({1, "a"})
-    t.class.should_not eq(Tuple(Int32, String))
+    t.should eq({1.as(Int32 | String), "a".as(Int32 | String)})
   end
 
   it "does Tuple.from" do

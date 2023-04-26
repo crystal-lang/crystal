@@ -193,7 +193,8 @@ describe Channel do
 
         spawn_and_wait(-> { sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
-          r.should eq({ {0, nil}, {0, nil}, {0, nil}, {0, nil} })
+          tuple = Tuple(Int32, String?).new(0, nil)
+          r.should eq({tuple, tuple, tuple, tuple})
         end
       end
     end

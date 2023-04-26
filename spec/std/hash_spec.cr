@@ -428,7 +428,7 @@ describe "Hash" do
     end
 
     it "works with mixed types" do
-      {1 => "a", "a" => 1, 2.0 => "a", "a" => 1.0}.values_at(1, "a", 2.0, "a").should eq({"a", 1, "a", 1.0})
+      {1 => "a", "a" => 1, 2.0 => "a", "a" => 1.0}.values_at(1, "a", 2.0, "a").should eq(Tuple(Float64 | Int32 | String, Float64 | Int32 | String, Float64 | Int32 | String, Float64 | Int32 | String).new("a", 1.0, "a", 1.0))
     end
   end
 
