@@ -17,7 +17,7 @@ module Spec
           actual_value.size == expected_value.size
       else
         actual_value == @expected_value
-      end && (!@type_safe || actual_value.class == T)
+      end && (!@type_safe || actual_value.class == expected_value.class)
     end
 
     def failure_message(actual_value)
