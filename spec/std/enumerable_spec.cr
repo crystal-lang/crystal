@@ -647,11 +647,11 @@ describe "Enumerable" do
   end
 
   describe "in_groups_of" do
-    it { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
-    it { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
-    it { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
-    it { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
-    it { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
+    it { [1, 2, 3].in_groups_of(1).should eq([[1] of Int32?, [2] of Int32?, [3] of Int32?]) }
+    it { [1, 2, 3].in_groups_of(2).should eq([[1, 2] of Int32?, [3, nil]]) }
+    it { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3] of Int32?, [4, nil, nil]]) }
+    it { ([] of Int32).in_groups_of(2).should eq([] of Array(Int32 | Nil)) }
+    it { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2] of Int32 | String, [3, "x"]]) }
 
     it "raises argument error if size is less than 0" do
       expect_raises ArgumentError, "Size must be positive" do
