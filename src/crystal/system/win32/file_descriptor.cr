@@ -171,6 +171,7 @@ module Crystal::System::FileDescriptor
     console_handle = false
     handle = windows_handle(fd)
     if handle != LibC::INVALID_HANDLE_VALUE
+      LibC._setmode fd, LibC::O_BINARY
       # TODO: use `out old_mode` after implementing interpreter out closured var
       old_mode = uninitialized LibC::DWORD
       if LibC.GetConsoleMode(handle, pointerof(old_mode)) != 0
