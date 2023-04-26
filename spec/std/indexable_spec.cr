@@ -912,7 +912,7 @@ describe Indexable do
 
   describe "#to_a" do
     it "without a block of an interface type" do
-      InterfaceIndexable.new.to_a.should eq [Three.new, Four.new]
+      InterfaceIndexable.new.to_a.should eq [Three.new, Four.new] of OtherInterface
     end
   end
 end

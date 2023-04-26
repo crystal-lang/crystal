@@ -7,7 +7,7 @@ private def assert_concrete_types(str, &)
   type, expected_concrete_types = yield program.types, program
 
   if type.responds_to?(:concrete_types)
-    Set.new(type.concrete_types).should eq(Set.new(expected_concrete_types))
+    Set.new(type.concrete_types).should eq? expected_concrete_types
   elsif type.is_a?(ModuleType) || type.is_a?(GenericModuleInstanceType)
     # Modules are not MultiType, we check only using the witness
   else
@@ -18,7 +18,7 @@ private def assert_concrete_types(str, &)
   # with respect a union of Witness. See UnionType#each_concrete_type
   witness_type = program.types["Witness"]
   wrapped_union = program.union_of([witness_type] of Type + (type.is_a?(UnionType) ? type.union_types : [type] of Type)).as(UnionType)
-  Set.new(wrapped_union.concrete_types).should eq(Set.new(expected_concrete_types).add(witness_type))
+  Set.new(wrapped_union.concrete_types).should eq?(Set.new(expected_concrete_types).add(witness_type))
 end
 
 describe "Semantic: concrete_types" do

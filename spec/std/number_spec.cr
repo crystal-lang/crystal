@@ -390,8 +390,7 @@ describe "Number" do
 
   it "creates an array with [] and some elements" do
     ary = Int64[1, 2, 3]
-    ary.should eq([1, 2, 3])
-    ary[0].should be_a(Int64)
+    ary.should eq([1, 2, 3] of Int64)
   end
 
   it "creates an array with [] and no elements" do

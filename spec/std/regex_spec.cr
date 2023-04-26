@@ -68,8 +68,8 @@ describe "Regex" do
     it "returns matchdata" do
       md = /(?<bar>.)(?<foo>.)/.match("Crystal").should_not be_nil
       md[0].should eq "Cr"
-      md.captures.should eq [] of String
-      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+      md.captures.should eq [] of String?
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"} of String => String?)
     end
 
     it "assigns captures" do
@@ -137,8 +137,8 @@ describe "Regex" do
     it "returns match data" do
       md = /(?<bar>.)(?<foo>.)/.match!("Crystal")
       md[0].should eq "Cr"
-      md.captures.should eq [] of String
-      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+      md.captures.should eq [] of String?
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"} of String => String?)
     end
 
     it "assigns captures" do

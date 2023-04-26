@@ -398,22 +398,22 @@ describe Iterator do
   describe "in_groups_of" do
     it "creates groups of one" do
       iter = (1..3).each.in_groups_of(1)
-      iter.next.should eq([1])
-      iter.next.should eq([2])
-      iter.next.should eq([3])
+      iter.next.should eq([1] of Int32?)
+      iter.next.should eq([2] of Int32?)
+      iter.next.should eq([3] of Int32?)
       iter.next.should be_a(Iterator::Stop)
     end
 
     it "creates a group of two" do
       iter = (1..3).each.in_groups_of(2)
-      iter.next.should eq([1, 2])
+      iter.next.should eq([1, 2] of Int32?)
       iter.next.should eq([3, nil])
       iter.next.should be_a(Iterator::Stop)
     end
 
     it "fills up with the fill up argument" do
       iter = (1..3).each.in_groups_of(2, 'z')
-      iter.next.should eq([1, 2])
+      iter.next.should eq([1, 2] of Char | Int32)
       iter.next.should eq([3, 'z'])
       iter.next.should be_a(Iterator::Stop)
     end
@@ -426,14 +426,14 @@ describe Iterator do
 
     it "still works with other iterator methods like to_a" do
       iter = (1..3).each.in_groups_of(2, 'z')
-      iter.to_a.should eq [[1, 2], [3, 'z']]
+      iter.to_a.should eq [[1, 2] of Char | Int32, [3, 'z']]
     end
 
     it "creates a group of two with reuse = true" do
       iter = (1..3).each.in_groups_of(2, reuse: true)
 
       a = iter.next
-      a.should eq([1, 2])
+      a.should eq([1, 2] of Int32?)
 
       b = iter.next
       b.should eq([3, nil])
@@ -950,10 +950,10 @@ describe Iterator do
     it "slices after: non-bool block" do
       ary = [1, nil, nil, 2, 3, nil]
       iter = ary.slice_after(&.itself)
-      iter.next.should eq([1])
+      iter.next.should eq([1] of Int32?)
       iter.next.should eq([nil, nil, 2])
-      iter.next.should eq([3])
-      iter.next.should eq([nil])
+      iter.next.should eq([3] of Int32?)
+      iter.next.should eq([nil] of Int32?)
       iter.next.should be_a(Iterator::Stop)
     end
 
@@ -1002,9 +1002,9 @@ describe Iterator do
     it "slices before nil" do
       ary = [1, 2, nil, 3, nil]
       iter = ary.slice_before(&.nil?)
-      iter.next.should eq([1, 2])
+      iter.next.should eq([1, 2] of Int32?)
       iter.next.should eq([nil, 3])
-      iter.next.should eq([nil])
+      iter.next.should eq([nil] of Int32?)
       iter.next.should be_a(Iterator::Stop)
     end
 
@@ -1055,7 +1055,7 @@ describe Iterator do
       ary = [1, nil, nil, 2, 3, nil]
       iter = ary.slice_before(&.itself)
       iter.next.should eq([1, nil, nil])
-      iter.next.should eq([2])
+      iter.next.should eq([2] of Int32?)
       iter.next.should eq([3, nil])
     end
 
@@ -1154,10 +1154,10 @@ describe Iterator do
     it "slices when: non-bool block" do
       ary = [1, 2, nil, 3, nil, nil, 4]
       ary.slice_when { |x, y| y }.to_a.should eq([
-        [1],
+        [1] of Int32?,
         [2, nil],
         [3, nil, nil],
-        [4],
+        [4] of Int32?,
       ])
     end
   end

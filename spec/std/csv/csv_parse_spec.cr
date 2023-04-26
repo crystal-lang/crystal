@@ -4,7 +4,7 @@ require "csv"
 describe CSV do
   describe "parse" do
     it "parses empty string" do
-      CSV.parse("").should eq([] of String)
+      CSV.parse("").should eq([] of Array(String))
     end
 
     it "parses one simple row" do

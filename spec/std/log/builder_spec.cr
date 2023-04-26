@@ -99,7 +99,7 @@ describe Log::Builder do
 
     backend = log.backend.should be_a(Log::BroadcastBackend)
     backend.should be(broadcast)
-    backend.@backends.should eq({a => s(:fatal)})
+    backend.@backends.should eq({a => s(:fatal)} of Log::Backend => Log::Severity)
     log.source.should eq("db")
     log.level.should eq(s(:info))
   end

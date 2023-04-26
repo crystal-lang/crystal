@@ -329,7 +329,7 @@ describe XML do
       namespaces.should eq({
         "xmlns"            => "http://www.w3.org/2005/Atom",
         "xmlns:openSearch" => "http://a9.com/-/spec/opensearchrss/1.0/",
-      })
+      } of String => String?)
     end
 
     it "includes parent namespaces" do
@@ -345,7 +345,7 @@ describe XML do
         "xmlns:c"          => "http://c",
         "xmlns"            => "http://www.w3.org/2005/Atom",
         "xmlns:openSearch" => "http://a9.com/-/spec/opensearchrss/1.0/",
-      })
+      } of String => String?)
     end
 
     it "returns an empty hash if there are no namespaces" do

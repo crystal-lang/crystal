@@ -800,7 +800,7 @@ describe "Hash" do
 
     h3 = h1.merge!(h2) { |k, v1, v2| (v1 || v2).to_s }
     h3.should be(h1)
-    h3.should eq({1 => "2", 2 => "4", 3 => "x"})
+    h3.should eq({1 => "2", 2 => "4", 3 => "x"} of Int32 => Int32 | String | Nil)
   end
 
   it "selects" do
@@ -871,8 +871,7 @@ describe "Hash" do
     h1 = {"a" => 1, "b" => 2, "c" => nil}
 
     h2 = h1.compact!
-    h2.should be_a(Hash(String, Int32 | Nil))
-    h2.should eq({"a" => 1, "b" => 2})
+    h2.should eq({"a" => 1, "b" => 2} of String => Int32?)
     h2.should be(h1)
   end
 

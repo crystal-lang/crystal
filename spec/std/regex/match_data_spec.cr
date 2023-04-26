@@ -393,8 +393,8 @@ describe "Regex::MatchData" do
 
   describe "#captures" do
     it "gets an array of unnamed captures" do
-      matchdata(/(Cr)y/, "Crystal").captures.should eq(["Cr"])
-      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").captures.should eq(["Cr", "st"])
+      matchdata(/(Cr)y/, "Crystal").captures.should eq(["Cr"] of String?)
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").captures.should eq(["Cr", "st"] of String?)
     end
 
     it "gets an array of unnamed captures with optional" do
@@ -404,23 +404,23 @@ describe "Regex::MatchData" do
 
     it "doesn't get named captures when there are more than 255" do
       regex = Regex.new(Array.new(256) { |i| "(?<c#{i}>.)" }.join)
-      matchdata(regex, "x" * 256).captures.should eq([] of String)
+      matchdata(regex, "x" * 256).captures.should eq([] of String?)
     end
   end
 
   describe "#named_captures" do
     it "gets a hash of named captures" do
-      matchdata(/(?<name1>Cr)y/, "Crystal").named_captures.should eq({"name1" => "Cr"})
-      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").named_captures.should eq({"name1" => "y", "name2" => "al"})
+      matchdata(/(?<name1>Cr)y/, "Crystal").named_captures.should eq({"name1" => "Cr"} of String => String?)
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").named_captures.should eq({"name1" => "y", "name2" => "al"} of String => String?)
     end
 
     it "gets a hash of named captures with optional" do
       matchdata(/(?<name1>Cr)(?<name2>s)?/, "Crystal").named_captures.should eq({"name1" => "Cr", "name2" => nil})
-      matchdata(/(Cr)(?<name1>s)?(t)?(?<name2>al)?/, "Crystal").named_captures.should eq({"name1" => nil, "name2" => nil})
+      matchdata(/(Cr)(?<name1>s)?(t)?(?<name2>al)?/, "Crystal").named_captures.should eq({"name1" => nil, "name2" => nil} of String => String?)
     end
 
     it "gets a hash of named captures with duplicated name" do
-      matchdata(/(?<name>Cr)y(?<name>s)/, "Crystal").named_captures.should eq({"name" => "s"})
+      matchdata(/(?<name>Cr)y(?<name>s)/, "Crystal").named_captures.should eq({"name" => "s"} of String => String?)
     end
 
     it "gets more than 127 named captures" do
@@ -433,8 +433,8 @@ describe "Regex::MatchData" do
 
   describe "#to_a" do
     it "converts into an array" do
-      matchdata(/(?<name1>Cr)(y)/, "Crystal").to_a.should eq(["Cry", "Cr", "y"])
-      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").to_a.should eq(["Crystal", "Cr", "y", "st", "al"])
+      matchdata(/(?<name1>Cr)(y)/, "Crystal").to_a.should eq(["Cry", "Cr", "y"] of String?)
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").to_a.should eq(["Crystal", "Cr", "y", "st", "al"] of String?)
     end
 
     it "converts into an array having nil" do
@@ -449,14 +449,14 @@ describe "Regex::MatchData" do
               0 => "Cry",
         "name1" => "Cr",
               2 => "y",
-      })
+      } of Int32 | String => String?)
       matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").to_h.should eq({
               0 => "Crystal",
               1 => "Cr",
         "name1" => "y",
               3 => "st",
         "name2" => "al",
-      })
+      } of Int32 | String => String?)
     end
 
     it "converts into a hash having nil" do
@@ -464,14 +464,14 @@ describe "Regex::MatchData" do
               0 => "Cr",
         "name1" => "Cr",
               2 => nil,
-      })
+      } of Int32 | String => String?)
       matchdata(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/, "Crystal").to_h.should eq({
               0 => "Crystal",
               1 => "Cr",
         "name1" => nil,
               3 => "yst",
         "name2" => "al",
-      })
+      } of Int32 | String => String?)
     end
 
     it "converts into a hash with duplicated names" do
@@ -480,7 +480,7 @@ describe "Regex::MatchData" do
              1 => "Cr",
         "name" => "al",
              3 => "yst",
-      })
+      } of Int32 | String => String?)
     end
   end
 

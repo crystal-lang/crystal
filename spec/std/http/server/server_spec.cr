@@ -177,7 +177,7 @@ describe HTTP::Server do
     server = HTTP::Server.new { }
 
     tcp_server = TCPServer.new("127.0.0.1", 0)
-    addresses = [server.bind_unused_port, server.bind_unused_port, tcp_server.local_address]
+    addresses = [server.bind_unused_port, server.bind_unused_port, tcp_server.local_address] of Socket::Address
     server.bind tcp_server
 
     server.addresses.should eq addresses

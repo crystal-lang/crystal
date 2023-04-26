@@ -80,15 +80,15 @@ describe "JSON serialization" do
     end
 
     it "does Array(Int64)#from_json" do
-      Array(Int64).from_json("[1, 2, 3]").should eq([1, 2, 3])
+      Array(Int64).from_json("[1, 2, 3]").should eq([1, 2, 3] of Int64)
     end
 
     it "does Array(Float32)#from_json" do
-      Array(Float32).from_json("[1.5, 2, 3.5]").should eq([1.5, 2.0, 3.5])
+      Array(Float32).from_json("[1.5, 2, 3.5]").should eq([1.5, 2.0, 3.5] of Float32)
     end
 
     it "does Array(Float64)#from_json" do
-      Array(Float64).from_json("[1.5, 2, 3.5]").should eq([1.5, 2, 3.5])
+      Array(Float64).from_json("[1.5, 2, 3.5]").should eq([1.5, 2.0, 3.5])
     end
 
     it "does Deque(String)#from_json" do
@@ -145,12 +145,12 @@ describe "JSON serialization" do
 
     describe "Hash with union key (Union.from_json_object_key?)" do
       it "string deprioritized" do
-        Hash(String | Int32, Nil).from_json(%({"1": null})).should eq({1 => nil})
-        Hash(String | UInt32, Nil).from_json(%({"1": null})).should eq({1 => nil})
+        Hash(String | Int32, Nil).from_json(%({"1": null})).should eq({1 => nil} of Int32 | String => Nil)
+        Hash(String | UInt32, Nil).from_json(%({"1": null})).should eq({1 => nil} of UInt32 | String => Nil)
       end
 
       it "string without alternative" do
-        Hash(String | Int32, Nil).from_json(%({"foo": null})).should eq({"foo" => nil})
+        Hash(String | Int32, Nil).from_json(%({"foo": null})).should eq({"foo" => nil} of Int32 | String => Nil)
       end
 
       it "no match" do

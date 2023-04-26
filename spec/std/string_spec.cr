@@ -2585,8 +2585,8 @@ describe "String" do
     it "returns matchdata" do
       md = "Crystal".match! /(?<bar>.)(?<foo>.)/
       md[0].should eq "Cr"
-      md.captures.should eq [] of String
-      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+      md.captures.should eq [] of String?
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"} of String => String?)
     end
 
     it "assigns captures" do
@@ -3045,7 +3045,7 @@ describe "String" do
 
     it "scrubs" do
       string = String.new(Bytes[255, 129, 97, 255, 97])
-      string.scrub.bytes.should eq([239, 191, 189, 239, 191, 189, 97, 239, 191, 189, 97])
+      string.scrub.bytes.should eq([239, 191, 189, 239, 191, 189, 97, 239, 191, 189, 97] of UInt8)
 
       string.scrub("?").should eq("??a?a")
 

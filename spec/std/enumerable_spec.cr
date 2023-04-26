@@ -161,7 +161,7 @@ describe "Enumerable" do
     end
 
     it "without a block of an interface type" do
-      InterfaceEnumerable.new.to_a.should eq [One.new, Two.new]
+      InterfaceEnumerable.new.to_a.should eq [One.new, Two.new] of SomeInterface
     end
   end
 
@@ -1538,7 +1538,7 @@ describe "Enumerable" do
       end
 
       it "tallies an interface type" do
-        InterfaceEnumerable.new.tally.should eq({One.new => 1, Two.new => 1})
+        InterfaceEnumerable.new.tally.should eq({One.new => 1, Two.new => 1} of SomeInterface => Int32)
       end
     end
   end
