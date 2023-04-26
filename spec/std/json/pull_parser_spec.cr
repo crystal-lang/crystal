@@ -211,9 +211,9 @@ describe JSON::PullParser do
       it "skips #{desc}" do
         pull = JSON::PullParser.new("[1, #{obj}, 2]")
         pull.read_array do
-          pull.read_int.should eq(1)
+          pull.read_int.should eq(1_i64)
           pull.skip
-          pull.read_int.should eq(2)
+          pull.read_int.should eq(2_i64)
         end
       end
     end
@@ -226,7 +226,7 @@ describe JSON::PullParser do
 
   it "reads int or null" do
     JSON::PullParser.new("null").read_int_or_null.should be_nil
-    JSON::PullParser.new("1").read_int_or_null.should eq(1)
+    JSON::PullParser.new("1").read_int_or_null.should eq(1_i64)
   end
 
   it "reads float or null" do
@@ -244,7 +244,7 @@ describe JSON::PullParser do
 
     pull = JSON::PullParser.new(%([1]))
     pull.read_array_or_null do
-      pull.read_int.should eq(1)
+      pull.read_int.should eq(1_i64)
     end
   end
 
@@ -254,7 +254,7 @@ describe JSON::PullParser do
     pull = JSON::PullParser.new(%({"foo": 1}))
     pull.read_object_or_null do |key|
       key.should eq("foo")
-      pull.read_int.should eq(1)
+      pull.read_int.should eq(1_i64)
     end
   end
 
@@ -267,13 +267,13 @@ describe JSON::PullParser do
         bar = pull.read_int
       end
 
-      bar.should eq(2)
+      bar.should eq(2_i64)
     end
 
     it "yields parser" do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
-      pull.on_key("bar", &.read_int).should eq(2)
+      pull.on_key("bar", &.read_int).should eq(2_i64)
     end
 
     it "doesn't find key" do
@@ -295,13 +295,13 @@ describe JSON::PullParser do
         bar = pull.read_int
       end
 
-      bar.should eq(2)
+      bar.should eq(2_i64)
     end
 
     it "yields parser with bang" do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
-      pull.on_key!("bar", &.read_int).should eq(2)
+      pull.on_key!("bar", &.read_int).should eq(2_i64)
     end
 
     it "doesn't find key with bang" do

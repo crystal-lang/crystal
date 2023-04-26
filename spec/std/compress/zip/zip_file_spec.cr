@@ -140,7 +140,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::File.open(io) do |zip|
-      zip.entries.size.should eq(UInt16::MAX)
+      zip.entries.size.should eq(UInt16::MAX.to_i32!)
     end
   end
 

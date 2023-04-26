@@ -236,7 +236,7 @@ describe "select" do
     end
 
     count.should eq(fibers * msg_per_sender)
-    sum.should eq(msg_per_sender * (msg_per_sender - 1) / 2 * fibers)
+    sum.should eq(msg_per_sender * (msg_per_sender - 1) // 2 * fibers)
   end
 
   context "blocking raise-on-close single-channel" do

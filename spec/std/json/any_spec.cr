@@ -7,8 +7,8 @@ describe JSON::Any do
     JSON::Any.new(nil).raw.should be_nil
     JSON::Any.new(true).raw.should eq true
     JSON::Any.new(1_i64).raw.should eq 1_i64
-    JSON::Any.new(1).raw.should eq 1
-    JSON::Any.new(1_u8).raw.should eq 1
+    JSON::Any.new(1).raw.should eq 1_i64
+    JSON::Any.new(1_u8).raw.should eq 1_i64
     JSON::Any.new(0.0).raw.should eq 0.0
     JSON::Any.new(0.0_f32).raw.should eq 0.0
     JSON::Any.new("foo").raw.should eq "foo"
@@ -50,12 +50,10 @@ describe JSON::Any do
 
     it "gets float32 from JSON integer (#8618)" do
       value = JSON.parse("123").as_f32
-      value.should eq(123.0)
-      value.should be_a(Float32)
+      value.should eq(123.0_f32)
 
       value = JSON.parse("123").as_f32?
-      value.should eq(123.0)
-      value.should be_a(Float32)
+      value.should eq(123.0_f32)
     end
 
     it "gets float64" do
@@ -106,7 +104,7 @@ describe JSON::Any do
 
   describe "#[]" do
     it "of array" do
-      JSON.parse("[1, 2, 3]")[1].raw.should eq(2)
+      JSON.parse("[1, 2, 3]")[1].raw.should eq(2_i64)
     end
 
     it "of hash" do
@@ -116,7 +114,7 @@ describe JSON::Any do
 
   describe "#[]?" do
     it "of array" do
-      JSON.parse("[1, 2, 3]")[1]?.not_nil!.raw.should eq(2)
+      JSON.parse("[1, 2, 3]")[1]?.not_nil!.raw.should eq(2_i64)
       JSON.parse("[1, 2, 3]")[3]?.should be_nil
       JSON.parse("[true, false]")[1]?.should eq false
     end

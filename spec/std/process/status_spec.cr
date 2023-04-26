@@ -49,7 +49,7 @@ describe Process::Status do
     Process::Status.new(exit_status(128)).system_exit_status.should eq({{ flag?(:unix) ? 0x8000_u32 : 128_u32 }})
     Process::Status.new(exit_status(255)).system_exit_status.should eq({{ flag?(:unix) ? 0xFF00_u32 : 255_u32 }})
 
-    status_for(:interrupted).system_exit_status.should eq({% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %})
+    status_for(:interrupted).system_exit_status.should eq({% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %}.to_u32)
   end
 
   it "#success?" do

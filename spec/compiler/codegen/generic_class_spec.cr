@@ -269,7 +269,7 @@ describe "Code gen: generic class type" do
       end
 
       Hello(MAX_RANGE).t
-      )).to_u64.should eq(2374623294237463578)
+      )).to_u64.should eq(2374623294237463578_u64)
   end
 
   it "doesn't use virtual + in type arguments (#2839)" do

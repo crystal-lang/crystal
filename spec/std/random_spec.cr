@@ -201,14 +201,14 @@ describe "Random" do
 
   it "generates by accumulation" do
     rng = TestRNG.new([234u8, 153u8, 0u8, 0u8, 127u8, 128u8, 255u8, 255u8])
-    rng.rand(65536).should eq 60057    # 234*0x100 + 153
-    rng.rand(60000).should eq 0        # 0*0x100 + 0
-    rng.rand(30000).should eq 2640     # (127*0x100 + 128) % 30000
-    rng.rand(65535u16).should eq 60057 # 255*0x100 + 255 [skip]-> 234*0x100 + 153
+    rng.rand(65536).should eq 60057        # 234*0x100 + 153
+    rng.rand(60000).should eq 0            # 0*0x100 + 0
+    rng.rand(30000).should eq 2640         # (127*0x100 + 128) % 30000
+    rng.rand(65535u16).should eq 60057_u16 # 255*0x100 + 255 [skip]-> 234*0x100 + 153
     rng.reset
     rng.rand(65537).should eq 38934 # (234*0x10000 + 153*0x100 + 0) % 65537
     rng.reset
-    rng.rand(32768u16).should eq 27289 # (234*0x100 + 153) % 32768
+    rng.rand(32768u16).should eq 27289_u16 # (234*0x100 + 153) % 32768
   end
 
   it "generates by truncation" do
@@ -216,9 +216,9 @@ describe "Random" do
     rng.rand(1).should eq 0
     rng.rand(10).should eq 0
     rng.rand(2).should eq 1
-    rng.rand(256u64).should eq 234
-    rng.rand(255u8).should eq 217   # 342475672 % 255
-    rng.rand(65536).should eq 18635 # 31541451 % 65536
+    rng.rand(256u64).should eq 234_u64
+    rng.rand(255u8).should eq 217_u8 # 342475672 % 255
+    rng.rand(65536).should eq 18635  # 31541451 % 65536
     rng = TestRNG.new([0xffffffffu32, 0u32])
     rng.rand(0x7fffffff).should eq 0
   end
@@ -242,7 +242,7 @@ describe "Random" do
     rng = TestRNG.new(RNG_DATA_32)
     RNG_DATA_32.each do |a|
       expected = a % 0x10000
-      rng.rand(UInt16::MIN..UInt16::MAX).should eq expected
+      rng.rand(UInt16::MIN..UInt16::MAX).should eq expected.to_u16!
     end
   end
 
@@ -251,7 +251,7 @@ describe "Random" do
     RNG_DATA_8.each do |a|
       expected = a.to_i
       expected -= 0x100 if a >= 0x80
-      rng.rand(Int8::MIN..Int8::MAX).should eq expected
+      rng.rand(Int8::MIN..Int8::MAX).should eq expected.to_i8!
     end
   end
 

@@ -731,10 +731,10 @@ describe "JSON mapping" do
   it "allows small types of integer" do
     json = JSONAttrWithSmallIntegers.from_json(%({"foo": 23, "bar": 7}))
 
-    json.foo.should eq(23)
+    json.foo.should eq(23_i16)
     typeof(json.foo).should eq(Int16)
 
-    json.bar.should eq(7)
+    json.bar.should eq(7_i8)
     typeof(json.bar).should eq(Int8)
   end
 

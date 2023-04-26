@@ -456,11 +456,11 @@ describe "Char" do
   end
 
   it "does each_byte" do
-    'a'.each_byte(&.should eq('a'.ord)).should be_nil
+    'a'.each_byte(&.should eq(97_u8)).should be_nil
   end
 
   it "does bytes" do
-    '\u{FF}'.bytes.should eq([195, 191])
+    '\u{FF}'.bytes.should eq([195, 191] of UInt8)
   end
 
   it "#===(:Int)" do

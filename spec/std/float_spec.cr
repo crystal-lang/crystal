@@ -55,25 +55,25 @@ describe "Float" do
   end
 
   describe "round" do
-    it { 2.5.round.should eq(2) }
-    it { 3.5.round.should eq(4) }
-    it { 2.4.round.should eq(2) }
+    it { 2.5.round.should eq(2_f64) }
+    it { 3.5.round.should eq(4_f64) }
+    it { 2.4.round.should eq(2_f64) }
   end
 
   describe "floor" do
-    it { 2.1.floor.should eq(2) }
-    it { 2.9.floor.should eq(2) }
+    it { 2.1.floor.should eq(2_f64) }
+    it { 2.9.floor.should eq(2_f64) }
   end
 
   describe "ceil" do
-    it { 2.0_f32.ceil.should eq(2) }
-    it { 2.0.ceil.should eq(2) }
+    it { 2.0_f32.ceil.should eq(2_f32) }
+    it { 2.0.ceil.should eq(2_f64) }
 
     it { 2.1_f32.ceil.should eq(3_f32) }
-    it { 2.1.ceil.should eq(3) }
+    it { 2.1.ceil.should eq(3_f64) }
 
-    it { 2.9_f32.ceil.should eq(3) }
-    it { 2.9.ceil.should eq(3) }
+    it { 2.9_f32.ceil.should eq(3_f32) }
+    it { 2.9.ceil.should eq(3_f64) }
   end
 
   describe "#integer?" do
@@ -102,40 +102,40 @@ describe "Float" do
   end
 
   describe "divmod" do
-    it { 1.2.divmod(0.3)[0].should eq(4) }
+    it { 1.2.divmod(0.3)[0].should eq(4_f64) }
     it { 1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
 
-    it { 1.3.divmod(0.3)[0].should eq(4) }
+    it { 1.3.divmod(0.3)[0].should eq(4_f64) }
     it { 1.3.divmod(0.3)[1].should be_close(0.1, 0.00001) }
 
-    it { 1.4.divmod(0.3)[0].should eq(4) }
+    it { 1.4.divmod(0.3)[0].should eq(4_f64) }
     it { 1.4.divmod(0.3)[1].should be_close(0.2, 0.00001) }
 
-    it { -1.2.divmod(0.3)[0].should eq(-4) }
+    it { -1.2.divmod(0.3)[0].should eq(-4_f64) }
     it { -1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
 
-    it { -1.3.divmod(0.3)[0].should eq(-5) }
+    it { -1.3.divmod(0.3)[0].should eq(-5_f64) }
     it { -1.3.divmod(0.3)[1].should be_close(0.2, 0.00001) }
 
-    it { -1.4.divmod(0.3)[0].should eq(-5) }
+    it { -1.4.divmod(0.3)[0].should eq(-5_f64) }
     it { -1.4.divmod(0.3)[1].should be_close(0.1, 0.00001) }
 
-    it { 1.2.divmod(-0.3)[0].should eq(-4) }
+    it { 1.2.divmod(-0.3)[0].should eq(-4_f64) }
     it { 1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
 
-    it { 1.3.divmod(-0.3)[0].should eq(-5) }
+    it { 1.3.divmod(-0.3)[0].should eq(-5_f64) }
     it { 1.3.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
 
-    it { 1.4.divmod(-0.3)[0].should eq(-5) }
+    it { 1.4.divmod(-0.3)[0].should eq(-5_f64) }
     it { 1.4.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
 
-    it { -1.2.divmod(-0.3)[0].should eq(4) }
+    it { -1.2.divmod(-0.3)[0].should eq(4_f64) }
     it { -1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
 
-    it { -1.3.divmod(-0.3)[0].should eq(4) }
+    it { -1.3.divmod(-0.3)[0].should eq(4_f64) }
     it { -1.3.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
 
-    it { -1.4.divmod(-0.3)[0].should eq(4) }
+    it { -1.4.divmod(-0.3)[0].should eq(4_f64) }
     it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
   end
 
@@ -300,13 +300,13 @@ describe "Float" do
   describe ".new" do
     it "String overload" do
       Float32.new("1").should be_a(Float32)
-      Float32.new("1").should eq(1)
+      Float32.new("1").should eq(1_f32)
       expect_raises ArgumentError, %(Invalid Float32: " 1 ") do
         Float32.new(" 1 ", whitespace: false)
       end
 
       Float64.new("1").should be_a(Float64)
-      Float64.new("1").should eq(1)
+      Float64.new("1").should eq(1_f64)
       expect_raises ArgumentError, %(Invalid Float64: " 1 ") do
         Float64.new(" 1 ", whitespace: false)
       end
@@ -314,10 +314,10 @@ describe "Float" do
 
     it "fallback overload" do
       Float32.new(1_f64).should be_a(Float32)
-      Float32.new(1_f64).should eq(1)
+      Float32.new(1_f64).should eq(1_f32)
 
       Float64.new(1_f32).should be_a(Float64)
-      Float64.new(1_f32).should eq(1)
+      Float64.new(1_f32).should eq(1_f64)
     end
   end
 
@@ -442,8 +442,8 @@ describe "Float" do
   end
 
   it "#abs" do
-    Math.copysign(1, 0.0.abs).should eq 1
-    Math.copysign(1, -0.0.abs).should eq 1
+    Math.copysign(1, 0.0.abs).should eq 1.0
+    Math.copysign(1, -0.0.abs).should eq 1.0
 
     0.1.abs.should eq 0.1
     -0.1.abs.should eq 0.1

@@ -738,11 +738,8 @@ describe "YAML::Serializable" do
   it "allows small types of integer" do
     yaml = YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7}))
 
-    yaml.foo.should eq(21)
-    typeof(yaml.foo).should eq(Int16)
-
-    yaml.bar.should eq(7)
-    typeof(yaml.bar).should eq(Int8)
+    yaml.foo.should eq(21_i16)
+    yaml.bar.should eq(7_i8)
   end
 
   it "checks that values fit into integer types" do

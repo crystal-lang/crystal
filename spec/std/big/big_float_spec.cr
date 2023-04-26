@@ -247,8 +247,7 @@ describe "BigFloat" do
 
   describe "#to_i64" do
     it "basic" do
-      1.to_big_f.to_i64.should eq 1
-      1.to_big_f.to_i64.should be_a(Int64)
+      1.to_big_f.to_i64.should eq 1_i64
     end
 
     it { expect_raises(OverflowError) { (2.0 ** 63).to_big_f.to_i64 } }
@@ -258,8 +257,7 @@ describe "BigFloat" do
 
   describe "#to_i64!" do
     it "basic" do
-      1.to_big_f.to_i64!.should eq 1
-      1.to_big_f.to_i64!.should be_a(Int64)
+      1.to_big_f.to_i64!.should eq 1_i64
     end
 
     it "doesn't raise on overflow" do
@@ -270,24 +268,23 @@ describe "BigFloat" do
   end
 
   describe "#to_u" do
-    it { 1.34.to_big_f.to_u.should eq(1) }
-    it { 123.to_big_f.to_u.should eq(123) }
-    it { 4321.to_big_f.to_u.should eq(4321) }
+    it { 1.34.to_big_f.to_u.should eq(1_u32) }
+    it { 123.to_big_f.to_u.should eq(123_u32) }
+    it { 4321.to_big_f.to_u.should eq(4321_u32) }
     it do
       expect_raises(OverflowError) { -123.34.to_big_f.to_u }
     end
   end
 
   describe "#to_u!" do
-    it { 1.34.to_big_f.to_u!.should eq(1) }
-    it { 123.to_big_f.to_u!.should eq(123) }
-    it { 4321.to_big_f.to_u!.should eq(4321) }
+    it { 1.34.to_big_f.to_u!.should eq(1_u32) }
+    it { 123.to_big_f.to_u!.should eq(123_u32) }
+    it { 4321.to_big_f.to_u!.should eq(4321_u32) }
   end
 
   describe "#to_u64" do
     it "basic" do
-      1.to_big_f.to_u64.should eq 1
-      1.to_big_f.to_u64.should be_a(UInt64)
+      1.to_big_f.to_u64.should eq 1_u64
     end
 
     it { expect_raises(OverflowError) { (2.0 ** 64).to_big_f.to_u64 } }
@@ -297,8 +294,7 @@ describe "BigFloat" do
 
   describe "#to_u64!" do
     it "basic" do
-      1.to_big_f.to_u64!.should eq 1
-      1.to_big_f.to_u64!.should be_a(UInt64)
+      1.to_big_f.to_u64!.should eq 1_u64
     end
 
     it "doesn't raise on overflow" do
@@ -558,13 +554,13 @@ end
 
 describe "BigFloat Math" do
   it ".ilogb" do
-    Math.ilogb(0.2.to_big_f).should eq(-3)
-    Math.ilogb(123.45.to_big_f).should eq(6)
-    Math.ilogb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000)
+    Math.ilogb(0.2.to_big_f).should eq(-3_i64)
+    Math.ilogb(123.45.to_big_f).should eq(6_i64)
+    Math.ilogb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000_i64)
 
     {% unless flag?(:win32) && flag?(:gnu) %}
-      Math.ilogb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000)
-      Math.ilogb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000)
+      Math.ilogb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000_i64)
+      Math.ilogb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000_i64)
     {% end %}
 
     expect_raises(ArgumentError) { Math.ilogb(0.to_big_f) }
@@ -617,23 +613,23 @@ describe "BigFloat Math" do
   end
 
   it ".frexp" do
-    Math.frexp(0.to_big_f).should eq({0.0, 0})
-    Math.frexp(1.to_big_f).should eq({0.5, 1})
-    Math.frexp(0.2.to_big_f).should eq({0.8, -2})
-    Math.frexp(2.to_big_f ** 63).should eq({0.5, 64})
-    Math.frexp(2.to_big_f ** 64).should eq({0.5, 65})
-    Math.frexp(2.to_big_f ** 200).should eq({0.5, 201})
-    Math.frexp(2.to_big_f ** -200).should eq({0.5, -199})
-    Math.frexp(2.to_big_f ** 0x7FFFFFFF).should eq({0.5, 0x80000000})
-    Math.frexp(2.to_big_f ** 0x80000000).should eq({0.5, 0x80000001})
-    Math.frexp(2.to_big_f ** 0xFFFFFFFF).should eq({0.5, 0x100000000})
-    Math.frexp(1.75 * 2.to_big_f ** 0x123456789).should eq({0.875, 0x12345678A})
-    Math.frexp(2.to_big_f ** -0x80000000).should eq({0.5, -0x7FFFFFFF})
-    Math.frexp(2.to_big_f ** -0x80000001).should eq({0.5, -0x80000000})
-    Math.frexp(2.to_big_f ** -0x100000000).should eq({0.5, -0xFFFFFFFF})
-    Math.frexp(1.75 * 2.to_big_f ** -0x123456789).should eq({0.875, -0x123456788})
-    Math.frexp(-(2.to_big_f ** 0x7FFFFFFF)).should eq({-0.5, 0x80000000})
-    Math.frexp(-(2.to_big_f ** -0x100000000)).should eq({-0.5, -0xFFFFFFFF})
+    Math.frexp(0.to_big_f).should eq({0.0.to_big_f, 0_i64})
+    Math.frexp(1.to_big_f).should eq({0.5.to_big_f, 1_i64})
+    Math.frexp(0.2.to_big_f).should eq({0.8.to_big_f, -2_i64})
+    Math.frexp(2.to_big_f ** 63).should eq({0.5.to_big_f, 64_i64})
+    Math.frexp(2.to_big_f ** 64).should eq({0.5.to_big_f, 65_i64})
+    Math.frexp(2.to_big_f ** 200).should eq({0.5.to_big_f, 201_i64})
+    Math.frexp(2.to_big_f ** -200).should eq({0.5.to_big_f, -199_i64})
+    Math.frexp(2.to_big_f ** 0x7FFFFFFF).should eq({0.5.to_big_f, 0x80000000_i64})
+    Math.frexp(2.to_big_f ** 0x80000000).should eq({0.5.to_big_f, 0x80000001_i64})
+    Math.frexp(2.to_big_f ** 0xFFFFFFFF).should eq({0.5.to_big_f, 0x100000000_i64})
+    Math.frexp(1.75 * 2.to_big_f ** 0x123456789).should eq({0.875.to_big_f, 0x12345678A_i64})
+    Math.frexp(2.to_big_f ** -0x80000000).should eq({0.5.to_big_f, -0x7FFFFFFF_i64})
+    Math.frexp(2.to_big_f ** -0x80000001).should eq({0.5.to_big_f, -0x80000000_i64})
+    Math.frexp(2.to_big_f ** -0x100000000).should eq({0.5.to_big_f, -0xFFFFFFFF_i64})
+    Math.frexp(1.75 * 2.to_big_f ** -0x123456789).should eq({0.875.to_big_f, -0x123456788_i64})
+    Math.frexp(-(2.to_big_f ** 0x7FFFFFFF)).should eq({-0.5.to_big_f, 0x80000000_i64})
+    Math.frexp(-(2.to_big_f ** -0x100000000)).should eq({-0.5.to_big_f, -0xFFFFFFFF_i64})
   end
 
   it ".copysign" do

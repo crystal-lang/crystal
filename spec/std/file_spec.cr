@@ -141,14 +141,14 @@ describe "File" do
         File.write(filename, "hello")
 
         File.open(filename, "a", blocking: false) do |file|
-          file.tell.should eq(0)
+          file.tell.should eq(0_i64)
 
           file.write "12345".to_slice
-          file.tell.should eq(10)
+          file.tell.should eq(10_i64)
 
           file.seek(5, IO::Seek::Set)
           file.write "6789".to_slice
-          file.tell.should eq(14)
+          file.tell.should eq(14_i64)
         end
 
         File.read(filename).should eq("hello123456789")
@@ -727,10 +727,10 @@ describe "File" do
   end
 
   describe "size" do
-    it { File.size(datapath("test_file.txt")).should eq(240) }
+    it { File.size(datapath("test_file.txt")).should eq(240_i64) }
     it do
       File.open(datapath("test_file.txt"), "r") do |file|
-        file.size.should eq(240)
+        file.size.should eq(240_i64)
       end
     end
 
@@ -996,7 +996,7 @@ describe "File" do
         bytes.should eq(Bytes[1, 3, 6, 10])
       end
       File.open(path, "ab") do |f|
-        f.size.should eq(4)
+        f.size.should eq(4_i64)
       end
 
       File.open(path, "r+b") do |f|
@@ -1015,7 +1015,7 @@ describe "File" do
         bytes.should eq(Bytes[1, 3, 6, 10, 13, 13, 10])
       end
       File.open(path, "w+b") do |f|
-        f.size.should eq(0)
+        f.size.should eq(0_i64)
       end
 
       File.open(path, "rb+") { }
@@ -1054,7 +1054,7 @@ describe "File" do
     File.open(datapath("test_file.txt")) do |file|
       file.gets(5)
       file.seek(-4, IO::Seek::Current)
-      file.tell.should eq(1)
+      file.tell.should eq(1_i64)
     end
   end
 
@@ -1066,22 +1066,22 @@ describe "File" do
 
   it "returns the current read position with tell" do
     File.open(datapath("test_file.txt")) do |file|
-      file.tell.should eq(0)
+      file.tell.should eq(0_i64)
       file.gets(5).should eq("Hello")
-      file.tell.should eq(5)
+      file.tell.should eq(5_i64)
       file.sync = true
-      file.tell.should eq(5)
+      file.tell.should eq(5_i64)
     end
   end
 
   it "returns the current write position with tell" do
     with_tempfile("delete-file.txt") do |filename|
       File.open(filename, "w") do |file|
-        file.tell.should eq(0)
+        file.tell.should eq(0_i64)
         file.write "12345".to_slice
-        file.tell.should eq(5)
+        file.tell.should eq(5_i64)
         file.sync = true
-        file.tell.should eq(5)
+        file.tell.should eq(5_i64)
       end
     end
   end
@@ -1091,7 +1091,7 @@ describe "File" do
       File.write(filename, "hello")
       File.open(filename, "a") do |file|
         file.write "12345".to_slice
-        file.tell.should eq(10)
+        file.tell.should eq(10_i64)
       end
     end
   end
@@ -1166,8 +1166,8 @@ describe "File" do
       i = 0
       file.each_byte do |byte|
         case i
-        when 0 then byte.should eq('H'.ord)
-        when 1 then byte.should eq('e'.ord)
+        when 0 then byte.should eq('H'.ord.to_u8!)
+        when 1 then byte.should eq('e'.ord.to_u8!)
         else
           break
         end

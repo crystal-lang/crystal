@@ -47,10 +47,10 @@ module XML
       doc = doc()
 
       count = doc.xpath("count(//people/person)").as(Float64)
-      count.should eq(2)
+      count.should eq(2.0)
 
       count = doc.xpath_float("count(//people/person)")
-      count.should eq(2)
+      count.should eq(2.0)
     end
 
     it "finds boolean" do

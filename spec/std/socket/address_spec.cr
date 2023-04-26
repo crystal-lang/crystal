@@ -35,9 +35,9 @@ end
 
 describe Socket::IPAddress do
   c_port = {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
-             36895 # 0x901F
+             0x901F_u16
            {% else %}
-             8080 # 0x1F90
+             0x1F90_u16
            {% end %}
 
   it "transforms an IPv4 address into a C struct and back" do

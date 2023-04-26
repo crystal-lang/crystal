@@ -36,7 +36,7 @@ describe "Codegen: const" do
       end
 
       Foo.new.foo
-    ").to_f32.should eq(2.5)
+    ").to_f32.should eq(2.5_f32)
   end
 
   it "allows constants with same name" do
@@ -53,7 +53,7 @@ describe "Codegen: const" do
 
       CONST
       Foo.new.foo
-    ").to_f32.should eq(2.5)
+    ").to_f32.should eq(2.5_f32)
   end
 
   it "constants with expression" do

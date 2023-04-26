@@ -73,7 +73,7 @@ describe HTTP::FormData do
       meta.creation_time.should eq(Time.utc(1997, 2, 12, 21, 29, 51, nanosecond: 0))
       meta.modification_time.should eq(Time.utc(1997, 2, 12, 21, 29, 51, nanosecond: 0))
       meta.read_time.should eq(Time.utc(1997, 2, 12, 21, 29, 51, nanosecond: 0))
-      meta.size.should eq(432334)
+      meta.size.should eq(432334_u64)
     end
   end
 

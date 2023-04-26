@@ -53,7 +53,7 @@ describe Time::Span do
 
   it "initializes with big seconds value" do
     t = Time::Span.new hours: 0, minutes: 0, seconds: 1231231231231
-    t.total_seconds.should eq(1231231231231)
+    t.total_seconds.should eq(1231231231231.0)
   end
 
   it "days overflows" do
@@ -77,7 +77,7 @@ describe Time::Span do
 
   it "max seconds" do
     ts = Int32::MAX.seconds
-    ts.days.should eq(24855)
+    ts.days.should eq(24855_i64)
     ts.hours.should eq(3)
     ts.minutes.should eq(14)
     ts.seconds.should eq(7)
@@ -87,7 +87,7 @@ describe Time::Span do
 
   it "min seconds" do
     ts = Int32::MIN.seconds
-    ts.days.should eq(-24855)
+    ts.days.should eq(-24855_i64)
     ts.hours.should eq(-3)
     ts.minutes.should eq(-14)
     ts.seconds.should eq(-8)
@@ -96,7 +96,7 @@ describe Time::Span do
 
   it "max milliseconds" do
     ts = Int32::MAX.milliseconds
-    ts.days.should eq(24)
+    ts.days.should eq(24_i64)
     ts.hours.should eq(20)
     ts.minutes.should eq(31)
     ts.seconds.should eq(23)
@@ -105,7 +105,7 @@ describe Time::Span do
 
   it "min milliseconds" do
     ts = Int32::MIN.milliseconds
-    ts.days.should eq(-24)
+    ts.days.should eq(-24_i64)
     ts.hours.should eq(-20)
     ts.minutes.should eq(-31)
     ts.seconds.should eq(-23)
@@ -114,7 +114,7 @@ describe Time::Span do
 
   it "negative timespan" do
     ts = Time::Span.new hours: -23, minutes: -59, seconds: -59
-    ts.days.should eq(0)
+    ts.days.should eq(0_i64)
     ts.hours.should eq(-23)
     ts.minutes.should eq(-59)
     ts.seconds.should eq(-59)
@@ -125,7 +125,7 @@ describe Time::Span do
     t1 = Time::Span.new days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5_000_000
     t2 = -t1
 
-    t1.days.should eq(1)
+    t1.days.should eq(1_i64)
     t1.hours.should eq(2)
     t1.minutes.should eq(3)
     t1.seconds.should eq(4)
@@ -133,7 +133,7 @@ describe Time::Span do
     t1.microseconds.should eq(5_000)
     t1.nanoseconds.should eq(5_000_000)
 
-    t2.days.should eq(-1)
+    t2.days.should eq(-1_i64)
     t2.hours.should eq(-2)
     t2.minutes.should eq(-3)
     t2.seconds.should eq(-4)
@@ -214,7 +214,7 @@ describe Time::Span do
       t2 = Time::Span.new days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5_000_000
       t3 = t1 + t2
 
-      t3.days.should eq(3)
+      t3.days.should eq(3_i64)
       t3.hours.should eq(5)
       t3.minutes.should eq(7)
       t3.seconds.should eq(9)
@@ -317,7 +317,7 @@ describe Time::Span do
     t1.total_microseconds.should be_close(9.3784e+10, 1e+04)
     t1.total_nanoseconds.should be_close(9.3784e+13, 1e+07)
     t1.to_f.should be_close(93784, 1e-01)
-    t1.to_i.should eq(93784)
+    t1.to_i.should eq(93784_i64)
 
     t2 = Time::Span.new nanoseconds: 123456
     t2.total_seconds.should be_close(0.000123456, 1e-06)

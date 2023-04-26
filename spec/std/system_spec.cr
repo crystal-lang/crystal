@@ -18,9 +18,9 @@ describe System do
     pending_interpreted "returns current CPU count" do
       shell_cpus =
         {% if flag?(:win32) %}
-          ENV["NUMBER_OF_PROCESSORS"].to_i
+          ENV["NUMBER_OF_PROCESSORS"].to_i64
         {% elsif flag?(:unix) %}
-          `getconf _NPROCESSORS_ONLN 2>/dev/null || nproc --all 2>/dev/null || grep -sc '^processor' /proc/cpuinfo || sysctl -n hw.ncpu 2>/dev/null`.to_i
+          `getconf _NPROCESSORS_ONLN 2>/dev/null || nproc --all 2>/dev/null || grep -sc '^processor' /proc/cpuinfo || sysctl -n hw.ncpu 2>/dev/null`.to_i64
         {% end %}
       cpu_count = System.cpu_count
       cpu_count.should eq(shell_cpus)

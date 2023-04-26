@@ -190,25 +190,25 @@ describe "Pointer" do
   end
 
   it "creates from int" do
-    Pointer(Int32).new(1234).address.should eq(1234)
+    Pointer(Int32).new(1234).address.should eq(1234_u64)
   end
 
   it "performs arithmetic with u64" do
     p = Pointer(Int8).new(1234)
     d = 4_u64
-    (p + d).address.should eq(1238)
-    (p - d).address.should eq(1230)
+    (p + d).address.should eq(1238_u64)
+    (p - d).address.should eq(1230_u64)
 
     p = Pointer(Int8).new(UInt64::MAX)
     d = UInt64::MAX - 1
-    (p - d).address.should eq(1)
+    (p - d).address.should eq(1_u64)
   end
 
   it "performs arithmetic with u32" do
     p = Pointer(Int8).new(1234)
     d = 4_u32
-    (p + d).address.should eq(1238)
-    (p - d).address.should eq(1230)
+    (p + d).address.should eq(1238_u64)
+    (p - d).address.should eq(1230_u64)
   end
 
   it "shuffles!" do

@@ -198,7 +198,7 @@ describe Time do
   end
 
   it ".unix" do
-    seconds = 1439404155
+    seconds = 1439404155_i64
     time = Time.unix(seconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.to_unix.should eq(seconds)
@@ -215,7 +215,7 @@ describe Time do
 
   describe ".unix_ns" do
     it "supports Int64 values" do
-      nanoseconds = 1439404155001457425i64
+      nanoseconds = 1439404155001457425_i128
       time = Time.unix_ns(nanoseconds)
       time.should eq(Time.utc(2015, 8, 12, 18, 29, 15, nanosecond: 1457425))
       time.to_unix_ns.should eq(nanoseconds)
@@ -552,7 +552,7 @@ describe Time do
   describe "#to_unix" do
     it "gets unix seconds" do
       t1 = Time.utc 2014, 10, 30, 21, 18, 13, nanosecond: 0
-      t1.to_unix.should eq(1414703893)
+      t1.to_unix.should eq(1414703893_i64)
       t1.to_unix_f.should be_close(1414703893, 1e-01)
     end
 

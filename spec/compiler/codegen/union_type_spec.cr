@@ -6,7 +6,7 @@ describe "Code gen: union type" do
   end
 
   it "codegens union type when obj is union and arg is union" do
-    run("a = 1; a = 1.5_f32; (a + a).to_f").to_f64.should eq(3)
+    run("a = 1; a = 1.5_f32; (a + a).to_f").to_f64.should eq(3.0)
   end
 
   it "codegens union type when obj is not union but arg is" do
@@ -56,7 +56,7 @@ describe "Code gen: union type" do
       f = Foo.new(1)
       f.value = 1.5_f32
       (f.value &+ f.value).to_f
-    ").to_f64.should eq(3)
+    ").to_f64.should eq(3.0)
   end
 
   it "codegens if with same nested union" do

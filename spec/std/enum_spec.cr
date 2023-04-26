@@ -117,47 +117,27 @@ describe Enum do
   end
 
   it "gets value" do
-    SpecEnum::Two.value.should eq(1)
-    SpecEnum::Two.value.should be_a(Int8)
+    SpecEnum::Two.value.should eq(1_i8)
   end
 
   it "gets value with to_i" do
     SpecEnum::Two.to_i.should eq(1)
-    SpecEnum::Two.to_i.should be_a(Int32)
   end
 
   it "gets value with to_i<bit>" do
-    SpecEnum::Two.to_i8.should eq(1)
-    SpecEnum::Two.to_i8.should be_a(Int8)
-
-    SpecEnum::Two.to_i16.should eq(1)
-    SpecEnum::Two.to_i16.should be_a(Int16)
-
-    SpecEnum::Two.to_i32.should eq(1)
-    SpecEnum::Two.to_i32.should be_a(Int32)
-
-    SpecEnum::Two.to_i64.should eq(1)
-    SpecEnum::Two.to_i64.should be_a(Int64)
-
-    SpecEnum::Two.to_i128.should eq(1)
-    SpecEnum::Two.to_i128.should be_a(Int128)
+    SpecEnum::Two.to_i8.should eq(1_i8)
+    SpecEnum::Two.to_i16.should eq(1_i16)
+    SpecEnum::Two.to_i32.should eq(1_i32)
+    SpecEnum::Two.to_i64.should eq(1_i64)
+    SpecEnum::Two.to_i128.should eq(1_i128)
   end
 
   it "gets value with to_u<bit>" do
-    SpecEnum::Two.to_u8.should eq(1)
-    SpecEnum::Two.to_u8.should be_a(UInt8)
-
-    SpecEnum::Two.to_u16.should eq(1)
-    SpecEnum::Two.to_u16.should be_a(UInt16)
-
-    SpecEnum::Two.to_u32.should eq(1)
-    SpecEnum::Two.to_u32.should be_a(UInt32)
-
-    SpecEnum::Two.to_u64.should eq(1)
-    SpecEnum::Two.to_u64.should be_a(UInt64)
-
-    SpecEnum::Two.to_u128.should eq(1)
-    SpecEnum::Two.to_u128.should be_a(UInt128)
+    SpecEnum::Two.to_u8.should eq(1_u8)
+    SpecEnum::Two.to_u16.should eq(1_u16)
+    SpecEnum::Two.to_u32.should eq(1_u32)
+    SpecEnum::Two.to_u64.should eq(1_u64)
+    SpecEnum::Two.to_u128.should eq(1_u128)
   end
 
   it "does +" do

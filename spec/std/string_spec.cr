@@ -292,7 +292,7 @@ describe "String" do
 
   describe "to_i" do
     it { "1234".to_i.should eq(1234) }
-    it { "-128".to_i8.should eq(-128) }
+    it { "-128".to_i8.should eq(-128_i8) }
     it { "   +1234   ".to_i.should eq(1234) }
     it { "   -1234   ".to_i.should eq(-1234) }
     it { "   +1234   ".to_i.should eq(1234) }
@@ -346,12 +346,12 @@ describe "String" do
     it { "0_1".to_i(underscore: true).should eq(1) }
 
     describe "to_i8" do
-      it { "127".to_i8.should eq(127) }
-      it { "-128".to_i8.should eq(-128) }
+      it { "127".to_i8.should eq(127_i8) }
+      it { "-128".to_i8.should eq(-128_i8) }
       it { expect_raises(ArgumentError) { "128".to_i8 } }
       it { expect_raises(ArgumentError) { "-129".to_i8 } }
 
-      it { "127".to_i8?.should eq(127) }
+      it { "127".to_i8?.should eq(127_i8) }
       it { "128".to_i8?.should be_nil }
       it { "128".to_i8 { 0 }.should eq(0) }
 
@@ -359,12 +359,12 @@ describe "String" do
     end
 
     describe "to_u8" do
-      it { "255".to_u8.should eq(255) }
-      it { "0".to_u8.should eq(0) }
+      it { "255".to_u8.should eq(255_u8) }
+      it { "0".to_u8.should eq(0_u8) }
       it { expect_raises(ArgumentError) { "256".to_u8 } }
       it { expect_raises(ArgumentError) { "-1".to_u8 } }
 
-      it { "255".to_u8?.should eq(255) }
+      it { "255".to_u8?.should eq(255_u8) }
       it { "256".to_u8?.should be_nil }
       it { "256".to_u8 { 0 }.should eq(0) }
 
@@ -372,12 +372,12 @@ describe "String" do
     end
 
     describe "to_i16" do
-      it { "32767".to_i16.should eq(32767) }
-      it { "-32768".to_i16.should eq(-32768) }
+      it { "32767".to_i16.should eq(32767_i16) }
+      it { "-32768".to_i16.should eq(-32768_i16) }
       it { expect_raises(ArgumentError) { "32768".to_i16 } }
       it { expect_raises(ArgumentError) { "-32769".to_i16 } }
 
-      it { "32767".to_i16?.should eq(32767) }
+      it { "32767".to_i16?.should eq(32767_i16) }
       it { "32768".to_i16?.should be_nil }
       it { "32768".to_i16 { 0 }.should eq(0) }
 
@@ -385,12 +385,12 @@ describe "String" do
     end
 
     describe "to_u16" do
-      it { "65535".to_u16.should eq(65535) }
-      it { "0".to_u16.should eq(0) }
+      it { "65535".to_u16.should eq(65535_u16) }
+      it { "0".to_u16.should eq(0_u16) }
       it { expect_raises(ArgumentError) { "65536".to_u16 } }
       it { expect_raises(ArgumentError) { "-1".to_u16 } }
 
-      it { "65535".to_u16?.should eq(65535) }
+      it { "65535".to_u16?.should eq(65535_u16) }
       it { "65536".to_u16?.should be_nil }
       it { "65536".to_u16 { 0 }.should eq(0) }
 
@@ -411,12 +411,12 @@ describe "String" do
     end
 
     describe "to_u32" do
-      it { "4294967295".to_u32.should eq(4294967295) }
-      it { "0".to_u32.should eq(0) }
+      it { "4294967295".to_u32.should eq(4294967295_u32) }
+      it { "0".to_u32.should eq(0_u32) }
       it { expect_raises(ArgumentError) { "4294967296".to_u32 } }
       it { expect_raises(ArgumentError) { "-1".to_u32 } }
 
-      it { "4294967295".to_u32?.should eq(4294967295) }
+      it { "4294967295".to_u32?.should eq(4294967295_u32) }
       it { "4294967296".to_u32?.should be_nil }
       it { "4294967296".to_u32 { 0 }.should eq(0) }
 
@@ -438,7 +438,7 @@ describe "String" do
 
     describe "to_u64" do
       it { "18446744073709551615".to_u64.should eq(18446744073709551615u64) }
-      it { "0".to_u64.should eq(0) }
+      it { "0".to_u64.should eq(0_u64) }
       it { expect_raises(ArgumentError) { "18446744073709551616".to_u64 } }
       it { expect_raises(ArgumentError) { "-1".to_u64 } }
 
@@ -462,7 +462,7 @@ describe "String" do
 
     describe "to_u128" do
       it { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
-      it { "0".to_u128.should eq(0) }
+      it { "0".to_u128.should eq(0_u128) }
       it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
       it { expect_raises(ArgumentError) { "-1".to_u128 } }
 
@@ -1025,10 +1025,8 @@ describe "String" do
         # Check offset type
         it { "foobarbaz".index("a", 5_i64).should eq(7) }
         it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
-        it { "日本語日本語".index("本", 2_i64).should eq(4) }
-        it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
-        it { "日本語日本語".index("", 2_i64).should eq 2 }
-        it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
+        it { "日本語日本語".index("本", 2_i64).should eq(4_i32) }
+        it { "日本語日本語".index("", 2_i64).should eq 2_i64 }
       end
     end
 
@@ -1154,10 +1152,8 @@ describe "String" do
         it { "日本\xFF語".rindex('\u{FFFD}', 1).should be_nil }
 
         # Check offset type
-        it { "bbbb".rindex('b', 2_i64).should eq(2) }
-        it { "bbbb".rindex('b', 2_i64).should be_a(Int64) }
-        it { "日本語日本語".rindex('本', 3_i64).should eq(1) }
-        it { "日本語日本語".rindex('本', 3_i64).should be_a(Int64) }
+        it { "bbbb".rindex('b', 2_i64).should eq(2_i64) }
+        it { "日本語日本語".rindex('本', 3_i64).should eq(1_i64) }
       end
     end
 
@@ -2187,12 +2183,12 @@ describe "String" do
   end
 
   it "does byte_at" do
-    "hello".byte_at(1).should eq('e'.ord)
+    "hello".byte_at(1).should eq('e'.ord.to_u8!)
     expect_raises(IndexError) { "hello".byte_at(5) }
   end
 
   it "does byte_at?" do
-    "hello".byte_at?(1).should eq('e'.ord)
+    "hello".byte_at?(1).should eq('e'.ord.to_u8!)
     "hello".byte_at?(5).should be_nil
   end
 
@@ -2849,7 +2845,7 @@ describe "String" do
         io.write_byte(byte)
       end
     end
-    255.times do |i|
+    255_u8.times do |i|
       string.byte_at(i).should eq(i)
     end
   end

@@ -99,25 +99,25 @@ describe YAML::Schema::Core do
   end
 
   # integer (base 10)
-  it_parses_scalar "0", 0
-  it_parses_scalar "123", 123
-  it_parses_scalar "+123", 123
-  it_parses_scalar "-123", -123
+  it_parses_scalar "0", 0_i64
+  it_parses_scalar "123", 123_i64
+  it_parses_scalar "+123", 123_i64
+  it_parses_scalar "-123", -123_i64
 
   # integer (binary)
-  it_parses_scalar "0b0", 0
-  it_parses_scalar "0b10110", 0b10110
+  it_parses_scalar "0b0", 0_i64
+  it_parses_scalar "0b10110", 0b10110_i64
 
   # integer (octal)
-  it_parses_scalar "00", 0
-  it_parses_scalar "0o0", 0
-  it_parses_scalar "0o123", 0o123
-  it_parses_scalar "0755", 0o755
+  it_parses_scalar "00", 0_i64
+  it_parses_scalar "0o0", 0_i64
+  it_parses_scalar "0o123", 0o123_i64
+  it_parses_scalar "0755", 0o755_i64
 
   # integer (hex)
-  it_parses_scalar "0x0", 0
-  it_parses_scalar "0x123abc", 0x123abc
-  it_parses_scalar "-0x123abc", -0x123abc
+  it_parses_scalar "0x0", 0_i64
+  it_parses_scalar "0x123abc", 0x123abc_i64
+  it_parses_scalar "-0x123abc", -0x123abc_i64
 
   # float
   it_parses_scalar "1.2", 1.2

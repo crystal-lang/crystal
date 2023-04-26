@@ -34,7 +34,7 @@ describe "Proc" do
 
   it "gets closure data for non-closure" do
     f = -> { 1 }
-    f.closure_data.address.should eq(0)
+    f.closure_data.address.should eq(0_u64)
     f.closure?.should be_false
   end
 

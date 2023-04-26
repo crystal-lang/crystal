@@ -38,8 +38,8 @@ describe "Math" do
     it "sqrt" do
       Math.sqrt(5.2_f32).should be_close(2.280350850198276, 1e-7)
       Math.sqrt(5.2).should be_close(2.280350850198276, 1e-7)
-      Math.sqrt(4_f32).should eq(2)
-      Math.sqrt(4).should eq(2)
+      Math.sqrt(4_f32).should eq(2.0_f32)
+      Math.sqrt(4).should eq(2.0)
     end
 
     it "isqrt" do
@@ -208,8 +208,8 @@ describe "Math" do
     it "gamma" do
       Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-6)
       Math.gamma(3.2).should be_close(2.4239654799353683, 1e-7)
-      Math.gamma(5).should eq 24
-      Math.gamma(5_i8).should eq 24
+      Math.gamma(5).should eq 24.0
+      Math.gamma(5_i8).should eq 24.0
     end
 
     it "lgamma" do
@@ -279,19 +279,19 @@ describe "Math" do
   describe ".pw2ceil" do
     {% for int in %w(Int8 Int16 Int32 Int64 Int128) %}
       it {{ int }} do
-        Math.pw2ceil({{ int.id }}::MIN).should eq 1
-        Math.pw2ceil({{ int.id }}::MIN + 1).should eq 1
-        Math.pw2ceil({{ int.id }}.new(-11)).should eq 1
-        Math.pw2ceil({{ int.id }}.new(-1)).should eq 1
-        Math.pw2ceil({{ int.id }}.new(0)).should eq 1
-        Math.pw2ceil({{ int.id }}.new(1)).should eq 1
-        Math.pw2ceil({{ int.id }}.new(2)).should eq 2
-        Math.pw2ceil({{ int.id }}.new(3)).should eq 4
-        Math.pw2ceil({{ int.id }}.new(4)).should eq 4
-        Math.pw2ceil({{ int.id }}.new(5)).should eq 8
-        Math.pw2ceil({{ int.id }}.new(32)).should eq(32)
-        Math.pw2ceil({{ int.id }}.new(33)).should eq(64)
-        Math.pw2ceil({{ int.id }}.new(64)).should eq(64)
+        Math.pw2ceil({{ int.id }}::MIN).should eq {{int.id}}.new(1)
+        Math.pw2ceil({{ int.id }}::MIN + 1).should eq {{int.id}}.new(1)
+        Math.pw2ceil({{ int.id }}.new(-11)).should eq {{int.id}}.new(1)
+        Math.pw2ceil({{ int.id }}.new(-1)).should eq {{int.id}}.new(1)
+        Math.pw2ceil({{ int.id }}.new(0)).should eq {{int.id}}.new(1)
+        Math.pw2ceil({{ int.id }}.new(1)).should eq {{int.id}}.new(1)
+        Math.pw2ceil({{ int.id }}.new(2)).should eq {{int.id}}.new(2)
+        Math.pw2ceil({{ int.id }}.new(3)).should eq {{int.id}}.new(4)
+        Math.pw2ceil({{ int.id }}.new(4)).should eq {{int.id}}.new(4)
+        Math.pw2ceil({{ int.id }}.new(5)).should eq {{int.id}}.new(8)
+        Math.pw2ceil({{ int.id }}.new(32)).should eq {{int.id}}.new(32)
+        Math.pw2ceil({{ int.id }}.new(33)).should eq {{int.id}}.new(64)
+        Math.pw2ceil({{ int.id }}.new(64)).should eq {{int.id}}.new(64)
 
         Math.pw2ceil({{ int.id }}::MAX // 2).should eq({{ int.id }}::MAX // 2 + 1)
         Math.pw2ceil({{ int.id }}::MAX // 2 + 1).should eq({{ int.id }}::MAX // 2 + 1)
@@ -302,15 +302,15 @@ describe "Math" do
 
     {% for uint in %w(UInt8 UInt16 UInt32 UInt64 UInt128) %}
       it {{ uint }} do
-        Math.pw2ceil({{ uint.id }}.new(0)).should eq 1
-        Math.pw2ceil({{ uint.id }}.new(1)).should eq 1
-        Math.pw2ceil({{ uint.id }}.new(2)).should eq 2
-        Math.pw2ceil({{ uint.id }}.new(3)).should eq 4
-        Math.pw2ceil({{ uint.id }}.new(4)).should eq 4
-        Math.pw2ceil({{ uint.id }}.new(5)).should eq 8
-        Math.pw2ceil({{ uint.id }}.new(32)).should eq(32)
-        Math.pw2ceil({{ uint.id }}.new(33)).should eq(64)
-        Math.pw2ceil({{ uint.id }}.new(64)).should eq(64)
+        Math.pw2ceil({{ uint.id }}.new(0)).should eq {{uint.id}}.new(1)
+        Math.pw2ceil({{ uint.id }}.new(1)).should eq {{uint.id}}.new(1)
+        Math.pw2ceil({{ uint.id }}.new(2)).should eq {{uint.id}}.new(2)
+        Math.pw2ceil({{ uint.id }}.new(3)).should eq {{uint.id}}.new(4)
+        Math.pw2ceil({{ uint.id }}.new(4)).should eq {{uint.id}}.new(4)
+        Math.pw2ceil({{ uint.id }}.new(5)).should eq {{uint.id}}.new(8)
+        Math.pw2ceil({{ uint.id }}.new(32)).should eq {{uint.id}}.new(32)
+        Math.pw2ceil({{ uint.id }}.new(33)).should eq {{uint.id}}.new(64)
+        Math.pw2ceil({{ uint.id }}.new(64)).should eq {{uint.id}}.new(64)
 
         Math.pw2ceil({{ uint.id }}::MAX // 2).should eq({{ uint.id }}::MAX // 2 + 1)
         Math.pw2ceil({{ uint.id }}::MAX // 2 + 1).should eq({{ uint.id }}::MAX // 2 + 1)

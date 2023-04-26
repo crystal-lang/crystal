@@ -6,7 +6,7 @@ class OAuth2::AccessToken
     it "builds from json" do
       token_value = "some token value"
       token_type = "Bearer"
-      expires_in = 3600
+      expires_in = 3600_i64
       refresh_token = "some refresh token"
       scope = "some scope"
       json = %({
@@ -82,7 +82,7 @@ class OAuth2::AccessToken
   describe Mac do
     it "builds from json" do
       mac_algorithm = "hmac-sha-256"
-      expires_in = 3600
+      expires_in = 3600_i64
       mac_key = "secret key"
       refresh_token = "some refresh token"
       token_value = "some token value"

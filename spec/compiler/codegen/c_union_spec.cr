@@ -8,7 +8,7 @@ describe "Code gen: c union" do
   end
 
   it "codegens union property default value 2" do
-    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z").to_f32.should eq(0)
+    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z").to_f32.should eq(0.0_f32)
   end
 
   it "codegens union property setter 1" do
@@ -16,7 +16,7 @@ describe "Code gen: c union" do
   end
 
   it "codegens union property setter 2" do
-    run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.z = 42.0_f32; bar.z").to_f32.should eq(42.0)
+    run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.z = 42.0_f32; bar.z").to_f32.should eq(42.0_f32)
   end
 
   it "codegens union property setter 1 via pointer" do
@@ -24,7 +24,7 @@ describe "Code gen: c union" do
   end
 
   it "codegens union property setter 2 via pointer" do
-    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z = 42.0_f32; bar.value.z").to_f32.should eq(42.0)
+    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z = 42.0_f32; bar.value.z").to_f32.should eq(42.0_f32)
   end
 
   it "codegens struct inside union" do

@@ -1377,19 +1377,19 @@ describe "Hash" do
 
   it "creates with initial capacity" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234)
-    hash.@indices_size_pow2.should eq(12)
+    hash.@indices_size_pow2.should eq(12_u8)
   end
 
   it "creates with initial capacity and default value" do
     hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
     hash[1].should eq(3)
-    hash.@indices_size_pow2.should eq(12)
+    hash.@indices_size_pow2.should eq(12_u8)
   end
 
   it "creates with initial capacity and block" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
     hash[1].should eq(3)
-    hash.@indices_size_pow2.should eq(12)
+    hash.@indices_size_pow2.should eq(12_u8)
   end
 
   describe "#rehash" do
@@ -1435,7 +1435,7 @@ describe "Hash" do
 
     it "edge case 2" do
       hash = Hash(Int32, Int32).new(initial_capacity: 0)
-      hash.@indices_size_pow2.should eq(0)
+      hash.@indices_size_pow2.should eq(0_u8)
       hash[1] = 2
       hash[1].should eq(2)
     end

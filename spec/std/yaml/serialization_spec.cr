@@ -56,8 +56,8 @@ describe "YAML serialization" do
 
     {% for int in BUILTIN_INTEGER_TYPES %}
       it "does {{ int }}.from_yaml" do
-        {{ int }}.from_yaml("0").should(be_a({{ int }})).should eq(0)
-        {{ int }}.from_yaml("123").should(be_a({{ int }})).should eq(123)
+        {{ int }}.from_yaml("0").should(be_a({{ int }})).should eq({{ int }}.new(0))
+        {{ int }}.from_yaml("123").should(be_a({{ int }})).should eq({{ int }}.new(123))
         {{ int }}.from_yaml({{ int }}::MIN.to_s).should(be_a({{ int }})).should eq({{ int }}::MIN)
         {{ int }}.from_yaml({{ int }}::MAX.to_s).should(be_a({{ int }})).should eq({{ int }}::MAX)
       end
@@ -395,10 +395,10 @@ describe "YAML serialization" do
         (Int32 | String).from_yaml(%(42)).should eq 42
         (Int32 | String).from_yaml(%("42")).should eq "42"
 
-        (String | UInt32).from_yaml(%(42)).should eq 42
+        (String | UInt32).from_yaml(%(42)).should eq 42_u32
         (String | UInt32).from_yaml(%("42")).should eq "42"
 
-        (Int32 | UInt32).from_yaml(%("42")).should eq 42
+        (Int32 | UInt32).from_yaml(%("42")).should eq 42_i32
       end
     end
 

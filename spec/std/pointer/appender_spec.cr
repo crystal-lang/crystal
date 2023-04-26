@@ -18,12 +18,12 @@ describe Pointer::Appender do
   it "#size" do
     data = Slice(Int32).new(5)
     appender = data.to_unsafe.appender
-    appender.size.should eq 0
+    appender.size.should eq 0_i64
     4.times do |i|
       appender << 0
-      appender.size.should eq i + 1
+      appender.size.should eq 1_i64 + i
     end
-    appender.size.should eq 4
+    appender.size.should eq 4_i64
   end
 
   it "#to_slice" do

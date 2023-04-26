@@ -93,8 +93,8 @@ describe YAML::Any do
     YAML::Any.new(nil).raw.should be_nil
     YAML::Any.new(true).raw.should eq true
     YAML::Any.new(1_i64).raw.should eq 1_i64
-    YAML::Any.new(1).raw.should eq 1
-    YAML::Any.new(1_u8).raw.should eq 1
+    YAML::Any.new(1).raw.should eq 1_i64
+    YAML::Any.new(1_u8).raw.should eq 1_i64
     YAML::Any.new(0.0).raw.should eq 0.0
     YAML::Any.new(0.0_f32).raw.should eq 0.0
     YAML::Any.new("foo").raw.should eq "foo"
@@ -150,16 +150,11 @@ describe YAML::Any do
     end
 
     it "gets int64" do
-      value = YAML.parse("1").as_i64
-      value.should eq(1)
-      value.should be_a(Int64)
+      YAML.parse("1").as_i64.should eq(1_i64)
 
-      value = YAML.parse("1").as_i64?
-      value.should eq(1)
-      value.should be_a(Int64)
+      YAML.parse("1").as_i64?.should eq(1_i64)
 
-      value = YAML.parse("true").as_i64?
-      value.should be_nil
+      YAML.parse("true").as_i64?.should be_nil
     end
 
     it "gets float32" do
@@ -178,13 +173,8 @@ describe YAML::Any do
     end
 
     it "gets float32 from JSON integer (#8618)" do
-      value = YAML.parse("123").as_f32
-      value.should eq(123.0)
-      value.should be_a(Float32)
-
-      value = YAML.parse("123").as_f32?
-      value.should eq(123.0)
-      value.should be_a(Float32)
+      YAML.parse("123").as_f32.should eq(123.0_f32)
+      YAML.parse("123").as_f32?.should eq(123.0_f32)
     end
 
     it "gets float64" do
@@ -265,10 +255,10 @@ describe YAML::Any do
     end
 
     it "doesn't get quoted numbers" do
-      YAML.parse("1").as_i64.should eq(1)
+      YAML.parse("1").as_i64.should eq(1_i64)
       YAML.parse("'1'").as_i64?.should be_nil
       YAML.parse("'1'").as_s?.should eq("1")
-      YAML::Any.from_yaml("1").as_i64.should eq(1)
+      YAML::Any.from_yaml("1").as_i64.should eq(1_i64)
       YAML::Any.from_yaml("'1'").as_i64?.should be_nil
       YAML::Any.from_yaml("'1'").as_s?.should eq("1")
     end
@@ -478,7 +468,7 @@ describe YAML::Any do
     nums = YAML.parse("[1, 2, 3]")
     nums.as_a.each_with_index do |x, i|
       x.should be_a(YAML::Any)
-      x.raw.should eq(i + 1)
+      x.raw.should eq(1_i64 + i)
     end
   end
 

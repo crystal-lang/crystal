@@ -748,7 +748,7 @@ describe "BitArray" do
 
         hash = {true => -4_i64}
         ary.tally(hash).should be(hash)
-        hash.should eq({true => 6_i64, false => 35})
+        hash.should eq({true => 6_i64, false => 35_i64})
       end
 
       it "doesn't add key into the tally hash if element doesn't exist" do

@@ -369,6 +369,6 @@ describe "Code gen: enum" do
       end
 
       Foo::A.value.to_u64!
-      )).to_u64.should eq(1 << 6)
+      )).to_u64.should eq(1_u64 << 6)
   end
 end

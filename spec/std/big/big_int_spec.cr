@@ -512,10 +512,10 @@ describe "BigInt" do
     (abc * b).lcm(abc * c).should eq(abc * b * c)
     (abc * b).gcd(abc * c).should be_a(BigInt)
 
-    (a_17).gcd(17).should eq(17)
-    (-a_17).gcd(17).should eq(17)
-    (17).gcd(a_17).should eq(17)
-    (17).gcd(-a_17).should eq(17)
+    (a_17).gcd(17).should eq(17_u64)
+    (-a_17).gcd(17).should eq(17_u64)
+    (17).gcd(a_17).should eq(17_u64)
+    (17).gcd(-a_17).should eq(17_u64)
 
     (a_17).lcm(17).should eq(a_17)
     (-a_17).lcm(17).should eq(a_17)
@@ -650,11 +650,11 @@ describe "BigInt" do
   end
 
   it "does popcount" do
-    5.to_big_i.popcount.should eq(2)
+    5.to_big_i.popcount.should eq(2_u64)
   end
 
   it "#trailing_zeros_count" do
-    "00000000000000001000000000001000".to_big_i(base: 2).trailing_zeros_count.should eq(3)
+    "00000000000000001000000000001000".to_big_i(base: 2).trailing_zeros_count.should eq(3_u64)
   end
 
   it "#hash" do

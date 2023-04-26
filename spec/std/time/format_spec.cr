@@ -266,8 +266,8 @@ describe Time::Format do
     parse_time("11:12:13", "%T").to_s.should eq("0001-01-01 11:12:13 UTC")
     parse_time("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00 UTC")
     parse_time("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00 UTC")
-    parse_time("epoch: 1459864667", "epoch: %s").to_unix.should eq(1459864667)
-    parse_time("epoch: -1459864667", "epoch: %s").to_unix.should eq(-1459864667)
+    parse_time("epoch: 1459864667", "epoch: %s").to_unix.should eq(1459864667_i64)
+    parse_time("epoch: -1459864667", "epoch: %s").to_unix.should eq(-1459864667_i64)
 
     parse_time("1985-W15-5", "%G-W%V-%u").should eq(Time.utc(1985, 4, 12))
     parse_time("2004-W53-6", "%G-W%V-%u").should eq(Time.utc(2005, 1, 1))

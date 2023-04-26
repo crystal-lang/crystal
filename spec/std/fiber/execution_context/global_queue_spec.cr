@@ -49,7 +49,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       fiber.should be(fibers[9])
 
       # enqueued the next 2 fibers
-      runnables.size.should eq(2)
+      runnables.size.should eq(2_u32)
       runnables.shift?.should be(fibers[8])
       runnables.shift?.should be(fibers[7])
 
@@ -70,7 +70,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       fiber.should be(f)
 
       # had nothing left to dequeue
-      runnables.size.should eq(0)
+      runnables.size.should eq(0_u32)
     end
 
     it "clamps divisor to 1" do
@@ -84,7 +84,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       fiber.should be(f)
 
       # had nothing left to dequeue
-      runnables.size.should eq(0)
+      runnables.size.should eq(0_u32)
     end
   end
 

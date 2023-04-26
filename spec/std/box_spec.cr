@@ -52,14 +52,14 @@ describe "Box" do
 
   it "boxing nil returns a null pointer" do
     box = Box.box(nil)
-    box.address.should eq(0)
+    box.address.should eq(0_u64)
 
     Box(Nil).unbox(box).should be_nil
   end
 
   it "boxing nil in a reference-like union returns a null pointer (#11839)" do
     box = Box.box(nil.as(String?))
-    box.address.should eq(0)
+    box.address.should eq(0_u64)
 
     Box(String?).unbox(box).should be_nil
   end

@@ -529,7 +529,7 @@ describe Object do
   end
 
   it "#unsafe_as" do
-    0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
+    0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8})
   end
 
   it "calls #finalize on #clone'd objects" do

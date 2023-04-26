@@ -13,10 +13,10 @@ describe "Number" do
 
   describe "significant" do
     it "10 base" do
-      1234.567.significant(1).should eq(1000)
-      1234.567.significant(2).should eq(1200)
-      1234.567.significant(3).should eq(1230)
-      1234.567.significant(4).should eq(1235)
+      1234.567.significant(1).should eq(1000.0)
+      1234.567.significant(2).should eq(1200.0)
+      1234.567.significant(3).should eq(1230.0)
+      1234.567.significant(4).should eq(1235.0)
       1234.567.significant(5).should be_close(1234.6, 1e-7)
       1234.567.significant(6).should eq(1234.57)
       1234.567.significant(7).should eq(1234.567)
@@ -48,14 +48,14 @@ describe "Number" do
 
   describe "#round" do
     it "rounds to nearest integer" do
-      5.5.round.should eq(6)
-      0.4.round.should eq(0)
-      -2.8.round.should eq(-3)
-      0.0.round.should eq(0)
-      0.49999999999999994.round.should eq(0)
-      -1763.116.round.should eq(-1763)
-      753.155.round.should eq(753)
-      15.151.round.should eq(15)
+      5.5.round.should eq(6.0)
+      0.4.round.should eq(0.0)
+      -2.8.round.should eq(-3.0)
+      0.0.round.should eq(0.0)
+      0.49999999999999994.round.should eq(0.0)
+      -1763.116.round.should eq(-1763.0)
+      753.155.round.should eq(753.0)
+      15.151.round.should eq(15.0)
     end
 
     it "infinity Float64" do
@@ -90,17 +90,17 @@ describe "Number" do
     end
 
     it "rounds to digits" do
-      5.5.round(0).should eq(6)
+      5.5.round(0).should eq(6.0)
       5.7.round(1).should eq(5.7)
       1.2345678.round(2).should eq(1.23)
-      123456.78.round(-2).should eq(123500) # rounded up
-      -123456.78.round(-2).should eq(-123500)
+      123456.78.round(-2).should eq(123500.0) # rounded up
+      -123456.78.round(-2).should eq(-123500.0)
 
       -1763.116.round(2).should eq(-1763.12)
       753.155.round(2).should eq(753.16)
       15.151.round(2).should eq(15.15)
 
-      0.8346268.round(-1).should eq(0)
+      0.8346268.round(-1).should eq(0.0)
     end
 
     it { 42.0.round(300).should eq(42.0) }
@@ -124,8 +124,8 @@ describe "Number" do
       123.round(-3).should eq(0)
       523.round(-3).should eq(1000)
 
-      123.456.round(-2).should eq(100)
-      123_456.123456.round(-5).should eq(100_000)
+      123.456.round(-2).should eq(100.0)
+      123_456.123456.round(-5).should eq(100_000.0)
     end
 
     it "accepts unsigned precision" do
@@ -234,56 +234,56 @@ describe "Number" do
 
     describe "with digits" do
       it "to_zero" do
-        12.345.round(-1, mode: :to_zero).should eq 10
-        12.345.round(0, mode: :to_zero).should eq 12
+        12.345.round(-1, mode: :to_zero).should eq 10.0
+        12.345.round(0, mode: :to_zero).should eq 12.0
         12.345.round(1, mode: :to_zero).should eq 12.3
         12.345.round(2, mode: :to_zero).should eq 12.34
-        -12.345.round(-1, mode: :to_zero).should eq -10
-        -12.345.round(0, mode: :to_zero).should eq -12
+        -12.345.round(-1, mode: :to_zero).should eq -10.0
+        -12.345.round(0, mode: :to_zero).should eq -12.0
         -12.345.round(1, mode: :to_zero).should eq -12.3
         -12.345.round(2, mode: :to_zero).should eq -12.34
       end
 
       it "to_positive" do
-        12.345.round(-1, mode: :to_positive).should eq 20
-        12.345.round(0, mode: :to_positive).should eq 13
+        12.345.round(-1, mode: :to_positive).should eq 20.0
+        12.345.round(0, mode: :to_positive).should eq 13.0
         12.345.round(1, mode: :to_positive).should eq 12.4
         12.345.round(2, mode: :to_positive).should eq 12.35
-        -12.345.round(-1, mode: :to_positive).should eq -10
-        -12.345.round(0, mode: :to_positive).should eq -12
+        -12.345.round(-1, mode: :to_positive).should eq -10.0
+        -12.345.round(0, mode: :to_positive).should eq -12.0
         -12.345.round(1, mode: :to_positive).should eq -12.3
         -12.345.round(2, mode: :to_positive).should eq -12.34
       end
 
       it "to_negative" do
-        12.345.round(-1, mode: :to_negative).should eq 10
-        12.345.round(0, mode: :to_negative).should eq 12
+        12.345.round(-1, mode: :to_negative).should eq 10.0
+        12.345.round(0, mode: :to_negative).should eq 12.0
         12.345.round(1, mode: :to_negative).should eq 12.3
         12.345.round(2, mode: :to_negative).should eq 12.34
-        -12.345.round(-1, mode: :to_negative).should eq -20
-        -12.345.round(0, mode: :to_negative).should eq -13
+        -12.345.round(-1, mode: :to_negative).should eq -20.0
+        -12.345.round(0, mode: :to_negative).should eq -13.0
         -12.345.round(1, mode: :to_negative).should eq -12.4
         -12.345.round(2, mode: :to_negative).should eq -12.35
       end
 
       it "ties_away" do
-        13.825.round(-1, mode: :ties_away).should eq 10
-        13.825.round(0, mode: :ties_away).should eq 14
+        13.825.round(-1, mode: :ties_away).should eq 10.0
+        13.825.round(0, mode: :ties_away).should eq 14.0
         13.825.round(1, mode: :ties_away).should eq 13.8
         13.825.round(2, mode: :ties_away).should eq 13.83
-        -13.825.round(-1, mode: :ties_away).should eq -10
-        -13.825.round(0, mode: :ties_away).should eq -14
+        -13.825.round(-1, mode: :ties_away).should eq -10.0
+        -13.825.round(0, mode: :ties_away).should eq -14.0
         -13.825.round(1, mode: :ties_away).should eq -13.8
         -13.825.round(2, mode: :ties_away).should eq -13.83
       end
 
       it "ties_even" do
-        15.255.round(-1, mode: :ties_even).should eq 20
-        15.255.round(0, mode: :ties_even).should eq 15
+        15.255.round(-1, mode: :ties_even).should eq 20.0
+        15.255.round(0, mode: :ties_even).should eq 15.0
         15.255.round(1, mode: :ties_even).should eq 15.3
         15.255.round(2, mode: :ties_even).should eq 15.26
-        -15.255.round(-1, mode: :ties_even).should eq -20
-        -15.255.round(0, mode: :ties_even).should eq -15
+        -15.255.round(-1, mode: :ties_even).should eq -20.0
+        -15.255.round(0, mode: :ties_even).should eq -15.0
         -15.255.round(1, mode: :ties_even).should eq -15.3
         -15.255.round(2, mode: :ties_even).should eq -15.26
       end
@@ -294,7 +294,7 @@ describe "Number" do
         -1763.116.round(2, base: 2).should eq(-1763.0)
         753.155.round(2, base: 2).should eq(753.25)
         15.159.round(2, base: 2).should eq(15.25)
-        753.155.round(-5, base: 2).should eq(768)
+        753.155.round(-5, base: 2).should eq(768.0)
       end
 
       it "8" do
@@ -397,25 +397,25 @@ describe "Number" do
     ary = Int64[]
     ary.should eq([] of Int64)
     ary << 1_i64
-    ary.should eq([1])
+    ary.should eq([1_i64])
   end
 
   it "creates a slice" do
     slice = Int8.slice(1, 2, 300)
     slice.should be_a(Slice(Int8))
     slice.size.should eq(3)
-    slice[0].should eq(1)
-    slice[1].should eq(2)
-    slice[2].should eq(300.to_u8!)
+    slice[0].should eq(1_i8)
+    slice[1].should eq(2_i8)
+    slice[2].should eq(300.to_i8!)
   end
 
   it "creates a static array" do
     ary = Int8.static_array(1, 2, 300)
     ary.should be_a(StaticArray(Int8, 3))
     ary.size.should eq(3)
-    ary[0].should eq(1)
-    ary[1].should eq(2)
-    ary[2].should eq(300.to_u8!)
+    ary[0].should eq(1_i8)
+    ary[1].should eq(2_i8)
+    ary[2].should eq(300.to_i8!)
   end
 
   it "#zero?" do

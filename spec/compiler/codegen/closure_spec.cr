@@ -348,7 +348,7 @@ describe "Code gen: closure" do
         a += func.call
       end
       a
-      )).to_i.should eq(1249975000_i64)
+      )).to_i.should eq(1249975000)
   end
 
   it "codegens nested closure" do

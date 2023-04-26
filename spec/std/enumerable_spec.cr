@@ -1369,9 +1369,9 @@ describe "Enumerable" do
     it { [1, 2, 3].sum(4.5).should eq(10.5) }
     it { (1..3).sum { |x| x * 2 }.should eq(12) }
     it { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
-    it { [1, 3_u64].sum(0_i32).should eq(4_u32) }
+    it { [1, 3_u64].sum(0_i32).should eq(4_i32) }
     it { [1, 3].sum(0_u64).should eq(4_u64) }
-    it { [1, 10000000000_u64].sum(0_u64).should eq(10000000001) }
+    it { [1, 10000000000_u64].sum(0_u64).should eq(10000000001_u64) }
     pending_wasm32 "raises if union types are summed", tags: %w[slow] do
       assert_compile_error <<-CRYSTAL,
         require "prelude"
@@ -1402,7 +1402,7 @@ describe "Enumerable" do
 
     it "float" do
       [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
-      ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
+      ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0_f32
     end
 
     it "slices" do
@@ -1414,9 +1414,9 @@ describe "Enumerable" do
     it { ([] of Int32).product.should eq(1) }
     it { [1, 2, 3].product.should eq(6) }
     it { [1, 2, 3].product(4).should eq(24) }
-    it { [1, 2, 3].product(4.5).should eq(27) }
+    it { [1, 2, 3].product(4.5).should eq(27.0) }
     it { (1..3).product { |x| x * 2 }.should eq(48) }
-    it { (1..3).product(1.5) { |x| x * 2 }.should eq(72) }
+    it { (1..3).product(1.5) { |x| x * 2 }.should eq(72.0) }
 
     it "uses zero from type" do
       typeof([1, 2, 3].product).should eq(Int32)
@@ -1424,7 +1424,7 @@ describe "Enumerable" do
       typeof([1, 2, 3].product(&.to_f)).should eq(Float64)
     end
 
-    it { [1, 3_u64].product(3_i32).should eq(9_u32) }
+    it { [1, 3_u64].product(3_i32).should eq(9_i32) }
     it { [1, 3].product(3_u64).should eq(9_u64) }
     it { [1, 10000000000_u64].product(3_u64).should eq(30000000000_u64) }
     pending_wasm32 "raises if union types are multiplied", tags: %w[slow] do
@@ -1533,7 +1533,7 @@ describe "Enumerable" do
         words.each(&.chars.tally(hash))
 
         hash.should eq(
-          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1} of Char => Int64
         )
       end
 

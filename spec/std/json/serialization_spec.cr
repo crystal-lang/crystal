@@ -39,8 +39,8 @@ describe "JSON serialization" do
 
     {% for int in BUILTIN_INTEGER_TYPES %}
       it "does {{ int }}.from_json" do
-        {{ int }}.from_json("0").should(be_a({{ int }})).should eq(0)
-        {{ int }}.from_json("123").should(be_a({{ int }})).should eq(123)
+        {{ int }}.from_json("0").should(be_a({{ int }})).should eq({{int}}.new(0))
+        {{ int }}.from_json("123").should(be_a({{ int }})).should eq({{int}}.new(123))
         {{ int }}.from_json({{ int }}::MIN.to_s).should(be_a({{ int }})).should eq({{ int }}::MIN)
         {{ int }}.from_json({{ int }}::MAX.to_s).should(be_a({{ int }})).should eq({{ int }}::MAX)
       end
@@ -461,12 +461,12 @@ describe "JSON serialization" do
     {% end %}
 
     it "deserializes union with Float32 (fast path)" do
-      Union(Float32, Array(Int32)).from_json(%(1)).should eq(1)
+      Union(Float32, Array(Int32)).from_json(%(1)).should eq(1.0_f32)
       Union(Float32, Array(Int32)).from_json(%(1.23)).should eq(1.23_f32)
     end
 
     it "deserializes union with Float64 (fast path)" do
-      Union(Float64, Array(Int32)).from_json(%(1)).should eq(1)
+      Union(Float64, Array(Int32)).from_json(%(1)).should eq(1.0)
       Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
     end
 

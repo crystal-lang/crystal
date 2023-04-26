@@ -279,6 +279,6 @@ describe "Code gen: automatic cast" do
 
       x = 123
       foo(x)
-      )).to_i64.should eq(123)
+      )).to_i64.should eq(123_i64)
   end
 end

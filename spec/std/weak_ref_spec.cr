@@ -31,23 +31,23 @@ describe WeakRef do
 
   it "FinalizeState counts released objects" do
     FinalizeState.reset
-    FinalizeState.count("foo").should eq 0
+    FinalizeState.count("foo").should eq 0_i64
     10.times do
       Foo.new("foo")
     end
     GC.collect
-    FinalizeState.count("foo").should be > 0
+    FinalizeState.count("foo").should be > 0_i64
   end
 
   it "Referenced object should not be released" do
     FinalizeState.reset
     instances = [] of Foo
-    FinalizeState.count("strong_foo_ref").should eq 0
+    FinalizeState.count("strong_foo_ref").should eq 0_i64
     10.times do
       instances << Foo.new("strong_foo_ref")
     end
     GC.collect
-    FinalizeState.count("strong_foo_ref").should eq 0
+    FinalizeState.count("strong_foo_ref").should eq 0_i64
   end
 
   it "Weak referenced object should be released if no other reference" do

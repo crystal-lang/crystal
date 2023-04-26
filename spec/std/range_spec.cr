@@ -198,7 +198,7 @@ describe "Range" do
       inf32 = Float32::INFINITY
       (0..inf32).bsearch { |x| x == inf32 }.should eq inf32
       (0_f32..inf).bsearch { |x| x == inf }.should eq inf
-      (0.0..inf32).bsearch { |x| x == inf32 }.should eq inf32
+      (0.0..inf32).bsearch { |x| x == inf32 }.should eq Float64::INFINITY
       (0_f32...5_f32).bsearch { |x| x >= 5_f32 }.should be_nil
     end
   end

@@ -36,7 +36,7 @@ describe DiyFP do
     fp2 = DiyFP.new(2_u64, 0)
     prod = fp1 * fp2
 
-    prod.frac.should eq 0
+    prod.frac.should eq 0_u64
     prod.exp.should eq 64
   end
 
@@ -45,7 +45,7 @@ describe DiyFP do
     fp2 = DiyFP.new(2_u64, 13)
     prod = fp1 * fp2
 
-    prod.frac.should eq 1
+    prod.frac.should eq 1_u64
     prod.exp.should eq 11 + 13 + 64
   end
 
@@ -54,7 +54,7 @@ describe DiyFP do
     fp2 = DiyFP.new(1_u64, 13)
     prod = fp1 * fp2
 
-    prod.frac.should eq 1
+    prod.frac.should eq 1_u64
     prod.exp.should eq 11 + 13 + 64
   end
 
@@ -63,7 +63,7 @@ describe DiyFP do
     fp2 = DiyFP.new(1_u64, 13)
     prod = fp1 * fp2
 
-    prod.frac.should eq 0
+    prod.frac.should eq 0_u64
     prod.exp.should eq 11 + 13 + 64
   end
 
@@ -85,7 +85,7 @@ describe DiyFP do
 
     fp.exp.should eq 0x12 - 0x3FF - 52
     # The 52 mantissa bits, plus the implicit 1 in bit 52 as a UINT64.
-    fp.frac.should eq 0x0013456789ABCDEF
+    fp.frac.should eq 0x0013456789ABCDEF_u64
   end
 
   it "converts ordered 32" do
@@ -98,7 +98,7 @@ describe DiyFP do
     fp.exp.should eq 0x2 - 0x7F - 23
     # The 23 mantissa bits, plus the implicit 1 in bit 24 as a uint32.
 
-    fp.frac.should eq 0xA34567
+    fp.frac.should eq 0xA34567_u64
   end
 
   it "converts min f64" do
@@ -110,7 +110,7 @@ describe DiyFP do
 
     fp.exp.should eq -0x3FF - 52 + 1
     # This is denormal, so no hidden bit
-    fp.frac.should eq 1
+    fp.frac.should eq 1_u64
   end
 
   it "converts min f32" do
@@ -120,7 +120,7 @@ describe DiyFP do
 
     fp.exp.should eq -0x7F - 23 + 1
     # This is a denormal; so no hidden bit.
-    fp.frac.should eq 1
+    fp.frac.should eq 1_u64
   end
 
   it "converts max f64" do

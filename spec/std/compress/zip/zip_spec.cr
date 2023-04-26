@@ -18,9 +18,9 @@ describe Compress::Zip do
       entry.dir?.should be_false
       entry.filename.should eq("foo.txt")
       entry.compression_method.should eq(Compress::Zip::CompressionMethod::DEFLATED)
-      entry.crc32.should eq(0)
-      entry.compressed_size.should eq(0)
-      entry.uncompressed_size.should eq(0)
+      entry.crc32.should eq(0u32)
+      entry.compressed_size.should eq(0_u32)
+      entry.uncompressed_size.should eq(0_u32)
       entry.extra.should be_empty
       entry.io.gets_to_end.should eq("contents of foo")
 
@@ -84,8 +84,8 @@ describe Compress::Zip do
       entry.filename.should eq("foo.txt")
       entry.compression_method.should eq(Compress::Zip::CompressionMethod::STORED)
       entry.crc32.should eq(crc32)
-      entry.compressed_size.should eq(text.bytesize)
-      entry.uncompressed_size.should eq(text.bytesize)
+      entry.compressed_size.should eq(text.bytesize.to_u32!)
+      entry.uncompressed_size.should eq(text.bytesize.to_u32!)
       entry.io.gets_to_end.should eq(text)
 
       entry = zip.next_entry.not_nil!

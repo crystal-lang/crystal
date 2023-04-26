@@ -40,7 +40,7 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
     lexer = JSON::Lexer.new string
     token = lexer.next_token
     token.kind.should eq(JSON::Token::Kind::Int)
-    token.int_value.should eq(int_value)
+    token.int_value.should eq(int_value.to_i64)
     token.raw_value.should eq(string)
     token.to_s.should eq(token.raw_value)
   end
@@ -49,7 +49,7 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
     lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
     token.kind.should eq(JSON::Token::Kind::Int)
-    token.int_value.should eq(int_value)
+    token.int_value.should eq(int_value.to_i64)
     token.raw_value.should eq(string)
     token.to_s.should eq(token.raw_value)
   end
@@ -60,7 +60,7 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
     lexer = JSON::Lexer.new string
     token = lexer.next_token
     token.kind.should eq(JSON::Token::Kind::Float)
-    token.float_value.should eq(float_value)
+    token.float_value.should eq(float_value.to_f64)
     token.raw_value.should eq(string)
     token.to_s.should eq(token.raw_value)
   end
@@ -69,7 +69,7 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
     lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
     token.kind.should eq(JSON::Token::Kind::Float)
-    token.float_value.should eq(float_value)
+    token.float_value.should eq(float_value.to_f64)
     token.raw_value.should eq(string)
     token.to_s.should eq(token.raw_value)
   end

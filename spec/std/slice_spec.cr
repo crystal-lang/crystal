@@ -795,7 +795,7 @@ describe "Slice" do
 
           spaceships.{{ sort }}!
           4.times do |i|
-            spaceships[i].value.should eq(i)
+            spaceships[i].value.should eq(i.to_f64)
           end
         end
 

@@ -53,7 +53,7 @@ describe "Float64 boundaries" do
     # 1.5 does not have a significand of the form 2^p (for some p).
     # Therefore its boundaries are at the same distance.
     (pl - fp).should eq(fp - mi)
-    (fp - mi).should eq(1 << 10)
+    (fp - mi).should eq(1_u64 << 10)
   end
 
   it "boundaries 1.0" do
@@ -61,8 +61,8 @@ describe "Float64 boundaries" do
     # 1.0 does have a significand of the form 2^p (for some p).
     # Therefore its lower boundary is twice as close as the upper boundary.
     (pl - fp).should be > fp - mi
-    (fp - mi).should eq 1 << 9
-    (pl - fp).should eq 1 << 10
+    (fp - mi).should eq 1_u64 << 9
+    (pl - fp).should eq 1_u64 << 10
   end
 
   it "boundaries min float64" do
@@ -78,14 +78,14 @@ describe "Float64 boundaries" do
     # Even though the significand is of the form 2^p (for some p), its boundaries
     # are at the same distance. (This is the only exception).
     (fp - mi).should eq(pl - fp)
-    (fp - mi).should eq(1 << 10)
+    (fp - mi).should eq(1_u64 << 10)
   end
 
   it "boundaries max denormal f64" do
     fp, mi, pl = gen_bound(0x000FFFFFFFFFFFFF_u64)
 
     (fp - mi).should eq(pl - fp)
-    (fp - mi).should eq(1 << 11)
+    (fp - mi).should eq(1_u64 << 11)
   end
 
   it "boundaries max f64" do
@@ -93,7 +93,7 @@ describe "Float64 boundaries" do
     # max-value does not have a significand of the form 2^p (for some p).
     # Therefore its boundaries are at the same distance.
     (fp - mi).should eq(pl - fp)
-    (fp - mi).should eq(1 << 10)
+    (fp - mi).should eq(1_u64 << 10)
   end
 end
 

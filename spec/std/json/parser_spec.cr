@@ -16,7 +16,7 @@ private def it_raises_on_parse(string, file = __FILE__, line = __LINE__)
 end
 
 describe JSON::Parser do
-  it_parses "1", 1
+  it_parses "1", 1_i64
   it_parses "2.5", 2.5
   it_parses %("hello"), "hello"
   it_parses "true", true
@@ -77,7 +77,6 @@ describe JSON::Parser do
 
   it "returns raw" do
     value = JSON.parse("1").raw
-    value.should eq(1)
-    value.should be_a(Int64)
+    value.should eq(1_i64)
   end
 end

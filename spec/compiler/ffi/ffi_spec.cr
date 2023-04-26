@@ -116,7 +116,7 @@ describe Crystal::FFI::CallInterface do
       ]
 
       call_interface.call(function_pointer, arg_pointers.to_unsafe, Pointer(Void).null)
-      pointer_value.should eq 66
+      pointer_value.should eq 66_i64
     ensure
       loader.try &.close_all
     end

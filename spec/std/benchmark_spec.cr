@@ -25,7 +25,7 @@ describe Benchmark::IPS::Job do
     # timer precision sleep 0.001 may not always be faster than 0.002 so we
     # don't care which
     first, second = [a.slower, b.slower].sort
-    first.should eq(1)
+    first.should eq(1.0)
     second.should be > 1
   end
 end
