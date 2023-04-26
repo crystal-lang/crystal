@@ -763,9 +763,9 @@ describe "Hash" do
   end
 
   it "merges recursive type (#1693)" do
-    hash = {"foo" => "bar"} of String => RecursiveType
+    hash = {"foo" => "bar"} of String => String | RecursiveType
     result = hash.merge({"foobar" => "foo"})
-    result.should eq({"foo" => "bar", "foobar" => "foo"})
+    result.should eq({"foo" => "bar", "foobar" => "foo"} of String => String | Int32 | Array(RecursiveType) | Hash(String, RecursiveType))
   end
 
   it "merges other type with block" do
