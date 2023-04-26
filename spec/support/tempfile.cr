@@ -53,13 +53,14 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
 
     {% if flag?(:msvc) %}
       # following is based on `Crystal::Compiler#linker_command`
-      cl = "cl.exe"
-
-      if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
-        # we won't be cross-compiling the specs binaries, so host and target
-        # bits are identical
-        bits = {{ flag?(:bits64) ? "x64" : "x86" }}
-        cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, "cl.exe").to_s)
+      unless cl = ENV["CC"]?
+        cl = "cl.exe"
+        if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
+          # we won't be cross-compiling the specs binaries, so host and target
+          # bits are identical
+          bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+          cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, cl).to_s)
+        end
       end
 
       `#{cl} /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
