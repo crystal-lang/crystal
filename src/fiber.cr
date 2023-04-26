@@ -141,7 +141,7 @@ class Fiber
   end
 
   # :nodoc:
-  def run
+  def run : Nil
     GC.unlock_read
     @proc.call
   rescue ex
