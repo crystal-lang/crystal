@@ -220,7 +220,7 @@ module IO::Overlapped
       yield operation.start
 
       unless schedule_overlapped(read_timeout)
-        raise IO::TimeoutError.new("accept timed out")
+        raise IO::TimeoutError.new("#{method} timed out")
       end
 
       operation.result(socket) do |error|

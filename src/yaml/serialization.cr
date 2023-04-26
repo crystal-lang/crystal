@@ -406,7 +406,7 @@ module YAML
     # ```
     macro use_yaml_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
-        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+        {% mapping.raise "Mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
       def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -415,7 +415,7 @@ module YAML
         end
 
         unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}"
+          node.raise "Expected YAML mapping, not #{node.class}"
         end
 
         node.each do |key, value|

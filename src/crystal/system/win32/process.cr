@@ -42,7 +42,7 @@ struct Crystal::System::Process
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
     if exit_code == LibC::STILL_ACTIVE
-      raise "BUG: process still active"
+      raise "BUG: Process still active"
     end
     exit_code
   end

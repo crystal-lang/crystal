@@ -83,7 +83,7 @@ struct Exception::CallStack
                      # TODO: use WOW64_CONTEXT in place of CONTEXT
                      {% raise "x86 not supported" %}
                    {% else %}
-                     {% raise "architecture not supported" %}
+                     {% raise "Architecture not supported" %}
                    {% end %}
 
     stack_frame = LibC::STACKFRAME64.new

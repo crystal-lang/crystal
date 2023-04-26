@@ -272,6 +272,6 @@ end
 
 {% if flag?(:interpreted) %}
   def __crystal_raise_cast_failed(obj, type_name : String, location : String)
-    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+    raise TypeCastError.new("Cast from #{obj.class} to #{type_name} failed, at #{location}")
   end
 {% end %}

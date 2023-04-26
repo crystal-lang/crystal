@@ -38,5 +38,5 @@ end
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"
 {% else %}
-  {% raise "event_loop not supported" %}
+  {% raise "Event loop not supported" %}
 {% end %}
