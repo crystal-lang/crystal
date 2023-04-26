@@ -286,7 +286,7 @@ describe HTTP::Server::RequestProcessor do
 
     logs.check(:error, "Unhandled exception on HTTP::Handler")
     logs.entry.exception.should eq(exception)
-    logs.entry.context[:foo].should eq "bar"
+    logs.entry.context[:foo].should eq? "bar"
   end
 
   it "doesn't respond with error when headers were already sent" do
@@ -342,11 +342,11 @@ describe HTTP::Server::RequestProcessor do
     logs.check :info, "before"
     logs.entry.context.should be_empty
     logs.check :info, "after"
-    logs.entry.context[:foo].should eq "bar"
+    logs.entry.context[:foo].should eq? "bar"
 
     logs.check :info, "before"
     logs.entry.context.should be_empty
     logs.check :info, "after"
-    logs.entry.context[:foo].should eq "bar"
+    logs.entry.context[:foo].should eq? "bar"
   end
 end
