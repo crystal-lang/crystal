@@ -61,7 +61,7 @@
 # p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
 # p                  # => #<Point(@x=0, @y=2)>
 # ```
-macro record(name, *properties, **kwargs)
+macro record(__name, *properties, **kwargs)
   {% raise "macro `record` does not accept named arguments
     Did you mean:
 
