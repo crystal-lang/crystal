@@ -47,6 +47,44 @@ describe Log::Builder do
     log.level.should eq(s(:info))
   end
 
+  it "creates a log for broadcast backend" do
+    builder = Log::Builder.new
+    a = Log::MemoryBackend.new
+    b = Log::MemoryBackend.new
+
+    broadcast = Log::BroadcastBackend.new
+    broadcast.append(a, :fatal)
+
+    builder.bind("db", :trace, broadcast)
+    builder.bind("db", :info, b)
+
+    log = builder.for("db")
+
+    backend = log.backend.should be_a(Log::BroadcastBackend)
+    backend.@backends.should eq({a => s(:fatal), b => s(:info)})
+    log.source.should eq("db")
+    log.level.should eq(s(:info))
+  end
+
+  it "creates a log for same broadcast backend added multiple times" do
+    builder = Log::Builder.new
+    a = Log::MemoryBackend.new
+
+    broadcast = Log::BroadcastBackend.new
+    broadcast.append(a, :fatal)
+
+    builder.bind("db", :trace, broadcast)
+    builder.bind("db", :info, broadcast)
+
+    log = builder.for("db")
+
+    backend = log.backend.should be_a(Log::BroadcastBackend)
+    backend.should be(broadcast)
+    backend.@backends.should eq({a => s(:fatal)})
+    log.source.should eq("db")
+    log.level.should eq(s(:info))
+  end
+
   it "uses last level for a source x backend" do
     builder = Log::Builder.new
     a = Log::MemoryBackend.new
