@@ -19,7 +19,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.8.0"
+          crystal: "1.8.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -373,3 +373,6 @@ jobs:
 
       - name: Run primitives specs
         run: make -f Makefile.win primitives_spec
+
+      - name: Build samples
+        run: make -f Makefile.win samples

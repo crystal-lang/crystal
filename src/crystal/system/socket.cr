@@ -25,9 +25,29 @@ module Crystal::System::Socket
 
   # private def system_close_write
 
-  # private def system_reuse_port?
+  # private def system_send_buffer_size : Int
+
+  # private def system_send_buffer_size=(val : Int)
+
+  # private def system_recv_buffer_size : Int
+
+  # private def system_recv_buffer_size=(val : Int)
+
+  # private def system_reuse_address? : Bool
+
+  # private def system_reuse_address=(val : Bool)
+
+  # private def system_reuse_port? : Bool
 
   # private def system_reuse_port=(val : Bool)
+
+  # private def system_broadcast? : Bool
+
+  # private def system_broadcast=(val : Bool)
+
+  # private def system_keepalive? : Bool
+
+  # private def system_keepalive=(val : Bool)
 
   # private def system_linger
 
