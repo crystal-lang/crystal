@@ -1723,8 +1723,8 @@ class String
     if single_byte_optimizable?
       unsafe_byte_slice_string(1, bytesize - 1)
     else
-      reader = Char::Reader.new(self)
-      unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
+      first_char_bytesize = char_bytesize_at(0)
+      unsafe_byte_slice_string(first_char_bytesize, bytesize - first_char_bytesize)
     end
   end
 
@@ -2532,8 +2532,7 @@ class String
     byte_index = char_index_to_byte_index(index)
     raise IndexError.new unless byte_index
 
-    reader = Char::Reader.new(self, pos: byte_index)
-    width = reader.current_char_width
+    width = char_bytesize_at(byte_index)
     replacement_width = replacement.bytesize
     new_bytesize = bytesize - width + replacement_width
 
@@ -2816,7 +2815,7 @@ class String
 
         if string.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
-          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
+          byte_offset = index + char_bytesize_at(byte_offset)
           last_byte_offset = index
         else
           byte_offset = index + string.bytesize
@@ -2874,7 +2873,7 @@ class String
 
         if str.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
-          byte_offset = index + Char::Reader.new(self, pos: byte_offset).current_char_width
+          byte_offset = index + char_bytesize_at(byte_offset)
           last_byte_offset = index
         else
           byte_offset = index + str.bytesize
@@ -4597,7 +4596,7 @@ class String
       $~ = match
       yield match
       match_bytesize = match.byte_end(0) - index
-      match_bytesize += 1 if match_bytesize == 0
+      match_bytesize += char_bytesize_at(byte_offset) if match_bytesize == 0
       byte_offset = index + match_bytesize
     end
 

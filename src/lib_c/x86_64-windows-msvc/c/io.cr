@@ -11,6 +11,7 @@ lib LibC
   fun _wchmod(filename : WCHAR*, pmode : Int) : Int
   fun _wunlink(filename : WCHAR*) : Int
   fun _wmktemp_s(template : WCHAR*, sizeInChars : SizeT) : ErrnoT
+  fun _wexecvp(cmdname : WCHAR*, argv : WCHAR**) : IntPtrT
   fun _chsize_s(fd : Int, size : Int64) : ErrnoT
   fun _get_osfhandle(fd : Int) : IntPtrT
   fun _pipe(pfds : Int*, psize : UInt, textmode : Int) : Int

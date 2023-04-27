@@ -30,6 +30,7 @@ debug ?=        ## Add symbolic debug info
 verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
+target ?=       ## Cross-compilation target
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
 order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)

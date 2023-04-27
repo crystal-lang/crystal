@@ -61,6 +61,10 @@ module Regex::PCRE
     flag
   end
 
+  def self.supports_compile_flag?(options)
+    !options.endanchored? && !options.match_invalid_utf?
+  end
+
   private def pcre_match_options(options)
     flag = 0
     Regex::Options.each do |option|
@@ -111,6 +115,10 @@ module Regex::PCRE
     flag |= options.value
 
     flag
+  end
+
+  def self.supports_match_flag?(options)
+    !options.endanchored? && !options.no_jit?
   end
 
   def finalize

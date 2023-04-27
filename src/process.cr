@@ -169,8 +169,6 @@ class Process
 
   # Replaces the current process with a new one. This function never returns.
   #
-  # Available only on Unix-like operating systems.
-  #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
