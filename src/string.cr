@@ -2880,7 +2880,7 @@ class String
           last_byte_offset = byte_offset
         end
 
-        match = pattern.match_at_byte_index(self, byte_offset)
+        match = pattern.match_at_byte_index(self, byte_offset, Regex::MatchOptions::NO_UTF_CHECK)
       end
 
       if last_byte_offset < bytesize
@@ -4108,7 +4108,8 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    while match = separator.match_at_byte_index(self, match_offset)
+    options = Regex::MatchOptions::None
+    while match = separator.match_at_byte_index(self, match_offset, options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
       next_offset = index + match_bytesize
@@ -4132,6 +4133,7 @@ class String
 
       break if limit && count + 1 == limit
       break if match_offset >= bytesize
+      options |= :no_utf_check
     end
 
     yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
@@ -4591,13 +4593,15 @@ class String
   def scan(pattern : Regex, &) : self
     byte_offset = 0
 
-    while match = pattern.match_at_byte_index(self, byte_offset)
+    options = Regex::MatchOptions::None
+    while match = pattern.match_at_byte_index(self, byte_offset, options)
       index = match.byte_begin(0)
       $~ = match
       yield match
       match_bytesize = match.byte_end(0) - index
       match_bytesize += char_bytesize_at(byte_offset) if match_bytesize == 0
       byte_offset = index + match_bytesize
+      options |= :no_utf_check
     end
 
     self
