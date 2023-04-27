@@ -448,10 +448,10 @@ module HTTP
             client.get("/")
 
             logs.check(:debug, "Performing request")
-            logs.entry.data[:method].should eq("GET")
-            logs.entry.data[:host].should eq("localhost")
-            logs.entry.data[:port].should eq(server.local_address.port)
-            logs.entry.data[:resource].should eq("/")
+            logs.entry.data[:method].should eq?("GET")
+            logs.entry.data[:host].should eq?("localhost")
+            logs.entry.data[:port].should eq?(server.local_address.port)
+            logs.entry.data[:resource].should eq?("/")
           end
         end
       end
@@ -462,10 +462,10 @@ module HTTP
             Log.capture("http.client") do |logs|
               client.get("/") do |response|
                 logs.check(:debug, "Performing request")
-                logs.entry.data[:method].should eq("GET")
-                logs.entry.data[:host].should eq("localhost")
-                logs.entry.data[:port].should eq(server.local_address.port)
-                logs.entry.data[:resource].should eq("/")
+                logs.entry.data[:method].should eq?("GET")
+                logs.entry.data[:host].should eq?("localhost")
+                logs.entry.data[:port].should eq?(server.local_address.port)
+                logs.entry.data[:resource].should eq?("/")
               end
             end
           end

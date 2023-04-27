@@ -477,7 +477,7 @@ describe "Array" do
     end
 
     it "works with mixed types" do
-      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq?({1, "a", 1.0, 'a'})
+      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq(Tuple(Int32 | String | Float64 | Char, Int32 | String | Float64 | Char, Int32 | String | Float64 | Char, Int32 | String | Float64 | Char).new(1, "a", 1.0, 'a'))
     end
   end
 

@@ -116,16 +116,14 @@ describe Indexable do
 
     it "offset type" do
       indexable = SafeIndexable.new(3)
-      indexable.index(1, 0_i64).should eq 1
-      indexable.index(1, 0_i64).should be_a(Int64)
+      indexable.index(1, 0_i64).should eq 1_i64
     end
   end
 
   describe "#index!" do
     it "offset type" do
       indexable = SafeIndexable.new(3)
-      indexable.index!(1, 0_i64).should eq 1
-      indexable.index!(1, 0_i64).should be_a(Int64)
+      indexable.index!(1, 0_i64).should eq 1_i64
     end
 
     it "raises if no element is found" do
@@ -220,8 +218,7 @@ describe Indexable do
 
     it "offset type" do
       indexable = SafeIndexable.new(3)
-      indexable.rindex(1, 2_i64).should eq 1
-      indexable.rindex(1, 2_i64).should be_a(Int64)
+      indexable.rindex(1, 2_i64).should eq 1_i64
     end
   end
 
@@ -242,8 +239,7 @@ describe Indexable do
 
     it "offset type" do
       indexable = SafeIndexable.new(3)
-      indexable.rindex!(1, 2_i64).should eq 1
-      indexable.rindex!(1, 2_i64).should be_a(Int64)
+      indexable.rindex!(1, 2_i64).should eq 1_i64
     end
   end
 
@@ -472,8 +468,16 @@ describe Indexable do
 
     it "does with a Tuple of Tuples with mixed types" do
       elems = Indexable.cartesian_product({ {1, 'a'}, {"", 4}, {5, 6} })
-      elems.should be_a(Array(Array(Int32 | Char | String)))
-      elems.should eq([[1, "", 5], [1, "", 6], [1, 4, 5], [1, 4, 6], ['a', "", 5], ['a', "", 6], ['a', 4, 5], ['a', 4, 6]])
+      elems.should eq([
+        [1, "", 5] of Int32 | Char | String,
+        [1, "", 6] of Int32 | Char | String,
+        [1, 4, 5] of Int32 | Char | String,
+        [1, 4, 6] of Int32 | Char | String,
+        ['a', "", 5] of Int32 | Char | String,
+        ['a', "", 6] of Int32 | Char | String,
+        ['a', 4, 5] of Int32 | Char | String,
+        ['a', 4, 6] of Int32 | Char | String,
+      ])
     end
   end
 
@@ -522,7 +526,7 @@ describe Indexable do
       i2 = SafeIndexable.new(3)
       i3 = SafeIndexable.new(4)
       i1.each_cartesian(i2, i3) { |a, b, c| r << a + b + c }
-      r.should eq([0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6])
+      r.should eq([0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6] of Int32 | String)
     end
 
     it "does with >1 other Indexables, without block" do
