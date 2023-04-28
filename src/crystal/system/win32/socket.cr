@@ -110,20 +110,7 @@ module Crystal::System::Socket
 
     error = overlapped_connect(fd, "ConnectEx") do |overlapped|
       # This is: LibC.ConnectEx(fd, addr, addr.size, nil, 0, nil, overlapped)
-      result = Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
-
-      if result.zero?
-        wsa_error = WinError.wsa_value
-
-        case wsa_error
-        when .wsa_io_pending?
-          next
-        when .wsaeaddrnotavail?
-          return yield ::Socket::ConnectError.from_os_error("ConnectEx", wsa_error)
-        else
-          return yield ::Socket::Error.from_os_error("ConnectEx", wsa_error)
-        end
-      end
+      Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
     end
 
     if error
@@ -145,7 +132,21 @@ module Crystal::System::Socket
 
   private def overlapped_connect(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
-      yield operation.start
+      result = yield operation.start
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .wsaeaddrnotavail?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        else
+          return ::Socket::Error.from_os_error("ConnectEx", error)
+        end
+      else
+        operation.synchronous = true
+        return nil
+      end
 
       schedule_overlapped(read_timeout || 1.seconds)
 
