@@ -202,19 +202,11 @@ module Crystal::System::Socket
     output_buffer = Bytes.new(address_size * 2 + buffer_size)
 
     success = overlapped_accept(fd, "AcceptEx") do |overlapped|
+      # This is: LibC.AcceptEx(fd, client_socket, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
       received_bytes = uninitialized UInt32
-
-      result = Crystal::System::Socket.accept_ex.call(fd, client_socket,
+      Crystal::System::Socket.accept_ex.call(fd, client_socket,
         output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
         address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
-
-      if result.zero?
-        error = WinError.wsa_value
-
-        unless error.wsa_io_pending?
-          return false
-        end
-      end
     end
 
     return false unless success
@@ -229,7 +221,19 @@ module Crystal::System::Socket
 
   private def overlapped_accept(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
-      yield operation.start
+      result = yield operation.start
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        else
+          return false
+        end
+      else
+        operation.synchronous = true
+        return true
+      end
 
       unless schedule_overlapped(read_timeout)
         raise IO::TimeoutError.new("accept timed out")
