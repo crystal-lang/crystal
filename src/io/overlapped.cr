@@ -152,9 +152,9 @@ module IO::Overlapped
         # Microsoft documentation:
         # The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        # (this applies even to asynchronous operations that completed
-        # synchronously)
-        if synchronous? || LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        # (this does not apply to asynchronous operations that finished
+        # synchronously, as nothing would be queued to the IOCP)
+        if !synchronous? && LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end

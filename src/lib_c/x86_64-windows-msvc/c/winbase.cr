@@ -25,6 +25,10 @@ lib LibC
   fun CreateNamedPipeA(lpName : LPSTR, dwOpenMode : DWORD, dwPipeMode : DWORD, nMaxInstances : DWORD,
                        nOutBufferSize : DWORD, nInBufferSize : DWORD, nDefaultTimeOut : DWORD, lpSecurityAttributes : SECURITY_ATTRIBUTES*) : HANDLE
 
+  FILE_SKIP_COMPLETION_PORT_ON_SUCCESS = 1_u8
+
+  fun SetFileCompletionNotificationModes(fileHandle : HANDLE, flags : UChar) : BOOL
+
   fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
   fun GetEnvironmentStringsW : LPWCH
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
