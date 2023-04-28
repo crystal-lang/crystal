@@ -18,8 +18,12 @@ lib LibC
   SYMBOLIC_LINK_FLAG_DIRECTORY                 = 0x1
   SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 0x2
 
-  fun CreateHardLinkW(lpFileName : LPWSTR, lpExistingFileName : LPWSTR, lpSecurityAttributes : Void*) : BOOL
+  PIPE_ACCESS_OUTBOUND = 0x00000002
+
+  fun CreateHardLinkW(lpFileName : LPWSTR, lpExistingFileName : LPWSTR, lpSecurityAttributes : SECURITY_ATTRIBUTES*) : BOOL
   fun CreateSymbolicLinkW(lpSymlinkFileName : LPWSTR, lpTargetFileName : LPWSTR, dwFlags : DWORD) : BOOLEAN
+  fun CreateNamedPipeA(lpName : LPSTR, dwOpenMode : DWORD, dwPipeMode : DWORD, nMaxInstances : DWORD,
+                       nOutBufferSize : DWORD, nInBufferSize : DWORD, nDefaultTimeOut : DWORD, lpSecurityAttributes : SECURITY_ATTRIBUTES*) : HANDLE
 
   fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
   fun GetEnvironmentStringsW : LPWCH

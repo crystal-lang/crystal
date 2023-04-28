@@ -254,7 +254,7 @@ module Crystal
     end
 
     def interpret_raise(node)
-      macro_raise(node, node.args, self)
+      macro_raise(node, node.args, self, Crystal::TopLevelMacroRaiseException)
     end
 
     def interpret_warning(node)
@@ -387,7 +387,7 @@ module Crystal
       when "class_name"
         interpret_check_args { class_name }
       when "raise"
-        macro_raise self, args, interpreter
+        macro_raise self, args, interpreter, Crystal::MacroRaiseException
       when "warning"
         macro_warning self, args, interpreter
       when "filename"
@@ -2676,14 +2676,14 @@ private def visibility_to_symbol(visibility)
   Crystal::SymbolLiteral.new(visibility_name)
 end
 
-private def macro_raise(node, args, interpreter)
+private def macro_raise(node, args, interpreter, exception_type)
   msg = args.map do |arg|
     arg.accept interpreter
     interpreter.last.to_macro_id
   end
   msg = msg.join " "
 
-  node.raise msg, exception_type: Crystal::MacroRaiseException
+  node.raise msg, exception_type: exception_type
 end
 
 private def macro_warning(node, args, interpreter)
