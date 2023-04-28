@@ -143,6 +143,26 @@ module Crystal::System::Socket
     end
   end
 
+  private def overlapped_connect(socket, method, &)
+    OverlappedOperation.run(socket) do |operation|
+      yield operation.start
+
+      schedule_overlapped(read_timeout || 1.seconds)
+
+      operation.wsa_result(socket) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaeconnrefused?
+          return ::Socket::ConnectError.from_os_error(method, error)
+        when .error_operation_aborted?
+          # FIXME: Not sure why this is necessary
+          return ::Socket::ConnectError.from_os_error(method, error)
+        end
+      end
+
+      nil
+    end
+  end
+
   private def system_connect_connectionless(addr, timeout, &)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
@@ -204,6 +224,25 @@ module Crystal::System::Socket
     system_setsockopt client_socket, LibC::SO_UPDATE_ACCEPT_CONTEXT, fd
 
     true
+  end
+
+  private def overlapped_accept(socket, method, &)
+    OverlappedOperation.run(socket) do |operation|
+      yield operation.start
+
+      unless schedule_overlapped(read_timeout)
+        raise IO::TimeoutError.new("accept timed out")
+      end
+
+      operation.wsa_result(socket) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaenotsock?
+          return false
+        end
+      end
+
+      true
+    end
   end
 
   private def wsa_buffer(bytes)
@@ -402,7 +441,7 @@ module Crystal::System::Socket
   private def unbuffered_read(slice : Bytes)
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = overlapped_operation(fd, "WSARecv", read_timeout, connreset_is_error: false) do |overlapped|
+    bytes_read = overlapped_read(fd, "WSARecv", connreset_is_error: false) do |overlapped|
       flags = 0_u32
       LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
     end
@@ -417,6 +456,18 @@ module Crystal::System::Socket
     end
     # we could return bytes (from WSAGetOverlappedResult) or bytes_sent
     bytes.to_i32
+  end
+
+  private def overlapped_write(socket, method, &)
+    wsa_overlapped_operation(socket, method, write_timeout) do |operation|
+      yield operation
+    end
+  end
+
+  private def overlapped_read(socket, method, *, connreset_is_error = true, &)
+    wsa_overlapped_operation(socket, method, read_timeout, connreset_is_error) do |operation|
+      yield operation
+    end
   end
 
   def system_close

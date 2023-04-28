@@ -19,7 +19,7 @@ lib LibC
 
   struct OVERLAPPED_ENTRY
     lpCompletionKey : ULONG_PTR
-    lpOverlapped : WSAOVERLAPPED*
+    lpOverlapped : OVERLAPPED*
     internal : ULONG_PTR
     dwNumberOfBytesTransferred : DWORD
   end

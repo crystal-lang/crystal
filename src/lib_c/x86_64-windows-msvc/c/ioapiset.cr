@@ -1,4 +1,11 @@
 lib LibC
+  fun GetOverlappedResult(
+    hFile : HANDLE,
+    lpOverlapped : OVERLAPPED*,
+    lpNumberOfBytesTransferred : DWORD*,
+    bWait : BOOL
+  ) : BOOL
+
   fun CreateIoCompletionPort(
     fileHandle : HANDLE,
     existingCompletionPort : HANDLE,
