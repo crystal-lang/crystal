@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
   SPEC_SPLIT_DOTS: 160
@@ -37,4 +37,4 @@ jobs:
         run: bin/ci build
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'bin/crystal spec --order=random spec/compiler/interpreter_spec.cr'
+        run: bin/ci with_build_env 'make interpreter_spec'

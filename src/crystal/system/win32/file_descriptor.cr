@@ -54,8 +54,19 @@ module Crystal::System::FileDescriptor
   end
 
   private def windows_handle
+    FileDescriptor.windows_handle!(fd)
+  end
+
+  def self.windows_handle(fd)
+    ret = LibC._get_osfhandle(fd)
+    return LibC::INVALID_HANDLE_VALUE if ret == -1 || ret == -2
+    LibC::HANDLE.new(ret)
+  end
+
+  def self.windows_handle!(fd)
     ret = LibC._get_osfhandle(fd)
     raise RuntimeError.from_errno("_get_osfhandle") if ret == -1
+    raise RuntimeError.new("_get_osfhandle returned -2") if ret == -2
     LibC::HANDLE.new(ret)
   end
 
@@ -103,22 +114,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?("dup3") %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
-      flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.fd, self.fd, flags) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-    {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC._dup2(other.fd, self.fd) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
-      end
-    {% end %}
+    # Windows doesn't implement the CLOEXEC flag
+    if LibC._dup2(other.fd, self.fd) == -1
+      raise IO::Error.from_errno("Could not reopen file descriptor")
+    end
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
@@ -154,9 +153,7 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(fd, buffer, offset)
-    handle = LibC._get_osfhandle(fd)
-    raise IO::Error.from_errno("_get_osfhandle") if handle == -1
-    handle = LibC::HANDLE.new(handle)
+    handle = windows_handle!(fd)
 
     overlapped = LibC::OVERLAPPED.new
     overlapped.union.offset.offset = LibC::DWORD.new(offset)
@@ -172,9 +169,9 @@ module Crystal::System::FileDescriptor
 
   def self.from_stdio(fd)
     console_handle = false
-    handle = LibC._get_osfhandle(fd)
-    if handle != -1
-      handle = LibC::HANDLE.new(handle)
+    handle = windows_handle(fd)
+    if handle != LibC::INVALID_HANDLE_VALUE
+      LibC._setmode fd, LibC::O_BINARY
       # TODO: use `out old_mode` after implementing interpreter out closured var
       old_mode = uninitialized LibC::DWORD
       if LibC.GetConsoleMode(handle, pointerof(old_mode)) != 0
@@ -187,7 +184,7 @@ module Crystal::System::FileDescriptor
       end
     end
 
-    io = IO::FileDescriptor.new(fd)
+    io = IO::FileDescriptor.new(fd, blocking: true)
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
     if console_handle

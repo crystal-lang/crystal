@@ -2,7 +2,8 @@ require "./guiddef"
 
 @[Link("mswsock")]
 lib LibC
-  SO_UPDATE_ACCEPT_CONTEXT = 0x700B
+  SO_UPDATE_ACCEPT_CONTEXT  = 0x700B
+  SO_UPDATE_CONNECT_CONTEXT = 0x7010
 
   alias AcceptEx = Proc(SOCKET, SOCKET, Void*, DWORD, DWORD, DWORD, DWORD*, OVERLAPPED*, BOOL)
   WSAID_ACCEPTEX = GUID.new(0xb5367df1, 0xcbac, 0x11cf, UInt8.static_array(0x95, 0xca, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92))

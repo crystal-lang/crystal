@@ -192,7 +192,6 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
@@ -204,8 +203,14 @@ module YAML
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = nil
+          %var{name} = {% if value[:has_default] || value[:nilable] %}
+                         nil.as(::Nil | typeof(@{{name}}))
+                       {% else %}
+                         uninitialized typeof(@{{name}})
+                       {% end %}
           %found{name} = false
         {% end %}
 
@@ -221,20 +226,17 @@ module YAML
             case key
             {% for name, value in properties %}
               when {{value[:key]}}
-                %found{name} = true
                 begin
-                  %var{name} =
-                    {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
+                  {% if value[:has_default] && !value[:nilable] %} YAML::Schema::Core.parse_null_or(value_node) do {% else %} begin {% end %}
+                    %var{name} =
+                      {% if value[:converter] %}
+                        {{value[:converter]}}.from_yaml(ctx, value_node)
+                      {% else %}
+                        typeof(@{{name}}).new(ctx, value_node)
+                      {% end %}
+                  end
 
-                    {% if value[:converter] %}
-                      {{value[:converter]}}.from_yaml(ctx, value_node)
-                    {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                      {{value[:type]}}.new(ctx, value_node)
-                    {% else %}
-                      ::Union({{value[:type]}}).new(ctx, value_node)
-                    {% end %}
-
-                  {% if value[:nilable] || value[:has_default] %} } {% end %}
+                  %found{name} = true
                 end
             {% end %}
             else
@@ -253,7 +255,7 @@ module YAML
 
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
-            if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
+            if !%found{name}
               node.raise "Missing YAML attribute: {{value[:key].id}}"
             end
           {% end %}
@@ -269,7 +271,7 @@ module YAML
               @{{name}} = %var{name}
             end
           {% else %}
-            @{{name}} = (%var{name}).as({{value[:type]}})
+            @{{name}} = %var{name}
           {% end %}
 
           {% if value[:presence] %}
@@ -300,7 +302,6 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
             {%
               properties[ivar.id] = {
-                type:      ivar.type,
                 key:       ((ann && ann[:key]) || ivar).id.stringify,
                 converter: ann && ann[:converter],
                 emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),

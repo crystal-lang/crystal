@@ -272,105 +272,59 @@ class Socket < IO
     io << "#<#{self.class}:fd #{fd}>"
   end
 
-  {% if flag?(:wasm32) %}
-    def send_buffer_size : Int32
-      raise NotImplementedError.new "Socket#send_buffer_size"
-    end
+  def send_buffer_size : Int32
+    system_send_buffer_size
+  end
 
-    def send_buffer_size=(val : Int32)
-      raise NotImplementedError.new "Socket#send_buffer_size="
-    end
+  def send_buffer_size=(val : Int32)
+    self.system_send_buffer_size = val
+    val
+  end
 
-    def recv_buffer_size : Int32
-      raise NotImplementedError.new "Socket#recv_buffer_size"
-    end
+  def recv_buffer_size : Int32
+    system_recv_buffer_size
+  end
 
-    def recv_buffer_size=(val : Int32)
-      raise NotImplementedError.new "Socket#recv_buffer_size="
-    end
+  def recv_buffer_size=(val : Int32)
+    self.system_recv_buffer_size = val
+    val
+  end
 
-    def reuse_address? : Bool
-      raise NotImplementedError.new "Socket#reuse_address?"
-    end
+  def reuse_address? : Bool
+    system_reuse_address?
+  end
 
-    def reuse_address=(val : Bool)
-      raise NotImplementedError.new "Socket#reuse_address="
-    end
+  def reuse_address=(val : Bool)
+    self.system_reuse_address = val
+    val
+  end
 
-    def reuse_port? : Bool
-      raise NotImplementedError.new "Socket#reuse_port?"
-    end
+  def reuse_port? : Bool
+    system_reuse_port?
+  end
 
-    def reuse_port=(val : Bool)
-      raise NotImplementedError.new "Socket#reuse_port="
-    end
+  def reuse_port=(val : Bool)
+    self.system_reuse_port = val
+    val
+  end
 
-    def broadcast? : Bool
-      raise NotImplementedError.new "Socket#broadcast?"
-    end
+  def broadcast? : Bool
+    system_broadcast?
+  end
 
-    def broadcast=(val : Bool)
-      raise NotImplementedError.new "Socket#broadcast="
-    end
+  def broadcast=(val : Bool)
+    self.system_broadcast = val
+    val
+  end
 
-    def keepalive?
-      raise NotImplementedError.new "Socket#keepalive?"
-    end
+  def keepalive?
+    system_keepalive?
+  end
 
-    def keepalive=(val : Bool)
-      raise NotImplementedError.new "Socket#keepalive="
-    end
-  {% else %}
-    def send_buffer_size : Int32
-      getsockopt LibC::SO_SNDBUF, 0
-    end
-
-    def send_buffer_size=(val : Int32)
-      setsockopt LibC::SO_SNDBUF, val
-      val
-    end
-
-    def recv_buffer_size : Int32
-      getsockopt LibC::SO_RCVBUF, 0
-    end
-
-    def recv_buffer_size=(val : Int32)
-      setsockopt LibC::SO_RCVBUF, val
-      val
-    end
-
-    def reuse_address? : Bool
-      getsockopt_bool LibC::SO_REUSEADDR
-    end
-
-    def reuse_address=(val : Bool)
-      setsockopt_bool LibC::SO_REUSEADDR, val
-    end
-
-    def reuse_port? : Bool
-      system_reuse_port?
-    end
-
-    def reuse_port=(val : Bool)
-      self.system_reuse_port = val
-    end
-
-    def broadcast? : Bool
-      getsockopt_bool LibC::SO_BROADCAST
-    end
-
-    def broadcast=(val : Bool)
-      setsockopt_bool LibC::SO_BROADCAST, val
-    end
-
-    def keepalive?
-      getsockopt_bool LibC::SO_KEEPALIVE
-    end
-
-    def keepalive=(val : Bool)
-      setsockopt_bool LibC::SO_KEEPALIVE, val
-    end
-  {% end %}
+  def keepalive=(val : Bool)
+    self.system_keepalive = val
+    val
+  end
 
   def linger
     system_linger

@@ -41,8 +41,7 @@ module Crystal::System::File
     )
 
     if handle == LibC::INVALID_HANDLE_VALUE
-      # Map ERROR_FILE_EXISTS to Errno::EEXIST to avoid changing semantics of other systems
-      return {-1, WinError.value.error_file_exists? ? Errno::EEXIST : Errno.value}
+      return {-1, WinError.value.to_errno}
     end
 
     fd = LibC._open_osfhandle handle, flags
@@ -115,7 +114,7 @@ module Crystal::System::File
     WinError::ERROR_INVALID_NAME,
   }
 
-  private def self.check_not_found_error(message, path)
+  def self.check_not_found_error(message, path)
     error = WinError.value
     if NOT_FOUND_ERRORS.includes? error
       nil
@@ -243,13 +242,21 @@ module Crystal::System::File
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    if LibC._wunlink(System.to_wstr(path)) == 0
-      true
-    elsif !raise_on_missing && Errno.value == Errno::ENOENT
-      false
-    else
-      raise ::File::Error.from_errno("Error deleting file", file: path)
+    win_path = System.to_wstr(path)
+
+    attributes = LibC.GetFileAttributesW(win_path)
+    if attributes == LibC::INVALID_FILE_ATTRIBUTES
+      check_not_found_error("Error deleting file", path)
+      raise ::File::Error.from_os_error("Error deleting file", Errno::ENOENT, file: path) if raise_on_missing
+      return false
     end
+
+    # all reparse point directories should be deleted like a directory, not just
+    # symbolic links, so we don't care about the reparse tag here
+    is_reparse_dir = attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
+    result = is_reparse_dir ? LibC._wrmdir(win_path) : LibC._wunlink(win_path)
+    return true if result == 0
+    raise ::File::Error.from_errno("Error deleting file", file: path)
   end
 
   private REALPATH_SYMLINK_LIMIT = 100

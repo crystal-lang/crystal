@@ -121,6 +121,32 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "pointerof read `StaticArray#@buffer` (1)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        struct StaticArray(T, N)
+          def to_unsafe
+            pointerof(@buffer)
+          end
+
+          def x
+            @buffer
+          end
+        end
+
+        foo = uninitialized Int32[4]
+        foo.to_unsafe.value = 2
+        foo.x
+        CRYSTAL
+    end
+
+    it "pointerof read `StaticArray#@buffer` (2)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        foo = uninitialized Int32[4]
+        pointerof(foo.@buffer).value = 2
+        foo.@buffer
+        CRYSTAL
+    end
+
     it "interprets pointer set and get (union type)" do
       interpret(<<-CRYSTAL).should eq(10)
         ptr = Pointer(Int32 | Bool).malloc(1_u64)

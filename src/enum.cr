@@ -337,20 +337,9 @@ struct Enum
   end
 
   # Returns `true` if this enum member's value includes *other*. This
-  # performs a logical "and" between this enum member's value and *other*'s,
-  # so instead of writing:
+  # performs a logical "and" between this enum member's value and *other*'s.
   #
-  # ```
-  # (member & value) != 0
-  # ```
-  #
-  # you can write:
-  #
-  # ```
-  # member.includes?(value)
-  # ```
-  #
-  # The above is mostly useful with flag enums.
+  # This is mostly useful for flag enums.
   #
   # For example:
   #
@@ -360,7 +349,7 @@ struct Enum
   # mode.includes?(IOMode::Async) # => false
   # ```
   def includes?(other : self) : Bool
-    (value & other.value) != 0
+    value.bits_set?(other.value)
   end
 
   # Returns `true` if this enum member and *other* have the same underlying value.
@@ -390,7 +379,7 @@ struct Enum
     {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
-        {% if member.stringify != "All" %}
+        {% if member.stringify != "All" && member.stringify != "None" %}
           if includes?(self.class.new({{@type.constant(member)}}))
             yield self.class.new({{@type.constant(member)}}), {{@type.constant(member)}}
           end

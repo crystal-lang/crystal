@@ -252,6 +252,19 @@ class Socket
       end
     end
 
+    # Returns `true` if this IP is a link-local address.
+    #
+    # IPv4 addresses in `169.254.0.0/16` reserved by [RFC 3927](https://www.rfc-editor.org/rfc/rfc3927) and Link-Local IPv6
+    # Unicast Addresses in `fe80::/10` reserved by [RFC 4291](https://tools.ietf.org/html/rfc4291) are considered link-local.
+    def link_local?
+      case addr = @addr
+      in LibC::InAddr
+        addr.s_addr & 0x000000ffff_u32 == 0x0000fea9_u32 # 169.254.0.0/16
+      in LibC::In6Addr
+        ipv6_addr8(addr).unsafe_as(UInt128) & 0xc0ff_u128 == 0x80fe_u128
+      end
+    end
+
     private def ipv6_addr8(addr : LibC::In6Addr)
       {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr8

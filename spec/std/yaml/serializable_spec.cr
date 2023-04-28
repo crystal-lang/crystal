@@ -381,6 +381,29 @@ end
 class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
 end
 
+class YAMLStrictDiscriminator
+  include YAML::Serializable
+  include YAML::Serializable::Strict
+
+  property type : String
+
+  use_yaml_discriminator "type", {foo: YAMLStrictDiscriminatorFoo, bar: YAMLStrictDiscriminatorBar}
+end
+
+class YAMLStrictDiscriminatorFoo < YAMLStrictDiscriminator
+end
+
+class YAMLStrictDiscriminatorBar < YAMLStrictDiscriminator
+  property x : YAMLStrictDiscriminator
+  property y : YAMLStrictDiscriminator
+end
+
+class YAMLSomething
+  include YAML::Serializable
+
+  property value : YAMLSomething?
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -972,6 +995,16 @@ describe "YAML::Serializable" do
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = YAMLStrictDiscriminator.from_yaml(%({"type": "foo"}))
+      foo = foo.should be_a(YAMLStrictDiscriminatorFoo)
+
+      bar = YAMLStrictDiscriminator.from_yaml(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(YAMLStrictDiscriminatorBar)
+      bar.x.should be_a(YAMLStrictDiscriminatorFoo)
+      bar.y.should be_a(YAMLStrictDiscriminatorFoo)
+    end
   end
 
   describe "namespaced classes" do
@@ -980,5 +1013,9 @@ describe "YAML::Serializable" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
   end
 end

@@ -23,6 +23,8 @@ struct LLVM::TargetData
   end
 
   def offset_of_element(struct_type, element)
+    # element_count = LibLLVM.count_struct_element_types(struct_type)
+    # raise "Invalid element idx!" unless element < element_count
     LibLLVM.offset_of_element(self, struct_type, element)
   end
 
