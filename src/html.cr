@@ -53,13 +53,12 @@ module HTML
             when '"'  then "&quot;"
             when '\'' then "&#39;"
             else
-              nil
+              next
             end
-      if str
-        io.write_string(string[last_copy_at, index &- last_copy_at])
-        last_copy_at = index &+ 1
-        io << str
-      end
+
+      io.write_string(string[last_copy_at, index &- last_copy_at])
+      last_copy_at = index &+ 1
+      io << str
     end
     io.write_string(string[last_copy_at, string.size &- last_copy_at])
   end
