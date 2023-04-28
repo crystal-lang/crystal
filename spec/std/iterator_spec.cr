@@ -165,10 +165,9 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    # NOTE: This spec would only fail in release mode.
     it "does not experience tuple upcase bug of #13411" do
-      ary = [] of Tuple(Bool | Int32)
-      [{true}].each.chain([{1}].each).each { |v| ary << v }
-      ary.should eq [{true}, {1}]
+      [{true}].each.chain([{1}].each).first(3).to_a.should eq [{true}, {1}]
     end
 
     describe "chain indeterminate number of iterators" do
