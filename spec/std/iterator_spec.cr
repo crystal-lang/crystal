@@ -166,9 +166,9 @@ describe Iterator do
     end
 
     it "does not experience tuple upcase bug of #13411" do
-      ary = [] of Bool | Int32
-      [{true}].each.chain([{1}].each).each { |v| ary < v }
-      ary.should eq [true, 1]
+      ary = [] of Tuple(Bool | Int32)
+      [{true}].each.chain([{1}].each).each { |v| ary << v }
+      ary.should eq [{true}, {1}]
     end
 
     describe "chain indeterminate number of iterators" do
