@@ -261,7 +261,8 @@ module Crystal::System::Socket
     wsabuf = wsa_buffer(message)
 
     bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      {ret, bytes_sent}
     end
 
     bytes.to_i32
@@ -269,13 +270,14 @@ module Crystal::System::Socket
 
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     wsabuf = wsa_buffer(bytes)
-    bytes_sent = overlapped_write(fd, "WSASendTo") do |overlapped|
-      LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+    bytes_written = overlapped_write(fd, "WSASendTo") do |overlapped|
+      ret = LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+      {ret, bytes_sent}
     end
-    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_written == -1
 
     # to_i32 is fine because string/slice sizes are an Int32
-    bytes_sent.to_i32
+    bytes_written.to_i32
   end
 
   private def system_receive(bytes)
@@ -291,7 +293,8 @@ module Crystal::System::Socket
 
     flags = 0_u32
     bytes_read = overlapped_read(fd, "WSARecvFrom") do |overlapped|
-      LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
+      ret = LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
+      {ret, bytes_received}
     end
 
     {bytes_read.to_i32, sockaddr, addrlen}
@@ -448,8 +451,10 @@ module Crystal::System::Socket
 
     bytes_read = overlapped_read(fd, "WSARecv", connreset_is_error: false) do |overlapped|
       flags = 0_u32
-      LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
+      ret = LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
+      {ret, bytes_received}
     end
+
     bytes_read.to_i32
   end
 
@@ -457,9 +462,10 @@ module Crystal::System::Socket
     wsabuf = wsa_buffer(slice)
 
     bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      {ret, bytes_sent}
     end
-    # we could return bytes (from WSAGetOverlappedResult) or bytes_sent
+
     bytes.to_i32
   end
 
