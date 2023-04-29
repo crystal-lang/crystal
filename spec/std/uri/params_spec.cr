@@ -296,6 +296,42 @@ class URI
       end
     end
 
+    describe "#merge!" do
+      it "modifies the reciever" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge!(other_params, replace: false)
+
+        params.to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
+      end
+    end
+
+    describe "#merge" do
+      it "replaces all values with the same key by default" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params).to_s.should eq("foo=buzz&foo=extra&qux=zoo")
+      end
+
+      it "appends values with the same key with replace: false" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params, replace: false).to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
+      end
+
+      it "does not modify the reciever" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params)
+
+        params.to_s.should eq("foo=bar&foo=baz&qux=zoo")
+      end
+    end
+
     describe "#empty?" do
       it "test empty?" do
         Params.parse("foo=bar&foo=baz&baz=qux").empty?.should be_false
