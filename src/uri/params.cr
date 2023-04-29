@@ -393,7 +393,7 @@ class URI
     # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
     # other_params = URI::Params.parse("foo=buzz&foo=extra")
     # params.merge(other_params).to_s # => "foo=buzz&foo=extra&qux=zoo"
-    # params.merge(other_params, replace: true).to_s # => "foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo"
+    # params.merge(other_params, replace: false).to_s # => "foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo"
     # ```
     def merge(params : URI::Params, *, replace : Bool = true) : URI::Params
       dup.merge!(params, replace: replace)
