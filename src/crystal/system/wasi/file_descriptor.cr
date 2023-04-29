@@ -11,6 +11,9 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor.pipe"
   end
 
+  private def system_blocking_init(value)
+  end
+
   private def system_reopen(other : IO::FileDescriptor)
     raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
   end
