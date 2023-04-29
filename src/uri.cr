@@ -274,8 +274,8 @@ class URI
   end
 
   # Yields a `URI::Params` of the URI#query and commits any modifications.
-  # Returns the modified `URI::Params` 
-  # 
+  # Returns the modified `URI::Params`
+  #
   # ```
   # require "uri"
   # uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")

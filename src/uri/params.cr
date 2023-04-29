@@ -362,14 +362,13 @@ class URI
       raw_params.delete(name)
     end
 
-
     # Similar to `#merge` but the receiver is modified.
     #
     # ```
     # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
     # other_params = URI::Params.parse("foo=buzz&foo=extra")
     # params.merge!(other_params).to_s # => "foo=buzz&foo=extra&qux=zoo"
-    # params.fetch_all("foo") # => ["buzz", "extra"]
+    # params.fetch_all("foo")          # => ["buzz", "extra"]
     # ```
     def merge!(params : URI::Params, *, replace : Bool = true) : URI::Params
       params.reduce({} of String => Bool?) do |memo, (key, value)|
@@ -392,7 +391,7 @@ class URI
     # ```
     # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
     # other_params = URI::Params.parse("foo=buzz&foo=extra")
-    # params.merge(other_params).to_s # => "foo=buzz&foo=extra&qux=zoo"
+    # params.merge(other_params).to_s                 # => "foo=buzz&foo=extra&qux=zoo"
     # params.merge(other_params, replace: false).to_s # => "foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo"
     # ```
     def merge(params : URI::Params, *, replace : Bool = true) : URI::Params
