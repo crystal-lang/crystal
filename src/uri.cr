@@ -273,6 +273,26 @@ class URI
     URI::Params.parse(@query || "")
   end
 
+  # Yields a `URI::Params` of the URI#query and commits any modifications.
+  # Returns the modified `URI::Params` 
+  # 
+  # ```
+  # require "uri"
+  # uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+  # uri.query_params { |params| params.delete_all("limit") } # => URI::Params{"id" => ["30"]}
+  #
+  # puts uri.to_s # => "http://foo.com?id=30#time=1305298413"
+  # ```
+  def query_params(&) : URI::Params
+    params = query_params
+
+    yield params
+
+    self.query_params = params
+
+    query_params
+  end
+
   # Sets `query` to stringified *params*.
   #
   # ```
