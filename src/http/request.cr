@@ -21,6 +21,7 @@ class HTTP::Request
   property version : String
   @cookies : Cookies?
   @query_params : URI::Params?
+  @form_params : HTTP::Params?
   @uri : URI?
 
   # The network address that sent the request to an HTTP server.
@@ -78,6 +79,24 @@ class HTTP::Request
   # see `URI::Params`.
   def query_params : URI::Params
     @query_params ||= uri.query_params
+  end
+
+  # Returns a convenience wrapper to parse form params, see `URI::Params`.
+  # Returns `nil` in case the content type `"application/x-www-form-urlencoded"`
+  # is not present or the body is `nil`.
+  def form_params? : HTTP::Params?
+    @form_params ||= begin
+      if headers["Content-Type"]? == "application/x-www-form-urlencoded"
+        if _body = body
+          HTTP::Params.parse(_body.gets_to_end)
+        end
+      end
+    end
+  end
+
+  # Returns a convenience wrapper to parse form params, see `URI::Params`.
+  def form_params : HTTP::Params
+    form_params? || HTTP::Params.new
   end
 
   def resource : String
