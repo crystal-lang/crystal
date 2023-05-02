@@ -2131,21 +2131,29 @@ module Crystal
 
     assert_syntax_error "lib Foo%end", %(unexpected token: "%")
 
-    %w(class module).each do |keyword|
-      assert_syntax_error %(#{keyword} Foo"a" end), %(unexpected token: "DELIMITER_START" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo'a' end", %(unexpected token: "a" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo[1] end", %(unexpected token: "[" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo{1} end", %(unexpected token: "{" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo{|a|a} end", %(unexpected token: "{" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo->{} end", %(unexpected token: "->" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo->(x : Bar){}", %(unexpected token: "->" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo:Bar end", %(unexpected token: "Bar" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo:bar end", %(unexpected token: "bar" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo%x() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo%w() end", %(unexpected token: "STRING_ARRAY_START" (expected ';' or newline))
-      assert_syntax_error "#{keyword} Foo%() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+    [
+      "annotation Foo",
+      "class Foo",
+      "class Foo < Bar",
+      "lib Foo",
+      "lib Foo; struct Bar",
+      "lib Foo; union Bar",
+      "module Foo",
+      "struct Foo",
+    ].each do |header|
+      assert_syntax_error %(#{header}"a"), %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+      assert_syntax_error "#{header}'a'", %(unexpected token: "a" (expected ';' or newline))
+      assert_syntax_error "#{header}[1]", %(unexpected token: "[" (expected ';' or newline))
+      assert_syntax_error "#{header}{1}", %(unexpected token: "{" (expected ';' or newline))
+      assert_syntax_error "#{header}{|a|a}", %(unexpected token: "{" (expected ';' or newline))
+      assert_syntax_error "#{header}->{}", %(unexpected token: "->" (expected ';' or newline))
+      assert_syntax_error "#{header}->(x : Qux){}", %(unexpected token: "->" (expected ';' or newline))
+      assert_syntax_error "#{header}:Qux", %(unexpected token: "Qux" (expected ';' or newline))
+      assert_syntax_error "#{header}:qux", %(unexpected token: "qux" (expected ';' or newline))
+      assert_syntax_error "#{header}%x()", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+      assert_syntax_error "#{header}%w()", %(unexpected token: "STRING_ARRAY_START" (expected ';' or newline))
+      assert_syntax_error "#{header}%()", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
     end
-    assert_syntax_error "class Foo < Bar:Qux end", %(unexpected token: "Qux" (expected ';' or newline))
 
     describe "end locations" do
       assert_end_location "nil"

@@ -1809,6 +1809,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
+      consume_statement_end
       skip_statement_end
 
       end_location = token_end_location
@@ -5603,6 +5604,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
+      consume_statement_end
       skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }
@@ -5932,7 +5934,9 @@ module Crystal
       location = @token.location
       next_token_skip_space_or_newline
       name = check_const
-      next_token_skip_statement_end
+      next_token
+      consume_statement_end
+      skip_statement_end
       body = parse_c_struct_or_union_body_expressions
       check_ident :end
       end_location = token_end_location
