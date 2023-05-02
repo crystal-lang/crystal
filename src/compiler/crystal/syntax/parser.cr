@@ -1681,7 +1681,7 @@ module Crystal
       next_token_skip_space_or_newline
       name_location = @token.location
 
-      name = parse_path(skip_space: false)
+      name = parse_path
       need_statement_end = !@token.type.space?
       skip_space
 
@@ -1776,7 +1776,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_path(skip_space: false)
+      name = parse_path
       need_statement_end = !@token.type.space?
       skip_space
 
@@ -3554,6 +3554,7 @@ module Crystal
 
       if @token.type.const?
         receiver = parse_path
+        skip_space
         last_was_space = false
       elsif @token.type.ident?
         check_valid_def_name
@@ -5077,7 +5078,7 @@ module Crystal
 
     # Parse type path.
     # It also consumes prefix `::` to specify global path.
-    def parse_path(skip_space = true)
+    def parse_path
       location = @token.location
 
       global = false
@@ -5086,9 +5087,7 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
-      self.skip_space if skip_space
-      path
+      parse_path(global, location)
     end
 
     def parse_path(global, location)
