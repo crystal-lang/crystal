@@ -82,7 +82,7 @@ class Socket
     @addr : LibC::In6Addr | LibC::InAddr
 
     def initialize(@address : String, @port : Int32)
-      raise Error.new("Invalid port number: #{port}") unless 0 <= port <= UInt16::MAX
+      raise Error.new("Invalid port number: #{port}") unless IPAddress.valid_port?(port)
 
       if addr = IPAddress.address_v6?(address)
         @addr = addr
@@ -144,16 +144,97 @@ class Socket
       parse URI.parse(uri)
     end
 
+    # Returns the IPv4 address `x0.x1.x2.x3:port`.
+    #
+    # Raises `Socket::Error` if any field or the port number is out of range.
+    def self.v4(x0 : Int, x1 : Int, x2 : Int, x3 : Int, *, port : Int) : self
+      fields = {x0, x1, x2, x3}.map do |field|
+        0 <= field <= 0xff ? field.to_u8! : raise Error.new("Invalid IPv4 field: #{field}")
+      end
+      port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
+      v4(fields, port)
+    end
+
+    # Returns the IPv6 address `[x0:x1:x2:x3:x4:x5:x6:x7]:port`.
+    #
+    # Raises `Socket::Error` if any field or the port number is out of range.
+    def self.v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, x4 : Int, x5 : Int, x6 : Int, x7 : Int, *, port : Int) : self
+      fields = {x0, x1, x2, x3, x4, x5, x6, x7}.map do |field|
+        0 <= field <= 0xffff ? field.to_u16! : raise Error.new("Invalid IPv6 field: #{field}")
+      end
+      port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
+      v6(fields, port)
+    end
+
+    # Returns the IPv4-mapped IPv6 address `[::ffff:x0.x1.x2.x3]:port`.
+    #
+    # Raises `Socket::Error` if any field or the port number is out of range.
+    def self.v4_mapped_v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, *, port : Int) : self
+      v4_fields = {x0, x1, x2, x3}.map do |field|
+        0 <= field <= 0xff ? field.to_u16! : raise Error.new("Invalid IPv4 field: #{field}")
+      end
+      port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
+      v6({0_u16, 0_u16, 0_u16, 0_u16, 0_u16, 0xffff_u16, v4_fields[0] << 8 | v4_fields[1], v4_fields[2] << 8 | v4_fields[3]}, port)
+    end
+
+    private def self.v4(fields, port)
+      addr_value = UInt32.zero
+      fields.each_with_index do |field, i|
+        addr_value = (addr_value << 8) | field
+      end
+
+      addr = LibC::SockaddrIn.new(
+        sin_family: LibC::AF_INET,
+        sin_port: endian_swap(port),
+        sin_addr: LibC::InAddr.new(s_addr: endian_swap(addr_value)),
+      )
+      new(pointerof(addr), sizeof(typeof(addr)))
+    end
+
+    private def self.v6(fields, port)
+      # `addr_bytes` is big-endian by construction
+      addr_bytes = uninitialized UInt8[16]
+      fields.each_with_index do |field, i|
+        addr_bytes[2 * i] = (field >> 8).to_u8!
+        addr_bytes[2 * i + 1] = field.to_u8!
+      end
+
+      addr = LibC::SockaddrIn6.new(
+        sin6_family: LibC::AF_INET6,
+        sin6_port: endian_swap(port),
+        sin6_addr: ipv6_from_addr8(addr_bytes),
+      )
+      new(pointerof(addr), sizeof(typeof(addr)))
+    end
+
+    private def self.ipv6_from_addr8(bytes : UInt8[16])
+      addr = LibC::In6Addr.new
+      {% if flag?(:darwin) || flag?(:bsd) %}
+        addr.__u6_addr.__u6_addr8 = bytes
+      {% elsif flag?(:linux) && flag?(:musl) %}
+        addr.__in6_union.__s6_addr = bytes
+      {% elsif flag?(:wasm32) %}
+        addr.s6_addr = bytes
+      {% elsif flag?(:linux) %}
+        addr.__in6_u.__u6_addr8 = bytes
+      {% elsif flag?(:win32) %}
+        addr.u.byte = bytes
+      {% else %}
+        {% raise "Unsupported platform" %}
+      {% end %}
+      addr
+    end
+
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
       @addr = sockaddr.value.sin6_addr
-      @port = endian_swap(sockaddr.value.sin6_port).to_i
+      @port = IPAddress.endian_swap(sockaddr.value.sin6_port).to_i
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
       @addr = sockaddr.value.sin_addr
-      @port = endian_swap(sockaddr.value.sin_port).to_i
+      @port = IPAddress.endian_swap(sockaddr.value.sin_port).to_i
     end
 
     # Returns `true` if *address* is a valid IPv4 or IPv6 address.
@@ -313,7 +394,7 @@ class Socket
     private def to_sockaddr_in6(addr)
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
-      sockaddr.value.sin6_port = endian_swap(port.to_u16!)
+      sockaddr.value.sin6_port = IPAddress.endian_swap(port.to_u16!)
       sockaddr.value.sin6_addr = addr
       sockaddr.as(LibC::Sockaddr*)
     end
@@ -321,12 +402,12 @@ class Socket
     private def to_sockaddr_in(addr)
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
-      sockaddr.value.sin_port = endian_swap(port.to_u16!)
+      sockaddr.value.sin_port = IPAddress.endian_swap(port.to_u16!)
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
     end
 
-    private def endian_swap(x : UInt16) : UInt16
+    protected def self.endian_swap(x : Int::Primitive) : Int::Primitive
       {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
         x.byte_swap
       {% else %}
