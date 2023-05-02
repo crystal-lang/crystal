@@ -131,11 +131,11 @@ describe Socket::IPAddress do
 
     it "raises on out of bound field" do
       expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(256, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0 ,256, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 256, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 0, 256, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 0, 0, 256, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(-1, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0 ,-1, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, -1, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, 0, -1, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, 0, 0, -1, port: 0) }
     end
@@ -157,19 +157,19 @@ describe Socket::IPAddress do
 
     it "raises on out of bound field" do
       expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(65536, 0, 0, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0 ,65536, 0, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 65536, 0, 0, 0, 0, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 65536, 0, 0, 0, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 65536, 0, 0, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 65536, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0 ,65536, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 65536, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 65536, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 65536, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(-1, 0, 0, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0 ,-1, 0, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, -1, 0, 0, 0, 0, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, -1, 0, 0, 0, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, -1, 0, 0, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, -1, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0 ,-1, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, -1, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, -1, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, -1, port: 0) }
     end
@@ -192,11 +192,11 @@ describe Socket::IPAddress do
 
     it "raises on out of bound field" do
       expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(256, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0 ,256, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 256, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 0, 256, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 256, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(-1, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0 ,-1, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, -1, 0, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, -1, 0, port: 0) }
       expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, -1, port: 0) }
     end
