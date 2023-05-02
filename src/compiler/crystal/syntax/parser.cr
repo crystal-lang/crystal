@@ -1291,12 +1291,11 @@ module Crystal
 
     def parse_generic_or_custom_literal
       type = parse_generic(expression: true)
+      skip_space
       parse_custom_literal type
     end
 
     def parse_custom_literal(type)
-      skip_space
-
       if @token.type.op_lcurly?
         tuple_or_hash = parse_hash_or_tuple_literal allow_of: false
 
@@ -1700,7 +1699,7 @@ module Crystal
           superclass = Self.new.at(@token.location)
           next_token
         else
-          superclass = parse_generic(skip_space: false)
+          superclass = parse_generic
         end
         need_statement_end = true
       end
@@ -2012,6 +2011,7 @@ module Crystal
         end
       when .const?
         obj = parse_generic global: global, location: location, expression: false
+        skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
         equals_sign, end_location = consume_def_equals_sign_skip_space
@@ -3044,6 +3044,7 @@ module Crystal
         next_token_skip_space
       else
         name = parse_generic
+        skip_space
       end
 
       klass.new name
@@ -4909,6 +4910,7 @@ module Crystal
         set_visibility parse_var_or_call global: true, location: location
       when .const?
         ident = parse_generic global: true, location: location, expression: true
+        skip_space
         parse_custom_literal ident
       else
         unexpected_token
@@ -4982,7 +4984,9 @@ module Crystal
         next_token_skip_space
         Underscore.new.at(location)
       when .const?, .op_colon_colon?
-        parse_generic
+        type = parse_generic
+        skip_space
+        type
       when .op_lcurly?
         next_token_skip_space_or_newline
         if named_tuple_start? || @token.type.delimiter_start?
@@ -5045,7 +5049,7 @@ module Crystal
     # Parse generic type path like `A::B(C, D)?`.
     # This method is used to parse not only a type, but also an expression represents type.
     # And it also consumes prefix `::` to specify global path.
-    def parse_generic(expression = false, skip_space = true)
+    def parse_generic(expression = false)
       location = @token.location
 
       global = false
@@ -5054,10 +5058,10 @@ module Crystal
         global = true
       end
 
-      parse_generic global, location, expression, skip_space
+      parse_generic global, location, expression
     end
 
-    def parse_generic(global, location, expression, skip_space = true)
+    def parse_generic(global, location, expression)
       path = parse_path(global, location)
       type = parse_type_args(path)
 
@@ -5070,8 +5074,6 @@ module Crystal
         next_token
         type = make_nilable_expression(type).at_end(end_location)
       end
-
-      self.skip_space if skip_space
 
       type
     end
