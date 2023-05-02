@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: ["13.0.0", "14.0.0", "15.0.6", "16.0.0"]
+        llvm_version: ["13.0.0", "14.0.0", "15.0.6", "16.0.2"]
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -36,9 +36,9 @@ jobs:
           version: "${{ matrix.llvm_version }}"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
-      - name: Install libtinfo5
-        run: sudo apt-get install -y libtinfo5
-        if: "${{ matrix.llvm_version == '16.0.0' }}"
+      # - name: Install libtinfo5
+      #   run: sudo apt-get install -y libtinfo5
+      #   if: "${{ matrix.llvm_version == '16.0.2' }}"
 
       - name: Set LLVM_CONFIG
         # LLVM_PATH is set by install-llvm-action
@@ -47,7 +47,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.7.3"
+          crystal: "1.8.1"
 
       - name: Build libllvm_ext
         run: make -B deps
