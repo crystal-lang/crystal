@@ -22,6 +22,15 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     if iocp.null?
       raise IO::Error.from_winerror("CreateIoCompletionPort")
     end
+    if parent
+      # all overlapped operations may finish synchronously, in which case we do
+      # not reschedule the running fiber; the following call tells Win32 not to
+      # queue an I/O completion packet to the associated IOCP as well, as this
+      # would be done by default
+      if LibC.SetFileCompletionNotificationModes(handle, LibC::FILE_SKIP_COMPLETION_PORT_ON_SUCCESS) == 0
+        raise IO::Error.from_winerror("SetFileCompletionNotificationModes")
+      end
+    end
     iocp
   end
 
