@@ -6015,15 +6015,15 @@ module Crystal
       name = parse_path
       skip_space
 
-      case @token.type
-      when .op_colon?
+      if @token.type.op_colon?
         next_token_skip_space_or_newline
-        base_type = parse_bare_proc_type
-        skip_statement_end
-      when .op_semicolon?, .newline?
+        base_type = parse_path
+      end
+
+      if @token.type.op_semicolon? || @token.type.newline?
         skip_statement_end
       else
-        unexpected_token
+        unexpected_token "expected ';' or newline"
       end
 
       members = parse_enum_body_expressions
