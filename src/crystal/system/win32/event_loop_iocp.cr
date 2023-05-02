@@ -34,21 +34,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     iocp
   end
 
-  # This is a temporary stub as a stand in for fiber swapping required for concurrency
-  def wait_completion(timeout = nil)
-    result = LibC.GetQueuedCompletionStatusEx(iocp, out io_entry, 1, out removed, timeout, false)
-    if result == 0
-      error = WinError.value
-      if timeout && error.wait_timeout?
-        return false
-      else
-        raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
-      end
-    end
-
-    true
-  end
-
   # Runs the event loop.
   def run_once : Nil
     next_event = @queue.min_by(&.wake_at)
