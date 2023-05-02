@@ -83,10 +83,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     end
   end
 
-  # Reinitializes the event loop after a fork.
-  def after_fork : Nil
-  end
-
   def enqueue(event : Crystal::Iocp::Event)
     unless @queue.includes?(event)
       @queue << event

@@ -5,11 +5,6 @@ abstract class Crystal::EventLoop
   # Runs the event loop.
   abstract def run_once : Nil
 
-  {% unless flag?(:preview_mt) %}
-    # Reinitializes the event loop after a fork.
-    abstract def after_fork : Nil
-  {% end %}
-
   # Create a new resume event for a fiber.
   abstract def create_resume_event(fiber : Fiber) : Event
 
