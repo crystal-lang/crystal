@@ -83,16 +83,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     Crystal::Iocp::Event.new(fiber)
   end
 
-  # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(Fiber.current)
-  end
-
-  # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(Fiber.current)
-  end
-
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
     Crystal::Iocp::Event.new(fiber, timeout: true)
   end
