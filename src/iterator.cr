@@ -277,16 +277,15 @@ module Iterator(T)
     end
 
     def next
-      if @iterator1_consumed
-        @iterator2.next
-      else
+      unless @iterator1_consumed
         value = @iterator1.next
         if value.is_a?(Stop)
           @iterator1_consumed = true
-          value = @iterator2.next
+        else
+          return value
         end
-        value
       end
+      @iterator2.next
     end
   end
 
