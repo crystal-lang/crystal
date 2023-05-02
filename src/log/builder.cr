@@ -104,19 +104,16 @@ class Log::Builder
       # if the bind applies for the same backend, the last applied
       # level should be used
       log.initial_level = level
-    when BroadcastBackend
-      current_backend.append(backend, level)
-      # initial_level needs to be recomputed since the append_backend
-      # might be called with the same backend as before but with a
-      # different (higher) level
-      log.initial_level = current_backend.min_level
-      current_backend.level = log.changed_level
     else
-      broadcast = BroadcastBackend.new
-      broadcast.append(current_backend, log.initial_level)
+      broadcast = current_backend.as?(BroadcastBackend)
+      if !broadcast || log.user_provided_broadcast_backend?
+        broadcast = BroadcastBackend.new
+        broadcast.append(current_backend, log.initial_level)
+        log.backend = broadcast
+        log.user_provided_broadcast_backend = false
+      end
       broadcast.append(backend, level)
       broadcast.level = log.changed_level
-      log.backend = broadcast
       log.initial_level = broadcast.min_level
     end
   end

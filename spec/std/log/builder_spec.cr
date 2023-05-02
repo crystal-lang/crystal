@@ -47,6 +47,25 @@ describe Log::Builder do
     log.level.should eq(s(:info))
   end
 
+  it "does not alter user-provided broadcast backend" do
+    builder = Log::Builder.new
+    a = Log::MemoryBackend.new
+    b = Log::MemoryBackend.new
+
+    broadcast = Log::BroadcastBackend.new
+    broadcast.append(a, :fatal)
+    previous_backends = broadcast.@backends.dup
+
+    builder.bind("db", :trace, broadcast)
+    builder.bind("db", :info, b)
+
+    log = builder.for("db")
+
+    backend = log.backend.should be_a(Log::BroadcastBackend)
+    backend.should_not be broadcast
+    broadcast.@backends.should eq(previous_backends)
+  end
+
   it "creates a log for broadcast backend" do
     builder = Log::Builder.new
     a = Log::MemoryBackend.new
@@ -61,9 +80,9 @@ describe Log::Builder do
     log = builder.for("db")
 
     backend = log.backend.should be_a(Log::BroadcastBackend)
-    backend.@backends.should eq({a => s(:fatal), b => s(:info)})
+    backend.@backends.should eq({broadcast => s(:trace), b => s(:info)})
     log.source.should eq("db")
-    log.level.should eq(s(:info))
+    log.level.should eq(s(:trace))
   end
 
   it "creates a log for same broadcast backend added multiple times" do

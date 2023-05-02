@@ -6,6 +6,12 @@ class Log
   property initial_level : Severity
 
   # :nodoc:
+  #
+  # Indicates whether @backend is user-provided or created as a dedicated
+  # backend for this `Log` instance.
+  property? user_provided_broadcast_backend = true
+
+  # :nodoc:
   def initialize(@source : String, @backend : Backend?, level : Severity)
     @initial_level = level
   end
