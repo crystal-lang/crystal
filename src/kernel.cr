@@ -528,7 +528,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% if flag?(:preview_mt) || flag?(:unix) %}
+{% if !flag?(:preview_mt) && flag?(:unix) %}
   class Process
     # :nodoc:
     #
