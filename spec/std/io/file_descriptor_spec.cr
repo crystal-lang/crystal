@@ -37,6 +37,34 @@ describe IO::FileDescriptor do
     end
   end
 
+  it "opens STDIN in binary mode" do
+    code = %q(print STDIN.gets_to_end.includes?('\r'))
+    compile_source(code) do |binpath|
+      io_in = IO::Memory.new("foo\r\n")
+      io_out = IO::Memory.new
+      Process.run(binpath, input: io_in, output: io_out)
+      io_out.to_s.should eq("true")
+    end
+  end
+
+  it "opens STDOUT in binary mode" do
+    code = %q(puts "foo")
+    compile_source(code) do |binpath|
+      io = IO::Memory.new
+      Process.run(binpath, output: io)
+      io.to_s.should eq("foo\n")
+    end
+  end
+
+  it "opens STDERR in binary mode" do
+    code = %q(STDERR.puts "foo")
+    compile_source(code) do |binpath|
+      io = IO::Memory.new
+      Process.run(binpath, error: io)
+      io.to_s.should eq("foo\n")
+    end
+  end
+
   it "does not close if close_on_finalize is false" do
     pipes = [] of IO::FileDescriptor
     assert_finalizes("fd") do

@@ -5602,7 +5602,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
-      next_token_skip_statement_end
+      skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }
 

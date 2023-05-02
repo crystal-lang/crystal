@@ -2129,6 +2129,8 @@ module Crystal
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
+    assert_syntax_error "lib Foo%end", %(unexpected token: "%")
+
     %w(class module).each do |keyword|
       assert_syntax_error %(#{keyword} Foo"a" end), %(unexpected token: "DELIMITER_START" (expected ';' or newline))
       assert_syntax_error "#{keyword} Foo'a' end", %(unexpected token: "a" (expected ';' or newline))
