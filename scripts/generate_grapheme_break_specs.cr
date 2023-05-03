@@ -54,7 +54,7 @@ File.open(path, "w") do |file|
           end
           grapheme = String::Builder.new
         when "×"
-        else raise "unexpected operator #{operator.inspect}"
+        else raise "Unexpected operator #{operator.inspect}"
         end
         grapheme << char
       end

@@ -236,7 +236,7 @@ module Crystal::System::Socket
       end
 
       unless schedule_overlapped(read_timeout)
-        raise IO::TimeoutError.new("accept timed out")
+        raise IO::TimeoutError.new("#{method} timed out")
       end
 
       operation.wsa_result(socket) do |error|

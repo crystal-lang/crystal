@@ -307,7 +307,7 @@ module Spec
     @@spec_nesting = false
 
     def check_nesting_spec(file, line, &block)
-      raise NestingSpecError.new("can't nest `it` or `pending`", file, line) if @@spec_nesting
+      raise NestingSpecError.new("Can't nest `it` or `pending`", file, line) if @@spec_nesting
 
       @@spec_nesting = true
       begin

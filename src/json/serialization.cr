@@ -418,7 +418,7 @@ module JSON
     # ```
     macro use_json_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
-        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+        {% mapping.raise "Mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
       def self.new(pull : ::JSON::PullParser)
@@ -471,7 +471,7 @@ module JSON
             {% elsif key.is_a?(Path) %}
               when {{key.resolve}}
             {% else %}
-              {% key.raise "mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
+              {% key.raise "Mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
             {% end %}
           {% end %}
           {{value.id}}.from_json(json)
