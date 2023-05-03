@@ -1,7 +1,7 @@
 module Spec
   # :nodoc:
-  struct EqualExpectation(T, U)
-    def initialize(@expected_value : T, @expected_type : U.class)
+  struct EqualExpectation(T)
+    def initialize(@expected_value : T, @type_safe : Bool = false)
     end
 
     def match(actual_value)
@@ -17,7 +17,7 @@ module Spec
           actual_value.size == expected_value.size
       else
         actual_value == @expected_value
-      end && (actual_value.class == @expected_class)
+      end && (!@type_safe || actual_value.class == expected_value.class)
     end
 
     def failure_message(actual_value)
