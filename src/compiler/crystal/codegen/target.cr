@@ -77,6 +77,21 @@ class Crystal::Codegen::Target
     end
   end
 
+  def executable_extension
+    case
+    when windows? then ".exe"
+    else               ""
+    end
+  end
+
+  def object_extension
+    case
+    when windows?                  then ".obj"
+    when @architecture == "wasm32" then ".wasm"
+    else                                ".o"
+    end
+  end
+
   def macos?
     @environment.starts_with?("darwin") || @environment.starts_with?("macos")
   end

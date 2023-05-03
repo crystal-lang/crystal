@@ -522,22 +522,14 @@ class Crystal::Command
     end
     sources.concat gather_sources(filenames)
 
+    output_extension = compiler.cross_compile? ? compiler.codegen_target.object_extension : compiler.codegen_target.executable_extension
     if output_filename
-      if compiler.codegen_target.win32?
-        # foo -> foo.exe
-        # foo.bar -> foo.bar
-        # foo.exe -> foo.exe
-        # foo.tar.gz -> foo.tar.gz
-        if File.extname(output_filename).empty?
-          output_filename = "#{output_filename}.exe"
-        end
+      if File.extname(output_filename).empty?
+        output_filename += output_extension
       end
     else
       first_filename = sources.first.filename
-      output_filename = ::Path[first_filename].stem
-      if compiler.codegen_target.win32?
-        output_filename = "#{output_filename}.exe"
-      end
+      output_filename = "#{::Path[first_filename].stem}#{output_extension}"
 
       # Check if we'll overwrite the main source file
       if !no_codegen && !run && first_filename == File.expand_path(output_filename)
