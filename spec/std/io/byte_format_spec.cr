@@ -1,15 +1,15 @@
 require "spec"
 
-private def assert_bytes(io, *bytes)
+private def assert_bytes(io, *bytes : UInt8, file = __FILE__, line = __LINE__)
   io.rewind
   bytes.each do |byte|
-    io.read_byte.should eq(byte)
+    io.read_byte.should eq(byte), file: file, line: line
   end
   io.read_byte.should be_nil
 end
 
-private def assert_bytes_reversed(io, *bytes)
-  assert_bytes io, *bytes.reverse
+private def assert_bytes_reversed(io, *bytes : UInt8, file = __FILE__, line = __LINE__)
+  assert_bytes io, *bytes.reverse, file: file, line: line
 end
 
 private def new_string_io(*bytes)

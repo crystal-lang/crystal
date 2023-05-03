@@ -99,7 +99,7 @@ describe IO::Memory do
 
           String.from_utf16(utf16_slice).should eq "abc😂"
           byte_slice.should eq Bytes[0x61, 0, 0x62, 0, 0x63, 0, 0x3D, 0xD8, 0x02, 0xDE]
-          utf16_slice.should eq Slice[0x0061, 0x0062, 0x0063, 0xD83D, 0xDE02]
+          utf16_slice.should eq Slice[0x0061_u16, 0x0062_u16, 0x0063_u16, 0xD83D_u16, 0xDE02_u16]
         end
       end
     {% end %}
@@ -348,14 +348,14 @@ describe IO::Memory do
     io = IO::Memory.new
     io.pos = 1000
     io.print 'a'
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001) { |i| i == 1000 ? 97_u8 : 0_u8 })
   end
 
   it "writes past end with write_byte" do
     io = IO::Memory.new
     io.pos = 1000
     io.write_byte 'a'.ord.to_u8
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001) { |i| i == 1000 ? 97_u8 : 0_u8 })
   end
 
   it "reads at offset" do
