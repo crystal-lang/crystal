@@ -112,9 +112,9 @@ describe "IO::Sized" do
   it "read_byte" do
     io = IO::Memory.new "abcdefg"
     sized = IO::Sized.new(io, read_size: 3)
-    sized.read_byte.should eq('a'.ord)
-    sized.read_byte.should eq('b'.ord)
-    sized.read_byte.should eq('c'.ord)
+    sized.read_byte.should eq('a'.ord.to_u8!)
+    sized.read_byte.should eq('b'.ord.to_u8!)
+    sized.read_byte.should eq('c'.ord.to_u8!)
     sized.read_byte.should be_nil
   end
 

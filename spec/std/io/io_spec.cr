@@ -341,11 +341,11 @@ describe IO do
 
     it "reads byte" do
       io = SimpleIOMemory.new("hello")
-      io.read_byte.should eq('h'.ord)
-      io.read_byte.should eq('e'.ord)
-      io.read_byte.should eq('l'.ord)
-      io.read_byte.should eq('l'.ord)
-      io.read_byte.should eq('o'.ord)
+      io.read_byte.should eq(104_u8)
+      io.read_byte.should eq(101_u8)
+      io.read_byte.should eq(108_u8)
+      io.read_byte.should eq(108_u8)
+      io.read_byte.should eq(111_u8)
       io.read_char.should be_nil
     end
 

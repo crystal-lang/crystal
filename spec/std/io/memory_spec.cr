@@ -31,9 +31,9 @@ describe IO::Memory do
 
   it "reads byte" do
     io = IO::Memory.new("abc")
-    io.read_byte.should eq('a'.ord)
-    io.read_byte.should eq('b'.ord)
-    io.read_byte.should eq('c'.ord)
+    io.read_byte.should eq(97_u8)
+    io.read_byte.should eq(98_u8)
+    io.read_byte.should eq(99_u8)
     io.read_byte.should be_nil
   end
 

@@ -199,11 +199,11 @@ describe "IO::Buffered" do
 
   it "reads byte" do
     io = BufferedWrapper.new(IO::Memory.new("hello"))
-    io.read_byte.should eq('h'.ord)
-    io.read_byte.should eq('e'.ord)
-    io.read_byte.should eq('l'.ord)
-    io.read_byte.should eq('l'.ord)
-    io.read_byte.should eq('o'.ord)
+    io.read_byte.should eq(104_u8)
+    io.read_byte.should eq(101_u8)
+    io.read_byte.should eq(108_u8)
+    io.read_byte.should eq(108_u8)
+    io.read_byte.should eq(111_u8)
     io.read_char.should be_nil
   end
 
@@ -237,8 +237,8 @@ describe "IO::Buffered" do
     count.should eq(9000)
 
     900.times do
-      10.times do |i|
-        slice[i].should eq('a'.ord + i)
+      10_u8.times do |i|
+        slice[i].should eq(i + 'a'.ord)
       end
     end
   end
