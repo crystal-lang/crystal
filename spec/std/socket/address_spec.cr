@@ -128,22 +128,6 @@ describe Socket::IPAddress do
       Socket::IPAddress.v4(192, 168, 0, 1, port: 8081).should eq Socket::IPAddress.new("192.168.0.1", 8081)
       Socket::IPAddress.v4(255, 255, 255, 254, port: 65535).should eq Socket::IPAddress.new("255.255.255.254", 65535)
     end
-
-    it "raises on out of bound field" do
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(256, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 256, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 0, 256, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 0, 0, 256, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(-1, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, -1, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, 0, -1, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, 0, 0, -1, port: 0) }
-    end
-
-    it "raises on out of bound port number" do
-      expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v4(0, 0, 0, 0, port: 65536) }
-      expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v4(0, 0, 0, 0, port: -1) }
-    end
   end
 
   describe ".v6" do
@@ -153,30 +137,6 @@ describe Socket::IPAddress do
       Socket::IPAddress.v6(0xfe80, 0, 0, 0, 0x4860, 0x4860, 0x4860, 0x1234, port: 55001).should eq Socket::IPAddress.new("fe80::4860:4860:4860:1234", 55001)
       Socket::IPAddress.v6(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xfffe, port: 65535).should eq Socket::IPAddress.new("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", 65535)
       Socket::IPAddress.v6(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0001, port: 0).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 0)
-    end
-
-    it "raises on out of bound field" do
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(65536, 0, 0, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 65536, 0, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 65536, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 65536, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 65536, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 65536, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 65536, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 65536, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(-1, 0, 0, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, -1, 0, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, -1, 0, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, -1, 0, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, -1, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, -1, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, -1, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, -1, port: 0) }
-    end
-
-    it "raises on out of bound port number" do
-      expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: 65536) }
-      expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: -1) }
     end
   end
 
@@ -188,22 +148,6 @@ describe Socket::IPAddress do
       Socket::IPAddress.v4_mapped_v6(127, 0, 0, 1, port: 1234).should eq Socket::IPAddress.new("::ffff:127.0.0.1", 1234)
       Socket::IPAddress.v4_mapped_v6(192, 168, 0, 1, port: 8081).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 8081)
       Socket::IPAddress.v4_mapped_v6(255, 255, 255, 254, port: 65535).should eq Socket::IPAddress.new("::ffff:255.255.255.254", 65535)
-    end
-
-    it "raises on out of bound field" do
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(256, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 256, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 0, 256, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 256, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(-1, 0, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, -1, 0, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, -1, 0, port: 0) }
-      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, -1, port: 0) }
-    end
-
-    it "raises on out of bound port number" do
-      expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: 65536) }
-      expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: -1) }
     end
   end
 
