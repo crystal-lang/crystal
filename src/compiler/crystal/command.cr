@@ -534,7 +534,7 @@ class Crystal::Command
       end
     else
       first_filename = sources.first.filename
-      output_filename = Path[first_filename].stem
+      output_filename = ::Path[first_filename].stem
       if compiler.codegen_target.win32?
         output_filename = "#{output_filename}.exe"
       end
