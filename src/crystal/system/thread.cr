@@ -36,5 +36,5 @@ require "./thread_condition_variable"
 {% elsif flag?(:win32) %}
   require "./win32/thread"
 {% else %}
-  {% raise "thread not supported" %}
+  {% raise "Thread not supported" %}
 {% end %}

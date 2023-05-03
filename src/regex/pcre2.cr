@@ -79,7 +79,7 @@ module Regex::PCRE2
                 when .endanchored?       then LibPCRE2::ENDANCHORED
                 when .match_invalid_utf? then LibPCRE2::MATCH_INVALID_UTF
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -112,7 +112,7 @@ module Regex::PCRE2
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -133,7 +133,7 @@ module Regex::PCRE2
                 when .no_jit?       then LibPCRE2::NO_JIT
                 when .no_utf_check? then LibPCRE2::NO_UTF_CHECK
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -167,7 +167,7 @@ module Regex::PCRE2
   private def pattern_info(what, where)
     ret = LibPCRE2.pattern_info(@re, what, where)
     if ret != 0
-      raise "error pattern_info #{what}: #{ret}"
+      raise "Error pattern_info #{what}: #{ret}"
     end
   end
 

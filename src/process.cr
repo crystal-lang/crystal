@@ -196,7 +196,7 @@ class Process
         File.open(File::NULL, "w")
       end
     else
-      raise "BUG: impossible type in ExecStdio #{stdio.class}"
+      raise "BUG: Impossible type in ExecStdio #{stdio.class}"
     end
   end
 
@@ -284,7 +284,7 @@ class Process
       when STDERR
         @error, fork_io = IO.pipe(write_blocking: true)
       else
-        raise "BUG: unknown destination io #{dst_io}"
+        raise "BUG: Unknown destination io #{dst_io}"
       end
 
       fork_io
@@ -297,7 +297,7 @@ class Process
         File.open(File::NULL, "w")
       end
     else
-      raise "BUG: impossible type in stdio #{stdio.class}"
+      raise "BUG: Impossible type in stdio #{stdio.class}"
     end
   end
 

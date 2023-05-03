@@ -245,7 +245,7 @@ module Float::Printer::Dragonbox
       {% elsif D::KAPPA == 2 %}
         Div.check_divisibility_and_divide_by_pow10_k2(n)
       {% else %}
-        {% raise "expected kappa == 1 or kappa == 2" %}
+        {% raise "Expected kappa == 1 or kappa == 2" %}
       {% end %}
     end
   end
