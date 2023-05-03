@@ -30,9 +30,9 @@ module FinalizeCounter
   end
 end
 
-def assert_finalizes(key : String, &)
+def assert_finalizes(key : String, *, file = __FILE__, line = __LINE__, &)
   FinalizeState.reset
-  FinalizeState.count(key).should eq(0)
+  FinalizeState.count(key).should eq(0_i64), file: file, line: line
 
   10.times do
     obj = yield
@@ -41,5 +41,5 @@ def assert_finalizes(key : String, &)
 
   GC.collect
 
-  FinalizeState.count(key).should be > 0
+  FinalizeState.count(key).should be > 0, file: file, line: line
 end
