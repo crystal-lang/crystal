@@ -1672,6 +1672,8 @@ module Crystal
       call
     end
 
+    StatementEnd = [:OP_SEMICOLON, :NEWLINE, :SPACE] of Token::Kind
+
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
       @type_nest += 1
 
@@ -1704,7 +1706,7 @@ module Crystal
         need_statement_end = true
       end
 
-      consume_statement_end if need_statement_end
+      check(StatementEnd) if need_statement_end
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -1782,7 +1784,7 @@ module Crystal
       type_vars, splat_index = parse_type_vars
       need_statement_end = true if type_vars
 
-      consume_statement_end if need_statement_end
+      check(StatementEnd) if need_statement_end
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -1809,7 +1811,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
-      consume_statement_end
+      check StatementEnd
       skip_statement_end
 
       end_location = token_end_location
@@ -5604,7 +5606,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
-      consume_statement_end
+      check StatementEnd
       skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }
@@ -5935,7 +5937,7 @@ module Crystal
       next_token_skip_space_or_newline
       name = check_const
       next_token
-      consume_statement_end
+      check StatementEnd
       skip_statement_end
       body = parse_c_struct_or_union_body_expressions
       check_ident :end
@@ -6020,11 +6022,8 @@ module Crystal
         base_type = parse_path
       end
 
-      if @token.type.op_semicolon? || @token.type.newline?
-        skip_statement_end
-      else
-        unexpected_token "expected ';' or newline"
-      end
+      check SemicolonOrNewLine
+      skip_statement_end
 
       members = parse_enum_body_expressions
 
@@ -6286,7 +6285,7 @@ module Crystal
     end
 
     def check(token_types : Array(Token::Kind))
-      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type}')", @token unless token_types.any? { |type| @token.type == type }
+      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token}')", @token unless token_types.any? { |type| @token.type == type }
     end
 
     def check(token_type : Token::Kind)
@@ -6353,15 +6352,6 @@ module Crystal
       arg_name = "__arg#{@temp_arg_count}"
       @temp_arg_count += 1
       arg_name
-    end
-
-    def consume_statement_end
-      case @token.type
-      when .space?, .newline?, .op_semicolon?
-        next_token
-      else
-        unexpected_token "expected ';' or newline"
-      end
     end
   end
 
