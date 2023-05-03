@@ -126,7 +126,7 @@ describe IO do
     string = "abあぼ"
     src = SimpleIOMemory.new(string)
     dst = SimpleIOMemory.new
-    IO.copy(src, dst).should eq(string.bytesize)
+    IO.copy(src, dst).should eq(string.bytesize.to_i64)
     dst.to_s.should eq(string)
   end
 
@@ -134,7 +134,7 @@ describe IO do
     string = "abcあぼ"
     src = SimpleIOMemory.new(string)
     dst = SimpleIOMemory.new
-    IO.copy(src, dst, 3).should eq(3)
+    IO.copy(src, dst, 3).should eq(3_i64)
     dst.to_s.should eq("abc")
   end
 

@@ -22,12 +22,12 @@ describe "IO::Sized" do
       sized.read_char.should eq('a')
       sized.read_char.should eq('b')
       sized.read_char.should eq('c')
-      sized.read_remaining.should eq(2)
+      sized.read_remaining.should eq(2_u64)
       sized.read_char.should eq('d')
       sized.read_char.should eq('e')
-      sized.read_remaining.should eq(0)
+      sized.read_remaining.should eq(0_u64)
       sized.read_char.should be_nil
-      sized.read_remaining.should eq(0)
+      sized.read_remaining.should eq(0_u64)
       sized.read_char.should be_nil
     end
 
