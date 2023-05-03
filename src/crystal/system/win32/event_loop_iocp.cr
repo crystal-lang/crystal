@@ -34,21 +34,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     iocp
   end
 
-  # This is a temporary stub as a stand in for fiber swapping required for concurrency
-  def wait_completion(timeout = nil)
-    result = LibC.GetQueuedCompletionStatusEx(iocp, out io_entry, 1, out removed, timeout, false)
-    if result == 0
-      error = WinError.value
-      if timeout && error.wait_timeout?
-        return false
-      else
-        raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
-      end
-    end
-
-    true
-  end
-
   # Runs the event loop.
   def run_once : Nil
     next_event = @queue.min_by(&.wake_at)
@@ -83,10 +68,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     end
   end
 
-  # Reinitializes the event loop after a fork.
-  def after_fork : Nil
-  end
-
   def enqueue(event : Crystal::Iocp::Event)
     unless @queue.includes?(event)
       @queue << event
@@ -100,16 +81,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   # Create a new resume event for a fiber.
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
     Crystal::Iocp::Event.new(fiber)
-  end
-
-  # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(Fiber.current)
-  end
-
-  # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(Fiber.current)
   end
 
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
