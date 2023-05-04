@@ -207,11 +207,7 @@ module YAML
         # `%var`'s type must be exact to avoid type inference issues with
         # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(::Union(::Nil, {{value[:type]}}))
-                       {% else %}
-                         uninitialized ::Union({{value[:type]}})
-                       {% end %}
+          %var{name} = uninitialized ::Union({{value[:type]}})
           %found{name} = false
         {% end %}
 
@@ -235,9 +231,8 @@ module YAML
                       {% else %}
                         ::Union({{value[:type]}}).new(ctx, value_node)
                       {% end %}
+                    %found{name} = true
                   end
-
-                  %found{name} = true
                 end
             {% end %}
             else
@@ -255,25 +250,13 @@ module YAML
         end
 
         {% for name, value in properties %}
-          {% unless value[:nilable] || value[:has_default] %}
-            if !%found{name}
-              node.raise "Missing YAML attribute: {{value[:key].id}}"
-            end
-          {% end %}
-
-          {% if value[:nilable] %}
-            {% if value[:has_default] != nil %}
-              @{{name}} = %found{name} ? %var{name} : {{value[:default]}}
-            {% else %}
-              @{{name}} = %var{name}
-            {% end %}
-          {% elsif value[:has_default] %}
-            if %found{name} && !%var{name}.nil?
-              @{{name}} = %var{name}
-            end
-          {% else %}
+          if %found{name}
             @{{name}} = %var{name}
-          {% end %}
+          else
+            {% unless value[:has_default] || value[:nilable] %}
+              node.raise "Missing YAML attribute: {{value[:key].id}}"
+            {% end %}
+          end
 
           {% if value[:presence] %}
             @{{name}}_present = %found{name}
