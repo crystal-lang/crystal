@@ -203,9 +203,9 @@ module JSON
         # recursively defined serializable types
         {% for name, value in properties %}
           %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(::Nil | Union({{value[:type]}}))
+                         nil.as(::Union(::Nil, {{value[:type]}}))
                        {% else %}
-                         uninitialized Union({{value[:type]}})
+                         uninitialized ::Union({{value[:type]}})
                        {% end %}
           %found{name} = false
         {% end %}
@@ -229,7 +229,7 @@ module JSON
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_json(pull)
                       {% else %}
-                        Union({{value[:type]}}).new(pull)
+                        ::Union({{value[:type]}}).new(pull)
                       {% end %}
                     end
                 end
