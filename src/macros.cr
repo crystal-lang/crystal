@@ -61,13 +61,13 @@
 # p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
 # p                  # => #<Point(@x=0, @y=2)>
 # ```
-macro record(__name, *properties, **kwargs)
+macro record(__name name, *properties, **kwargs)
   {% raise <<-TXT unless kwargs.empty?
-macro `record` does not accept named arguments
-    Did you mean:
+    macro `record` does not accept named arguments
+      Did you mean:
 
-    record #{name}, #{(properties + kwargs.map { |name, value| "#{name} : #{value}" }).join(", ").id}
-TXT
+      record #{name}, #{(properties + kwargs.map { |name, value| "#{name} : #{value}" }).join(", ").id}
+    TXT
   %}
 
   struct {{name.id}}
