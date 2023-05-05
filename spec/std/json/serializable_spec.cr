@@ -477,6 +477,25 @@ class JSONSomethingElse
   property value : JSONAttrValue(Set(JSONSomethingElse)?)?
 end
 
+module JsonDiscriminatorBug
+  abstract class Base
+    include JSON::Serializable
+
+    use_json_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -1109,6 +1128,14 @@ describe "JSON mapping" do
       bar = bar.should be_a(JSONStrictDiscriminatorBar)
       bar.x.should be_a(JSONStrictDiscriminatorFoo)
       bar.y.should be_a(JSONStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(JsonDiscriminatorBug::C).value.should eq 2
+
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}})
+      c.as(JsonDiscriminatorBug::C).value.should eq 1
     end
   end
 
