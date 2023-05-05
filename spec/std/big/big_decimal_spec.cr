@@ -181,13 +181,13 @@ describe BigDecimal do
   end
 
   it "raises if creating from infinity" do
-    expect_raises(ArgumentError, "can only construct from a finite number") { BigDecimal.new(Float32::INFINITY) }
-    expect_raises(ArgumentError, "can only construct from a finite number") { BigDecimal.new(Float64::INFINITY) }
+    expect_raises(ArgumentError, "Can only construct from a finite number") { BigDecimal.new(Float32::INFINITY) }
+    expect_raises(ArgumentError, "Can only construct from a finite number") { BigDecimal.new(Float64::INFINITY) }
   end
 
   it "raises if creating from NaN" do
-    expect_raises(ArgumentError, "can only construct from a finite number") { BigDecimal.new(Float32::NAN) }
-    expect_raises(ArgumentError, "can only construct from a finite number") { BigDecimal.new(Float64::NAN) }
+    expect_raises(ArgumentError, "Can only construct from a finite number") { BigDecimal.new(Float32::NAN) }
+    expect_raises(ArgumentError, "Can only construct from a finite number") { BigDecimal.new(Float64::NAN) }
   end
 
   it "performs arithmetic with bigdecimals" do
