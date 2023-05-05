@@ -404,6 +404,25 @@ class YAMLSomething
   property value : YAMLSomething?
 end
 
+module YAMLDiscriminatorBug
+  abstract class Base
+    include YAML::Serializable
+
+    use_yaml_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -1004,6 +1023,14 @@ describe "YAML::Serializable" do
       bar = bar.should be_a(YAMLStrictDiscriminatorBar)
       bar.x.should be_a(YAMLStrictDiscriminatorFoo)
       bar.y.should be_a(YAMLStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 2
+
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 1
     end
   end
 

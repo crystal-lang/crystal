@@ -196,6 +196,7 @@ module YAML
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
                 nilable:     ivar.type.nilable?,
+                type:        ivar.type,
                 converter:   ann && ann[:converter],
                 presence:    ann && ann[:presence],
               }
@@ -207,9 +208,9 @@ module YAML
         # recursively defined serializable types
         {% for name, value in properties %}
           %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(::Nil | typeof(@{{name}}))
+                         nil.as(::Union(::Nil, {{value[:type]}}))
                        {% else %}
-                         uninitialized typeof(@{{name}})
+                         uninitialized ::Union({{value[:type]}})
                        {% end %}
           %found{name} = false
         {% end %}
@@ -232,7 +233,7 @@ module YAML
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_yaml(ctx, value_node)
                       {% else %}
-                        typeof(@{{name}}).new(ctx, value_node)
+                        ::Union({{value[:type]}}).new(ctx, value_node)
                       {% end %}
                   end
 
