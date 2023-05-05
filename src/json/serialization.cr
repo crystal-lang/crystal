@@ -190,6 +190,7 @@ module JSON
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
                 nilable:     ivar.type.nilable?,
+                type:        ivar.type,
                 root:        ann && ann[:root],
                 converter:   ann && ann[:converter],
                 presence:    ann && ann[:presence],
@@ -202,9 +203,9 @@ module JSON
         # recursively defined serializable types
         {% for name, value in properties %}
           %var{name} = {% if value[:has_default] || value[:nilable] %}
-                         nil.as(::Nil | typeof(@{{name}}))
+                         nil.as(::Union(::Nil, {{value[:type]}}))
                        {% else %}
-                         uninitialized typeof(@{{name}})
+                         uninitialized ::Union({{value[:type]}})
                        {% end %}
           %found{name} = false
         {% end %}
@@ -228,7 +229,7 @@ module JSON
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_json(pull)
                       {% else %}
-                        typeof(@{{name}}).new(pull)
+                        ::Union({{value[:type]}}).new(pull)
                       {% end %}
                     end
                 end
