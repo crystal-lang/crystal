@@ -1,7 +1,8 @@
+require "network_server"
 require "../request"
 require "./response"
 
-class HTTP::Server
+class HTTP::Server < NetworkServer
   # Instances of this class are passed to an `HTTP::Server` handler.
   class Context
     # The `HTTP::Request` to process.
