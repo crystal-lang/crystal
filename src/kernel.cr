@@ -43,7 +43,7 @@ STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
 #
-# The result is may be a relative or absolute path (including symbolic links),
+# The result may be a relative or absolute path (including symbolic links),
 # just the command name or the empty string.
 #
 # See `Process.executable_path` for a more convenient alternative that always
