@@ -224,15 +224,17 @@ module YAML
             {% for name, value in properties %}
               when {{value[:key]}}
                 begin
-                  {% if value[:has_default] && !value[:nilable] %} YAML::Schema::Core.parse_null_or(value_node) do {% else %} begin {% end %}
-                    %var{name} =
-                      {% if value[:converter] %}
-                        {{value[:converter]}}.from_yaml(ctx, value_node)
-                      {% else %}
-                        ::Union({{value[:type]}}).new(ctx, value_node)
-                      {% end %}
-                    %found{name} = true
-                  end
+                  {% if value[:has_default] && !value[:nilable] %}
+                    next if YAML::Schema::Core.parse_null?(value_node)
+                  {% end %}
+
+                  %var{name} =
+                    {% if value[:converter] %}
+                      {{value[:converter]}}.from_yaml(ctx, value_node)
+                    {% else %}
+                      ::Union({{value[:type]}}).new(ctx, value_node)
+                    {% end %}
+                  %found{name} = true
                 end
             {% end %}
             else

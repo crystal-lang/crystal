@@ -343,11 +343,20 @@ class JSON::PullParser
 
   # Reads a null value and returns it, or executes the given block if the value is not null.
   def read_null_or(&)
+    unless read_null?
+      yield
+    end
+  end
+
+  # Reads the current token if its value is null.
+  #
+  # Returns `true` if the token was read.
+  def read_null? : Bool
     if @kind.null?
       read_next
-      nil
+      true
     else
-      yield
+      false
     end
   end
 

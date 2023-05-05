@@ -219,17 +219,19 @@ module JSON
           {% for name, value in properties %}
             when {{value[:key]}}
               begin
-                {% if (value[:has_default] && !value[:nilable]) || value[:root] %} pull.read_null_or do {% else %} begin {% end %}
-                  %var{name} =
-                    {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
-                      {% if value[:converter] %}
-                        {{value[:converter]}}.from_json(pull)
-                      {% else %}
-                        ::Union({{value[:type]}}).new(pull)
-                      {% end %}
-                    end
-                  %found{name} = true
-                end
+                {% if (value[:has_default] && !value[:nilable]) || value[:root] %}
+                  next if pull.read_null?
+                {% end %}
+
+                %var{name} =
+                  {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
+                    {% if value[:converter] %}
+                      {{value[:converter]}}.from_json(pull)
+                    {% else %}
+                      ::Union({{value[:type]}}).new(pull)
+                    {% end %}
+                  end
+                %found{name} = true
               rescue exc : ::JSON::ParseException
                 raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
               end
