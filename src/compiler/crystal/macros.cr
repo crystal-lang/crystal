@@ -1525,7 +1525,7 @@ module Crystal::Macros
     end
 
     # Returns the `else` of this `case`.
-    def else : ArrayLiteral(When)
+    def else : ASTNode
     end
 
     # Returns whether this `case` is exhaustive (`case ... in`).

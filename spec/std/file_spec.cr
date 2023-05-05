@@ -428,8 +428,7 @@ describe "File" do
       info.type.should eq(File::Type::Directory)
     end
 
-    # TODO: support stating nul on windows
-    pending_win32 "gets for a character device" do
+    it "gets for a character device" do
       info = File.info(File::NULL)
       info.type.should eq(File::Type::CharacterDevice)
     end

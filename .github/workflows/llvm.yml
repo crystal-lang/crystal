@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
   SPEC_SPLIT_DOTS: 160
@@ -43,7 +43,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.8.0"
+          crystal: "1.8.1"
 
       - name: Build libllvm_ext
         run: make -B deps

@@ -296,7 +296,7 @@ canonical_combining_classes.sort_by! &.low
 canonical_decompositions = entries.compact_map do |entry|
   next unless entry.decomposition_type.canonical?
   mapping = entry.decomposition_mapping.not_nil!
-  raise "BUG: mapping longer than 2 codepoints" unless mapping.size <= 2
+  raise "BUG: Mapping longer than 2 codepoints" unless mapping.size <= 2
   {entry.codepoint, mapping[0], mapping[1]? || 0}
 end
 

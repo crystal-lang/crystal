@@ -1734,7 +1734,7 @@ describe "String" do
     end
   end
 
-  describe "gsub" do
+  describe "#gsub" do
     it "gsubs char with char" do
       "foobar".gsub('o', 'e').should eq("feebar")
     end
@@ -1909,6 +1909,16 @@ describe "String" do
 
     it "ignores if backreferences: false" do
       "foo".gsub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xx\\0x")
+    end
+
+    it "empty match" do
+      "a  b".gsub(/\B/, "-").should eq "a - b"
+      "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
+    end
+
+    it "empty string" do
+      "ab".gsub("", "-").should eq "-a-b-"
+      "┬7".gsub("", "-").should eq "-┬-7-"
     end
   end
 
@@ -2256,7 +2266,7 @@ describe "String" do
     end
   end
 
-  describe "scan" do
+  describe "#scan" do
     it "does without block" do
       a = "cruel world"
       a.scan(/\w+/).map(&.[0]).should eq(["cruel", "world"])
@@ -2292,6 +2302,10 @@ describe "String" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
       "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
+    end
+
+    it "works when match is empty, multibyte char" do
+      "\u{80}\u{800}\u{10000}".scan(/()/).map(&.begin).should eq([0, 1, 2, 3])
     end
 
     it "works with strings with block" do

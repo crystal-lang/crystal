@@ -68,15 +68,14 @@ describe "Dir" do
       end
     end
 
-    # TODO: do we even want this?
-    pending_win32 "tests empty? on a directory path to a file" do
+    it "tests empty? on a directory path to a file" do
       expect_raises(File::Error, "Error opening directory: '#{datapath("dir", "f1.txt", "/").inspect_unquoted}'") do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
     end
   end
 
-  pending_win32 "tests info on existing directory" do
+  it "tests info on existing directory" do
     Dir.open(datapath) do |dir|
       info = dir.info
       info.directory?.should be_true

@@ -179,7 +179,65 @@ class Deque(T)
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
-  def concat(other : Enumerable(T))
+  #
+  # ```
+  # deq = Deque{"a", "b"}
+  # deq.concat(Deque{"c", "d"})
+  # deq # => Deque{"a", "b", "c", "d"}
+  # ```
+  def concat(other : Indexable) : self
+    other_size = other.size
+
+    resize_if_cant_insert(other_size)
+
+    index = @start + @size
+    index -= @capacity if index >= @capacity
+    concat_indexable(other, index)
+
+    @size += other_size
+
+    self
+  end
+
+  private def concat_indexable(other : Deque, index)
+    Deque.half_slices(other) do |slice|
+      index = concat_indexable(slice, index)
+    end
+  end
+
+  private def concat_indexable(other : Array | StaticArray, index)
+    concat_indexable(Slice.new(other.to_unsafe, other.size), index)
+  end
+
+  private def concat_indexable(other : Slice, index)
+    if index + other.size <= @capacity
+      # there is enough space after the last element; one copy will suffice
+      (@buffer + index).copy_from(other.to_unsafe, other.size)
+      index += other.size
+      index == @capacity ? 0 : index
+    else
+      # copy the first half of *other* to the end of the buffer, and then the
+      # remaining half to the start, which must be available after a call to
+      # `#resize_if_cant_insert`
+      first_half_size = @capacity - index
+      second_half_size = other.size - first_half_size
+      (@buffer + index).copy_from(other.to_unsafe, first_half_size)
+      @buffer.copy_from(other.to_unsafe + first_half_size, second_half_size)
+      second_half_size
+    end
+  end
+
+  private def concat_indexable(other, index)
+    appender = (@buffer + index).appender
+    buffer_end = @buffer + @capacity
+    other.each do |elem|
+      appender << elem
+      appender = @buffer.appender if appender.pointer == buffer_end
+    end
+  end
+
+  # :ditto:
+  def concat(other : Enumerable(T)) : self
     other.each do |x|
       push x
     end
@@ -593,10 +651,25 @@ class Deque(T)
     @capacity * 2
   end
 
+  private def calculate_new_capacity(new_size)
+    new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
+    while new_capacity < new_size
+      new_capacity *= 2
+    end
+    new_capacity
+  end
+
   # behaves like `resize_if_cant_insert(1)`
   private def resize_if_cant_insert
     if @size >= @capacity
       resize_to_capacity(calculate_new_capacity)
+    end
+  end
+
+  private def resize_if_cant_insert(insert_size)
+    new_capacity = calculate_new_capacity(@size + insert_size)
+    if new_capacity > @capacity
+      resize_to_capacity(new_capacity)
     end
   end
 

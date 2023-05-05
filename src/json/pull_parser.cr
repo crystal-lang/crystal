@@ -224,7 +224,7 @@ class JSON::PullParser
     when .float?
       float_value.tap { read_next }
     else
-      raise "expecting int or float but was #{@kind}"
+      raise "Expecting int or float but was #{@kind}"
     end
   end
 

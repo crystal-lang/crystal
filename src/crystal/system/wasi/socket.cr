@@ -59,12 +59,52 @@ module Crystal::System::Socket
     end
   end
 
+  private def system_send_buffer_size : Int
+    raise NotImplementedError.new "Crystal::System::Socket#system_send_buffer_size"
+  end
+
+  private def system_send_buffer_size=(val : Int)
+    raise NotImplementedError.new "Crystal::System::Socket#system_send_buffer_size="
+  end
+
+  private def system_recv_buffer_size : Int
+    raise NotImplementedError.new "Crystal::System::Socket#system_recv_buffer_size"
+  end
+
+  private def system_recv_buffer_size=(val : Int)
+    raise NotImplementedError.new "Crystal::System::Socket#system_recv_buffer_size="
+  end
+
+  private def system_reuse_address? : Bool
+    raise NotImplementedError.new "Crystal::System::Socket#system_reuse_address?"
+  end
+
+  private def system_reuse_address=(val : Bool)
+    raise NotImplementedError.new "Crystal::System::Socket#system_reuse_address="
+  end
+
   private def system_reuse_port?
     raise NotImplementedError.new "Crystal::System::Socket#system_reuse_port?"
   end
 
   private def system_reuse_port=(val : Bool)
     raise NotImplementedError.new "Crystal::System::Socket#system_reuse_port="
+  end
+
+  private def system_broadcast? : Bool
+    raise NotImplementedError.new "Crystal::System::Socket#system_broadcast?"
+  end
+
+  private def system_broadcast=(val : Bool)
+    raise NotImplementedError.new "Crystal::System::Socket#system_broadcast="
+  end
+
+  private def system_keepalive? : Bool
+    raise NotImplementedError.new "Crystal::System::Socket#system_keepalive?"
+  end
+
+  private def system_keepalive=(val : Bool)
+    raise NotImplementedError.new "Crystal::System::Socket#system_keepalive="
   end
 
   private def system_linger

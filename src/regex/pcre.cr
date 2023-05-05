@@ -49,7 +49,7 @@ module Regex::PCRE
                 when .endanchored?       then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
                 when .match_invalid_utf? then raise ArgumentError.new("Regex::Option::MATCH_INVALID_UTF is not supported with PCRE")
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -59,6 +59,10 @@ module Regex::PCRE
     flag |= options.value
 
     flag
+  end
+
+  def self.supports_compile_flag?(options)
+    !options.endanchored? && !options.match_invalid_utf?
   end
 
   private def pcre_match_options(options)
@@ -79,7 +83,7 @@ module Regex::PCRE
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre_exec`")
                 when .endanchored?    then raise ArgumentError.new("Regex::Option::ENDANCHORED is not supported with PCRE")
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -101,7 +105,7 @@ module Regex::PCRE
                 when .no_jit?       then raise ArgumentError.new("Regex::Option::NO_JIT is not supported with PCRE")
                 when .no_utf_check? then LibPCRE::NO_UTF8_CHECK
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -111,6 +115,10 @@ module Regex::PCRE
     flag |= options.value
 
     flag
+  end
+
+  def self.supports_match_flag?(options)
+    !options.endanchored? && !options.no_jit?
   end
 
   def finalize
