@@ -89,11 +89,11 @@ struct BigRational < Number
     LibGMP.mpq_cmp(mpq, other)
   end
 
-  def <=>(other : Float32 | Float64)
-    self <=> BigRational.new(other)
+  def <=>(other : Float::Primitive)
+    self <=> BigRational.new(other) unless other.nan?
   end
 
-  def <=>(other : Float)
+  def <=>(other : BigFloat)
     to_big_f <=> other.to_big_f
   end
 
@@ -348,7 +348,8 @@ struct Float
   end
 
   def <=>(other : BigRational)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 end
 

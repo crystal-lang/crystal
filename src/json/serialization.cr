@@ -186,11 +186,11 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
                 nilable:     ivar.type.nilable?,
+                type:        ivar.type,
                 root:        ann && ann[:root],
                 converter:   ann && ann[:converter],
                 presence:    ann && ann[:presence],
@@ -199,8 +199,14 @@ module JSON
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
+          %var{name} = {% if value[:has_default] || value[:nilable] %}
+                         nil.as(::Union(::Nil, {{value[:type]}}))
+                       {% else %}
+                         uninitialized ::Union({{value[:type]}})
+                       {% end %}
           %found{name} = false
         {% end %}
 
@@ -288,7 +294,6 @@ module JSON
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                type:             ivar.type,
                 key:              ((ann && ann[:key]) || ivar).id.stringify,
                 root:             ann && ann[:root],
                 converter:        ann && ann[:converter],
@@ -414,7 +419,7 @@ module JSON
     # ```
     macro use_json_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
-        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+        {% mapping.raise "Mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
       def self.new(pull : ::JSON::PullParser)
@@ -467,7 +472,7 @@ module JSON
             {% elsif key.is_a?(Path) %}
               when {{key.resolve}}
             {% else %}
-              {% key.raise "mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
+              {% key.raise "Mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
             {% end %}
           {% end %}
           {{value.id}}.from_json(json)

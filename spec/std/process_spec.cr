@@ -137,12 +137,12 @@ describe Process do
       value.should eq("hello#{newline}")
     end
 
-    pending_win32 "sends input in IO" do
+    it "sends input in IO" do
       value = Process.run(*stdin_to_stdout_command, input: IO::Memory.new("hello")) do |proc|
         proc.input?.should be_nil
         proc.output.gets_to_end
       end
-      value.should eq("hello")
+      value.chomp.should eq("hello")
     end
 
     it "sends output to IO" do
@@ -305,6 +305,8 @@ describe Process do
       {% end %}
     end
 
+    # TODO: this spec gives "WaitForSingleObject: The handle is invalid."
+    # is this because standard streams on windows aren't async?
     pending_win32 "can link processes together" do
       buffer = IO::Memory.new
       Process.run(*stdin_to_stdout_command) do |cat|
@@ -313,7 +315,7 @@ describe Process do
           cat.close
         end
       end
-      buffer.to_s.lines.size.should eq(1000)
+      buffer.to_s.chomp.lines.size.should eq(1000)
     end
   end
 
@@ -414,15 +416,15 @@ describe Process do
         end
       end
     end
+  {% end %}
 
-    describe ".exec" do
-      it "gets error from exec" do
-        expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
-          Process.exec("foobarbaz")
-        end
+  describe ".exec" do
+    it "gets error from exec" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.exec("foobarbaz")
       end
     end
-  {% end %}
+  end
 
   describe ".chroot" do
     {% if flag?(:unix) && !flag?(:android) %}

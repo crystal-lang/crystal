@@ -2129,6 +2129,8 @@ module Crystal
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
+    assert_syntax_error "lib Foo%end", %(unexpected token: "%")
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
