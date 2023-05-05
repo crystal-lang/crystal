@@ -1683,13 +1683,13 @@ module Crystal
       name_location = @token.location
 
       name = parse_path
-      need_statement_end = !@token.type.space?
+      found_space = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
 
       if type_vars
-        need_statement_end = !@token.type.space?
+        found_space = @token.type.space?
         skip_space
       end
 
@@ -1703,10 +1703,9 @@ module Crystal
         else
           superclass = parse_generic
         end
-        need_statement_end = true
       end
 
-      check(StatementEnd) if need_statement_end
+      check(StatementEnd) if superclass || !found_space
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -1778,13 +1777,12 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
-      need_statement_end = !@token.type.space?
+      found_space = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
-      need_statement_end = true if type_vars
 
-      check(StatementEnd) if need_statement_end
+      check(StatementEnd) if type_vars || !found_space
       skip_statement_end
 
       body = push_visibility { parse_expressions }
