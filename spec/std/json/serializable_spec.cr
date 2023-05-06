@@ -738,9 +738,10 @@ describe "JSON mapping" do
       json.a.should eq 11
       json.b.should eq "Haha"
 
-      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null}))
+      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null,"f":null}))
       json.a.should eq 11
       json.b.should eq "Haha"
+      json.f.should be_nil
     end
 
     it "bool" do
