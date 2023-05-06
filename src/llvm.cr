@@ -72,6 +72,23 @@ module LLVM
     {% end %}
   end
 
+  def self.init_riscv64 : Nil
+    return if @@initialized_riscv64
+    @@initialized_riscv64 = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:riscv) %}
+      LibLLVM.initialize_riscv64_target_info
+      LibLLVM.initialize_riscv64_target
+      LibLLVM.initialize_riscv64_target_mc
+      LibLLVM.initialize_riscv64_asm_printer
+      LibLLVM.initialize_riscv64_asm_parser
+      # LibLLVM.link_in_jit
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without RISCV target"
+    {% end %}
+  end
+
   def self.start_multithreaded : Bool
     if multithreaded?
       true
