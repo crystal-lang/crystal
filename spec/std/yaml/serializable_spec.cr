@@ -788,9 +788,10 @@ describe "YAML::Serializable" do
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
 
-      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null,"f":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+      yaml.f.should be_nil
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
       yaml.b.should eq ""
