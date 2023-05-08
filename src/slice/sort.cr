@@ -1,7 +1,7 @@
 struct Slice(T)
   protected def self.intro_sort!(a, n)
     return if n < 2
-    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2)
+    quick_sort_for_intro_sort!(a, n, (n.bit_length - 1) * 2)
     insertion_sort!(a, n)
   end
 
@@ -99,7 +99,7 @@ struct Slice(T)
 
   protected def self.intro_sort!(a, n, comp)
     return if n < 2
-    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2, comp)
+    quick_sort_for_intro_sort!(a, n, (n.bit_length - 1) * 2, comp)
     insertion_sort!(a, n, comp)
   end
 

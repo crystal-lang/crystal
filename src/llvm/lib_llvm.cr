@@ -222,7 +222,6 @@ lib LibLLVM
   fun initialize_webassembly_target = LLVMInitializeWebAssemblyTarget
   fun initialize_webassembly_target_info = LLVMInitializeWebAssemblyTargetInfo
   fun initialize_webassembly_target_mc = LLVMInitializeWebAssemblyTargetMC
-  fun initialize_native_target = LLVMInitializeNativeTarget
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
@@ -266,7 +265,6 @@ lib LibLLVM
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : UInt8*) : Int32
   fun verify_module = LLVMVerifyModule(module : ModuleRef, action : LLVM::VerifierFailureAction, outmessage : UInt8**) : Int32
-  fun link_in_jit = LLVMLinkInJIT
   fun link_in_mc_jit = LLVMLinkInMCJIT
   fun start_multithreaded = LLVMStartMultithreaded : Int32
   fun stop_multithreaded = LLVMStopMultithreaded
