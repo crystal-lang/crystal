@@ -106,11 +106,14 @@ class Log::Builder
       log.initial_level = level
     else
       broadcast = current_backend.as?(BroadcastBackend)
-      if !broadcast || log.user_provided_broadcast_backend?
+      # If the current backend is not a broadcast backend , we need to
+      # auto-create a broadcast backend for distributing the different log backends.
+      # A broadcast backend explicitly added as a binding, must not be mutated,
+      # so that requires to create a new one as well.
+      if !broadcast || @bindings.any? { |binding| binding.backend.same?(current_backend) }
         broadcast = BroadcastBackend.new
         broadcast.append(current_backend, log.initial_level)
         log.backend = broadcast
-        log.user_provided_broadcast_backend = false
       end
       broadcast.append(backend, level)
       broadcast.level = log.changed_level
