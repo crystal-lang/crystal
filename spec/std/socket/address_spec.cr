@@ -144,6 +144,13 @@ describe Socket::IPAddress do
       expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v4(0, 0, 0, 0, port: 65536) }
       expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v4(0, 0, 0, 0, port: -1) }
     end
+
+    it "constructs from StaticArray" do
+      Socket::IPAddress.v4(UInt8.static_array(0, 0, 0, 0), 0).should eq Socket::IPAddress.new("0.0.0.0", 0)
+      Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 1234).should eq Socket::IPAddress.new("127.0.0.1", 1234)
+      Socket::IPAddress.v4(UInt8.static_array(192, 168, 0, 1), 8081).should eq Socket::IPAddress.new("192.168.0.1", 8081)
+      Socket::IPAddress.v4(UInt8.static_array(255, 255, 255, 254), 65535).should eq Socket::IPAddress.new("255.255.255.254", 65535)
+    end
   end
 
   describe ".v6" do
@@ -177,6 +184,14 @@ describe Socket::IPAddress do
     it "raises on out of bound port number" do
       expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: 65536) }
       expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: -1) }
+    end
+
+    it "constructs from StaticArray" do
+      Socket::IPAddress.v6(UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 0), 0).should eq Socket::IPAddress.new("::", 0)
+      Socket::IPAddress.v6(UInt16.static_array(1, 2, 3, 4, 5, 6, 7, 8), 8080).should eq Socket::IPAddress.new("1:2:3:4:5:6:7:8", 8080)
+      Socket::IPAddress.v6(UInt16.static_array(0xfe80, 0, 0, 0, 0x4860, 0x4860, 0x4860, 0x1234), 55001).should eq Socket::IPAddress.new("fe80::4860:4860:4860:1234", 55001)
+      Socket::IPAddress.v6(UInt16.static_array(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xfffe), 65535).should eq Socket::IPAddress.new("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", 65535)
+      Socket::IPAddress.v6(UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0001), 0).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 0)
     end
   end
 
