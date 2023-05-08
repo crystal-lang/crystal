@@ -36,6 +36,7 @@ end
     IS_LT_130 = {{compare_versions(LibLLVM::VERSION, "13.0.0") < 0}}
     IS_LT_140 = {{compare_versions(LibLLVM::VERSION, "14.0.0") < 0}}
     IS_LT_150 = {{compare_versions(LibLLVM::VERSION, "15.0.0") < 0}}
+    IS_LT_160 = {{compare_versions(LibLLVM::VERSION, "16.0.0") < 0}}
   end
 {% end %}
 
@@ -43,6 +44,7 @@ lib LibLLVM
   alias Char = LibC::Char
   alias Int = LibC::Int
   alias UInt = LibC::UInt
+  alias SizeT = LibC::SizeT
 
   type ContextRef = Void*
   type ModuleRef = Void*
@@ -62,6 +64,7 @@ lib LibLLVM
   type MemoryBufferRef = Void*
   type PassBuilderOptionsRef = Void*
   type ErrorRef = Void*
+  type DIBuilderRef = Void*
 
   struct JITCompilerOptions
     opt_level : UInt32
@@ -75,9 +78,15 @@ lib LibLLVM
     Intel
   end
 
-  # `LLVMModuleFlagBehavior` (_not_ `LLVM::Module::ModFlagBehavior`, their values disagree)
+  # NOTE: the following C enums usually have different values from their C++
+  # counterparts (e.g. `LLVMModuleFlagBehavior` v.s. `LLVM::Module::ModFlagBehavior`)
+
   enum ModuleFlagBehavior
     Warning = 1
+  end
+
+  enum DWARFEmissionKind
+    Full = 1
   end
 
   fun add_case = LLVMAddCase(switch : ValueRef, onval : ValueRef, dest : BasicBlockRef)
@@ -180,6 +189,9 @@ lib LibLLVM
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
   fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : BasicBlockRef) : Char*
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
+  {% unless LibLLVM::IS_LT_90 %}
+    fun get_current_debug_location2 = LLVMGetCurrentDebugLocation2(builder : BuilderRef) : MetadataRef
+  {% end %}
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
@@ -379,6 +391,7 @@ lib LibLLVM
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
 
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
+  fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
 
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(ctx : ContextRef, fn : ValueRef, name : UInt8*) : BasicBlockRef
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
@@ -394,6 +407,9 @@ lib LibLLVM
   fun get_num_arg_operands = LLVMGetNumArgOperands(instr : ValueRef) : UInt
   fun get_arg_operand = LLVMGetArgOperand(val : ValueRef, index : UInt) : ValueRef
 
+  fun get_md_node_num_operands = LLVMGetMDNodeNumOperands(v : ValueRef) : UInt
+  fun get_md_node_operands = LLVMGetMDNodeOperands(v : ValueRef, dest : ValueRef*)
+
   fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
 
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
@@ -403,4 +419,121 @@ lib LibLLVM
     fun create_pass_builder_options = LLVMCreatePassBuilderOptions : PassBuilderOptionsRef
     fun dispose_pass_builder_options = LLVMDisposePassBuilderOptions(options : PassBuilderOptionsRef)
   {% end %}
+
+  fun create_di_builder = LLVMCreateDIBuilder(m : ModuleRef) : DIBuilderRef
+  fun dispose_di_builder = LLVMDisposeDIBuilder(builder : DIBuilderRef)
+  fun di_builder_finalize = LLVMDIBuilderFinalize(builder : DIBuilderRef)
+
+  {% if LibLLVM::IS_LT_110 %}
+    fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(
+      builder : DIBuilderRef, lang : LLVM::DwarfSourceLanguage, file_ref : MetadataRef, producer : Char*,
+      producer_len : SizeT, is_optimized : Int, flags : Char*, flags_len : SizeT, runtime_ver : UInt,
+      split_name : Char*, split_name_len : SizeT, kind : DWARFEmissionKind, dwo_id : UInt,
+      split_debug_inlining : Int, debug_info_for_profiling : Int
+    ) : MetadataRef
+  {% else %}
+    fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(
+      builder : DIBuilderRef, lang : LLVM::DwarfSourceLanguage, file_ref : MetadataRef, producer : Char*,
+      producer_len : SizeT, is_optimized : Int, flags : Char*, flags_len : SizeT, runtime_ver : UInt,
+      split_name : Char*, split_name_len : SizeT, kind : DWARFEmissionKind, dwo_id : UInt,
+      split_debug_inlining : Int, debug_info_for_profiling : Int, sys_root : Char*,
+      sys_root_len : SizeT, sdk : Char*, sdk_len : SizeT
+    ) : MetadataRef
+  {% end %}
+
+  fun di_builder_create_file = LLVMDIBuilderCreateFile(
+    builder : DIBuilderRef, filename : Char*, filename_len : SizeT,
+    directory : Char*, directory_len : SizeT
+  ) : MetadataRef
+
+  fun di_builder_create_function = LLVMDIBuilderCreateFunction(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT,
+    linkage_name : Char*, linkage_name_len : SizeT, file : MetadataRef, line_no : UInt,
+    ty : MetadataRef, is_local_to_unit : Int, is_definition : Int, scope_line : UInt,
+    flags : LLVM::DIFlags, is_optimized : Int
+  ) : MetadataRef
+
+  fun di_builder_create_lexical_block = LLVMDIBuilderCreateLexicalBlock(
+    builder : DIBuilderRef, scope : MetadataRef, file : MetadataRef, line : UInt, column : UInt
+  ) : MetadataRef
+  fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(
+    builder : DIBuilderRef, scope : MetadataRef, file_scope : MetadataRef, discriminator : UInt
+  ) : MetadataRef
+
+  {% unless LibLLVM::IS_LT_90 %}
+    fun di_builder_create_enumerator = LLVMDIBuilderCreateEnumerator(
+      builder : DIBuilderRef, name : Char*, name_len : SizeT, value : Int64, is_unsigned : Int
+    ) : MetadataRef
+  {% end %}
+
+  fun di_builder_create_subroutine_type = LLVMDIBuilderCreateSubroutineType(
+    builder : DIBuilderRef, file : MetadataRef, parameter_types : MetadataRef*,
+    num_parameter_types : UInt, flags : LLVM::DIFlags
+  ) : MetadataRef
+  fun di_builder_create_enumeration_type = LLVMDIBuilderCreateEnumerationType(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
+    line_number : UInt, size_in_bits : UInt64, align_in_bits : UInt32,
+    elements : MetadataRef*, num_elements : UInt, class_ty : MetadataRef
+  ) : MetadataRef
+  fun di_builder_create_union_type = LLVMDIBuilderCreateUnionType(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
+    line_number : UInt, size_in_bits : UInt64, align_in_bits : UInt32, flags : LLVM::DIFlags,
+    elements : MetadataRef*, num_elements : UInt, run_time_lang : UInt, unique_id : Char*, unique_id_len : SizeT
+  ) : MetadataRef
+  fun di_builder_create_array_type = LLVMDIBuilderCreateArrayType(
+    builder : DIBuilderRef, size : UInt64, align_in_bits : UInt32,
+    ty : MetadataRef, subscripts : MetadataRef*, num_subscripts : UInt
+  ) : MetadataRef
+  fun di_builder_create_unspecified_type = LLVMDIBuilderCreateUnspecifiedType(builder : DIBuilderRef, name : Char*, name_len : SizeT) : MetadataRef
+  fun di_builder_create_basic_type = LLVMDIBuilderCreateBasicType(
+    builder : DIBuilderRef, name : Char*, name_len : SizeT, size_in_bits : UInt64,
+    encoding : UInt, flags : LLVM::DIFlags
+  ) : MetadataRef
+  fun di_builder_create_pointer_type = LLVMDIBuilderCreatePointerType(
+    builder : DIBuilderRef, pointee_ty : MetadataRef, size_in_bits : UInt64, align_in_bits : UInt32,
+    address_space : UInt, name : Char*, name_len : SizeT
+  ) : MetadataRef
+  fun di_builder_create_struct_type = LLVMDIBuilderCreateStructType(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
+    line_number : UInt, size_in_bits : UInt64, align_in_bits : UInt32, flags : LLVM::DIFlags,
+    derived_from : MetadataRef, elements : MetadataRef*, num_elements : UInt,
+    run_time_lang : UInt, v_table_holder : MetadataRef, unique_id : Char*, unique_id_len : SizeT
+  ) : MetadataRef
+  fun di_builder_create_member_type = LLVMDIBuilderCreateMemberType(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
+    line_no : UInt, size_in_bits : UInt64, align_in_bits : UInt32, offset_in_bits : UInt64,
+    flags : LLVM::DIFlags, ty : MetadataRef
+  ) : MetadataRef
+  fun di_builder_create_replaceable_composite_type = LLVMDIBuilderCreateReplaceableCompositeType(
+    builder : DIBuilderRef, tag : UInt, name : Char*, name_len : SizeT, scope : MetadataRef,
+    file : MetadataRef, line : UInt, runtime_lang : UInt, size_in_bits : UInt64, align_in_bits : UInt32,
+    flags : LLVM::DIFlags, unique_identifier : Char*, unique_identifier_len : SizeT
+  ) : MetadataRef
+
+  fun di_builder_get_or_create_subrange = LLVMDIBuilderGetOrCreateSubrange(builder : DIBuilderRef, lo : Int64, count : Int64) : MetadataRef
+  fun di_builder_get_or_create_array = LLVMDIBuilderGetOrCreateArray(builder : DIBuilderRef, data : MetadataRef*, length : SizeT) : MetadataRef
+  fun di_builder_get_or_create_type_array = LLVMDIBuilderGetOrCreateTypeArray(builder : DIBuilderRef, types : MetadataRef*, length : SizeT) : MetadataRef
+
+  {% if LibLLVM::IS_LT_140 %}
+    fun di_builder_create_expression = LLVMDIBuilderCreateExpression(builder : DIBuilderRef, addr : Int64*, length : SizeT) : MetadataRef
+  {% else %}
+    fun di_builder_create_expression = LLVMDIBuilderCreateExpression(builder : DIBuilderRef, addr : UInt64*, length : SizeT) : MetadataRef
+  {% end %}
+
+  fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(
+    builder : DIBuilderRef, storage : ValueRef, var_info : MetadataRef,
+    expr : MetadataRef, debug_loc : MetadataRef, block : BasicBlockRef
+  ) : ValueRef
+
+  fun di_builder_create_auto_variable = LLVMDIBuilderCreateAutoVariable(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
+    line_no : UInt, ty : MetadataRef, always_preserve : Int, flags : LLVM::DIFlags, align_in_bits : UInt32
+  ) : MetadataRef
+  fun di_builder_create_parameter_variable = LLVMDIBuilderCreateParameterVariable(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, arg_no : UInt,
+    file : MetadataRef, line_no : UInt, ty : MetadataRef, always_preserve : Int, flags : LLVM::DIFlags
+  ) : MetadataRef
+
+  fun set_subprogram = LLVMSetSubprogram(func : ValueRef, sp : MetadataRef)
+  fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(target_metadata : MetadataRef, replacement : MetadataRef)
 end
