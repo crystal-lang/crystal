@@ -666,12 +666,11 @@ describe Time do
     end
     Time.utc(2014, 11, 9).at_beginning_of_week(sunday_day_of_week).should eq Time.utc(2014, 11, 9)
 
-    sunday_day_of_week_symbol = :sunday
-    Time.utc(2014, 11, 1).at_beginning_of_week(sunday_day_of_week_symbol).should eq Time.utc(2014, 10, 26)
+    Time.utc(2014, 11, 1).at_beginning_of_week(:sunday).should eq Time.utc(2014, 10, 26)
     2.upto(8) do |i|
-      Time.utc(2014, 11, i).at_beginning_of_week(sunday_day_of_week_symbol).should eq Time.utc(2014, 11, 2)
+      Time.utc(2014, 11, i).at_beginning_of_week(:sunday).should eq Time.utc(2014, 11, 2)
     end
-    Time.utc(2014, 11, 9).at_beginning_of_week(sunday_day_of_week_symbol).should eq Time.utc(2014, 11, 9)
+    Time.utc(2014, 11, 9).at_beginning_of_week(:sunday).should eq Time.utc(2014, 11, 9)
 
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Sunday).should eq Time.utc(2014, 11, 9)
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Monday).should eq Time.utc(2014, 11, 10)
@@ -680,13 +679,6 @@ describe Time do
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Thursday).should eq Time.utc(2014, 11, 6)
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Friday).should eq Time.utc(2014, 11, 7)
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Saturday).should eq Time.utc(2014, 11, 8)
-
-    Time.utc(2014, 11, 3).at_beginning_of_week(:wednesday).should eq Time.utc(2014, 11, 3).at_beginning_of_week(Time::DayOfWeek::Wednesday)
-    Time.utc(2014, 11, 3).at_beginning_of_week("wednesday").should eq Time.utc(2014, 11, 3).at_beginning_of_week(:wednesday)
-    Time.utc(2014, 11, 3).at_beginning_of_week("Wednesday").should eq Time.utc(2014, 11, 3).at_beginning_of_week("wednesday")
-
-    expect_raises(ArgumentError, "Invalid start_day: invalid_day") { Time.utc(2014, 11, 3).at_beginning_of_week(:invalid_day) }
-    expect_raises(ArgumentError, "Invalid start_day: Moonday") { Time.utc(2014, 11, 3).at_beginning_of_week("Moonday") }
 
     t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
     t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)

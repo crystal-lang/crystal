@@ -1365,28 +1365,14 @@ struct Time
   # now = Time.local # => 2023-05-08 16:48:13 +00:00
   # now.at_beginning_of_week(Time::DayOfWeek::Monday) # => 2023-05-08 00:00:00 +00:00
   # now.at_beginning_of_week(Time::DayOfWeek::Sunday) # => 2023-05-07 00:00:00 +00:00
+  #
+  # # with a symbol
+  # now.at_beginning_of_week(:monday) # => 2023-05-08 00:00:00 +00:00
+  # now.at_beginning_of_week(:sunday) # => 2023-05-07 00:00:00 +00:00
   # ```
   # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week(start_day : Time::DayOfWeek = Time::DayOfWeek::Monday) : Time
     (self - ((day_of_week.value - start_day.value) % 7).days).at_beginning_of_day
-  end
-
-  # Returns a copy of this `Time` representing the beginning of the week.
-  #
-  # The week starts on Monday by default, but can be configured by passing a different `start_day` as a `String` or `Symbol`.
-  #
-  # ```
-  # now = Time.local # => 2023-05-08 16:48:13 +00:00
-  # now.at_beginning_of_week(:monday) # => 2023-05-08 00:00:00 +00:00
-  # # case-insensitive
-  # now.at_beginning_of_week("Sunday") # => 2023-05-07 00:00:00 +00:00
-  # ```
-  # TODO: Ensure correctness in local time-line.
-  def at_beginning_of_week(start_day : String | Symbol) : Time
-    parsed_start_day = Time::DayOfWeek.parse?(start_day.to_s)
-    raise ArgumentError.new("Invalid start_day: #{start_day}") unless parsed_start_day
-
-    at_beginning_of_week(parsed_start_day)
   end
 
   def_at_end(year) { Time.local(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
