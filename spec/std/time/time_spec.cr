@@ -685,6 +685,9 @@ describe Time do
     Time.utc(2014, 11, 3).at_beginning_of_week("wednesday").should eq Time.utc(2014, 11, 3).at_beginning_of_week(:wednesday)
     Time.utc(2014, 11, 3).at_beginning_of_week("Wednesday").should eq Time.utc(2014, 11, 3).at_beginning_of_week("wednesday")
 
+    expect_raises(ArgumentError, "Invalid start_day: invalid_day") { Time.utc(2014, 11, 3).at_beginning_of_week(:invalid_day) }
+    expect_raises(ArgumentError, "Invalid start_day: Moonday") { Time.utc(2014, 11, 3).at_beginning_of_week("Moonday") }
+
     t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
     t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)
     t1.at_beginning_of_minute.should eq Time.utc(2014, 11, 25, 10, 11)
