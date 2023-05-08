@@ -4983,8 +4983,9 @@ module Crystal
           type = make_tuple_type parse_union_types(:OP_RCURLY, allow_splats: true)
         end
         check :OP_RCURLY
+        end_location = token_end_location
         next_token_skip_space
-        type
+        type.at(location).at_end(end_location)
       when .op_minus_gt?
         parse_proc_type_output(nil, location)
       when .op_lparen?

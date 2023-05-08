@@ -2602,6 +2602,18 @@ module Crystal
       node_source(source, node).should eq("*bar")
     end
 
+    it "sets correct location of tuple type" do
+      source = "x : {Foo, Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type
+      node_source(source, node).should eq("{Foo, Bar}")
+    end
+
+    it "sets correct location of named tuple type" do
+      source = "x : {foo: Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type
+      node_source(source, node).should eq("{foo: Bar}")
+    end
+
     it "sets correct location of argument in named tuple type" do
       source = "x : {foo: Bar}"
       node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil!.first
