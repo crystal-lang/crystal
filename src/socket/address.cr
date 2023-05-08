@@ -176,17 +176,11 @@ class Socket
     # Returns the IPv6 address with the given address *fields* and *port*
     # number.
     def self.v6(fields : UInt16[8], port : UInt16) : self
-      # `addr_bytes` is big-endian by construction
-      addr_bytes = uninitialized UInt8[16]
-      fields.each_with_index do |field, i|
-        addr_bytes[2 * i] = (field >> 8).to_u8!
-        addr_bytes[2 * i + 1] = field.to_u8!
-      end
-
+      fields.map! { |field| endian_swap(field) }
       addr = LibC::SockaddrIn6.new(
         sin6_family: LibC::AF_INET6,
         sin6_port: endian_swap(port),
-        sin6_addr: ipv6_from_addr8(addr_bytes),
+        sin6_addr: ipv6_from_addr16(fields),
       )
       new(pointerof(addr), sizeof(typeof(addr)))
     end
@@ -217,18 +211,21 @@ class Socket
       v6(v6_fields, port)
     end
 
-    private def self.ipv6_from_addr8(bytes : UInt8[16])
+    private def self.ipv6_from_addr16(bytes : UInt16[8])
       addr = LibC::In6Addr.new
       {% if flag?(:darwin) || flag?(:bsd) %}
-        addr.__u6_addr.__u6_addr8 = bytes
+        addr.__u6_addr.__u6_addr16 = bytes
       {% elsif flag?(:linux) && flag?(:musl) %}
-        addr.__in6_union.__s6_addr = bytes
+        addr.__in6_union.__s6_addr16 = bytes
       {% elsif flag?(:wasm32) %}
-        addr.s6_addr = bytes
+        bytes.each_with_index do |byte, i|
+          addr.s6_addr[2 * i] = byte.to_u8!
+          addr.s6_addr[2 * i + 1] = (byte >> 8).to_u8!
+        end
       {% elsif flag?(:linux) %}
-        addr.__in6_u.__u6_addr8 = bytes
+        addr.__in6_u.__u6_addr16 = bytes
       {% elsif flag?(:win32) %}
-        addr.u.byte = bytes
+        addr.u.word = bytes
       {% else %}
         {% raise "Unsupported platform" %}
       {% end %}
