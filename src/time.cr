@@ -1371,7 +1371,7 @@ struct Time
   # now.at_beginning_of_week(:sunday) # => 2023-05-07 00:00:00 +00:00
   # ```
   # TODO: Ensure correctness in local time-line.
-  def at_beginning_of_week(start_day : Time::DayOfWeek = Time::DayOfWeek::Monday) : Time
+  def at_beginning_of_week(start_day : Time::DayOfWeek = :monday) : Time
     (self - ((day_of_week.value - start_day.value) % 7).days).at_beginning_of_day
   end
 
