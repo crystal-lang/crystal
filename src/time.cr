@@ -1362,7 +1362,7 @@ struct Time
   # The week starts on Monday by default, but can be configured by passing a different `start_day` as a `Time::DayOfWeek`.
   #
   # ```
-  # now = Time.local # => 2023-05-08 16:48:13 +00:00
+  # now = Time.local                                  # => 2023-05-08 16:48:13 +00:00
   # now.at_beginning_of_week(Time::DayOfWeek::Monday) # => 2023-05-08 00:00:00 +00:00
   # now.at_beginning_of_week(Time::DayOfWeek::Sunday) # => 2023-05-07 00:00:00 +00:00
   #
