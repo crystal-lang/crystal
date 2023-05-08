@@ -220,6 +220,15 @@ describe Socket::IPAddress do
       expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: 65536) }
       expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: -1) }
     end
+
+    it "constructs from StaticArray" do
+      # windows returns the former which, while correct, is not canonical
+      # TODO: implement also `#to_s` in Crystal
+      {Socket::IPAddress.new("::ffff:0:0", 0), Socket::IPAddress.new("::ffff:0.0.0.0", 0)}.should contain Socket::IPAddress.v4_mapped_v6(UInt8.static_array(0, 0, 0, 0), 0)
+      Socket::IPAddress.v4_mapped_v6(UInt8.static_array(127, 0, 0, 1), 1234).should eq Socket::IPAddress.new("::ffff:127.0.0.1", 1234)
+      Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 0, 1), 8081).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 8081)
+      Socket::IPAddress.v4_mapped_v6(UInt8.static_array(255, 255, 255, 254), 65535).should eq Socket::IPAddress.new("::ffff:255.255.255.254", 65535)
+    end
   end
 
   it ".valid_v6?" do

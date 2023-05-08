@@ -198,17 +198,24 @@ class Socket
       0 <= field <= 0xffff ? field.to_u16! : raise Error.new("Invalid IPv6 field: #{field}")
     end
 
+    # Returns the IPv4-mapped IPv6 address with the given IPv4 address *fields*
+    # and *port* number.
+    def self.v4_mapped_v6(fields : UInt8[4], port : UInt16) : self
+      v6_fields = StaticArray[
+        0_u16, 0_u16, 0_u16, 0_u16, 0_u16, 0xffff_u16,
+        fields[0].to_u16! << 8 | fields[1],
+        fields[2].to_u16! << 8 | fields[3],
+      ]
+      v6(v6_fields, port)
+    end
+
     # Returns the IPv4-mapped IPv6 address `[::ffff:x0.x1.x2.x3]:port`.
     #
     # Raises `Socket::Error` if any field or the port number is out of range.
     def self.v4_mapped_v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, *, port : Int) : self
-      v6_fields = StaticArray[
-        0_u16, 0_u16, 0_u16, 0_u16, 0_u16, 0xffff_u16,
-        to_v4_field(x0).to_u16! << 8 | to_v4_field(x1),
-        to_v4_field(x2).to_u16! << 8 | to_v4_field(x3),
-      ]
+      v4_fields = StaticArray[x0, x1, x2, x3].map { |field| to_v4_field(field) }
       port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
-      v6(v6_fields, port)
+      v4_mapped_v6(v4_fields, port)
     end
 
     private def self.ipv6_from_addr16(bytes : UInt16[8])
