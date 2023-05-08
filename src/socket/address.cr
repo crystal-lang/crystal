@@ -145,9 +145,41 @@ class Socket
     end
 
     # Returns the IPv4 address `x0.x1.x2.x3:port`.
-    def self.v4(x0 : UInt8, x1 : UInt8, x2 : UInt8, x3 : UInt8, *, port : UInt16) : self
+    #
+    # Raises `Socket::Error` if any field or the port number is out of range.
+    def self.v4(x0 : Int, x1 : Int, x2 : Int, x3 : Int, *, port : Int) : self
+      fields = {x0, x1, x2, x3}.map do |field|
+        0 <= field <= 0xff ? field.to_u8! : raise Error.new("Invalid IPv4 field: #{field}")
+      end
+      port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
+      v4(fields, port)
+    end
+
+    # Returns the IPv6 address `[x0:x1:x2:x3:x4:x5:x6:x7]:port`.
+    #
+    # Raises `Socket::Error` if any field or the port number is out of range.
+    def self.v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, x4 : Int, x5 : Int, x6 : Int, x7 : Int, *, port : Int) : self
+      fields = {x0, x1, x2, x3, x4, x5, x6, x7}.map do |field|
+        0 <= field <= 0xffff ? field.to_u16! : raise Error.new("Invalid IPv6 field: #{field}")
+      end
+      port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
+      v6(fields, port)
+    end
+
+    # Returns the IPv4-mapped IPv6 address `[::ffff:x0.x1.x2.x3]:port`.
+    #
+    # Raises `Socket::Error` if any field or the port number is out of range.
+    def self.v4_mapped_v6(x0 : Int, x1 : Int, x2 : Int, x3 : Int, *, port : Int) : self
+      v4_fields = {x0, x1, x2, x3}.map do |field|
+        0 <= field <= 0xff ? field.to_u16! : raise Error.new("Invalid IPv4 field: #{field}")
+      end
+      port = valid_port?(port) ? port.to_u16! : raise Error.new("Invalid port number: #{port}")
+      v6({0_u16, 0_u16, 0_u16, 0_u16, 0_u16, 0xffff_u16, v4_fields[0] << 8 | v4_fields[1], v4_fields[2] << 8 | v4_fields[3]}, port)
+    end
+
+    private def self.v4(fields, port)
       addr_value = UInt32.zero
-      {x0, x1, x2, x3}.each_with_index do |field, i|
+      fields.each_with_index do |field, i|
         addr_value = (addr_value << 8) | field
       end
 
@@ -159,11 +191,10 @@ class Socket
       new(pointerof(addr), sizeof(typeof(addr)))
     end
 
-    # Returns the IPv6 address `[x0:x1:x2:x3:x4:x5:x6:x7]:port`.
-    def self.v6(x0 : UInt16, x1 : UInt16, x2 : UInt16, x3 : UInt16, x4 : UInt16, x5 : UInt16, x6 : UInt16, x7 : UInt16, *, port : UInt16) : self
+    private def self.v6(fields, port)
       # `addr_bytes` is big-endian by construction
       addr_bytes = uninitialized UInt8[16]
-      {x0, x1, x2, x3, x4, x5, x6, x7}.each_with_index do |field, i|
+      fields.each_with_index do |field, i|
         addr_bytes[2 * i] = (field >> 8).to_u8!
         addr_bytes[2 * i + 1] = field.to_u8!
       end
@@ -174,11 +205,6 @@ class Socket
         sin6_addr: ipv6_from_addr8(addr_bytes),
       )
       new(pointerof(addr), sizeof(typeof(addr)))
-    end
-
-    # Returns the IPv4-mapped IPv6 address `[::ffff:x0.x1.x2.x3]:port`.
-    def self.v4_mapped_v6(x0 : UInt8, x1 : UInt8, x2 : UInt8, x3 : UInt8, *, port : UInt16) : self
-      v6(0_u16, 0_u16, 0_u16, 0_u16, 0_u16, 0xffff_u16, x0.to_u16! << 8 | x1, x2.to_u16! << 8 | x3, port: port)
     end
 
     private def self.ipv6_from_addr8(bytes : UInt8[16])
