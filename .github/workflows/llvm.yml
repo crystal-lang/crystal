@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: ["13.0.1", "14.0.6", "15.0.7"]
+        llvm_version: ["13.0.0", "14.0.0", "15.0.6"]
         include:
           - llvm_version: "16.0.3"
             force_version: true
@@ -43,7 +43,7 @@ jobs:
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
       - name: Install dependencies
-        run: sudo apt-get install -y libtinfo5 libzstd-dev
+        run: sudo apt-get install -y libtinfo5
 
       - name: Set LLVM_CONFIG
         # LLVM_PATH is set by install-llvm-action
