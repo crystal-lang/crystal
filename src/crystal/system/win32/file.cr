@@ -137,24 +137,38 @@ module Crystal::System::File
       return check_not_found_error("Unable to get file info", path) if ret == 0
 
       if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
-        # Could be a symlink, retrieve its reparse tag with FindFirstFile
-        handle = LibC.FindFirstFileW(winpath, out find_data)
+        # Could be a symlink, retrieve its reparse tag
+        handle = LibC.CreateFileW(
+          winpath,
+          LibC::ACCESS_MASK::FILE_READ_ATTRIBUTES | LibC::ACCESS_MASK::READ_CONTROL,
+          LibC::DEFAULT_SHARE_MODE,
+          nil,
+          LibC::OPEN_EXISTING,
+          LibC::FILE_FLAG_BACKUP_SEMANTICS | LibC::FILE_FLAG_OPEN_REPARSE_POINT,
+          LibC::HANDLE.null
+        )
         return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
 
-        if LibC.FindClose(handle) == 0
-          raise RuntimeError.from_winerror("FindClose")
-        end
-
-        if find_data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
-          return ::File::Info.new(find_data)
+        begin
+          with_reparse_data_buffer do |buf, size|
+            if LibC.DeviceIoControl(handle, LibC::FSCTL_GET_REPARSE_POINT, nil, 0, buf, size, out _, nil) != 0
+              reparse_data = buf.as(LibC::REPARSE_DATA_BUFFER*)
+              reparse_tag = reparse_data.value.reparseTag
+              if reparse_tag == LibC::IO_REPARSE_TAG_SYMLINK
+                return FileDescriptor.system_info(handle, LibC::FILE_TYPE_DISK, reparse_tag)
+              end
+            end
+          end
+        ensure
+          LibC.CloseHandle(handle)
         end
       end
     end
 
     handle = LibC.CreateFileW(
-      System.to_wstr(path),
-      LibC::ACCESS_MASK::FILE_READ_ATTRIBUTES,
-      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
+      winpath,
+      LibC::ACCESS_MASK::FILE_READ_ATTRIBUTES | LibC::ACCESS_MASK::READ_CONTROL,
+      LibC::DEFAULT_SHARE_MODE,
       nil,
       LibC::OPEN_EXISTING,
       LibC::FILE_FLAG_BACKUP_SEMANTICS,
@@ -332,10 +346,7 @@ module Crystal::System::File
     return nil if handle == LibC::INVALID_HANDLE_VALUE
 
     begin
-      size = 0x40
-      buf = Pointer(UInt8).malloc(size)
-
-      while true
+      with_reparse_data_buffer do |buf, size|
         if LibC.DeviceIoControl(handle, LibC::FSCTL_GET_REPARSE_POINT, nil, 0, buf, size, out _, nil) != 0
           reparse_data = buf.as(LibC::REPARSE_DATA_BUFFER*)
           if reparse_data.value.reparseTag == LibC::IO_REPARSE_TAG_SYMLINK
@@ -366,13 +377,21 @@ module Crystal::System::File
             raise ::File::Error.new("Not a symlink", file: path)
           end
         end
-
-        return nil if WinError.value != WinError::ERROR_MORE_DATA || size == LibC::MAXIMUM_REPARSE_DATA_BUFFER_SIZE
-        size *= 2
-        buf = buf.realloc(size)
       end
     ensure
       LibC.CloseHandle(handle)
+    end
+  end
+
+  private def self.with_reparse_data_buffer(&)
+    size = 0x40
+    buf = Pointer(UInt8).malloc(size)
+
+    while true
+      yield buf, size
+      return nil if WinError.value != WinError::ERROR_MORE_DATA || size == LibC::MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+      size *= 2
+      buf = buf.realloc(size)
     end
   end
 

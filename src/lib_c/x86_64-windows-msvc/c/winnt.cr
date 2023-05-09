@@ -110,6 +110,37 @@ lib LibC
     KEY_WRITE = 0x20006
   end
 
+  struct SID_IDENTIFIER_AUTHORITY
+    value : BYTE[6]
+  end
+
+  struct SID
+    revision : BYTE
+    subAuthorityCount : BYTE
+    identifierAuthority : SID_IDENTIFIER_AUTHORITY
+    subAuthority : DWORD[1]
+  end
+
+  SECURITY_MAX_SID_SIZE = 68
+
+  enum WELL_KNOWN_SID_TYPE
+    WinWorldSid = 1
+  end
+
+  alias SECURITY_DESCRIPTOR = Void # body unused
+
+  OWNER_SECURITY_INFORMATION = 0x00000001_u32
+  GROUP_SECURITY_INFORMATION = 0x00000002_u32
+  DACL_SECURITY_INFORMATION  = 0x00000004_u32
+
+  struct ACL
+    aclRevision : BYTE
+    sbz1 : BYTE
+    aclSize : WORD
+    aceCount : WORD
+    sbz2 : WORD
+  end
+
   struct CONTEXT
     p1Home : DWORD64
     p2Home : DWORD64
