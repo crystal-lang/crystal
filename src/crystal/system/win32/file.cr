@@ -196,15 +196,60 @@ module Crystal::System::File
   end
 
   def self.readable?(path) : Bool
-    accessible?(path, 4)
+    check_rw_access(path, false)
   end
 
   def self.writable?(path) : Bool
-    accessible?(path, 2)
+    check_rw_access(path, true)
   end
 
   def self.executable?(path) : Bool
     LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
+  end
+
+  private def self.check_rw_access(path, write = false)
+    winpath = System.to_wstr(path)
+
+    handle = LibC.CreateFileW(
+      winpath,
+      LibC::ACCESS_MASK::FILE_READ_ATTRIBUTES | LibC::ACCESS_MASK::READ_CONTROL,
+      LibC::DEFAULT_SHARE_MODE,
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS,
+      LibC::HANDLE.null
+    )
+    return false if handle == LibC::INVALID_HANDLE_VALUE
+
+    begin
+      if write
+        attributes = LibC.GetFileAttributesW(winpath)
+        return false if attributes == LibC::INVALID_FILE_ATTRIBUTES
+        return false if attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+      end
+
+      status = LibC.GetSecurityInfo(handle, LibC::SE_OBJECT_TYPE::FILE_OBJECT, LibC::DACL_SECURITY_INFORMATION, nil, nil, out dacl, nil, out security_descriptor)
+      raise IO::Error.from_os_error("GetSecurityInfo", WinError.new(status)) unless status == 0
+
+      begin
+        LibC.BuildTrusteeWithSidW(out trustee, process_sid)
+        if LibC.GetEffectiveRightsFromAclW(dacl, pointerof(trustee), out access_rights) != 0
+          raise RuntimeError.from_winerror("GetEffectiveRightsFromAclW")
+        end
+        access_rights.includes?(write ? LibC::ACCESS_MASK::FILE_GENERIC_WRITE : LibC::ACCESS_MASK::FILE_GENERIC_READ)
+      ensure
+        LibC.LocalFree(security_descriptor)
+      end
+    ensure
+      LibC.CloseHandle(handle)
+    end
+  end
+
+  private class_getter process_sid : LibC::SID* do
+    LibC.GetTokenInformation(LibC::GetCurrentProcessToken, LibC::TOKEN_INFORMATION_CLASS::TokenOwner, nil, 0, out byte_size)
+    buf = Pointer(UInt8).malloc(byte_size).as(LibC::TOKEN_OWNER*)
+    LibC.GetTokenInformation(LibC::GetCurrentProcessToken, LibC::TOKEN_INFORMATION_CLASS::TokenOwner, buf, byte_size, out _)
+    buf.value.owner
   end
 
   private def self.accessible?(path, mode)

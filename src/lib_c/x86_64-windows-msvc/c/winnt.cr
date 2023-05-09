@@ -141,6 +141,14 @@ lib LibC
     sbz2 : WORD
   end
 
+  struct TOKEN_OWNER
+    owner : SID*
+  end
+
+  enum TOKEN_INFORMATION_CLASS
+    TokenOwner = 4
+  end
+
   struct CONTEXT
     p1Home : DWORD64
     p2Home : DWORD64
