@@ -15,7 +15,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: ["13.0.0", "14.0.0", "15.0.6", "16.0.2"]
+        llvm_version: ["13.0.1", "14.0.6", "15.0.7"]
+        include:
+          - llvm_version: "16.0.3"
+            force_version: true
+            ubuntu_version: "22.04"
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -36,9 +40,9 @@ jobs:
           version: "${{ matrix.llvm_version }}"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
-      # - name: Install libtinfo5
-      #   run: sudo apt-get install -y libtinfo5
-      #   if: "${{ matrix.llvm_version == '16.0.2' }}"
+      - name: Install libzstd-dev
+        run: sudo apt-get install -y libzstd-dev
+        if: "${{ matrix.llvm_version == '16.0.3' }}"
 
       - name: Set LLVM_CONFIG
         # LLVM_PATH is set by install-llvm-action
