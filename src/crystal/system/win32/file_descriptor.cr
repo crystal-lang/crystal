@@ -180,7 +180,7 @@ module Crystal::System::FileDescriptor
 
     r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
     r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
-    r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
+    r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::ACCESS_MASK::GENERIC_READ | LibC::ACCESS_MASK::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
     Crystal::Scheduler.event_loop.create_completion_port(r_pipe) unless read_blocking
 

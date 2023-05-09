@@ -58,15 +58,15 @@ module Crystal::System::File
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
     access = if flags.bits_set? LibC::O_WRONLY
-               LibC::GENERIC_WRITE
+               LibC::ACCESS_MASK::GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
-               LibC::GENERIC_READ | LibC::GENERIC_WRITE
+               LibC::ACCESS_MASK::GENERIC_READ | LibC::ACCESS_MASK::GENERIC_WRITE
              else
-               LibC::GENERIC_READ
+               LibC::ACCESS_MASK::GENERIC_READ
              end
 
     if flags.bits_set? LibC::O_APPEND
-      access |= LibC::FILE_APPEND_DATA
+      access |= LibC::ACCESS_MASK::FILE_APPEND_DATA
     end
 
     if flags.bits_set? LibC::O_TRUNC
@@ -92,7 +92,7 @@ module Crystal::System::File
 
     if flags.bits_set? LibC::O_TEMPORARY
       attributes |= LibC::FILE_FLAG_DELETE_ON_CLOSE | LibC::FILE_ATTRIBUTE_TEMPORARY
-      access |= LibC::DELETE
+      access |= LibC::ACCESS_MASK::DELETE
     end
 
     if flags.bits_set? LibC::O_SHORT_LIVED
@@ -153,7 +153,7 @@ module Crystal::System::File
 
     handle = LibC.CreateFileW(
       System.to_wstr(path),
-      LibC::FILE_READ_ATTRIBUTES,
+      LibC::ACCESS_MASK::FILE_READ_ATTRIBUTES,
       LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
       nil,
       LibC::OPEN_EXISTING,
@@ -321,7 +321,7 @@ module Crystal::System::File
   private def self.symlink_info?(path)
     handle = LibC.CreateFileW(
       System.to_wstr(path),
-      LibC::FILE_READ_ATTRIBUTES,
+      LibC::ACCESS_MASK::FILE_READ_ATTRIBUTES,
       LibC::DEFAULT_SHARE_MODE,
       nil,
       LibC::OPEN_EXISTING,
@@ -393,7 +393,7 @@ module Crystal::System::File
     mtime = Crystal::System::Time.to_filetime(modification_time)
     handle = LibC.CreateFileW(
       System.to_wstr(path),
-      LibC::FILE_WRITE_ATTRIBUTES,
+      LibC::ACCESS_MASK::FILE_WRITE_ATTRIBUTES,
       LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
       nil,
       LibC::OPEN_EXISTING,
