@@ -1880,10 +1880,9 @@ module Crystal
       if @token.type.op_lparen?
         next_token_skip_space_or_newline
         while !@token.type.op_rparen?
-          param_location = @token.location
-          param = parse_fun_literal_param.at(param_location)
+          param = parse_fun_literal_param
           if params.any? &.name.==(param.name)
-            raise "duplicated proc literal parameter name: #{param.name}", param_location
+            raise "duplicated proc literal parameter name: #{param.name}", param.location.not_nil!
           end
 
           params << param
@@ -1950,12 +1949,15 @@ module Crystal
 
     def parse_fun_literal_param
       name = check_ident
+      location = @token.location
+      end_location = token_end_location
       next_token_skip_space_or_newline
 
       if @token.type.op_colon?
         next_token_skip_space_or_newline
 
         type = parse_bare_proc_type
+        end_location = type.end_location
       end
 
       if @token.type.op_comma?
@@ -1965,7 +1967,7 @@ module Crystal
         check :OP_RPAREN
       end
 
-      Arg.new name, restriction: type
+      Arg.new(name, restriction: type).at(location).at_end(end_location)
     end
 
     def parse_fun_pointer

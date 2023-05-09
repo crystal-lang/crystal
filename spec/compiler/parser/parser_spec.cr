@@ -2584,5 +2584,12 @@ module Crystal
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
     end
+
+    it "sets correct location of parameter in proc literal" do
+      source = "->(foo : Bar, baz) { }"
+      args = Parser.parse(source).as(ProcLiteral).def.args
+      node_source(source, args[0]).should eq("foo : Bar")
+      node_source(source, args[1]).should eq("baz")
+    end
   end
 end
