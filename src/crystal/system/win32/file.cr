@@ -164,11 +164,7 @@ module Crystal::System::File
     return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
 
     begin
-      if LibC.GetFileInformationByHandle(handle, out file_info) == 0
-        raise ::File::Error.from_winerror("Unable to get file info", file: path)
-      end
-
-      ::File::Info.new(file_info, LibC::FILE_TYPE_DISK)
+      FileDescriptor.system_info(handle)
     ensure
       LibC.CloseHandle(handle)
     end

@@ -228,6 +228,10 @@ module Crystal::Macros
   def raise(message) : NoReturn
   end
 
+  # Emits a compile-time warning with the given *message*.
+  def warning(message : StringLiteral) : NilLiteral
+  end
+
   # Returns `true` if the given *filename* exists, `false` otherwise.
   def file_exists?(filename) : BoolLiteral
   end
@@ -413,9 +417,14 @@ module Crystal::Macros
     def !=(other : ASTNode) : BoolLiteral
     end
 
-    # Gives a compile-time error with the given *message*. This will
-    # highlight this node in the error message.
+    # Gives a compile-time error with the given *message*.
+    # This will highlight this node in the error message.
     def raise(message) : NoReturn
+    end
+
+    # Emits a compile-time warning with the given *message*.
+    # This will highlight this node in the warning message.
+    def warning(message : StringLiteral) : NilLiteral
     end
 
     # Returns `true` if this node's type is the given *type* or any of its
@@ -1516,7 +1525,7 @@ module Crystal::Macros
     end
 
     # Returns the `else` of this `case`.
-    def else : ArrayLiteral(When)
+    def else : ASTNode
     end
 
     # Returns whether this `case` is exhaustive (`case ... in`).

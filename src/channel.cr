@@ -71,7 +71,7 @@ class Channel(T)
     # Implementor that returns `Channel::UseDefault` in `#execute`
     # must redefine `#default_result`
     def default_result
-      raise "unreachable"
+      raise "Unreachable"
     end
   end
 
@@ -406,7 +406,7 @@ class Channel(T)
   # :nodoc:
   def self.select(ops : Indexable(SelectAction))
     i, m = select_impl(ops, false)
-    raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
+    raise "BUG: Blocking select returned not ready status" if m.is_a?(NotReady)
     return i, m
   end
 

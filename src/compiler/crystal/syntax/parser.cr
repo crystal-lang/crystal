@@ -2914,7 +2914,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\\n'"
         end
       end
       false
@@ -5589,7 +5589,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
-      next_token_skip_statement_end
+      skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }
 

@@ -746,16 +746,35 @@ class Array(T)
   # ary.concat(["c", "d"])
   # ary # => ["a", "b", "c", "d"]
   # ```
-  def concat(other : Array) : self
+  def concat(other : Indexable) : self
     other_size = other.size
 
     resize_if_cant_insert(other_size)
 
-    (@buffer + @size).copy_from(other.to_unsafe, other_size)
+    concat_indexable(other)
 
     @size += other_size
 
     self
+  end
+
+  private def concat_indexable(other : Array | Slice | StaticArray)
+    (@buffer + @size).copy_from(other.to_unsafe, other.size)
+  end
+
+  private def concat_indexable(other : Deque)
+    ptr = @buffer + @size
+    Deque.half_slices(other) do |slice|
+      ptr.copy_from(slice.to_unsafe, slice.size)
+      ptr += slice.size
+    end
+  end
+
+  private def concat_indexable(other)
+    appender = (@buffer + @size).appender
+    other.each do |elem|
+      appender << elem
+    end
   end
 
   # :ditto:
@@ -1602,7 +1621,7 @@ class Array(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.sort! &block
@@ -1624,7 +1643,7 @@ class Array(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1645,7 +1664,7 @@ class Array(T)
   # :inherit:
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     to_unsafe_slice.sort!(&block)
@@ -1655,7 +1674,7 @@ class Array(T)
   # :inherit:
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     to_unsafe_slice.unstable_sort!(&block)
@@ -2205,10 +2224,9 @@ class Array(T)
 
     def self.element_type(ary)
       case ary
-      when Array
-        element_type(ary.first)
-      when Iterator
-        element_type(ary.next)
+      when Array, Iterator
+        ary.each { |elem| return element_type(elem) }
+        ::raise ""
       else
         ary
       end

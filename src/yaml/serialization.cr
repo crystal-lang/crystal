@@ -192,11 +192,11 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
                 nilable:     ivar.type.nilable?,
+                type:        ivar.type,
                 converter:   ann && ann[:converter],
                 presence:    ann && ann[:presence],
               }
@@ -204,8 +204,10 @@ module YAML
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = {% if value[:has_default] || value[:nilable] %} nil {% else %} uninitialized ::Union({{value[:type]}}) {% end %}
+          %var{name} = uninitialized ::Union({{value[:type]}})
           %found{name} = false
         {% end %}
 
@@ -222,17 +224,16 @@ module YAML
             {% for name, value in properties %}
               when {{value[:key]}}
                 begin
-                  {% if value[:has_default] && !value[:nilable] %} YAML::Schema::Core.parse_null_or(value_node) do {% else %} begin {% end %}
-                    %var{name} =
-                      {% if value[:converter] %}
-                        {{value[:converter]}}.from_yaml(ctx, value_node)
-                      {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                        {{value[:type]}}.new(ctx, value_node)
-                      {% else %}
-                        ::Union({{value[:type]}}).new(ctx, value_node)
-                      {% end %}
-                  end
+                  {% if value[:has_default] && !value[:nilable] %}
+                    next if YAML::Schema::Core.parse_null?(value_node)
+                  {% end %}
 
+                  %var{name} =
+                    {% if value[:converter] %}
+                      {{value[:converter]}}.from_yaml(ctx, value_node)
+                    {% else %}
+                      ::Union({{value[:type]}}).new(ctx, value_node)
+                    {% end %}
                   %found{name} = true
                 end
             {% end %}
@@ -251,25 +252,13 @@ module YAML
         end
 
         {% for name, value in properties %}
-          {% unless value[:nilable] || value[:has_default] %}
-            if !%found{name}
-              node.raise "Missing YAML attribute: {{value[:key].id}}"
-            end
-          {% end %}
-
-          {% if value[:nilable] %}
-            {% if value[:has_default] != nil %}
-              @{{name}} = %found{name} ? %var{name} : {{value[:default]}}
-            {% else %}
-              @{{name}} = %var{name}
-            {% end %}
-          {% elsif value[:has_default] %}
-            if %found{name} && !%var{name}.nil?
-              @{{name}} = %var{name}
-            end
-          {% else %}
+          if %found{name}
             @{{name}} = %var{name}
-          {% end %}
+          else
+            {% unless value[:has_default] || value[:nilable] %}
+              node.raise "Missing YAML attribute: {{value[:key].id}}"
+            {% end %}
+          end
 
           {% if value[:presence] %}
             @{{name}}_present = %found{name}
@@ -299,7 +288,6 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
             {%
               properties[ivar.id] = {
-                type:      ivar.type,
                 key:       ((ann && ann[:key]) || ivar).id.stringify,
                 converter: ann && ann[:converter],
                 emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
@@ -404,7 +392,7 @@ module YAML
     # ```
     macro use_yaml_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
-        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+        {% mapping.raise "Mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
       def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -413,7 +401,7 @@ module YAML
         end
 
         unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}"
+          node.raise "Expected YAML mapping, not #{node.class}"
         end
 
         node.each do |key, value|

@@ -200,7 +200,7 @@ module HTTP
       end
     end
 
-    pending_win32 "will retry a broken socket" do
+    it "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close

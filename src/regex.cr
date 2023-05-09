@@ -80,27 +80,31 @@ require "./regex/match_data"
 # have their own language for describing strings.
 #
 # Many programming languages and tools implement their own regular expression
-# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library, with
-# [JIT complication](http://www.pcre.org/original/doc/html/pcrejit.html) enabled
+# language, but Crystal uses [PCRE2](http://www.pcre.org/), a popular C library, with
+# [JIT complication](http://www.pcre.org/current/doc/html/pcre2jit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
-# alternation - but the feature set of PCRE extends far beyond these, and we
+# alternation - but the feature set of PCRE2 extends far beyond these, and we
 # don't attempt to describe it in full here. For more information, refer to
-# the PCRE documentation, especially the
-# [full pattern syntax](http://www.pcre.org/original/doc/html/pcrepattern.html)
+# the PCRE2 documentation, especially the
+# [full pattern syntax](http://www.pcre.org/current/doc/html/pcre2pattern.html)
 # or
-# [syntax quick reference](http://www.pcre.org/original/doc/html/pcresyntax.html).
+# [syntax quick reference](http://www.pcre.org/current/doc/html/pcre2syntax.html).
+#
+# NOTE: Prior to Crystal 1.8 the compiler expected regex literals to follow the
+# original [PCRE pattern syntax](https://www.pcre.org/original/doc/html/pcrepattern.html).
+# The following summary applies to both PCRE and PCRE2.
 #
 # The regular expression language can be used to match much more than just the
 # static substrings in the above examples. Certain characters, called
-# [metacharacters](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC4),
+# [metacharacters](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC4),
 # are given special treatment in regular expressions, and can be used to
 # describe more complex patterns. To match metacharacters literally in a
 # regular expression, they must be escaped by being preceded with a backslash
 # (`\`). `escape` will do this automatically for a given String.
 #
 # A group of characters (often called a capture group or
-# [subpattern](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC14))
+# [subpattern](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC14))
 # can be identified by enclosing it in parentheses (`()`). The contents of
 # each capture group can be extracted on a successful match:
 #
@@ -131,7 +135,7 @@ require "./regex/match_data"
 # would return `nil`. `$2?.nil?` would return `true`.
 #
 # A character or group can be
-# [repeated](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC17)
+# [repeated](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC17)
 # or made optional using an asterisk (`*` - zero or more), a plus sign
 # (`+` - one or more), integer bounds in curly braces
 # (`{n,m}`) (at least `n`, no more than `m`), or a question mark
@@ -152,12 +156,12 @@ require "./regex/match_data"
 # ```
 #
 # Alternatives can be separated using a
-# [vertical bar](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC12)
+# [vertical bar](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC12)
 # (`|`). Any single character can be represented by
-# [dot](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC7)
+# [dot](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC7)
 # (`.`). When matching only one character, specific
 # alternatives can be expressed as a
-# [character class](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC9),
+# [character class](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC9),
 # enclosed in square brackets (`[]`):
 #
 # ```
@@ -175,11 +179,11 @@ require "./regex/match_data"
 # ```
 #
 # Regular expressions can be defined with these 3
-# [optional flags](http://www.pcre.org/original/doc/html/pcreapi.html#SEC11):
+# [optional flags](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC13):
 #
-# * `i`: ignore case (PCRE_CASELESS)
-# * `m`: multiline (PCRE_MULTILINE and PCRE_DOTALL)
-# * `x`: extended (PCRE_EXTENDED)
+# * `i`: ignore case (`Regex::Options::IGNORE_CASE`)
+# * `m`: multiline (`Regex::Options::MULTILINE`)
+# * `x`: extended (`Regex::Options::EXTENDED`)
 #
 # ```
 # /asdf/ =~ "ASDF"    # => nil
@@ -188,10 +192,10 @@ require "./regex/match_data"
 # /^z/im =~ "ASDF\nZ" # => 5
 # ```
 #
-# PCRE supports other encodings, but Crystal strings are UTF-8 only, so Crystal
+# PCRE2 supports other encodings, but Crystal strings are UTF-8 only, so Crystal
 # regular expressions are also UTF-8 only (by default).
 #
-# PCRE optionally permits named capture groups (named subpatterns) to not be
+# PCRE2 optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a `Regex` as a
 # `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
 # unique names within a single `Regex`.
@@ -281,6 +285,14 @@ class Regex
   # This alias is supposed to replace `Options`.
   alias CompileOptions = Options
 
+  # Returns `true` if the regex engine supports all *options* flags when compiling a pattern.
+  def self.supports_compile_options?(options : CompileOptions) : Bool
+    options.each do |flag|
+      return false unless Engine.supports_compile_flag?(flag)
+    end
+    true
+  end
+
   # Represents options passed to regex match methods such as `Regex#match`.
   @[Flags]
   enum MatchOptions
@@ -302,6 +314,14 @@ class Regex
     # This option has no effect if the pattern was compiled with
     # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
     NO_UTF_CHECK
+  end
+
+  # Returns `true` if the regex engine supports all *options* flags when matching a pattern.
+  def self.supports_match_options?(options : MatchOptions) : Bool
+    options.each do |flag|
+      return false unless Engine.supports_match_flag?(flag)
+    end
+    true
   end
 
   # Returns a `Regex::CompileOptions` representing the optional flags applied to this `Regex`.

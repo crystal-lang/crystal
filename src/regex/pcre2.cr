@@ -79,7 +79,7 @@ module Regex::PCRE2
                 when .endanchored?       then LibPCRE2::ENDANCHORED
                 when .match_invalid_utf? then LibPCRE2::MATCH_INVALID_UTF
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -88,6 +88,10 @@ module Regex::PCRE2
       raise ArgumentError.new("Unknown Regex::Option value: #{options}")
     end
     flag
+  end
+
+  def self.supports_compile_flag?(options)
+    true
   end
 
   private def pcre2_match_options(options)
@@ -108,7 +112,7 @@ module Regex::PCRE2
                 when .ucp?            then raise ArgumentError.new("Invalid regex option UCP for `pcre2_match`")
                 when .endanchored?    then LibPCRE2::ENDANCHORED
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -129,7 +133,7 @@ module Regex::PCRE2
                 when .no_jit?       then LibPCRE2::NO_JIT
                 when .no_utf_check? then LibPCRE2::NO_UTF_CHECK
                 else
-                  raise "unreachable"
+                  raise "Unreachable"
                 end
         options &= ~option
       end
@@ -138,6 +142,10 @@ module Regex::PCRE2
       raise ArgumentError.new("Unknown Regex::MatchOption value: #{options}")
     end
     flag
+  end
+
+  def self.supports_match_flag?(options)
+    true
   end
 
   protected def self.error_impl(source)
@@ -159,14 +167,14 @@ module Regex::PCRE2
   private def pattern_info(what, where)
     ret = LibPCRE2.pattern_info(@re, what, where)
     if ret != 0
-      raise "error pattern_info #{what}: #{ret}"
+      raise "Error pattern_info #{what}: #{ret}"
     end
   end
 
   private def name_table_impl
     lookup = Hash(Int32, String).new
 
-    each_capture_group do |capture_number, name_entry|
+    each_named_capture_group do |capture_number, name_entry|
       lookup[capture_number] = String.new(name_entry.to_unsafe + 2)
     end
 
@@ -174,7 +182,7 @@ module Regex::PCRE2
   end
 
   # :nodoc:
-  def each_capture_group(&)
+  def each_named_capture_group(&)
     name_table = uninitialized UInt8*
     pattern_info(LibPCRE2::INFO_NAMETABLE, pointerof(name_table))
 
@@ -182,7 +190,7 @@ module Regex::PCRE2
 
     name_count = pattern_info(LibPCRE2::INFO_NAMECOUNT)
     name_count.times do
-      capture_number = (name_table[0] << 8) | name_table[1]
+      capture_number = (name_table[0].to_i << 8) | name_table[1]
 
       yield capture_number, Slice.new(name_table, name_entry_size)
 
@@ -291,7 +299,7 @@ module Regex::PCRE2
     private def fetch_impl(group_name : String, &)
       selected_range = nil
       exists = false
-      @regex.each_capture_group do |number, name_entry|
+      @regex.each_named_capture_group do |number, name_entry|
         if name_entry[2, group_name.bytesize]? == group_name.to_slice && name_entry[2 + group_name.bytesize].zero?
           exists = true
           range = byte_range(number) { nil }

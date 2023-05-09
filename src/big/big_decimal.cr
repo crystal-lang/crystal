@@ -39,6 +39,7 @@ struct BigDecimal < Number
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes initialization from them risky.
   def self.new(num : Float)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new(num.to_s)
   end
 
@@ -198,6 +199,22 @@ struct BigDecimal < Number
 
   def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
+  end
+
+  def %(other : BigDecimal) : BigDecimal
+    if @scale > other.scale
+      scaled = other.scale_to(self)
+      BigDecimal.new(@value % scaled.value, @scale)
+    elsif @scale < other.scale
+      scaled = scale_to(other)
+      BigDecimal.new(scaled.value % other.value, other.scale)
+    else
+      BigDecimal.new(@value % other.value, @scale)
+    end
+  end
+
+  def %(other : Int)
+    self % BigDecimal.new(other)
   end
 
   def /(other : BigDecimal) : BigDecimal

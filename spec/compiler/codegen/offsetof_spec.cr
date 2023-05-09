@@ -56,4 +56,12 @@ describe "Code gen: offsetof" do
       (pointerof(f).as(Void*) + offsetof(Foo, @y).to_i64).as(UInt32*).value == f.y
       CRYSTAL
   end
+
+  it "returns offset of `StaticArray#@buffer`" do
+    run(<<-CRYSTAL).to_b.should be_true
+      x = uninitialized Int32[4]
+      pointerof(x.@buffer).value = 12345
+      (pointerof(x).as(Void*) + offsetof(Int32[4], @buffer).to_i64).as(Int32*).value == x.@buffer
+      CRYSTAL
+  end
 end

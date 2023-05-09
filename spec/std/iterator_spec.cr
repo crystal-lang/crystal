@@ -165,6 +165,11 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    # NOTE: This spec would only fail in release mode.
+    it "does not experience tuple upcase bug of #13411" do
+      [{true}].each.chain([{1}].each).first(3).to_a.should eq [{true}, {1}]
+    end
+
     describe "chain indeterminate number of iterators" do
       it "chains all together" do
         iters = [[0], [1], [2, 3], [4, 5, 6]].each.map &.each

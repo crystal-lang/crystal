@@ -105,13 +105,13 @@ module Crystal
     end
 
     def offset_of(type, element_index)
-      return 0_u64 if type.extern_union?
+      return 0_u64 if type.extern_union? || type.is_a?(StaticArrayInstanceType)
       llvm_typer.offset_of(llvm_typer.llvm_type(type), element_index)
     end
 
     def instance_offset_of(type, element_index)
-      # extern unions must be value types, which always use the above
-      # `offset_of` instead
+      # extern unions and static arrays must be value types, which always use
+      # the above `offset_of` instead
       llvm_typer.offset_of(llvm_typer.llvm_struct_type(type), element_index + 1)
     end
   end
@@ -1380,7 +1380,7 @@ module Crystal
 
     def type_cast_exception_call(from_type, to_type, node, var_name)
       pieces = [
-        StringLiteral.new("cast from ").at(node),
+        StringLiteral.new("Cast from ").at(node),
         Call.new(Var.new(var_name).at(node), "class").at(node),
         StringLiteral.new(" to #{to_type} failed").at(node),
       ] of ASTNode

@@ -277,7 +277,8 @@ describe "Regex" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-        LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
+        jit_enabled = uninitialized LibC::Int
+        LibPCRE.config LibPCRE::CONFIG_JIT, pointerof(jit_enabled)
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
 
         # This match may raise on JIT stack limit or not. If it raises, the error message should be the expected one.
@@ -396,6 +397,12 @@ describe "Regex" do
 
     it "duplicate name" do
       /(?<foo>)(?<foo>)/.name_table.should eq({1 => "foo", 2 => "foo"})
+    end
+
+    it "more than 255 groups" do
+      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
+      name_table = Array.new(1000) { |i| {i + 1, "c#{i}"} }.to_h
+      regex.name_table.should eq(name_table)
     end
   end
 
@@ -532,5 +539,15 @@ describe "Regex" do
         "missing ) at 8"
       end
     )
+  end
+
+  it ".supports_compile_options?" do
+    Regex.supports_compile_options?(:anchored).should be_true
+    Regex.supports_compile_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
+  end
+
+  it ".supports_match_options?" do
+    Regex.supports_match_options?(:anchored).should be_true
+    Regex.supports_match_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
   end
 end
