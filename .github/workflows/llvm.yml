@@ -38,11 +38,12 @@ jobs:
       - uses: KyleMayes/install-llvm-action@13d5d77cbf0bd7e35cb02a8f9ed4bb85bed3393b # v1.8.0
         with:
           version: "${{ matrix.llvm_version }}"
+          force-version: "${{ matrix.force_version }}"
+          ubuntu-version: "${{ matrix.ubuntu_version }}"
           cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
-      - name: Install libzstd-dev
-        run: sudo apt-get install -y libzstd-dev
-        if: "${{ matrix.llvm_version == '16.0.3' }}"
+      - name: Install dependencies
+        run: sudo apt-get install -y libtinfo5 libzstd-dev
 
       - name: Set LLVM_CONFIG
         # LLVM_PATH is set by install-llvm-action
@@ -51,7 +52,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.8.1"
+          crystal: "1.8.2"
 
       - name: Build libllvm_ext
         run: make -B deps
