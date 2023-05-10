@@ -1342,6 +1342,7 @@ module Crystal
 
     def parse_annotation
       doc = @token.doc
+      location = @token.location
 
       next_token_skip_space
       name = parse_path
@@ -1371,10 +1372,11 @@ module Crystal
         end
       end
       check :OP_RSQUARE
+      end_location = token_end_location
       @wants_regex = false
       next_token_skip_space
 
-      ann = Annotation.new(name, args, named_args)
+      ann = Annotation.new(name, args, named_args).at(location).at_end(end_location)
       ann.doc = doc
       ann
     end

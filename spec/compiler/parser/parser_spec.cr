@@ -2619,5 +2619,23 @@ module Crystal
       node = Parser.parse(source).as(ProcPointer).obj.not_nil!
       node_source(source, node).should eq("@@foo")
     end
+
+    it "sets correct location of annotation on method parameter" do
+      source = "def x(@[Foo] y) end"
+      node = Parser.parse(source).as(Def).args.first.parsed_annotations.not_nil!.first
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of annotation in lib" do
+      source = "lib X; @[Foo]; end"
+      node = Parser.parse(source).as(LibDef).body
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of annotation in enum" do
+      source = "enum X; @[Foo]; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("@[Foo]")
+    end
   end
 end
