@@ -2601,5 +2601,11 @@ module Crystal
       node = Parser.parse(source).as(MultiAssign).targets[1]
       node_source(source, node).should eq("*bar")
     end
+
+    it "sets correct location of argument in named tuple type" do
+      source = "x : {foo: Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil![0]
+      node_source(source, node).should eq("foo: Bar")
+    end
   end
 end

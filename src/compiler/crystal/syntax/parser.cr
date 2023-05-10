@@ -5157,7 +5157,7 @@ module Crystal
         type = parse_bare_proc_type
         skip_space
 
-        named_args << NamedArgument.new(name, type)
+        named_args << NamedArgument.new(name, type).at(name_location).at_end(type)
 
         if @token.type.op_comma?
           next_token_skip_space_or_newline
