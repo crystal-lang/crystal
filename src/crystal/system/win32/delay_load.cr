@@ -4,7 +4,7 @@ private ERROR_SEVERITY_ERROR = 0xC0000000_u32
 private FACILITY_VISUALCPP   =           0x6d
 
 private macro vcpp_exception(err)
-  {{ ERROR_SEVERITY_ERROR | (FACILITY_VISUALCPP << 16) | err }}
+  {{ ERROR_SEVERITY_ERROR | (FACILITY_VISUALCPP << 16) | WinError.constant(err.id) }}
 end
 
 lib LibC
@@ -105,10 +105,10 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
     # DloadReleaseSectionWriteAccess
 
     LibC.RaiseException(
-      vcpp_exception(87_u32), # WinError::ERROR_INVALID_PARAMETER
+      vcpp_exception(ERROR_INVALID_PARAMETER),
       0,
       1,
-      Pointer(LibC::ULONG_PTR).new(pointerof(rgpdli).address),
+      pointerof(rgpdli).as(LibC::ULONG_PTR*),
     )
   end
 
@@ -141,10 +141,10 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
 
       # DloadReleaseSectionWriteAccess
       LibC.RaiseException(
-        vcpp_exception(126_u32), # WinError::ERROR_MOD_NOT_FOUND
+        vcpp_exception(ERROR_MOD_NOT_FOUND),
         0,
         1,
-        Pointer(LibC::ULONG_PTR).new(pointerof(rgpdli).address),
+        pointerof(rgpdli).as(LibC::ULONG_PTR*),
       )
 
       # If we get to here, we blindly assume that the handler of the exception
@@ -186,10 +186,10 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
 
     # DloadReleaseSectionWriteAccess
     LibC.RaiseException(
-      vcpp_exception(127_u32), # WinError::ERROR_PROC_NOT_FOUND
+      vcpp_exception(ERROR_PROC_NOT_FOUND),
       0,
       1,
-      Pointer(LibC::ULONG_PTR).new(pointerof(rgpdli).address),
+      pointerof(rgpdli).as(LibC::ULONG_PTR*),
     )
     # DloadAcquireSectionWriteAccess
 

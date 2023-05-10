@@ -44,7 +44,7 @@ class Crystal::Loader
         next unless File.file?(library_path)
 
         Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
-          dlls << dll unless dll.downcase == "kernel32.dll"
+          dlls << dll unless dll.compare("kernel32.dll", case_insensitive: true).zero?
         end
         break
       end
