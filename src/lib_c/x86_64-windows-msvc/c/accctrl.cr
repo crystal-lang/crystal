@@ -69,6 +69,5 @@ lib LibC
     trusteeForm : TRUSTEE_FORM
     trusteeType : TRUSTEE_TYPE
     union : TRUSTEE_W_union
-    ptstrName : LPWSTR
   end
 end
