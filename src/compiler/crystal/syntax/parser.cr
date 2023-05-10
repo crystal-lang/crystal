@@ -135,7 +135,7 @@ module Crystal
       location = @token.location
 
       if @token.type.op_star?
-        lhs_splat_index = 0
+        lhs_splat = {index: 0, location: @token.location}
         next_token_skip_space
       end
 
@@ -147,17 +147,17 @@ module Crystal
       case @token.type
       when .op_comma?
         unless last_is_target
-          unexpected_token if lhs_splat_index
+          unexpected_token if lhs_splat
           raise "Multiple assignment is not allowed for constants" if last.is_a?(Path)
           unexpected_token
         end
       when .newline?, .op_semicolon?
-        unexpected_token if lhs_splat_index && !multi_assign_middle?(last)
-        return last unless lhs_splat_index
+        unexpected_token if lhs_splat && !multi_assign_middle?(last)
+        return last unless lhs_splat
       else
         if end_token?
-          unexpected_token if lhs_splat_index && !multi_assign_middle?(last)
-          return last unless lhs_splat_index
+          unexpected_token if lhs_splat && !multi_assign_middle?(last)
+          return last unless lhs_splat
         else
           unexpected_token
         end
@@ -178,8 +178,8 @@ module Crystal
 
         next_token_skip_space_or_newline
         if @token.type.op_star?
-          raise "splat assignment already specified" if lhs_splat_index
-          lhs_splat_index = i
+          raise "splat assignment already specified" if lhs_splat
+          lhs_splat = {index: i, location: @token.location}
           next_token_skip_space
         end
 
@@ -217,13 +217,15 @@ module Crystal
         raise "BUG: multi_assign index expression can only be Assign or Call"
       end
 
-      if lhs_splat_index
-        targets[lhs_splat_index] = Splat.new(targets[lhs_splat_index])
+      if lhs_splat
+        lhs_splat_location = lhs_splat[:location]
+        lhs_splat_index = lhs_splat[:index]
+        targets[lhs_splat_index] = Splat.new(targets[lhs_splat_index]).at(lhs_splat_location)
       end
 
       values.concat exps[assign_index + 1..-1]
       if values.size != 1
-        if lhs_splat_index
+        if lhs_splat
           raise "Multiple assignment count mismatch", location if targets.size - 1 > values.size
         else
           raise "Multiple assignment count mismatch", location if targets.size != values.size

@@ -1155,6 +1155,10 @@ module Crystal
       @exp.accept visitor
     end
 
+    def end_location
+      @end_location || @exp.end_location
+    end
+
     def_equals_and_hash exp
   end
 

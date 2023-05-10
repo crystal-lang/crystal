@@ -2591,5 +2591,15 @@ module Crystal
       node_source(source, args[0]).should eq("foo : Bar")
       node_source(source, args[1]).should eq("baz")
     end
+
+    it "sets correct location of splat in multiple assignment" do
+      source = "*foo, bar = 1, 2"
+      node = Parser.parse(source).as(MultiAssign).targets[0]
+      node_source(source, node).should eq("*foo")
+
+      source = "foo, *bar = 1, 2"
+      node = Parser.parse(source).as(MultiAssign).targets[1]
+      node_source(source, node).should eq("*bar")
+    end
   end
 end
