@@ -2607,5 +2607,17 @@ module Crystal
       node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil!.first
       node_source(source, node).should eq("foo: Bar")
     end
+
+    it "sets correct location of instance variable in proc pointer" do
+      source = "->@foo.x"
+      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node_source(source, node).should eq("@foo")
+    end
+
+    it "sets correct location of instance variable in proc pointer" do
+      source = "->@@foo.x"
+      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node_source(source, node).should eq("@@foo")
+    end
   end
 end

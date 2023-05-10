@@ -2009,7 +2009,7 @@ module Crystal
         name = "#{name}=" if equals_sign
       when .instance_var?
         raise "ProcPointer of instance variable cannot be global", location if global
-        obj = InstanceVar.new(@token.value.to_s)
+        obj = InstanceVar.new(@token.value.to_s).at(location).at_end(token_end_location)
         next_token_skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
@@ -2017,7 +2017,7 @@ module Crystal
         name = "#{name}=" if equals_sign
       when .class_var?
         raise "ProcPointer of class variable cannot be global", location if global
-        obj = ClassVar.new(@token.value.to_s)
+        obj = ClassVar.new(@token.value.to_s).at(location).at_end(token_end_location)
         next_token_skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
