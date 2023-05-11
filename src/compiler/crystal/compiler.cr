@@ -3,6 +3,7 @@ require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
+  require "./loader"
   require "crystal/system/win32/visual_studio"
   require "crystal/system/win32/windows_sdk"
 {% end %}
@@ -363,6 +364,19 @@ module Crystal
         link_args << "/INCREMENTAL:NO /STACK:0x800000"
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
+
+        {% if flag?(:msvc) %}
+          if program.has_flag?("preview_dll") && !program.has_flag?("no_win32_delay_load")
+            # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
+            # it is harmless to skip this error because not all import libraries are always used, much
+            # less the individual DLLs they refer to
+            link_args << "/IGNORE:4199"
+
+            Loader.search_dlls(Process.parse_arguments_windows(link_args.join(' '))).each do |dll|
+              link_args << "/DELAYLOAD:#{dll}"
+            end
+          end
+        {% end %}
 
         args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
         cmd = "#{linker} #{args}"

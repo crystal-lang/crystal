@@ -94,6 +94,9 @@ end
 {% elsif flag?(:win32) %}
   require "exception/lib_unwind"
 
+  {% begin %}
+    @[Link({{ flag?(:preview_dll) ? "vcruntime" : "libvcruntime" }})]
+  {% end %}
   lib LibC
     fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
   end
