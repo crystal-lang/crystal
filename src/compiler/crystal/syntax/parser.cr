@@ -5402,7 +5402,7 @@ module Crystal
       next_token_skip_space
       exp = parse_op_assign
 
-      modifier = VisibilityModifier.new(modifier, exp).at(location).at_end(exp)
+      modifier = VisibilityModifier.new(modifier, exp).at(location)
       modifier.doc = doc
       exp.doc = doc
       modifier
@@ -6033,9 +6033,9 @@ module Crystal
     private def parse_enum_body_expressions
       members = [] of ASTNode
       until end_token?
+        location = @token.location
         case @token.type
         when .const?
-          location = @token.location
           constant_name = @token.value.to_s
           member_doc = @token.doc
 
@@ -6081,17 +6081,17 @@ module Crystal
           case @token.value
           when Keyword::DEF
             member = parse_def.at(def_location)
-            member = VisibilityModifier.new(visibility, member) if visibility
+            member = VisibilityModifier.new(visibility, member).at(location) if visibility
             members << member
           when Keyword::MACRO
             member = parse_macro.at(def_location)
-            member = VisibilityModifier.new(visibility, member) if visibility
+            member = VisibilityModifier.new(visibility, member).at(location) if visibility
             members << member
           else
             unexpected_token
           end
         when .class_var?
-          class_var = ClassVar.new(@token.value.to_s).at(@token.location)
+          class_var = ClassVar.new(@token.value.to_s).at(location)
 
           next_token_skip_space
           check :OP_EQ
@@ -6102,7 +6102,6 @@ module Crystal
         when .op_lcurly_lcurly?
           members << parse_percent_macro_expression
         when .op_lcurly_percent?
-          location = @token.location
           members << parse_percent_macro_control.at(location)
         when .op_at_lsquare?
           members << parse_annotation

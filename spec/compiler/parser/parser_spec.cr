@@ -2637,5 +2637,17 @@ module Crystal
       node = Parser.parse(source).as(EnumDef).members.first
       node_source(source, node).should eq("@[Foo]")
     end
+
+    it "sets correct location of private method in enum" do
+      source = "enum X; private def foo; end; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("private def foo; end")
+    end
+
+    it "sets correct location of protected macro in enum" do
+      source = "enum X; protected macro foo; end; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("protected macro foo; end")
+    end
   end
 end

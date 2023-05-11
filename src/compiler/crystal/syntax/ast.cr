@@ -1232,6 +1232,10 @@ module Crystal
       VisibilityModifier.new(@modifier, @exp.clone)
     end
 
+    def end_location
+      @end_location || @exp.end_location
+    end
+
     def_equals_and_hash modifier, exp
   end
 
