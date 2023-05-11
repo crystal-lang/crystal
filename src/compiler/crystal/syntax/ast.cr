@@ -721,6 +721,10 @@ module Crystal
       NamedArgument.new(name, value.clone)
     end
 
+    def end_location
+      @end_location || value.end_location
+    end
+
     def_equals_and_hash name, value
   end
 
