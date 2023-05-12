@@ -21,6 +21,12 @@ using namespace llvm;
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Analysis/ModuleSummaryAnalysis.h>
 
+#if LLVM_VERSION_GE(16, 0)
+#define makeArrayRef ArrayRef
+#endif
+
+typedef DIBuilder *DIBuilderRef;
+#define DIArray DINodeArray
 template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
   return (T *)(v ? unwrap<MDNode>(v) : NULL);
 }
@@ -157,7 +163,7 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
          .setOptLevel((CodeGenOpt::Level)options.OptLevel)
          .setTargetOptions(targetOptions);
   bool JIT;
-  if (Optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
+  if (auto CM = unwrap(options.CodeModel, JIT))
     builder.setCodeModel(*CM);
   if (options.MCJMM)
     builder.setMCJITMemoryManager(
