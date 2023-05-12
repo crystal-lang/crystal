@@ -247,11 +247,21 @@ module Crystal::System::File
       return false
     end
 
+    # Windows cannot delete read-only files, so we unset the attribute here, but
+    # restore it afterwards if deletion still failed
+    read_only_removed = false
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+      if LibC.SetFileAttributesW(win_path, attributes & ~LibC::FILE_ATTRIBUTE_READONLY) != 0
+        read_only_removed = true
+      end
+    end
+
     # all reparse point directories should be deleted like a directory, not just
     # symbolic links, so we don't care about the reparse tag here
     is_reparse_dir = attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
     result = is_reparse_dir ? LibC._wrmdir(win_path) : LibC._wunlink(win_path)
     return true if result == 0
+    LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
     raise ::File::Error.from_errno("Error deleting file", file: path)
   end
 
