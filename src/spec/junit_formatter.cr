@@ -68,7 +68,7 @@ module Spec
       io << %(" name=")
       HTML.escape(escape_xml_attr(result.description), io)
       io << %(" line=")
-      HTML.escape(result.line.to_s, io)
+      io << result.line
 
       if elapsed = result.elapsed
         io << %(" time=")
