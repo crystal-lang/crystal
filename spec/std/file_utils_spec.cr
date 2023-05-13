@@ -102,10 +102,10 @@ describe "FileUtils" do
 
     it "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        test_with_string_and_path(src_path, out_path) do |*args|
-          File.write(src_path, "foo")
-          File.chmod(src_path, 0o444)
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
 
+        test_with_string_and_path(src_path, out_path) do |*args|
           FileUtils.cp(*args)
 
           File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
