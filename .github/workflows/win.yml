@@ -283,28 +283,23 @@ jobs:
         uses: actions/cache@v3
         with:
           path: llvm
-          key: llvm-libs-15.0.7-msvc-${{ env.VSCMD_VER }}
+          key: llvm-libs-16.0.3-msvc-${{ env.VSCMD_VER }}
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/llvm-15.0.7.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "4AD8B2CC8003C86D0078D15D987D84E3A739F24AAE9033865C027ABAE93EE7A4"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.3/llvm-16.0.3.src.tar.xz -OutFile llvm.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "D820E63BC3A6F4F833EC69A1EF49A2E81992E90BC23989F98946914B061AB6C7"
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
       - name: Download LLVM's CMake files
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/cmake-15.0.7.src.tar.xz -OutFile cmake.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.3/cmake-16.0.3.src.tar.xz -OutFile cmake.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "B6D83C91F12757030D8361DEDC5DD84357B3EDB8DA406B5D0850DF8B6F7798B1"
           7z x cmake.tar.xz
           7z x cmake.tar
           mv cmake-* cmake
-      - name: Patch LLVM for VS 2019 16.7.0
-        working-directory: ./llvm-src
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        run: |
-          sed -i 's/#ifdef HAVE_STD_IS_TRIVIALLY_COPYABLE/#if 0/' include/llvm/Support/type_traits.h
       - name: Build LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         working-directory: ./llvm-src
