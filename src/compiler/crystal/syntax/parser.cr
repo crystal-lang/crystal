@@ -2523,7 +2523,7 @@ module Crystal
           end
         end
         slash_is_regex!
-        next_token_skip_space
+        next_token_skip_space_or_newline
         parse_hash_literal first_key, location, allow_of
       end
     end
