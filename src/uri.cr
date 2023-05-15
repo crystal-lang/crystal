@@ -286,7 +286,7 @@ class URI
     self.query = params.to_s
   end
 
-  # Yields a `URI::Params` of the URI#query and commits any modifications.
+  # Yields the value of `#query_params` commits any modifications of the `URI::Params` instance to self.
   # Returns the modified `URI::Params`
   #
   # ```
