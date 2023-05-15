@@ -292,7 +292,7 @@ class URI
   # ```
   # require "uri"
   # uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
-  # uri.query_params { |params| params.delete_all("limit") } # => URI::Params{"id" => ["30"]}
+  # uri.update_query_params { |params| params.delete_all("limit") } # => URI::Params{"id" => ["30"]}
   #
   # puts uri.to_s # => "http://foo.com?id=30#time=1305298413"
   # ```
