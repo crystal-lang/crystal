@@ -50,13 +50,18 @@ class Crystal::Loader
     search_paths, libnames = parse_args(args, search_paths, remaining: result.remaining_args)
 
     libnames.each do |libname|
-      found_path = search_paths.each do |directory|
-        if extra_suffix
-          library_path = File.join(directory, library_filename(libname + extra_suffix))
+      if Path[libname].absolute?
+        library_path = library_filename(libname)
+        found_path = File.file?(library_path) ? library_path : nil
+      else
+        found_path = search_paths.each do |directory|
+          if extra_suffix
+            library_path = File.join(directory, library_filename(libname + extra_suffix))
+            break library_path if File.file?(library_path)
+          end
+          library_path = File.join(directory, library_filename(libname))
           break library_path if File.file?(library_path)
         end
-        library_path = File.join(directory, library_filename(libname))
-        break library_path if File.file?(library_path)
       end
 
       if found_path
