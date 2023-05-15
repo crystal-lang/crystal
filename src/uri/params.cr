@@ -371,15 +371,12 @@ class URI
     # params.fetch_all("foo")          # => ["buzz", "extra"]
     # ```
     def merge!(params : URI::Params, *, replace : Bool = true) : URI::Params
-      params.reduce({} of String => Bool?) do |memo, (key, value)|
-        if replace && !memo[key]?
-          self[key] = value
-        else
-          add(key, value)
+      if replace
+        @raw_params.merge!(params.raw_params)
+      else
+        @raw_params.merge!(params.raw_params) do |_, first, second|
+          first + second
         end
-
-        memo[key] = true
-        memo
       end
 
       self
