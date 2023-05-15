@@ -366,15 +366,28 @@ module Crystal
         @link_flags.try { |flags| link_args << flags }
 
         {% if flag?(:msvc) %}
-          if program.has_flag?("preview_dll") && !program.has_flag?("no_win32_delay_load")
+          extra_suffix = program.has_flag?("preview_dll") ? "-dynamic" : "-static"
+          search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ')), extra_suffix: extra_suffix)
+          if not_found = search_result.not_found?
+            error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+          end
+
+          link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
+
+          if !program.has_flag?("no_win32_delay_load")
             # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
             # it is harmless to skip this error because not all import libraries are always used, much
             # less the individual DLLs they refer to
             link_args << "/IGNORE:4199"
 
-            Loader.search_dlls(Process.parse_arguments_windows(link_args.join(' '))).each do |dll|
-              link_args << "/DELAYLOAD:#{dll}"
+            dlls = Set(String).new
+            search_result.library_paths.each do |library_path|
+              Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
+                dlls << dll.downcase
+              end
             end
+            dlls.delete "kernel32.dll"
+            dlls.each { |dll| link_args << "/DELAYLOAD:#{dll}" }
           end
         {% end %}
 

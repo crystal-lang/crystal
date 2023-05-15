@@ -32,28 +32,44 @@ class Crystal::Loader
     end
   end
 
-  # Returns the list of DLLs imported from the libraries specified in the given
-  # linker arguments. Used by the compiler for delay-loaded DLL support.
-  def self.search_dlls(args : Array(String), *, search_paths : Array(String) = default_search_paths) : Set(String)
-    search_paths, libnames = parse_args(args, search_paths)
-    dlls = Set(String).new
+  struct SearchLibResult
+    getter library_paths = [] of String
+    getter remaining_args = [] of String
+    getter(not_found) { [] of String }
+
+    def not_found?
+      @not_found
+    end
+  end
+
+  # Extracts the command-line arguments from *args* that add libraries and
+  # expands them to their absolute paths. Returns a `SearchLibResult` with those
+  # expanded paths, plus unused arguments and libraries that were not found.
+  def self.search_libraries(args : Array(String), *, search_paths : Array(String) = default_search_paths, extra_suffix : String? = nil) : SearchLibResult
+    result = SearchLibResult.new
+    search_paths, libnames = parse_args(args, search_paths, remaining: result.remaining_args)
 
     libnames.each do |libname|
-      search_paths.each do |directory|
-        library_path = File.join(directory, library_filename(libname))
-        next unless File.file?(library_path)
-
-        Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
-          dlls << dll unless dll.compare("kernel32.dll", case_insensitive: true).zero?
+      found_path = search_paths.each do |directory|
+        if extra_suffix
+          library_path = File.join(directory, library_filename(libname + extra_suffix))
+          break library_path if File.file?(library_path)
         end
-        break
+        library_path = File.join(directory, library_filename(libname))
+        break library_path if File.file?(library_path)
+      end
+
+      if found_path
+        result.library_paths << found_path
+      else
+        result.not_found << libname
       end
     end
 
-    dlls
+    result
   end
 
-  private def self.parse_args(args, search_paths)
+  def self.parse_args(args, search_paths, *, remaining = nil)
     libnames = [] of String
 
     # NOTE: `/LIBPATH`s are prepended before the default paths:
@@ -68,10 +84,14 @@ class Crystal::Loader
         extra_search_paths << lib_path
       elsif !arg.starts_with?('/') && (name = arg.rchop?(".lib"))
         libnames << name
+      elsif remaining
+        remaining << arg
       end
     end
 
     search_paths = extra_search_paths + search_paths
+    search_paths.uniq! &.downcase
+    libnames.uniq! &.downcase
     {search_paths, libnames}
   end
 
