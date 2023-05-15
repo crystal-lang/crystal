@@ -305,6 +305,28 @@ class URI
 
         params.to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
       end
+
+      describe "does not modify the other params" do
+        it "with replace: true" do
+          params = Params.parse("foo=bar")
+          other_params = Params.parse("foo=buzz&foo=extra")
+
+          params.merge!(other_params, replace: true)
+          params.add("foo", "another")
+
+          other_params.to_s.should eq("foo=buzz&foo=extra")
+        end
+
+        it "with replace: false" do
+          params = Params.parse("foo=bar")
+          other_params = Params.parse("foo=buzz&foo=extra")
+
+          params.merge!(other_params, replace: false)
+          params.add("foo", "another")
+
+          other_params.to_s.should eq("foo=buzz&foo=extra")
+        end
+      end
     end
 
     describe "#merge" do

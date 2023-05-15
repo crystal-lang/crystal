@@ -296,7 +296,7 @@ class URI
   #
   # puts uri.to_s # => "http://foo.com?id=30#time=1305298413"
   # ```
-  def update_query_params(&) : URI::Params
+  def update_query_params(& : URI::Params -> _) : URI::Params
     params = query_params
 
     yield params
