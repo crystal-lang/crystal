@@ -1,7 +1,7 @@
 require "./node"
 
 class XML::Attributes
-  include Enumerable(Node)
+  include Container(Node)
 
   def initialize(@node : Node)
   end
@@ -57,6 +57,10 @@ class XML::Attributes
       yield Node.new(props)
       props = props.value.next
     end
+  end
+
+  def size : Int32
+    count { true }
   end
 
   def to_s(io : IO) : Nil

@@ -83,7 +83,7 @@ module YAML::Nodes
 
   # A sequence of nodes.
   class Sequence < Node
-    include Enumerable(Node)
+    include Container(Node)
 
     # The nodes in this sequence.
     getter nodes = [] of Node
@@ -100,6 +100,10 @@ module YAML::Nodes
       @nodes.each do |node|
         yield node
       end
+    end
+
+    def size : Int32
+      @nodes.size
     end
 
     def to_yaml(builder : YAML::Builder) : Nil

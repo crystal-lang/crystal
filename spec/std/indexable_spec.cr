@@ -365,23 +365,28 @@ describe Indexable do
 
   describe ".cartesian_product" do
     it "does with an Indexable of Indexables" do
-      elems = Indexable.cartesian_product(SafeNestedIndexable.new(2, 3))
+      elems = Container.cartesian_product(SafeNestedIndexable.new(2, 3))
       elems.should eq([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]])
 
-      elems = Indexable.cartesian_product(SafeNestedIndexable.new(2, 0))
+      elems = Container.cartesian_product(SafeNestedIndexable.new(2, 0))
       elems.should be_empty
 
-      elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 3))
+      elems = Container.cartesian_product(SafeNestedIndexable.new(0, 3))
       elems.should eq([[] of Int32])
 
-      elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 0))
+      elems = Container.cartesian_product(SafeNestedIndexable.new(0, 0))
       elems.should eq([[] of Int32])
     end
 
     it "does with a Tuple of Tuples with mixed types" do
-      elems = Indexable.cartesian_product({ {1, 'a'}, {"", 4}, {5, 6} })
+      elems = Container.cartesian_product({ {1, 'a'}, {"", 4}, {5, 6} })
       elems.should be_a(Array(Array(Int32 | Char | String)))
       elems.should eq([[1, "", 5], [1, "", 6], [1, 4, 5], [1, 4, 6], ['a', "", 5], ['a', "", 6], ['a', 4, 5], ['a', 4, 6]])
+    end
+
+    it "does with Container of Containers" do
+      elems = Container.cartesian_product(Set{Set{0, 1, 2}, Set{'a', 'b', 'c'}})
+      elems.should eq([[0, 'a'], [0, 'b'], [0, 'c'], [1, 'a'], [1, 'b'], [1, 'c'], [2, 'a'], [2, 'b'], [2, 'c']])
     end
   end
 
@@ -453,20 +458,26 @@ describe Indexable do
   describe ".each_cartesian" do
     it "does with an Indexable of Indexables, with block" do
       r = [] of Int32
-      Indexable.each_cartesian(SafeNestedIndexable.new(3, 2)) { |v| r.concat(v) }
+      Container.each_cartesian(SafeNestedIndexable.new(3, 2)) { |v| r.concat(v) }
       r.should eq([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1])
 
       r = [] of Int32
-      Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
+      Container.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
       r.should be_empty
 
       r = [] of Int32
-      Indexable.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
+      Container.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
       r.should be_empty
 
       r = [] of Int32
-      Indexable.each_cartesian(SafeNestedIndexable.new(0, 0)) { |v| r.concat(v) }
+      Container.each_cartesian(SafeNestedIndexable.new(0, 0)) { |v| r.concat(v) }
       r.should be_empty
+    end
+
+    it "does with Container of Containers" do
+      r = [] of Int32 | Char
+      Container.each_cartesian(Set{Set{0, 1, 2}, Set{'a', 'b', 'c'}}) { |v| r.concat(v) }
+      r.should eq([0, 'a', 0, 'b', 0, 'c', 1, 'a', 1, 'b', 1, 'c', 2, 'a', 2, 'b', 2, 'c'])
     end
 
     it "does with reuse = true, with block" do
@@ -474,7 +485,7 @@ describe Indexable do
       object_ids = Set(UInt64).new
       indexables = SafeNestedIndexable.new(3, 2)
 
-      Indexable.each_cartesian(indexables, reuse: true) do |v|
+      Container.each_cartesian(indexables, reuse: true) do |v|
         object_ids << v.object_id
         r.concat(v)
       end
@@ -488,7 +499,7 @@ describe Indexable do
       buf = [] of Int32
       indexables = SafeNestedIndexable.new(3, 2)
 
-      Indexable.each_cartesian(indexables, reuse: buf) do |v|
+      Container.each_cartesian(indexables, reuse: buf) do |v|
         v.should be(buf)
         r.concat(v)
       end

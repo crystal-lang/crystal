@@ -1,5 +1,5 @@
 class XML::NodeSet
-  include Enumerable(Node)
+  include Container(Node)
 
   def initialize(@doc : Node, @set : LibXML::NodeSet*)
   end

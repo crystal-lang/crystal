@@ -278,7 +278,7 @@ module HTTP
   #
   # NOTE: To use `Cookies`, you must explicitly import it with `require "http/cookie"`
   class Cookies
-    include Enumerable(Cookie)
+    include Container(Cookie)
 
     # Creates a new instance by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.

@@ -57,7 +57,7 @@
 # r.includes?(Xs.new(5)) # => true
 # ```
 struct Range(B, E)
-  include Enumerable(B)
+  include Container(B)
   include Iterable(B)
 
   # Returns the object that defines the beginning of this range.

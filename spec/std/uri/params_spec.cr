@@ -296,6 +296,14 @@ class URI
       end
     end
 
+    describe "#size" do
+      it "returns the number of key-value pairs" do
+        Params.parse("foo=bar&foo=baz&baz=qux").size.should eq(3)
+        Params.parse("").size.should eq(0)
+        Params.new.size.should eq(0)
+      end
+    end
+
     describe "#empty?" do
       it "test empty?" do
         Params.parse("foo=bar&foo=baz&baz=qux").empty?.should be_false

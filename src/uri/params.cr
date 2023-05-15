@@ -3,7 +3,7 @@ require "./encoding"
 class URI
   # An ordered multi-value mapped collection representing generic URI parameters.
   struct Params
-    include Enumerable({String, String})
+    include Container({String, String})
 
     # Parses an URI query string into a `URI::Params`
     #
@@ -330,6 +330,10 @@ class URI
           yield({name, value})
         end
       end
+    end
+
+    def size : Int32
+      raw_params.sum { |_, values| values.size }
     end
 
     # Deletes first value for provided param *name*. If there are no values left,

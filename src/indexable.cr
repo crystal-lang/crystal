@@ -23,10 +23,7 @@
 # not stable or only conditionally stable.
 module Indexable(T)
   include Iterable(T)
-  include Enumerable(T)
-
-  # Returns the number of elements in this container.
-  abstract def size
+  include Container(T)
 
   # Returns the element at the given *index*, without doing any bounds check.
   #
@@ -223,12 +220,7 @@ module Indexable(T)
   # Indexable.cartesian_product([[1, 2, 3], [4, 5]]) # => [[1, 4], [1, 5], [2, 4], [2, 5], [3, 4], [3, 5]]
   # ```
   def self.cartesian_product(indexables : Indexable(Indexable))
-    capacity = indexables.product(&.size)
-    result = Array(Array(typeof(Enumerable.element_type Enumerable.element_type indexables))).new(capacity)
-    each_cartesian(indexables) do |product|
-      result << product
-    end
-    result
+    Container.cartesian_product(indexables)
   end
 
   # Yields each ordered combination of the elements taken from each of `self`
@@ -318,30 +310,7 @@ module Indexable(T)
   # This can be used to prevent many memory allocations when each combination of
   # interest is to be used in a read-only fashion.
   def self.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)
-    lens = indexables.map &.size
-    return if lens.any? &.zero?
-
-    n = indexables.size
-    pool = Array.new(n) { |i| indexables.unsafe_fetch(i).unsafe_fetch(0) }
-    indices = Array.new(n, 0)
-    reuse = Indexable(typeof(pool.first)).check_reuse(reuse, n)
-
-    while true
-      yield pool_slice(pool, n, reuse)
-
-      i = n
-
-      while true
-        i -= 1
-        return if i < 0
-        indices[i] += 1
-        if move_to_next = (indices[i] >= lens[i])
-          indices[i] = 0
-        end
-        pool[i] = indexables[i].unsafe_fetch(indices[i])
-        break unless move_to_next
-      end
-    end
+    Container.each_cartesian(indexables, reuse) { |v| yield v }
   end
 
   # Returns an iterator that enumerates the ordered combinations of elements
