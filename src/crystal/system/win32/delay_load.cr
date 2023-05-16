@@ -122,11 +122,12 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
 
   pitd = idd.pINT + iINT
 
-  dli.dlp.fImportByName = pitd.value.u1.ordinal & LibC::IMAGE_ORDINAL_FLAG == 0
+  import_by_name = (pitd.value.u1.ordinal & LibC::IMAGE_ORDINAL_FLAG) == 0
+  dli.dlp.fImportByName = import_by_name ? 1 : 0
 
-  if dli.dlp.fImportByName
-    import_by_name = p_from_rva(LibC::RVA.new!(pitd.value.u1.addressOfData))
-    dli.dlp.union.szProcName = import_by_name + offsetof(LibC::IMAGE_IMPORT_BY_NAME, @name)
+  if import_by_name
+    image_import_by_name = p_from_rva(LibC::RVA.new!(pitd.value.u1.addressOfData))
+    dli.dlp.union.szProcName = image_import_by_name + offsetof(LibC::IMAGE_IMPORT_BY_NAME, @name)
   else
     dli.dlp.union.dwOrdinal = LibC::DWORD.new!(pitd.value.u1.ordinal & 0xFFFF)
   end
