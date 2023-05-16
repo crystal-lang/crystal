@@ -361,6 +361,7 @@ module Crystal
         begin
           @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
         rescue ex : MacroRaiseException
+          # Re-raise to avoid the logic in the other rescue blocks and to retain the original location
           raise ex
         rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
@@ -369,6 +370,7 @@ module Crystal
         end
       else
         # no receiver: special calls
+        # may raise `Crystal::TopLevelMacroRaiseException`
         interpret_top_level_call node
       end
 

@@ -39,6 +39,7 @@ struct BigDecimal < Number
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes initialization from them risky.
   def self.new(num : Float)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     new(num.to_s)
   end
 

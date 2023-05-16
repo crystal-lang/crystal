@@ -2116,7 +2116,9 @@ describe "Array" do
     t = [4, 5, 6, [7, 8]]
     u = [9, [10, 11].each]
     a = [s, t, u, 12, 13]
-    a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result = a.flatten.to_a
+    result.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result.should be_a(Array(Int32))
   end
 
   it "#skip" do

@@ -32,9 +32,7 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{ flag?(:win32) || flag?(:wasi) }}
-      self.blocking = false
-    end
+    system_blocking_init(blocking)
   end
 
   # :nodoc:

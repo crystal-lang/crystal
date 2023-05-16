@@ -61,6 +61,14 @@ module Crystal
       @builder.build_operand_bundle_def(name, values)
     end
 
+    def current_debug_location_metadata
+      {% if LibLLVM::IS_LT_90 %}
+        LibLLVM.value_as_metadata LibLLVM.get_current_debug_location(@builder)
+      {% else %}
+        LibLLVM.get_current_debug_location2(@builder)
+      {% end %}
+    end
+
     def to_unsafe
       @builder.to_unsafe
     end

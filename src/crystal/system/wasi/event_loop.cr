@@ -7,11 +7,6 @@ end
 
 # :nodoc:
 class Crystal::Wasi::EventLoop < Crystal::EventLoop
-  {% unless flag?(:preview_mt) %}
-    def after_fork : Nil
-    end
-  {% end %}
-
   # Runs the event loop.
   def run_once : Nil
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run_once")

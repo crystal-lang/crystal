@@ -71,7 +71,7 @@ struct LLVM::Type
   # The name can be `nil` if the struct is anonymous.
   # Raises if this type is not a struct.
   def struct_name : String?
-    raise "not a Struct" unless kind == Kind::Struct
+    raise "Not a Struct" unless kind == Kind::Struct
 
     name = LibLLVM.get_struct_name(self)
     name ? String.new(name) : nil
@@ -108,12 +108,12 @@ struct LLVM::Type
   end
 
   def vector_size
-    raise "not a Vector" unless kind == Kind::Vector
+    raise "Not a Vector" unless kind == Kind::Vector
     LibLLVM.get_vector_size(self).to_i32
   end
 
   def return_type
-    raise "not a Function" unless kind == Kind::Function
+    raise "Not a Function" unless kind == Kind::Function
     Type.new LibLLVM.get_return_type(self)
   end
 
@@ -126,12 +126,12 @@ struct LLVM::Type
   end
 
   def params_size
-    raise "not a Function" unless kind == Kind::Function
+    raise "Not a Function" unless kind == Kind::Function
     LibLLVM.count_param_types(self).to_i
   end
 
   def varargs?
-    raise "not a Function" unless kind == Kind::Function
+    raise "Not a Function" unless kind == Kind::Function
     LibLLVM.is_function_var_arg(self) != 0
   end
 

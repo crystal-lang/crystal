@@ -271,39 +271,142 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
-  it "executes raise inside macro" do
-    ex = assert_error(<<-CRYSTAL, "OH NO")
-      macro foo
-        {{ raise "OH NO" }}
+  describe "raise" do
+    describe "inside macro" do
+      describe "without node" do
+        it "does not contain `expanding macro`" do
+          ex = assert_error(<<-CRYSTAL, "OH NO")
+            macro foo
+              {{ raise "OH NO" }}
+            end
+
+            foo
+            CRYSTAL
+
+          ex.to_s.should_not contain("expanding macro")
+        end
+
+        it "supports an empty message (#8631)" do
+          assert_error(<<-CRYSTAL, "")
+            macro foo
+              {{ raise "" }}
+            end
+
+            foo
+          CRYSTAL
+        end
+
+        it "renders both frames (#7147)" do
+          ex = assert_error(<<-CRYSTAL, "OH NO")
+            macro macro_raise(node)
+              {% raise "OH NO" %}
+            end
+
+            macro_raise 10
+          CRYSTAL
+
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 2"
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
       end
 
-      foo
-      CRYSTAL
+      describe "with node" do
+        it "contains the message and not `expanding macro` (#5669)" do
+          ex = assert_error(<<-CRYSTAL, "OH")
+            macro foo(x)
+              {{ x.raise "OH\nNO" }}
+            end
 
-    ex.to_s.should_not contain("expanding macro")
-  end
+            foo(1)
+          CRYSTAL
 
-  it "executes raise inside macro, with node (#5669)" do
-    ex = assert_error(<<-CRYSTAL, "OH")
-      macro foo(x)
-        {{ x.raise "OH\nNO" }}
+          ex.to_s.should contain "NO"
+          ex.to_s.should_not contain("expanding macro")
+        end
+
+        it "renders both frames (#7147)" do
+          ex = assert_error(<<-'CRYSTAL', "OH")
+            macro macro_raise_on(arg)
+              {% arg.raise "OH NO" %}
+            end
+
+            macro_raise_on 123
+          CRYSTAL
+
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
+
+        it "pointing at the correct node in complex/nested macro (#7147)" do
+          ex = assert_error(<<-'CRYSTAL', "Value method must be an instance method")
+            class Child
+              def self.value : Nil
+              end
+            end
+
+            module ExampleModule
+              macro calculate_value
+                {% begin %}
+                  {%
+                    if method = Child.class.methods.find &.name.stringify.==("value")
+                      method.raise "Value method must be an instance method."
+                    else
+                      raise "BUG: Didn't find value method."
+                    end
+                  %}
+                {% end %}
+              end
+
+              class_getter value : Nil do
+                calculate_value
+              end
+            end
+
+            ExampleModule.value
+          CRYSTAL
+
+          ex.to_s.should contain "error in line 20"
+          ex.to_s.should contain "error in line 2"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
+
+        # TODO: Remove this spec once symbols literals have their location fixed
+        it "points to caller when missing node location information (#7147)" do
+          ex = assert_error(<<-'CRYSTAL', "foo")
+            macro macro_raise_on(arg)
+              {% arg.raise "foo" %}
+            end
+
+            macro_raise_on :this
+          CRYSTAL
+
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 1
+        end
       end
+    end
 
-      foo(1)
-      CRYSTAL
+    describe "inside method" do
+      describe "without node" do
+        it "renders both frames (#7147)" do
+          ex = assert_error(<<-CRYSTAL, "OH")
+            def foo(x)
+              {% raise "OH NO" %}
+            end
 
-    ex.to_s.should contain "NO"
-    ex.to_s.should_not contain("expanding macro")
-  end
+            foo 1
+          CRYSTAL
 
-  it "executes raise inside macro, with empty message (#8631)" do
-    assert_error(<<-CRYSTAL, "")
-      macro foo
-        {{ raise "" }}
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 2"
+          ex.to_s.should contain "error in line 5"
+          ex.to_s.scan("error in line").size.should eq 2
+        end
       end
-
-      foo
-      CRYSTAL
+    end
   end
 
   it "can specify tuple as return type" do

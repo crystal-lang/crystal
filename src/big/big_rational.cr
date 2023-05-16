@@ -43,36 +43,17 @@ struct BigRational < Number
     initialize(num, 1)
   end
 
-  # Creates a exact representation of float as rational.
-  def initialize(num : Float::Primitive)
-    # It ensures that `BigRational.new(f) == f`
-    # It relies on fact, that mantissa is at most 53 bits
-    frac, exp = Math.frexp num
-    ifrac = Math.ldexp(frac.to_f64, Float64::MANT_DIGITS).to_i64
-    exp -= Float64::MANT_DIGITS
-    initialize ifrac, 1
-    if exp >= 0
-      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
-    else
-      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
-    end
+  # Creates an exact representation of float as rational.
+  #
+  # Raises `ArgumentError` if *num* is not finite.
+  def self.new(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
+    new { |mpq| LibGMP.mpq_set_d(mpq, num) }
   end
 
-  # :ditto:
-  def initialize(num : BigFloat)
-    frac, exp = Math.frexp num
-    prec = LibGMP.mpf_get_prec(frac)
-    # the mantissa has at most `prec + 1` bits, because the first fractional bit
-    # of `frac` is always 1, and `prec` variable bits follow
-    # TODO: use `Math.ldexp` after #11007
-    ifrac = BigFloat.new { |mpf| LibGMP.mpf_mul_2exp(mpf, frac, prec + 1) }.to_big_i
-    exp -= prec + 1
-    initialize ifrac, 1
-    if exp >= 0
-      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
-    else
-      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
-    end
+  # Creates an exact representation of float as rational.
+  def self.new(num : BigFloat)
+    new { |mpq| LibGMP.mpq_set_f(mpq, num) }
   end
 
   # Creates a `BigRational` from the given *num*.
@@ -108,11 +89,11 @@ struct BigRational < Number
     LibGMP.mpq_cmp(mpq, other)
   end
 
-  def <=>(other : Float32 | Float64)
-    self <=> BigRational.new(other)
+  def <=>(other : Float::Primitive)
+    self <=> BigRational.new(other) unless other.nan?
   end
 
-  def <=>(other : Float)
+  def <=>(other : BigFloat)
     to_big_f <=> other.to_big_f
   end
 
@@ -367,7 +348,8 @@ struct Float
   end
 
   def <=>(other : BigRational)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 end
 

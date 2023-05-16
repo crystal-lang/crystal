@@ -20,8 +20,41 @@ class Crystal::Loader
 
   # Parses linker arguments in the style of `link.exe`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
-    libnames = [] of String
+    search_paths, libnames = parse_args(args, search_paths)
     file_paths = [] of String
+
+    begin
+      self.new(search_paths, libnames, file_paths)
+    rescue exc : LoadError
+      exc.args = args
+      exc.search_paths = search_paths
+      raise exc
+    end
+  end
+
+  # Returns the list of DLLs imported from the libraries specified in the given
+  # linker arguments. Used by the compiler for delay-loaded DLL support.
+  def self.search_dlls(args : Array(String), *, search_paths : Array(String) = default_search_paths) : Set(String)
+    search_paths, libnames = parse_args(args, search_paths)
+    dlls = Set(String).new
+
+    libnames.each do |libname|
+      search_paths.each do |directory|
+        library_path = File.join(directory, library_filename(libname))
+        next unless File.file?(library_path)
+
+        Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
+          dlls << dll unless dll.compare("kernel32.dll", case_insensitive: true).zero?
+        end
+        break
+      end
+    end
+
+    dlls
+  end
+
+  private def self.parse_args(args, search_paths)
+    libnames = [] of String
 
     # NOTE: `/LIBPATH`s are prepended before the default paths:
     # (https://docs.microsoft.com/en-us/cpp/build/reference/libpath-additional-libpath)
@@ -39,14 +72,7 @@ class Crystal::Loader
     end
 
     search_paths = extra_search_paths + search_paths
-
-    begin
-      self.new(search_paths, libnames, file_paths)
-    rescue exc : LoadError
-      exc.args = args
-      exc.search_paths = search_paths
-      raise exc
-    end
+    {search_paths, libnames}
   end
 
   def self.library_filename(libname : String) : String
