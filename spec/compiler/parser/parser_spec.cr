@@ -2585,5 +2585,82 @@ module Crystal
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
     end
+
+    it "sets correct location of parameter in proc literal" do
+      source = "->(foo : Bar, baz) { }"
+      args = Parser.parse(source).as(ProcLiteral).def.args
+      node_source(source, args[0]).should eq("foo : Bar")
+      node_source(source, args[1]).should eq("baz")
+    end
+
+    it "sets correct location of splat in multiple assignment" do
+      source = "*foo, bar = 1, 2"
+      node = Parser.parse(source).as(MultiAssign).targets[0]
+      node_source(source, node).should eq("*foo")
+
+      source = "foo, *bar = 1, 2"
+      node = Parser.parse(source).as(MultiAssign).targets[1]
+      node_source(source, node).should eq("*bar")
+    end
+
+    it "sets correct location of tuple type" do
+      source = "x : {Foo, Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type
+      node_source(source, node).should eq("{Foo, Bar}")
+    end
+
+    it "sets correct location of named tuple type" do
+      source = "x : {foo: Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type
+      node_source(source, node).should eq("{foo: Bar}")
+    end
+
+    it "sets correct location of argument in named tuple type" do
+      source = "x : {foo: Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil!.first
+      node_source(source, node).should eq("foo: Bar")
+    end
+
+    it "sets correct location of instance variable in proc pointer" do
+      source = "->@foo.x"
+      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node_source(source, node).should eq("@foo")
+    end
+
+    it "sets correct location of instance variable in proc pointer" do
+      source = "->@@foo.x"
+      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node_source(source, node).should eq("@@foo")
+    end
+
+    it "sets correct location of annotation on method parameter" do
+      source = "def x(@[Foo] y) end"
+      node = Parser.parse(source).as(Def).args.first.parsed_annotations.not_nil!.first
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of annotation in lib" do
+      source = "lib X; @[Foo]; end"
+      node = Parser.parse(source).as(LibDef).body
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of annotation in enum" do
+      source = "enum X; @[Foo]; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of private method in enum" do
+      source = "enum X; private def foo; end; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("private def foo; end")
+    end
+
+    it "sets correct location of protected macro in enum" do
+      source = "enum X; protected macro foo; end; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("protected macro foo; end")
+    end
   end
 end
