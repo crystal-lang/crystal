@@ -50,21 +50,7 @@ class Crystal::Loader
     search_paths, libnames = parse_args(args, search_paths, remaining: result.remaining_args)
 
     libnames.each do |libname|
-      if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
-        found_path = search_paths.each do |directory|
-          if extra_suffix
-            library_path = File.join(directory, library_filename(libname + extra_suffix))
-            break library_path if File.file?(library_path)
-          end
-          library_path = File.join(directory, library_filename(libname))
-          break library_path if File.file?(library_path)
-        end
-      else
-        library_path = library_filename(libname)
-        found_path = File.file?(library_path) ? library_path : nil
-      end
-
-      if found_path
+      if found_path = search_library(libname, search_paths, extra_suffix)
         result.library_paths << found_path
       else
         result.not_found << libname
@@ -72,6 +58,24 @@ class Crystal::Loader
     end
 
     result
+  end
+
+  private def self.search_library(libname, search_paths, extra_suffix)
+    if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
+      libname = File.expand_path(libname)
+      library_path = library_filename(libname)
+      return library_path if File.file?(library_path)
+    else
+      search_paths.each do |directory|
+        if extra_suffix
+          library_path = File.join(directory, library_filename(libname + extra_suffix))
+          return library_path if File.file?(library_path)
+        end
+
+        library_path = File.join(directory, library_filename(libname))
+        return library_path if File.file?(library_path)
+      end
+    end
   end
 
   def self.parse_args(args, search_paths, *, remaining = nil)
