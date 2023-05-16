@@ -680,6 +680,16 @@ describe Time do
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Friday).should eq Time.utc(2014, 11, 7)
     Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Saturday).should eq Time.utc(2014, 11, 8)
 
+    at_beginning_of_week_default = Time.local.at_beginning_of_week
+    at_beginning_of_week_default.hour.should eq 0
+    at_beginning_of_week_default.minute.should eq 0
+    at_beginning_of_week_default.second.should eq 0
+
+    at_beginning_of_week_sunday = Time.local.at_beginning_of_week(:sunday)
+    at_beginning_of_week_sunday.hour.should eq 0
+    at_beginning_of_week_sunday.minute.should eq 0
+    at_beginning_of_week_sunday.second.should eq 0
+
     t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
     t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)
     t1.at_beginning_of_minute.should eq Time.utc(2014, 11, 25, 10, 11)
