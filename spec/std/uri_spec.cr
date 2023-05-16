@@ -370,11 +370,11 @@ describe "URI" do
   end
 
   describe "#update_query_params" do
-    it "returns the modified URI::Params" do
+    it "returns self" do
       expected_params = URI::Params{"id" => "30"}
 
       uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
-      uri.update_query_params { |params| params.delete("limit") }.should eq(expected_params)
+      uri.update_query_params { |params| params.delete("limit") }.should eq(uri)
     end
 
     it "commits changes to the URI::Object" do

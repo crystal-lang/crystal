@@ -296,14 +296,14 @@ class URI
   #
   # puts uri.to_s # => "http://foo.com?id=30#time=1305298413"
   # ```
-  def update_query_params(& : URI::Params -> _) : URI::Params
+  def update_query_params(& : URI::Params -> _) : URI
     params = query_params
 
     yield params
 
     self.query_params = params
 
-    query_params
+    self
   end
 
   # Returns the authority component of this URI.

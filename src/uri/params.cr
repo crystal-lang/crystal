@@ -374,7 +374,7 @@ class URI
     # See `#merge` for a non-mutating alternative
     def merge!(params : URI::Params, *, replace : Bool = true) : URI::Params
       if replace
-        @raw_params.merge!(params.raw_params) { |_, _, second| second.dup }
+        @raw_params.merge!(params.raw_params) { |_, first, second| second.dup }
       else
         @raw_params.merge!(params.raw_params) do |_, first, second|
           first + second
