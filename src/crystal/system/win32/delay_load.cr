@@ -1,18 +1,26 @@
 require "c/delayimp"
 
-private ERROR_SEVERITY_ERROR = 0xC0000000_u32
-private FACILITY_VISUALCPP   =           0x6d
-
-private macro vcpp_exception(err)
-  {{ ERROR_SEVERITY_ERROR | (FACILITY_VISUALCPP << 16) | WinError.constant(err.id) }}
-end
-
 lib LibC
   $image_base = __ImageBase : IMAGE_DOS_HEADER
 end
 
 private macro p_from_rva(rva)
   pointerof(LibC.image_base).as(UInt8*) + {{ rva }}
+end
+
+private macro print_error(format, *args)
+  {% if args.empty? %}
+    %str = {{ format }}
+    LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), %str, %str.bytesize, out _, nil)
+  {% else %}
+    %buf = uninitialized LibC::CHAR[1024]
+    %args = uninitialized UInt64[{{ args.size }}]
+    {% for arg, i in args %}
+      %args[{{ i }}] = {{ arg }}
+    {% end %}
+    %len = LibC.FormatMessageA(LibC::FORMAT_MESSAGE_FROM_STRING | LibC::FORMAT_MESSAGE_ARGUMENT_ARRAY, {{ format }}, 0, 0, %buf, %buf.size, %args)
+    LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), %buf, %len, out _, nil)
+  {% end %}
 end
 
 module Crystal::System::DelayLoad
@@ -52,21 +60,9 @@ end
 # that leads to an infinite recursion. In particular, if `preview_dll` is in
 # effect, `Crystal::System.print_error` will not work, because the C runtime
 # library DLLs are also delay-loaded and `LibC.snprintf` is unavailable. If you
-# want print debugging inside this function, try the following:
-#
-# ```
-# lib LibC
-#   STD_OUTPUT_HANDLE = -11
-#
-#   fun GetStdHandle(nStdHandle : DWORD) : HANDLE
-#   fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD, lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
-# end
-#
-# buf = uninitialized LibC::CHAR[512]
-# args = StaticArray[dli.szDll, dli.dlp.union.szProcName]
-# len = LibC.FormatMessageA(LibC::FORMAT_MESSAGE_FROM_STRING | LibC::FORMAT_MESSAGE_ARGUMENT_ARRAY, "Loading `%2` from `%1`\n", 0, 0, buf, buf.size, args)
-# LibC.WriteFile(LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE), buf, len, out _, nil)
-# ```
+# want print debugging inside this function, use the `print_error` macro
+# instead. Note that its format string is passed to `LibC.FormatMessageA`, which
+# uses different conventions from `LibC.printf`.
 #
 # `kernel32.dll` is the only DLL guaranteed to be available. It cannot be
 # delay-loaded and the Crystal compiler excludes it from the linker arguments.
@@ -100,16 +96,9 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
   )
 
   if 0 == idd.grAttrs & LibC::DLAttrRva
-    rgpdli = pointerof(dli)
-
     # DloadReleaseSectionWriteAccess
-
-    LibC.RaiseException(
-      vcpp_exception(ERROR_INVALID_PARAMETER),
-      0,
-      1,
-      pointerof(rgpdli).as(LibC::ULONG_PTR*),
-    )
+    print_error("FATAL: Delay load descriptor does not support RVAs\n")
+    LibC.ExitProcess(1)
   end
 
   hmod = idd.phmod.value
@@ -136,22 +125,9 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
   if !hmod
     # note: ANSI variant used here
     unless hmod = LibC.LoadLibraryExA(dli.szDll, nil, 0)
-      dli.dwLastError = LibC.GetLastError
-
-      rgpdli = pointerof(dli)
-
       # DloadReleaseSectionWriteAccess
-      LibC.RaiseException(
-        vcpp_exception(ERROR_MOD_NOT_FOUND),
-        0,
-        1,
-        pointerof(rgpdli).as(LibC::ULONG_PTR*),
-      )
-
-      # If we get to here, we blindly assume that the handler of the exception
-      # has magically fixed everything up and left the function pointer in
-      # dli.pfnCur.
-      return dli.pfnCur
+      print_error("FATAL: Cannot find the DLL named `%1`, exiting\n", dli.szDll.address)
+      LibC.ExitProcess(1)
     end
 
     # Store the library handle.  If it is already there, we infer
@@ -181,23 +157,13 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
   end
 
   unless pfnRet = LibC.GetProcAddress(hmod, dli.dlp.union.szProcName)
-    dli.dwLastError = LibC.GetLastError
-
-    rgpdli = pointerof(dli)
-
     # DloadReleaseSectionWriteAccess
-    LibC.RaiseException(
-      vcpp_exception(ERROR_PROC_NOT_FOUND),
-      0,
-      1,
-      pointerof(rgpdli).as(LibC::ULONG_PTR*),
-    )
-    # DloadAcquireSectionWriteAccess
-
-    # If we get to here, we blindly assume that the handler of the exception
-    # has magically fixed everything up and left the function pointer in
-    # dli.pfnCur.
-    pfnRet = dli.pfnCur
+    if import_by_name
+      print_error("FATAL: Cannot find the symbol named `%1` within `%2`, exiting\n", dli.dlp.union.szProcName.address, dli.szDll.address)
+    else
+      print_error("FATAL: Cannot find the symbol with the ordinal #%1!llu! within `%2`, exiting\n", dli.dlp.union.dwOrdinal, dli.szDll.address)
+    end
+    LibC.ExitProcess(1)
   end
 
   ppfnIATEntry.value = pfnRet
