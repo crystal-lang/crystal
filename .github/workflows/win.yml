@@ -39,26 +39,9 @@ jobs:
             libs/yaml.lib
             libs/xml2.lib
           key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}-msvc-${{ env.VSCMD_VER }}
-      - name: Download libgc
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: ivmai/bdwgc
-          ref: v8.2.2
-          path: bdwgc
-      - name: Download libatomic_ops
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: ivmai/libatomic_ops
-          ref: v7.6.14
-          path: bdwgc/libatomic_ops
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./bdwgc
-        run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
+        run: .\etc\win-ci\build-gc.ps1 -Version 8.2.2
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -72,49 +55,12 @@ jobs:
         run: |
           cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
-      - name: Download libpcre2
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: PCRE2Project/pcre2
-          ref: pcre2-10.42
-          path: pcre2
       - name: Build libpcre2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./pcre2
-        run: |
-          cmake . -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DPCRE2_STATIC_RUNTIME=ON -DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
-      - name: Download libiconv
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: pffang/libiconv-for-Windows
-          ref: 1353455a6c4e15c9db6865fd9c2bf7203b59c0ec # master@{2022-10-11}
-          path: libiconv
+        run: .\etc\win-ci\build-pcre2.ps1 -Version 10.42
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./libiconv
-        run: |
-          sed -i 's|__declspec (dllimport) ||' libiconv\include\iconv.h
-
-          echo '<Project>
-            <PropertyGroup>
-              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
-            </PropertyGroup>
-          </Project>' > 'Directory.Build.props'
-
-          echo '<Project>
-            <ItemDefinitionGroup>
-              <ClCompile>
-                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-                <DebugInformationFormat>None</DebugInformationFormat>
-                <WholeProgramOptimization>false</WholeProgramOptimization>
-              </ClCompile>
-            </ItemDefinitionGroup>
-          </Project>' > 'Override.props'
-
-          MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
+        run: .\etc\win-ci\build-iconv.ps1
       - name: Download libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -232,11 +178,7 @@ jobs:
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
-          mkdir libs
           mv pcre/Release/pcre.lib libs/
-          mv pcre2/Release/pcre2-8-static.lib libs/pcre2-8.lib
-          mv libiconv/output/x64/ReleaseStatic/libiconvStatic.lib libs/iconv.lib
-          mv bdwgc/Release/gc.lib libs/
           mv libffi/win32/vs16_x64/x64/Release/libffi.lib libs/ffi.lib
           mv zlib/Release/zlibstatic.lib libs/z.lib
           mv mpir/lib/x64/Release/mpir.lib libs/
