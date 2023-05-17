@@ -14,9 +14,9 @@ private macro print_error(format, *args)
     LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), %str, %str.bytesize, out _, nil)
   {% else %}
     %buf = uninitialized LibC::CHAR[1024]
-    %args = uninitialized UInt64[{{ args.size }}]
+    %args = uninitialized Void*[{{ args.size }}]
     {% for arg, i in args %}
-      %args[{{ i }}] = {{ arg }}
+      %args[{{ i }}] = ({{ arg }}).as(Void*)
     {% end %}
     %len = LibC.FormatMessageA(LibC::FORMAT_MESSAGE_FROM_STRING | LibC::FORMAT_MESSAGE_ARGUMENT_ARRAY, {{ format }}, 0, 0, %buf, %buf.size, %args)
     LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), %buf, %len, out _, nil)
@@ -126,7 +126,7 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
     # note: ANSI variant used here
     unless hmod = LibC.LoadLibraryExA(dli.szDll, nil, 0)
       # DloadReleaseSectionWriteAccess
-      print_error("FATAL: Cannot find the DLL named `%1`, exiting\n", dli.szDll.address)
+      print_error("FATAL: Cannot find the DLL named `%1`, exiting\n", dli.szDll)
       LibC.ExitProcess(1)
     end
 
@@ -159,9 +159,9 @@ fun __delayLoadHelper2(pidd : LibC::ImgDelayDescr*, ppfnIATEntry : LibC::FARPROC
   unless pfnRet = LibC.GetProcAddress(hmod, dli.dlp.union.szProcName)
     # DloadReleaseSectionWriteAccess
     if import_by_name
-      print_error("FATAL: Cannot find the symbol named `%1` within `%2`, exiting\n", dli.dlp.union.szProcName.address, dli.szDll.address)
+      print_error("FATAL: Cannot find the symbol named `%1` within `%2`, exiting\n", dli.dlp.union.szProcName, dli.szDll)
     else
-      print_error("FATAL: Cannot find the symbol with the ordinal #%1!llu! within `%2`, exiting\n", dli.dlp.union.dwOrdinal, dli.szDll.address)
+      print_error("FATAL: Cannot find the symbol with the ordinal #%1!u! within `%2`, exiting\n", Pointer(Void).new(dli.dlp.union.dwOrdinal), dli.szDll)
     end
     LibC.ExitProcess(1)
   end
