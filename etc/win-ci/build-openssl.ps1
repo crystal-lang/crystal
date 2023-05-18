@@ -32,7 +32,7 @@ if ($Dynamic) {
     mv -Force $BuildTree\libcrypto-$major-x64.dll dlls\
     mv -Force $BuildTree\libssl-$major-x64.dll dlls\
 } else {
-    mv -Force $BuildTree\libcrypto.lib libs\
-    mv -Force $BuildTree\libssl.lib libs\
+    mv -Force $BuildTree\libcrypto.lib libs\crypto.lib
+    mv -Force $BuildTree\libssl.lib libs\ssl.lib
 }
 [IO.File]::WriteAllLines("libs\openssl_VERSION", $Version)

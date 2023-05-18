@@ -24,20 +24,6 @@ function Find-Git {
     Exit 1
 }
 
-function Find-7Zip {
-    $Path = Get-Command "7z" -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
-    if ($Path) { return $Path.Path }
-
-    $Path = "$env:ProgramFiles\7-Zip\7z.exe"
-    if (Test-Path -Path $Path -PathType Leaf) { return $Path }
-
-    $Path = "${env:ProgramFiles(x86)}\7-Zip\7z.exe"
-    if (Test-Path -Path $Path -PathType Leaf) { return $Path }
-
-    Write-Host "Error: Cannot locate 7-Zip executable" -ForegroundColor Red
-    Exit 1
-}
-
 function Find-CMake {
     $Path = Get-Command "cmake" -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
     if ($Path) { return $Path.Path }
@@ -91,7 +77,6 @@ function Replace-Text {
 }
 
 $git = Find-Git
-$7z = Find-7Zip
 $cmake = Find-CMake
 
 [void](New-Item -Name libs -ItemType Directory -Force)

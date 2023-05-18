@@ -4,11 +4,25 @@ param(
     [switch] $Dynamic
 )
 
+function Find-7Zip {
+    $Path = Get-Command "7z" -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
+    if ($Path) { return $Path.Path }
+
+    $Path = "$env:ProgramFiles\7-Zip\7z.exe"
+    if (Test-Path -Path $Path -PathType Leaf) { return $Path }
+
+    $Path = "${env:ProgramFiles(x86)}\7-Zip\7z.exe"
+    if (Test-Path -Path $Path -PathType Leaf) { return $Path }
+
+    Write-Host "Error: Cannot locate 7-Zip executable" -ForegroundColor Red
+    Exit 1
+}
+
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
 Invoke-WebRequest https://cs.stanford.edu/pub/exim/pcre/pcre-$Version.zip -OutFile pcre.zip
-& $7z x pcre.zip
+& (Find-7Zip) x pcre.zip
 mv pcre-* $BuildTree
 rm pcre.zip
 
