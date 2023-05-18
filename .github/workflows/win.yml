@@ -75,7 +75,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.0.7-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc-${{ env.VSCMD_VER }}
+          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc-${{ env.VSCMD_VER }}
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
