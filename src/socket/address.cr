@@ -523,13 +523,80 @@ class Socket
       {% end %}
     end
 
-    def_equals_and_hash family, port, address
+    def_equals_and_hash family, port, address_value
+
+    protected def address_value
+      case addr = @addr
+      in LibC::InAddr
+        addr.s_addr
+      in LibC::In6Addr
+        ipv6_addr8(addr).unsafe_as(UInt128)
+      end
+    end
 
     def to_s(io : IO) : Nil
-      if family == Family::INET6
-        io << '[' << address << ']' << ':' << port
+      case addr = @addr
+      in LibC::InAddr
+        address_to_s(io, addr)
+        io << ':' << port
+      in LibC::In6Addr
+        io << '['
+        address_to_s(io, addr)
+        io << ']' << ':' << port
+      end
+    end
+
+    private def address_to_s(io : IO, addr : LibC::InAddr)
+      io << (addr.s_addr & 0xFF)
+      io << '.' << (addr.s_addr >> 8 & 0xFF)
+      io << '.' << (addr.s_addr >> 16 & 0xFF)
+      io << '.' << (addr.s_addr >> 24)
+    end
+
+    private def address_to_s(io : IO, addr : LibC::In6Addr)
+      bytes = ipv6_addr8(addr)
+      if Slice.new(bytes.to_unsafe, 10).all?(&.zero?) && bytes[10] == 0xFF && bytes[11] == 0xFF
+        io << "::ffff:" << bytes[12] << '.' << bytes[13] << '.' << bytes[14] << '.' << bytes[15]
       else
-        io << address << ':' << port
+        fields = bytes.unsafe_as(StaticArray(UInt16, 8)).map! { |field| IPAddress.endian_swap(field) }
+
+        zeros_start = nil
+        zeros_count_max = 1
+
+        count = 0
+        fields.each_with_index do |field, i|
+          if field == 0
+            count += 1
+            if count > zeros_count_max
+              zeros_start = i - count + 1
+              zeros_count_max = count
+            end
+          else
+            count = 0
+          end
+        end
+
+        i = 0
+        while i < 8
+          if i == zeros_start
+            io << ':'
+            i += zeros_count_max
+            io << ':' if i == 8
+          else
+            io << ':' if i > 0
+            fields[i].to_s(io, base: 16)
+            i += 1
+          end
+        end
+      end
+    end
+
+    private IPV4_FULL_MAX_SIZE = 21 # "255.255.255.255:65535".size
+    private IPV6_FULL_MAX_SIZE = 47 # "[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:65535".size
+
+    def to_s : String
+      String.build(@addr.is_a?(LibC::InAddr) ? IPV4_FULL_MAX_SIZE : IPV6_FULL_MAX_SIZE) do |io|
+        to_s(io)
       end
     end
 
@@ -537,6 +604,13 @@ class Socket
       io << "Socket::IPAddress("
       to_s(io)
       io << ")"
+    end
+
+    def inspect : String
+      # 19 == "Socket::IPAddress(".size + ")".size
+      String.build((@addr.is_a?(LibC::InAddr) ? IPV4_FULL_MAX_SIZE : IPV6_FULL_MAX_SIZE) + 19) do |io|
+        inspect(io)
+      end
     end
 
     def pretty_print(pp)
