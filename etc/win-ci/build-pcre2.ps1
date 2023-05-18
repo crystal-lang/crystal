@@ -1,13 +1,15 @@
 param(
+    [Parameter(Mandatory)] [string] $BuildTree,
     [Parameter(Mandatory)] [string] $Version,
     [switch] $Dynamic
 )
 
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
-Setup-Git -Path deps\pcre2 -Url https://github.com/PCRE2Project/pcre2.git -Branch pcre2-$Version
+[void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
+Setup-Git -Path $BuildTree -Url https://github.com/PCRE2Project/pcre2.git -Branch pcre2-$Version
 
-Run-InDirectory deps\pcre2 {
+Run-InDirectory $BuildTree {
     $args = "-DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
     if ($Dynamic) {
         $args = "-DBUILD_STATIC_LIBS=OFF -DBUILD_SHARED_LIBS=ON $args"
@@ -17,14 +19,14 @@ Run-InDirectory deps\pcre2 {
     & $cmake . $args.split(' ')
     & $cmake --build . --config Release
     if (-not $?) {
-        Write-Host "Error: Failed to build libpcre2" -ForegroundColor Red
+        Write-Host "Error: Failed to build PCRE2" -ForegroundColor Red
         Exit 1
     }
 }
 
 if ($Dynamic) {
-    mv -Force deps\pcre2\Release\pcre2-8.lib libs\pcre2-8-dynamic.lib
-    mv -Force deps\pcre2\Release\pcre2-8.dll dlls\
+    mv -Force $BuildTree\Release\pcre2-8.lib libs\pcre2-8-dynamic.lib
+    mv -Force $BuildTree\Release\pcre2-8.dll dlls\
 } else {
-    mv -Force deps\pcre2\Release\pcre2-8-static.lib libs\pcre2-8.lib
+    mv -Force $BuildTree\Release\pcre2-8-static.lib libs\pcre2-8.lib
 }

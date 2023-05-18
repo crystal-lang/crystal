@@ -7,11 +7,10 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/ivmai/bdwgc.git -Branch v$Version
-Setup-Git -Path $BuildTree\libatomic_ops -Url https://github.com/ivmai/libatomic_ops.git -Branch v7.8.0
+Setup-Git -Path $BuildTree -Url https://github.com/yaml/libyaml.git -Branch $Version
 
 Run-InDirectory $BuildTree {
-    $args = "-Dbuild_cord=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
+    $args = "-DBUILD_TESTING=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
     if ($Dynamic) {
         $args = "-DBUILD_SHARED_LIBS=ON $args"
     } else {
@@ -20,15 +19,14 @@ Run-InDirectory $BuildTree {
     & $cmake . $args.split(' ')
     & $cmake --build . --config Release
     if (-not $?) {
-        Write-Host "Error: Failed to build libgc" -ForegroundColor Red
+        Write-Host "Error: Failed to build libyaml" -ForegroundColor Red
         Exit 1
     }
 }
 
 if ($Dynamic) {
-    mv -Force $BuildTree\Release\gc.lib libs\gc-dynamic.lib
-    mv -Force $BuildTree\Release\gc.dll dlls\
+    mv -Force $BuildTree\Release\yaml.lib libs\yaml-dynamic.lib
+    mv -Force $BuildTree\Release\yaml.dll dlls\
 } else {
-    mv -Force $BuildTree\Release\gc.lib libs\
+    mv -Force $BuildTree\Release\yaml.lib libs\
 }
-

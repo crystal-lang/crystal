@@ -1,15 +1,18 @@
 param(
     [Parameter(Mandatory)] [string] $BuildTree,
+    [Parameter(Mandatory)] [string] $Version,
     [switch] $Dynamic
 )
 
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/pffang/libiconv-for-Windows.git -Commit 1353455a6c4e15c9db6865fd9c2bf7203b59c0ec # master@{2022-10-11}
+Setup-Git -Path $BuildTree -Url https://github.com/winlibs/libffi.git -Branch libffi-$Version
 
 Run-InDirectory $BuildTree {
-    Replace-Text libiconv\include\iconv.h '__declspec (dllimport) ' ''
+    if ($Dynamic) {
+        Replace-Text win32\vs16_x64\libffi\libffi.vcxproj 'StaticLibrary' 'DynamicLibrary'
+    }
 
     echo '<Project>
         <PropertyGroup>
@@ -23,6 +26,11 @@ Run-InDirectory $BuildTree {
         </PropertyGroup>
         <ItemDefinitionGroup>
             <ClCompile>
+                $(if ($Dynamic) {
+                    '<PreprocessorDefinitions>FFI_BUILDING_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>'
+                } else {
+                    '<RuntimeLibrary>MultiThreaded</RuntimeLibrary>'
+                })
                 <DebugInformationFormat>None</DebugInformationFormat>
                 <WholeProgramOptimization>false</WholeProgramOptimization>
             </ClCompile>
@@ -30,27 +38,18 @@ Run-InDirectory $BuildTree {
                 <GenerateDebugInformation>false</GenerateDebugInformation>
             </Link>
         </ItemDefinitionGroup>
-        <ItemDefinitionGroup Condition=`"'`$(Configuration)'=='ReleaseStatic'`">
-            <ClCompile>
-                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-            </ClCompile>
-        </ItemDefinitionGroup>
     </Project>" > 'Override.props'
 
-    if ($Dynamic) {
-        MSBuild.exe /p:Platform=x64 /p:Configuration=Release libiconv.vcxproj
-    } else {
-        MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
-    }
+    MSBuild.exe /p:PlatformToolset=v143 /p:Platform=x64 /p:Configuration=Release win32\vs16_x64\libffi-msvc.sln -target:libffi:Rebuild
     if (-not $?) {
-        Write-Host "Error: Failed to build libiconv" -ForegroundColor Red
+        Write-Host "Error: Failed to build libffi" -ForegroundColor Red
         Exit 1
     }
 }
 
 if ($Dynamic) {
-    mv -Force $BuildTree\output\x64\Release\libiconv.lib libs\iconv-dynamic.lib
-    mv -Force $BuildTree\output\x64\Release\libiconv.dll dlls\
+    mv -Force $BuildTree\win32\vs16_x64\x64\Release\libffi.lib libs\ffi-dynamic.lib
+    mv -Force $BuildTree\win32\vs16_x64\x64\Release\libffi.dll dlls\
 } else {
-    mv -Force $BuildTree\output\x64\ReleaseStatic\libiconvStatic.lib libs\iconv.lib
+    mv -Force $BuildTree\win32\vs16_x64\x64\Release\libffi.lib libs\ffi.lib
 }

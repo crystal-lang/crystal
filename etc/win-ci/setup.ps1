@@ -6,7 +6,7 @@ function Run-InDirectory {
 
     [void](New-Item -Name $Path -ItemType Directory -Force)
     Push-Location $Path
-    [Environment]::CurrentDirectory = $Path
+    [Environment]::CurrentDirectory = (Get-Location -PSProvider FileSystem).ProviderPath
     try { & $ScriptBlock } finally {
         Pop-Location
         [Environment]::CurrentDirectory = (Get-Location -PSProvider FileSystem).ProviderPath
@@ -31,7 +31,7 @@ function Find-7Zip {
     $Path = "$env:ProgramFiles\7-Zip\7z.exe"
     if (Test-Path -Path $Path -PathType Leaf) { return $Path }
 
-    $Path = "$env:ProgramFiles(x86)\7-Zip\7z.exe"
+    $Path = "${env:ProgramFiles(x86)}\7-Zip\7z.exe"
     if (Test-Path -Path $Path -PathType Leaf) { return $Path }
 
     Write-Host "Error: Cannot locate 7-Zip executable" -ForegroundColor Red
@@ -96,4 +96,3 @@ $cmake = Find-CMake
 
 [void](New-Item -Name libs -ItemType Directory -Force)
 [void](New-Item -Name dlls -ItemType Directory -Force)
-[void](New-Item -Name deps -ItemType Directory -Force)

@@ -7,11 +7,10 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/ivmai/bdwgc.git -Branch v$Version
-Setup-Git -Path $BuildTree\libatomic_ops -Url https://github.com/ivmai/libatomic_ops.git -Branch v7.8.0
+Setup-Git -Path $BuildTree -Url https://gitlab.gnome.org/GNOME/libxml2.git -Branch v$Version
 
 Run-InDirectory $BuildTree {
-    $args = "-Dbuild_cord=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
+    $args = "-DLIBXML2_WITH_TESTS=OFF -DLIBXML2_WITH_PROGRAMS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_ICONV=OFF -DLIBXML2_WITH_LZMA=OFF -DLIBXML2_WITH_PYTHON=OFF -DLIBXML2_WITH_ZLIB=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
     if ($Dynamic) {
         $args = "-DBUILD_SHARED_LIBS=ON $args"
     } else {
@@ -20,15 +19,14 @@ Run-InDirectory $BuildTree {
     & $cmake . $args.split(' ')
     & $cmake --build . --config Release
     if (-not $?) {
-        Write-Host "Error: Failed to build libgc" -ForegroundColor Red
+        Write-Host "Error: Failed to build libxml2" -ForegroundColor Red
         Exit 1
     }
 }
 
 if ($Dynamic) {
-    mv -Force $BuildTree\Release\gc.lib libs\gc-dynamic.lib
-    mv -Force $BuildTree\Release\gc.dll dlls\
+    mv -Force $BuildTree\Release\libxml2.lib libs\xml2-dynamic.lib
+    mv -Force $BuildTree\Release\libxml2.dll dlls\
 } else {
-    mv -Force $BuildTree\Release\gc.lib libs\
+    mv -Force $BuildTree\Release\libxml2s.lib libs\xml2.lib
 }
-
