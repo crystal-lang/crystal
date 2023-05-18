@@ -82,10 +82,11 @@ describe Socket::IPAddress do
     end
   end
 
-  it "to_s" do
+  it "#to_s" do
     assert_prints Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 80).to_s, "127.0.0.1:80"
 
     assert_prints Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0x8714, 0x3a90, 0, 0, 0, 0x12), 443).to_s, "[2001:db8:8714:3a90::12]:443"
+    assert_prints Socket::IPAddress.v6(UInt16.static_array(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff), 0xffff).to_s, "[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:65535"
     assert_prints Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 1, 1, 1, 1, 1), 443).to_s, "[2001:db8:0:1:1:1:1:1]:443"
     assert_prints Socket::IPAddress.v6(UInt16.static_array(0x2001, 0, 0, 1, 0, 0, 0, 1), 443).to_s, "[2001:0:0:1::1]:443"
     assert_prints Socket::IPAddress.v6(UInt16.static_array(0x2001, 0, 0, 0, 1, 0, 0, 1), 443).to_s, "[2001::1:0:0:1]:443"
@@ -100,6 +101,27 @@ describe Socket::IPAddress do
     assert_prints Socket::IPAddress.new("0:0:0:0:0:0:0:1", 443).to_s, "[::1]:443"
     assert_prints Socket::IPAddress.new("0:0:0:0:0:ffff:c0a8:010f", 443).to_s, "[::ffff:192.168.1.15]:443"
     assert_prints Socket::IPAddress.new("::ffff:0:0", 443).to_s, "[::ffff:0.0.0.0]:443"
+  end
+
+  it "#address" do
+    Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 80).address.should eq "127.0.0.1"
+
+    Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0x8714, 0x3a90, 0, 0, 0, 0x12), 443).address.should eq "2001:db8:8714:3a90::12"
+    Socket::IPAddress.v6(UInt16.static_array(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff), 0xffff).address.should eq "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 1, 1, 1, 1, 1), 443).address.should eq "2001:db8:0:1:1:1:1:1"
+    Socket::IPAddress.v6(UInt16.static_array(0x2001, 0, 0, 1, 0, 0, 0, 1), 443).address.should eq "2001:0:0:1::1"
+    Socket::IPAddress.v6(UInt16.static_array(0x2001, 0, 0, 0, 1, 0, 0, 1), 443).address.should eq "2001::1:0:0:1"
+    Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 0, 1, 0, 0, 1), 443).address.should eq "2001:db8::1:0:0:1"
+    Socket::IPAddress.v6(UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 1), 443).address.should eq "::1"
+    Socket::IPAddress.v6(UInt16.static_array(1, 0, 0, 0, 0, 0, 0, 0), 443).address.should eq "1::"
+    Socket::IPAddress.v6(UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 0), 443).address.should eq "::"
+
+    Socket::IPAddress.v4_mapped_v6(UInt8.static_array(0, 0, 0, 0), 443).address.should eq "::ffff:0.0.0.0"
+    Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 1, 15), 443).address.should eq "::ffff:192.168.1.15"
+
+    Socket::IPAddress.new("0:0:0:0:0:0:0:1", 443).address.should eq "::1"
+    Socket::IPAddress.new("0:0:0:0:0:ffff:c0a8:010f", 443).address.should eq "::ffff:192.168.1.15"
+    Socket::IPAddress.new("::ffff:0:0", 443).address.should eq "::ffff:0.0.0.0"
   end
 
   describe ".parse" do

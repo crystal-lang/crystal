@@ -97,8 +97,6 @@ class Socket
         raise Error.new("Invalid IP address: #{address}")
       end
 
-      # TODO: canonicalize (#13423)
-      addr.address = address
       addr
     end
 
@@ -430,27 +428,26 @@ class Socket
     # ip_address = socket.remote_address
     # ip_address.address # => "127.0.0.1"
     # ```
-    getter(address : String) { address(@addr) }
-
-    protected setter address
-
-    private def address(addr : LibC::In6Addr)
-      String.new(46) do |buffer|
-        unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Socket::Error.from_errno("Failed to convert IP address")
+    def address : String
+      case addr = @addr
+      in LibC::InAddr
+        String.build(IPV4_MAX_SIZE) do |io|
+          address_to_s(io, addr)
         end
-        {LibC.strlen(buffer), 0}
+      in LibC::In6Addr
+        String.build(IPV6_MAX_SIZE) do |io|
+          address_to_s(io, addr)
+        end
       end
     end
 
-    private def address(addr : LibC::InAddr)
-      String.new(16) do |buffer|
-        unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Socket::Error.from_errno("Failed to convert IP address")
-        end
-        {LibC.strlen(buffer), 0}
-      end
-    end
+    private IPV4_MAX_SIZE = 15 # "255.255.255.255".size
+
+    # NOTE: INET6_ADDRSTRLEN is 46 bytes (including the terminating null
+    # character), but it is only attainable for mixed-notation addresses that
+    # use all 24 hexadecimal digits in the IPv6 field part, which we do not
+    # support
+    private IPV6_MAX_SIZE = 39 # "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff".size
 
     # Returns `true` if this IP is a loopback address.
     #
@@ -591,8 +588,8 @@ class Socket
       end
     end
 
-    private IPV4_FULL_MAX_SIZE = 21 # "255.255.255.255:65535".size
-    private IPV6_FULL_MAX_SIZE = 47 # "[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:65535".size
+    private IPV4_FULL_MAX_SIZE = IPV4_MAX_SIZE + 6 # ":65535".size
+    private IPV6_FULL_MAX_SIZE = IPV6_MAX_SIZE + 8 # "[".size + "]:65535".size
 
     def to_s : String
       String.build(@addr.is_a?(LibC::InAddr) ? IPV4_FULL_MAX_SIZE : IPV6_FULL_MAX_SIZE) do |io|
