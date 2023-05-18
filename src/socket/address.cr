@@ -421,13 +421,28 @@ class Socket
       !parse_v4_fields?(address).nil?
     end
 
-    # Returns a `String` representation of the IP address.
+    # Returns a `String` representation of the IP address, without the port
+    # number.
     #
-    # Example:
+    # IPv6 addresses are canonicalized according to
+    # [RFC 5952, section 4](https://datatracker.ietf.org/doc/html/rfc5952#section-4).
+    # IPv4-mapped IPv6 addresses use the mixed notation according to RFC 5952,
+    # section 5.
+    #
     # ```
-    # ip_address = socket.remote_address
-    # ip_address.address # => "127.0.0.1"
+    # require "socket"
+    #
+    # v4 = Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 8080)
+    # v4.address # => "127.0.0.1"
+    #
+    # v6 = Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 0, 1, 0, 0, 1), 443)
+    # v6.address # => "2001:db8::1:0:0:1"
+    #
+    # mapped = Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 1, 15), 55001)
+    # mapped.address # => "::ffff:192.168.1.15"
     # ```
+    #
+    # To obtain both the address and the port number in one string, see `#to_s`.
     def address : String
       case addr = @addr
       in LibC::InAddr
@@ -531,6 +546,17 @@ class Socket
       end
     end
 
+    # Writes the `String` representation of the IP address plus the port number
+    # to the given *io*.
+    #
+    # IPv6 addresses are canonicalized according to
+    # [RFC 5952, section 4](https://datatracker.ietf.org/doc/html/rfc5952#section-4),
+    # and surrounded within a pair of square brackets according to
+    # [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
+    # IPv4-mapped IPv6 addresses use the mixed notation according to RFC 5952,
+    # section 5.
+    #
+    # To obtain the address alone without the port number, see `#address`.
     def to_s(io : IO) : Nil
       case addr = @addr
       in LibC::InAddr
@@ -591,6 +617,29 @@ class Socket
     private IPV4_FULL_MAX_SIZE = IPV4_MAX_SIZE + 6 # ":65535".size
     private IPV6_FULL_MAX_SIZE = IPV6_MAX_SIZE + 8 # "[".size + "]:65535".size
 
+    # Returns a `String` representation of the IP address plus the port number.
+    #
+    # IPv6 addresses are canonicalized according to
+    # [RFC 5952, section 4](https://datatracker.ietf.org/doc/html/rfc5952#section-4),
+    # and surrounded within a pair of square brackets according to
+    # [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
+    # IPv4-mapped IPv6 addresses use the mixed notation according to RFC 5952,
+    # section 5.
+    #
+    # ```
+    # require "socket"
+    #
+    # v4 = Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 8080)
+    # v4.to_s # => "127.0.0.1:8080"
+    #
+    # v6 = Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 0, 1, 0, 0, 1), 443)
+    # v6.to_s # => "[2001:db8::1:0:0:1]:443"
+    #
+    # mapped = Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 1, 15), 55001)
+    # mapped.to_s # => "[::ffff:192.168.1.15]:55001"
+    # ```
+    #
+    # To obtain the address alone without the port number, see `#address`.
     def to_s : String
       String.build(@addr.is_a?(LibC::InAddr) ? IPV4_FULL_MAX_SIZE : IPV6_FULL_MAX_SIZE) do |io|
         to_s(io)
