@@ -586,6 +586,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def ilogb(value)
     ilogb(value.to_f)
   end
@@ -603,21 +604,23 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def logb(value)
     logb(value.to_f)
   end
 
   # Multiplies the given floating-point *value* by 2 raised to the power *exp*.
-  def ldexp(value : Float32, exp : Int32) : Float32
-    LibM.ldexp_f32(value, exp)
+  def ldexp(value : Float32, exp : Int) : Float32
+    LibM.ldexp_f32(value, exp.to_i32)
   end
 
   # :ditto:
-  def ldexp(value : Float64, exp : Int32) : Float64
-    LibM.ldexp_f64(value, exp)
+  def ldexp(value : Float64, exp : Int) : Float64
+    LibM.ldexp_f64(value, exp.to_i32)
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def ldexp(value, exp)
     ldexp(value.to_f, exp.to_i32)
   end
@@ -625,31 +628,33 @@ module Math
   # Returns the floating-point *value* with its exponent raised by *exp*.
   #
   # For `Float32` and `Float64` this is equivalent to `ldexp`.
-  def scalbn(value : Float32, exp : Int32) : Float32
-    LibM.scalbn_f32(value, exp)
+  def scalbn(value : Float32, exp : Int) : Float32
+    LibM.scalbn_f32(value, exp.to_i32)
   end
 
   # :ditto:
-  def scalbn(value : Float64, exp : Int32) : Float64
-    LibM.scalbn_f64(value, exp)
+  def scalbn(value : Float64, exp : Int) : Float64
+    LibM.scalbn_f64(value, exp.to_i32)
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def scalbn(value, exp)
     scalbn(value.to_f, exp.to_i32)
   end
 
   # :ditto:
-  def scalbln(value : Float32, exp : Int64)
-    LibM.scalbln_f32(value, exp)
+  def scalbln(value : Float32, exp : Int) : Float32
+    LibM.scalbln_f32(value, exp.to_i64)
   end
 
   # :ditto:
-  def scalbln(value : Float64, exp : Int64) : Float64
-    LibM.scalbln_f64(value, exp)
+  def scalbln(value : Float64, exp : Int) : Float64
+    LibM.scalbln_f64(value, exp.to_i64)
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def scalbln(value, exp) : Float64
     scalbln(value.to_f, exp.to_i64)
   end
@@ -673,6 +678,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def frexp(value)
     frexp(value.to_f)
   end
@@ -688,6 +694,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def copysign(value1, value2)
     copysign(value1.to_f, value2.to_f)
   end
