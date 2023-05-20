@@ -34,6 +34,14 @@ describe "Regex" do
     end
   end
 
+  it ".literal" do
+    Regex.literal("foo").should eq /foo/
+    Regex.literal("foo", i: true).should eq /foo/i
+    Regex.literal("foo", i: true, m: true).should eq /foo/im
+    Regex.literal("foo", i: true, m: true, x: true).should eq /foo/imx
+    Regex.literal("foo", x: true).should eq /foo/x
+  end
+
   it "#options" do
     /cat/.options.ignore_case?.should be_false
     /cat/i.options.ignore_case?.should be_true
@@ -539,5 +547,15 @@ describe "Regex" do
         "missing ) at 8"
       end
     )
+  end
+
+  it ".supports_compile_options?" do
+    Regex.supports_compile_options?(:anchored).should be_true
+    Regex.supports_compile_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
+  end
+
+  it ".supports_match_options?" do
+    Regex.supports_match_options?(:anchored).should be_true
+    Regex.supports_match_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
   end
 end

@@ -85,6 +85,20 @@ describe "BigFloat" do
       BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648.0")
       BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9.223372036854775808e+18")
     end
+
+    it "raises if creating from infinity" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::INFINITY, precision: 128) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::INFINITY, precision: 128) }
+    end
+
+    it "raises if creating from NaN" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::NAN, precision: 128) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::NAN, precision: 128) }
+    end
   end
 
   describe "#<=>" do

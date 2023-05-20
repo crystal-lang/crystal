@@ -66,11 +66,17 @@ struct BigFloat < Float
     end
   end
 
+  def initialize(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
+    LibGMP.mpf_init_set_d(out @mpf, num)
+  end
+
   def initialize(num : Number)
     LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
   end
 
   def initialize(num : Float, precision : Int)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     LibGMP.mpf_init2(out @mpf, precision.to_u64)
     LibGMP.mpf_set_d(self, num.to_f64)
   end

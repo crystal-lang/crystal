@@ -129,6 +129,7 @@ end
 
 {% if flag?(:win32) %}
   require "./system/win32/wmain"
+  require "./system/win32/delay_load"
 {% end %}
 
 {% if flag?(:wasi) %}

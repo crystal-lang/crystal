@@ -121,6 +121,116 @@ describe Socket::IPAddress do
     end
   end
 
+  describe ".v4" do
+    it "constructs an IPv4 address" do
+      Socket::IPAddress.v4(0, 0, 0, 0, port: 0).should eq Socket::IPAddress.new("0.0.0.0", 0)
+      Socket::IPAddress.v4(127, 0, 0, 1, port: 1234).should eq Socket::IPAddress.new("127.0.0.1", 1234)
+      Socket::IPAddress.v4(192, 168, 0, 1, port: 8081).should eq Socket::IPAddress.new("192.168.0.1", 8081)
+      Socket::IPAddress.v4(255, 255, 255, 254, port: 65535).should eq Socket::IPAddress.new("255.255.255.254", 65535)
+    end
+
+    it "raises on out of bound field" do
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(256, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 256, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 0, 256, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4(0, 0, 0, 256, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(-1, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, -1, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, 0, -1, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4(0, 0, 0, -1, port: 0) }
+    end
+
+    it "raises on out of bound port number" do
+      expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v4(0, 0, 0, 0, port: 65536) }
+      expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v4(0, 0, 0, 0, port: -1) }
+    end
+
+    it "constructs from StaticArray" do
+      Socket::IPAddress.v4(UInt8.static_array(0, 0, 0, 0), 0).should eq Socket::IPAddress.new("0.0.0.0", 0)
+      Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 1234).should eq Socket::IPAddress.new("127.0.0.1", 1234)
+      Socket::IPAddress.v4(UInt8.static_array(192, 168, 0, 1), 8081).should eq Socket::IPAddress.new("192.168.0.1", 8081)
+      Socket::IPAddress.v4(UInt8.static_array(255, 255, 255, 254), 65535).should eq Socket::IPAddress.new("255.255.255.254", 65535)
+    end
+  end
+
+  describe ".v6" do
+    it "constructs an IPv6 address" do
+      Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: 0).should eq Socket::IPAddress.new("::", 0)
+      Socket::IPAddress.v6(1, 2, 3, 4, 5, 6, 7, 8, port: 8080).should eq Socket::IPAddress.new("1:2:3:4:5:6:7:8", 8080)
+      Socket::IPAddress.v6(0xfe80, 0, 0, 0, 0x4860, 0x4860, 0x4860, 0x1234, port: 55001).should eq Socket::IPAddress.new("fe80::4860:4860:4860:1234", 55001)
+      Socket::IPAddress.v6(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xfffe, port: 65535).should eq Socket::IPAddress.new("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", 65535)
+      Socket::IPAddress.v6(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0001, port: 0).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 0)
+    end
+
+    it "raises on out of bound field" do
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(65536, 0, 0, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 65536, 0, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 65536, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 65536, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 65536, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 65536, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 65536, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 65536, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(-1, 0, 0, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, -1, 0, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, -1, 0, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, -1, 0, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, -1, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, -1, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, -1, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv6 field: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, -1, port: 0) }
+    end
+
+    it "raises on out of bound port number" do
+      expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: 65536) }
+      expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v6(0, 0, 0, 0, 0, 0, 0, 0, port: -1) }
+    end
+
+    it "constructs from StaticArray" do
+      Socket::IPAddress.v6(UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 0), 0).should eq Socket::IPAddress.new("::", 0)
+      Socket::IPAddress.v6(UInt16.static_array(1, 2, 3, 4, 5, 6, 7, 8), 8080).should eq Socket::IPAddress.new("1:2:3:4:5:6:7:8", 8080)
+      Socket::IPAddress.v6(UInt16.static_array(0xfe80, 0, 0, 0, 0x4860, 0x4860, 0x4860, 0x1234), 55001).should eq Socket::IPAddress.new("fe80::4860:4860:4860:1234", 55001)
+      Socket::IPAddress.v6(UInt16.static_array(0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xfffe), 65535).should eq Socket::IPAddress.new("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", 65535)
+      Socket::IPAddress.v6(UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0001), 0).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 0)
+    end
+  end
+
+  describe ".v4_mapped_v6" do
+    it "constructs an IPv4-mapped IPv6 address" do
+      # windows returns the former which, while correct, is not canonical
+      # TODO: implement also `#to_s` in Crystal
+      {Socket::IPAddress.new("::ffff:0:0", 0), Socket::IPAddress.new("::ffff:0.0.0.0", 0)}.should contain Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: 0)
+      Socket::IPAddress.v4_mapped_v6(127, 0, 0, 1, port: 1234).should eq Socket::IPAddress.new("::ffff:127.0.0.1", 1234)
+      Socket::IPAddress.v4_mapped_v6(192, 168, 0, 1, port: 8081).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 8081)
+      Socket::IPAddress.v4_mapped_v6(255, 255, 255, 254, port: 65535).should eq Socket::IPAddress.new("::ffff:255.255.255.254", 65535)
+    end
+
+    it "raises on out of bound field" do
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(256, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 256, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 0, 256, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: 256") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 256, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(-1, 0, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, -1, 0, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, -1, 0, port: 0) }
+      expect_raises(Socket::Error, "Invalid IPv4 field: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, -1, port: 0) }
+    end
+
+    it "raises on out of bound port number" do
+      expect_raises(Socket::Error, "Invalid port number: 65536") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: 65536) }
+      expect_raises(Socket::Error, "Invalid port number: -1") { Socket::IPAddress.v4_mapped_v6(0, 0, 0, 0, port: -1) }
+    end
+
+    it "constructs from StaticArray" do
+      # windows returns the former which, while correct, is not canonical
+      # TODO: implement also `#to_s` in Crystal
+      {Socket::IPAddress.new("::ffff:0:0", 0), Socket::IPAddress.new("::ffff:0.0.0.0", 0)}.should contain Socket::IPAddress.v4_mapped_v6(UInt8.static_array(0, 0, 0, 0), 0)
+      Socket::IPAddress.v4_mapped_v6(UInt8.static_array(127, 0, 0, 1), 1234).should eq Socket::IPAddress.new("::ffff:127.0.0.1", 1234)
+      Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 0, 1), 8081).should eq Socket::IPAddress.new("::ffff:192.168.0.1", 8081)
+      Socket::IPAddress.v4_mapped_v6(UInt8.static_array(255, 255, 255, 254), 65535).should eq Socket::IPAddress.new("::ffff:255.255.255.254", 65535)
+    end
+  end
+
   it ".valid_v6?" do
     Socket::IPAddress.valid_v6?("::1").should be_true
     Socket::IPAddress.valid_v6?("x").should be_false

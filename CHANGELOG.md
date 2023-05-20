@@ -1,3 +1,34 @@
+# 1.8.2 (2023-05-08)
+
+## Standard Library
+
+### Collection
+
+- Fix codegen bug with `Iterator::ChainIterator` ([#13412](https://github.com/crystal-lang/crystal/pull/13412), thanks @straight-shoota)
+
+### Log
+
+- Fix `Log::Metadata#dup` crash with 2+ entries ([#13369](https://github.com/crystal-lang/crystal/pull/13369), thanks @HertzDevil)
+
+### Serialization
+
+- Fixup for `JSON::Serializable` on certain recursively defined types ([#13430](https://github.com/crystal-lang/crystal/pull/13430), thanks @kostya)
+
+### Text
+
+- Fix `String#scan` with empty `Regex` match at multibyte char ([#13387](https://github.com/crystal-lang/crystal/pull/13387), thanks @HertzDevil)
+- **(performance)** Check subject UTF-8 validity just once for `String#gsub`, `#scan`, `#split` ([#13406](https://github.com/crystal-lang/crystal/pull/13406), thanks @HertzDevil)
+
+## Compiler
+
+### Codegen
+
+- Always use 0 for offset of `StaticArray`'s `@buffer` ([#13319](https://github.com/crystal-lang/crystal/pull/13319), thanks @HertzDevil)
+
+## Other
+
+- Backport bugfixes to release/1.8 for release 1.8.2 ([#3435](https://github.com/crystal-lang/crystal/pull/13435), thanks @straight-shoota)
+
 # 1.8.1 (2023-04-20)
 
 ## Standard Library
