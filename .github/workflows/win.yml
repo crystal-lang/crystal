@@ -38,7 +38,7 @@ jobs:
             libs/mpir.lib
             libs/yaml.lib
             libs/xml2.lib
-          key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}-${{ hashFiles('etc/win-ci/*.ps1') }}-msvc-${{ env.VSCMD_VER }}
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc-${{ env.VSCMD_VER }}
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2
