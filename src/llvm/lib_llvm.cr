@@ -534,6 +534,13 @@ lib LibLLVM
     file : MetadataRef, line_no : UInt, ty : MetadataRef, always_preserve : Int, flags : LLVM::DIFlags
   ) : MetadataRef
 
+  fun di_builder_create_debug_location = LLVMDIBuilderCreateDebugLocation(ctx : ContextRef, line : UInt, column : UInt, scope : MetadataRef, inlined_at : MetadataRef) : MetadataRef
+  {% if LibLLVM::IS_LT_90 %}
+    fun set_current_debug_location = LLVMSetCurrentDebugLocation(builder : BuilderRef, l : ValueRef)
+  {% else %}
+    fun set_current_debug_location2 = LLVMSetCurrentDebugLocation2(builder : BuilderRef, loc : MetadataRef)
+  {% end %}
+
   fun set_subprogram = LLVMSetSubprogram(func : ValueRef, sp : MetadataRef)
   fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(target_metadata : MetadataRef, replacement : MetadataRef)
 end

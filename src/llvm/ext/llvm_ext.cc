@@ -42,24 +42,6 @@ LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(
 }
 #endif
 
-void LLVMExtSetCurrentDebugLocation(
-  LLVMBuilderRef Bref, unsigned Line, unsigned Col, LLVMMetadataRef Scope,
-  LLVMMetadataRef InlinedAt) {
-#if LLVM_VERSION_GE(12, 0)
-  if (!Scope)
-    unwrap(Bref)->SetCurrentDebugLocation(DebugLoc());
-  else
-    unwrap(Bref)->SetCurrentDebugLocation(
-      DILocation::get(unwrap<MDNode>(Scope)->getContext(), Line, Col,
-                      unwrapDIptr<DILocalScope>(Scope),
-                      unwrapDIptr<DILocation>(InlinedAt)));
-#else
-  unwrap(Bref)->SetCurrentDebugLocation(
-      DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
-                    InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
-#endif
-}
-
 OperandBundleDef *LLVMExtBuildOperandBundleDef(
     const char *Name, LLVMValueRef *Inputs, unsigned NumInputs) {
   return new OperandBundleDef(Name, makeArrayRef(unwrap(Inputs), NumInputs));

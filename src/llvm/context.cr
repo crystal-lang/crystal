@@ -13,8 +13,7 @@ class LLVM::Context
   end
 
   def new_builder : Builder
-    # builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
-    builder = Builder.new(LibLLVM.create_builder_in_context(self))
+    builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
     @builders << builder
     builder
   end
@@ -105,6 +104,18 @@ class LLVM::Context
 
   def md_node(values : Array(Value)) : Value
     Value.new LibLLVM.md_node_in_context(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+  end
+
+  def debug_location(line, column, scope, inlined_at = nil)
+    LibLLVM.di_builder_create_debug_location(self, line, column, scope, inlined_at)
+  end
+
+  def null_debug_location
+    {% if LibLLVM::IS_LT_90 %}
+      debug_location(0, 0, nil)
+    {% else %}
+      Pointer(Void).null.as(LibLLVM::MetadataRef)
+    {% end %}
   end
 
   def parse_ir(buf : MemoryBuffer)

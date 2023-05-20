@@ -15,8 +15,6 @@ lib LibLLVMExt
     fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : LibLLVM::DIBuilderRef, name : Char*, value : Int64) : LibLLVM::MetadataRef
   {% end %}
 
-  fun set_current_debug_location = LLVMExtSetCurrentDebugLocation(LibLLVM::BuilderRef, Int, Int, LibLLVM::MetadataRef, LibLLVM::MetadataRef)
-
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef

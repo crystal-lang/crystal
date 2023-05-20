@@ -1,7 +1,7 @@
 class LLVM::Builder
   @disposed = false
 
-  def initialize(@unwrap : LibLLVM::BuilderRef)
+  def initialize(@unwrap : LibLLVM::BuilderRef, @context : Context)
   end
 
   def position_at_end(block)
@@ -314,8 +314,9 @@ class LLVM::Builder
     Value.new LibLLVM.build_va_arg(self, list, type, name)
   end
 
-  def set_current_debug_location(line, column, scope, inlined_at = nil)
-    LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  @[Deprecated("Use `#current_debug_location=` instead")]
+  def set_current_debug_location(line, column, scope, inlined_at = nil) : Nil
+    self.current_debug_location = @context.debug_location(line, column, scope, inlined_at)
   end
 
   def set_metadata(value, kind, node)
@@ -324,6 +325,23 @@ class LLVM::Builder
 
   def current_debug_location
     Value.new LibLLVM.get_current_debug_location(self)
+  end
+
+  def current_debug_location_metadata
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVM.value_as_metadata LibLLVM.get_current_debug_location(self)
+    {% else %}
+      LibLLVM.get_current_debug_location2(self)
+    {% end %}
+  end
+
+  def current_debug_location=(debug_location_metadata)
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVM.set_current_debug_location(self, LibLLVM.metadata_as_value @context, debug_location_metadata)
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, debug_location_metadata)
+    {% end %}
+    debug_location_metadata
   end
 
   def to_unsafe

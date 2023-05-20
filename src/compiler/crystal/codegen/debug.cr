@@ -373,8 +373,8 @@ module Crystal
       end
       old_debug_location = @current_debug_location
       set_current_debug_location location
-      if builder.current_debug_location != llvm_nil && (ptr = alloca)
-        di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location_metadata, block)
+      if (debug_location_metadata = builder.current_debug_location_metadata) && (ptr = alloca)
+        di_builder.insert_declare_at_end(ptr, var, expr, debug_location_metadata, block)
         set_current_debug_location old_debug_location
         true
       else
@@ -463,7 +463,7 @@ module Crystal
       scope = get_current_debug_scope(location)
 
       if scope
-        builder.set_current_debug_location(location.line_number || 1, location.column_number, scope)
+        builder.current_debug_location = @llvm_context.debug_location(location.line_number || 1, location.column_number, scope)
       else
         clear_current_debug_location
       end
@@ -472,7 +472,7 @@ module Crystal
     def clear_current_debug_location
       @current_debug_location = nil
 
-      builder.set_current_debug_location(0, 0, nil)
+      builder.current_debug_location = @llvm_context.null_debug_location
     end
 
     def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LibLLVM::MetadataRef, is_optimized = false)
