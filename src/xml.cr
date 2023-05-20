@@ -105,6 +105,36 @@ module XML
 
     Node.new(doc, errors)
   end
+
+  protected def self.with_indent_tree_output(indent : Bool, &)
+    ptr = {% if flag?(:win32) %}
+            LibXML.__xmlIndentTreeOutput
+          {% else %}
+            pointerof(LibXML.xmlIndentTreeOutput)
+          {% end %}
+
+    old, ptr.value = ptr.value, indent ? 1 : 0
+    begin
+      yield
+    ensure
+      ptr.value = old
+    end
+  end
+
+  protected def self.with_tree_indent_string(string : String, &)
+    ptr = {% if flag?(:win32) %}
+            LibXML.__xmlTreeIndentString
+          {% else %}
+            pointerof(LibXML.xmlTreeIndentString)
+          {% end %}
+
+    old, ptr.value = ptr.value, string.to_unsafe
+    begin
+      yield
+    ensure
+      ptr.value = old
+    end
+  end
 end
 
 require "./xml/*"
