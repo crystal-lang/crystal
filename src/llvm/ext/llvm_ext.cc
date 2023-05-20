@@ -1,6 +1,5 @@
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/DebugLoc.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
@@ -24,12 +23,6 @@ using namespace llvm;
 #if LLVM_VERSION_GE(16, 0)
 #define makeArrayRef ArrayRef
 #endif
-
-typedef DIBuilder *DIBuilderRef;
-#define DIArray DINodeArray
-template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
-  return (T *)(v ? unwrap<MDNode>(v) : NULL);
-}
 
 extern "C" {
 
