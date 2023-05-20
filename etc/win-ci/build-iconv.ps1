@@ -30,9 +30,9 @@ Run-InDirectory $BuildTree {
                 <GenerateDebugInformation>false</GenerateDebugInformation>
             </Link>
         </ItemDefinitionGroup>
-        <ItemDefinitionGroup Condition=`"'`$(Configuration)'=='ReleaseStatic'`">
+        <ItemDefinitionGroup Condition=`"'`$(Configuration)'=='Release'`">
             <ClCompile>
-                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+                <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
             </ClCompile>
         </ItemDefinitionGroup>
     </Project>" > 'Override.props'
