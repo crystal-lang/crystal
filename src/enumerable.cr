@@ -629,6 +629,22 @@ module Enumerable(T)
     end
   end
 
+  # Returns an `Array` with chunks in the given size.
+  # Last chunk can be smaller depending on the number of remaining items.
+  #
+  # ```
+  # [1, 2, 3].in_slices_of(2) # => [[1, 2], [3]]
+  # ```
+  def in_slices_of(size : Int) : Array(Array(T))
+    raise ArgumentError.new("Size must be positive") if size <= 0
+
+    ary = Array(Array(T)).new
+    each_slice_internal(size, Array(T), false) do |slice|
+      ary << slice
+    end
+    ary
+  end
+
   # Returns `true` if the collection contains *obj*, `false` otherwise.
   #
   # ```

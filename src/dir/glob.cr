@@ -176,10 +176,10 @@ class Dir
         next_pos = pos - 1
         case cmd
         in RootDirectory
-          raise "unreachable" if path
+          raise "Unreachable" if path
           path_stack << {next_pos, root, nil}
         in DirectoriesOnly
-          raise "unreachable" unless path
+          raise "Unreachable" unless path
           # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
           if path == File::SEPARATOR_STRING
             fullpath = path

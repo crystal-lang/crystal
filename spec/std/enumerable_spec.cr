@@ -569,6 +569,19 @@ describe "Enumerable" do
     end
   end
 
+  describe "in slices of" do
+    it { [1, 2, 3].in_slices_of(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].in_slices_of(2).should eq([[1, 2], [3]]) }
+    it { [1, 2, 3, 4].in_slices_of(3).should eq([[1, 2, 3], [4]]) }
+    it { ([] of Int32).in_slices_of(2).should eq([] of Array(Int32)) }
+
+    it "raises argument error if size is less than 0" do
+      expect_raises ArgumentError, "Size must be positive" do
+        [1, 2, 3].in_slices_of(0)
+      end
+    end
+  end
+
   describe "includes?" do
     it "is true if the object exists in the collection" do
       [1, 2, 3].includes?(2).should be_true

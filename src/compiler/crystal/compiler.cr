@@ -3,6 +3,7 @@ require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
+  require "./loader"
   require "crystal/system/win32/visual_studio"
   require "crystal/system/win32/windows_sdk"
 {% end %}
@@ -20,8 +21,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    CC = ENV["CC"]? || "cc"
-    CL = "cl.exe"
+    private DEFAULT_LINKER = ENV["CC"]? || "cc"
+    private MSVC_LINKER    = ENV["CC"]? || "cl.exe"
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -331,7 +332,7 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        cl = CL
+        linker = MSVC_LINKER
         link_args = [] of String
 
         # if the compiler and the target both have the `msvc` flag, we are not
@@ -353,7 +354,7 @@ module Crystal
               # use exact path for compiler instead of relying on `PATH`
               # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
               target_bits = target_bits.sub("arm", "ARM")
-              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s)
+              linker = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
             end
           end
         {% end %}
@@ -363,8 +364,21 @@ module Crystal
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
+        {% if flag?(:msvc) %}
+          if program.has_flag?("preview_dll") && !program.has_flag?("no_win32_delay_load")
+            # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
+            # it is harmless to skip this error because not all import libraries are always used, much
+            # less the individual DLLs they refer to
+            link_args << "/IGNORE:4199"
+
+            Loader.search_dlls(Process.parse_arguments_windows(link_args.join(' '))).each do |dll|
+              link_args << "/DELAYLOAD:#{dll}"
+            end
+          end
+        {% end %}
+
         args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
-        cmd = "#{cl} #{args}"
+        cmd = "#{linker} #{args}"
 
         if cmd.to_utf16.size > 32000
           # The command line would be too big, pass the args through a UTF-16-encoded file instead.
@@ -375,10 +389,10 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
+          cmd = "#{linker} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        {cl, cmd, nil}
+        {linker, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
@@ -386,7 +400,7 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        {CC, %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
 

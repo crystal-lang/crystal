@@ -94,6 +94,9 @@ end
 {% elsif flag?(:win32) %}
   require "exception/lib_unwind"
 
+  {% begin %}
+    @[Link({{ flag?(:preview_dll) ? "vcruntime" : "libvcruntime" }})]
+  {% end %}
   lib LibC
     fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
   end
@@ -272,6 +275,6 @@ end
 
 {% if flag?(:interpreted) %}
   def __crystal_raise_cast_failed(obj, type_name : String, location : String)
-    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+    raise TypeCastError.new("Cast from #{obj.class} to #{type_name} failed, at #{location}")
   end
 {% end %}

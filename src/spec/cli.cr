@@ -50,7 +50,7 @@ module Spec
       when UInt64
         mode
       else
-        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
+        raise ArgumentError.new("Order must be either 'default', 'random', or a numeric seed value")
       end
 
     @@randomizer_seed = seed

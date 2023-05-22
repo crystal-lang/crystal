@@ -37,6 +37,10 @@ class Log::Metadata
     data
   end
 
+  def dup : self
+    self
+  end
+
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = @overridden_size = entries.size
     @max_total_size = @size + (@parent.try(&.max_total_size) || 0)

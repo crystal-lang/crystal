@@ -81,7 +81,7 @@ module Spec::Methods
         # Compare the actual value directly. Since there are less
         # then expected values, the expectation will fail and raise.
         %ary.should eq({{ expected }})
-        raise "unreachable"
+        raise "Unreachable"
       end
       %ary << %v
     end

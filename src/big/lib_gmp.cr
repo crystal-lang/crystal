@@ -29,18 +29,21 @@ lib LibGMP
 
   {% if flag?(:win32) && flag?(:bits64) %}
     alias MpExp = LibC::Long
+    alias MpSize = LibC::LongLong
     alias MpLimb = LibC::ULongLong
   {% elsif flag?(:bits64) %}
     alias MpExp = Int64
+    alias MpSize = LibC::Long
     alias MpLimb = LibC::ULong
   {% else %}
     alias MpExp = Int32
+    alias MpSize = LibC::Long
     alias MpLimb = LibC::ULong
   {% end %}
 
   struct MPZ
-    _mp_alloc : Int32
-    _mp_size : Int32
+    _mp_alloc : Int
+    _mp_size : Int
     _mp_d : MpLimb*
   end
 
@@ -144,6 +147,11 @@ lib LibGMP
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
   fun remove = __gmpz_remove(rop : MPZ*, op : MPZ*, f : MPZ*) : BitcntT
 
+  # Special Functions
+
+  fun limbs_write = __gmpz_limbs_write(x : MPZ*, n : MpSize) : MpLimb*
+  fun limbs_finish = __gmpz_limbs_finish(x : MPZ*, s : MpSize)
+
   # MPQ
   struct MPQ
     _mp_num : MPZ
@@ -160,7 +168,9 @@ lib LibGMP
 
   # # Conversion
   fun mpq_get_str = __gmpq_get_str(str : UInt8*, base : Int, op : MPQ*) : UInt8*
-  fun mpq_get_d = __gmpq_get_d(x : MPQ*) : Float64
+  fun mpq_get_d = __gmpq_get_d(op : MPQ*) : Double
+  fun mpq_set_d = __gmpq_set_d(rop : MPQ*, op : Double)
+  fun mpq_set_f = __gmpq_set_f(rop : MPQ*, op : MPF*)
 
   # # Compare
   fun mpq_cmp = __gmpq_cmp(x : MPQ*, o : MPQ*) : Int32
