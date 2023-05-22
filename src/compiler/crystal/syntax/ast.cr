@@ -721,6 +721,10 @@ module Crystal
       NamedArgument.new(name, value.clone)
     end
 
+    def end_location
+      @end_location || value.end_location
+    end
+
     def_equals_and_hash name, value
   end
 
@@ -1155,6 +1159,10 @@ module Crystal
       @exp.accept visitor
     end
 
+    def end_location
+      @end_location || @exp.end_location
+    end
+
     def_equals_and_hash exp
   end
 
@@ -1222,6 +1230,10 @@ module Crystal
 
     def clone_without_location
       VisibilityModifier.new(@modifier, @exp.clone)
+    end
+
+    def end_location
+      @end_location || @exp.end_location
     end
 
     def_equals_and_hash modifier, exp
