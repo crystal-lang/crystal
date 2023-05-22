@@ -85,10 +85,10 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(handle)
-    value = 1_u8
-    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_EXCLUSIVEADDRUSE, pointerof(value), 1)
-    if ret == LibC::SOCKET_ERROR
-      raise ::Socket::Error.from_wsa_error("setsockopt")
+    system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
+      if value == 0
+        system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+      end
     end
   end
 

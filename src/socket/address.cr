@@ -58,14 +58,6 @@ class Socket
   # `String`, or directly received from an opened connection (e.g.
   # `Socket#local_address`, `Socket#receive`).
   #
-  # Example:
-  # ```
-  # require "socket"
-  #
-  # Socket::IPAddress.new("127.0.0.1", 8080)
-  # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234)
-  # ```
-  #
   # `IPAddress` won't resolve domains, including `localhost`. If you must
   # resolve an IP, or don't know whether a `String` contains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
@@ -81,20 +73,33 @@ class Socket
 
     @addr : LibC::In6Addr | LibC::InAddr
 
-    def initialize(@address : String, @port : Int32)
+    # Creates an `IPAddress` from the given IPv4 or IPv6 *address* and *port*
+    # number.
+    #
+    # *address* is parsed using `.parse_v4_fields?` and `.parse_v6_fields?`.
+    # Raises `Socket::Error` if *address* does not contain a valid IP address or
+    # the port number is out of range.
+    #
+    # ```
+    # require "socket"
+    #
+    # Socket::IPAddress.new("127.0.0.1", 8080)                 # => Socket::IPAddress(127.0.0.1:8080)
+    # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234) # => Socket::IPAddress([fe80::2ab2:bdff:fe59:8e2c]:1234)
+    # ```
+    def self.new(address : String, port : Int32)
       raise Error.new("Invalid port number: #{port}") unless IPAddress.valid_port?(port)
 
-      if addr = IPAddress.address_v6?(address)
-        @addr = addr
-        @family = Family::INET6
-        @size = sizeof(LibC::SockaddrIn6)
-      elsif addr = IPAddress.address_v4?(address)
-        @addr = addr
-        @family = Family::INET
-        @size = sizeof(LibC::SockaddrIn)
+      if v4_fields = parse_v4_fields?(address)
+        addr = v4(v4_fields, port.to_u16!)
+      elsif v6_fields = parse_v6_fields?(address)
+        addr = v6(v6_fields, port.to_u16!)
       else
         raise Error.new("Invalid IP address: #{address}")
       end
+
+      # TODO: canonicalize (#13423)
+      addr.address = address
+      addr
     end
 
     # Creates an `IPAddress` from the internal OS representation. Supports both
@@ -142,6 +147,158 @@ class Socket
     # :ditto:
     def self.parse(uri : String) : self
       parse URI.parse(uri)
+    end
+
+    # Parses *str* as an IPv4 address and returns its fields, or returns `nil`
+    # if *str* does not contain a valid IPv4 address.
+    #
+    # The format of IPv4 addresses follows
+    # [RFC 3493, section 6.3](https://datatracker.ietf.org/doc/html/rfc3493#section-6.3).
+    # No extensions (e.g. octal fields, fewer than 4 fields) are supported.
+    #
+    # ```
+    # require "socket"
+    #
+    # Socket::IPAddress.parse_v4_fields?("192.168.0.1")     # => UInt8.static_array(192, 168, 0, 1)
+    # Socket::IPAddress.parse_v4_fields?("255.255.255.254") # => UInt8.static_array(255, 255, 255, 254)
+    # Socket::IPAddress.parse_v4_fields?("01.2.3.4")        # => nil
+    # ```
+    def self.parse_v4_fields?(str : String) : UInt8[4]?
+      parse_v4_fields?(str.to_slice)
+    end
+
+    private def self.parse_v4_fields?(bytes : Bytes)
+      # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
+      fields = StaticArray(UInt8, 4).new(0)
+      ptr = bytes.to_unsafe
+      finish = ptr + bytes.size
+
+      4.times do |i|
+        decimal = 0_u32
+        old_ptr = ptr
+
+        3.times do
+          break unless ptr < finish
+          ch = ptr.value &- 0x30
+          break unless ch <= 0x09
+          decimal = decimal &* 10 &+ ch
+          ptr += 1
+        end
+
+        return nil if ptr == old_ptr                             # no decimal
+        return nil if ptr - old_ptr > 1 && old_ptr.value === '0' # octal etc.
+        return nil if decimal > 0xFF                             # overflow
+
+        fields[i] = decimal.to_u8!
+
+        break if i == 3
+        return nil unless ptr < finish && ptr.value === '.'
+        ptr += 1
+      end
+
+      fields if ptr == finish
+    end
+
+    # Parses *str* as an IPv6 address and returns its fields, or returns `nil`
+    # if *str* does not contain a valid IPv6 address.
+    #
+    # The format of IPv6 addresses follows
+    # [RFC 4291, section 2.2](https://datatracker.ietf.org/doc/html/rfc4291#section-2.2).
+    # Both canonical and non-canonical forms are supported.
+    #
+    # ```
+    # require "socket"
+    #
+    # Socket::IPAddress.parse_v6_fields?("::1")                 # => UInt16.static_array(0, 0, 0, 0, 0, 0, 0, 1)
+    # Socket::IPAddress.parse_v6_fields?("a:0b:00c:000d:E:F::") # => UInt16.static_array(10, 11, 12, 13, 14, 15, 0, 0)
+    # Socket::IPAddress.parse_v6_fields?("::ffff:192.168.1.1")  # => UInt16.static_array(0, 0, 0, 0, 0, 0xffff, 0xc0a8, 0x0101)
+    # Socket::IPAddress.parse_v6_fields?("1::2::")              # => nil
+    # ```
+    def self.parse_v6_fields?(str : String) : UInt16[8]?
+      parse_v6_fields?(str.to_slice)
+    end
+
+    private def self.parse_v6_fields?(bytes : Bytes)
+      # port of https://git.musl-libc.org/cgit/musl/tree/src/network/inet_pton.c?id=7e13e5ae69a243b90b90d2f4b79b2a150f806335
+      ptr = bytes.to_unsafe
+      finish = ptr + bytes.size
+
+      if ptr < finish && ptr.value === ':'
+        ptr += 1
+        return nil unless ptr < finish && ptr.value === ':'
+      end
+
+      fields = StaticArray(UInt16, 8).new(0)
+      brk = -1
+      need_v4 = false
+
+      i = 0
+      while true
+        if ptr < finish && ptr.value === ':' && brk < 0
+          brk = i
+          fields[i] = 0
+          ptr += 1
+          break if ptr == finish
+          return nil if i == 7
+          i &+= 1
+          next
+        end
+
+        field = 0_u16
+        old_ptr = ptr
+
+        4.times do
+          break unless ptr < finish
+          ch = from_hex(ptr.value)
+          break unless ch <= 0x0F
+          field = field.unsafe_shl(4) | ch
+          ptr += 1
+        end
+
+        return nil if ptr == old_ptr # no field
+
+        fields[i] = field
+        break if ptr == finish && (brk >= 0 || i == 7)
+        return nil if i == 7
+
+        unless ptr < finish && ptr.value === ':'
+          return nil if !(ptr < finish && ptr.value === '.') || (i < 6 && brk < 0)
+          need_v4 = true
+          i &+= 1
+          fields[i] = 0
+          ptr = old_ptr
+          break
+        end
+
+        ptr += 1
+        i &+= 1
+      end
+
+      if brk >= 0
+        fields_brk = fields.to_unsafe + brk
+        (fields_brk + 7 - i).move_from(fields_brk, i &+ 1 &- brk)
+        fields_brk.clear(7 &- i)
+      end
+
+      if need_v4
+        x0, x1, x2, x3 = parse_v4_fields?(Slice.new(ptr, finish - ptr)) || return nil
+        fields[6] = x0.to_u16! << 8 | x1
+        fields[7] = x2.to_u16! << 8 | x3
+      end
+
+      fields
+    end
+
+    private def self.from_hex(ch : UInt8)
+      if 0x30 <= ch <= 0x39
+        ch &- 0x30
+      elsif 0x41 <= ch <= 0x46
+        ch &- 0x37
+      elsif 0x61 <= ch <= 0x66
+        ch &- 0x57
+      else
+        0xFF_u8
+      end
     end
 
     # Returns the IPv4 address with the given address *fields* and *port*
@@ -258,24 +415,12 @@ class Socket
 
     # Returns `true` if *address* is a valid IPv6 address.
     def self.valid_v6?(address : String) : Bool
-      !address_v6?(address).nil?
-    end
-
-    # :nodoc:
-    protected def self.address_v6?(address : String)
-      addr = uninitialized LibC::In6Addr
-      addr if LibC.inet_pton(LibC::AF_INET6, address, pointerof(addr)) == 1
+      !parse_v6_fields?(address).nil?
     end
 
     # Returns `true` if *address* is a valid IPv4 address.
     def self.valid_v4?(address : String) : Bool
-      !address_v4?(address).nil?
-    end
-
-    # :nodoc:
-    protected def self.address_v4?(address : String)
-      addr = uninitialized LibC::InAddr
-      addr if LibC.inet_pton(LibC::AF_INET, address, pointerof(addr)) == 1
+      !parse_v4_fields?(address).nil?
     end
 
     # Returns a `String` representation of the IP address.
@@ -286,6 +431,8 @@ class Socket
     # ip_address.address # => "127.0.0.1"
     # ```
     getter(address : String) { address(@addr) }
+
+    protected setter address
 
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
@@ -547,8 +694,6 @@ class Socket
   # Returns `true` if the string represents a valid IPv4 or IPv6 address.
   @[Deprecated("Use `IPAddress.valid?` instead")]
   def self.ip?(string : String)
-    addr = LibC::In6Addr.new
-    ptr = pointerof(addr).as(Void*)
-    LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
+    IPAddress.valid?(string)
   end
 end

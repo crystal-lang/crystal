@@ -216,7 +216,11 @@ $(O)\crystal.rc: $(MAKEFILE_LIST)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	$(call check_llvm_config)
-	$(CXX) /nologo /c $(CXXFLAGS) "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
+	@rem Disable some harmless warnings:
+	@rem - warning C4244: 'initializing': conversion from '_Ty' to '_Ty2', possible loss of data
+	@rem - warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+	@rem - warning C4624: '...': destructor was implicitly defined as deleted
+	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
