@@ -392,14 +392,16 @@ describe Process do
     process.terminated?.should be_true
   end
 
-  pending_win32 ".pgid" do
-    process = Process.new(*standing_command)
-    Process.pgid(process.pid).should be_a(Int64)
-    process.terminate
-    Process.pgid.should eq(Process.pgid(Process.pid))
-  ensure
-    process.try(&.wait)
-  end
+  {% unless flag?(:win32) %}
+    it ".pgid" do
+      process = Process.new(*standing_command)
+      Process.pgid(process.pid).should be_a(Int64)
+      process.terminate
+      Process.pgid.should eq(Process.pgid(Process.pid))
+    ensure
+      process.try(&.wait)
+    end
+  {% end %}
 
   {% unless flag?(:preview_mt) || flag?(:win32) %}
     describe ".fork" do
