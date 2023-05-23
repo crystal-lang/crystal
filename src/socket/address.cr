@@ -97,8 +97,6 @@ class Socket
         raise Error.new("Invalid IP address: #{address}")
       end
 
-      # TODO: canonicalize (#13423)
-      addr.address = address
       addr
     end
 
@@ -423,34 +421,48 @@ class Socket
       !parse_v4_fields?(address).nil?
     end
 
-    # Returns a `String` representation of the IP address.
+    # Returns a `String` representation of the IP address, without the port
+    # number.
     #
-    # Example:
+    # IPv6 addresses are canonicalized according to
+    # [RFC 5952, section 4](https://datatracker.ietf.org/doc/html/rfc5952#section-4).
+    # IPv4-mapped IPv6 addresses use the mixed notation according to RFC 5952,
+    # section 5.
+    #
     # ```
-    # ip_address = socket.remote_address
-    # ip_address.address # => "127.0.0.1"
+    # require "socket"
+    #
+    # v4 = Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 8080)
+    # v4.address # => "127.0.0.1"
+    #
+    # v6 = Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 0, 1, 0, 0, 1), 443)
+    # v6.address # => "2001:db8::1:0:0:1"
+    #
+    # mapped = Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 1, 15), 55001)
+    # mapped.address # => "::ffff:192.168.1.15"
     # ```
-    getter(address : String) { address(@addr) }
-
-    protected setter address
-
-    private def address(addr : LibC::In6Addr)
-      String.new(46) do |buffer|
-        unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Socket::Error.from_errno("Failed to convert IP address")
+    #
+    # To obtain both the address and the port number in one string, see `#to_s`.
+    def address : String
+      case addr = @addr
+      in LibC::InAddr
+        String.build(IPV4_MAX_SIZE) do |io|
+          address_to_s(io, addr)
         end
-        {LibC.strlen(buffer), 0}
+      in LibC::In6Addr
+        String.build(IPV6_MAX_SIZE) do |io|
+          address_to_s(io, addr)
+        end
       end
     end
 
-    private def address(addr : LibC::InAddr)
-      String.new(16) do |buffer|
-        unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Socket::Error.from_errno("Failed to convert IP address")
-        end
-        {LibC.strlen(buffer), 0}
-      end
-    end
+    private IPV4_MAX_SIZE = 15 # "255.255.255.255".size
+
+    # NOTE: INET6_ADDRSTRLEN is 46 bytes (including the terminating null
+    # character), but it is only attainable for mixed-notation addresses that
+    # use all 24 hexadecimal digits in the IPv6 field part, which we do not
+    # support
+    private IPV6_MAX_SIZE = 39 # "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff".size
 
     # Returns `true` if this IP is a loopback address.
     #
@@ -523,13 +535,114 @@ class Socket
       {% end %}
     end
 
-    def_equals_and_hash family, port, address
+    def_equals_and_hash family, port, address_value
 
+    protected def address_value
+      case addr = @addr
+      in LibC::InAddr
+        addr.s_addr
+      in LibC::In6Addr
+        ipv6_addr8(addr).unsafe_as(UInt128)
+      end
+    end
+
+    # Writes the `String` representation of the IP address plus the port number
+    # to the given *io*.
+    #
+    # IPv6 addresses are canonicalized according to
+    # [RFC 5952, section 4](https://datatracker.ietf.org/doc/html/rfc5952#section-4),
+    # and surrounded within a pair of square brackets according to
+    # [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
+    # IPv4-mapped IPv6 addresses use the mixed notation according to RFC 5952,
+    # section 5.
+    #
+    # To obtain the address alone without the port number, see `#address`.
     def to_s(io : IO) : Nil
-      if family == Family::INET6
-        io << '[' << address << ']' << ':' << port
+      case addr = @addr
+      in LibC::InAddr
+        address_to_s(io, addr)
+        io << ':' << port
+      in LibC::In6Addr
+        io << '['
+        address_to_s(io, addr)
+        io << ']' << ':' << port
+      end
+    end
+
+    private def address_to_s(io : IO, addr : LibC::InAddr)
+      io << (addr.s_addr & 0xFF)
+      io << '.' << (addr.s_addr >> 8 & 0xFF)
+      io << '.' << (addr.s_addr >> 16 & 0xFF)
+      io << '.' << (addr.s_addr >> 24)
+    end
+
+    private def address_to_s(io : IO, addr : LibC::In6Addr)
+      bytes = ipv6_addr8(addr)
+      if Slice.new(bytes.to_unsafe, 10).all?(&.zero?) && bytes[10] == 0xFF && bytes[11] == 0xFF
+        io << "::ffff:" << bytes[12] << '.' << bytes[13] << '.' << bytes[14] << '.' << bytes[15]
       else
-        io << address << ':' << port
+        fields = bytes.unsafe_as(StaticArray(UInt16, 8)).map! { |field| IPAddress.endian_swap(field) }
+
+        zeros_start = nil
+        zeros_count_max = 1
+
+        count = 0
+        fields.each_with_index do |field, i|
+          if field == 0
+            count += 1
+            if count > zeros_count_max
+              zeros_start = i - count + 1
+              zeros_count_max = count
+            end
+          else
+            count = 0
+          end
+        end
+
+        i = 0
+        while i < 8
+          if i == zeros_start
+            io << ':'
+            i += zeros_count_max
+            io << ':' if i == 8
+          else
+            io << ':' if i > 0
+            fields[i].to_s(io, base: 16)
+            i += 1
+          end
+        end
+      end
+    end
+
+    private IPV4_FULL_MAX_SIZE = IPV4_MAX_SIZE + 6 # ":65535".size
+    private IPV6_FULL_MAX_SIZE = IPV6_MAX_SIZE + 8 # "[".size + "]:65535".size
+
+    # Returns a `String` representation of the IP address plus the port number.
+    #
+    # IPv6 addresses are canonicalized according to
+    # [RFC 5952, section 4](https://datatracker.ietf.org/doc/html/rfc5952#section-4),
+    # and surrounded within a pair of square brackets according to
+    # [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
+    # IPv4-mapped IPv6 addresses use the mixed notation according to RFC 5952,
+    # section 5.
+    #
+    # ```
+    # require "socket"
+    #
+    # v4 = Socket::IPAddress.v4(UInt8.static_array(127, 0, 0, 1), 8080)
+    # v4.to_s # => "127.0.0.1:8080"
+    #
+    # v6 = Socket::IPAddress.v6(UInt16.static_array(0x2001, 0xdb8, 0, 0, 1, 0, 0, 1), 443)
+    # v6.to_s # => "[2001:db8::1:0:0:1]:443"
+    #
+    # mapped = Socket::IPAddress.v4_mapped_v6(UInt8.static_array(192, 168, 1, 15), 55001)
+    # mapped.to_s # => "[::ffff:192.168.1.15]:55001"
+    # ```
+    #
+    # To obtain the address alone without the port number, see `#address`.
+    def to_s : String
+      String.build(@addr.is_a?(LibC::InAddr) ? IPV4_FULL_MAX_SIZE : IPV6_FULL_MAX_SIZE) do |io|
+        to_s(io)
       end
     end
 
@@ -537,6 +650,13 @@ class Socket
       io << "Socket::IPAddress("
       to_s(io)
       io << ")"
+    end
+
+    def inspect : String
+      # 19 == "Socket::IPAddress(".size + ")".size
+      String.build((@addr.is_a?(LibC::InAddr) ? IPV4_FULL_MAX_SIZE : IPV6_FULL_MAX_SIZE) + 19) do |io|
+        inspect(io)
+      end
     end
 
     def pretty_print(pp)
