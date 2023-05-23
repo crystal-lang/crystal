@@ -10,8 +10,13 @@ describe Socket, tags: "network" do
       sock.family.should eq(Socket::Family::UNIX)
       sock.type.should eq(Socket::Type::STREAM)
 
-      sock = Socket.unix(Socket::Type::DGRAM)
-      sock.type.should eq(Socket::Type::DGRAM)
+      # Datagram socket type is not supported on Windows yet:
+      # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+      # https://github.com/microsoft/WSL/issues/5272
+      {% unless flag?(:win32) %}
+        sock = Socket.unix(Socket::Type::DGRAM)
+        sock.type.should eq(Socket::Type::DGRAM)
+      {% end %}
 
       expect_raises Socket::Error, "Protocol not supported" do
         TCPSocket.new(family: :unix)
@@ -87,19 +92,22 @@ describe Socket, tags: "network" do
     server.try &.close
   end
 
-  pending_win32 "sends datagram over unix socket" do
-    with_tempfile("datagram_unix") do |path|
-      server = Socket.unix(Socket::Type::DGRAM)
-      server.bind Socket::UNIXAddress.new(path)
+  # Datagram socket type is not supported on Windows yet
+  {% unless flag?(:win32) %}
+    it "sends datagram over unix socket" do
+      with_tempfile("datagram_unix") do |path|
+        server = Socket.unix(Socket::Type::DGRAM)
+        server.bind Socket::UNIXAddress.new(path)
 
-      client = Socket.unix(Socket::Type::DGRAM)
-      client.connect Socket::UNIXAddress.new(path)
-      client.send "foo"
+        client = Socket.unix(Socket::Type::DGRAM)
+        client.connect Socket::UNIXAddress.new(path)
+        client.send "foo"
 
-      message, _ = server.receive
-      message.should eq "foo"
+        message, _ = server.receive
+        message.should eq "foo"
+      end
     end
-  end
+  {% end %}
 
   describe "#bind" do
     each_ip_family do |family, _, any_address|
