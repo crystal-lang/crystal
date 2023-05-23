@@ -58,47 +58,51 @@ describe UNIXSocket do
     end
   end
 
-  it "creates a pair of sockets" do
-    UNIXSocket.pair do |left, right|
-      left.local_address.family.should eq(Socket::Family::UNIX)
-      left.local_address.path.should eq("")
+  # `LibC.socketpair` is not supported in Winsock 2.0 yet:
+  # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+  {% unless flag?(:win32) %}
+    it "creates a pair of sockets" do
+      UNIXSocket.pair do |left, right|
+        left.local_address.family.should eq(Socket::Family::UNIX)
+        left.local_address.path.should eq("")
 
-      left << "ping"
-      right.gets(4).should eq("ping")
+        left << "ping"
+        right.gets(4).should eq("ping")
 
-      right << "pong"
-      left.gets(4).should eq("pong")
-    end
-  end
-
-  it "tests read and write timeouts" do
-    UNIXSocket.pair do |left, right|
-      # BUG: shrink the socket buffers first
-      left.write_timeout = 0.0001
-      right.read_timeout = 0.0001
-      buf = ("a" * IO::DEFAULT_BUFFER_SIZE).to_slice
-
-      expect_raises(IO::TimeoutError, "Write timed out") do
-        loop { left.write buf }
-      end
-
-      expect_raises(IO::TimeoutError, "Read timed out") do
-        loop { right.read buf }
+        right << "pong"
+        left.gets(4).should eq("pong")
       end
     end
-  end
 
-  it "tests socket options" do
-    UNIXSocket.pair do |left, right|
-      size = 12000
-      # linux returns size * 2
-      sizes = [size, size * 2]
+    it "tests read and write timeouts" do
+      UNIXSocket.pair do |left, right|
+        # BUG: shrink the socket buffers first
+        left.write_timeout = 0.0001
+        right.read_timeout = 0.0001
+        buf = ("a" * IO::DEFAULT_BUFFER_SIZE).to_slice
 
-      (left.send_buffer_size = size).should eq(size)
-      sizes.should contain(left.send_buffer_size)
+        expect_raises(IO::TimeoutError, "Write timed out") do
+          loop { left.write buf }
+        end
 
-      (left.recv_buffer_size = size).should eq(size)
-      sizes.should contain(left.recv_buffer_size)
+        expect_raises(IO::TimeoutError, "Read timed out") do
+          loop { right.read buf }
+        end
+      end
     end
-  end
+
+    it "tests socket options" do
+      UNIXSocket.pair do |left, right|
+        size = 12000
+        # linux returns size * 2
+        sizes = [size, size * 2]
+
+        (left.send_buffer_size = size).should eq(size)
+        sizes.should contain(left.send_buffer_size)
+
+        (left.recv_buffer_size = size).should eq(size)
+        sizes.should contain(left.recv_buffer_size)
+      end
+    end
+  {% end %}
 end
