@@ -85,9 +85,11 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(handle)
-    system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
-      if value == 0
-        system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+    unless @family.unix?
+      system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
+        if value == 0
+          system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+        end
       end
     end
   end
@@ -173,7 +175,7 @@ module Crystal::System::Socket
 
   private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
+      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
     end
   end
 

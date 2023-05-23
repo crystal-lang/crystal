@@ -4,7 +4,7 @@ require "../../support/win32"
 
 describe Socket, tags: "network" do
   describe ".unix" do
-    pending_win32 "creates a unix socket" do
+    it "creates a unix socket" do
       sock = Socket.unix
       sock.should be_a(Socket)
       sock.family.should eq(Socket::Family::UNIX)
@@ -18,9 +18,16 @@ describe Socket, tags: "network" do
         sock.type.should eq(Socket::Type::DGRAM)
       {% end %}
 
-      expect_raises Socket::Error, "Protocol not supported" do
+      error = expect_raises(Socket::Error) do
         TCPSocket.new(family: :unix)
       end
+      error.os_error.should eq({% if flag?(:win32) %}
+        WinError::WSAEPROTONOSUPPORT
+      {% elsif flag?(:wasi) %}
+        WasiError::PROTONOSUPPORT
+      {% else %}
+        Errno.new(LibC::EPROTONOSUPPORT)
+      {% end %})
     end
   end
 
