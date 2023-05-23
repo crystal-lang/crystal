@@ -98,6 +98,12 @@ module Crystal
       default_paths.join(Process::PATH_DELIMITER)
     end
 
+    def self.default_rpath : String
+      # do not call `CrystalPath.expand_paths`, as `$ORIGIN` inside this env
+      # variable is always expanded at run time
+      ENV.fetch("CRYSTAL_LIBRARY_RPATH", "")
+    end
+
     class_getter paths : Array(String) do
       default_paths
     end

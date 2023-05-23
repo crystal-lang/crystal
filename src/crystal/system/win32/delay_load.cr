@@ -196,8 +196,8 @@ module Crystal::System::DelayLoad
   def self.load_library(dll : LibC::Char*) : LibC::HMODULE
     utf16_dll = to_utf16!(dll)
 
-    {% if paths = env("CRYSTAL_LIBRARY_RPATH") %}
-      {% paths = paths.gsub(/\$\{ORIGIN\}/, "$ORIGIN").split(::Process::PATH_DELIMITER).reject(&.empty?) %}
+    {% begin %}
+      {% paths = Crystal::LIBRARY_RPATH.gsub(/\$\{ORIGIN\}/, "$ORIGIN").split(::Process::PATH_DELIMITER).reject(&.empty?) %}
       {% unless paths.empty? %}
         size = 0x40
         buf = LibC.HeapAlloc(LibC.GetProcessHeap, 0, size &* 2).as(LibC::WCHAR*)

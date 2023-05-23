@@ -4,6 +4,10 @@ lib LibCrystalMain
 end
 
 module Crystal
+  {% unless Crystal.has_constant?("LIBRARY_RPATH") %}
+    LIBRARY_RPATH = {{ env("CRYSTAL_LIBRARY_RPATH") || "" }}
+  {% end %}
+
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
