@@ -133,22 +133,22 @@ module Crystal::System::File
       LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
       pointerof(file_attributes)
     )
-    return check_not_found_error("Unable to get file info", path) if ret == 0
+    if ret != 0
+      if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
+        # Could be a symlink, retrieve its reparse tag with FindFirstFile
+        handle = LibC.FindFirstFileW(winpath, out find_data)
+        return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
 
-    if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
-      # Could be a symlink, retrieve its reparse tag with FindFirstFile
-      handle = LibC.FindFirstFileW(winpath, out find_data)
-      return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
+        if LibC.FindClose(handle) == 0
+          raise RuntimeError.from_winerror("FindClose")
+        end
 
-      if LibC.FindClose(handle) == 0
-        raise RuntimeError.from_winerror("FindClose")
-      end
-
-      case find_data.dwReserved0
-      when LibC::IO_REPARSE_TAG_SYMLINK
-        return ::File::Info.new(find_data) unless follow_symlinks
-      when LibC::IO_REPARSE_TAG_AF_UNIX
-        return ::File::Info.new(find_data)
+        case find_data.dwReserved0
+        when LibC::IO_REPARSE_TAG_SYMLINK
+          return ::File::Info.new(find_data) unless follow_symlinks
+        when LibC::IO_REPARSE_TAG_AF_UNIX
+          return ::File::Info.new(find_data)
+        end
       end
     end
 
