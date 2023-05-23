@@ -1,4 +1,3 @@
-{% skip_file if flag?(:win32) %}
 require "../spec_helper"
 require "socket"
 require "../../support/fibers"
@@ -21,6 +20,7 @@ describe UNIXServer do
       with_tempfile("unix_server.sock") do |path|
         UNIXServer.open(path) do
           File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
         end
 
         File.exists?(path).should be_false
