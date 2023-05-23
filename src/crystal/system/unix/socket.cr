@@ -205,7 +205,7 @@ module Crystal::System::Socket
 
   private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
     system_getsockopt(fd, optname, optval, level) { |value| return value }
-    raise Socket::Error.from_errno("getsockopt #{optname}")
+    raise ::Socket::Error.from_errno("getsockopt #{optname}")
   end
 
   private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
