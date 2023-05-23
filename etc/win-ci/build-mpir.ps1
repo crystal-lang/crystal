@@ -6,7 +6,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/BrianGladman/mpir.git -Commit dc82b0475dea84d5338356e49176c40be03a5bdf # master@{2023-02-10}
+Setup-Git -Path $BuildTree -Url https://github.com/BrianGladman/mpir.git -Ref dc82b0475dea84d5338356e49176c40be03a5bdf # master@{2023-02-10}
 
 Run-InDirectory $BuildTree {
     $vsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"

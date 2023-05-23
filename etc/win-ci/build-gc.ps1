@@ -7,8 +7,8 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/ivmai/bdwgc.git -Branch v$Version
-Setup-Git -Path $BuildTree\libatomic_ops -Url https://github.com/ivmai/libatomic_ops.git -Branch v7.8.0
+Setup-Git -Path $BuildTree -Url https://github.com/ivmai/bdwgc.git -Ref v$Version
+Setup-Git -Path $BuildTree\libatomic_ops -Url https://github.com/ivmai/libatomic_ops.git -Ref v7.8.0
 
 Run-InDirectory $BuildTree {
     $args = "-Dbuild_cord=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"

@@ -7,7 +7,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/madler/zlib.git -Branch v$Version
+Setup-Git -Path $BuildTree -Url https://github.com/madler/zlib.git -Ref v$Version
 
 Run-InDirectory $BuildTree {
     $args = "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"

@@ -7,7 +7,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/PCRE2Project/pcre2.git -Branch pcre2-$Version
+Setup-Git -Path $BuildTree -Url https://github.com/PCRE2Project/pcre2.git -Ref pcre2-$Version
 
 Run-InDirectory $BuildTree {
     $args = "-DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"

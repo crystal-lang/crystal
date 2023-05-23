@@ -39,16 +39,11 @@ function Setup-Git {
     param(
         [Parameter(Mandatory)] [string] $Path,
         [Parameter(Mandatory)] [string] $Url,
-        [string] $Branch = $null,
-        [string] $Commit = $null
+        [string] $Ref = $null
     )
 
     if (-not (Test-Path $Path)) {
         $args = "clone", "--config", "core.autocrlf=false", $Url, $Path
-        if ($Branch) {
-            $args += "-b"
-            $args += $Branch
-        }
         Write-Host "$git $args" -ForegroundColor Cyan
         & $git $args
         if (-not $?) {
@@ -57,10 +52,10 @@ function Setup-Git {
         }
     }
 
-    if ($Commit) {
+    if ($Ref) {
         Run-InDirectory $Path {
-            Write-Host "$git checkout $Commit" -ForegroundColor Cyan
-            & $git checkout $Commit
+            Write-Host "$git checkout $Ref" -ForegroundColor Cyan
+            & $git checkout $Ref
         }
     }
 }

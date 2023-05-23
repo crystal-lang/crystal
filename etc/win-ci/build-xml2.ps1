@@ -7,7 +7,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://gitlab.gnome.org/GNOME/libxml2.git -Branch v$Version
+Setup-Git -Path $BuildTree -Url https://gitlab.gnome.org/GNOME/libxml2.git -Ref v$Version
 
 Run-InDirectory $BuildTree {
     $args = "-DLIBXML2_WITH_TESTS=OFF -DLIBXML2_WITH_PROGRAMS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_ICONV=OFF -DLIBXML2_WITH_LZMA=OFF -DLIBXML2_WITH_PYTHON=OFF -DLIBXML2_WITH_ZLIB=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"

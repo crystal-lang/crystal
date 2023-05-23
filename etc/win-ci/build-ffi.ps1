@@ -7,7 +7,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/winlibs/libffi.git -Branch libffi-$Version
+Setup-Git -Path $BuildTree -Url https://github.com/winlibs/libffi.git -Ref libffi-$Version
 
 Run-InDirectory $BuildTree {
     if ($Dynamic) {

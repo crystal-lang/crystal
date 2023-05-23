@@ -6,7 +6,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/pffang/libiconv-for-Windows.git -Commit 1353455a6c4e15c9db6865fd9c2bf7203b59c0ec # master@{2022-10-11}
+Setup-Git -Path $BuildTree -Url https://github.com/pffang/libiconv-for-Windows.git -Ref 1353455a6c4e15c9db6865fd9c2bf7203b59c0ec # master@{2022-10-11}
 
 Run-InDirectory $BuildTree {
     Replace-Text libiconv\include\iconv.h '__declspec (dllimport) ' ''
