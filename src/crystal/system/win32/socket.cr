@@ -437,9 +437,7 @@ module Crystal::System::Socket
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    ret = LibC.fcntl fd, cmd, arg
-    raise Socket::Error.from_errno("fcntl() failed") if ret == -1
-    ret
+    raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
   private def system_tty?
