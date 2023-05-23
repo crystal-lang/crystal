@@ -113,8 +113,6 @@ Generate the output with symbolic debug symbols.
 These are read when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for those tools.
 .It Fl -no-debug
 Generate the output without any symbolic debug symbols.
-.It Fl -lto Ar FLAG
-Use ThinLTO --lto=thin.
 .It Fl D Ar FLAG, Fl -define Ar FLAG
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -emit Op asm|llvm-bc|llvm-ir|obj

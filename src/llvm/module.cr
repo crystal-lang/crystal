@@ -53,8 +53,9 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
+  @[Deprecated("ThinLTO is no longer supported; use `#write_bitcode_to_file` instead")]
   def write_bitcode_with_summary_to_file(filename : String)
-    LibLLVMExt.write_bitcode_with_summary_to_file self, filename
+    LibLLVM.write_bitcode_to_file self, filename
   end
 
   def write_bitcode_to_memory_buffer

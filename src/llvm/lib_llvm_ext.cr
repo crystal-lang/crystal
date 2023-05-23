@@ -32,8 +32,6 @@ lib LibLLVMExt
                                           bundle : LibLLVMExt::OperandBundleDefRef,
                                           name : LibC::Char*) : LibLLVM::ValueRef
 
-  fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
-
   fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
   fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
 end
