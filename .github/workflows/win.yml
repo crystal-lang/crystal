@@ -41,7 +41,7 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc-${{ env.VSCMD_VER }}
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2 -AtomicOpsVersion 7.8.0
       - name: Build libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45
