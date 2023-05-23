@@ -173,13 +173,13 @@ module Crystal::System::Socket
 
   private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
+      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
     end
   end
 
   private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_errno("Listen failed")
+      yield ::Socket::Error.from_wsa_error("Listen failed")
     end
   end
 
@@ -274,7 +274,7 @@ module Crystal::System::Socket
       ret = LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
       {ret, bytes_sent}
     end
-    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_written == -1
+    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
 
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_written.to_i32
@@ -302,13 +302,13 @@ module Crystal::System::Socket
 
   private def system_close_read
     if LibC.shutdown(fd, LibC::SH_RECEIVE) != 0
-      raise ::Socket::Error.from_errno("shutdown read")
+      raise ::Socket::Error.from_wsa_error("shutdown read")
     end
   end
 
   private def system_close_write
     if LibC.shutdown(fd, LibC::SH_SEND) != 0
-      raise ::Socket::Error.from_errno("shutdown write")
+      raise ::Socket::Error.from_wsa_error("shutdown write")
     end
   end
 
@@ -389,20 +389,19 @@ module Crystal::System::Socket
     val
   end
 
-  def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
-
-    if ret.zero?
-      yield optval
-    else
-      raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
-    end
-
+    yield optval if ret == 0
     ret
   end
 
-  def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(fd, optname, optval, level) { |value| return value }
+    raise Socket::Error.from_wsa_error("getsockopt #{optname}")
+  end
+
+  private def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
@@ -491,7 +490,7 @@ module Crystal::System::Socket
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        return ::Socket::Error.from_errno("Error closing socket")
+        return ::Socket::Error.from_wsa_error("Error closing socket")
       end
     end
   end
