@@ -722,11 +722,11 @@ class Socket
     MAX_PATH_SIZE = {% if flag?(:wasm32) %}
                       0
                     {% else %}
-                      LibC::SockaddrUn.new.sun_path.size - 1
+                      sizeof(typeof(LibC::SockaddrUn.new.sun_path)) - 1
                     {% end %}
 
     def initialize(@path : String)
-      if @path.bytesize + 1 > MAX_PATH_SIZE
+      if @path.bytesize > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
       @family = Family::UNIX
@@ -740,7 +740,7 @@ class Socket
     # Creates an `UNIXSocket` from the internal OS representation.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : UNIXAddress
       {% if flag?(:wasm32) %}
-        raise NotImplementedError.new "Socket::UnixAddress.from"
+        raise NotImplementedError.new "Socket::UNIXAddress.from"
       {% else %}
         new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
       {% end %}
@@ -773,10 +773,10 @@ class Socket
 
       raise Socket::Error.new("Invalid UNIX address: missing path") if unix_path.empty?
 
-      {% if flag?(:unix) %}
-        UNIXAddress.new(unix_path)
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::UNIXAddress.parse"
       {% else %}
-        raise NotImplementedError.new("UNIX address not available")
+        UNIXAddress.new(unix_path)
       {% end %}
     end
 
@@ -801,7 +801,7 @@ class Socket
 
     def to_unsafe : LibC::Sockaddr*
       {% if flag?(:wasm32) %}
-        raise NotImplementedError.new "Socket::UnixAddress#to_unsafe"
+        raise NotImplementedError.new "Socket::UNIXAddress#to_unsafe"
       {% else %}
         sockaddr = Pointer(LibC::SockaddrUn).malloc
         sockaddr.value.sun_family = family

@@ -20,7 +20,7 @@ describe Socket::Address do
       address.should eq Socket::IPAddress.new("192.168.0.1", 8081)
     end
 
-    pending_win32 "parses UNIX" do
+    it "parses UNIX" do
       address = Socket::Address.parse "unix://socket.sock"
       address.should eq Socket::UNIXAddress.new("socket.sock")
     end
