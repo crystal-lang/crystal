@@ -430,7 +430,7 @@ describe Process do
 
   describe ".chroot" do
     {% if flag?(:unix) && !flag?(:android) %}
-      it "raises when unprivileged" do
+      it "raises when unprivileged", tags: %w[slow] do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
           # Try to drop privileges. Ignoring any errors because dropping is only
           # necessary for a privileged user and it doesn't matter when it fails
