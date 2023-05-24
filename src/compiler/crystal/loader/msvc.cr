@@ -149,6 +149,7 @@ class Crystal::Loader
   end
 
   private def open_library(path : String)
+    # TODO: respect Crystal::LIBRARY_RPATH (#13490)
     LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 
