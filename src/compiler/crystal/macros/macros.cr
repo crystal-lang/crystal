@@ -93,7 +93,7 @@ class Crystal::Program
       return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
-    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
+    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path, combine_rpath: true
 
     # Write the new files from which 'filename' depends into the cache dir
     # (here we store how to obtain these files, because a require might use
