@@ -180,7 +180,20 @@ describe Process do
       $?.exit_code.should eq(0)
     end
 
-    it "sets working directory" do
+    it "sets working directory with string" do
+      parent = File.dirname(Dir.current)
+      command = {% if flag?(:win32) %}
+                  "cmd.exe /c echo %cd%"
+                {% else %}
+                  "pwd"
+                {% end %}
+      value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should eq "#{parent}#{newline}"
+    end
+
+    it "sets working directory with path" do
       parent = Path.new File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
                   "cmd.exe /c echo %cd%"
