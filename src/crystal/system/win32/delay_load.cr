@@ -59,6 +59,16 @@ module Crystal::System::DelayLoad
     len
   end
 
+  # assigns *src* to *dst*, and returns the end of the new string in *dst*
+  private def self.strcpy(dst : LibC::WCHAR*, src : LibC::WCHAR*) : LibC::WCHAR*
+    while src.value != 0
+      dst.value = src.value
+      dst += 1
+      src += 1
+    end
+    dst
+  end
+
   # assigns the concatenation of *args* to the buffer at *buf* with the given
   # *size*, possibly reallocating it, and returns the new buffer
   private def self.strcat(buf : LibC::WCHAR*, size : Int32, *args : *T) : {LibC::WCHAR*, Int32} forall T
@@ -74,12 +84,7 @@ module Crystal::System::DelayLoad
 
     ptr = buf
     {% for i in 0...T.size %}
-      src = args[{{ i }}]
-      while src.value != 0
-        ptr.value = src.value
-        ptr += 1
-        src += 1
-      end
+      ptr = strcpy(ptr, args[{{ i }}])
     {% end %}
     ptr.value = 0
 
@@ -173,12 +178,7 @@ module Crystal::System::DelayLoad
     while ptr.value != 0
       new_ptr = str_lchop(ptr, origin_prefix.to_unsafe)
       if new_ptr != ptr
-        src = origin
-        while src.value != 0
-          dst.value = src.value
-          dst += 1
-          src += 1
-        end
+        dst = strcpy(dst, origin)
         ptr = new_ptr
         next
       end
