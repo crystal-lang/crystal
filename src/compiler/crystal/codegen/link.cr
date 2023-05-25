@@ -110,18 +110,18 @@ module Crystal
     # example, on Linux:
     #
     # - CRYSTAL_LIBRARY_RPATH of the compiler: `$ORIGIN/so`
-    # - Current $CRYSTAL_LIBRARY_RPATH: `/home/foo:$ORIGIN/so`
+    # - Current $CRYSTAL_LIBRARY_RPATH: `/home/foo:$ORIGIN/mylibs`
     # - Compiler's full path: `/opt/crystal`
-    # - Generated executable's Crystal::LIBRARY_RPATH: `/home/foo:$ORIGIN/so:/opt/so`
+    # - Generated executable's Crystal::LIBRARY_RPATH: `/home/foo:$ORIGIN/mylibs:/opt/so`
     #
     # On Windows we additionally append the compiler's parent directory to the
     # list, as if by appending `$ORIGIN` to the compiler's RPATH. This directory
     # is effectively the first search entry on any Windows executable. Example:
     #
     # - CRYSTAL_LIBRARY_RPATH of the compiler: `$ORIGIN\dll`
-    # - Current %CRYSTAL_LIBRARY_RPATH%: `C:\bar;$ORIGIN\dll`
+    # - Current %CRYSTAL_LIBRARY_RPATH%: `C:\bar;$ORIGIN\mylibs`
     # - Compiler's full path: `C:\foo\crystal.exe`
-    # - Generated executable's Crystal::LIBRARY_RPATH: `C:\bar;$ORIGIN\dll;C:\foo\dll;C:\foo`
+    # - Generated executable's Crystal::LIBRARY_RPATH: `C:\bar;$ORIGIN\mylibs;C:\foo\dll;C:\foo`
     #
     # Combining RPATHs multiple times has no effect; the `CRYSTAL_LIBRARY_RPATH`
     # environment variable at compiler startup is used, not really the "current"
