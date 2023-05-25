@@ -212,7 +212,7 @@ struct Crystal::System::Process
        ) == 0
       error = WinError.value
       case error.to_errno
-      when Errno::EACCES, Errno::ENOENT
+      when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
         raise ::File::Error.from_os_error("Error executing process", error, file: command_args)
       else
         raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)

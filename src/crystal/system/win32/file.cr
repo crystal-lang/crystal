@@ -126,16 +126,14 @@ module Crystal::System::File
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     winpath = System.to_wstr(path)
 
-    unless follow_symlinks
-      # First try using GetFileAttributes to check if it's a reparse point
-      file_attributes = uninitialized LibC::WIN32_FILE_ATTRIBUTE_DATA
-      ret = LibC.GetFileAttributesExW(
-        winpath,
-        LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
-        pointerof(file_attributes)
-      )
-      return check_not_found_error("Unable to get file info", path) if ret == 0
-
+    # First try using GetFileAttributes to check if it's a reparse point
+    file_attributes = uninitialized LibC::WIN32_FILE_ATTRIBUTE_DATA
+    ret = LibC.GetFileAttributesExW(
+      winpath,
+      LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
+      pointerof(file_attributes)
+    )
+    if ret != 0
       if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
         # Could be a symlink, retrieve its reparse tag with FindFirstFile
         handle = LibC.FindFirstFileW(winpath, out find_data)
@@ -145,7 +143,10 @@ module Crystal::System::File
           raise RuntimeError.from_winerror("FindClose")
         end
 
-        if find_data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
+        case find_data.dwReserved0
+        when LibC::IO_REPARSE_TAG_SYMLINK
+          return ::File::Info.new(find_data) unless follow_symlinks
+        when LibC::IO_REPARSE_TAG_AF_UNIX
           return ::File::Info.new(find_data)
         end
       end
@@ -373,7 +374,8 @@ module Crystal::System::File
             end
             return {name, is_relative}
           else
-            raise ::File::Error.new("Not a symlink", file: path)
+            # not a symlink (e.g. IO_REPARSE_TAG_AF_UNIX)
+            return nil
           end
         end
 

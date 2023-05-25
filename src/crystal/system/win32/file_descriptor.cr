@@ -79,6 +79,10 @@ module Crystal::System::FileDescriptor
     false
   end
 
+  def self.fcntl(fd, cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor.fcntl"
+  end
+
   private def windows_handle
     FileDescriptor.windows_handle!(fd)
   end

@@ -68,9 +68,18 @@ describe Process do
       end
     end
 
-    pending_win32 "raises if command is not executable" do
+    it "raises if command is not executable" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new(path)
+        end
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
           Process.new(path)
         end

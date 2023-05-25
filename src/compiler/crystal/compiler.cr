@@ -39,7 +39,7 @@ module Crystal
     # If `true`, doesn't generate an executable but instead
     # creates a `.o` file and outputs a command line to link
     # it in the target machine.
-    property cross_compile = false
+    property? cross_compile = false
 
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
@@ -315,17 +315,16 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = output_filename + program.object_extension
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod if @release
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
-        target_machine.emit_obj_to_file llvm_mod, object_name
+        target_machine.emit_obj_to_file llvm_mod, output_filename
       end
 
-      _, command, args = linker_command(program, [object_name], output_filename, nil)
+      _, command, args = linker_command(program, [output_filename], output_filename, nil)
       print_command(command, args)
     end
 
@@ -717,7 +716,7 @@ module Crystal
           @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
-        @object_extension = program.object_extension
+        @object_extension = compiler.codegen_target.object_extension
       end
 
       def compile

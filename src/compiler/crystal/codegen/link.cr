@@ -157,14 +157,6 @@ module Crystal
   end
 
   class Program
-    def object_extension
-      case
-      when has_flag?("windows") then ".obj"
-      when has_flag?("wasm32")  then ".wasm"
-      else                           ".o"
-      end
-    end
-
     def lib_flags
       has_flag?("windows") ? lib_flags_windows : lib_flags_posix
     end
