@@ -127,7 +127,7 @@ class Crystal::Program
         # When cross-compiling, the host compiler shouldn't copy the config for
         # the target compiler and use the system defaults instead.
         # TODO: Add configuration overrides for host compiler to CLI.
-        unless compiler.cross_compile
+        unless compiler.cross_compile?
           host_compiler.flags = compiler.flags
           host_compiler.dump_ll = compiler.dump_ll?
           host_compiler.link_flags = compiler.link_flags
