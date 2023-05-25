@@ -549,6 +549,7 @@ class Crystal::Command
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
+    combine_rpath = run && !no_codegen
     @config = CompilerConfig.new compiler, sources, output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
   end
 
