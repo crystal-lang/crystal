@@ -381,6 +381,48 @@ end
 class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
 end
 
+class YAMLStrictDiscriminator
+  include YAML::Serializable
+  include YAML::Serializable::Strict
+
+  property type : String
+
+  use_yaml_discriminator "type", {foo: YAMLStrictDiscriminatorFoo, bar: YAMLStrictDiscriminatorBar}
+end
+
+class YAMLStrictDiscriminatorFoo < YAMLStrictDiscriminator
+end
+
+class YAMLStrictDiscriminatorBar < YAMLStrictDiscriminator
+  property x : YAMLStrictDiscriminator
+  property y : YAMLStrictDiscriminator
+end
+
+class YAMLSomething
+  include YAML::Serializable
+
+  property value : YAMLSomething?
+end
+
+module YAMLDiscriminatorBug
+  abstract class Base
+    include YAML::Serializable
+
+    use_yaml_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
+  end
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -746,9 +788,10 @@ describe "YAML::Serializable" do
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
 
-      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null,"f":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+      yaml.f.should be_nil
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
       yaml.b.should eq ""
@@ -972,6 +1015,24 @@ describe "YAML::Serializable" do
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = YAMLStrictDiscriminator.from_yaml(%({"type": "foo"}))
+      foo = foo.should be_a(YAMLStrictDiscriminatorFoo)
+
+      bar = YAMLStrictDiscriminator.from_yaml(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(YAMLStrictDiscriminatorBar)
+      bar.x.should be_a(YAMLStrictDiscriminatorFoo)
+      bar.y.should be_a(YAMLStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 2
+
+      c = YAMLDiscriminatorBug::Base.from_yaml %q({"type": "c", "source": {"type": "a"}})
+      c.as(YAMLDiscriminatorBug::C).value.should eq 1
+    end
   end
 
   describe "namespaced classes" do
@@ -980,5 +1041,9 @@ describe "YAML::Serializable" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    YAMLSomething.from_yaml(%({"value":{}})).value.should_not be_nil
   end
 end

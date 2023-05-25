@@ -180,11 +180,17 @@ lib LibM
   fun frexp_f64 = frexp(value : Float64, exp : Int32*) : Float64
   fun gamma_f32 = lgammaf(value : Float32) : Float32
   fun gamma_f64 = lgamma(value : Float64) : Float64
-  fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
+  {% if flag?(:win32) %}
+    fun hypot_f32 = _hypotf(value1 : Float32, value2 : Float32) : Float32
+  {% else %}
+    fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
+  {% end %}
   fun hypot_f64 = hypot(value1 : Float64, value2 : Float64) : Float64
   fun ilogb_f32 = ilogbf(value : Float32) : Int32
   fun ilogb_f64 = ilogb(value : Float64) : Int32
-  fun ldexp_f32 = ldexpf(value1 : Float32, value2 : Int32) : Float32
+  {% unless flag?(:win32) %}
+    fun ldexp_f32 = ldexpf(value1 : Float32, value2 : Int32) : Float32
+  {% end %}
   fun ldexp_f64 = ldexp(value1 : Float64, value2 : Int32) : Float64
   fun log1p_f32 = log1pf(value : Float32) : Float32
   fun log1p_f64 = log1p(value : Float64) : Float64

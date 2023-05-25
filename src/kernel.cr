@@ -42,6 +42,12 @@ STDOUT = IO::FileDescriptor.from_stdio(1)
 STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
+#
+# The result may be a relative or absolute path (including symbolic links),
+# just the command name or the empty string.
+#
+# See `Process.executable_path` for a more convenient alternative that always
+# returns the absolute real path to the executable file (if it exists).
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 
 # An array of arguments passed to the program.
@@ -528,7 +534,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) || flag?(:wasm32) %}
+{% if !flag?(:preview_mt) && flag?(:unix) %}
   class Process
     # :nodoc:
     #
@@ -536,8 +542,8 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # clean ups (don't depend on event loop):
-        ->Crystal::Signal.after_fork,
-        ->Crystal::SignalChildHandler.after_fork,
+        ->Crystal::System::Signal.after_fork,
+        ->Crystal::System::SignalChildHandler.after_fork,
 
         # reinit event loop:
         ->{ Crystal::Scheduler.event_loop.after_fork },
@@ -561,7 +567,7 @@ end
   {% if flag?(:win32) %}
     Crystal::System::Process.start_interrupt_loop
   {% else %}
-    Signal.setup_default_handlers
+    Crystal::System::Signal.setup_default_handlers
   {% end %}
 
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1

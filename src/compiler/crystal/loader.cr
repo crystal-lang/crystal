@@ -10,8 +10,6 @@ require "option_parser"
 # finding symbols inside them.
 #
 # See system-specific implementations in ./loader for details.
-#
-# A Windows implementation is not yet available.
 class Crystal::Loader
   class LoadError < Exception
     property args : Array(String)?

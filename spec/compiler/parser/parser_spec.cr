@@ -1,6 +1,6 @@
 require "../../support/syntax"
 
-private def regex(string, options = Regex::Options::None)
+private def regex(string, options = Regex::CompileOptions::None)
   RegexLiteral.new(StringLiteral.new(string), options)
 end
 
@@ -1197,10 +1197,10 @@ module Crystal
     it_parses "1.!(\n)", Not.new(1.int32)
 
     it_parses "/foo/", regex("foo")
-    it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
-    it_parses "/foo/m", regex("foo", Regex::Options::MULTILINE)
-    it_parses "/foo/x", regex("foo", Regex::Options::EXTENDED)
-    it_parses "/foo/imximx", regex("foo", Regex::Options::IGNORE_CASE | Regex::Options::MULTILINE | Regex::Options::EXTENDED)
+    it_parses "/foo/i", regex("foo", Regex::CompileOptions::IGNORE_CASE)
+    it_parses "/foo/m", regex("foo", Regex::CompileOptions::MULTILINE)
+    it_parses "/foo/x", regex("foo", Regex::CompileOptions::EXTENDED)
+    it_parses "/foo/imximx", regex("foo", Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::MULTILINE | Regex::CompileOptions::EXTENDED)
     it_parses "/fo\\so/", regex("fo\\so")
     it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
     it_parses "/(fo\#{\"bar\"}\#{1}o)/", RegexLiteral.new(StringInterpolation.new(["(fo".string, "bar".string, 1.int32, "o)".string] of ASTNode))
@@ -1282,6 +1282,7 @@ module Crystal
     it_parses "foo z: out x; x", [Call.new(nil, "foo", named_args: [NamedArgument.new("z", Out.new("x".var))]), "x".var]
 
     it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
+    it_parses "{1 =>\n2, 3 =>\n4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
     it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new("A", "B"), 1.int32), HashLiteral::Entry.new(Path.new("C", "D"), 2.int32)])
     assert_syntax_error %({"foo" => 1, "bar": 2}), "can't use 'key: value' syntax in a hash literal"
 
@@ -2129,6 +2130,8 @@ module Crystal
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
+    assert_syntax_error "lib Foo%end", %(unexpected token: "%")
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
@@ -2511,6 +2514,12 @@ module Crystal
         source_between(source, node.name_location, node.name_end_location).should eq("foo")
       end
 
+      it "sets correct location of call name in operator assignment" do
+        source = "@foo.bar += 1"
+        node = Parser.parse(source).as(OpAssign).target.as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq("bar")
+      end
+
       it "sets correct location of element in array literal" do
         source = "%i(foo bar)"
         elements = Parser.new(source).parse.as(ArrayLiteral).elements
@@ -2581,6 +2590,83 @@ module Crystal
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
+    end
+
+    it "sets correct location of parameter in proc literal" do
+      source = "->(foo : Bar, baz) { }"
+      args = Parser.parse(source).as(ProcLiteral).def.args
+      node_source(source, args[0]).should eq("foo : Bar")
+      node_source(source, args[1]).should eq("baz")
+    end
+
+    it "sets correct location of splat in multiple assignment" do
+      source = "*foo, bar = 1, 2"
+      node = Parser.parse(source).as(MultiAssign).targets[0]
+      node_source(source, node).should eq("*foo")
+
+      source = "foo, *bar = 1, 2"
+      node = Parser.parse(source).as(MultiAssign).targets[1]
+      node_source(source, node).should eq("*bar")
+    end
+
+    it "sets correct location of tuple type" do
+      source = "x : {Foo, Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type
+      node_source(source, node).should eq("{Foo, Bar}")
+    end
+
+    it "sets correct location of named tuple type" do
+      source = "x : {foo: Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type
+      node_source(source, node).should eq("{foo: Bar}")
+    end
+
+    it "sets correct location of argument in named tuple type" do
+      source = "x : {foo: Bar}"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil!.first
+      node_source(source, node).should eq("foo: Bar")
+    end
+
+    it "sets correct location of instance variable in proc pointer" do
+      source = "->@foo.x"
+      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node_source(source, node).should eq("@foo")
+    end
+
+    it "sets correct location of instance variable in proc pointer" do
+      source = "->@@foo.x"
+      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node_source(source, node).should eq("@@foo")
+    end
+
+    it "sets correct location of annotation on method parameter" do
+      source = "def x(@[Foo] y) end"
+      node = Parser.parse(source).as(Def).args.first.parsed_annotations.not_nil!.first
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of annotation in lib" do
+      source = "lib X; @[Foo]; end"
+      node = Parser.parse(source).as(LibDef).body
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of annotation in enum" do
+      source = "enum X; @[Foo]; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of private method in enum" do
+      source = "enum X; private def foo; end; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("private def foo; end")
+    end
+
+    it "sets correct location of protected macro in enum" do
+      source = "enum X; protected macro foo; end; end"
+      node = Parser.parse(source).as(EnumDef).members.first
+      node_source(source, node).should eq("protected macro foo; end")
     end
   end
 end

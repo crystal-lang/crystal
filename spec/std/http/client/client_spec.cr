@@ -200,7 +200,7 @@ module HTTP
       end
     end
 
-    pending_win32 "will retry a broken socket" do
+    it "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
@@ -357,7 +357,7 @@ module HTTP
       end
     end
 
-    pending_win32 "tests write_timeout" do
+    it "tests write_timeout" do
       # Here we don't want to write a response on the server side because
       # it doesn't make sense to try to write because the client will already
       # timeout on read. Writing a response could lead on an exception in
@@ -371,7 +371,7 @@ module HTTP
       end
     end
 
-    pending_win32 "tests connect_timeout" do
+    it "tests connect_timeout" do
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5

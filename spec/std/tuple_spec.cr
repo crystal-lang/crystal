@@ -225,7 +225,7 @@ describe "Tuple" do
       Tuple(Int32).from([1, 2])
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       Tuple(Int32, String).from(["foo", 1])
     end
   end
@@ -239,7 +239,7 @@ describe "Tuple" do
       {Int32}.from([1, 2])
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       {Int32, String}.from(["foo", 1])
     end
   end

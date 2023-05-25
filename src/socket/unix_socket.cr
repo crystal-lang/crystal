@@ -1,6 +1,9 @@
 # A local interprocess communication clientsocket.
 #
-# Only available on UNIX and UNIX-like operating systems.
+# Available on UNIX-like operating systems, and Windows 10 Build 17063 or above.
+# Not all features are supported on Windows.
+#
+# NOTE: To use `UNIXSocket`, you must explicitly import it with `require "socket"`
 #
 # Example usage:
 # ```
@@ -48,6 +51,8 @@ class UNIXSocket < Socket
 
   # Returns a pair of unnamed UNIX sockets.
   #
+  # [Not supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
+  #
   # ```
   # require "socket"
   #
@@ -63,7 +68,7 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    {% if flag?(:wasm32) %}
+    {% if flag?(:wasm32) || flag?(:win32) %}
       raise NotImplementedError.new "UNIXSocket.pair"
     {% else %}
       fds = uninitialized Int32[2]
@@ -85,6 +90,8 @@ class UNIXSocket < Socket
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.
+  #
+  # [Not supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
   def self.pair(type : Type = Type::STREAM, &)
     left, right = pair(type)
     begin

@@ -186,6 +186,10 @@ module Crystal::Macros
   def puts(*expressions) : Nop
   end
 
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def print(*expressions) : Nop
+  end
+
   # Same as `puts`.
   def p(*expressions) : Nop
   end
@@ -226,6 +230,10 @@ module Crystal::Macros
 
   # Gives a compile-time error with the given *message*.
   def raise(message) : NoReturn
+  end
+
+  # Emits a compile-time warning with the given *message*.
+  def warning(message : StringLiteral) : NilLiteral
   end
 
   # Returns `true` if the given *filename* exists, `false` otherwise.
@@ -413,9 +421,14 @@ module Crystal::Macros
     def !=(other : ASTNode) : BoolLiteral
     end
 
-    # Gives a compile-time error with the given *message*. This will
-    # highlight this node in the error message.
+    # Gives a compile-time error with the given *message*.
+    # This will highlight this node in the error message.
     def raise(message) : NoReturn
+    end
+
+    # Emits a compile-time warning with the given *message*.
+    # This will highlight this node in the warning message.
+    def warning(message : StringLiteral) : NilLiteral
     end
 
     # Returns `true` if this node's type is the given *type* or any of its
@@ -1516,7 +1529,7 @@ module Crystal::Macros
     end
 
     # Returns the `else` of this `case`.
-    def else : ArrayLiteral(When)
+    def else : ASTNode
     end
 
     # Returns whether this `case` is exhaustive (`case ... in`).
@@ -2097,52 +2110,13 @@ module Crystal::Macros
     # If the constant is a constant (like `A = 1`), then its value
     # as an `ASTNode` is returned. If the constant is a type, the
     # type is returned as a `TypeNode`. Otherwise, `NilLiteral` is returned.
-    #
-    # ```
-    # TOP_VALUE = 123
-    #
-    # module Foo
-    #   ID = 1
-    #
-    #   class Bar
-    #     struct Baz
-    #     end
-    #   end
-    # end
-    #
-    # {{ Foo.constant "ID" }}                 # => 10
-    # {{ Foo.constant(:Bar).class? }}         # => true
-    # {{ Foo.constant("Bar").class? }}        # => true
-    # {{ Foo.constant(Bar::Baz.id).struct? }} # => true
-    # {{ Foo.constant("::TOP_VALUE") }}       # => 123
-    # ```
-    def constant(name : StringLiteral | SymbolLiteral | MacroId) : ASTNode | NilLiteral
+    def constant(name : StringLiteral | SymbolLiteral | MacroId) : ASTNode
     end
 
-    # Returns `true` if this type has a constant/type with the provided *name*.
-    #
-    # ```
-    # module Foo
-    #   ID = 1
-    #
-    #   module Bar
-    #     module Baz
-    #     end
-    #   end
-    # end
-    #
-    # {{ Foo.has_constant? "ID" }}        # => true
-    # {{ Foo.has_constant? :Bar }}        # => true
-    # {{ Foo.has_constant? "Bar" }}       # => true
-    # {{ Foo.has_constant? Foo::Bar.id }} # => true
-    #
-    # {{ @top_level.has_constant? "Foo" }}      # => true
-    # {{ @type.has_constant? "Foo" }}           # => true
-    # {{ @type.has_constant? "Foo::Bar::Baz" }} # => true
-    # {{ @type.has_constant? "Bar" }}           # => false
-    # {{ @type.has_constant? "Foo::Bar::Biz" }} # => false
-    # ```
-    def has_constant?(name : StringLiteral | SymbolLiteral | MacroId) : BoolLiteral
+    # Returns `true` if this type has a constant. For example `DEFAULT_OPTIONS`
+    # (the name you pass to this method is `"DEFAULT_OPTIONS"` or `:DEFAULT_OPTIONS`
+    # in this cases).
+    def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
     # Returns the instance methods defined by this type, without including

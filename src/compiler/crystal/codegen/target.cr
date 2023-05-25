@@ -70,8 +70,25 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .android?
+      "android"
     else
       environment
+    end
+  end
+
+  def executable_extension
+    case
+    when windows? then ".exe"
+    else               ""
+    end
+  end
+
+  def object_extension
+    case
+    when windows?                  then ".obj"
+    when @architecture == "wasm32" then ".wasm"
+    else                                ".o"
     end
   end
 
@@ -101,6 +118,10 @@ class Crystal::Codegen::Target
 
   def netbsd?
     @environment.starts_with?("netbsd")
+  end
+
+  def android?
+    environment_parts.any? &.starts_with?("android")
   end
 
   def linux?

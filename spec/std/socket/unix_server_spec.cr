@@ -1,4 +1,3 @@
-{% skip_file if flag?(:win32) %}
 require "../spec_helper"
 require "socket"
 require "../../support/fibers"
@@ -21,6 +20,7 @@ describe UNIXServer do
       with_tempfile("unix_server.sock") do |path|
         UNIXServer.open(path) do
           File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
         end
 
         File.exists?(path).should be_false
@@ -149,17 +149,22 @@ describe UNIXServer do
     end
   end
 
-  describe "datagrams" do
-    it "can send and receive datagrams" do
-      with_tempfile("unix_dgram_server.sock") do |path|
-        UNIXServer.open(path, Socket::Type::DGRAM) do |s|
-          UNIXSocket.open(path, Socket::Type::DGRAM) do |c|
-            c.send("foobar")
-            msg, _addr = s.receive(512)
-            msg.should eq "foobar"
+  # Datagram socket type is not supported on Windows yet:
+  # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+  # https://github.com/microsoft/WSL/issues/5272
+  {% unless flag?(:win32) %}
+    describe "datagrams" do
+      it "can send and receive datagrams" do
+        with_tempfile("unix_dgram_server.sock") do |path|
+          UNIXServer.open(path, Socket::Type::DGRAM) do |s|
+            UNIXSocket.open(path, Socket::Type::DGRAM) do |c|
+              c.send("foobar")
+              msg, _addr = s.receive(512)
+              msg.should eq "foobar"
+            end
           end
         end
       end
     end
-  end
+  {% end %}
 end

@@ -2,6 +2,10 @@ name: Linux CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 env:
   TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
@@ -15,13 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2, 1.7.2]
+        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2]
+        flags: ["USE_PCRE1=true"]
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
-            flags: -Dwithout_ffi
+            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
           - crystal_bootstrap_version: 1.1.1
-            flags: -Dwithout_ffi
+            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.7.3
+            flags: ""
+          - crystal_bootstrap_version: 1.8.2
+            flags: ""
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -33,7 +42,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: FLAGS=${{ matrix.flags }} bin/ci build
+        run: ${{ matrix.flags }} bin/ci build
 
   x86_64-musl-test:
     env:
@@ -52,38 +61,6 @@ jobs:
 
       - name: Test
         run: bin/ci build
-
-  test_llvm:
-    env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - llvm_version: 13.0.0
-          llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
-          base_image: ubuntu-22.04
-        - llvm_version: 14.0.0
-          llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
-          base_image: ubuntu-22.04
-    runs-on: ${{ matrix.base_image }}
-    name: "Test LLVM ${{ matrix.llvm_version }} (${{ matrix.base_image }})"
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v3
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Install LLVM ${{ matrix.llvm_version }}
-        run: mkdir -p llvm && curl -L ${{ matrix.llvm_url }} > llvm.tar.xz && tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
-
-      - name: Test
-        run: bin/ci with_build_env "make clean deps compiler_spec crystal std_spec LLVM_CONFIG=\$(pwd)/llvm/bin/llvm-config threads=1 junit_output=.junit/spec.xml"
 
   x86_64-gnu-test-preview_mt:
     env:
@@ -105,34 +82,6 @@ jobs:
 
       - name: Test
         run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt"'
-
-  test_interpreter:
-    env:
-      ARCH: ${{ matrix.arch }}
-      ARCH_CMD: linux64
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch:
-          - x86_64
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v3
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Test interpreter
-        run: bin/ci with_build_env 'make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec'
-
-      - name: Build interpreter
-        run: bin/ci with_build_env 'make interpreter=1 release=1'
-
-      - name: Test std specs with interpreter
-        run: bin/ci with_build_env 'bin/crystal i spec/interpreter_std_spec.cr'
 
   check_format:
     env:
@@ -175,7 +124,7 @@ jobs:
         run: echo $GITHUB_SHA > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -2,6 +2,10 @@ name: AArch64 CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   aarch64-musl-build:
     runs-on: [linux, ARM64]
@@ -36,7 +40,7 @@ jobs:
       - name: Run stdlib specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make std_spec
+          args: make std_spec FLAGS=-Duse_pcre
   aarch64-musl-test-compiler:
     needs: aarch64-musl-build
     runs-on: [linux, ARM64]

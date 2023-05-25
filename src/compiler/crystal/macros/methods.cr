@@ -59,6 +59,8 @@ module Crystal
         interpret_parse_type(node)
       when "puts"
         interpret_puts(node)
+      when "print"
+        interpret_print(node)
       when "p", "pp"
         interpret_p(node)
       when "p!", "pp!"
@@ -69,6 +71,8 @@ module Crystal
         interpret_system(node)
       when "raise"
         interpret_raise(node)
+      when "warning"
+        interpret_warning(node)
       when "file_exists?"
         interpret_file_exists?(node)
       when "read_file"
@@ -158,31 +162,6 @@ module Crystal
       end
     end
 
-    def interpret_constant(arg, type, name)
-      case type = type.lookup_path parse_path(arg, name)
-      when Const
-        type.value
-      when Type
-        TypeNode.new(type)
-      else
-        NilLiteral.new
-      end
-    end
-
-    def interpret_has_constant?(arg, type, name)
-      BoolLiteral.new !!type.lookup_path parse_path(arg, name)
-    end
-
-    private def parse_path(arg, name) : Path
-      parser = @program.new_parser name
-      parser.next_token
-      path = parser.parse_path
-      parser.check :EOF
-      @last = path
-    rescue ex : Crystal::SyntaxException
-      arg.raise "Invalid constant name: #{name.inspect}"
-    end
-
     def interpret_parse_type(node)
       interpret_check_args_toplevel do |arg|
         arg.accept self
@@ -216,6 +195,18 @@ module Crystal
         last = last.value if last.is_a?(StringLiteral)
 
         @program.stdout.puts last
+      end
+
+      @last = Nop.new
+    end
+
+    def interpret_print(node)
+      node.args.each do |arg|
+        arg.accept self
+        last = @last
+        last = last.value if last.is_a?(StringLiteral)
+
+        @program.stdout.print last
       end
 
       @last = Nop.new
@@ -270,14 +261,18 @@ module Crystal
       if $?.success?
         @last = MacroId.new(result)
       elsif result.empty?
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}"
+        node.raise "error executing command: #{cmd}, got exit status #{$?}"
       else
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
+        node.raise "error executing command: #{cmd}, got exit status #{$?}:\n\n#{result}\n"
       end
     end
 
     def interpret_raise(node)
-      macro_raise(node, node.args, self)
+      macro_raise(node, node.args, self, Crystal::TopLevelMacroRaiseException)
+    end
+
+    def interpret_warning(node)
+      macro_warning(node, node.args, self)
     end
 
     def interpret_file_exists?(node)
@@ -406,7 +401,9 @@ module Crystal
       when "class_name"
         interpret_check_args { class_name }
       when "raise"
-        macro_raise self, args, interpreter
+        macro_raise self, args, interpreter, Crystal::MacroRaiseException
+      when "warning"
+        macro_warning self, args, interpreter
       when "filename"
         interpret_check_args do
           filename = location.try &.original_filename
@@ -1673,13 +1670,12 @@ module Crystal
       when "constant"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#constant'")
-          interpreter.interpret_constant arg, type, value
+          TypeNode.constant(type, value)
         end
       when "has_constant?"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#has_constant?'")
-
-          interpreter.interpret_has_constant? arg, type, value
+          TypeNode.has_constant?(type, value)
         end
       when "methods"
         interpret_check_args { TypeNode.methods(type) }
@@ -1936,6 +1932,22 @@ module Crystal
       else
         names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
         ArrayLiteral.new names
+      end
+    end
+
+    def self.has_constant?(type, name)
+      BoolLiteral.new(type.types.has_key?(name))
+    end
+
+    def self.constant(type, name)
+      type = type.types[name]?
+      case type
+      when Const
+        type.value
+      when Type
+        TypeNode.new(type)
+      else
+        NilLiteral.new
       end
     end
 
@@ -2678,14 +2690,26 @@ private def visibility_to_symbol(visibility)
   Crystal::SymbolLiteral.new(visibility_name)
 end
 
-private def macro_raise(node, args, interpreter)
+private def macro_raise(node, args, interpreter, exception_type)
   msg = args.map do |arg|
     arg.accept interpreter
     interpreter.last.to_macro_id
   end
   msg = msg.join " "
 
-  node.raise msg, exception_type: Crystal::MacroRaiseException
+  node.raise msg, exception_type: exception_type
+end
+
+private def macro_warning(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  interpreter.warnings.add_warning_at(node.location, msg)
+
+  Crystal::NilLiteral.new
 end
 
 private def empty_no_return_array

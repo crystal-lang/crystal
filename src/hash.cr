@@ -255,7 +255,7 @@ class Hash(K, V)
         @indices_bytesize = 1
       end
 
-      @indices_size_pow2 = Math.log2(initial_indices_size).to_u8
+      @indices_size_pow2 = initial_indices_size.bit_length.to_u8 - 1
     end
 
     @size = 0

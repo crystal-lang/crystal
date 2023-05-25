@@ -109,10 +109,6 @@ struct Range(B, E)
   # # prints: 10 11 12 13 14 15
   # ```
   def each(&) : Nil
-    {% if B == Nil %}
-      {% raise "Can't each beginless range" %}
-    {% end %}
-
     current = @begin
     if current.nil?
       raise ArgumentError.new("Can't each beginless range")
@@ -142,10 +138,6 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
-    {% if B == Nil %}
-      {% raise "Can't each beginless range" %}
-    {% end %}
-
     if @begin.nil?
       raise ArgumentError.new("Can't each beginless range")
     end
@@ -161,10 +153,6 @@ struct Range(B, E)
   # # prints: 14 13 12 11 10
   # ```
   def reverse_each(&) : Nil
-    {% if E == Nil %}
-      {% raise "Can't reverse_each endless range" %}
-    {% end %}
-
     end_value = @end
     if end_value.nil?
       raise ArgumentError.new("Can't reverse_each endless range")
@@ -196,10 +184,6 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
-    {% if E == Nil %}
-      {% raise "Can't reverse_each endless range" %}
-    {% end %}
-
     if @end.nil?
       raise ArgumentError.new("Can't reverse_each endless range")
     end
@@ -363,10 +347,6 @@ struct Range(B, E)
   #
   # Raises `ArgumentError` if `self` is an open range.
   def sample(random : Random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
     {% if B < Int && E < Int %}
       random.rand(self)
     {% elsif B < Float && E < Float %}
@@ -391,10 +371,6 @@ struct Range(B, E)
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
   def sample(n : Int, random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
     end
@@ -507,10 +483,6 @@ struct Range(B, E)
   # (3...8).size # => 5
   # ```
   def size
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't calculate size of an open range" %}
-    {% end %}
-
     b = self.begin
     e = self.end
 

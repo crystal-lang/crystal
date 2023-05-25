@@ -23,16 +23,36 @@ private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE_
 end
 
 describe BigRational do
-  it "initialize" do
-    BigRational.new(BigInt.new(10), BigInt.new(3))
-      .should eq(BigRational.new(10, 3))
+  describe ".new" do
+    it "initialize" do
+      BigRational.new(BigInt.new(10), BigInt.new(3))
+        .should eq(BigRational.new(10, 3))
 
-    expect_raises(DivisionByZeroError) do
-      BigRational.new(BigInt.new(2), BigInt.new(0))
+      expect_raises(DivisionByZeroError) do
+        BigRational.new(BigInt.new(2), BigInt.new(0))
+      end
+
+      expect_raises(DivisionByZeroError) do
+        BigRational.new(2, 0)
+      end
     end
 
-    expect_raises(DivisionByZeroError) do
-      BigRational.new(2, 0)
+    it "initializes from BigFloat with high precision" do
+      (0..12).each do |i|
+        bf = BigFloat.new(2.0, precision: 64) ** 64 + BigFloat.new(2.0, precision: 64) ** i
+        br = BigRational.new(bf)
+        br.should eq(bf)
+      end
+    end
+
+    it "raises if creating from infinity" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigRational.new(Float32::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigRational.new(Float64::INFINITY) }
+    end
+
+    it "raises if creating from NaN" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigRational.new(Float32::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigRational.new(Float64::NAN) }
     end
   end
 
@@ -117,30 +137,46 @@ describe BigRational do
     BigDecimal.new("1.123").to_big_r.should eq(br(1123, 1000))
   end
 
-  it "#<=>(:BigRational) and Comparable" do
-    a = br(11, 3)
-    l = br(10, 3)
-    e = a
-    g = br(12, 3)
+  describe "#<=>" do
+    it "BigRational and Comparable" do
+      a = br(11, 3)
+      l = br(10, 3)
+      e = a
+      g = br(12, 3)
 
-    # verify things aren't swapped
-    [l, e, g].each { |o| (a <=> o).should eq(a.to_f <=> o.to_f) }
+      # verify things aren't swapped
+      [l, e, g].each { |o| (a <=> o).should eq(a.to_f <=> o.to_f) }
 
-    test_comp(a, l, e, g)
-  end
+      test_comp(a, l, e, g)
+    end
 
-  it "#<=>(:Int) and Comparable" do
-    test_comp(br(10, 2), 4_i32, 5_i32, 6_i32)
-    test_comp(br(10, 2), 4_i64, 5_i64, 6_i64)
-  end
+    it "Int and Comparable" do
+      test_comp(br(10, 2), 4_i32, 5_i32, 6_i32)
+      test_comp(br(10, 2), 4_i64, 5_i64, 6_i64)
+    end
 
-  it "#<=>(:BigInt) and Comparable" do
-    test_comp(br(10, 2), BigInt.new(4), BigInt.new(5), BigInt.new(6))
-  end
+    it "BigInt and Comparable" do
+      test_comp(br(10, 2), BigInt.new(4), BigInt.new(5), BigInt.new(6))
+    end
 
-  it "#<=>(:Float) and Comparable" do
-    test_comp(br(10, 2), 4.0_f32, 5.0_f32, 6.0_f32)
-    test_comp(br(10, 2), 4.0_f64, 5.0_f64, 6.0_f64)
+    it "Float and Comparable" do
+      test_comp(br(10, 2), 4.0_f32, 5.0_f32, 6.0_f32)
+      test_comp(br(10, 2), 4.0_f64, 5.0_f64, 6.0_f64)
+    end
+
+    it "compares against NaNs" do
+      (1.to_big_r <=> Float64::NAN).should be_nil
+      (1.to_big_r <=> Float32::NAN).should be_nil
+      (Float64::NAN <=> 1.to_big_r).should be_nil
+      (Float32::NAN <=> 1.to_big_r).should be_nil
+
+      typeof(1.to_big_r <=> Float64::NAN).should eq(Int32?)
+      typeof(1.to_big_r <=> Float32::NAN).should eq(Int32?)
+      typeof(Float64::NAN <=> 1.to_big_r).should eq(Int32?)
+      typeof(Float32::NAN <=> 1.to_big_r).should eq(Int32?)
+
+      typeof(1.to_big_r <=> 1.to_big_f).should eq(Int32)
+    end
   end
 
   it "#+" do

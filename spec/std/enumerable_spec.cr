@@ -569,6 +569,19 @@ describe "Enumerable" do
     end
   end
 
+  describe "in slices of" do
+    it { [1, 2, 3].in_slices_of(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].in_slices_of(2).should eq([[1, 2], [3]]) }
+    it { [1, 2, 3, 4].in_slices_of(3).should eq([[1, 2, 3], [4]]) }
+    it { ([] of Int32).in_slices_of(2).should eq([] of Array(Int32)) }
+
+    it "raises argument error if size is less than 0" do
+      expect_raises ArgumentError, "Size must be positive" do
+        [1, 2, 3].in_slices_of(0)
+      end
+    end
+  end
+
   describe "includes?" do
     it "is true if the object exists in the collection" do
       [1, 2, 3].includes?(2).should be_true
@@ -803,6 +816,24 @@ describe "Enumerable" do
 
   describe "max" do
     it { [1, 2, 3].max.should eq(3) }
+    it { [1, 2, 3].max(0).should eq([] of Int32) }
+    it { [1, 2, 3].max(1).should eq([3]) }
+    it { [1, 2, 3].max(2).should eq([3, 2]) }
+    it { [1, 2, 3].max(3).should eq([3, 2, 1]) }
+    it { [1, 2, 3].max(4).should eq([3, 2, 1]) }
+    it { ([] of Int32).max(0).should eq([] of Int32) }
+    it { ([] of Int32).max(5).should eq([] of Int32) }
+    it {
+      (0..1000).map { |x| (x*137 + x*x*139) % 5000 }.max(10).should eq([
+        4992, 4990, 4980, 4972, 4962, 4962, 4960, 4960, 4952, 4952,
+      ])
+    }
+
+    it "does not modify the array" do
+      xs = [7, 5, 2, 4, 9]
+      xs.max(2).should eq([9, 7])
+      xs.should eq([7, 5, 2, 4, 9])
+    end
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -810,9 +841,21 @@ describe "Enumerable" do
       end
     end
 
+    it "raises if n is negative" do
+      expect_raises ArgumentError do
+        ([1, 2, 3] of Int32).max(-1)
+      end
+    end
+
     it "raises if not comparable" do
       expect_raises ArgumentError do
         [Float64::NAN, 1.0, 2.0, Float64::NAN].max
+      end
+    end
+
+    it "raises if not comparable in max(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max(2)
       end
     end
   end
@@ -851,6 +894,24 @@ describe "Enumerable" do
 
   describe "min" do
     it { [1, 2, 3].min.should eq(1) }
+    it { [1, 2, 3].min(0).should eq([] of Int32) }
+    it { [1, 2, 3].min(1).should eq([1]) }
+    it { [1, 2, 3].min(2).should eq([1, 2]) }
+    it { [1, 2, 3].min(3).should eq([1, 2, 3]) }
+    it { [1, 2, 3].min(4).should eq([1, 2, 3]) }
+    it { ([] of Int32).min(0).should eq([] of Int32) }
+    it { ([] of Int32).min(1).should eq([] of Int32) }
+    it {
+      (0..1000).map { |x| (x*137 + x*x*139) % 5000 }.min(10).should eq([
+        0, 10, 20, 26, 26, 26, 26, 30, 32, 32,
+      ])
+    }
+
+    it "does not modify the array" do
+      xs = [7, 5, 2, 4, 9]
+      xs.min(2).should eq([2, 4])
+      xs.should eq([7, 5, 2, 4, 9])
+    end
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -858,9 +919,21 @@ describe "Enumerable" do
       end
     end
 
+    it "raises if n is negative" do
+      expect_raises ArgumentError do
+        ([1, 2, 3] of Int32).min(-1)
+      end
+    end
+
     it "raises if not comparable" do
       expect_raises ArgumentError do
         [-1.0, Float64::NAN, -3.0].min
+      end
+    end
+
+    it "raises if not comparable in min(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].min(2)
       end
     end
   end
@@ -1163,6 +1236,10 @@ describe "Enumerable" do
     it "float" do
       [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
       ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
+    end
+
+    it "slices" do
+      [Slice[1, 2], Slice[3, 'a', 'b', 'c']].sum.should eq(Slice[1, 2, 3, 'a', 'b', 'c'])
     end
   end
 

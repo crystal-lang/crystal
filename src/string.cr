@@ -98,12 +98,12 @@ require "c/string"
 #
 # ### Non UTF-8 valid strings
 #
-# String might end up being conformed of bytes which are an invalid
+# A string might end up being composed of bytes which form an invalid
 # byte sequence according to UTF-8. This can happen if the string is created
 # via one of the constructors that accept bytes, or when getting a string
-# from `String.build` or `IO::Memory`. No exception will be raised, but
-# invalid byte sequences, when asked as chars, will use the unicode replacement
-# char (value 0xFFFD). For example:
+# from `String.build` or `IO::Memory`. No exception will be raised, but every
+# byte that doesn't start a valid UTF-8 byte sequence is interpreted as though
+# it encodes the Unicode replacement character (U+FFFD) by itself. For example:
 #
 # ```
 # # here 255 is not a valid byte value in the UTF-8 encoding
@@ -134,12 +134,18 @@ require "c/string"
 # and having a program raise an exception or stop because of this
 # is not good. It's better if programs are more resilient, but
 # show a replacement character when there's an error in incoming data.
+#
+# Note that this interpretation only applies to methods inside Crystal; calling
+# `#to_slice` or `#to_unsafe`, e.g. when passing a string to a C library, will
+# expose the invalid UTF-8 byte sequences. In particular, `Regex`'s underlying
+# engine may reject strings that are not valid UTF-8, or it may invoke undefined
+# behavior on invalid strings. If this is undesired, `#scrub` could be used to
+# remove the offending byte sequences first.
 class String
   # :nodoc:
-  TYPE_ID = "".crystal_type_id
-
-  # :nodoc:
-  HEADER_SIZE = sizeof({Int32, Int32, Int32})
+  #
+  # Holds the offset to the first character byte.
+  HEADER_SIZE = offsetof(String, @c)
 
   include Comparable(self)
 
@@ -259,9 +265,18 @@ class String
       str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
-    str_header = str.as({Int32, Int32, Int32}*)
-    str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
-    str.as(String)
+    set_crystal_type_id(str)
+    str = str.as(String)
+    str.initialize_header(bytesize.to_i, size.to_i)
+    str
+  end
+
+  # :nodoc:
+  #
+  # Initializes the header information of a `String` instance.
+  # The actual character content at `@c` is expected to be already filled and is
+  # unaffected by this method.
+  def initialize_header(@bytesize : Int32, @length : Int32 = 0)
   end
 
   # Builds a `String` by creating a `String::Builder` with the given initial capacity, yielding
@@ -1708,8 +1723,8 @@ class String
     if single_byte_optimizable?
       unsafe_byte_slice_string(1, bytesize - 1)
     else
-      reader = Char::Reader.new(self)
-      unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
+      first_char_bytesize = char_bytesize_at(0)
+      unsafe_byte_slice_string(first_char_bytesize, bytesize - first_char_bytesize)
     end
   end
 
@@ -2517,8 +2532,7 @@ class String
     byte_index = char_index_to_byte_index(index)
     raise IndexError.new unless byte_index
 
-    reader = Char::Reader.new(self, pos: byte_index)
-    width = reader.current_char_width
+    width = char_bytesize_at(byte_index)
     replacement_width = replacement.bytesize
     new_bytesize = bytesize - width + replacement_width
 
@@ -2800,7 +2814,8 @@ class String
         buffer << yield string
 
         if string.bytesize == 0
-          byte_offset = index + 1
+          # The pattern matched an empty result. We must advance one character to avoid stagnation.
+          byte_offset = index + char_bytesize_at(byte_offset)
           last_byte_offset = index
         else
           byte_offset = index + string.bytesize
@@ -2857,14 +2872,15 @@ class String
         yield str, match, buffer
 
         if str.bytesize == 0
-          byte_offset = index + 1
+          # The pattern matched an empty result. We must advance one character to avoid stagnation.
+          byte_offset = index + char_bytesize_at(byte_offset)
           last_byte_offset = index
         else
           byte_offset = index + str.bytesize
           last_byte_offset = byte_offset
         end
 
-        match = pattern.match_at_byte_index(self, byte_offset)
+        match = pattern.match_at_byte_index(self, byte_offset, Regex::MatchOptions::NO_UTF_CHECK)
       end
 
       if last_byte_offset < bytesize
@@ -4092,7 +4108,8 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    while match = separator.match_at_byte_index(self, match_offset)
+    options = Regex::MatchOptions::None
+    while match = separator.match_at_byte_index(self, match_offset, options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
       next_offset = index + match_bytesize
@@ -4116,6 +4133,7 @@ class String
 
       break if limit && count + 1 == limit
       break if match_offset >= bytesize
+      options |= :no_utf_check
     end
 
     yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
@@ -4575,13 +4593,15 @@ class String
   def scan(pattern : Regex, &) : self
     byte_offset = 0
 
-    while match = pattern.match_at_byte_index(self, byte_offset)
+    options = Regex::MatchOptions::None
+    while match = pattern.match_at_byte_index(self, byte_offset, options)
       index = match.byte_begin(0)
       $~ = match
       yield match
       match_bytesize = match.byte_end(0) - index
-      match_bytesize += 1 if match_bytesize == 0
+      match_bytesize += char_bytesize_at(byte_offset) if match_bytesize == 0
       byte_offset = index + match_bytesize
+      options |= :no_utf_check
     end
 
     self
@@ -5012,7 +5032,7 @@ class String
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
   def starts_with?(re : Regex) : Bool
-    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
+    !!($~ = re.match_at_byte_index(self, 0, Regex::MatchOptions::ANCHORED))
   end
 
   # Returns `true` if this string ends with the given *str*.
@@ -5254,11 +5274,17 @@ class String
   # Returns the underlying bytes of this String.
   #
   # The returned slice is read-only.
+  #
+  # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
+  # obtain a `String` that is guaranteed to be valid UTF-8.
   def to_slice : Bytes
     Slice.new(to_unsafe, bytesize, read_only: true)
   end
 
   # Returns a pointer to the underlying bytes of this String.
+  #
+  # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
+  # obtain a `String` that is guaranteed to be valid UTF-8.
   def to_unsafe : UInt8*
     pointerof(@c)
   end

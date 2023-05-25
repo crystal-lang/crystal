@@ -222,7 +222,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises when as fails" do
-      interpret(<<-CRYSTAL, prelude: "prelude").to_s.should contain("cast from Int32 to Char failed")
+      interpret(<<-CRYSTAL, prelude: "prelude").to_s.should contain("Cast from Int32 to Char failed")
         x = 1 || 'a'
         begin
           x.as(Char)

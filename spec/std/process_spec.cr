@@ -68,9 +68,18 @@ describe Process do
       end
     end
 
-    pending_win32 "raises if command is not executable" do
+    it "raises if command is not executable" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new(path)
+        end
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
           Process.new(path)
         end
@@ -137,12 +146,12 @@ describe Process do
       value.should eq("hello#{newline}")
     end
 
-    pending_win32 "sends input in IO" do
+    it "sends input in IO" do
       value = Process.run(*stdin_to_stdout_command, input: IO::Memory.new("hello")) do |proc|
         proc.input?.should be_nil
         proc.output.gets_to_end
       end
-      value.should eq("hello")
+      value.chomp.should eq("hello")
     end
 
     it "sends output to IO" do
@@ -305,6 +314,8 @@ describe Process do
       {% end %}
     end
 
+    # TODO: this spec gives "WaitForSingleObject: The handle is invalid."
+    # is this because standard streams on windows aren't async?
     pending_win32 "can link processes together" do
       buffer = IO::Memory.new
       Process.run(*stdin_to_stdout_command) do |cat|
@@ -313,7 +324,7 @@ describe Process do
           cat.close
         end
       end
-      buffer.to_s.lines.size.should eq(1000)
+      buffer.to_s.chomp.lines.size.should eq(1000)
     end
   end
 
@@ -325,26 +336,28 @@ describe Process do
     end
   end
 
-  describe "#signal" do
-    pending_win32 "kills a process" do
-      process = Process.new(*standing_command)
-      process.signal(Signal::KILL).should be_nil
-    ensure
-      process.try &.wait
-    end
+  {% unless flag?(:win32) %}
+    describe "#signal(Signal::KILL)" do
+      it "kills a process" do
+        process = Process.new(*standing_command)
+        process.signal(Signal::KILL).should be_nil
+      ensure
+        process.try &.wait
+      end
 
-    pending_win32 "kills many process" do
-      process1 = Process.new(*standing_command)
-      process2 = Process.new(*standing_command)
-      process1.signal(Signal::KILL).should be_nil
-      process2.signal(Signal::KILL).should be_nil
-    ensure
-      process1.try &.wait
-      process2.try &.wait
+      it "kills many process" do
+        process1 = Process.new(*standing_command)
+        process2 = Process.new(*standing_command)
+        process1.signal(Signal::KILL).should be_nil
+        process2.signal(Signal::KILL).should be_nil
+      ensure
+        process1.try &.wait
+        process2.try &.wait
+      end
     end
-  end
+  {% end %}
 
-  pending_win32 "#terminate" do
+  it "#terminate" do
     process = Process.new(*standing_command)
     process.exists?.should be_true
     process.terminated?.should be_false
@@ -354,21 +367,33 @@ describe Process do
     process.try(&.wait)
   end
 
-  pending_win32 ".exists?" do
-    # We can't reliably check whether it ever returns false, since we can't predict
-    # how PIDs are used by the system, a new process might be spawned in between
-    # reaping the one we would spawn and checking for it, using the now available
-    # pid.
-    Process.exists?(Process.ppid).should be_true
+  typeof(Process.new(*standing_command).terminate(graceful: false))
+
+  it ".exists?" do
+    # On Windows killing a parent process does not reparent its children to
+    # another existing process, so the following isn't guaranteed to work
+    {% unless flag?(:win32) %}
+      # We can't reliably check whether it ever returns false, since we can't predict
+      # how PIDs are used by the system, a new process might be spawned in between
+      # reaping the one we would spawn and checking for it, using the now available
+      # pid.
+      Process.exists?(Process.ppid).should be_true
+    {% end %}
 
     process = Process.new(*standing_command)
     process.exists?.should be_true
     process.terminated?.should be_false
 
     # Kill, zombie now
-    process.signal(Signal::KILL)
-    process.exists?.should be_true
-    process.terminated?.should be_false
+    process.terminate
+    {% if flag?(:win32) %}
+      # Windows has no concept of zombie processes
+      process.exists?.should be_false
+      process.terminated?.should be_true
+    {% else %}
+      process.exists?.should be_true
+      process.terminated?.should be_false
+    {% end %}
 
     # Reap, gone now
     process.wait
@@ -376,14 +401,16 @@ describe Process do
     process.terminated?.should be_true
   end
 
-  pending_win32 ".pgid" do
-    process = Process.new(*standing_command)
-    Process.pgid(process.pid).should be_a(Int64)
-    process.signal(Signal::KILL)
-    Process.pgid.should eq(Process.pgid(Process.pid))
-  ensure
-    process.try(&.wait)
-  end
+  {% unless flag?(:win32) %}
+    it ".pgid" do
+      process = Process.new(*standing_command)
+      Process.pgid(process.pid).should be_a(Int64)
+      process.terminate
+      Process.pgid.should eq(Process.pgid(Process.pid))
+    ensure
+      process.try(&.wait)
+    end
+  {% end %}
 
   {% unless flag?(:preview_mt) || flag?(:win32) %}
     describe ".fork" do
@@ -400,20 +427,26 @@ describe Process do
         end
       end
     end
-
-    describe ".exec" do
-      it "gets error from exec" do
-        expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
-          Process.exec("foobarbaz")
-        end
-      end
-    end
   {% end %}
 
+  describe ".exec" do
+    it "gets error from exec" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.exec("foobarbaz")
+      end
+    end
+  end
+
   describe ".chroot" do
-    {% if flag?(:unix) %}
+    {% if flag?(:unix) && !flag?(:android) %}
       it "raises when unprivileged" do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
+          # Try to drop privileges. Ignoring any errors because dropping is only
+          # necessary for a privileged user and it doesn't matter when it fails
+          # for an unprivileged one.
+          # This particular UID is often attributed to the `nobody` user.
+          LibC.setuid(65534)
+
           begin
             Process.chroot(".")
             puts "FAIL"

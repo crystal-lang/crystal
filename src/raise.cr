@@ -94,6 +94,9 @@ end
 {% elsif flag?(:win32) %}
   require "exception/lib_unwind"
 
+  {% begin %}
+    @[Link({{ flag?(:preview_dll) ? "vcruntime" : "libvcruntime" }})]
+  {% end %}
   lib LibC
     fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
   end
@@ -105,7 +108,7 @@ end
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-    LibC.printf("EXITING: __crystal_raise called")
+    Crystal::System.print_error "EXITING: __crystal_raise called"
     LibC.exit(1)
   end
 {% elsif flag?(:arm) %}
@@ -160,20 +163,20 @@ end
 {% elsif flag?(:wasm32) %}
   # :nodoc:
   fun __crystal_personality
-    LibC.printf("EXITING: __crystal_personality called")
+    Crystal::System.print_error "EXITING: __crystal_personality called"
     LibC.exit(1)
   end
 
   # :nodoc:
   @[Raises]
   fun __crystal_raise(ex : Void*) : NoReturn
-    LibC.printf("EXITING: __crystal_raise called")
+    Crystal::System.print_error "EXITING: __crystal_raise called"
     LibC.exit(1)
   end
 
   # :nodoc:
   fun __crystal_get_exception(ex : Void*) : UInt64
-    LibC.printf("EXITING: __crystal_get_exception called")
+    Crystal::System.print_error "EXITING: __crystal_get_exception called"
     LibC.exit(1)
     0u64
   end
@@ -215,7 +218,7 @@ end
 
 {% if flag?(:wasm32) %}
   def raise(exception : Exception) : NoReturn
-    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    Crystal::System.print_error "EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}"
     LibIntrinsics.debugtrap
     LibC.exit(1)
   end
@@ -272,6 +275,6 @@ end
 
 {% if flag?(:interpreted) %}
   def __crystal_raise_cast_failed(obj, type_name : String, location : String)
-    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+    raise TypeCastError.new("Cast from #{obj.class} to #{type_name} failed, at #{location}")
   end
 {% end %}

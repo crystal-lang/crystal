@@ -518,9 +518,9 @@ module Crystal
 
   class RegexLiteral < ASTNode
     property value : ASTNode
-    property options : Regex::Options
+    property options : Regex::CompileOptions
 
-    def initialize(@value, @options = Regex::Options::None)
+    def initialize(@value, @options = Regex::CompileOptions::None)
     end
 
     def accept_children(visitor)
@@ -719,6 +719,10 @@ module Crystal
 
     def clone_without_location
       NamedArgument.new(name, value.clone)
+    end
+
+    def end_location
+      @end_location || value.end_location
     end
 
     def_equals_and_hash name, value
@@ -1155,6 +1159,10 @@ module Crystal
       @exp.accept visitor
     end
 
+    def end_location
+      @end_location || @exp.end_location
+    end
+
     def_equals_and_hash exp
   end
 
@@ -1222,6 +1230,10 @@ module Crystal
 
     def clone_without_location
       VisibilityModifier.new(@modifier, @exp.clone)
+    end
+
+    def end_location
+      @end_location || @exp.end_location
     end
 
     def_equals_and_hash modifier, exp

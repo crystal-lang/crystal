@@ -170,6 +170,48 @@ struct Slice(T)
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
 
+  # Returns a new slice that has `self`'s elements followed by *other*'s
+  # elements.
+  #
+  # ```
+  # Slice[1, 2] + Slice[3, 4, 5]          # => Slice[1, 2, 3, 4, 5]
+  # Slice[1, 2, 3] + Slice['a', 'b', 'c'] # => Slice[1, 2, 3, 'a', 'b', 'c']
+  # ```
+  #
+  # See also: `Slice.join` to join multiple slices at once without creating
+  # intermediate results.
+  def +(other : Slice) : Slice
+    Slice.join({self, other})
+  end
+
+  # Returns a new slice that has the elements from *slices* joined together.
+  #
+  # ```
+  # Slice.join([Slice[1, 2], Slice[3, 4, 5]])        # => Slice[1, 2, 3, 4, 5]
+  # Slice.join({Slice[1], Slice['a'], Slice["xyz"]}) # => Slice[1, 'a', "xyz"]
+  # ```
+  #
+  # See also: `#+(other : Slice)`.
+  def self.join(slices : Indexable(Slice)) : Slice
+    total_size = slices.sum(&.size)
+    buf = Pointer(typeof(Enumerable.element_type Enumerable.element_type slices)).malloc(total_size)
+
+    ptr = buf
+    slices.each do |slice|
+      slice.to_unsafe.copy_to(ptr, slice.size)
+      ptr += slice.size
+    end
+
+    Slice.new(buf, total_size)
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # This is an empty slice.
+  def self.additive_identity : self
+    self.new(0)
+  end
+
   # :inherit:
   #
   # Raises if this slice is read-only.
@@ -890,7 +932,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.sort! &block
@@ -912,7 +954,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1013,7 +1055,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -1056,7 +1098,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)

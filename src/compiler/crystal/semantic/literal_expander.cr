@@ -1,7 +1,7 @@
 module Crystal
   class LiteralExpander
     def initialize(@program : Program)
-      @regexes = [] of {String, Regex::Options}
+      @regexes = [] of {String, Regex::CompileOptions}
     end
 
     # Converts an array literal to creating an Array and storing the values:
@@ -341,6 +341,14 @@ module Crystal
       else
         regex_new_call(node, node_value)
       end
+    end
+
+    private def regex_new_call(node, value)
+      Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
+    end
+
+    private def regex_options(node)
+      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value.to_s).at(node)).at(node)
     end
 
     # Convert and to if:
@@ -1017,14 +1025,6 @@ module Crystal
       else
         proc_literal
       end
-    end
-
-    private def regex_new_call(node, value)
-      Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
-    end
-
-    private def regex_options(node)
-      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value).at(node)).at(node)
     end
 
     def expand(node)

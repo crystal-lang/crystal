@@ -1,6 +1,7 @@
 require "c/processthreadsapi"
 require "c/handleapi"
 require "c/synchapi"
+require "c/tlhelp32"
 require "process/shell"
 require "crystal/atomic_semaphore"
 
@@ -41,7 +42,7 @@ struct Crystal::System::Process
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
     if exit_code == LibC::STILL_ACTIVE
-      raise "BUG: process still active"
+      raise "BUG: Process still active"
     end
     exit_code
   end
@@ -50,8 +51,8 @@ struct Crystal::System::Process
     Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    raise NotImplementedError.new("Process.kill")
+  def terminate(*, graceful)
+    LibC.TerminateProcess(@process_handle, 1)
   end
 
   def self.exit(status)
@@ -71,7 +72,28 @@ struct Crystal::System::Process
   end
 
   def self.ppid
-    raise NotImplementedError.new("Process.ppid")
+    pid = self.pid
+    each_process_entry do |pe|
+      return pe.th32ParentProcessID if pe.th32ProcessID == pid
+    end
+    raise RuntimeError.new("Cannot locate current process")
+  end
+
+  private def self.each_process_entry(&)
+    h = LibC.CreateToolhelp32Snapshot(LibC::TH32CS_SNAPPROCESS, 0)
+    raise RuntimeError.from_winerror("CreateToolhelp32Snapshot") if h == LibC::INVALID_HANDLE_VALUE
+
+    begin
+      pe = LibC::PROCESSENTRY32W.new(dwSize: sizeof(LibC::PROCESSENTRY32W))
+      if LibC.Process32FirstW(h, pointerof(pe)) != 0
+        while true
+          yield pe
+          break if LibC.Process32NextW(h, pointerof(pe)) == 0
+        end
+      end
+    ensure
+      LibC.CloseHandle(h)
+    end
   end
 
   def self.signal(pid, signal)
@@ -129,7 +151,7 @@ struct Crystal::System::Process
 
   def self.exists?(pid)
     handle = LibC.OpenProcess(LibC::PROCESS_QUERY_INFORMATION, 0, pid)
-    return false if handle.nil?
+    return false unless handle
     begin
       if LibC.GetExitCodeProcess(handle, out exit_code) == 0
         raise RuntimeError.from_winerror("GetExitCodeProcess")
@@ -160,9 +182,7 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    ret = LibC._get_osfhandle(io.fd)
-    raise RuntimeError.from_winerror("_get_osfhandle") if ret == -1
-    source_handle = LibC::HANDLE.new(ret)
+    source_handle = FileDescriptor.windows_handle!(io.fd)
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
@@ -183,6 +203,8 @@ struct Crystal::System::Process
 
     process_info = LibC::PROCESS_INFORMATION.new
 
+    command_args = ::Process.quote_windows(command_args) unless command_args.is_a?(String)
+
     if LibC.CreateProcessW(
          nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
@@ -190,7 +212,7 @@ struct Crystal::System::Process
        ) == 0
       error = WinError.value
       case error.to_errno
-      when Errno::EACCES, Errno::ENOENT
+      when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
         raise ::File::Error.from_os_error("Error executing process", error, file: command_args)
       else
         raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)
@@ -206,7 +228,7 @@ struct Crystal::System::Process
     process_info
   end
 
-  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : String
+  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool)
     if shell
       if args
         raise NotImplementedError.new("Process with args and shell: true is not supported on Windows")
@@ -215,12 +237,67 @@ struct Crystal::System::Process
     else
       command_args = [command]
       command_args.concat(args) if args
-      ::Process.quote_windows(command_args)
+      command_args
     end
   end
 
+  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+    reopen_io(input, ORIGINAL_STDIN)
+    reopen_io(output, ORIGINAL_STDOUT)
+    reopen_io(error, ORIGINAL_STDERR)
+
+    ENV.clear if clear_env
+    env.try &.each do |key, val|
+      if val
+        ENV[key] = val
+      else
+        ENV.delete key
+      end
+    end
+
+    ::Dir.cd(chdir) if chdir
+
+    if command_args.is_a?(String)
+      command = System.to_wstr(command_args)
+      argv = [command]
+    else
+      command = System.to_wstr(command_args[0])
+      argv = command_args.map { |arg| System.to_wstr(arg) }
+    end
+    argv << Pointer(LibC::WCHAR).null
+
+    LibC._wexecvp(command, argv)
+  end
+
   def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    raise NotImplementedError.new("Process.exec")
+    try_replace(command_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0])
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    case errno
+    when Errno::EACCES, Errno::ENOENT
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
+    else
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
+    end
+  end
+
+  private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
+    src_io = to_real_fd(src_io)
+
+    dst_io.reopen(src_io)
+    dst_io.blocking = true
+    dst_io.close_on_exec = false
+  end
+
+  private def self.to_real_fd(fd : IO::FileDescriptor)
+    case fd
+    when STDIN  then ORIGINAL_STDIN
+    when STDOUT then ORIGINAL_STDOUT
+    when STDERR then ORIGINAL_STDERR
+    else             fd
+    end
   end
 
   def self.chroot(path)

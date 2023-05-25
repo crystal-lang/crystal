@@ -3,6 +3,7 @@ require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
+  require "./loader"
   require "crystal/system/win32/visual_studio"
   require "crystal/system/win32/windows_sdk"
 {% end %}
@@ -20,8 +21,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    CC = ENV["CC"]? || "cc"
-    CL = "cl.exe"
+    private DEFAULT_LINKER = ENV["CC"]? || "cc"
+    private MSVC_LINKER    = ENV["CC"]? || "cl.exe"
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -38,7 +39,7 @@ module Crystal
     # If `true`, doesn't generate an executable but instead
     # creates a `.o` file and outputs a command line to link
     # it in the target machine.
-    property cross_compile = false
+    property? cross_compile = false
 
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
@@ -305,17 +306,16 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = output_filename + program.object_extension
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod if @release
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
-        target_machine.emit_obj_to_file llvm_mod, object_name
+        target_machine.emit_obj_to_file llvm_mod, output_filename
       end
 
-      _, command, args = linker_command(program, [object_name], output_filename, nil)
+      _, command, args = linker_command(program, [output_filename], output_filename, nil)
       print_command(command, args)
     end
 
@@ -332,7 +332,7 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        cl = CL
+        linker = MSVC_LINKER
         link_args = [] of String
 
         # if the compiler and the target both have the `msvc` flag, we are not
@@ -341,8 +341,8 @@ module Crystal
         {% if flag?(:msvc) %}
           if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
             if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-              host_bits = {{ flag?(:bits64) ? "x64" : "x86" }}
-              target_bits = program.has_flag?("bits64") ? "x64" : "x86"
+              host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
+              target_bits = program.has_flag?("aarch64") ? "arm64" : program.has_flag?("bits64") ? "x64" : "x86"
 
               # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
               # that is normally expected on the MSVC developer command prompt
@@ -352,7 +352,9 @@ module Crystal
               link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
 
               # use exact path for compiler instead of relying on `PATH`
-              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s)
+              # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
+              target_bits = target_bits.sub("arm", "ARM")
+              linker = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
             end
           end
         {% end %}
@@ -362,8 +364,36 @@ module Crystal
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
+        {% if flag?(:msvc) %}
+          unless @cross_compile
+            extra_suffix = program.has_flag?("preview_dll") ? "-dynamic" : "-static"
+            search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
+            if not_found = search_result.not_found?
+              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+            end
+
+            link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
+
+            if !program.has_flag?("no_win32_delay_load")
+              # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
+              # it is harmless to skip this error because not all import libraries are always used, much
+              # less the individual DLLs they refer to
+              link_args << "/IGNORE:4199"
+
+              dlls = Set(String).new
+              search_result.library_paths.each do |library_path|
+                Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
+                  dlls << dll.downcase
+                end
+              end
+              dlls.delete "kernel32.dll"
+              dlls.each { |dll| link_args << "/DELAYLOAD:#{dll}" }
+            end
+          end
+        {% end %}
+
         args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
-        cmd = "#{cl} #{args}"
+        cmd = "#{linker} #{args}"
 
         if cmd.to_utf16.size > 32000
           # The command line would be too big, pass the args through a UTF-16-encoded file instead.
@@ -374,10 +404,10 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
+          cmd = "#{linker} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        {cl, cmd, nil}
+        {linker, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
@@ -385,7 +415,7 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        {CC, %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
 
@@ -621,9 +651,8 @@ module Crystal
             linker_not_found File::NotFoundError, linker_name
           end
         end
-        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
         code = status.normal_exit? ? status.exit_code : 1
-        error "execution of command failed with #{msg}: `#{command}`", exit_code: code
+        error "execution of command failed with exit status #{status}: #{command}", exit_code: code
       end
     end
 
@@ -678,7 +707,7 @@ module Crystal
           @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
-        @object_extension = program.object_extension
+        @object_extension = compiler.codegen_target.object_extension
       end
 
       def compile

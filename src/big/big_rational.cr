@@ -5,6 +5,8 @@ require "big"
 # denominator and the numerator have no common factors, and that the
 # denominator is positive. Zero has the unique representation 0/1.
 #
+# NOTE: To use `BigRational`, you must explicitly import it with `require "big"`
+#
 # ```
 # require "big"
 #
@@ -20,9 +22,6 @@ struct BigRational < Number
   include Comparable(BigRational)
   include Comparable(Int)
   include Comparable(Float)
-
-  private MANTISSA_BITS  = 53
-  private MANTISSA_SHIFT = (1_i64 << MANTISSA_BITS).to_f64
 
   # Creates a new `BigRational`.
   #
@@ -44,19 +43,17 @@ struct BigRational < Number
     initialize(num, 1)
   end
 
-  # Creates a exact representation of float as rational.
-  def initialize(num : Float)
-    # It ensures that `BigRational.new(f) == f`
-    # It relies on fact, that mantissa is at most 53 bits
-    frac, exp = Math.frexp num
-    ifrac = (frac.to_f64 * MANTISSA_SHIFT).to_i64
-    exp -= MANTISSA_BITS
-    initialize ifrac, 1
-    if exp >= 0
-      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
-    else
-      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
-    end
+  # Creates an exact representation of float as rational.
+  #
+  # Raises `ArgumentError` if *num* is not finite.
+  def self.new(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
+    new { |mpq| LibGMP.mpq_set_d(mpq, num) }
+  end
+
+  # Creates an exact representation of float as rational.
+  def self.new(num : BigFloat)
+    new { |mpq| LibGMP.mpq_set_f(mpq, num) }
   end
 
   # Creates a `BigRational` from the given *num*.
@@ -92,11 +89,11 @@ struct BigRational < Number
     LibGMP.mpq_cmp(mpq, other)
   end
 
-  def <=>(other : Float32 | Float64)
-    self <=> BigRational.new(other)
+  def <=>(other : Float::Primitive)
+    self <=> BigRational.new(other) unless other.nan?
   end
 
-  def <=>(other : Float)
+  def <=>(other : BigFloat)
     to_big_f <=> other.to_big_f
   end
 
@@ -351,7 +348,8 @@ struct Float
   end
 
   def <=>(other : BigRational)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 end
 

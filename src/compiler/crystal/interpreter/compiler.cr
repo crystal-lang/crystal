@@ -344,11 +344,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     in .u64?
       put_u64 value.to_u64, node: node
     in .i128?
-      # TODO: implement String#to_i128 and use it
-      put_i128 value.to_i64.to_i128!, node: node
+      put_i128 value.to_i128, node: node
     in .u128?
-      # TODO: implement String#to_i128 and use it
-      put_u128 value.to_u64.to_u128!, node: node
+      put_u128 value.to_u128, node: node
     in .f32?
       put_i32 value.to_f32.unsafe_as(Int32), node: node
     in .f64?
@@ -1552,6 +1550,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Not)
+    node.type = @context.program.no_return unless node.type?
+
     exp = node.exp
     exp.accept self
     return false unless @wants_value
@@ -1622,7 +1622,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                      begin
                        create_compiled_def(call, target_def)
                      rescue ex : Crystal::TypeException
-                       node.raise ex, inner: ex
+                       node.raise ex.message, inner: ex
                      end
       call compiled_def, node: node
 
@@ -1873,7 +1873,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                    begin
                      create_compiled_def(node, target_def)
                    rescue ex : Crystal::TypeException
-                     node.raise ex, inner: ex
+                     node.raise ex.message, inner: ex
                    end
 
     if (block = node.block) && !block.fun_literal

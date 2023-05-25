@@ -1359,9 +1359,17 @@ struct Time
 
   # Returns a copy of this `Time` representing the beginning of the week.
   #
+  # The week starts on Monday by default, but can be configured by passing a different `start_day` as a `Time::DayOfWeek`.
+  #
+  # ```
+  # now = Time.utc(2023, 5, 16, 17, 53, 22)
+  # now.at_beginning_of_week             # => 2023-05-15 00:00:00 UTC
+  # now.at_beginning_of_week(:sunday)    # => 2023-05-14 00:00:00 UTC
+  # now.at_beginning_of_week(:wednesday) # => 2023-05-10 00:00:00 UTC
+  # ```
   # TODO: Ensure correctness in local time-line.
-  def at_beginning_of_week : Time
-    (self - (day_of_week.value - 1).days).at_beginning_of_day
+  def at_beginning_of_week(start_day : Time::DayOfWeek = :monday) : Time
+    (self - ((day_of_week.value - start_day.value) % 7).days).at_beginning_of_day
   end
 
   def_at_end(year) { Time.local(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }

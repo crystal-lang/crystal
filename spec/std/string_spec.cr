@@ -1734,7 +1734,7 @@ describe "String" do
     end
   end
 
-  describe "gsub" do
+  describe "#gsub" do
     it "gsubs char with char" do
       "foobar".gsub('o', 'e').should eq("feebar")
     end
@@ -1909,6 +1909,16 @@ describe "String" do
 
     it "ignores if backreferences: false" do
       "foo".gsub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xx\\0x")
+    end
+
+    it "empty match" do
+      "a  b".gsub(/\B/, "-").should eq "a - b"
+      "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
+    end
+
+    it "empty string" do
+      "ab".gsub("", "-").should eq "-a-b-"
+      "┬7".gsub("", "-").should eq "-┬-7-"
     end
   end
 
@@ -2256,7 +2266,7 @@ describe "String" do
     end
   end
 
-  describe "scan" do
+  describe "#scan" do
     it "does without block" do
       a = "cruel world"
       a.scan(/\w+/).map(&.[0]).should eq(["cruel", "world"])
@@ -2292,6 +2302,10 @@ describe "String" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
       "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
+    end
+
+    it "works when match is empty, multibyte char" do
+      "\u{80}\u{800}\u{10000}".scan(/()/).map(&.begin).should eq([0, 1, 2, 3])
     end
 
     it "works with strings with block" do
@@ -2582,27 +2596,64 @@ describe "String" do
     end
   end
 
-  it "raises if string capacity is negative" do
-    expect_raises(ArgumentError, "Negative capacity") do
-      String.new(-1) { |buf| {0, 0} }
+  describe "String.new(&)" do
+    it "creates with matching capacity" do
+      String.new(3) { |buf|
+        buf[0] = 'f'.ord.to_u8
+        buf[1] = 'o'.ord.to_u8
+        buf[2] = 'o'.ord.to_u8
+        {3, 3}
+      }.should eq "foo"
     end
-  end
 
-  it "raises if capacity too big on new with UInt32::MAX" do
-    expect_raises(ArgumentError, "Capacity too big") do
-      String.new(UInt32::MAX) { {0, 0} }
+    it "creates with excess capacity" do
+      String.new(5) { |buf|
+        buf[0] = 'f'.ord.to_u8
+        buf[1] = 'o'.ord.to_u8
+        buf[2] = 'o'.ord.to_u8
+        {3, 3}
+      }.should eq "foo"
     end
-  end
 
-  it "raises if capacity too big on new with UInt32::MAX - String::HEADER_SIZE - 1" do
-    expect_raises(ArgumentError, "Capacity too big") do
-      String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
+    it "raises if string capacity is negative" do
+      expect_raises(ArgumentError, "Negative capacity") do
+        String.new(-1) { |buf| {0, 0} }
+      end
     end
-  end
 
-  it "raises if capacity too big on new with UInt64::MAX" do
-    expect_raises(ArgumentError, "Capacity too big") do
-      String.new(UInt64::MAX) { {0, 0} }
+    it "raises if capacity too big with UInt32::MAX" do
+      expect_raises(ArgumentError, "Capacity too big") do
+        String.new(UInt32::MAX) { {0, 0} }
+      end
+    end
+
+    it "raises if capacity too big with UInt32::MAX - String::HEADER_SIZE - 1" do
+      expect_raises(ArgumentError, "Capacity too big") do
+        String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
+      end
+    end
+
+    it "raises if capacity too big with UInt64::MAX" do
+      expect_raises(ArgumentError, "Capacity too big") do
+        String.new(UInt64::MAX) { {0, 0} }
+      end
+    end
+
+    {% unless flag?(:wasm32) %}
+      it "allocates buffer of correct size (#3332)" do
+        String.new(255_u8) do |buffer|
+          LibGC.size(buffer).should be > 255
+          {255, 0}
+        end
+      end
+    {% end %}
+
+    it "raises if returned bytesize is greater than capacity" do
+      expect_raises ArgumentError, "Bytesize out of capacity bounds" do
+        String.new(123) do |buffer|
+          {124, 0}
+        end
+      end
     end
   end
 
@@ -2811,23 +2862,6 @@ describe "String" do
     string = "foo"
     clone = string.clone
     string.should be(clone)
-  end
-
-  {% unless flag?(:wasm32) %}
-    it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
-      String.new(255_u8) do |buffer|
-        LibGC.size(buffer).should be >= 255
-        {255, 0}
-      end
-    end
-  {% end %}
-
-  it "raises on String.new if returned bytesize is greater than capacity" do
-    expect_raises ArgumentError, "Bytesize out of capacity bounds" do
-      String.new(123) do |buffer|
-        {124, 0}
-      end
-    end
   end
 
   describe "invalid UTF-8 byte sequence" do

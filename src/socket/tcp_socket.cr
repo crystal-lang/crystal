@@ -2,6 +2,8 @@ require "./ip_socket"
 
 # A Transmission Control Protocol (TCP/IP) socket.
 #
+# NOTE: To use `TCPSocket`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 # ```
 # require "socket"

@@ -213,6 +213,12 @@ describe "Regex::MatchData" do
         matchdata(re, "barfoo")["g1"].should eq("foo")
       end
 
+      it "named groups with same prefix" do
+        md = matchdata(/KEY_(?<key>\w+)\s+(?<keycode>.*)/, "KEY_POWER 116")
+        md["key"].should eq "POWER"
+        md["keycode"].should eq "116"
+      end
+
       it "raises exception when named group doesn't exist" do
         md = matchdata(/foo/, "foo")
         expect_raises(KeyError, "Capture group 'group' does not exist") { md["group"] }
@@ -394,6 +400,11 @@ describe "Regex::MatchData" do
       matchdata(/(Cr)(s)?/, "Crystal").captures.should eq(["Cr", nil])
       matchdata(/(Cr)(?<name1>s)?(tal)?/, "Crystal").captures.should eq(["Cr", nil])
     end
+
+    it "doesn't get named captures when there are more than 255" do
+      regex = Regex.new(Array.new(256) { |i| "(?<c#{i}>.)" }.join)
+      matchdata(regex, "x" * 256).captures.should eq([] of String)
+    end
   end
 
   describe "#named_captures" do
@@ -409,6 +420,13 @@ describe "Regex::MatchData" do
 
     it "gets a hash of named captures with duplicated name" do
       matchdata(/(?<name>Cr)y(?<name>s)/, "Crystal").named_captures.should eq({"name" => "s"})
+    end
+
+    it "gets more than 127 named captures" do
+      regex = Regex.new(Array.new(128) { |i| "(?<c#{i}>.)" }.join)
+      captures = matchdata(regex, "x" * 128).named_captures
+      captures.size.should eq(128)
+      128.times { |i| captures["c#{i}"].should eq("x") }
     end
   end
 
