@@ -58,6 +58,10 @@ class Process
   # * On Unix-like systems, this traps `SIGINT`.
   # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd> and
   #   <kbd>Ctrl</kbd> + <kbd>Break</kbd> signals sent to a console application.
+  #
+  # The default interrupt handler calls `::exit` to ensure `at_exit` handlers
+  # execute. It returns a platform-specific status code indicating an interrupt
+  # (`130` on Unix, `3` on Windows).
   def self.on_interrupt(&handler : ->) : Nil
     Crystal::System::Process.on_interrupt(&handler)
   end

@@ -74,6 +74,12 @@ struct Crystal::System::Process
     # do nothing; `Crystal::System::Signal.start_loop` takes care of this
   end
 
+  def self.setup_default_interrupt_handlers
+    # Status 128 + signal number indicates process exit was caused by the signal.
+    ::Signal::INT.trap { ::exit 128 + ::Signal::INT.value }
+    ::Signal::TERM.trap { ::exit 128 + ::Signal::TERM.value }
+  end
+
   def self.exists?(pid)
     ret = LibC.kill(pid, 0)
     if ret == 0
