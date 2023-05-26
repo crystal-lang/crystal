@@ -34,7 +34,7 @@ describe "ARGV" do
   end
 end
 
-describe "exit" do
+describe ".exit" do
   it "exits normally with status 0", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit"
     status.success?.should be_true
@@ -44,6 +44,39 @@ describe "exit" do
     status, _, _ = compile_and_run_source "exit 42"
     status.success?.should be_false
     status.exit_code.should eq(42)
+  end
+
+  it "runs at_exit handlers", tags: %w[slow] do
+    status, _, _ = compile_and_run_source <<-CRYSTAL
+    at_exit do |status|
+      exit 5
+    end
+    exit 3
+    CRYSTAL
+    status.exit_code.should eq 5
+  end
+end
+
+describe ".exit!" do
+  it "exits normally with status 0", tags: %w[slow] do
+    status, _, _ = compile_and_run_source "exit!"
+    status.success?.should be_true
+  end
+
+  it "exits with given error code", tags: %w[slow] do
+    status, _, _ = compile_and_run_source "exit! 42"
+    status.success?.should be_false
+    status.exit_code.should eq(42)
+  end
+
+  it "does not run at_exit handlers", tags: %w[slow] do
+    status, _, _ = compile_and_run_source <<-CRYSTAL
+    at_exit do |status|
+      status + 2
+    end
+    exit 3
+    CRYSTAL
+    status.exit_code.should eq 3
   end
 end
 

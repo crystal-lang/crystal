@@ -522,6 +522,14 @@ end
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
   status = Crystal::AtExitHandlers.run status
+  exit!(status)
+end
+
+# Terminates execution immediately, returning the given status code
+# to the invoking environment.
+#
+# Registered `at_exit` procs are not executed.
+def exit!(status = 0) : NoReturn
   Crystal.ignore_stdio_errors { STDOUT.flush }
   Crystal.ignore_stdio_errors { STDERR.flush }
   Process.exit(status)
