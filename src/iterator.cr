@@ -1496,12 +1496,6 @@ module Iterator(T)
 
       stop
     end
-
-    private def init_state
-      @init = nil
-      @acc.reset
-      self
-    end
   end
 
   # Returns an iterator over chunks of elements, where each
