@@ -72,9 +72,9 @@ describe ".exit!" do
   it "does not run at_exit handlers", tags: %w[slow] do
     status, _, _ = compile_and_run_source <<-CRYSTAL
     at_exit do |status|
-      status + 2
+      exit! 5
     end
-    exit 3
+    exit! 3
     CRYSTAL
     status.exit_code.should eq 3
   end
