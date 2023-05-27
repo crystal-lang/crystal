@@ -760,10 +760,11 @@ span.flag.lime {
   .superclass-hierarchy .superclass a:visited,
   .other-type a,
   .other-type a:visited,
-  .entry-summary .signature {
-    background-color: #343434;
+  .entry-summary .signature,
+  .entry-summary a:visited {
+    background-color: #202020;
     color: white;
-    border: 1px solid #858585;
+    border: 1px solid #353535;
   }
 
   .superclass-hierarchy .superclass a:hover,
