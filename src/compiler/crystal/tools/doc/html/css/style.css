@@ -724,3 +724,151 @@ span.flag.lime {
 .main-content h6:hover .anchor .octicon-link {
   visibility: visible
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+
+  html, body {
+    background: #1b1b1b;
+  }
+
+  body {
+    color: white;
+  }
+
+  a {
+    color: #8cb4ff;
+  }
+
+  .main-content a:visited {
+    color: #5f8de3;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: white;
+  }
+
+  h1.type-name {
+    color: white;
+    background-color: #343434;
+    border: 1px solid #858585;
+  }
+
+  .superclass-hierarchy .superclass a,
+  .superclass-hierarchy .superclass a:visited,
+  .other-type a,
+  .other-type a:visited,
+  .entry-summary .signature {
+    background-color: #343434;
+    color: white;
+    border: 1px solid #858585;
+  }
+
+  .superclass-hierarchy .superclass a:hover,
+  .other-type a:hover,
+  .entry-summary .signature:hover {
+    background: #443d4d;
+    border-color: #b092d4;
+  }
+
+  .kind {
+    color: #b092d4;
+  }
+
+  .n {
+    color: #00ade6;
+  }
+
+  .t {
+    color: #00ade6;
+  }
+
+  .k {
+    color: #ff66ae;
+  }
+
+  .o {
+    color: #ff66ae;
+  }
+
+  .s {
+    color: #7799ff;
+  }
+
+  .i {
+    color: #b38668;
+  }
+
+  .m {
+    color: #b9a5d6;
+  }
+
+  .c {
+    color: #a1a1a1;
+  }
+
+  .methods-inherited a, .methods-inherited a:visited {
+    color: #B290D9;
+  }
+
+  .methods-inherited a:hover {
+    color: #D4B7F4;
+  }
+
+  .methods-inherited .tooltip>span {
+    background: #443d4d;
+  }
+
+  .methods-inherited .tooltip * {
+    color: white;
+  }
+
+  .entry-detail:target .signature {
+    background-color: #443d4d;
+    border: 1px solid #b092d4;
+  }
+
+  .entry-detail .signature {
+    background-color: #343434;
+    color: white;
+    border: 1px solid #858585;
+  }
+
+  .entry-detail .signature .method-permalink {
+    color: #b092d4;
+  }
+
+  :not(pre)>code {
+    background-color: #343434;
+  }
+
+  span.flag.purple {
+    background-color: #443d4d;
+    color: #ECE1F9;
+    border-color: #b092d4;
+  }
+
+  .sidebar input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color: white;
+  }
+  
+  .sidebar input::-moz-placeholder { /* Firefox 19+ */
+    color: white;
+  }
+  
+  .sidebar input:-ms-input-placeholder { /* IE 10+ */
+    color: white;
+  }
+  
+  .sidebar input:-moz-placeholder { /* Firefox 18- */
+    color: white;
+  }
+
+  pre {
+    color: white;
+    background: #343434;
+    border: 1px solid #858585;
+  }
+}
