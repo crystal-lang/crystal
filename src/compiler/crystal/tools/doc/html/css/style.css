@@ -752,8 +752,8 @@ span.flag.lime {
 
   h1.type-name {
     color: white;
-    background-color: #343434;
-    border: 1px solid #858585;
+    background-color: #202020;
+    border: 1px solid #353535;
   }
 
   .superclass-hierarchy .superclass a,
@@ -832,9 +832,9 @@ span.flag.lime {
   }
 
   .entry-detail .signature {
-    background-color: #343434;
+    background-color: #202020;
     color: white;
-    border: 1px solid #858585;
+    border: 1px solid #353535;
   }
 
   .entry-detail .signature .method-permalink {
@@ -842,7 +842,7 @@ span.flag.lime {
   }
 
   :not(pre)>code {
-    background-color: #343434;
+    background-color: #202020;
   }
 
   span.flag.purple {
@@ -869,7 +869,7 @@ span.flag.lime {
 
   pre {
     color: white;
-    background: #343434;
-    border: 1px solid #858585;
+    background: #202020;
+    border: 1px solid #353535;
   }
 }
