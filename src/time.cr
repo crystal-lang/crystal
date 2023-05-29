@@ -545,7 +545,6 @@ struct Time
   # time.nanosecond                         # => 789479273
   # ```
   def self.unix_ns(nanoseconds : Int) : Time
-    nanoseconds = nanoseconds.to_i64
     seconds = UNIX_EPOCH.total_seconds + (nanoseconds // 1_000_000_000)
     nanoseconds = nanoseconds % 1_000_000_000
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
