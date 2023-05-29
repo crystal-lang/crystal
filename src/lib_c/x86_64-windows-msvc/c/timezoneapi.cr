@@ -12,7 +12,7 @@ lib LibC
     daylightBias : LONG
   end
 
-  TIME_TONE_ID_INVALID  = 0xffffffff_u32
+  TIME_ZONE_ID_INVALID  = 0xffffffff_u32
   TIME_ZONE_ID_UNKNOWN  =          0_u32
   TIME_ZONE_ID_STANDARD =          1_u32
   TIME_ZONE_ID_DAYLIGHT =          2_u32
