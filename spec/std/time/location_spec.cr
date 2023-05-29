@@ -33,6 +33,15 @@ class Time::Location
         end
       end
 
+      {% if flag?(:win32) %}
+        it "maps IANA timezone identifier to Windows name (#13166)" do
+          location = Location.load("Europe/Berlin")
+          location.name.should eq "Europe/Berlin"
+          location.utc?.should be_false
+          location.fixed?.should be_false
+        end
+      {% end %}
+
       it "invalid timezone identifier" do
         with_zoneinfo(datapath("zoneinfo")) do
           expect_raises(InvalidLocationNameError, "Foobar/Baz") do

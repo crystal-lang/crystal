@@ -298,6 +298,10 @@ class Time::Location
         return location
       end
 
+      if location = Crystal::System::Time.load_iana_zone(name)
+        return location
+      end
+
       raise InvalidLocationNameError.new(name)
     end
   end
