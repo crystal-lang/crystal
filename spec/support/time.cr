@@ -27,6 +27,8 @@
     fun GetTokenInformation(tokenHandle : HANDLE, tokenInformationClass : Int, tokenInformation : Void*, tokenInformationLength : DWORD, returnLength : DWORD*) : BOOL
     fun LookupPrivilegeValueW(lpSystemName : LPWSTR, lpName : LPWSTR, lpLuid : LUID*) : BOOL
     fun AdjustTokenPrivileges(tokenHandle : HANDLE, disableAllPrivileges : BOOL, newState : TOKEN_PRIVILEGES*, bufferLength : DWORD, previousState : TOKEN_PRIVILEGES*, returnLength : DWORD*) : BOOL
+
+    fun SetDynamicTimeZoneInformation(lpTimeZoneInformation : DYNAMIC_TIME_ZONE_INFORMATION*) : BOOL
   end
 
   private SeTimeZonePrivilege = Crystal::System.to_wstr("SeTimeZonePrivilege")
@@ -68,13 +70,13 @@
     end
   end
 
-  def with_system_time_zone(tzi : LibC::TIME_ZONE_INFORMATION, *, file = __FILE__, line = __LINE__, &)
+  def with_system_time_zone(dtzi : LibC::DYNAMIC_TIME_ZONE_INFORMATION, *, file = __FILE__, line = __LINE__, &)
     unless Crystal::System::Time.time_zone_privilege_enabled?
       pending! "Unable to set system time zone", file: file, line: line
     end
 
-    LibC.GetTimeZoneInformation(out old_tzi)
-    unless LibC.SetTimeZoneInformation(pointerof(tzi)) != 0
+    LibC.GetDynamicTimeZoneInformation(out old_dtzi)
+    unless LibC.SetDynamicTimeZoneInformation(pointerof(dtzi)) != 0
       error = WinError.value
       raise RuntimeError.from_os_error("Failed to set system time zone", error) unless error.error_privilege_not_held?
       pending! "Unable to set system time zone", file: file, line: line
@@ -83,7 +85,7 @@
     begin
       yield
     ensure
-      LibC.SetTimeZoneInformation(pointerof(old_tzi))
+      LibC.SetDynamicTimeZoneInformation(pointerof(old_dtzi))
     end
   end
 {% end %}

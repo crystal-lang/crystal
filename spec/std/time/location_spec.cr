@@ -217,17 +217,16 @@ class Time::Location
 
       {% if flag?(:win32) %}
         it "loads time zone information from registry" do
-          info = LibC::TIME_ZONE_INFORMATION.new(
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(
             bias: -60,
             standardBias: 0,
             daylightBias: -60,
             standardDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 10, wDayOfWeek: 0, wDay: 5, wHour: 3, wMinute: 0, wSecond: 0, wMilliseconds: 0),
             daylightDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 3, wDayOfWeek: 0, wDay: 5, wHour: 2, wMinute: 0, wSecond: 0, wMilliseconds: 0),
-            standardName: StaticArray(UInt16, 32).new(0),
-            daylightName: StaticArray(UInt16, 32).new(0),
           )
           info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
           info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "Central Europe Standard Time".to_utf16
 
           with_system_time_zone(info) do
             location = Location.load_local
@@ -236,17 +235,10 @@ class Time::Location
         end
 
         it "loads time zone without DST (#13502)" do
-          info = LibC::TIME_ZONE_INFORMATION.new(
-            bias: -480,
-            standardBias: 0,
-            daylightBias: 0,
-            standardDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 0, wDayOfWeek: 0, wDay: 0, wHour: 0, wMinute: 0, wSecond: 0, wMilliseconds: 0),
-            daylightDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 0, wDayOfWeek: 0, wDay: 0, wHour: 0, wMinute: 0, wSecond: 0, wMilliseconds: 0),
-            standardName: StaticArray(UInt16, 32).new(0),
-            daylightName: StaticArray(UInt16, 32).new(0),
-          )
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(bias: -480)
           info.standardName.to_slice.copy_from "China Standard Time".to_utf16
           info.daylightName.to_slice.copy_from "China Daylight Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "China Standard Time".to_utf16
 
           with_system_time_zone(info) do
             location = Location.load_local
