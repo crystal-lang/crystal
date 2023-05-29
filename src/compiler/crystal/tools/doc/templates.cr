@@ -9,6 +9,14 @@ module Crystal::Doc
   </svg>
   SVG
 
+  SIDEBAR_BUTTON = <<-HTML
+  <input type="checkbox" id="sidebar-btn">
+  <label for="sidebar-btn" id="sidebar-btn-label">
+    <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+    <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+  </label>
+  HTML
+
   def self.anchor_link(anchor : String)
     anchor = anchor.downcase.gsub(' ', '-')
 
