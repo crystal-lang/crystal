@@ -47,7 +47,7 @@ struct Atomic(T)
     {% end %}
   end
 
-  # Performs `atomic_value += value`. Returns the old value.
+  # Performs `atomic_value &+= value`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(1)
@@ -58,7 +58,7 @@ struct Atomic(T)
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
   end
 
-  # Performs `atomic_value -= value`. Returns the old value.
+  # Performs `atomic_value &-= value`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(9)
@@ -113,7 +113,7 @@ struct Atomic(T)
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
   end
 
-  # Performs `atomic_value = max(atomic_value, value)`. Returns the old value.
+  # Performs `atomic_value = {atomic_value, value}.max`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -132,7 +132,7 @@ struct Atomic(T)
     {% end %}
   end
 
-  # Performs `atomic_value = min(atomic_value, value)`. Returns the old value.
+  # Performs `atomic_value = {atomic_value, value}.min`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(5)
