@@ -1276,8 +1276,8 @@ struct Time
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_910_123)
   # time.to_unix_ns # => 1452567845678910123
   # ```
-  def to_unix_ns : Int64
-    (to_unix * NANOSECONDS_PER_SECOND) + nanosecond
+  def to_unix_ns : Int128
+    (to_unix.to_i128 * NANOSECONDS_PER_SECOND) + nanosecond
   end
 
   # Returns the number of seconds since the Unix epoch
