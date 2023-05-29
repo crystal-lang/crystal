@@ -125,7 +125,13 @@ struct Atomic(T)
   # atomic.get     # => 10
   # ```
   def max(value : T)
-    {% if T < Int::Signed %}
+    {% if T < Enum %}
+      if @value.value.is_a?(Int::Signed)
+        Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
+      else
+        Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
+      end
+    {% elsif T < Int::Signed %}
       Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
     {% else %}
       Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
@@ -144,7 +150,13 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def min(value : T)
-    {% if T < Int::Signed %}
+    {% if T < Enum %}
+      if @value.value.is_a?(Int::Signed)
+        Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
+      else
+        Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)
+      end
+    {% elsif T < Int::Signed %}
       Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
     {% else %}
       Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)
