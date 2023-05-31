@@ -4345,7 +4345,7 @@ class String
   # Works on Unicode graphemes (and not codepoints) so combining characters are preserved.
   #
   # ```
-  # puts "Noe\u0308l".reverse # => "lëoN"
+  # "Noe\u0308l".reverse # => "lëoN"
   # ```
   def reverse : String
     return self if bytesize <= 1
