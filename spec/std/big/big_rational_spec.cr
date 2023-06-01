@@ -5,21 +5,31 @@ private def br(n, d)
   BigRational.new(n, d)
 end
 
-private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE__)
-  (val < greater).should eq(true), file: file, line: line
-  (greater < val).should eq(false), file: file, line: line
-  (val <=> greater).should eq(-1), file: file, line: line
-  (greater <=> val).should eq(1), file: file, line: line
+private def test_greater(val, other, *, file = __FILE__, line = __LINE__)
+  (val > other).should eq(true), file: file, line: line
+  (other > val).should eq(false), file: file, line: line
+  (val <=> other).should_not(be_nil).should be > 0, file: file, line: line
+  (other <=> val).should_not(be_nil).should be < 0, file: file, line: line
+end
 
-  (val == equal).should eq(true), file: file, line: line
-  (equal == val).should eq(true), file: file, line: line
-  (val <=> equal).should eq(0), file: file, line: line
-  (equal <=> val).should eq(0), file: file, line: line
+private def test_equal(val, other, *, file = __FILE__, line = __LINE__)
+  (val == other).should eq(true), file: file, line: line
+  (other == val).should eq(true), file: file, line: line
+  (val <=> other).should eq(0), file: file, line: line
+  (other <=> val).should eq(0), file: file, line: line
+end
 
-  (val > less).should eq(true), file: file, line: line
-  (less > val).should eq(false), file: file, line: line
-  (val <=> less).should eq(1), file: file, line: line
-  (less <=> val).should eq(-1), file: file, line: line
+private def test_less(val, other, *, file = __FILE__, line = __LINE__)
+  (val < other).should eq(true), file: file, line: line
+  (other < val).should eq(false), file: file, line: line
+  (val <=> other).should_not(be_nil).should be < 0, file: file, line: line
+  (other <=> val).should_not(be_nil).should be > 0, file: file, line: line
+end
+
+private def test_comp(val, less, equal, greater, *, file = __FILE__, line = __LINE__)
+  test_greater(val, less, file: file, line: line)
+  test_equal(val, equal, file: file, line: line)
+  test_less(val, greater, file: file, line: line)
 end
 
 describe BigRational do
@@ -162,6 +172,11 @@ describe BigRational do
     it "Float and Comparable" do
       test_comp(br(10, 2), 4.0_f32, 5.0_f32, 6.0_f32)
       test_comp(br(10, 2), 4.0_f64, 5.0_f64, 6.0_f64)
+    end
+
+    it "BigFloat and Comparable" do
+      test_greater(1.to_big_r + 0.5.to_big_r ** (BigFloat.default_precision + 66), 1.to_big_f)
+      test_less(1.to_big_r - 0.5.to_big_r ** (BigFloat.default_precision + 66), 1.to_big_f)
     end
 
     it "compares against NaNs" do

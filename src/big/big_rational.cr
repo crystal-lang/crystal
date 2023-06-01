@@ -94,7 +94,7 @@ struct BigRational < Number
   end
 
   def <=>(other : BigFloat)
-    to_big_f <=> other.to_big_f
+    self <=> other.to_big_r
   end
 
   def <=>(other : Int)
@@ -350,6 +350,12 @@ struct Float
   def <=>(other : BigRational)
     cmp = other <=> self
     -cmp if cmp
+  end
+end
+
+struct BigFloat
+  def <=>(other : BigRational)
+    -(other <=> self)
   end
 end
 
