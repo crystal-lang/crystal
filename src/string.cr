@@ -1498,7 +1498,7 @@ class String
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char_with_index do |char, i|
       if i.zero?
-        char.upcase(options) { |c| io << c }
+        char.titlecase(options) { |c| io << c }
       else
         char.downcase(options) { |c| io << c }
       end
@@ -1550,8 +1550,11 @@ class String
     upcase_next = true
 
     each_char_with_index do |char, i|
-      replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
-      io << replaced_char
+      if upcase_next
+        char.titlecase(options) { |c| io << c }
+      else
+        char.downcase(options) { |c| io << c }
+      end
       upcase_next = char.whitespace?
     end
   end
@@ -4322,11 +4325,15 @@ class String
 
     each_char do |char|
       if first
-        io << (lower ? char.downcase(options) : char.upcase(options))
+        if lower
+          char.downcase(options) { |c| io << c }
+        else
+          char.titlecase(options) { |c| io << c }
+        end
       elsif char == '_'
         last_is_underscore = true
       elsif last_is_underscore
-        io << char.upcase(options)
+        char.titlecase(options) { |c| io << c }
         last_is_underscore = false
       else
         io << char
