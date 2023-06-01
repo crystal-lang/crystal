@@ -304,6 +304,53 @@ module Unicode
   end
 
   # :nodoc:
+  def self.titlecase(char : Char, options : CaseOptions) : Char
+    result = check_upcase_ascii(char, options)
+    return result if result
+
+    result = check_upcase_turkic(char, options)
+    return result if result
+
+    # there are no ASCII or Turkic special cases for titlecasing; this is the
+    # only part that differs from `.upcase`
+    result = special_cases_titlecase[char.ord]?
+    return result.first.unsafe_chr if result && result[1] == 0 && result[2] == 0
+
+    check_upcase_ranges(char)
+  end
+
+  # :nodoc:
+  def self.titlecase(char : Char, options : CaseOptions, &)
+    result = check_upcase_ascii(char, options)
+    if result
+      yield result
+      return
+    end
+
+    result = check_upcase_turkic(char, options)
+    if result
+      yield result
+      return
+    end
+
+    # there are no ASCII or Turkic special cases for titlecasing; this is the
+    # only part that differs from `.upcase`
+    result = special_cases_titlecase[char.ord]?
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    result = special_cases_upcase[char.ord]?
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    yield check_upcase_ranges(char)
+  end
+
+  # :nodoc:
   def self.lowercase?(char : Char) : Bool
     in_category?(char.ord, category_Ll)
   end

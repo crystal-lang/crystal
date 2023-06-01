@@ -4,20 +4,25 @@ require "spec/helpers/iterate"
 require "../support/string"
 
 describe "Char" do
-  describe "upcase" do
+  describe "#upcase" do
     it { 'a'.upcase.should eq('A') }
     it { '1'.upcase.should eq('1') }
+    it { assert_iterates_yielding ['F', 'F', 'L'], 'ﬄ'.upcase }
   end
 
-  describe "downcase" do
+  describe "#downcase" do
     it { 'A'.downcase.should eq('a') }
     it { '1'.downcase.should eq('1') }
-    it do
-      actual = [] of Char
-      'ß'.downcase(Unicode::CaseOptions::Fold) { |c| actual << c }
-      actual.should eq(['s', 's'])
-    end
+    it { assert_iterates_yielding ['i', '\u{0307}'], 'İ'.downcase }
+    it { assert_iterates_yielding ['s', 's'], 'ß'.downcase(Unicode::CaseOptions::Fold) }
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
+  end
+
+  describe "#titlecase" do
+    it { 'a'.titlecase.should eq('A') }
+    it { '1'.titlecase.should eq('1') }
+    it { '\u{10D0}'.titlecase.should eq('\u{10D0}') } # GEORGIAN LETTER AN
+    it { assert_iterates_yielding ['F', 'f', 'l'], 'ﬄ'.titlecase }
   end
 
   it "#succ" do

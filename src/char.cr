@@ -393,7 +393,7 @@ struct Char
   # characters, like 'İ', than when downcased result in multiple
   # characters (in this case: 'I' and the dot mark).
   #
-  # For a more correct method see the method that receives a block.
+  # For more correct behavior see the overload that receives a block.
   #
   # ```
   # 'Z'.downcase # => 'z'
@@ -420,7 +420,7 @@ struct Char
   # characters, like 'ﬄ', than when upcased result in multiple
   # characters (in this case: 'F', 'F', 'L').
   #
-  # For a more correct method see the method that receives a block.
+  # For more correct behavior see the overload that receives a block.
   #
   # ```
   # 'z'.upcase # => 'Z'
@@ -443,6 +443,49 @@ struct Char
   # ```
   def upcase(options : Unicode::CaseOptions = :none, &)
     Unicode.upcase(self, options) { |char| yield char }
+  end
+
+  # Returns the titlecase equivalent of this char.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may return a different character where only
+  # the first letter is uppercase and the rest lowercase.
+  #
+  # Note that this only works for characters whose titlecase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'ﬄ', than when titlecased result in multiple
+  # characters (in this case: 'F', 'f', 'l').
+  #
+  # For more correct behavior see the overload that receives a block.
+  #
+  # ```
+  # 'z'.titlecase # => 'Z'
+  # 'X'.titlecase # => 'X'
+  # '.'.titlecase # => '.'
+  # 'Ǳ'.titlecase # => 'ǲ'
+  # 'ǳ'.titlecase # => 'ǲ'
+  # ```
+  def titlecase(options : Unicode::CaseOptions = :none) : Char
+    Unicode.titlecase(self, options)
+  end
+
+  # Yields each char for the titlecase equivalent of this char.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may yield a different character sequence
+  # where only the first letter is uppercase and the rest lowercase.
+  #
+  # This method takes into account the possibility that an upcase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'f' and 'l'.
+  #
+  # ```
+  # 'z'.titlecase { |v| puts v } # prints 'Z'
+  # 'Ǳ'.titlecase { |v| puts v } # prints 'ǲ'
+  # 'ﬄ'.titlecase { |v| puts v } # prints 'F', 'f', 'l'
+  # ```
+  def titlecase(options : Unicode::CaseOptions = :none, &)
+    Unicode.titlecase(self, options) { |char| yield char }
   end
 
   # See `Object#hash(hasher)`
