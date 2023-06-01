@@ -2185,34 +2185,22 @@ describe "String" do
   end
 
   describe "#underscore" do
-    it { "Foo".underscore.should eq "foo" }
-    it { "FooBar".underscore.should eq "foo_bar" }
-    it { "ABCde".underscore.should eq "ab_cde" }
-    it { "FOO_bar".underscore.should eq "foo_bar" }
-    it { "Char_S".underscore.should eq "char_s" }
-    it { "Char_".underscore.should eq "char_" }
-    it { "C_".underscore.should eq "c_" }
-    it { "HTTP".underscore.should eq "http" }
-    it { "HTTP_CLIENT".underscore.should eq "http_client" }
-    it { "CSS3".underscore.should eq "css3" }
-    it { "HTTP1.1".underscore.should eq "http1.1" }
-    it { "3.14IsPi".underscore.should eq "3.14_is_pi" }
-    it { "I2C".underscore.should eq "i2_c" }
+    it { assert_prints "Foo".underscore, "foo" }
+    it { assert_prints "FooBar".underscore, "foo_bar" }
+    it { assert_prints "ABCde".underscore, "ab_cde" }
+    it { assert_prints "FOO_bar".underscore, "foo_bar" }
+    it { assert_prints "Char_S".underscore, "char_s" }
+    it { assert_prints "Char_".underscore, "char_" }
+    it { assert_prints "C_".underscore, "c_" }
+    it { assert_prints "HTTP".underscore, "http" }
+    it { assert_prints "HTTP_CLIENT".underscore, "http_client" }
+    it { assert_prints "CSS3".underscore, "css3" }
+    it { assert_prints "HTTP1.1".underscore, "http1.1" }
+    it { assert_prints "3.14IsPi".underscore, "3.14_is_pi" }
+    it { assert_prints "I2C".underscore, "i2_c" }
 
-    describe "with IO" do
-      it { String.build { |io| "Foo".underscore io }.should eq "foo" }
-      it { String.build { |io| "FooBar".underscore io }.should eq "foo_bar" }
-      it { String.build { |io| "ABCde".underscore io }.should eq "ab_cde" }
-      it { String.build { |io| "FOO_bar".underscore io }.should eq "foo_bar" }
-      it { String.build { |io| "Char_S".underscore io }.should eq "char_s" }
-      it { String.build { |io| "Char_".underscore io }.should eq "char_" }
-      it { String.build { |io| "C_".underscore io }.should eq "c_" }
-      it { String.build { |io| "HTTP".underscore io }.should eq "http" }
-      it { String.build { |io| "HTTP_CLIENT".underscore io }.should eq "http_client" }
-      it { String.build { |io| "CSS3".underscore io }.should eq "css3" }
-      it { String.build { |io| "HTTP1.1".underscore io }.should eq "http1.1" }
-      it { String.build { |io| "3.14IsPi".underscore io }.should eq "3.14_is_pi" }
-      it { String.build { |io| "I2C".underscore io }.should eq "i2_c" }
+    it "handles multi-character mappings correctly" do
+      assert_prints "İxİİ0İİxİ0".underscore, "i̇x_i̇i̇0_i̇_i̇x_i̇0"
     end
   end
 
