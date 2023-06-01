@@ -6,22 +6,22 @@ private def br(n, d)
 end
 
 private def test_greater(val, other, *, file = __FILE__, line = __LINE__)
-  (val > other).should eq(true), file: file, line: line
-  (other > val).should eq(false), file: file, line: line
+  val.should be > other, file: file, line: line
+  other.should_not be > val, file: file, line: line
   (val <=> other).should_not(be_nil).should be > 0, file: file, line: line
   (other <=> val).should_not(be_nil).should be < 0, file: file, line: line
 end
 
 private def test_equal(val, other, *, file = __FILE__, line = __LINE__)
-  (val == other).should eq(true), file: file, line: line
-  (other == val).should eq(true), file: file, line: line
+  (val == other).should be_true, file: file, line: line
+  (other == val).should be_true, file: file, line: line
   (val <=> other).should eq(0), file: file, line: line
   (other <=> val).should eq(0), file: file, line: line
 end
 
 private def test_less(val, other, *, file = __FILE__, line = __LINE__)
-  (val < other).should eq(true), file: file, line: line
-  (other < val).should eq(false), file: file, line: line
+  val.should be < other, file: file, line: line
+  other.should_not be < val, file: file, line: line
   (val <=> other).should_not(be_nil).should be < 0, file: file, line: line
   (other <=> val).should_not(be_nil).should be > 0, file: file, line: line
 end
