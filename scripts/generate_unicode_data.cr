@@ -147,6 +147,7 @@ end
 
 entries = [] of Entry
 special_cases_downcase = [] of SpecialCase
+special_cases_titlecase = [] of SpecialCase
 special_cases_upcase = [] of SpecialCase
 special_cases_casefold = [] of SpecialCase
 casefold_mapping = Hash(Int32, Int32).new
@@ -200,6 +201,7 @@ body.each_line do |line|
   end
   upcase = pieces[12].to_i?(16)
   downcase = pieces[13].to_i?(16)
+  titlecase = pieces[14].to_i?(16)
   casefold = casefold_mapping[codepoint]?
   entries << Entry.new(
     codepoint: codepoint,
@@ -211,6 +213,9 @@ body.each_line do |line|
     downcase: downcase,
     casefold: casefold,
   )
+  if titlecase && titlecase != upcase
+    special_cases_titlecase << SpecialCase.new(codepoint, [titlecase, 0, 0])
+  end
 end
 
 url = "#{UCD_ROOT}SpecialCasing.txt"
@@ -223,21 +228,29 @@ body.each_line do |line|
 
   pieces = line.split(';')
   codepoint = pieces[0].to_i(16)
+
   downcase = pieces[1].split.map(&.to_i(16))
-  upcase = pieces[3].split.map(&.to_i(16))
-  downcase = nil if downcase.size == 1
-  upcase = nil if upcase.size == 1
-  if downcase
+  if downcase.size > 1
     while downcase.size < 3
       downcase << 0
     end
     special_cases_downcase << SpecialCase.new(codepoint, downcase)
   end
-  if upcase
+
+  upcase = pieces[3].split.map(&.to_i(16))
+  if upcase.size > 1
     while upcase.size < 3
       upcase << 0
     end
     special_cases_upcase << SpecialCase.new(codepoint, upcase)
+  end
+
+  titlecase = pieces[2].split.map(&.to_i(16))
+  if titlecase.size > 1
+    while titlecase.size < 3
+      titlecase << 0
+    end
+    special_cases_titlecase << SpecialCase.new(codepoint, titlecase)
   end
 end
 
@@ -281,6 +294,11 @@ upcase_ranges = case_ranges entries, &.upcase
 upcase_ranges.select! { |r| r.delta != -1 }
 
 alternate_ranges = alternate_ranges(downcase_one_ranges)
+
+special_cases_downcase.sort_by! &.codepoint
+special_cases_upcase.sort_by! &.codepoint
+special_cases_titlecase.reject! { |v| special_cases_upcase.includes?(v) }
+special_cases_titlecase.sort_by! &.codepoint
 
 casefold_ranges = case_ranges entries, &.casefold
 
