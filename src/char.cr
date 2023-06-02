@@ -197,6 +197,7 @@ struct Char
   # 'ç'.lowercase? # => true
   # 'G'.lowercase? # => false
   # '.'.lowercase? # => false
+  # 'ǲ'.lowercase? # => false
   # ```
   def lowercase? : Bool
     ascii? ? ascii_lowercase? : Unicode.lowercase?(self)
@@ -221,9 +222,22 @@ struct Char
   # 'Á'.uppercase? # => true
   # 'c'.uppercase? # => false
   # '.'.uppercase? # => false
+  # 'ǲ'.uppercase? # => false
   # ```
   def uppercase? : Bool
     ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
+  end
+
+  # Returns `true` if this char is a titlecase character, i.e. a ligature
+  # consisting of an uppercase letter followed by lowercase characters.
+  #
+  # ```
+  # 'ǲ'.titlecase? # => true
+  # 'H'.titlecase? # => false
+  # 'c'.titlecase? # => false
+  # ```
+  def titlecase? : Bool
+    !ascii? && Unicode.titlecase?(self)
   end
 
   # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').

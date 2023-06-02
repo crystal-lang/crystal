@@ -92,6 +92,13 @@ describe "Char" do
     it { ' '.lowercase?.should be_false }
   end
 
+  describe "#titlecase?" do
+    it { 'ǲ'.titlecase?.should be_true }
+    it { 'ᾈ'.titlecase?.should be_true }
+    it { 'A'.titlecase?.should be_false }
+    it { 'a'.titlecase?.should be_false }
+  end
+
   describe "ascii_letter?" do
     it { 'a'.ascii_letter?.should be_true }
     it { 'A'.ascii_letter?.should be_true }

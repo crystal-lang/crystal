@@ -297,7 +297,7 @@ alternate_ranges = alternate_ranges(downcase_one_ranges)
 
 special_cases_downcase.sort_by! &.codepoint
 special_cases_upcase.sort_by! &.codepoint
-special_cases_titlecase.reject! { |v| special_cases_upcase.includes?(v) }
+special_cases_titlecase.reject! &.in?(special_cases_upcase)
 special_cases_titlecase.sort_by! &.codepoint
 
 casefold_ranges = case_ranges entries, &.casefold
