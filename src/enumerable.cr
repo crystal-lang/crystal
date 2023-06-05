@@ -204,11 +204,6 @@ module Enumerable(T)
           init(key, val) unless key.is_a?(Drop.class)
         end
       end
-
-      def reset
-        @initialized = false
-        @data.clear
-      end
     end
 
     def self.element_type(ary, block)
