@@ -96,4 +96,16 @@ module Crystal::Doc
   record SitemapTemplate, types : Array(Type), base_url : String, priority : String, changefreq : String do
     ECR.def_to_s "#{__DIR__}/html/sitemap.xml"
   end
+
+  record APIIndexTemplate, project_info : ProjectInfo, types : Array(Type) do
+    ECR.def_to_s "#{__DIR__}/html/api-index.html"
+
+    def iterate_types(types = self.types, &block : Type ->)
+      types.each do |type|
+        block.call(type)
+
+        iterate_types(type.types, &block) unless type.program?
+      end
+    end
+  end
 end

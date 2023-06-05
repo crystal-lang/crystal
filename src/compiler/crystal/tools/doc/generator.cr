@@ -78,6 +78,7 @@ class Crystal::Doc::Generator
     copy_files
     generate_types_docs types, @output_dir, types
     generate_readme program_type, types
+    generate_api_index types
     generate_sitemap types
   end
 
@@ -98,6 +99,10 @@ class Crystal::Doc::Generator
     if sitemap_base_url = @sitemap_base_url
       File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, @sitemap_priority, @sitemap_changefreq)
     end
+  end
+
+  def generate_api_index(types)
+    File.write File.join(@output_dir, "api-index.html"), APIIndexTemplate.new(project_info, types)
   end
 
   def copy_files
