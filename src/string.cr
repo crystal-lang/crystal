@@ -3117,6 +3117,7 @@ class String
   # "abcdef".compare("ABCDEG", case_insensitive: true) # => -1
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
+  # "Baﬄe".compare("baffle", case_insensitive: true, options: Unicode::CaseOptions::Fold)   # => 0
   # ```
   #
   # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
