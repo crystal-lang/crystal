@@ -1,33 +1,97 @@
 class Dir
+  # Options used to control which kind of files are returned by `Dir.glob`.
+  @[Flags]
+  enum GlobOptions
+    # Includes files whose name begins with a period (`.`).
+    DotFiles
+
+    # Includes files which have a hidden attribute backed by the native
+    # filesystem.
+    NativeHidden
+
+    # Includes files which are considered hidden by operating system
+    # conventions (apart from `DotFiles`), but not by the filesystem.
+    #
+    # On Windows, `NativeHidden | OSHidden` matches files that have both the
+    # hidden and system attributes set.
+    OSHidden
+
+    def self.default
+      NativeHidden | OSHidden
+    end
+  end
+
   # Returns an array of all files that match against any of *patterns*.
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.[](*patterns : Path | String, match_hidden = false, follow_symlinks = false) : Array(String)
-    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks)
+  def self.[](*patterns : Path | String, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
-  def self.[](patterns : Enumerable, match_hidden = false, follow_symlinks = false) : Array(String)
-    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks)
+  def self.[](patterns : Enumerable, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks)
+  end
+
+  # :ditto:
+  #
+  # For compatibility, a falsey *match_hidden* argument is equivalent to passing
+  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
+  # `match: GlobOptions::All`.
+  @[Deprecated("Use the overload with a `match` parameter instead")]
+  def self.[](*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
+    glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
+  end
+
+  # :ditto:
+  #
+  # For compatibility, a falsey *match_hidden* argument is equivalent to passing
+  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
+  # `match: GlobOptions::All`.
+  @[Deprecated("Use the overload with a `match` parameter instead")]
+  def self.[](patterns : Enumerable, match_hidden, follow_symlinks = false) : Array(String)
+    glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
   end
 
   # Returns an array of all files that match against any of *patterns*.
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # If *match_hidden* is `true` the pattern will match hidden files and folders.
-  #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false) : Array(String)
-    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks)
+  def self.glob(*patterns : Path | String, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable, match_hidden = false, follow_symlinks = false) : Array(String)
+  def self.glob(patterns : Enumerable, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
     paths = [] of String
-    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
+    glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
+      paths << path
+    end
+    paths
+  end
+
+  # :ditto:
+  #
+  # For compatibility, a falsey *match_hidden* argument is equivalent to passing
+  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
+  # `match: GlobOptions::All`.
+  @[Deprecated("Use the overload with a `match` parameter instead")]
+  def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
+    glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
+  end
+
+  # :ditto:
+  #
+  # For compatibility, a falsey *match_hidden* argument is equivalent to passing
+  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
+  # `match: GlobOptions::All`.
+  @[Deprecated("Use the overload with a `match` parameter instead")]
+  def self.glob(patterns : Enumerable, match_hidden, follow_symlinks = false) : Array(String)
+    paths = [] of String
+    glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks) do |path|
       paths << path
     end
     paths
@@ -37,20 +101,48 @@ class Dir
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # If *match_hidden* is `true` the pattern will match hidden files and folders.
-  #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false, &block : String -> _)
-    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
+  def self.glob(*patterns : Path | String, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false, &block : String -> _)
+    glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable, match_hidden = false, follow_symlinks = false, &block : String -> _)
-    Globber.glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
+  def self.glob(patterns : Enumerable, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false, &block : String -> _)
+    Globber.glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
+  end
+
+  # :ditto:
+  #
+  # For compatibility, a falsey *match_hidden* argument is equivalent to passing
+  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
+  # `match: GlobOptions::All`.
+  @[Deprecated("Use the overload with a `match` parameter instead")]
+  def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false, &block : String -> _)
+    glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks) do |path|
+      yield path
+    end
+  end
+
+  # :ditto:
+  #
+  # For compatibility, a falsey *match_hidden* argument is equivalent to passing
+  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
+  # `match: GlobOptions::All`.
+  @[Deprecated("Use the overload with a `match` parameter instead")]
+  def self.glob(patterns : Enumerable, match_hidden, follow_symlinks = false, &block : String -> _)
+    Globber.glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks) do |path|
+      yield path
+    end
+  end
+
+  private def self.match_hidden_to_options(match_hidden)
+    options = GlobOptions.default
+    options |= GlobOptions::DotFiles if match_hidden
+    options
   end
 
   # :nodoc:
@@ -72,7 +164,7 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    def self.glob(patterns : Enumerable, *, match_hidden, follow_symlinks, &block : String -> _)
+    def self.glob(patterns : Enumerable, *, match, follow_symlinks, &block : String -> _)
       patterns.each do |pattern|
         if pattern.is_a?(Path)
           pattern = pattern.to_posix.to_s
@@ -81,11 +173,11 @@ class Dir
 
         sequences.each do |sequence|
           if sequence.count(&.is_a?(RecursiveDirectories)) > 1
-            run_tracking(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
+            run_tracking(sequence, match: match, follow_symlinks: follow_symlinks) do |match|
               yield match
             end
           else
-            run(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
+            run(sequence, match: match, follow_symlinks: follow_symlinks) do |match|
               yield match
             end
           end
@@ -153,17 +245,17 @@ class Dir
       true
     end
 
-    private def self.run_tracking(sequence, match_hidden, follow_symlinks, &block : String -> _)
+    private def self.run_tracking(sequence, match, follow_symlinks, &block : String -> _)
       result_tracker = Set(String).new
 
-      run(sequence, match_hidden, follow_symlinks) do |result|
+      run(sequence, match, follow_symlinks) do |result|
         if result_tracker.add?(result)
           yield result
         end
       end
     end
 
-    private def self.run(sequence, match_hidden, follow_symlinks, &block : String -> _)
+    private def self.run(sequence, match, follow_symlinks, &block : String -> _)
       return if sequence.empty?
 
       path_stack = [] of Tuple(Int32, String?, Crystal::System::Dir::Entry?)
@@ -195,7 +287,7 @@ class Dir
         in EntryMatch
           next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
-            next if !match_hidden && entry.name.starts_with?('.')
+            next unless matches_file?(entry, match)
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
         in DirectoryMatch
@@ -255,7 +347,7 @@ class Dir
 
             if entry = read_entry(dir)
               next if entry.name.in?(".", "..")
-              next if !match_hidden && entry.name.starts_with?('.')
+              next unless matches_file?(entry, match)
 
               if dir_path.bytesize == 0
                 fullpath = entry.name
@@ -339,6 +431,13 @@ class Dir
       # whether something is a directory or not, avoiding having to
       # call File.info? which is really expensive.
       Crystal::System::Dir.next_entry(dir.@dir, dir.path)
+    end
+
+    private def self.matches_file?(entry, match)
+      return false if entry.name.starts_with?('.') && !match.dot_files?
+      return false if entry.native_hidden? && !match.native_hidden?
+      return false if entry.os_hidden? && !match.os_hidden?
+      true
     end
   end
 end
