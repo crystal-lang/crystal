@@ -69,13 +69,13 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   end
 
   def enqueue(event : Crystal::Iocp::Event)
-    unless @queue.any? &.id.==(event.id)
+    unless @queue.includes?(event)
       @queue << event
     end
   end
 
   def dequeue(event : Crystal::Iocp::Event)
-    @queue.reject_did_remove? &.id.==(event.id)
+    @queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
@@ -88,16 +88,14 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   end
 end
 
-struct Crystal::Iocp::Event < Crystal::EventLoop::Event
-  getter id : UInt64
+class Crystal::Iocp::Event
+  include Crystal::EventLoop::Event
+
   getter fiber
   getter wake_at
   getter? timeout
 
-  @@id = Atomic(UInt64).new(0)
-
   def initialize(@fiber : Fiber, @wake_at = Time.monotonic, *, @timeout = false)
-    @id = @@id.add(1)
   end
 
   # Frees the event

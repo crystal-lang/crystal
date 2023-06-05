@@ -299,14 +299,6 @@ class Deque(T)
     self
   end
 
-  # :nodoc:
-  # needed by `Crystal::Iocp::EventLoop#dequeue`; acts like `#reject!`, returns
-  # like `#delete`
-  def reject_did_remove?(&) : Bool
-    match = internal_delete { |e| yield e }
-    !match.nil?
-  end
-
   # Modifies `self`, deleting the elements in the collection for which
   # `pattern === element`.
   #
