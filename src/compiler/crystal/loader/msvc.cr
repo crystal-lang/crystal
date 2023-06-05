@@ -89,12 +89,13 @@ class Crystal::Loader
     extra_search_paths = [] of String
 
     args.each do |arg|
-      if lib_path = arg.lchop?("/LIBPATH:")
-        extra_search_paths << lib_path
-      elsif !arg.starts_with?('/') && (name = arg.rchop?(".lib"))
+      if !arg.starts_with?('/') && (name = arg.rchop?(".lib"))
         libnames << name
-      elsif remaining
-        remaining << arg
+      else
+        remaining << arg if remaining
+        if lib_path = arg.lchop?("/LIBPATH:")
+          extra_search_paths << lib_path
+        end
       end
     end
 
