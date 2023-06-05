@@ -1928,7 +1928,7 @@ module Crystal
           elsif !delimiter_state && whitespace && (keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) })
             char = current_char
 
-            nest += 1 unless keyword[:abstract_def]
+            nest += 1 unless keyword.abstract_def?
             whitespace = true
             beginning_of_line = false
             next
@@ -2006,7 +2006,12 @@ module Crystal
       end
     end
 
-    def macro_starts_with_keyword?(beginning_of_line) : {abstract_def: Bool}?
+    enum MacroKeywordState
+      AbstractDef
+      Other
+    end
+
+    def macro_starts_with_keyword?(beginning_of_line) : MacroKeywordState?
       case char = current_char
       when 'a'
         case next_char
@@ -2014,65 +2019,65 @@ module Crystal
           if char_sequence?('s', 't', 'r', 'a', 'c', 't') && next_char.whitespace?
             case next_char
             when 'd'
-              {abstract_def: true} if char_sequence?('e', 'f') && peek_not_ident_part_or_end_next_char
+              MacroKeywordState::AbstractDef if char_sequence?('e', 'f') && peek_not_ident_part_or_end_next_char
             when 'c'
-              {abstract_def: false} if char_sequence?('l', 'a', 's', 's') && peek_not_ident_part_or_end_next_char
+              MacroKeywordState::Other if char_sequence?('l', 'a', 's', 's') && peek_not_ident_part_or_end_next_char
             when 's'
-              {abstract_def: false} if char_sequence?('t', 'r', 'u', 'c', 't') && peek_not_ident_part_or_end_next_char
+              MacroKeywordState::Other if char_sequence?('t', 'r', 'u', 'c', 't') && peek_not_ident_part_or_end_next_char
             end
           end
         when 'n'
-          {abstract_def: false} if char_sequence?('n', 'o', 't', 'a', 't', 'i', 'o', 'n') && peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if char_sequence?('n', 'o', 't', 'a', 't', 'i', 'o', 'n') && peek_not_ident_part_or_end_next_char
         end
       when 'b'
-        {abstract_def: false} if char_sequence?('e', 'g', 'i', 'n') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if char_sequence?('e', 'g', 'i', 'n') && peek_not_ident_part_or_end_next_char
       when 'c'
         case next_char
         when 'a'
-          {abstract_def: false} if char_sequence?('s', 'e') && peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if char_sequence?('s', 'e') && peek_not_ident_part_or_end_next_char
         when 'l'
-          {abstract_def: false} if char_sequence?('a', 's', 's') && peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if char_sequence?('a', 's', 's') && peek_not_ident_part_or_end_next_char
         end
       when 'd'
         case next_char
         when 'o'
-          {abstract_def: false} if peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if peek_not_ident_part_or_end_next_char
         when 'e'
-          {abstract_def: false} if next_char == 'f' && peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if next_char == 'f' && peek_not_ident_part_or_end_next_char
         end
       when 'f'
-        {abstract_def: false} if char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
       when 'i'
-        {abstract_def: false} if beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char
       when 'l'
-        {abstract_def: false} if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
       when 'm'
         case next_char
         when 'a'
-          {abstract_def: false} if char_sequence?('c', 'r', 'o') && peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if char_sequence?('c', 'r', 'o') && peek_not_ident_part_or_end_next_char
         when 'o'
-          {abstract_def: false} if char_sequence?('d', 'u', 'l', 'e') && peek_not_ident_part_or_end_next_char
+          MacroKeywordState::Other if char_sequence?('d', 'u', 'l', 'e') && peek_not_ident_part_or_end_next_char
         end
       when 's'
         case next_char
         when 'e'
-          {abstract_def: false} if char_sequence?('l', 'e', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
+          MacroKeywordState::Other if char_sequence?('l', 'e', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
         when 't'
-          {abstract_def: false} if char_sequence?('r', 'u', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
+          MacroKeywordState::Other if char_sequence?('r', 'u', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
         end
       when 'u'
         if next_char == 'n'
           case next_char
           when 'i'
-            {abstract_def: false} if char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
+            MacroKeywordState::Other if char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
           when 'l'
-            {abstract_def: false} if beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char
+            MacroKeywordState::Other if beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char
           when 't'
-            {abstract_def: false} if beginning_of_line && char_sequence?('i', 'l') && peek_not_ident_part_or_end_next_char
+            MacroKeywordState::Other if beginning_of_line && char_sequence?('i', 'l') && peek_not_ident_part_or_end_next_char
           end
         end
       when 'w'
-        {abstract_def: false} if beginning_of_line && char_sequence?('h', 'i', 'l', 'e') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if beginning_of_line && char_sequence?('h', 'i', 'l', 'e') && peek_not_ident_part_or_end_next_char
       end
     end
 
