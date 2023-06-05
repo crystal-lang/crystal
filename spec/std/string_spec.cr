@@ -646,6 +646,7 @@ describe "String" do
     it { assert_prints "tschüß".downcase(Unicode::CaseOptions::Fold), "tschüss" }
     it { assert_prints "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold), "σίσυφοσfiæ" }
     it { assert_prints "ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
+    it { assert_prints "Ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
 
     it "does not touch invalid code units in an otherwise ascii string" do
       "\xB5!\xE0\xC1\xB5?".downcase.should eq("\xB5!\xE0\xC1\xB5?")
