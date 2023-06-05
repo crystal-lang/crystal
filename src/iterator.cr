@@ -1455,7 +1455,7 @@ module Iterator(T)
   #
   # See also: `Enumerable#chunks`.
   def chunk(reuse = false, &block : T -> U) forall T, U
-    ChunkIterator(typeof(self), T, U, typeof(::Enumerable::Chunk.element_type(self, block))).new(self, reuse, &block)
+    ChunkIterator(typeof(self), T, U, typeof(::Enumerable::Chunk.key_type(self, block))).new(self, reuse, &block)
   end
 
   private class ChunkIterator(I, T, U, V)

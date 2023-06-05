@@ -131,7 +131,7 @@ module Enumerable(T)
   #
   # See also: `Iterator#chunk`.
   def chunks(&block : T -> U) forall U
-    res = [] of Tuple(typeof(Chunk.element_type(self, block)), Array(T))
+    res = [] of Tuple(typeof(Chunk.key_type(self, block)), Array(T))
     chunks_internal(block) { |*kv| res << kv }
     res
   end
@@ -206,7 +206,7 @@ module Enumerable(T)
       end
     end
 
-    def self.element_type(ary, block)
+    def self.key_type(ary, block)
       ary.each do |item|
         key = block.call(item)
         ::raise "" if key.is_a?(Drop.class)
@@ -217,7 +217,7 @@ module Enumerable(T)
   end
 
   private def chunks_internal(original_block : T -> U, &) forall U
-    acc = Chunk::Accumulator(T, typeof(Chunk.element_type(self, original_block))).new
+    acc = Chunk::Accumulator(T, typeof(Chunk.key_type(self, original_block))).new
     each do |val|
       key = original_block.call(val)
       acc.acc(key, val) do |*tuple|
