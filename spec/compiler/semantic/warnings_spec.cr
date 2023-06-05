@@ -267,6 +267,19 @@ describe "Semantic: warnings" do
       end
     end
 
+    it "ignores nested calls to deprecated methods" do
+      x = assert_warning <<-CRYSTAL,
+        @[Deprecated]
+        def foo; bar; end
+
+        @[Deprecated]
+        def bar; end
+
+        foo
+        CRYSTAL
+        "warning in line 7\nWarning: Deprecated top-level foo."
+    end
+
     it "errors if invalid argument type" do
       assert_error <<-CRYSTAL,
         @[Deprecated(42)]
