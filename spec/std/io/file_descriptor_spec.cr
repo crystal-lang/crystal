@@ -14,7 +14,7 @@ private def shell_command(command)
 end
 
 describe IO::FileDescriptor do
-  it "reopen STDIN with the right mode" do
+  it "reopen STDIN with the right mode", tags: %w[slow] do
     code = %q(puts "#{STDIN.blocking} #{STDIN.info.type}")
     compile_source(code) do |binpath|
       `#{shell_command %(#{Process.quote(binpath)} < #{Process.quote(binpath)})}`.chomp.should eq("true File")
@@ -37,7 +37,7 @@ describe IO::FileDescriptor do
     end
   end
 
-  it "opens STDIN in binary mode" do
+  it "opens STDIN in binary mode", tags: %w[slow] do
     code = %q(print STDIN.gets_to_end.includes?('\r'))
     compile_source(code) do |binpath|
       io_in = IO::Memory.new("foo\r\n")
@@ -47,7 +47,7 @@ describe IO::FileDescriptor do
     end
   end
 
-  it "opens STDOUT in binary mode" do
+  it "opens STDOUT in binary mode", tags: %w[slow] do
     code = %q(puts "foo")
     compile_source(code) do |binpath|
       io = IO::Memory.new
@@ -56,7 +56,7 @@ describe IO::FileDescriptor do
     end
   end
 
-  it "opens STDERR in binary mode" do
+  it "opens STDERR in binary mode", tags: %w[slow] do
     code = %q(STDERR.puts "foo")
     compile_source(code) do |binpath|
       io = IO::Memory.new

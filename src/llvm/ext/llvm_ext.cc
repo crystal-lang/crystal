@@ -1,8 +1,6 @@
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/DebugLoc.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/FileSystem.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
@@ -18,8 +16,6 @@ using namespace llvm;
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
 #include <llvm/Target/CodeGenCWrappers.h>
-#include <llvm/Bitcode/BitcodeWriter.h>
-#include <llvm/Analysis/ModuleSummaryAnalysis.h>
 
 #if LLVM_VERSION_GE(16, 0)
 #define makeArrayRef ArrayRef
@@ -83,22 +79,6 @@ LLVMValueRef LLVMExtBuildInvoke2(
   return wrap(unwrap(B)->CreateInvoke((llvm::FunctionType*) unwrap(Ty), unwrap(Fn), unwrap(Then), unwrap(Catch),
                                       makeArrayRef(unwrap(Args), NumArgs),
                                       Bundles, Name));
-}
-
-void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
-  // https://github.com/ldc-developers/ldc/pull/1840/files
-  Module *m = unwrap(mref);
-
-  std::error_code EC;
-#if LLVM_VERSION_GE(13, 0)
-  raw_fd_ostream OS(File, EC, sys::fs::OF_None);
-#else
-  raw_fd_ostream OS(File, EC, sys::fs::F_None);
-#endif
-  if (EC) return;
-
-  llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
-  llvm::WriteBitcodeToFile(*m, OS, true, &moduleSummaryIndex, true);
 }
 
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {

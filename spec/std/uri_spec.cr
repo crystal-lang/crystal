@@ -369,6 +369,23 @@ describe "URI" do
     end
   end
 
+  describe "#update_query_params" do
+    it "returns self" do
+      expected_params = URI::Params{"id" => "30"}
+
+      uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+      uri.update_query_params { |params| params.delete("limit") }.should be(uri)
+      uri.query_params.should eq(expected_params)
+    end
+
+    it "commits changes to the URI::Object" do
+      uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+      uri.update_query_params { |params| params.delete("limit") }
+
+      uri.to_s.should eq("http://foo.com?id=30#time=1305298413")
+    end
+  end
+
   describe "#==" do
     it { URI.parse("http://example.com").should eq(URI.parse("http://example.com")) }
   end

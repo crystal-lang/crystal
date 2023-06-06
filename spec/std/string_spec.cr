@@ -850,8 +850,7 @@ describe "String" do
     it { "\n\t  ".strip.should eq("") }
     it { "\u00A0".strip.should eq("") }
 
-    # TODO: add spec tags so this can be run with tag:slow
-    # it { (" " * 167772160).strip.should eq("") }
+    it(tags: %w[slow]) { (" " * 167772160).strip.should eq("") }
 
     it { "".strip("xyz").should eq("") }
     it { "foobar".strip("").should eq("foobar") }
@@ -2465,6 +2464,25 @@ describe "String" do
       "ZZZ9999".succ.should eq("AAAA0000")
       "/[]ZZZ9999".succ.should eq("/[]AAAA0000")
       "Z/[]ZZZ9999".succ.should eq("AA/[]AAA0000")
+    end
+  end
+
+  describe "match!" do
+    it "returns matchdata" do
+      md = "Crystal".match! /(?<bar>.)(?<foo>.)/
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = "foo".match! /foo/
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { "foo".match! /Crystal/ }
+      expect_raises(NilAssertionError) { $~ }
     end
   end
 

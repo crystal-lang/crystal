@@ -2735,6 +2735,21 @@ module Crystal
       end
     end
 
+    private UNICODE_BIDI_CONTROL_CHARACTERS = {'\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'}
+
+    private FORBIDDEN_ESCAPES = UNICODE_BIDI_CONTROL_CHARACTERS.to_h { |ch| {ch, ch.unicode_escape} }
+
+    # used by the formatter
+    def self.escape_forbidden_characters(string)
+      string.each_char do |ch|
+        if ch.in?(UNICODE_BIDI_CONTROL_CHARACTERS)
+          return string.gsub(FORBIDDEN_ESCAPES)
+        end
+      end
+
+      string
+    end
+
     def next_char_no_column_increment
       char = @reader.next_char
       if error = @reader.error

@@ -93,7 +93,7 @@ class Crystal::Program
       return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
-    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
+    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path, combine_rpath: true
 
     # Write the new files from which 'filename' depends into the cache dir
     # (here we store how to obtain these files, because a require might use
@@ -127,7 +127,7 @@ class Crystal::Program
         # When cross-compiling, the host compiler shouldn't copy the config for
         # the target compiler and use the system defaults instead.
         # TODO: Add configuration overrides for host compiler to CLI.
-        unless compiler.cross_compile
+        unless compiler.cross_compile?
           host_compiler.flags = compiler.flags
           host_compiler.dump_ll = compiler.dump_ll?
           host_compiler.link_flags = compiler.link_flags

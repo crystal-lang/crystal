@@ -34,6 +34,14 @@ describe "Regex" do
     end
   end
 
+  it ".literal" do
+    Regex.literal("foo").should eq /foo/
+    Regex.literal("foo", i: true).should eq /foo/i
+    Regex.literal("foo", i: true, m: true).should eq /foo/im
+    Regex.literal("foo", i: true, m: true, x: true).should eq /foo/imx
+    Regex.literal("foo", x: true).should eq /foo/x
+  end
+
   it "#options" do
     /cat/.options.ignore_case?.should be_false
     /cat/i.options.ignore_case?.should be_true
@@ -122,6 +130,33 @@ describe "Regex" do
     it "skip invalid UTF check" do
       # no exception raised
       /f.o/.matches?("f\xFFo", options: Regex::MatchOptions::NO_UTF_CHECK)
+    end
+  end
+
+  describe "#match!" do
+    it "returns match data" do
+      md = /(?<bar>.)(?<foo>.)/.match!("Crystal")
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = /foo/.match!("foo")
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { /Crystal/.match!("foo") }
+      expect_raises(NilAssertionError) { $~ }
+    end
+
+    context "with options" do
+      it "Regex::Match options" do
+        expect_raises(Regex::Error, "Match not found") do
+          /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED)
+        end
+      end
     end
   end
 

@@ -351,6 +351,15 @@ class Regex
     new(_source: source, _options: options)
   end
 
+  # Creates a new `Regex` instance from a literal consisting of a *pattern* and the named parameter modifiers.
+  def self.literal(pattern : String, *, i : Bool = false, m : Bool = false, x : Bool = false) : self
+    options = CompileOptions::None
+    options |= :ignore_case if i
+    options |= :multiline if m
+    options |= :extended if x
+    new(pattern, options: options)
+  end
+
   # Determines Regex's source validity. If it is, `nil` is returned.
   # If it's not, a `String` containing the error message is returned.
   #
@@ -571,6 +580,21 @@ class Regex
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
   def match(str, pos, _options) : MatchData?
     match(str, pos, options: _options)
+  end
+
+  # Matches a regular expression against *str*. This starts at the character
+  # index *pos* if given, otherwise at the start of *str*. Returns a `Regex::MatchData`
+  # if *str* matched, otherwise raises `Regex::Error`. `$~` will contain the same value
+  # if matched.
+  #
+  # ```
+  # /(.)(.)(.)/.match!("abc")[2]   # => "b"
+  # /(.)(.)/.match!("abc", 1)[2]   # => "c"
+  # /(.)(タ)/.match!("クリスタル", 3)[2] # raises Exception
+  # ```
+  def match!(str : String, pos : Int32 = 0, *, options : Regex::MatchOptions = :none) : MatchData
+    byte_index = str.char_index_to_byte_index(pos) || raise Error.new "Match not found"
+    $~ = match_at_byte_index(str, byte_index, options) || raise Error.new "Match not found"
   end
 
   # Match at byte index. Matches a regular expression against `String`

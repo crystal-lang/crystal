@@ -4562,8 +4562,7 @@ class String
     end
   end
 
-  # Finds match of *regex*, starting at *pos*.
-  # It also updates `$~` with the result.
+  # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
   #
   # ```
   # "foo".match(/foo/) # => Regex::MatchData("foo")
@@ -4573,9 +4572,19 @@ class String
   # $~                 # raises Exception
   # ```
   def match(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Regex::MatchData?
-    match = regex.match self, pos, options: options
-    $~ = match
-    match
+    $~ = regex.match self, pos, options: options
+  end
+
+  # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match!(/foo/) # => Regex::MatchData("foo")
+  # $~                  # => Regex::MatchData("foo")
+  #
+  # "foo".match!(/bar/) # => raises Exception
+  def match!(regex : Regex, pos = 0) : Regex::MatchData
+    $~ = regex.match! self, pos
   end
 
   # Finds match of *regex* like `#match`, but it returns `Bool` value.

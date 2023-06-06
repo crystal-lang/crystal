@@ -491,11 +491,7 @@ module Crystal
       while true
         case @token.type
         when .string?
-          if @token.invalid_escape
-            write @token.value
-          else
-            write @token.raw
-          end
+          write_sanitized_string_body(@token.delimiter_state.allow_escapes && !is_regex)
           next_string_token
         when .interpolation_start?
           # This is the case of #{__DIR__}
@@ -532,6 +528,12 @@ module Crystal
       end
 
       false
+    end
+
+    private def write_sanitized_string_body(escape)
+      body = @token.invalid_escape ? @token.value.as(String) : @token.raw
+      body = Lexer.escape_forbidden_characters(body) if escape
+      write body
     end
 
     def visit(node : StringInterpolation)
@@ -609,7 +611,7 @@ module Crystal
           else
             loop do
               check :STRING
-              write @token.invalid_escape ? @token.value : @token.raw
+              write_sanitized_string_body(delimiter_state.allow_escapes && !is_regex)
               next_string_token
 
               # On heredoc, pieces of contents are combined due to removing indentation.

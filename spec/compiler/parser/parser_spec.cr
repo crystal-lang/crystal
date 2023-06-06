@@ -2514,6 +2514,12 @@ module Crystal
         source_between(source, node.name_location, node.name_end_location).should eq("foo")
       end
 
+      it "sets correct location of call name in operator assignment" do
+        source = "@foo.bar += 1"
+        node = Parser.parse(source).as(OpAssign).target.as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq("bar")
+      end
+
       it "sets correct location of element in array literal" do
         source = "%i(foo bar)"
         elements = Parser.new(source).parse.as(ArrayLiteral).elements

@@ -43,6 +43,7 @@ lib LibC
   fun GetCurrentProcessId : DWORD
   fun OpenProcess(dwDesiredAccess : DWORD, bInheritHandle : BOOL, dwProcessId : DWORD) : HANDLE
   fun GetExitCodeProcess(hProcess : HANDLE, lpExitCode : DWORD*) : BOOL
+  fun ExitProcess(uExitCode : UInt) : NoReturn
   fun TerminateProcess(hProcess : HANDLE, uExitCode : UInt) : BOOL
   fun CreateProcessW(lpApplicationName : LPWSTR, lpCommandLine : LPWSTR,
                      lpProcessAttributes : SECURITY_ATTRIBUTES*, lpThreadAttributes : SECURITY_ATTRIBUTES*,
