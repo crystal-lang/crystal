@@ -477,9 +477,10 @@ struct Enum
   # Returns the enum member that has the given name, or
   # raises `ArgumentError` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # the enum members names. Dashes (`-`) in *string* have the same meaning as an underscore (`_`).
+  # A member named "FortyTwo" or "FORTY_TWO"
   # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
-  # "FORTYTWO", "fortytwo".
+  # "Forty-Two", "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse("Red")    # => Color::Red
@@ -493,9 +494,10 @@ struct Enum
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # the enum members names. Dashes (`-`) in *string* have the same meaning as an underscore (`_`).
+  # A member named "FortyTwo", or "FORTY_TWO"
   # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
-  # "FORTYTWO", "fortytwo".
+  # "Forty-Two", "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse?("Red")    # => Color::Red
@@ -506,7 +508,7 @@ struct Enum
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
     {% begin %}
-      case string.camelcase.downcase
+      case string.gsub('-', '_').camelcase.downcase
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
       # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.

@@ -95,7 +95,7 @@ class Crystal::Command
     output_filename = Crystal.temp_executable "spec"
 
     ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= Process.executable_path
-    compiler.compile sources, output_filename
+    compiler.compile sources, output_filename, combine_rpath: true
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end
