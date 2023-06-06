@@ -940,4 +940,8 @@ img {
     background: #202020;
     border: 1px solid #353535;
   }
+
+  #sidebar-btn, #sidebar-btn-label {
+    color: white; 
+  }
 }
