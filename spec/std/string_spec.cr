@@ -2652,7 +2652,7 @@ describe "String" do
     end
   end
 
-  describe "compare" do
+  describe "#compare" do
     it "compares case-sensitive" do
       "fo".compare("foo").should eq(-1)
       "foo".compare("fo").should eq(1)
@@ -2683,6 +2683,12 @@ describe "String" do
       "".compare("abc", case_insensitive: true).should eq(-1)
       "abc".compare("", case_insensitive: true).should eq(1)
       "abcA".compare("abca", case_insensitive: true).should eq(0)
+    end
+
+    it "compares case-insensitive, multiple chars after case conversion (#4513)" do
+      "ﬄ".compare("ffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "FFL".compare("ﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "sß".compare("ßs", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
     end
 
     it "treats invalid code units as replacement char in an otherwise ascii string" do
