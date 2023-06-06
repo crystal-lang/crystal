@@ -635,32 +635,21 @@ describe "String" do
   end
 
   describe "#downcase" do
-    it { "HELLO!".downcase.should eq("hello!") }
-    it { "HELLO MAN!".downcase.should eq("hello man!") }
-    it { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
-    it { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
-    it { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
-    it { "İ".downcase.should eq("i̇") }
-    it { "Baﬄe".downcase(Unicode::CaseOptions::Fold).should eq("baffle") }
-    it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
-    it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
-    it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
+    it { assert_prints "HELLO!".downcase, "hello!" }
+    it { assert_prints "HELLO MAN!".downcase, "hello man!" }
+    it { assert_prints "ÁÉÍÓÚĀ".downcase, "áéíóúā" }
+    it { assert_prints "AEIİOU".downcase(Unicode::CaseOptions::Turkic), "aeıiou" }
+    it { assert_prints "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII), "ÁeÍoÚ" }
+    it { assert_prints "İ".downcase, "i̇" }
+    it { assert_prints "Baﬄe".downcase(Unicode::CaseOptions::Fold), "baffle" }
+    it { assert_prints "ﬀ".downcase(Unicode::CaseOptions::Fold), "ff" }
+    it { assert_prints "tschüß".downcase(Unicode::CaseOptions::Fold), "tschüss" }
+    it { assert_prints "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold), "σίσυφοσfiæ" }
+    it { assert_prints "ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
+    it { assert_prints "Ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
 
     it "does not touch invalid code units in an otherwise ascii string" do
       "\xB5!\xE0\xC1\xB5?".downcase.should eq("\xB5!\xE0\xC1\xB5?")
-    end
-
-    describe "with IO" do
-      it { String.build { |io| "HELLO!".downcase io }.should eq "hello!" }
-      it { String.build { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
-      it { String.build { |io| "ÁÉÍÓÚĀ".downcase io }.should eq "áéíóúā" }
-      it { String.build { |io| "AEIİOU".downcase io, Unicode::CaseOptions::Turkic }.should eq "aeıiou" }
-      it { String.build { |io| "ÁEÍOÚ".downcase io, Unicode::CaseOptions::ASCII }.should eq "ÁeÍoÚ" }
-      it { String.build { |io| "İ".downcase io }.should eq "i̇" }
-      it { String.build { |io| "Baﬄe".downcase io, Unicode::CaseOptions::Fold }.should eq "baffle" }
-      it { String.build { |io| "ﬀ".downcase io, Unicode::CaseOptions::Fold }.should eq "ff" }
-      it { String.build { |io| "tschüß".downcase io, Unicode::CaseOptions::Fold }.should eq "tschüss" }
-      it { String.build { |io| "ΣίσυφοςﬁÆ".downcase io, Unicode::CaseOptions::Fold }.should eq "σίσυφοσfiæ" }
     end
   end
 
