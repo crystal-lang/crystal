@@ -2467,6 +2467,25 @@ describe "String" do
     end
   end
 
+  describe "match!" do
+    it "returns matchdata" do
+      md = "Crystal".match! /(?<bar>.)(?<foo>.)/
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = "foo".match! /foo/
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { "foo".match! /Crystal/ }
+      expect_raises(NilAssertionError) { $~ }
+    end
+  end
+
   it "does %" do
     ("Hello %d world" % 123).should eq("Hello 123 world")
     ("Hello %d world" % [123]).should eq("Hello 123 world")
