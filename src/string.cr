@@ -4583,8 +4583,8 @@ class String
   # $~                  # => Regex::MatchData("foo")
   #
   # "foo".match!(/bar/) # => raises Exception
-  def match!(regex : Regex, pos = 0) : Regex::MatchData
-    $~ = regex.match! self, pos
+  def match!(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Regex::MatchData
+    $~ = regex.match! self, pos, options: options
   end
 
   # Finds match of *regex* like `#match`, but it returns `Bool` value.

@@ -2484,6 +2484,15 @@ describe "String" do
       expect_raises(Regex::Error, "Match not found") { "foo".match! /Crystal/ }
       expect_raises(NilAssertionError) { $~ }
     end
+
+    context "with options" do
+      it "Regex::Match options" do
+        expect_raises(Regex::Error, "Match not found") do
+          ".foo".match!(/foo/, options: :anchored)
+        end
+        "foo".match!(/foo/, options: :anchored)
+      end
+    end
   end
 
   it "does %" do
