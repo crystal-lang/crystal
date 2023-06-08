@@ -86,7 +86,10 @@ struct BigInt < Int
   end
 
   # :ditto:
+  #
+  # *num* must be finite.
   def initialize(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     LibGMP.init_set_d(out @mpz, num)
   end
 

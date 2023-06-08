@@ -2608,4 +2608,34 @@ describe Crystal::Formatter do
         CRYSTAL
     end
   end
+
+  # CVE-2021-42574
+  describe "Unicode bi-directional control characters" do
+    ['\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
+      assert_format %("#{char}"), %("#{char.unicode_escape}")
+      assert_format %("\\c#{char}"), %("c#{char.unicode_escape}")
+      assert_format %("#{char}\#{1}"), %("#{char.unicode_escape}\#{1}")
+      assert_format %("\\c#{char}\#{1}"), %("c#{char.unicode_escape}\#{1}")
+      assert_format %(%(#{char})), %(%(#{char.unicode_escape}))
+      assert_format %(%Q(#{char})), %(%Q(#{char.unicode_escape}))
+      assert_format %(%Q(#{char}\#{1})), %(%Q(#{char.unicode_escape}\#{1}))
+      assert_format %(<<-EOS\n#{char}\nEOS), %(<<-EOS\n#{char.unicode_escape}\nEOS)
+      assert_format %(<<-EOS\n#{char}\#{1}\nEOS), %(<<-EOS\n#{char.unicode_escape}\#{1}\nEOS)
+      assert_format %(def foo("#{char}" x)\nend), %(def foo("#{char.unicode_escape}" x)\nend)
+      assert_format %(foo("#{char}": 1)), %(foo("#{char.unicode_escape}": 1))
+      assert_format %(NamedTuple("#{char}": Int32)), %(NamedTuple("#{char.unicode_escape}": Int32))
+      assert_format %({"#{char}": 1}), %({"#{char.unicode_escape}": 1})
+
+      # the following contexts do not accept escape sequences, escaping these
+      # control characters would alter the meaning of the source code
+      assert_format %(/#{char}/)
+      assert_format %(%r(#{char}))
+      assert_format %(%q(#{char}))
+      assert_format %(%w(#{char}))
+      assert_format %(%i(#{char}))
+      assert_format %(/#{char}\#{1}/)
+      assert_format %(%r(#{char}\#{1}))
+      assert_format %(<<-'EOS'\n#{char}\nEOS)
+    end
+  end
 end

@@ -137,10 +137,15 @@ class Crystal::Loader
   def self.default_search_paths : Array(String)
     default_search_paths = [] of String
 
+    # TODO: respect the compiler's DT_RPATH (#13490)
+
     if env_library_path = ENV[{{ flag?(:darwin) ? "DYLD_LIBRARY_PATH" : "LD_LIBRARY_PATH" }}]?
       # TODO: Expand tokens $ORIGIN, $LIB, $PLATFORM
       default_search_paths.concat env_library_path.split(Process::PATH_DELIMITER, remove_empty: true)
     end
+
+    # TODO: respect the compiler's DT_RUNPATH
+    # TODO: respect $DYLD_FALLBACK_LIBRARY_PATH and the compiler's LC_RPATH on darwin
 
     {% if (flag?(:linux) && !flag?(:android)) || flag?(:bsd) %}
       read_ld_conf(default_search_paths)

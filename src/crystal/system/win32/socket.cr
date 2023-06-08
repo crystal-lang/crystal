@@ -85,10 +85,12 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(handle)
-    value = 1_u8
-    ret = LibC.setsockopt(handle, LibC::SOL_SOCKET, LibC::SO_EXCLUSIVEADDRUSE, pointerof(value), 1)
-    if ret == LibC::SOCKET_ERROR
-      raise ::Socket::Error.from_wsa_error("setsockopt")
+    unless @family.unix?
+      system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
+        if value == 0
+          system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+        end
+      end
     end
   end
 
@@ -110,20 +112,7 @@ module Crystal::System::Socket
 
     error = overlapped_connect(fd, "ConnectEx") do |overlapped|
       # This is: LibC.ConnectEx(fd, addr, addr.size, nil, 0, nil, overlapped)
-      result = Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
-
-      if result.zero?
-        wsa_error = WinError.wsa_value
-
-        case wsa_error
-        when .wsa_io_pending?
-          next
-        when .wsaeaddrnotavail?
-          return yield ::Socket::ConnectError.from_os_error("ConnectEx", wsa_error)
-        else
-          return yield ::Socket::Error.from_os_error("ConnectEx", wsa_error)
-        end
-      end
+      Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
     end
 
     if error
@@ -145,7 +134,21 @@ module Crystal::System::Socket
 
   private def overlapped_connect(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
-      yield operation.start
+      result = yield operation.start
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .wsaeaddrnotavail?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        else
+          return ::Socket::Error.from_os_error("ConnectEx", error)
+        end
+      else
+        operation.synchronous = true
+        return nil
+      end
 
       schedule_overlapped(read_timeout || 1.seconds)
 
@@ -172,13 +175,13 @@ module Crystal::System::Socket
 
   private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
+      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
     end
   end
 
   private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_errno("Listen failed")
+      yield ::Socket::Error.from_wsa_error("Listen failed")
     end
   end
 
@@ -201,19 +204,11 @@ module Crystal::System::Socket
     output_buffer = Bytes.new(address_size * 2 + buffer_size)
 
     success = overlapped_accept(fd, "AcceptEx") do |overlapped|
+      # This is: LibC.AcceptEx(fd, client_socket, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
       received_bytes = uninitialized UInt32
-
-      result = Crystal::System::Socket.accept_ex.call(fd, client_socket,
+      Crystal::System::Socket.accept_ex.call(fd, client_socket,
         output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
         address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
-
-      if result.zero?
-        error = WinError.wsa_value
-
-        unless error.wsa_io_pending?
-          return false
-        end
-      end
     end
 
     return false unless success
@@ -228,10 +223,22 @@ module Crystal::System::Socket
 
   private def overlapped_accept(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
-      yield operation.start
+      result = yield operation.start
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        else
+          return false
+        end
+      else
+        operation.synchronous = true
+        return true
+      end
 
       unless schedule_overlapped(read_timeout)
-        raise IO::TimeoutError.new("accept timed out")
+        raise IO::TimeoutError.new("#{method} timed out")
       end
 
       operation.wsa_result(socket) do |error|
@@ -256,7 +263,8 @@ module Crystal::System::Socket
     wsabuf = wsa_buffer(message)
 
     bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      {ret, bytes_sent}
     end
 
     bytes.to_i32
@@ -264,13 +272,14 @@ module Crystal::System::Socket
 
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     wsabuf = wsa_buffer(bytes)
-    bytes_sent = overlapped_write(fd, "WSASendTo") do |overlapped|
-      LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+    bytes_written = overlapped_write(fd, "WSASendTo") do |overlapped|
+      ret = LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+      {ret, bytes_sent}
     end
-    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
 
     # to_i32 is fine because string/slice sizes are an Int32
-    bytes_sent.to_i32
+    bytes_written.to_i32
   end
 
   private def system_receive(bytes)
@@ -286,7 +295,8 @@ module Crystal::System::Socket
 
     flags = 0_u32
     bytes_read = overlapped_read(fd, "WSARecvFrom") do |overlapped|
-      LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
+      ret = LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
+      {ret, bytes_received}
     end
 
     {bytes_read.to_i32, sockaddr, addrlen}
@@ -294,13 +304,13 @@ module Crystal::System::Socket
 
   private def system_close_read
     if LibC.shutdown(fd, LibC::SH_RECEIVE) != 0
-      raise ::Socket::Error.from_errno("shutdown read")
+      raise ::Socket::Error.from_wsa_error("shutdown read")
     end
   end
 
   private def system_close_write
     if LibC.shutdown(fd, LibC::SH_SEND) != 0
-      raise ::Socket::Error.from_errno("shutdown write")
+      raise ::Socket::Error.from_wsa_error("shutdown write")
     end
   end
 
@@ -381,20 +391,19 @@ module Crystal::System::Socket
     val
   end
 
-  def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
-
-    if ret.zero?
-      yield optval
-    else
-      raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
-    end
-
+    yield optval if ret == 0
     ret
   end
 
-  def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(fd, optname, optval, level) { |value| return value }
+    raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
+  end
+
+  private def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
@@ -429,9 +438,7 @@ module Crystal::System::Socket
   end
 
   def self.fcntl(fd, cmd, arg = 0)
-    ret = LibC.fcntl fd, cmd, arg
-    raise Socket::Error.from_errno("fcntl() failed") if ret == -1
-    ret
+    raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
   private def system_tty?
@@ -443,8 +450,10 @@ module Crystal::System::Socket
 
     bytes_read = overlapped_read(fd, "WSARecv", connreset_is_error: false) do |overlapped|
       flags = 0_u32
-      LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
+      ret = LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
+      {ret, bytes_received}
     end
+
     bytes_read.to_i32
   end
 
@@ -452,9 +461,10 @@ module Crystal::System::Socket
     wsabuf = wsa_buffer(slice)
 
     bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      {ret, bytes_sent}
     end
-    # we could return bytes (from WSAGetOverlappedResult) or bytes_sent
+
     bytes.to_i32
   end
 
@@ -480,7 +490,7 @@ module Crystal::System::Socket
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        return ::Socket::Error.from_errno("Error closing socket")
+        return ::Socket::Error.from_wsa_error("Error closing socket")
       end
     end
   end

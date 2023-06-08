@@ -220,7 +220,7 @@ describe "File" do
       other = datapath("test_file.ini")
 
       with_tempfile("test_file_symlink.txt") do |symlink|
-        File.symlink(File.real_path(file), symlink)
+        File.symlink(File.realpath(file), symlink)
 
         File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
@@ -428,8 +428,7 @@ describe "File" do
       info.type.should eq(File::Type::Directory)
     end
 
-    # TODO: support stating nul on windows
-    pending_win32 "gets for a character device" do
+    it "gets for a character device" do
       info = File.info(File::NULL)
       info.type.should eq(File::Type::CharacterDevice)
     end
@@ -515,7 +514,7 @@ describe "File" do
     end
   end
 
-  describe "delete" do
+  describe ".delete" do
     it "deletes a file" do
       with_tempfile("delete-file.txt") do |filename|
         File.open(filename, "w") { }
@@ -531,6 +530,20 @@ describe "File" do
         File.exists?(file.path).should be_true
         file.delete
         File.exists?(file.path).should be_false
+      end
+    end
+
+    it "deletes a read-only file" do
+      with_tempfile("delete-file-dir") do |path|
+        Dir.mkdir(path)
+        File.chmod(path, 0o755)
+
+        filename = File.join(path, "foo")
+        File.open(filename, "w") { }
+        File.exists?(filename).should be_true
+        File.chmod(filename, 0o000)
+        File.delete(filename)
+        File.exists?(filename).should be_false
       end
     end
 
@@ -892,7 +905,26 @@ describe "File" do
     end
   end
 
-  pending_win32 "raises when reading a file with no permission" do
+  # Crystal does not expose ways to make a file unreadable on Windows
+  {% unless flag?(:win32) %}
+    it "raises when reading a file with no permission" do
+      with_tempfile("file.txt") do |path|
+        File.touch(path)
+        File.chmod(path, File::Permissions::None)
+        {% if flag?(:unix) %}
+          # TODO: Find a better way to execute this spec when running as privileged
+          # user. Compiling a program and running a separate process would be a
+          # lot of overhead.
+          if LibC.getuid == 0
+            pending! "Spec cannot run as superuser"
+          end
+        {% end %}
+        expect_raises(File::AccessDeniedError) { File.read(path) }
+      end
+    end
+  {% end %}
+
+  it "raises when writing to a file with no permission" do
     with_tempfile("file.txt") do |path|
       File.touch(path)
       File.chmod(path, File::Permissions::None)
@@ -904,7 +936,7 @@ describe "File" do
           pending! "Spec cannot run as superuser"
         end
       {% end %}
-      expect_raises(File::AccessDeniedError) { File.read(path) }
+      expect_raises(File::AccessDeniedError) { File.write(path, "foo") }
     end
   end
 
@@ -1377,29 +1409,29 @@ describe "File" do
       end
     end
 
-    pending_win32 "copies permissions" do
+    it "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
-        File.chmod(src_path, 0o700)
+        File.chmod(src_path, 0o444)
 
         File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
         File.same_content?(src_path, out_path).should be_true
       end
     end
 
-    pending_win32 "overwrites existing destination and permissions" do
+    it "overwrites existing destination and permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
-        File.chmod(src_path, 0o700)
+        File.chmod(src_path, 0o444)
 
         File.write(out_path, "bar")
-        File.chmod(out_path, 0o777)
+        File.chmod(out_path, 0o666)
 
         File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
         File.same_content?(src_path, out_path).should be_true
       end
     end

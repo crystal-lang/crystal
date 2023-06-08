@@ -293,9 +293,8 @@ describe "JSON serialization" do
         JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
         JSONSpecEnum.from_json(%("two")).should eq(JSONSpecEnum::Two)
         JSONSpecEnum.from_json(%("ONE_HUNDRED")).should eq(JSONSpecEnum::OneHundred)
-        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "ONE-HUNDRED")) do
-          JSONSpecEnum.from_json(%("ONE-HUNDRED"))
-        end
+        JSONSpecEnum.from_json(%("ONE-HUNDRED")).should eq(JSONSpecEnum::OneHundred)
+
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: " one ")) do
           JSONSpecEnum.from_json(%(" one "))
         end

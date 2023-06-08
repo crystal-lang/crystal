@@ -635,32 +635,21 @@ describe "String" do
   end
 
   describe "#downcase" do
-    it { "HELLO!".downcase.should eq("hello!") }
-    it { "HELLO MAN!".downcase.should eq("hello man!") }
-    it { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
-    it { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
-    it { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
-    it { "İ".downcase.should eq("i̇") }
-    it { "Baﬄe".downcase(Unicode::CaseOptions::Fold).should eq("baffle") }
-    it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
-    it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
-    it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
+    it { assert_prints "HELLO!".downcase, "hello!" }
+    it { assert_prints "HELLO MAN!".downcase, "hello man!" }
+    it { assert_prints "ÁÉÍÓÚĀ".downcase, "áéíóúā" }
+    it { assert_prints "AEIİOU".downcase(Unicode::CaseOptions::Turkic), "aeıiou" }
+    it { assert_prints "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII), "ÁeÍoÚ" }
+    it { assert_prints "İ".downcase, "i̇" }
+    it { assert_prints "Baﬄe".downcase(Unicode::CaseOptions::Fold), "baffle" }
+    it { assert_prints "ﬀ".downcase(Unicode::CaseOptions::Fold), "ff" }
+    it { assert_prints "tschüß".downcase(Unicode::CaseOptions::Fold), "tschüss" }
+    it { assert_prints "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold), "σίσυφοσfiæ" }
+    it { assert_prints "ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
+    it { assert_prints "Ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
 
     it "does not touch invalid code units in an otherwise ascii string" do
       "\xB5!\xE0\xC1\xB5?".downcase.should eq("\xB5!\xE0\xC1\xB5?")
-    end
-
-    describe "with IO" do
-      it { String.build { |io| "HELLO!".downcase io }.should eq "hello!" }
-      it { String.build { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
-      it { String.build { |io| "ÁÉÍÓÚĀ".downcase io }.should eq "áéíóúā" }
-      it { String.build { |io| "AEIİOU".downcase io, Unicode::CaseOptions::Turkic }.should eq "aeıiou" }
-      it { String.build { |io| "ÁEÍOÚ".downcase io, Unicode::CaseOptions::ASCII }.should eq "ÁeÍoÚ" }
-      it { String.build { |io| "İ".downcase io }.should eq "i̇" }
-      it { String.build { |io| "Baﬄe".downcase io, Unicode::CaseOptions::Fold }.should eq "baffle" }
-      it { String.build { |io| "ﬀ".downcase io, Unicode::CaseOptions::Fold }.should eq "ff" }
-      it { String.build { |io| "tschüß".downcase io, Unicode::CaseOptions::Fold }.should eq "tschüss" }
-      it { String.build { |io| "ΣίσυφοςﬁÆ".downcase io, Unicode::CaseOptions::Fold }.should eq "σίσυφοσfiæ" }
     end
   end
 
@@ -850,8 +839,7 @@ describe "String" do
     it { "\n\t  ".strip.should eq("") }
     it { "\u00A0".strip.should eq("") }
 
-    # TODO: add spec tags so this can be run with tag:slow
-    # it { (" " * 167772160).strip.should eq("") }
+    it(tags: %w[slow]) { (" " * 167772160).strip.should eq("") }
 
     it { "".strip("xyz").should eq("") }
     it { "foobar".strip("").should eq("foobar") }
@@ -2186,34 +2174,22 @@ describe "String" do
   end
 
   describe "#underscore" do
-    it { "Foo".underscore.should eq "foo" }
-    it { "FooBar".underscore.should eq "foo_bar" }
-    it { "ABCde".underscore.should eq "ab_cde" }
-    it { "FOO_bar".underscore.should eq "foo_bar" }
-    it { "Char_S".underscore.should eq "char_s" }
-    it { "Char_".underscore.should eq "char_" }
-    it { "C_".underscore.should eq "c_" }
-    it { "HTTP".underscore.should eq "http" }
-    it { "HTTP_CLIENT".underscore.should eq "http_client" }
-    it { "CSS3".underscore.should eq "css3" }
-    it { "HTTP1.1".underscore.should eq "http1.1" }
-    it { "3.14IsPi".underscore.should eq "3.14_is_pi" }
-    it { "I2C".underscore.should eq "i2_c" }
+    it { assert_prints "Foo".underscore, "foo" }
+    it { assert_prints "FooBar".underscore, "foo_bar" }
+    it { assert_prints "ABCde".underscore, "ab_cde" }
+    it { assert_prints "FOO_bar".underscore, "foo_bar" }
+    it { assert_prints "Char_S".underscore, "char_s" }
+    it { assert_prints "Char_".underscore, "char_" }
+    it { assert_prints "C_".underscore, "c_" }
+    it { assert_prints "HTTP".underscore, "http" }
+    it { assert_prints "HTTP_CLIENT".underscore, "http_client" }
+    it { assert_prints "CSS3".underscore, "css3" }
+    it { assert_prints "HTTP1.1".underscore, "http1.1" }
+    it { assert_prints "3.14IsPi".underscore, "3.14_is_pi" }
+    it { assert_prints "I2C".underscore, "i2_c" }
 
-    describe "with IO" do
-      it { String.build { |io| "Foo".underscore io }.should eq "foo" }
-      it { String.build { |io| "FooBar".underscore io }.should eq "foo_bar" }
-      it { String.build { |io| "ABCde".underscore io }.should eq "ab_cde" }
-      it { String.build { |io| "FOO_bar".underscore io }.should eq "foo_bar" }
-      it { String.build { |io| "Char_S".underscore io }.should eq "char_s" }
-      it { String.build { |io| "Char_".underscore io }.should eq "char_" }
-      it { String.build { |io| "C_".underscore io }.should eq "c_" }
-      it { String.build { |io| "HTTP".underscore io }.should eq "http" }
-      it { String.build { |io| "HTTP_CLIENT".underscore io }.should eq "http_client" }
-      it { String.build { |io| "CSS3".underscore io }.should eq "css3" }
-      it { String.build { |io| "HTTP1.1".underscore io }.should eq "http1.1" }
-      it { String.build { |io| "3.14IsPi".underscore io }.should eq "3.14_is_pi" }
-      it { String.build { |io| "I2C".underscore io }.should eq "i2_c" }
+    it "handles multi-character mappings correctly" do
+      assert_prints "İxİİ0İİxİ0".underscore, "i̇x_i̇i̇0_i̇_i̇x_i̇0"
     end
   end
 
@@ -2468,6 +2444,25 @@ describe "String" do
     end
   end
 
+  describe "match!" do
+    it "returns matchdata" do
+      md = "Crystal".match! /(?<bar>.)(?<foo>.)/
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = "foo".match! /foo/
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { "foo".match! /Crystal/ }
+      expect_raises(NilAssertionError) { $~ }
+    end
+  end
+
   it "does %" do
     ("Hello %d world" % 123).should eq("Hello 123 world")
     ("Hello %d world" % [123]).should eq("Hello 123 world")
@@ -2657,7 +2652,7 @@ describe "String" do
     end
   end
 
-  describe "compare" do
+  describe "#compare" do
     it "compares case-sensitive" do
       "fo".compare("foo").should eq(-1)
       "foo".compare("fo").should eq(1)
@@ -2688,6 +2683,12 @@ describe "String" do
       "".compare("abc", case_insensitive: true).should eq(-1)
       "abc".compare("", case_insensitive: true).should eq(1)
       "abcA".compare("abca", case_insensitive: true).should eq(0)
+    end
+
+    it "compares case-insensitive, multiple chars after case conversion (#4513)" do
+      "ﬄ".compare("ffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "FFL".compare("ﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "sß".compare("ßs", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
     end
 
     it "treats invalid code units as replacement char in an otherwise ascii string" do

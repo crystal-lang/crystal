@@ -198,4 +198,104 @@ lib LibC
     protect : DWORD
     type : DWORD
   end
+
+  IMAGE_NT_SIGNATURE = 0x00004550 # PE00
+
+  struct IMAGE_DOS_HEADER
+    e_magic : WORD
+    e_cblp : WORD
+    e_cp : WORD
+    e_crlc : WORD
+    e_cparhdr : WORD
+    e_minalloc : WORD
+    e_maxalloc : WORD
+    e_ss : WORD
+    e_sp : WORD
+    e_csum : WORD
+    e_ip : WORD
+    e_cs : WORD
+    e_lfarlc : WORD
+    e_ovno : WORD
+    e_res : WORD[4]
+    e_oemid : WORD
+    e_oeminfo : WORD
+    e_res2 : WORD[10]
+    e_lfanew : LONG
+  end
+
+  struct IMAGE_FILE_HEADER
+    machine : WORD
+    numberOfSections : WORD
+    timeDateStamp : DWORD
+    pointerToSymbolTable : DWORD
+    numberOfSymbols : DWORD
+    sizeOfOptionalHeader : WORD
+    characteristics : WORD
+  end
+
+  struct IMAGE_DATA_DIRECTORY
+    virtualAddress : DWORD
+    size : DWORD
+  end
+
+  struct IMAGE_OPTIONAL_HEADER64
+    magic : WORD
+    majorLinkerVersion : BYTE
+    minorLinkerVersion : BYTE
+    sizeOfCode : DWORD
+    sizeOfInitializedData : DWORD
+    sizeOfUninitializedData : DWORD
+    addressOfEntryPoint : DWORD
+    baseOfCode : DWORD
+    imageBase : ULongLong
+    sectionAlignment : DWORD
+    fileAlignment : DWORD
+    majorOperatingSystemVersion : WORD
+    minorOperatingSystemVersion : WORD
+    majorImageVersion : WORD
+    minorImageVersion : WORD
+    majorSubsystemVersion : WORD
+    minorSubsystemVersion : WORD
+    win32VersionValue : DWORD
+    sizeOfImage : DWORD
+    sizeOfHeaders : DWORD
+    checkSum : DWORD
+    subsystem : WORD
+    dllCharacteristics : WORD
+    sizeOfStackReserve : ULongLong
+    sizeOfStackCommit : ULongLong
+    sizeOfHeapReserve : ULongLong
+    sizeOfHeapCommit : ULongLong
+    loaderFlags : DWORD
+    numberOfRvaAndSizes : DWORD
+    dataDirectory : IMAGE_DATA_DIRECTORY[16] # IMAGE_NUMBEROF_DIRECTORY_ENTRIES
+  end
+
+  struct IMAGE_NT_HEADERS64
+    signature : DWORD
+    fileHeader : IMAGE_FILE_HEADER
+    optionalHeader : IMAGE_OPTIONAL_HEADER64
+  end
+
+  struct IMAGE_IMPORT_BY_NAME
+    hint : WORD
+    name : CHAR[1]
+  end
+
+  union IMAGE_THUNK_DATA64_u1
+    forwarderString : ULongLong
+    function : ULongLong
+    ordinal : ULongLong
+    addressOfData : ULongLong
+  end
+
+  struct IMAGE_THUNK_DATA64
+    u1 : IMAGE_THUNK_DATA64_u1
+  end
+
+  IMAGE_ORDINAL_FLAG64 = 0x8000000000000000_u64
+
+  alias IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64
+  alias IMAGE_THUNK_DATA = IMAGE_THUNK_DATA64
+  IMAGE_ORDINAL_FLAG = IMAGE_ORDINAL_FLAG64
 end

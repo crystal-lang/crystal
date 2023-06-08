@@ -88,10 +88,10 @@ module Unicode
   end
 
   # Fold case transformation that involve mapping a codepoint
-  # to multiple codepoints. The maximum transformation is always 4
-  # codepoints, so we store them all as 4 codepoints and 0 means end.
-  private class_getter fold_cases : Hash(Int32, {Int32, Int32, Int32, Int32}) do
-    data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_casefold.size %>)
+  # to multiple codepoints. The maximum transformation is always 3
+  # codepoints, so we store them all as 3 codepoints and 0 means end.
+  private class_getter fold_cases : Hash(Int32, {Int32, Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_casefold.size %>)
     <%- special_cases_casefold.each do |a_case| -%>
       put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
     <%- end -%>

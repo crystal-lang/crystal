@@ -218,7 +218,7 @@ module Crystal
           sequence.version = @io.read_bytes(UInt16)
 
           if sequence.version < 2 || sequence.version > 5
-            raise "unknown line table version: #{sequence.version}"
+            raise "Unknown line table version: #{sequence.version}"
           end
 
           if sequence.version >= 5
@@ -239,14 +239,14 @@ module Crystal
           end
 
           if sequence.maximum_operations_per_instruction == 0
-            raise "invalid maximum operations per instruction: 0"
+            raise "Invalid maximum operations per instruction: 0"
           end
 
           sequence.default_is_stmt = @io.read_byte == 1
           sequence.line_base = @io.read_bytes(Int8).to_i
           sequence.line_range = @io.read_bytes(UInt8).to_i
           if sequence.line_range == 0
-            raise "invalid line range: 0"
+            raise "Invalid line range: 0"
           end
 
           sequence.opcode_base = @io.read_bytes(UInt8).to_i

@@ -1380,7 +1380,7 @@ module Crystal
 
     def type_cast_exception_call(from_type, to_type, node, var_name)
       pieces = [
-        StringLiteral.new("cast from ").at(node),
+        StringLiteral.new("Cast from ").at(node),
         Call.new(Var.new(var_name).at(node), "class").at(node),
         StringLiteral.new(" to #{to_type} failed").at(node),
       ] of ASTNode

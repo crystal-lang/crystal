@@ -362,6 +362,44 @@ class URI
       raw_params.delete(name)
     end
 
+    # Merges *params* into self.
+    #
+    # ```
+    # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # other_params = URI::Params.parse("foo=buzz&foo=extra")
+    # params.merge!(other_params).to_s # => "foo=buzz&foo=extra&qux=zoo"
+    # params.fetch_all("foo")          # => ["buzz", "extra"]
+    # ```
+    #
+    # See `#merge` for a non-mutating alternative
+    def merge!(params : URI::Params, *, replace : Bool = true) : URI::Params
+      if replace
+        @raw_params.merge!(params.raw_params) { |_, _first, second| second.dup }
+      else
+        @raw_params.merge!(params.raw_params) do |_, first, second|
+          first + second
+        end
+      end
+
+      self
+    end
+
+    # Merges *params* and self into a new instance.
+    # If *replace* is `false` values with the same key are concatenated.
+    # Otherwise the value in *params* overrides the one in self.
+    #
+    # ```
+    # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # other_params = URI::Params.parse("foo=buzz&foo=extra")
+    # params.merge(other_params).to_s                 # => "foo=buzz&foo=extra&qux=zoo"
+    # params.merge(other_params, replace: false).to_s # => "foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo"
+    # ```
+    #
+    # See `#merge!` for a mutating alternative
+    def merge(params : URI::Params, *, replace : Bool = true) : URI::Params
+      dup.merge!(params, replace: replace)
+    end
+
     # Serializes to string representation as http url-encoded form.
     #
     # ```

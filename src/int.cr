@@ -369,16 +369,16 @@ struct Int
   def bits(range : Range)
     start_index = range.begin
     if start_index
-      raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
+      raise IndexError.new("Start index (#{start_index}) must be positive") if start_index < 0
     else
       start_index = 0
     end
 
     end_index = range.end
     if end_index
-      raise IndexError.new("end index (#{end_index}) must be positive") if end_index < 0
+      raise IndexError.new("End index (#{end_index}) must be positive") if end_index < 0
       end_index += 1 unless range.exclusive?
-      raise IndexError.new("end index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
+      raise IndexError.new("End index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
     else
       # if there is no end index then we only need to shift
       return self >> start_index

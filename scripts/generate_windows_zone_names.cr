@@ -1,32 +1,24 @@
+#! /usr/bin/env crystal
+#
 # This script generates the file src/crystal/system/win32/zone_names.cr
 # that contains mappings for windows time zone names based on the values
-# found in http://unicode.org/cldr/data/common/supplemental/windowsZones.xml
+# found in https://github.com/unicode-org/cldr/blob/main/common/supplemental/windowsZones.xml
 
 require "http/client"
 require "xml"
 require "../src/compiler/crystal/formatter"
 
-WINDOWS_ZONE_NAMES_SOURCE = "http://unicode.org/cldr/data/common/supplemental/windowsZones.xml"
+WINDOWS_ZONE_NAMES_SOURCE = "https://raw.githubusercontent.com/unicode-org/cldr/main/common/supplemental/windowsZones.xml"
 TARGET_FILE               = File.join(__DIR__, "..", "src", "crystal", "system", "win32", "zone_names.cr")
 
 response = HTTP::Client.get(WINDOWS_ZONE_NAMES_SOURCE)
-
-# Simple redirection resolver
-# TODO: Needs to be replaced by proper redirect handling that should be provided by `HTTP::Client`
-if (300..399).includes?(response.status_code) && (location = response.headers["Location"]?)
-  response = HTTP::Client.get(location)
-end
-
 xml = XML.parse(response.body)
-
 nodes = xml.xpath_nodes("/supplementalData/windowsZones/mapTimezones/mapZone[@territory=001]")
 
-entries = [] of {key: String, zones: {String, String}, tzdata_name: String}
-
-nodes.each do |node|
+entries = nodes.compact_map do |node|
   location = Time::Location.load(node["type"])
   next unless location
-  time = Time.now(location).at_beginning_of_year
+  time = Time.local(location).at_beginning_of_year
   zone1 = time.zone
   zone2 = (time + 6.months).zone
 
@@ -38,20 +30,21 @@ nodes.each do |node|
     zones = {zone1.name, zone2.name}
   end
 
-  entries << {key: node["other"], zones: zones, tzdata_name: location.name}
+  {key: node["other"], zones: zones, tzdata_name: location.name}
 rescue err : Time::Location::InvalidLocationNameError
   pp err
+  nil
 end
 
 # sort by IANA database identifier
 entries.sort_by! &.[:tzdata_name]
 
 hash_items = String.build do |io|
-  entries.each do |entry|
+  entries.join(io, '\n') do |entry|
     entry[:key].inspect(io)
     io << " => "
     entry[:zones].inspect(io)
-    io << ", # " << entry[:tzdata_name] << '\n'
+    io << ", # " << entry[:tzdata_name]
   end
 end
 

@@ -16,5 +16,5 @@ end
 {% elsif flag?(:win32) %}
   require "./win32/fiber"
 {% else %}
-  {% raise "fiber not supported" %}
+  {% raise "Fiber not supported" %}
 {% end %}

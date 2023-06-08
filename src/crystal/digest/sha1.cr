@@ -42,7 +42,7 @@ class Crystal::Digest::SHA1 < ::Digest
       if @length_low == 0
         @length_high &+= 1
         if @length_high == 0
-          raise ArgumentError.new "Crypto.sha1: message too long"
+          raise ArgumentError.new "Message too long"
         end
       end
 

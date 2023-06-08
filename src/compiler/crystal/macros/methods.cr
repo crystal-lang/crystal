@@ -59,6 +59,8 @@ module Crystal
         interpret_parse_type(node)
       when "puts"
         interpret_puts(node)
+      when "print"
+        interpret_print(node)
       when "p", "pp"
         interpret_p(node)
       when "p!", "pp!"
@@ -193,6 +195,18 @@ module Crystal
         last = last.value if last.is_a?(StringLiteral)
 
         @program.stdout.puts last
+      end
+
+      @last = Nop.new
+    end
+
+    def interpret_print(node)
+      node.args.each do |arg|
+        arg.accept self
+        last = @last
+        last = last.value if last.is_a?(StringLiteral)
+
+        @program.stdout.print last
       end
 
       @last = Nop.new

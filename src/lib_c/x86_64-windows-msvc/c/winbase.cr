@@ -12,6 +12,10 @@ lib LibC
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
   FORMAT_MESSAGE_MAX_WIDTH_MASK  = 0x000000FF_u32
 
+  STD_ERROR_HANDLE = 0xFFFFFFF4_u32
+
+  fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
+                     lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
   fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
 
@@ -24,6 +28,10 @@ lib LibC
   fun CreateSymbolicLinkW(lpSymlinkFileName : LPWSTR, lpTargetFileName : LPWSTR, dwFlags : DWORD) : BOOLEAN
   fun CreateNamedPipeA(lpName : LPSTR, dwOpenMode : DWORD, dwPipeMode : DWORD, nMaxInstances : DWORD,
                        nOutBufferSize : DWORD, nInBufferSize : DWORD, nDefaultTimeOut : DWORD, lpSecurityAttributes : SECURITY_ATTRIBUTES*) : HANDLE
+
+  FILE_SKIP_COMPLETION_PORT_ON_SUCCESS = 1_u8
+
+  fun SetFileCompletionNotificationModes(fileHandle : HANDLE, flags : UChar) : BOOL
 
   fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
   fun GetEnvironmentStringsW : LPWCH
