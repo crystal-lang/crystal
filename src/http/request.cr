@@ -87,8 +87,8 @@ class HTTP::Request
   def form_params? : HTTP::Params?
     @form_params ||= begin
       if headers["Content-Type"]? == "application/x-www-form-urlencoded"
-        if _body = body
-          HTTP::Params.parse(_body.gets_to_end)
+        if body = self.body
+          HTTP::Params.parse(body.gets_to_end)
         end
       end
     end
