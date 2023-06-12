@@ -692,10 +692,6 @@ describe "String" do
     end
 
     it "does not touch invalid code units in an otherwise ascii string" do
-      "\xB5!\xE0\xC1\xB5?".capitalize.should eq("\xB5!\xE0\xC1\xB5?")
-    end
-
-    pending "IO overload with invalid code units" do
       assert_prints "\xB5!\xE0\xC1\xB5?".capitalize, "\xB5!\xE0\xC1\xB5?"
     end
   end
@@ -714,11 +710,6 @@ describe "String" do
     end
 
     it "does not touch invalid code units in an otherwise ascii string" do
-      "\xB5!\xE0\xC1\xB5?".titleize.should eq("\xB5!\xE0\xC1\xB5?")
-      "a\xA0b".titleize.should eq("A\xA0b")
-    end
-
-    pending "IO overload with invalid code units" do
       assert_prints "\xB5!\xE0\xC1\xB5?".titleize, "\xB5!\xE0\xC1\xB5?"
       assert_prints "a\xA0b".titleize, "A\xA0b"
     end
