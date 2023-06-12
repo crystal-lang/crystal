@@ -1,5 +1,6 @@
 require "c/stdlib"
 require "c/string"
+require "crystal/small_deque"
 {% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
@@ -3119,6 +3120,7 @@ class String
   # "abcdef".compare("ABCDEG", case_insensitive: true) # => -1
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
+  # "Baﬄe".compare("baffle", case_insensitive: true, options: Unicode::CaseOptions::Fold)   # => 0
   # ```
   #
   # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
@@ -3156,23 +3158,51 @@ class String
     else
       reader1 = Char::Reader.new(self)
       reader2 = Char::Reader.new(other)
-      char1 = reader1.current_char
-      char2 = reader2.current_char
 
-      while reader1.has_next? && reader2.has_next?
-        comparison = char1.downcase(options) <=> char2.downcase(options)
-        return comparison.sign unless comparison == 0
+      # 3 chars maximum for case folding; 2 held in temporary buffers
+      chars1 = Crystal::SmallDeque(Char, 2).new
+      chars2 = Crystal::SmallDeque(Char, 2).new
 
-        char1 = reader1.next_char
-        char2 = reader2.next_char
-      end
+      while true
+        lhs = chars1.shift do
+          next unless reader1.has_next?
+          lhs_ = nil
+          reader1.current_char.downcase(options) do |char|
+            if lhs_
+              chars1 << char
+            else
+              lhs_ = char
+            end
+          end
+          reader1.next_char
+          lhs_
+        end
 
-      if reader1.has_next?
-        1
-      elsif reader2.has_next?
-        -1
-      else
-        0
+        rhs = chars2.shift do
+          next unless reader2.has_next?
+          rhs_ = nil
+          reader2.current_char.downcase(options) do |char|
+            if rhs_
+              chars2 << char
+            else
+              rhs_ = char
+            end
+          end
+          reader2.next_char
+          rhs_
+        end
+
+        case {lhs, rhs}
+        in {Nil, Nil}
+          return 0
+        in {Nil, Char}
+          return -1
+        in {Char, Nil}
+          return 1
+        in {Char, Char}
+          comparison = lhs <=> rhs
+          return comparison.sign unless comparison == 0
+        end
       end
     end
   end
@@ -4235,18 +4265,18 @@ class String
     mem : Char? = nil
 
     each_char do |char|
-      digit = char.ascii_number?
-
-      if options.none?
+      if options.ascii?
+        digit = char.ascii_number?
         downcase = digit || char.ascii_lowercase?
         upcase = char.ascii_uppercase?
       else
+        digit = char.number?
         downcase = digit || char.lowercase?
         upcase = char.uppercase?
       end
 
       if first
-        io << char.downcase(options)
+        char.downcase(options) { |c| io << c }
       elsif last_is_downcase && upcase
         if mem
           # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
@@ -4258,7 +4288,7 @@ class String
         # This is the case of AbcDe, we need to put an underscore before the 'D'
         #                        ^
         io << '_'
-        io << char.downcase(options)
+        char.downcase(options) { |c| io << c }
       elsif (last_is_upcase || last_is_digit) && (upcase || digit)
         # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
         #                          ^         ^           ^
@@ -4268,7 +4298,7 @@ class String
         # 3) we need to append this char as downcase and then a single underscore
         if mem
           # case 2
-          io << mem.downcase(options)
+          mem.downcase(options) { |c| io << c }
         end
         mem = char
       else
@@ -4279,11 +4309,11 @@ class String
             # case 1
             io << '_'
           end
-          io << mem.downcase(options)
+          mem.downcase(options) { |c| io << c }
           mem = nil
         end
 
-        io << char.downcase(options)
+        char.downcase(options) { |c| io << c }
       end
 
       last_is_downcase = downcase
@@ -4292,7 +4322,7 @@ class String
       first = false
     end
 
-    io << mem.downcase(options) if mem
+    mem.downcase(options) { |c| io << c } if mem
   end
 
   # Converts underscores to camelcase boundaries.
@@ -4565,8 +4595,7 @@ class String
     end
   end
 
-  # Finds match of *regex*, starting at *pos*.
-  # It also updates `$~` with the result.
+  # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
   #
   # ```
   # "foo".match(/foo/) # => Regex::MatchData("foo")
@@ -4576,9 +4605,19 @@ class String
   # $~                 # raises Exception
   # ```
   def match(regex : Regex, pos = 0) : Regex::MatchData?
-    match = regex.match self, pos
-    $~ = match
-    match
+    $~ = regex.match self, pos
+  end
+
+  # Finds matches of *regex* starting at *pos* and updates `$~` to the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match!(/foo/) # => Regex::MatchData("foo")
+  # $~                  # => Regex::MatchData("foo")
+  #
+  # "foo".match!(/bar/) # => raises Exception
+  def match!(regex : Regex, pos = 0) : Regex::MatchData
+    $~ = regex.match! self, pos
   end
 
   # Finds match of *regex* like `#match`, but it returns `Bool` value.

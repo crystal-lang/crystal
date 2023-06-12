@@ -20,6 +20,19 @@ module Unicode
     Turkic
 
     # Unicode case folding, which is more far-reaching than Unicode case mapping.
+    #
+    # Note that only full mappings are defined, and calling `Char#downcase` with
+    # this option will return its receiver unchanged if a multiple-character
+    # case folding exists, even if a separate single-character transformation is
+    # also defined in Unicode.
+    #
+    # ```
+    # "ẞ".downcase(Unicode::CaseOptions::Fold) # => "ss"
+    # 'ẞ'.downcase(Unicode::CaseOptions::Fold) # => 'ẞ' # not U+00DF 'ß'
+    #
+    # "ᾈ".downcase(Unicode::CaseOptions::Fold) # => "ἀι"
+    # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) # => "ᾈ" # not U+1F80 'ᾀ'
+    # ```
     Fold
   end
 
@@ -224,9 +237,6 @@ module Unicode
     result = check_downcase_turkic(char, options)
     return result if result
 
-    results = check_downcase_fold(char, options)
-    return results[0].unsafe_chr if results && results.size == 1
-
     check_downcase_ranges(char)
   end
 
@@ -241,12 +251,6 @@ module Unicode
     result = check_downcase_turkic(char, options)
     if result
       yield result
-      return
-    end
-
-    result = check_downcase_fold(char, options)
-    if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
       return
     end
 
@@ -281,16 +285,6 @@ module Unicode
     else
       nil
     end
-  end
-
-  private def self.check_downcase_fold(char, options)
-    if options.fold?
-      result = search_ranges(casefold_ranges, char.ord)
-      return {char.ord + result} if result
-
-      return fold_cases[char.ord]?
-    end
-    nil
   end
 
   private def self.check_downcase_ranges(char)
@@ -348,6 +342,34 @@ module Unicode
     end
 
     yield check_upcase_ranges(char)
+  end
+
+  def self.foldcase(char : Char, options : CaseOptions) : Char
+    results = check_foldcase(char, options)
+    return results[0].unsafe_chr if results && results.size == 1
+
+    char
+  end
+
+  # :nodoc:
+  def self.foldcase(char : Char, options : CaseOptions, &)
+    result = check_foldcase(char, options)
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    yield char
+  end
+
+  private def self.check_foldcase(char, options)
+    if options.fold?
+      result = search_ranges(casefold_ranges, char.ord)
+      return {char.ord + result} if result
+
+      return fold_cases[char.ord]?
+    end
+    nil
   end
 
   # :nodoc:

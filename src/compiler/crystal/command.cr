@@ -331,10 +331,11 @@ class Crystal::Command
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String? do
+    output_format : String?,
+    combine_rpath : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = output_filename.rchop(File.extname(output_filename))
-      compiler.compile sources, output_filename
+      compiler.compile sources, output_filename, combine_rpath: combine_rpath
     end
 
     def top_level_semantic
@@ -548,7 +549,8 @@ class Crystal::Command
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
-    @config = CompilerConfig.new compiler, sources, output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
+    combine_rpath = run && !no_codegen
+    @config = CompilerConfig.new compiler, sources, output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
   end
 
   private def gather_sources(filenames)

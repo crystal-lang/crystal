@@ -16,6 +16,8 @@ describe "Char" do
     it { assert_iterates_yielding ['i', '\u{0307}'], 'İ'.downcase }
     it { assert_iterates_yielding ['s', 's'], 'ß'.downcase(Unicode::CaseOptions::Fold) }
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
+    it { 'ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') }
+    it { 'Ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') }
   end
 
   describe "#titlecase" do

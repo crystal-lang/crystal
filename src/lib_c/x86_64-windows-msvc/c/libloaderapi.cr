@@ -4,7 +4,8 @@ require "c/winnt"
 lib LibC
   alias FARPROC = Void*
 
-  fun LoadLibraryExA(lpLibFileName : LPSTR, hFile : HANDLE, dwFlags : DWORD) : HMODULE
+  LOAD_WITH_ALTERED_SEARCH_PATH = 0x00000008
+
   fun LoadLibraryExW(lpLibFileName : LPWSTR, hFile : HANDLE, dwFlags : DWORD) : HMODULE
   fun FreeLibrary(hLibModule : HMODULE) : BOOL
 
