@@ -345,7 +345,11 @@ struct BigDecimal < Number
     self <=> other.to_big_r
   end
 
-  def <=>(other : Int | Float)
+  def <=>(other : BigFloat) : Int32
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : Int)
     self <=> BigDecimal.new(other)
   end
 
@@ -823,7 +827,7 @@ end
 
 struct BigFloat
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    -(other <=> self)
   end
 end
 

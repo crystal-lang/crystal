@@ -417,6 +417,12 @@ describe BigDecimal do
 
     BigRational.new(1, 3).should be < (1.to_big_d / 3 + BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
     BigRational.new(-1, 3).should be > (-(1.to_big_d / 3) - BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
+
+    (0.5.to_big_d ** 10000).should eq(0.5.to_big_f ** 10000)
+    "5.0123727492064520093e-3011".to_big_d.should be > 0.5.to_big_f ** 10000
+
+    (0.5.to_big_f ** 10000).should eq(0.5.to_big_d ** 10000)
+    (0.5.to_big_f ** 10000).should be < "5.0123727492064520093e-3011".to_big_d
   end
 
   describe "#<=>" do
