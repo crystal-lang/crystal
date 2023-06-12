@@ -335,6 +335,16 @@ struct BigDecimal < Number
     end
   end
 
+  def <=>(other : Float::Primitive) : Int32?
+    return nil if other.nan?
+
+    if sign = other.infinite?
+      return -sign
+    end
+
+    self <=> other.to_big_r
+  end
+
   def <=>(other : Int | Float)
     self <=> BigDecimal.new(other)
   end
@@ -794,7 +804,8 @@ struct Float
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Converts `self` to `BigDecimal`.
@@ -807,6 +818,12 @@ struct Float
   # ```
   def to_big_d : BigDecimal
     BigDecimal.new(self)
+  end
+end
+
+struct BigFloat
+  def <=>(other : BigDecimal)
+    to_big_d <=> other
   end
 end
 
