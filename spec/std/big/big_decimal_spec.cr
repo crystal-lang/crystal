@@ -388,6 +388,20 @@ describe BigDecimal do
 
     BigRational.new(1, 2).should eq(BigDecimal.new("0.5"))
     BigRational.new(1, 4).should eq(BigDecimal.new("0.25"))
+
+    (1.to_big_d / 3).should be < BigRational.new(1, 3)
+    (-(1.to_big_d / 3)).should be > BigRational.new(-1, 3)
+    (-1.to_big_d / 3).should be < BigRational.new(-1, 3)
+
+    BigRational.new(1, 3).should be > 1.to_big_d / 3
+    BigRational.new(-1, 3).should be < -(1.to_big_d / 3)
+    BigRational.new(-1, 3).should be > -1.to_big_d / 3
+
+    (1.to_big_d / 3 + BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION)).should be > BigRational.new(1, 3)
+    (-(1.to_big_d / 3) - BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION)).should be < BigRational.new(-1, 3)
+
+    BigRational.new(1, 3).should be < (1.to_big_d / 3 + BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
+    BigRational.new(-1, 3).should be > (-(1.to_big_d / 3) - BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
   end
 
   it "keeps precision" do

@@ -227,8 +227,9 @@ struct BigDecimal < Number
   # Divides `self` with another `BigDecimal`, with an optionally configurable
   # *precision*.
   #
-  # When the division is inexact, the returned value's scale is never greater
-  # than `scale - other.scale + precision`.
+  # When the division is inexact, the returned value rounds towards negative
+  # infinity, and its scale is never greater than
+  # `scale - other.scale + precision`.
   #
   # ```
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
@@ -325,7 +326,16 @@ struct BigDecimal < Number
     end
   end
 
-  def <=>(other : Int | Float | BigRational)
+  def <=>(other : BigRational) : Int32
+    if @scale == 0
+      @value <=> other
+    else
+      # `@value / power_ten_to(@scale) <=> other.numerator / other.denominator`
+      @value * other.denominator <=> power_ten_to(@scale) * other.numerator
+    end
+  end
+
+  def <=>(other : Int | Float)
     self <=> BigDecimal.new(other)
   end
 
@@ -732,7 +742,7 @@ struct BigDecimal < Number
   end
 
   private def power_ten_to(x : Int) : Int
-    TEN_I ** x
+    x == 1 ? TEN_I : TEN_I ** x
   end
 
   # Factors out any extra powers of ten in the internal representation.
@@ -804,7 +814,7 @@ struct BigRational
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    -(other <=> self)
   end
 
   # Converts `self` to `BigDecimal`.
