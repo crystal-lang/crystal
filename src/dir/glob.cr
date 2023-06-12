@@ -7,15 +7,29 @@ class Dir
 
     # Includes files which have a hidden attribute backed by the native
     # filesystem.
+    #
+    # On Windows, this matches files that have the NTFS hidden attribute set.
+    # This option alone doesn't match files with _both_ the hidden and the
+    # system attributes, `OSHidden` must also be used.
+    #
+    # On other systems, this has no effect.
     NativeHidden
 
     # Includes files which are considered hidden by operating system
     # conventions (apart from `DotFiles`), but not by the filesystem.
     #
-    # On Windows, `NativeHidden | OSHidden` matches files that have both the
-    # hidden and system attributes set.
+    # On Windows, this option alone has no effect. However, combining it with
+    # `NativeHidden` matches files that have both the NTFS hidden and system
+    # attributes set. Note that files with just the system attribute, but not
+    # the hidden attribute, are always matched regardless of this option or
+    # `NativeHidden`.
+    #
+    # On other systems, this has no effect.
     OSHidden
 
+    # Returns a suitable platform-specific default set of options.
+    #
+    # Currently this is always `NativeHidden | OSHidden`.
     def self.default
       NativeHidden | OSHidden
     end
