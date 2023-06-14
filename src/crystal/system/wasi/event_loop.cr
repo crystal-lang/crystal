@@ -33,7 +33,9 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
   end
 end
 
-struct Crystal::Wasi::Event < Crystal::EventLoop::Event
+struct Crystal::Wasi::Event
+  include Crystal::EventLoop::Event
+
   def add(timeout : Time::Span?) : Nil
   end
 
