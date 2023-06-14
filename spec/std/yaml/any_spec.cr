@@ -236,6 +236,26 @@ describe YAML::Any do
         YAML.parse("*foo")
       end
     end
+
+    it "gets yes/no unquoted booleans" do
+      YAML.parse("yes").as_bool.should be_true
+      YAML.parse("no").as_bool.should be_false
+      YAML.parse("'yes'").as_bool?.should be_nil
+      YAML.parse("'no'").as_bool?.should be_nil
+      YAML::Any.from_yaml("yes").as_bool.should be_true
+      YAML::Any.from_yaml("no").as_bool.should be_false
+      YAML::Any.from_yaml("'yes'").as_bool?.should be_nil
+      YAML::Any.from_yaml("'no'").as_bool?.should be_nil
+    end
+
+    it "doesn't get quoted numbers" do
+      YAML.parse("1").as_i64.should eq(1)
+      YAML.parse("'1'").as_i64?.should be_nil
+      YAML.parse("'1'").as_s?.should eq("1")
+      YAML::Any.from_yaml("1").as_i64.should eq(1)
+      YAML::Any.from_yaml("'1'").as_i64?.should be_nil
+      YAML::Any.from_yaml("'1'").as_s?.should eq("1")
+    end
   end
 
   describe "#size" do

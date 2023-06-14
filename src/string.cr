@@ -4371,6 +4371,12 @@ class String
   # "Argentina".reverse # => "anitnegrA"
   # "racecar".reverse   # => "racecar"
   # ```
+  #
+  # Works on Unicode graphemes (and not codepoints) so combining characters are preserved.
+  #
+  # ```
+  # "Noe\u0308l".reverse # => "lëoN"
+  # ```
   def reverse : String
     return self if bytesize <= 1
 
