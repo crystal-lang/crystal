@@ -131,8 +131,8 @@ module Enumerable(T)
   #
   # See also: `Iterator#chunk`.
   def chunks(&block : T -> U) forall U
-    res = [] of Tuple(U, Array(T))
-    chunks_internal(block) { |k, v| res << {k, v} }
+    res = [] of Tuple(typeof(Chunk.key_type(self, block)), Array(T))
+    chunks_internal(block) { |*kv| res << kv }
     res
   end
 
@@ -166,7 +166,6 @@ module Enumerable(T)
       end
 
       def init(key, val)
-        return if key == Drop
         @key = key
 
         if @reuse
@@ -190,33 +189,44 @@ module Enumerable(T)
 
       def same_as?(key) : Bool
         return false unless @initialized
-        return false if key.in?(Alone, Drop)
+        return false if key.is_a?(Alone.class) || key.is_a?(Drop.class)
         @key == key
       end
 
-      def reset
-        @initialized = false
-        @data.clear
+      def acc(key, val, &)
+        if same_as?(key)
+          add(val)
+        else
+          if tuple = fetch
+            yield *tuple
+          end
+
+          init(key, val) unless key.is_a?(Drop.class)
+        end
       end
+    end
+
+    def self.key_type(ary, block)
+      ary.each do |item|
+        key = block.call(item)
+        ::raise "" if key.is_a?(Drop.class)
+        return key
+      end
+      ::raise ""
     end
   end
 
   private def chunks_internal(original_block : T -> U, &) forall U
-    acc = Chunk::Accumulator(T, U).new
+    acc = Chunk::Accumulator(T, typeof(Chunk.key_type(self, original_block))).new
     each do |val|
       key = original_block.call(val)
-      if acc.same_as?(key)
-        acc.add(val)
-      else
-        if tuple = acc.fetch
-          yield(*tuple)
-        end
-        acc.init(key, val)
+      acc.acc(key, val) do |*tuple|
+        yield *tuple
       end
     end
 
     if tuple = acc.fetch
-      yield(*tuple)
+      yield *tuple
     end
   end
 

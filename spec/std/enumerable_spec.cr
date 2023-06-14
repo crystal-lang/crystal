@@ -177,6 +177,7 @@ describe "Enumerable" do
 
     it "drop all" do
       result = [1, 2].chunk { Enumerable::Chunk::Drop }.to_a
+      result.should be_a(Array(Tuple(NoReturn, Array(Int32))))
       result.size.should eq 0
     end
 
@@ -192,14 +193,14 @@ describe "Enumerable" do
 
     it "reuses true" do
       iter = [1, 1, 2, 3, 3].chunk(reuse: true, &.itself)
-      a = iter.next.as(Tuple)
+      a = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       a.should eq({1, [1, 1]})
 
-      b = iter.next.as(Tuple)
+      b = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       b.should eq({2, [2]})
       b[1].should be(a[1])
 
-      c = iter.next.as(Tuple)
+      c = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       c.should eq({3, [3, 3]})
       c[1].should be(a[1])
     end
@@ -239,6 +240,7 @@ describe "Enumerable" do
 
     it "drop all" do
       result = [1, 2].chunks { Enumerable::Chunk::Drop }
+      result.should be_a(Array(Tuple(NoReturn, Array(Int32))))
       result.size.should eq 0
     end
 
