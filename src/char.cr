@@ -400,8 +400,26 @@ struct Char
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
+  #
+  # If `options.fold?` is true, then returns the case-folded equivalent instead.
+  # Note that this will return `self` if a multiple-character case folding
+  # exists, even if a separate single-character transformation is also defined
+  # in Unicode.
+  #
+  # ```
+  # 'Z'.downcase(Unicode::CaseOptions::Fold) # => 'z'
+  # 'x'.downcase(Unicode::CaseOptions::Fold) # => 'x'
+  # 'ς'.downcase(Unicode::CaseOptions::Fold) # => 'σ'
+  # 'ꭰ'.downcase(Unicode::CaseOptions::Fold) # => 'Ꭰ'
+  # 'ẞ'.downcase(Unicode::CaseOptions::Fold) # => 'ẞ' # not U+00DF 'ß'
+  # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) # => "ᾈ" # not U+1F80 'ᾀ'
+  # ```
   def downcase(options : Unicode::CaseOptions = :none) : Char
-    Unicode.downcase(self, options)
+    if options.fold?
+      Unicode.foldcase(self, options)
+    else
+      Unicode.downcase(self, options)
+    end
   end
 
   # Yields each char for the downcase equivalent of this char.
@@ -409,8 +427,19 @@ struct Char
   # This method takes into account the possibility that an downcase
   # version of a char might result in multiple chars, like for
   # 'İ', which results in 'i' and a dot mark.
+  #
+  # ```
+  # 'Z'.downcase { |v| puts v }                             # prints 'z'
+  # 'ς'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 'σ'
+  # 'ẞ'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 's', 's'
+  # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 'ἀ', 'ι'
+  # ```
   def downcase(options : Unicode::CaseOptions = :none, &)
-    Unicode.downcase(self, options) { |char| yield char }
+    if options.fold?
+      Unicode.foldcase(self, options) { |char| yield char }
+    else
+      Unicode.downcase(self, options) { |char| yield char }
+    end
   end
 
   # Returns the upcase equivalent of this char.

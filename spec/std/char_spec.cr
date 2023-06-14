@@ -18,6 +18,8 @@ describe "Char" do
       actual.should eq(['s', 's'])
     end
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
+    it { 'ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') }
+    it { 'Ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') }
   end
 
   it "#succ" do

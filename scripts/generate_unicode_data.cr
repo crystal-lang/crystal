@@ -171,7 +171,7 @@ body.each_line do |line|
     casefold = nil
   end
   if casefold
-    while casefold.size < 4
+    while casefold.size < 3
       casefold << 0
     end
     special_cases_casefold << SpecialCase.new(codepoint, casefold)
