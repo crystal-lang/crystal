@@ -288,9 +288,9 @@ module YAML
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                key:       ((ann && ann[:key]) || ivar).id.stringify,
-                converter: ann && ann[:converter],
-                emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                key:              ((ann && ann[:key]) || ivar).id.stringify,
+                converter:        ann && ann[:converter],
+                emit_null:        (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
                 ignore_serialize: ann && ann[:ignore_serialize],
               }
             %}
