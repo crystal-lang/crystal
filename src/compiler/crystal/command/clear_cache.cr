@@ -22,7 +22,7 @@ class Crystal::Command
       end
 
     end
-    puts "clearing compiler cache at \"#{CacheDir.instance.dir}\"" if verbose
+    puts "Clearing compiler cache at #{CacheDir.instance.dir.inspect}" if verbose
     FileUtils.rm_rf(CacheDir.instance.dir)
   end
 end
