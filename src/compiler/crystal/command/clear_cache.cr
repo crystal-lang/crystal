@@ -2,6 +2,7 @@
 
 class Crystal::Command
   private def clear_cache
+    verbose = false
     OptionParser.parse(@options) do |opts|
       opts.banner = <<-'BANNER'
         Usage: crystal clear_cache
@@ -15,8 +16,13 @@ class Crystal::Command
         puts opts
         exit
       end
+
+      opts.on("-v", "--verbose", "Display detailed information") do
+        verbose = true
+      end
+
     end
-    puts "clearing compiler cache at \"#{CacheDir.instance.dir}\""
+    puts "clearing compiler cache at \"#{CacheDir.instance.dir}\"" if verbose
     FileUtils.rm_rf(CacheDir.instance.dir)
   end
 end
