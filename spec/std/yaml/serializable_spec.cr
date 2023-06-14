@@ -244,6 +244,29 @@ class YAMLAttrWithPresence
   getter? last_name_present : Bool
 end
 
+class YMALAttrWithPresenceAndIgnoreSerialize
+  include YAML::Serializable
+
+  @[YAML::Field(presence: true, ignore_serialize: ignore_first_name?)]
+  property first_name : String?
+
+  @[YAML::Field(presence: true, ignore_serialize: last_name.nil? && !last_name_present?, emit_null: true)]
+  property last_name : String?
+
+  @[YAML::Field(ignore: true)]
+  getter? first_name_present : Bool = false
+
+  @[YAML::Field(ignore: true)]
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
+
+  def ignore_first_name?
+    first_name.nil? || first_name == ""
+  end
+end
+
 class YAMLAttrWithQueryAttributes
   include YAML::Serializable
 
@@ -911,6 +934,48 @@ describe "YAML::Serializable" do
       yaml.first_name_present?.should be_true
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
+    end
+  end
+
+  describe "serializes YMAL with presence markers and ignore_serialize" do
+    context "ignore_serialize is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        yaml = YMALAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"first_name": ""}))
+        yaml.first_name_present?.should be_true
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+
+      it "ignores field when value is nil" do
+        yaml = YMALAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"first_name": null}))
+        yaml.first_name_present?.should be_true
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+    end
+
+    context "ignore_serialize is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        yaml = YMALAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
+        yaml.last_name_present?.should be_true
+        yaml.to_yaml.should eq("---\nlast_name:\n")
+      end
+
+      it "does not emit null when value is null and @last_name_present is false" do
+        yaml = YMALAttrWithPresenceAndIgnoreSerialize.from_yaml(%({}))
+        yaml.last_name_present?.should be_false
+        yaml.to_yaml.should eq("--- {}\n")
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        yaml = YMALAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
+        yaml.last_name_present?.should be_false
+        yaml.to_yaml.should eq("---\nlast_name: something\n")
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        yaml = YMALAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name":"something"}))
+        yaml.last_name_present?.should be_true
+        yaml.to_yaml.should eq("---\nlast_name: something\n")
+      end
     end
   end
 

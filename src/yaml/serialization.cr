@@ -285,12 +285,13 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
                 key:       ((ann && ann[:key]) || ivar).id.stringify,
                 converter: ann && ann[:converter],
                 emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                ignore_serialize: ann && ann[:ignore_serialize],
               }
             %}
           {% end %}
@@ -300,23 +301,30 @@ module YAML
           {% for name, value in properties %}
             _{{name}} = @{{name}}
 
-            {% unless value[:emit_null] %}
-              unless _{{name}}.nil?
+            {% if value[:ignore_serialize] %}
+              unless {{value[:ignore_serialize]}}
             {% end %}
 
-              {{value[:key]}}.to_yaml(yaml)
-
-              {% if value[:converter] %}
-                if _{{name}}
-                  {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
-                else
-                  nil.to_yaml(yaml)
-                end
-              {% else %}
-                _{{name}}.to_yaml(yaml)
+              {% unless value[:emit_null] %}
+                unless _{{name}}.nil?
               {% end %}
 
-            {% unless value[:emit_null] %}
+                {{value[:key]}}.to_yaml(yaml)
+
+                {% if value[:converter] %}
+                  if _{{name}}
+                    {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
+                  else
+                    nil.to_yaml(yaml)
+                  end
+                {% else %}
+                  _{{name}}.to_yaml(yaml)
+                {% end %}
+
+              {% unless value[:emit_null] %}
+                end
+              {% end %}
+            {% if value[:ignore_serialize] %}
               end
             {% end %}
           {% end %}
