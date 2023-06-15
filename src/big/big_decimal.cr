@@ -756,7 +756,7 @@ struct BigDecimal < Number
   end
 
   private def power_ten_to(x : Int) : Int
-    x == 1 ? TEN_I : TEN_I ** x
+    TEN_I ** x
   end
 
   # Factors out any extra powers of ten in the internal representation.

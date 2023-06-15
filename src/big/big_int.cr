@@ -433,8 +433,11 @@ struct BigInt < Int
   def **(other : Int) : BigInt
     if other < 0
       raise ArgumentError.new("Negative exponent isn't supported")
+    elsif other == 1
+      self
+    else
+      BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
     end
-    BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
   # Returns the greatest common divisor of `self` and *other*.
