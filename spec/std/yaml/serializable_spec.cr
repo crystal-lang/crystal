@@ -956,9 +956,15 @@ describe "YAML::Serializable" do
       it "emits null when value is null and @last_name_present is true" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
         yaml.last_name_present?.should be_true
-        yaml.to_yaml.should eq("---\nlast_name:\n")
-      end
 
+        # libyaml 0.2.5 removes traling space for empty scalar nodes
+        if YAML.libyaml_version >= SemanticVersion.new(0, 2, 5)
+          yaml.to_yaml.should eq("---\nlast_name:\n")
+        else
+          yaml.to_yaml.should eq("---\nlast_name: \n")
+        end 
+      end
+      YAML.libyaml_version
       it "does not emit null when value is null and @last_name_present is false" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({}))
         yaml.last_name_present?.should be_false
@@ -968,6 +974,7 @@ describe "YAML::Serializable" do
       it "emits field when value is not nil and @last_name_present is false" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
         yaml.last_name_present?.should be_false
+
         yaml.to_yaml.should eq("---\nlast_name: something\n")
       end
 
