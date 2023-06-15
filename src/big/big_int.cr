@@ -657,9 +657,9 @@ struct BigInt < Int
     end
 
     def to_u{{n}} : UInt{{n}}
-      \{% if Int{{n}} == LibGMP::Long %}
+      \{% if UInt{{n}} == LibGMP::ULong %}
         LibGMP.fits_ulong_p(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
-      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::Long::MAX %}
+      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::ULong::MAX %}
         LibGMP::ULong.new(self).to_u{{n}}
       \{% else %}
         to_primitive_u(UInt{{n}})
@@ -671,9 +671,9 @@ struct BigInt < Int
     end
 
     def to_u{{n}}! : UInt{{n}}
-      \{% if Int{{n}} == LibGMP::Long %}
+      \{% if UInt{{n}} == LibGMP::ULong %}
         LibGMP.get_ui(self) &* sign
-      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::Long::MAX %}
+      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::ULong::MAX %}
         LibGMP::ULong.new!(self).to_u{{n}}!
       \{% else %}
         to_primitive_u!(UInt{{n}})
