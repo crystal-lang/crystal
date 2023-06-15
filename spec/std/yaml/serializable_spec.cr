@@ -956,7 +956,7 @@ describe "YAML::Serializable" do
       it "emits null when value is null and @last_name_present is true" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({"last_name": null}))
         yaml.last_name_present?.should be_true
-        yaml.to_yaml.should eq("---\nlast_name: \n")
+        yaml.to_yaml.should eq("---\nlast_name:\n")
       end
 
       it "does not emit null when value is null and @last_name_present is false" do
