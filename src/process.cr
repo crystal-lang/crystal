@@ -305,10 +305,12 @@ class Process
     end
   end
 
-  # :nodoc:
-  def initialize(pid : LibC::PidT)
-    @process_info = Crystal::System::Process.new(pid)
-  end
+  {% if flag?(:unix) %}
+    # :nodoc:
+    def initialize(pid : LibC::PidT)
+      @process_info = Crystal::System::Process.new(pid)
+    end
+  {% end %}
 
   # Sends *signal* to this process.
   #
