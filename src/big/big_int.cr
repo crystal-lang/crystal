@@ -61,6 +61,8 @@ struct BigInt < Int
       num = num.abs_unsigned
       capacity = (num.bit_length - 1) // (sizeof(LibGMP::MpLimb) * 8) + 1
 
+      # This assumes GMP wasn't built with its experimental nails support:
+      # https://gmplib.org/manual/Low_002dlevel-Functions
       unsafe_build(capacity) do |limbs|
         appender = limbs.to_unsafe.appender
         limbs.size.times do
@@ -83,6 +85,16 @@ struct BigInt < Int
     size, negative = yield Slice.new(limbs, capacity)
     LibGMP.limbs_finish(pointerof(mpz), size * (negative ? -1 : 1))
     new(mpz)
+  end
+
+  # Returns a read-only `Slice` of the limbs that make up this integer, which
+  # is effectively `abs.digits(2 ** N)` where `N` is the number of bits in
+  # `LibGMP::MpLimb`, except that an empty `Slice` is returned for zero.
+  #
+  # This assumes GMP wasn't built with its experimental nails support:
+  # https://gmplib.org/manual/Low_002dlevel-Functions
+  private def limbs
+    Slice.new(LibGMP.limbs_read(self), LibGMP.size(self), read_only: true)
   end
 
   # :ditto:
@@ -621,91 +633,113 @@ struct BigInt < Int
     to_i32
   end
 
-  def to_i8 : Int8
-    to_i32.to_i8
-  end
-
-  def to_i16 : Int16
-    to_i32.to_i16
-  end
-
-  def to_i32 : Int32
-    LibGMP.get_si(self).to_i32
-  end
-
-  def to_i64 : Int64
-    if LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
-      LibGMP.get_si(self).to_i64
-    else
-      to_s.to_i64 { raise OverflowError.new }
-    end
-  end
-
-  def to_i!
+  def to_i! : Int32
     to_i32!
-  end
-
-  def to_i8! : Int8
-    LibGMP.get_si(self).to_i8!
-  end
-
-  def to_i16! : Int16
-    LibGMP.get_si(self).to_i16!
-  end
-
-  def to_i32! : Int32
-    LibGMP.get_si(self).to_i32!
-  end
-
-  def to_i64! : Int64
-    (self % BITS64).to_u64.to_i64!
   end
 
   def to_u : UInt32
     to_u32
   end
 
-  def to_u8 : UInt8
-    to_u32.to_u8
-  end
-
-  def to_u16 : UInt16
-    to_u32.to_u16
-  end
-
-  def to_u32 : UInt32
-    to_u64.to_u32
-  end
-
-  def to_u64 : UInt64
-    if LibGMP::ULong::MIN <= self <= LibGMP::ULong::MAX
-      LibGMP.get_ui(self).to_u64
-    else
-      to_s.to_u64 { raise OverflowError.new }
-    end
-  end
-
-  def to_u!
+  def to_u! : UInt32
     to_u32!
   end
 
-  def to_u8! : UInt8
-    LibGMP.get_ui(self).to_u8!
+  {% for n in [8, 16, 32, 64, 128] %}
+    def to_i{{n}} : Int{{n}}
+      \{% if Int{{n}} == LibGMP::Long %}
+        LibGMP.fits_slong_p(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
+      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::Long::MAX %}
+        LibGMP::Long.new(self).to_i{{n}}
+      \{% else %}
+        to_primitive_i(Int{{n}})
+      \{% end %}
+    end
+
+    def to_u{{n}} : UInt{{n}}
+      \{% if Int{{n}} == LibGMP::Long %}
+        LibGMP.fits_ulong_p(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
+      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::Long::MAX %}
+        LibGMP::ULong.new(self).to_u{{n}}
+      \{% else %}
+        to_primitive_u(UInt{{n}})
+      \{% end %}
+    end
+
+    def to_i{{n}}! : Int{{n}}
+      to_u{{n}}!.to_i{{n}}!
+    end
+
+    def to_u{{n}}! : UInt{{n}}
+      \{% if Int{{n}} == LibGMP::Long %}
+        LibGMP.get_ui(self) &* sign
+      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::Long::MAX %}
+        LibGMP::ULong.new!(self).to_u{{n}}!
+      \{% else %}
+        to_primitive_u!(UInt{{n}})
+      \{% end %}
+    end
+  {% end %}
+
+  private def to_primitive_i(type : T.class) : T forall T
+    self >= 0 ? to_primitive_i_positive(T) : to_primitive_i_negative(T)
   end
 
-  def to_u16! : UInt16
-    LibGMP.get_ui(self).to_u16!
+  private def to_primitive_u(type : T.class) : T forall T
+    self >= 0 ? to_primitive_i_positive(T) : raise OverflowError.new
   end
 
-  def to_u32! : UInt32
-    LibGMP.get_ui(self).to_u32!
+  private def to_primitive_u!(type : T.class) : T forall T
+    limbs = self.limbs
+    max_bits = sizeof(T) * 8
+    bits_per_limb = sizeof(LibGMP::MpLimb) * 8
+
+    x = T.zero
+    limbs.each_with_index do |limb, i|
+      break if i * bits_per_limb >= max_bits
+      x |= T.new!(limb) << (i * bits_per_limb)
+    end
+    x &* sign
   end
 
-  def to_u64! : UInt64
-    (self % BITS64).to_u64
+  private def to_primitive_i_positive(type : T.class) : T forall T
+    limbs = self.limbs
+    bits_per_limb = sizeof(LibGMP::MpLimb) * 8
+
+    highest_limb_index = (sizeof(T) * 8 - 1) // bits_per_limb
+    raise OverflowError.new if limbs.size > highest_limb_index + 1
+    if highest_limb = limbs[highest_limb_index]?
+      mask = LibGMP::MpLimb.new!(T::MAX >> (bits_per_limb * highest_limb_index))
+      raise OverflowError.new if highest_limb > mask
+    end
+
+    x = T.zero
+    preshift_limit = T::MAX >> bits_per_limb
+    limbs.reverse_each do |limb|
+      x <<= bits_per_limb
+      x |= limb
+    end
+    x
   end
 
-  private BITS64 = BigInt.new(1) << 64
+  private def to_primitive_i_negative(type : T.class) : T forall T
+    limbs = self.limbs
+    bits_per_limb = sizeof(LibGMP::MpLimb) * 8
+
+    x = T.zero.abs_unsigned
+    limit = T::MIN.abs_unsigned
+    preshift_limit = limit >> bits_per_limb
+    limbs.reverse_each do |limb|
+      raise OverflowError.new if x > preshift_limit
+      x <<= bits_per_limb
+
+      # precondition: T must be larger than LibGMP::MpLimb, otherwise overflows
+      # like `0_i8 | 256` would happen and `x += limb` should be called instead
+      x |= limb
+      raise OverflowError.new if x > limit
+    end
+    x.neg_signed
+  end
 
   def to_f : Float64
     to_f64
