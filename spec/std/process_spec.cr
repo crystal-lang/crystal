@@ -183,7 +183,7 @@ describe Process do
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
-                  "cmd.exe /c echo %cd%"
+                  "echo %cd%"
                 {% else %}
                   "pwd"
                 {% end %}
@@ -196,7 +196,7 @@ describe Process do
     it "sets working directory with path" do
       parent = Path.new File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
-                  "cmd.exe /c echo %cd%"
+                  "echo %cd%"
                 {% else %}
                   "pwd"
                 {% end %}
@@ -206,30 +206,32 @@ describe Process do
       value.should eq "#{parent}#{newline}"
     end
 
-    pending_win32 "disallows passing arguments to nowhere" do
-      expect_raises ArgumentError, /args.+@/ do
-        Process.run("foo bar", {"baz"}, shell: true)
+    {% unless flag?(:win32) %}
+      it "disallows passing arguments to nowhere" do
+        expect_raises ArgumentError, /args.+@/ do
+          Process.run("foo bar", {"baz"}, shell: true)
+        end
       end
-    end
 
-    pending_win32 "looks up programs in the $PATH with a shell" do
-      proc = Process.run(*exit_code_command(0), shell: true, output: Process::Redirect::Close)
-      proc.exit_code.should eq(0)
-    end
+      it "looks up programs in the $PATH with a shell" do
+        proc = Process.run(*exit_code_command(0), shell: true, output: Process::Redirect::Close)
+        proc.exit_code.should eq(0)
+      end
 
-    pending_win32 "allows passing huge argument lists to a shell" do
-      proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: Process::Redirect::Pipe)
-      output = proc.output.gets_to_end
-      proc.wait
-      output.should eq "a b\n"
-    end
+      it "allows passing huge argument lists to a shell" do
+        proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: Process::Redirect::Pipe)
+        output = proc.output.gets_to_end
+        proc.wait
+        output.should eq "a b\n"
+      end
 
-    pending_win32 "does not run shell code in the argument list" do
-      proc = Process.new("echo", {"`echo hi`"}, shell: true, output: Process::Redirect::Pipe)
-      output = proc.output.gets_to_end
-      proc.wait
-      output.should eq "`echo hi`\n"
-    end
+      it "does not run shell code in the argument list" do
+        proc = Process.new("echo", {"`echo hi`"}, shell: true, output: Process::Redirect::Pipe)
+        output = proc.output.gets_to_end
+        proc.wait
+        output.should eq "`echo hi`\n"
+      end
+    {% end %}
 
     describe "environ" do
       it "clears the environment" do
