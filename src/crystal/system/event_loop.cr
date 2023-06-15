@@ -11,7 +11,7 @@ abstract class Crystal::EventLoop
   # Creates a timeout_event.
   abstract def create_timeout_event(fiber : Fiber) : Event
 
-  abstract struct Event
+  module Event
     # Frees the event.
     abstract def free : Nil
 

@@ -4,6 +4,7 @@ enum AtomicEnum
   One
   Two
   Three
+  Minus = -1
 end
 
 @[Flags]
@@ -126,6 +127,16 @@ describe Atomic do
     atomic.get.should eq(UInt32::MAX)
   end
 
+  it "#max with signed enum" do
+    atomic = Atomic.new(AtomicEnum::Two)
+    atomic.max(AtomicEnum::One).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::Two)
+    atomic.max(AtomicEnum::Three).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::Three)
+    atomic.max(AtomicEnum::Minus).should eq(AtomicEnum::Three)
+    atomic.get.should eq(AtomicEnum::Three)
+  end
+
   it "#min with signed" do
     atomic = Atomic.new(5)
     atomic.min(10).should eq(5)
@@ -140,6 +151,16 @@ describe Atomic do
     atomic.get.should eq(10_u32)
     atomic.min(15_u32).should eq(10_u32)
     atomic.get.should eq(10_u32)
+  end
+
+  it "#min with signed enum" do
+    atomic = Atomic.new(AtomicEnum::Two)
+    atomic.min(AtomicEnum::Three).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::Two)
+    atomic.min(AtomicEnum::One).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::One)
+    atomic.min(AtomicEnum::Minus).should eq(AtomicEnum::One)
+    atomic.get.should eq(AtomicEnum::Minus)
   end
 
   it "#set" do

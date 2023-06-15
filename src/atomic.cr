@@ -47,7 +47,7 @@ struct Atomic(T)
     {% end %}
   end
 
-  # Performs `atomic_value += value`. Returns the old value.
+  # Performs `atomic_value &+= value`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(1)
@@ -58,7 +58,7 @@ struct Atomic(T)
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
   end
 
-  # Performs `atomic_value -= value`. Returns the old value.
+  # Performs `atomic_value &-= value`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(9)
@@ -113,7 +113,7 @@ struct Atomic(T)
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
   end
 
-  # Performs `atomic_value = max(atomic_value, value)`. Returns the old value.
+  # Performs `atomic_value = {atomic_value, value}.max`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -125,14 +125,20 @@ struct Atomic(T)
   # atomic.get     # => 10
   # ```
   def max(value : T)
-    {% if T < Int::Signed %}
+    {% if T < Enum %}
+      if @value.value.is_a?(Int::Signed)
+        Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
+      else
+        Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
+      end
+    {% elsif T < Int::Signed %}
       Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
     {% else %}
       Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
     {% end %}
   end
 
-  # Performs `atomic_value = min(atomic_value, value)`. Returns the old value.
+  # Performs `atomic_value = {atomic_value, value}.min`. Returns the old value.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -144,7 +150,13 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def min(value : T)
-    {% if T < Int::Signed %}
+    {% if T < Enum %}
+      if @value.value.is_a?(Int::Signed)
+        Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
+      else
+        Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)
+      end
+    {% elsif T < Int::Signed %}
       Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
     {% else %}
       Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)

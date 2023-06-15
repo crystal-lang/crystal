@@ -8,6 +8,10 @@ module Crystal::System::Time
   # Returns a list of paths where time zone data should be looked up.
   # def self.zone_sources : Enumerable(String)
 
+  # Loads a time zone by its IANA zone identifier directly. May return `nil` on
+  # systems where tzdata is assumed to be available.
+  # def self.load_iana_zone(iana_name : String) : ::Time::Location?
+
   # Returns the system's current local time zone
   # def self.load_localtime : ::Time::Location?
 end

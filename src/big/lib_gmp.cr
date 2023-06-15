@@ -172,9 +172,6 @@ lib LibGMP
   fun mpq_set_d = __gmpq_set_d(rop : MPQ*, op : Double)
   fun mpq_set_f = __gmpq_set_f(rop : MPQ*, op : MPF*)
 
-  # # Compare
-  fun mpq_cmp = __gmpq_cmp(x : MPQ*, o : MPQ*) : Int32
-
   # # Arithmetic
   fun mpq_add = __gmpq_add(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
   fun mpq_sub = __gmpq_sub(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
@@ -186,6 +183,13 @@ lib LibGMP
 
   fun mpq_div_2exp = __gmpq_div_2exp(q : MPQ*, n : MPQ*, b : BitcntT)
   fun mpq_mul_2exp = __gmpq_mul_2exp(rop : MPQ*, op1 : MPQ*, op2 : BitcntT)
+
+  # # Compare
+  fun mpq_cmp = __gmpq_cmp(op1 : MPQ*, op2 : MPQ*) : Int
+  fun mpq_cmp_z = __gmpq_cmp_z(op1 : MPQ*, op2 : MPZ*) : Int
+  fun mpq_cmp_ui = __gmpq_cmp_ui(op1 : MPQ*, num2 : UI, den2 : UI) : Int
+  fun mpq_cmp_si = __gmpq_cmp_si(op1 : MPQ*, num2 : SI, den2 : SI) : Int
+  fun mpq_equal = __gmpq_equal(op1 : MPQ*, op2 : MPQ*) : Int
 
   # MPF
   struct MPF

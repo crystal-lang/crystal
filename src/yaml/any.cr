@@ -31,7 +31,7 @@ struct YAML::Any
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     case node
     when YAML::Nodes::Scalar
-      new YAML::Schema::Core.parse_scalar(node.value)
+      new YAML::Schema::Core.parse_scalar(node)
     when YAML::Nodes::Sequence
       ary = [] of YAML::Any
 
