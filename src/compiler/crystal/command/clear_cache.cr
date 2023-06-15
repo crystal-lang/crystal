@@ -20,7 +20,6 @@ class Crystal::Command
       opts.on("-v", "--verbose", "Display detailed information") do
         verbose = true
       end
-
     end
     puts "Clearing compiler cache at #{CacheDir.instance.dir.inspect}" if verbose
     FileUtils.rm_rf(CacheDir.instance.dir)
