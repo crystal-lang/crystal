@@ -97,8 +97,24 @@ struct BigRational < Number
     self <=> other.to_big_r
   end
 
-  def <=>(other : Int)
-    LibGMP.mpq_cmp(mpq, other.to_big_r)
+  def <=>(other : Int::Primitive)
+    if LibGMP::SI::MIN <= other <= LibGMP::UI::MAX
+      if other <= LibGMP::SI::MAX
+        LibGMP.mpq_cmp_si(self, LibGMP::SI.new!(other), 1)
+      else
+        LibGMP.mpq_cmp_ui(self, LibGMP::UI.new!(other), 1)
+      end
+    else
+      self <=> other.to_big_i
+    end
+  end
+
+  def <=>(other : BigInt)
+    LibGMP.mpq_cmp_z(self, other)
+  end
+
+  def ==(other : BigRational) : Bool
+    LibGMP.mpq_equal(self, other) != 0
   end
 
   def +(other : BigRational) : BigRational

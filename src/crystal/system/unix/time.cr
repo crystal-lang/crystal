@@ -53,6 +53,10 @@ module Crystal::System::Time
     ZONE_SOURCES
   end
 
+  def self.load_iana_zone(iana_name : String) : ::Time::Location?
+    nil
+  end
+
   def self.load_localtime : ::Time::Location?
     if ::File.file?(LOCALTIME) && ::File.readable?(LOCALTIME)
       ::File.open(LOCALTIME) do |file|

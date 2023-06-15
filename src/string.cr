@@ -5131,7 +5131,14 @@ class String
   # "22hh".ends_with?(/[a-z]{2}/) # => true
   # ```
   def ends_with?(re : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
-    !!($~ = /#{re}\z/.match(self, options: options))
+    if Regex.supports_match_options?(Regex::MatchOptions::ENDANCHORED)
+      result = re.match(self, options: options | Regex::MatchOptions::ENDANCHORED)
+    else
+      # Workaround when ENDANCHORED is unavailable (PCRE).
+      result = /#{re}\z/.match(self, options: options)
+    end
+    $~ = result
+    !!result
   end
 
   # Interpolates *other* into the string using top-level `::sprintf`.
