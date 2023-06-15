@@ -962,7 +962,7 @@ describe "YAML::Serializable" do
           yaml.to_yaml.should eq("---\nlast_name:\n")
         else
           yaml.to_yaml.should eq("---\nlast_name: \n")
-        end 
+        end
       end
       YAML.libyaml_version
       it "does not emit null when value is null and @last_name_present is false" do
@@ -974,7 +974,6 @@ describe "YAML::Serializable" do
       it "emits field when value is not nil and @last_name_present is false" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
         yaml.last_name_present?.should be_false
-
         yaml.to_yaml.should eq("---\nlast_name: something\n")
       end
 
