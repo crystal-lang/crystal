@@ -964,7 +964,6 @@ describe "YAML::Serializable" do
           yaml.to_yaml.should eq("---\nlast_name: \n")
         end
       end
-      YAML.libyaml_version
       it "does not emit null when value is null and @last_name_present is false" do
         yaml = YAMLAttrWithPresenceAndIgnoreSerialize.from_yaml(%({}))
         yaml.last_name_present?.should be_false
