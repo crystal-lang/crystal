@@ -527,7 +527,7 @@ describe "Dir" do
           Dir.glob("#{path}/**/*", match: :none).sort.should eq(expected)
           Dir.glob("#{path}/**/*", match: :native_hidden).sort.should eq(expected_hidden)
           Dir.glob("#{path}/**/*", match: :os_hidden).sort.should eq(expected)
-          Dir.glob("#{path}/**/*", match: Dir::GlobOptions[NativeHidden, OSHidden]).sort.should eq(expected_system_hidden)
+          Dir.glob("#{path}/**/*", match: File::MatchOptions[NativeHidden, OSHidden]).sort.should eq(expected_system_hidden)
         end
       end
     {% end %}

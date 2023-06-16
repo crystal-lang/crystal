@@ -1,59 +1,24 @@
 class Dir
-  # Options used to control which kind of files are returned by `Dir.glob`.
-  @[Flags]
-  enum GlobOptions
-    # Includes files whose name begins with a period (`.`).
-    DotFiles
-
-    # Includes files which have a hidden attribute backed by the native
-    # filesystem.
-    #
-    # On Windows, this matches files that have the NTFS hidden attribute set.
-    # This option alone doesn't match files with _both_ the hidden and the
-    # system attributes, `OSHidden` must also be used.
-    #
-    # On other systems, this has no effect.
-    NativeHidden
-
-    # Includes files which are considered hidden by operating system
-    # conventions (apart from `DotFiles`), but not by the filesystem.
-    #
-    # On Windows, this option alone has no effect. However, combining it with
-    # `NativeHidden` matches files that have both the NTFS hidden and system
-    # attributes set. Note that files with just the system attribute, but not
-    # the hidden attribute, are always matched regardless of this option or
-    # `NativeHidden`.
-    #
-    # On other systems, this has no effect.
-    OSHidden
-
-    # Returns a suitable platform-specific default set of options.
-    #
-    # Currently this is always `NativeHidden | OSHidden`.
-    def self.default
-      NativeHidden | OSHidden
-    end
-  end
-
   # Returns an array of all files that match against any of *patterns*.
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.[](*patterns : Path | String, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+  def self.[](*patterns : Path | String, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
-  def self.[](patterns : Enumerable, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+  def self.[](patterns : Enumerable, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
   #
   # For compatibility, a falsey *match_hidden* argument is equivalent to passing
-  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
-  # `match: GlobOptions::All`.
+  # `match: File::MatchOptions.glob_default`, and a truthy *match_hidden* is
+  # equivalent to
+  # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
   def self.[](*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
@@ -62,8 +27,9 @@ class Dir
   # :ditto:
   #
   # For compatibility, a falsey *match_hidden* argument is equivalent to passing
-  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
-  # `match: GlobOptions::All`.
+  # `match: File::MatchOptions.glob_default`, and a truthy *match_hidden* is
+  # equivalent to
+  # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
   def self.[](patterns : Enumerable, match_hidden, follow_symlinks = false) : Array(String)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
@@ -74,12 +40,12 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns : Path | String, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+  def self.glob(*patterns : Path | String, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     glob(patterns, match: match, follow_symlinks: follow_symlinks)
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false) : Array(String)
+  def self.glob(patterns : Enumerable, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false) : Array(String)
     paths = [] of String
     glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
       paths << path
@@ -90,8 +56,9 @@ class Dir
   # :ditto:
   #
   # For compatibility, a falsey *match_hidden* argument is equivalent to passing
-  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
-  # `match: GlobOptions::All`.
+  # `match: File::MatchOptions.glob_default`, and a truthy *match_hidden* is
+  # equivalent to
+  # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
   def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false) : Array(String)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks)
@@ -100,8 +67,9 @@ class Dir
   # :ditto:
   #
   # For compatibility, a falsey *match_hidden* argument is equivalent to passing
-  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
-  # `match: GlobOptions::All`.
+  # `match: File::MatchOptions.glob_default`, and a truthy *match_hidden* is
+  # equivalent to
+  # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
   def self.glob(patterns : Enumerable, match_hidden, follow_symlinks = false) : Array(String)
     paths = [] of String
@@ -116,14 +84,14 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns : Path | String, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false, &block : String -> _)
+  def self.glob(*patterns : Path | String, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false, &block : String -> _)
     glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable, match : GlobOptions = GlobOptions.default, follow_symlinks : Bool = false, &block : String -> _)
+  def self.glob(patterns : Enumerable, match : File::MatchOptions = File::MatchOptions.glob_default, follow_symlinks : Bool = false, &block : String -> _)
     Globber.glob(patterns, match: match, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
@@ -132,8 +100,9 @@ class Dir
   # :ditto:
   #
   # For compatibility, a falsey *match_hidden* argument is equivalent to passing
-  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
-  # `match: GlobOptions::All`.
+  # `match: File::MatchOptions.glob_default`, and a truthy *match_hidden* is
+  # equivalent to
+  # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
   def self.glob(*patterns : Path | String, match_hidden, follow_symlinks = false, &block : String -> _)
     glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks) do |path|
@@ -144,8 +113,9 @@ class Dir
   # :ditto:
   #
   # For compatibility, a falsey *match_hidden* argument is equivalent to passing
-  # `match: GlobOptions.default`, and a truthy *match_hidden* is equivalent to
-  # `match: GlobOptions::All`.
+  # `match: File::MatchOptions.glob_default`, and a truthy *match_hidden* is
+  # equivalent to
+  # `match: File::MatchOptions.glob_default | File::MatchOptions::DotFiles`.
   @[Deprecated("Use the overload with a `match` parameter instead")]
   def self.glob(patterns : Enumerable, match_hidden, follow_symlinks = false, &block : String -> _)
     Globber.glob(patterns, match: match_hidden_to_options(match_hidden), follow_symlinks: follow_symlinks) do |path|
@@ -154,8 +124,8 @@ class Dir
   end
 
   private def self.match_hidden_to_options(match_hidden)
-    options = GlobOptions.default
-    options |= GlobOptions::DotFiles if match_hidden
+    options = File::MatchOptions.glob_default
+    options |= File::MatchOptions::DotFiles if match_hidden
     options
   end
 
