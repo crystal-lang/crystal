@@ -31,7 +31,7 @@ struct YAML::Any
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     case node
     when YAML::Nodes::Scalar
-      new YAML::Schema::Core.parse_scalar(node.value)
+      new YAML::Schema::Core.parse_scalar(node)
     when YAML::Nodes::Sequence
       ary = [] of YAML::Any
 
@@ -348,7 +348,7 @@ struct YAML::Any
     if raw.responds_to?(:to_json_object_key)
       raw.to_json_object_key
     else
-      raise JSON::Error.new("can't convert #{raw.class} to a JSON object key")
+      raise JSON::Error.new("Can't convert #{raw.class} to a JSON object key")
     end
   end
 end

@@ -32,9 +32,7 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{ flag?(:win32) || flag?(:wasi) }}
-      self.blocking = false
-    end
+    system_blocking_init(blocking)
   end
 
   # :nodoc:
@@ -58,15 +56,13 @@ class IO::FileDescriptor < IO
     self.system_close_on_exec = value
   end
 
-  {% unless flag?(:win32) %}
-    def self.fcntl(fd, cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
+  def self.fcntl(fd, cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
-    def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
-  {% end %}
+  def fcntl(cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
   # Returns a `File::Info` object for this file descriptor, or raises
   # `IO::Error` in case of an error.

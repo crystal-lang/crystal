@@ -20,8 +20,66 @@ class Crystal::Loader
 
   # Parses linker arguments in the style of `link.exe`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
-    libnames = [] of String
+    search_paths, libnames = parse_args(args, search_paths)
     file_paths = [] of String
+
+    begin
+      self.new(search_paths, libnames, file_paths)
+    rescue exc : LoadError
+      exc.args = args
+      exc.search_paths = search_paths
+      raise exc
+    end
+  end
+
+  struct SearchLibResult
+    getter library_paths = [] of String
+    getter remaining_args = [] of String
+    getter(not_found) { [] of String }
+
+    def not_found?
+      @not_found
+    end
+  end
+
+  # Extracts the command-line arguments from *args* that add libraries and
+  # expands them to their absolute paths. Returns a `SearchLibResult` with those
+  # expanded paths, plus unused arguments and libraries that were not found.
+  def self.search_libraries(args : Array(String), *, search_paths : Array(String) = default_search_paths, extra_suffix : String? = nil) : SearchLibResult
+    result = SearchLibResult.new
+    search_paths, libnames = parse_args(args, search_paths, remaining: result.remaining_args)
+
+    libnames.each do |libname|
+      if found_path = search_library(libname, search_paths, extra_suffix)
+        result.library_paths << found_path
+      else
+        result.not_found << libname
+      end
+    end
+
+    result
+  end
+
+  private def self.search_library(libname, search_paths, extra_suffix)
+    if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
+      libname = File.expand_path(libname)
+      library_path = library_filename(libname)
+      return library_path if File.file?(library_path)
+    else
+      search_paths.each do |directory|
+        if extra_suffix
+          library_path = File.join(directory, library_filename(libname + extra_suffix))
+          return library_path if File.file?(library_path)
+        end
+
+        library_path = File.join(directory, library_filename(libname))
+        return library_path if File.file?(library_path)
+      end
+    end
+  end
+
+  def self.parse_args(args, search_paths, *, remaining = nil)
+    libnames = [] of String
 
     # NOTE: `/LIBPATH`s are prepended before the default paths:
     # (https://docs.microsoft.com/en-us/cpp/build/reference/libpath-additional-libpath)
@@ -31,22 +89,20 @@ class Crystal::Loader
     extra_search_paths = [] of String
 
     args.each do |arg|
-      if lib_path = arg.lchop?("/LIBPATH:")
-        extra_search_paths << lib_path
-      elsif !arg.starts_with?('/') && (name = arg.rchop?(".lib"))
+      if !arg.starts_with?('/') && (name = arg.rchop?(".lib"))
         libnames << name
+      else
+        remaining << arg if remaining
+        if lib_path = arg.lchop?("/LIBPATH:")
+          extra_search_paths << lib_path
+        end
       end
     end
 
     search_paths = extra_search_paths + search_paths
-
-    begin
-      self.new(search_paths, libnames, file_paths)
-    rescue exc : LoadError
-      exc.args = args
-      exc.search_paths = search_paths
-      raise exc
-    end
+    search_paths.uniq! &.downcase
+    libnames.uniq! &.downcase
+    {search_paths, libnames}
   end
 
   def self.library_filename(libname : String) : String
@@ -94,6 +150,7 @@ class Crystal::Loader
   end
 
   private def open_library(path : String)
+    # TODO: respect Crystal::LIBRARY_RPATH (#13490)
     LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 

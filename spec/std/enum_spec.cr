@@ -288,6 +288,8 @@ describe Enum do
 
     SpecEnum2.parse("FORTY_FOUR").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("forty_four").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FORTY-FOUR").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("forty-four").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("FortyFour").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("FORTYFOUR").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("fortyfour").should eq(SpecEnum2::FORTY_FOUR)
@@ -301,9 +303,10 @@ describe Enum do
     SpecEnumWithCaseSensitiveMembers.parse("Foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
   end
 
-  it "parses?" do
+  it ".parse?" do
     SpecEnum.parse?("Two").should eq(SpecEnum::Two)
     SpecEnum.parse?("Four").should be_nil
+    SpecEnum.parse?("Fo-ur").should be_nil
   end
 
   it "clones" do

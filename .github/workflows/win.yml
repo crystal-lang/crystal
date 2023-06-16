@@ -4,22 +4,18 @@ on: [push, pull_request]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
-  x86_64-windows:
+  x86_64-windows-libs:
     runs-on: windows-2022
     steps:
       - name: Disable CRLF line ending substitution
         run: |
           git config --global core.autocrlf false
+
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
-
-      - name: Install Crystal
-        uses: crystal-lang/install-crystal@v1
-        with:
-          crystal: "1.7.3"
 
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -38,210 +34,34 @@ jobs:
             libs/mpir.lib
             libs/yaml.lib
             libs/xml2.lib
-          key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}-msvc-${{ env.VSCMD_VER }}
-      - name: Download libgc
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: ivmai/bdwgc
-          ref: v8.2.2
-          path: bdwgc
-      - name: Download libatomic_ops
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: ivmai/libatomic_ops
-          ref: v7.6.14
-          path: bdwgc/libatomic_ops
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./bdwgc
-        run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
-      - name: Download libpcre
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://cs.stanford.edu/pub/exim/pcre/pcre-8.45.zip -OutFile pcre.zip
-          (Get-FileHash -Algorithm SHA256 .\pcre.zip).hash -eq "5b709aa45ea3b8bb73052947200ad187f651a2049158fb5bbfed329e4322a977"
-          7z x pcre.zip
-          mv pcre-* pcre
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2 -AtomicOpsVersion 7.8.0
       - name: Build libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./pcre
-        run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
-      - name: Download libpcre2
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: PCRE2Project/pcre2
-          ref: pcre2-10.42
-          path: pcre2
+        run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45
       - name: Build libpcre2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./pcre2
-        run: |
-          cmake . -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DPCRE2_STATIC_RUNTIME=ON -DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
-      - name: Download libiconv
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: pffang/libiconv-for-Windows
-          ref: 1353455a6c4e15c9db6865fd9c2bf7203b59c0ec # master@{2022-10-11}
-          path: libiconv
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.42
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./libiconv
-        run: |
-          sed -i 's|__declspec (dllimport) ||' libiconv\include\iconv.h
-
-          echo '<Project>
-            <PropertyGroup>
-              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
-            </PropertyGroup>
-          </Project>' > 'Directory.Build.props'
-
-          echo '<Project>
-            <ItemDefinitionGroup>
-              <ClCompile>
-                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-                <DebugInformationFormat>None</DebugInformationFormat>
-                <WholeProgramOptimization>false</WholeProgramOptimization>
-              </ClCompile>
-            </ItemDefinitionGroup>
-          </Project>' > 'Override.props'
-
-          MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
-      - name: Download libffi
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: winlibs/libffi
-          ref: libffi-3.3
-          path: libffi
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./libffi
-        run: |
-          echo '<Project>
-            <PropertyGroup>
-              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
-            </PropertyGroup>
-          </Project>' > 'Directory.Build.props'
-
-          echo '<Project>
-            <ItemDefinitionGroup Label="Configuration">
-              <ClCompile>
-                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-                <DebugInformationFormat>None</DebugInformationFormat>
-                <WholeProgramOptimization>false</WholeProgramOptimization>
-              </ClCompile>
-              <Link>
-                <GenerateDebugInformation>false</GenerateDebugInformation>
-              </Link>
-            </ItemDefinitionGroup>
-          </Project>' > 'Override.props'
-
-          MSBuild.exe /p:PlatformToolset=v143 /p:Platform=x64 /p:Configuration=Release win32\vs16_x64\libffi-msvc.sln -target:libffi:Rebuild
-      - name: Download zlib
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://github.com/madler/zlib/archive/v1.2.13.zip -OutFile zlib.zip
-          (Get-FileHash -Algorithm SHA256 .\zlib.zip).hash -eq "C2856951BBF30E30861ACE3765595D86BA13F2CF01279D901F6C62258C57F4FF"
-          7z x zlib.zip
-          mv zlib-* zlib
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3
       - name: Build zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./zlib
-        run: |
-          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
-      - name: Download mpir
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: BrianGladman/mpir
-          ref: 28d01062f62de1218d511c4574da4006f92be3bd  # master@{2022-10-12}
-          path: mpir
+        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.2.13
       - name: Build mpir
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./mpir
-        run: |
-          $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
-
-          echo '<Project>
-            <PropertyGroup>
-              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
-            </PropertyGroup>
-          </Project>' > 'msvc\Directory.Build.props'
-
-          echo '<Project>
-            <ItemDefinitionGroup Label="Configuration">
-              <ClCompile>
-                <DebugInformationFormat>None</DebugInformationFormat>
-                <WholeProgramOptimization>false</WholeProgramOptimization>
-              </ClCompile>
-            </ItemDefinitionGroup>
-          </Project>' > 'msvc\Override.props'
-
-          MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
-      - name: Download libyaml
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://github.com/yaml/libyaml/archive/0.2.5.zip -OutFile libyaml.zip
-          (Get-FileHash -Algorithm SHA256 .\libyaml.zip).hash -eq "14605BAA6DFC0C4D3AB943A46A627413C0388736E453B67FE4E90C9683C8CBC8"
-          7z x libyaml.zip
-          mv libyaml-* libyaml
+        run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir
       - name: Build libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./libyaml
-        run: |
-          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          cmake --build . --config Release
-      - name: Download libxml2
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: GNOME/libxml2
-          ref: f507d167f1755b7eaea09fb1a44d29aab828b6d1  # v2.10.3
-          path: libxml2
+        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5
       - name: Build libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        working-directory: ./libxml2
-        run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_PROGRAMS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLIBXML2_WITH_ICONV=OFF -DLIBXML2_WITH_LZMA=OFF -DLIBXML2_WITH_PYTHON=OFF -DLIBXML2_WITH_ZLIB=OFF
-
-          echo '<Project>
-            <PropertyGroup>
-              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
-            </PropertyGroup>
-          </Project>' > 'Directory.Build.props'
-
-          echo '<Project>
-            <ItemDefinitionGroup>
-              <ClCompile>
-                <PreprocessorDefinitions>LIBXML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-              </ClCompile>
-            </ItemDefinitionGroup>
-          </Project>' > 'Override.props'
-
-          cmake --build . --config Release
-      - name: Gather libraries
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: |
-          mkdir libs
-          mv pcre/Release/pcre.lib libs/
-          mv pcre2/Release/pcre2-8-static.lib libs/pcre2-8.lib
-          mv libiconv/output/x64/ReleaseStatic/libiconvStatic.lib libs/iconv.lib
-          mv bdwgc/Release/gc.lib libs/
-          mv libffi/win32/vs16_x64/x64/Release/libffi.lib libs/ffi.lib
-          mv zlib/Release/zlibstatic.lib libs/z.lib
-          mv mpir/lib/x64/Release/mpir.lib libs/
-          mv libyaml/Release/yaml.lib libs/
-          mv libxml2/Release/libxml2s.lib libs/xml2.lib
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.11.3
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -251,76 +71,222 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.0.7-msvc-${{ env.VSCMD_VER }}
+          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
-      - name: Download OpenSSL
-        if: steps.cache-openssl.outputs.cache-hit != 'true'
-        run: |
-          iwr https://www.openssl.org/source/openssl-3.0.7.tar.gz -OutFile openssl.tar.gz
-          (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "83049d042a260e696f62406ac5c08bf706fd84383f945cf21bd61e9ed95c396e"
-          7z x openssl.tar.gz
-          7z x openssl.tar
-          mv openssl-* openssl
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        working-directory: ./openssl
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0
+
+  x86_64-windows-dlls:
+    runs-on: windows-2022
+    steps:
+      - name: Disable CRLF line ending substitution
         run: |
-          sed -i 's|/Zi /Fd.*\.pdb||' Configurations/10-main.conf
-          sed -i 's|/debug|/debug:none|' Configurations/10-main.conf
-          perl Configure VC-WIN64A /MT -static no-tests --with-zlib-lib=..\zlib\Release --with-zlib-include=..\zlib
-          nmake
-      - name: Gather OpenSSL
-        if: steps.cache-openssl.outputs.cache-hit != 'true'
-        run: |
-          cp openssl/libcrypto.lib libs/crypto.lib
-          cp openssl/libssl.lib libs/ssl.lib
-          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.7")
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+
+      - name: Cache libraries
+        id: cache-dlls
+        uses: actions/cache@v3
+        with:
+          path: | # openssl and llvm take much longer to build so they are cached separately
+            libs/pcre-dynamic.lib
+            libs/pcre2-8-dynamic.lib
+            libs/iconv-dynamic.lib
+            libs/gc-dynamic.lib
+            libs/ffi-dynamic.lib
+            libs/z-dynamic.lib
+            libs/mpir-dynamic.lib
+            libs/yaml-dynamic.lib
+            libs/xml2-dynamic.lib
+            dlls/pcre.dll
+            dlls/pcre2-8.dll
+            dlls/libiconv.dll
+            dlls/gc.dll
+            dlls/libffi.dll
+            dlls/zlib1.dll
+            dlls/mpir.dll
+            dlls/yaml.dll
+            dlls/libxml2.dll
+          key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+      - name: Build libgc
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2 -AtomicOpsVersion 7.8.0 -Dynamic
+      - name: Build libpcre
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45 -Dynamic
+      - name: Build libpcre2
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.42 -Dynamic
+      - name: Build libiconv
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Dynamic
+      - name: Build libffi
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3 -Dynamic
+      - name: Build zlib
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.2.13 -Dynamic
+      - name: Build mpir
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir -Dynamic
+      - name: Build libyaml
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5 -Dynamic
+      - name: Build libxml2
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.11.3 -Dynamic
+
+      - name: Cache OpenSSL
+        id: cache-openssl-dlls
+        uses: actions/cache@v3
+        with:
+          path: |
+            libs/crypto-dynamic.lib
+            libs/ssl-dynamic.lib
+            dlls/libcrypto-3-x64.dll
+            dlls/libssl-3-x64.dll
+          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+      - name: Set up NASM
+        if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
+        uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
+      - name: Build OpenSSL
+        if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0 -Dynamic
+
+  x86_64-windows-llvm:
+    runs-on: windows-2022
+    steps:
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Cache LLVM
         id: cache-llvm
         uses: actions/cache@v3
         with:
           path: llvm
-          key: llvm-libs-15.0.7-msvc-${{ env.VSCMD_VER }}
+          key: llvm-libs-16.0.3-msvc
+
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/llvm-15.0.7.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "4AD8B2CC8003C86D0078D15D987D84E3A739F24AAE9033865C027ABAE93EE7A4"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.3/llvm-16.0.3.src.tar.xz -OutFile llvm.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "D820E63BC3A6F4F833EC69A1EF49A2E81992E90BC23989F98946914B061AB6C7"
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
+
       - name: Download LLVM's CMake files
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/cmake-15.0.7.src.tar.xz -OutFile cmake.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "8986f29b634fdaa9862eedda78513969fe9788301c9f2d938f4c10a3e7a3e7ea"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.3/cmake-16.0.3.src.tar.xz -OutFile cmake.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "B6D83C91F12757030D8361DEDC5DD84357B3EDB8DA406B5D0850DF8B6F7798B1"
           7z x cmake.tar.xz
           7z x cmake.tar
           mv cmake-* cmake
-      - name: Patch LLVM for VS 2019 16.7.0
-        working-directory: ./llvm-src
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        run: |
-          sed -i 's/#ifdef HAVE_STD_IS_TRIVIALLY_COPYABLE/#if 0/' include/llvm/Support/type_traits.h
+
       - name: Build LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         working-directory: ./llvm-src
         run: |
-          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_BUILD_BENCHMARKS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_ENABLE_ZSTD=OFF
+          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
           cmake --build . --config Release
-      - name: Gather LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)\llvm -P cmake_install.cmake
+
+  x86_64-windows:
+    runs-on: windows-2022
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
+    steps:
+      - name: Disable CRLF line ending substitution
         run: |
-          mv llvm-src/Release llvm
-          mv llvm-src/include llvm/
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.8.2"
+
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+
+      - name: Restore libraries
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/pcre.lib
+            libs/pcre2-8.lib
+            libs/iconv.lib
+            libs/gc.lib
+            libs/ffi.lib
+            libs/z.lib
+            libs/mpir.lib
+            libs/yaml.lib
+            libs/xml2.lib
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/crypto.lib
+            libs/ssl.lib
+            libs/openssl_VERSION
+          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore DLLs
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/pcre-dynamic.lib
+            libs/pcre2-8-dynamic.lib
+            libs/iconv-dynamic.lib
+            libs/gc-dynamic.lib
+            libs/ffi-dynamic.lib
+            libs/z-dynamic.lib
+            libs/mpir-dynamic.lib
+            libs/yaml-dynamic.lib
+            libs/xml2-dynamic.lib
+            dlls/pcre.dll
+            dlls/pcre2-8.dll
+            dlls/libiconv.dll
+            dlls/gc.dll
+            dlls/libffi.dll
+            dlls/zlib1.dll
+            dlls/mpir.dll
+            dlls/yaml.dll
+            dlls/libxml2.dll
+          key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL DLLs
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/crypto-dynamic.lib
+            libs/ssl-dynamic.lib
+            dlls/libcrypto-3-x64.dll
+            dlls/libssl-3-x64.dll
+          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore LLVM
+        uses: actions/cache/restore@v3
+        with:
+          path: llvm
+          key: llvm-libs-16.0.3-msvc
+          fail-on-cache-miss: true
 
       - name: Set up environment
         run: |
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
-          echo "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\.build\crystal.exe" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
 
       - name: Build LLVM extensions
@@ -335,7 +301,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: crystal-lang/shards
-          ref: v0.17.2
+          ref: v0.17.3
           path: shards
 
       - name: Download molinillo release
@@ -356,6 +322,7 @@ jobs:
           cp .build/crystal.exe crystal/
           cp shards/shards.exe crystal/
           cp libs/* crystal/lib/
+          cp dlls/* crystal/
           cp src/* crystal/src -Recurse
           rm crystal/src/llvm/ext/llvm_ext.obj
 
@@ -365,6 +332,39 @@ jobs:
           name: crystal
           path: crystal
 
+  x86_64-windows-test:
+    runs-on: windows-2022
+    needs: [x86_64-windows]
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v3
+        with:
+          name: crystal
+          path: build
+
+      - name: Restore LLVM
+        uses: actions/cache/restore@v3
+        with:
+          path: llvm
+          key: llvm-libs-16.0.3-msvc
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          Add-Content $env:GITHUB_PATH "$(pwd)\build"
+          Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+          Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe"
+
       - name: Run stdlib specs
         run: make -f Makefile.win std_spec
 
@@ -372,4 +372,7 @@ jobs:
         run: make -f Makefile.win compiler_spec
 
       - name: Run primitives specs
-        run: make -f Makefile.win primitives_spec
+        run: make -f Makefile.win -o .build\crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
+
+      - name: Build samples
+        run: make -f Makefile.win samples

@@ -454,8 +454,24 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def eval_macro(node, &)
     yield
+  rescue ex : TopLevelMacroRaiseException
+    # If the node that caused a top level macro raise is a `Call`, it denotes it happened within the context of a macro.
+    # In this case, we want the inner most exception to be the call of the macro itself so that it's the last frame in the trace.
+    # This will make the actual `#raise` method call be the first frame.
+    if node.is_a? Call
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+    end
+
+    # Otherwise, if the current node is _NOT_ a `Call`, it denotes a top level raise within a method.
+    # In this case, we want the same behavior as if it were a `Call`, but do not want to set the inner exception here since that will be handled via `Call#bubbling_exception`.
+    # So just re-raise the exception to keep the original location intact.
+    raise ex
   rescue ex : MacroRaiseException
-    node.raise ex.message, exception_type: MacroRaiseException
+    # Raise another exception on this node, keeping the original as the inner exception.
+    # This will retain the location of the node specific raise as the last frame, while also adding in this node into the trace.
+    #
+    # If the original exception does not have a location, it'll essentially be dropped and this node will take its place as the last frame.
+    node.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
     node.raise "expanding macro", ex
   end

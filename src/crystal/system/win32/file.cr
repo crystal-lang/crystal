@@ -114,7 +114,7 @@ module Crystal::System::File
     WinError::ERROR_INVALID_NAME,
   }
 
-  private def self.check_not_found_error(message, path)
+  def self.check_not_found_error(message, path)
     error = WinError.value
     if NOT_FOUND_ERRORS.includes? error
       nil
@@ -126,16 +126,14 @@ module Crystal::System::File
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     winpath = System.to_wstr(path)
 
-    unless follow_symlinks
-      # First try using GetFileAttributes to check if it's a reparse point
-      file_attributes = uninitialized LibC::WIN32_FILE_ATTRIBUTE_DATA
-      ret = LibC.GetFileAttributesExW(
-        winpath,
-        LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
-        pointerof(file_attributes)
-      )
-      return check_not_found_error("Unable to get file info", path) if ret == 0
-
+    # First try using GetFileAttributes to check if it's a reparse point
+    file_attributes = uninitialized LibC::WIN32_FILE_ATTRIBUTE_DATA
+    ret = LibC.GetFileAttributesExW(
+      winpath,
+      LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
+      pointerof(file_attributes)
+    )
+    if ret != 0
       if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
         # Could be a symlink, retrieve its reparse tag with FindFirstFile
         handle = LibC.FindFirstFileW(winpath, out find_data)
@@ -145,7 +143,10 @@ module Crystal::System::File
           raise RuntimeError.from_winerror("FindClose")
         end
 
-        if find_data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
+        case find_data.dwReserved0
+        when LibC::IO_REPARSE_TAG_SYMLINK
+          return ::File::Info.new(find_data) unless follow_symlinks
+        when LibC::IO_REPARSE_TAG_AF_UNIX
           return ::File::Info.new(find_data)
         end
       end
@@ -164,11 +165,7 @@ module Crystal::System::File
     return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
 
     begin
-      if LibC.GetFileInformationByHandle(handle, out file_info) == 0
-        raise ::File::Error.from_winerror("Unable to get file info", file: path)
-      end
-
-      ::File::Info.new(file_info, LibC::FILE_TYPE_DISK)
+      FileDescriptor.system_info(handle)
     ensure
       LibC.CloseHandle(handle)
     end
@@ -242,13 +239,31 @@ module Crystal::System::File
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    if LibC._wunlink(System.to_wstr(path)) == 0
-      true
-    elsif !raise_on_missing && Errno.value == Errno::ENOENT
-      false
-    else
-      raise ::File::Error.from_errno("Error deleting file", file: path)
+    win_path = System.to_wstr(path)
+
+    attributes = LibC.GetFileAttributesW(win_path)
+    if attributes == LibC::INVALID_FILE_ATTRIBUTES
+      check_not_found_error("Error deleting file", path)
+      raise ::File::Error.from_os_error("Error deleting file", Errno::ENOENT, file: path) if raise_on_missing
+      return false
     end
+
+    # Windows cannot delete read-only files, so we unset the attribute here, but
+    # restore it afterwards if deletion still failed
+    read_only_removed = false
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+      if LibC.SetFileAttributesW(win_path, attributes & ~LibC::FILE_ATTRIBUTE_READONLY) != 0
+        read_only_removed = true
+      end
+    end
+
+    # all reparse point directories should be deleted like a directory, not just
+    # symbolic links, so we don't care about the reparse tag here
+    is_reparse_dir = attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
+    result = is_reparse_dir ? LibC._wrmdir(win_path) : LibC._wunlink(win_path)
+    return true if result == 0
+    LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
+    raise ::File::Error.from_errno("Error deleting file", file: path)
   end
 
   private REALPATH_SYMLINK_LIMIT = 100
@@ -359,7 +374,8 @@ module Crystal::System::File
             end
             return {name, is_relative}
           else
-            raise ::File::Error.new("Not a symlink", file: path)
+            # not a symlink (e.g. IO_REPARSE_TAG_AF_UNIX)
+            return nil
           end
         end
 

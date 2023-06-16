@@ -445,6 +445,24 @@ describe "Array" do
       a[3..] = [4, 5, 6]
       a.should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.pop
+      a[4, 0] = [6]
+      a.should eq([1, 2, 3, 4, 6])
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      a[4, 0] = [6, 7, 8, 9]
+      a.should eq([2, 3, 4, 5, 6, 7, 8, 9])
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(1)
+    end
   end
 
   describe "values_at" do
@@ -539,6 +557,20 @@ describe "Array" do
       a = [] of Int32
       a.concat(1..4)
       a.@capacity.should eq(6)
+    end
+
+    it "concats indexable" do
+      a = [1, 2, 3]
+      a.concat(Slice.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(StaticArray(Int32, 97).new { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(Deque.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
     end
 
     it "concats a union of arrays" do
@@ -2084,7 +2116,9 @@ describe "Array" do
     t = [4, 5, 6, [7, 8]]
     u = [9, [10, 11].each]
     a = [s, t, u, 12, 13]
-    a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result = a.flatten.to_a
+    result.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result.should be_a(Array(Int32))
   end
 
   it "#skip" do

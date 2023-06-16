@@ -12,15 +12,15 @@ describe "Regex" do
 
     describe "options" do
       it "regular" do
-        Regex.new("", Regex::Options::ANCHORED).options.anchored?.should be_true
+        Regex.new("", Regex::CompileOptions::ANCHORED).options.anchored?.should be_true
       end
 
       it "unnamed option" do
         {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-          Regex.new("^/foo$", Regex::Options.new(0x00000020)).matches?("/foo\n").should be_false
+          Regex.new("^/foo$", Regex::CompileOptions.new(0x00000020)).matches?("/foo\n").should be_false
         {% else %}
           expect_raises ArgumentError, "Unknown Regex::Option value: 64" do
-            Regex.new("", Regex::Options.new(0x00000040))
+            Regex.new("", Regex::CompileOptions.new(0x00000040))
           end
         {% end %}
       end
@@ -30,8 +30,16 @@ describe "Regex" do
       expect_raises(ArgumentError, /invalid UTF-8 string|UTF-8 error/) do
         Regex.new("\x96")
       end
-      Regex.new("\x96", :NO_UTF8_CHECK).should be_a(Regex)
+      Regex.new("\x96", :NO_UTF_CHECK).should be_a(Regex)
     end
+  end
+
+  it ".literal" do
+    Regex.literal("foo").should eq /foo/
+    Regex.literal("foo", i: true).should eq /foo/i
+    Regex.literal("foo", i: true, m: true).should eq /foo/im
+    Regex.literal("foo", i: true, m: true, x: true).should eq /foo/imx
+    Regex.literal("foo", x: true).should eq /foo/x
   end
 
   it "#options" do
@@ -97,23 +105,58 @@ describe "Regex" do
       end
     end
 
-    it "with options" do
-      /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
-      /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
+        /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
+      end
+
+      it "Regex::Match options" do
+        /foo/.match(".foo", options: Regex::MatchOptions::ANCHORED).should be_nil
+        /foo/.match("foo", options: Regex::MatchOptions::ANCHORED).should_not be_nil
+      end
     end
 
     it "with invalid UTF-8" do
-      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-        expect_raises(ArgumentError, "UTF-8 error") do
-          /([\w_\.@#\/\*])+/.match("\xFF\xFE")
+      expect_raises(ArgumentError, "UTF-8 error") do
+        /([\w_\.@#\/\*])+/.match("\xFF\xFE")
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        Regex.new("([\\w_\\.@#\\/\\*])+", options: Regex::Options::MATCH_INVALID_UTF).match("\xFF\xFE").should be_nil
+      end
+    end
+
+    it "skip invalid UTF check" do
+      # no exception raised
+      /f.o/.matches?("f\xFFo", options: Regex::MatchOptions::NO_UTF_CHECK)
+    end
+  end
+
+  describe "#match!" do
+    it "returns match data" do
+      md = /(?<bar>.)(?<foo>.)/.match!("Crystal")
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = /foo/.match!("foo")
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { /Crystal/.match!("foo") }
+      expect_raises(NilAssertionError) { $~ }
+    end
+
+    context "with options" do
+      it "Regex::Match options" do
+        expect_raises(Regex::Error, "Match not found") do
+          /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED)
         end
-      {% else %}
-        if Regex::PCRE2.version_number < {10, 35}
-          pending! "Error in libpcre2 < 10.35"
-        else
-          /([\w_\.@#\/\*])+/.match("\xFF\xFE").should be_nil
-        end
-      {% end %}
+      end
     end
   end
 
@@ -147,12 +190,12 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      if Regex::Engine.version_number < {10, 34}
-        expect_raises(ArgumentError, "bad offset into UTF string") do
-          /foo/.match_at_byte_index("öfoo", 1)
-        end
-      else
-        md = /foo/.match_at_byte_index("öfoo", 1).should_not be_nil
+      expect_raises(ArgumentError, "bad offset into UTF string") do
+        /foo/.match_at_byte_index("öfoo", 1)
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        md = Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).match_at_byte_index("öfoo", 1).should_not be_nil
         md.begin.should eq 1
         md.byte_begin.should eq 2
       end
@@ -168,9 +211,16 @@ describe "Regex" do
       /foo/.match_at_byte_index("..foo", -2).should be_nil
     end
 
-    it "with options" do
-      /foo/.match_at_byte_index("..foo", 1, options: Regex::Options::ANCHORED).should be_nil
-      /foo/.match_at_byte_index(".foo", 1, options: Regex::Options::ANCHORED).should_not be_nil
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.match_at_byte_index("..foo", 1, options: Regex::Options::ANCHORED).should be_nil
+        /foo/.match_at_byte_index(".foo", 1, options: Regex::Options::ANCHORED).should_not be_nil
+      end
+
+      it "Regex::MatchOptions" do
+        /foo/.match_at_byte_index("..foo", 1, options: Regex::MatchOptions::ANCHORED).should be_nil
+        /foo/.match_at_byte_index(".foo", 1, options: Regex::MatchOptions::ANCHORED).should_not be_nil
+      end
     end
   end
 
@@ -213,8 +263,8 @@ describe "Regex" do
       end
 
       it "anchored" do
-        Regex.new("foo", Regex::Options::ANCHORED).matches?("foo").should be_true
-        Regex.new("foo", Regex::Options::ANCHORED).matches?(".foo").should be_false
+        Regex.new("foo", Regex::CompileOptions::ANCHORED).matches?("foo").should be_true
+        Regex.new("foo", Regex::CompileOptions::ANCHORED).matches?(".foo").should be_false
       end
     end
 
@@ -232,30 +282,38 @@ describe "Regex" do
       end
 
       it "invalid codepoint" do
-        if Regex::Engine.version_number < {10, 34}
-          expect_raises(ArgumentError, "UTF-8 error") do
-            /foo/.matches?("f\x96o")
-          end
-        else
-          /foo/.matches?("f\x96o").should be_false
-          /f\x96o/.matches?("f\x96o").should be_false
-          /f.o/.matches?("f\x96o").should be_false
-          /\bf\b/.matches?("f\x96o").should be_true
-          /\bo\b/.matches?("f\x96o").should be_true
+        expect_raises(ArgumentError, "UTF-8 error") do
+          /foo/.matches?("f\x96o")
+        end
+
+        if Regex::Engine.version_number >= {10, 36}
+          Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_false
+          Regex.new("f\x96o", options: Regex::CompileOptions::MATCH_INVALID_UTF | Regex::CompileOptions::NO_UTF_CHECK).matches?("f\x96o").should be_false
+          Regex.new("f.o", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_false
+          Regex.new("\\bf\\b", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_true
+          Regex.new("\\bo\\b", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches?("f\x96o").should be_true
         end
       end
     end
 
-    it "with options" do
-      /foo/.matches?(".foo", options: Regex::Options::ANCHORED).should be_false
-      /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.matches?(".foo", options: Regex::Options::ANCHORED).should be_false
+        /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
+      end
+
+      it "Regex::MatchOptions" do
+        /foo/.matches?(".foo", options: Regex::MatchOptions::ANCHORED).should be_false
+        /foo/.matches?("foo", options: Regex::MatchOptions::ANCHORED).should be_true
+      end
     end
 
     it "doesn't crash with a large single line string" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
-        LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
+        jit_enabled = uninitialized LibC::Int
+        LibPCRE.config LibPCRE::CONFIG_JIT, pointerof(jit_enabled)
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
 
         # This match may raise on JIT stack limit or not. If it raises, the error message should be the expected one.
@@ -289,12 +347,12 @@ describe "Regex" do
     end
 
     it "multibyte index" do
-      if Regex::Engine.version_number < {10, 34}
-        expect_raises(ArgumentError, "bad offset into UTF string") do
-          /foo/.matches_at_byte_index?("öfoo", 1)
-        end
-      else
-        /foo/.matches_at_byte_index?("öfoo", 1).should be_true
+      expect_raises(ArgumentError, "bad offset into UTF string") do
+        /foo/.matches_at_byte_index?("öfoo", 1)
+      end
+
+      if Regex::Engine.version_number >= {10, 36}
+        Regex.new("foo", options: Regex::CompileOptions::MATCH_INVALID_UTF).matches_at_byte_index?("öfoo", 1).should be_true
       end
       /foo/.matches_at_byte_index?("öfoo", 2).should be_true
     end
@@ -304,9 +362,16 @@ describe "Regex" do
       /foo/.matches_at_byte_index?("..foo", -2).should be_false
     end
 
-    it "with options" do
-      /foo/.matches_at_byte_index?("..foo", 1, options: Regex::Options::ANCHORED).should be_false
-      /foo/.matches_at_byte_index?(".foo", 1, options: Regex::Options::ANCHORED).should be_true
+    context "with options" do
+      it "deprecated Regex::Options" do
+        /foo/.matches_at_byte_index?("..foo", 1, options: Regex::Options::ANCHORED).should be_false
+        /foo/.matches_at_byte_index?(".foo", 1, options: Regex::Options::ANCHORED).should be_true
+      end
+
+      it "Regex::MatchOptions" do
+        /foo/.matches_at_byte_index?("..foo", 1, options: Regex::MatchOptions::ANCHORED).should be_false
+        /foo/.matches_at_byte_index?(".foo", 1, options: Regex::MatchOptions::ANCHORED).should be_true
+      end
     end
   end
 
@@ -368,6 +433,12 @@ describe "Regex" do
     it "duplicate name" do
       /(?<foo>)(?<foo>)/.name_table.should eq({1 => "foo", 2 => "foo"})
     end
+
+    it "more than 255 groups" do
+      regex = Regex.new(Array.new(1000) { |i| "(?<c#{i}>.)" }.join)
+      name_table = Array.new(1000) { |i| {i + 1, "c#{i}"} }.to_h
+      regex.name_table.should eq(name_table)
+    end
   end
 
   it "#capture_count" do
@@ -410,18 +481,18 @@ describe "Regex" do
   end
 
   it "#==" do
-    regex = Regex.new("foo", Regex::Options::IGNORE_CASE)
-    (regex == Regex.new("foo", Regex::Options::IGNORE_CASE)).should be_true
+    regex = Regex.new("foo", Regex::CompileOptions::IGNORE_CASE)
+    (regex == Regex.new("foo", Regex::CompileOptions::IGNORE_CASE)).should be_true
     (regex == Regex.new("foo")).should be_false
-    (regex == Regex.new("bar", Regex::Options::IGNORE_CASE)).should be_false
+    (regex == Regex.new("bar", Regex::CompileOptions::IGNORE_CASE)).should be_false
     (regex == Regex.new("bar")).should be_false
   end
 
   it "#hash" do
-    hash = Regex.new("foo", Regex::Options::IGNORE_CASE).hash
-    hash.should eq(Regex.new("foo", Regex::Options::IGNORE_CASE).hash)
+    hash = Regex.new("foo", Regex::CompileOptions::IGNORE_CASE).hash
+    hash.should eq(Regex.new("foo", Regex::CompileOptions::IGNORE_CASE).hash)
     hash.should_not eq(Regex.new("foo").hash)
-    hash.should_not eq(Regex.new("bar", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("bar", Regex::CompileOptions::IGNORE_CASE).hash)
     hash.should_not eq(Regex.new("bar").hash)
   end
 
@@ -503,5 +574,15 @@ describe "Regex" do
         "missing ) at 8"
       end
     )
+  end
+
+  it ".supports_compile_options?" do
+    Regex.supports_compile_options?(:anchored).should be_true
+    Regex.supports_compile_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
+  end
+
+  it ".supports_match_options?" do
+    Regex.supports_match_options?(:anchored).should be_true
+    Regex.supports_match_options?(:endanchored).should eq Regex::Engine.version_number >= {10, 0}
   end
 end

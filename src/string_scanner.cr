@@ -91,8 +91,8 @@ class StringScanner
   # s.scan(/\s\w+/) # => " string"
   # s.scan(/.*/)    # => ""
   # ```
-  def scan(pattern) : String?
-    match(pattern, advance: true, options: Regex::Options::ANCHORED)
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options | Regex::MatchOptions::ANCHORED)
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
@@ -107,11 +107,11 @@ class StringScanner
   # s.scan_until(/tr/) # => nil
   # s.scan_until(/g/)  # => "ing"
   # ```
-  def scan_until(pattern) : String?
-    match(pattern, advance: true, options: Regex::Options::None)
+  def scan_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options)
   end
 
-  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
+  private def match(pattern, advance = true, options = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -134,8 +134,8 @@ class StringScanner
   #
   # This method is the same as `#scan`, but without returning the matched
   # string.
-  def skip(pattern) : Int32?
-    match = scan(pattern)
+  def skip(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan(pattern, options: options)
     match.size if match
   end
 
@@ -150,8 +150,8 @@ class StringScanner
   #
   # This method is the same as `#scan_until`, but without returning the matched
   # string.
-  def skip_until(pattern) : Int32?
-    match = scan_until(pattern)
+  def skip_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan_until(pattern, options: options)
     match.size if match
   end
 
@@ -166,8 +166,8 @@ class StringScanner
   # s.check(/\w+/) # => "is"
   # s.check(/\w+/) # => "is"
   # ```
-  def check(pattern) : String?
-    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+  def check(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options | Regex::MatchOptions::ANCHORED)
   end
 
   # Returns the value that `#scan_until` would return, without advancing the
@@ -180,8 +180,8 @@ class StringScanner
   # s.check_until(/tr/) # => "test str"
   # s.check_until(/g/)  # => "test string"
   # ```
-  def check_until(pattern) : String?
-    match(pattern, advance: false, options: Regex::Options::None)
+  def check_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options)
   end
 
   # Returns the *n*-th subgroup in the most recent match.

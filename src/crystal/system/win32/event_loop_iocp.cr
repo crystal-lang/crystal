@@ -22,22 +22,16 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     if iocp.null?
       raise IO::Error.from_winerror("CreateIoCompletionPort")
     end
-    iocp
-  end
-
-  # This is a temporary stub as a stand in for fiber swapping required for concurrency
-  def wait_completion(timeout = nil)
-    result = LibC.GetQueuedCompletionStatusEx(iocp, out io_entry, 1, out removed, timeout, false)
-    if result == 0
-      error = WinError.value
-      if timeout && error.wait_timeout?
-        return false
-      else
-        raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
+    if parent
+      # all overlapped operations may finish synchronously, in which case we do
+      # not reschedule the running fiber; the following call tells Win32 not to
+      # queue an I/O completion packet to the associated IOCP as well, as this
+      # would be done by default
+      if LibC.SetFileCompletionNotificationModes(handle, LibC::FILE_SKIP_COMPLETION_PORT_ON_SUCCESS) == 0
+        raise IO::Error.from_winerror("SetFileCompletionNotificationModes")
       end
     end
-
-    true
+    iocp
   end
 
   # Runs the event loop.
@@ -74,10 +68,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     end
   end
 
-  # Reinitializes the event loop after a fork.
-  def after_fork : Nil
-  end
-
   def enqueue(event : Crystal::Iocp::Event)
     unless @queue.includes?(event)
       @queue << event
@@ -93,22 +83,14 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     Crystal::Iocp::Event.new(fiber)
   end
 
-  # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(Fiber.current)
-  end
-
-  # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(Fiber.current)
-  end
-
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
     Crystal::Iocp::Event.new(fiber, timeout: true)
   end
 end
 
-struct Crystal::Iocp::Event < Crystal::EventLoop::Event
+class Crystal::Iocp::Event
+  include Crystal::EventLoop::Event
+
   getter fiber
   getter wake_at
   getter? timeout

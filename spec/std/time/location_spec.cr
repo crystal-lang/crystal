@@ -33,6 +33,15 @@ class Time::Location
         end
       end
 
+      {% if flag?(:win32) %}
+        it "maps IANA timezone identifier to Windows name (#13166)" do
+          location = Location.load("Europe/Berlin")
+          location.name.should eq "Europe/Berlin"
+          location.utc?.should be_false
+          location.fixed?.should be_false
+        end
+      {% end %}
+
       it "invalid timezone identifier" do
         with_zoneinfo(datapath("zoneinfo")) do
           expect_raises(InvalidLocationNameError, "Foobar/Baz") do
@@ -229,7 +238,9 @@ class Time::Location
             )
             info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
             info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
-            LibC.SetTimeZoneInformation(pointerof(info))
+            if LibC.SetTimeZoneInformation(pointerof(info)) == 0
+              pending! "Unable to set time zone" if WinError.value.error_privilege_not_held?
+            end
 
             location = Location.load_local
             location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]

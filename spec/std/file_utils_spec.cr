@@ -100,15 +100,15 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "copies permissions" do
+    it "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        test_with_string_and_path(src_path, out_path) do |*args|
-          File.write(src_path, "foo")
-          File.chmod(src_path, 0o700)
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
 
+        test_with_string_and_path(src_path, out_path) do |*args|
           FileUtils.cp(*args)
 
-          File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+          File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
           FileUtils.cmp(src_path, out_path).should be_true
 
           FileUtils.rm_rf(out_path)
@@ -239,7 +239,7 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "doesn't follow symlinks" do
+    it "doesn't follow symlinks" do
       with_tempfile("rm_r-removed", "rm_r-linked") do |removed_path, linked_path|
         link_path = File.join(removed_path, "link")
         file_path = File.join(linked_path, "file")
@@ -678,7 +678,7 @@ describe "FileUtils" do
           File.symlink?(path2).should be_true
 
           expect_raises(File::NotFoundError, "Error resolving real path: '#{path2.inspect_unquoted}'") do
-            File.real_path(path2)
+            File.realpath(path2)
           end
           FileUtils.rm_rf(path2)
         end

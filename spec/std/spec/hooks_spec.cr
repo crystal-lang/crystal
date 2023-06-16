@@ -2,7 +2,7 @@ require "./spec_helper"
 
 describe Spec do
   describe "hooks" do
-    it "runs in correct order" do
+    it "runs in correct order", tags: %w[slow] do
       compile_and_run_source(<<-CRYSTAL, flags: %w(--no-debug))[1].lines[..-5].should eq <<-OUT.lines
         require "prelude"
         require "spec"

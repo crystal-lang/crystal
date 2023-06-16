@@ -277,16 +277,15 @@ module Iterator(T)
     end
 
     def next
-      if @iterator1_consumed
-        @iterator2.next
-      else
+      unless @iterator1_consumed
         value = @iterator1.next
         if value.is_a?(Stop)
           @iterator1_consumed = true
-          value = @iterator2.next
+        else
+          return value
         end
-        value
       end
+      @iterator2.next
     end
   end
 
@@ -1456,21 +1455,22 @@ module Iterator(T)
   #
   # See also: `Enumerable#chunks`.
   def chunk(reuse = false, &block : T -> U) forall T, U
-    ChunkIterator(typeof(self), T, U).new(self, reuse, &block)
+    ChunkIterator(typeof(self), T, U, typeof(::Enumerable::Chunk.key_type(self, block))).new(self, reuse, &block)
   end
 
-  private class ChunkIterator(I, T, U)
-    include Iterator(Tuple(U, Array(T)))
+  private class ChunkIterator(I, T, U, V)
+    include Iterator(Tuple(V, Array(T)))
     @iterator : I
-    @init : {U, T}?
+    @init : {V, T}?
 
     def initialize(@iterator : Iterator(T), reuse, &@original_block : T -> U)
-      @acc = Enumerable::Chunk::Accumulator(T, U).new(reuse)
+      @acc = ::Enumerable::Chunk::Accumulator(T, V).new(reuse)
     end
 
     def next
       if init = @init
-        @acc.init(*init)
+        k, v = init
+        @acc.init(k, v)
         @init = nil
       end
 
@@ -1482,10 +1482,10 @@ module Iterator(T)
         else
           tuple = @acc.fetch
           if tuple
-            @init = {key, val}
+            @init = {key, val} unless key.is_a?(::Enumerable::Chunk::Drop.class)
             return tuple
           else
-            @acc.init(key, val)
+            @acc.init(key, val) unless key.is_a?(::Enumerable::Chunk::Drop.class)
           end
         end
       end
@@ -1493,13 +1493,8 @@ module Iterator(T)
       if tuple = @acc.fetch
         return tuple
       end
-      stop
-    end
 
-    private def init_state
-      @init = nil
-      @acc.reset
-      self
+      stop
     end
   end
 

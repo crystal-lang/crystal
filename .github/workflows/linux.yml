@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
   TRAVIS_OS_NAME: linux
@@ -28,6 +28,8 @@ jobs:
           - crystal_bootstrap_version: 1.1.1
             flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
           - crystal_bootstrap_version: 1.7.3
+            flags: ""
+          - crystal_bootstrap_version: 1.8.2
             flags: ""
     steps:
       - name: Download Crystal source

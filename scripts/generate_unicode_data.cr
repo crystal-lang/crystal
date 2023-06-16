@@ -171,7 +171,7 @@ body.each_line do |line|
     casefold = nil
   end
   if casefold
-    while casefold.size < 4
+    while casefold.size < 3
       casefold << 0
     end
     special_cases_casefold << SpecialCase.new(codepoint, casefold)
@@ -296,7 +296,7 @@ canonical_combining_classes.sort_by! &.low
 canonical_decompositions = entries.compact_map do |entry|
   next unless entry.decomposition_type.canonical?
   mapping = entry.decomposition_mapping.not_nil!
-  raise "BUG: mapping longer than 2 codepoints" unless mapping.size <= 2
+  raise "BUG: Mapping longer than 2 codepoints" unless mapping.size <= 2
   {entry.codepoint, mapping[0], mapping[1]? || 0}
 end
 

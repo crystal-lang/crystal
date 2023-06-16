@@ -1,3 +1,5 @@
+all:
+
 -include Makefile.local # for optional local options e.g. threads
 
 # Recipes for this Makefile
@@ -28,6 +30,7 @@ debug ?=        ## Add symbolic debug info
 verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
+target ?=       ## Cross-compilation target
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
 order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
@@ -39,9 +42,9 @@ override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(releas
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
-CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
+CRYSTAL_CONFIG_BUILD_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
-SOURCE_DATE_EPOCH := $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
+SOURCE_DATE_EPOCH ?= $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
 ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
 endif
@@ -101,6 +104,10 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 .PHONY: primitives_spec
 primitives_spec: $(O)/primitives_spec ## Run primitives specs
 	$(O)/primitives_spec $(SPEC_FLAGS)
+
+.PHONY: interpreter_spec
+interpreter_spec: $(O)/interpreter_spec ## Run interpreter specs
+	$(O)/interpreter_spec $(SPEC_FLAGS)
 
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
@@ -193,6 +200,11 @@ $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
+
+$(O)/interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+	$(eval interpreter=1)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	$(call check_llvm_config)

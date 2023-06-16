@@ -209,7 +209,7 @@ struct Crystal::System::Process
 
       if args
         unless command.includes?(%("${@}"))
-          raise ArgumentError.new(%(can't specify arguments in both command and args without including "${@}" into your command))
+          raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
 
         {% if flag?(:freebsd) || flag?(:dragonfly) %}
@@ -257,7 +257,7 @@ struct Crystal::System::Process
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
     case errno
-    when Errno::EACCES, Errno::ENOENT
+    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
       raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
