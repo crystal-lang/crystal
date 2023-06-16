@@ -187,7 +187,7 @@ struct Atomic(T)
   # ```
   def swap(value : T)
     {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
-      address = Ops.atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(T).object_id), :sequentially_consistent, false)
+      address = Ops.atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), :sequentially_consistent, false)
       Pointer(T).new(address).as(T)
     {% else %}
       Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
