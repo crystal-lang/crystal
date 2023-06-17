@@ -501,66 +501,6 @@ module Base64
     LibC::SizeT.new!(in_ptr - in_ptr_orig)
   end
 
-  # Processes the given data and yields each byte.
-  private def from_base64(data : Bytes, &block : UInt8 -> Nil)
-    size = data.size
-    bytes = data.to_unsafe
-    bytes_begin = bytes
-
-    # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
-    while (size > 0) && (sym = bytes[size - 1]) && sym.in?(NL, NR, PAD)
-      size -= 1
-    end
-
-    # Process combinations of four characters until there aren't any left
-    fin = bytes + size - 4
-    while true
-      break if bytes > fin
-
-      # Move the pointer by one byte until there is a valid base64 character
-      while bytes.value.in?(NL, NR)
-        bytes += 1
-      end
-      break if bytes > fin
-
-      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], bytes[3], chunk_pos: bytes - bytes_begin)
-      bytes += 4
-    end
-
-    # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
-    while (bytes < fin + 4) && bytes.value.in?(NL, NR)
-      bytes += 1
-    end
-
-    # If the amount of base64 characters is not divisible by 4, the remainder of the previous loop is handled here
-    unread_bytes = (fin - bytes) % 4
-    case unread_bytes
-    when 1
-      raise Base64::Error.new("Wrong size")
-    when 2
-      yield_decoded_chunk_bytes(bytes[0], bytes[1], chunk_pos: bytes - bytes_begin)
-    when 3
-      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], chunk_pos: bytes - bytes_begin)
-    end
-  end
-
-  # This macro decodes the given chunk of (2-4) base64 characters.
-  # The argument chunk_pos is only used for the resulting error message.
-  # The resulting bytes are then each yielded.
-  private macro yield_decoded_chunk_bytes(*bytes, chunk_pos)
-    %buffer = 0_u32
-    {% for byte, i in bytes %}
-      %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
-      %buffer = (%buffer << 6) + %decoded
-      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded >= 0x40_u8
-    {% end %}
-
-    # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8
-    {% for i in 2..(bytes.size) %}
-      yield (%buffer >> {{ (4 - bytes.size) * 2 + (8 * (bytes.size - i)) }}).to_u8!
-    {% end %}
-  end
-
   # The lookup table used for decoding the base64 bytes.
   #
   # The individual bytes inside the table are structured as follows:
