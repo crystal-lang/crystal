@@ -254,6 +254,89 @@ module Base64
     total_written_bytes
   end
 
+  # Writes the base64-decoded version of `from` into `to`.
+  #
+  # Raises `Base64::Error` if the input is invalid base64.
+  #
+  # This will decode either the normal or urlsafe alphabets.
+  def decode(from : IO, to : IO) : Nil
+    # Here the same buffer is used for in- and output.
+    buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+    in_ptr = buffer.to_unsafe
+    in_size = 0
+    in_offset = 0
+
+    while true
+      # Move still-present data inside the buffer to the beginning
+      if in_size > 0 && in_offset > 0
+        Intrinsics.memmove(buffer.to_unsafe, buffer.to_unsafe + in_offset, in_size, false)
+      end
+
+      # Fill the buffer
+      bytes_copied = from.read(Slice.new(buffer.to_unsafe + in_size, buffer.size - in_size))
+      in_size += bytes_copied
+
+      # It is possible that an IO implementation could read less than 4 bytes into the buffer,
+      # in which case the IO has not necessarily reached EOF (but decode_buffer_regular requires 4 bytes).
+      if in_size < 4
+        break if bytes_copied == 0
+        next
+      end
+
+      read_bytes, written_bytes = decode_buffer_regular(buffer.to_unsafe, LibC::SizeT.new!(in_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      in_offset = read_bytes
+      in_size &-= read_bytes
+      break if read_bytes == 0
+
+      to.write(Bytes.new(buffer.to_unsafe, written_bytes))
+    end
+
+    while true
+      # Move still-present data inside the buffer to the beginning
+      if in_size > 0 && in_offset > 0
+        Intrinsics.memmove(buffer.to_unsafe, buffer.to_unsafe + in_offset, in_size, false)
+      end
+
+      # Fill the buffer
+      bytes_copied = from.read(Slice.new(buffer.to_unsafe + in_size, buffer.size - in_size))
+      in_size += bytes_copied
+
+      # It is possible that an IO implementation could read less than 4 bytes into the buffer,
+      # in which case the IO has not necessarily reached EOF (but decode_buffer_final wants 4 bytes).
+      if in_size < 4
+        break if in_size == 0
+        next unless bytes_copied == 0
+      end
+
+      read_bytes, written_bytes = decode_buffer_final(buffer.to_unsafe, LibC::SizeT.new!(in_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      raise Base64::Error.new("Expected EOF but found non-decodable characters") if read_bytes == 0
+
+      in_offset = read_bytes
+      in_size &-= read_bytes
+      to.write(Bytes.new(buffer.to_unsafe, written_bytes))
+      break if written_bytes > 0
+    end
+
+    while true
+      # Move still-present data inside the buffer to the beginning
+      if in_size > 0 && in_offset > 0
+        Intrinsics.memmove(buffer.to_unsafe, buffer.to_unsafe + in_offset, in_size, false)
+      end
+
+      # Fill the buffer
+      bytes_copied = from.read(Slice.new(buffer.to_unsafe + in_size, buffer.size - in_size))
+      in_size += bytes_copied
+      break if in_size == 0
+
+      read_bytes = consume_buffer_garbage(buffer.to_unsafe, LibC::SizeT.new!(in_size))
+      raise Base64::Error.new("Expected EOF but found non-decodable characters") if read_bytes != in_size
+      in_offset = read_bytes
+      in_size &-= read_bytes
+    end
+
+    to.flush
+  end
+
   # Returns the base64-decoded version of *data* as a string.
   # This will decode either the normal or urlsafe alphabets.
   def decode_string(data) : String
