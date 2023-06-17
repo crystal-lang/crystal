@@ -172,7 +172,7 @@ module Base64
     to_ptr = to.to_unsafe
     to_size = to.size
 
-    read_bytes, written_bytes = decode_buffer_regular(from_ptr, LibC::SizeT.new!(from_size), to_ptr, LibC::SizeT.new!(to_size))
+    read_bytes, written_bytes = decode_buffer_regular(from_ptr, from_size, to_ptr, to_size)
     total_written_bytes += written_bytes
     total_read_bytes += read_bytes
     from_ptr += read_bytes
@@ -181,7 +181,7 @@ module Base64
     to_size &-= written_bytes
 
     if from_size > 0
-      read_bytes, written_bytes = decode_buffer_final(from_ptr, LibC::SizeT.new!(from_size), to_ptr, LibC::SizeT.new!(to_size))
+      read_bytes, written_bytes = decode_buffer_final(from_ptr, from_size, to_ptr, to_size)
       total_written_bytes += written_bytes
       total_read_bytes += read_bytes
 
@@ -227,7 +227,7 @@ module Base64
     buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
 
     while true
-      read_bytes, written_bytes = decode_buffer_regular(data_ptr, LibC::SizeT.new!(data_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      read_bytes, written_bytes = decode_buffer_regular(data_ptr, data_size, buffer.to_unsafe, buffer.size)
       total_written_bytes &+= written_bytes
       total_read_bytes &+= read_bytes
 
@@ -239,7 +239,7 @@ module Base64
     end
 
     if data_size > 0
-      read_bytes, written_bytes = decode_buffer_final(data_ptr, LibC::SizeT.new!(data_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      read_bytes, written_bytes = decode_buffer_final(data_ptr, data_size, buffer.to_unsafe, buffer.size)
       total_written_bytes &+= written_bytes
       total_read_bytes &+= read_bytes
 
@@ -283,7 +283,7 @@ module Base64
         next
       end
 
-      read_bytes, written_bytes = decode_buffer_regular(buffer.to_unsafe, LibC::SizeT.new!(in_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      read_bytes, written_bytes = decode_buffer_regular(buffer.to_unsafe, in_size, buffer.to_unsafe, buffer.size)
       in_offset = read_bytes
       in_size &-= read_bytes
       break if read_bytes == 0
@@ -308,7 +308,7 @@ module Base64
         next unless bytes_copied == 0
       end
 
-      read_bytes, written_bytes = decode_buffer_final(buffer.to_unsafe, LibC::SizeT.new!(in_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      read_bytes, written_bytes = decode_buffer_final(buffer.to_unsafe, in_size, buffer.to_unsafe, buffer.size)
       raise Base64::Error.new("Expected EOF but found non-decodable characters") if read_bytes == 0
 
       in_offset = read_bytes
@@ -328,7 +328,7 @@ module Base64
       in_size += bytes_copied
       break if in_size == 0
 
-      read_bytes = consume_buffer_garbage(buffer.to_unsafe, LibC::SizeT.new!(in_size))
+      read_bytes = consume_buffer_garbage(buffer.to_unsafe, in_size)
       raise Base64::Error.new("Expected EOF but found non-decodable characters") if read_bytes != in_size
       in_offset = read_bytes
       in_size &-= read_bytes
@@ -420,13 +420,13 @@ module Base64
   #
   # NOTE: This method expects the buffer used for decoding to fit at least four bytes.
   #       If the given buffer contains less than four bytes, this method will return without decoding.
-  private def decode_buffer_regular(in_ptr : UInt8*, in_size : LibC::SizeT, out_ptr : UInt8*, out_size : LibC::SizeT) : Tuple(LibC::SizeT, LibC::SizeT)
+  private def decode_buffer_regular(in_ptr : UInt8*, in_size : Int32, out_ptr : UInt8*, out_size : Int32) : Tuple(Int32, Int32)
     in_ptr_orig : UInt8* = in_ptr
     out_ptr_orig : UInt8* = out_ptr
-    in_ptr_end : UInt8* = in_ptr + (LibC::SSizeT.new(in_size) &- 4)
-    out_ptr_end : UInt8* = out_ptr + (LibC::SSizeT.new(out_size) &- 3)
+    in_ptr_end : UInt8* = in_ptr + (Int64.new!(in_size) &- 4)
+    out_ptr_end : UInt8* = out_ptr + (Int64.new!(out_size) &- 3)
 
-    out_pos : LibC::SizeT = 0
+    out_pos : Int32 = 0
     decode_ptr : UInt8* = DECODE_TABLE.to_unsafe
 
     while true
@@ -474,7 +474,7 @@ module Base64
       out_ptr += 1
     end
 
-    {LibC::SizeT.new!(in_ptr - in_ptr_orig), LibC::SizeT.new!(out_ptr - out_ptr_orig)}
+    {Int32.new!(in_ptr - in_ptr_orig), Int32.new!(out_ptr - out_ptr_orig)}
   end
 
   # Decodes base64 data from the `in` buffer and writes it into the `out` buffer.
@@ -496,8 +496,8 @@ module Base64
   #       all decodable characters if there is no padding before it.
   #       If the given buffer contains only a part of the last chunk without padding,
   #       either an error is thrown or the output is cut off.
-  private def decode_buffer_final(in_ptr : UInt8*, in_size : LibC::SizeT, out_ptr : UInt8*, out_size : LibC::SizeT) : Tuple(LibC::SizeT, LibC::SizeT)
-    in_pos : LibC::SizeT = 0
+  private def decode_buffer_final(in_ptr : UInt8*, in_size : Int32, out_ptr : UInt8*, out_size : Int32) : Tuple(Int32, Int32)
+    in_pos : Int32 = 0
     decode_ptr : UInt8* = DECODE_TABLE.to_unsafe
 
     # Move the pointer by one byte until there is a valid base64 character
@@ -505,7 +505,7 @@ module Base64
       in_pos &+= 1
     end
 
-    return {in_pos, LibC::SizeT::MIN} if in_size == in_pos
+    return {in_pos, 0} if in_size == in_pos
     raise Base64::Error.new("Invalid base64 chunk") if in_size &- in_pos == 1
 
     chunk : UInt32 = 0
@@ -545,7 +545,7 @@ module Base64
 
     raise Base64::Error.new("Invalid base64 chunk") if bytes_state >= 0x80_u8
 
-    return {LibC::SizeT::MIN, LibC::SizeT::MIN} if write_count > out_size
+    return {0, 0} if write_count > out_size
 
     # Write resulting bytes
     out_ptr.value = (chunk >> 16).to_u8!
@@ -564,7 +564,7 @@ module Base64
       in_pos &+= 1
     end
 
-    {in_pos, LibC::SizeT.new!(write_count)}
+    {in_pos, write_count.to_i32!}
   end
 
   # Reads any allowed padding characters from the given buffer.
@@ -572,7 +572,7 @@ module Base64
   # If the amount of bytes read from the buffer does not equal
   # the amount of bytes in the given buffer,
   # a character in the buffer is not allowed at this position.
-  private def consume_buffer_garbage(in_ptr : UInt8*, in_size : LibC::SizeT) : LibC::SizeT
+  private def consume_buffer_garbage(in_ptr : UInt8*, in_size : Int32) : Int32
     in_ptr_orig : UInt8* = in_ptr
     in_ptr_end : UInt8* = in_ptr + in_size
 
@@ -581,7 +581,7 @@ module Base64
       in_ptr += 1
     end
 
-    LibC::SizeT.new!(in_ptr - in_ptr_orig)
+    Int32.new!(in_ptr - in_ptr_orig)
   end
 
   # The lookup table used for decoding the base64 bytes.
