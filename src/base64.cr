@@ -195,8 +195,11 @@ module Base64
     size
   end
 
-  private def decode_size(str_size)
-    (str_size * 3 / 4.0).to_i + 4
+  # Returns the maximum amount of bytes required to
+  # decode a base64-buffer with the given bytesize
+  private def decode_size(bytesize : Int::Primitive) : Int::Primitive
+    chunks, remainder = bytesize.divmod(4)
+    (chunks * 3) + ((remainder > 1) ? remainder - 1 : 0)
   end
 
   private def to_base64(data, chars, pad = false, &)
