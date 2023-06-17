@@ -156,36 +156,113 @@ module Base64
     strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
-  # Returns the base64-decoded version of *data* as a `Bytes`.
+  # Writes the base64-decoded version of `from` into `to`,
+  # and returns the amount of bytes written.
+  #
+  # If the `to` buffer is not big enough to store the resulting bytes,
+  # or if the input is invalid base64, the method raises a `Base64::Error`.
+  #
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data) : Bytes
-    slice = data.to_slice
-    buf = Pointer(UInt8).malloc(decode_size(slice.size))
-    appender = buf.appender
-    from_base64(slice) { |byte| appender << byte }
-    Slice.new(buf, appender.size.to_i32)
+  def decode(from : Bytes, to : Bytes) : Int32
+    total_written_bytes : Int32 = 0
+    total_read_bytes : Int32 = 0
+
+    from_ptr = from.to_unsafe
+    from_size = from.size
+    to_ptr = to.to_unsafe
+    to_size = to.size
+
+    read_bytes, written_bytes = decode_buffer_regular(from_ptr, LibC::SizeT.new!(from_size), to_ptr, LibC::SizeT.new!(to_size))
+    total_written_bytes += written_bytes
+    total_read_bytes += read_bytes
+    from_ptr += read_bytes
+    from_size &-= read_bytes
+    to_ptr += written_bytes
+    to_size &-= written_bytes
+
+    if from_size > 0
+      read_bytes, written_bytes = decode_buffer_final(from_ptr, LibC::SizeT.new!(from_size), to_ptr, LibC::SizeT.new!(to_size))
+      total_written_bytes += written_bytes
+      total_read_bytes += read_bytes
+
+      from_ptr += read_bytes
+      from_size &-= read_bytes
+      to_ptr += written_bytes
+      to_size &-= written_bytes
+
+      raise Base64::Error.new("Expected EOF but found #{from_size} additional bytes") if from_size > 0
+    end
+
+    total_written_bytes
   end
 
-  # Writes the base64-decoded version of *data* to *io*.
+  # Returns the base64-decoded version of `data` as a `Bytes`.
+  #
+  # Raises `Base64::Error` if the input is invalid base64.
+  #
+  # This will decode either the normal or urlsafe alphabets.
+  def decode(data) : Bytes
+    data = data.to_slice
+    buf_size = decode_size(data.size)
+    buf = Pointer(UInt8).malloc(buf_size)
+
+    bytes_written = decode(from: data, to: Bytes.new(buf, buf_size))
+    Bytes.new(buf, bytes_written)
+  end
+
+  # Writes the base64-decoded version of `data` to `io`,
+  # and returns the amount of bytes written.
+  #
+  # Raises `Base64::Error` if the input is invalid base64.
+  #
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
-    count = 0
-    from_base64(data.to_slice) do |byte|
-      io.write_byte byte
-      count += 1
+    total_written_bytes = 0
+    total_read_bytes = 0
+
+    data = data.to_slice
+    data_ptr = data.to_unsafe
+    data_size = data.size
+
+    buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+
+    while true
+      read_bytes, written_bytes = decode_buffer_regular(data_ptr, LibC::SizeT.new!(data_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      total_written_bytes &+= written_bytes
+      total_read_bytes &+= read_bytes
+
+      break if read_bytes == 0
+
+      data_ptr += read_bytes
+      data_size &-= read_bytes
+      io.write(Bytes.new(buffer.to_unsafe, written_bytes))
     end
+
+    if data_size > 0
+      read_bytes, written_bytes = decode_buffer_final(data_ptr, LibC::SizeT.new!(data_size), buffer.to_unsafe, LibC::SizeT.new!(buffer.size))
+      total_written_bytes &+= written_bytes
+      total_read_bytes &+= read_bytes
+
+      data_ptr += read_bytes
+      data_size &-= read_bytes
+      io.write(Bytes.new(buffer.to_unsafe, written_bytes))
+
+      raise Base64::Error.new("Expected EOF but found #{data_size} additional bytes") if data_size > 0
+    end
+
     io.flush
-    count
+    total_written_bytes
   end
 
   # Returns the base64-decoded version of *data* as a string.
   # This will decode either the normal or urlsafe alphabets.
   def decode_string(data) : String
-    slice = data.to_slice
-    String.new(decode_size(slice.size)) do |buf|
-      appender = buf.appender
-      from_base64(slice) { |byte| appender << byte }
-      {appender.size, 0}
+    data = data.to_slice
+    buf_size = decode_size(data.size)
+
+    String.new(buf_size) do |buf|
+      bytes_written = decode(from: data, to: Bytes.new(buf, buf_size))
+      {bytes_written, 0}
     end
   end
 
