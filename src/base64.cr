@@ -296,7 +296,7 @@ module Base64
     {% for byte, i in bytes %}
       %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
       %buffer = (%buffer << 6) + %decoded
-      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
+      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded >= 0x40_u8
     {% end %}
 
     # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8
@@ -305,14 +305,27 @@ module Base64
     {% end %}
   end
 
+  # The lookup table used for decoding the base64 bytes.
+  #
+  # The individual bytes inside the table are structured as follows:
+  # - `0bX0000000`
+  #   The first bit is the "invalidity flag".
+  #   If a character must never appear inside a base64 string, this flag is set.
+  # - `0b0X000000`
+  #   The second bit is the "skip flag".
+  #   If a character must be ignored (ex. "\r\n", "=" padding), this flag is set.
+  # - `0b00XXXXXX`
+  #   The last 6 bits are the decoded value of a valid base64 byte.
+  #   If any of these bits are set, the first two bits are always `0b00`.
   private DECODE_TABLE = Array(UInt8).new(size: 256) do |i|
     case i.unsafe_chr
-    when 'A'..'Z' then (i - 0x41).to_u8!
-    when 'a'..'z' then (i - 0x47).to_u8!
-    when '0'..'9' then (i + 0x04).to_u8!
-    when '+', '-' then 0x3E_u8
-    when '/', '_' then 0x3F_u8
-    else               255_u8
+    when 'A'..'Z'        then (i - 0x41).to_u8!
+    when 'a'..'z'        then (i - 0x47).to_u8!
+    when '0'..'9'        then (i + 0x04).to_u8!
+    when '+', '-'        then 0x3E_u8
+    when '/', '_'        then 0x3F_u8
+    when '=', '\n', '\r' then 0x40_u8
+    else                      0x80_u8
     end
   end
 end
