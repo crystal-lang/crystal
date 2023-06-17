@@ -245,6 +245,182 @@ module Base64
     end
   end
 
+  # Decodes base64 data sequentially from the `in` buffer and writes it into the `out` buffer.
+  #
+  # This method only reads complete 4-character chunks (ex. "0ABC"),
+  # not padding or non-4-character chunks (ex. "AB", "0AC=").
+  # These must be read using `decode_base64_buffer_final`.
+  #
+  # Raises a `Base64::Error` when invalid characters are passed.
+  #
+  # Returns the amount of bytes read and the amount of bytes written.
+  #
+  # NOTE: This method expects the buffer used for decoding to fit at least four bytes.
+  #       If the given buffer contains less than four bytes, this method will return without decoding.
+  private def decode_buffer_regular(in_ptr : UInt8*, in_size : LibC::SizeT, out_ptr : UInt8*, out_size : LibC::SizeT) : Tuple(LibC::SizeT, LibC::SizeT)
+    in_ptr_orig : UInt8* = in_ptr
+    out_ptr_orig : UInt8* = out_ptr
+    in_ptr_end : UInt8* = in_ptr + (LibC::SSizeT.new(in_size) &- 4)
+    out_ptr_end : UInt8* = out_ptr + (LibC::SSizeT.new(out_size) &- 3)
+
+    out_pos : LibC::SizeT = 0
+    decode_ptr : UInt8* = DECODE_TABLE.to_unsafe
+
+    while true
+      # Move the pointer by one byte until there is a valid base64 character
+      while in_ptr <= in_ptr_end && in_ptr.value.in?(10_u8, 13_u8)
+        in_ptr += 1
+      end
+
+      break if in_ptr > in_ptr_end || out_ptr > out_ptr_end
+
+      chunk : UInt32 = 0
+      bytes_state : UInt8 = 0
+
+      # Read and decode characters into `chunk`,
+      # writing additional flags to `bytes_state`.
+      current_byte = decode_ptr[in_ptr.value]
+      chunk = (chunk << 6) &+ current_byte
+      bytes_state |= current_byte
+      in_ptr += 1
+      current_byte = decode_ptr[in_ptr.value]
+      chunk = (chunk << 6) &+ current_byte
+      bytes_state |= current_byte
+      in_ptr += 1
+      current_byte = decode_ptr[in_ptr.value]
+      chunk = (chunk << 6) &+ current_byte
+      bytes_state |= current_byte
+      in_ptr += 1
+      current_byte = decode_ptr[in_ptr.value]
+      chunk = (chunk << 6) &+ current_byte
+      bytes_state |= current_byte
+      in_ptr += 1
+
+      raise Base64::Error.new("Invalid base64 chunk") if bytes_state >= 0x80_u8
+      if bytes_state >= 0x40_u8
+        in_ptr -= 4
+        break
+      end
+
+      # Write resulting bytes
+      out_ptr.value = (chunk >> 16).to_u8!
+      out_ptr += 1
+      out_ptr.value = (chunk >> 8).to_u8!
+      out_ptr += 1
+      out_ptr.value = chunk.to_u8!
+      out_ptr += 1
+    end
+
+    {LibC::SizeT.new!(in_ptr - in_ptr_orig), LibC::SizeT.new!(out_ptr - out_ptr_orig)}
+  end
+
+  # Decodes base64 data from the `in` buffer and writes it into the `out` buffer.
+  #
+  # This method expects the buffer given via `in_ptr` and `in_size`
+  # to contain exactly one encoding character (with optional padding at the end).
+  #
+  # Once this method has written at least one byte into the output buffer,
+  # it may not be called again for the remaining part of the buffer.
+  # For this, you can use `consume_buffer_garbage`.
+  # That being said, note that there can only be a "remaining part of the buffer" if
+  # not all relevant bytes have been given to `decode_buffer_final`.
+  #
+  # Raises a `Base64::Error` when invalid chunks/characters are passed.
+  #
+  # Returns the amount of bytes read and the amount of bytes written.
+  #
+  # NOTE: This method expects the buffer used for decoding to contain
+  #       all decodable characters if there is no padding before it.
+  #       If the given buffer contains only a part of the last chunk without padding,
+  #       either an error is thrown or the output is cut off.
+  private def decode_buffer_final(in_ptr : UInt8*, in_size : LibC::SizeT, out_ptr : UInt8*, out_size : LibC::SizeT) : Tuple(LibC::SizeT, LibC::SizeT)
+    in_pos : LibC::SizeT = 0
+    decode_ptr : UInt8* = DECODE_TABLE.to_unsafe
+
+    # Move the pointer by one byte until there is a valid base64 character
+    while in_pos < in_size && in_ptr.value.in?(10_u8, 13_u8)
+      in_pos &+= 1
+    end
+
+    return {in_pos, LibC::SizeT::MIN} if in_size == in_pos
+    raise Base64::Error.new("Invalid base64 chunk") if in_size &- in_pos == 1
+
+    chunk : UInt32 = 0
+    bytes_state : UInt8 = 0
+    write_count : UInt8 = 1
+
+    # Read and decode characters into `chunk`,
+    # writing additional flags to `bytes_state`.
+    current_byte = decode_ptr[in_ptr[in_pos]]
+    chunk = (chunk << 6) &+ current_byte
+    bytes_state |= current_byte
+    in_pos &+= 1
+    current_byte = decode_ptr[in_ptr[in_pos]]
+    chunk = (chunk << 6) &+ current_byte
+    bytes_state |= current_byte
+    in_pos &+= 1
+    chunk <<= 6
+    if in_size > 2
+      current_byte = decode_ptr[in_ptr[in_pos]]
+      chunk = chunk &+ (current_byte & 0x3F)
+      bytes_state |= current_byte & 0b10000000
+      write_count &+= 1 if current_byte & 0b01000000 == 0
+      in_pos &+= 1
+    end
+    chunk <<= 6
+    if in_size > 3
+      current_byte = decode_ptr[in_ptr[in_pos]]
+      chunk = chunk &+ (current_byte & 0x3F)
+      bytes_state |= current_byte & 0b10000000
+      if current_byte & 0b01000000 == 0
+        # Disallow decodable characters after a padding character.
+        raise Base64::Error.new("Invalid base64 chunk") if write_count == 1
+        write_count &+= 1
+      end
+      in_pos &+= 1
+    end
+
+    raise Base64::Error.new("Invalid base64 chunk") if bytes_state >= 0x80_u8
+
+    return {LibC::SizeT::MIN, LibC::SizeT::MIN} if write_count > out_size
+
+    # Write resulting bytes
+    out_ptr.value = (chunk >> 16).to_u8!
+    out_ptr += 1
+    if write_count > 1
+      out_ptr.value = (chunk >> 8).to_u8!
+      out_ptr += 1
+    end
+    if write_count > 2
+      out_ptr.value = chunk.to_u8!
+      out_ptr += 1
+    end
+
+    # Skip remaining allowed whitespace characters
+    while in_pos < in_size && in_ptr[in_pos].in?(10_u8, 13_u8)
+      in_pos &+= 1
+    end
+
+    {in_pos, LibC::SizeT.new!(write_count)}
+  end
+
+  # Reads any allowed padding characters from the given buffer.
+  #
+  # If the amount of bytes read from the buffer does not equal
+  # the amount of bytes in the given buffer,
+  # a character in the buffer is not allowed at this position.
+  private def consume_buffer_garbage(in_ptr : UInt8*, in_size : LibC::SizeT) : LibC::SizeT
+    in_ptr_orig : UInt8* = in_ptr
+    in_ptr_end : UInt8* = in_ptr + in_size
+
+    # Skip remaining allowed whitespace characters
+    while in_ptr < in_ptr_end && in_ptr.value.in?(10_u8, 13_u8)
+      in_ptr += 1
+    end
+
+    LibC::SizeT.new!(in_ptr - in_ptr_orig)
+  end
+
   # Processes the given data and yields each byte.
   private def from_base64(data : Bytes, &block : UInt8 -> Nil)
     size = data.size
