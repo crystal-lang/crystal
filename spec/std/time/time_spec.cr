@@ -212,6 +212,32 @@ describe Time do
     time.utc?.should be_true
   end
 
+  describe ".unix_ns" do
+    it "supports Int64 values" do
+      nanoseconds = 1439404155001457425i64
+      time = Time.unix_ns(nanoseconds)
+      time.should eq(Time.utc(2015, 8, 12, 18, 29, 15, nanosecond: 1457425))
+      time.to_unix_ns.should eq(nanoseconds)
+      time.utc?.should be_true
+    end
+
+    it "supports maximum valid time" do
+      nanoseconds = Int128.new("253402300799999999999")
+      time = Time.unix_ns(nanoseconds)
+      time.should eq(Time.utc(9999, 12, 31, 23, 59, 59, nanosecond: 999999999))
+      time.to_unix_ns.should eq(nanoseconds)
+      time.utc?.should be_true
+    end
+
+    it "supports minimum valid time" do
+      nanoseconds = Int128.new("-62135596800000000000")
+      time = Time.unix_ns(nanoseconds)
+      time.should eq(Time.utc(1, 1, 1, 0, 0, 0, nanosecond: 0))
+      time.to_unix_ns.should eq(nanoseconds)
+      time.utc?.should be_true
+    end
+  end
+
   describe ".local without arguments" do
     it "current time is similar in different locations" do
       (Time.local - Time.utc).should be_close(0.seconds, 1.second)
