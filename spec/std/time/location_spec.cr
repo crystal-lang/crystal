@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../../support/time"
 
 class Time::Location
   describe Time::Location do
@@ -225,27 +226,32 @@ class Time::Location
 
       {% if flag?(:win32) %}
         it "loads time zone information from registry" do
-          LibC.GetTimeZoneInformation(out old_info)
-          begin
-            info = LibC::TIME_ZONE_INFORMATION.new(
-              bias: -60,
-              standardBias: 0,
-              daylightBias: -60,
-              standardDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 10, wDayOfWeek: 0, wDay: 5, wHour: 3, wMinute: 0, wSecond: 0, wMilliseconds: 0),
-              daylightDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 3, wDayOfWeek: 0, wDay: 5, wHour: 2, wMinute: 0, wSecond: 0, wMilliseconds: 0),
-              standardName: StaticArray(UInt16, 32).new(0),
-              daylightName: StaticArray(UInt16, 32).new(0),
-            )
-            info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
-            info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
-            if LibC.SetTimeZoneInformation(pointerof(info)) == 0
-              pending! "Unable to set time zone" if WinError.value.error_privilege_not_held?
-            end
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(
+            bias: -60,
+            standardBias: 0,
+            daylightBias: -60,
+            standardDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 10, wDayOfWeek: 0, wDay: 5, wHour: 3, wMinute: 0, wSecond: 0, wMilliseconds: 0),
+            daylightDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 3, wDayOfWeek: 0, wDay: 5, wHour: 2, wMinute: 0, wSecond: 0, wMilliseconds: 0),
+          )
+          info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "Central Europe Standard Time".to_utf16
 
+          with_system_time_zone(info) do
             location = Location.load_local
             location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
-          ensure
-            LibC.SetTimeZoneInformation(pointerof(old_info))
+          end
+        end
+
+        it "loads time zone without DST (#13502)" do
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(bias: -480)
+          info.standardName.to_slice.copy_from "China Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "China Daylight Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "China Standard Time".to_utf16
+
+          with_system_time_zone(info) do
+            location = Location.load_local
+            location.zones.should eq [Time::Location::Zone.new("CST", 28800, false)]
           end
         end
       {% end %}
