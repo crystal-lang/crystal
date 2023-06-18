@@ -60,7 +60,7 @@ module YAML
   #
   # `YAML::Field` properties:
   # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
-  # * **ignore_serialize**: if `true` skip this field in serialization (by default false)
+  # * **ignore_serialize**: If truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the yaml object (by default the name of the instance variable)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::ParseContext, YAML::Nodes::Node)` and `to_yaml(value, YAML::Nodes::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
@@ -285,12 +285,13 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                key:       ((ann && ann[:key]) || ivar).id.stringify,
-                converter: ann && ann[:converter],
-                emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                key:              ((ann && ann[:key]) || ivar).id.stringify,
+                converter:        ann && ann[:converter],
+                emit_null:        (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                ignore_serialize: ann && ann[:ignore_serialize],
               }
             %}
           {% end %}
@@ -300,23 +301,30 @@ module YAML
           {% for name, value in properties %}
             _{{name}} = @{{name}}
 
-            {% unless value[:emit_null] %}
-              unless _{{name}}.nil?
+            {% if value[:ignore_serialize] %}
+              unless {{value[:ignore_serialize]}}
             {% end %}
 
-              {{value[:key]}}.to_yaml(yaml)
-
-              {% if value[:converter] %}
-                if _{{name}}
-                  {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
-                else
-                  nil.to_yaml(yaml)
-                end
-              {% else %}
-                _{{name}}.to_yaml(yaml)
+              {% unless value[:emit_null] %}
+                unless _{{name}}.nil?
               {% end %}
 
-            {% unless value[:emit_null] %}
+                {{value[:key]}}.to_yaml(yaml)
+
+                {% if value[:converter] %}
+                  if _{{name}}
+                    {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
+                  else
+                    nil.to_yaml(yaml)
+                  end
+                {% else %}
+                  _{{name}}.to_yaml(yaml)
+                {% end %}
+
+              {% unless value[:emit_null] %}
+                end
+              {% end %}
+            {% if value[:ignore_serialize] %}
               end
             {% end %}
           {% end %}
