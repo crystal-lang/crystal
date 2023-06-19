@@ -108,10 +108,10 @@ struct Tuple
   # {}                         # syntax error
   # ```
   def self.new(*args : *T)
-    {% if @type.name(generic_args: false) == "Tuple" %}
+    {% if @type.name == "Tuple(*T)" %}
       # deduced type vars
       args
-    {% elsif @type.name(generic_args: false) == "Tuple()" %}
+    {% elsif @type.name == "Tuple()" %}
       # special case: empty tuple
       # TODO: check against `Tuple()` directly after 1.4.0
       args

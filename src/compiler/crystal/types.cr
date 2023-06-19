@@ -2382,16 +2382,19 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << "Proc("
-      arg_types.each do |type|
-        type = type.devirtualize unless codegen
-        type.to_s_with_options(io, codegen: codegen)
-        io << ", "
+      io << "Proc"
+      if generic_args
+        io << '('
+        arg_types.each do |type|
+          type = type.devirtualize unless codegen
+          type.to_s_with_options(io, codegen: codegen)
+          io << ", "
+        end
+        return_type = self.return_type
+        return_type = return_type.devirtualize unless codegen
+        return_type.to_s_with_options(io, codegen: codegen)
+        io << ')'
       end
-      return_type = self.return_type
-      return_type = return_type.devirtualize unless codegen
-      return_type.to_s_with_options(io, codegen: codegen)
-      io << ')'
     end
   end
 
@@ -2504,12 +2507,15 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << "Tuple("
-      @tuple_types.join(io, ", ") do |tuple_type|
-        tuple_type = tuple_type.devirtualize unless codegen
-        tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
+      io << "Tuple"
+      if generic_args
+        io << '('
+        @tuple_types.join(io, ", ") do |tuple_type|
+          tuple_type = tuple_type.devirtualize unless codegen
+          tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
+        end
+        io << ')'
       end
-      io << ')'
     end
 
     def type_desc
@@ -2626,19 +2632,22 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << "NamedTuple("
-      @entries.join(io, ", ") do |entry|
-        if Symbol.needs_quotes_for_named_argument?(entry.name)
-          entry.name.inspect(io)
-        else
-          io << entry.name
+      io << "NamedTuple"
+      if generic_args
+        io << '('
+        @entries.join(io, ", ") do |entry|
+          if Symbol.needs_quotes_for_named_argument?(entry.name)
+            entry.name.inspect(io)
+          else
+            io << entry.name
+          end
+          io << ": "
+          entry_type = entry.type
+          entry_type = entry_type.devirtualize unless codegen
+          entry_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
         end
-        io << ": "
-        entry_type = entry.type
-        entry_type = entry_type.devirtualize unless codegen
-        entry_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
+        io << ')'
       end
-      io << ')'
     end
 
     def type_desc
@@ -2929,7 +2938,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << @name
+      if @name == "Class"
+        io << @name
+      else
+        @instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
+        io << (instance_type.module? ? ":Module" : ".class")
+      end
     end
 
     def type_desc
@@ -3002,7 +3016,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
       io << ".class"
     end
 
@@ -3056,7 +3070,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
       io << ".class"
     end
 
@@ -3525,7 +3539,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s_with_options(io, codegen: codegen)
+      instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
       io << ".class"
     end
 
