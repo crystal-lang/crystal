@@ -118,7 +118,7 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Build libgc
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2 -AtomicOpsVersion 7.8.0 -Dynamic
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.4 -AtomicOpsVersion 7.8.0 -Dynamic
       - name: Build libpcre
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45 -Dynamic
@@ -376,3 +376,188 @@ jobs:
 
       - name: Build samples
         run: make -f Makefile.win samples
+
+  x86_64-windows-release:
+    runs-on: windows-2022
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.8.2"
+
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+
+      - name: Restore libraries
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/pcre.lib
+            libs/pcre2-8.lib
+            libs/iconv.lib
+            libs/gc.lib
+            libs/ffi.lib
+            libs/z.lib
+            libs/mpir.lib
+            libs/yaml.lib
+            libs/xml2.lib
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/crypto.lib
+            libs/ssl.lib
+            libs/openssl_VERSION
+          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore DLLs
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/pcre-dynamic.lib
+            libs/pcre2-8-dynamic.lib
+            libs/iconv-dynamic.lib
+            libs/gc-dynamic.lib
+            libs/ffi-dynamic.lib
+            libs/z-dynamic.lib
+            libs/mpir-dynamic.lib
+            libs/yaml-dynamic.lib
+            libs/xml2-dynamic.lib
+            dlls/pcre.dll
+            dlls/pcre2-8.dll
+            dlls/libiconv.dll
+            dlls/gc.dll
+            dlls/libffi.dll
+            dlls/zlib1.dll
+            dlls/mpir.dll
+            dlls/yaml.dll
+            dlls/libxml2.dll
+          key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL DLLs
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/crypto-dynamic.lib
+            libs/ssl-dynamic.lib
+            dlls/libcrypto-3-x64.dll
+            dlls/libssl-3-x64.dll
+          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore LLVM
+        uses: actions/cache/restore@v3
+        with:
+          path: llvm
+          key: llvm-libs-16.0.3-msvc
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+
+      - name: Build LLVM extensions
+        run: make -f Makefile.win deps
+
+      - name: Build Crystal
+        run: |
+          bin/crystal.bat env
+          make -f Makefile.win -B release=1
+
+      - name: Download shards release
+        uses: actions/checkout@v3
+        with:
+          repository: crystal-lang/shards
+          ref: v0.17.3
+          path: shards
+
+      - name: Download molinillo release
+        uses: actions/checkout@v3
+        with:
+          repository: crystal-lang/crystal-molinillo
+          ref: v0.2.0
+          path: shards/lib/molinillo
+
+      - name: Build shards release
+        working-directory: ./shards
+        run: ../bin/crystal.bat build --release src/shards.cr
+
+      - name: Gather Crystal binaries
+        run: |
+          mkdir crystal/src
+          mkdir crystal/lib
+          cp .build/crystal.exe crystal/
+          cp .build/crystal.pdb crystal/
+          cp shards/shards.exe crystal/
+          cp libs/* crystal/lib/
+          cp dlls/* crystal/
+          cp src/* crystal/src -Recurse
+          cp README.md crystal/
+          cp LICENSE crystal/LICENSE.txt
+          rm crystal/src/llvm/ext/llvm_ext.obj
+
+      - name: Upload Crystal binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: crystal-release
+          path: crystal
+
+  x86_64-windows-installer:
+    runs-on: windows-2022
+    needs: [x86_64-windows-release]
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v3
+        with:
+          name: crystal-release
+          path: etc/win-ci/portable
+
+      - name: Restore LLVM
+        uses: actions/cache/restore@v3
+        with:
+          path: llvm
+          key: llvm-libs-16.0.3-msvc
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          Add-Content $env:GITHUB_PATH "$(pwd)\etc\win-ci\portable"
+          Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe"
+
+      - name: Build docs
+        run: make -f Makefile.win docs
+
+      - name: Gather files
+        run: |
+          mkdir etc/win-ci/portable/samples
+          mkdir etc/win-ci/portable/docs
+          cp samples/* etc/win-ci/portable/samples -Recurse
+          cp docs/* etc/win-ci/portable/docs -Recurse
+          rm samples/.gitignore
+
+      - name: Build installer
+        run: |
+          iscc.exe etc/win-ci/crystal.iss
+
+      - name: Upload Crystal installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: crystal-installer
+          path: etc/win-ci/Output/crystal-setup.exe
