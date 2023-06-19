@@ -19,6 +19,7 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
+        clear_cache              clear the compiler cache
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -112,6 +113,9 @@ class Crystal::Command
     when "tool".starts_with?(command)
       options.shift
       tool
+    when command == "clear_cache"
+      options.shift
+      clear_cache
     when "help".starts_with?(command), "--help" == command, "-h" == command
       puts USAGE
       exit
