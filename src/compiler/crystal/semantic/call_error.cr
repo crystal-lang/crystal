@@ -1005,7 +1005,7 @@ class Crystal::Call
 
   def self.full_name(owner, method_name = name)
     case owner
-    when Program
+    when Program, Nil
       method_name
     when owner.program.class_type
       # Class's instance_type is Object, not Class, so we cannot treat it like

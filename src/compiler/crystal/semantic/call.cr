@@ -1112,17 +1112,57 @@ class Crystal::Call
     # This will insert this node into the trace as the new first frame.
     self.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
-    if obj = @obj
-      if name == "initialize"
-        # Avoid putting 'initialize' in the error trace
-        # because it's most likely that this is happening
-        # inside a generated 'new' method
-        ::raise ex
-      else
-        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-      end
+    if (obj = @obj) && name == "initialize"
+      # Avoid putting 'initialize' in the error trace
+      # because it's most likely that this is happening
+      # inside a generated 'new' method
+      ::raise ex
     else
-      raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+      msg = String.build do |io|
+        io << "instantiating '" << full_name(obj.try(&.type)) << '('
+
+        first = true
+        args.each do |arg|
+          case {arg_type = arg.type, arg}
+          when {TupleInstanceType, Splat}
+            next if arg_type.tuple_types.empty?
+            io << ", " unless first
+            arg_type.tuple_types.join(io, ", ")
+            first = false
+          when {NamedTupleInstanceType, DoubleSplat}
+            next if arg_type.entries.empty?
+            io << ", " unless first
+            arg_type.entries.join(io, ", ") do |entry|
+              if Symbol.needs_quotes_for_named_argument?(entry.name)
+                entry.name.inspect(io)
+              else
+                io << entry.name
+              end
+              io << ": " << entry.type
+            end
+            first = false
+          else
+            io << ", " unless first
+            io << arg.type
+            first = false
+          end
+        end
+
+        if named_args = @named_args
+          io << ", " unless first
+          named_args.join(io, ", ") do |named_arg|
+            if Symbol.needs_quotes_for_named_argument?(named_arg.name)
+              named_arg.name.inspect(io)
+            else
+              io << named_arg.name
+            end
+            io << ": " << named_arg.value.type
+          end
+        end
+
+        io << ")'"
+      end
+      raise msg, ex
     end
   end
 
