@@ -165,7 +165,6 @@ module Base64
   # This will decode either the normal or urlsafe alphabets.
   def decode(from : Bytes, to : Bytes) : Int32
     total_written_bytes : Int32 = 0
-    total_read_bytes : Int32 = 0
 
     from_ptr = from.to_unsafe
     from_size = from.size
@@ -173,8 +172,7 @@ module Base64
     to_size = to.size
 
     read_bytes, written_bytes = decode_buffer_regular(from_ptr, from_size, to_ptr, to_size)
-    total_written_bytes += written_bytes
-    total_read_bytes += read_bytes
+    total_written_bytes &+= written_bytes
     from_ptr += read_bytes
     from_size &-= read_bytes
     to_ptr += written_bytes
@@ -182,15 +180,9 @@ module Base64
 
     if from_size > 0
       read_bytes, written_bytes = decode_buffer_final(from_ptr, from_size, to_ptr, to_size)
-      total_written_bytes += written_bytes
-      total_read_bytes += read_bytes
+      total_written_bytes &+= written_bytes
 
-      from_ptr += read_bytes
-      from_size &-= read_bytes
-      to_ptr += written_bytes
-      to_size &-= written_bytes
-
-      raise Base64::Error.new("Expected EOF but found #{from_size} additional bytes") if from_size > 0
+      raise Base64::Error.new("Expected EOF but found non-decodable characters") if from_size > read_bytes
     end
 
     total_written_bytes
@@ -204,10 +196,10 @@ module Base64
   def decode(data) : Bytes
     data = data.to_slice
     buf_size = decode_size(data.size)
-    buf = Pointer(UInt8).malloc(buf_size)
 
-    bytes_written = decode(from: data, to: Bytes.new(buf, buf_size))
-    Bytes.new(buf, bytes_written)
+    buffer = Bytes.new(buf_size)
+    bytes_written = decode(from: data, to: buffer)
+    buffer[0, bytes_written]
   end
 
   # Writes the base64-decoded version of `data` to `io`,
@@ -216,9 +208,8 @@ module Base64
   # Raises `Base64::Error` if the input is invalid base64.
   #
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data, io : IO)
-    total_written_bytes = 0
-    total_read_bytes = 0
+  def decode(data, io : IO) : Int32
+    total_written_bytes : Int32 = 0
 
     data = data.to_slice
     data_ptr = data.to_unsafe
@@ -229,7 +220,6 @@ module Base64
     while true
       read_bytes, written_bytes = decode_buffer_regular(data_ptr, data_size, buffer.to_unsafe, buffer.size)
       total_written_bytes &+= written_bytes
-      total_read_bytes &+= read_bytes
 
       break if read_bytes == 0
 
@@ -241,13 +231,10 @@ module Base64
     if data_size > 0
       read_bytes, written_bytes = decode_buffer_final(data_ptr, data_size, buffer.to_unsafe, buffer.size)
       total_written_bytes &+= written_bytes
-      total_read_bytes &+= read_bytes
 
-      data_ptr += read_bytes
-      data_size &-= read_bytes
       io.write(Bytes.new(buffer.to_unsafe, written_bytes))
 
-      raise Base64::Error.new("Expected EOF but found #{data_size} additional bytes") if data_size > 0
+      raise Base64::Error.new("Expected EOF but found non-decodable characters") if data_size > read_bytes
     end
 
     io.flush
@@ -262,7 +249,6 @@ module Base64
   def decode(from : IO, to : IO) : Nil
     # Here the same buffer is used for in- and output.
     buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
-    in_ptr = buffer.to_unsafe
     in_size = 0
     in_offset = 0
 
@@ -556,7 +542,6 @@ module Base64
     end
     if write_count > 2
       out_ptr.value = chunk.to_u8!
-      out_ptr += 1
     end
 
     # Skip remaining allowed whitespace characters
