@@ -1128,7 +1128,6 @@ class Crystal::Call
             next if arg_type.tuple_types.empty?
             io << ", " unless first
             arg_type.tuple_types.join(io, ", ")
-            first = false
           when {NamedTupleInstanceType, DoubleSplat}
             next if arg_type.entries.empty?
             io << ", " unless first
@@ -1140,12 +1139,11 @@ class Crystal::Call
               end
               io << ": " << entry.type
             end
-            first = false
           else
             io << ", " unless first
             io << arg.type
-            first = false
           end
+          first = false
         end
 
         if named_args = @named_args
