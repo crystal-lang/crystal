@@ -1119,46 +1119,9 @@ class Crystal::Call
       ::raise ex
     else
       msg = String.build do |io|
-        io << "instantiating '" << full_name(obj.try(&.type)) << '('
-
-        first = true
-        args.each do |arg|
-          case {arg_type = arg.type, arg}
-          when {TupleInstanceType, Splat}
-            next if arg_type.tuple_types.empty?
-            io << ", " unless first
-            arg_type.tuple_types.join(io, ", ")
-          when {NamedTupleInstanceType, DoubleSplat}
-            next if arg_type.entries.empty?
-            io << ", " unless first
-            arg_type.entries.join(io, ", ") do |entry|
-              if Symbol.needs_quotes_for_named_argument?(entry.name)
-                entry.name.inspect(io)
-              else
-                io << entry.name
-              end
-              io << ": " << entry.type
-            end
-          else
-            io << ", " unless first
-            io << arg.type
-          end
-          first = false
-        end
-
-        if named_args = @named_args
-          io << ", " unless first
-          named_args.join(io, ", ") do |named_arg|
-            if Symbol.needs_quotes_for_named_argument?(named_arg.name)
-              named_arg.name.inspect(io)
-            else
-              io << named_arg.name
-            end
-            io << ": " << named_arg.value.type
-          end
-        end
-
-        io << ")'"
+        io << "instantiating '"
+        signature(io)
+        io << "'"
       end
       raise msg, ex
     end
