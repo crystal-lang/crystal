@@ -1441,6 +1441,29 @@ module Enumerable(T)
     {a, b}
   end
 
+  # Returns a `Tuple` with two arrays. The first one contains the elements
+  # in the collection that are of the given *type*,
+  # and the second one that are **not** of the given *type*.
+  #
+  # ```
+  # ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
+  # ints           # => [1, 3]
+  # others         # => [true, nil, false, "string", 'c']
+  # typeof(ints)   # => Array(Int32)
+  # typeof(others) # => Array(String | Char | Nil)
+  # ```
+  def partition(type : U.class) forall U
+    a = [] of U
+    b = [] of typeof(begin
+      e = Enumerable.element_type(self)
+      e.is_a?(U) ? raise("") : e
+    end)
+    each do |e|
+      e.is_a?(U) ? a.push(e) : b.push(e)
+    end
+    {a, b}
+  end
+
   # Returns an `Array` with all the elements in the collection for which
   # the passed block is falsey.
   #
