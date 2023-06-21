@@ -1049,6 +1049,38 @@ describe "Enumerable" do
   describe "partition" do
     it { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
     it { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
+
+    it "with mono type on union type" do
+      ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
+      ints.should eq([1, 3])
+      others.should eq([true, nil, false, "string", 'c'])
+      ints.should be_a(Array(Int32))
+      others.should be_a(Array(Bool | String | Char | Nil))
+    end
+
+    it "with union type on union type" do
+      ints_bools, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32 | Bool)
+      ints_bools.should eq([1, true, 3, false])
+      others.should eq([nil, "string", 'c'])
+      ints_bools.should be_a(Array(Int32 | Bool))
+      others.should be_a(Array(String | Char | Nil))
+    end
+
+    it "with missing type on union type" do
+      symbols, others = [1, true, nil, 3, false, "string", 'c'].partition(Symbol)
+      symbols.empty?.should be_true
+      others.should eq([1, true, nil, 3, false, "string", 'c'])
+      symbols.should be_a(Array(Symbol))
+      others.should be_a(Array(Int32 | Bool | String | Char | Nil))
+    end
+
+    it "with mono type on mono type" do
+      ints, others = [1, 3].partition(Int32)
+      ints.should eq([1, 3])
+      others.empty?.should be_true
+      ints.should be_a(Array(Int32))
+      others.should be_a(Array(NoReturn))
+    end
   end
 
   describe "reject" do
