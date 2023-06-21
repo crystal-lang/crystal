@@ -1093,11 +1093,10 @@ class Hash(K, V)
   #
   # ```
   # h = {} of Int32 => Array(String)
-  # a = h.put_if_absent(1) { [] of String } # => []
-  # a << "foo"
-  # h.put_if_absent(1) { [] of String }     # => ["foo"]
+  # h.put_if_absent(1) { |key| [key.to_s] } # => ["1"]
+  # h.put_if_absent(1) { [] of String }     # => ["1"]
   # h.put_if_absent(2) { |key| [key.to_s] } # => ["2"]
-  # h                                       # => {1 => ["foo"], 2 => ["2"]}
+  # h                                       # => {1 => ["1"], 2 => ["2"]}
   # ```
   #
   # `hash.put_if_absent(key) { value }` is a more performant alternative to
