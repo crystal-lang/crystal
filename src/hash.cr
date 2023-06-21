@@ -400,6 +400,56 @@ class Hash(K, V)
     end
   end
 
+  # Inserts a key-value pair. Assumes that the given key doesn't exist.
+  private def insert_new(key, value)
+    # Unless otherwise noted, this body should be identical to `#upsert`
+
+    if @entries.null?
+      @indices_size_pow2 = 3
+      @entries = malloc_entries(4)
+    end
+
+    hash = key_hash(key)
+
+    if @indices.null?
+      # don't call `#update_linear_scan` here
+
+      if !entries_full?
+        add_entry_and_increment_size(hash, key, value)
+        return
+      end
+
+      resize
+
+      if @indices.null?
+        add_entry_and_increment_size(hash, key, value)
+        return
+      end
+    end
+
+    index = fit_in_indices(hash)
+
+    while true
+      entry_index = get_index(index)
+
+      if entry_index == -1
+        if entries_full?
+          resize
+          index = fit_in_indices(hash)
+          next
+        end
+
+        set_index(index, entries_size)
+        add_entry_and_increment_size(hash, key, value)
+        return
+      end
+
+      # don't call `#get_entry` and `#entry_matches?` here
+
+      index = next_index(index)
+    end
+  end
+
   # Tries to update a key-value-hash triplet by doing a linear scan.
   # Returns an old `Entry` if it was updated, otherwise `nil`.
   private def update_linear_scan(key, value, hash) : Entry(K, V)?
@@ -1003,7 +1053,7 @@ class Hash(K, V)
 
   # Sets the value of *key* to the given *value*.
   #
-  # If a value already exists for `key`, that (old) value is returned.
+  # If a value already exists for *key*, that (old) value is returned.
   # Otherwise the given block is invoked with *key* and its value is returned.
   #
   # ```
@@ -1011,10 +1061,56 @@ class Hash(K, V)
   # h.put(1, "one") { "didn't exist" } # => "didn't exist"
   # h.put(1, "uno") { "didn't exist" } # => "one"
   # h.put(2, "two") { |key| key.to_s } # => "2"
+  # h                                  # => {1 => "one", 2 => "two"}
   # ```
   def put(key : K, value : V, &)
     updated_entry = upsert(key, value)
     updated_entry ? updated_entry.value : yield key
+  end
+
+  # Sets the value of *key* to the given *value*, unless a value for *key*
+  # already exists.
+  #
+  # If a value already exists for *key*, that (old) value is returned.
+  # Otherwise *value* is returned.
+  #
+  # ```
+  # h = {} of Int32 => Array(String)
+  # h.put_if_absent(1, "one") # => "one"
+  # h.put_if_absent(1, "uno") # => "one"
+  # h.put_if_absent(2, "two") # => "two"
+  # h                         # => {1 => "one", 2 => "two"}
+  # ```
+  def put_if_absent(key : K, value : V) : V
+    put_if_absent(key) { value }
+  end
+
+  # Sets the value of *key* to the value returned by the given block, unless a
+  # value for *key* already exists.
+  #
+  # If a value already exists for *key*, that (old) value is returned.
+  # Otherwise the given block is invoked with *key* and its value is returned.
+  #
+  # ```
+  # h = {} of Int32 => Array(String)
+  # a = h.put_if_absent(1) { [] of String } # => []
+  # a << "foo"
+  # h.put_if_absent(1) { [] of String }     # => ["foo"]
+  # h.put_if_absent(2) { |key| [key.to_s] } # => ["2"]
+  # h                                       # => {1 => ["foo"], 2 => ["2"]}
+  # ```
+  #
+  # `hash.put_if_absent(key) { value }` is a more performant alternative to
+  # `hash[key] ||= value` that also works correctly when the hash may contain
+  # falsey values.
+  def put_if_absent(key : K, & : K -> V) : V
+    if entry = find_entry(key)
+      entry.value
+    else
+      value = yield key
+      insert_new(key, value)
+      value
+    end
   end
 
   # Updates the current value of *key* with the value returned by the given block
@@ -1049,7 +1145,7 @@ class Hash(K, V)
       entry.value
     elsif block = @block
       default_value = block.call(self, key)
-      upsert(key, yield default_value)
+      insert_new(key, yield default_value)
       default_value
     else
       raise KeyError.new "Missing hash key: #{key.inspect}"
