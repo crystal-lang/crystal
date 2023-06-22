@@ -111,7 +111,7 @@ class Crystal::Doc::Macro
         if html.none?
           io << name
         else
-          HTML.escape name
+          HTML.escape name, io
         end
       else
         io << "_"
