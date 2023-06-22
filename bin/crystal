@@ -153,11 +153,12 @@ if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_P
   PARENT_CRYSTAL="crystal"
 fi
 
-PARENT_CRYSTAL_COMMAND=$(realpath "$(command -v "$PARENT_CRYSTAL" 2> /dev/null)" 2> /dev/null)
+PARENT_CRYSTAL_COMMAND=$(command -v "$PARENT_CRYSTAL" 2> /dev/null)
+PARENT_CRYSTAL_COMMAND_REALPATH=$(realpath "$PARNET_CRYSTAL_COMMAND" 2> /dev/null)
 PARENT_CRYSTAL_EXISTS=$(test !$?)
 
 # check if the parent crystal command refers to this script
-if [ "$PARENT_CRYSTAL_COMMAND" = "$SCRIPT_PATH" ]; then
+if [ "$PARENT_CRYSTAL_COMMAND_REALPATH" = "$SCRIPT_PATH" ]; then
   # remove the path to this script from PATH
   NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
   # if the PATH did not change it will lead to an infinite recursion => display error
