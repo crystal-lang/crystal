@@ -1,6 +1,6 @@
 require "spec"
 require "uuid"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "UUID" do
   describe "#==" do
