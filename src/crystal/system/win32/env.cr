@@ -26,7 +26,7 @@ module Crystal::System::Env
 
   # Gets an environment variable.
   def self.get(key : String) : String?
-    check_valid_key(key) { return nil }
+    return nil unless valid_key?(key)
     key = System.to_wstr(key, "key")
 
     System.retry_wstr_buffer do |buffer, small_buf|
@@ -55,7 +55,7 @@ module Crystal::System::Env
 
   # Returns `true` if environment variable is set.
   def self.has_key?(key : String) : Bool
-    check_valid_key(key) { return false }
+    return false unless valid_key?(key)
     key = System.to_wstr(key, "key")
 
     buffer = uninitialized UInt16[1]
@@ -94,11 +94,11 @@ module Crystal::System::Env
     end.to_utf16.to_unsafe
   end
 
-  private def self.check_valid_key(key : String, &)
-    yield if key.empty? || key.includes?('=')
+  private def self.valid_key?(key : String)
+    !(key.empty? || key.includes?('='))
   end
 
   private def self.check_valid_key(key : String)
-    check_valid_key(key) { raise ArgumentError.new("Invalid env key #{key.inspect}") }
+    raise ArgumentError.new("Invalid env key #{key.inspect}") unless valid_key?(key)
   end
 end
