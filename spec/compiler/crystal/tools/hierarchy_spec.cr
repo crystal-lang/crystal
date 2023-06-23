@@ -34,8 +34,8 @@ describe Crystal::TextHierarchyPrinter do
     - class Object (4 bytes)
       |
       +- struct Value (0 bytes)
-        |
-        +- struct Struct (0 bytes)
+         |
+         +- struct Struct (0 bytes)
             |
             +- struct Foo (1 bytes)
                    @x : Bool (1 bytes)\n
