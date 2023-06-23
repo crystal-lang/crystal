@@ -154,7 +154,7 @@ if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_P
 fi
 
 PARENT_CRYSTAL_COMMAND=$(command -v "$PARENT_CRYSTAL" 2> /dev/null)
-PARENT_CRYSTAL_COMMAND_REALPATH=$(realpath "$PARNET_CRYSTAL_COMMAND" 2> /dev/null)
+PARENT_CRYSTAL_COMMAND_REALPATH=$(realpath "$PARENT_CRYSTAL_COMMAND" 2> /dev/null)
 PARENT_CRYSTAL_EXISTS=$(test !$?)
 
 # check if the parent crystal command refers to this script
