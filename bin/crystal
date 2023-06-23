@@ -153,12 +153,8 @@ if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_P
   PARENT_CRYSTAL="crystal"
 fi
 
-PARENT_CRYSTAL_COMMAND=$(command -v "$PARENT_CRYSTAL" 2> /dev/null)
-PARENT_CRYSTAL_COMMAND_REALPATH=$(realpath "$PARENT_CRYSTAL_COMMAND" 2> /dev/null)
-PARENT_CRYSTAL_EXISTS=$(test !$?)
-
 # check if the parent crystal command refers to this script
-if [ "$PARENT_CRYSTAL_COMMAND_REALPATH" = "$SCRIPT_PATH" ]; then
+if [ "$(realpath "$(command -v "$PARENT_CRYSTAL" 2> /dev/null)" 2> /dev/null)" = "$SCRIPT_PATH" ]; then
   # remove the path to this script from PATH
   NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
   # if the PATH did not change it will lead to an infinite recursion => display error
@@ -166,18 +162,18 @@ if [ "$PARENT_CRYSTAL_COMMAND_REALPATH" = "$SCRIPT_PATH" ]; then
     __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
     exit 1
   fi
-  PARENT_CRYSTAL_COMMAND=$(PATH=$NEW_PATH command -v "$PARENT_CRYSTAL" 2> /dev/null)
-  PARENT_CRYSTAL_COMMAND_REALPATH=$(realpath "$PARENT_CRYSTAL_COMMAND" 2> /dev/null)
-  PARENT_CRYSTAL_EXISTS=$(test !$?)
-  if [ "$PARENT_CRYSTAL_COMMAND_REALPATH" = "$SCRIPT_PATH" ]; then
+  PARENT_CRYSTAL=$(PATH=$NEW_PATH command -v "$PARENT_CRYSTAL" 2> /dev/null)
+  if [ "$(realpath "$PARENT_CRYSTAL" 2> /dev/null)" = "$SCRIPT_PATH" ]; then
     __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
     exit 1
   fi
 fi
 
+command -v "$PARENT_CRYSTAL" > /dev/null 2> /dev/null
+PARENT_CRYSTAL_EXISTS=$(test !$?)
 if ($PARENT_CRYSTAL_EXISTS); then
   if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
-    CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL_COMMAND env CRYSTAL_LIBRARY_PATH 2> /dev/null || echo "")"
+    CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL env CRYSTAL_LIBRARY_PATH 2> /dev/null || echo "")"
     export CRYSTAL_LIBRARY_PATH=${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
     export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
   fi
@@ -195,5 +191,5 @@ elif !($PARENT_CRYSTAL_EXISTS); then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
 else
-  exec "$PARENT_CRYSTAL_COMMAND" "$@"
+  exec "$PARENT_CRYSTAL" "$@"
 fi
