@@ -518,7 +518,7 @@ struct Char
   # consisting of multiple letters may yield a different character sequence
   # where only the first letter is uppercase and the rest lowercase.
   #
-  # This method takes into account the possibility that an upcase
+  # This method takes into account the possibility that a titlecase
   # version of a char might result in multiple chars, like for
   # 'ﬄ', which results in 'F', 'f' and 'l'.
   #
