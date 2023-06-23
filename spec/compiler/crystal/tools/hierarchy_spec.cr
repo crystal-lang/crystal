@@ -38,7 +38,7 @@ describe Crystal::TextHierarchyPrinter do
         +- struct Struct (0 bytes)
             |
             +- struct Foo (1 bytes)
-                  @x : Bool (1 bytes)\n
+                   @x : Bool (1 bytes)\n
     EOS
   end
 end
