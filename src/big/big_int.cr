@@ -647,20 +647,20 @@ struct BigInt < Int
 
   {% for n in [8, 16, 32, 64, 128] %}
     def to_i{{n}} : Int{{n}}
-      \{% if Int{{n}} == LibGMP::Long %}
-        LibGMP.fits_slong_p(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
-      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::Long::MAX %}
-        LibGMP::Long.new(self).to_i{{n}}
+      \{% if Int{{n}} == LibGMP::SI %}
+        LibGMP.{{ flag?(:win32) ? "fits_si_p".id : "fits_slong_p".id }}(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
+      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::SI::MAX %}
+        LibGMP::SI.new(self).to_i{{n}}
       \{% else %}
         to_primitive_i(Int{{n}})
       \{% end %}
     end
 
     def to_u{{n}} : UInt{{n}}
-      \{% if UInt{{n}} == LibGMP::ULong %}
-        LibGMP.fits_ulong_p(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
-      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::ULong::MAX %}
-        LibGMP::ULong.new(self).to_u{{n}}
+      \{% if UInt{{n}} == LibGMP::UI %}
+        LibGMP.{{ flag?(:win32) ? "fits_ui_p".id : "fits_ulong_p".id }}(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
+      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
+        LibGMP::UI.new(self).to_u{{n}}
       \{% else %}
         to_primitive_u(UInt{{n}})
       \{% end %}
@@ -671,10 +671,10 @@ struct BigInt < Int
     end
 
     def to_u{{n}}! : UInt{{n}}
-      \{% if UInt{{n}} == LibGMP::ULong %}
+      \{% if UInt{{n}} == LibGMP::UI %}
         LibGMP.get_ui(self) &* sign
-      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::ULong::MAX %}
-        LibGMP::ULong.new!(self).to_u{{n}}!
+      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
+        LibGMP::UI.new!(self).to_u{{n}}!
       \{% else %}
         to_primitive_u!(UInt{{n}})
       \{% end %}

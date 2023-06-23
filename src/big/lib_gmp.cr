@@ -149,6 +149,10 @@ lib LibGMP
 
   fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
   fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
+  {% if flag?(:win32) %}
+    fun fits_ui_p = __gmpz_fits_ui_p(op : MPZ*) : Int
+    fun fits_si_p = __gmpz_fits_si_p(op : MPZ*) : Int
+  {% end %}
 
   # # Special Functions
 
