@@ -166,9 +166,10 @@ if [ "$PARENT_CRYSTAL_COMMAND_REALPATH" = "$SCRIPT_PATH" ]; then
     __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
     exit 1
   fi
-  PARENT_CRYSTAL_COMMAND=$(realpath "$(PATH=$NEW_PATH command -v "$PARENT_CRYSTAL" 2> /dev/null)" 2> /dev/null)
+  PARENT_CRYSTAL_COMMAND=$(PATH=$NEW_PATH command -v "$PARENT_CRYSTAL" 2> /dev/null)
+  PARENT_CRYSTAL_COMMAND_REALPATH=$(realpath "$PARENT_CRYSTAL_COMMAND" 2> /dev/null)
   PARENT_CRYSTAL_EXISTS=$(test !$?)
-  if [ "$PARENT_CRYSTAL_COMMAND" = "$SCRIPT_PATH" ]; then
+  if [ "$PARENT_CRYSTAL_COMMAND_REALPATH" = "$SCRIPT_PATH" ]; then
     __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
     exit 1
   fi
