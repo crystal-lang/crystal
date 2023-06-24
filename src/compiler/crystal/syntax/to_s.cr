@@ -885,11 +885,7 @@ module Crystal
     end
 
     def visit_named_arg_name(name)
-      if Symbol.needs_quotes_for_named_argument?(name)
-        name.inspect(@str)
-      else
-        @str << name
-      end
+      Symbol.quote_for_named_argument(@str, name)
     end
 
     def visit(node : Underscore)
@@ -1123,11 +1119,7 @@ module Crystal
       else
         @str << node.name
         @str << " = "
-        if Symbol.needs_quotes_for_named_argument?(node.real_name)
-          node.real_name.inspect(@str)
-        else
-          @str << node.real_name
-        end
+        Symbol.quote_for_named_argument(@str, node.real_name)
       end
       if node.args.size > 0
         @str << '('
