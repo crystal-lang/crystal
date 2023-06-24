@@ -469,7 +469,7 @@ class HTTP::Client
     end
 
     # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
-    # to "application/x-www-form-urlencoded".
+    # to "application/x-www-form-urlencoded" if none is provided.
     #
     # ```
     # require "http/client"
@@ -479,13 +479,14 @@ class HTTP::Client
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : String | IO) : HTTP::Client::Response
       request = new_request({{method.upcase}}, path, headers, form)
-      request.headers["Content-Type"] = "application/x-www-form-urlencoded"
+      request.headers["Content-Type"] = "application/x-www-form-urlencoded" unless request.headers.has_key?("Content-Type")
       exec request
     end
 
     # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
-    # The "Content-Type" header is set to "application/x-www-form-urlencoded".
+    # The "Content-Type" header is set to "application/x-www-form-urlencoded"
+    # if none is provided.
     #
     # ```
     # require "http/client"
@@ -497,14 +498,14 @@ class HTTP::Client
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : String | IO)
       request = new_request({{method.upcase}}, path, headers, form)
-      request.headers["Content-Type"] = "application/x-www-form-urlencoded"
+      request.headers["Content-Type"] = "application/x-www-form-urlencoded" unless request.headers.has_key?("Content-Type")
       exec(request) do |response|
         yield response
       end
     end
 
     # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
-    # to "application/x-www-form-urlencoded".
+    # to "application/x-www-form-urlencoded" if none is provided.
     #
     # ```
     # require "http/client"
@@ -519,7 +520,8 @@ class HTTP::Client
 
     # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
-    # The "Content-type" header is set to "application/x-www-form-urlencoded".
+    # The "Content-type" header is set to "application/x-www-form-urlencoded"
+    # if none is provided.
     #
     # ```
     # require "http/client"
@@ -537,7 +539,7 @@ class HTTP::Client
     end
 
     # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
-    # to "application/x-www-form-urlencoded".
+    # to "application/x-www-form-urlencoded" if none is provided.
     #
     # ```
     # require "http/client"
@@ -552,7 +554,8 @@ class HTTP::Client
 
     # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
-    # The "Content-Type" header is set to "application/x-www-form-urlencoded".
+    # The "Content-Type" header is set to "application/x-www-form-urlencoded"
+    # if none is provided.
     #
     # ```
     # require "http/client"
