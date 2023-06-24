@@ -895,6 +895,11 @@ struct Int8
     self < 0 ? 0_u8 &- self : to_u8!
   end
 
+  # :nodoc:
+  def neg_signed : self
+    -self
+  end
+
   def popcount : Int8
     Intrinsics.popcount8(self)
   end
@@ -998,6 +1003,11 @@ struct Int16
   # :nodoc:
   def abs_unsigned : UInt16
     self < 0 ? 0_u16 &- self : to_u16!
+  end
+
+  # :nodoc:
+  def neg_signed : self
+    -self
   end
 
   def popcount : Int16
@@ -1105,6 +1115,11 @@ struct Int32
     self < 0 ? 0_u32 &- self : to_u32!
   end
 
+  # :nodoc:
+  def neg_signed : self
+    -self
+  end
+
   def popcount : Int32
     Intrinsics.popcount32(self)
   end
@@ -1208,6 +1223,11 @@ struct Int64
   # :nodoc:
   def abs_unsigned : UInt64
     self < 0 ? 0_u64 &- self : to_u64!
+  end
+
+  # :nodoc:
+  def neg_signed : self
+    -self
   end
 
   def popcount : Int64
@@ -1316,6 +1336,11 @@ struct Int128
   # :nodoc:
   def abs_unsigned : UInt128
     self < 0 ? UInt128.new(0) &- self : to_u128!
+  end
+
+  # :nodoc:
+  def neg_signed : self
+    -self
   end
 
   def popcount
@@ -1427,6 +1452,11 @@ struct UInt8
     self
   end
 
+  # :nodoc:
+  def neg_signed : Int8
+    0_i8 - self
+  end
+
   def popcount : Int8
     Intrinsics.popcount8(self)
   end
@@ -1534,6 +1564,11 @@ struct UInt16
   # :nodoc:
   def abs_unsigned : self
     self
+  end
+
+  # :nodoc:
+  def neg_signed : Int16
+    0_i16 - self
   end
 
   def popcount : Int16
@@ -1645,6 +1680,11 @@ struct UInt32
     self
   end
 
+  # :nodoc:
+  def neg_signed : Int32
+    0_i32 - self
+  end
+
   def popcount : Int32
     Intrinsics.popcount32(self)
   end
@@ -1752,6 +1792,11 @@ struct UInt64
   # :nodoc:
   def abs_unsigned : self
     self
+  end
+
+  # :nodoc:
+  def neg_signed : Int64
+    0_i64 - self
   end
 
   def popcount : Int64
@@ -1863,6 +1908,11 @@ struct UInt128
   # :nodoc:
   def abs_unsigned : self
     self
+  end
+
+  # :nodoc:
+  def neg_signed : Int128
+    Int128.new(0) - self
   end
 
   def popcount
