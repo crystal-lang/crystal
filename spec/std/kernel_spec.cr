@@ -323,6 +323,18 @@ end
 describe "default interrupt handlers", tags: %w[slow] do
   # TODO: Implementation for sending console control commands on Windows.
   # So long this behaviour can only be tested manually.
+  #
+  # ```
+  # lib LibC
+  #  fun GenerateConsoleCtrlEvent(dwCtrlEvent : DWORD, dwProcessGroupId : DWORD) : BOOL
+  # end
+
+  # at_exit { print "Exiting"; }
+  # print "."
+  # STDOUT.flush
+  # LibC.GenerateConsoleCtrlEvent(LibC::CTRL_C_EVENT, 0)
+  # sleep
+  # ```
   {% unless flag?(:windows) %}
     it "handler for SIGINT" do
       status, output, _ = compile_and_run_exit_handler(&.signal(Signal::INT))
