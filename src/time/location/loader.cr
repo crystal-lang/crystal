@@ -110,7 +110,7 @@ class Time::Location
 
     abbreviations = read_buffer(io, abbrev_length)
 
-    leap_second_time_pairs = Bytes.new(num_leap_seconds)
+    leap_second_time_pairs = Bytes.new(num_leap_seconds * 8)
     io.read_fully(leap_second_time_pairs)
 
     isstddata = Bytes.new(num_std_wall)
