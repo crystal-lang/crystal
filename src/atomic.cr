@@ -2,17 +2,19 @@ require "llvm/enums/atomic"
 
 # A value that may be updated atomically.
 #
-# Only primitive integer types, reference types or nilable reference types
-# can be used with an Atomic type.
+# If `T` is a non-union primitive integer type or enum type, all operations are
+# supported. If `T` is a reference type, or a union type containing only
+# reference types or `Nil`, then only `#compare_and_set`, `#swap`, `#set`,
+# `#lazy_set`, `#get`, and `#lazy_get` are available.
 struct Atomic(T)
   # Creates an Atomic with the given initial value.
   def initialize(@value : T)
     {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
       # Support integer types, enum types, or char (because it's represented as an integer)
-    {% elsif T < Reference || (T.union? && T.union_types.all? { |t| t == Nil || t < Reference }) %}
+    {% elsif T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       # Support reference types, or union types with only nil or reference types
     {% else %}
-      {{ raise "Can only create Atomic with primitive integer types, reference types or nilable reference types, not #{T}" }}
+      {% raise "Can only create Atomic with primitive integer types, reference types or nilable reference types, not #{T}" %}
     {% end %}
   end
 
@@ -20,6 +22,8 @@ struct Atomic(T)
   #
   # * if they are equal, sets the value to *new*, and returns `{old_value, true}`
   # * if they are not equal the value remains the same, and returns `{old_value, false}`
+  #
+  # Reference types are compared by `#same?`, not `#==`.
   #
   # ```
   # atomic = Atomic.new(1)
@@ -31,23 +35,12 @@ struct Atomic(T)
   # atomic.get                   # => 3
   # ```
   def compare_and_set(cmp : T, new : T) : {T, Bool}
-    # Check if it's a nilable reference type
-    {% if T.union? && T.union_types.all? { |t| t == Nil || t < Reference } %}
-      # If so, use addresses because LLVM < 3.9 doesn't support cmpxchg with pointers
-      address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
-      {address == 0 ? nil : Pointer(T).new(address).as(T), success}
-      # Check if it's a reference type
-    {% elsif T < Reference %}
-      # Use addresses again (but this can't return nil)
-      address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
-      {Pointer(T).new(address).as(T), success}
-    {% else %}
-      # Otherwise, this is an integer type
-      Ops.cmpxchg(pointerof(@value), cmp, new, :sequentially_consistent, :sequentially_consistent)
-    {% end %}
+    Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
   end
 
   # Performs `atomic_value &+= value`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(1)
@@ -55,10 +48,13 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def add(value : T) : T
+    check_reference_type
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value &-= value`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(9)
@@ -66,10 +62,13 @@ struct Atomic(T)
   # atomic.get    # => 7
   # ```
   def sub(value : T) : T
+    check_reference_type
     Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value &= value`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -77,10 +76,13 @@ struct Atomic(T)
   # atomic.get    # => 1
   # ```
   def and(value : T) : T
+    check_reference_type
     Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value = ~(atomic_value & value)`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -88,10 +90,13 @@ struct Atomic(T)
   # atomic.get     # => -2
   # ```
   def nand(value : T) : T
+    check_reference_type
     Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value |= value`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -99,10 +104,13 @@ struct Atomic(T)
   # atomic.get   # => 7
   # ```
   def or(value : T) : T
+    check_reference_type
     Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value ^= value`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -110,10 +118,13 @@ struct Atomic(T)
   # atomic.get    # => 6
   # ```
   def xor(value : T) : T
+    check_reference_type
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value = {atomic_value, value}.max`. Returns the old value.
+  #
+  # `T` cannot contain any reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -125,6 +136,7 @@ struct Atomic(T)
   # atomic.get     # => 10
   # ```
   def max(value : T)
+    check_reference_type
     {% if T < Enum %}
       if @value.value.is_a?(Int::Signed)
         Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
@@ -140,6 +152,8 @@ struct Atomic(T)
 
   # Performs `atomic_value = {atomic_value, value}.min`. Returns the old value.
   #
+  # `T` cannot contain any reference types.
+  #
   # ```
   # atomic = Atomic.new(5)
   #
@@ -150,6 +164,7 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def min(value : T)
+    check_reference_type
     {% if T < Enum %}
       if @value.value.is_a?(Int::Signed)
         Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
@@ -171,8 +186,8 @@ struct Atomic(T)
   # atomic.get      # => 10
   # ```
   def swap(value : T)
-    {% if T.union? && T.union_types.all? { |t| t == Nil || t < Reference } || T < Reference %}
-      address = Ops.atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(T).object_id), :sequentially_consistent, false)
+    {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
+      address = Ops.atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), :sequentially_consistent, false)
       Pointer(T).new(address).as(T)
     {% else %}
       Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
@@ -209,6 +224,12 @@ struct Atomic(T)
   # **Non-atomically** returns this atomic's value.
   def lazy_get
     @value
+  end
+
+  private macro check_reference_type
+    {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
+      {% raise "Cannot call `#{@type}##{@def.name}` as `#{T}` is a reference type" %}
+    {% end %}
   end
 
   # :nodoc:
