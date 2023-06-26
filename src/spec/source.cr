@@ -8,7 +8,8 @@ module Spec
   def self.read_line(file, line)
     return nil unless File.file?(file)
 
-    lines_cache.put_if_absent(file) { File.read_lines(file) }[line - 1]?
+    lines = lines_cache.put_if_absent(file) { File.read_lines(file) }
+    lines[line - 1]?
   end
 
   # :nodoc:
