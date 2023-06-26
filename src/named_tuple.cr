@@ -449,12 +449,7 @@ struct NamedTuple
       {% if i > 0 %}
         io << ", "
       {% end %}
-      key = {{key.stringify}}
-      if Symbol.needs_quotes_for_named_argument?(key)
-        key.inspect(io)
-      else
-        io << key
-      end
+      Symbol.quote_for_named_argument io, {{key.stringify}}
       io << ": "
       self[{{key.symbolize}}].inspect(io)
     {% end %}
@@ -468,12 +463,7 @@ struct NamedTuple
           pp.comma
         {% end %}
         pp.group do
-          key = {{key.stringify}}
-          if Symbol.needs_quotes_for_named_argument?(key)
-            pp.text key.inspect
-          else
-            pp.text key
-          end
+          pp.text Symbol.quote_for_named_argument({{key.stringify}})
           pp.text ": "
           pp.nest do
             pp.breakable ""
