@@ -103,7 +103,7 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          make -f Makefile.win -B ${{ inputs.release && "release=1" || "" }}
+          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
 
       - name: Download shards release
         uses: actions/checkout@v3
@@ -121,7 +121,7 @@ jobs:
 
       - name: Build shards release
         working-directory: ./shards
-        run: ../bin/crystal.bat build ${{ inputs.release && "--release" || "" }} src/shards.cr
+        run: ../bin/crystal.bat build ${{ inputs.release && '--release' || '' }} src/shards.cr
 
       - name: Gather Crystal binaries
         run: |
@@ -139,5 +139,5 @@ jobs:
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.release && "crystal-release" || "crystal" }}
+          name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
           path: crystal
