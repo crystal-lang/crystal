@@ -692,7 +692,8 @@ describe "String" do
     end
 
     it "does not touch invalid code units in an otherwise ascii string" do
-      assert_prints "\xB5!\xE0\xC1\xB5?".capitalize, "\xB5!\xE0\xC1\xB5?"
+      "\xB5!\xE0\xC1\xB5?".capitalize.should eq("\xB5!\xE0\xC1\xB5?")
+      String.build { |io| "\xB5!\xE0\xC1\xB5?".capitalize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
     end
   end
 
@@ -710,8 +711,10 @@ describe "String" do
     end
 
     it "does not touch invalid code units in an otherwise ascii string" do
-      assert_prints "\xB5!\xE0\xC1\xB5?".titleize, "\xB5!\xE0\xC1\xB5?"
-      assert_prints "a\xA0b".titleize, "A\xA0b"
+      "\xB5!\xE0\xC1\xB5?".titleize.should eq("\xB5!\xE0\xC1\xB5?")
+      "a\xA0b".titleize.should eq("A\xA0b")
+      String.build { |io| "\xB5!\xE0\xC1\xB5?".titleize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
+      String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
     end
   end
 

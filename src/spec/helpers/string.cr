@@ -48,7 +48,8 @@ module Spec::Methods
   # Asserts that the given *call* and its `IO`-accepting variant both produce
   # the given string *str*.
   #
-  # Equivalent to `assert_prints call, should: eq(str.scrub)`.
+  # Equivalent to `assert_prints call, should: eq(str)`. *str* must be validly
+  # encoded in UTF-8.
   #
   # ```
   # require "spec"
@@ -82,6 +83,10 @@ module Spec::Methods
   # end
   # ```
   macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
-    assert_prints({{ call }}, should: eq(({{ str }}.scrub).as(::String)), file: {{ file }}, line: {{ line }})
+    %str = ({{ str }}).as(::String)
+    unless %str.valid_encoding?
+      ::fail "`str` contains invalid UTF-8 byte sequences: #{%str.inspect}", file: {{ file }}, line: {{ line }}
+    end
+    assert_prints({{ call }}, should: eq(%str), file: {{ file }}, line: {{ line }})
   end
 end
