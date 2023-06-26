@@ -1032,11 +1032,7 @@ class Crystal::Call
         next if arg_type.entries.empty?
         io << ", " unless first
         arg_type.entries.join(io, ", ") do |entry|
-          if Symbol.needs_quotes_for_named_argument?(entry.name)
-            entry.name.inspect(io)
-          else
-            io << entry.name
-          end
+          Symbol.quote_for_named_argument(io, entry.name)
           io << ": " << entry.type
         end
       else
@@ -1049,11 +1045,7 @@ class Crystal::Call
     if named_args = @named_args
       io << ", " unless first
       named_args.join(io, ", ") do |named_arg|
-        if Symbol.needs_quotes_for_named_argument?(named_arg.name)
-          named_arg.name.inspect(io)
-        else
-          io << named_arg.name
-        end
+        Symbol.quote_for_named_argument(io, named_arg.name)
         io << ": " << named_arg.value.type
       end
     end

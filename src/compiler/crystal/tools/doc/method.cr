@@ -272,14 +272,11 @@ class Crystal::Doc::Method
   def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
-        if Symbol.needs_quotes_for_named_argument? name
-          if html.none?
-            name.inspect io
-          else
-            HTML.escape name.inspect, io
-          end
-        else
+        name = Symbol.quote_for_named_argument(name)
+        if html.none?
           io << name
+        else
+          HTML.escape name, io
         end
       else
         io << "_"

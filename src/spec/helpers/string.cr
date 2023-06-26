@@ -48,7 +48,7 @@ module Spec::Methods
   # Asserts that the given *call* and its `IO`-accepting variant both produce
   # the given string *str*.
   #
-  # Equivalent to `assert_prints call, should: eq(str)`.
+  # Equivalent to `assert_prints call, should: eq(str.scrub)`.
   #
   # ```
   # require "spec"
@@ -82,6 +82,6 @@ module Spec::Methods
   # end
   # ```
   macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
-    assert_prints({{ call }}, should: eq(({{ str }}).as(::String)), file: {{ file }}, line: {{ line }})
+    assert_prints({{ call }}, should: eq(({{ str }}.scrub).as(::String)), file: {{ file }}, line: {{ line }})
   end
 end

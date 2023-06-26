@@ -1048,11 +1048,7 @@ module Crystal
 
     private def to_double_splat(trailing_string = "")
       MacroId.new(entries.join(", ") do |entry|
-        if Symbol.needs_quotes_for_named_argument?(entry.key)
-          "#{entry.key.inspect}: #{entry.value}"
-        else
-          "#{entry.key}: #{entry.value}"
-        end
+        "#{Symbol.quote_for_named_argument(entry.key)}: #{entry.value}"
       end + trailing_string)
     end
   end
