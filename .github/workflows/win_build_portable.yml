@@ -10,7 +10,6 @@ on:
 jobs:
   build:
     runs-on: windows-2022
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
     steps:
       - name: Disable CRLF line ending substitution
         run: |

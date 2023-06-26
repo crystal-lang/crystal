@@ -201,6 +201,7 @@ jobs:
           cmake -DCMAKE_INSTALL_PREFIX=$(pwd)\llvm -P cmake_install.cmake
 
   x86_64-windows:
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: false
@@ -251,6 +252,7 @@ jobs:
         run: make -f Makefile.win samples
 
   x86_64-windows-release:
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
