@@ -11,6 +11,10 @@
 #define MyAppAssocExt ".cr"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
+#define MajorNum 0
+#define MinorNum 0
+#expr UnpackVersionComponents(StrToVersion(MyAppVersionNum), MajorNum, MinorNum, null, null)
+
 [Setup]
 AppId={{7C307DDF-447E-46C5-BB3B-47A6F652D7C8}
 AppName={#MyAppName} x86_64-windows-msvc
@@ -96,7 +100,7 @@ Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\DefaultIcon"; 
 Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".cr"; ValueData: ""; Flags: uninsdeletekey
 
 [Icons]
-Name: "{group}\Crystal Book"; Filename: "https://crystal-lang.org/reference/master/index.html"
+Name: "{group}\Crystal Book"; Filename: "https://crystal-lang.org/reference/{#MajorNum}.{#MinorNum}/index.html"
 Name: "{group}\Crystal Standard Library API"; Filename: "{app}\docs\index.html"; Components: docs
 Name: "{group}\Crystal Standard Library API"; Filename: "https://crystal-lang.org/api/{#MyAppVersion}/index.html"; Components: not docs
 Name: "{group}\Official Website"; Filename: "https://crystal-lang.org/"
