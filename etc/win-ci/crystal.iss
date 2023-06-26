@@ -68,7 +68,7 @@ Name: association; Description: "{cm:AssocFileExtension,Crystal,.cr}"; Flags: un
 Source: "portable\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Components: main
 Source: "portable\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: main
 Source: "portable\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: main
-Source: "portable\src\*"; DestDir: "{app}\src"; Excludes: "llvm\ext\llvm_ext.obj"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: main
+Source: "portable\src\*"; DestDir: "{app}\src"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: main
 Source: "portable\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme; Components: main
 Source: "portable\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: main
 
