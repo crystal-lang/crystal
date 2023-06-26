@@ -285,15 +285,7 @@ jobs:
           Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe"
 
       - name: Build docs
-        run: make -f Makefile.win docs
-
-      - name: Gather files
-        run: |
-          mkdir etc/win-ci/portable/samples
-          mkdir etc/win-ci/portable/docs
-          cp samples/* etc/win-ci/portable/samples -Recurse
-          cp docs/* etc/win-ci/portable/docs -Recurse
-          rm samples/.gitignore
+        run: make -f Makefile.win install_docs prefix=etc\win-ci\portable
 
       - name: Build installer
         run: |
