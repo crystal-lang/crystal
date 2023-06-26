@@ -517,11 +517,7 @@ class Crystal::Doc::Type
     if (named_args = node.named_args) && !named_args.empty?
       io << ", " unless node.type_vars.empty?
       named_args.join(io, ", ") do |entry|
-        if Symbol.needs_quotes_for_named_argument?(entry.name)
-          entry.name.inspect(io)
-        else
-          io << entry.name
-        end
+        Symbol.quote_for_named_argument(io, entry.name)
         io << ": "
         node_to_html entry.value, io, html: html
       end
@@ -636,11 +632,7 @@ class Crystal::Doc::Type
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, html : HTMLOption = :all)
     io << '{'
     type.entries.join(io, ", ") do |entry|
-      if Symbol.needs_quotes_for_named_argument?(entry.name)
-        entry.name.inspect(io)
-      else
-        io << entry.name
-      end
+      Symbol.quote_for_named_argument(io, entry.name)
       io << ": "
       type_to_html entry.type, io, html: html
     end

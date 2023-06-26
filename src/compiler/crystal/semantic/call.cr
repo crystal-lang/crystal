@@ -1112,17 +1112,18 @@ class Crystal::Call
     # This will insert this node into the trace as the new first frame.
     self.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
-    if obj = @obj
-      if name == "initialize"
-        # Avoid putting 'initialize' in the error trace
-        # because it's most likely that this is happening
-        # inside a generated 'new' method
-        ::raise ex
-      else
-        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-      end
+    if (obj = @obj) && name == "initialize"
+      # Avoid putting 'initialize' in the error trace
+      # because it's most likely that this is happening
+      # inside a generated 'new' method
+      ::raise ex
     else
-      raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+      msg = String.build do |io|
+        io << "instantiating '"
+        signature(io)
+        io << "'"
+      end
+      raise msg, ex
     end
   end
 

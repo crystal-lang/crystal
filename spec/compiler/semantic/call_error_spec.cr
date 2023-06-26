@@ -293,4 +293,259 @@ describe "Call errors" do
       ),
       "expected argument #2 to 'foo' to be Int32, not (Int32 | Nil)"
   end
+
+  describe "method signatures in error traces" do
+    it "includes named argument" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(y: Int32)'"
+        def foo(x)
+        end
+
+        def bar(**opts)
+          foo
+        end
+
+        bar(y: 1)
+        CRYSTAL
+    end
+
+    it "includes named arguments" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(y: Int32, z: String)'"
+        def foo(x)
+        end
+
+        def bar(**opts)
+          foo
+        end
+
+        bar(y: 1, z: "")
+        CRYSTAL
+    end
+
+    it "includes positional and named argument" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32, y: String)'"
+        def foo(x)
+        end
+
+        def bar(*args, **opts)
+          foo
+        end
+
+        bar(1, y: "")
+        CRYSTAL
+    end
+
+    it "expands single splat argument" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32)'"
+        def foo(x)
+        end
+
+        def bar(*args)
+          foo
+        end
+
+        bar(*{1})
+        CRYSTAL
+    end
+
+    it "expands single splat argument, more elements" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32, String)'"
+        def foo(x)
+        end
+
+        def bar(*args)
+          foo
+        end
+
+        bar(*{1, ""})
+        CRYSTAL
+    end
+
+    it "expands single splat argument, empty tuple" do
+      assert_error <<-CRYSTAL, "instantiating 'bar()'"
+        #{tuple_new}
+
+        def foo(x)
+        end
+
+        def bar(*args)
+          foo
+        end
+
+        bar(*Tuple.new)
+        CRYSTAL
+    end
+
+    it "expands positional and single splat argument" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32, String)'"
+        def foo(x)
+        end
+
+        def bar(*args)
+          foo
+        end
+
+        bar(1, *{""})
+        CRYSTAL
+    end
+
+    it "expands positional and single splat argument, more elements" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32, String, Bool)'"
+        def foo(x)
+        end
+
+        def bar(*args)
+          foo
+        end
+
+        bar(1, *{"", true})
+        CRYSTAL
+    end
+
+    it "expands positional and single splat argument, empty tuple" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32)'"
+        #{tuple_new}
+
+        def foo(x)
+        end
+
+        def bar(*args)
+          foo
+        end
+
+        bar(1, *Tuple.new)
+        CRYSTAL
+    end
+
+    it "expands double splat argument" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(y: Int32)'"
+        def foo(x)
+        end
+
+        def bar(**opts)
+          foo
+        end
+
+        bar(**{y: 1})
+        CRYSTAL
+    end
+
+    it "expands double splat argument, more elements" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(y: Int32, z: String)'"
+        def foo(x)
+        end
+
+        def bar(**opts)
+          foo
+        end
+
+        bar(**{y: 1, z: ""})
+        CRYSTAL
+    end
+
+    it "expands double splat argument, empty named tuple" do
+      assert_error <<-CRYSTAL, "instantiating 'bar()'"
+        #{named_tuple_new}
+
+        def foo(x)
+        end
+
+        def bar(**opts)
+          foo
+        end
+
+        bar(**NamedTuple.new)
+        CRYSTAL
+    end
+
+    it "expands positional and double splat argument" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32, y: String)'"
+        def foo(x)
+        end
+
+        def bar(*args, **opts)
+          foo
+        end
+
+        bar(1, **{y: ""})
+        CRYSTAL
+    end
+
+    it "expands positional and double splat argument, more elements" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32, y: String, z: Bool)'"
+        def foo(x)
+        end
+
+        def bar(*args, **opts)
+          foo
+        end
+
+        bar(1, **{y: "", z: true})
+        CRYSTAL
+    end
+
+    it "expands positional and double splat argument, empty named tuple" do
+      assert_error <<-CRYSTAL, "instantiating 'bar(Int32)'"
+        #{named_tuple_new}
+
+        def foo(x)
+        end
+
+        def bar(*args, **opts)
+          foo
+        end
+
+        bar(1, **NamedTuple.new)
+        CRYSTAL
+    end
+
+    it "uses `T.method` instead of `T.class#method`" do
+      assert_error <<-CRYSTAL, "instantiating 'Bar.bar()'"
+        def foo(x)
+        end
+
+        class Bar
+          def self.bar
+            foo
+          end
+        end
+
+        Bar.bar
+        CRYSTAL
+    end
+
+    it "uses `T.method` instead of `T:module#method`" do
+      assert_error <<-CRYSTAL, "instantiating 'Bar.bar()'"
+        def foo(x)
+        end
+
+        module Bar
+          def self.bar
+            foo
+          end
+        end
+
+        Bar.bar
+        CRYSTAL
+    end
+  end
+end
+
+private def tuple_new
+  <<-CRYSTAL
+    struct Tuple
+      def self.new(*args)
+        args
+      end
+    end
+    CRYSTAL
+end
+
+private def named_tuple_new
+  <<-CRYSTAL
+    struct NamedTuple
+      def self.new(**opts)
+        opts
+      end
+    end
+    CRYSTAL
 end

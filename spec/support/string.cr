@@ -25,11 +25,13 @@ end
 # Given a call of the form `foo.bar(*args, **opts)`, tests the following cases:
 #
 # * This call itself should return a `String` equal to *str*.
-# * `String.build { |io| foo.bar(io, *args, **opts) }` should be equal to *str*.
-# * `string_build_via_utf16 { |io| foo.bar(io, *args, **opts) }` should be equal
-#   to *str*; that is, the `IO` overload should not fail when the `IO` argument
-#   uses a non-default encoding. This case is skipped if the `without_iconv`
-#   flag is set.
+# * `String.build { |io| foo.bar(io, *args, **opts) }` should be equal to
+#   `str.scrub`; writing to a `String::Builder` must not produce any invalid
+#   UTF-8 byte sequences.
+# * `string_build_via_utf16 { |io| foo.bar(io, *args, **opts) }` should also be
+#   equal to `str.scrub`; that is, the `IO` overload should not fail when the
+#   `IO` argument uses a non-default encoding. This case is skipped if the
+#   `without_iconv` flag is set.
 macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
   %str = ({{ str }}).as(String)
   %file = {{ file }}
@@ -45,7 +47,7 @@ macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
       {% for arg in call.args %} {{ arg }}, {% end %}
       {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
     ) {{ call.block }}
-  end.should eq(%str), file: %file, line: %line
+  end.should eq(%str.scrub), file: %file, line: %line
 
   {% unless flag?(:without_iconv) %}
     string_build_via_utf16 do |io|
@@ -54,6 +56,6 @@ macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
         {% for arg in call.args %} {{ arg }}, {% end %}
         {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
       ) {{ call.block }}
-    end.should eq(%str), file: %file, line: %line
+    end.should eq(%str.scrub), file: %file, line: %line
   {% end %}
 end

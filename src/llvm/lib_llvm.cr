@@ -19,6 +19,8 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_170 = {{LibLLVM::VERSION.starts_with?("17.0")}}
+    IS_160 = {{LibLLVM::VERSION.starts_with?("16.0")}}
     IS_150 = {{LibLLVM::VERSION.starts_with?("15.0")}}
     IS_140 = {{LibLLVM::VERSION.starts_with?("14.0")}}
     IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
@@ -37,6 +39,7 @@ end
     IS_LT_140 = {{compare_versions(LibLLVM::VERSION, "14.0.0") < 0}}
     IS_LT_150 = {{compare_versions(LibLLVM::VERSION, "15.0.0") < 0}}
     IS_LT_160 = {{compare_versions(LibLLVM::VERSION, "16.0.0") < 0}}
+    IS_LT_170 = {{compare_versions(LibLLVM::VERSION, "17.0.0") < 0}}
   end
 {% end %}
 
@@ -58,9 +61,6 @@ lib LibLLVM
   type TargetRef = Void*
   type TargetDataRef = Void*
   type TargetMachineRef = Void*
-  type PassManagerBuilderRef = Void*
-  type PassManagerRef = Void*
-  type PassRegistryRef = Void*
   type MemoryBufferRef = Void*
   type PassBuilderOptionsRef = Void*
   type ErrorRef = Void*
@@ -238,24 +238,10 @@ lib LibLLVM
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
   fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : UInt64
-  fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
-  fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
-  fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)
-  fun pass_manager_builder_set_disable_unroll_loops = LLVMPassManagerBuilderSetDisableUnrollLoops(builder : PassManagerBuilderRef, value : Int32)
-  fun pass_manager_builder_set_disable_simplify_lib_calls = LLVMPassManagerBuilderSetDisableSimplifyLibCalls(builder : PassManagerBuilderRef, value : Int32)
-  fun pass_manager_builder_use_inliner_with_threshold = LLVMPassManagerBuilderUseInlinerWithThreshold(builder : PassManagerBuilderRef, threshold : UInt32)
-  fun pass_manager_builder_populate_function_pass_manager = LLVMPassManagerBuilderPopulateFunctionPassManager(builder : PassManagerBuilderRef, pm : PassManagerRef)
-  fun pass_manager_builder_populate_module_pass_manager = LLVMPassManagerBuilderPopulateModulePassManager(builder : PassManagerBuilderRef, pm : PassManagerRef)
-  fun pass_manager_create = LLVMCreatePassManager : PassManagerRef
-  fun create_function_pass_manager_for_module = LLVMCreateFunctionPassManagerForModule(mod : ModuleRef) : PassManagerRef
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun print_module_to_file = LLVMPrintModuleToFile(m : ModuleRef, filename : UInt8*, error_msg : UInt8**) : Int32
   fun run_function = LLVMRunFunction(ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
-  fun run_pass_manager = LLVMRunPassManager(pm : PassManagerRef, m : ModuleRef) : Int32
-  fun initialize_function_pass_manager = LLVMInitializeFunctionPassManager(fpm : PassManagerRef) : Int32
-  fun run_function_pass_manager = LLVMRunFunctionPassManager(fpm : PassManagerRef, f : ValueRef) : Int32
-  fun finalize_function_pass_manager = LLVMFinalizeFunctionPassManager(fpm : PassManagerRef) : Int32
   fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun is_global_constant = LLVMIsGlobalConstant(global : ValueRef) : Int32
@@ -285,19 +271,6 @@ lib LibLLVM
   fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
   fun get_next_instruction = LLVMGetNextInstruction(inst : ValueRef) : ValueRef
-  fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
-  fun initialize_core = LLVMInitializeCore(r : PassRegistryRef)
-  fun initialize_transform_utils = LLVMInitializeTransformUtils(r : PassRegistryRef)
-  fun initialize_scalar_opts = LLVMInitializeScalarOpts(r : PassRegistryRef)
-  fun initialize_obj_c_arc_opts = LLVMInitializeObjCARCOpts(r : PassRegistryRef)
-  fun initialize_vectorization = LLVMInitializeVectorization(r : PassRegistryRef)
-  fun initialize_inst_combine = LLVMInitializeInstCombine(r : PassRegistryRef)
-  fun initialize_ipo = LLVMInitializeIPO(r : PassRegistryRef)
-  fun initialize_instrumentation = LLVMInitializeInstrumentation(r : PassRegistryRef)
-  fun initialize_analysis = LLVMInitializeAnalysis(r : PassRegistryRef)
-  fun initialize_ipa = LLVMInitializeIPA(r : PassRegistryRef)
-  fun initialize_code_gen = LLVMInitializeCodeGen(r : PassRegistryRef)
-  fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
   fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
   fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
@@ -330,9 +303,7 @@ lib LibLLVM
   fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
   fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
   fun dispose_context = LLVMContextDispose(ContextRef)
-  fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
   fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
-  fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
   fun get_return_type = LLVMGetReturnType(TypeRef) : TypeRef
@@ -536,4 +507,41 @@ lib LibLLVM
 
   fun set_subprogram = LLVMSetSubprogram(func : ValueRef, sp : MetadataRef)
   fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(target_metadata : MetadataRef, replacement : MetadataRef)
+
+  {% if LibLLVM::IS_LT_170 %}
+    type PassManagerRef = Void*
+    fun pass_manager_create = LLVMCreatePassManager : PassManagerRef
+    fun create_function_pass_manager_for_module = LLVMCreateFunctionPassManagerForModule(mod : ModuleRef) : PassManagerRef
+    fun run_pass_manager = LLVMRunPassManager(pm : PassManagerRef, m : ModuleRef) : Int32
+    fun initialize_function_pass_manager = LLVMInitializeFunctionPassManager(fpm : PassManagerRef) : Int32
+    fun run_function_pass_manager = LLVMRunFunctionPassManager(fpm : PassManagerRef, f : ValueRef) : Int32
+    fun finalize_function_pass_manager = LLVMFinalizeFunctionPassManager(fpm : PassManagerRef) : Int32
+    fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
+
+    type PassRegistryRef = Void*
+    fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
+    fun initialize_core = LLVMInitializeCore(r : PassRegistryRef)
+    fun initialize_transform_utils = LLVMInitializeTransformUtils(r : PassRegistryRef)
+    fun initialize_scalar_opts = LLVMInitializeScalarOpts(r : PassRegistryRef)
+    fun initialize_obj_c_arc_opts = LLVMInitializeObjCARCOpts(r : PassRegistryRef)
+    fun initialize_vectorization = LLVMInitializeVectorization(r : PassRegistryRef)
+    fun initialize_inst_combine = LLVMInitializeInstCombine(r : PassRegistryRef)
+    fun initialize_ipo = LLVMInitializeIPO(r : PassRegistryRef)
+    fun initialize_instrumentation = LLVMInitializeInstrumentation(r : PassRegistryRef)
+    fun initialize_analysis = LLVMInitializeAnalysis(r : PassRegistryRef)
+    fun initialize_ipa = LLVMInitializeIPA(r : PassRegistryRef)
+    fun initialize_code_gen = LLVMInitializeCodeGen(r : PassRegistryRef)
+    fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
+
+    type PassManagerBuilderRef = Void*
+    fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
+    fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
+    fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)
+    fun pass_manager_builder_set_disable_unroll_loops = LLVMPassManagerBuilderSetDisableUnrollLoops(builder : PassManagerBuilderRef, value : Int32)
+    fun pass_manager_builder_set_disable_simplify_lib_calls = LLVMPassManagerBuilderSetDisableSimplifyLibCalls(builder : PassManagerBuilderRef, value : Int32)
+    fun pass_manager_builder_use_inliner_with_threshold = LLVMPassManagerBuilderUseInlinerWithThreshold(builder : PassManagerBuilderRef, threshold : UInt32)
+    fun pass_manager_builder_populate_function_pass_manager = LLVMPassManagerBuilderPopulateFunctionPassManager(builder : PassManagerBuilderRef, pm : PassManagerRef)
+    fun pass_manager_builder_populate_module_pass_manager = LLVMPassManagerBuilderPopulateModulePassManager(builder : PassManagerBuilderRef, pm : PassManagerRef)
+    fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
+  {% end %}
 end

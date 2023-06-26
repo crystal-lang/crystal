@@ -68,6 +68,7 @@ lib LibGMP
   fun get_si = __gmpz_get_si(op : MPZ*) : SI
   fun get_ui = __gmpz_get_ui(op : MPZ*) : UI
   fun get_d = __gmpz_get_d(op : MPZ*) : Double
+  fun get_d_2exp = __gmpz_get_d_2exp(exp : Long*, op : MPZ*) : Double
 
   # # Arithmetic
 
@@ -136,9 +137,6 @@ lib LibGMP
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : UI) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
 
-  # # Conversion
-  fun get_d_2exp = __gmpz_get_d_2exp(exp : Long*, op : MPZ*) : Double
-
   # # Number Theoretic Functions
 
   fun gcd = __gmpz_gcd(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
@@ -147,8 +145,19 @@ lib LibGMP
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
   fun remove = __gmpz_remove(rop : MPZ*, op : MPZ*, f : MPZ*) : BitcntT
 
-  # Special Functions
+  # # Miscellaneous Functions
 
+  fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
+  fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
+  {% if flag?(:win32) %}
+    fun fits_ui_p = __gmpz_fits_ui_p(op : MPZ*) : Int
+    fun fits_si_p = __gmpz_fits_si_p(op : MPZ*) : Int
+  {% end %}
+
+  # # Special Functions
+
+  fun size = __gmpz_size(op : MPZ*) : SizeT
+  fun limbs_read = __gmpz_limbs_read(x : MPZ*) : MpLimb*
   fun limbs_write = __gmpz_limbs_write(x : MPZ*, n : MpSize) : MpLimb*
   fun limbs_finish = __gmpz_limbs_finish(x : MPZ*, s : MpSize)
 
