@@ -124,16 +124,12 @@ jobs:
 
       - name: Gather Crystal binaries
         run: |
-          mkdir crystal/src
+          make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
-          cp .build/crystal.exe crystal/
           cp shards/shards.exe crystal/
           cp libs/* crystal/lib/
           cp dlls/* crystal/
-          cp src/* crystal/src -Recurse
           cp README.md crystal/
-          cp LICENSE crystal/LICENSE.txt
-          rm crystal/src/llvm/ext/llvm_ext.obj
 
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v3
