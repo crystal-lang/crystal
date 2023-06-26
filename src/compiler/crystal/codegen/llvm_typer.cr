@@ -247,7 +247,7 @@ module Crystal
 
     private def create_llvm_type(type : NonGenericModuleType | GenericClassType, wants_size)
       # This can only be reached if the module or generic class don't have implementors
-      @llvm_context.void
+      @llvm_context.int1
     end
 
     private def create_llvm_type(type : Type, wants_size)
