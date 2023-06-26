@@ -76,8 +76,14 @@ class Process
   end
 
   # Restores default handling of interrupt requests.
+  #
+  # The default interrupt handler calls `::exit` to ensure `at_exit` handlers
+  # execute. It returns a platform-specific status code indicating an interrupt
+  # (`130` on Unix, `3` on Windows).
   def self.restore_interrupts! : Nil
     Crystal::System::Process.restore_interrupts!
+
+    Crystal::System::Process.setup_default_interrupt_handlers
   end
 
   # Returns `true` if the process identified by *pid* is valid for
