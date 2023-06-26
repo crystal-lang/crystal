@@ -6,6 +6,7 @@
 #define MyAppPublisher "Manas Technology Solutions"
 #define MyAppURL "https://crystal-lang.org/"
 #define MyAppExeName "crystal.exe"
+#define MyAppCopyright GetFileCopyright("crystal\.build\" + MyAppExeName)
 #define MyAppAssocName MyAppName + " Source File"
 #define MyAppAssocExt ".cr"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
@@ -14,7 +15,7 @@
 AppId={{7C307DDF-447E-46C5-BB3B-47A6F652D7C8}
 AppName={#MyAppName} x86_64-windows-msvc
 AppVersion={#MyAppVersion}
-AppCopyright=Copyright 2012-2023 Manas Technology Solutions
+AppCopyright=#{MyAppCopyright}
 VersionInfoVersion={#MyAppVersionNum}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
