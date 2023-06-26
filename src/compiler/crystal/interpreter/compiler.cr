@@ -2010,7 +2010,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args = node.args
     obj_type = obj.try(&.type) || target_def.owner
 
-    if obj_type == @context.program
+    # TODO: should this use `Type#passed_as_self?` instead?
+    if obj_type == @context.program || obj_type.is_a?(FileModule)
       # Nothing
     elsif obj_type.passed_by_value?
       args_bytesize += sizeof(Pointer(UInt8))
