@@ -294,3 +294,64 @@ describe "hardware exception" do
     error.should contain("Stack overflow")
   end
 end
+
+private def compile_and_run_exit_handler(&block : Process -> _)
+  with_tempfile("source_file") do |source_file|
+    File.write(source_file, <<-CRYSTAL)
+      at_exit { print "Exiting" }
+      print "."
+      STDOUT.flush
+      sleep
+      CRYSTAL
+    output = nil
+    compile_file(source_file) do |executable_file|
+      error = IO::Memory.new
+      process = Process.new executable_file, output: :pipe, error: error
+
+      spawn do
+        process.output.read_byte
+        block.call(process)
+        output = process.output.gets_to_end
+      end
+
+      status = process.wait
+      {status, output, error.to_s}
+    end
+  end
+end
+
+describe "default interrupt handlers", tags: %w[slow] do
+  # TODO: Implementation for sending console control commands on Windows.
+  # So long this behaviour can only be tested manually.
+  #
+  # ```
+  # lib LibC
+  #  fun GenerateConsoleCtrlEvent(dwCtrlEvent : DWORD, dwProcessGroupId : DWORD) : BOOL
+  # end
+
+  # at_exit { print "Exiting"; }
+  # print "."
+  # STDOUT.flush
+  # LibC.GenerateConsoleCtrlEvent(LibC::CTRL_C_EVENT, 0)
+  # sleep
+  # ```
+  {% unless flag?(:windows) %}
+    it "handler for SIGINT" do
+      status, output, _ = compile_and_run_exit_handler(&.signal(Signal::INT))
+      output.should eq "Exiting"
+      status.inspect.should eq "Process::Status[130]"
+    end
+
+    it "handler for SIGTERM" do
+      status, output, _ = compile_and_run_exit_handler(&.terminate)
+      output.should eq "Exiting"
+      status.inspect.should eq "Process::Status[143]"
+    end
+  {% end %}
+
+  it "no handler for SIGKILL" do
+    status, output, _ = compile_and_run_exit_handler(&.terminate(graceful: false))
+    output.should eq ""
+    status.inspect.should eq {{ flag?(:unix) ? "Process::Status[Signal::KILL]" : "Process::Status[1]" }}
+  end
+end
