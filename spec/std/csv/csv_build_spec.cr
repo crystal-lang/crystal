@@ -1,6 +1,6 @@
 require "spec"
 require "csv"
-require "../../support/string"
+require "spec/helpers/string"
 
 describe CSV do
   describe "build" do

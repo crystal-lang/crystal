@@ -1,7 +1,7 @@
 require "spec"
 require "unicode"
 require "spec/helpers/iterate"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "Char" do
   describe "#upcase" do

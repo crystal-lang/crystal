@@ -1,6 +1,6 @@
 require "spec"
 require "big"
-require "../../support/string"
+require "spec/helpers/string"
 
 describe BigDecimal do
   it "initializes from valid input" do

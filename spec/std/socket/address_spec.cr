@@ -1,7 +1,7 @@
 require "spec"
 require "socket"
 require "../../support/win32"
-require "../../support/string"
+require "spec/helpers/string"
 
 describe Socket::Address do
   describe ".parse" do

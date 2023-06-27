@@ -1,6 +1,6 @@
 require "spec"
 require "big"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = __LINE__)
   it "converts to #{str}", file: file, line: line do

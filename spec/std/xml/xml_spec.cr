@@ -1,6 +1,6 @@
 require "spec"
 require "xml"
-require "../../support/string"
+require "spec/helpers/string"
 
 describe XML do
   it "parses" do

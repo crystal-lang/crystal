@@ -1,5 +1,5 @@
 require "spec"
-require "../support/string"
+require "spec/helpers/string"
 
 enum SpecEnum : Int8
   One
