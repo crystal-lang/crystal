@@ -532,7 +532,7 @@ class Crystal::Call
     unless expected_type
       restriction = def_arg.restriction
       if restriction
-        expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.free_vars)
+        expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.bound_free_vars)
       end
     end
     expected_type ||= def_arg.restriction.not_nil!

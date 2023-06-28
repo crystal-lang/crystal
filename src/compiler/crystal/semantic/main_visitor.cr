@@ -3076,7 +3076,7 @@ module Crystal
     # # Helpers
 
     def free_vars
-      match_context.try &.free_vars
+      match_context.try &.bound_free_vars
     end
 
     def check_closured(var, mark_as_mutably_closured : Bool = false)

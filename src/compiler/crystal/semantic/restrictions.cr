@@ -876,7 +876,7 @@ module Crystal
       free_var_count = other.types.count do |other_type|
         other_type.is_a?(Path) &&
           (first_name = other_type.single_name?) &&
-          context.has_def_free_var?(first_name)
+          context.has_unbound_free_var?(first_name)
       end
       if free_var_count > 1
         other.raise "can't specify more than one free var in union restriction"
@@ -890,8 +890,8 @@ module Crystal
 
     def restrict(other : Path, context)
       if first_name = other.single_name?
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
+        if context.has_unbound_free_var?(first_name)
+          return context.bind_free_var(first_name, self)
         end
       end
 
@@ -902,12 +902,12 @@ module Crystal
         # and a restriction X, it matches, and we add X to the free vars.
         if owner.is_a?(GenericType)
           if owner.type_vars.includes?(first_name)
-            context.set_free_var(first_name, self)
+            context.bind_free_var(first_name, self)
             return self
           end
         end
 
-        ident_type = context.get_free_var(other.names.first)
+        ident_type = context.bound_free_var?(other.names.first)
       end
 
       had_ident_type = !!ident_type
@@ -923,7 +923,7 @@ module Crystal
 
       if first_name
         if context.defining_type.type_var?(first_name)
-          return context.set_free_var(first_name, self)
+          return context.bind_free_var(first_name, self)
         end
       end
 
@@ -1044,7 +1044,7 @@ module Crystal
       free_vars, other_types = other.types.partition do |other_type|
         other_type.is_a?(Path) &&
           (first_name = other_type.single_name?) &&
-          context.has_def_free_var?(first_name)
+          context.has_unbound_free_var?(first_name)
       end
       if free_vars.size > 1
         other.raise "can't specify more than one free var in union restriction"
@@ -1265,13 +1265,13 @@ module Crystal
           if first_name = other_type_var.single_name?
             # If the free variable is already set to another
             # number, there's no match
-            if existing = context.get_free_var(first_name)
+            if existing = context.bound_free_var?(first_name)
               return existing == type_var ? existing : nil
             end
 
             # If the free variable is not yet bound, there is a match
-            if context.has_def_free_var?(first_name)
-              context.set_free_var(first_name, type_var)
+            if context.has_unbound_free_var?(first_name)
+              context.bind_free_var(first_name, type_var)
               return type_var
             end
           end
@@ -1493,8 +1493,8 @@ module Crystal
 
     def restrict(other : Path, context)
       if first_name = other.single_name?
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
+        if context.has_unbound_free_var?(first_name)
+          return context.bind_free_var(first_name, self)
         end
       end
 
@@ -1506,7 +1506,7 @@ module Crystal
       else
         if first_name = other.single_name?
           if context.defining_type.type_var?(first_name)
-            return context.set_free_var(first_name, self)
+            return context.bind_free_var(first_name, self)
           else
             other.raise_undefined_constant(context.defining_type)
           end
