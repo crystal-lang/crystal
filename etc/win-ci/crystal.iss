@@ -81,7 +81,7 @@ Source: "portable\shards.exe"; DestDir: "{app}"; Flags: ignoreversion; Component
 
 Source: "portable\crystal.pdb"; DestDir: "{app}"; Flags: ignoreversion; Components: pdb
 
-Source: "portable\samples\*"; DestDir: "{app}\samples"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: samples
+Source: "portable\examples\*"; DestDir: "{app}\examples"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: samples
 
 Source: "portable\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs
 
