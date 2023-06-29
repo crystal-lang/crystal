@@ -858,7 +858,7 @@ describe "Hash" do
   it "transforms keys with values included" do
     h1 = {1 => "a", 2 => "b", 3 => "c"}
 
-    expected_values = ["a", "b", "c"]
+    expected_values = h1.values
     h2 = h1.transform_keys do |x, v|
       v.should eq(expected_values.shift)
       x + 1
@@ -892,7 +892,7 @@ describe "Hash" do
   it "transforms values with keys included" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
-    expected_keys = ["a", "b", "c"]
+    expected_keys = h1.keys
     h2 = h1.transform_values do |x, k|
       k.should eq(expected_keys.shift)
       x + 1
@@ -910,7 +910,7 @@ describe "Hash" do
   it "transform values in place with keys included" do
     h = {"a" => 1, "b" => 2, "c" => 3}
 
-    expected_keys = ["a", "b", "c"]
+    expected_keys = h.keys
     h.transform_values! do |x, k|
       k.should eq(expected_keys.shift)
       x + 1
