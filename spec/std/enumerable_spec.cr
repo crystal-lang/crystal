@@ -396,7 +396,7 @@ describe "Enumerable" do
   describe "each_step" do
     it "yields the every 2nd element" do
       collection = [] of String
-      ["a", "b", "c", "d", "e", "f"].each_step(2) do |e|
+      %w[a b c d e f].each_step(2) do |e|
         collection << e
       end
       collection.should eq ["a", "c", "e"]
@@ -404,14 +404,14 @@ describe "Enumerable" do
 
     it "accepts an optional offset parameter" do
       collection = [] of String
-      ["a", "b", "c", "d", "e", "f"].each_step(2, 1) do |e|
+      %w[a b c d e f].each_step(2, offset: 1) do |e|
         collection << e
       end
       collection.should eq ["b", "d", "f"]
     end
 
     it "gets each_step iterator" do
-      iter = ["a", "b", "c", "d", "e", "f"].each_step(2)
+      iter = %w[a b c d e f].each_step(2)
       iter.next.should eq("a")
       iter.next.should eq("c")
       iter.next.should eq("e")
@@ -419,7 +419,7 @@ describe "Enumerable" do
     end
 
     it "gets each_step iterator with an offset" do
-      iter = ["a", "b", "c", "d", "e", "f"].each_step(2, 1)
+      iter = %w[a b c d e f].each_step(2, offset: 1)
       iter.next.should eq("b")
       iter.next.should eq("d")
       iter.next.should eq("f")
