@@ -1611,7 +1611,7 @@ class Hash(K, V)
 
   # Returns a new hash with all keys converted using the block operation.
   # The block can change a type of keys.
-  # The block optionally yields the value as well
+  # The block yields the key and value.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
@@ -1625,7 +1625,7 @@ class Hash(K, V)
 
   # Returns a new hash with the results of running block once for every value.
   # The block can change a type of values.
-  # The block optionally yields the key as well
+  # The block yields the value and key.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
@@ -1639,7 +1639,7 @@ class Hash(K, V)
 
   # Destructively transforms all values using a block. Same as transform_values but modifies in place.
   # The block cannot change a type of values.
-  # The block optionally yields the key as well
+  # The block yields the value and key.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
