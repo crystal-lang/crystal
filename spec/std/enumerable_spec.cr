@@ -393,6 +393,40 @@ describe "Enumerable" do
     end
   end
 
+  describe "each_step", focus: true do
+    it "yields the every 2nd element" do
+      collection = [] of String
+      ["a", "b", "c", "d", "e", "f"].each_step(2) do |e|
+        collection << e
+      end
+      collection.should eq ["a", "c", "e"]
+    end
+
+    it "accepts an optional offset parameter" do
+      collection = [] of String
+      ["a", "b", "c", "d", "e", "f"].each_step(2, 1) do |e|
+        collection << e
+      end
+      collection.should eq ["b", "d", "f"]
+    end
+
+    it "gets each_step iterator" do
+      iter = ["a", "b", "c", "d", "e", "f"].each_step(2)
+      iter.next.should eq("a")
+      iter.next.should eq("c")
+      iter.next.should eq("e")
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "gets each_step iterator with an offset" do
+      iter = ["a", "b", "c", "d", "e", "f"].each_step(2, 1)
+      iter.next.should eq("b")
+      iter.next.should eq("d")
+      iter.next.should eq("f")
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
   describe "each_with_index" do
     it "yields the element and the index" do
       collection = [] of {String, Int32}

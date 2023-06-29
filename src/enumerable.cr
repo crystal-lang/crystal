@@ -426,6 +426,42 @@ module Enumerable(T)
     nil
   end
 
+  # Iterates over the collection, yielding every *n*th element, starting with the first.
+  #
+  # ```
+  # ["Alice", "Bob", "Charlie", "David"].each_step(2) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # User: Alice
+  # User: Charlie
+  # ```
+  #
+  # Accepts an optional *offset* parameter
+  #
+  # ```
+  # ["Alice", "Bob", "Charlie", "David"].each_step(2, 1) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Which would print:
+  #
+  # ```text
+  # User: Bob
+  # User: David
+  # ```
+  def each_step(n : Int, offset : Int = 0, & : T ->) : Nil
+    offset_mod = offset % n
+    each_with_index do |elem, i|
+      yield elem if i >= offset && i % n == offset_mod
+    end
+  end
+
   # Iterates over the collection, yielding both the elements and their index.
   #
   # ```
