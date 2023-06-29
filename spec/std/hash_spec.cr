@@ -858,12 +858,8 @@ describe "Hash" do
   it "transforms keys with values included" do
     h1 = {1 => "a", 2 => "b", 3 => "c"}
 
-    expected_values = h1.values
-    h2 = h1.transform_keys do |x, v|
-      v.should eq(expected_values.shift)
-      x + 1
-    end
-    h2.should eq({2 => "a", 3 => "b", 4 => "c"})
+    h2 = h1.transform_keys { |k, v| "#{k}#{v}" }
+    h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
   end
 
   it "transforms values" do
@@ -892,12 +888,8 @@ describe "Hash" do
   it "transforms values with keys included" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
-    expected_keys = h1.keys
-    h2 = h1.transform_values do |x, k|
-      k.should eq(expected_keys.shift)
-      x + 1
-    end
-    h2.should eq({"a" => 2, "b" => 3, "c" => 4})
+    h2 = h1.transform_values { |v, k| "#{k}#{v}" }
+    h2.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
   end
 
   it "transform values in place" do
@@ -908,14 +900,10 @@ describe "Hash" do
   end
 
   it "transform values in place with keys included" do
-    h = {"a" => 1, "b" => 2, "c" => 3}
+    h = {"a" => "1", "b" => "2", "c" => "3"}
 
-    expected_keys = h.keys
-    h.transform_values! do |x, k|
-      k.should eq(expected_keys.shift)
-      x + 1
-    end
-    h.should eq({"a" => 2, "b" => 3, "c" => 4})
+    h.transform_values! { |v, k| "#{k}#{v}" }
+    h.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
   end
 
   it "zips" do
