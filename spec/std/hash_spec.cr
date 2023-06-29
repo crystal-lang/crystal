@@ -855,6 +855,17 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms keys with values included" do
+    h1 = {1 => "a", 2 => "b", 3 => "c"}
+
+    expected_values = ["a", "b", "c"]
+    h2 = h1.transform_keys do |x, v|
+      v.should eq(expected_values.shift)
+      x + 1
+    end
+    h2.should eq({2 => "a", 3 => "b", 4 => "c"})
+  end
+
   it "transforms values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
@@ -878,10 +889,32 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms values with keys included" do
+    h1 = {"a" => 1, "b" => 2, "c" => 3}
+
+    expected_keys = ["a", "b", "c"]
+    h2 = h1.transform_values do |x, k|
+      k.should eq(expected_keys.shift)
+      x + 1
+    end
+    h2.should eq({"a" => 2, "b" => 3, "c" => 4})
+  end
+
   it "transform values in place" do
     h = {"a" => 1, "b" => 2, "c" => 3}
 
     h.transform_values!(&.+(1))
+    h.should eq({"a" => 2, "b" => 3, "c" => 4})
+  end
+
+  it "transform values in place with keys included" do
+    h = {"a" => 1, "b" => 2, "c" => 3}
+
+    expected_keys = ["a", "b", "c"]
+    h.transform_values! do |x, k|
+      k.should eq(expected_keys.shift)
+      x + 1
+    end
     h.should eq({"a" => 2, "b" => 3, "c" => 4})
   end
 
