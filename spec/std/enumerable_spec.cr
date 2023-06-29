@@ -393,7 +393,7 @@ describe "Enumerable" do
     end
   end
 
-  describe "each_step", focus: true do
+  describe "each_step" do
     it "yields the every 2nd element" do
       collection = [] of String
       ["a", "b", "c", "d", "e", "f"].each_step(2) do |e|
