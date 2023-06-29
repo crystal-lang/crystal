@@ -1614,9 +1614,9 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_keys { |key| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys { |key, _value| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
   # ```
-  def transform_keys(& : K -> K2) : Hash(K2, V) forall K2
+  def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
       memo[yield(key, value)] = value
     end
@@ -1627,9 +1627,9 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values { |value, _key| value + 1 } # => {:a => 2, :b => 3, :c => 4}
   # ```
-  def transform_values(& : V -> V2) : Hash(K, V2) forall V2
+  def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
@@ -1640,11 +1640,11 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_values! { |value| value + 1 }
+  # hash.transform_values! { |value, _key| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
   # ```
   # See `#update` for updating a *single* value.
-  def transform_values!(& : V -> V) : self
+  def transform_values!(& : V, K -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value, entry.key
       set_entry(i, Entry(K, V).new(entry.hash, entry.key, new_value))
