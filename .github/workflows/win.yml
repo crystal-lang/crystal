@@ -290,8 +290,9 @@ jobs:
         run: make -f Makefile.win install_docs prefix=etc\win-ci\portable
 
       - name: Build installer
+        working-directory: ./etc/win-ci
         run: |
-          iscc.exe etc/win-ci/crystal.iss
+          iscc.exe crystal.iss
 
       - name: Upload Crystal installer
         uses: actions/upload-artifact@v3
