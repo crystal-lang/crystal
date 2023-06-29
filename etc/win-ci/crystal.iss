@@ -19,7 +19,7 @@
 AppId={{7C307DDF-447E-46C5-BB3B-47A6F652D7C8}
 AppName={#MyAppName} x86_64-windows-msvc
 AppVersion={#MyAppVersion}
-AppCopyright=#{MyAppCopyright}
+AppCopyright={#MyAppCopyright}
 VersionInfoVersion={#MyAppVersionNum}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
