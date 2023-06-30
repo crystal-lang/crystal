@@ -454,6 +454,16 @@ module Crystal
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
 
+    def run_requires(node : Require, filenames) : Nil
+      filenames.each do |filename|
+        unseen_file = requires.add?(filename)
+
+        if unseen_file
+          yield filename
+        end
+      end
+    end
+
     # Finds *filename* in the configured CRYSTAL_PATH for this program,
     # relative to *relative_to*.
     def find_in_path(filename, relative_to = nil) : Array(String)?

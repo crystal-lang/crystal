@@ -69,11 +69,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     if filenames
       nodes = Array(ASTNode).new(filenames.size)
-      filenames.each do |filename|
-        if @program.requires.add?(filename)
-          nodes << require_file(node, filename)
-        end
+
+      @program.run_requires(node, filenames) do |filename|
+        nodes << require_file(node, filename)
       end
+
       expanded = Expressions.from(nodes)
     else
       expanded = Nop.new
