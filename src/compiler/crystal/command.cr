@@ -43,6 +43,7 @@ class Crystal::Command
         expand                   show macro expansion for given location
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
+        dependencies             show file dependency tree
         implementations          show implementations for given call in location
         types                    show type of main variables
         --help, -h               show this help
@@ -181,6 +182,9 @@ class Crystal::Command
     when "hierarchy".starts_with?(tool)
       options.shift
       hierarchy
+    when "dependencies".starts_with?(tool)
+      options.shift
+      dependencies
     when "implementations".starts_with?(tool)
       options.shift
       implementations

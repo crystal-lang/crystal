@@ -455,12 +455,18 @@ module Crystal
     end
 
     def run_requires(node : Require, filenames) : Nil
+      dependency_printer = compiler.try(&.dependency_printer)
+
       filenames.each do |filename|
         unseen_file = requires.add?(filename)
+
+        dependency_printer.try(&.enter_file(filename, unseen_file))
 
         if unseen_file
           yield filename
         end
+
+        dependency_printer.try(&.leave_file)
       end
     end
 
