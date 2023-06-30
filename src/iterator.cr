@@ -1322,7 +1322,7 @@ module Iterator(T)
   end
 
   private class WithIndexIterator(I, T, O)
-    include Iterator({T, Int32})
+    include Iterator({T, O})
     include IteratorWrapper
 
     def initialize(@iterator : I, @offset : O, @index : O = offset)
