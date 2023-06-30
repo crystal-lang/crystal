@@ -13,7 +13,7 @@ class Crystal::Command
         when "tree"
           dependency_printer = DependencyPrinter.new(STDOUT, flat: false)
         else
-          abort "Invalid format: #{format}"
+          error "Invalid format: #{format}"
         end
       end
     end
@@ -34,12 +34,10 @@ module Crystal
     end
 
     def enter_file(filename : String, unseen : Bool)
-      unless unseen
-        @indent += 1
-        return
+      if unseen
+        print_indent
+        print_file(filename)
       end
-      print_indent
-      print_file(filename)
 
       @indent += 1
     end
@@ -50,7 +48,7 @@ module Crystal
 
     private def print_indent
       return if @flat
-      @io.print "  " * @indent.clamp(0..)
+      @io.print "  " * @indent if @indent > 0
     end
 
     private def print_file(filename)
