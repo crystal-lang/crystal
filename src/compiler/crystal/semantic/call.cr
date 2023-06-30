@@ -1040,7 +1040,7 @@ class Crystal::Call
                             when Self
                               match.context.instantiated_type
                             when Crystal::Path
-                              match.context.defining_type.lookup_type_var(output, match.context.free_vars)
+                              match.context.defining_type.lookup_type_var(output, match.context.bound_free_vars)
                             else
                               output
                             end
@@ -1091,12 +1091,12 @@ class Crystal::Call
 
   private def lookup_node_type(context, node)
     bubbling_exception do
-      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
+      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.bound_free_vars, allow_typeof: false)
     end
   end
 
   private def lookup_node_type?(context, node)
-    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
+    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.bound_free_vars, allow_typeof: false)
   end
 
   def bubbling_exception(&)
