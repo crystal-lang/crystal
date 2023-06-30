@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class SpecEnumerable
   include Enumerable(Int32)
@@ -394,37 +395,8 @@ describe "Enumerable" do
   end
 
   describe "each_step" do
-    it "yields the every 2nd element" do
-      collection = [] of String
-      %w[a b c d e f].each_step(2) do |e|
-        collection << e
-      end
-      collection.should eq ["a", "c", "e"]
-    end
-
-    it "accepts an optional offset parameter" do
-      collection = [] of String
-      %w[a b c d e f].each_step(2, offset: 1) do |e|
-        collection << e
-      end
-      collection.should eq ["b", "d", "f"]
-    end
-
-    it "gets each_step iterator" do
-      iter = %w[a b c d e f].each_step(2)
-      iter.next.should eq("a")
-      iter.next.should eq("c")
-      iter.next.should eq("e")
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "gets each_step iterator with an offset" do
-      iter = %w[a b c d e f].each_step(2, offset: 1)
-      iter.next.should eq("b")
-      iter.next.should eq("d")
-      iter.next.should eq("f")
-      iter.next.should be_a(Iterator::Stop)
-    end
+    it_iterates "yields the every 2nd element", %w[a c e], %w[a b c d e f].each_step(2)
+    it_iterates "accepts an optional offset parameter", %w[b d f], %w[a b c d e f].each_step(2, offset: 1)
   end
 
   describe "each_with_index" do
