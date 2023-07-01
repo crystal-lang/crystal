@@ -29,8 +29,21 @@ module Spec
         non_nil_block = block
         start = Time.monotonic
 
-        ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
-        ran || internal_run(start, non_nil_block)
+        if Spec.list_tags?
+          tags = all_tags
+          tags << "untagged" if tags.empty?
+          context = self.parent
+          while !context.nil?
+            tags.each do |tag|
+              context.tag_counts[tag] += 1
+            end
+            break if !context.responds_to?(:parent)
+            context = context.parent
+          end
+        else
+          ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
+          ran || internal_run(start, non_nil_block)
+        end
 
         # We do this to give a chance for signals (like CTRL+C) to be handled,
         # which currently are only handled when there's a fiber switch

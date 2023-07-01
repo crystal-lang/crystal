@@ -5,6 +5,7 @@ module Spec
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
+    getter tag_counts = Hash(String, Int32).new(0)
 
     def randomize(randomizer)
       children.each do |child|
@@ -180,6 +181,12 @@ module Spec
     end
 
     def print_results(elapsed_time, aborted = false)
+      if Spec.list_tags?
+        longest_name = tag_counts.keys.map { |tag_name| tag_name.size }.max
+        tag_counts.to_a.sort_by { |k, v| -v }.each do |tag_name, count|
+          puts "#{tag_name.rjust(longest_name)}: #{count}"
+        end
+      end
       pendings = results_for(:pending)
       unless pendings.empty?
         puts
