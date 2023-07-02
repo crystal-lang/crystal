@@ -165,6 +165,7 @@ install_docs: docs ## Install docs at prefix
 	$(call MKDIR,"$(DATADIR)")
 	$(call INSTALLDIR,docs,"$(DATADIR)\docs")
 	$(call INSTALLDIR,samples,"$(DATADIR)\examples")
+	$(call RM,"$(DATADIR)\examples\.gitignore")
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from prefix
