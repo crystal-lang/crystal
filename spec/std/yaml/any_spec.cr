@@ -93,6 +93,7 @@ describe YAML::Any do
     YAML::Any.new(nil).raw.should be_nil
     YAML::Any.new(true).raw.should eq true
     YAML::Any.new(1_i64).raw.should eq 1_i64
+    YAML::Any.new(1).raw.should eq 1
     YAML::Any.new(0.0).raw.should eq 0.0
     YAML::Any.new("foo").raw.should eq "foo"
     YAML::Any.new(Time.utc(2023, 7, 2)).raw.should eq Time.utc(2023, 7, 2)

@@ -7,6 +7,7 @@ describe JSON::Any do
     JSON::Any.new(nil).raw.should be_nil
     JSON::Any.new(true).raw.should eq true
     JSON::Any.new(1_i64).raw.should eq 1_i64
+    JSON::Any.new(1).raw.should eq 1
     JSON::Any.new(0.0).raw.should eq 0.0
     JSON::Any.new("foo").raw.should eq "foo"
     JSON::Any.new([] of JSON::Any).raw.should eq [] of JSON::Any
