@@ -89,6 +89,19 @@ private def it_fetches_from_hash?(key, *equivalent_keys)
 end
 
 describe YAML::Any do
+  it ".new" do
+    YAML::Any.new(nil).raw.should be_nil
+    YAML::Any.new(true).raw.should eq true
+    YAML::Any.new(1_i64).raw.should eq 1_i64
+    YAML::Any.new(0.0).raw.should eq 0.0
+    YAML::Any.new("foo").raw.should eq "foo"
+    YAML::Any.new(Time.utc(2023, 7, 2)).raw.should eq Time.utc(2023, 7, 2)
+    YAML::Any.new(Bytes[1, 2, 3]).raw.should eq Bytes[1, 2, 3]
+    YAML::Any.new([] of YAML::Any).raw.should eq [] of YAML::Any
+    YAML::Any.new({} of YAML::Any => YAML::Any).raw.should eq({} of YAML::Any => YAML::Any)
+    YAML::Any.new(Set(YAML::Any).new).raw.should eq Set(YAML::Any).new
+  end
+
   describe "casts" do
     it "gets nil" do
       YAML.parse("").as_nil.should be_nil
