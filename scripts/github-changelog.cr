@@ -25,23 +25,25 @@ api_token = ENV["GITHUB_TOKEN"]
 repository = "crystal-lang/crystal"
 milestone = ARGV.first
 
-query = <<-GRAPHQL
-  query($milestone: String, $owner: String!, $repository: String!) {
-    repository(owner: $owner, name: $repository) {
-      milestones(query: $milestone, first: 1) {
-        nodes {
-          pullRequests(first: 300) {
-            nodes {
-              number
-              title
-              mergedAt
-              permalink
-              author {
-                login
-              }
-              labels(first: 10) {
-                nodes {
-                  name
+def query_prs(api_token, repository, milestone)
+  query = <<-GRAPHQL
+    query($milestone: String, $owner: String!, $repository: String!) {
+      repository(owner: $owner, name: $repository) {
+        milestones(query: $milestone, first: 1) {
+          nodes {
+            pullRequests(first: 300) {
+              nodes {
+                number
+                title
+                mergedAt
+                permalink
+                author {
+                  login
+                }
+                labels(first: 10) {
+                  nodes {
+                    name
+                  }
                 }
               }
             }
@@ -49,24 +51,26 @@ query = <<-GRAPHQL
         }
       }
     }
-  }
-  GRAPHQL
+    GRAPHQL
 
-owner, _, name = repository.partition("/")
-variables = {
-  owner:      owner,
-  repository: name,
-  milestone:  milestone,
-}
-
-response = HTTP::Client.post("https://api.github.com/graphql",
-  body: {query: query, variables: variables}.to_json,
-  headers: HTTP::Headers{
-    "Authorization" => "bearer #{api_token}",
+  owner, _, name = repository.partition("/")
+  variables = {
+    owner:      owner,
+    repository: name,
+    milestone:  milestone,
   }
-)
-unless response.success?
-  abort "GitHub API response: #{response.status}\n#{response.body}"
+
+  response = HTTP::Client.post("https://api.github.com/graphql",
+    body: {query: query, variables: variables}.to_json,
+    headers: HTTP::Headers{
+      "Authorization" => "bearer #{api_token}",
+    }
+  )
+  unless response.success?
+    abort "GitHub API response: #{response.status}\n#{response.body}"
+  end
+
+  response
 end
 
 module LabelNameConverter
@@ -126,8 +130,38 @@ record PullRequest,
       merged_at || Time.unix(0),
     }
   end
+
+  def scope
+    labels.each do |label|
+      case label
+      when .starts_with?("topic:lang")
+        return "Language"
+      when .starts_with?("topic:compiler")
+        if label == "topic:compiler"
+          return "Compiler"
+        else
+          return "Compiler: #{label.lchop("topic:compiler:").titleize}"
+        end
+      when .starts_with?("topic:tools")
+        if label == "topic:tools"
+          return "Tools"
+        else
+          return "Tools: #{label.lchop("topic:tools:").titleize}"
+        end
+      when .starts_with?("topic:stdlib")
+        if label == "topic:stdlib"
+          return "Standard Library"
+        else
+          return "Standard Library: #{label.lchop("topic:stdlib:").titleize}"
+        end
+      else
+        next
+      end
+    end
+  end
 end
 
+response = query_prs(api_token, repository, milestone)
 parser = JSON::PullParser.new(response.body)
 array = parser.on_key! "data" do
   parser.on_key! "repository" do
@@ -148,34 +182,8 @@ end
 
 changelog = File.read("CHANGELOG.md")
 array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
-sections = array.group_by { |pr|
-  pr.labels.each do |label|
-    case label
-    when .starts_with?("topic:lang")
-      break "Language"
-    when .starts_with?("topic:compiler")
-      if label == "topic:compiler"
-        break "Compiler"
-      else
-        break "Compiler: #{label.lchop("topic:compiler:").titleize}"
-      end
-    when .starts_with?("topic:tools")
-      if label == "topic:tools"
-        break "Tools"
-      else
-        break "Tools: #{label.lchop("topic:tools:").titleize}"
-      end
-    when .starts_with?("topic:stdlib")
-      if label == "topic:stdlib"
-        break "Standard Library"
-      else
-        break "Standard Library: #{label.lchop("topic:stdlib:").titleize}"
-      end
-    else
-      next
-    end
-  end || "Other"
-}
+
+sections = array.group_by { |pr| pr.scope || "Other" }
 
 titles = [] of String
 ["Language", "Standard Library", "Compiler", "Tools", "Other"].each do |main_section|
