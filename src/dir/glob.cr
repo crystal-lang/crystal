@@ -375,12 +375,7 @@ class Dir
     end
 
     private def self.root
-      # TODO: better implementation for windows?
-      {% if flag?(:windows) %}
-        "C:\\"
-      {% else %}
-        File::SEPARATOR_STRING
-      {% end %}
+      Path[Dir.current].anchor.not_nil!.to_s
     end
 
     private def self.dir?(path, follow_symlinks)
