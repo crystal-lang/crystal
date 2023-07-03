@@ -40,6 +40,20 @@ module Crystal::System::Time
     {% end %}
   end
 
+  def self.to_timespec(time : ::Time)
+    t = uninitialized LibC::Timespec
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
+    t
+  end
+
+  def self.to_timeval(time : ::Time)
+    t = uninitialized LibC::Timeval
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond // ::Time::NANOSECONDS_PER_MICROSECOND)
+    t
+  end
+
   # Many systems use /usr/share/zoneinfo, Solaris 2 has
   # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
   ZONE_SOURCES = {
