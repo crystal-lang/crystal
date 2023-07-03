@@ -948,7 +948,7 @@ class File < IO::FileDescriptor
 
   # Sets the access and modification times
   def utime(atime : Time, mtime : Time) : Nil
-    Crystal::System::File.futimens(@path, fd, atime, mtime)
+    system_utime(atime, mtime, @path)
   end
 
   # Attempts to set the access and modification times

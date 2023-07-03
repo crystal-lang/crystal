@@ -191,7 +191,7 @@ module Crystal::System::File
     end
   end
 
-  def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
+  private def system_utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
     ret = {% if LibC.has_method?("futimens") %}
             timespecs = uninitialized LibC::Timespec[2]
             timespecs[0] = to_timespec(atime)

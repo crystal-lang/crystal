@@ -401,12 +401,10 @@ module Crystal::System::File
   end
 
   def self.utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
-    atime = Crystal::System::Time.to_filetime(access_time)
-    mtime = Crystal::System::Time.to_filetime(modification_time)
     handle = LibC.CreateFileW(
       System.to_wstr(path),
       LibC::FILE_WRITE_ATTRIBUTES,
-      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
+      LibC::DEFAULT_SHARE_MODE,
       nil,
       LibC::OPEN_EXISTING,
       LibC::FILE_FLAG_BACKUP_SEMANTICS,
@@ -415,18 +413,24 @@ module Crystal::System::File
     if handle == LibC::INVALID_HANDLE_VALUE
       raise ::File::Error.from_winerror("Error setting time on file", file: path)
     end
+
     begin
-      if LibC.SetFileTime(handle, nil, pointerof(atime), pointerof(mtime)) == 0
-        raise ::File::Error.from_winerror("Error setting time on file", file: path)
-      end
+      utime(handle, access_time, modification_time, path)
     ensure
       LibC.CloseHandle(handle)
     end
   end
 
-  def self.futimens(path : String, fd : Int, access_time : ::Time, modification_time : ::Time) : Nil
-    # TODO: use fd instead of path
-    utime access_time, modification_time, path
+  def self.utime(handle : LibC::HANDLE, access_time : ::Time, modification_time : ::Time, path : String) : Nil
+    atime = Crystal::System::Time.to_filetime(access_time)
+    mtime = Crystal::System::Time.to_filetime(modification_time)
+    if LibC.SetFileTime(handle, nil, pointerof(atime), pointerof(mtime)) == 0
+      raise ::File::Error.from_winerror("Error setting time on file", file: path)
+    end
+  end
+
+  private def system_utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
+    Crystal::System::File.utime(windows_handle, access_time, modification_time, path)
   end
 
   private def system_truncate(size : Int) : Nil

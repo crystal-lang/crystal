@@ -1270,7 +1270,7 @@ describe "File" do
   end
 
   describe "utime" do
-    it "sets times with utime" do
+    it "sets times with class method" do
       with_tempfile("utime-set.txt") do |path|
         File.write(path, "")
 
@@ -1284,7 +1284,7 @@ describe "File" do
       end
     end
 
-    it "sets times with futime" do
+    it "sets times with instance method" do
       with_tempfile("utime-set.txt") do |path|
         File.open(path, "w") do |file|
           atime = Time.utc(2000, 1, 2)
