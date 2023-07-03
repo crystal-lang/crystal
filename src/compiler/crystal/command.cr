@@ -354,7 +354,7 @@ class Crystal::Command
 
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
-                              single_file = false)
+                              single_file = false, dependencies = false)
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
@@ -410,8 +410,14 @@ class Crystal::Command
         end
       end
 
-      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-        output_format = f
+      if dependencies
+        opts.on("-f tree|flat", "--format tree|flat", "Output format tree (default) or flat") do |f|
+          output_format = f
+        end
+      else
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          output_format = f
+        end
       end
 
       opts.on("--error-trace", "Show full error trace") do
@@ -547,9 +553,16 @@ class Crystal::Command
       end
     end
 
-    output_format ||= "text"
-    unless output_format.in?("text", "json")
-      error "You have input an invalid format, only text and JSON are supported"
+    if dependencies
+      output_format ||= "tree"
+      unless output_format.in?("tree", "flat")
+        error "You have input an invalid format, only tree and flat are supported"
+      end
+    else
+      output_format ||= "text"
+      unless output_format.in?("text", "json")
+        error "You have input an invalid format, only text and JSON are supported"
+      end
     end
 
     error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1

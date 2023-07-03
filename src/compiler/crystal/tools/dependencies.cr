@@ -4,24 +4,10 @@ require "../syntax/ast"
 
 class Crystal::Command
   private def dependencies
-    dependency_printer = nil
-    option_parser = parse_with_crystal_opts do |opts|
-      opts.on("-f FORMAT", "--format FORMAT", "Format the output. Available options: flat, tree (default)") do |format|
-        case format
-        when "flat"
-          dependency_printer = DependencyPrinter.new(STDOUT, flat: true)
-        when "tree"
-          dependency_printer = DependencyPrinter.new(STDOUT, flat: false)
-        else
-          error "Invalid format: #{format}"
-        end
-      end
-    end
-
-    config = create_compiler "tool dependencies", no_codegen: true
+    config = create_compiler "tool dependencies", no_codegen: true, dependencies: true
     config.compiler.no_codegen = true
 
-    config.compiler.dependency_printer = dependency_printer || DependencyPrinter.new(STDOUT)
+    config.compiler.dependency_printer = DependencyPrinter.new(STDOUT, flat: config.output_format == "flat")
     config.compile
   end
 end
