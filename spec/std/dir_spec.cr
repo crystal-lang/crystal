@@ -180,6 +180,15 @@ describe "Dir" do
         end
       end
     end
+
+    it "deletes a read-only directory" do
+      with_tempfile("delete-readonly-dir") do |path|
+        Dir.mkdir(path)
+        File.chmod(path, 0o000)
+        Dir.delete(path)
+        Dir.exists?(path).should be_false
+      end
+    end
   end
 
   describe "glob" do
