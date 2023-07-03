@@ -119,7 +119,7 @@ module Crystal::System::File
     end
   end
 
-  def self.fchmod(path, fd, mode)
+  private def system_chmod(path, mode)
     if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end

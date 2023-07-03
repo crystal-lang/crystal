@@ -943,7 +943,7 @@ class File < IO::FileDescriptor
   # file.info.permissions.value # => 0o700
   # ```
   def chmod(permissions : Int | Permissions) : Nil
-    Crystal::System::File.fchmod(@path, fd, permissions)
+    system_chmod(@path, permissions)
   end
 
   # Sets the access and modification times

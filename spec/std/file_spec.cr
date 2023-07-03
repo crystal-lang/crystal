@@ -351,7 +351,7 @@ describe "File" do
   end
 
   describe "chmod" do
-    it "changes file permissions" do
+    it "changes file permissions with class method" do
       path = datapath("chmod.txt")
       begin
         File.write(path, "")
@@ -362,7 +362,7 @@ describe "File" do
       end
     end
 
-    it "changes file permissions with fchmod" do
+    it "changes file permissions with instance method" do
       path = datapath("chmod.txt")
       begin
         File.open(path, "w") do |file|
