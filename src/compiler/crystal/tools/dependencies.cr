@@ -13,7 +13,7 @@ end
 
 module Crystal
   class DependencyPrinter
-    @indent = 0
+    @depth = 0
 
     def initialize(@io : IO, @flat : Bool = false)
     end
@@ -24,16 +24,16 @@ module Crystal
         print_file(filename)
       end
 
-      @indent += 1
+      @depth += 1
     end
 
     def leave_file
-      @indent -= 1
+      @depth -= 1
     end
 
     private def print_indent
       return if @flat
-      @io.print "  " * @indent if @indent > 0
+      @io.print "  " * @depth if @depth > 0
     end
 
     private def print_file(filename)
