@@ -5,10 +5,9 @@ require "../syntax/ast"
 class Crystal::Command
   private def dependencies
     config = create_compiler "tool dependencies", no_codegen: true, dependencies: true
-    config.compiler.no_codegen = true
 
     config.compiler.dependency_printer = DependencyPrinter.new(STDOUT, flat: config.output_format == "flat")
-    config.compile
+    config.compiler.top_level_semantic config.sources
   end
 end
 
