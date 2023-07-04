@@ -110,6 +110,9 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if labels.includes?("deprecation")
+      io << "**[deprecation]** "
+    end
     io << title << " ("
     io << "[#" << number << "](" << permalink << ")"
     if author = self.author
@@ -143,6 +146,10 @@ record PullRequest,
     }.try(&.lchop("topic:").split(":"))
   end
 
+  def breaking?
+    labels.includes?("kind:breaking")
+  end
+
   def feature?
     labels.includes?("kind:feature")
   end
@@ -173,6 +180,7 @@ record PullRequest,
 
   def type
     case
+    when breaking?    then "breaking"
     when infra?       then "infra"
     when feature?     then "feature"
     when fix?         then "fix"
@@ -210,6 +218,7 @@ array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
 sections = array.group_by { |pr| pr.type || "" }
 
 TYPE_TITLES = {
+  "breaking"    => "Breaking changes",
   "feature"     => "Features",
   "fix"         => "Bugfixes",
   "performance" => "Performance",
