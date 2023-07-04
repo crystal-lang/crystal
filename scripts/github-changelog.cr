@@ -110,7 +110,7 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
-    if labels.includes?("deprecation")
+    if deprecated?
       io << "**[deprecation]** "
     end
     io << title << " ("
@@ -128,6 +128,7 @@ record PullRequest,
   def sort_tuple
     {
       topic || [] of String,
+      deprecated? ? 0 : 1,
       merged_at || Time.unix(0),
     }
   end
@@ -144,6 +145,10 @@ record PullRequest,
     labels.find { |label|
       label.starts_with?("topic:") && label != "topic:multithreading"
     }.try(&.lchop("topic:").split(":"))
+  end
+
+  def deprecated?
+    labels.includes?("deprecation")
   end
 
   def breaking?
