@@ -233,7 +233,7 @@ TOPIC_ORDER = %w[lang stdlib compiler tools other]
 
 TYPE_TITLES.each do |id, title|
   prs = sections[id]? || next
-  puts "## #{title}"
+  puts "### #{title}"
   puts
 
   topics = prs.group_by(&.primary_topic)
@@ -244,7 +244,7 @@ TYPE_TITLES.each do |id, title|
     topic_prs = topics[topic_title]? || next
 
     unless id == "infra" && topic_title == "infrastructure"
-      puts "**#{topic_title}:**"
+      puts "#### #{topic_title}"
       puts
     end
 
