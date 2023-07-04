@@ -113,7 +113,7 @@ record PullRequest,
     if deprecated?
       io << "**[deprecation]** "
     end
-    io << title << " ("
+    io << title.sub(/^#{type}: /i, "") << " ("
     io << "[#" << number << "](" << permalink << ")"
     if author = self.author
       io << ", thanks @" << author
