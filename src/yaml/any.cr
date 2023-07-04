@@ -63,13 +63,19 @@ struct YAML::Any
   getter raw : Type
 
   # Creates a `YAML::Any` that wraps the given `Type`.
-  def self.new(raw : Int32)
+  def initialize(@raw : Type)
+  end
+
+  # :ditto:
+  def self.new(raw : Int)
     # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
     new(raw.to_i64)
   end
 
-  # Creates a `YAML::Any` that wraps the given `Type`.
-  def initialize(@raw : Type)
+  # :ditto:
+  def self.new(raw : Float)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_f64)
   end
 
   # Assumes the underlying value is an `Array` or `Hash` and returns its size.

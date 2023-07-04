@@ -53,14 +53,20 @@ struct JSON::Any
   # Returns the raw underlying value.
   getter raw : Type
 
-  # Creates a `JSON::Any` that wraps the given `Type`.
-  def self.new(raw : Int32)
+  # Creates a `JSON::Any` that wraps the given value.
+  def initialize(@raw : Type)
+  end
+
+  # :ditto:
+  def self.new(raw : Int)
     # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
     new(raw.to_i64)
   end
 
-  # Creates a `JSON::Any` that wraps the given value.
-  def initialize(@raw : Type)
+  # :ditto:
+  def self.new(raw : Float)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_f64)
   end
 
   # Assumes the underlying value is an `Array` or `Hash` and returns its size.
