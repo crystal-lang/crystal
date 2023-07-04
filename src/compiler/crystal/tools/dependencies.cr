@@ -19,10 +19,13 @@ module Crystal
     end
 
     def enter_file(filename : String, unseen : Bool)
+      print_indent
+      print_file(filename)
       if unseen
-        print_indent
-        print_file(filename)
+      else
+        @io.print " (duplicate skipped)"
       end
+      @io.puts
 
       @depth += 1
     end
@@ -37,7 +40,7 @@ module Crystal
     end
 
     private def print_file(filename)
-      @io.puts ::Path[filename].relative_to?(Dir.current) || filename
+      @io.print ::Path[filename].relative_to?(Dir.current) || filename
     end
   end
 end
