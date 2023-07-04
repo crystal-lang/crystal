@@ -252,12 +252,14 @@ jobs:
         run: make -f Makefile.win samples
 
   x86_64-windows-release:
+    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/ci/'))
     needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
 
   x86_64-windows-installer:
+    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/ci/'))
     runs-on: windows-2022
     needs: [x86_64-windows-release]
     steps:
