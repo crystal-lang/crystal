@@ -127,8 +127,17 @@ record PullRequest,
 
   def sort_tuple
     {
-      type,
+      type || "",
       topic || [] of String,
+      deprecated? ? 0 : 1,
+      merged_at || Time.unix(0),
+    }
+  end
+
+  def infra_sort_tuple
+    {
+      topic || [] of String,
+      type || "",
       deprecated? ? 0 : 1,
       merged_at || Time.unix(0),
     }
@@ -145,7 +154,7 @@ record PullRequest,
   def topic
     labels.find { |label|
       label.starts_with?("topic:") && label != "topic:multithreading"
-    }.try(&.lchop("topic:").split(":"))
+    }.try(&.lchop("topic:").split(/:|\//))
   end
 
   def deprecated?
@@ -181,7 +190,7 @@ record PullRequest,
   end
 
   def infra?
-    labels.includes?("topic:infrastructure")
+    labels.any?(&.starts_with?("topic:infrastructure"))
   end
 
   def type
@@ -255,12 +264,14 @@ SECTION_TITLES.each do |id, title|
   topic_titles.each do |topic_title|
     topic_prs = topics[topic_title]? || next
 
-    unless id == "infra" && topic_title == "infrastructure"
+    if id == "infra"
+      topic_prs.sort_by!(&.infra_sort_tuple)
+    else
+      topic_prs.sort!
       puts "#### #{topic_title}"
       puts
     end
 
-    topic_prs.sort!
     topic_prs.each do |pr|
       puts "- #{pr}"
     end
