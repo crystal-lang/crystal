@@ -127,6 +127,7 @@ record PullRequest,
 
   def sort_tuple
     {
+      type,
       topic || [] of String,
       deprecated? ? 0 : 1,
       merged_at || Time.unix(0),
@@ -185,8 +186,6 @@ record PullRequest,
 
   def type
     case
-    when breaking?    then "breaking"
-    when infra?       then "infra"
     when feature?     then "feature"
     when fix?         then "fix"
     when docs?        then "docs"
@@ -194,6 +193,14 @@ record PullRequest,
     when performance? then "performance"
     when refactor?    then "refactor"
     else                   nil
+    end
+  end
+
+  def section
+    case
+    when breaking? then "breaking"
+    when infra?    then "infra"
+    else                type || ""
     end
   end
 end
@@ -220,9 +227,9 @@ end
 changelog = File.read("CHANGELOG.md")
 array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
 
-sections = array.group_by { |pr| pr.type || "" }
+sections = array.group_by { |pr| pr.section }
 
-TYPE_TITLES = {
+SECTION_TITLES = {
   "breaking"    => "Breaking changes",
   "feature"     => "Features",
   "fix"         => "Bugfixes",
@@ -236,7 +243,7 @@ TYPE_TITLES = {
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
 
-TYPE_TITLES.each do |id, title|
+SECTION_TITLES.each do |id, title|
   prs = sections[id]? || next
   puts "### #{title}"
   puts
