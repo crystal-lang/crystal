@@ -21,8 +21,7 @@ module Crystal
     def enter_file(filename : String, unseen : Bool)
       print_indent
       print_file(filename)
-      if unseen
-      else
+      unless unseen
         @io.print " (duplicate skipped)"
       end
       @io.puts
