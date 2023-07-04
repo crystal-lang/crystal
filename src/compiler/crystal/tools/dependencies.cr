@@ -30,15 +30,17 @@ module Crystal
 
     def enter_file(filename : String, unseen : Bool)
       if @depth <= @filter_depth
+        filter = filter?(filename)
+        if filter
+          @filter_depth = @depth
+        else
+          @filter_depth = Int32::MAX
+        end
+
         print_indent
         print_file(filename)
         if unseen
-          if filter?(filename)
-            @filter_depth = @depth
-            @io.print " (filtered)"
-          else
-            @filter_depth = Int32::MAX
-          end
+          @io.print " (filtered)" if filter
         else
           @io.print " (duplicate skipped)"
         end
