@@ -144,6 +144,8 @@ module Crystal
     # Whether to link statically
     property? static = false
 
+    property dependency_printer : DependencyPrinter? = nil
+
     # Program that was created for the last compilation.
     property! program : Program
 
