@@ -6,7 +6,7 @@ class Crystal::Command
   private def dependencies
     config = create_compiler "tool dependencies", no_codegen: true, dependencies: true
 
-    dependency_printer = DependencyPrinter.new(STDOUT, flat: config.output_format == "flat")
+    dependency_printer = DependencyPrinter.new(STDOUT, flat: config.output_format == "flat", verbose: config.verbose)
     dependency_printer.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
     dependency_printer.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
     config.compiler.dependency_printer = dependency_printer
@@ -25,26 +25,29 @@ module Crystal
 
     getter default_paths : Array(::Path) = CrystalPath.default_paths.map { |path| ::Path[path].expand }
 
-    def initialize(@io : IO, @flat : Bool = false)
+    def initialize(@io : IO, @flat : Bool = false, @verbose : Bool = false)
     end
 
     def enter_file(filename : String, unseen : Bool)
       if @depth <= @filter_depth
         filter = filter?(filename)
+
         if filter
           @filter_depth = @depth
         else
           @filter_depth = Int32::MAX
         end
 
-        print_indent
-        print_file(filename)
-        if unseen
-          @io.print " (filtered)" if filter
-        else
-          @io.print " (duplicate skipped)"
+        if (unseen && !filter) || @verbose
+          print_indent
+          print_file(filename)
+          if unseen
+            @io.print " (filtered)" if filter
+          else
+            @io.print " (duplicate skipped)"
+          end
+          @io.puts
         end
-        @io.puts
       end
 
       @depth += 1

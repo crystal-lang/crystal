@@ -343,7 +343,8 @@ class Crystal::Command
     output_format : String?,
     combine_rpath : Bool,
     includes : Array(String),
-    excludes : Array(String) do
+    excludes : Array(String),
+    verbose : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename, combine_rpath: combine_rpath
@@ -371,6 +372,7 @@ class Crystal::Command
     output_format = nil
     excludes = [] of String
     includes = [] of String
+    verbose = false
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -425,6 +427,10 @@ class Crystal::Command
 
         opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
           excludes << f
+        end
+
+        opts.on("--verbose", "Show skipped and filtered paths") do
+          verbose = true
         end
       else
         opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
@@ -588,7 +594,7 @@ class Crystal::Command
     end
 
     combine_rpath = run && !no_codegen
-    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath, includes, excludes
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath, includes, excludes, verbose
   end
 
   private def gather_sources(filenames)
