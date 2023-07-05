@@ -219,7 +219,7 @@ abstract class Digest
 
   # Reads the io's data and updates the digest with it.
   def update(io : IO) : self
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
     while (read_bytes = io.read(buffer.to_slice)) > 0
       self << buffer.to_slice[0, read_bytes]
     end
