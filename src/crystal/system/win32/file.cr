@@ -233,9 +233,26 @@ module Crystal::System::File
     end
   end
 
-  def self.fchmod(path : String, fd : Int, mode : Int32 | ::File::Permissions) : Nil
-    # TODO: use fd instead of path
-    chmod path, mode
+  private def system_chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
+    mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
+    handle = windows_handle
+
+    basic_info = uninitialized LibC::FILE_BASIC_INFO
+    if LibC.GetFileInformationByHandleEx(handle, LibC::FILE_INFO_BY_HANDLE_CLASS::FileBasicInfo, pointerof(basic_info), sizeof(typeof(basic_info))) == 0
+      raise ::File::Error.from_winerror("Error changing permissions", file: path)
+    end
+
+    # Only the owner writable bit is used, since windows only supports
+    # the read only attribute.
+    if mode.owner_write?
+      basic_info.fileAttributes &= ~LibC::FILE_ATTRIBUTE_READONLY
+    else
+      basic_info.fileAttributes |= LibC::FILE_ATTRIBUTE_READONLY
+    end
+
+    if LibC.SetFileInformationByHandle(handle, LibC::FILE_INFO_BY_HANDLE_CLASS::FileBasicInfo, pointerof(basic_info), sizeof(typeof(basic_info))) == 0
+      raise ::File::Error.from_winerror("Error changing permissions", file: path)
+    end
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool

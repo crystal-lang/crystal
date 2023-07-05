@@ -45,6 +45,10 @@ lib LibC
     GetFileExMaxInfoLevel
   end
 
+  enum FILE_INFO_BY_HANDLE_CLASS
+    FileBasicInfo = 0
+  end
+
   LOCKFILE_FAIL_IMMEDIATELY = DWORD.new(0x00000001)
   LOCKFILE_EXCLUSIVE_LOCK   = DWORD.new(0x00000002)
 

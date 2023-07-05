@@ -57,4 +57,14 @@ lib LibC
   fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
 
   fun GetBinaryTypeW(lpApplicationName : LPWSTR, lpBinaryType : DWORD*) : BOOL
+
+  struct FILE_BASIC_INFO
+    creationTime : LARGE_INTEGER
+    lastAccessTime : LARGE_INTEGER
+    lastWriteTime : LARGE_INTEGER
+    changeTime : LARGE_INTEGER
+    fileAttributes : DWORD
+  end
+
+  fun GetFileInformationByHandleEx(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 end
