@@ -25,7 +25,7 @@
 - *(collection)* Add `Enumerable#partition` overload with type filter ([#13572](https://github.com/crystal-lang/crystal/pull/13572), thanks @baseballlover723)
 - *(concurrency)* Support asynchronous `IO.pipe` on Windows ([#13362](https://github.com/crystal-lang/crystal/pull/13362), thanks @HertzDevil)
 - *(files)* Add `slow` tag to stdlib specs that compile a program ([#13498](https://github.com/crystal-lang/crystal/pull/13498), thanks @straight-shoota)
-- *(files)* **[deprecation]** Add `Dir::GlobOptions` to control `Dir.glob`'s behavior ([#13550](https://github.com/crystal-lang/crystal/pull/13550), thanks @HertzDevil)
+- *(files)* **[deprecation]** Add `File::MatchOptions` to control `Dir.glob`'s behavior ([#13550](https://github.com/crystal-lang/crystal/pull/13550), thanks @HertzDevil)
 - *(networking)* Implement Socket `reuse_port` (=`reuse_address`) on Windows ([#13326](https://github.com/crystal-lang/crystal/pull/13326), thanks @stakach)
 - *(networking)* Add multicast support to win32 target ([#13325](https://github.com/crystal-lang/crystal/pull/13325), thanks @stakach)
 - *(networking)* HTTP Server should allow custom concurrency models ([#13428](https://github.com/crystal-lang/crystal/pull/13428), thanks @stakach)
