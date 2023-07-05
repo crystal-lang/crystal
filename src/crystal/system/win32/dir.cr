@@ -170,7 +170,17 @@ module Crystal::System::Dir
       raise ::File::Error.new("Cannot remove directory that is a reparse point: '#{path.inspect_unquoted}'", file: path)
     end
 
+    # Windows cannot delete read-only files, so we unset the attribute here, but
+    # restore it afterwards if deletion still failed
+    read_only_removed = false
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+      if LibC.SetFileAttributesW(win_path, attributes & ~LibC::FILE_ATTRIBUTE_READONLY) != 0
+        read_only_removed = true
+      end
+    end
+
     return true if LibC._wrmdir(win_path) == 0
+    LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
     raise ::File::Error.from_errno("Unable to remove directory", file: path)
   end
 end
