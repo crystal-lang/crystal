@@ -1615,7 +1615,8 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_keys { |key, _value| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys { |key| key.to_s }                # => {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
   def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
@@ -1629,7 +1630,8 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_values { |value, _key| value + 1 } # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values { |value| value + 1 }             # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
@@ -1643,8 +1645,10 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_values! { |value, _key| value + 1 }
+  # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values! { |value, key| value + key.to_s[0].ord }
+  # hash # => {:a => 99, :b => 101, :c => 103}
   # ```
   # See `#update` for updating a *single* value.
   def transform_values!(& : V, K -> V) : self
