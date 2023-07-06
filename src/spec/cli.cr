@@ -87,7 +87,7 @@ module Spec
       opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
         Spec.add_tag tag
       end
-      opts.on("--tags", "lists all the tags used.") do
+      opts.on("--list-tags", "lists all the tags used.") do
         Spec.list_tags = true
       end
       opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|

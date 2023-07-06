@@ -21,14 +21,6 @@ module Spec
       Spec.root_context.check_nesting_spec(file, line) do
         Spec.formatters.each(&.before_example(description))
 
-        unless block = @block
-          @parent.report(:pending, description, file, line)
-          return
-        end
-
-        non_nil_block = block
-        start = Time.monotonic
-
         if Spec.list_tags?
           tags = all_tags
           tags << "untagged" if tags.empty?
@@ -40,10 +32,20 @@ module Spec
             break if !context.responds_to?(:parent)
             context = context.parent
           end
-        else
-          ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
-          ran || internal_run(start, non_nil_block)
+          Fiber.yield
+          return
         end
+
+        unless block = @block
+          @parent.report(:pending, description, file, line)
+          return
+        end
+
+        non_nil_block = block
+        start = Time.monotonic
+
+        ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
+        ran || internal_run(start, non_nil_block)
 
         # We do this to give a chance for signals (like CTRL+C) to be handled,
         # which currently are only handled when there's a fiber switch
