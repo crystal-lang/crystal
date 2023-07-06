@@ -188,7 +188,7 @@ module Spec
         end
       end
       pendings = results_for(:pending)
-      unless pendings.empty?
+      unless pendings.empty? || Spec.list_tags?
         puts
         puts "Pending:"
         pendings.each do |pending|

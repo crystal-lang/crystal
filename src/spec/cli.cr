@@ -89,6 +89,7 @@ module Spec
       end
       opts.on("--list-tags", "lists all the tags used.") do
         Spec.list_tags = true
+        configure_formatter("list_tags")
       end
       opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
         if mode.in?("default", "random")

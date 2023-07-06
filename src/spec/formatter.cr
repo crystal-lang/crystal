@@ -115,6 +115,12 @@ module Spec
     end
   end
 
+  # :nodoc:
+  class ListTagsFormatter < DotFormatter
+    def report(result)
+    end
+  end
+
   @@formatters = [Spec::DotFormatter.new] of Spec::Formatter
 
   # :nodoc:
