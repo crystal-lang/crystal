@@ -182,8 +182,8 @@ module Spec
 
     def print_results(elapsed_time, aborted = false)
       if Spec.list_tags?
-        longest_name = tag_counts.keys.map { |tag_name| tag_name.size }.max
-        tag_counts.to_a.sort_by { |k, v| -v }.each do |tag_name, count|
+        longest_name = tag_counts.keys.max_of(&.size)
+        tag_counts.to_a.sort_by! { |k, v| -v }.each do |tag_name, count|
           puts "#{tag_name.rjust(longest_name)}: #{count}"
         end
       end

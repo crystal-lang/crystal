@@ -33,7 +33,7 @@ module Spec
           tags = all_tags
           tags << "untagged" if tags.empty?
           context = self.parent
-          while !context.nil?
+          while context
             tags.each do |tag|
               context.tag_counts[tag] += 1
             end
