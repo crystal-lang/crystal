@@ -11,6 +11,7 @@ lib LibC
   VSTART    =         12
   VSTOP     =         13
   VSUSP     =         10
+  VTIME     =         17
   BRKINT    = 0x00000002
   ICRNL     = 0x00000100
   IGNBRK    = 0x00000001
