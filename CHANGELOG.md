@@ -7,7 +7,6 @@
 - *(numeric)* Handle NaNs when comparing `BigFloat` against `Float` ([#13294](https://github.com/crystal-lang/crystal/pull/13294), thanks @HertzDevil)
 - *(numeric)* Handle NaNs when comparing `BigRational` against `Float` ([#13350](https://github.com/crystal-lang/crystal/pull/13350), thanks @HertzDevil)
 - *(numeric)* Make `BigDecimal`'s comparisons exact ([#13554](https://github.com/crystal-lang/crystal/pull/13554), thanks @HertzDevil)
-- *(serialization)* Fix handling of quoted boolean values in `YAML::Any` ([#13546](https://github.com/crystal-lang/crystal/pull/13546), thanks @willhbr)
 - *(llvm)* Remove most `LLVM::DIBuilder` functions from `llvm_ext.cc` ([#13448](https://github.com/crystal-lang/crystal/pull/13448), thanks @HertzDevil)
 
 ### Features
@@ -107,6 +106,7 @@
 - *(serialization)* Fix ambiguous call with untyped int literal in `{JSON,YAML}::Any.new` ([#13618](https://github.com/crystal-lang/crystal/pull/13618), thanks @straight-shoota)
 - *(system)* Fix for Process: ensure chdir is a string ([#13503](https://github.com/crystal-lang/crystal/pull/13503), thanks @devnote-dev)
 - *(system)* Windows: drop internal environment variables from `ENV` ([#13570](https://github.com/crystal-lang/crystal/pull/13570), thanks @HertzDevil)
+- *(serialization)* Fix handling of quoted boolean values in `YAML::Any` ([#13546](https://github.com/crystal-lang/crystal/pull/13546), thanks @willhbr)
 - *(text)* Fix `String#underscore` with multi-character downcasing ([#13540](https://github.com/crystal-lang/crystal/pull/13540), thanks @HertzDevil)
 - *(text)* Do not attempt downcasing first when case-folding a `Char` ([#13542](https://github.com/crystal-lang/crystal/pull/13542), thanks @HertzDevil)
 - *(text)* Handle case folding in `String#compare` correctly ([#13532](https://github.com/crystal-lang/crystal/pull/13532), thanks @HertzDevil)
