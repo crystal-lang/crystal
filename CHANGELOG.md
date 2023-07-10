@@ -3,10 +3,7 @@
 
 #### stdlib
 
-- *(numeric)* Handle NaNs when comparing `BigInt` against `Float` ([#13293](https://github.com/crystal-lang/crystal/pull/13293), thanks @HertzDevil)
-- *(numeric)* Handle NaNs when comparing `BigFloat` against `Float` ([#13294](https://github.com/crystal-lang/crystal/pull/13294), thanks @HertzDevil)
-- *(numeric)* Handle NaNs when comparing `BigRational` against `Float` ([#13350](https://github.com/crystal-lang/crystal/pull/13350), thanks @HertzDevil)
-- *(numeric)* Make `BigDecimal`'s comparisons exact ([#13554](https://github.com/crystal-lang/crystal/pull/13554), thanks @HertzDevil)
+- *(numeric)* Handle NaNs when comparing `Big*` numbers against `Float` ([#13293](https://github.com/crystal-lang/crystal/pull/13293), [#13294](https://github.com/crystal-lang/crystal/pull/13294), [#13554](https://github.com/crystal-lang/crystal/pull/13554), thanks @HertzDevil)
 - *(llvm)* Remove most `LLVM::DIBuilder` functions from `llvm_ext.cc` ([#13448](https://github.com/crystal-lang/crystal/pull/13448), thanks @HertzDevil)
 
 ### Features
@@ -23,10 +20,10 @@
 - *(collection)* Add `Enum#to_i128` and `#to_u128` ([#13576](https://github.com/crystal-lang/crystal/pull/13576), thanks @meatball133)
 - *(collection)* Add `Enumerable#partition` overload with type filter ([#13572](https://github.com/crystal-lang/crystal/pull/13572), thanks @baseballlover723)
 - *(concurrency)* Support asynchronous `IO.pipe` on Windows ([#13362](https://github.com/crystal-lang/crystal/pull/13362), thanks @HertzDevil)
-- *(files)* **[deprecation]** Add `Dir::GlobOptions` to control `Dir.glob`'s behavior ([#13550](https://github.com/crystal-lang/crystal/pull/13550), thanks @HertzDevil)
+- *(files)* **[deprecation]** Add `File::MatchOptions` to control `Dir.glob`'s behavior ([#13550](https://github.com/crystal-lang/crystal/pull/13550), thanks @HertzDevil)
 - *(files)* Add `slow` tag to stdlib specs that compile a program ([#13498](https://github.com/crystal-lang/crystal/pull/13498), thanks @straight-shoota)
-- *(networking)* Implement Socket `reuse_port` (=`reuse_address`) on Windows ([#13326](https://github.com/crystal-lang/crystal/pull/13326), thanks @stakach)
-- *(networking)* Add multicast support to win32 target ([#13325](https://github.com/crystal-lang/crystal/pull/13325), thanks @stakach)
+- *(networking)* Implement `Socket#reuse_port` on Windows ([#13326](https://github.com/crystal-lang/crystal/pull/13326), thanks @stakach)
+- *(networking)* Add multicast support to `UDPSocket` on Windows ([#13325](https://github.com/crystal-lang/crystal/pull/13325), thanks @stakach)
 - *(networking)* HTTP Server should allow custom concurrency models ([#13428](https://github.com/crystal-lang/crystal/pull/13428), thanks @stakach)
 - *(networking)* Add `Socket::IPaddress.v4`, `.v6`, `.v4_mapped_v6` ([#13422](https://github.com/crystal-lang/crystal/pull/13422), thanks @HertzDevil)
 - *(networking)* Add `URI::Params#merge`, `#merge!` and `URI#update_query_params` ([#13415](https://github.com/crystal-lang/crystal/pull/13415), thanks @skinnyjames)
@@ -121,9 +118,9 @@
 - Fix instantiated method signatures in error traces ([#13580](https://github.com/crystal-lang/crystal/pull/13580), thanks @HertzDevil)
 - Place `--emit` files back in current directory when running source ([#13604](https://github.com/crystal-lang/crystal/pull/13604), thanks @HertzDevil)
 - *(generics)* Fix free variable matching of bound numeric values ([#13606](https://github.com/crystal-lang/crystal/pull/13606), thanks @HertzDevil)
-- *(parser)* Parser: Don't skip the token immediately after `lib` name ([#13407](https://github.com/crystal-lang/crystal/pull/13407), thanks @FnControlOption)
+- *(parser)* Don't skip the token immediately after `lib` name ([#13407](https://github.com/crystal-lang/crystal/pull/13407), thanks @FnControlOption)
 - *(parser)* Allow newline after hash rocket ([#13460](https://github.com/crystal-lang/crystal/pull/13460), thanks @FnControlOption)
-- *(parser)* Parser: Add missing locations of various AST nodes ([#13452](https://github.com/crystal-lang/crystal/pull/13452), thanks @FnControlOption)
+- *(parser)* Add missing locations of various AST nodes ([#13452](https://github.com/crystal-lang/crystal/pull/13452), thanks @FnControlOption)
 - *(parser)* Fix AST location of call name in operator assignment ([#13456](https://github.com/crystal-lang/crystal/pull/13456), thanks @FnControlOption)
 
 #### tools
@@ -208,13 +205,10 @@
 
 ### Infrastructure
 
-- Update previous Crystal release - 1.8.0 ([#13322](https://github.com/crystal-lang/crystal/pull/13322), thanks @straight-shoota)
-- Merge `release/1.8`@1.8.1 ([#13361](https://github.com/crystal-lang/crystal/pull/13361), thanks @straight-shoota)
-- Update previous Crystal release - 1.8.1 ([#13373](https://github.com/crystal-lang/crystal/pull/13373), thanks @straight-shoota)
+- Update changelog with previous Crystal releases ([#13322](https://github.com/crystal-lang/crystal/pull/13322, [#13373](https://github.com/crystal-lang/crystal/pull/13373), [#13450](https://github.com/crystal-lang/crystal/pull/13450), thanks @straight-shoota)
+- Merge `release/1.8` ([#13361](https://github.com/crystal-lang/crystal/pull/13361), [#13449](https://github.com/crystal-lang/crystal/pull/13449), thanks @straight-shoota)
 - PR template: adding a line about force-pushes ([#12794](https://github.com/crystal-lang/crystal/pull/12794), thanks @beta-ziliani)
 - Less verbose output in `Makefile.win` ([#13383](https://github.com/crystal-lang/crystal/pull/13383), thanks @HertzDevil)
-- Merge `release/1.8`@1.8.1 ([#13449](https://github.com/crystal-lang/crystal/pull/13449), thanks @straight-shoota)
-- Update previous Crystal release - 1.8.2 ([#13450](https://github.com/crystal-lang/crystal/pull/13450), thanks @straight-shoota)
 - Update distribution-scripts ([#13457](https://github.com/crystal-lang/crystal/pull/13457), thanks @Blacksmoke16)
 - Add `.gitattributes` to repository ([#13479](https://github.com/crystal-lang/crystal/pull/13479), thanks @HertzDevil)
 - Update `shell.nix` to nixpkgs-23.05 ([#13571](https://github.com/crystal-lang/crystal/pull/13571), thanks @HertzDevil)
@@ -222,8 +216,7 @@
 - Fix `bin\crystal.ps1` writing to standard error stream ([#13372](https://github.com/crystal-lang/crystal/pull/13372), thanks @HertzDevil)
 - Avoid calling realpath of parent crystal in wrapper script ([#13596](https://github.com/crystal-lang/crystal/pull/13596), thanks @straight-shoota)
 - *(ci)* Show PCRE/PCRE2 configuration on CI ([#13307](https://github.com/crystal-lang/crystal/pull/13307), thanks @HertzDevil)
-- *(ci)* Update cachix/install-nix-action action to v21 ([#13531](https://github.com/crystal-lang/crystal/pull/13531), thanks @renovate)
-- *(ci)* Update cachix/install-nix-action action to v22 ([#13586](https://github.com/crystal-lang/crystal/pull/13586), thanks @renovate)
+- *(ci)* Update cachix/install-nix-action action ([#13531](https://github.com/crystal-lang/crystal/pull/13531), [#13586](https://github.com/crystal-lang/crystal/pull/13586), thanks @renovate)
 - *(ci)* Restrict Windows CI jobs for installer packages to release branches ([#13623](https://github.com/crystal-lang/crystal/pull/13623), thanks @HertzDevil)
 - *(ci)* Build samples on Windows CI ([#13334](https://github.com/crystal-lang/crystal/pull/13334), thanks @HertzDevil)
 - *(ci)* Do not cancel in progress CI jobs for master branch ([#13393](https://github.com/crystal-lang/crystal/pull/13393), thanks @Blacksmoke16)
