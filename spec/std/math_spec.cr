@@ -22,8 +22,8 @@ describe "Math" do
   end
 
   describe "Order-related functions" do
-    Math.min(2.1, 2.11).should eq(2.1)
-    Math.max(3.2, 3.11).should eq(3.2)
+    it { Math.min(2.1, 2.11).should eq(2.1) }
+    it { Math.max(3.2, 3.11).should eq(3.2) }
   end
 
   pending "Functions for computing quotient and remainder" do
@@ -41,6 +41,17 @@ describe "Math" do
       Math.sqrt(4_f32).should eq(2)
       Math.sqrt(4).should eq(2)
     end
+
+    it "isqrt" do
+      Math.isqrt(9).should eq(3)
+      Math.isqrt(8).should eq(2)
+      Math.isqrt(4).should eq(2)
+      {% for type in [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128] %}
+        %val = {{type}}.new 42
+        %exp = {{type}}.new 6
+        Math.isqrt(%val).should eq(%exp)
+      {% end %}
+    end
   end
 
   describe "Exponents" do
@@ -55,7 +66,7 @@ describe "Math" do
     end
 
     it "expm1" do
-      Math.expm1(0.99_f32).should be_close(1.6912344723492623, 1e-7)
+      Math.expm1(0.99_f32).should be_close(1.6912344723492623, 1e-6)
       Math.expm1(0.99).should be_close(1.6912344723492623, 1e-7)
     end
 
@@ -255,13 +266,48 @@ describe "Math" do
 
   # div rem
 
-  # pw2ceil
+  describe ".pw2ceil" do
+    {% for int in %w(Int8 Int16 Int32 Int64 Int128) %}
+      it {{ int }} do
+        Math.pw2ceil({{ int.id }}::MIN).should eq 1
+        Math.pw2ceil({{ int.id }}::MIN + 1).should eq 1
+        Math.pw2ceil({{ int.id }}.new(-11)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(-1)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(0)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(1)).should eq 1
+        Math.pw2ceil({{ int.id }}.new(2)).should eq 2
+        Math.pw2ceil({{ int.id }}.new(3)).should eq 4
+        Math.pw2ceil({{ int.id }}.new(4)).should eq 4
+        Math.pw2ceil({{ int.id }}.new(5)).should eq 8
+        Math.pw2ceil({{ int.id }}.new(32)).should eq(32)
+        Math.pw2ceil({{ int.id }}.new(33)).should eq(64)
+        Math.pw2ceil({{ int.id }}.new(64)).should eq(64)
 
-  describe "Rounding up to powers of 2" do
-    it "pw2ceil" do
-      Math.pw2ceil(33).should eq(64)
-      Math.pw2ceil(128).should eq(128)
-    end
+        Math.pw2ceil({{ int.id }}::MAX // 2).should eq({{ int.id }}::MAX // 2 + 1)
+        Math.pw2ceil({{ int.id }}::MAX // 2 + 1).should eq({{ int.id }}::MAX // 2 + 1)
+        expect_raises(OverflowError) { Math.pw2ceil({{ int.id }}::MAX // 2 + 2) }
+        expect_raises(OverflowError) { Math.pw2ceil({{ int.id }}::MAX) }
+      end
+    {% end %}
+
+    {% for uint in %w(UInt8 UInt16 UInt32 UInt64 UInt128) %}
+      it {{ uint }} do
+        Math.pw2ceil({{ uint.id }}.new(0)).should eq 1
+        Math.pw2ceil({{ uint.id }}.new(1)).should eq 1
+        Math.pw2ceil({{ uint.id }}.new(2)).should eq 2
+        Math.pw2ceil({{ uint.id }}.new(3)).should eq 4
+        Math.pw2ceil({{ uint.id }}.new(4)).should eq 4
+        Math.pw2ceil({{ uint.id }}.new(5)).should eq 8
+        Math.pw2ceil({{ uint.id }}.new(32)).should eq(32)
+        Math.pw2ceil({{ uint.id }}.new(33)).should eq(64)
+        Math.pw2ceil({{ uint.id }}.new(64)).should eq(64)
+
+        Math.pw2ceil({{ uint.id }}::MAX // 2).should eq({{ uint.id }}::MAX // 2 + 1)
+        Math.pw2ceil({{ uint.id }}::MAX // 2 + 1).should eq({{ uint.id }}::MAX // 2 + 1)
+        expect_raises(OverflowError) { Math.pw2ceil({{ uint.id }}::MAX // 2 + 2) }
+        expect_raises(OverflowError) { Math.pw2ceil({{ uint.id }}::MAX) }
+      end
+    {% end %}
   end
 
   # ** (float and int)

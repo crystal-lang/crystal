@@ -15,13 +15,17 @@ module Crystal
     end
 
     def self.description
-      formatted_sha = "[#{build_commit}] " if build_commit
-      <<-DOC
-        Crystal #{version} #{formatted_sha}(#{date})
+      String.build do |io|
+        io << "Crystal " << version
+        io << " [" << build_commit << "]" if build_commit
+        io << " (" << date << ")" unless date.empty?
 
-        LLVM: #{llvm_version}
-        Default target: #{self.host_target}
-        DOC
+        io << "\n\nThe compiler was not built in release mode." unless release_mode?
+
+        io << "\n\nLLVM: " << llvm_version
+        io << "\nDefault target: " << host_target
+        io << "\n"
+      end
     end
 
     def self.build_commit
@@ -32,8 +36,16 @@ module Crystal
     end
 
     def self.date
-      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
-      Time.unix(time).to_s("%Y-%m-%d")
+      source_date_epoch = {{ (t = env("SOURCE_DATE_EPOCH")) && !t.empty? ? t.to_i : nil }}
+      if source_date_epoch
+        Time.unix(source_date_epoch).to_s("%Y-%m-%d")
+      else
+        ""
+      end
+    end
+
+    def self.release_mode?
+      {{ flag?(:release) }}
     end
 
     @@host_target : Crystal::Codegen::Target?

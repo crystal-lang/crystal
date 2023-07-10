@@ -10,6 +10,7 @@ lib LibC
   FD_CLOEXEC =         1
   O_CLOEXEC  = 0o2000000
   O_CREAT    =     0o100
+  O_EXCL     =     0o200
   O_NOFOLLOW =  0o400000
   O_TRUNC    =    0o1000
   O_APPEND   =    0o2000
@@ -28,5 +29,5 @@ lib LibC
   end
 
   fun fcntl(fd : Int, cmd : Int, ...) : Int
-  fun open(file : Char*, oflag : Int, ...) : Int
+  fun open = open64(file : Char*, oflag : Int, ...) : Int
 end

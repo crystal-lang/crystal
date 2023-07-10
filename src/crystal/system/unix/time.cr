@@ -14,7 +14,7 @@ module Crystal::System::Time
   UnixEpochInSeconds = 62135596800_i64
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    {% if LibC.methods.includes?("clock_gettime".id) %}
+    {% if LibC.has_method?("clock_gettime") %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise RuntimeError.from_errno("clock_gettime") unless ret == 0
       {timespec.tv_sec.to_i64 + UnixEpochInSeconds, timespec.tv_nsec.to_i}
@@ -40,6 +40,20 @@ module Crystal::System::Time
     {% end %}
   end
 
+  def self.to_timespec(time : ::Time)
+    t = uninitialized LibC::Timespec
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
+    t
+  end
+
+  def self.to_timeval(time : ::Time)
+    t = uninitialized LibC::Timeval
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond // ::Time::NANOSECONDS_PER_MICROSECOND)
+    t
+  end
+
   # Many systems use /usr/share/zoneinfo, Solaris 2 has
   # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
   ZONE_SOURCES = {
@@ -53,10 +67,16 @@ module Crystal::System::Time
     ZONE_SOURCES
   end
 
+  def self.load_iana_zone(iana_name : String) : ::Time::Location?
+    nil
+  end
+
   def self.load_localtime : ::Time::Location?
-    if ::File.exists?(LOCALTIME)
+    if ::File.file?(LOCALTIME) && ::File.readable?(LOCALTIME)
       ::File.open(LOCALTIME) do |file|
         ::Time::Location.read_zoneinfo("Local", file)
+      rescue ::Time::Location::InvalidTZDataError
+        nil
       end
     end
   end

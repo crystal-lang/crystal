@@ -21,7 +21,7 @@ class String
         if i == bytesize
           0_u16
         else
-          unsafe_byte_at(i).to_u16
+          to_unsafe[i].to_u16
         end
       end
       return slice[0, bytesize]
@@ -96,10 +96,12 @@ class String
   #
   # ```
   # slice = Slice[104_u16, 105_u16, 0_u16, 55296_u16, 56485_u16, 0_u16]
-  # String.from_utf16(slice) # => "hi\0000𐂥"
+  # String.from_utf16(slice) # => "hi\0000𐂥\u0000"
   # pointer = slice.to_unsafe
-  # string, pointer = String.from_utf16(pointer) # => "hi"
-  # string, pointer = String.from_utf16(pointer) # => "𐂥"
+  # string, pointer = String.from_utf16(pointer)
+  # string # => "hi"
+  # string, pointer = String.from_utf16(pointer)
+  # string # => "𐂥"
   # ```
   #
   # Invalid values are encoded using the unicode replacement char with
@@ -127,32 +129,32 @@ class String
   end
 
   # Yields each decoded char in the given slice.
-  private def self.each_utf16_char(slice : Slice(UInt16))
+  private def self.each_utf16_char(slice : Slice(UInt16), &)
     i = 0
     while i < slice.size
       byte = slice[i].to_i
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte
-      elsif 0xd800 <= byte < 0xdc00 &&
+      elsif byte < 0xdc00 &&
             (i + 1) < slice.size &&
             0xdc00 <= slice[i + 1] <= 0xdfff
-        # Surrougate pair
-        codepoint = ((byte - 0xd800) << 10) + (slice[i + 1] - 0xdc00) + 0x10000
+        # Surrogate pair
+        codepoint = (byte << 10) &+ slice[i + 1] &- 0x35fdc00
         i += 1
       else
         # Invalid byte
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.unsafe_chr
 
       i += 1
     end
   end
 
   # Yields each decoded char in the given pointer, stopping at the first null byte.
-  private def self.each_utf16_char(pointer : Pointer(UInt16)) : Pointer(UInt16)
+  private def self.each_utf16_char(pointer : Pointer(UInt16), &) : Pointer(UInt16)
     loop do
       byte = pointer.value.to_i
       break if byte == 0
@@ -160,17 +162,17 @@ class String
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte
-      elsif 0xd800 <= byte < 0xdc00 &&
+      elsif byte < 0xdc00 &&
             0xdc00 <= (pointer + 1).value <= 0xdfff
-        # Surrougate pair
+        # Surrogate pair
         pointer = pointer + 1
-        codepoint = ((byte - 0xd800) << 10) + (pointer.value - 0xdc00) + 0x10000
+        codepoint = (byte << 10) &+ pointer.value &- 0x35fdc00
       else
         # Invalid byte
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.unsafe_chr
 
       pointer = pointer + 1
     end

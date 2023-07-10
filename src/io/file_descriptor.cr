@@ -7,11 +7,18 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  def fd
+  def fd : Int
     @volatile_fd.get
   end
 
-  def initialize(fd, blocking = nil)
+  # Whether or not to close the file descriptor when this object is finalized.
+  # Disabling this is useful in order to create an IO wrapper over a file
+  # descriptor returned from a C API that keeps ownership of the descriptor. Do
+  # note that, if the fd is closed by its owner at any point, any IO operations
+  # will then fail.
+  property? close_on_finalize : Bool
+
+  def initialize(fd, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
 
@@ -25,13 +32,11 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{flag?(:win32)}}
-      self.blocking = false
-    end
+    system_blocking_init(blocking)
   end
 
   # :nodoc:
-  def self.from_stdio(fd)
+  def self.from_stdio(fd) : self
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
@@ -43,7 +48,7 @@ class IO::FileDescriptor < IO
     self.system_blocking = value
   end
 
-  def close_on_exec?
+  def close_on_exec? : Bool
     system_close_on_exec?
   end
 
@@ -51,17 +56,33 @@ class IO::FileDescriptor < IO
     self.system_close_on_exec = value
   end
 
-  {% unless flag?(:win32) %}
-    def self.fcntl(fd, cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
+  def self.fcntl(fd, cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
-    def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
-  {% end %}
+  def fcntl(cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
-  def info
+  # Returns a `File::Info` object for this file descriptor, or raises
+  # `IO::Error` in case of an error.
+  #
+  # Certain fields like the file size may not be updated until an explicit
+  # flush.
+  #
+  # ```
+  # File.write("testfile", "abc")
+  #
+  # file = File.new("testfile", "a")
+  # file.info.size # => 3
+  # file << "defgh"
+  # file.info.size # => 3
+  # file.flush
+  # file.info.size # => 8
+  # ```
+  #
+  # Use `File.info` if the file is not open and a path to the file is available.
+  def info : File::Info
     system_info
   end
 
@@ -93,7 +114,7 @@ class IO::FileDescriptor < IO
 
   # Same as `seek` but yields to the block after seeking and eventually seeks
   # back to the original position when the block returns.
-  def seek(offset, whence : Seek = Seek::Set)
+  def seek(offset, whence : Seek = Seek::Set, &)
     original_pos = tell
     begin
       seek(offset, whence)
@@ -113,10 +134,10 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos
+  protected def unbuffered_pos : Int64
     check_open
 
-    system_pos - @in_buffer_rem.size
+    system_pos
   end
 
   # Sets the current position (in bytes) in this `IO`.
@@ -133,17 +154,70 @@ class IO::FileDescriptor < IO
     value
   end
 
+  # Flushes all data written to this File Descriptor to the disk device so that
+  # all changed information can be retrieved even if the system
+  # crashes or is rebooted. The call blocks until the device reports that
+  # the transfer has completed.
+  # To reduce disk activity the *flush_metadata* parameter can be set to false,
+  # then the syscall *fdatasync* will be used and only data required for
+  # subsequent data retrieval is flushed. Metadata such as modified time and
+  # access time is not written.
+  #
+  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
+  # and DragonFly BSD.
+  def fsync(flush_metadata = true) : Nil
+    flush
+    system_fsync(flush_metadata)
+  end
+
+  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
+
+  def flock_shared(blocking = true, &)
+    flock_shared blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
+  def flock_shared(blocking = true) : Nil
+    system_flock_shared(blocking)
+  end
+
+  def flock_exclusive(blocking = true, &)
+    flock_exclusive blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
+  def flock_exclusive(blocking = true) : Nil
+    system_flock_exclusive(blocking)
+  end
+
+  # Removes an existing advisory lock held by this process.
+  def flock_unlock : Nil
+    system_flock_unlock
+  end
+
   def finalize
-    return if closed?
+    return if closed? || !close_on_finalize?
 
     close rescue nil
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  def tty?
+  def tty? : Bool
     system_tty?
   end
 

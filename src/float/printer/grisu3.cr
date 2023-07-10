@@ -32,6 +32,7 @@ require "./diy_fp"
 require "./ieee"
 require "./cached_powers"
 
+@[Deprecated("Use `Float::Printer::Dragonbox` instead")]
 module Float::Printer::Grisu3
   extend self
 
@@ -53,7 +54,7 @@ module Float::Printer::Grisu3
   # representable number to the input.
   #
   # Modifies the generated digits in the buffer to approach (round towards) *w*.
-  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit)
+  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit) : Bool
     buffer = buffer_ptr.to_slice(128)
     small_distance = distance_too_high_w - unit
     big_distance = distance_too_high_w + unit
@@ -155,7 +156,7 @@ module Float::Printer::Grisu3
     #   Since too_low = too_high - unsafe_interval this is equivalent to
     #      [too_high - unsafe_interval + 4 ulp; too_high - 2 ulp]
     #   Conceptually we have: rest ~= too_high - buffer
-    return (2 &* unit <= rest) && (rest <= unsafe_interval &- 4 &* unit)
+    (2 &* unit <= rest) && (rest <= unsafe_interval &- 4 &* unit)
   end
 
   # Generates the digits of input number *w*.
@@ -314,8 +315,6 @@ module Float::Printer::Grisu3
   # digits might correctly yield *v* when read again, the closest will be
   # computed.
   def grisu3(v : Float64 | Float32, buffer_p) : {Bool, Int32, Int32}
-    buffer = buffer_p.to_slice(128)
-
     w = DiyFP.from_f_normalized(v)
 
     # boundary_minus and boundary_plus are the boundaries between v and its
@@ -341,7 +340,7 @@ module Float::Printer::Grisu3
     # the difference between w and boundary_minus/plus (a power of 2) and to
     # compute scaled_boundary_minus/plus by subtracting/adding from
     # scaled_w. However the code becomes much less readable and the speed
-    # enhancements are not terriffic.
+    # enhancements are not terrific.
     scaled_boundary_minus = boundaries[:minus] * ten_mk
     scaled_boundary_plus = boundaries[:plus] * ten_mk
 
@@ -349,7 +348,7 @@ module Float::Printer::Grisu3
     # v == (scaled_w * 10^-mk).to_f
     # Set decimal_exponent == -mk and pass it to DigitGen. If scaled_w is not an
     # integer than it will be updated. For instance if scaled_w == 1.23 then
-    # the buffer will be filled with "123" und the decimal_exponent will be
+    # the buffer will be filled with "123" and the decimal_exponent will be
     # decreased by 2.
     result, kappa, length = digit_gen(scaled_boundary_minus, scaled_w, scaled_boundary_plus, buffer_p)
 

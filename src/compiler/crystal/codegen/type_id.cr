@@ -14,11 +14,11 @@ class Crystal::CodeGenVisitor
   end
 
   private def type_id_impl(value, type : ReferenceUnionType)
-    load(value)
+    load(llvm_context.int32, value)
   end
 
   private def type_id_impl(value, type : VirtualType)
-    load(value)
+    load(llvm_context.int32, value)
   end
 
   private def type_id_impl(value, type : NilableReferenceUnionType)
@@ -32,15 +32,11 @@ class Crystal::CodeGenVisitor
     br exit_block
 
     position_at_end not_nil_block
-    phi_table.add insert_block, load(value)
+    phi_table.add insert_block, load(llvm_context.int32, value)
     br exit_block
 
     position_at_end exit_block
     phi llvm_context.int32, phi_table
-  end
-
-  private def type_id_impl(value, type : NilablePointerType)
-    builder.select null_pointer?(value), type_id(@program.nil), type_id(type.pointer_type)
   end
 
   private def type_id_impl(value, type : NilableProcType)

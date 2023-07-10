@@ -5,14 +5,14 @@ class LLVM::JITCompiler
     mod.take_ownership { raise "Can't create two JIT compilers for the same module" }
 
     # if LibLLVM.create_jit_compiler_for_module(out @unwrap, mod, 3, out error) != 0
-    if LibLLVM.create_mc_jit_compiler_for_module(out @unwrap, mod, nil, 0, out error) != 0
+    if LibLLVMExt.create_mc_jit_compiler_for_module(out @unwrap, mod, nil, 0, false, out error) != 0
       raise LLVM.string_and_dispose(error)
     end
 
     @finalized = false
   end
 
-  def self.new(mod)
+  def self.new(mod, &)
     jit = new(mod)
     yield jit ensure jit.dispose
   end

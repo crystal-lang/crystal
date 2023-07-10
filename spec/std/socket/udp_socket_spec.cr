@@ -1,7 +1,23 @@
 require "./spec_helper"
 require "socket"
 
-describe UDPSocket do
+describe UDPSocket, tags: "network" do
+  # Note: This spec fails with a IPv6 address. See pending below.
+  it "#remote_address resets after connect" do
+    socket = UDPSocket.new
+    socket.connect("127.0.0.1", 1)
+    socket.remote_address.port.should eq 1
+    socket.connect("127.0.0.1", 2)
+    socket.remote_address.port.should eq 2
+    socket.close
+  end
+
+  pending "#connect with a IPv6 address" do
+    socket = UDPSocket.new
+    socket.connect("::1", 1)
+    socket.close
+  end
+
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do
       port = unused_local_port
@@ -45,9 +61,12 @@ describe UDPSocket do
 
       client.send("laus deo semper")
 
-      bytes_read, client_addr = server.receive(buffer.to_slice[0, 4])
-      message = String.new(buffer.to_slice[0, bytes_read])
-      message.should eq("laus")
+      # WSA errors with WSAEMSGSIZE if the buffer is not large enough to receive the message
+      {% unless flag?(:win32) %}
+        bytes_read, client_addr = server.receive(buffer.to_slice[0, 4])
+        message = String.new(buffer.to_slice[0, bytes_read])
+        message.should eq("laus")
+      {% end %}
 
       client.close
       server.close
@@ -78,21 +97,48 @@ describe UDPSocket do
                  expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
                    udp.multicast_interface 0
                  end
-                 udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
+
+                 begin
+                   udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
+                 rescue e : Socket::Error
+                   if e.os_error == Errno::ENOPROTOOPT
+                     pending!("Multicast device selection not available on this host")
+                   else
+                     raise e
+                   end
+                 end
 
                  Socket::IPAddress.new("224.0.0.254", port)
                when Socket::Family::INET6
                  expect_raises(Socket::Error, "Unsupported IP address family: INET6. For use with IPv4 only") do
                    udp.multicast_interface(Socket::IPAddress.new(unspecified_address, 0))
                  end
-                 udp.multicast_interface(0)
+
+                 begin
+                   udp.multicast_interface(0)
+                 rescue e : Socket::Error
+                   if e.os_error == Errno::ENOPROTOOPT
+                     pending!("Multicast device selection not available on this host")
+                   else
+                     raise e
+                   end
+                 end
 
                  Socket::IPAddress.new("ff02::102", port)
                else
                  raise "Unsupported IP address family: #{family}"
                end
 
-        udp.join_group(addr)
+        begin
+          udp.join_group(addr)
+        rescue e : Socket::Error
+          if e.os_error == Errno::ENODEV
+            pending!("Multicast device selection not available on this host")
+          else
+            raise e
+          end
+        end
+
         udp.multicast_loopback = true
         udp.multicast_loopback?.should eq(true)
 
@@ -113,12 +159,13 @@ describe UDPSocket do
           sleep 100.milliseconds
           udp.close
         end
-        expect_raises(IO::Error, "Closed stream") { udp.receive }
+        expect_raises(IO::Error) { udp.receive }
+        udp.closed?.should be_true
       end
     end
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:win32) %}
     it "sends broadcast message" do
       port = unused_local_port
 

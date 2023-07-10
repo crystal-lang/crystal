@@ -16,7 +16,7 @@ struct Crystal::ExhaustivenessChecker
     cond_type = cond.type?
 
     # No type on condition means we couldn't type it so we can't
-    # check exhasutiveness.
+    # check exhaustiveness.
     return unless cond_type
 
     # Compute all types that we must cover.
@@ -51,7 +51,7 @@ struct Crystal::ExhaustivenessChecker
     # If we covered all types, we are done.
     return if targets.empty?
 
-    if targets.all?(&.is_a?(TypeTarget)) && all_patterns_are_types
+    if targets.all?(TypeTarget) && all_patterns_are_types
       node.raise <<-MSG
         case is not exhaustive.
 
@@ -99,7 +99,7 @@ struct Crystal::ExhaustivenessChecker
     elements = cond.elements
 
     # No type on condition means we couldn't type it so we can't
-    # check exhasutiveness.
+    # check exhaustiveness.
     return unless elements.all? &.type?
 
     element_types = elements.map &.type
@@ -179,7 +179,7 @@ struct Crystal::ExhaustivenessChecker
     end
   end
 
-  # Retuens an array of all the types inside `type`:
+  # Returns an array of all the types inside `type`:
   # for unions it's all the union types, otherwise it's just that type.
   private def expand_types(type)
     if type.is_a?(UnionType)
@@ -287,7 +287,7 @@ struct Crystal::ExhaustivenessChecker
     end
 
     # Tries to cover this target with the given pattern.
-    # By default, a TypePatteren will cover a target.
+    # By default, a TypePattern will cover a target.
     # Other, more specific, patterns will partially cover a target.
     def cover(pattern : Pattern) : Nil
       case pattern
@@ -395,7 +395,7 @@ struct Crystal::ExhaustivenessChecker
         gathered_missing_cases = [] of String
 
         # See if a case is missing for both false and true: show it as Bool in that case
-        missing_cases_per_bool.values.flatten.uniq.each do |missing_case|
+        missing_cases_per_bool.values.flatten.uniq!.each do |missing_case|
           if {true, false}.all? { |bool| missing_cases_per_bool[bool]?.try &.includes?(missing_case) }
             gathered_missing_cases << "Bool, #{missing_case}"
             {true, false}.each { |bool| missing_cases_per_bool[bool]?.try &.delete(missing_case) }
@@ -403,8 +403,9 @@ struct Crystal::ExhaustivenessChecker
         end
 
         missing_cases_per_bool.each do |bool, missing_cases|
-          next if missing_cases.empty?
-          gathered_missing_cases << "#{bool}, #{missing_cases.join(", ")}"
+          missing_cases.each do |missing_case|
+            gathered_missing_cases << "#{bool}, #{missing_case}"
+          end
         end
 
         gathered_missing_cases
@@ -525,7 +526,7 @@ struct Crystal::ExhaustivenessChecker
         gathered_missing_cases = [] of String
 
         # See if a case is missing for all members: show it as the enum name in that case
-        missing_cases_per_member.values.flatten.uniq.each do |missing_case|
+        missing_cases_per_member.values.flatten.uniq!.each do |missing_case|
           if @members.all? { |member| missing_cases_per_member[member]?.try &.includes?(missing_case) }
             gathered_missing_cases << "#{@type}, #{missing_case}"
             @members.each { |member| missing_cases_per_member[member]?.try &.delete(missing_case) }
@@ -533,8 +534,9 @@ struct Crystal::ExhaustivenessChecker
         end
 
         missing_cases_per_member.each do |member, missing_cases|
-          next if missing_cases.empty?
-          gathered_missing_cases << "#{member}, #{missing_cases.join(", ")}"
+          missing_cases.each do |missing_case|
+            gathered_missing_cases << "#{member}, #{missing_case}"
+          end
         end
 
         gathered_missing_cases

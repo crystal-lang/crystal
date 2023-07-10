@@ -32,4 +32,36 @@ describe "Code gen: offsetof" do
 
     run(code).to_b.should be_true
   end
+
+  it "returns offset allowing manual access of tuple items" do
+    code = "foo = {1, 2_i8, 3}
+            (pointerof(foo).as(Void*) + offsetof({Int32,Int8,Int32}, 2).to_i64).as(Int32*).value == 3"
+
+    run(code).to_b.should be_true
+  end
+
+  it "returns offset of extern union" do
+    run(<<-CRYSTAL).to_b.should be_true
+      @[Extern(union: true)]
+      struct Foo
+        @x = 1.0_f32
+        @y = uninitialized UInt32
+
+        def y
+          @y
+        end
+      end
+
+      f = Foo.new
+      (pointerof(f).as(Void*) + offsetof(Foo, @y).to_i64).as(UInt32*).value == f.y
+      CRYSTAL
+  end
+
+  it "returns offset of `StaticArray#@buffer`" do
+    run(<<-CRYSTAL).to_b.should be_true
+      x = uninitialized Int32[4]
+      pointerof(x.@buffer).value = 12345
+      (pointerof(x).as(Void*) + offsetof(Int32[4], @buffer).to_i64).as(Int32*).value == x.@buffer
+      CRYSTAL
+  end
 end

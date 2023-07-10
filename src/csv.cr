@@ -3,6 +3,8 @@
 #
 # This module conforms to [RFC 4180](https://tools.ietf.org/html/rfc4180).
 #
+# NOTE: To use `CSV` or its children, you must explicitly import it with `require "csv"`
+#
 # ### Parsing
 #
 # Several ways of parsing CSV are provided. The most straight-forward, but
@@ -20,7 +22,7 @@
 # A CSV instance holds a cursor to the current row in the CSV. The cursor
 # is advanced by invoking `#next`, which returns `true` if a next row was found,
 # and `false` otherwise. A first call to `#next` is required to position the
-# csv parser in the first row.
+# CSV parser in the first row.
 #
 # Once positioned in a row, values can be obtained with the several `#[]` methods,
 # which can accept a header name, column position, or header name pattern as a `Regex`.
@@ -94,7 +96,7 @@ class CSV
   # ["one", "two"]
   # ["three"]
   # ```
-  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, &)
     Parser.new(string_or_io, separator, quote_char).each_row do |row|
       yield row
     end
@@ -135,7 +137,7 @@ class CSV
   # ```
   #
   # See: `CSV::Builder::Quoting`
-  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : String
+  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC, &) : String
     String.build do |io|
       build(io, separator, quote_char, quoting) { |builder| yield builder }
     end
@@ -155,7 +157,7 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : Nil
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC, &) : Nil
     builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
     io.flush
@@ -194,7 +196,7 @@ class CSV
   # Headers are always stripped.
   #
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
-  def self.new(string_or_io : String | IO, headers = false, strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def self.new(string_or_io : String | IO, headers = false, strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, &)
     csv = new(string_or_io, headers, strip, separator, quote_char)
     csv.each do
       yield csv
@@ -209,7 +211,7 @@ class CSV
   end
 
   # Invokes the block once for each row in this CSV, yielding `self`.
-  def each : Nil
+  def each(&) : Nil
     while self.next
       yield self
     end
@@ -218,7 +220,7 @@ class CSV
   # Advanced the cursor to the next row. Must be called once to position
   # the cursor in the first row. Returns `true` if a next row was found,
   # `false` otherwise.
-  def next
+  def next : Bool
     return false if @traversed
 
     row = @row ||= [] of String
@@ -263,15 +265,15 @@ class CSV
   # Returns the current row's value corresponding to the given *header_pattern*.
   # Raises `KeyError` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
-  def [](header_pattern : Regex) : String
-    row_internal[header_pattern]
+  def [](header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    row_internal[header_pattern, options: options]
   end
 
   # Returns the current row's value corresponding to the given *header_pattern*.
   # Returns `nil` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
-  def []?(header_pattern : Regex) : String?
-    row_internal[header_pattern]?
+  def []?(header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    row_internal[header_pattern, options: options]?
   end
 
   # Returns a tuple of the current row's values at given indices
@@ -296,7 +298,7 @@ class CSV
   end
 
   # Rewinds this CSV to the beginning, rewinding the underlying IO if any.
-  def rewind
+  def rewind : Nil
     @parser.rewind
     @parser.next_row if @headers
     @traversed = false
@@ -318,7 +320,7 @@ class CSV
   end
 
   # :nodoc:
-  def indices
+  def indices : Hash(String, Int32)
     @indices || raise(Error.new("Headers not requested"))
   end
 
@@ -326,7 +328,7 @@ class CSV
   getter? strip
 
   # :nodoc:
-  def headers?
+  def headers? : Array(String)?
     @headers
   end
 
@@ -385,8 +387,8 @@ class CSV
     # Returns this row's value corresponding to the given *header_pattern*.
     # Raises `KeyError` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
-    def [](header_pattern : Regex) : String
-      value = self.[]?(header_pattern)
+    def [](header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+      value = self.[]?(header_pattern, options: options)
       raise KeyError.new("Missing header pattern: #{header_pattern}") unless value
       value
     end
@@ -394,9 +396,9 @@ class CSV
     # Returns this row's value corresponding to the given *header_pattern*.
     # Returns `nil` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
-    def []?(header_pattern : Regex) : String?
+    def []?(header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
       csv.headers.each_with_index do |header, i|
-        if header =~ header_pattern
+        if header.matches?(header_pattern, options: options)
           return maybe_strip(@row[i]? || "")
         end
       end
@@ -405,7 +407,7 @@ class CSV
 
     # Returns the number of columns in this row, regardless of the number
     # of headers (if requested).
-    def size
+    def size : Int32
       @row.size
     end
 

@@ -59,9 +59,11 @@ module YAML
   # ```
   #
   # `YAML::Field` properties:
-  # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
+  # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
+  # * **ignore_serialize**: If truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
+  # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the yaml object (by default the name of the instance variable)
-  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::PullParser)` and `to_yaml(value, YAML::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::ParseContext, YAML::Nodes::Node)` and `to_yaml(value, YAML::Nodes::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
@@ -95,7 +97,8 @@ module YAML
   #   @a : Int32
   # end
   #
-  # a = A.from_yaml("---\na: 1\nb: 2\n") # => A(@yaml_unmapped={"b" => 2_i64}, @a=1)
+  # a = A.from_yaml("---\na: 1\nb: 2\n") # => A(@yaml_unmapped={"b" => 2}, @a=1)
+  # a.yaml_unmapped["b"].raw.class       # => Int64
   # a.to_yaml                            # => "---\na: 1\nb: 2\n"
   # ```
   #
@@ -123,6 +126,28 @@ module YAML
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
   # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
+  #
+  # ### `after_initialize` method
+  #
+  # `#after_initialize` is a method that runs after an instance is deserialized
+  # from YAML. It can be used as a hook to post-process the initialized object.
+  #
+  # Example:
+  # ```
+  # require "yaml"
+  #
+  # class Person
+  #   include YAML::Serializable
+  #   getter name : String
+  #
+  #   def after_initialize
+  #     @name = @name.upcase
+  #   end
+  # end
+  #
+  # person = Person.from_yaml "---\nname: Jane\n"
+  # person.name # => "JANE"
+  # ```
   module Serializable
     annotation Options
     end
@@ -136,7 +161,7 @@ module YAML
       end
 
       private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-        ctx.read_alias(node, \{{@type}}) do |obj|
+        ctx.read_alias(node, self) do |obj|
           return obj
         end
 
@@ -150,7 +175,7 @@ module YAML
       end
 
       # When the type is inherited, carry over the `new`
-      # so it can compete with other possible intializes
+      # so it can compete with other possible initializes
 
       macro inherited
         def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -164,14 +189,14 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
-                type:        ivar.type,
                 key:         ((ann && ann[:key]) || ivar).id.stringify,
                 has_default: ivar.has_default_value?,
                 default:     ivar.default_value,
                 nilable:     ivar.type.nilable?,
+                type:        ivar.type,
                 converter:   ann && ann[:converter],
                 presence:    ann && ann[:presence],
               }
@@ -179,8 +204,10 @@ module YAML
           {% end %}
         {% end %}
 
+        # `%var`'s type must be exact to avoid type inference issues with
+        # recursively defined serializable types
         {% for name, value in properties %}
-          %var{name} = nil
+          %var{name} = uninitialized ::Union({{value[:type]}})
           %found{name} = false
         {% end %}
 
@@ -196,20 +223,18 @@ module YAML
             case key
             {% for name, value in properties %}
               when {{value[:key]}}
-                %found{name} = true
                 begin
-                  %var{name} =
-                    {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
+                  {% if value[:has_default] && !value[:nilable] %}
+                    next if YAML::Schema::Core.parse_null?(value_node)
+                  {% end %}
 
+                  %var{name} =
                     {% if value[:converter] %}
                       {{value[:converter]}}.from_yaml(ctx, value_node)
-                    {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                      {{value[:type]}}.new(ctx, value_node)
                     {% else %}
                       ::Union({{value[:type]}}).new(ctx, value_node)
                     {% end %}
-
-                  {% if value[:nilable] || value[:has_default] %} } {% end %}
+                  %found{name} = true
                 end
             {% end %}
             else
@@ -227,23 +252,13 @@ module YAML
         end
 
         {% for name, value in properties %}
-          {% unless value[:nilable] || value[:has_default] %}
-            if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
+          if %found{name}
+            @{{name}} = %var{name}
+          else
+            {% unless value[:has_default] || value[:nilable] %}
               node.raise "Missing YAML attribute: {{value[:key].id}}"
-            end
-          {% end %}
-
-          {% if value[:nilable] %}
-            {% if value[:has_default] != nil %}
-              @{{name}} = %found{name} ? %var{name} : {{value[:default]}}
-            {% else %}
-              @{{name}} = %var{name}
             {% end %}
-          {% elsif value[:has_default] %}
-            @{{name}} = %var{name}.nil? ? {{value[:default]}} : %var{name}
-          {% else %}
-            @{{name}} = (%var{name}).as({{value[:type]}})
-          {% end %}
+          end
 
           {% if value[:presence] %}
             @{{name}}_present = %found{name}
@@ -270,13 +285,13 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                type:      ivar.type,
-                key:       ((ann && ann[:key]) || ivar).id.stringify,
-                converter: ann && ann[:converter],
-                emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                key:              ((ann && ann[:key]) || ivar).id.stringify,
+                converter:        ann && ann[:converter],
+                emit_null:        (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                ignore_serialize: ann && ann[:ignore_serialize],
               }
             %}
           {% end %}
@@ -286,23 +301,30 @@ module YAML
           {% for name, value in properties %}
             _{{name}} = @{{name}}
 
-            {% unless value[:emit_null] %}
-              unless _{{name}}.nil?
+            {% if value[:ignore_serialize] %}
+              unless {{value[:ignore_serialize]}}
             {% end %}
 
-              {{value[:key]}}.to_yaml(yaml)
-
-              {% if value[:converter] %}
-                if _{{name}}
-                  {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
-                else
-                  nil.to_yaml(yaml)
-                end
-              {% else %}
-                _{{name}}.to_yaml(yaml)
+              {% unless value[:emit_null] %}
+                unless _{{name}}.nil?
               {% end %}
 
-            {% unless value[:emit_null] %}
+                {{value[:key]}}.to_yaml(yaml)
+
+                {% if value[:converter] %}
+                  if _{{name}}
+                    {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
+                  else
+                    nil.to_yaml(yaml)
+                  end
+                {% else %}
+                  _{{name}}.to_yaml(yaml)
+                {% end %}
+
+              {% unless value[:emit_null] %}
+                end
+              {% end %}
+            {% if value[:ignore_serialize] %}
               end
             {% end %}
           {% end %}
@@ -378,16 +400,16 @@ module YAML
     # ```
     macro use_yaml_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
-        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+        {% mapping.raise "Mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
-      private def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
 
         unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}"
+          node.raise "Expected YAML mapping, not #{node.class}"
         end
 
         node.each do |key, value|
@@ -397,6 +419,15 @@ module YAML
           discriminator_value = value.value
           case discriminator_value
           {% for key, value in mapping %}
+            {% if key.is_a?(Path) %}
+              {% key = key.resolve %}
+            {% end %}
+            {% if key.is_a?(NumberLiteral) %}
+              # An enum value is always a typed NumberLiteral and stringifies with type
+              # suffix unless it's Int32.
+              # TODO: Replace this workaround with NumberLiteral#to_number after the next release
+              {% key = key.id.split("_")[0] %}
+            {% end %}
             when {{key.id.stringify}}
               return {{value.id}}.new(ctx, node)
           {% end %}

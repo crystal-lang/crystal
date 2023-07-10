@@ -9,6 +9,7 @@ private def abi
   triple = "aarch64-unknown-linux-gnu"
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::AArch64.new(machine)
 end
 
@@ -140,8 +141,20 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.arg_types[0].should eq(ArgType.indirect(str, nil))
           info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+
+        test "does with homogeneous structs" do |abi, ctx|
+          str = ctx.struct([ctx.float, ctx.float, ctx.float, ctx.float])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.direct(str, ctx.float.array(4)))
+          info.return_type.should eq(ArgType.direct(str, ctx.float.array(4)))
         end
       end
     {% end %}

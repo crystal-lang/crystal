@@ -1,11 +1,13 @@
 require "lib_z"
 require "./*"
 
-# The Flate module contains readers and writers of DEFLATE format compressed
+# The Deflate module contains readers and writers of DEFLATE format compressed
 # data, as specified in [RFC 1951](https://www.ietf.org/rfc/rfc1951.txt).
 #
 # See `Gzip`, `Zip` and `Zlib` for modules that provide access
 # to DEFLATE-based file formats.
+#
+# NOTE: To use `Deflate` or its children, you must explicitly import it with `require "compress/deflate"`
 module Compress::Deflate
   NO_COMPRESSION      =  0
   BEST_SPEED          =  1

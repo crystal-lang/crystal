@@ -27,7 +27,7 @@ describe "Code gen: experimental" do
       def foo
       end
       ),
-      "Error: first argument must be a String"
+      "first argument must be a String"
   end
 
   it "errors if too many arguments" do
@@ -36,7 +36,7 @@ describe "Code gen: experimental" do
       def foo
       end
       ),
-      "Error: wrong number of experimental annotation arguments (given 2, expected 1)"
+      "wrong number of experimental annotation arguments (given 2, expected 1)"
   end
 
   it "errors if missing link arguments" do
@@ -45,6 +45,6 @@ describe "Code gen: experimental" do
       def foo
       end
       ),
-      "Error: too many named arguments (given 1, expected maximum 0)"
+      "too many named arguments (given 1, expected maximum 0)"
   end
 end

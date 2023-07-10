@@ -2,7 +2,7 @@ module Crystal
   class CrystalLLVMBuilder
     property end : Bool
 
-    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper, @printf : LLVM::Function)
+    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper, @printf : LLVMTypedFunction)
       @end = false
     end
 
@@ -59,6 +59,14 @@ module Crystal
 
     def build_operand_bundle_def(name, values : Array(LLVM::Value))
       @builder.build_operand_bundle_def(name, values)
+    end
+
+    def current_debug_location_metadata
+      {% if LibLLVM::IS_LT_90 %}
+        LibLLVM.value_as_metadata LibLLVM.get_current_debug_location(@builder)
+      {% else %}
+        LibLLVM.get_current_debug_location2(@builder)
+      {% end %}
     end
 
     def to_unsafe

@@ -1,6 +1,7 @@
 require "./client"
 require "./headers"
 
+# NOTE: To use `WebSocket`, you must explicitly import it with `require "http/web_socket"`
 class HTTP::WebSocket
   getter? closed = false
 
@@ -30,6 +31,8 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
   # HTTP::WebSocket.new(URI.parse("ws://websocket.example.com/chat"),        # Creates a new WebSocket to `websocket.example.com` with an Authorization header
   #   HTTP::Headers{"Authorization" => "Bearer authtoken"})
+  # HTTP::WebSocket.new(
+  #   URI.parse("ws://user:password@websocket.example.com/chat")) # Creates a new WebSocket to `websocket.example.com` with an HTTP basic auth Authorization header
   # ```
   def self.new(uri : URI | String, headers = HTTP::Headers.new)
     new(Protocol.new(uri, headers: headers))
@@ -48,18 +51,25 @@ class HTTP::WebSocket
     new(Protocol.new(host, path, port, tls, headers))
   end
 
+  # Called when a PING frame is received.
   def on_ping(&@on_ping : String ->)
   end
 
+  # Called when a PONG frame is received.
+  #
+  # An unsolicited PONG frame should not be responded to.
   def on_pong(&@on_pong : String ->)
   end
 
+  # Called when a text message is received.
   def on_message(&@on_message : String ->)
   end
 
+  # Called when a binary message is received.
   def on_binary(&@on_binary : Bytes ->)
   end
 
+  # Called when the connection is closed by the other party.
   def on_close(&@on_close : CloseCode, String ->)
   end
 
@@ -67,48 +77,57 @@ class HTTP::WebSocket
     raise IO::Error.new "Closed socket" if closed?
   end
 
-  def send(message)
+  # Sends a message payload (message).
+  def send(message) : Nil
     check_open
     @ws.send(message)
   end
 
-  # It's possible to send a PING frame, which the client must respond to
-  # with a PONG, or the server can send an unsolicited PONG frame
-  # which the client should not respond to.
+  # Sends a PING frame. Received pings will call `#on_ping`.
   #
-  # See `#pong`.
+  # The receiving party must respond with a PONG.
   def ping(message = nil)
     check_open
     @ws.ping(message)
   end
 
-  # Server can send an unsolicited PONG frame which the client should not respond to.
-  #
-  # See `#ping`.
-  def pong(message = nil)
+  # Sends a PONG frame, which must be in response to a previously received PING frame from `#on_ping`.
+  def pong(message = nil) : Nil
     check_open
     @ws.pong(message)
   end
 
-  def stream(binary = true, frame_size = 1024)
+  def stream(binary = true, frame_size = 1024, &)
     check_open
     @ws.stream(binary: binary, frame_size: frame_size) do |io|
       yield io
     end
   end
 
-  @[Deprecated("Use WebSocket#close(code, message) instead")]
-  def close(message)
-    close(nil, message)
-  end
-
-  def close(code : CloseCode | Int? = nil, message = nil)
+  # Sends a close frame, and closes the connection.
+  # The close frame may contain a body (message) that indicates the reason for closing.
+  def close(code : CloseCode | Int? = nil, message = nil) : Nil
     return if closed?
     @closed = true
     @ws.close(code, message)
   end
 
-  def run
+  # Continuously receives messages and calls previously set callbacks until the websocket is closed.
+  # Ping and pong messages are automatically handled.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # # Set callback
+  # ws.on_message do |msg|
+  #   ws.send "response"
+  # end
+  #
+  # # Start infinite loop
+  # ws.run
+  # ```
+  def run : Nil
     loop do
       begin
         info = @ws.receive(@buffer)
@@ -119,7 +138,7 @@ class HTTP::WebSocket
       end
 
       case info.opcode
-      when .ping?
+      in .ping?
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
@@ -127,25 +146,25 @@ class HTTP::WebSocket
           pong(message) unless closed?
           @current_message.clear
         end
-      when .pong?
+      in .pong?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_pong.try &.call(@current_message.to_s)
           @current_message.clear
         end
-      when .text?
+      in .text?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_message.try &.call(@current_message.to_s)
           @current_message.clear
         end
-      when .binary?
+      in .binary?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_binary.try &.call(@current_message.to_slice)
           @current_message.clear
         end
-      when .close?
+      in .close?
         @current_message.write @buffer[0, info.size]
         if info.final
           @current_message.rewind
@@ -159,12 +178,12 @@ class HTTP::WebSocket
           message = @current_message.gets_to_end
 
           @on_close.try &.call(code, message)
-          close(code)
+          close
 
           @current_message.clear
           break
         end
-      when Protocol::Opcode::CONTINUATION
+      in .continuation?
         # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
     end

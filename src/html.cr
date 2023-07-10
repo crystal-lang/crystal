@@ -3,6 +3,8 @@ require "./html/entities"
 # Provides HTML escaping and unescaping methods.
 #
 # For HTML *parsing* see module XML, especially `XML.parse_html`.
+#
+# NOTE: To use `HTML`, you must explicitly import it with `require "html"`
 module HTML
   private SUBSTITUTIONS = {
     '&'  => "&amp;",
@@ -24,7 +26,7 @@ module HTML
     string.gsub(SUBSTITUTIONS)
   end
 
-  # Same as `escape(string)` but ouputs the result to
+  # Same as `escape(string)` but outputs the result to
   # the given *io*.
   #
   # ```
@@ -35,9 +37,30 @@ module HTML
   # io.to_s                          # => "Crystal &amp; You"
   # ```
   def self.escape(string : String, io : IO) : Nil
-    string.each_char do |char|
-      io << SUBSTITUTIONS.fetch(char, char)
+    escape(string.to_slice, io)
+  end
+
+  # Same as `escape(String, IO)` but accepts `Bytes` instead of `String`.
+  #
+  # The slice is assumed to be valid UTF-8.
+  def self.escape(string : Bytes, io : IO) : Nil
+    last_copy_at = 0
+    string.each_with_index do |byte, index|
+      str = case byte
+            when '&'  then "&amp;"
+            when '<'  then "&lt;"
+            when '>'  then "&gt;"
+            when '"'  then "&quot;"
+            when '\'' then "&#39;"
+            else
+              next
+            end
+
+      io.write_string(string[last_copy_at, index &- last_copy_at])
+      last_copy_at = index &+ 1
+      io << str
     end
+    io.write_string(string[last_copy_at, string.size &- last_copy_at])
   end
 
   # These replacements permit compatibility with old numeric entities that
@@ -81,9 +104,9 @@ module HTML
   }
 
   # Returns a string where named and numeric character references
-  # (e.g. &gt;, &#62;, &x3e;) in *string* are replaced with the corresponding
+  # (e.g. &amp;gt;, &amp;#62;, &amp;#x3e;) in *string* are replaced with the corresponding
   # unicode characters. This method decodes all HTML5 entities including those
-  # without a trailing semicolon (such as `&copy`).
+  # without a trailing semicolon (such as "&amp;copy").
   #
   # ```
   # require "html"

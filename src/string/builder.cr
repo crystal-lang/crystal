@@ -14,7 +14,6 @@ class String::Builder < IO
     # Make sure to also be able to hold
     # the header size plus the trailing zero byte
     capacity += String::HEADER_SIZE + 1
-    String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)
     @bytesize = 0
@@ -22,7 +21,7 @@ class String::Builder < IO
     @finished = false
   end
 
-  def self.build(capacity : Int = 64) : String
+  def self.build(capacity : Int = 64, &) : String
     builder = new(capacity)
     yield builder
     builder.to_s
@@ -34,12 +33,12 @@ class String::Builder < IO
     io
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise "Not implemented"
   end
 
-  def write(slice : Bytes) : UInt64
-    return 0u64 if slice.empty?
+  def write(slice : Bytes) : Nil
+    return if slice.empty?
 
     count = slice.size
     new_bytesize = real_bytesize + count
@@ -49,11 +48,9 @@ class String::Builder < IO
 
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
-
-    slice.size.to_u64
   end
 
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     new_bytesize = real_bytesize + 1
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
@@ -66,17 +63,27 @@ class String::Builder < IO
     nil
   end
 
-  def buffer
+  def write_string(slice : Bytes) : Nil
+    write(slice)
+  end
+
+  def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
+    unless utf8_encoding?(encoding, invalid)
+      raise "Can't change encoding of String::Builder"
+    end
+  end
+
+  def buffer : Pointer(UInt8)
     @buffer + String::HEADER_SIZE
   end
 
-  def empty?
+  def empty? : Bool
     @bytesize == 0
   end
 
   # Chomps the last byte from the string buffer.
   # If the byte is `'\n'` and there's a `'\r'` before it, it is also removed.
-  def chomp!(byte : UInt8)
+  def chomp!(byte : UInt8) : self
     if bytesize > 0 && buffer[bytesize - 1] == byte
       back(1)
 
@@ -89,7 +96,7 @@ class String::Builder < IO
 
   # Moves the write pointer, and the resulting string bytesize,
   # by the given *amount*.
-  def back(amount : Int)
+  def back(amount : Int) : Int32
     unless 0 <= amount <= @bytesize
       raise ArgumentError.new "Invalid back amount"
     end
@@ -109,21 +116,18 @@ class String::Builder < IO
       resize_to_capacity(real_bytesize)
     end
 
-    header = @buffer.as({Int32, Int32, Int32}*)
-    header.value = {String::TYPE_ID, @bytesize - 1, 0}
-    @buffer.as(String)
+    String.set_crystal_type_id(@buffer)
+    str = @buffer.as(String)
+    str.initialize_header((bytesize - 1).to_i)
+    str
   end
 
   private def real_bytesize
     @bytesize + String::HEADER_SIZE
   end
 
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if real_bytesize == @capacity
-  end
-
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end

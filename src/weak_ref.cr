@@ -1,5 +1,8 @@
 # Weak Reference class that allows a referenced object to be garbage-collected.
 #
+# WARNING: The referenced object cannot be a module.
+# NOTE: To use `WeakRef`, you must explicitly import it with `require "weak_ref"`
+#
 # ```
 # require "weak_ref"
 #
@@ -12,6 +15,8 @@ class WeakRef(T)
   @target : Void*
 
   def initialize(target : T)
+    {% raise "Cannot create a WeakRef of a module" if T.module? %}
+
     @target = target.as(Void*)
     if GC.is_heap_ptr(@target)
       GC.register_disappearing_link(pointerof(@target))

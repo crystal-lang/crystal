@@ -47,6 +47,8 @@ module Spec
     rescue ex : Spec::AssertionFailed
       @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
+    rescue ex : Spec::ExamplePending
+      @parent.report(:pending, description, file, line, Time.monotonic - start)
     rescue ex
       @parent.report(:error, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?

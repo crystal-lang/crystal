@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "spec/helpers/string"
 
 def parse_time(format, string)
   Time.parse_utc(format, string)
@@ -15,111 +16,123 @@ describe Time::Format do
       t2 = Time.utc 2014, 1, 2, 15, 4, 5, nanosecond: 6_000_000
       t3 = Time.utc 2014, 1, 2, 12, 4, 5, nanosecond: 6_000_000
 
-      t.to_s("%Y").should eq("2014")
-      Time.utc(1, 1, 2, 3, 4, 5, nanosecond: 6).to_s("%Y").should eq("0001")
+      assert_prints t.to_s("%Y"), "2014"
+      assert_prints Time.utc(1, 1, 2, 3, 4, 5, nanosecond: 6).to_s("%Y"), "0001"
 
-      t.to_s("%C").should eq("20")
-      t.to_s("%y").should eq("14")
-      t.to_s("%m").should eq("01")
-      t.to_s("%_m").should eq(" 1")
-      t.to_s("%_%_m2").should eq("%_ 12")
-      t.to_s("%-m").should eq("1")
-      t.to_s("%-%-m2").should eq("%-12")
-      t.to_s("%B").should eq("January")
-      t.to_s("%^B").should eq("JANUARY")
-      t.to_s("%^%^B2").should eq("%^JANUARY2")
-      t.to_s("%b").should eq("Jan")
-      t.to_s("%^b").should eq("JAN")
-      t.to_s("%h").should eq("Jan")
-      t.to_s("%^h").should eq("JAN")
-      t.to_s("%d").should eq("02")
-      t.to_s("%-d").should eq("2")
-      t.to_s("%e").should eq(" 2")
-      t.to_s("%j").should eq("002")
-      t.to_s("%H").should eq("03")
+      assert_prints t.to_s("%C"), "20"
+      assert_prints t.to_s("%y"), "14"
+      assert_prints t.to_s("%m"), "01"
+      assert_prints t.to_s("%_m"), " 1"
+      assert_prints t.to_s("%_%_m2"), "%_ 12"
+      assert_prints t.to_s("%-m"), "1"
+      assert_prints t.to_s("%-%-m2"), "%-12"
+      assert_prints t.to_s("%B"), "January"
+      assert_prints t.to_s("%^B"), "JANUARY"
+      assert_prints t.to_s("%^%^B2"), "%^JANUARY2"
+      assert_prints t.to_s("%b"), "Jan"
+      assert_prints t.to_s("%^b"), "JAN"
+      assert_prints t.to_s("%h"), "Jan"
+      assert_prints t.to_s("%^h"), "JAN"
+      assert_prints t.to_s("%d"), "02"
+      assert_prints t.to_s("%-d"), "2"
+      assert_prints t.to_s("%e"), " 2"
+      assert_prints t.to_s("%j"), "002"
+      assert_prints t.to_s("%H"), "03"
 
-      t.to_s("%k").should eq(" 3")
-      t2.to_s("%k").should eq("15")
+      assert_prints t.to_s("%k"), " 3"
+      assert_prints t2.to_s("%k"), "15"
 
-      t.to_s("%I").should eq("03")
-      t2.to_s("%I").should eq("03")
-      t3.to_s("%I").should eq("12")
+      assert_prints t.to_s("%I"), "03"
+      assert_prints t2.to_s("%I"), "03"
+      assert_prints t3.to_s("%I"), "12"
 
-      t.to_s("%l").should eq(" 3")
-      t2.to_s("%l").should eq(" 3")
-      t3.to_s("%l").should eq("12")
+      assert_prints t.to_s("%l"), " 3"
+      assert_prints t2.to_s("%l"), " 3"
+      assert_prints t3.to_s("%l"), "12"
 
       # Note: we purposely match %p to am/pm and %P to AM/PM (makes more sense)
-      t.to_s("%p").should eq("am")
-      t2.to_s("%p").should eq("pm")
+      assert_prints t.to_s("%p"), "am"
+      assert_prints t2.to_s("%p"), "pm"
 
-      t.to_s("%P").should eq("AM")
-      t2.to_s("%P").should eq("PM")
+      assert_prints t.to_s("%P"), "AM"
+      assert_prints t2.to_s("%P"), "PM"
 
-      t.to_s("%M").to_s.should eq("04")
-      t.to_s("%S").to_s.should eq("05")
-      t.to_s("%L").to_s.should eq("006")
-      t.to_s("%N").to_s.should eq("006000000")
-      t.to_s("%3N").to_s.should eq("006")
-      t.to_s("%6N").to_s.should eq("006000")
-      t.to_s("%9N").to_s.should eq("006000000")
+      assert_prints t.to_s("%M"), "04"
+      assert_prints t.to_s("%S"), "05"
+      assert_prints t.to_s("%L"), "006"
+      assert_prints t.to_s("%N"), "006000000"
+      assert_prints t.to_s("%3N"), "006"
+      assert_prints t.to_s("%6N"), "006000"
+      assert_prints t.to_s("%9N"), "006000000"
 
-      t.to_s("%z").should eq("+0000")
-      t.to_s("%:z").should eq("+00:00")
-      t.to_s("%::z").should eq("+00:00:00")
+      assert_prints t.to_s("%z"), "+0000"
+      assert_prints t.to_s("%:z"), "+00:00"
+      assert_prints t.to_s("%::z"), "+00:00:00"
+      assert_prints t.to_s("%^Z"), "UTC"
+      assert_prints t.to_s("%Z"), "UTC"
 
-      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
-      zoned.to_s("%z").should eq("+0100")
-      zoned.to_s("%:z").should eq("+01:00")
-      zoned.to_s("%::z").should eq("+01:00:00")
+      with_zoneinfo do
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
+        assert_prints zoned.to_s("%z"), "+0100"
+        assert_prints zoned.to_s("%:z"), "+01:00"
+        assert_prints zoned.to_s("%::z"), "+01:00:00"
+        assert_prints zoned.to_s("%^Z"), "CET"
+        assert_prints zoned.to_s("%Z"), "Europe/Berlin"
 
-      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
-      zoned.to_s("%z").should eq("-0300")
-      zoned.to_s("%:z").should eq("-03:00")
-      zoned.to_s("%::z").should eq("-03:00:00")
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
+        assert_prints zoned.to_s("%z"), "-0300"
+        assert_prints zoned.to_s("%:z"), "-03:00"
+        assert_prints zoned.to_s("%::z"), "-03:00:00"
+        assert_prints zoned.to_s("%^Z"), "-03"
+        assert_prints zoned.to_s("%Z"), "America/Buenos_Aires"
+      end
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))
-      offset.to_s("%z").should eq("+0230")
-      offset.to_s("%:z").should eq("+02:30")
-      offset.to_s("%::z").should eq("+02:30:00")
+      assert_prints offset.to_s("%z"), "+0230"
+      assert_prints offset.to_s("%:z"), "+02:30"
+      assert_prints offset.to_s("%::z"), "+02:30:00"
+      assert_prints offset.to_s("%^Z"), "+02:30"
+      assert_prints offset.to_s("%Z"), "+02:30"
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9001))
-      offset.to_s("%z").should eq("+0230")
-      offset.to_s("%:z").should eq("+02:30")
-      offset.to_s("%::z").should eq("+02:30:01")
+      assert_prints offset.to_s("%z"), "+0230"
+      assert_prints offset.to_s("%:z"), "+02:30"
+      assert_prints offset.to_s("%::z"), "+02:30:01"
+      assert_prints offset.to_s("%^Z"), "+02:30:01"
+      assert_prints offset.to_s("%Z"), "+02:30:01"
 
-      t.to_s("%A").to_s.should eq("Thursday")
-      t.to_s("%^A").to_s.should eq("THURSDAY")
-      t.to_s("%a").to_s.should eq("Thu")
-      t.to_s("%^a").to_s.should eq("THU")
-      t.to_s("%u").to_s.should eq("4")
-      t.to_s("%w").to_s.should eq("4")
+      assert_prints t.to_s("%A"), "Thursday"
+      assert_prints t.to_s("%^A"), "THURSDAY"
+      assert_prints t.to_s("%a"), "Thu"
+      assert_prints t.to_s("%^a"), "THU"
+      assert_prints t.to_s("%u"), "4"
+      assert_prints t.to_s("%w"), "4"
 
-      t3 = Time.utc 2014, 1, 5 # A Sunday
-      t3.to_s("%u").to_s.should eq("7")
-      t3.to_s("%w").to_s.should eq("0")
+      t4 = Time.utc 2014, 1, 5 # A Sunday
+      assert_prints t4.to_s("%u"), "7"
+      assert_prints t4.to_s("%w"), "0"
 
-      Time.utc(1985, 4, 12).to_s("%G-W%V-%u").should eq "1985-W15-5"
-      Time.utc(2005, 1, 1).to_s("%G-W%V-%u").should eq "2004-W53-6"
-      Time.utc(2005, 1, 2).to_s("%G-W%V-%u").should eq "2004-W53-7"
-      Time.utc(2005, 12, 31).to_s("%G-W%V-%u").should eq "2005-W52-6"
-      Time.utc(2006, 1, 1).to_s("%G-W%V-%u").should eq "2005-W52-7"
-      Time.utc(2006, 1, 2).to_s("%G-W%V-%u").should eq "2006-W01-1"
-      Time.utc(2006, 12, 31).to_s("%G-W%V-%u").should eq "2006-W52-7"
-      Time.utc(2007, 1, 1).to_s("%G-W%V-%u").should eq "2007-W01-1"
-      Time.utc(2007, 12, 30).to_s("%G-W%V-%u").should eq "2007-W52-7"
-      Time.utc(2007, 12, 31).to_s("%G-W%V-%u").should eq "2008-W01-1"
-      Time.utc(2008, 1, 1).to_s("%G-W%V-%u").should eq "2008-W01-2"
-      Time.utc(2008, 12, 28).to_s("%G-W%V-%u").should eq "2008-W52-7"
-      Time.utc(2008, 12, 29).to_s("%G-W%V-%u").should eq "2009-W01-1"
-      Time.utc(2008, 12, 30).to_s("%G-W%V-%u").should eq "2009-W01-2"
-      Time.utc(2008, 12, 31).to_s("%G-W%V-%u").should eq "2009-W01-3"
-      Time.utc(2009, 1, 1).to_s("%G-W%V-%u").should eq "2009-W01-4"
-      Time.utc(2009, 12, 31).to_s("%G-W%V-%u").should eq "2009-W53-4"
-      Time.utc(2010, 1, 1).to_s("%G-W%V-%u").should eq "2009-W53-5"
-      Time.utc(2010, 1, 2).to_s("%G-W%V-%u").should eq "2009-W53-6"
-      Time.utc(2010, 1, 3).to_s("%G-W%V-%u").should eq "2009-W53-7"
-      Time.utc(1985, 4, 12).to_s("%g-W%V-%u").should eq "85-W15-5"
+      assert_prints Time.utc(1985, 4, 12).to_s("%G-W%V-%u"), "1985-W15-5"
+      assert_prints Time.utc(2005, 1, 1).to_s("%G-W%V-%u"), "2004-W53-6"
+      assert_prints Time.utc(2005, 1, 2).to_s("%G-W%V-%u"), "2004-W53-7"
+      assert_prints Time.utc(2005, 12, 31).to_s("%G-W%V-%u"), "2005-W52-6"
+      assert_prints Time.utc(2006, 1, 1).to_s("%G-W%V-%u"), "2005-W52-7"
+      assert_prints Time.utc(2006, 1, 2).to_s("%G-W%V-%u"), "2006-W01-1"
+      assert_prints Time.utc(2006, 12, 31).to_s("%G-W%V-%u"), "2006-W52-7"
+      assert_prints Time.utc(2007, 1, 1).to_s("%G-W%V-%u"), "2007-W01-1"
+      assert_prints Time.utc(2007, 12, 30).to_s("%G-W%V-%u"), "2007-W52-7"
+      assert_prints Time.utc(2007, 12, 31).to_s("%G-W%V-%u"), "2008-W01-1"
+      assert_prints Time.utc(2008, 1, 1).to_s("%G-W%V-%u"), "2008-W01-2"
+      assert_prints Time.utc(2008, 12, 28).to_s("%G-W%V-%u"), "2008-W52-7"
+      assert_prints Time.utc(2008, 12, 29).to_s("%G-W%V-%u"), "2009-W01-1"
+      assert_prints Time.utc(2008, 12, 30).to_s("%G-W%V-%u"), "2009-W01-2"
+      assert_prints Time.utc(2008, 12, 31).to_s("%G-W%V-%u"), "2009-W01-3"
+      assert_prints Time.utc(2009, 1, 1).to_s("%G-W%V-%u"), "2009-W01-4"
+      assert_prints Time.utc(2009, 12, 31).to_s("%G-W%V-%u"), "2009-W53-4"
+      assert_prints Time.utc(2010, 1, 1).to_s("%G-W%V-%u"), "2009-W53-5"
+      assert_prints Time.utc(2010, 1, 2).to_s("%G-W%V-%u"), "2009-W53-6"
+      assert_prints Time.utc(2010, 1, 3).to_s("%G-W%V-%u"), "2009-W53-7"
+      assert_prints Time.utc(1985, 4, 12).to_s("%g-W%V-%u"), "85-W15-5"
       # TODO %U
       # TODO %W
       # TODO %s
@@ -127,48 +140,48 @@ describe Time::Format do
       # TODO %t
       # TODO %%
 
-      t.to_s("%%").should eq("%")
-      t.to_s("%c").should eq(t.to_s("%a %b %e %T %Y"))
-      t.to_s("%D").should eq(t.to_s("%m/%d/%y"))
-      t.to_s("%F").should eq(t.to_s("%Y-%m-%d"))
+      assert_prints t.to_s("%%"), "%"
+      assert_prints t.to_s("%c"), t.to_s("%a %b %e %T %Y")
+      assert_prints t.to_s("%D"), t.to_s("%m/%d/%y")
+      assert_prints t.to_s("%F"), t.to_s("%Y-%m-%d")
       # TODO %v
-      t.to_s("%x").should eq(t.to_s("%D"))
-      t.to_s("%X").should eq(t.to_s("%T"))
-      t.to_s("%r").should eq(t.to_s("%I:%M:%S %P"))
-      t.to_s("%R").should eq(t.to_s("%H:%M"))
-      t.to_s("%T").should eq(t.to_s("%H:%M:%S"))
+      assert_prints t.to_s("%x"), t.to_s("%D")
+      assert_prints t.to_s("%X"), t.to_s("%T")
+      assert_prints t.to_s("%r"), t.to_s("%I:%M:%S %P")
+      assert_prints t.to_s("%R"), t.to_s("%H:%M")
+      assert_prints t.to_s("%T"), t.to_s("%H:%M:%S")
 
-      t.to_s("%Y-%m-hello").should eq("2014-01-hello")
+      assert_prints t.to_s("%Y-%m-hello"), "2014-01-hello"
 
-      t = Time.utc 2014, 1, 2, 3, 4, 5, nanosecond: 6
-      t.to_s("%s").should eq("1388631845")
+      t5 = Time.utc 2014, 1, 2, 3, 4, 5, nanosecond: 6
+      assert_prints t5.to_s("%s"), "1388631845"
     end
   end
 
   it "formats standard formats" do
     time = Time.utc(2016, 2, 15)
-    time.to_rfc3339.should eq "2016-02-15T00:00:00Z"
+    assert_prints time.to_rfc3339, "2016-02-15T00:00:00Z"
     Time.parse_rfc3339(time.to_rfc3339).should eq time
-    time.to_rfc2822.should eq "Mon, 15 Feb 2016 00:00:00 +0000"
+    assert_prints time.to_rfc2822, "Mon, 15 Feb 2016 00:00:00 +0000"
     Time.parse_rfc2822(time.to_rfc2822).should eq time
   end
 
   it "formats rfc3339 with different fraction digits" do
     time = Time.utc(2016, 2, 15, 8, 23, 45, nanosecond: 123456789)
-    time.to_rfc3339.should eq "2016-02-15T08:23:45Z"
-    time.to_rfc3339(fraction_digits: 0).should eq "2016-02-15T08:23:45Z"
-    time.to_rfc3339(fraction_digits: 3).should eq "2016-02-15T08:23:45.123Z"
-    time.to_rfc3339(fraction_digits: 6).should eq "2016-02-15T08:23:45.123456Z"
-    time.to_rfc3339(fraction_digits: 9).should eq "2016-02-15T08:23:45.123456789Z"
+    assert_prints time.to_rfc3339, "2016-02-15T08:23:45Z"
+    assert_prints time.to_rfc3339(fraction_digits: 0), "2016-02-15T08:23:45Z"
+    assert_prints time.to_rfc3339(fraction_digits: 3), "2016-02-15T08:23:45.123Z"
+    assert_prints time.to_rfc3339(fraction_digits: 6), "2016-02-15T08:23:45.123456Z"
+    assert_prints time.to_rfc3339(fraction_digits: 9), "2016-02-15T08:23:45.123456789Z"
     expect_raises(ArgumentError, "Invalid fraction digits: 5") { time.to_rfc3339(fraction_digits: 5) }
     expect_raises(ArgumentError, "Invalid fraction digits: -1") { time.to_rfc3339(fraction_digits: -1) }
 
     time = Time.utc(2016, 2, 15, 8, 23, 45)
-    time.to_rfc3339.should eq "2016-02-15T08:23:45Z"
-    time.to_rfc3339(fraction_digits: 0).should eq "2016-02-15T08:23:45Z"
-    time.to_rfc3339(fraction_digits: 3).should eq "2016-02-15T08:23:45.000Z"
-    time.to_rfc3339(fraction_digits: 6).should eq "2016-02-15T08:23:45.000000Z"
-    time.to_rfc3339(fraction_digits: 9).should eq "2016-02-15T08:23:45.000000000Z"
+    assert_prints time.to_rfc3339, "2016-02-15T08:23:45Z"
+    assert_prints time.to_rfc3339(fraction_digits: 0), "2016-02-15T08:23:45Z"
+    assert_prints time.to_rfc3339(fraction_digits: 3), "2016-02-15T08:23:45.000Z"
+    assert_prints time.to_rfc3339(fraction_digits: 6), "2016-02-15T08:23:45.000000Z"
+    assert_prints time.to_rfc3339(fraction_digits: 9), "2016-02-15T08:23:45.000000000Z"
   end
 
   it "parses empty" do
@@ -189,6 +202,12 @@ describe Time::Format do
     end
     Time.parse("2017-12-01 20:15:13", "%F %T", Time::Location.local).to_s("%F %T").should eq "2017-12-01 20:15:13"
     Time.parse!("2017-12-01 20:15:13 +01:00", "%F %T %:z").to_s("%F %T %:z").should eq "2017-12-01 20:15:13 +01:00"
+  end
+
+  it "gives nice error message when end of input is reached (#12047)" do
+    expect_raises(Time::Format::Error, "Expected '-' but the end of the input was reached") do
+      Time.parse!("2021-01", "%F")
+    end
   end
 
   it "parses" do
@@ -218,6 +237,10 @@ describe Time::Format do
     parse_time(" 9", "%l").hour.should eq(9)
     parse_time("9pm", "%l%p").hour.should eq(21)
     parse_time("9PM", "%l%P").hour.should eq(21)
+    parse_time("12PM", "%l%P").hour.should eq(12)
+    parse_time("9am", "%l%p").hour.should eq(9)
+    parse_time("9AM", "%l%P").hour.should eq(9)
+    parse_time("12AM", "%l%P").hour.should eq(0)
     parse_time("09", "%M").minute.should eq(9)
     parse_time("09", "%S").second.should eq(9)
     parse_time("123", "%L").millisecond.should eq(123)
@@ -265,6 +288,148 @@ describe Time::Format do
     parse_time("2009-W53-5", "%G-W%V-%u").should eq(Time.utc(2010, 1, 1))
     parse_time("2009-W53-6", "%G-W%V-%u").should eq(Time.utc(2010, 1, 2))
     parse_time("2009-W53-7", "%G-W%V-%u").should eq(Time.utc(2010, 1, 3))
+  end
+
+  it "parses am/pm" do
+    parse_time("12:00 am", "%I:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01 am", "%I:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 am", "%I:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 am", "%I:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("00:00 pm", "%I:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("00:01 pm", "%I:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("12:00 pm", "%I:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 pm", "%I:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("01:00 pm", "%I:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("11:00 pm", "%I:%M %P").to_s("%H:%M").should eq("23:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:00 am", "%I:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:01 am", "%I:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 am", "%I:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 pm", "%I:%M %P")
+    end
+
+    parse_time("12:00", "%I:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01", "%I:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00", "%I:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%I:%M").to_s("%H:%M").should eq("11:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:00", "%I:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:01", "%I:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00", "%I:%M")
+    end
+
+    parse_time("12:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01 am", "%l:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00 am", "%l:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 am", "%l:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time(" 0:00 pm", "%l:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time(" 0:01 pm", "%l:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("12:00 pm", "%l:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 pm", "%l:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time(" 1:00 pm", "%l:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("11:00 pm", "%l:%M %P").to_s("%H:%M").should eq("23:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:00 am", "%l:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:01 am", "%l:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 am", "%l:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 pm", "%l:%M %P")
+    end
+
+    parse_time("12:00", "%l:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01", "%l:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00", "%l:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%l:%M").to_s("%H:%M").should eq("11:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:00", "%l:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:01", "%l:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00", "%l:%M")
+    end
+  end
+
+  it "parses 24h clock" do
+    parse_time("00:00", "%H:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01", "%H:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00", "%H:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%H:%M").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00", "%H:%M").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01", "%H:%M").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00", "%H:%M").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00", "%H:%M").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00", "%H:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("2020-05-21 24:00", "%F %H:%M").should eq(Time.utc(2020, 5, 22, 0, 0))
+
+    parse_time(" 0:00", "%k:%M").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01", "%k:%M").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00", "%k:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%k:%M").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00", "%k:%M").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01", "%k:%M").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00", "%k:%M").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00", "%k:%M").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00", "%k:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("2020-05-21 24:00", "%F %k:%M").should eq(Time.utc(2020, 5, 22, 0, 0))
+  end
+
+  it "parses 24h clock with am/pm" do
+    parse_time("00:00 AM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01 AM", "%H:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 AM", "%H:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 AM", "%H:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 AM", "%H:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 AM", "%H:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 AM", "%H:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 AM", "%H:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 AM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+
+    parse_time(" 0:00 AM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01 AM", "%k:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00 AM", "%k:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 AM", "%k:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 AM", "%k:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 AM", "%k:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 AM", "%k:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 AM", "%k:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 AM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
+
+    parse_time("00:00 PM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01 PM", "%H:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 PM", "%H:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 PM", "%H:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 PM", "%H:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 PM", "%H:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 PM", "%H:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 PM", "%H:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 PM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+
+    parse_time(" 0:00 PM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01 PM", "%k:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00 PM", "%k:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 PM", "%k:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 PM", "%k:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 PM", "%k:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 PM", "%k:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 PM", "%k:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 PM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
   end
 
   it "parses timezone" do
@@ -316,12 +481,81 @@ describe Time::Format do
     time.location.fixed?.should be_true
   end
 
+  it "parses zone name" do
+    ["%^Z", "%Z"].each do |pattern|
+      time = Time.parse!("UTC", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_true
+      time.location.fixed?.should be_true
+
+      time = Time.parse!("-00:00", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_false
+      time.location.fixed?.should be_true
+
+      time = Time.parse!("+00:00", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_false
+      time.location.fixed?.should be_true
+
+      time = Time.parse!("+00:00:00", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_false
+      time.location.fixed?.should be_true
+
+      with_zoneinfo do
+        time = Time.parse!("CET", pattern)
+        time.offset.should eq 3600
+        time.utc?.should be_false
+        time.location.fixed?.should be_false
+
+        time = Time.parse!("Europe/Berlin", pattern)
+        time.location.should eq Time::Location.load("Europe/Berlin")
+
+        expect_raises(Time::Location::InvalidLocationNameError) do
+          Time.parse!("INVALID", pattern)
+        end
+      end
+    end
+  end
+
   it "raises when time zone missing" do
     expect_raises(Time::Format::Error, "Invalid timezone") do
       Time.parse!("", "%z")
     end
     expect_raises(Time::Format::Error, "Invalid timezone") do
       Time.parse!("123456+01:00", "%3N%z")
+    end
+  end
+
+  it "parses day of year" do
+    parse_time("2006-001", "%Y-%j").should eq(Time.utc(2006, 1, 1))
+    parse_time("2006-032", "%Y-%j").should eq(Time.utc(2006, 2, 1))
+    parse_time("2006-059", "%Y-%j").should eq(Time.utc(2006, 2, 28))
+    parse_time("2006-060", "%Y-%j").should eq(Time.utc(2006, 3, 1))
+    parse_time("2006-200", "%Y-%j").should eq(Time.utc(2006, 7, 19))
+    parse_time("2006-365", "%Y-%j").should eq(Time.utc(2006, 12, 31))
+
+    parse_time("2004-001", "%Y-%j").should eq(Time.utc(2004, 1, 1))
+    parse_time("2004-032", "%Y-%j").should eq(Time.utc(2004, 2, 1))
+    parse_time("2004-059", "%Y-%j").should eq(Time.utc(2004, 2, 28))
+    parse_time("2004-060", "%Y-%j").should eq(Time.utc(2004, 2, 29))
+    parse_time("2004-061", "%Y-%j").should eq(Time.utc(2004, 3, 1))
+    parse_time("2004-200", "%Y-%j").should eq(Time.utc(2004, 7, 18))
+    parse_time("2004-365", "%Y-%j").should eq(Time.utc(2004, 12, 30))
+    parse_time("2004-366", "%Y-%j").should eq(Time.utc(2004, 12, 31))
+
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2006-000", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2004-000", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2006-366", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2004-367", "%Y-%j")
     end
   end
 

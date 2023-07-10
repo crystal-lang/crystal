@@ -20,6 +20,7 @@ describe UNIXServer do
       with_tempfile("unix_server.sock") do |path|
         UNIXServer.open(path) do
           File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
         end
 
         File.exists?(path).should be_false
@@ -79,7 +80,7 @@ describe UNIXServer do
     it "raises when server is closed" do
       with_tempfile("unix_server-closed.sock") do |path|
         server = UNIXServer.new(path)
-        ch = Channel(Symbol).new(1)
+        ch = Channel(SpecChannelStatus).new(1)
         exception = nil
 
         schedule_timeout ch
@@ -94,13 +95,13 @@ describe UNIXServer do
           ch.send(:end)
         end
 
-        ch.receive.should eq(:begin)
+        ch.receive.begin?.should be_true
 
         # wait for the server to call accept
         wait_until_blocked f
 
         server.close
-        ch.receive.should eq(:end)
+        ch.receive.end?.should be_true
 
         exception.should be_a(IO::Error)
         exception.try(&.message).should eq("Closed stream")
@@ -124,8 +125,8 @@ describe UNIXServer do
     it "returns nil when server is closed" do
       with_tempfile("unix_server-accept2.sock") do |path|
         server = UNIXServer.new(path)
-        ch = Channel(Symbol).new(1)
-        ret = :initial
+        ch = Channel(SpecChannelStatus).new(1)
+        ret = "initial"
 
         schedule_timeout ch
 
@@ -135,16 +136,35 @@ describe UNIXServer do
           ch.send :end
         end
 
-        ch.receive.should eq(:begin)
+        ch.receive.begin?.should be_true
 
         # wait for the server to call accept
         wait_until_blocked f
 
         server.close
-        ch.receive.should eq(:end)
+        ch.receive.end?.should be_true
 
         ret.should be_nil
       end
     end
   end
+
+  # Datagram socket type is not supported on Windows yet:
+  # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+  # https://github.com/microsoft/WSL/issues/5272
+  {% unless flag?(:win32) %}
+    describe "datagrams" do
+      it "can send and receive datagrams" do
+        with_tempfile("unix_dgram_server.sock") do |path|
+          UNIXServer.open(path, Socket::Type::DGRAM) do |s|
+            UNIXSocket.open(path, Socket::Type::DGRAM) do |c|
+              c.send("foobar")
+              msg, _addr = s.receive(512)
+              msg.should eq "foobar"
+            end
+          end
+        end
+      end
+    end
+  {% end %}
 end

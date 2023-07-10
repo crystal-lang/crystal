@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-private def assert_type_to_s(expected)
+private def assert_type_to_s(expected, &)
   p = Program.new
   t = with p yield p
   t.to_s.should eq(expected)
@@ -37,6 +37,10 @@ describe "types to_s of" do
 
   it "union of simple types" do
     assert_type_to_s "(Int32 | String)" { union_of(string, int32) }
+  end
+
+  it "named tuple" do
+    assert_type_to_s %(NamedTuple(a: Int32, "b c": String, "+": Char)) { named_tuple_of({"a" => int32, "b c" => string, "+" => char}) }
   end
 
   it "nilable reference type" do

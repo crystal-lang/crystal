@@ -2,12 +2,13 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "file/error"
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
 
   def initialize(@pid : LibC::PidT)
-    @channel = Crystal::SignalChildHandler.wait(@pid)
+    @channel = Crystal::System::SignalChildHandler.wait(@pid)
   end
 
   def release
@@ -21,8 +22,8 @@ struct Crystal::System::Process
     !@channel.closed? && Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    Crystal::System::Process.signal(@pid, LibC::SIGTERM)
+  def terminate(*, graceful)
+    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
   def self.exit(status)
@@ -41,7 +42,7 @@ struct Crystal::System::Process
 
   def self.pgid(pid)
     # Disallow users from depending on ppid(0) instead of `pgid`
-    raise RuntimeError.from_errno("getpgid", Errno::EINVAL) if pid == 0
+    raise RuntimeError.from_os_error("getpgid", Errno::EINVAL) if pid == 0
 
     ret = LibC.getpgid(pid)
     raise RuntimeError.from_errno("getpgid") if ret < 0
@@ -55,6 +56,28 @@ struct Crystal::System::Process
   def self.signal(pid, signal)
     ret = LibC.kill(pid, signal)
     raise RuntimeError.from_errno("kill") if ret < 0
+  end
+
+  def self.on_interrupt(&handler : ->) : Nil
+    ::Signal::INT.trap { |_signal| handler.call }
+  end
+
+  def self.ignore_interrupts! : Nil
+    ::Signal::INT.ignore
+  end
+
+  def self.restore_interrupts! : Nil
+    ::Signal::INT.reset
+  end
+
+  def self.start_interrupt_loop : Nil
+    # do nothing; `Crystal::System::Signal.start_loop` takes care of this
+  end
+
+  def self.setup_default_interrupt_handlers
+    # Status 128 + signal number indicates process exit was caused by the signal.
+    ::Signal::INT.trap { ::exit 128 + ::Signal::INT.value }
+    ::Signal::TERM.trap { ::exit 128 + ::Signal::TERM.value }
   end
 
   def self.exists?(pid)
@@ -93,7 +116,7 @@ struct Crystal::System::Process
       pid = nil
       if will_exec
         # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::Signal.after_fork_before_exec
+        Crystal::System::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
@@ -106,13 +129,35 @@ struct Crystal::System::Process
       # error:
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_errno("fork", errno)
+      raise RuntimeError.from_os_error("fork", errno)
     else
       # parent:
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
 
     pid
+  end
+
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork(&)
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    if pid = fork
+      return pid
+    end
+
+    begin
+      yield
+      LibC._exit 0
+    rescue ex
+      ex.inspect_with_backtrace STDERR
+      STDERR.flush
+      LibC._exit 1
+    ensure
+      LibC._exit 254 # not reached
+    end
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -123,8 +168,11 @@ struct Crystal::System::Process
       begin
         reader_pipe.close
         writer_pipe.close_on_exec = true
-        self.replace(command_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(command_args, env, clear_env, input, output, error, chdir)
+        writer_pipe.write_byte(1)
+        writer_pipe.write_bytes(Errno.value.to_i)
       rescue ex
+        writer_pipe.write_byte(0)
         writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
         writer_pipe << ex.message
         writer_pipe.close
@@ -134,16 +182,28 @@ struct Crystal::System::Process
     end
 
     writer_pipe.close
-    bytes = uninitialized UInt8[4]
-    if reader_pipe.read(bytes.to_slice) == 4
-      message_size = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
-      if message_size > 0
-        message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
+    begin
+      case reader_pipe.read_byte
+      when nil
+        # Pipe was closed, no error
+      when 0
+        # Error message coming
+        message_size = reader_pipe.read_bytes(Int32)
+        if message_size > 0
+          message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
+        end
+        reader_pipe.close
+        raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
+      when 1
+        # Errno coming
+        errno = Errno.new(reader_pipe.read_bytes(Int32))
+        self.raise_exception_from_errno(command_args[0], errno)
+      else
+        raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
+    ensure
       reader_pipe.close
-      raise RuntimeError.new("Error executing process: #{message}")
     end
-    reader_pipe.close
 
     pid
   end
@@ -155,7 +215,7 @@ struct Crystal::System::Process
 
       if args
         unless command.includes?(%("${@}"))
-          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+          raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
 
         {% if flag?(:freebsd) || flag?(:dragonfly) %}
@@ -173,7 +233,7 @@ struct Crystal::System::Process
     end
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
+  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
@@ -194,7 +254,20 @@ struct Crystal::System::Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
-    raise RuntimeError.from_errno
+  end
+
+  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+    try_replace(command_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command_args[0])
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    case errno
+    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
+    else
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
+    end
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)

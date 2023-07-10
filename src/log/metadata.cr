@@ -20,10 +20,10 @@ class Log::Metadata
   # When the metadata is defragmented max_total_size will be updated with size
   protected getter max_total_size : Int32
   @max_total_size = uninitialized Int32
-  # How many entries are potentially overriden from parent (ie: initial entries.size)
-  @overriden_size = uninitialized Int32
+  # How many entries are potentially overridden from parent (ie: initial entries.size)
+  @overridden_size = uninitialized Int32
   # How many entries are stored from @first.
-  # Initially are @overriden_size, the one explictly overriden in entries argument.
+  # Initially are @overridden_size, the one explicitly overridden in entries argument.
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
@@ -37,8 +37,12 @@ class Log::Metadata
     data
   end
 
+  def dup : self
+    self
+  end
+
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
-    @size = @overriden_size = entries.size
+    @size = @overridden_size = entries.size
     @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
     ptr_entries = pointerof(@first)
 
@@ -55,17 +59,17 @@ class Log::Metadata
 
   # Returns a `Metadata` with the information of the argument.
   # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
-  def self.build(value : NamedTuple | Hash)
+  def self.build(value : NamedTuple | Hash) : self
     return @@empty if value.empty?
     Metadata.new(nil, value)
   end
 
   # :ditto:
-  def self.build(value : Metadata)
+  def self.build(value : Metadata) : Metadata
     value
   end
 
-  # Returns a `Log::Metadata` with all the entries of *self*
+  # Returns a `Log::Metadata` with all the entries of `self`
   # and *other*. If a key is defined in both, the values in *other* are used.
   def extend(other : NamedTuple | Hash) : Metadata
     return Metadata.build(other) if self.empty?
@@ -74,39 +78,39 @@ class Log::Metadata
     Metadata.new(self, other)
   end
 
-  def empty?
+  def empty? : Bool
     parent = @parent
 
     @size == 0 && (parent.nil? || parent.empty?)
   end
 
-  # Removes the reference to *parent*. Flattening the entries from it into *self*.
-  # *self* was originally allocated with enough entries to perform this action.
+  # Removes the reference to *parent*. Flattening the entries from it into `self`.
+  # `self` was originally allocated with enough entries to perform this action.
   #
   # If multiple threads execute defrag concurrently, the entries
   # will be recomputed, but the result should be the same.
   #
   # * @parent.nil? signals if the defrag is needed/done
-  # * The values of @overriden_size, pointerof(@first) are never changed
+  # * The values of @overridden_size, pointerof(@first) are never changed
   # * @parent is set at the very end of the method
   protected def defrag
     parent = @parent
     return if parent.nil?
 
-    total_size = @overriden_size
+    total_size = @overridden_size
     ptr_entries = pointerof(@first)
-    next_free_entry = ptr_entries + @overriden_size
+    next_free_entry = ptr_entries + @overridden_size
 
     parent.each do |(key, value)|
-      overriden = false
-      @overriden_size.times do |i|
+      overridden = false
+      @overridden_size.times do |i|
         if ptr_entries[i][:key] == key
-          overriden = true
+          overridden = true
           break
         end
       end
 
-      unless overriden
+      unless overridden
         next_free_entry.value = {key: key, value: value}
         next_free_entry += 1
         total_size += 1
@@ -136,7 +140,7 @@ class Log::Metadata
     fetch(key) { nil }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry[:value] : yield key
   end
@@ -175,9 +179,12 @@ class Log::Metadata
     true
   end
 
-  # :nodoc:
   def ==(other)
     false
+  end
+
+  def hash(hasher)
+    to_a.sort_by!(&.[0]).hash(hasher)
   end
 
   def to_s(io : IO) : Nil
@@ -209,7 +216,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value)
+    def self.to_metadata_value(value) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end

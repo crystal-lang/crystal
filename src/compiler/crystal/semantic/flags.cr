@@ -44,8 +44,10 @@ class Crystal::Program
       flags.add "freebsd"
       flags.add "freebsd#{target.freebsd_version}"
     end
+    flags.add "netbsd" if target.netbsd?
     flags.add "openbsd" if target.openbsd?
     flags.add "dragonfly" if target.dragonfly?
+    flags.add "android" if target.android?
 
     flags.add "bsd" if target.bsd?
 

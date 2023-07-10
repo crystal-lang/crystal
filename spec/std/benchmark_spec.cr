@@ -22,7 +22,7 @@ describe Benchmark::IPS::Job do
     a.mean.should be > 10
 
     # one of the reports should be normalized to the fastest but do to the
-    # timer precisison sleep 0.001 may not always be faster than 0.002 so we
+    # timer precision sleep 0.001 may not always be faster than 0.002 so we
     # don't care which
     first, second = [a.slower, b.slower].sort
     first.should eq(1)
@@ -108,7 +108,7 @@ describe Benchmark::IPS::Entry, "#human_iteration_time" do
   it { h_ips(0.000_001_234_567).should eq("  1.23µs") }
 
   it { h_ips(0.000_000_123_456).should eq("123.46ns") }
-  it { h_ips(0.000_000_012_345).should eq(" 12.35ns") }
+  it { h_ips(0.000_000_012_345).should eq(" 12.34ns") }
   it { h_ips(0.000_000_001_234).should eq("  1.23ns") }
   it { h_ips(0.000_000_000_123).should eq("  0.12ns") }
 end

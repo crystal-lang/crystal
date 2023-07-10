@@ -569,6 +569,17 @@ describe Channel do
         end
       end
     end
+
+    it "returns correct index for array argument" do
+      ch = [Channel(String).new, Channel(String).new, Channel(String).new]
+      channels = [ch[0], ch[2], ch[1]] # shuffle around to get non-sequential lock_object_ids
+      spawn_and_wait(->{ channels[0].send "foo" }) do
+        i, m = Channel.non_blocking_select(channels.map(&.receive_select_action))
+
+        i.should eq(0)
+        m.should eq("foo")
+      end
+    end
   end
 end
 
@@ -608,7 +619,7 @@ describe "unbuffered" do
     spawn { ch.send 2; ch.send 5 }
     spawn { ch.send 3; ch.send 6 }
 
-    (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
+    (1..6).map { ch.receive }.sort!.should eq([1, 2, 3, 4, 5, 6])
   end
 
   it "works with select" do
@@ -616,11 +627,6 @@ describe "unbuffered" do
     ch2 = Channel(Int32).new
     spawn { ch1.send 123 }
     Channel.select(ch1.receive_select_action, ch2.receive_select_action).should eq({0, 123})
-  end
-
-  it "works with select else" do
-    ch1 = Channel(Int32).new
-    Channel.select({ch1.receive_select_action}, true).should eq({1, Channel::NotReady.new})
   end
 
   it "can send and receive nil" do
@@ -633,8 +639,9 @@ describe "unbuffered" do
   it "can be closed" do
     ch = Channel(Int32).new
     ch.closed?.should be_false
-    ch.close.should be_nil
+    ch.close.should be_true
     ch.closed?.should be_true
+    ch.close.should be_false
     expect_raises(Channel::ClosedError) { ch.receive }
   end
 

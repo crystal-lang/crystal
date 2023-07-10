@@ -47,7 +47,7 @@ module Crystal
       KEXT_BUNDLE = 0xb
     end
 
-    @[Flags]
+    @[::Flags]
     enum Flags : UInt32
       NOUNDEFS                =       0x1
       INCRLINK                =       0x2
@@ -90,7 +90,7 @@ module Crystal
     @stabs : Array(StabEntry)?
     @symbols : Array(Nlist64)?
 
-    def self.open(path)
+    def self.open(path, &)
       File.open(path, "r") do |file|
         yield new(file)
       end
@@ -112,7 +112,7 @@ module Crystal
 
     private def read_magic
       magic = @io.read_bytes(UInt32)
-      unless magic == MAGIC_64 || magic == CIGAM_64 || magic == MAGIC || magic == CIGAM
+      unless magic.in?(MAGIC_64, CIGAM_64, MAGIC, CIGAM)
         raise Error.new("Invalid magic number")
       end
       magic
@@ -123,7 +123,7 @@ module Crystal
     end
 
     def endianness
-      if @magic == MAGIC_64 || @magic == MAGIC
+      if @magic.in?(MAGIC_64, MAGIC)
         IO::ByteFormat::SystemEndian
       elsif IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian
         IO::ByteFormat::BigEndian
@@ -366,14 +366,14 @@ module Crystal
 
     # Seek to the first matching load command, yields, then returns the value of
     # the block.
-    private def seek_to(load_command : LoadCommand)
+    private def seek_to(load_command : LoadCommand, &)
       seek_to_each(load_command) do |cmd, cmdsize|
         return yield cmdsize
       end
     end
 
     # Seek to each matching load command, yielding each of them.
-    private def seek_to_each(load_command : LoadCommand) : Nil
+    private def seek_to_each(load_command : LoadCommand, &) : Nil
       @io.seek(@ldoff)
 
       ncmds.times do
@@ -441,11 +441,15 @@ module Crystal
     end
 
     def uuid
-      @uuid ||= seek_to(LoadCommand::UUID) do
-        bytes = uninitialized UInt8[16]
-        @io.read_fully(bytes.to_slice)
-        UUID.new(bytes)
-      end.not_nil!
+      @uuid ||= begin
+        # ld has a -no_version_load_command options to suppress the LC_UUID entry.
+        # The Dwarf file generated in such scenario has a LC_UUID = 00000000-0000-0000-0000-000000000000.
+        seek_to(LoadCommand::UUID) do
+          bytes = uninitialized UInt8[16]
+          @io.read_fully(bytes.to_slice)
+          UUID.new(bytes)
+        end || UUID.new(StaticArray(UInt8, 16).new(0))
+      end
     end
 
     def symbols
@@ -494,7 +498,7 @@ module Crystal
       String.new(bytes.to_unsafe, len)
     end
 
-    def read_section?(name)
+    def read_section?(name, &)
       if sh = sections.find { |s| s.sectname == name }
         @io.seek(sh.offset) do
           yield sh, @io

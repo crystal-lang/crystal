@@ -11,7 +11,7 @@ class CSV::Lexer::StringBased < CSV::Lexer
     end
   end
 
-  def rewind
+  def rewind : Nil
     super
     @reader.pos = 0
     if @reader.current_char == '\n'
@@ -34,8 +34,6 @@ class CSV::Lexer::StringBased < CSV::Lexer
         break
       when @quote_char
         raise "Unexpected quote"
-      else
-        # go on
       end
     end
     @reader.string.byte_slice(start_pos, end_pos - start_pos)

@@ -41,6 +41,7 @@ struct Time::Span
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs
 
   include Comparable(self)
+  include Steppable
 
   MAX  = new seconds: Int64::MAX, nanoseconds: 999_999_999
   MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999
@@ -52,19 +53,6 @@ struct Time::Span
   # and always have the same sign as @seconds (if seconds is zero,
   # @nanoseconds can either be negative or positive).
   @nanoseconds : Int32
-
-  @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_hours : Int, _minutes : Int, _seconds : Int)
-    new(0, _hours, _minutes, _seconds)
-  end
-
-  @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_days : Int, _hours : Int, _minutes : Int, _seconds : Int, nanoseconds : Int = 0)
-    new(
-      seconds: compute_seconds(_days, _hours, _minutes, _seconds),
-      nanoseconds: nanoseconds.to_i64,
-    )
-  end
 
   # Creates a new `Time::Span` from *seconds* and *nanoseconds*.
   #
@@ -95,7 +83,7 @@ struct Time::Span
     @nanoseconds = nanoseconds.to_i32
   end
 
-  # Creates a new `Time::Span` from the *nanosenconds* given
+  # Creates a new `Time::Span` from the *nanoseconds* given
   #
   # Nanoseconds get normalized in the range of `0...1_000_000_000`,
   # the nanosecond overflow gets added as seconds.
@@ -117,7 +105,7 @@ struct Time::Span
   #
   # ```
   # Time::Span.new(days: 1)                                                   # => 1.00:00:00
-  # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 01:02:03
+  # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 1.02:03:00
   # Time::Span.new(days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5) # => 1.02:03:04.000000005
   # ```
   def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
@@ -240,15 +228,21 @@ struct Time::Span
     @seconds
   end
 
-  # Alias of `abs`.
-  def duration : Time::Span
-    abs
-  end
-
   # Returns the absolute (non-negative) amount of time this `Time::Span`
   # represents by removing the sign.
   def abs : Time::Span
     Span.new(seconds: to_i.abs, nanoseconds: nanoseconds.abs)
+  end
+
+  # Returns the sign of this time span.
+  #
+  # Values are `-1`, `0`, `1` if `self` is smaller, equal, bigger compared to `ZERO`.
+  def sign : Int32
+    if @seconds == 0
+      @nanoseconds.sign
+    else
+      @seconds.sign
+    end
   end
 
   # Returns a `Time` that happens later by `self` than the current time.
@@ -283,6 +277,13 @@ struct Time::Span
       seconds: to_i + other.to_i,
       nanoseconds: nanoseconds + other.nanoseconds,
     )
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # This is `zero`.
+  def self.additive_identity : self
+    zero
   end
 
   def + : self
@@ -333,6 +334,10 @@ struct Time::Span
     cmp
   end
 
+  def sign : Int32
+    (self <=> ZERO).sign
+  end
+
   def inspect(io : IO) : Nil
     if to_i < 0 || nanoseconds < 0
       io << '-'
@@ -378,12 +383,42 @@ struct Time::Span
     end
   end
 
+  # Creates a new `Time::Span` representing a span of zero time.
   def self.zero : Time::Span
     ZERO
   end
 
+  # Returns `true` if `self` represents a span of zero time.
+  #
+  # ```
+  # 2.hours.zero?  # => false
+  # 0.days.zero?   # => true
+  # 1.second.zero? # => false
+  # ```
   def zero? : Bool
-    to_i == 0 && nanoseconds == 0
+    self == ZERO
+  end
+
+  # Returns `true` if `self` represents a positive time span.
+  #
+  # ```
+  # 2.hours.positive? # => true
+  # 0.days.positive?  # => false
+  # -3.days.positive? # => false
+  # ```
+  def positive? : Bool
+    self > ZERO
+  end
+
+  # Returns `true` if `self` represents a negative time span.
+  #
+  # ```
+  # 2.hours.negative? # => false
+  # 0.days.negative?  # => false
+  # -3.days.negative? # => true
+  # ```
+  def negative? : Bool
+    self < ZERO
   end
 end
 

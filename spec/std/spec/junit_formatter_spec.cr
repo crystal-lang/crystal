@@ -1,10 +1,11 @@
 require "../spec_helper"
-{% unless flag?(:win32) %}
-  require "xml"
-{% end %}
+require "xml"
 
 class Spec::JUnitFormatter
   property started_at
+end
+
+private class MyException < Exception
 end
 
 describe "JUnit Formatter" do
@@ -17,8 +18,8 @@ describe "JUnit Formatter" do
     expected = <<-XML
                  <?xml version="1.0"?>
                  <testsuite tests="2" skipped="0" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something"/>
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something else"/>
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something" line="33"/>
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something else" line="50"/>
                  </testsuite>
                  XML
 
@@ -33,7 +34,7 @@ describe "JUnit Formatter" do
     expected = <<-XML
                  <?xml version="1.0"?>
                  <testsuite tests="1" skipped="1" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something" line="33">
                      <skipped/>
                    </testcase>
                  </testsuite>
@@ -50,7 +51,7 @@ describe "JUnit Formatter" do
     expected = <<-XML
                  <?xml version="1.0"?>
                  <testsuite tests="1" skipped="0" errors="0" failures="1" time="0.0" hostname="#{System.hostname}">
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something" line="33">
                      <failure/>
                    </testcase>
                  </testsuite>
@@ -61,14 +62,14 @@ describe "JUnit Formatter" do
 
   it "reports errors" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, MyException.new("foo"))
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
                  <testsuite tests="1" skipped="0" errors="1" failures="0" time="0.0" hostname="#{System.hostname}">
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
-                     <error/>
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something" line="33">
+                     <error message="foo" type="MyException"></error>
                    </testcase>
                  </testsuite>
                  XML
@@ -87,14 +88,14 @@ describe "JUnit Formatter" do
     expected = <<-XML
                  <?xml version="1.0"?>
                  <testsuite tests="4" skipped="1" errors="1" failures="1" time="0.0" hostname="#{System.hostname}">
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" time="2.0"/>
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" time="0.5">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" line="33" time="2.0"/>
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" line="50" time="0.5">
                      <failure/>
                    </testcase>
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something3">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something3" line="65">
                      <error/>
                    </testcase>
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something4">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something4" line="80">
                      <skipped/>
                    </testcase>
                  </testsuite>
@@ -103,7 +104,7 @@ describe "JUnit Formatter" do
     output.should eq(expected)
   end
 
-  pending_win32 "encodes class names from the relative file path" do
+  it "encodes class names from the relative file path" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
     end
@@ -112,7 +113,7 @@ describe "JUnit Formatter" do
     classname.should eq("spec.std.spec.junit_formatter_spec")
   end
 
-  pending_win32 "outputs timestamp according to RFC 3339" do
+  it "outputs timestamp according to RFC 3339" do
     now = Time.utc
 
     output = build_report(timestamp: now) do |f|
@@ -123,7 +124,7 @@ describe "JUnit Formatter" do
     classname.should eq(now.to_rfc3339)
   end
 
-  pending_win32 "escapes spec names" do
+  it "escapes spec names" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
       f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil)
@@ -136,7 +137,7 @@ describe "JUnit Formatter" do
     name.should eq(%(ctrl characters follow - \\r\\n))
   end
 
-  pending_win32 "report failure stacktrace if present" do
+  it "report failure stacktrace if present" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
@@ -151,7 +152,7 @@ describe "JUnit Formatter" do
     backtrace.should eq(cause.backtrace.join('\n'))
   end
 
-  pending_win32 "report error stacktrace if present" do
+  it "report error stacktrace if present" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
@@ -167,7 +168,7 @@ describe "JUnit Formatter" do
   end
 end
 
-private def build_report(timestamp = nil)
+private def build_report(timestamp = nil, &)
   output = String::Builder.new
   formatter = Spec::JUnitFormatter.new(output)
   formatter.started_at = timestamp if timestamp
@@ -176,7 +177,7 @@ private def build_report(timestamp = nil)
   output.to_s.chomp
 end
 
-private def build_report_with_no_timestamp
+private def build_report_with_no_timestamp(&)
   output = build_report do |formatter|
     yield formatter
   end

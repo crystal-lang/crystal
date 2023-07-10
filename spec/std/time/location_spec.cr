@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../../support/time"
 
 class Time::Location
   describe Time::Location do
@@ -33,12 +34,33 @@ class Time::Location
         end
       end
 
+      {% if flag?(:win32) %}
+        it "maps IANA timezone identifier to Windows name (#13166)" do
+          location = Location.load("Europe/Berlin")
+          location.name.should eq "Europe/Berlin"
+          location.utc?.should be_false
+          location.fixed?.should be_false
+        end
+      {% end %}
+
       it "invalid timezone identifier" do
-        expect_raises(InvalidLocationNameError, "Foobar/Baz") do
-          Location.load("Foobar/Baz")
+        with_zoneinfo(datapath("zoneinfo")) do
+          expect_raises(InvalidLocationNameError, "Foobar/Baz") do
+            Location.load("Foobar/Baz")
+          end
         end
 
-        Location.load?("Foobar/Baz", Crystal::System::Time.zone_sources).should be_nil
+        Location.load?("Foobar/Baz", [datapath("zoneinfo")]).should be_nil
+      end
+
+      it "name is folder" do
+        Location.load?("Foo", [datapath("zoneinfo")]).should be_nil
+      end
+
+      it "invalid zone file" do
+        expect_raises(Time::Location::InvalidTZDataError) do
+          Location.load?("Foo/invalid", [datapath("zoneinfo")])
+        end
       end
 
       it "treats UTC as special case" do
@@ -105,7 +127,7 @@ class Time::Location
             end
           end
 
-          with_zoneinfo("nonexising_zipfile.zip") do
+          with_zoneinfo("nonexistent_zipfile.zip") do
             expect_raises(InvalidLocationNameError) do
               Location.load("Europe/Berlin")
             end
@@ -201,6 +223,38 @@ class Time::Location
           end
         end
       end
+
+      {% if flag?(:win32) %}
+        it "loads time zone information from registry" do
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(
+            bias: -60,
+            standardBias: 0,
+            daylightBias: -60,
+            standardDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 10, wDayOfWeek: 0, wDay: 5, wHour: 3, wMinute: 0, wSecond: 0, wMilliseconds: 0),
+            daylightDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 3, wDayOfWeek: 0, wDay: 5, wHour: 2, wMinute: 0, wSecond: 0, wMilliseconds: 0),
+          )
+          info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "Central Europe Standard Time".to_utf16
+
+          with_system_time_zone(info) do
+            location = Location.load_local
+            location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
+          end
+        end
+
+        it "loads time zone without DST (#13502)" do
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(bias: -480)
+          info.standardName.to_slice.copy_from "China Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "China Daylight Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "China Standard Time".to_utf16
+
+          with_system_time_zone(info) do
+            location = Location.load_local
+            location.zones.should eq [Time::Location::Zone.new("CST", 28800, false)]
+          end
+        end
+      {% end %}
     end
 
     describe ".fixed" do

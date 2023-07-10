@@ -109,8 +109,16 @@ module Spec
   end
 
   # :nodoc:
+  enum Status
+    Success
+    Fail
+    Error
+    Pending
+  end
+
+  # :nodoc:
   record Result,
-    kind : Symbol,
+    kind : Status,
     description : String,
     file : String,
     line : Int32,
@@ -134,25 +142,28 @@ module Spec
     class_getter instance = RootContext.new
     class_getter current_context : Context = @@instance
 
+    @results : Hash(Status, Array(Result))
+
+    def results_for(status : Status)
+      @results[status]
+    end
+
     def initialize
-      @results = {
-        success: [] of Result,
-        fail:    [] of Result,
-        error:   [] of Result,
-        pending: [] of Result,
-      }
+      @results = Status.values.to_h { |status| {status, [] of Result} }
     end
 
     def run
+      print_order_message
+
       internal_run
     end
 
-    def report(kind, full_description, file, line, elapsed = nil, ex = nil)
-      result = Result.new(kind, full_description, file, line, elapsed, ex)
+    def report(status : Status, full_description, file, line, elapsed = nil, ex = nil)
+      result = Result.new(status, full_description, file, line, elapsed, ex)
 
       report_formatters result
 
-      @results[result.kind] << result
+      @results[status] << result
     end
 
     def report_formatters(result)
@@ -160,7 +171,7 @@ module Spec
     end
 
     def succeeded
-      @results[:fail].empty? && @results[:error].empty?
+      results_for(:fail).empty? && results_for(:error).empty?
     end
 
     def finish(elapsed_time, aborted = false)
@@ -169,7 +180,7 @@ module Spec
     end
 
     def print_results(elapsed_time, aborted = false)
-      pendings = @results[:pending]
+      pendings = results_for(:pending)
       unless pendings.empty?
         puts
         puts "Pending:"
@@ -178,8 +189,8 @@ module Spec
         end
       end
 
-      failures = @results[:fail]
-      errors = @results[:error]
+      failures = results_for(:fail)
+      errors = results_for(:error)
 
       failures_and_errors = failures + errors
       unless failures_and_errors.empty?
@@ -214,41 +225,34 @@ module Spec
 
       if Spec.slowest
         puts
-        results = @results[:success] + @results[:fail]
+        results = results_for(:success) + results_for(:fail)
         top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
         top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
         percent = (top_n_time * 100) / elapsed_time.total_seconds
-        puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
+        puts "Top #{Spec.slowest} slowest examples (#{top_n_time.humanize} seconds, #{percent.round(2)}% of total time):"
         top_n.each do |res|
           puts "  #{res.description}"
-          res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
-          if Spec.use_colors?
-            res_elapsed = res_elapsed.colorize.bold
-          end
-          puts "    #{res_elapsed} seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
+          puts "    #{res_elapsed.colorize.bold} seconds #{Spec.relative_file(res.file)}:#{res.line}"
         end
       end
 
       puts
 
-      success = @results[:success]
+      success = results_for(:success)
       total = pendings.size + failures.size + errors.size + success.size
 
       final_status = case
-                     when aborted                           then :error
-                     when (failures.size + errors.size) > 0 then :fail
-                     when pendings.size > 0                 then :pending
-                     else                                        :success
+                     when aborted                           then Status::Error
+                     when (failures.size + errors.size) > 0 then Status::Fail
+                     when pendings.size > 0                 then Status::Pending
+                     else                                        Status::Success
                      end
 
       puts "Aborted!".colorize.red if aborted
       puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
-
-      if randomizer_seed = Spec.randomizer_seed
-        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
-      end
 
       unless failures_and_errors.empty?
         puts
@@ -258,6 +262,14 @@ module Spec
           print Spec.color("crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}", :error)
           puts Spec.color(" # #{fail.description}", :comment)
         end
+      end
+
+      print_order_message
+    end
+
+    def print_order_message
+      if randomizer_seed = Spec.randomizer_seed
+        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
       end
     end
 
@@ -295,7 +307,7 @@ module Spec
     @@spec_nesting = false
 
     def check_nesting_spec(file, line, &block)
-      raise NestingSpecError.new("can't nest `it` or `pending`", file, line) if @@spec_nesting
+      raise NestingSpecError.new("Can't nest `it` or `pending`", file, line) if @@spec_nesting
 
       @@spec_nesting = true
       begin
@@ -330,8 +342,8 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
-    protected def report(kind, description, file, line, elapsed = nil, ex = nil)
-      parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
+    protected def report(status : Status, description, file, line, elapsed = nil, ex = nil)
+      parent.report status, "#{@description} #{description}", file, line, elapsed, ex
     end
 
     protected def run_before_each_hooks

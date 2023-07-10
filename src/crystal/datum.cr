@@ -27,7 +27,7 @@ module Crystal
   # `Crystal.datum` macro is an internal helper to create data types that will hold
   # values of multiple kinds similar to `JSON::Any` and `YAML::Any`.
   #
-  # * **types**: contains a named tuple of prefixes and datatypes of each leaf
+  # * **types**: contains a named tuple of prefixes and data types of each leaf
   # * **hash_key_type** specifies the type used as the key of `Hash`
   # * **immutable**: will generate honor immutability of the values via `.clone`
   # * **target_type**: is the type where the macro is invoked (it's a workaround for #9099).
@@ -106,39 +106,34 @@ module Crystal
 
     # Traverses the depth of a structure and returns the value.
     # Returns `nil` if not found.
-    def dig?(index_or_key, *subkeys)
-      if value = self[index_or_key]?
-        value.dig?(*subkeys)
-      end
+    def dig?(index_or_key, *subkeys) : self?
+      self[index_or_key]?.try &.dig?(*subkeys)
     end
 
     # :nodoc:
-    def dig?(index_or_key)
+    def dig?(index_or_key) : self?
       case @raw
       when Hash, Array
         self[index_or_key]?
+      else
+        nil
       end
     end
 
     # Traverses the depth of a structure and returns the value, otherwise raises.
-    def dig(index_or_key, *subkeys)
-      if (value = self[index_or_key]) && value.responds_to?(:dig)
-        return value.dig(*subkeys)
-      end
-      raise "#{self.class} value not diggable for key: #{index_or_key.inspect}"
+    def dig(index_or_key, *subkeys) : self
+      self[index_or_key].dig(*subkeys)
     end
 
     # :nodoc:
-    def dig(index_or_key)
+    def dig(index_or_key) : self
       self[index_or_key]
     end
 
-    # :nodoc:
     def inspect(io : IO) : Nil
       @raw.inspect(io)
     end
 
-    # :nodoc:
     def to_s(io : IO) : Nil
       @raw.to_s(io)
     end

@@ -1,18 +1,14 @@
-.DS_Store
-/.tags
-/.tags_sorted_by_file
-/.vagrant
-.crystal/
-coverage/
-/deps/
-/.build/
-.*.swp
 /Makefile.local
-all_spec
-/tmp
+
+# Build artifacts
+/.build/
 /docs/
 /src/llvm/ext/llvm_ext.o
 /src/llvm/ext/llvm_ext.obj
 /src/llvm/ext/llvm_ext.dwo
-/src/ext/*.o
-/src/ext/libcrystal.a
+/man/*.gz
+
+# CI
+/coverage/
+/tmp/
+/.junit/

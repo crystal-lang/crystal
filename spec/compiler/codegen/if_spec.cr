@@ -194,7 +194,7 @@ describe "Code gen: if" do
       )).to_i.should eq(3)
   end
 
-  {% if flag?(:x86_64) %}
+  {% if flag?(:bits64) %}
     it "codegens if with pointer 0x100000000 pointer" do
       run(%(
         ptr = Pointer(Void).new(0x100000000_u64)

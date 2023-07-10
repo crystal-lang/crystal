@@ -9,7 +9,7 @@ describe "Semantic: type" do
       end
 
       Lib.foo.address
-    ") { uint64 }
+    ", inject_primitives: true) { uint64 }
   end
 
   it "can call methods of parent type" do

@@ -1,4 +1,4 @@
-struct XML::Node
+class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
   # Creates a new node.
@@ -7,7 +7,7 @@ struct XML::Node
   end
 
   # :ditto:
-  def initialize(node : LibXML::Doc*)
+  def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
     initialize(node.as(LibXML::Node*))
   end
 
@@ -36,7 +36,7 @@ struct XML::Node
 
   # Deletes attribute given by *name*.
   # Returns attributes value, or `nil` if attribute not found.
-  def delete(name : String)
+  def delete(name : String) : String?
     attributes.delete(name)
   end
 
@@ -46,22 +46,22 @@ struct XML::Node
   end
 
   # Returns attributes of this node as an `XML::Attributes`.
-  def attributes
+  def attributes : XML::Attributes
     Attributes.new(self)
   end
 
   # Returns `true` if this is an attribute node.
-  def attribute?
+  def attribute? : Bool
     type == XML::Node::Type::ATTRIBUTE_NODE
   end
 
   # Returns `true` if this is a `CDATA` section node.
-  def cdata?
+  def cdata? : Bool
     type == XML::Node::Type::CDATA_SECTION_NODE
   end
 
   # Gets the list of children for this node as a `XML::NodeSet`.
-  def children
+  def children : XML::NodeSet
     child = @node.value.children
 
     set = LibXML.xmlXPathNodeSetCreate(child)
@@ -92,17 +92,17 @@ struct XML::Node
   # Sets the Node's content to a Text node containing string.
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
-    content = escape(content.to_s)
+    check_no_null_byte(content)
     LibXML.xmlNodeSetContent(self, content)
   end
 
   # Gets the document for this Node as a `XML::Node`.
-  def document
+  def document : XML::Node
     Node.new @node.value.doc
   end
 
   # Returns `true` if this is a Document or HTML Document node.
-  def document?
+  def document? : Bool
     case type
     when XML::Node::Type::DOCUMENT_NODE,
          XML::Node::Type::HTML_DOCUMENT_NODE
@@ -113,7 +113,7 @@ struct XML::Node
   end
 
   # Returns the encoding of this node's document.
-  def encoding
+  def encoding : String?
     if document?
       encoding = @node.as(LibXML::Doc*).value.encoding
       encoding ? String.new(encoding) : nil
@@ -123,7 +123,7 @@ struct XML::Node
   end
 
   # Returns the version of this node's document.
-  def version
+  def version : String?
     if document?
       version = @node.as(LibXML::Doc*).value.version
       version ? String.new(version) : nil
@@ -133,13 +133,13 @@ struct XML::Node
   end
 
   # Returns `true` if this is an Element node.
-  def element?
+  def element? : Bool
     type == XML::Node::Type::ELEMENT_NODE
   end
 
   # Returns the first child node of this node that is an element.
   # Returns `nil` if not found.
-  def first_element_child
+  def first_element_child : XML::Node?
     child = @node.value.children
     while child
       if child.value.type == XML::Node::Type::ELEMENT_NODE
@@ -151,7 +151,7 @@ struct XML::Node
   end
 
   # Returns `true` if this is a DocumentFragment.
-  def fragment?
+  def fragment? : Bool
     type == XML::Node::Type::DOCUMENT_FRAG_NODE
   end
 
@@ -159,7 +159,7 @@ struct XML::Node
   def_hash object_id
 
   # Returns the content for this Node.
-  def inner_text
+  def inner_text : String
     content
   end
 
@@ -204,7 +204,7 @@ struct XML::Node
       end
 
       if attribute?
-        io << " value="
+        io << " content="
         content.inspect(io)
       else
         attributes = self.attributes
@@ -225,18 +225,18 @@ struct XML::Node
   end
 
   # Returns the next sibling node or `nil` if not found.
-  def next
+  def next : XML::Node?
     next_node = @node.value.next
     next_node ? Node.new(next_node) : nil
   end
 
   # :ditto:
-  def next_sibling
+  def next_sibling : XML::Node?
     self.next
   end
 
   # Returns the next element node sibling or `nil` if not found.
-  def next_element
+  def next_element : XML::Node?
     next_node = @node.value.next
     while next_node
       if next_node.value.type == XML::Node::Type::ELEMENT_NODE
@@ -248,7 +248,7 @@ struct XML::Node
   end
 
   # Returns the name for this Node.
-  def name
+  def name : String
     if document?
       "document"
     elsif text?
@@ -294,23 +294,31 @@ struct XML::Node
     end
   end
 
-  # Returns namespaces in scope for self – those defined on self element
+  # Returns namespaces defined on this node directly.
+  def namespace_definitions : Array(Namespace)
+    namespaces = [] of Namespace
+
+    ns = @node.value.ns_def
+    while ns
+      namespaces << Namespace.new(document, ns)
+      ns = ns.value.next
+    end
+
+    namespaces
+  end
+
+  # Returns namespaces in scope for this node – those defined on this node
   # directly or any ancestor node – as an `Array` of `XML::Namespace` objects.
   #
-  # Default namespaces (`"xmlns="` style) for self are included in this array;
-  # Default namespaces for ancestors, however, are not.
+  # Default namespaces (`"xmlns="` style) for this node are included in this
+  # array; default namespaces for ancestors, however, are not.
   #
   # See also `#namespaces`
   def namespace_scopes : Array(Namespace)
     scopes = [] of Namespace
 
-    ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
-
-    if ns_list
-      while ns_list.value
-        scopes << Namespace.new(document, ns_list.value)
-        ns_list += 1
-      end
+    each_namespace do |namespace|
+      scopes << namespace
     end
 
     scopes
@@ -321,7 +329,7 @@ struct XML::Node
   #
   # This method returns the same namespaces as `#namespace_scopes`.
   #
-  # Returns namespaces in scope for self – those defined on self element
+  # Returns namespaces in scope for this node – those defined on this node
   # directly or any ancestor node – as a `Hash` of attribute-name/value pairs.
   #
   # NOTE: Note that the keys in this hash XML attributes that would be used to
@@ -347,24 +355,24 @@ struct XML::Node
   end
 
   # Returns the address of underlying `LibXML::Node*` in memory.
-  def object_id
+  def object_id : UInt64
     @node.address
   end
 
   # Returns the parent node or `nil` if not found.
-  def parent
+  def parent : XML::Node?
     parent = @node.value.parent
     parent ? Node.new(parent) : nil
   end
 
   # Returns the previous sibling node or `nil` if not found.
-  def previous
+  def previous : XML::Node?
     prev_node = @node.value.prev
     prev_node ? Node.new(prev_node) : nil
   end
 
   # Returns the previous sibling node that is an element or `nil` if not found.
-  def previous_element
+  def previous_element : XML::Node?
     prev_node = @node.value.prev
     while prev_node
       if prev_node.value.type == XML::Node::Type::ELEMENT_NODE
@@ -377,7 +385,7 @@ struct XML::Node
 
   # Returns the previous sibling node or `nil` if not found.
   # Same with `#previous`.
-  def previous_sibling
+  def previous_sibling : XML::Node?
     previous
   end
 
@@ -387,13 +395,13 @@ struct XML::Node
   end
 
   # Returns the root node for this document or `nil`.
-  def root
+  def root : XML::Node?
     root = LibXML.xmlDocGetRootElement(@node.value.doc)
     root ? Node.new(root) : nil
   end
 
   # Same as `#content`.
-  def text
+  def text : String
     content
   end
 
@@ -403,7 +411,7 @@ struct XML::Node
   end
 
   # Returns `true` if this is a Text node.
-  def text?
+  def text? : Bool
     type == XML::Node::Type::TEXT_NODE
   end
 
@@ -417,7 +425,7 @@ struct XML::Node
   # Serialize this Node as XML and return a `String` using default options.
   #
   # See `XML::SaveOptions.xml_default` for default options.
-  def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
+  def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default) : String
     String.build do |str|
       to_xml str, indent, indent_text, options
     end
@@ -432,29 +440,24 @@ struct XML::Node
   def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     # We need to use a mutex because we modify global libxml variables
     SAVE_MUTEX.synchronize do
-      oldXmlIndentTreeOutput = LibXML.xmlIndentTreeOutput
-      LibXML.xmlIndentTreeOutput = 1
-
-      oldXmlTreeIndentString = LibXML.xmlTreeIndentString
-      LibXML.xmlTreeIndentString = (indent_text * indent).to_unsafe
-
-      save_ctx = LibXML.xmlSaveToIO(
-        ->(ctx, buffer, len) {
-          Box(IO).unbox(ctx).write Slice.new(buffer, len)
-          len
-        },
-        ->(ctx) {
-          Box(IO).unbox(ctx).flush
-          0
-        },
-        Box(IO).box(io),
-        @node.value.doc.value.encoding,
-        options)
-      LibXML.xmlSaveTree(save_ctx, self)
-      LibXML.xmlSaveClose(save_ctx)
-
-      LibXML.xmlIndentTreeOutput = oldXmlIndentTreeOutput
-      LibXML.xmlTreeIndentString = oldXmlTreeIndentString
+      XML.with_indent_tree_output(true) do
+        XML.with_tree_indent_string(indent_text * indent) do
+          save_ctx = LibXML.xmlSaveToIO(
+            ->(ctx, buffer, len) {
+              Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
+              len
+            },
+            ->(ctx) {
+              Box(IO).unbox(ctx).flush
+              0
+            },
+            Box(IO).box(io),
+            @node.value.doc.value.encoding,
+            options)
+          LibXML.xmlSaveTree(save_ctx, self)
+          LibXML.xmlSaveClose(save_ctx)
+        end
+      end
     end
 
     io
@@ -466,12 +469,12 @@ struct XML::Node
   end
 
   # Returns the type for this Node as `XML::Node::Type`.
-  def type
+  def type : XML::Node::Type
     @node.value.type
   end
 
   # Removes the node from the XML document.
-  def unlink
+  def unlink : Nil
     LibXML.xmlUnlinkNode(self)
   end
 
@@ -568,31 +571,15 @@ struct XML::Node
     xpath(path, namespaces, variables).as(String)
   end
 
-  # :nodoc:
-  def errors=(errors)
-    @node.value._private = errors.as(Void*)
-  end
-
   # Returns the list of `XML::Error` found when parsing this document.
   # Returns `nil` if no errors were found.
-  def errors
-    ptr = @node.value._private
-    ptr ? (ptr.as(Array(XML::Error))) : nil
+  def errors : Array(XML::Error)?
+    return @errors unless @errors.try &.empty?
   end
 
-  private SUBSTITUTIONS = {
-    '>'  => "&gt;",
-    '<'  => "&lt;",
-    '"'  => "&quot;",
-    '\'' => "&apos;",
-    '&'  => "&amp;",
-  }
-
-  private def escape(string)
-    if string.includes? '\0'
+  private def check_no_null_byte(string)
+    if string.includes? Char::ZERO
       raise XML::Error.new("Cannot escape string containing null character", 0)
     end
-
-    string.gsub(SUBSTITUTIONS)
   end
 end

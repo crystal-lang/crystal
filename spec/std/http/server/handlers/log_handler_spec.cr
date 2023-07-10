@@ -2,16 +2,13 @@ require "spec"
 require "log/spec"
 require "http/server/handler"
 require "../../../../support/io"
+require "../../../../support/retry"
 
 describe HTTP::LogHandler do
   it "logs" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
-    {% if flag?(:win32) %}
-      request.remote_address = "192.168.0.1"
-    {% else %}
-      request.remote_address = Socket::IPAddress.new("192.168.0.1", 1234)
-    {% end %}
+    request.remote_address = Socket::IPAddress.new("192.168.0.1", 1234)
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
@@ -36,20 +33,6 @@ describe HTTP::LogHandler do
 
     logs = Log::EntriesChecker.new(backend.entries)
     logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
-  end
-
-  it "logs to io" do
-    request = HTTP::Request.new("GET", "/")
-    response = HTTP::Server::Response.new(IO::Memory.new)
-    context = HTTP::Server::Context.new(request, response)
-
-    backend = Log::MemoryBackend.new
-    io = IO::Memory.new
-    handler = HTTP::LogHandler.new(io)
-    handler.next = ->(ctx : HTTP::Server::Context) {}
-    handler.call(context)
-
-    io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 
   it "log failed request" do

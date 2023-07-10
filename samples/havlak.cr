@@ -267,8 +267,8 @@ class HavlakLoopFinder
 
       node_w = nodes[w].bb
       if node_w
-        node_w.in_edges.each do |nodeV|
-          v = number[nodeV]
+        node_w.in_edges.each do |node_v|
+          v = number[node_v]
           if v != UNVISITED
             if ancestor?(w, v, last)
               back_preds[w] << v

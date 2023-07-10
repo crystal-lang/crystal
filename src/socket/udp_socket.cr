@@ -15,6 +15,8 @@ require "./ip_socket"
 # This implementation supports both IPv4 and IPv6 addresses. For IPv4 addresses you must use
 # `Socket::Family::INET` family (default) or `Socket::Family::INET6` for IPv6 # addresses.
 #
+# NOTE: To use `UDPSocket`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 #
 # ```
@@ -68,7 +70,7 @@ class UDPSocket < IPSocket
   def receive(max_message_size = 512) : {String, IPAddress}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, sockaddr, addrlen = recvfrom(Slice.new(buffer, max_message_size))
+      bytes_read, sockaddr, addrlen = system_receive(Slice.new(buffer, max_message_size))
       address = IPAddress.from(sockaddr, addrlen)
       {bytes_read, 0}
     end
@@ -87,13 +89,13 @@ class UDPSocket < IPSocket
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, IPAddress}
-    bytes_read, sockaddr, addrlen = recvfrom(message)
+    bytes_read, sockaddr, addrlen = system_receive(message)
     {bytes_read, IPAddress.from(sockaddr, addrlen)}
   end
 
   # Reports whether transmitted multicast packets should be copied and sent
   # back to the originator.
-  def multicast_loopback?
+  def multicast_loopback? : Bool
     case @family
     when Family::INET
       getsockopt_bool LibC::IP_MULTICAST_LOOP, LibC::IPPROTO_IP
@@ -122,7 +124,7 @@ class UDPSocket < IPSocket
   # Multicast datagrams with a `hoplimit` of `0` will not be transmitted on any
   # network, but may be delivered locally if the sending host belongs to the
   # destination group and multicast loopback is enabled.
-  def multicast_hops
+  def multicast_hops : Int32
     case @family
     when Family::INET
       getsockopt LibC::IP_MULTICAST_TTL, 0, LibC::IPPROTO_IP
@@ -160,7 +162,8 @@ class UDPSocket < IPSocket
   # Raises `Socket::Error` unless the socket is IPv4 and an IPv4 address is provided.
   def multicast_interface(address : IPAddress)
     if @family == Family::INET
-      if addr = address.@addr4
+      addr = address.@addr
+      if addr.is_a?(LibC::InAddr)
         setsockopt LibC::IP_MULTICAST_IF, addr, LibC::IPPROTO_IP
       else
         raise Socket::Error.new "Expecting an IPv4 interface address. Address provided: #{address.address}"
@@ -211,9 +214,11 @@ class UDPSocket < IPSocket
   end
 
   private def group_modify(ip, operation)
+    ip_addr = ip.@addr
+
     case @family
     when Family::INET
-      if ip_addr = ip.@addr4
+      if ip_addr.is_a?(LibC::InAddr)
         req = LibC::IpMreq.new
         req.imr_multiaddr = ip_addr
 
@@ -222,7 +227,7 @@ class UDPSocket < IPSocket
         raise Socket::Error.new "Expecting an IPv4 multicast address. Address provided: #{ip.address}"
       end
     when Family::INET6
-      if ip_addr = ip.@addr6
+      if ip_addr.is_a?(LibC::In6Addr)
         req = LibC::Ipv6Mreq.new
         req.ipv6mr_multiaddr = ip_addr
 

@@ -24,7 +24,7 @@ lib LibC
   MADV_HUGEPAGE         = 14
   MADV_NOHUGEPAGE       = 15
 
-  fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : OffT) : Void*
+  fun mmap = mmap64(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : OffT) : Void*
   fun mprotect(addr : Void*, len : SizeT, prot : Int) : Int
   fun munmap(addr : Void*, len : SizeT) : Int
   fun madvise(addr : Void*, len : SizeT, advice : Int) : Int

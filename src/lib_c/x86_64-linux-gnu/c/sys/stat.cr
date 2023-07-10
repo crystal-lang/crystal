@@ -44,12 +44,18 @@ lib LibC
     __glibc_reserved : StaticArray(Long, 3)
   end
 
+  STAT_VER = 1
+
   fun chmod(file : Char*, mode : ModeT) : Int
+  fun fchmod(fd : Int, mode : ModeT) : Int
   fun fstat(fd : Int, buf : Stat*) : Int
+  fun __fxstat(ver : Int, fd : Int, buf : Stat*) : Int
   fun lstat(file : Char*, buf : Stat*) : Int
+  fun __lxstat(ver : Int, file : Char*, buf : Stat*) : Int
   fun mkdir(path : Char*, mode : ModeT) : Int
   fun mkfifo(path : Char*, mode : ModeT) : Int
   fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
   fun stat(file : Char*, buf : Stat*) : Int
+  fun __xstat(ver : Int, file : Char*, buf : Stat*) : Int
   fun umask(mask : ModeT) : ModeT
 end

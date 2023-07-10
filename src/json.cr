@@ -1,5 +1,7 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
+# NOTE: To use `JSON` or its children, you must explicitly import it with `require "json"`
+#
 # ### General type-safe interface
 #
 # The general type-safe interface for parsing JSON is to invoke `T.from_json` on a
@@ -28,7 +30,7 @@
 # Most types in the standard library implement these methods. For user-defined types
 # you can define a `self.new(pull : JSON::PullParser)` for parsing and
 # `to_json(builder : JSON::Builder)` for serializing. The following sections
-# show convenient ways to do this using either `JSON.mapping` or `JSON::Serializable`.
+# show convenient ways to do this using `JSON::Serializable`.
 #
 # NOTE: JSON object keys are always strings but they can still be parsed
 # and deserialized to other types. To deserialize, define a
@@ -46,12 +48,6 @@
 # {1.5 => 2}.to_json # => "{\"1.5\":2}"
 # ```
 #
-# ### Parsing and generating with `JSON.mapping`
-#
-# Use `JSON.mapping` to define how an object is mapped to JSON, making it
-# the recommended easy, type-safe and efficient option for parsing and generating
-# JSON. Refer to that module's documentation to learn about it.
-#
 # ### Parsing with `JSON.parse`
 #
 # `JSON.parse` will return an `Any`, which is a convenient wrapper around all possible JSON types,
@@ -63,10 +59,14 @@
 #
 # value = JSON.parse("[1, 2, 3]") # : JSON::Any
 #
-# value[0]              # => 1
-# typeof(value[0])      # => JSON::Any
-# value[0].as_i         # => 1
-# typeof(value[0].as_i) # => Int32
+# value[0]               # => 1
+# typeof(value[0])       # => JSON::Any
+# value[0].as_i          # => 1
+# typeof(value[0].as_i)  # => Int32
+# value[0].as_i?         # => 1
+# typeof(value[0].as_i?) # => Int32 | Nil
+# value[0].as_s?         # => nil
+# typeof(value[0].as_s?) # => String | Nil
 #
 # value[0] + 1       # Error, because value[0] is JSON::Any
 # value[0].as_i + 10 # => 11
@@ -83,7 +83,7 @@
 # end
 # ```
 #
-# Parsing with `JSON.parse` is useful for dealing with a dynamic JSON structure but is slower than using `JSON.mapping`.
+# Parsing with `JSON.parse` is useful for dealing with a dynamic JSON structure.
 #
 # ### Generating with `JSON.build`
 #
@@ -112,7 +112,7 @@
 #
 # `to_json`, `to_json(IO)` and `to_json(JSON::Builder)` methods are provided
 # for primitive types, but you need to define `to_json(JSON::Builder)`
-# for custom objects, either manually or using `JSON.mapping`.
+# for custom objects, either manually or using `JSON::Serializable`.
 module JSON
   # Generic JSON error.
   class Error < Exception
@@ -124,10 +124,10 @@ module JSON
     getter column_number : Int32
 
     def initialize(message, @line_number, @column_number, cause = nil)
-      super "#{message} at #{@line_number}:#{@column_number}", cause
+      super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end

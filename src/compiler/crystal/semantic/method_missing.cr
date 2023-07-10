@@ -28,25 +28,25 @@ module Crystal
     end
 
     def define_method_from_method_missing(method_missing, signature, original_call)
-      name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       named_args_nodes = nil
-      args_nodes_names = Set(String).new
+      args_nodes_names = [] of {String?, String} # external <-> internal name
       signature.arg_types.each_index do |index|
         arg_node_name = "_arg#{index}"
         args_nodes << MacroId.new(arg_node_name)
-        args_nodes_names << arg_node_name
+        args_nodes_names << {nil, arg_node_name}
       end
       if named_args = signature.named_args
-        args_nodes_names << ""
-        named_args.each do |named_arg|
+        args_nodes_names << {nil, ""}
+        named_args.each_with_index do |named_arg, index|
+          named_arg_node_name = "_named_arg#{index}"
           named_args_nodes ||= [] of NamedArgument
-          named_args_nodes << NamedArgument.new(named_arg.name, MacroId.new(named_arg.name))
-          args_nodes_names << named_arg.name
+          named_args_nodes << NamedArgument.new(named_arg.name, MacroId.new(named_arg_node_name))
+          args_nodes_names << {named_arg.name, named_arg_node_name}
         end
       end
       if block = signature.block
-        block_vars = block.args.map_with_index do |var, index|
+        block_vars = block.args.map_with_index do |_, index|
           Var.new("_block_arg#{index}")
         end
         yield_exps = block_vars.map { |var| var.clone.as(ASTNode) }
@@ -56,23 +56,25 @@ module Crystal
         block_node = Nop.new
       end
 
-      a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
+      a_def = Def.new(signature.name, args_nodes_names.map { |ext_name, name| Arg.new(name, external_name: ext_name) })
       a_def.splat_index = signature.arg_types.size if signature.named_args
 
       call = Call.new(nil, signature.name,
         args: args_nodes,
         named_args: named_args_nodes,
         block: block_node.is_a?(Block) ? block_node : nil)
-      fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
+      fake_call = Call.new(nil, "method_missing", call)
 
       expanded_macro, macro_expansion_pragmas = program.expand_macro method_missing, fake_call, self, self
 
       # Check if the expanded macro is a def. We do this
       # by just lexing the result and seeing if the first
       # token is `def`
+      macro_vars = Set(String).new
+      args_nodes_names.each { |_, name| macro_vars << name }
       expands_to_def = starts_with_def?(expanded_macro)
       generated_nodes =
-        program.parse_macro_source(expanded_macro, macro_expansion_pragmas, method_missing, method_missing, args_nodes_names) do |parser|
+        program.parse_macro_source(expanded_macro, macro_expansion_pragmas, method_missing, method_missing, macro_vars) do |parser|
           if expands_to_def
             parser.parse
           else
@@ -91,7 +93,7 @@ module Crystal
         end
 
         a_def.body = generated_nodes
-        a_def.yields = block.try &.args.size
+        a_def.block_arity = block.try &.args.size
       end
 
       owner = self
@@ -178,7 +180,7 @@ private def starts_with_def?(source)
   while true
     token = lexer.next_token
     return true if token.keyword?(:def)
-    break if token.type == :EOF
+    break if token.type.eof?
   end
   false
 end

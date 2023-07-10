@@ -1,3 +1,5 @@
+{% skip_file if flag?(:win32) %} # 32-bit windows is not supported
+
 require "spec"
 require "llvm"
 
@@ -13,6 +15,7 @@ private def abi
            {% end %}
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::X86.new(machine)
 end
 

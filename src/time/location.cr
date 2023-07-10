@@ -94,7 +94,7 @@ class Time::Location
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
     # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
-      # Maximium offsets of IANA time zone database are -12:00 and +14:00.
+      # Maximum offsets of IANA time zone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
       raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
@@ -179,7 +179,7 @@ class Time::Location
     def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.unix(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s(io, "%F %T")
       if standard?
         io << " STD"
       else
@@ -223,7 +223,7 @@ class Time::Location
   # Creates a `Location` instance with fixed *offset* in seconds from UTC.
   #
   # The formatted *offset* is used as name.
-  def self.fixed(offset : Int32)
+  def self.fixed(offset : Int32) : self
     zone = Zone.new(nil, offset, false)
     new zone.name, [zone]
   end
@@ -239,7 +239,7 @@ class Time::Location
   # `"UTC"` and empty string (`""`) return `Location::UTC`, and
   # `"Local"` returns `Location.local`.
   #
-  # The implementation uses a list of system-specifc paths to look for a time
+  # The implementation uses a list of system-specific paths to look for a time
   # zone database.
   # The first time zone database entry matching the given name that is
   # successfully loaded and parsed is returned.
@@ -295,6 +295,15 @@ class Time::Location
       end
 
       if location = load(name, Crystal::System::Time.zone_sources)
+        return location
+      end
+
+      # If none of the database sources contains a suitable location,
+      # try getting it from the operating system.
+      # This is only implemented on Windows. Unix systems usually have a
+      # copy of the time zone database available, and no system API
+      # for loading time zone information.
+      if location = Crystal::System::Time.load_iana_zone(name)
         return location
       end
 

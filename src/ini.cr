@@ -1,11 +1,12 @@
-class INI
+# NOTE: To use `INI`, you must explicitly import it with `require "ini"`
+module INI
   # Exception thrown on an INI parse error.
   class ParseException < Exception
     getter line_number : Int32
     getter column_number : Int32
 
     def initialize(message, @line_number, @column_number)
-      super "#{message} at #{@line_number}:#{@column_number}"
+      super "#{message} at line #{@line_number}, column #{@column_number}"
     end
 
     def location
@@ -21,12 +22,12 @@ class INI
   #
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
-  def self.parse(str : String | IO) : Hash(String, Hash(String, String))
+  def self.parse(string_or_io : String | IO) : Hash(String, Hash(String, String))
     ini = Hash(String, Hash(String, String)).new
     current_section = ini[""] = Hash(String, String).new
     lineno = 0
 
-    str.each_line do |line|
+    string_or_io.each_line do |line|
       lineno += 1
       next if line.empty?
 
@@ -41,14 +42,14 @@ class INI
         next
       when '['
         end_idx = line.index(']', offset)
-        raise ParseException.new("unterminated section", lineno, line.size) unless end_idx
-        raise ParseException.new("data after section", lineno, end_idx + 1) unless end_idx == line.size - 1
+        raise ParseException.new("Unterminated section", lineno, line.size) unless end_idx
+        raise ParseException.new("Data after section", lineno, end_idx + 1) unless end_idx == line.size - 1
 
         current_section_name = line[offset + 1...end_idx]
         current_section = ini[current_section_name] ||= Hash(String, String).new
       else
         key, eq, value = line.partition('=')
-        raise ParseException.new("expected declaration", lineno, key.size) if eq != "="
+        raise ParseException.new("Expected declaration", lineno, key.size) if eq != "="
 
         current_section[key.strip] = value.strip
       end

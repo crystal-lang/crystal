@@ -1,4 +1,5 @@
-require "./regex/*"
+require "./regex/engine"
+require "./regex/match_data"
 
 # A `Regex` represents a regular expression, a pattern that describes the
 # contents of strings. A `Regex` can determine whether or not a string matches
@@ -11,6 +12,8 @@ require "./regex/*"
 # /hay/ =~ "haystack"   # => 0
 # /y/.match("haystack") # => Regex::MatchData("y")
 # ```
+#
+# See [`Regex` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/regex.html) in the language reference.
 #
 # Interpolation works in regular expression literals just as it does in string
 # literals. Be aware that using this feature will cause an exception to be
@@ -77,26 +80,31 @@ require "./regex/*"
 # have their own language for describing strings.
 #
 # Many programming languages and tools implement their own regular expression
-# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library
+# language, but Crystal uses [PCRE2](http://www.pcre.org/), a popular C library, with
+# [JIT complication](http://www.pcre.org/current/doc/html/pcre2jit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
-# alternation - but the feature set of PCRE extends far beyond these, and we
+# alternation - but the feature set of PCRE2 extends far beyond these, and we
 # don't attempt to describe it in full here. For more information, refer to
-# the PCRE documentation, especially the
-# [full pattern syntax](http://www.pcre.org/original/doc/html/pcrepattern.html)
+# the PCRE2 documentation, especially the
+# [full pattern syntax](http://www.pcre.org/current/doc/html/pcre2pattern.html)
 # or
-# [syntax quick reference](http://www.pcre.org/original/doc/html/pcresyntax.html).
+# [syntax quick reference](http://www.pcre.org/current/doc/html/pcre2syntax.html).
+#
+# NOTE: Prior to Crystal 1.8 the compiler expected regex literals to follow the
+# original [PCRE pattern syntax](https://www.pcre.org/original/doc/html/pcrepattern.html).
+# The following summary applies to both PCRE and PCRE2.
 #
 # The regular expression language can be used to match much more than just the
 # static substrings in the above examples. Certain characters, called
-# [metacharacters](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC4),
+# [metacharacters](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC4),
 # are given special treatment in regular expressions, and can be used to
 # describe more complex patterns. To match metacharacters literally in a
 # regular expression, they must be escaped by being preceded with a backslash
 # (`\`). `escape` will do this automatically for a given String.
 #
 # A group of characters (often called a capture group or
-# [subpattern](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC14))
+# [subpattern](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC14))
 # can be identified by enclosing it in parentheses (`()`). The contents of
 # each capture group can be extracted on a successful match:
 #
@@ -127,7 +135,7 @@ require "./regex/*"
 # would return `nil`. `$2?.nil?` would return `true`.
 #
 # A character or group can be
-# [repeated](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC17)
+# [repeated](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC17)
 # or made optional using an asterisk (`*` - zero or more), a plus sign
 # (`+` - one or more), integer bounds in curly braces
 # (`{n,m}`) (at least `n`, no more than `m`), or a question mark
@@ -148,12 +156,12 @@ require "./regex/*"
 # ```
 #
 # Alternatives can be separated using a
-# [vertical bar](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC12)
+# [vertical bar](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC12)
 # (`|`). Any single character can be represented by
-# [dot](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC7)
+# [dot](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC7)
 # (`.`). When matching only one character, specific
 # alternatives can be expressed as a
-# [character class](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC9),
+# [character class](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC9),
 # enclosed in square brackets (`[]`):
 #
 # ```
@@ -171,11 +179,11 @@ require "./regex/*"
 # ```
 #
 # Regular expressions can be defined with these 3
-# [optional flags](http://www.pcre.org/original/doc/html/pcreapi.html#SEC11):
+# [optional flags](http://www.pcre.org/current/doc/html/pcre2pattern.html#SEC13):
 #
-# * `i`: ignore case (PCRE_CASELESS)
-# * `m`: multiline (PCRE_MULTILINE and PCRE_DOTALL)
-# * `x`: extended (PCRE_EXTENDED)
+# * `i`: ignore case (`Regex::Options::IGNORE_CASE`)
+# * `m`: multiline (`Regex::Options::MULTILINE`)
+# * `x`: extended (`Regex::Options::EXTENDED`)
 #
 # ```
 # /asdf/ =~ "ASDF"    # => nil
@@ -184,14 +192,19 @@ require "./regex/*"
 # /^z/im =~ "ASDF\nZ" # => 5
 # ```
 #
-# PCRE supports other encodings, but Crystal strings are UTF-8 only, so Crystal
+# PCRE2 supports other encodings, but Crystal strings are UTF-8 only, so Crystal
 # regular expressions are also UTF-8 only (by default).
 #
-# PCRE optionally permits named capture groups (named subpatterns) to not be
+# PCRE2 optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a `Regex` as a
 # `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
 # unique names within a single `Regex`.
 class Regex
+  include Regex::Engine
+
+  class Error < Exception
+  end
+
   # List of metacharacters that need to be escaped.
   #
   # See `Regex.needs_escape?` and `Regex.escape`.
@@ -201,10 +214,15 @@ class Regex
     '=', '!', '<', '>', '|', ':', '-',
   }
 
+  # Represents compile options passed to `Regex.new`.
+  #
+  # This type is intended to be renamed to `CompileOptions`. Please use that
+  # name.
   @[Flags]
-  enum Options
+  enum Options : UInt64
     # Case insensitive match.
-    IGNORE_CASE = 1
+    IGNORE_CASE = 0x0000_0001
+
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
     # - `PCRE_DOTALL` changes the "`.`" meaning
     # - `PCRE_MULTILINE` changes "`^`" and "`$`" meanings
@@ -212,23 +230,104 @@ class Regex
     # Crystal modifies this meaning to have essentially one unique "`m`"
     # flag that activates both behaviours, so here we do the same by
     # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
-    MULTILINE = 6
+    # The same applies for PCRE2 except that the native values are 0x200 and 0x400.
+
+    # Multiline matching.
+    #
+    # Equivalent to `MULTILINE | DOTALL` in PCRE and PCRE2.
+    MULTILINE = 0x0000_0006
+
+    DOTALL = 0x0000_0002
+
     # Ignore white space and `#` comments.
-    EXTENDED = 8
-    # Force pattern anchoring.
-    ANCHORED = 16
+    EXTENDED = 0x0000_0008
+
+    # Force pattern anchoring at the start of the subject.
+    ANCHORED = 0x0000_0010
+
+    DOLLAR_ENDONLY = 0x0000_0020
+    FIRSTLINE      = 0x0004_0000
+
     # :nodoc:
-    UTF_8 = 0x00000800
+    UTF_8 = 0x0000_0800
     # :nodoc:
-    NO_UTF8_CHECK = 0x00002000
+    NO_UTF8_CHECK = 0x0000_2000
     # :nodoc:
-    DUPNAMES = 0x00080000
+    DUPNAMES = 0x0008_0000
+    # :nodoc:
+    UCP = 0x2000_0000
+
+    # Force pattern anchoring at the end of the subject.
+    #
+    # Unsupported with PCRE.
+    ENDANCHORED = 0x8000_0000
+
+    # Do not check the pattern for valid UTF encoding.
+    NO_UTF_CHECK = NO_UTF8_CHECK
+
+    # Enable matching against subjects containing invalid UTF bytes.
+    # Invalid bytes never match anything. The entire subject string is
+    # effectively split into segments of valid UTF.
+    #
+    # Read more in the [PCRE2 documentation](https://www.pcre.org/current/doc/html/pcre2unicode.html#matchinvalid).
+    #
+    # When this option is set, `MatchOptions::NO_UTF_CHECK` is ignored at match time.
+    #
+    # Unsupported with PCRE.
+    #
+    # NOTE: This option was introduced in PCRE2 10.34 but a bug that can lead to an
+    # infinite loop is only fixed in 10.36 (https://github.com/PCRE2Project/pcre2/commit/e0c6029a62db9c2161941ecdf459205382d4d379).
+    MATCH_INVALID_UTF = 0x1_0000_0000
   end
 
-  # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
+  # Represents compile options passed to `Regex.new`.
+  #
+  # This alias is supposed to replace `Options`.
+  alias CompileOptions = Options
+
+  # Returns `true` if the regex engine supports all *options* flags when compiling a pattern.
+  def self.supports_compile_options?(options : CompileOptions) : Bool
+    options.each do |flag|
+      return false unless Engine.supports_compile_flag?(flag)
+    end
+    true
+  end
+
+  # Represents options passed to regex match methods such as `Regex#match`.
+  @[Flags]
+  enum MatchOptions
+    # Force pattern anchoring at the start of the subject.
+    ANCHORED
+
+    # Force pattern anchoring at the end of the subject.
+    #
+    # Unsupported with PCRE.
+    ENDANCHORED
+
+    # Disable JIT engine.
+    #
+    # Unsupported with PCRE.
+    NO_JIT
+
+    # Do not check subject for valid UTF encoding.
+    #
+    # This option has no effect if the pattern was compiled with
+    # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
+    NO_UTF_CHECK
+  end
+
+  # Returns `true` if the regex engine supports all *options* flags when matching a pattern.
+  def self.supports_match_options?(options : MatchOptions) : Bool
+    options.each do |flag|
+      return false unless Engine.supports_match_flag?(flag)
+    end
+    true
+  end
+
+  # Returns a `Regex::CompileOptions` representing the optional flags applied to this `Regex`.
   #
   # ```
-  # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
+  # /ab+c/ix.options      # => Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::EXTENDED
   # /ab+c/ix.options.to_s # => "IGNORE_CASE | EXTENDED"
   # ```
   getter options : Options
@@ -243,21 +342,22 @@ class Regex
   # Creates a new `Regex` out of the given source `String`.
   #
   # ```
-  # Regex.new("^a-z+:\\s+\\w+")                   # => /^a-z+:\s+\w+/
-  # Regex.new("cat", Regex::Options::IGNORE_CASE) # => /cat/i
-  # options = Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
+  # Regex.new("^a-z+:\\s+\\w+")                          # => /^a-z+:\s+\w+/
+  # Regex.new("cat", Regex::CompileOptions::IGNORE_CASE) # => /cat/i
+  # options = Regex::CompileOptions::IGNORE_CASE | Regex::CompileOptions::EXTENDED
   # Regex.new("dog", options) # => /dog/ix
   # ```
-  def initialize(source : String, @options : Options = Options::None)
-    # PCRE's pattern must have their null characters escaped
-    source = source.gsub('\u{0}', "\\0")
-    @source = source
+  def self.new(source : String, options : Options = Options::None)
+    new(_source: source, _options: options)
+  end
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
-    raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
-    @extra = LibPCRE.study(@re, 0, out studyerrptr)
-    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
-    LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
+  # Creates a new `Regex` instance from a literal consisting of a *pattern* and the named parameter modifiers.
+  def self.literal(pattern : String, *, i : Bool = false, m : Bool = false, x : Bool = false) : self
+    options = CompileOptions::None
+    options |= :ignore_case if i
+    options |= :multiline if m
+    options |= :extended if x
+    new(pattern, options: options)
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
@@ -267,13 +367,8 @@ class Regex
   # Regex.error?("(foo|bar)") # => nil
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
-  def self.error?(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
-    if re
-      nil
-    else
-      "#{String.new(errptr)} at #{erroffset}"
-    end
+  def self.error?(source) : String?
+    Engine.error_impl(source)
   end
 
   # Returns `true` if *char* need to be escaped, `false` otherwise.
@@ -368,7 +463,7 @@ class Regex
   # re.match("Skiing")   # => Regex::MatchData("Skiing")
   # re.match("sledding") # => Regex::MatchData("sledding")
   # ```
-  def +(other)
+  def +(other) : Regex
     Regex.union(self, other)
   end
 
@@ -421,7 +516,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other : String)
+  def =~(other : String) : Int32?
     match = self.match(other)
     $~ = match
     match.try &.begin(0)
@@ -433,7 +528,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other)
+  def =~(other) : Nil
     nil
   end
 
@@ -463,14 +558,43 @@ class Regex
   # /(.)(.)/.match("abc", 1).try &.[2]   # => "c"
   # /(.)(.)/.match("クリスタル", 3).try &.[2] # => "ル"
   # ```
-  def match(str, pos = 0, options = Regex::Options::None) : MatchData?
+  def match(str : String, pos : Int32 = 0, options : Regex::MatchOptions = :none) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
-      match = match_at_byte_index(str, byte_index, options)
+      $~ = match_at_byte_index(str, byte_index, options)
     else
-      match = nil
+      $~ = nil
     end
+  end
 
-    $~ = match
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match(str, pos = 0, *, options) : MatchData?
+    if byte_index = str.char_index_to_byte_index(pos)
+      $~ = match_at_byte_index(str, byte_index, options)
+    else
+      $~ = nil
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match(str, pos, _options) : MatchData?
+    match(str, pos, options: _options)
+  end
+
+  # Matches a regular expression against *str*. This starts at the character
+  # index *pos* if given, otherwise at the start of *str*. Returns a `Regex::MatchData`
+  # if *str* matched, otherwise raises `Regex::Error`. `$~` will contain the same value
+  # if matched.
+  #
+  # ```
+  # /(.)(.)(.)/.match!("abc")[2]   # => "b"
+  # /(.)(.)/.match!("abc", 1)[2]   # => "c"
+  # /(.)(タ)/.match!("クリスタル", 3)[2] # raises Exception
+  # ```
+  def match!(str : String, pos : Int32 = 0, *, options : Regex::MatchOptions = :none) : MatchData
+    byte_index = str.char_index_to_byte_index(pos) || raise Error.new "Match not found"
+    $~ = match_at_byte_index(str, byte_index, options) || raise Error.new "Match not found"
   end
 
   # Match at byte index. Matches a regular expression against `String`
@@ -483,18 +607,28 @@ class Regex
   # /(.)(.)/.match_at_byte_index("abc", 1).try &.[2]   # => "c"
   # /(.)(.)/.match_at_byte_index("クリスタル", 3).try &.[2] # => "ス"
   # ```
-  def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None) : MatchData?
-    return ($~ = nil) if byte_index > str.bytesize
-
-    ovector_size = (@captures + 1) * 3
-    ovector = Pointer(Int32).malloc(ovector_size)
-    if internal_matches?(str, byte_index, options, ovector, ovector_size)
-      match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
+  def match_at_byte_index(str : String, byte_index : Int32 = 0, options : Regex::MatchOptions = :none) : MatchData?
+    if byte_index > str.bytesize
+      $~ = nil
     else
-      match = nil
+      $~ = match_impl(str, byte_index, options)
     end
+  end
 
-    $~ = match
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match_at_byte_index(str, byte_index = 0, *, options) : MatchData?
+    if byte_index > str.bytesize
+      $~ = nil
+    else
+      $~ = match_impl(str, byte_index, options)
+    end
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def match_at_byte_index(str, byte_index, _options) : MatchData?
+    match_at_byte_index(str, byte_index, options: _options)
   end
 
   # Match at character index. It behaves like `#match`, however it returns `Bool` value.
@@ -507,7 +641,7 @@ class Regex
   # # `$~` is not set even if last match succeeds.
   # $~ # raises Exception
   # ```
-  def matches?(str, pos = 0, options = Regex::Options::None) : Bool
+  def matches?(str : String, pos : Int32 = 0, options : Regex::MatchOptions = :none) : Bool
     if byte_index = str.char_index_to_byte_index(pos)
       matches_at_byte_index?(str, byte_index, options)
     else
@@ -515,19 +649,42 @@ class Regex
     end
   end
 
-  # Match at byte index. It behaves like `#match_at_byte_inbdex`, however it returns `Bool` value.
-  # It neither returns `MatchData` nor assigns it to the `$~` variable.
-  def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
-    return false if byte_index > str.bytesize
-
-    internal_matches?(str, byte_index, options, nil, 0)
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches?(str, pos = 0, *, options) : Bool
+    if byte_index = str.char_index_to_byte_index(pos)
+      matches_at_byte_index?(str, byte_index, options)
+    else
+      false
+    end
   end
 
-  # Calls `pcre_exec` C function, and handles returning value.
-  private def internal_matches?(str, byte_index, options, ovector, ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK), ovector, ovector_size)
-    # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
-    ret >= 0
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches?(str, pos, _options) : Bool
+    matches?(str, pos, options: _options)
+  end
+
+  # Match at byte index. It behaves like `#match_at_byte_index`, however it returns `Bool` value.
+  # It neither returns `MatchData` nor assigns it to the `$~` variable.
+  def matches_at_byte_index?(str : String, byte_index : Int32 = 0, options : Regex::MatchOptions = :none) : Bool
+    return false if byte_index > str.bytesize
+
+    matches_impl(str, byte_index, options)
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches_at_byte_index?(str, byte_index = 0, *, options) : Bool
+    return false if byte_index > str.bytesize
+
+    matches_impl(str, byte_index, options)
+  end
+
+  # :ditto:
+  @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
+  def matches_at_byte_index?(str, byte_index, _options) : Bool
+    matches_at_byte_index?(str, byte_index, options: _options)
   end
 
   # Returns a `Hash` where the values are the names of capture groups and the
@@ -540,27 +697,20 @@ class Regex
   # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
   # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
-  def name_table : Hash(UInt16, String)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
-    table_pointer = Pointer(UInt8).null
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer).as(Pointer(Int32)))
-    name_table = table_pointer.to_slice(name_entry_size*name_count)
+  def name_table : Hash(Int32, String)
+    name_table_impl
+  end
 
-    lookup = Hash(UInt16, String).new
-
-    name_count.times do |i|
-      capture_offset = i * name_entry_size
-      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
-
-      name_offset = capture_offset + 2
-      checked = name_table[name_offset, name_entry_size - 3]
-      name = String.new(checked.to_unsafe)
-
-      lookup[capture_number] = name
-    end
-
-    lookup
+  # Returns the number of (named & non-named) capture groups.
+  #
+  # ```
+  # /(?:.+)/.capture_count     # => 0
+  # /(?<foo>.+)/.capture_count # => 1
+  # /(.)/.capture_count        # => 1
+  # /(.)|(.)/.capture_count    # => 2
+  # ```
+  def capture_count : Int32
+    capture_count_impl
   end
 
   # Convert to `String` in subpattern format. Produces a `String` which can be

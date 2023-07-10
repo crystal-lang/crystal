@@ -25,9 +25,29 @@ module Spec
 
   # :nodoc:
   class DotFormatter < Formatter
+    @count = 0
+    @split = 0
+
+    def initialize(*args)
+      super
+
+      if split = ENV["SPEC_SPLIT_DOTS"]?
+        @split = split.to_i
+      end
+    end
+
     def report(result)
       @io << Spec.color(LETTERS[result.kind], result.kind)
+      split_lines
       @io.flush
+    end
+
+    private def split_lines
+      return unless @split > 0
+      if (@count += 1) >= @split
+        @io.puts
+        @count = 0
+      end
     end
 
     def finish(elapsed_time, aborted)

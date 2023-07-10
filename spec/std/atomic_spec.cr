@@ -4,6 +4,7 @@ enum AtomicEnum
   One
   Two
   Three
+  Minus = -1
 end
 
 @[Flags]
@@ -14,64 +15,88 @@ enum AtomicEnumFlags
 end
 
 describe Atomic do
-  it "compares and sets with integer" do
-    atomic = Atomic.new(1)
+  describe "#compare_and_set" do
+    it "with integer" do
+      atomic = Atomic.new(1)
 
-    atomic.compare_and_set(2, 3).should eq({1, false})
-    atomic.get.should eq(1)
+      atomic.compare_and_set(2, 3).should eq({1, false})
+      atomic.get.should eq(1)
 
-    atomic.compare_and_set(1, 3).should eq({1, true})
-    atomic.get.should eq(3)
-  end
+      atomic.compare_and_set(1, 3).should eq({1, true})
+      atomic.get.should eq(3)
+    end
 
-  it "compares and set with enum" do
-    atomic = Atomic(AtomicEnum).new(AtomicEnum::One)
+    it "with enum" do
+      atomic = Atomic(AtomicEnum).new(AtomicEnum::One)
 
-    atomic.compare_and_set(AtomicEnum::Two, AtomicEnum::Three).should eq({AtomicEnum::One, false})
-    atomic.get.should eq(AtomicEnum::One)
+      atomic.compare_and_set(AtomicEnum::Two, AtomicEnum::Three).should eq({AtomicEnum::One, false})
+      atomic.get.should eq(AtomicEnum::One)
 
-    atomic.compare_and_set(AtomicEnum::One, AtomicEnum::Three).should eq({AtomicEnum::One, true})
-    atomic.get.should eq(AtomicEnum::Three)
-  end
+      atomic.compare_and_set(AtomicEnum::One, AtomicEnum::Three).should eq({AtomicEnum::One, true})
+      atomic.get.should eq(AtomicEnum::Three)
+    end
 
-  it "compares and set with flags enum" do
-    atomic = Atomic(AtomicEnumFlags).new(AtomicEnumFlags::One)
+    it "with flags enum" do
+      atomic = Atomic(AtomicEnumFlags).new(AtomicEnumFlags::One)
 
-    atomic.compare_and_set(AtomicEnumFlags::Two, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, false})
-    atomic.get.should eq(AtomicEnumFlags::One)
+      atomic.compare_and_set(AtomicEnumFlags::Two, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, false})
+      atomic.get.should eq(AtomicEnumFlags::One)
 
-    atomic.compare_and_set(AtomicEnumFlags::One, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, true})
-    atomic.get.should eq(AtomicEnumFlags::Three)
-  end
+      atomic.compare_and_set(AtomicEnumFlags::One, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, true})
+      atomic.get.should eq(AtomicEnumFlags::Three)
+    end
 
-  it "compares and sets with nilable type" do
-    atomic = Atomic(String?).new(nil)
-    string = "hello"
+    it "with nilable reference" do
+      atomic = Atomic(String?).new(nil)
+      string = "hello"
 
-    atomic.compare_and_set(string, "foo").should eq({nil, false})
-    atomic.get.should be_nil
+      atomic.compare_and_set(string, "foo").should eq({nil, false})
+      atomic.get.should be_nil
 
-    atomic.compare_and_set(nil, string).should eq({nil, true})
-    atomic.get.should be(string)
+      atomic.compare_and_set(nil, string).should eq({nil, true})
+      atomic.get.should be(string)
 
-    atomic.compare_and_set(string, nil).should eq({string, true})
-    atomic.get.should be_nil
-  end
+      atomic.compare_and_set(string, nil).should eq({string, true})
+      atomic.get.should be_nil
+    end
 
-  it "compares and sets with reference type" do
-    str1 = "hello"
-    str2 = "bye"
+    it "with reference type" do
+      str1 = "hello"
+      str2 = "bye"
 
-    atomic = Atomic(String).new(str1)
+      atomic = Atomic(String).new(str1)
 
-    atomic.compare_and_set(str2, "foo").should eq({str1, false})
-    atomic.get.should eq(str1)
+      atomic.compare_and_set(str2, "foo").should eq({str1, false})
+      atomic.get.should be(str1)
 
-    atomic.compare_and_set(str1, str2).should eq({str1, true})
-    atomic.get.should be(str2)
+      atomic.compare_and_set(str1, str2).should eq({str1, true})
+      atomic.get.should be(str2)
 
-    atomic.compare_and_set(str2, str1).should eq({str2, true})
-    atomic.get.should be(str1)
+      atomic.compare_and_set(str2, str1).should eq({str2, true})
+      atomic.get.should be(str1)
+
+      atomic.compare_and_set(String.build(&.<< "bye"), str2).should eq({str1, false})
+      atomic.get.should be(str1)
+    end
+
+    it "with reference union" do
+      arr1 = [1]
+      arr2 = [""]
+
+      atomic = Atomic(Array(Int32) | Array(String)).new(arr1)
+
+      atomic.compare_and_set(arr2, ["foo"]).should eq({arr1, false})
+      atomic.get.should be(arr1)
+
+      atomic.compare_and_set(arr1, arr2).should eq({arr1, true})
+      atomic.get.should be(arr2)
+
+      atomic.compare_and_set(arr2, arr1).should eq({arr2, true})
+      atomic.get.should be(arr1)
+
+      atomic.compare_and_set([1], arr2).should eq({arr1, false})
+      atomic.get.should be(arr1)
+    end
   end
 
   it "#adds" do
@@ -126,6 +151,16 @@ describe Atomic do
     atomic.get.should eq(UInt32::MAX)
   end
 
+  it "#max with signed enum" do
+    atomic = Atomic.new(AtomicEnum::Two)
+    atomic.max(AtomicEnum::One).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::Two)
+    atomic.max(AtomicEnum::Three).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::Three)
+    atomic.max(AtomicEnum::Minus).should eq(AtomicEnum::Three)
+    atomic.get.should eq(AtomicEnum::Three)
+  end
+
   it "#min with signed" do
     atomic = Atomic.new(5)
     atomic.min(10).should eq(5)
@@ -140,6 +175,16 @@ describe Atomic do
     atomic.get.should eq(10_u32)
     atomic.min(15_u32).should eq(10_u32)
     atomic.get.should eq(10_u32)
+  end
+
+  it "#min with signed enum" do
+    atomic = Atomic.new(AtomicEnum::Two)
+    atomic.min(AtomicEnum::Three).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::Two)
+    atomic.min(AtomicEnum::One).should eq(AtomicEnum::Two)
+    atomic.get.should eq(AtomicEnum::One)
+    atomic.min(AtomicEnum::Minus).should eq(AtomicEnum::One)
+    atomic.get.should eq(AtomicEnum::Minus)
   end
 
   it "#set" do
@@ -164,26 +209,40 @@ describe Atomic do
     atomic.get.should eq(2)
   end
 
-  it "#swap" do
-    atomic = Atomic.new(1)
-    atomic.swap(2).should eq(1)
-    atomic.get.should eq(2)
-  end
+  describe "#swap" do
+    it "with integer" do
+      atomic = Atomic.new(1)
+      atomic.swap(2).should eq(1)
+      atomic.get.should eq(2)
+    end
 
-  it "#swap with Reference type" do
-    atomic = Atomic.new("hello")
-    atomic.swap("world").should eq("hello")
-    atomic.get.should eq("world")
-  end
+    it "with reference type" do
+      atomic = Atomic.new("hello")
+      atomic.swap("world").should eq("hello")
+      atomic.get.should eq("world")
+    end
 
-  it "#swap with nil" do
-    atomic = Atomic(String?).new(nil)
+    it "with nilable reference" do
+      atomic = Atomic(String?).new(nil)
 
-    atomic.swap("not nil").should eq(nil)
-    atomic.get.should eq("not nil")
+      atomic.swap("not nil").should eq(nil)
+      atomic.get.should eq("not nil")
 
-    atomic.swap(nil).should eq("not nil")
-    atomic.get.should eq(nil)
+      atomic.swap(nil).should eq("not nil")
+      atomic.get.should eq(nil)
+    end
+
+    it "with reference union" do
+      arr1 = [1]
+      arr2 = [""]
+      atomic = Atomic(Array(Int32) | Array(String)).new(arr1)
+
+      atomic.swap(arr2).should be(arr1)
+      atomic.get.should be(arr2)
+
+      atomic.swap(arr1).should be(arr2)
+      atomic.get.should be(arr1)
+    end
   end
 end
 

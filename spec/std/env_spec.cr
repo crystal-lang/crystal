@@ -131,6 +131,7 @@ describe "ENV" do
       ENV["1"] = "2"
       ENV.fetch("1") { |k| k + "block" }.should eq("2")
       ENV.fetch("2") { |k| k + "block" }.should eq("2block")
+      ENV.fetch("3") { 4 }.should eq(4)
     ensure
       ENV.delete("1")
     end
@@ -172,4 +173,14 @@ describe "ENV" do
   ensure
     ENV.delete("FOO")
   end
+
+  {% if flag?(:win32) %}
+    it "skips internal environment variables" do
+      key = "=#{Path[Dir.current].drive}"
+      ENV.has_key?(key).should be_false
+      ENV[key]?.should be_nil
+      expect_raises(ArgumentError) { ENV[key] = "foo" }
+      expect_raises(ArgumentError) { ENV[key] = nil }
+    end
+  {% end %}
 end

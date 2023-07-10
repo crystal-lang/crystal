@@ -1,28 +1,37 @@
 require "../spec_helper"
-require "spec"
 require "yaml"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/yaml"
-{% end %}
+require "big"
+require "big/yaml"
 
 enum YAMLSpecEnum
   Zero
   One
   Two
+  OneHundred
+end
+
+@[Flags]
+enum YAMLSpecFlagEnum
+  One
+  Two
+  OneHundred
+end
+
+private record FooPrivate, x : Int32 do
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    new(Int32.new(ctx, node))
+  end
 end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
-# libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+puts YAML.libyaml_version
+
+# libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
-private def assert_yaml_document_end(actual, expected)
-  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
-    expected += "...\n"
-  end
-
-  actual.should eq(expected)
+private def assert_yaml_document_end(actual, expected, file = __FILE__, line = __LINE__)
+  actual.rchop("...\n").should eq(expected), file: file, line: line
 end
 
 describe "YAML serialization" do
@@ -63,7 +72,7 @@ describe "YAML serialization" do
     end
 
     it "can parse string that looks like a number" do
-      String.from_yaml(%(1.2)).should eq ("1.2")
+      String.from_yaml(%(1.2)).should eq("1.2")
     end
 
     it "does Path.from_yaml" do
@@ -72,13 +81,19 @@ describe "YAML serialization" do
 
     it "does Float32#from_yaml" do
       Float32.from_yaml("1.5").should eq(1.5_f32)
+      Float32.from_yaml(".nan").nan?.should be_true
       Float32.from_yaml(".inf").should eq(Float32::INFINITY)
+      Float32.from_yaml("-.inf").should eq(-Float32::INFINITY)
     end
 
     it "does Float64#from_yaml" do
       value = Float64.from_yaml("1.5")
       value.should eq(1.5)
       value.should be_a(Float64)
+
+      Float64.from_yaml(".nan").nan?.should be_true
+      Float64.from_yaml(".inf").should eq(Float64::INFINITY)
+      Float64.from_yaml("-.inf").should eq(-Float64::INFINITY)
     end
 
     it "does Array#from_yaml" do
@@ -135,59 +150,205 @@ describe "YAML serialization" do
       array[2].should eq({"foo" => 1, "bar" => 2})
     end
 
-    it "does Tuple#from_yaml" do
-      Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n").should eq({1, "foo", true})
+    it "does for tuple" do
+      tuple = Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n")
+      tuple.should eq({1, "foo", true})
+      typeof(tuple).should eq(Tuple(Int32, String, Bool))
+    end
+
+    it "does for tuple with file-private type" do
+      tuple = Tuple(FooPrivate).from_yaml %([1])
+      tuple.should eq({FooPrivate.new(1)})
+      typeof(tuple).should eq(Tuple(FooPrivate))
+    end
+
+    it "does for empty tuple" do
+      typeof(Tuple.new).from_yaml("[]").should eq(Tuple.new)
     end
 
     it "does for named tuple" do
       tuple = NamedTuple(x: Int32, y: String).from_yaml(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_yaml(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
     end
 
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello", "x": null}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
-    pending_win32 "does for BigInt" do
+    it "does for named tuple with spaces in key (#10918)" do
+      tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_yaml %{{"a": 1, "xyz b-23": 2}}
+      tuple.should eq({a: 1, "xyz b-23": 2})
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz b-23": Int32))
+    end
+
+    it "does for named tuple with spaces in key and quote char (#10918)" do
+      tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_yaml %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
+      tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32))
+    end
+
+    it "does for named tuple with file-private type" do
+      tuple = NamedTuple(a: FooPrivate).from_yaml %({"a": 1})
+      tuple.should eq({a: FooPrivate.new(1)})
+      typeof(tuple).should eq(NamedTuple(a: FooPrivate))
+    end
+
+    it "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    pending_win32 "does for BigFloat" do
+    it "does for BigFloat" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    pending_win32 "does for BigDecimal" do
+    it "does for BigDecimal" do
       big = BigDecimal.from_yaml("1234.567891011121314")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.567891011121314"))
     end
 
-    it "does for Enum with number" do
-      YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
+    describe "Enum" do
+      it "normal enum" do
+        YAMLSpecEnum.from_yaml(%("one")).should eq(YAMLSpecEnum::One)
+        YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
+        YAMLSpecEnum.from_yaml(%("two")).should eq(YAMLSpecEnum::Two)
+        YAMLSpecEnum.from_yaml(%("ONE_HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
+        YAMLSpecEnum.from_yaml(%("ONE-HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
 
-      expect_raises(Exception, "Unknown enum YAMLSpecEnum value: 3") do
-        YAMLSpecEnum.from_yaml(%("3"))
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: " one ")) do
+          YAMLSpecEnum.from_yaml(%(" one "))
+        end
+
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "three")) do
+          YAMLSpecEnum.from_yaml(%("three"))
+        end
+        expect_raises(YAML::ParseException, %(Expected String, not "1")) do
+          YAMLSpecEnum.from_yaml(%(1))
+        end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "1")) do
+          YAMLSpecEnum.from_yaml(%("1"))
+        end
+
+        expect_raises(YAML::ParseException, "Expected scalar, not mapping") do
+          YAMLSpecEnum.from_yaml(%({}))
+        end
+        expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
+          YAMLSpecEnum.from_yaml(%([]))
+        end
+      end
+
+      it "flag enum" do
+        YAMLSpecFlagEnum.from_yaml(%(["one"])).should eq(YAMLSpecFlagEnum::One)
+        YAMLSpecFlagEnum.from_yaml(%(["One"])).should eq(YAMLSpecFlagEnum::One)
+        YAMLSpecFlagEnum.from_yaml(%([one])).should eq(YAMLSpecFlagEnum::One)
+        YAMLSpecFlagEnum.from_yaml(%(["one", "one"])).should eq(YAMLSpecFlagEnum::One)
+        YAMLSpecFlagEnum.from_yaml(%(["one", "two"])).should eq(YAMLSpecFlagEnum::One | YAMLSpecFlagEnum::Two)
+        YAMLSpecFlagEnum.from_yaml(%([one, two])).should eq(YAMLSpecFlagEnum::One | YAMLSpecFlagEnum::Two)
+        YAMLSpecFlagEnum.from_yaml(%(["one", "two", "one_hundred"])).should eq(YAMLSpecFlagEnum::All)
+        YAMLSpecFlagEnum.from_yaml(%([])).should eq(YAMLSpecFlagEnum::None)
+
+        expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
+          YAMLSpecFlagEnum.from_yaml(%(["one", ["two"]]))
+        end
+
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: "three")) do
+          YAMLSpecFlagEnum.from_yaml(%(["one", "three"]))
+        end
+        expect_raises(YAML::ParseException, %(Expected String, not "1")) do
+          YAMLSpecFlagEnum.from_yaml(%([1, 2]))
+        end
+        expect_raises(YAML::ParseException, %(Expected String, not "2")) do
+          YAMLSpecFlagEnum.from_yaml(%(["one", 2]))
+        end
+        expect_raises(YAML::ParseException, "Expected sequence, not mapping") do
+          YAMLSpecFlagEnum.from_yaml(%({}))
+        end
+        expect_raises(YAML::ParseException, "Expected sequence, not scalar") do
+          YAMLSpecFlagEnum.from_yaml(%("one"))
+        end
       end
     end
 
-    it "does for Enum with string" do
-      YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
+    describe "Enum::ValueConverter.from_yaml" do
+      it "normal enum" do
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("0").should eq(YAMLSpecEnum::Zero)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("1").should eq(YAMLSpecEnum::One)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("2").should eq(YAMLSpecEnum::Two)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("3").should eq(YAMLSpecEnum::OneHundred)
 
-      expect_raises(ArgumentError, "Unknown enum YAMLSpecEnum value: Three") do
-        YAMLSpecEnum.from_yaml(%("Three"))
+        expect_raises(YAML::ParseException, %(Expected Int64, not "3")) do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%("3"))
+        end
+
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: 4)) do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml("4")
+        end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: -1)) do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml("-1")
+        end
+        expect_raises(YAML::ParseException, %(Expected Int64, not )) do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml("")
+        end
+
+        expect_raises(YAML::ParseException, %(Expected Int64, not "one")) do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%("one"))
+        end
+
+        expect_raises(YAML::ParseException, "Expected scalar, not mapping") do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%({}))
+        end
+        expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%([]))
+        end
+      end
+
+      it "flag enum" do
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("0").should eq(YAMLSpecFlagEnum::None)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("1").should eq(YAMLSpecFlagEnum::One)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("2").should eq(YAMLSpecFlagEnum::Two)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("4").should eq(YAMLSpecFlagEnum::OneHundred)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("5").should eq(YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("7").should eq(YAMLSpecFlagEnum::All)
+
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: 8)) do
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("8")
+        end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: -1)) do
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("-1")
+        end
+        expect_raises(YAML::ParseException, %(Expected Int64, not "")) do
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("")
+        end
+
+        expect_raises(YAML::ParseException, %(Expected Int64, not "one")) do
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml(%("one"))
+        end
+
+        expect_raises(YAML::ParseException, "Expected scalar, not mapping") do
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml(%({}))
+        end
+        expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml(%([]))
+        end
       end
     end
 
@@ -219,7 +380,7 @@ describe "YAML serialization" do
             ]
             YAML
         end
-        ex.message.should eq("Expected Nil, not 1 at line 2, column 3")
+        ex.message.should eq(%(Expected Nil, not "1" at line 2, column 3))
         ex.location.should eq({2, 3})
       end
 
@@ -276,8 +437,36 @@ describe "YAML serialization" do
       Int32.from_yaml(1.to_yaml).should eq(1)
     end
 
+    it "does for Float32" do
+      Float32.from_yaml(1.5_f32.to_yaml).should eq(1.5_f32)
+    end
+
+    it "does for Float32 (infinity)" do
+      Float32.from_yaml(Float32::INFINITY.to_yaml).should eq(Float32::INFINITY)
+    end
+
+    it "does for Float32 (-infinity)" do
+      Float32.from_yaml((-Float32::INFINITY).to_yaml).should eq(-Float32::INFINITY)
+    end
+
+    it "does for Float32 (nan)" do
+      Float32.from_yaml(Float32::NAN.to_yaml).nan?.should be_true
+    end
+
     it "does for Float64" do
       Float64.from_yaml(1.5.to_yaml).should eq(1.5)
+    end
+
+    it "does for Float64 (infinity)" do
+      Float64.from_yaml(Float64::INFINITY.to_yaml).should eq(Float64::INFINITY)
+    end
+
+    it "does for Float64 (-infinity)" do
+      Float64.from_yaml((-Float64::INFINITY).to_yaml).should eq(-Float64::INFINITY)
+    end
+
+    it "does for Float64 (nan)" do
+      Float64.from_yaml(Float64::NAN.to_yaml).nan?.should be_true
     end
 
     it "does for String" do
@@ -334,18 +523,89 @@ describe "YAML serialization" do
       {x: 1, y: "hello"}.to_yaml.should eq({:x => 1, :y => "hello"}.to_yaml)
     end
 
-    pending_win32 "does for BigInt" do
+    it "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       BigInt.from_yaml(big.to_yaml).should eq(big)
     end
 
-    pending_win32 "does for BigFloat" do
+    it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
     end
 
-    it "does for Enum" do
-      YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
+    it "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
+      BigDecimal.from_yaml(big.to_yaml).should eq(big)
+    end
+
+    describe "Enum" do
+      it "normal enum" do
+        assert_yaml_document_end(YAMLSpecEnum::One.to_yaml, "--- one\n")
+        YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
+
+        assert_yaml_document_end(YAMLSpecEnum::OneHundred.to_yaml, "--- one_hundred\n")
+        YAMLSpecEnum.from_yaml(YAMLSpecEnum::OneHundred.to_yaml).should eq(YAMLSpecEnum::OneHundred)
+
+        # undefined members can't be parsed back because the standard converter only accepts named
+        # members
+        assert_yaml_document_end(YAMLSpecEnum.new(42).to_yaml, %(--- "42"\n))
+      end
+
+      it "flag enum" do
+        assert_yaml_document_end(YAMLSpecFlagEnum::One.to_yaml, %(--- [one]\n))
+        YAMLSpecFlagEnum.from_yaml(YAMLSpecFlagEnum::One.to_yaml).should eq(YAMLSpecFlagEnum::One)
+
+        assert_yaml_document_end(YAMLSpecFlagEnum::OneHundred.to_yaml, %(--- [one_hundred]\n))
+        YAMLSpecFlagEnum.from_yaml(YAMLSpecFlagEnum::OneHundred.to_yaml).should eq(YAMLSpecFlagEnum::OneHundred)
+
+        combined = YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One
+        assert_yaml_document_end(combined.to_yaml, %(--- [one, one_hundred]\n))
+        YAMLSpecFlagEnum.from_yaml(combined.to_yaml).should eq(combined)
+
+        assert_yaml_document_end(YAMLSpecFlagEnum::None.to_yaml, %(--- []\n))
+        YAMLSpecFlagEnum.from_yaml(YAMLSpecFlagEnum::None.to_yaml).should eq(YAMLSpecFlagEnum::None)
+
+        assert_yaml_document_end(YAMLSpecFlagEnum::All.to_yaml, %(--- [one, two, one_hundred]\n))
+        YAMLSpecFlagEnum.from_yaml(YAMLSpecFlagEnum::All.to_yaml).should eq(YAMLSpecFlagEnum::All)
+
+        assert_yaml_document_end(YAMLSpecFlagEnum.new(42).to_yaml, "--- [two]\n")
+      end
+    end
+
+    describe "Enum::ValueConverter" do
+      it "normal enum" do
+        converter = Enum::ValueConverter(YAMLSpecEnum)
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecEnum::One), "--- 1\n")
+        converter.from_yaml(converter.to_yaml(YAMLSpecEnum::One)).should eq(YAMLSpecEnum::One)
+
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecEnum::OneHundred), "--- 3\n")
+        converter.from_yaml(converter.to_yaml(YAMLSpecEnum::OneHundred)).should eq(YAMLSpecEnum::OneHundred)
+
+        # undefined members can't be parsed back because the standard converter only accepts named
+        # members
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecEnum.new(42)), %(--- 42\n))
+      end
+
+      it "flag enum" do
+        converter = Enum::ValueConverter(YAMLSpecFlagEnum)
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum::One), %(--- 1\n))
+        converter.from_yaml(converter.to_yaml(YAMLSpecFlagEnum::One)).should eq(YAMLSpecFlagEnum::One)
+
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum::OneHundred), %(--- 4\n))
+        converter.from_yaml(converter.to_yaml(YAMLSpecFlagEnum::OneHundred)).should eq(YAMLSpecFlagEnum::OneHundred)
+
+        combined = YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One
+        assert_yaml_document_end(converter.to_yaml(combined), %(--- 5\n))
+        converter.from_yaml(converter.to_yaml(combined)).should eq(combined)
+
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum::None), %(--- 0\n))
+        converter.from_yaml(converter.to_yaml(YAMLSpecFlagEnum::None)).should eq(YAMLSpecFlagEnum::None)
+
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum::All), %(--- 7\n))
+        converter.from_yaml(converter.to_yaml(YAMLSpecFlagEnum::All)).should eq(YAMLSpecFlagEnum::All)
+
+        assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum.new(42)), "--- 42\n")
+      end
     end
 
     it "does for utc time" do
@@ -386,9 +646,9 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
+      expected = /\A---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: ?\n\z/
 
-      data.to_yaml.should eq(expected)
+      data.to_yaml.should match(expected)
     end
 
     it "writes to a stream" do
@@ -409,7 +669,7 @@ describe "YAML serialization" do
       h[1] = 2
       h[h] = h
 
-      h.to_yaml.should eq("--- &1\n1: 2\n*1: *1\n")
+      h.to_yaml.should match(/\A--- &1\n1: 2\n\*1 ?: \*1\n\z/)
     end
   end
 end

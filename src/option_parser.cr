@@ -7,6 +7,8 @@
 #
 # Run `crystal` for an example of a CLI built with `OptionParser`.
 #
+# NOTE: To use `OptionParser`, you must explicitly import it with `require "option_parser"`
+#
 # Short example:
 #
 # ```
@@ -58,7 +60,7 @@
 #     welcome = true
 #     parser.banner = "Usage: example welcome"
 #   end
-#   parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
+#   parser.on("-v", "--verbose", "Enabled verbose output") { verbose = true }
 #   parser.on("-h", "--help", "Show this help") do
 #     puts parser
 #     exit
@@ -108,20 +110,19 @@ class OptionParser
 
   # Creates a new parser, with its configuration specified in the block,
   # and uses it to parse the passed *args* (defaults to `ARGV`).
-  def self.parse(args = ARGV) : self
-    parser = OptionParser.new
+  #
+  # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
+  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false, &) : self
+    parser = OptionParser.new(gnu_optional_args: gnu_optional_args)
     yield parser
     parser.parse(args)
     parser
   end
 
-  @[Deprecated("Use `parse` instead.")]
-  def self.parse! : self
-    parse(ARGV) { |parser| yield parser }
-  end
-
   # Creates a new parser.
-  def initialize
+  #
+  # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
+  def initialize(*, @gnu_optional_args : Bool = false)
     @flags = [] of String
     @handlers = Hash(String, Handler).new
     @stop = false
@@ -130,9 +131,47 @@ class OptionParser
   end
 
   # Creates a new parser, with its configuration specified in the block.
-  def self.new
-    new.tap { |parser| yield parser }
+  #
+  # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
+  def self.new(*, gnu_optional_args : Bool = false, &)
+    new(gnu_optional_args: gnu_optional_args).tap { |parser| yield parser }
   end
+
+  # Returns whether the GNU convention is followed for optional arguments.
+  #
+  # If true, any optional argument must follow the preceding flag in the same
+  # token immediately, without any space inbetween:
+  #
+  # ```
+  # require "option_parser"
+  #
+  # OptionParser.parse(%w(-a1 -a 2 -a --b=3 --b 4), gnu_optional_args: true) do |parser|
+  #   parser.on("-a", "--b [x]", "optional") { |x| p x }
+  #   parser.unknown_args { |args, _| puts "Remaining: #{args}" }
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # "1"
+  # ""
+  # ""
+  # "3"
+  # ""
+  # Remaining: ["2", "4"]
+  # ```
+  #
+  # Without `gnu_optional_args: true`, prints the following instead:
+  #
+  # ```text
+  # "1"
+  # "2"
+  # "--b=3"
+  # "4"
+  # Remaining: []
+  # ```
+  property? gnu_optional_args : Bool
 
   # Establishes the initial message for the help printout.
   # Typically, you want to write here the name of your program,
@@ -203,16 +242,16 @@ class OptionParser
 
   private def parse_flag_definition(flag : String)
     case flag
-    when /--(\S+)\s+\[\S+\]/
+    when /\A--(\S+)\s+\[\S+\]\z/
       {"--#{$1}", FlagValue::Optional}
-    when /--(\S+)(\s+|\=)(\S+)?/
+    when /\A--(\S+)(\s+|\=)(\S+)?\z/
       {"--#{$1}", FlagValue::Required}
-    when /--\S+/
+    when /\A--\S+\z/
       # This can't be merged with `else` otherwise /-(.)/ matches
       {flag, FlagValue::None}
-    when /-(.)\s*\[\S+\]/
+    when /\A-(.)\s*\[\S+\]\z/
       {flag[0..1], FlagValue::Optional}
-    when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
+    when /\A-(.)\s+\S+\z/, /\A-(.)\s+\z/, /\A-(.)\S+\z/
       {flag[0..1], FlagValue::Required}
     else
       # This happens for -f without argument
@@ -221,11 +260,11 @@ class OptionParser
   end
 
   # Adds a separator, with an optional header message, that will be used to
-  # print the help. The seperator is placed between the flags registered (`#on`)
+  # print the help. The separator is placed between the flags registered (`#on`)
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
-  def separator(message = "")
+  def separator(message = "") : Nil
     @flags << message.to_s
   end
 
@@ -264,7 +303,7 @@ class OptionParser
   # Stops the current parse and returns immediately, leaving the remaining flags
   # unparsed. This is treated identically to `--` being inserted *behind* the
   # current parsed flag.
-  def stop
+  def stop : Nil
     @stop = true
   end
 
@@ -278,8 +317,10 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
+    indent = " " * 37
+    description = description.gsub("\n", "\n#{indent}")
     if flag.size >= 33
-      @flags << "    #{flag}\n#{" " * 37}#{description}"
+      @flags << "    #{flag}\n#{indent}#{description}"
     else
       @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
     end
@@ -293,7 +334,7 @@ class OptionParser
     end
   end
 
-  private def with_preserved_state
+  private def with_preserved_state(&)
     old_flags = @flags.clone
     old_handlers = @handlers.clone
     old_banner = @banner
@@ -317,7 +358,7 @@ class OptionParser
   end
 
   # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV)
+  def parse(args = ARGV) : Nil
     with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
       handled_args = [] of Int32
@@ -366,27 +407,41 @@ class OptionParser
           value = nil
         end
 
-        if handler = @handlers[flag]?
+        # Fetch handler of the flag.
+        # If value is given even though handler does not take value, it is invalid, then it is skipped.
+        if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
           handled_args << arg_index
 
-          # Pull in the next argument if we don't already have it and an argument
-          # is taken (i.e. not FlagValue::None)
-          if !value && !handler.value_type.none?
-            value = args[arg_index + 1]?
-            if value
-              handled_args << arg_index + 1
-              arg_index += 1
+          if !value
+            case handler.value_type
+            in FlagValue::Required
+              value = args[arg_index + 1]?
+              if value
+                handled_args << arg_index + 1
+                arg_index += 1
+              else
+                @missing_option.call(flag)
+              end
+            in FlagValue::Optional
+              unless gnu_optional_args?
+                value = args[arg_index + 1]?
+                if value && !@handlers.has_key?(value)
+                  handled_args << arg_index + 1
+                  arg_index += 1
+                else
+                  value = nil
+                end
+              end
+            in FlagValue::None
+              # do nothing
             end
           end
-
-          # If we require a value and we don't have one, call missing option
-          @missing_option.call(flag) if handler.value_type.required? && value.nil?
 
           # If this is a subcommand (flag not starting with -), delete all
           # subcommands since they are no longer valid.
           unless flag.starts_with?('-')
-            @handlers.select! { |k, v| k.starts_with?('-') }
-            @flags.select! { |flag| flag.starts_with?("    -") }
+            @handlers.select! { |k, _| k.starts_with?('-') }
+            @flags.select!(&.starts_with?("    -"))
           end
 
           handler.block.call(value || "")
@@ -442,10 +497,5 @@ class OptionParser
         end
       end
     end
-  end
-
-  @[Deprecated("Use `parse` instead.")]
-  def parse!
-    parse
   end
 end

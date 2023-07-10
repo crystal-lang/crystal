@@ -39,11 +39,13 @@
 # # if our assumption doesn't hold.
 # idx3 = str.index('o').not_nil!
 # ```
+#
+# See [`Nil` literal](https://crystal-lang.org/reference/syntax_and_semantics/literals/nil.html) in the language reference.
 struct Nil
   # Returns `0_u64`. Even though `Nil` is not a `Reference` type, it is usually
   # mixed with them to form nilable types so it's useful to have an
   # object id for `nil`.
-  def object_id
+  def object_id : UInt64
     0_u64
   end
 
@@ -63,7 +65,7 @@ struct Nil
   end
 
   # Returns `false`.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     false
   end
 
@@ -101,9 +103,15 @@ struct Nil
 
   # Raises `NilAssertionError`.
   #
+  # If *message* is given, it is forwarded as error message of `NilAssertionError`.
+  #
   # See also: `Object#not_nil!`.
-  def not_nil!
-    raise NilAssertionError.new
+  def not_nil!(message = nil) : NoReturn
+    if message
+      raise NilAssertionError.new(message)
+    else
+      raise NilAssertionError.new
+    end
   end
 
   # Returns `self`.
@@ -115,7 +123,7 @@ struct Nil
   # config["empty"]?.presence   # => nil
   # config["missing"]?.presence # => nil
   # ```
-  def presence
+  def presence : Nil
     self
   end
 

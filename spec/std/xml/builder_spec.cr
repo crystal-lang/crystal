@@ -1,11 +1,9 @@
 require "spec"
 require "xml"
+require "spec/helpers/string"
 
-private def assert_built(expected, quote_char = nil)
-  string = XML.build(quote_char: quote_char) do |xml|
-    with xml yield xml
-  end
-  string.should eq(expected)
+private def assert_built(expected, quote_char = nil, *, file = __FILE__, line = __LINE__, &)
+  assert_prints XML.build(quote_char: quote_char) { |xml| with xml yield xml }, expected, file: file, line: line
 end
 
 describe XML::Builder do
@@ -44,13 +42,13 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with namspace" do
+  it "writes element with namespace" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1) { }
     end
   end
 
-  it "writes element with namspace, without block" do
+  it "writes element with namespace, without block" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1)
     end
