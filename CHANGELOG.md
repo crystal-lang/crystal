@@ -51,7 +51,7 @@
 - Add message about non-release mode to `crystal --version` ([#13254](https://github.com/crystal-lang/crystal/pull/13254), thanks @will)
 - Respect `%CC%` on Windows ([#13376](https://github.com/crystal-lang/crystal/pull/13376), thanks @HertzDevil)
 - Support DLL delay-loading on Windows ([#13436](https://github.com/crystal-lang/crystal/pull/13436), thanks @HertzDevil)
-- Support `-static` and `-dynamic` `.lib` suffixes on Windows ([#13473](https://github.com/crystal-lang/crystal/pull/13473), thanks @HertzDevil)
+- Support `-static` and `-dynamic` `.lib` suffixes on Windows ([#13473](https://github.com/crystal-lang/crystal/pull/13473), [#13645](https://github.com/crystal-lang/crystal/pull/13645), thanks @HertzDevil)
 - Make compiler aware of output extension when building programs ([#13370](https://github.com/crystal-lang/crystal/pull/13370), thanks @HertzDevil)
 - Support `CRYSTAL_LIBRARY_RPATH` for adding dynamic library lookup paths ([#13499](https://github.com/crystal-lang/crystal/pull/13499), thanks @HertzDevil)
 - Add compiler command `crystal clear_cache` ([#13553](https://github.com/crystal-lang/crystal/pull/13553), thanks @baseballlover723)
