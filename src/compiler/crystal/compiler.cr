@@ -383,7 +383,7 @@ module Crystal
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
 
-            if !program.has_flag?("no_win32_delay_load")
+            if program.has_flag?("preview_win32_delay_load")
               # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
               # it is harmless to skip this error because not all import libraries are always used, much
               # less the individual DLLs they refer to
