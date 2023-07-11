@@ -3,7 +3,7 @@
 
 #### stdlib
 
-- *(numeric)* Handle NaNs when comparing `Big*` numbers against `Float` ([#13293](https://github.com/crystal-lang/crystal/pull/13293), [#13294](https://github.com/crystal-lang/crystal/pull/13294), [#13350](https://github.com/crystal-lang/crystal/pull/13350, [#13554](https://github.com/crystal-lang/crystal/pull/13554), thanks @HertzDevil)
+- *(numeric)* Handle NaNs when comparing `Big*` numbers against `Float` ([#13293](https://github.com/crystal-lang/crystal/pull/13293), [#13294](https://github.com/crystal-lang/crystal/pull/13294), [#13350](https://github.com/crystal-lang/crystal/pull/13350), [#13554](https://github.com/crystal-lang/crystal/pull/13554), thanks @HertzDevil)
 - *(llvm)* Remove most `LLVM::DIBuilder` functions from `llvm_ext.cc` ([#13448](https://github.com/crystal-lang/crystal/pull/13448), thanks @HertzDevil)
 
 ### Features
