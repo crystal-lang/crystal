@@ -64,6 +64,7 @@ struct Crystal::System::Process
       signal.ignore
     end
     Signal::INT.trap &sig_handler
+    Signal::HUP.trap &sig_handler
     Signal::TERM.trap &sig_handler
   end
 
