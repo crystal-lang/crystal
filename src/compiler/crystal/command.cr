@@ -417,7 +417,7 @@ class Crystal::Command
       end
 
       if dependencies
-        opts.on("-f tree|flat", "--format tree|flat", "Output format tree (default) or flat") do |f|
+        opts.on("-f tree|flat|dot|mermaid", "--format tree|flat|dot|mermaid", "Output format tree (default), flat, dot, or mermaid") do |f|
           output_format = f
         end
 
@@ -573,8 +573,8 @@ class Crystal::Command
 
     if dependencies
       output_format ||= "tree"
-      unless output_format.in?("tree", "flat")
-        error "You have input an invalid format, only tree and flat are supported"
+      unless output_format.in?("tree", "flat", "dot", "mermaid")
+        error "You have input an invalid format, only tree, flat, dot, and mermaid are supported"
       end
     else
       output_format ||= "text"
