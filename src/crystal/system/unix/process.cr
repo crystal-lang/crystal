@@ -59,7 +59,7 @@ struct Crystal::System::Process
   end
 
   def self.on_interrupt(&handler : ->) : Nil
-    sig_handler = Proc(Signal, Nil).new do |signal|
+    sig_handler = Proc(::Signal, Nil).new do |signal|
       handler.call
       signal.ignore.as(Nil)
     end
