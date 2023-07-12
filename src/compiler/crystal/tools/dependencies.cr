@@ -79,7 +79,7 @@ module Crystal
       when .dot?
         @io.puts "digraph G {"
       when .mermaid?
-        @io.puts "graph TB"
+        @io.puts "graph LR"
       end
     end
 
