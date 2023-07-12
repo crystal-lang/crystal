@@ -63,9 +63,9 @@ struct Crystal::System::Process
       handler.call
       signal.ignore.as(Nil)
     end
-    Signal::INT.trap &sig_handler
-    Signal::HUP.trap &sig_handler
-    Signal::TERM.trap &sig_handler
+    ::Signal::INT.trap &sig_handler
+    ::Signal::HUP.trap &sig_handler
+    ::Signal::TERM.trap &sig_handler
   end
 
   def self.ignore_interrupts! : Nil
