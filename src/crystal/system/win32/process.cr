@@ -103,7 +103,7 @@ struct Crystal::System::Process
   def self.on_interrupt(&@@interrupt_handler : ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
-      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
+      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT, LibC::CTRL_CLOSE_EVENT, LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT)
       @@interrupt_count.signal
       1
     end
