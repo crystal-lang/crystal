@@ -61,7 +61,7 @@ struct Crystal::System::Process
   def self.on_interrupt(&handler : ->) : Nil
     sig_handler = Proc(::Signal, Nil).new do |signal|
       handler.call
-      signal.ignore.as(Nil)
+      signal.ignore
     end
     ::Signal::INT.trap &sig_handler
     ::Signal::HUP.trap &sig_handler
