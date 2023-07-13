@@ -29,13 +29,14 @@ describe "Compiler" do
   end
 
   it "outputs correct cc command in preference to a filename when cross compile" do
+    crystal_bin = File.realpath(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal")
     Dir.cd compiler_datapath do
       with_temp_executable "compiler_spec_output" do |path|
         FileUtils.mkdir_p("#{path}/bin")
         expected_bin = "#{path}/bin/compiler_sample-linux-x86_64"
         output = IO::Memory.new
         Process.run(
-          ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal",
+          crystal_bin,
           ["build"].concat(program_flags_options).concat(["--cross-compile", "--target=x86_64-unknown-linux-gnu", "-o", expected_bin, "compiler_sample"]),
           output: output
         )
