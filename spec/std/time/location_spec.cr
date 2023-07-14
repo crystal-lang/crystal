@@ -166,6 +166,36 @@ class Time::Location
       end
     end
 
+    describe ".load_android" do
+      it "loads Europe/Berlin" do
+        location = Location.load_android("Europe/Berlin", {datapath("android_tzdata")}).should_not be_nil
+
+        location.name.should eq "Europe/Berlin"
+        standard_time = location.lookup(Time.utc(2017, 11, 22))
+        standard_time.name.should eq "CET"
+        standard_time.offset.should eq 3600
+        standard_time.dst?.should be_false
+
+        summer_time = location.lookup(Time.utc(2017, 10, 22))
+        summer_time.name.should eq "CEST"
+        summer_time.offset.should eq 7200
+        summer_time.dst?.should be_true
+
+        location.utc?.should be_false
+        location.fixed?.should be_false
+      end
+
+      it "loads new data if tzdata file was changed" do
+        tzdata_path = datapath("android_tzdata")
+        location1 = Location.load_android("Europe/Berlin", {tzdata_path})
+        File.touch(tzdata_path)
+        location2 = Location.load_android("Europe/Berlin", {tzdata_path})
+
+        location1.should eq location2
+        location1.should_not be location2
+      end
+    end
+
     it "UTC" do
       location = Location::UTC
       location.name.should eq "UTC"
