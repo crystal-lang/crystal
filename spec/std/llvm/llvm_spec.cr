@@ -17,7 +17,7 @@ describe LLVM do
     {% if flag?(:darwin) %}
       triple.should match(/-apple-macosx$/)
     {% elsif flag?(:linux) %}
-      triple.should match(/-linux-/)
+      triple.should match(/-linux/)
     {% elsif flag?(:windows) %}
       triple.should match(/-windows-/)
     {% elsif flag?(:freebsd) %}
