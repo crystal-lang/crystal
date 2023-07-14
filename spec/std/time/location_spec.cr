@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 require "../../support/time"
 
 class Time::Location
@@ -22,11 +22,11 @@ class Time::Location
           location.utc?.should be_false
           location.fixed?.should be_false
 
-          with_env("TZ", nil) do
+          with_tz(nil) do
             location.local?.should be_false
           end
 
-          with_env("TZ", "Europe/Berlin") do
+          with_tz("Europe/Berlin") do
             location.local?.should be_true
           end
 
@@ -195,7 +195,7 @@ class Time::Location
 
     describe ".load_local" do
       it "with unset TZ" do
-        with_env("TZ", nil) do
+        with_tz(nil) do
           # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
           # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
           # making the return value default to `UTC`.
@@ -205,12 +205,12 @@ class Time::Location
 
       it "with TZ" do
         with_zoneinfo do
-          with_env("TZ", "Europe/Berlin") do
+          with_tz("Europe/Berlin") do
             Location.load_local.name.should eq "Europe/Berlin"
           end
         end
         with_zoneinfo(datapath("zoneinfo")) do
-          with_env("TZ", "Foo/Bar") do
+          with_tz("Foo/Bar") do
             Location.load_local.name.should eq "Foo/Bar"
           end
         end
@@ -218,7 +218,7 @@ class Time::Location
 
       it "with empty TZ" do
         with_zoneinfo do
-          with_env("TZ", "") do
+          with_tz("") do
             Location.load_local.utc?.should be_true
           end
         end
