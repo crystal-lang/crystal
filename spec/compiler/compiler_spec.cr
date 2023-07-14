@@ -30,6 +30,8 @@ describe "Compiler" do
 
   it "outputs correct cc command in preference to a filename when cross compile" do
     crystal_bin = File.realpath(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal")
+    cc = ENV["CC"]? || {{ flag?(:msvc) ? "cl.exe" : "cc" }}
+
     Dir.cd compiler_datapath do
       with_temp_executable "compiler_spec_output" do |path|
         FileUtils.mkdir_p("#{path}/bin")
@@ -41,7 +43,7 @@ describe "Compiler" do
           output: output
         )
         File.exists?("#{expected_bin}.o").should be_true
-        output.to_s.should contain("cc #{expected_bin}.o -o #{expected_bin} ")
+        output.to_s.should contain("#{cc} #{expected_bin}.o -o #{expected_bin} ")
       end
     end
   end
