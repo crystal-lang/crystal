@@ -236,7 +236,7 @@ end
 changelog = File.read("CHANGELOG.md")
 array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
 
-sections = array.group_by { |pr| pr.section }
+sections = array.group_by(&.section)
 
 SECTION_TITLES = {
   "breaking"    => "Breaking changes",
