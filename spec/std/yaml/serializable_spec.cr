@@ -221,6 +221,20 @@ class YAMLAttrWithTimeEpoch
   property value : Time
 end
 
+class YAMLAttrNilableWithTimeEpoch
+  include YAML::Serializable
+
+  @[YAML::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class YAMLAttrDefaultWithTimeEpoch
+  include YAML::Serializable
+
+  @[YAML::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
+end
+
 class YAMLAttrWithTimeEpochMillis
   include YAML::Serializable
 
@@ -869,6 +883,16 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
       yaml.h.should eq [1, 2, 3]
     end
+  end
+
+  it "converter with null value (#13655)" do
+    YAMLAttrNilableWithTimeEpoch.from_yaml(%({"value": null})).value.should be_nil
+    YAMLAttrNilableWithTimeEpoch.from_yaml(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    YAMLAttrDefaultWithTimeEpoch.from_yaml(%({"value": null})).value.should eq Time.unix(0)
+    YAMLAttrDefaultWithTimeEpoch.from_yaml(%({"value":1459859781})).value.should eq Time.unix(1459859781)
   end
 
   it "uses Time::EpochConverter" do
