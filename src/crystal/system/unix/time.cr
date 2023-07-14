@@ -61,10 +61,20 @@ module Crystal::System::Time
     "/usr/share/lib/zoneinfo/",
     "/usr/lib/locale/TZ/",
   }
-  LOCALTIME = "/etc/localtime"
+
+  # Android Bionic C-specific locations. These are files rather than directories
+  # and use a different format (see `Time::Location.read_android_tzdata`).
+  ANDROID_TZDATA_SOURCES = {
+    "/apex/com.android.tzdata/etc/tz/tzdata",
+    "/system/usr/share/zoneinfo/tzdata",
+  }
 
   def self.zone_sources : Enumerable(String)
     ZONE_SOURCES
+  end
+
+  def self.android_tzdata_sources : Enumerable(String)
+    ANDROID_TZDATA_SOURCES
   end
 
   def self.load_iana_zone(iana_name : String) : ::Time::Location?

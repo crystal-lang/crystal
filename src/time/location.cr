@@ -298,6 +298,12 @@ class Time::Location
         return location
       end
 
+      {% if flag?(:android) %}
+        if location = load_android(name, Crystal::System::Time.android_tzdata_sources)
+          return location
+        end
+      {% end %}
+
       # If none of the database sources contains a suitable location,
       # try getting it from the operating system.
       # This is only implemented on Windows. Unix systems usually have a
