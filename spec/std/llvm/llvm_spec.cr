@@ -28,7 +28,7 @@ describe LLVM do
       triple.should match(/-dragonfly/)
     {% elsif flag?(:netbsd) %}
       triple.should match(/-netbsd/)
-    {% elsif flag?(:was) %}
+    {% elsif flag?(:wasi) %}
       triple.should match(/-wasi/)
     {% else %}
       pending! "Unknown operating system"
