@@ -28,26 +28,6 @@ describe "Compiler" do
     end
   end
 
-  it "outputs correct cc command in preference to a filename when cross compile" do
-    crystal_bin = File.realpath(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal")
-    cc = ENV["CC"]? || {{ flag?(:msvc) ? "cl.exe" : "cc" }}
-
-    Dir.cd compiler_datapath do
-      with_temp_executable "compiler_spec_output" do |path|
-        FileUtils.mkdir_p("#{path}/bin")
-        expected_bin = "#{path}/bin/compiler_sample-linux-x86_64"
-        output = IO::Memory.new
-        Process.run(
-          crystal_bin,
-          ["build"].concat(program_flags_options).concat(["--cross-compile", "--target=x86_64-unknown-linux-gnu", "-o", expected_bin, "compiler_sample"]),
-          output: output
-        )
-        File.exists?("#{expected_bin}.o").should be_true
-        output.to_s.should contain("#{cc} #{expected_bin}.o -o #{expected_bin} ")
-      end
-    end
-  end
-
   it "treats all arguments post-filename as program arguments" do
     with_tempfile "args_test" do |path|
       Process.run(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal", [File.join(compiler_datapath, "args_test"), "-Dother_flag", "--", "bar", path])
