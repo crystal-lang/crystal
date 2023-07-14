@@ -1,6 +1,11 @@
 require "c/sys/time"
 require "c/time"
 
+{% if flag?(:android) %}
+  # needed for accessing local timezone
+  require "c/sys/system_properties"
+{% end %}
+
 {% if flag?(:darwin) %}
   # Darwin supports clock_gettime starting from macOS Sierra, but we can't
   # use it because it would prevent running binaries built on macOS Sierra
@@ -81,15 +86,51 @@ module Crystal::System::Time
     nil
   end
 
-  def self.load_localtime : ::Time::Location?
-    if ::File.file?(LOCALTIME) && ::File.readable?(LOCALTIME)
-      ::File.open(LOCALTIME) do |file|
-        ::Time::Location.read_zoneinfo("Local", file)
-      rescue ::Time::Location::InvalidTZDataError
-        nil
+  {% if flag?(:android) %}
+    def self.load_localtime : ::Time::Location?
+      # NOTE: although reading a system property is expensive, we don't cache it
+      # here since it is expected that most code should only ever be calling
+      # `Time::Location.load`, which is already a cached class property, rather
+      # than `.load_local`. Bionic itself caches the property like this:
+      # https://android.googlesource.com/platform/bionic/+/master/libc/private/CachedProperty.h
+      if timezone = getprop("persist.sys.timezone")
+        if path = ::Time::Location.find_android_tzdata_file(android_tzdata_sources)
+          ::File.open(path) do |file|
+            ::Time::Location.read_android_tzdata(file, true) do |name, location|
+              return location if name == timezone
+            end
+          end
+        end
       end
     end
-  end
+
+    private def self.getprop(key : String) : String?
+      {% if LibC.has_method?("__system_property_read_callback") %}
+        pi = LibC.__system_property_find(key)
+        value = ""
+        LibC.__system_property_read_callback(pi, ->(data, _name, value, _serial) do
+          data.as(String*).value = String.new(value)
+        end, pointerof(value))
+        value.presence
+      {% else %}
+        buf = uninitialized LibC::Char[LibC::PROP_VALUE_MAX]
+        len = LibC.__system_property_get(key, buf)
+        String.new(buf.to_slice[0, len]) if len > 0
+      {% end %}
+    end
+  {% else %}
+    private LOCALTIME = "/etc/localtime"
+
+    def self.load_localtime : ::Time::Location?
+      if ::File.file?(LOCALTIME) && ::File.readable?(LOCALTIME)
+        ::File.open(LOCALTIME) do |file|
+          ::Time::Location.read_zoneinfo("Local", file)
+        rescue ::Time::Location::InvalidTZDataError
+          nil
+        end
+      end
+    end
+  {% end %}
 
   {% if flag?(:darwin) %}
     @@mach_timebase_info : LibC::MachTimebaseInfo?
