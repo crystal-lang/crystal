@@ -324,7 +324,7 @@ module Crystal
         target_machine.emit_obj_to_file llvm_mod, output_filename
       end
       object_names = [output_filename]
-      output_filename = output_filename.sub(/#{Regex.escape(unit.object_extension)}$/, "")
+      output_filename = output_filename.rchop(unit.object_extension)
       _, command, args = linker_command(program, object_names, output_filename, nil)
       print_command(command, args)
     end
