@@ -62,7 +62,7 @@ module Iterable(T)
   #
   # See also: `Iterator#step`.
   def each_step(n : Int, *, offset : Int)
-    each.skip(offset < 0 ? offset % n : offset).step(n)
+    each.skip(offset).step(n)
   end
 
   # Same as `each.with_index(offset)`.

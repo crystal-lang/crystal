@@ -444,7 +444,7 @@ module Enumerable(T)
   # Accepts an optional *offset* parameter
   #
   # ```
-  # %w[Alice Bob Charlie David].each_step(2, 1) do |user|
+  # %w[Alice Bob Charlie David].each_step(2, offset: 1) do |user|
   #   puts "User: #{user}"
   # end
   # ```
