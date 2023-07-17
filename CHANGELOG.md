@@ -1,3 +1,15 @@
+# 1.9.1 (2023-07-17)
+
+### Bugfixes
+
+#### stdlib
+
+- *(serialization)* Fix `Serializable` with converter parsing `null` value ([#13656](https://github.com/crystal-lang/crystal/pull/13656), thanks @straight-shoota)
+
+#### compiler
+
+- *(codegen)* Fix generated cc command for cross compile ([#13661](https://github.com/crystal-lang/crystal/pull/13661), thanks @fnordfish)
+
 # 1.9.0 (2023-07-11)
 ### Breaking changes
 
