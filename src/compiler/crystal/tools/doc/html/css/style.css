@@ -725,10 +725,6 @@ span.flag.lime {
   visibility: visible
 }
 
-.octicon-link {
-  color: black;
-}
-
 img {
   max-width: 100%;
 }
@@ -947,9 +943,5 @@ img {
 
   #sidebar-btn, #sidebar-btn-label {
     color: white; 
-  }
-
-  .octicon-link {
-    color: white;
   }
 }
