@@ -103,8 +103,6 @@ def Spec.configure_formatter(formatter, output_path = nil)
   when "junit"
     junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
     Spec.add_formatter(junit_formatter)
-  when "list_tags"
-    Spec.override_default_formatter(Spec::ListTagsFormatter.new)
   when "verbose"
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
   when "tap"

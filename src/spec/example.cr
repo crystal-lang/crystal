@@ -22,7 +22,7 @@ module Spec
         Spec.formatters.each(&.before_example(description))
 
         unless block = @block
-          @parent.report(:pending, description, file, line)
+          @parent.report(:pending, description, file, line) unless Spec.list_tags?
           return
         end
 
@@ -40,7 +40,6 @@ module Spec
             break if !context.responds_to?(:parent)
             context = context.parent
           end
-          @parent.report(:success, description, file, line, Time.monotonic - start)
         else
           ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
           ran || internal_run(start, non_nil_block)
