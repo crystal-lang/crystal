@@ -224,8 +224,14 @@ module YAML
             {% for name, value in properties %}
               when {{value[:key]}}
                 begin
-                  {% if value[:has_default] && !value[:nilable] %}
-                    next if YAML::Schema::Core.parse_null?(value_node)
+                  {% if value[:has_default] || value[:nilable] %}
+                    if YAML::Schema::Core.parse_null?(value_node)
+                      {% if value[:nilable] %}
+                        %var{name} = nil
+                        %found{name} = true
+                      {% end %}
+                      next
+                    end
                   {% end %}
 
                   %var{name} =
