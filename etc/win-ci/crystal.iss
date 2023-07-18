@@ -200,6 +200,16 @@ begin
     HasWinSDKAt(HKEY_CURRENT_USER, Win10SDK32);
 end;
 
+function IsDeveloperModeEnabled: Boolean;
+var
+  regValue: Cardinal;
+begin
+  result := False;
+  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock', 'AllowDevelopmentWithoutDevLicense', regValue) then
+    if regValue <> 0 then
+      result := True;
+end;
+
 { Adopted from https://stackoverflow.com/a/46609047 }
 procedure EnvAddPath(Path: string; IsSystem: Boolean);
 var
@@ -302,7 +312,13 @@ begin
       'Please install the missing components using one of the following options: \line\line ' +
       '\emspace\bullet\emspace https://aka.ms/vs/17/release/vs_BuildTools.exe for the build tools alone \line ' +
       '\emspace\bullet\emspace https://visualstudio.microsoft.com/downloads/ for the build tools + Visual Studio 2022 \line\line ' +
-      'The {\b Desktop development with C++} workload should be selected.';
+      'The {\b Desktop development with C++} workload should be selected. \line\line ';
+
+  if not IsDeveloperModeEnabled() then
+    message := message +
+      '{\b WARNING:} Developer Mode is not enabled on this machine. Please refer to ' +
+      'https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development ' +
+      'for instructions on how to enable Developer Mode. \line\line ';
   
   if message <> '' then
     warningsPage := CreateOutputMsgMemoPage(wpInfoAfter,
