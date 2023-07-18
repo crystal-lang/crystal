@@ -456,8 +456,8 @@ module Enumerable(T)
   # User: David
   # ```
   def each_step(n : Int, *, offset : Int = 0, & : T ->) : Nil
-    raise ArgumentError.new("n must be greater or equal 1") if n < 1
-    raise ArgumentError.new("offset must be greater or equal 0") if offset < 0
+    raise ArgumentError.new("Invalid n size: #{n}") if n <= 0
+    raise ArgumentError.new("Invalid offset size: #{offset}") if offset < 0
     offset_mod = offset % n
     each_with_index do |elem, i|
       yield elem if i >= offset && i % n == offset_mod
