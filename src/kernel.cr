@@ -569,7 +569,6 @@ end
   {% else %}
     Crystal::System::Signal.setup_default_handlers
   {% end %}
-  Crystal::System::Process.setup_default_interrupt_handlers
 
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
