@@ -518,7 +518,8 @@
 - Do not match expectations outside specs ([#13079](https://github.com/crystal-lang/crystal/pull/13079), thanks @HertzDevil)
 - Enable or fix specs that already work on Windows ([#13186](https://github.com/crystal-lang/crystal/pull/13186), thanks @HertzDevil)
 
-## 1.7.3
+## [1.7.3] - 2023-03-07
+[1.7.3]: https://github.com/crystal-lang/crystal/releases/1.7.3
 
 ### Standard Library
 
