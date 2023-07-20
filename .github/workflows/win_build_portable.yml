@@ -21,7 +21,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.9.1"
+          crystal: "1.9.2"
 
       - name: Download Crystal source
         uses: actions/checkout@v3
