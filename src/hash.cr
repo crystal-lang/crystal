@@ -2071,11 +2071,11 @@ class Hash(K, V)
     self
   end
 
-  # Rebuilds the hash table based on the current value of each key.
+  # Rebuilds the hash table based on the current keys.
   #
-  # When using mutable data types as keys, changing the value of a key after
-  # it was inserted into the `Hash` may lead to undefined behaviour.
-  # This method re-indexes the hash using the current key values.
+  # When using mutable data types as keys, modifying a key after it was inserted
+  # into the `Hash` may lead to undefined behaviour. This method re-indexes the
+  # hash using the current keys.
   def rehash : Nil
     do_compaction(rehash: true)
   end
