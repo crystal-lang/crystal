@@ -169,7 +169,7 @@ describe "Hash" do
     end
   end
 
-  describe "put" do
+  describe "#put" do
     it "puts in a small hash" do
       a = {} of Int32 => Int32
       a.put(1, 2) { nil }.should eq(nil)
@@ -188,6 +188,33 @@ describe "Hash" do
     it "yields key" do
       a = {} of Int32 => Int32
       a.put(1, 2, &.to_s).should eq("1")
+    end
+  end
+
+  describe "#put_if_absent" do
+    it "puts if key doesn't exist" do
+      v = [] of String
+      h = {} of Int32 => Array(String)
+      h.put_if_absent(1, v).should be(v)
+      h.should eq({1 => v})
+      h[1].should be(v)
+    end
+
+    it "returns existing value if key exists" do
+      v = [] of String
+      h = {1 => v}
+      h.put_if_absent(1, [] of String).should be(v)
+      h.should eq({1 => v})
+      h[1].should be(v)
+    end
+
+    it "accepts a block" do
+      v = [] of String
+      h = {1 => v}
+      h.put_if_absent(1) { [] of String }.should be(v)
+      h.put_if_absent(2) { |key| [key.to_s] }.should eq(["2"])
+      h.should eq({1 => v, 2 => ["2"]})
+      h[1].should be(v)
     end
   end
 

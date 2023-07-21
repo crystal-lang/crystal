@@ -16,8 +16,7 @@ class URI
     def self.parse(query : String) : self
       parsed = {} of String => Array(String)
       parse(query) do |key, value|
-        ary = parsed[key] ||= [] of String
-        ary.push value
+        parsed.put_if_absent(key) { [] of String } << value
       end
       Params.new(parsed)
     end
@@ -297,9 +296,9 @@ class URI
     # params.fetch_all("item") # => ["pencil", "book", "workbook", "keychain"]
     # ```
     def add(name, value)
-      raw_params[name] ||= [] of String
-      raw_params[name] = [] of String if raw_params[name] == [""]
-      raw_params[name] << value
+      params = raw_params.put_if_absent(name) { [] of String }
+      params.clear if params.size == 1 && params[0] == ""
+      params << value
     end
 
     # Sets all *values* for specified param *name* at once.
