@@ -49,8 +49,6 @@ abstract class OpenSSL::SSL::Context
       {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_server"
       {% end %}
-
-      self.ciphers = CIPHERS_OLD
     end
 
     # Returns a new TLS client context with only the given method set.
