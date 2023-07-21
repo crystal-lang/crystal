@@ -176,8 +176,7 @@ module Crystal
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
-      @single_module = !!single_module
+    def initialize(@program : Program, @node : ASTNode, @single_module : Bool = false, @debug = Debug::Default)
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")

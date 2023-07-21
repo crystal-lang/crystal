@@ -77,9 +77,8 @@ module Crystal
       @assigned_vars = [] of String
     end
 
-    def wants_doc=(wants_doc)
-      @wants_doc = !!wants_doc
-      @doc_enabled = !!wants_doc
+    def wants_doc=(@wants_doc : Bool)
+      @doc_enabled = wants_doc
     end
 
     def parse
@@ -3738,7 +3737,7 @@ module Crystal
       end
 
       @def_nest -= 1
-      @doc_enabled = !!@wants_doc
+      @doc_enabled = @wants_doc
 
       node = Def.new name, params, body, receiver, block_param, return_type, @is_macro_def, @block_arity, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_location = name_location
