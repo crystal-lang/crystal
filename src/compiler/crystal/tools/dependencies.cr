@@ -28,7 +28,7 @@ module Crystal
     end
 
     @depth = 0
-    @parents = [] of String
+    @stack = [] of String
     @filter_depth = Int32::MAX
 
     @format : Format
@@ -54,17 +54,17 @@ module Crystal
         if (unseen && !filter) || @verbose
           print_indent if wants_indent?
 
-          print_file(filename, @parents.last?, filter, unseen)
+          print_file(filename, @stack.last?, filter, unseen)
         end
       end
 
-      @parents << filename
+      @stack << filename
       @depth += 1
     end
 
     def leave_file
       @depth -= 1
-      @parents.pop?
+      @stack.pop?
     end
 
     private getter? wants_indent : Bool { @format.tree? }
