@@ -133,7 +133,7 @@ module Crystal
 
     private def path(filename)
       relative_path = ::Path[filename].relative_to?(Dir.current) || filename
-      wants_quotes? ? relative_path.inspect : relative_path
+      wants_quotes? ? relative_path.to_s.inspect : relative_path
     end
 
     private def filter?(filename)
