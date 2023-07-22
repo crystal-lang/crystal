@@ -50,15 +50,18 @@ class Process
     Crystal::System::Process.signal(pid, signal.value)
   end
 
+  alias Interrupt = Crystal::System::Process::Interrupt
+
   # Installs *handler* as the new handler for interrupt requests. Removes any
   # previously set interrupt handler.
   #
   # The handler is executed on a fresh fiber every time an interrupt occurs.
   #
-  # * On Unix-like systems, this traps `SIGINT`.
-  # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd> and
-  #   <kbd>Ctrl</kbd> + <kbd>Break</kbd> signals sent to a console application.
-  def self.on_interrupt(&handler : ->) : Nil
+  # * On Unix-like systems, this traps `SIGINT`, `SIGHUP`, `SIGTERM`.
+  # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd>,
+  #   <kbd>Ctrl</kbd> + <kbd>Break</kbd>, terminal close, windows logoff
+  #   and shutdown signals sent to a console application.
+  def self.on_interrupt(&handler : Interrupt ->) : Nil
     Crystal::System::Process.on_interrupt(&handler)
   end
 
