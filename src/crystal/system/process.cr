@@ -77,6 +77,15 @@ struct Crystal::System::Process
 
   # Changes the root directory for the current process.
   # def self.chroot(path : String)
+
+  enum Interrupt
+    # sigint, ctrl-c or ctrl-break events
+    USER_SIGNALLED
+    # sighup or closed event
+    TERMINAL_DISCONNECTED
+    # sigterm, logoff or shutdown events
+    SESSION_ENDED
+  end
 end
 
 module Crystal::System

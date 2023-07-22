@@ -58,8 +58,28 @@ struct Crystal::System::Process
     raise RuntimeError.from_errno("kill") if ret < 0
   end
 
-  def self.on_interrupt(&handler : ->) : Nil
-    ::Signal::INT.trap { |_signal| handler.call }
+  def self.on_interrupt(&handler : Interrupt ->) : Nil
+    sig_handler = Proc(::Signal, Nil).new do |signal|
+      int_type = case signal
+                 when .int?
+                   Interrupt::USER_SIGNALLED
+                 when .hup?
+                   Interrupt::TERMINAL_DISCONNECTED
+                 when .term?
+                   Interrupt::SESSION_ENDED
+                 else
+                   Interrupt::USER_SIGNALLED
+                 end
+      handler.call int_type
+
+      # ignore prevents system defaults and clears registered interrupts
+      # hence we need to re-register
+      signal.ignore
+      Process.on_interrupt &handler
+    end
+    ::Signal::INT.trap &sig_handler
+    ::Signal::HUP.trap &sig_handler
+    ::Signal::TERM.trap &sig_handler
   end
 
   def self.ignore_interrupts! : Nil
