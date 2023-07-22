@@ -162,9 +162,6 @@ module Crystal
         @io.puts "graph LR"
       end
 
-      def end_format
-      end
-
       private def print_file(filename, parent, filter, unseen)
         return unless parent
 
