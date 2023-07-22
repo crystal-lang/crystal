@@ -14,6 +14,7 @@ struct Crystal::System::Process
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
+  @@last_interrupt = Interrupt::USER_SIGNALLED
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
@@ -103,7 +104,16 @@ struct Crystal::System::Process
   def self.on_interrupt(&@@interrupt_handler : ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
-      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT, LibC::CTRL_CLOSE_EVENT, LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT)
+      @@last_interrupt = case event_type
+                         when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
+                           Interrupt::USER_SIGNALLED
+                         when LibC::CTRL_CLOSE_EVENT
+                           Interrupt::TERMINAL_DISCONNECTED
+                         when LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT
+                           Interrupt::SESSION_ENDED
+                         else
+                           next 0
+                         end
       @@interrupt_count.signal
       1
     end
@@ -136,8 +146,9 @@ struct Crystal::System::Process
 
         if handler = @@interrupt_handler
           non_nil_handler = handler # if handler is closured it will also have the Nil type
+          int_type = @@last_interrupt
           spawn do
-            non_nil_handler.call
+            non_nil_handler.call int_type
           rescue ex
             ex.inspect_with_backtrace(STDERR)
             STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
