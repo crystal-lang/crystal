@@ -27,7 +27,6 @@ module Crystal
       Mermaid
     end
 
-    @depth = 0
     @stack = [] of String
     @filter_depth = Int32::MAX
 
@@ -42,11 +41,11 @@ module Crystal
     end
 
     def enter_file(filename : String, unseen : Bool)
-      if @depth <= @filter_depth
+      if @stack.size <= @filter_depth
         filter = filter?(filename)
 
         if filter
-          @filter_depth = @depth
+          @filter_depth = @stack.size
         else
           @filter_depth = Int32::MAX
         end
@@ -59,12 +58,10 @@ module Crystal
       end
 
       @stack << filename
-      @depth += 1
     end
 
     def leave_file
-      @depth -= 1
-      @stack.pop?
+      @stack.pop
     end
 
     private getter? wants_indent : Bool { @format.tree? }
@@ -86,7 +83,7 @@ module Crystal
     end
 
     private def print_indent
-      @io.print "  " * @depth if @depth > 0
+      @io.print "  " * @stack.size unless @stack.empty?
     end
 
     private def print_file(filename, parent, filter, unseen)
