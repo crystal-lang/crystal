@@ -6,7 +6,7 @@ class Crystal::Command
   private def dependencies
     config = create_compiler "tool dependencies", no_codegen: true, dependencies: true
 
-    dependency_printer = DependencyPrinter.new(STDOUT, format: config.output_format, verbose: config.verbose)
+    dependency_printer = DependencyPrinter.new(STDOUT, format: config.dependency_output_format, verbose: config.verbose)
 
     dependency_printer.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
     dependency_printer.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
@@ -38,12 +38,7 @@ module Crystal
 
     getter default_paths : Array(::Path) = CrystalPath.default_paths.map { |path| ::Path[path].expand }
 
-    def initialize(@io : IO, format : Format | String? = Format::Tree, @verbose : Bool = false)
-      case format
-      in Format then @format = format
-      in String then @format = Format.parse(format)
-      in Nil    then @format = Format::Tree
-      end
+    def initialize(@io : IO, @format : Format = Format::Tree, @verbose : Bool = false)
     end
 
     def enter_file(filename : String, unseen : Bool)

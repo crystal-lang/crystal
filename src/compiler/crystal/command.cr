@@ -341,6 +341,7 @@ class Crystal::Command
     hierarchy_exp : String?,
     cursor_location : String?,
     output_format : String?,
+    dependency_output_format : DependencyPrinter::Format,
     combine_rpath : Bool,
     includes : Array(String),
     excludes : Array(String),
@@ -370,6 +371,7 @@ class Crystal::Command
     hierarchy_exp = nil
     cursor_location = nil
     output_format = nil
+    dependency_output_format = nil
     excludes = [] of String
     includes = [] of String
     verbose = false
@@ -418,7 +420,8 @@ class Crystal::Command
 
       if dependencies
         opts.on("-f tree|flat|dot|mermaid", "--format tree|flat|dot|mermaid", "Output format tree (default), flat, dot, or mermaid") do |f|
-          output_format = f
+          dependency_output_format = DependencyPrinter::Format.parse?(f)
+          error "Invalid format: #{f}. Options are: tree, flat, dot, or mermaid" unless dependency_output_format
         end
 
         opts.on("-i <path>", "--include <path>", "Include path") do |f|
@@ -571,16 +574,11 @@ class Crystal::Command
       end
     end
 
-    if dependencies
-      output_format ||= "tree"
-      unless output_format.in?("tree", "flat", "dot", "mermaid")
-        error "You have input an invalid format, only tree, flat, dot, and mermaid are supported"
-      end
-    else
-      output_format ||= "text"
-      unless output_format.in?("text", "json")
-        error "You have input an invalid format, only text and JSON are supported"
-      end
+    dependency_output_format ||= DependencyPrinter::Format::Tree
+
+    output_format ||= "text"
+    unless output_format.in?("text", "json")
+      error "You have input an invalid format, only text and JSON are supported"
     end
 
     error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
@@ -594,7 +592,9 @@ class Crystal::Command
     end
 
     combine_rpath = run && !no_codegen
-    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath, includes, excludes, verbose
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
+      arguments, specified_output, hierarchy_exp, cursor_location, output_format,
+      dependency_output_format.not_nil!, combine_rpath, includes, excludes, verbose
   end
 
   private def gather_sources(filenames)
