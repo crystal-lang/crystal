@@ -6,7 +6,7 @@ class Crystal::Command
   private def dependencies
     config = create_compiler "tool dependencies", no_codegen: true, dependencies: true
 
-    dependency_printer = DependencyPrinter.new(STDOUT, format: config.dependency_output_format, verbose: config.verbose)
+    dependency_printer = DependencyPrinter.create(STDOUT, format: config.dependency_output_format, verbose: config.verbose)
 
     dependency_printer.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
     dependency_printer.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
@@ -19,7 +19,7 @@ class Crystal::Command
 end
 
 module Crystal
-  class DependencyPrinter
+  abstract class DependencyPrinter
     enum Format
       Flat
       Tree
@@ -37,6 +37,17 @@ module Crystal
 
     getter default_paths : Array(::Path) = CrystalPath.default_paths.map { |path| ::Path[path].expand }
 
+    def self.create(io : IO, format : Format = Format::Tree, verbose : Bool = false)
+      case format
+      in .flat?, .tree?
+        List.new(io, format, verbose)
+      in .dot?
+        Dot.new(io, format, verbose)
+      in .mermaid?
+        Mermaid.new(io, format, verbose)
+      end
+    end
+
     def initialize(@io : IO, @format : Format = Format::Tree, @verbose : Bool = false)
     end
 
@@ -51,7 +62,7 @@ module Crystal
         end
 
         if (unseen && !filter) || @verbose
-          print_indent if wants_indent?
+          print_indent
 
           print_file(filename, @stack.last?, filter, unseen)
         end
@@ -64,61 +75,16 @@ module Crystal
       @stack.pop
     end
 
-    private getter? wants_indent : Bool { @format.tree? }
-
     def start_format
-      case @format
-      when .dot?
-        @io.puts "digraph G {"
-      when .mermaid?
-        @io.puts "graph LR"
-      end
-    end
-
-    def end_format
-      case @format
-      when .dot?
-        @io.puts "}"
-      end
     end
 
     private def print_indent
-      @io.print "  " * @stack.size unless @stack.empty?
     end
 
-    private def print_file(filename, parent, filter, unseen)
-      comment = edge_comment(filter, unseen)
-      case @format
-      in .dot?
-        if parent
-          @io.print "  "
-          @io.print path(parent)
-          @io.print " -> "
-          @io.print path(filename)
-          @io.print %( [label="#{comment}"]) if comment
-          @io.puts
-        end
-      in .mermaid?
-        if parent
-          @io.print "  "
-          @io.print path(parent)
-          @io.print " -->"
-          @io.print "|#{comment}|" if comment
-          @io.print " "
-          @io.print path(filename)
-          @io.puts
-        end
-      in .tree?, .flat?
-        @io.print path(filename)
-        if comment
-          @io.print " "
-          @io.print comment
-        end
-        @io.puts
-      end
-    end
+    private abstract def print_file(filename, parent, filter, unseen)
 
-    private getter? wants_quotes : Bool { @format.dot? }
+    def end_format
+    end
 
     private def edge_comment(filter = false, unseen = false)
       if unseen
@@ -129,8 +95,7 @@ module Crystal
     end
 
     private def path(filename)
-      relative_path = ::Path[filename].relative_to?(Dir.current) || filename
-      wants_quotes? ? relative_path.to_s.inspect : relative_path
+      ::Path[filename].relative_to?(Dir.current) || filename
     end
 
     private def filter?(filename)
@@ -146,6 +111,73 @@ module Crystal
 
     private def match_patterns?(patterns, paths)
       patterns.any? { |pattern| paths.any? { |path| File.match?(pattern, path) } }
+    end
+
+    class List < DependencyPrinter
+      private def print_file(filename, parent, filter, unseen)
+        @io.print path(filename)
+        if comment = edge_comment(filter, unseen)
+          @io.print " "
+          @io.print comment
+        end
+        @io.puts
+      end
+
+      private def print_indent
+        @io.print "  " * @stack.size unless @stack.empty?
+      end
+
+      private getter? wants_indent : Bool { @format.tree? }
+    end
+
+    class Dot < DependencyPrinter
+      def start_format
+        @io.puts "digraph G {"
+      end
+
+      def end_format
+        @io.puts "}"
+      end
+
+      private def print_file(filename, parent, filter, unseen)
+        return unless parent
+
+        @io.print "  "
+        @io.print path(parent)
+        @io.print " -> "
+        @io.print path(filename)
+        if comment = edge_comment(filter, unseen)
+          @io.print %( [label="#{comment}"])
+        end
+        @io.puts
+      end
+
+      private def path(filename)
+        super.to_s.inspect
+      end
+    end
+
+    class Mermaid < DependencyPrinter
+      def start_format
+        @io.puts "graph LR"
+      end
+
+      def end_format
+      end
+
+      private def print_file(filename, parent, filter, unseen)
+        return unless parent
+
+        @io.print "  "
+        @io.print path(parent)
+        @io.print " -->"
+        if comment = edge_comment(filter, unseen)
+          @io.print "|#{comment}|"
+        end
+        @io.print " "
+        @io.print path(filename)
+        @io.puts
+      end
     end
   end
 end
