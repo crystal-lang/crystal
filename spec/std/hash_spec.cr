@@ -882,6 +882,13 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms keys with values included" do
+    h1 = {1 => "a", 2 => "b", 3 => "c"}
+
+    h2 = h1.transform_keys { |k, v| "#{k}#{v}" }
+    h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+  end
+
   it "transforms values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
@@ -905,11 +912,25 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms values with keys included" do
+    h1 = {"a" => 1, "b" => 2, "c" => 3}
+
+    h2 = h1.transform_values { |v, k| "#{k}#{v}" }
+    h2.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
+  end
+
   it "transform values in place" do
     h = {"a" => 1, "b" => 2, "c" => 3}
 
     h.transform_values!(&.+(1))
     h.should eq({"a" => 2, "b" => 3, "c" => 4})
+  end
+
+  it "transform values in place with keys included" do
+    h = {"a" => "1", "b" => "2", "c" => "3"}
+
+    h.transform_values! { |v, k| "#{k}#{v}" }
+    h.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
   end
 
   it "zips" do
