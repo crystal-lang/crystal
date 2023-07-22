@@ -10,7 +10,7 @@ struct Crystal::System::Process
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
 
-  @@interrupt_handler : Proc(Nil)?
+  @@interrupt_handler : Proc(Interrupt)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
@@ -101,7 +101,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler : ->) : Nil
+  def self.on_interrupt(&@@interrupt_handler : Interrupt ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       @@last_interrupt = case event_type
