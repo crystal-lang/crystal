@@ -1,4 +1,4 @@
-set -l crystal_commands init build docs env eval i interactive play run spec tool help version
+set -l crystal_commands init build clear_cache docs env eval i interactive play run spec tool help version
 set -l tool_subcommands context expand format hierarchy implementations types
 
 complete -c crystal -s h -l help -d "Show help" -x
@@ -37,6 +37,8 @@ complete -c crystal -n "__fish_seen_subcommand_from build" -l target -d "Target 
 complete -c crystal -n "__fish_seen_subcommand_from build" -l verbose -d "Display executed commands"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l static -d "Link statically"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l stdin-filename -d "Source file name to be read from STDIN"
+
+complete -c crystal -n "not __fish_seen_subcommand_from $crystal_commands" -a "clear_cache" -d "clear the compiler cache"
 
 complete -c crystal -n "not __fish_seen_subcommand_from $crystal_commands" -a "docs" -d "generate documentation"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -l project-name -d "Set project name"
