@@ -243,6 +243,9 @@ struct UUID
       end
     else
       Random::Secure.random_bytes(uuid.to_slice[10..15])
+      # set multicast bit as recommended per section 4.5 of the RFC 4122 spec
+      # to not conflict with real MAC addresses
+      uuid[10] |= 0x01_u8
     end
 
     new(uuid, version: UUID::Version::V1, variant: UUID::Variant::RFC4122)
@@ -300,19 +303,19 @@ struct UUID
     new(hash[0...16], version: UUID::Version::V5, variant: UUID::Variant::RFC4122)
   end
 
-  {% for name in %w(DNS URL OID X500) %}
-    # Generates RFC 4122 v3 UUID with the `Namespace::{{ name.id }}`.
+  {% for name in %w(DNS URL OID X500).map(&.id) %}
+    # Generates RFC 4122 v3 UUID with the `Namespace::{{ name }}`.
     #
     # * `name`: The name used to generate the UUID, it can be a string of any size.
-    def self.v3_{{ name.id.downcase }}(name : String)
-      v3(name, Namespace::{{ name.id }})
+    def self.v3_{{ name.downcase }}(name : String)
+      v3(name, Namespace::{{ name }})
     end
 
-    # Generates RFC 4122 v5 UUID with the `Namespace::{{ name.id }}`.
+    # Generates RFC 4122 v5 UUID with the `Namespace::{{ name }}`.
     #
     # * `name`: The name used to generate the UUID, it can be a string of any size.
-    def self.v5_{{ name.id.downcase }}(name : String)
-      v5(name, Namespace::{{ name.id }})
+    def self.v5_{{ name.downcase }}(name : String)
+      v5(name, Namespace::{{ name }})
     end
   {% end %}
 
