@@ -84,9 +84,6 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
-    # The cache directory where temporary files are placed.
-    setter cache_dir : String?
-
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
@@ -141,7 +138,7 @@ module Crystal
 
       types["NoReturn"] = @no_return = NoReturnType.new self, self, "NoReturn"
       types["Void"] = @void = VoidType.new self, self, "Void"
-      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
+      types["Nil"] = @nil = NilType.new self, self, "Nil", value, 1
       types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
       types["Char"] = @char = CharType.new self, self, "Char", value, 4
 
@@ -281,6 +278,7 @@ module Crystal
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
       define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path
+      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath
       define_crystal_string_constant "VERSION", Crystal::Config.version
       define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end

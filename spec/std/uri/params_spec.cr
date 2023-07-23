@@ -4,7 +4,7 @@ require "uri/params"
 class URI
   describe Params do
     describe ".new" do
-      Params.new.should eq(Params.parse(""))
+      it { Params.new.should eq(Params.parse("")) }
     end
 
     describe ".parse" do
@@ -293,6 +293,64 @@ class URI
         expect_raises KeyError do
           params["foo"]
         end
+      end
+    end
+
+    describe "#merge!" do
+      it "modifies the reciever" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge!(other_params, replace: false)
+
+        params.to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
+      end
+
+      describe "does not modify the other params" do
+        it "with replace: true" do
+          params = Params.parse("foo=bar")
+          other_params = Params.parse("foo=buzz&foo=extra")
+
+          params.merge!(other_params, replace: true)
+          params.add("foo", "another")
+
+          other_params.to_s.should eq("foo=buzz&foo=extra")
+        end
+
+        it "with replace: false" do
+          params = Params.parse("foo=bar")
+          other_params = Params.parse("foo=buzz&foo=extra")
+
+          params.merge!(other_params, replace: false)
+          params.add("foo", "another")
+
+          other_params.to_s.should eq("foo=buzz&foo=extra")
+        end
+      end
+    end
+
+    describe "#merge" do
+      it "replaces all values with the same key by default" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params).to_s.should eq("foo=buzz&foo=extra&qux=zoo")
+      end
+
+      it "appends values with the same key with replace: false" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params, replace: false).to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
+      end
+
+      it "does not modify the reciever" do
+        params = Params.parse("foo=bar&foo=baz&qux=zoo")
+        other_params = Params.parse("foo=buzz&foo=extra")
+
+        params.merge(other_params)
+
+        params.to_s.should eq("foo=bar&foo=baz&qux=zoo")
       end
     end
 

@@ -148,6 +148,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(lib Foo\n  union Foo\n    a : Int\n    b : Int32\n  end\nend)
   expect_to_s %(lib Foo\n  FOO = 0\nend)
   expect_to_s %(lib LibC\n  fun getch = "get.char"\nend)
+  expect_to_s %(lib Foo::Bar\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
   expect_to_s %(alias Foo::Bar = Void)
@@ -228,4 +229,8 @@ describe "ASTNode#to_s" do
       x
     end
     CODE
+  expect_to_s "def foo\n  yield\nend", "def foo(&)\n  yield\nend"
+  expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
+  expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
+  expect_to_s "macro foo(x)\n  yield\nend"
 end

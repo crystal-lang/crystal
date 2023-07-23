@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "enum" do
     it "does enum value" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         enum Color
           Red
           Green
@@ -12,11 +12,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Color::Blue.value
-      CODE
+      CRYSTAL
     end
 
     it "does enum new" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         enum Color
           Red
           Green
@@ -25,7 +25,7 @@ describe Crystal::Repl::Interpreter do
 
         blue = Color.new(2)
         blue.value
-      CODE
+      CRYSTAL
     end
   end
 end

@@ -154,7 +154,7 @@ class JSON::PullParser
   # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the array.
   #
   # If the array is empty, it does not yield.
-  def read_array
+  def read_array(&)
     read_begin_array
     until kind.end_array?
       yield
@@ -185,7 +185,7 @@ class JSON::PullParser
   # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the object.
   #
   # If the object is empty, it does not yield.
-  def read_object
+  def read_object(&)
     read_begin_object
     until kind.end_object?
       key_location = location
@@ -224,7 +224,7 @@ class JSON::PullParser
     when .float?
       float_value.tap { read_next }
     else
-      raise "expecting int or float but was #{@kind}"
+      raise "Expecting int or float but was #{@kind}"
     end
   end
 
@@ -332,22 +332,31 @@ class JSON::PullParser
   end
 
   # Reads an array or a null value, and returns it.
-  def read_array_or_null
+  def read_array_or_null(&)
     read_null_or { read_array { yield } }
   end
 
   # Reads an object or a null value, and returns it.
-  def read_object_or_null
+  def read_object_or_null(&)
     read_null_or { read_object { |key| yield key } }
   end
 
   # Reads a null value and returns it, or executes the given block if the value is not null.
-  def read_null_or
+  def read_null_or(&)
+    unless read_null?
+      yield
+    end
+  end
+
+  # Reads the current token if its value is null.
+  #
+  # Returns `true` if the token was read.
+  def read_null? : Bool
     if @kind.null?
       read_next
-      nil
+      true
     else
-      yield
+      false
     end
   end
 

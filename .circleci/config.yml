@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "1ee8983d46c594f97b6fe70a711c5dbefe83ab45"
+    default: "4b3af3fb9ebeb2c74850bc7025a17a38ab82c5f4"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1"
 
 defaults:
   environment: &env
@@ -19,7 +19,9 @@ defaults:
     - run: bin/ci prepare_system
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
-    - run: bin/ci build
+    - run:
+        command: bin/ci build
+        no_output_timeout: 30m
     - run:
         when: always
         command: |
@@ -45,7 +47,9 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -87,7 +91,9 @@ jobs:
       - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -117,7 +123,9 @@ jobs:
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci with_build_env 'make crystal'
-      - run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+      - run:
+          command: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+          no_output_timeout: 30m
       - run:
           when: always
           command: |
@@ -428,7 +436,7 @@ jobs:
       - image: manastech/s3cmd:2.2-alpine
     environment:
       <<: *env
-      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJDEDGK6MQ
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -470,7 +478,9 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
 
 workflows:
   version: 2

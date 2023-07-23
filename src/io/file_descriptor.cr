@@ -32,9 +32,7 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{ flag?(:win32) || flag?(:wasi) }}
-      self.blocking = false
-    end
+    system_blocking_init(blocking)
   end
 
   # :nodoc:
@@ -58,15 +56,13 @@ class IO::FileDescriptor < IO
     self.system_close_on_exec = value
   end
 
-  {% unless flag?(:win32) %}
-    def self.fcntl(fd, cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
+  def self.fcntl(fd, cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
-    def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
-  {% end %}
+  def fcntl(cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
   # Returns a `File::Info` object for this file descriptor, or raises
   # `IO::Error` in case of an error.
@@ -118,7 +114,7 @@ class IO::FileDescriptor < IO
 
   # Same as `seek` but yields to the block after seeking and eventually seeks
   # back to the original position when the block returns.
-  def seek(offset, whence : Seek = Seek::Set)
+  def seek(offset, whence : Seek = Seek::Set, &)
     original_pos = tell
     begin
       seek(offset, whence)
@@ -175,9 +171,8 @@ class IO::FileDescriptor < IO
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-  # TODO: always use non-blocking locks, yield fiber until resource becomes available
 
-  def flock_shared(blocking = true)
+  def flock_shared(blocking = true, &)
     flock_shared blocking
     begin
       yield
@@ -192,7 +187,7 @@ class IO::FileDescriptor < IO
     system_flock_shared(blocking)
   end
 
-  def flock_exclusive(blocking = true)
+  def flock_exclusive(blocking = true, &)
     flock_exclusive blocking
     begin
       yield

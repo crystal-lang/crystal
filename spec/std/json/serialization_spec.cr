@@ -40,6 +40,14 @@ describe "JSON serialization" do
       UInt64.from_json(UInt64::MAX.to_s).should eq(UInt64::MAX)
     end
 
+    it "does UInt128.from_json" do
+      UInt128.from_json(UInt128::MAX.to_s).should eq(UInt128::MAX)
+    end
+
+    it "does Int128.from_json" do
+      Int128.from_json(Int128::MAX.to_s).should eq(Int128::MAX)
+    end
+
     it "raises ParserException for overflow UInt64.from_json" do
       expect_raises(JSON::ParseException, "Can't read UInt64 at line 0, column 0") do
         UInt64.from_json("1#{UInt64::MAX}")
@@ -285,9 +293,8 @@ describe "JSON serialization" do
         JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
         JSONSpecEnum.from_json(%("two")).should eq(JSONSpecEnum::Two)
         JSONSpecEnum.from_json(%("ONE_HUNDRED")).should eq(JSONSpecEnum::OneHundred)
-        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "ONE-HUNDRED")) do
-          JSONSpecEnum.from_json(%("ONE-HUNDRED"))
-        end
+        JSONSpecEnum.from_json(%("ONE-HUNDRED")).should eq(JSONSpecEnum::OneHundred)
+
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: " one ")) do
           JSONSpecEnum.from_json(%(" one "))
         end
@@ -443,7 +450,7 @@ describe "JSON serialization" do
     it "deserializes unions of the same kind and remains stable" do
       str = [Int32::MAX, Int64::MAX].to_json
       value = Array(Int32 | Int64).from_json(str)
-      value.all? { |x| x.should be_a(Int64) }
+      value.all?(&.should(be_a(Int64)))
     end
 
     it "deserializes Time" do
@@ -499,6 +506,10 @@ describe "JSON serialization" do
 
     it "does for Int32" do
       1.to_json.should eq("1")
+    end
+
+    it "does for Int128" do
+      Int128::MAX.to_json.should eq(Int128::MAX.to_s)
     end
 
     it "does for Float64" do

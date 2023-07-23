@@ -1,0 +1,39 @@
+name: Regex Engine CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  pcre:
+    runs-on: ubuntu-latest
+    name: "PCRE"
+    container: crystallang/crystal:1.9.2-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+      - name: Remove PCRE2
+        run: apk del pcre2-dev
+      - name: Assert using PCRE
+        run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE'
+      - name: Show PCRE config
+        run: bin/crystal scripts/print_regex_config.cr
+      - name: Run Regex specs
+        run: bin/crystal spec --order=random spec/std/regex*
+  pcre2:
+    runs-on: ubuntu-latest
+    name: "PCRE2"
+    container: crystallang/crystal:1.9.2-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+      - name: Assert using PCRE2
+        run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE2'
+      - name: Assert select PCRE
+        run: bin/crystal eval -Duse_pcre 'abort unless Regex::Engine == Regex::PCRE'
+      - name: Show PCRE2 config
+        run: bin/crystal scripts/print_regex_config.cr
+      - name: Run Regex specs
+        run: bin/crystal spec --order=random spec/std/regex*

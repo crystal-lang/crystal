@@ -1587,4 +1587,21 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(1)
   end
+
+  it "doesn't crash if yield exp has no type (#12670)" do
+    codegen(%(
+      def foo : String?
+      end
+
+      def bar
+        while res = foo
+          yield res
+        end
+      end
+
+      bar do |res|
+        res
+      end
+      ))
+  end
 end

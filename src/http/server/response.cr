@@ -61,6 +61,7 @@ class HTTP::Server
       @headers.clear
       @cookies = nil
       @status = :ok
+      @status_message = nil
       @wrote_headers = false
       @output = @original_output
       @original_output.reset
@@ -168,6 +169,34 @@ class HTTP::Server
     # :ditto:
     def respond_with_status(status : Int, message : String? = nil) : Nil
       respond_with_status(HTTP::Status.new(status), message)
+    end
+
+    # Sends a redirect to *location*.
+    #
+    # The value of *location* gets encoded with `URI.encode`.
+    #
+    # The *status* determines the HTTP status code which can be
+    # `HTTP::Status::FOUND` (`302`) for a temporary redirect or
+    # `HTTP::Status::MOVED_PERMANENTLY` (`301`) for a permanent redirect.
+    #
+    # The response gets closed.
+    #
+    # Raises `IO::Error` if the response is closed or headers were already
+    # sent.
+    def redirect(location : String | URI, status : HTTP::Status = :found)
+      check_headers
+
+      self.status = status
+      headers["Location"] = if location.is_a? URI
+                              location.to_s
+                            else
+                              String.build do |io|
+                                URI.encode(location.to_s, io) do |byte|
+                                  URI.reserved?(byte) || URI.unreserved?(byte)
+                                end
+                              end
+                            end
+      close
     end
 
     private def check_headers

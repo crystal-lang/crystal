@@ -232,9 +232,8 @@ describe "YAML serialization" do
         YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
         YAMLSpecEnum.from_yaml(%("two")).should eq(YAMLSpecEnum::Two)
         YAMLSpecEnum.from_yaml(%("ONE_HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
-        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "ONE-HUNDRED")) do
-          YAMLSpecEnum.from_yaml(%("ONE-HUNDRED"))
-        end
+        YAMLSpecEnum.from_yaml(%("ONE-HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
+
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: " one ")) do
           YAMLSpecEnum.from_yaml(%(" one "))
         end

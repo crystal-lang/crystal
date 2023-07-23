@@ -226,7 +226,9 @@ module Random
           end
           span += 1
         end
-        range.begin + {{type}}.new!(rand_int(span))
+        # this addition never overflows because `rand_int` is unsigned and
+        # `rand_int <= range.end - range.begin <= type::MAX - range.begin`
+        range.begin &+ rand_int(span)
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.

@@ -107,7 +107,7 @@ class IO::Stapled < IO
   #
   # Both endpoints and the underlying `IO`s are closed after the block
   # (even if `sync_close?` is `false`).
-  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false)
+  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false, &)
     IO.pipe(read_blocking, write_blocking) do |a_read, a_write|
       IO.pipe(read_blocking, write_blocking) do |b_read, b_write|
         a, b = new(a_read, b_write, true), new(b_read, a_write, true)

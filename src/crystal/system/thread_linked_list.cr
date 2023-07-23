@@ -15,7 +15,7 @@ class Thread
     # stop-the-world situations, where a paused thread could have acquired the
     # lock to push/delete a node, while still being "safe" to iterate (but only
     # during a stop-the-world).
-    def unsafe_each : Nil
+    def unsafe_each(&) : Nil
       node = @head
 
       while node

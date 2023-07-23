@@ -5,14 +5,14 @@
 # ```
 # require "yaml"
 #
-# data = YAML.parse <<-END
+# data = YAML.parse <<-YAML
 #          ---
 #          foo:
 #            bar:
 #              baz:
 #                - qux
 #                - fox
-#          END
+#          YAML
 # data["foo"]["bar"]["baz"][0].as_s # => "qux"
 # data["foo"]["bar"]["baz"].as_a    # => ["qux", "fox"]
 # ```
@@ -26,14 +26,14 @@
 # which return `nil` when the underlying value type won't match.
 struct YAML::Any
   # All valid YAML core schema types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
+  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(YAML::Any) | Hash(YAML::Any, YAML::Any) | Set(YAML::Any)
 
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     case node
     when YAML::Nodes::Scalar
-      new YAML::Schema::Core.parse_scalar(node.value)
+      new YAML::Schema::Core.parse_scalar(node)
     when YAML::Nodes::Sequence
-      ary = [] of Any
+      ary = [] of YAML::Any
 
       node.each do |value|
         ary << new(ctx, value)
@@ -41,7 +41,7 @@ struct YAML::Any
 
       new ary
     when YAML::Nodes::Mapping
-      hash = {} of Any => Any
+      hash = {} of YAML::Any => YAML::Any
 
       node.each do |key, value|
         hash[new(ctx, key)] = new(ctx, value)
@@ -62,8 +62,20 @@ struct YAML::Any
   # Returns the raw underlying value, a `Type`.
   getter raw : Type
 
-  # Creates a `Any` that wraps the given `Type`.
+  # Creates a `YAML::Any` that wraps the given `Type`.
   def initialize(@raw : Type)
+  end
+
+  # :ditto:
+  def self.new(raw : Int)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_i64)
+  end
+
+  # :ditto:
+  def self.new(raw : Float)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_f64)
   end
 
   # Assumes the underlying value is an `Array` or `Hash` and returns its size.
@@ -198,28 +210,50 @@ struct YAML::Any
     as_i if @raw.is_a?(Int)
   end
 
-  # Checks that the underlying value is `Float64`, and returns its value.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value.
   # Raises otherwise.
   def as_f : Float64
-    @raw.as(Float64)
+    case raw = @raw
+    when Int
+      raw.to_f
+    else
+      raw.as(Float64)
+    end
   end
 
-  # Checks that the underlying value is `Float64`, and returns its value.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value.
   # Returns `nil` otherwise.
   def as_f? : Float64?
-    @raw.as?(Float64)
+    case raw = @raw
+    when Int
+      raw.to_f
+    else
+      raw.as?(Float64)
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float32`.
   # Raises otherwise.
   def as_f32 : Float32
-    @raw.as(Float).to_f32
+    case raw = @raw
+    when Int
+      raw.to_f32
+    else
+      raw.as(Float).to_f32
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float32`.
   # Returns `nil` otherwise.
   def as_f32? : Float32?
-    as_f32 if @raw.is_a?(Float)
+    case raw = @raw
+    when Int
+      raw.to_f32
+    when Float
+      raw.to_f32
+    else
+      nil
+    end
   end
 
   # Checks that the underlying value is `Time`, and returns its value.
@@ -236,25 +270,25 @@ struct YAML::Any
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
-  def as_a : Array(Any)
+  def as_a : Array(YAML::Any)
     @raw.as(Array)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
-  def as_a? : Array(Any)?
+  def as_a? : Array(YAML::Any)?
     @raw.as?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
-  def as_h : Hash(Any, Any)
+  def as_h : Hash(YAML::Any, YAML::Any)
     @raw.as(Hash)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
-  def as_h? : Hash(Any, Any)?
+  def as_h? : Hash(YAML::Any, YAML::Any)?
     @raw.as?(Hash)
   end
 
@@ -311,12 +345,12 @@ struct YAML::Any
 
   # Returns a new YAML::Any instance with the `raw` value `dup`ed.
   def dup
-    Any.new(raw.dup)
+    YAML::Any.new(raw.dup)
   end
 
   # Returns a new YAML::Any instance with the `raw` value `clone`ed.
   def clone
-    Any.new(raw.clone)
+    YAML::Any.new(raw.clone)
   end
 
   # Forwards `to_json_object_key` to `raw` if it responds to that method,
@@ -326,7 +360,7 @@ struct YAML::Any
     if raw.responds_to?(:to_json_object_key)
       raw.to_json_object_key
     else
-      raise JSON::Error.new("can't convert #{raw.class} to a JSON object key")
+      raise JSON::Error.new("Can't convert #{raw.class} to a JSON object key")
     end
   end
 end

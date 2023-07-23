@@ -14,7 +14,6 @@ module LLVM
       LibLLVM.initialize_x86_target_mc
       LibLLVM.initialize_x86_asm_printer
       LibLLVM.initialize_x86_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without X86 target"
@@ -31,7 +30,6 @@ module LLVM
       LibLLVM.initialize_aarch64_target_mc
       LibLLVM.initialize_aarch64_asm_printer
       LibLLVM.initialize_aarch64_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without AArch64 target"
@@ -48,7 +46,6 @@ module LLVM
       LibLLVM.initialize_arm_target_mc
       LibLLVM.initialize_arm_asm_printer
       LibLLVM.initialize_arm_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without ARM target"
@@ -65,7 +62,6 @@ module LLVM
       LibLLVM.initialize_webassembly_target_mc
       LibLLVM.initialize_webassembly_asm_printer
       LibLLVM.initialize_webassembly_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without WebAssembly target"
@@ -94,27 +90,26 @@ module LLVM
     chars = LibLLVM.get_default_target_triple
     triple = string_and_dispose(chars)
     if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
+      # normalize on `macosx` and remove minimum deployment target version
       "x86_64-apple-macosx"
+    elsif triple =~ /aarch64-apple-macosx|aarch64-apple-darwin/
+      # normalize on `macosx` and remove minimum deployment target version
+      "aarch64-apple-macosx"
+    elsif triple =~ /aarch64-unknown-linux-android/
+      # remove API version
+      "aarch64-unknown-linux-android"
     else
       triple
     end
   end
 
   def self.host_cpu_name : String
-    {% unless LibLLVM::IS_LT_70 %}
-      String.new LibLLVM.get_host_cpu_name
-    {% else %}
-      raise "LibLLVM.host_cpu_name requires LLVM 7.0 or newer"
-    {% end %}
+    String.new LibLLVM.get_host_cpu_name
   end
 
   def self.normalize_triple(triple : String) : String
-    normalized = LibLLVMExt.normalize_target_triple(triple)
+    normalized = LibLLVM.normalize_target_triple(triple)
     normalized = LLVM.string_and_dispose(normalized)
-
-    # Fix LLVM not replacing empty triple parts with "unknown"
-    # This was fixed in LLVM 8
-    normalized = normalized.split('-').map { |c| c.presence || "unknown" }.join('-')
 
     normalized
   end

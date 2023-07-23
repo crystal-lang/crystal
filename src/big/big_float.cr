@@ -4,6 +4,8 @@ require "big"
 # A `BigFloat` can represent arbitrarily large floats.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# NOTE: To use `BigFloat`, you must explicitly import it with `require "big"`
 struct BigFloat < Float
   include Comparable(Int)
   include Comparable(BigFloat)
@@ -64,11 +66,17 @@ struct BigFloat < Float
     end
   end
 
+  def initialize(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
+    LibGMP.mpf_init_set_d(out @mpf, num)
+  end
+
   def initialize(num : Number)
     LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
   end
 
   def initialize(num : Float, precision : Int)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     LibGMP.mpf_init2(out @mpf, precision.to_u64)
     LibGMP.mpf_set_d(self, num.to_f64)
   end
@@ -76,7 +84,7 @@ struct BigFloat < Float
   def initialize(@mpf : LibGMP::MPF)
   end
 
-  def self.new
+  def self.new(&)
     LibGMP.mpf_init(out mpf)
     yield pointerof(mpf)
     new(mpf)
@@ -101,8 +109,8 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_z(self, other)
   end
 
-  def <=>(other : Float32 | Float64)
-    LibGMP.mpf_cmp_d(self, other.to_f64)
+  def <=>(other : Float::Primitive)
+    LibGMP.mpf_cmp_d(self, other) unless other.nan?
   end
 
   def <=>(other : Number)
@@ -385,10 +393,6 @@ end
 struct Number
   include Comparable(BigFloat)
 
-  def <=>(other : BigFloat)
-    -(other <=> self)
-  end
-
   def +(other : BigFloat)
     other + self
   end
@@ -407,6 +411,19 @@ struct Number
 
   def to_big_f : BigFloat
     BigFloat.new(self)
+  end
+end
+
+struct Int
+  def <=>(other : BigFloat)
+    -(other <=> self)
+  end
+end
+
+struct Float
+  def <=>(other : BigFloat)
+    cmp = other <=> self
+    -cmp if cmp
   end
 end
 

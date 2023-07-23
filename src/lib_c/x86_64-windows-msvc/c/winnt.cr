@@ -16,14 +16,25 @@ lib LibC
 
   INVALID_FILE_ATTRIBUTES      = DWORD.new!(-1)
   FILE_ATTRIBUTE_DIRECTORY     =  0x10
+  FILE_ATTRIBUTE_HIDDEN        =   0x2
   FILE_ATTRIBUTE_READONLY      =   0x1
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
+  FILE_ATTRIBUTE_SYSTEM        =   0x4
 
-  FILE_READ_ATTRIBUTES  =   0x80
-  FILE_WRITE_ATTRIBUTES = 0x0100
+  FILE_APPEND_DATA = 0x00000004
+
+  DELETE                = 0x00010000
+  FILE_READ_ATTRIBUTES  =       0x80
+  FILE_WRITE_ATTRIBUTES =     0x0100
+
+  MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 0x4000
+
+  IO_REPARSE_TAG_SYMLINK = 0xA000000C_u32
+  IO_REPARSE_TAG_AF_UNIX = 0x80000023_u32
 
   # Memory protection constants
-  PAGE_READWRITE = 0x04
+  PAGE_READWRITE =  0x04
+  PAGE_GUARD     = 0x100
 
   PROCESS_QUERY_LIMITED_INFORMATION =     0x1000
   SYNCHRONIZE                       = 0x00100000
@@ -168,4 +179,125 @@ lib LibC
     exceptionRecord : EXCEPTION_RECORD64*
     contextRecord : CONTEXT*
   end
+
+  struct NT_TIB
+    exceptionList : Void*
+    stackBase : Void*
+    stackLimit : Void*
+    subSystemTib : Void*
+    fiberData : Void*
+    arbitraryUserPointer : Void*
+    pvSelf : NT_TIB*
+  end
+
+  struct MEMORY_BASIC_INFORMATION
+    baseAddress : Void*
+    allocationBase : Void*
+    allocationProtect : DWORD
+    partitionId : WORD
+    regionSize : SizeT
+    state : DWORD
+    protect : DWORD
+    type : DWORD
+  end
+
+  IMAGE_NT_SIGNATURE = 0x00004550 # PE00
+
+  struct IMAGE_DOS_HEADER
+    e_magic : WORD
+    e_cblp : WORD
+    e_cp : WORD
+    e_crlc : WORD
+    e_cparhdr : WORD
+    e_minalloc : WORD
+    e_maxalloc : WORD
+    e_ss : WORD
+    e_sp : WORD
+    e_csum : WORD
+    e_ip : WORD
+    e_cs : WORD
+    e_lfarlc : WORD
+    e_ovno : WORD
+    e_res : WORD[4]
+    e_oemid : WORD
+    e_oeminfo : WORD
+    e_res2 : WORD[10]
+    e_lfanew : LONG
+  end
+
+  struct IMAGE_FILE_HEADER
+    machine : WORD
+    numberOfSections : WORD
+    timeDateStamp : DWORD
+    pointerToSymbolTable : DWORD
+    numberOfSymbols : DWORD
+    sizeOfOptionalHeader : WORD
+    characteristics : WORD
+  end
+
+  struct IMAGE_DATA_DIRECTORY
+    virtualAddress : DWORD
+    size : DWORD
+  end
+
+  struct IMAGE_OPTIONAL_HEADER64
+    magic : WORD
+    majorLinkerVersion : BYTE
+    minorLinkerVersion : BYTE
+    sizeOfCode : DWORD
+    sizeOfInitializedData : DWORD
+    sizeOfUninitializedData : DWORD
+    addressOfEntryPoint : DWORD
+    baseOfCode : DWORD
+    imageBase : ULongLong
+    sectionAlignment : DWORD
+    fileAlignment : DWORD
+    majorOperatingSystemVersion : WORD
+    minorOperatingSystemVersion : WORD
+    majorImageVersion : WORD
+    minorImageVersion : WORD
+    majorSubsystemVersion : WORD
+    minorSubsystemVersion : WORD
+    win32VersionValue : DWORD
+    sizeOfImage : DWORD
+    sizeOfHeaders : DWORD
+    checkSum : DWORD
+    subsystem : WORD
+    dllCharacteristics : WORD
+    sizeOfStackReserve : ULongLong
+    sizeOfStackCommit : ULongLong
+    sizeOfHeapReserve : ULongLong
+    sizeOfHeapCommit : ULongLong
+    loaderFlags : DWORD
+    numberOfRvaAndSizes : DWORD
+    dataDirectory : IMAGE_DATA_DIRECTORY[16] # IMAGE_NUMBEROF_DIRECTORY_ENTRIES
+  end
+
+  struct IMAGE_NT_HEADERS64
+    signature : DWORD
+    fileHeader : IMAGE_FILE_HEADER
+    optionalHeader : IMAGE_OPTIONAL_HEADER64
+  end
+
+  struct IMAGE_IMPORT_BY_NAME
+    hint : WORD
+    name : CHAR[1]
+  end
+
+  union IMAGE_THUNK_DATA64_u1
+    forwarderString : ULongLong
+    function : ULongLong
+    ordinal : ULongLong
+    addressOfData : ULongLong
+  end
+
+  struct IMAGE_THUNK_DATA64
+    u1 : IMAGE_THUNK_DATA64_u1
+  end
+
+  IMAGE_ORDINAL_FLAG64 = 0x8000000000000000_u64
+
+  alias IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64
+  alias IMAGE_THUNK_DATA = IMAGE_THUNK_DATA64
+  IMAGE_ORDINAL_FLAG = IMAGE_ORDINAL_FLAG64
 end

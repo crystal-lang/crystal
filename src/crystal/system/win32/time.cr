@@ -17,10 +17,13 @@ module Crystal::System::Time
   BIAS_TO_OFFSET_FACTOR = -60
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    # TODO: Needs a check if `GetSystemTimePreciseAsFileTime` is actually available (only >= Windows 8)
-    # and use `GetSystemTimeAsFileTime` as fallback.
-    LibC.GetSystemTimePreciseAsFileTime(out filetime)
-    filetime_to_seconds_and_nanoseconds(filetime)
+    {% if LibC.has_method?("GetSystemTimePreciseAsFileTime") %}
+      LibC.GetSystemTimePreciseAsFileTime(out filetime)
+      filetime_to_seconds_and_nanoseconds(filetime)
+    {% else %}
+      LibC.GetSystemTimeAsFileTime(out filetime)
+      filetime_to_seconds_and_nanoseconds(filetime)
+    {% end %}
   end
 
   def self.filetime_to_seconds_and_nanoseconds(filetime) : {Int64, Int32}
@@ -68,8 +71,8 @@ module Crystal::System::Time
   end
 
   def self.load_localtime : ::Time::Location?
-    if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_UNKNOWN
-      initialize_location_from_TZI(info)
+    if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
+      initialize_location_from_TZI(info, "Local")
     end
   end
 
@@ -77,13 +80,44 @@ module Crystal::System::Time
     [] of String
   end
 
-  private def self.initialize_location_from_TZI(info)
+  # https://learn.microsoft.com/en-us/windows/win32/api/timezoneapi/ns-timezoneapi-time_zone_information#remarks
+  @[Extern]
+  private record REG_TZI_FORMAT,
+    bias : LibC::LONG,
+    standardBias : LibC::LONG,
+    daylightBias : LibC::LONG,
+    standardDate : LibC::SYSTEMTIME,
+    daylightDate : LibC::SYSTEMTIME
+
+  def self.load_iana_zone(iana_name : String) : ::Time::Location?
+    return unless windows_name = iana_to_windows[iana_name]?
+
+    WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
+      WindowsRegistry.open?(key_handle, windows_name.to_utf16) do |sub_handle|
+        reg_tzi = uninitialized REG_TZI_FORMAT
+        WindowsRegistry.get_raw(sub_handle, TZI, Slice.new(pointerof(reg_tzi), 1).to_unsafe_bytes)
+
+        tzi = LibC::TIME_ZONE_INFORMATION.new(
+          bias: reg_tzi.bias,
+          standardDate: reg_tzi.standardDate,
+          standardBias: reg_tzi.standardBias,
+          daylightDate: reg_tzi.daylightDate,
+          daylightBias: reg_tzi.daylightBias,
+        )
+        WindowsRegistry.get_raw(sub_handle, Std, tzi.standardName.to_slice.to_unsafe_bytes)
+        WindowsRegistry.get_raw(sub_handle, Dlt, tzi.daylightName.to_slice.to_unsafe_bytes)
+        initialize_location_from_TZI(tzi, iana_name)
+      end
+    end
+  end
+
+  private def self.initialize_location_from_TZI(info, name)
     stdname, dstname = normalize_zone_names(info)
 
     if info.standardDate.wMonth == 0_u16
       # No DST
       zone = ::Time::Location::Zone.new(stdname, info.bias * BIAS_TO_OFFSET_FACTOR, false)
-      return ::Time::Location.new("Local", [zone])
+      return ::Time::Location.new(name, [zone])
     end
 
     zones = [
@@ -113,7 +147,7 @@ module Crystal::System::Time
       transitions << ::Time::Location::ZoneTransition.new(tstamp, second_index, second_index == 0, false)
     end
 
-    ::Time::Location.new("Local", zones, transitions)
+    ::Time::Location.new(name, zones, transitions)
   end
 
   # Calculates the day of a DST switch in year *year* by extrapolating the date given in
@@ -158,14 +192,14 @@ module Crystal::System::Time
   private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
     stdname, _ = String.from_utf16(info.standardName.to_slice.to_unsafe)
 
-    if normalized_names = WINDOWS_ZONE_NAMES[stdname]?
+    if normalized_names = windows_zone_names[stdname]?
       return normalized_names
     end
 
     dstname, _ = String.from_utf16(info.daylightName.to_slice.to_unsafe)
 
     if english_name = translate_zone_name(stdname, dstname)
-      if normalized_names = WINDOWS_ZONE_NAMES[english_name]?
+      if normalized_names = windows_zone_names[english_name]?
         return normalized_names
       end
     end
@@ -178,6 +212,7 @@ module Crystal::System::Time
   REGISTRY_TIME_ZONES = %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones).to_utf16
   Std                 = "Std".to_utf16
   Dlt                 = "Dlt".to_utf16
+  TZI                 = "TZI".to_utf16
 
   # Searches the registry for an English name of a time zone named *stdname* or *dstname*
   # and returns the English name.

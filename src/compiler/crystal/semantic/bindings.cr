@@ -1,7 +1,7 @@
 module Crystal
   class ASTNode
-    property dependencies = ZeroOneOrMany(ASTNode).new
-    property observers = ZeroOneOrMany(ASTNode).new
+    property! dependencies : Array(ASTNode)
+    property observers : Array(ASTNode)?
     property enclosing_call : Call?
 
     @dirty = false
@@ -107,22 +107,22 @@ module Crystal
     end
 
     def bind_to(node : ASTNode) : Nil
-      bind(node) do
-        @dependencies.push node
+      bind(node) do |dependencies|
+        dependencies.push node
         node.add_observer self
       end
     end
 
-    def bind_to(nodes : Indexable(ASTNode)) : Nil
+    def bind_to(nodes : Indexable) : Nil
       return if nodes.empty?
 
-      bind do
-        @dependencies.concat nodes
+      bind do |dependencies|
+        dependencies.concat nodes
         nodes.each &.add_observer self
       end
     end
 
-    def bind(from = nil)
+    def bind(from = nil, &)
       # Quick check to provide a better error message when assigning a type
       # to a variable whose type is frozen
       if self.is_a?(MetaTypeVar) && (freeze_type = self.freeze_type) && from &&
@@ -130,7 +130,9 @@ module Crystal
         raise_frozen_type freeze_type, from_type, from
       end
 
-      yield
+      dependencies = @dependencies ||= [] of ASTNode
+
+      yield dependencies
 
       new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
@@ -151,28 +153,27 @@ module Crystal
       Type.merge dependencies
     end
 
-    def unbind_from(nodes : Nil) : Nil
+    def unbind_from(nodes : Nil)
       # Nothing to do
     end
 
-    def unbind_from(node : ASTNode) : Nil
-      @dependencies.reject! &.same?(node)
+    def unbind_from(node : ASTNode)
+      @dependencies.try &.reject! &.same?(node)
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Enumerable(ASTNode)) : Nil
-      @dependencies.reject! { |dependency|
-        nodes.any? &.same?(dependency)
-      }
+    def unbind_from(nodes : Array(ASTNode))
+      @dependencies.try &.reject! { |dep| nodes.any? &.same?(dep) }
       nodes.each &.remove_observer self
     end
 
-    def add_observer(observer : ASTNode) : Nil
-      @observers.push observer
+    def add_observer(observer)
+      observers = @observers ||= [] of ASTNode
+      observers.push observer
     end
 
-    def remove_observer(observer : ASTNode) : Nil
-      @observers.reject! &.same?(observer)
+    def remove_observer(observer)
+      @observers.try &.reject! &.same?(observer)
     end
 
     def set_enclosing_call(enclosing_call)
@@ -194,9 +195,9 @@ module Crystal
     end
 
     def notify_observers
-      @observers.each &.update self
+      @observers.try &.each &.update self
       @enclosing_call.try &.recalculate
-      @observers.each &.propagate
+      @observers.try &.each &.propagate
       @enclosing_call.try &.propagate
     end
 
@@ -268,8 +269,8 @@ module Crystal
       visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
-      until node.dependencies.empty?
-        dependencies = node.dependencies.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+      while deps = node.dependencies?
+        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
         if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
@@ -576,7 +577,7 @@ module Crystal
           node_type = node.type?
           return unless node_type
 
-          if node.is_a?(Path) && (target_const = node.target_const)
+          if node.is_a?(Path) && node.target_const
             node.raise "can't use constant as type for NamedTuple"
           end
 

@@ -85,7 +85,7 @@ module Crystal
     end
   end
 
-  class CrystalLibraryPath
+  module CrystalLibraryPath
     def self.default_paths : Array(String)
       paths = ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path).split(Process::PATH_DELIMITER, remove_empty: true)
 
@@ -98,20 +98,65 @@ module Crystal
       default_paths.join(Process::PATH_DELIMITER)
     end
 
+    def self.default_rpath : String
+      # do not call `CrystalPath.expand_paths`, as `$ORIGIN` inside this env
+      # variable is always expanded at run time
+      ENV.fetch("CRYSTAL_LIBRARY_RPATH", "")
+    end
+
+    # Adds the compiler itself's RPATH to the environment for the duration of
+    # the block. `$ORIGIN` in the compiler's RPATH is expanded immediately, but
+    # `$ORIGIN`s in the existing environment variable are not expanded. For
+    # example, on Linux:
+    #
+    # - CRYSTAL_LIBRARY_RPATH of the compiler: `$ORIGIN/so`
+    # - Current $CRYSTAL_LIBRARY_RPATH: `/home/foo:$ORIGIN/mylibs`
+    # - Compiler's full path: `/opt/crystal`
+    # - Generated executable's Crystal::LIBRARY_RPATH: `/home/foo:$ORIGIN/mylibs:/opt/so`
+    #
+    # On Windows we additionally append the compiler's parent directory to the
+    # list, as if by appending `$ORIGIN` to the compiler's RPATH. This directory
+    # is effectively the first search entry on any Windows executable. Example:
+    #
+    # - CRYSTAL_LIBRARY_RPATH of the compiler: `$ORIGIN\dll`
+    # - Current %CRYSTAL_LIBRARY_RPATH%: `C:\bar;$ORIGIN\mylibs`
+    # - Compiler's full path: `C:\foo\crystal.exe`
+    # - Generated executable's Crystal::LIBRARY_RPATH: `C:\bar;$ORIGIN\mylibs;C:\foo\dll;C:\foo`
+    #
+    # Combining RPATHs multiple times has no effect; the `CRYSTAL_LIBRARY_RPATH`
+    # environment variable at compiler startup is used, not really the "current"
+    # one. This can happen when running a program that also uses macro `run`s.
+    def self.add_compiler_rpath(&)
+      executable_path = Process.executable_path
+      compiler_origin = File.dirname(executable_path) if executable_path
+
+      current_rpaths = ORIGINAL_CRYSTAL_LIBRARY_RPATH.try &.split(Process::PATH_DELIMITER, remove_empty: true)
+      compiler_rpaths = Crystal::LIBRARY_RPATH.split(Process::PATH_DELIMITER, remove_empty: true)
+      CrystalPath.expand_paths(compiler_rpaths, compiler_origin)
+
+      rpaths = compiler_rpaths
+      rpaths.concat(current_rpaths) if current_rpaths
+      {% if flag?(:win32) %}
+        rpaths << compiler_origin if compiler_origin
+      {% end %}
+
+      old_env = ENV["CRYSTAL_LIBRARY_RPATH"]?
+      ENV["CRYSTAL_LIBRARY_RPATH"] = rpaths.join(Process::PATH_DELIMITER)
+      begin
+        yield
+      ensure
+        ENV["CRYSTAL_LIBRARY_RPATH"] = old_env
+      end
+    end
+
+    private ORIGINAL_CRYSTAL_LIBRARY_RPATH = ENV["CRYSTAL_LIBRARY_RPATH"]?
+
     class_getter paths : Array(String) do
       default_paths
     end
   end
 
   class Program
-    def object_extension
-      case
-      when has_flag?("windows") then ".obj"
-      when has_flag?("wasm32")  then ".wasm"
-      else                           ".o"
-      end
-    end
-
     def lib_flags
       has_flag?("windows") ? lib_flags_windows : lib_flags_posix
     end

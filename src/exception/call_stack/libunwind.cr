@@ -33,7 +33,7 @@ struct Exception::CallStack
   {% end %}
 
   def self.setup_crash_handler
-    Signal.setup_segfault_handler
+    Crystal::System::Signal.setup_segfault_handler
   end
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
@@ -102,35 +102,29 @@ struct Exception::CallStack
   end
 
   private def self.print_frame(repeated_frame)
+    Crystal::System.print_error "[0x%llx] ", repeated_frame.ip.address.to_u64
+    print_frame_location(repeated_frame)
+    Crystal::System.print_error " (%d times)", repeated_frame.count + 1 unless repeated_frame.count == 0
+    Crystal::System.print_error "\n"
+  end
+
+  private def self.print_frame_location(repeated_frame)
     {% if flag?(:debug) %}
       if @@dwarf_loaded &&
          (name = decode_function_name(repeated_frame.ip.address))
         file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
         if file && file != "??"
-          if repeated_frame.count == 0
-            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i\n", repeated_frame.ip, name, file, line, column
-          else
-            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i (%ld times)\n", repeated_frame.ip, name, file, line, column, repeated_frame.count + 1
-          end
+          Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
           return
         end
       end
     {% end %}
 
-    frame = decode_frame(repeated_frame.ip)
-    if frame
+    if frame = decode_frame(repeated_frame.ip)
       offset, sname, fname = frame
-      if repeated_frame.count == 0
-        Crystal::System.print_error "[0x%lx] %s +%ld in %s\n", repeated_frame.ip, sname, offset, fname
-      else
-        Crystal::System.print_error "[0x%lx] %s +%ld in %s (%ld times)\n", repeated_frame.ip, sname, offset, fname, repeated_frame.count + 1
-      end
+      Crystal::System.print_error "%s +%lld in %s", sname, offset.to_i64, fname
     else
-      if repeated_frame.count == 0
-        Crystal::System.print_error "[0x%lx] ???\n", repeated_frame.ip
-      else
-        Crystal::System.print_error "[0x%lx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
-      end
+      Crystal::System.print_error "???"
     end
   end
 

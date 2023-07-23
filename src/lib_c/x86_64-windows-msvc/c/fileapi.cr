@@ -41,20 +41,39 @@ lib LibC
   fun SetFileAttributesW(lpFileName : LPWSTR, dwFileAttributes : DWORD) : BOOL
   fun GetFileAttributesExW(lpFileName : LPWSTR, fInfoLevelId : GET_FILEEX_INFO_LEVELS, lpFileInformation : Void*) : BOOL
 
-  OPEN_EXISTING = 3
+  CREATE_NEW        = 1
+  CREATE_ALWAYS     = 2
+  OPEN_EXISTING     = 3
+  OPEN_ALWAYS       = 4
+  TRUNCATE_EXISTING = 5
 
-  FILE_ATTRIBUTE_NORMAL      =       0x80
-  FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+  FILE_ATTRIBUTE_NORMAL    =  0x80
+  FILE_ATTRIBUTE_TEMPORARY = 0x100
+
+  FILE_FLAG_BACKUP_SEMANTICS    = 0x02000000
+  FILE_FLAG_DELETE_ON_CLOSE     = 0x04000000
+  FILE_FLAG_FIRST_PIPE_INSTANCE = 0x00080000
+  FILE_FLAG_NO_BUFFERING        = 0x20000000
+  FILE_FLAG_OPEN_REPARSE_POINT  = 0x00200000
+  FILE_FLAG_OVERLAPPED          = 0x40000000
+  FILE_FLAG_RANDOM_ACCESS       = 0x10000000
+  FILE_FLAG_SEQUENTIAL_SCAN     = 0x08000000
 
   FILE_SHARE_READ   = 0x1
   FILE_SHARE_WRITE  = 0x2
   FILE_SHARE_DELETE = 0x4
+
+  DEFAULT_SHARE_MODE = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
+
+  GENERIC_READ  = 0x80000000
+  GENERIC_WRITE = 0x40000000
 
   fun CreateFileW(lpFileName : LPWSTR, dwDesiredAccess : DWORD, dwShareMode : DWORD,
                   lpSecurityAttributes : SECURITY_ATTRIBUTES*, dwCreationDisposition : DWORD,
                   dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
 
   fun ReadFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToRead : DWORD, lpNumberOfBytesRead : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
+  fun WriteFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToWrite : DWORD, lpNumberOfBytesWritten : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
 
   MAX_PATH = 260
 
@@ -75,6 +94,22 @@ lib LibC
   fun FindNextFileW(hFindFile : HANDLE, lpFindFileData : WIN32_FIND_DATAW*) : BOOL
   fun FindClose(hFindFile : HANDLE) : BOOL
 
+  fun LockFileEx(
+    hFile : HANDLE,
+    dwFlags : DWORD,
+    dwReserved : DWORD,
+    nNumberOfBytesToLockLow : DWORD,
+    nNumberOfBytesToLockHigh : DWORD,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
+  fun UnlockFileEx(
+    hFile : HANDLE,
+    dwReserved : DWORD,
+    nNumberOfBytesToUnlockLow : DWORD,
+    nNumberOfBytesToUnlockHigh : DWORD,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
   fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
                   lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
+  fun SetFileInformationByHandle(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 end

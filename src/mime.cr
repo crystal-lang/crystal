@@ -2,6 +2,8 @@ require "crystal/system/mime"
 
 # This module implements a global MIME registry.
 #
+# NOTE: To use `MIME`, you must explicitly import it with `require "mime"`
+#
 # ```
 # require "mime"
 #
@@ -230,8 +232,7 @@ module MIME
     @@types[extension] = type
     @@types_lower[extension.downcase] = type
 
-    type_extensions = @@extensions[mediatype] ||= Set(String).new
-    type_extensions << extension
+    @@extensions.put_if_absent(mediatype) { Set(String).new } << extension
   end
 
   # Returns all extensions registered for *type*.

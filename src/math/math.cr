@@ -609,7 +609,12 @@ module Math
 
   # Multiplies the given floating-point *value* by 2 raised to the power *exp*.
   def ldexp(value : Float32, exp : Int32) : Float32
-    LibM.ldexp_f32(value, exp)
+    {% if flag?(:win32) %}
+      # ucrt does not export `ldexpf` and instead defines it like this
+      LibM.ldexp_f64(value, exp).to_f32!
+    {% else %}
+      LibM.ldexp_f32(value, exp)
+    {% end %}
   end
 
   # :ditto:
@@ -657,7 +662,7 @@ module Math
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : Float32) : {Float32, Int32}
     {% if flag?(:win32) %}
-      # libucrt does not export `frexpf` and instead defines it like this
+      # ucrt does not export `frexpf` and instead defines it like this
       frac = LibM.frexp_f64(value, out exp)
       {frac.to_f32, exp}
     {% else %}
@@ -722,31 +727,18 @@ module Math
     value1 <= value2 ? value1 : value2
   end
 
-  # Computes the next highest power of 2 of *v*.
+  # Computes the smallest nonnegative power of 2 that is greater than or equal
+  # to *v*.
+  #
+  # The returned value has the same type as the argument. Raises `OverflowError`
+  # if the result does not fit into the argument's type.
   #
   # ```
   # Math.pw2ceil(33) # => 64
+  # Math.pw2ceil(64) # => 64
+  # Math.pw2ceil(-5) # => 1
   # ```
-  def pw2ceil(v : Int32)
-    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v += v == -1 ? 2 : 1
-  end
-
-  def pw2ceil(v : Int64)
-    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v |= v >> 32
-    v += v == -1 ? 2 : 1
+  def pw2ceil(v : Int::Primitive)
+    v.next_power_of_two
   end
 end

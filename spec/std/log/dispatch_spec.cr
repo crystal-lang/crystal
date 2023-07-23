@@ -15,7 +15,7 @@ class Log
     it "dispatches entry" do
       backend = Log::MemoryBackend.new
       backend.dispatcher = DirectDispatcher
-      backend.dispatch entry = Entry.new("source", :info, "message", Log::Metadata.empty, nil)
+      backend.dispatch Entry.new("source", :info, "message", Log::Metadata.empty, nil)
       backend.entries.size.should eq(1)
     end
   end
@@ -24,7 +24,7 @@ class Log
     it "dispatches entry" do
       backend = Log::MemoryBackend.new
       backend.dispatcher = SyncDispatcher.new
-      backend.dispatch entry = Entry.new("source", :info, "message", Log::Metadata.empty, nil)
+      backend.dispatch Entry.new("source", :info, "message", Log::Metadata.empty, nil)
       backend.entries.size.should eq(1)
     end
   end
@@ -33,14 +33,14 @@ class Log
     it "dispatches entry" do
       backend = Log::MemoryBackend.new
       backend.dispatcher = AsyncDispatcher.new
-      backend.dispatch entry = Entry.new("source", :info, "message", Log::Metadata.empty, nil)
+      backend.dispatch Entry.new("source", :info, "message", Log::Metadata.empty, nil)
       retry { backend.entries.size.should eq(1) }
     end
 
     it "wait for entries to flush before closing" do
       backend = Log::MemoryBackend.new
       backend.dispatcher = AsyncDispatcher.new
-      backend.dispatch entry = Entry.new("source", :info, "message", Log::Metadata.empty, nil)
+      backend.dispatch Entry.new("source", :info, "message", Log::Metadata.empty, nil)
       backend.close
       backend.entries.size.should eq(1)
     end
@@ -48,7 +48,7 @@ class Log
     it "can be closed twice" do
       backend = Log::MemoryBackend.new
       backend.dispatcher = AsyncDispatcher.new
-      backend.dispatch entry = Entry.new("source", :info, "message", Log::Metadata.empty, nil)
+      backend.dispatch Entry.new("source", :info, "message", Log::Metadata.empty, nil)
       backend.close
       backend.close
       backend.entries.size.should eq(1)

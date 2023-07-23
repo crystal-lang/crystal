@@ -169,7 +169,7 @@ describe "Hash" do
     end
   end
 
-  describe "put" do
+  describe "#put" do
     it "puts in a small hash" do
       a = {} of Int32 => Int32
       a.put(1, 2) { nil }.should eq(nil)
@@ -188,6 +188,33 @@ describe "Hash" do
     it "yields key" do
       a = {} of Int32 => Int32
       a.put(1, 2, &.to_s).should eq("1")
+    end
+  end
+
+  describe "#put_if_absent" do
+    it "puts if key doesn't exist" do
+      v = [] of String
+      h = {} of Int32 => Array(String)
+      h.put_if_absent(1, v).should be(v)
+      h.should eq({1 => v})
+      h[1].should be(v)
+    end
+
+    it "returns existing value if key exists" do
+      v = [] of String
+      h = {1 => v}
+      h.put_if_absent(1, [] of String).should be(v)
+      h.should eq({1 => v})
+      h[1].should be(v)
+    end
+
+    it "accepts a block" do
+      v = [] of String
+      h = {1 => v}
+      h.put_if_absent(1) { [] of String }.should be(v)
+      h.put_if_absent(2) { |key| [key.to_s] }.should eq(["2"])
+      h.should eq({1 => v, 2 => ["2"]})
+      h[1].should be(v)
     end
   end
 
@@ -404,12 +431,12 @@ describe "Hash" do
     describe "if block is given," do
       it "returns the first key with the given value" do
         hash = {"foo" => "bar", "baz" => "bar"}
-        hash.key_for("bar") { |value| value.upcase }.should eq("foo")
+        hash.key_for("bar", &.upcase).should eq("foo")
       end
 
       it "yields the argument if no hash key pairs with the value" do
         hash = {"foo" => "bar"}
-        hash.key_for("qux") { |value| value.upcase }.should eq("QUX")
+        hash.key_for("qux", &.upcase).should eq("QUX")
       end
     end
   end
@@ -842,7 +869,7 @@ describe "Hash" do
   it "transforms keys with type casting" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
-    h2 = h1.transform_keys { |x| x.to_s.upcase }
+    h2 = h1.transform_keys(&.to_s.upcase)
     h2.should be_a(Hash(String, Int32))
     h2.should eq({"A" => 1, "B" => 2, "C" => 3})
   end
@@ -855,6 +882,13 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms keys with values included" do
+    h1 = {1 => "a", 2 => "b", 3 => "c"}
+
+    h2 = h1.transform_keys { |k, v| "#{k}#{v}" }
+    h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+  end
+
   it "transforms values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
@@ -865,7 +899,7 @@ describe "Hash" do
   it "transforms values with type casting values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
-    h2 = h1.transform_values { |x| x.to_s }
+    h2 = h1.transform_values(&.to_s)
     h2.should be_a(Hash(String, String))
     h2.should eq({"a" => "1", "b" => "2", "c" => "3"})
   end
@@ -878,11 +912,25 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms values with keys included" do
+    h1 = {"a" => 1, "b" => 2, "c" => 3}
+
+    h2 = h1.transform_values { |v, k| "#{k}#{v}" }
+    h2.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
+  end
+
   it "transform values in place" do
     h = {"a" => 1, "b" => 2, "c" => 3}
 
     h.transform_values!(&.+(1))
     h.should eq({"a" => 2, "b" => 3, "c" => 4})
+  end
+
+  it "transform values in place with keys included" do
+    h = {"a" => "1", "b" => "2", "c" => "3"}
+
+    h.transform_values! { |v, k| "#{k}#{v}" }
+    h.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
   end
 
   it "zips" do
@@ -1257,7 +1305,7 @@ describe "Hash" do
     it { {"a" => 2, "b" => 3}.reject(["b", "a"]).should eq({} of String => Int32) }
     it "does not change current hash" do
       h = {"a" => 3, "b" => 6, "c" => 9}
-      h2 = h.reject("b", "c")
+      h.reject("b", "c")
       h.should eq({"a" => 3, "b" => 6, "c" => 9})
     end
   end
@@ -1282,7 +1330,7 @@ describe "Hash" do
     it { {"a" => 2, "b" => 3}.select(Set{"b", "a"}).should eq({"a" => 2, "b" => 3}) }
     it "does not change current hash" do
       h = {"a" => 3, "b" => 6, "c" => 9}
-      h2 = h.select("b", "c")
+      h.select("b", "c")
       h.should eq({"a" => 3, "b" => 6, "c" => 9})
     end
   end
@@ -1293,10 +1341,16 @@ describe "Hash" do
     it { {"a" => 2, "b" => 3}.select!("b", "a").should eq({"a" => 2, "b" => 3}) }
     it { {"a" => 2, "b" => 3}.select!(["b", "a"]).should eq({"a" => 2, "b" => 3}) }
     it { {"a" => 2, "b" => 3}.select!(Set{"b", "a"}).should eq({"a" => 2, "b" => 3}) }
+
     it "does change current hash" do
       h = {"a" => 3, "b" => 6, "c" => 9}
       h.select!("b", "c")
       h.should eq({"b" => 6, "c" => 9})
+    end
+
+    it "does not skip elements with an exhaustable enumerable argument (#12736)" do
+      h = {1 => 'a', 2 => 'b', 3 => 'c'}.select!({1, 2, 3}.each)
+      h.should eq({1 => 'a', 2 => 'b', 3 => 'c'})
     end
   end
 

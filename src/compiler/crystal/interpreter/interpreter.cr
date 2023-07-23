@@ -69,6 +69,9 @@ class Crystal::Repl::Interpreter
   # - when doing `finish`, we'd like to exit the current frame
   @pry_max_target_frame : Int32?
 
+  # The input reader for the pry interface, it's stored here notably to hold the history.
+  @pry_reader : PryReader
+
   # The set of local variables for interpreting code.
   getter local_vars : LocalVars
 
@@ -123,6 +126,9 @@ class Crystal::Repl::Interpreter
     @block_level = 0
 
     @compiled_def = nil
+
+    @pry_reader = PryReader.new
+    @pry_reader.color = @context.program.color?
   end
 
   def self.new(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), block_level : Int32)
@@ -141,6 +147,9 @@ class Crystal::Repl::Interpreter
     @call_stack_leave_index = @call_stack.size
 
     @compiled_def = compiled_def
+
+    @pry_reader = PryReader.new
+    @pry_reader.color = @context.program.color?
   end
 
   # Interprets the give node under the given context.
@@ -419,7 +428,7 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
-    # Check if any existing local variable size changed.
+    # Check if any existing local variable type changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
@@ -435,7 +444,7 @@ class Crystal::Repl::Interpreter
 
       current_type = current_local_vars.type(current_name, 0)
       next_type = next_meta_vars[current_name].type
-      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+      current_type != next_type
     end
 
     return unless needs_migration
@@ -1230,12 +1239,8 @@ class Crystal::Repl::Interpreter
 
     interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
-    prompt = Prompt.new(@context, show_nest: false)
-
     while @pry
-      prefix = String.build do |io|
-        io.print "pry"
-        io.print '('
+      @pry_reader.prompt_info = String.build do |io|
         unless owner.is_a?(Program)
           if owner.metaclass?
             io.print owner.instance_type
@@ -1246,10 +1251,9 @@ class Crystal::Repl::Interpreter
           end
         end
         io.print compiled_def.def.name
-        io.print ')'
       end
 
-      input = prompt.prompt(prefix)
+      input = @pry_reader.read_next
       unless input
         self.pry = false
         break
@@ -1284,10 +1288,13 @@ class Crystal::Repl::Interpreter
       end
 
       begin
-        line_node = prompt.parse(
-          input: input,
+        parser = Parser.new(
+          input,
+          string_pool: @context.program.string_pool,
           var_scopes: [meta_vars.keys.to_set],
         )
+        line_node = parser.parse
+
         next unless line_node
 
         main_visitor = MainVisitor.new(from_main_visitor: main_visitor)
@@ -1317,7 +1324,8 @@ class Crystal::Repl::Interpreter
         # to their new type)
         local_vars = interpreter.local_vars
 
-        prompt.display(value)
+        print " => "
+        puts SyntaxHighlighter::Colorize.highlight!(value.to_s)
       rescue ex : EscapingException
         print "Unhandled exception: "
         print ex

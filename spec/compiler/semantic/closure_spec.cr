@@ -617,7 +617,7 @@ describe "Semantic: closure" do
   end
 
   it "doesn't assign all types to metavar if closured but only assigned to once" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       def capture(&block)
         block
       end
@@ -627,7 +627,7 @@ describe "Semantic: closure" do
           x &+ 1
         end
       end
-      CR
+      CRYSTAL
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop" do

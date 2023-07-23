@@ -255,7 +255,7 @@ class Hash(K, V)
         @indices_bytesize = 1
       end
 
-      @indices_size_pow2 = Math.log2(initial_indices_size).to_u8
+      @indices_size_pow2 = initial_indices_size.bit_length.to_u8 - 1
     end
 
     @size = 0
@@ -397,6 +397,56 @@ class Hash(K, V)
         # Otherwise we have to keep looking...
         index = next_index(index)
       end
+    end
+  end
+
+  # Inserts a key-value pair. Assumes that the given key doesn't exist.
+  private def insert_new(key, value)
+    # Unless otherwise noted, this body should be identical to `#upsert`
+
+    if @entries.null?
+      @indices_size_pow2 = 3
+      @entries = malloc_entries(4)
+    end
+
+    hash = key_hash(key)
+
+    if @indices.null?
+      # don't call `#update_linear_scan` here
+
+      if !entries_full?
+        add_entry_and_increment_size(hash, key, value)
+        return
+      end
+
+      resize
+
+      if @indices.null?
+        add_entry_and_increment_size(hash, key, value)
+        return
+      end
+    end
+
+    index = fit_in_indices(hash)
+
+    while true
+      entry_index = get_index(index)
+
+      if entry_index == -1
+        if entries_full?
+          resize
+          index = fit_in_indices(hash)
+          next
+        end
+
+        set_index(index, entries_size)
+        add_entry_and_increment_size(hash, key, value)
+        return
+      end
+
+      # don't call `#get_entry` and `#entry_matches?` here
+
+      index = next_index(index)
     end
   end
 
@@ -842,7 +892,7 @@ class Hash(K, V)
   end
 
   # Yields each non-deleted Entry with its index inside `@entries`.
-  protected def each_entry_with_index : Nil
+  protected def each_entry_with_index(&) : Nil
     return if @size == 0
 
     @first.upto(entries_size - 1) do |i|
@@ -1003,7 +1053,7 @@ class Hash(K, V)
 
   # Sets the value of *key* to the given *value*.
   #
-  # If a value already exists for `key`, that (old) value is returned.
+  # If a value already exists for *key*, that (old) value is returned.
   # Otherwise the given block is invoked with *key* and its value is returned.
   #
   # ```
@@ -1011,10 +1061,55 @@ class Hash(K, V)
   # h.put(1, "one") { "didn't exist" } # => "didn't exist"
   # h.put(1, "uno") { "didn't exist" } # => "one"
   # h.put(2, "two") { |key| key.to_s } # => "2"
+  # h                                  # => {1 => "one", 2 => "two"}
   # ```
-  def put(key : K, value : V)
+  def put(key : K, value : V, &)
     updated_entry = upsert(key, value)
     updated_entry ? updated_entry.value : yield key
+  end
+
+  # Sets the value of *key* to the given *value*, unless a value for *key*
+  # already exists.
+  #
+  # If a value already exists for *key*, that (old) value is returned.
+  # Otherwise *value* is returned.
+  #
+  # ```
+  # h = {} of Int32 => Array(String)
+  # h.put_if_absent(1, "one") # => "one"
+  # h.put_if_absent(1, "uno") # => "one"
+  # h.put_if_absent(2, "two") # => "two"
+  # h                         # => {1 => "one", 2 => "two"}
+  # ```
+  def put_if_absent(key : K, value : V) : V
+    put_if_absent(key) { value }
+  end
+
+  # Sets the value of *key* to the value returned by the given block, unless a
+  # value for *key* already exists.
+  #
+  # If a value already exists for *key*, that (old) value is returned.
+  # Otherwise the given block is invoked with *key* and its value is returned.
+  #
+  # ```
+  # h = {} of Int32 => Array(String)
+  # h.put_if_absent(1) { |key| [key.to_s] } # => ["1"]
+  # h.put_if_absent(1) { [] of String }     # => ["1"]
+  # h.put_if_absent(2) { |key| [key.to_s] } # => ["2"]
+  # h                                       # => {1 => ["1"], 2 => ["2"]}
+  # ```
+  #
+  # `hash.put_if_absent(key) { value }` is a more performant alternative to
+  # `hash[key] ||= value` that also works correctly when the hash may contain
+  # falsey values.
+  def put_if_absent(key : K, & : K -> V) : V
+    if entry = find_entry(key)
+      entry.value
+    else
+      value = yield key
+      insert_new(key, value)
+      value
+    end
   end
 
   # Updates the current value of *key* with the value returned by the given block
@@ -1049,7 +1144,7 @@ class Hash(K, V)
       entry.value
     elsif block = @block
       default_value = block.call(self, key)
-      upsert(key, yield default_value)
+      insert_new(key, yield default_value)
       default_value
     else
       raise KeyError.new "Missing hash key: #{key.inspect}"
@@ -1102,8 +1197,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h.dig? "a", "b" # => [10, 20, 30]
+  # h.dig? "a", "x" # => nil
   # ```
   def dig?(key : K, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -1121,8 +1216,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h.dig "a", "b" # => [10, 20, 30]
+  # h.dig "a", "x" # raises KeyError
   # ```
   def dig(key : K, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
@@ -1181,7 +1276,7 @@ class Hash(K, V)
   # h.fetch("bar") { "default value" }  # => "default value"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry.value : yield key
   end
@@ -1227,7 +1322,7 @@ class Hash(K, V)
   # hash.key_for("bar") { |value| value.upcase } # => "foo"
   # hash.key_for("qux") { |value| value.upcase } # => "QUX"
   # ```
-  def key_for(value)
+  def key_for(value, &)
     each do |k, v|
       return k if v == value
     end
@@ -1253,7 +1348,7 @@ class Hash(K, V)
   # h.fetch("foo", nil)                          # => nil
   # h.delete("baz") { |key| "#{key} not found" } # => "baz not found"
   # ```
-  def delete(key)
+  def delete(key, &)
     entry = delete_impl(key)
     entry ? entry.value : yield key
   end
@@ -1466,11 +1561,8 @@ class Hash(K, V)
     {% end %}
 
     each do |k, v|
-      if other.has_key?(k)
-        other[k] = yield k, other[k], v
-      else
-        other[k] = v
-      end
+      entry = other.find_entry(k)
+      other[k] = entry ? yield(k, entry.value, v) : v
     end
   end
 
@@ -1551,9 +1643,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    hash = {} of K => V
-    keys.each { |k| hash[k] = self[k] if has_key?(k) }
-    hash
+    keys.each_with_object({} of K => V) do |k, memo|
+      entry = find_entry(k)
+      memo[k] = entry.value if entry
+    end
   end
 
   # :ditto:
@@ -1571,8 +1664,16 @@ class Hash(K, V)
   # h1 == h2 == h3 == h4 # => true
   # h1                   # => {"a" => 1, "c" => 3}
   # ```
+  def select!(keys : Indexable) : self
+    each_key { |k| delete(k) unless k.in?(keys) }
+    self
+  end
+
+  # :ditto:
   def select!(keys : Enumerable) : self
-    each { |k, v| delete(k) unless keys.includes?(k) }
+    # Convert enumerable to a set to prevent exhaustion of elements
+    key_set = keys.to_set
+    each_key { |k| delete(k) unless k.in?(key_set) }
     self
   end
 
@@ -1605,42 +1706,49 @@ class Hash(K, V)
 
   # Returns a new hash with all keys converted using the block operation.
   # The block can change a type of keys.
+  # The block yields the key and value.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_keys { |key| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys { |key| key.to_s }                # => {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
-  def transform_keys(& : K -> K2) : Hash(K2, V) forall K2
+  def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
-      memo[yield(key)] = value
+      memo[yield(key, value)] = value
     end
   end
 
   # Returns a new hash with the results of running block once for every value.
   # The block can change a type of values.
+  # The block yields the value and key.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values { |value| value + 1 }             # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
-  def transform_values(& : V -> V2) : Hash(K, V2) forall V2
+  def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
-      memo[key] = yield(value)
+      memo[key] = yield(value, key)
     end
   end
 
   # Destructively transforms all values using a block. Same as transform_values but modifies in place.
   # The block cannot change a type of values.
+  # The block yields the value and key.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
+  # hash.transform_values! { |value, key| value + key.to_s[0].ord }
+  # hash # => {:a => 99, :b => 101, :c => 103}
   # ```
   # See `#update` for updating a *single* value.
-  def transform_values!(& : V -> V) : self
+  def transform_values!(& : V, K -> V) : self
     each_entry_with_index do |entry, i|
-      new_value = yield entry.value
+      new_value = yield entry.value, entry.key
       set_entry(i, Entry(K, V).new(entry.hash, entry.key, new_value))
     end
     self
@@ -1773,7 +1881,7 @@ class Hash(K, V)
   # hash.shift { true } # => true
   # hash                # => {}
   # ```
-  def shift
+  def shift(&)
     first_entry = first_entry?
     if first_entry
       delete_entry_and_update_counts(@first)
@@ -1970,11 +2078,11 @@ class Hash(K, V)
     self
   end
 
-  # Rebuilds the hash table based on the current value of each key.
+  # Rebuilds the hash table based on the current keys.
   #
-  # When using mutable data types as keys, changing the value of a key after
-  # it was inserted into the `Hash` may lead to undefined behaviour.
-  # This method re-indexes the hash using the current key values.
+  # When using mutable data types as keys, modifying a key after it was inserted
+  # into the `Hash` may lead to undefined behaviour. This method re-indexes the
+  # hash using the current keys.
   def rehash : Nil
     do_compaction(rehash: true)
   end
@@ -2019,7 +2127,7 @@ class Hash(K, V)
       @index = @hash.@first
     end
 
-    def base_next
+    def base_next(&)
       while true
         if @index < @hash.entries_size
           entry = @hash.entries[@index]

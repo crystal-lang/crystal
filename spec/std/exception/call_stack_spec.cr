@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 describe "Backtrace" do
-  it "prints file line:column" do
+  it "prints file line:column", tags: %w[slow] do
     source_file = datapath("backtrace_sample")
 
     # CallStack tries to make files relative to the current dir,
@@ -28,25 +28,25 @@ describe "Backtrace" do
     output.should_not contain("src/raise.cr")
   end
 
-  it "doesn't relativize paths outside of current dir (#10169)" do
+  it "doesn't relativize paths outside of current dir (#10169)", tags: %w[slow] do
     with_tempfile("source_file") do |source_file|
       source_path = Path.new(source_file)
       source_path.absolute?.should be_true
 
-      File.write source_file, <<-EOF
+      File.write source_file, <<-CRYSTAL
         def callee1
           puts caller.join('\n')
         end
 
         callee1
-        EOF
+        CRYSTAL
       _, output, _ = compile_and_run_file(source_file)
 
       output.should match /\A(#{Regex.escape(source_path.to_s)}):/
     end
   end
 
-  it "prints exception backtrace to stderr" do
+  it "prints exception backtrace to stderr", tags: %w[slow] do
     sample = datapath("exception_backtrace_sample")
 
     _, output, error = compile_and_run_file(sample)
@@ -55,7 +55,7 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  it "prints crash backtrace to stderr" do
+  it "prints crash backtrace to stderr", tags: %w[slow] do
     sample = datapath("crash_backtrace_sample")
 
     _, output, error = compile_and_run_file(sample)
@@ -68,7 +68,7 @@ describe "Backtrace" do
     # In windows, the current working directory of the process cannot be
     # removed. So we probably don't need to test that.
     # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/rmdir-wrmdir?view=msvc-170#remarks
-    it "print exception with non-existing PWD" do
+    it "print exception with non-existing PWD", tags: %w[slow] do
       source_file = datapath("blank_test_file.txt")
       compile_file(source_file) do |executable_file|
         output, error = IO::Memory.new, IO::Memory.new

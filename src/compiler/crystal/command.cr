@@ -19,6 +19,7 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
+        clear_cache              clear the compiler cache
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -95,7 +96,7 @@ class Crystal::Command
     when command == "eval"
       options.shift
       eval
-    when command == "i" || command == "interactive"
+    when command.in?("i", "interactive")
       options.shift
       {% if flag?(:without_interpreter) %}
         STDERR.puts "Crystal was compiled without interpreter support"
@@ -112,6 +113,9 @@ class Crystal::Command
     when "tool".starts_with?(command)
       options.shift
       tool
+    when command == "clear_cache"
+      options.shift
+      clear_cache
     when "help".starts_with?(command), "--help" == command, "-h" == command
       puts USAGE
       exit
@@ -140,6 +144,14 @@ class Crystal::Command
     exit 1
   rescue ex : Crystal::Error
     report_warnings
+
+    # This unwraps nested errors which could be caused by `require` which wraps
+    # errors in order to trace the require path. The causes are listed similarly
+    # to `#inspect_with_backtrace` but without the backtrace.
+    while cause = ex.cause
+      error ex.message, exit_code: nil
+      ex = cause
+    end
 
     error ex.message
   rescue ex : OptionParser::Exception
@@ -210,7 +222,7 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable(config.output_filename)
 
-    result = config.compile output_filename
+    config.compile output_filename
 
     unless config.compiler.no_codegen?
       report_warnings
@@ -242,10 +254,10 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            {% unless flag?(:win32) || flag?(:wasm32) %}
+            {% unless flag?(:wasm32) %}
               # Ignore the signal so we don't exit the running process
               # (the running process can still handle this signal)
-              ::Signal::INT.ignore # do
+              Process.ignore_interrupts!
             {% end %}
           end
         end
@@ -274,39 +286,61 @@ class Crystal::Command
       puts "Execute: #{elapsed_time}"
     end
 
-    case status
-    when .normal_exit?
-      exit error_on_exit ? 1 : status.exit_code
-    when .signal_exit?
-      case signal = status.exit_signal
-      when .kill?
-        STDERR.puts "Program was killed"
-      when .segv?
-        STDERR.puts "Program exited because of a segmentation fault (11)"
-      when .int?
-        # OK, bubbled from the sub-program
-      else
-        STDERR.puts "Program received and didn't handle signal #{signal} (#{signal.value})"
-      end
-    else
-      STDERR.puts "Program exited abnormally, the cause is unknown"
+    if status.exit_reason.normal? && !error_on_exit
+      exit status.exit_code
     end
+
+    if message = exit_message(status)
+      STDERR.puts message
+      STDERR.flush
+    end
+
     exit 1
+  end
+
+  private def exit_message(status)
+    case status.exit_reason
+    when .aborted?
+      if status.signal_exit?
+        signal = status.exit_signal
+        if signal.kill?
+          "Program was killed"
+        else
+          "Program received and didn't handle signal #{signal} (#{signal.value})"
+        end
+      else
+        "Program exited abnormally"
+      end
+    when .breakpoint?
+      "Program hit a breakpoint and no debugger was attached"
+    when .access_violation?, .bad_memory_access?
+      # NOTE: this only happens with the empty prelude, because the stdlib
+      # runtime catches those exceptions and then exits _normally_ with exit
+      # code 11 or 1
+      "Program exited because of an invalid memory access"
+    when .bad_instruction?
+      "Program exited because of an invalid instruction"
+    when .float_exception?
+      "Program exited because of a floating-point system exception"
+    when .unknown?
+      "Program exited abnormally, the cause is unknown"
+    end
   end
 
   record CompilerConfig,
     compiler : Compiler,
     sources : Array(Compiler::Source),
     output_filename : String,
-    original_output_filename : String,
+    emit_base_filename : String?,
     arguments : Array(String),
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String? do
+    output_format : String?,
+    combine_rpath : Bool do
     def compile(output_filename = self.output_filename)
-      compiler.emit_base_filename = original_output_filename
-      compiler.compile sources, output_filename
+      compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
+      compiler.compile sources, output_filename, combine_rpath: combine_rpath
     end
 
     def top_level_semantic
@@ -353,7 +387,7 @@ class Crystal::Command
 
       unless no_codegen
         valid_emit_values = Compiler::EmitTarget.names
-        valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
+        valid_emit_values.map!(&.gsub('_', '-').downcase)
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
@@ -492,17 +526,23 @@ class Crystal::Command
     if has_stdin_filename
       sources << Compiler::Source.new(filenames.shift, STDIN.gets_to_end)
     end
-    sources += gather_sources(filenames)
-    first_filename = sources.first.filename
-    first_file_ext = File.extname(first_filename)
-    original_output_filename = File.basename(first_filename, first_file_ext)
+    sources.concat gather_sources(filenames)
 
-    # Check if we'll overwrite the main source file
-    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
-      error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+    output_extension = compiler.cross_compile? ? compiler.codegen_target.object_extension : compiler.codegen_target.executable_extension
+    if output_filename
+      if File.extname(output_filename).empty?
+        output_filename += output_extension
+      end
+    else
+      first_filename = sources.first.filename
+      output_filename = "#{::Path[first_filename].stem}#{output_extension}"
+
+      # Check if we'll overwrite the main source file
+      if !no_codegen && !run && first_filename == File.expand_path(output_filename)
+        error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+      end
     end
 
-    output_filename ||= original_output_filename
     output_format ||= "text"
     unless output_format.in?("text", "json")
       error "You have input an invalid format, only text and JSON are supported"
@@ -514,7 +554,12 @@ class Crystal::Command
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
-    @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
+    if run
+      emit_base_filename = ::Path[sources.first.filename].stem
+    end
+
+    combine_rpath = run && !no_codegen
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
   end
 
   private def gather_sources(filenames)

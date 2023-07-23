@@ -2,6 +2,8 @@ require "crystal/system/user"
 
 # Represents a user on the host system.
 #
+# NOTE: To use User, you must explicitly import it with `require "system/user"`
+#
 # Users can be retrieved by either username or their user ID:
 #
 # ```
@@ -27,6 +29,9 @@ class System::User
   getter group_id : String
 
   # The user's real or full name.
+  #
+  # May not be present on all platforms. Returns the same value as `#username`
+  # if neither a real nor full name is available.
   getter name : String
 
   # The user's home directory.

@@ -1,6 +1,6 @@
 require "spec"
 require "big"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = __LINE__)
   it "converts to #{str}", file: file, line: line do
@@ -9,7 +9,7 @@ private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = _
   end
 end
 
-private def with_precision(precision)
+private def with_precision(precision, &)
   old_precision = BigFloat.default_precision
   BigFloat.default_precision = precision
 
@@ -84,6 +84,36 @@ describe "BigFloat" do
       BigFloat.new(-32768_i16).to_s.should eq("-32768.0")
       BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648.0")
       BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9.223372036854775808e+18")
+    end
+
+    it "raises if creating from infinity" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::INFINITY, precision: 128) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::INFINITY, precision: 128) }
+    end
+
+    it "raises if creating from NaN" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::NAN, precision: 128) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::NAN, precision: 128) }
+    end
+  end
+
+  describe "#<=>" do
+    it "compares against NaNs" do
+      (1.to_big_f <=> Float64::NAN).should be_nil
+      (1.to_big_f <=> Float32::NAN).should be_nil
+      (Float64::NAN <=> 1.to_big_f).should be_nil
+      (Float32::NAN <=> 1.to_big_f).should be_nil
+
+      typeof(1.to_big_f <=> Float64::NAN).should eq(Int32?)
+      typeof(1.to_big_f <=> Float32::NAN).should eq(Int32?)
+      typeof(Float64::NAN <=> 1.to_big_f).should eq(Int32?)
+      typeof(Float32::NAN <=> 1.to_big_f).should eq(Int32?)
+
+      typeof(1.to_big_f <=> 1.to_big_f).should eq(Int32)
     end
   end
 

@@ -41,12 +41,12 @@ class Time::Location
     end
   end
 
-  private def self.open_file_cached(name : String, path : String)
+  private def self.open_file_cached(name : String, path : String, &)
     return nil unless File.exists?(path)
 
     mtime = File.info(path).modification_time
     if (cache = @@location_cache[name]?) && cache[:time] == mtime
-      return cache[:location]
+      cache[:location]
     else
       File.open(path) do |file|
         location = yield file
@@ -110,7 +110,7 @@ class Time::Location
 
     abbreviations = read_buffer(io, abbrev_length)
 
-    leap_second_time_pairs = Bytes.new(num_leap_seconds)
+    leap_second_time_pairs = Bytes.new(num_leap_seconds * 8)
     io.read_fully(leap_second_time_pairs)
 
     isstddata = Bytes.new(num_std_wall)
@@ -173,7 +173,7 @@ class Time::Location
 
   # This method loads an entry from an uncompressed zip file.
   # See http://www.onicos.com/staff/iz/formats/zip.html for ZIP format layout
-  private def self.read_zip_file(name : String, file : File)
+  private def self.read_zip_file(name : String, file : File, &)
     file.seek -ZIP_TAIL_SIZE, IO::Seek::End
 
     if file.read_bytes(Int32, IO::ByteFormat::LittleEndian) != END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE

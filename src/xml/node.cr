@@ -7,7 +7,7 @@ class XML::Node
   end
 
   # :ditto:
-  def initialize(node : LibXML::Doc*)
+  def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
     initialize(node.as(LibXML::Node*))
   end
 
@@ -440,29 +440,24 @@ class XML::Node
   def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     # We need to use a mutex because we modify global libxml variables
     SAVE_MUTEX.synchronize do
-      oldXmlIndentTreeOutput = LibXML.xmlIndentTreeOutput
-      LibXML.xmlIndentTreeOutput = 1
-
-      oldXmlTreeIndentString = LibXML.xmlTreeIndentString
-      LibXML.xmlTreeIndentString = (indent_text * indent).to_unsafe
-
-      save_ctx = LibXML.xmlSaveToIO(
-        ->(ctx, buffer, len) {
-          Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
-          len
-        },
-        ->(ctx) {
-          Box(IO).unbox(ctx).flush
-          0
-        },
-        Box(IO).box(io),
-        @node.value.doc.value.encoding,
-        options)
-      LibXML.xmlSaveTree(save_ctx, self)
-      LibXML.xmlSaveClose(save_ctx)
-
-      LibXML.xmlIndentTreeOutput = oldXmlIndentTreeOutput
-      LibXML.xmlTreeIndentString = oldXmlTreeIndentString
+      XML.with_indent_tree_output(true) do
+        XML.with_tree_indent_string(indent_text * indent) do
+          save_ctx = LibXML.xmlSaveToIO(
+            ->(ctx, buffer, len) {
+              Box(IO).unbox(ctx).write_string Slice.new(buffer, len)
+              len
+            },
+            ->(ctx) {
+              Box(IO).unbox(ctx).flush
+              0
+            },
+            Box(IO).box(io),
+            @node.value.doc.value.encoding,
+            options)
+          LibXML.xmlSaveTree(save_ctx, self)
+          LibXML.xmlSaveClose(save_ctx)
+        end
+      end
     end
 
     io
@@ -576,16 +571,10 @@ class XML::Node
     xpath(path, namespaces, variables).as(String)
   end
 
-  # :nodoc:
-  def errors=(errors)
-    @node.value._private = errors.as(Void*)
-  end
-
   # Returns the list of `XML::Error` found when parsing this document.
   # Returns `nil` if no errors were found.
   def errors : Array(XML::Error)?
-    ptr = @node.value._private
-    ptr ? (ptr.as(Array(XML::Error))) : nil
+    return @errors unless @errors.try &.empty?
   end
 
   private def check_no_null_byte(string)
