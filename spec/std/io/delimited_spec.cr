@@ -214,6 +214,21 @@ describe "IO::Delimited" do
         io.gets_to_end.should eq("")
       end
 
+      it "handles the case of peek matching first byte, not having enough room, but rest not immediately matching (with a potential match afterwards)" do
+        #                                 not a delimiter, but the second 'f' will actually match the delimiter
+        #                                    ---
+        io = MemoryIOWithFixedPeek.new("abcdeffghijk")
+        #                               -------
+        #                                peek
+        io.peek_size = 7
+        delimited = IO::Delimited.new(io, read_delimiter: "fgh")
+
+        delimited.peek.should eq("abcde".to_slice)
+        delimited.gets_to_end.should eq("abcdef")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("ijk")
+      end
+
       it "handles the case of peek matching first byte, not having enough room, but later matching" do
         #                                  delimiter
         #                                    ---

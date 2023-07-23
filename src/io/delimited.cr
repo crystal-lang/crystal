@@ -180,11 +180,12 @@ class IO::Delimited < IO
     # doesn't match the read delimiter's portion, we can move on
     rest = peek[index..]
     unless rest == @read_delimiter[0, rest.size]
-      # If not, we can read from the peek buffer for now
-      slice.copy_from(peek)
-      @io.skip(peek.size)
-      slice += peek.size
-      return peek.size
+      # We can read up to past that byte for now
+      safe_to_read = peek[0, index + 1]
+      slice.copy_from(safe_to_read)
+      @io.skip(safe_to_read.size)
+      slice += safe_to_read.size
+      return safe_to_read.size
     end
 
     # Copy up to index into slice
