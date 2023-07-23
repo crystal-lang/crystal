@@ -10,7 +10,7 @@ struct Crystal::System::Process
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
 
-  @@interrupt_handler : Proc(Interrupt)?
+  @@interrupt_handler : Proc(Interrupt, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
