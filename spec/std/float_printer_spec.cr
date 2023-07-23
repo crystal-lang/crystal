@@ -35,7 +35,7 @@
 
 require "spec"
 require "./spec_helper"
-require "../support/string"
+require "spec/helpers/string"
 require "../support/number"
 
 # Tests that `v.to_s` is the same as the *v* literal is written in the source

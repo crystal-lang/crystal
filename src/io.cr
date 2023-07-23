@@ -152,7 +152,7 @@ abstract class IO
   #   reader.gets # => "world"
   # end
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
+  def self.pipe(read_blocking = false, write_blocking = false, &)
     r, w = IO.pipe(read_blocking, write_blocking)
     begin
       yield r, w
@@ -989,7 +989,7 @@ abstract class IO
   # あ
   # め
   # ```
-  def each_char : Nil
+  def each_char(&) : Nil
     while char = read_char
       yield char
     end
@@ -1024,7 +1024,7 @@ abstract class IO
   # 129
   # 130
   # ```
-  def each_byte : Nil
+  def each_byte(&) : Nil
     while byte = read_byte
       yield byte
     end

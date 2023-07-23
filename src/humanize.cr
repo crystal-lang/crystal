@@ -96,7 +96,7 @@ struct Number
   end
 
   # Default SI prefixes ordered by magnitude.
-  SI_PREFIXES = { {'y', 'z', 'a', 'f', 'p', 'n', 'µ', 'm'}, {nil, 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'} }
+  SI_PREFIXES = { {'q', 'r', 'y', 'z', 'a', 'f', 'p', 'n', 'µ', 'm'}, {nil, 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q'} }
 
   # SI prefixes used by `#humanize`. Equal to `SI_PREFIXES` but prepends the
   # prefix with a space character.
@@ -113,12 +113,13 @@ struct Number
   def self.si_prefix(magnitude : Int, prefixes = SI_PREFIXES) : Char?
     index = (magnitude // 3)
     prefixes = prefixes[magnitude < 0 ? 0 : 1]
-    prefixes[index.clamp((-prefixes.size + 1)..(prefixes.size - 1))]
+    prefixes[index.clamp((-prefixes.size)..(prefixes.size - 1))]
   end
 
   # :nodoc:
-  def self.prefix_index(i : Int32, group : Int32 = 3) : Int32
-    ((i - (i > 0 ? 1 : 0)) // group) * group
+  def self.prefix_index(i : Int32, *, group : Int32 = 3, prefixes = SI_PREFIXES) : Int32
+    prefixes = prefixes[i < 0 ? 0 : 1]
+    ((i - (i > 0 ? 1 : 0)) // group).clamp((-prefixes.size)..(prefixes.size - 1)) * group
   end
 
   # Pretty prints this number as a `String` in a human-readable format.
@@ -150,7 +151,7 @@ struct Number
   # See `Int#humanize_bytes` to format a file size.
   def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Indexable = SI_PREFIXES) : Nil
     humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, _|
-      magnitude = Number.prefix_index(magnitude)
+      magnitude = Number.prefix_index(magnitude, prefixes: prefixes)
       {magnitude, Number.si_prefix(magnitude, prefixes)}
     end
   end
@@ -259,7 +260,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true) : String
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, &) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, number|
         yield magnitude, number
@@ -284,13 +285,13 @@ end
 
 struct Int
   enum BinaryPrefixFormat
-    # The IEC standard prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`)
+    # The IEC standard prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`, `Ri`, `Qi`)
     # based on powers of 1000.
     IEC
 
-    # Extended range of the JEDEC units (`K`, `M`, `G`, `T`, `P`, `E`, `Z`, `Y`) which equals to
-    # the prefixes of the SI system except for uppercase `K` and is based on
-    # powers of 1024.
+    # Extended range of the JEDEC units (`K`, `M`, `G`, `T`, `P`, `E`, `Z`, `Y`, `R`, `Q`)
+    # which equals to the prefixes of the SI system except for uppercase `K` and
+    # is based on powers of 1024.
     JEDEC
   end
 
@@ -300,12 +301,12 @@ struct Int
   # Values with binary measurements such as computer storage (e.g. RAM size) are
   # typically expressed using unit prefixes based on 1024 (instead of multiples
   # of 1000 as per SI standard). This method by default uses the IEC standard
-  # prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`) based on powers of
-  # 1000 (see `BinaryPrefixFormat::IEC`).
+  # prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`, `Ri`, `Qi`) based
+  # on powers of 1000 (see `BinaryPrefixFormat::IEC`).
   #
   # *format* can be set to use the extended range of JEDEC units (`K`, `M`, `G`,
-  # `T`, `P`, `E`, `Z`, `Y`) which equals to the prefixes of the SI system
-  # except for uppercase `K` and is based on powers of 1024 (see
+  # `T`, `P`, `E`, `Z`, `Y`, `R`, `Q`) which equals to the prefixes of the SI
+  # system except for uppercase `K` and is based on powers of 1024 (see
   # `BinaryPrefixFormat::JEDEC`).
   #
   # ```

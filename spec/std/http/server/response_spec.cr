@@ -264,9 +264,13 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.headers["Foo"] = "Bar"
     response.cookies["Bar"] = "Foo"
+    response.status = HTTP::Status::USE_PROXY
+    response.status_message = "Baz"
     response.reset
     response.headers.should be_empty
     response.cookies.should be_empty
+    response.status.should eq HTTP::Status::OK
+    response.status_message.should eq "OK"
   end
 
   it "writes cookie headers" do
@@ -345,6 +349,67 @@ describe HTTP::Server::Response do
       response.flush
       expect_raises(IO::Error, "Headers already sent") do
         response.respond_with_status(400)
+      end
+    end
+  end
+
+  describe "#redirect" do
+    ["/path", URI.parse("/path")].each do |location|
+      it "#{location.class} location" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.redirect(location)
+        io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+      end
+    end
+
+    it "encodes special characters" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.redirect("https://example.com/path\nfoo bar")
+      io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: https://example.com/path%0Afoo%20bar\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "doesn't encode URIs twice" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      u = URI.new "https", host: "example.com", path: "auth",
+        query: URI::Params.new({"redirect_uri" => ["http://example.com/callback"]})
+      response.redirect(u)
+      io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: https://example.com/auth?redirect_uri=http%3A%2F%2Fexample.com%2Fcallback\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "permanent redirect" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.redirect("/path", status: :moved_permanently)
+      io.to_s.should eq("HTTP/1.1 301 Moved Permanently\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "with header" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.headers["Foo"] = "Bar"
+      response.redirect("/path", status: :moved_permanently)
+      io.to_s.should eq("HTTP/1.1 301 Moved Permanently\r\nFoo: Bar\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "fails if headers already sent" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.puts "foo"
+      response.flush
+      expect_raises(IO::Error, "Headers already sent") do
+        response.redirect("/path")
+      end
+    end
+
+    it "fails if closed" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.close
+      expect_raises(IO::Error, "Closed stream") do
+        response.redirect("/path")
       end
     end
   end

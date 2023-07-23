@@ -41,7 +41,7 @@ describe Log do
       Log.context.set a: 1
       done = Channel(Nil).new
 
-      f = spawn do
+      spawn do
         Log.context.metadata.should eq(Log::Metadata.new)
         Log.context.set b: 2
         Log.context.metadata.should eq(m({b: 2}))

@@ -1,5 +1,8 @@
 require "uri/punycode"
 require "log"
+{% if flag?(:win32) %}
+  require "crystal/system/win32/crypto"
+{% end %}
 
 # An `SSL::Context` represents a generic secure socket protocol configuration.
 #
@@ -98,6 +101,14 @@ abstract class OpenSSL::SSL::Context
         end
       }, hostname.as(Void*))
     end
+
+    private def alpn_protocol=(protocol : Bytes)
+      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
+        LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
+      {% else %}
+        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_protos")
+      {% end %}
+    end
   end
 
   class Server < Context
@@ -173,6 +184,24 @@ abstract class OpenSSL::SSL::Context
         raise OpenSSL::Error.new("SSL_CTX_set_num_tickets") if ret != 1
       {% end %}
     end
+
+    private def alpn_protocol=(protocol : Bytes)
+      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
+        alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
+          proto = Box(Bytes).unbox(data)
+          ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
+          if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
+            LibSSL::SSL_TLSEXT_ERR_NOACK
+          else
+            LibSSL::SSL_TLSEXT_ERR_OK
+          end
+        }
+        @alpn_protocol = alpn_protocol = Box.box(protocol)
+        LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
+      {% else %}
+        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_select_cb")
+      {% end %}
+    end
   end
 
   protected def initialize(method : LibSSL::SSLMethod)
@@ -197,6 +226,12 @@ abstract class OpenSSL::SSL::Context
     {% end %}
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+
+    # OpenSSL does not support reading from the system root certificate store on
+    # Windows, so we have to import them ourselves
+    {% if flag?(:win32) %}
+      Crystal::System::Crypto.populate_system_root_certificates(self)
+    {% end %}
   end
 
   # Overriding initialize or new in the child classes as public methods,
@@ -207,6 +242,12 @@ abstract class OpenSSL::SSL::Context
   protected def _initialize_insecure(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+
+    # since an insecure context on non-Windows systems still has access to the
+    # system certificates, we do the same for Windows
+    {% if flag?(:win32) %}
+      Crystal::System::Crypto.populate_system_root_certificates(self)
+    {% end %}
   end
 
   protected def self.insecure(method : LibSSL::SSLMethod)
@@ -427,24 +468,6 @@ abstract class OpenSSL::SSL::Context
     proto[0] = protocol.bytesize.to_u8
     protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
     self.alpn_protocol = proto
-  end
-
-  private def alpn_protocol=(protocol : Bytes)
-    {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
-      alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-        proto = Box(Bytes).unbox(data)
-        ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
-        if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
-          LibSSL::SSL_TLSEXT_ERR_NOACK
-        else
-          LibSSL::SSL_TLSEXT_ERR_OK
-        end
-      }
-      @alpn_protocol = alpn_protocol = Box.box(protocol)
-      LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
-    {% else %}
-      raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_select_cb")
-    {% end %}
   end
 
   # Sets this context verify param to the default one of the given name.

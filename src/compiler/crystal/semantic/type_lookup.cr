@@ -247,6 +247,10 @@ class Crystal::Type
             type_var.raise "can only splat tuple type, not #{splat_type}"
           end
           next
+        when SizeOf, InstanceSizeOf, OffsetOf
+          next unless @raise
+
+          type_var.raise "can't use #{type_var} as a generic type argument"
         end
 
         # Check the case of T resolving to a number
@@ -422,7 +426,7 @@ class Crystal::Type
       Crystal.check_type_can_be_stored(ident, type, message)
     end
 
-    def in_generic_args
+    def in_generic_args(&)
       @in_generic_args += 1
       value = yield
       @in_generic_args -= 1

@@ -30,22 +30,22 @@ class Crystal::Digest::MD5 < ::Digest
     update(data.to_unsafe, data.bytesize.to_u32)
   end
 
-  private def update(inBuf, inLen)
+  private def update(in_buf, in_len)
     tmp_in = uninitialized UInt32[16]
 
     # compute number of bytes mod 64
     mdi = (@i[0] >> 3) & 0x3F
 
     # update number of bits
-    @i[1] &+= 1 if (@i[0] &+ (inLen << 3)) < @i[0]
-    @i[0] &+= (inLen << 3)
-    @i[1] &+= (inLen >> 29)
+    @i[1] &+= 1 if (@i[0] &+ (in_len << 3)) < @i[0]
+    @i[0] &+= (in_len << 3)
+    @i[1] &+= (in_len >> 29)
 
-    inLen.times do
+    in_len.times do
       # add new character to buffer, increment mdi
-      @in[mdi] = inBuf.value
+      @in[mdi] = in_buf.value
       mdi += 1
-      inBuf += 1
+      in_buf += 1
 
       # transform if necessary
       if mdi == 0x40

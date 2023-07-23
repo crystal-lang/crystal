@@ -154,7 +154,7 @@ module Crystal
 
       restricted = common_descendent(type1.typedef, type2)
       if restricted == type1.typedef
-        return type1
+        type1
       elsif restricted.is_a?(UnionType)
         type1.program.type_merge(restricted.union_types.map { |t| t == type1.typedef ? type1 : t })
       else

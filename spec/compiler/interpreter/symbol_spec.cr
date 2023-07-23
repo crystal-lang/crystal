@@ -4,23 +4,23 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "symbol" do
     it "Symbol#to_s" do
-      interpret(<<-CODE).should eq("hello")
+      interpret(<<-CRYSTAL).should eq("hello")
         x = :hello
         x.to_s
-      CODE
+      CRYSTAL
     end
 
     it "Symbol#to_i" do
-      interpret(<<-CODE).should eq(0 + 1 + 2)
+      interpret(<<-CRYSTAL).should eq(0 + 1 + 2)
         x = :hello
         y = :bye
         z = :foo
         x.to_i + y.to_i + z.to_i
-      CODE
+      CRYSTAL
     end
 
     it "symbol equality" do
-      interpret(<<-CODE).should eq(9)
+      interpret(<<-CRYSTAL).should eq(9)
         s1 = :foo
         s2 = :bar
 
@@ -30,7 +30,7 @@ describe Crystal::Repl::Interpreter do
         a += 4 if s1 != s1
         a += 8 if s1 != s2
         a
-      CODE
+      CRYSTAL
     end
   end
 end

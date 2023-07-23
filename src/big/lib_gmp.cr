@@ -29,18 +29,21 @@ lib LibGMP
 
   {% if flag?(:win32) && flag?(:bits64) %}
     alias MpExp = LibC::Long
+    alias MpSize = LibC::LongLong
     alias MpLimb = LibC::ULongLong
   {% elsif flag?(:bits64) %}
     alias MpExp = Int64
+    alias MpSize = LibC::Long
     alias MpLimb = LibC::ULong
   {% else %}
     alias MpExp = Int32
+    alias MpSize = LibC::Long
     alias MpLimb = LibC::ULong
   {% end %}
 
   struct MPZ
-    _mp_alloc : Int32
-    _mp_size : Int32
+    _mp_alloc : Int
+    _mp_size : Int
     _mp_d : MpLimb*
   end
 
@@ -65,6 +68,7 @@ lib LibGMP
   fun get_si = __gmpz_get_si(op : MPZ*) : SI
   fun get_ui = __gmpz_get_ui(op : MPZ*) : UI
   fun get_d = __gmpz_get_d(op : MPZ*) : Double
+  fun get_d_2exp = __gmpz_get_d_2exp(exp : Long*, op : MPZ*) : Double
 
   # # Arithmetic
 
@@ -133,9 +137,6 @@ lib LibGMP
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : UI) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
 
-  # # Conversion
-  fun get_d_2exp = __gmpz_get_d_2exp(exp : Long*, op : MPZ*) : Double
-
   # # Number Theoretic Functions
 
   fun gcd = __gmpz_gcd(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
@@ -143,6 +144,22 @@ lib LibGMP
   fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
   fun remove = __gmpz_remove(rop : MPZ*, op : MPZ*, f : MPZ*) : BitcntT
+
+  # # Miscellaneous Functions
+
+  fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
+  fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
+  {% if flag?(:win32) %}
+    fun fits_ui_p = __gmpz_fits_ui_p(op : MPZ*) : Int
+    fun fits_si_p = __gmpz_fits_si_p(op : MPZ*) : Int
+  {% end %}
+
+  # # Special Functions
+
+  fun size = __gmpz_size(op : MPZ*) : SizeT
+  fun limbs_read = __gmpz_limbs_read(x : MPZ*) : MpLimb*
+  fun limbs_write = __gmpz_limbs_write(x : MPZ*, n : MpSize) : MpLimb*
+  fun limbs_finish = __gmpz_limbs_finish(x : MPZ*, s : MpSize)
 
   # MPQ
   struct MPQ
@@ -160,10 +177,9 @@ lib LibGMP
 
   # # Conversion
   fun mpq_get_str = __gmpq_get_str(str : UInt8*, base : Int, op : MPQ*) : UInt8*
-  fun mpq_get_d = __gmpq_get_d(x : MPQ*) : Float64
-
-  # # Compare
-  fun mpq_cmp = __gmpq_cmp(x : MPQ*, o : MPQ*) : Int32
+  fun mpq_get_d = __gmpq_get_d(op : MPQ*) : Double
+  fun mpq_set_d = __gmpq_set_d(rop : MPQ*, op : Double)
+  fun mpq_set_f = __gmpq_set_f(rop : MPQ*, op : MPF*)
 
   # # Arithmetic
   fun mpq_add = __gmpq_add(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
@@ -176,6 +192,13 @@ lib LibGMP
 
   fun mpq_div_2exp = __gmpq_div_2exp(q : MPQ*, n : MPQ*, b : BitcntT)
   fun mpq_mul_2exp = __gmpq_mul_2exp(rop : MPQ*, op1 : MPQ*, op2 : BitcntT)
+
+  # # Compare
+  fun mpq_cmp = __gmpq_cmp(op1 : MPQ*, op2 : MPQ*) : Int
+  fun mpq_cmp_z = __gmpq_cmp_z(op1 : MPQ*, op2 : MPZ*) : Int
+  fun mpq_cmp_ui = __gmpq_cmp_ui(op1 : MPQ*, num2 : UI, den2 : UI) : Int
+  fun mpq_cmp_si = __gmpq_cmp_si(op1 : MPQ*, num2 : SI, den2 : SI) : Int
+  fun mpq_equal = __gmpq_equal(op1 : MPQ*, op2 : MPQ*) : Int
 
   # MPF
   struct MPF
@@ -196,6 +219,7 @@ lib LibGMP
   # # Precision
   fun mpf_set_default_prec = __gmpf_set_default_prec(prec : BitcntT)
   fun mpf_get_default_prec = __gmpf_get_default_prec : BitcntT
+  fun mpf_get_prec = __gmpf_get_prec(op : MPF*) : BitcntT
 
   # # Conversion
   fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*

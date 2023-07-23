@@ -695,7 +695,7 @@ describe "Semantic: exception" do
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       while true
         begin
           foo = 1
@@ -707,7 +707,7 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      CR
+      CRYSTAL
   end
 
   it "correctly types variable assigned inside nested exception handler (#9769)" do

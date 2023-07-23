@@ -3,6 +3,7 @@ require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
+  require "./loader"
   require "crystal/system/win32/visual_studio"
   require "crystal/system/win32/windows_sdk"
 {% end %}
@@ -20,8 +21,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    CC = ENV["CC"]? || "cc"
-    CL = "cl.exe"
+    private DEFAULT_LINKER = ENV["CC"]? || "cc"
+    private MSVC_LINKER    = ENV["CC"]? || "cl.exe"
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -38,7 +39,7 @@ module Crystal
     # If `true`, doesn't generate an executable but instead
     # creates a `.o` file and outputs a command line to link
     # it in the target machine.
-    property cross_compile = false
+    property? cross_compile = false
 
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
@@ -149,12 +150,21 @@ module Crystal
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
+    # If *combine_rpath* is true, add the compiler itself's RPATH to the
+    # generated executable via `CrystalLibraryPath.add_compiler_rpath`. This is
+    # used by the `run` / `eval` / `spec` commands as well as the macro `run`
+    # (via `Crystal::Program#macro_compile`), and never during cross-compiling.
+    #
     # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
-    def compile(source : Source | Array(Source), output_filename : String) : Result
+    def compile(source : Source | Array(Source), output_filename : String, *, combine_rpath : Bool = false) : Result
+      if combine_rpath
+        return CrystalLibraryPath.add_compiler_rpath { compile(source, output_filename, combine_rpath: false) }
+      end
+
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
@@ -194,7 +204,6 @@ module Crystal
       @program = program = Program.new
       program.compiler = self
       program.filename = sources.first.filename
-      program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
       program.target_machine = target_machine
       program.flags << "release" if release?
@@ -286,17 +295,12 @@ module Crystal
       result
     end
 
-    private def with_file_lock(output_dir)
-      {% if flag?(:win32) %}
-        # TODO: use flock when it's supported in Windows
-        yield
-      {% else %}
-        File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
-          file.flock_exclusive do
-            yield
-          end
+    private def with_file_lock(output_dir, &)
+      File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
+        file.flock_exclusive do
+          yield
         end
-      {% end %}
+      end
     end
 
     private def run_dsymutil(filename)
@@ -311,17 +315,18 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = output_filename + program.object_extension
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod if @release
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
-        target_machine.emit_obj_to_file llvm_mod, object_name
+        target_machine.emit_obj_to_file llvm_mod, output_filename
       end
-
-      print_command(*linker_command(program, [object_name], output_filename, nil))
+      object_names = [output_filename]
+      output_filename = output_filename.rchop(unit.object_extension)
+      _, command, args = linker_command(program, object_names, output_filename, nil)
+      print_command(command, args)
     end
 
     private def print_command(command, args)
@@ -337,7 +342,7 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        cl = CL
+        linker = MSVC_LINKER
         link_args = [] of String
 
         # if the compiler and the target both have the `msvc` flag, we are not
@@ -346,8 +351,8 @@ module Crystal
         {% if flag?(:msvc) %}
           if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
             if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-              host_bits = {{ flag?(:bits64) ? "x64" : "x86" }}
-              target_bits = program.has_flag?("bits64") ? "x64" : "x86"
+              host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
+              target_bits = program.has_flag?("aarch64") ? "arm64" : program.has_flag?("bits64") ? "x64" : "x86"
 
               # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
               # that is normally expected on the MSVC developer command prompt
@@ -357,7 +362,9 @@ module Crystal
               link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
 
               # use exact path for compiler instead of relying on `PATH`
-              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s)
+              # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
+              target_bits = target_bits.sub("arm", "ARM")
+              linker = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
             end
           end
         {% end %}
@@ -367,8 +374,36 @@ module Crystal
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
+        {% if flag?(:msvc) %}
+          unless @cross_compile
+            extra_suffix = program.has_flag?("preview_dll") ? "-dynamic" : "-static"
+            search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
+            if not_found = search_result.not_found?
+              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+            end
+
+            link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
+
+            if program.has_flag?("preview_win32_delay_load")
+              # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
+              # it is harmless to skip this error because not all import libraries are always used, much
+              # less the individual DLLs they refer to
+              link_args << "/IGNORE:4199"
+
+              dlls = Set(String).new
+              search_result.library_paths.each do |library_path|
+                Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
+                  dlls << dll.downcase
+                end
+              end
+              dlls.delete "kernel32.dll"
+              dlls.each { |dll| link_args << "/DELAYLOAD:#{dll}" }
+            end
+          end
+        {% end %}
+
         args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
-        cmd = "#{cl} #{args}"
+        cmd = "#{linker} #{args}"
 
         if cmd.to_utf16.size > 32000
           # The command line would be too big, pass the args through a UTF-16-encoded file instead.
@@ -379,18 +414,18 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
+          cmd = "#{linker} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        {cmd, nil}
+        {linker, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
+        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
 
@@ -422,21 +457,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
-
-          process_wrapper(*linker_command) do |command, args|
-            Process.run(command, args, shell: true,
-              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
-              process.error.each_line(chomp: false) do |line|
-                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
-                line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
-                line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
-                line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
-                STDERR << line
-              end
-            end
-            $?
-          end
+          run_linker *linker_command(program, object_names, output_filename, output_dir, expand: true)
         end
       end
 
@@ -459,7 +480,9 @@ module Crystal
         return all_reused
       end
 
-      {% if flag?(:preview_mt) %}
+      {% if !Crystal::System::Process.class.has_method?("fork") %}
+        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+      {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
       {% else %}
         jobs_count = 0
@@ -483,7 +506,7 @@ module Crystal
               end
             end
 
-            codegen_process = Process.fork do
+            codegen_process = Crystal::System::Process.fork do
               pipe_w = pw
               slice.each do |unit|
                 unit.compile
@@ -493,7 +516,7 @@ module Crystal
                 end
               end
             end
-            codegen_process.wait
+            Process.new(codegen_process).wait
 
             if pipe_w = pw
               pipe_w.close
@@ -564,61 +587,86 @@ module Crystal
       exit 1
     end
 
-    protected def optimize(llvm_mod)
-      {% if LibLLVM::IS_LT_130 %}
-        optimize_with_old_pass_manager(llvm_mod)
-      {% else %}
-        optimize_with_new_pass_manager(llvm_mod)
-      {% end %}
-    end
-
-    private def optimize_with_old_pass_manager(llvm_mod)
-      fun_pass_manager = llvm_mod.new_function_pass_manager
-      pass_manager_builder.populate fun_pass_manager
-      fun_pass_manager.run llvm_mod
-      module_pass_manager.run llvm_mod
-    end
-
-    private def optimize_with_new_pass_manager(llvm_mod)
-      LLVM::PassBuilderOptions.new do |options|
-        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+    {% if LibLLVM::IS_LT_130 %}
+      protected def optimize(llvm_mod)
+        fun_pass_manager = llvm_mod.new_function_pass_manager
+        pass_manager_builder.populate fun_pass_manager
+        fun_pass_manager.run llvm_mod
+        module_pass_manager.run llvm_mod
       end
-    end
 
-    @module_pass_manager : LLVM::ModulePassManager?
+      @module_pass_manager : LLVM::ModulePassManager?
 
-    private def module_pass_manager
-      @module_pass_manager ||= begin
-        mod_pass_manager = LLVM::ModulePassManager.new
-        pass_manager_builder.populate mod_pass_manager
-        mod_pass_manager
+      private def module_pass_manager
+        @module_pass_manager ||= begin
+          mod_pass_manager = LLVM::ModulePassManager.new
+          pass_manager_builder.populate mod_pass_manager
+          mod_pass_manager
+        end
       end
-    end
 
-    @pass_manager_builder : LLVM::PassManagerBuilder?
+      @pass_manager_builder : LLVM::PassManagerBuilder?
 
-    private def pass_manager_builder
-      @pass_manager_builder ||= begin
-        registry = LLVM::PassRegistry.instance
-        registry.initialize_all
+      private def pass_manager_builder
+        @pass_manager_builder ||= begin
+          registry = LLVM::PassRegistry.instance
+          registry.initialize_all
 
-        builder = LLVM::PassManagerBuilder.new
-        builder.opt_level = 3
-        builder.size_level = 0
-        builder.use_inliner_with_threshold = 275
-        builder
+          builder = LLVM::PassManagerBuilder.new
+          builder.opt_level = 3
+          builder.size_level = 0
+          builder.use_inliner_with_threshold = 275
+          builder
+        end
       end
-    end
+    {% else %}
+      protected def optimize(llvm_mod)
+        LLVM::PassBuilderOptions.new do |options|
+          LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+        end
+      end
+    {% end %}
 
-    private def process_wrapper(command, args = nil)
+    private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
 
-      status = yield command, args
+      begin
+        Process.run(command, args, shell: true,
+          input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
+          process.error.each_line(chomp: false) do |line|
+            hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+            line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
+            line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
+            line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
+            STDERR << line
+          end
+        end
+      rescue exc : File::AccessDeniedError | File::NotFoundError
+        linker_not_found exc.class, linker_name
+      end
 
+      status = $?
       unless status.success?
-        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        if status.normal_exit?
+          case status.exit_code
+          when 126
+            linker_not_found File::AccessDeniedError, linker_name
+          when 127
+            linker_not_found File::NotFoundError, linker_name
+          end
+        end
         code = status.normal_exit? ? status.exit_code : 1
-        error "execution of command failed with #{msg}: `#{command}`", exit_code: code
+        error "execution of command failed with exit status #{status}: #{command}", exit_code: code
+      end
+    end
+
+    private def linker_not_found(exc_class, linker_name)
+      verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
+      case exc_class
+      when File::AccessDeniedError
+        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+      else
+        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
       end
     end
 
@@ -637,7 +685,7 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
-      @object_extension : String
+      getter object_extension : String
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
@@ -663,7 +711,7 @@ module Crystal
           @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
-        @object_extension = program.object_extension
+        @object_extension = compiler.codegen_target.object_extension
       end
 
       def compile

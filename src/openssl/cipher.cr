@@ -70,7 +70,7 @@ class OpenSSL::Cipher
   end
 
   def iv=(iv)
-    raise ArgumentError.new "iv length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
+    raise ArgumentError.new "IV length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
     cipherinit iv: iv
     iv
   end

@@ -34,6 +34,8 @@ module Crystal
             self_type.kind.bytesize <= 64
           when FloatType
             self_type.kind.f32?
+          else
+            false
           end
         else
           false
@@ -471,7 +473,6 @@ module Crystal
       # bind all previously related local vars to it so that
       # they get all types assigned to it.
       local_vars.each &.bind_to self
-      local_vars = nil
     end
 
     # True if this variable belongs to the given context
@@ -676,6 +677,12 @@ module Crystal
 
   class Alias
     property! resolved_type : AliasType
+  end
+
+  class AnnotationDef
+    include Annotatable
+
+    property! resolved_type : AnnotationType
   end
 
   class External < Def

@@ -10,8 +10,8 @@ module Crystal::System::File
     raise NotImplementedError.new "Crystal::System::File.chown"
   end
 
-  def self.real_path(path)
-    raise NotImplementedError.new "Crystal::System::File.real_path"
+  def self.realpath(path)
+    raise NotImplementedError.new "Crystal::System::File.realpath"
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
@@ -32,10 +32,6 @@ module Crystal::System::File
 
   private def flock(op : LibC::FlockOp, blocking : Bool = true)
     raise NotImplementedError.new "Crystal::System::File#flock"
-  end
-
-  def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
-    raise NotImplementedError.new "Crystal::System::File.mktemp"
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool

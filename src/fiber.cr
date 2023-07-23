@@ -52,8 +52,8 @@ class Fiber
 
   @context : Context
   @stack : Void*
-  @resume_event : Crystal::Event?
-  @timeout_event : Crystal::Event?
+  @resume_event : Crystal::EventLoop::Event?
+  @timeout_event : Crystal::EventLoop::Event?
   # :nodoc:
   property timeout_select_action : Channel::TimeoutAction?
   protected property stack_bottom : Void*
@@ -76,7 +76,7 @@ class Fiber
   end
 
   # :nodoc:
-  def self.unsafe_each
+  def self.unsafe_each(&)
     fibers.unsafe_each { |fiber| yield fiber }
   end
 
@@ -193,7 +193,7 @@ class Fiber
   # The fiber's proc has terminated, and the fiber is now considered dead. The
   # fiber is impossible to resume, ever.
   def dead? : Bool
-    @alive == false
+    !@alive
   end
 
   # Immediately resumes execution of this fiber.
@@ -224,13 +224,13 @@ class Fiber
   end
 
   # :nodoc:
-  def resume_event : Crystal::Event
-    @resume_event ||= Crystal::EventLoop.create_resume_event(self)
+  def resume_event : Crystal::EventLoop::Event
+    @resume_event ||= Crystal::Scheduler.event_loop.create_resume_event(self)
   end
 
   # :nodoc:
-  def timeout_event : Crystal::Event
-    @timeout_event ||= Crystal::EventLoop.create_timeout_event(self)
+  def timeout_event : Crystal::EventLoop::Event
+    @timeout_event ||= Crystal::Scheduler.event_loop.create_timeout_event(self)
   end
 
   # :nodoc:

@@ -667,7 +667,7 @@ module Crystal
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
       if obj.is_a?(Generic) &&
          (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
-         (node.name == "malloc" || node.name == "null")
+         node.name.in?("malloc", "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
       end
@@ -769,7 +769,7 @@ module Crystal
 
       defs = metaclass.lookup_defs(node.name)
       defs = defs.select do |a_def|
-        a_def_has_block = !!a_def.yields
+        a_def_has_block = !!a_def.block_arity
         call_has_block = !!(node.block || node.block_arg)
         next unless a_def_has_block == call_has_block
 
@@ -813,7 +813,6 @@ module Crystal
 
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
-      type = nil
       old_type_override = @type_override
       @type_override = obj_type
 

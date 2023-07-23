@@ -186,6 +186,10 @@ module Crystal::Macros
   def puts(*expressions) : Nop
   end
 
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def print(*expressions) : Nop
+  end
+
   # Same as `puts`.
   def p(*expressions) : Nop
   end
@@ -226,6 +230,10 @@ module Crystal::Macros
 
   # Gives a compile-time error with the given *message*.
   def raise(message) : NoReturn
+  end
+
+  # Emits a compile-time warning with the given *message*.
+  def warning(message : StringLiteral) : NilLiteral
   end
 
   # Returns `true` if the given *filename* exists, `false` otherwise.
@@ -413,9 +421,14 @@ module Crystal::Macros
     def !=(other : ASTNode) : BoolLiteral
     end
 
-    # Gives a compile-time error with the given *message*. This will
-    # highlight this node in the error message.
+    # Gives a compile-time error with the given *message*.
+    # This will highlight this node in the error message.
     def raise(message) : NoReturn
+    end
+
+    # Emits a compile-time warning with the given *message*.
+    # This will highlight this node in the warning message.
+    def warning(message : StringLiteral) : NilLiteral
     end
 
     # Returns `true` if this node's type is the given *type* or any of its
@@ -707,6 +720,10 @@ module Crystal::Macros
     def +(other : ArrayLiteral) : ArrayLiteral
     end
 
+    # Similar to `Array#-`.
+    def -(other : ArrayLiteral) : ArrayLiteral
+    end
+
     # Returns the type specified at the end of the array literal, if any.
     #
     # This refers to the part after brackets in `[] of String`.
@@ -883,6 +900,131 @@ module Crystal::Macros
   #
   # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
+    # Similar to `Enumerable#any?`
+    def any?(&) : BoolLiteral
+    end
+
+    # Similar to `Enumerable#all?`
+    def all?(&) : BoolLiteral
+    end
+
+    # Returns a `MacroId` with all of this tuple's elements joined
+    # by commas.
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this tuple is empty. This lets you
+    # splat a tuple and optionally write a trailing comma
+    # if needed.
+    def splat(trailing_string : StringLiteral = nil) : MacroId
+    end
+
+    # Similar to `Tuple#empty?`
+    def empty? : BoolLiteral
+    end
+
+    # Similar to `Enumerable#find`
+    def find(&) : ASTNode | NilLiteral
+    end
+
+    # Similar to `Tuple#first`, but returns a `NilLiteral` if the tuple is empty.
+    def first : ASTNode | NilLiteral
+    end
+
+    # Similar to `Enumerable#includes?(obj)`.
+    def includes?(node : ASTNode) : BoolLiteral
+    end
+
+    # Similar to `Enumerable#join`
+    def join(separator) : StringLiteral
+    end
+
+    # Similar to `Tuple#last`, but returns a `NilLiteral` if the tuple is empty.
+    def last : ASTNode | NilLiteral
+    end
+
+    # Similar to `Tuple#size`
+    def size : NumberLiteral
+    end
+
+    # Similar to `Enumerable#map`
+    def map(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&) : TupleLiteral
+    end
+
+    # Similar to `Tuple#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `Enumerable#each_with_index`
+    def each_with_index(&) : Nil
+    end
+
+    # Similar to `Enumerable#select`
+    def select(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#reject`
+    def reject(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(&) : ASTNode
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &) : ASTNode
+    end
+
+    # Similar to `Array#shuffle`
+    def shuffle : TupleLiteral
+    end
+
+    # Similar to `Array#sort`
+    def sort : TupleLiteral
+    end
+
+    # Similar to `Array#sort_by`
+    def sort_by(&) : TupleLiteral
+    end
+
+    # Similar to `Array#uniq`
+    def uniq : TupleLiteral
+    end
+
+    # Similar to `Tuple#[]`, but returns `NilLiteral` on out of bounds.
+    def [](index : NumberLiteral) : ASTNode
+    end
+
+    # Similar to `Tuple#[]`.
+    def [](index : RangeLiteral) : TupleLiteral(ASTNode)
+    end
+
+    # Similar to `Array#[]=`.
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `Array#unshift`.
+    def unshift(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Array#push`.
+    def push(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Array#<<`.
+    def <<(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Tuple#+`.
+    def +(other : TupleLiteral) : TupleLiteral
+    end
+
+    # Similar to `Array#-`.
+    def -(other : TupleLiteral) : TupleLiteral
+    end
   end
 
   # A fictitious node representing a variable or instance
@@ -917,6 +1059,11 @@ module Crystal::Macros
     # Returns an array of annotations with the given `type`
     # attached to this variable, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # variable, or an empty `ArrayLiteral` if there are none.
+    def annotations : ArrayLiteral(Annotation)
     end
   end
 
@@ -1124,6 +1271,11 @@ module Crystal::Macros
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
+    # Returns an array of all annotations attached to this
+    # arg, or an empty `ArrayLiteral` if there are none.
+    def annotations : ArrayLiteral(Annotation)
+    end
+
     # Returns the external name of this argument.
     #
     # For example, for `def write(to file)` returns `to`.
@@ -1219,13 +1371,18 @@ module Crystal::Macros
     end
 
     # Returns the last `Annotation` with the given `type`
-    # attached to this variable or `NilLiteral` if there are none.
+    # attached to this method or `NilLiteral` if there are none.
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
     # Returns an array of annotations with the given `type`
-    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    # attached to this method, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # method, or an empty `ArrayLiteral` if there are none.
+    def annotations : ArrayLiteral(Annotation)
     end
   end
 
@@ -1372,7 +1529,7 @@ module Crystal::Macros
     end
 
     # Returns the `else` of this `case`.
-    def else : ArrayLiteral(When)
+    def else : ASTNode
     end
 
     # Returns whether this `case` is exhaustive (`case ... in`).
@@ -1829,12 +1986,14 @@ module Crystal::Macros
     def union? : BoolLiteral
     end
 
-    # Returns `true` if `self` is nilable (if it has `Nil` amongst its types), otherwise `false`.
+    # Returns `true` if `nil` is an instance of `self`, otherwise `false`.
     #
     # ```
     # {{String.nilable?}}                   # => false
     # {{String?.nilable?}}                  # => true
     # {{Union(String, Bool, Nil).nilable?}} # => true
+    # {{NoReturn.nilable?}}                 # => false
+    # {{Value.nilable?}}                    # => true
     # ```
     def nilable? : BoolLiteral
     end
@@ -1972,13 +2131,18 @@ module Crystal::Macros
     end
 
     # Returns the last `Annotation` with the given `type`
-    # attached to this variable or `NilLiteral` if there are none.
+    # attached to this type or `NilLiteral` if there are none.
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
     # Returns an array of annotations with the given `type`
-    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    # attached to this type, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # type, or an empty `ArrayLiteral` if there are none.
+    def annotations : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.

@@ -21,7 +21,7 @@ SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 #
 # If the environment variable `SPEC_TEMPFILE_CLEANUP` is set to `0`, no paths
 # will be cleaned up, enabling easier debugging.
-def with_tempfile(*paths, file = __FILE__)
+def with_tempfile(*paths, file = __FILE__, &)
   calling_spec = File.basename(file).rchop("_spec.cr")
   paths = paths.map { |path| File.join(SPEC_TEMPFILE_PATH, calling_spec, path) }
   FileUtils.mkdir_p(File.join(SPEC_TEMPFILE_PATH, calling_spec))
@@ -31,13 +31,13 @@ def with_tempfile(*paths, file = __FILE__)
   ensure
     if SPEC_TEMPFILE_CLEANUP
       paths.each do |path|
-        rm_rf(path) if File.exists?(path)
+        FileUtils.rm_rf(path) if File.exists?(path)
       end
     end
   end
 end
 
-def with_temp_executable(name, file = __FILE__)
+def with_temp_executable(name, file = __FILE__, &)
   {% if flag?(:win32) %}
     name += ".exe"
   {% end %}
@@ -46,20 +46,21 @@ def with_temp_executable(name, file = __FILE__)
   end
 end
 
-def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__)
+def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
   obj_ext = {{ flag?(:msvc) ? ".obj" : ".o" }}
   with_tempfile("#{filename}.c", "#{filename}#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
     {% if flag?(:msvc) %}
       # following is based on `Crystal::Compiler#linker_command`
-      cl = "cl.exe"
-
-      if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
-        # we won't be cross-compiling the specs binaries, so host and target
-        # bits are identical
-        bits = {{ flag?(:bits64) ? "x64" : "x86" }}
-        cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, "cl.exe").to_s)
+      unless cl = ENV["CC"]?
+        cl = "cl.exe"
+        if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
+          # we won't be cross-compiling the specs binaries, so host and target
+          # bits are identical
+          bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+          cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, cl).to_s)
+        end
       end
 
       `#{cl} /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
@@ -73,24 +74,6 @@ end
 
 if SPEC_TEMPFILE_CLEANUP
   at_exit do
-    rm_rf(SPEC_TEMPFILE_PATH) if Dir.exists?(SPEC_TEMPFILE_PATH)
-  end
-end
-
-private def rm_rf(path : String) : Nil
-  if Dir.exists?(path) && !File.symlink?(path)
-    Dir.each_child(path) do |entry|
-      src = File.join(path, entry)
-      rm_rf(src)
-    end
-    Dir.delete(path)
-  else
-    begin
-      File.delete(path)
-    rescue File::AccessDeniedError
-      # To be able to delete read-only files (e.g. ones under .git/) on Windows.
-      File.chmod(path, 0o666)
-      File.delete(path)
-    end
+    FileUtils.rm_rf(SPEC_TEMPFILE_PATH) if Dir.exists?(SPEC_TEMPFILE_PATH)
   end
 end

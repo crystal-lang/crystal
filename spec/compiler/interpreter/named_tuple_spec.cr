@@ -4,14 +4,14 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "named tuple" do
     it "interprets named tuple literal and access by known index" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
         a = {a: 1, b: 2, c: 3}
         a[:a] + a[:b] + a[:c]
-      CODE
+      CRYSTAL
     end
 
     it "interprets named tuple metaclass indexer" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         struct Int32
           def self.foo
             2
@@ -20,13 +20,13 @@ describe Crystal::Repl::Interpreter do
 
         a = {a: 1, b: 'a'}
         a.class[:a].foo
-      CODE
+      CRYSTAL
     end
 
     it "discards named tuple (#12383)" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         1 + ({a: 1, b: 2, c: 3, d: 4}; 2)
-      CODE
+      CRYSTAL
     end
   end
 end

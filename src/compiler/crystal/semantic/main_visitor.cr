@@ -370,7 +370,8 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          bind_to_program_nil_var(meta_var)
+          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
+          node.bind_to(@program.nil_var)
         end
 
         check_mutably_closured meta_var, var
@@ -393,10 +394,6 @@ module Crystal
       else
         node.raise "read before assignment to local variable '#{node.name}'"
       end
-    end
-
-    private def bind_to_program_nil_var(node)
-      node.bind_to(@program.nil_var) unless node.dependencies.any? &.same?(@program.nil_var)
     end
 
     def visit(node : TypeDeclaration)
@@ -427,11 +424,17 @@ module Crystal
 
         if value = node.value
           type_assign(var, value, node)
+
+          node.bind_to value
+        else
+          node.type = @program.nil
         end
       when InstanceVar
         if @untyped_def
           node.raise "declaring the type of an instance variable must be done at the class level"
         end
+
+        node.type = @program.nil
       when ClassVar
         if @untyped_def
           node.raise "declaring the type of a class variable must be done at the class level"
@@ -442,11 +445,11 @@ module Crystal
         class_var = lookup_class_var(var)
         var.var = class_var
         class_var.thread_local = true if thread_local
+
+        node.type = @program.nil
       else
         raise "Bug: unexpected var type: #{var.class}"
       end
-
-      node.type = @program.nil
 
       false
     end
@@ -598,6 +601,19 @@ module Crystal
     def undefined_instance_variable(owner, node)
       similar_name = owner.lookup_similar_instance_var_name(node.name)
       program.undefined_instance_variable(node, owner, similar_name)
+    end
+
+    def first_time_accessing_meta_type_var?(var)
+      return false if var.uninitialized?
+
+      if var.freeze_type
+        deps = var.dependencies?
+        # If no dependencies, it's the case of a global for a regex literal.
+        # If there are dependencies and it's just one, it's the same var
+        deps ? deps.size == 1 : false
+      else
+        !var.dependencies?
+      end
     end
 
     def visit(node : InstanceVar)
@@ -934,7 +950,7 @@ module Crystal
         node.raise "can't use `yield` outside a method"
       end
 
-      if ctx = @fun_literal_context
+      if @fun_literal_context
         node.raise <<-MSG
           can't use `yield` inside a proc literal or captured block
 
@@ -950,8 +966,8 @@ module Crystal
       # This is the case of a yield when there's a captured block
       if block.fun_literal
         block_arg_name = typed_def.block_arg.not_nil!.name
-        block_var = Var.new(block_arg_name).at(node.location)
-        call = Call.new(block_var, "call", node.exps).at(node.location)
+        block_var = Var.new(block_arg_name).at(node)
+        call = Call.new(block_var, "call", node.exps).at(node)
         call.accept self
         node.bind_to call
         node.expanded = call
@@ -1242,7 +1258,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (node.dependencies.empty? || !node.type?)
+        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
           node.bind_to(expanded)
         end
 
@@ -1380,14 +1396,14 @@ module Crystal
           next
         end
 
-        temp_var = @program.new_temp_var.at(arg.location)
-        assign = Assign.new(temp_var, exp).at(arg.location)
+        temp_var = @program.new_temp_var.at(arg)
+        assign = Assign.new(temp_var, exp).at(arg)
         exps << assign
         case arg
         when Splat
-          arg.exp = temp_var.clone.at(arg.location)
+          arg.exp = temp_var.clone.at(arg)
         when DoubleSplat
-          arg.exp = temp_var.clone.at(arg.location)
+          arg.exp = temp_var.clone.at(arg)
         else
           next
         end
@@ -1398,7 +1414,8 @@ module Crystal
       expansion.accept self
       node.expanded = expansion
       node.bind_to(expanded)
-      return false
+
+      false
     end
 
     # If it's a super or previous_def call inside an initialize we treat
@@ -1496,7 +1513,7 @@ module Crystal
       end
     end
 
-    def check_lib_call_arg(method, arg_index)
+    def check_lib_call_arg(method, arg_index, &)
       method_arg = method.args[arg_index]?
       return unless method_arg
 
@@ -1540,7 +1557,7 @@ module Crystal
 
       temp_name = @program.new_temp_var_name
 
-      new_call = Call.new(node.obj, "new").at(node.location)
+      new_call = Call.new(node.obj, "new").at(node)
 
       new_assign = Assign.new(Var.new(temp_name).at(node), new_call).at(node)
       exps << new_assign
@@ -1721,7 +1738,7 @@ module Crystal
       if const.is_a?(Path) && const.target_const
         obj = node.obj.clone.at(node.obj)
         const = node.const.clone.at(node.const)
-        comp = Call.new(const, "===", obj).at(node.location)
+        comp = Call.new(const, "===", obj).at(node)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -1766,10 +1783,14 @@ module Crystal
         typed_def.raises = true
       end
 
-      node.obj.accept self
+      ignoring_type_filters do
+        node.obj.accept self
+      end
 
       @in_type_args += 1
-      node.to.accept self
+      ignoring_type_filters do
+        node.to.accept self
+      end
       @in_type_args -= 1
 
       node.obj.add_observer node
@@ -2164,7 +2185,7 @@ module Crystal
       filter_vars(filters) { |filter| filter }
     end
 
-    def filter_vars(filters)
+    def filter_vars(filters, &)
       filters.try &.each do |name, filter|
         existing_var = @vars[name]
         filtered_var = MetaVar.new(name)
@@ -2234,7 +2255,7 @@ module Crystal
       @unreachable = true
     end
 
-    def with_block_kind(kind : BlockKind)
+    def with_block_kind(kind : BlockKind, &)
       old_block_kind, @last_block_kind = last_block_kind, kind
       old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind.ensure?
       yield
@@ -2245,7 +2266,7 @@ module Crystal
     def visit(node : Primitive)
       # If the method where this primitive is defined has a return type, use it
       if return_type = typed_def.return_type
-        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        node.type = (path_lookup || scope).lookup_type(return_type, free_vars: free_vars)
         return false
       end
 
@@ -2915,7 +2936,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        generic_type = TypeNode.new(type).at(node) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)
@@ -2926,7 +2947,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        generic_type = TypeNode.new(type).at(node) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)
@@ -2996,7 +3017,7 @@ module Crystal
       expand(node) { @program.literal_expander.expand_named node, generic_type }
     end
 
-    def expand(node)
+    def expand(node, &)
       expanded = yield
       expanded.accept self
       node.expanded = expanded
@@ -3055,7 +3076,7 @@ module Crystal
     # # Helpers
 
     def free_vars
-      match_context.try &.free_vars
+      match_context.try &.bound_free_vars
     end
 
     def check_closured(var, mark_as_mutably_closured : Bool = false)
@@ -3211,7 +3232,7 @@ module Crystal
       @needs_type_filters > 0
     end
 
-    def request_type_filters
+    def request_type_filters(&)
       @type_filters = nil
       @needs_type_filters += 1
       begin
@@ -3221,7 +3242,7 @@ module Crystal
       end
     end
 
-    def ignoring_type_filters
+    def ignoring_type_filters(&)
       needs_type_filters, @needs_type_filters = @needs_type_filters, 0
       begin
         yield
@@ -3241,7 +3262,7 @@ module Crystal
     def define_special_var(name, value)
       meta_var, _ = assign_to_meta_var(name)
       meta_var.bind_to value
-      bind_to_program_nil_var(meta_var)
+      meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
       meta_var.assigned_to = true
       check_closured meta_var
 

@@ -3,7 +3,7 @@ require "spec"
 private class SpecEnumerable
   include Enumerable(Int32)
 
-  def each
+  def each(&)
     yield 1
     yield 2
     yield 3
@@ -177,6 +177,7 @@ describe "Enumerable" do
 
     it "drop all" do
       result = [1, 2].chunk { Enumerable::Chunk::Drop }.to_a
+      result.should be_a(Array(Tuple(NoReturn, Array(Int32))))
       result.size.should eq 0
     end
 
@@ -192,14 +193,14 @@ describe "Enumerable" do
 
     it "reuses true" do
       iter = [1, 1, 2, 3, 3].chunk(reuse: true, &.itself)
-      a = iter.next.as(Tuple)
+      a = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       a.should eq({1, [1, 1]})
 
-      b = iter.next.as(Tuple)
+      b = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       b.should eq({2, [2]})
       b[1].should be(a[1])
 
-      c = iter.next.as(Tuple)
+      c = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       c.should eq({3, [3, 3]})
       c[1].should be(a[1])
     end
@@ -239,6 +240,7 @@ describe "Enumerable" do
 
     it "drop all" do
       result = [1, 2].chunks { Enumerable::Chunk::Drop }
+      result.should be_a(Array(Tuple(NoReturn, Array(Int32))))
       result.size.should eq 0
     end
 
@@ -523,8 +525,8 @@ describe "Enumerable" do
     it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
     it "groups can group by size (like the doc example)" do
-      %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-                                                           5 => ["Alice"]})
+      %w(Alice Bob Ary).group_by(&.size).should eq({3 => ["Bob", "Ary"],
+                                                    5 => ["Alice"]})
     end
   end
 
@@ -566,6 +568,19 @@ describe "Enumerable" do
         array << slice.dup
       end
       array.should eq([[1, 2, 4], [5, 10, 10]])
+    end
+  end
+
+  describe "in slices of" do
+    it { [1, 2, 3].in_slices_of(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].in_slices_of(2).should eq([[1, 2], [3]]) }
+    it { [1, 2, 3, 4].in_slices_of(3).should eq([[1, 2, 3], [4]]) }
+    it { ([] of Int32).in_slices_of(2).should eq([] of Array(Int32)) }
+
+    it "raises argument error if size is less than 0" do
+      expect_raises ArgumentError, "Size must be positive" do
+        [1, 2, 3].in_slices_of(0)
+      end
     end
   end
 
@@ -625,12 +640,12 @@ describe "Enumerable" do
 
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
-      hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }
+      hash = ["Anna", "Ary", "Alice"].index_by(&.size)
       hash.should eq({4 => "Anna", 3 => "Ary", 5 => "Alice"})
     end
 
     it "overrides values if a value is returned twice" do
-      hash = ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
+      hash = ["Anna", "Ary", "Alice", "Bob"].index_by(&.size)
       hash.should eq({4 => "Anna", 3 => "Bob", 5 => "Alice"})
     end
   end
@@ -803,6 +818,24 @@ describe "Enumerable" do
 
   describe "max" do
     it { [1, 2, 3].max.should eq(3) }
+    it { [1, 2, 3].max(0).should eq([] of Int32) }
+    it { [1, 2, 3].max(1).should eq([3]) }
+    it { [1, 2, 3].max(2).should eq([3, 2]) }
+    it { [1, 2, 3].max(3).should eq([3, 2, 1]) }
+    it { [1, 2, 3].max(4).should eq([3, 2, 1]) }
+    it { ([] of Int32).max(0).should eq([] of Int32) }
+    it { ([] of Int32).max(5).should eq([] of Int32) }
+    it {
+      (0..1000).map { |x| (x*137 + x*x*139) % 5000 }.max(10).should eq([
+        4992, 4990, 4980, 4972, 4962, 4962, 4960, 4960, 4952, 4952,
+      ])
+    }
+
+    it "does not modify the array" do
+      xs = [7, 5, 2, 4, 9]
+      xs.max(2).should eq([9, 7])
+      xs.should eq([7, 5, 2, 4, 9])
+    end
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -810,9 +843,21 @@ describe "Enumerable" do
       end
     end
 
+    it "raises if n is negative" do
+      expect_raises ArgumentError do
+        ([1, 2, 3] of Int32).max(-1)
+      end
+    end
+
     it "raises if not comparable" do
       expect_raises ArgumentError do
         [Float64::NAN, 1.0, 2.0, Float64::NAN].max
+      end
+    end
+
+    it "raises if not comparable in max(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max(2)
       end
     end
   end
@@ -851,6 +896,24 @@ describe "Enumerable" do
 
   describe "min" do
     it { [1, 2, 3].min.should eq(1) }
+    it { [1, 2, 3].min(0).should eq([] of Int32) }
+    it { [1, 2, 3].min(1).should eq([1]) }
+    it { [1, 2, 3].min(2).should eq([1, 2]) }
+    it { [1, 2, 3].min(3).should eq([1, 2, 3]) }
+    it { [1, 2, 3].min(4).should eq([1, 2, 3]) }
+    it { ([] of Int32).min(0).should eq([] of Int32) }
+    it { ([] of Int32).min(1).should eq([] of Int32) }
+    it {
+      (0..1000).map { |x| (x*137 + x*x*139) % 5000 }.min(10).should eq([
+        0, 10, 20, 26, 26, 26, 26, 30, 32, 32,
+      ])
+    }
+
+    it "does not modify the array" do
+      xs = [7, 5, 2, 4, 9]
+      xs.min(2).should eq([2, 4])
+      xs.should eq([7, 5, 2, 4, 9])
+    end
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -858,9 +921,21 @@ describe "Enumerable" do
       end
     end
 
+    it "raises if n is negative" do
+      expect_raises ArgumentError do
+        ([1, 2, 3] of Int32).min(-1)
+      end
+    end
+
     it "raises if not comparable" do
       expect_raises ArgumentError do
         [-1.0, Float64::NAN, -3.0].min
+      end
+    end
+
+    it "raises if not comparable in min(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].min(2)
       end
     end
   end
@@ -974,6 +1049,38 @@ describe "Enumerable" do
   describe "partition" do
     it { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
     it { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
+
+    it "with mono type on union type" do
+      ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
+      ints.should eq([1, 3])
+      others.should eq([true, nil, false, "string", 'c'])
+      ints.should be_a(Array(Int32))
+      others.should be_a(Array(Bool | String | Char | Nil))
+    end
+
+    it "with union type on union type" do
+      ints_bools, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32 | Bool)
+      ints_bools.should eq([1, true, 3, false])
+      others.should eq([nil, "string", 'c'])
+      ints_bools.should be_a(Array(Int32 | Bool))
+      others.should be_a(Array(String | Char | Nil))
+    end
+
+    it "with missing type on union type" do
+      symbols, others = [1, true, nil, 3, false, "string", 'c'].partition(Symbol)
+      symbols.empty?.should be_true
+      others.should eq([1, true, nil, 3, false, "string", 'c'])
+      symbols.should be_a(Array(Symbol))
+      others.should be_a(Array(Int32 | Bool | String | Char | Nil))
+    end
+
+    it "with mono type on mono type" do
+      ints, others = [1, 3].partition(Int32)
+      ints.should eq([1, 3])
+      others.empty?.should be_true
+      ints.should be_a(Array(Int32))
+      others.should be_a(Array(NoReturn))
+    end
   end
 
   describe "reject" do
@@ -1164,6 +1271,10 @@ describe "Enumerable" do
       [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
       ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
     end
+
+    it "slices" do
+      [Slice[1, 2], Slice[3, 'a', 'b', 'c']].sum.should eq(Slice[1, 2, 3, 'a', 'b', 'c'])
+    end
   end
 
   describe "product" do
@@ -1242,7 +1353,7 @@ describe "Enumerable" do
       it "returns a hash with counts according to the value" do
         hash = {} of Char => Int32
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
@@ -1252,7 +1363,7 @@ describe "Enumerable" do
       it "updates existing hash with counts according to the value" do
         hash = {'a' => 1, 'b' => 1, 'c' => 1, 'd' => 1}
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1}
@@ -1262,7 +1373,7 @@ describe "Enumerable" do
       it "ignores the default value" do
         hash = Hash(Char, Int32).new(100)
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
@@ -1272,7 +1383,7 @@ describe "Enumerable" do
       it "returns a hash with Int64 counts according to the value" do
         hash = {} of Char => Int64
         words = ["crystal", "ruby"]
-        words.each { |word| word.chars.tally(hash) }
+        words.each(&.chars.tally(hash))
 
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}

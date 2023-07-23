@@ -248,7 +248,7 @@ abstract class Crystal::SyntaxHighlighter
             raise "Unterminated symbol array literal"
           end
         else
-          raise "Bug: shouldn't happen"
+          raise "BUG: Shouldn't happen"
         end
       end
     end

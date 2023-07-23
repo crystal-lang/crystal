@@ -69,9 +69,9 @@ struct Struct
       {% for ivar in @type.instance_vars %}
         return false unless @{{ivar.id}} == other.@{{ivar.id}}
       {% end %}
-      return true
+      true
     else
-      return false
+      false
     end
   end
 

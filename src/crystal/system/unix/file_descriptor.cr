@@ -44,6 +44,10 @@ module Crystal::System::FileDescriptor
     fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
+  private def system_blocking_init(value)
+    self.system_blocking = false unless value
+  end
+
   private def system_close_on_exec?
     flags = fcntl(LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
@@ -192,12 +196,9 @@ module Crystal::System::FileDescriptor
 
   private def system_echo(enable : Bool, & : ->)
     system_console_mode do |mode|
-      if enable
-        mode.c_lflag |= Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value
-      else
-        mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
-      end
-      if LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode)) != 0
+      flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
+      mode.c_lflag = enable ? (mode.c_lflag | flags) : (mode.c_lflag & ~flags)
+      if LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
         raise IO::Error.from_errno("tcsetattr")
       end
       yield
@@ -209,11 +210,11 @@ module Crystal::System::FileDescriptor
       if enable
         LibC.cfmakeraw(pointerof(mode))
       else
-        mode.c_iflag |= Termios::InputMode.flags(BRKINT, ISTRIP, ICRNL, IXON).value
-        mode.c_oflag |= Termios::OutputMode::OPOST.value
-        mode.c_lflag |= Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL, ICANON, ISIG, IEXTEN).value
+        mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
+        mode.c_oflag |= LibC::OPOST
+        mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
       end
-      if LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode)) != 0
+      if LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
         raise IO::Error.from_errno("tcsetattr")
       end
       yield
@@ -228,7 +229,7 @@ module Crystal::System::FileDescriptor
 
     before = mode
     ret = yield mode
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(before))
+    LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
     ret
   end
 end

@@ -2,13 +2,13 @@ require "../../../spec_helper"
 
 describe Crystal::TextHierarchyPrinter do
   it "works" do
-    program = semantic(<<-CR).program
+    program = semantic(<<-CRYSTAL).program
       class Foo
       end
 
       class Bar < Foo
       end
-      CR
+      CRYSTAL
 
     output = String.build { |io| Crystal.print_hierarchy(program, io, "ar$", "text") }
     output.should eq(<<-EOS)
@@ -21,17 +21,37 @@ describe Crystal::TextHierarchyPrinter do
             +- class Bar (4 bytes)\n
     EOS
   end
+
+  it "shows correct size for Bool member" do
+    program = semantic(<<-CRYSTAL).program
+      struct Foo
+        @x = true
+      end
+      CRYSTAL
+
+    output = String.build { |io| Crystal.print_hierarchy(program, io, "Foo", "text") }
+    output.should eq(<<-EOS)
+    - class Object (4 bytes)
+      |
+      +- struct Value (0 bytes)
+         |
+         +- struct Struct (0 bytes)
+            |
+            +- struct Foo (1 bytes)
+                   @x : Bool (1 bytes)\n
+    EOS
+  end
 end
 
 describe Crystal::JSONHierarchyPrinter do
   it "works" do
-    program = semantic(<<-CR).program
+    program = semantic(<<-CRYSTAL).program
       class Foo
       end
 
       class Bar < Foo
       end
-      CR
+      CRYSTAL
 
     output = String.build { |io| Crystal.print_hierarchy(program, io, "ar$", "json") }
     JSON.parse(output).should eq(JSON.parse(<<-EOS))
