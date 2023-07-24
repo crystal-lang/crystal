@@ -1,7 +1,12 @@
 require "time"
 require "io"
-require "digest/sha1"
-require "digest/md5"
+{% if flag?(:wasm32) %}
+  require "crystal/digest/sha1"
+  require "crystal/digest/md5"
+{% else %}
+  require "digest/sha1"
+  require "digest/md5"
+{% end %}
 
 # Represents a UUID (Universally Unique IDentifier).
 #
@@ -276,7 +281,8 @@ struct UUID
   # * `name`: The name used to generate the UUID, it can be a string of any size.
   # * `namespace`: Specifies the type of the name, usually one of `Namespace`
   def self.v3(name : String, namespace : UUID) : self
-    hash = Digest::MD5.digest do |ctx|
+    klass = {% if flag?(:wasm32) %}::Crystal::Digest::MD5{% else %}::Digest::MD5{% end %}
+    hash = klass.digest do |ctx|
       ctx.update namespace.bytes
       ctx.update name
     end
@@ -296,7 +302,8 @@ struct UUID
   # * `name`: The name used to generate the UUID, it can be a string of any size.
   # * `namespace`: Specifies the type of the name, usually one of `Namespace`
   def self.v5(name : String, namespace : UUID) : self
-    hash = Digest::SHA1.digest do |ctx|
+    klass = {% if flag?(:wasm32) %}::Crystal::Digest::SHA1{% else %}::Digest::SHA1{% end %}
+    hash = klass.digest do |ctx|
       ctx.update namespace.bytes
       ctx.update name
     end
