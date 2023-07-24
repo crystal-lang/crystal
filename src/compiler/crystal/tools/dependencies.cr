@@ -126,8 +126,6 @@ module Crystal
       private def print_indent
         @io.print "  " * @stack.size unless @stack.empty?
       end
-
-      private getter? wants_indent : Bool { @format.tree? }
     end
 
     class Dot < DependencyPrinter
