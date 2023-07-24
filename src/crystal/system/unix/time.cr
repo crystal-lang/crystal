@@ -93,13 +93,12 @@ module Crystal::System::Time
       # `Time::Location.load`, which is already a cached class property, rather
       # than `.load_local`. Bionic itself caches the property like this:
       # https://android.googlesource.com/platform/bionic/+/master/libc/private/CachedProperty.h
-      if timezone = getprop("persist.sys.timezone")
-        if path = ::Time::Location.find_android_tzdata_file(android_tzdata_sources)
-          ::File.open(path) do |file|
-            ::Time::Location.read_android_tzdata(file, true) do |name, location|
-              return location if name == timezone
-            end
-          end
+      return nil unless timezone = getprop("persist.sys.timezone")
+      return nil unless path = ::Time::Location.find_android_tzdata_file(android_tzdata_sources)
+
+      ::File.open(path) do |file|
+        ::Time::Location.read_android_tzdata(file, true) do |name, location|
+          return location if name == timezone
         end
       end
     end
