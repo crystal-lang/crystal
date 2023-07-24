@@ -604,6 +604,16 @@ describe "File" do
         end
       end
     end
+
+    it "renames a File instance" do
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        f = File.new(source_path, "w")
+        f.rename target_path
+        f.path.should eq target_path
+        File.exists?(source_path).should be_false
+        File.exists?(target_path).should be_true
+      end
+    end
   end
 
   # There are more detailed specs for `Path#expand` in path_spec.cr
