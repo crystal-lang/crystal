@@ -40,8 +40,6 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-    #
-    # It uses `CIPHERS_OLD` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
