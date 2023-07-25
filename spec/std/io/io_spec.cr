@@ -246,6 +246,11 @@ describe IO do
       io.gets('a', 3).should be_nil
     end
 
+    it "doesn't underflow when limit is unsigned" do
+      io = IO::Memory.new("aїa")
+      io.gets('є', 2u32).should eq("aї")
+    end
+
     it "raises if invoking gets with negative limit" do
       io = SimpleIOMemory.new("hello\nworld\n")
       expect_raises ArgumentError, "Negative limit" do
