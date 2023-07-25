@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 require "spec/helpers/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
