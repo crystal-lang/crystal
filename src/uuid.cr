@@ -219,13 +219,12 @@ struct UUID
   # and privacy. Therefore, a pseudo-random `node_id` is generated as described in section 4.5 of
   # the RFC.
   #
-  # * `clock_seq`: The sequence number is used to generate the UUID. This number should be
-  #   monotonically increasing, with only 14 bits of the clock sequence being used effectively.
-  #   The clock sequence should be stored in a stable location, such as a file. If it is not
-  #   stored, a random value is used by default. If not provided the current time milliseconds
-  #   are used.
-  # * `node_id`: In case the traditional MAC address based approach should be taken the
-  #   `node_id` can be provided. Otherwise secure random is used.
+  # The sequence number `clock_seq` is used to generate the UUID. This number should be
+  # monotonically increasing, with only 14 bits of the clock sequence being used effectively.
+  # The clock sequence should be stored in a stable location, such as a file. If it is not
+  # stored, a random value is used by default. If not provided the current time milliseconds
+  # are used. In case the traditional MAC address based approach should be taken the
+  # `node_id` can be provided. Otherwise secure random is used.
   def self.v1(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
     tl = Time.local
     now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000
@@ -263,11 +262,10 @@ struct UUID
   # For a given domain/id pair, the same token may be returned for a duration of up to 7 minutes
   # and 10 seconds.
   #
-  # * `domain`: The `Domain` of the uuid.
-  # * `id`: The id depends on the domain, for the `Domain::Person` usually the local user id
-  #    is used, for `Domain::Group` usually the local group id is used.
-  # * `node_id`: In case the traditional MAC address based approach should be taken the
-  #   `node_id` can be provided. Otherwise secure random is used.
+  # The `id` depends on the `domain`, for the `Domain::Person` usually the local user id (uid) is
+  # used, for `Domain::Group` usually the local group id (gid) is used. In case the traditional
+  # MAC address based approach should be taken the `node_id` can be provided. Otherwise secure
+  # random is used.
   def self.v2(domain : Domain, id : UInt32, node_id : MAC? = nil) : self
     uuid = v1(node_id: node_id).bytes
     uuid[6] = (uuid[6] & 0x0f) | 0x20 # Version 2
@@ -276,10 +274,8 @@ struct UUID
     new(uuid, version: UUID::Version::V2, variant: UUID::Variant::RFC4122)
   end
 
-  # Generates RFC 4122 v3 UUID.
-  #
-  # * `name`: The name used to generate the UUID, it can be a string of any size.
-  # * `namespace`: Specifies the type of the name, usually one of `Namespace`
+  # Generates RFC 4122 v3 UUID using the `name` to generate the UUID, it can be a string of any size.
+  # The `namespace` specifies the type of the name, usually one of `Namespace`.
   def self.v3(name : String, namespace : UUID) : self
     klass = {% if flag?(:wasm32) %}::Crystal::Digest::MD5{% else %}::Digest::MD5{% end %}
     hash = klass.digest do |ctx|
@@ -297,10 +293,8 @@ struct UUID
     random(r)
   end
 
-  # Generates RFC 4122 v5 UUID.
-  #
-  # * `name`: The name used to generate the UUID, it can be a string of any size.
-  # * `namespace`: Specifies the type of the name, usually one of `Namespace`
+  # Generates RFC 4122 v5 UUID using the `name` to generate the UUID, it can be a string of any size.
+  # The `namespace` specifies the type of the name, usually one of `Namespace`.
   def self.v5(name : String, namespace : UUID) : self
     klass = {% if flag?(:wasm32) %}::Crystal::Digest::SHA1{% else %}::Digest::SHA1{% end %}
     hash = klass.digest do |ctx|

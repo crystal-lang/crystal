@@ -1,5 +1,5 @@
 require "spec"
-require "uuid"
+require "../../src/uuid"
 require "spec/helpers/string"
 
 describe "UUID" do
