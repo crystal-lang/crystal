@@ -133,7 +133,6 @@ abstract class OpenSSL::SSL::Context
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
-      add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
       {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_client"
       {% end %}
