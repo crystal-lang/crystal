@@ -1879,4 +1879,20 @@ describe "Code gen: macro" do
       Foo.new.bar
       )).to_b.should eq(true)
   end
+
+  it "does block unpacking inside macro expression (##13707)" do
+    run(%(
+      {% begin %}
+        {%
+          data = [{1, 2}, {3, 4}]
+          value = 0
+          data.each do |(k, v)|
+            value += k
+            value += v
+          end
+        %}
+        {{ value }}
+      {% end %}
+      )).to_i.should eq(10)
+  end
 end
