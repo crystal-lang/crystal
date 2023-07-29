@@ -47,6 +47,96 @@ describe Crystal::TextHierarchyPrinter do
                      @x : Bool (1 bytes)\n
       EOS
   end
+
+  it "shows correct size for members with bound types" do
+    assert_text_hierarchy <<-CRYSTAL, "Foo", <<-EOS
+      struct Bar1(T)
+        @x = uninitialized T
+      end
+
+      class Bar2(T)
+        @x = uninitialized T
+      end
+
+      module Bar3(T)
+        struct I(T)
+          include Bar3(T)
+
+          @x = uninitialized T
+        end
+      end
+
+      module Bar4(T)
+        class I(T)
+          include Bar3(T)
+
+          @x = uninitialized T
+        end
+      end
+
+      class Foo(T)
+        @a = uninitialized T*
+        @b = uninitialized T
+        @c = uninitialized T[4]
+        @d = uninitialized Int32[T]
+        @e = uninitialized T ->
+        @f = uninitialized T?
+        @g = uninitialized {T}
+        @h = uninitialized {x: T}
+        @i = uninitialized Bar1(T)
+        @j = uninitialized Bar2(T)
+        @k = uninitialized Bar3(T)
+        @l = uninitialized Bar4(T)
+      end
+      CRYSTAL
+      - class Object (4 bytes)
+        |
+        +- class Reference (4 bytes)
+           |
+           +- class Foo(T)
+                  @a : Pointer(T)            ( 8 bytes)
+                  @b : T
+                  @c : StaticArray(T, 4)
+                  @d : StaticArray(Int32, T)
+                  @e : Proc(T, Nil)          (16 bytes)
+                  @f : (T | Nil)
+                  @g : Tuple(T)
+                  @h : NamedTuple(x: T)
+                  @i : Bar1(T)
+                  @j : Bar2(T)               ( 8 bytes)
+                  @k : Bar3(T)
+                  @l : Bar4(T)               ( 8 bytes)\n
+      EOS
+  end
+
+  it "shows correct total size of generic class if known" do
+    assert_text_hierarchy <<-CRYSTAL, "Foo", <<-EOS
+      class Bar1(T)
+        @x = uninitialized T
+      end
+
+      class Bar2(T)
+        @x = uninitialized T
+      end
+
+      class Foo(T)
+        @a = uninitialized T*
+        @b : Bar1(T) | Bar2(T)?
+        @c = uninitialized T*[6]
+        @d = uninitialized Int64
+      end
+      CRYSTAL
+      - class Object (4 bytes)
+        |
+        +- class Reference (4 bytes)
+           |
+           +- class Foo(T) (80 bytes)
+                  @a : Pointer(T)                 ( 8 bytes)
+                  @b : (Bar1(T) | Bar2(T) | Nil)  ( 8 bytes)
+                  @c : StaticArray(Pointer(T), 6) (48 bytes)
+                  @d : Int64                      ( 8 bytes)\n
+      EOS
+  end
 end
 
 describe Crystal::JSONHierarchyPrinter do
