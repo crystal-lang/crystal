@@ -206,10 +206,11 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
-      log_setup
-      maybe_randomize
-      run_filters
-      root_context.run
+      if Spec.list_tags?
+        execute_list_tags
+      else
+        execute_examples
+      end
     rescue ex
       STDERR.print "Unhandled exception: "
       ex.inspect_with_backtrace(STDERR)
@@ -217,6 +218,70 @@ module Spec
       @@aborted = true
     ensure
       finish_run
+    end
+  end
+
+  # :nodoc:
+  def self.execute_examples
+    log_setup
+    maybe_randomize
+    run_filters
+    root_context.run
+  end
+
+  # :nodoc:
+  def self.execute_list_tags
+    run_filters
+    tag_counts, pending_tag_counts = collect_tags(root_context)
+
+    print_list_tags("tags:", tag_counts)
+    print_list_tags("pending tags:", pending_tag_counts)
+
+    exit
+  end
+
+  # :nodoc:
+  private def self.collect_tags(context) : {Hash(String, Int32), Hash(String, Int32)}
+    tag_counts = Hash(String, Int32).new(0)
+    pending_tag_counts = Hash(String, Int32).new(0)
+    collect_tags(tag_counts, pending_tag_counts, context, Set(String).new)
+    {tag_counts, pending_tag_counts}
+  end
+
+  # :nodoc:
+  private def self.collect_tags(tag_counts, pending_tag_counts, context : Context, tags)
+    if context.responds_to?(:tags) && (context_tags = context.tags)
+      tags += context_tags
+    end
+    context.children.each do |child|
+      collect_tags(tag_counts, pending_tag_counts, child, tags)
+    end
+  end
+
+  # :nodoc:
+  private def self.collect_tags(tag_counts, pending_tag_counts, example : Example, tags)
+    if example_tags = example.tags
+      tags += example_tags
+    end
+    counts = example.block.nil? ? pending_tag_counts : tag_counts
+    if tags.empty?
+      counts.update("untagged") { |count| count + 1 }
+    else
+      tags.each do |tag|
+        counts.update(tag) { |count| count + 1 }
+      end
+    end
+  end
+
+  # :nodoc:
+  private def self.print_list_tags(description : String, tag_counts : Hash(String, Int32))
+    return if tag_counts.empty?
+    puts if @@printed_list_tags
+    puts description
+    longest_name_size = tag_counts.keys.max_of(&.size)
+    tag_counts.to_a.sort_by! { |k, v| -v }.each do |tag_name, count|
+      @@printed_list_tags = true
+      puts "#{tag_name.rjust(longest_name_size)}: #{count}"
     end
   end
 
