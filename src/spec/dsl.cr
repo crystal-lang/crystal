@@ -280,9 +280,10 @@ module Spec
     puts description
     longest_name_size = tag_counts.keys.max_of(&.size)
     tag_counts.to_a.sort_by! { |k, v| -v }.each do |tag_name, count|
-      @@printed_list_tags = true
       puts "#{tag_name.rjust(longest_name_size)}: #{count}"
     end
+
+    @@printed_list_tags = true
   end
 
   # :nodoc:
