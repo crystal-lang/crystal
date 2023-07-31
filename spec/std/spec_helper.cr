@@ -106,19 +106,19 @@ def compile_source(source, flags = %w(), file = __FILE__, &)
   end
 end
 
-def compile_and_run_file(source_file, flags = %w(), file = __FILE__)
+def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = __FILE__)
   compile_file(source_file, flags: flags, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
-    status = Process.run executable_file, output: output, error: error
+    status = Process.run executable_file, args: runtime_args, output: output, error: error
 
     {status, output.to_s, error.to_s}
   end
 end
 
-def compile_and_run_source(source, flags = %w(), file = __FILE__)
+def compile_and_run_source(source, flags = %w(), runtime_args = %w(), file = __FILE__)
   with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
-    compile_and_run_file(source_file, flags, file: file)
+    compile_and_run_file(source_file, flags, runtime_args, file: file)
   end
 end
 
