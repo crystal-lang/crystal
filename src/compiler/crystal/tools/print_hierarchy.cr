@@ -106,8 +106,9 @@ module Crystal
       @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
     end
 
-    def ivar_size(ivar)
-      @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
+    def ivar_size(ivar, extern)
+      llvm_type = extern ? @llvm_typer.llvm_embedded_c_type(ivar.type) : @llvm_typer.llvm_embedded_type(ivar.type)
+      @llvm_typer.size_of(llvm_type)
     end
   end
 
@@ -201,7 +202,7 @@ module Crystal
       max_name_size = instance_vars.max_of &.name.size
 
       max_type_size = typed_instance_vars.max_of?(&.type.to_s.size) || 0
-      max_bytes_size = typed_instance_vars.max_of? { |var| ivar_size(var).to_s.size } || 0
+      max_bytes_size = typed_instance_vars.max_of? { |var| ivar_size(var, type.extern?).to_s.size } || 0
 
       instance_vars.each do |ivar|
         print_indent
@@ -214,7 +215,7 @@ module Crystal
             ivar_type.to_s.ljust(@io, max_type_size)
             with_color.light_gray.surround(@io) do
               @io << " ("
-              ivar_size(ivar).to_s.rjust(@io, max_bytes_size)
+              ivar_size(ivar, type.extern?).to_s.rjust(@io, max_bytes_size)
               @io << " bytes)"
             end
           else
@@ -330,7 +331,7 @@ module Crystal
               @json.object do
                 @json.field "name", instance_var.name.to_s
                 @json.field "type", ivar_type.to_s
-                @json.field "size_in_bytes", ivar_size(instance_var)
+                @json.field "size_in_bytes", ivar_size(instance_var, type.extern?)
               end
             end
           end
