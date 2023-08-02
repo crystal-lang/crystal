@@ -126,9 +126,15 @@ module Crystal
       @llvm_typer.size_of(llvm_type)
     end
 
-    def ivar_size(ivar)
+    def ivar_size(ivar, extern)
       return nil unless constant_ivar_size?(ivar.type)
-      llvm_type = @llvm_typer.llvm_embedded_type(ivar.type, wants_size: true)
+
+      llvm_type = if extern
+                    @llvm_typer.llvm_embedded_c_type(ivar.type, wants_size: true)
+                  else
+                    @llvm_typer.llvm_embedded_type(ivar.type, wants_size: true)
+                  end
+
       @llvm_typer.size_of(llvm_type)
     end
 
@@ -272,8 +278,8 @@ module Crystal
       instance_vars = instance_vars.values
       instance_var_types = {} of MetaTypeVar => {Type, UInt64?}
       instance_vars.each do |ivar|
-        if type = ivar.type?
-          instance_var_types[ivar] = {type, ivar_size(ivar)}
+        if ivar_type = ivar.type?
+          instance_var_types[ivar] = {ivar_type, ivar_size(ivar, type.extern?)}
         end
       end
 
@@ -397,7 +403,7 @@ module Crystal
               @json.object do
                 @json.field "name", instance_var.name.to_s
                 @json.field "type", ivar_type.to_s
-                if ivar_size = ivar_size(instance_var)
+                if ivar_size = ivar_size(instance_var, type.extern?)
                   @json.field "size_in_bytes", ivar_size
                 end
               end

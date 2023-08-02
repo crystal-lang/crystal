@@ -137,6 +137,33 @@ describe Crystal::TextHierarchyPrinter do
                   @d : Int64                      ( 8 bytes)\n
       EOS
   end
+
+  it "shows correct size for Proc inside extern struct" do
+    assert_text_hierarchy <<-CRYSTAL, "Foo", <<-EOS
+      @[Extern]
+      struct Foo
+        @x = uninitialized ->
+      end
+
+      lib Bar
+        struct Foo
+          x : Int32 -> Int32
+        end
+      end
+      CRYSTAL
+      - class Object (4 bytes)
+        |
+        +- struct Value (0 bytes)
+           |
+           +- struct Struct (0 bytes)
+              |
+              +- struct Bar::Foo (8 bytes)
+              |      @x : Proc(Int32, Int32) (8 bytes)
+              |
+              +- struct Foo (8 bytes)
+                     @x : Proc(Nil) (8 bytes)\n
+      EOS
+  end
 end
 
 describe Crystal::JSONHierarchyPrinter do
