@@ -11,53 +11,53 @@ module Crystal
     property? abi_info = false
 
     def mangled_name(program, self_type)
-      name = String.build do |str|
-        str << '*'
+      name = String.build do |io|
+        io << '*'
 
         if owner = @owner
           if owner.metaclass?
-            self_type.instance_type.llvm_name(str)
+            self_type.instance_type.llvm_name(io)
             if original_owner != self_type
-              str << '@'
-              original_owner.instance_type.llvm_name(str)
+              io << '@'
+              original_owner.instance_type.llvm_name(io)
             end
-            str << "::"
+            io << "::"
           elsif !owner.is_a?(Crystal::Program)
-            self_type.llvm_name(str)
+            self_type.llvm_name(io)
             if original_owner != self_type
-              str << '@'
-              original_owner.llvm_name(str)
+              io << '@'
+              original_owner.llvm_name(io)
             end
-            str << '#'
+            io << '#'
           end
         end
 
-        str << self.name.gsub('@', '.')
+        io << self.name.gsub('@', '.')
 
         next_def = self.next
         while next_def
-          str << '\''
+          io << '\''
           next_def = next_def.next
         end
 
         if args.size > 0 || uses_block_arg?
-          str << '<'
+          io << '<'
           if args.size > 0
             args.each_with_index do |arg, i|
-              str << ", " if i > 0
-              arg.type.llvm_name(str)
+              io << ", " if i > 0
+              arg.type.llvm_name(io)
             end
           end
           if uses_block_arg?
-            str << ", " if args.size > 0
-            str << '&'
-            block_arg.not_nil!.type.llvm_name(str)
+            io << ", " if args.size > 0
+            io << '&'
+            block_arg.not_nil!.type.llvm_name(io)
           end
-          str << '>'
+          io << '>'
         end
         if return_type = @type
-          str << ':'
-          return_type.llvm_name(str)
+          io << ':'
+          return_type.llvm_name(io)
         end
       end
 

@@ -323,8 +323,8 @@ module XML
   # string # => "<?xml version=\"1.0\"?>\n<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
   # ```
   def self.build(version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil, &)
-    String.build do |str|
-      build(str, version, encoding, indent, quote_char) do |xml|
+    String.build do |io|
+      build(io, version, encoding, indent, quote_char) do |xml|
         yield xml
       end
     end
@@ -347,8 +347,8 @@ module XML
   # string # => "<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
   # ```
   def self.build_fragment(*, indent = nil, quote_char = nil, &)
-    String.build do |str|
-      build_fragment(str, indent: indent, quote_char: quote_char) do |xml|
+    String.build do |io|
+      build_fragment(io, indent: indent, quote_char: quote_char) do |xml|
         yield xml
       end
     end

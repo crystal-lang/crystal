@@ -72,11 +72,11 @@ class Crystal::Def
       # names that won't clash with local variables defined in the method.
       named_args_temp_names = Array(String).new(named_args.size)
 
-      new_name = String.build do |str|
-        str << name
+      new_name = String.build do |io|
+        io << name
         named_args.each do |named_arg|
-          str << ':'
-          str << named_arg
+          io << ':'
+          io << named_arg
 
           temp_name = program.new_temp_var_name
           named_args_temp_names << temp_name

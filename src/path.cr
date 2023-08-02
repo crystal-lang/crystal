@@ -419,17 +419,17 @@ struct Path
     separators = self.separators
     add_separator_at_end = !remove_final_separator && ends_with_separator?
 
-    new_name = String.build do |str|
+    new_name = String.build do |io|
       if drive
-        str << drive.gsub('/', '\\')
+        io << drive.gsub('/', '\\')
         reader.pos += drive.bytesize
       end
       if root
-        str << separators[0]
+        io << separators[0]
         reader.next_char
-        dotdot = str.bytesize
+        dotdot = io.bytesize
       end
-      anchor_pos = str.bytesize
+      anchor_pos = io.bytesize
 
       while (char = reader.current_char) != Char::ZERO
         curr_pos = reader.pos
@@ -442,43 +442,43 @@ struct Path
         elsif char == '.' && reader.next_char == '.' && (reader.pos + 1 == @name.bytesize || separators.includes?(reader.peek_next_char))
           # .. element: remove to last /
           reader.next_char
-          if str.bytesize > dotdot
-            str.back 1
-            while str.bytesize > dotdot && !separators.includes?((str.buffer + str.bytesize).value.unsafe_chr)
-              str.back 1
+          if io.bytesize > dotdot
+            io.back 1
+            while io.bytesize > dotdot && !separators.includes?((io.buffer + io.bytesize).value.unsafe_chr)
+              io.back 1
             end
           elsif !root
-            if str.bytesize > 0
-              str << separators[0]
+            if io.bytesize > 0
+              io << separators[0]
             end
-            str << ".."
-            dotdot = str.bytesize
+            io << ".."
+            dotdot = io.bytesize
           end
         else
           reader.pos = curr_pos # make sure to reset lookahead used in previous condition
 
           # real path element
           # add slash if needed
-          if str.bytesize > anchor_pos && !separators.includes?((str.buffer + str.bytesize - 1).value.unsafe_chr)
-            str << separators[0]
+          if io.bytesize > anchor_pos && !separators.includes?((io.buffer + io.bytesize - 1).value.unsafe_chr)
+            io << separators[0]
           end
 
           loop do
-            str << char
+            io << char
             char = reader.next_char
             break if separators.includes?(char) || char == Char::ZERO
           end
         end
       end
 
-      if str.empty?
-        str << '.'
+      if io.empty?
+        io << '.'
       end
 
-      last_char = (str.buffer + str.bytesize - 1).value.unsafe_chr
+      last_char = (io.buffer + io.bytesize - 1).value.unsafe_chr
 
       if add_separator_at_end && !separators.includes?(last_char)
-        str << separators[0]
+        io << separators[0]
       end
     end
 

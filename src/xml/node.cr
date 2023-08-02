@@ -426,8 +426,8 @@ class XML::Node
   #
   # See `XML::SaveOptions.xml_default` for default options.
   def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default) : String
-    String.build do |str|
-      to_xml str, indent, indent_text, options
+    String.build do |io|
+      to_xml io, indent, indent_text, options
     end
   end
 

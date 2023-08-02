@@ -405,8 +405,8 @@ end
 
 # :ditto:
 def sprintf(format_string, args : Array | Tuple) : String
-  String.build(format_string.bytesize) do |str|
-    String::Formatter(typeof(args)).new(format_string, args, str).format
+  String.build(format_string.bytesize) do |io|
+    String::Formatter(typeof(args)).new(format_string, args, io).format
   end
 end
 

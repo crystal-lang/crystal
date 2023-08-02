@@ -691,17 +691,17 @@ module Crystal
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
         @original_name = @name
-        @name = String.build do |str|
+        @name = String.build do |io|
           @name.each_char do |char|
             case char
             when 'a'..'z', '0'..'9', '_'
-              str << char
+              io << char
             when 'A'..'Z'
               # Because OSX has case insensitive filenames, try to avoid
               # clash of 'a' and 'A' by using 'A-' for 'A'.
-              str << char << '-'
+              io << char << '-'
             else
-              str << char.ord
+              io << char.ord
             end
           end
         end

@@ -308,35 +308,35 @@ module Crystal
 
   class Program
     def undefined_class_variable(node, owner, similar_name)
-      common = String.build do |str|
-        str << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
+      common = String.build do |io|
+        io << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << '\n'
-          str << "Did you mean '#{similar_name}'?"
+          io << '\n'
+          io << "Did you mean '#{similar_name}'?"
         end
       end
 
-      msg = String.build do |str|
-        str << common
-        str << "\n\n"
-        str << undefined_variable_message("class variable", node.name, owner.devirtualize)
+      msg = String.build do |io|
+        io << common
+        io << "\n\n"
+        io << undefined_variable_message("class variable", node.name, owner.devirtualize)
       end
       node.raise msg
     end
 
     def undefined_instance_variable(node, owner, similar_name)
-      common = String.build do |str|
-        str << "can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
+      common = String.build do |io|
+        io << "can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << '\n'
-          str << "Did you mean '#{similar_name}'?"
+          io << '\n'
+          io << "Did you mean '#{similar_name}'?"
         end
       end
 
-      msg = String.build do |str|
-        str << common
-        str << "\n\n"
-        str << undefined_variable_message("instance variable", node.name, owner.devirtualize)
+      msg = String.build do |io|
+        io << common
+        io << "\n\n"
+        io << undefined_variable_message("instance variable", node.name, owner.devirtualize)
       end
       node.raise msg
     end

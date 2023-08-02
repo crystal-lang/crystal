@@ -12,9 +12,9 @@ module OpenSSL::X509
     end
 
     def initialize(nid : Int32, value : String, critical = false)
-      valstr = String.build do |str|
-        str << "critical," if critical
-        str << value
+      valstr = String.build do |io|
+        io << "critical," if critical
+        io << value
       end
       @ext = LibCrypto.x509v3_ext_nconf_nid(nil, nil, nid, valstr)
       raise Error.new("X509V3_EXT_nconf_nid") if @ext.null?

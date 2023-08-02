@@ -15,7 +15,7 @@ module ECR
     lexer = Lexer.new string
     token = lexer.next_token
 
-    String.build do |str|
+    String.build do |io|
       while true
         case token.type
         when .string?
@@ -24,10 +24,10 @@ module ECR
 
           string = suppress_leading_indentation(token, string)
 
-          str << buffer_name
-          str << " << "
-          string.inspect(str)
-          str << '\n'
+          io << buffer_name
+          io << " << "
+          string.inspect(io)
+          io << '\n'
         when .output?
           string = token.value
           line_number = token.line_number
@@ -37,12 +37,12 @@ module ECR
 
           suppress_trailing_whitespace(token, suppress_trailing)
 
-          str << "#<loc:push>("
-          append_loc(str, filename, line_number, column_number)
-          str << string
-          str << ")#<loc:pop>.to_s "
-          str << buffer_name
-          str << '\n'
+          io << "#<loc:push>("
+          append_loc(io, filename, line_number, column_number)
+          io << string
+          io << ")#<loc:pop>.to_s "
+          io << buffer_name
+          io << '\n'
         when .control?
           string = token.value
           line_number = token.line_number
@@ -52,12 +52,12 @@ module ECR
 
           suppress_trailing_whitespace(token, suppress_trailing)
 
-          str << "#<loc:push>"
-          append_loc(str, filename, line_number, column_number)
-          str << ' ' unless string.starts_with?(' ')
-          str << string
-          str << "#<loc:pop>"
-          str << '\n'
+          io << "#<loc:push>"
+          append_loc(io, filename, line_number, column_number)
+          io << ' ' unless string.starts_with?(' ')
+          io << string
+          io << "#<loc:pop>"
+          io << '\n'
         when .eof?
           break
         end

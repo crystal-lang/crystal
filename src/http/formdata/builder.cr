@@ -36,10 +36,10 @@ module HTTP::FormData
     # builder.content_type # => "multipart/form-data; boundary=\"a4VF\""
     # ```
     def content_type : String
-      String.build do |str|
-        str << "multipart/form-data; boundary=\""
-        HTTP.quote_string(@boundary, str)
-        str << '"'
+      String.build do |io|
+        io << "multipart/form-data; boundary=\""
+        HTTP.quote_string(@boundary, io)
+        io << '"'
       end
     end
 

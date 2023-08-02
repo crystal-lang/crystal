@@ -1934,16 +1934,16 @@ module Crystal
         location = @token.location
         next_token_skip_space
 
-        msg = String.build do |msg|
-          msg << %[unexpected token: "|", proc literals specify their parameters like this: ->(]
+        msg = String.build do |io|
+          io << %[unexpected token: "|", proc literals specify their parameters like this: ->(]
           if @token.type.ident?
-            msg << @token.value.to_s << " : Type"
+            io << @token.value.to_s << " : Type"
             next_token_skip_space_or_newline
-            msg << ", ..." if @token.type.op_comma?
+            io << ", ..." if @token.type.op_comma?
           else
-            msg << "param : Type"
+            io << "param : Type"
           end
-          msg << ") { ... }"
+          io << ") { ... }"
         end
 
         raise msg, location

@@ -401,8 +401,8 @@ module JSON
   # string # => %<{"name":"foo","values":[1,2,3]}>
   # ```
   def self.build(indent = nil, &)
-    String.build do |str|
-      build(str, indent) do |json|
+    String.build do |io|
+      build(io, indent) do |json|
         yield json
       end
     end

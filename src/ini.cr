@@ -67,7 +67,7 @@ module INI
   # INI.build({"foo" => {"a" => "1"}}, true) # => "[foo]\na = 1\n\n"
   # ```
   def self.build(ini, space : Bool = false) : String
-    String.build { |str| build str, ini, space }
+    String.build { |io| build io, ini, space }
   end
 
   # Appends INI data to the given IO.

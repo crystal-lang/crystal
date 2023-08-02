@@ -1,7 +1,7 @@
 class Object
   def to_json : String
-    String.build do |str|
-      to_json str
+    String.build do |io|
+      to_json io
     end
   end
 
@@ -12,8 +12,8 @@ class Object
   end
 
   def to_pretty_json(indent : String = "  ") : String
-    String.build do |str|
-      to_pretty_json str, indent: indent
+    String.build do |io|
+      to_pretty_json io, indent: indent
     end
   end
 

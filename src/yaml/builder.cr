@@ -240,8 +240,8 @@ module YAML
   # string # => "---\nfoo:\n- 1\n- 2\n"
   # ```
   def self.build(&)
-    String.build do |str|
-      build(str) do |yaml|
+    String.build do |io|
+      build(io) do |yaml|
         yield yaml
       end
     end

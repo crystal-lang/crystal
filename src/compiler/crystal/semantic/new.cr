@@ -271,11 +271,11 @@ module Crystal
         splat_index = i
         i += 1
 
-        name = String.build do |str|
-          str << "new"
+        name = String.build do |io|
+          io << "new"
           named_args.each do |named_arg|
-            str << ':'
-            str << named_arg
+            io << ':'
+            io << named_arg
 
             # When **opts is expanded for named arguments, we must use internal
             # names that won't clash with local variables defined in the method.

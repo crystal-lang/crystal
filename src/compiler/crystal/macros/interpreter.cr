@@ -157,13 +157,13 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
-      @last = StringLiteral.new(String.build do |str|
+      @last = StringLiteral.new(String.build do |io|
         node.expressions.each do |exp|
           if exp.is_a?(StringLiteral)
-            str << exp.value
+            io << exp.value
           else
             exp.accept self
-            @last.to_s(str)
+            @last.to_s(io)
           end
         end
       end)

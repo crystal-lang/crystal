@@ -708,10 +708,10 @@ describe IO do
         end
 
         it "skips invalid byte sequences" do
-          string = String.build do |str|
-            str.write "好".encode("EUC-JP")
-            str.write_byte 255_u8
-            str.write "是".encode("EUC-JP")
+          string = String.build do |io|
+            io.write "好".encode("EUC-JP")
+            io.write_byte 255_u8
+            io.write "是".encode("EUC-JP")
           end
           io = SimpleIOMemory.new(string)
           io.set_encoding("EUC-JP", invalid: :skip)

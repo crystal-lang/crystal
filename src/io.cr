@@ -552,18 +552,18 @@ abstract class IO
   # io.gets_to_end # => ""
   # ```
   def gets_to_end : String
-    String.build do |str|
+    String.build do |io|
       if decoder = decoder()
         while true
           decoder.read(self)
           break if decoder.out_slice.empty?
 
-          decoder.write(str)
+          decoder.write(io)
         end
       else
         buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
         while (read_bytes = read(buffer.to_slice)) > 0
-          str.write buffer.to_slice[0, read_bytes]
+          io.write buffer.to_slice[0, read_bytes]
         end
       end
     end

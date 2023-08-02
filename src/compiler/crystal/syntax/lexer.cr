@@ -2183,9 +2183,9 @@ module Crystal
     end
 
     def consume_string_unicode_brace_escape
-      String.build do |str|
+      String.build do |io|
         while true
-          str << consume_braced_unicode_escape(allow_spaces: true).chr
+          io << consume_braced_unicode_escape(allow_spaces: true).chr
           break unless current_char == ' '
         end
       end

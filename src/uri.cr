@@ -230,15 +230,15 @@ class URI
       string_size += query.bytesize + 1
     end
 
-    String.build(string_size) do |str|
+    String.build(string_size) do |io|
       if @path.empty?
-        str << "/" unless opaque?
+        io << "/" unless opaque?
       else
-        str << @path
+        io << @path
       end
 
       if (query = @query) && !query.empty?
-        str << '?' << query
+        io << '?' << query
       end
     end
   end

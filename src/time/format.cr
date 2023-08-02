@@ -88,8 +88,8 @@ struct Time::Format
 
   # Turns a `Time` into a `String`.
   def format(time : Time) : String
-    String.build do |str|
-      format time, str
+    String.build do |io|
+      format time, io
     end
   end
 

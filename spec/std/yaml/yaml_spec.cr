@@ -157,8 +157,8 @@ describe "YAML" do
     end
 
     it "writes YAML to a stream" do
-      string = String.build do |str|
-        YAML.dump(%w(1 2 3), str)
+      string = String.build do |io|
+        YAML.dump(%w(1 2 3), io)
       end
       string.should eq(%(---\n- "1"\n- "2"\n- "3"\n))
     end

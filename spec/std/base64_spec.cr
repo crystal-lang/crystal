@@ -169,13 +169,13 @@ describe "Base64" do
         "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA=="
     end
     it "with spec symbols" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |buf| (160..179).each { |i| buf << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
       assert_prints base64_strict_encode(s), se
     end
 
     it "encode to stream returns number of written characters" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |buf| (160..179).each { |i| buf << i.chr } }
       io = IO::Memory.new
       Base64.strict_encode(s, io).should eq(56)
     end
@@ -183,13 +183,13 @@ describe "Base64" do
 
   describe "urlsafe" do
     it "work" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |buf| (160..179).each { |i| buf << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw=="
       assert_prints base64_urlsafe_encode(s), se
     end
 
     it "encode to stream returns number of written characters" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |buf| (160..179).each { |i| buf << i.chr } }
       io = IO::Memory.new
       Base64.urlsafe_encode(s, io).should eq(56)
     end

@@ -140,7 +140,7 @@ class Process
       end
       break unless reader.has_next?
 
-      token = String.build do |str|
+      token = String.build do |io|
         while reader.has_next? && !reader.current_char.ascii_whitespace?
           quote = nil
           if reader.current_char.in?('\'', '"')
@@ -152,7 +152,7 @@ class Process
             break unless reader.has_next?
             reader.next_char
             if char == '\\' && quote != '\''
-              str << char if quote == '"'
+              io << char if quote == '"'
               char = reader.current_char
               if reader.has_next?
                 reader.next_char
@@ -161,7 +161,7 @@ class Process
                 char = '\\'
               end
             end
-            str << char
+            io << char
           end
 
           if quote
@@ -203,7 +203,7 @@ class Process
       end
       break unless reader.has_next?
 
-      token = String.build do |str|
+      token = String.build do |io|
         while true
           backslash_count = 0
           while reader.current_char == '\\'
@@ -212,19 +212,19 @@ class Process
           end
 
           if reader.current_char == '"'
-            (backslash_count // 2).times { str << '\\' }
+            (backslash_count // 2).times { io << '\\' }
             if backslash_count.odd?
-              str << '"'
+              io << '"'
             else
               quote = !quote
             end
           else
-            backslash_count.times { str << '\\' }
+            backslash_count.times { io << '\\' }
             break unless reader.has_next?
             # `current_char` is neither '\\' nor '"'
             char = reader.current_char
             break if char.in?(' ', '\t') && !quote
-            str << char
+            io << char
           end
 
           reader.next_char

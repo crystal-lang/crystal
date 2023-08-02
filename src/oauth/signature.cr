@@ -8,11 +8,11 @@ struct OAuth::Signature
   end
 
   def key : String
-    String.build do |str|
-      URI.encode_www_form @client_shared_secret, str, space_to_plus: false
-      str << '&'
+    String.build do |io|
+      URI.encode_www_form @client_shared_secret, io, space_to_plus: false
+      io << '&'
       if token_shared_secret = @token_shared_secret
-        URI.encode_www_form token_shared_secret, str, space_to_plus: false
+        URI.encode_www_form token_shared_secret, io, space_to_plus: false
       end
     end
   end
@@ -42,20 +42,20 @@ struct OAuth::Signature
   private def base_string(request, tls, params)
     host, port = host_and_port(request, tls)
 
-    String.build do |str|
-      str << request.method
-      str << '&'
-      str << (tls ? "https" : "http")
-      str << "%3A%2F%2F"
-      URI.encode_www_form host, str, space_to_plus: false
+    String.build do |io|
+      io << request.method
+      io << '&'
+      io << (tls ? "https" : "http")
+      io << "%3A%2F%2F"
+      URI.encode_www_form host, io, space_to_plus: false
       if port
-        str << "%3A"
-        str << port
+        io << "%3A"
+        io << port
       end
       uri_path = request.path.presence || "/"
-      URI.encode_www_form(uri_path, str, space_to_plus: false)
-      str << '&'
-      str << params
+      URI.encode_www_form(uri_path, io, space_to_plus: false)
+      io << '&'
+      io << params
     end
   end
 

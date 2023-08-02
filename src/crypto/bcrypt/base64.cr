@@ -23,34 +23,34 @@ module Crypto::Bcrypt::Base64
   def self.encode(d, len) : String
     off = 0
 
-    String.build do |str|
+    String.build do |io|
       loop do
         c1 = d[off] & 0xff
         off += 1
-        str << ALPHABET[(c1 >> 2) & 0x3f]
+        io << ALPHABET[(c1 >> 2) & 0x3f]
         c1 = (c1 & 0x03) << 4
 
         if off >= len
-          str << ALPHABET[c1 & 0x3f]
+          io << ALPHABET[c1 & 0x3f]
           break
         end
 
         c2 = d[off] & 0xff
         off += 1
         c1 |= (c2 >> 4) & 0x0f
-        str << ALPHABET[c1 & 0x3f]
+        io << ALPHABET[c1 & 0x3f]
         c1 = (c2 & 0x0f) << 2
 
         if off >= len
-          str << ALPHABET[c1 & 0x3f]
+          io << ALPHABET[c1 & 0x3f]
           break
         end
 
         c2 = d[off] & 0xff
         off += 1
         c1 |= (c2 >> 6) & 0x03
-        str << ALPHABET[c1 & 0x3f]
-        str << ALPHABET[c2 & 0x3f]
+        io << ALPHABET[c1 & 0x3f]
+        io << ALPHABET[c2 & 0x3f]
 
         break if off >= len
       end

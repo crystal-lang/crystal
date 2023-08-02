@@ -180,8 +180,8 @@ class String
   # String.new(slice, "GB2312") # => "好"
   # ```
   def self.new(bytes : Bytes, encoding : String, invalid : Symbol? = nil) : String
-    String.build do |str|
-      String.encode(bytes, encoding, "UTF-8", str, invalid)
+    String.build do |io|
+      String.encode(bytes, encoding, "UTF-8", io, invalid)
     end
   end
 
@@ -285,9 +285,9 @@ class String
   # resizes as needed.
   #
   # ```
-  # str = String.build do |str|
-  #   str << "hello "
-  #   str << 1
+  # str = String.build do |io|
+  #   io << "hello "
+  #   io << 1
   # end
   # str # => "hello 1"
   # ```
@@ -4598,9 +4598,9 @@ class String
       chars.insert(last_alnum, carry)
     end
 
-    String.build(chars.size) do |str|
+    String.build(chars.size) do |io|
       chars.each do |char|
-        str << char
+        io << char
       end
     end
   end

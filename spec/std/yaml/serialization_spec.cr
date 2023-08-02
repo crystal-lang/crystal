@@ -652,8 +652,8 @@ describe "YAML serialization" do
     end
 
     it "writes to a stream" do
-      string = String.build do |str|
-        %w(a b c).to_yaml(str)
+      string = String.build do |io|
+        %w(a b c).to_yaml(io)
       end
       string.should eq("---\n- a\n- b\n- c\n")
     end

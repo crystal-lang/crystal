@@ -399,15 +399,15 @@ class Regex
   # /#{string}/                    # => /\*\?\{\}\./
   # ```
   def self.escape(str) : String
-    String.build do |result|
+    String.build do |io|
       str.each_byte do |byte|
         {% begin %}
           case byte.unsafe_chr
           when {{*SPECIAL_CHARACTERS}}
-            result << '\\'
-            result.write_byte byte
+            io << '\\'
+            io.write_byte byte
           else
-            result.write_byte byte
+            io.write_byte byte
           end
         {% end %}
       end

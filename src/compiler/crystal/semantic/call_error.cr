@@ -380,13 +380,13 @@ class Crystal::Call
   end
 
   private def raise_no_overload_matches(node, defs, arg_types, inner_exception, &)
-    error_message = String.build do |str|
-      yield str
+    error_message = String.build do |io|
+      yield io
 
-      str.puts
-      str.puts
-      str << "Overloads are:"
-      append_matches(defs, arg_types, str)
+      io.puts
+      io.puts
+      io << "Overloads are:"
+      append_matches(defs, arg_types, io)
     end
 
     node.raise(error_message, inner_exception)
@@ -675,31 +675,31 @@ class Crystal::Call
     end
     all_arguments_sizes.uniq!.sort!
 
-    raise(String.build do |str|
+    raise(String.build do |io|
       if single_message = single_def_error_message(defs, named_args_types)
-        str << single_message
-        str << '\n'
+        io << single_message
+        io << '\n'
       else
-        str << "wrong number of arguments for '"
-        str << full_name(owner, def_name)
-        str << "' (given "
-        str << arg_types.size
-        str << ", expected "
+        io << "wrong number of arguments for '"
+        io << full_name(owner, def_name)
+        io << "' (given "
+        io << arg_types.size
+        io << ", expected "
 
         # If we have 2, 3, 4, show it as 2..4
         if all_arguments_sizes.size > 1 && all_arguments_sizes.last - all_arguments_sizes.first == all_arguments_sizes.size - 1
-          str << all_arguments_sizes.first
-          str << ".."
-          str << all_arguments_sizes.last
+          io << all_arguments_sizes.first
+          io << ".."
+          io << all_arguments_sizes.last
         else
-          all_arguments_sizes.join str, ", "
+          all_arguments_sizes.join io, ", "
         end
 
-        str << '+' if min_splat != Int32::MAX
-        str << ")\n"
+        io << '+' if min_splat != Int32::MAX
+        io << ")\n"
       end
-      str << "Overloads are:"
-      append_matches(defs, arg_types, str)
+      io << "Overloads are:"
+      append_matches(defs, arg_types, io)
     end, inner: inner_exception)
   end
 

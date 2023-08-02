@@ -284,9 +284,9 @@ struct UUID
   # uuid2.urn # => "urn:uuid:c49fc136-9362-4414-81a5-9a7e0fcca0f1"
   # ```
   def urn : String
-    String.build(45) do |str|
-      str << "urn:uuid:"
-      to_s(str)
+    String.build(45) do |io|
+      io << "urn:uuid:"
+      to_s(io)
     end
   end
 

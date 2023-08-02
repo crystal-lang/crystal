@@ -5005,10 +5005,10 @@ module Crystal
 
       before = line[0...middle]
       after = line[middle..-1]
-      result = String.build do |str|
-        str << before
-        gap.times { str << ' ' }
-        str << after
+      result = String.build do |io|
+        io << before
+        gap.times { io << ' ' }
+        io << after
       end
 
       lines[info.line] = result
@@ -5059,10 +5059,10 @@ module Crystal
       comment_line = line[comment_column..-1]
       gap = max_column - comment_column
 
-      result = String.build do |str|
-        str << source_line
-        gap.times { str << ' ' }
-        str << comment_line
+      result = String.build do |io|
+        io << source_line
+        gap.times { io << ' ' }
+        io << comment_line
       end
       result
     end
@@ -5074,12 +5074,12 @@ module Crystal
         first_line = lines[doc_comment.start_line]
         sharp_index = first_line.index('#').not_nil!
 
-        comment = String.build do |str|
+        comment = String.build do |io|
           (doc_comment.start_line..doc_comment.end_line).each do |i|
             line = lines[i].strip[1..-1]
             line = line[1..-1] if line[0]? == ' '
-            str << line
-            str << '\n'
+            io << line
+            io << '\n'
           end
         end
 
@@ -5087,10 +5087,10 @@ module Crystal
           formatted_comment = Formatter.format(comment)
           formatted_lines = formatted_comment.lines
           formatted_lines.map! do |line|
-            String.build do |str|
-              sharp_index.times { str << ' ' }
-              str << "# "
-              str << line
+            String.build do |io|
+              sharp_index.times { io << ' ' }
+              io << "# "
+              io << line
             end
           end
           lines[doc_comment.start_line..doc_comment.end_line] = formatted_lines

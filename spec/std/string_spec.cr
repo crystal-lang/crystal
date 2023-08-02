@@ -1903,8 +1903,8 @@ describe "String" do
   end
 
   it "scans using $~" do
-    str = String.build do |str|
-      "fooxooo".scan(/(o+)/) { str << $1 }
+    str = String.build do |io|
+      "fooxooo".scan(/(o+)/) { io << $1 }
     end
     str.should eq("ooooo")
   end

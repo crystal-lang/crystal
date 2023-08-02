@@ -105,13 +105,13 @@ module Crystal
         MASKPROC         = 0xf0000000
 
         def short
-          String.build do |str|
-            str << 'W' if write?
-            str << 'A' if alloc?
-            str << 'X' if execinstr?
-            str << 'M' if merge?
-            str << 'S' if strings?
-            str << 'T' if tls?
+          String.build do |io|
+            io << 'W' if write?
+            io << 'A' if alloc?
+            io << 'X' if execinstr?
+            io << 'M' if merge?
+            io << 'S' if strings?
+            io << 'T' if tls?
           end
         end
       end
