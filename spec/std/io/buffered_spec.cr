@@ -220,10 +220,10 @@ describe "IO::Buffered" do
   end
 
   it "reads more than the buffer's internal capacity" do
-    s = String.build do |buf|
+    s = String.build do |io|
       900.times do
         10.times do |i|
-          buf << ('a' + i)
+          io << ('a' + i)
         end
       end
     end
@@ -241,10 +241,10 @@ describe "IO::Buffered" do
   end
 
   it "writes more than the buffer's internal capacity" do
-    s = String.build do |buf|
+    s = String.build do |io|
       900.times do
         10.times do |i|
-          buf << ('a' + i)
+          io << ('a' + i)
         end
       end
     end

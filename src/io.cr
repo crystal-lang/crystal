@@ -700,10 +700,10 @@ abstract class IO
     # We didn't find the delimiter, so we append to a String::Builder
     # until we find it or we reach the limit, appending what we have
     # in the peek buffer and peeking again.
-    String.build do |buffer|
+    String.build do |io|
       while peek
         available = Math.min(peek.size, limit)
-        buffer.write peek[0, available]
+        io.write peek[0, available]
         skip(available)
         peek += available
         limit -= available
@@ -720,12 +720,12 @@ abstract class IO
           # If for some reason this IO became unpeekable,
           # default to the slow method. One example where this can
           # happen is `IO::Delimited`.
-          gets_slow(delimiter, limit, chomp, buffer)
+          gets_slow(delimiter, limit, chomp, io)
           break
         end
 
         if peek.empty?
-          if buffer.bytesize == 0
+          if io.bytesize == 0
             return nil
           else
             break
@@ -739,12 +739,12 @@ abstract class IO
           else
             index += 1
           end
-          buffer.write peek[0, index]
+          io.write peek[0, index]
           skip(index)
           break
         end
       end
-      buffer.chomp!(delimiter_byte) if chomp
+      io.chomp!(delimiter_byte) if chomp
     end
   end
 

@@ -2288,19 +2288,19 @@ class String
       end
     end
 
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       each_char do |ch|
         if ch.ord < 256
           if (a = table[ch.ord]) >= 0
-            buffer << a.unsafe_chr
+            io << a.unsafe_chr
           else
-            buffer << ch
+            io << ch
           end
         else
           if a = multi.try &.[ch]?
-            buffer << a
+            io << a
           else
-            buffer << ch
+            io << ch
           end
         end
       end
@@ -2317,11 +2317,11 @@ class String
   def sub(&block : Char -> _) : String
     return self if empty?
 
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       reader = Char::Reader.new(self)
-      buffer << yield reader.current_char
+      io << yield reader.current_char
       reader.next_char
-      buffer.write unsafe_byte_slice(reader.pos)
+      io.write unsafe_byte_slice(reader.pos)
     end
   end
 
@@ -2334,19 +2334,19 @@ class String
   # ```
   def sub(char : Char, replacement) : String
     if includes?(char)
-      String.build(bytesize) do |buffer|
+      String.build(bytesize) do |io|
         reader = Char::Reader.new(self)
         while reader.has_next?
           if reader.current_char == char
-            buffer << replacement
+            io << replacement
             break
           else
-            buffer << reader.current_char
+            io << reader.current_char
           end
           reader.next_char
         end
         reader.next_char
-        buffer.write unsafe_byte_slice(reader.pos)
+        io.write unsafe_byte_slice(reader.pos)
       end
     else
       self
@@ -2452,10 +2452,10 @@ class String
     index = self.byte_index(string)
     return self unless index
 
-    String.build(bytesize) do |buffer|
-      buffer.write unsafe_byte_slice(0, index)
-      buffer << yield string
-      buffer.write unsafe_byte_slice(index + string.bytesize)
+    String.build(bytesize) do |io|
+      io.write unsafe_byte_slice(0, index)
+      io << yield string
+      io.write unsafe_byte_slice(index + string.bytesize)
     end
   end
 
@@ -2468,23 +2468,23 @@ class String
   def sub(hash : Hash(Char, _)) : String
     return self if empty?
 
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       reader = Char::Reader.new(self)
       while reader.has_next?
         if hash.has_key?(reader.current_char)
-          buffer << hash[reader.current_char]
+          io << hash[reader.current_char]
           reader.next_char
           break
         else
-          buffer << reader.current_char
+          io << reader.current_char
           reader.next_char
         end
       end
 
       if reader.has_next?
-        buffer << reader.current_char
+        io << reader.current_char
         reader.next_char
-        buffer.write unsafe_byte_slice(reader.pos)
+        io.write unsafe_byte_slice(reader.pos)
       end
     end
   end
@@ -2493,12 +2493,12 @@ class String
     match = pattern.match(self, options: options)
     return self unless match
 
-    String.build(bytesize) do |buffer|
-      buffer.write unsafe_byte_slice(0, match.byte_begin)
+    String.build(bytesize) do |io|
+      io.write unsafe_byte_slice(0, match.byte_begin)
       str = match[0]
       $~ = match
-      yield str, match, buffer
-      buffer.write unsafe_byte_slice(match.byte_begin + str.bytesize)
+      yield str, match, io
+      io.write unsafe_byte_slice(match.byte_begin + str.bytesize)
     end
   end
 
@@ -2669,9 +2669,9 @@ class String
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
   def gsub(&block : Char -> _) : String
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       each_char do |my_char|
-        buffer << yield my_char
+        io << yield my_char
       end
     end
   end
@@ -2816,10 +2816,10 @@ class String
 
     last_byte_offset = 0
 
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       while index
-        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
-        buffer << yield string
+        io.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
+        io << yield string
 
         if string.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
@@ -2834,7 +2834,7 @@ class String
       end
 
       if last_byte_offset < bytesize
-        buffer.write unsafe_byte_slice(last_byte_offset)
+        io.write unsafe_byte_slice(last_byte_offset)
       end
     end
   end
@@ -2870,14 +2870,14 @@ class String
 
     last_byte_offset = 0
 
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       while match
         index = match.byte_begin(0)
 
-        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
+        io.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
         str = match[0]
         $~ = match
-        yield str, match, buffer
+        yield str, match, io
 
         if str.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
@@ -2892,7 +2892,7 @@ class String
       end
 
       if last_byte_offset < bytesize
-        buffer.write unsafe_byte_slice(last_byte_offset)
+        io.write unsafe_byte_slice(last_byte_offset)
       end
     end
   end
@@ -2935,9 +2935,9 @@ class String
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
   def delete(&) : String
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       each_char do |char|
-        buffer << char unless yield char
+        io << char unless yield char
       end
     end
   end
@@ -2973,9 +2973,9 @@ class String
   # ```
   def squeeze(&) : String
     previous = nil
-    String.build(bytesize) do |buffer|
+    String.build(bytesize) do |io|
       each_char do |char|
-        buffer << char unless yield(char) && previous == char
+        io << char unless yield(char) && previous == char
         previous = char
       end
     end

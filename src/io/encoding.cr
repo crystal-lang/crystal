@@ -184,10 +184,10 @@ class IO
 
       # We need to read from the out_slice into a String until we find that byte,
       # or until we consumed limit bytes
-      String.build do |io1|
+      String.build do |builder|
         loop do
           limit -= @out_slice.size
-          write io1
+          write builder
 
           read(io)
 
@@ -200,16 +200,16 @@ class IO
             else
               index += 1
             end
-            write io1, index
+            write builder, index
             break
           else
             if limit < @out_slice.size
-              write(io1, limit)
+              write(builder, limit)
               break
             end
           end
         end
-        io1.chomp!(delimiter) if chomp
+        builder.chomp!(delimiter) if chomp
       end
     end
 
