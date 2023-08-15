@@ -227,8 +227,9 @@ struct BigDecimal < Number
   # Divides `self` with another `BigDecimal`, with an optionally configurable
   # *precision*.
   #
-  # When the division is inexact, the returned value's scale is never greater
-  # than `scale - other.scale + precision`.
+  # When the division is inexact, the returned value rounds towards negative
+  # infinity, and its scale is never greater than
+  # `scale - other.scale + precision`.
   #
   # ```
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
@@ -325,7 +326,30 @@ struct BigDecimal < Number
     end
   end
 
-  def <=>(other : Int | Float | BigRational)
+  def <=>(other : BigRational) : Int32
+    if @scale == 0
+      @value <=> other
+    else
+      # `@value / power_ten_to(@scale) <=> other.numerator / other.denominator`
+      @value * other.denominator <=> power_ten_to(@scale) * other.numerator
+    end
+  end
+
+  def <=>(other : Float::Primitive) : Int32?
+    return nil if other.nan?
+
+    if sign = other.infinite?
+      return -sign
+    end
+
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : BigFloat) : Int32
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : Int)
     self <=> BigDecimal.new(other)
   end
 
@@ -784,7 +808,8 @@ struct Float
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Converts `self` to `BigDecimal`.
@@ -800,11 +825,17 @@ struct Float
   end
 end
 
+struct BigFloat
+  def <=>(other : BigDecimal)
+    -(other <=> self)
+  end
+end
+
 struct BigRational
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    -(other <=> self)
   end
 
   # Converts `self` to `BigDecimal`.

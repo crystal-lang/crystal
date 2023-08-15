@@ -323,8 +323,9 @@ module Crystal
 
         target_machine.emit_obj_to_file llvm_mod, output_filename
       end
-
-      _, command, args = linker_command(program, [output_filename], output_filename, nil)
+      object_names = [output_filename]
+      output_filename = output_filename.rchop(unit.object_extension)
+      _, command, args = linker_command(program, object_names, output_filename, nil)
       print_command(command, args)
     end
 
@@ -383,7 +384,7 @@ module Crystal
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
 
-            if !program.has_flag?("no_win32_delay_load")
+            if program.has_flag?("preview_win32_delay_load")
               # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
               # it is harmless to skip this error because not all import libraries are always used, much
               # less the individual DLLs they refer to
@@ -586,51 +587,45 @@ module Crystal
       exit 1
     end
 
-    protected def optimize(llvm_mod)
-      {% if LibLLVM::IS_LT_130 %}
-        optimize_with_old_pass_manager(llvm_mod)
-      {% else %}
-        optimize_with_new_pass_manager(llvm_mod)
-      {% end %}
-    end
-
-    private def optimize_with_old_pass_manager(llvm_mod)
-      fun_pass_manager = llvm_mod.new_function_pass_manager
-      pass_manager_builder.populate fun_pass_manager
-      fun_pass_manager.run llvm_mod
-      module_pass_manager.run llvm_mod
-    end
-
-    private def optimize_with_new_pass_manager(llvm_mod)
-      LLVM::PassBuilderOptions.new do |options|
-        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+    {% if LibLLVM::IS_LT_130 %}
+      protected def optimize(llvm_mod)
+        fun_pass_manager = llvm_mod.new_function_pass_manager
+        pass_manager_builder.populate fun_pass_manager
+        fun_pass_manager.run llvm_mod
+        module_pass_manager.run llvm_mod
       end
-    end
 
-    @module_pass_manager : LLVM::ModulePassManager?
+      @module_pass_manager : LLVM::ModulePassManager?
 
-    private def module_pass_manager
-      @module_pass_manager ||= begin
-        mod_pass_manager = LLVM::ModulePassManager.new
-        pass_manager_builder.populate mod_pass_manager
-        mod_pass_manager
+      private def module_pass_manager
+        @module_pass_manager ||= begin
+          mod_pass_manager = LLVM::ModulePassManager.new
+          pass_manager_builder.populate mod_pass_manager
+          mod_pass_manager
+        end
       end
-    end
 
-    @pass_manager_builder : LLVM::PassManagerBuilder?
+      @pass_manager_builder : LLVM::PassManagerBuilder?
 
-    private def pass_manager_builder
-      @pass_manager_builder ||= begin
-        registry = LLVM::PassRegistry.instance
-        registry.initialize_all
+      private def pass_manager_builder
+        @pass_manager_builder ||= begin
+          registry = LLVM::PassRegistry.instance
+          registry.initialize_all
 
-        builder = LLVM::PassManagerBuilder.new
-        builder.opt_level = 3
-        builder.size_level = 0
-        builder.use_inliner_with_threshold = 275
-        builder
+          builder = LLVM::PassManagerBuilder.new
+          builder.opt_level = 3
+          builder.size_level = 0
+          builder.use_inliner_with_threshold = 275
+          builder
+        end
       end
-    end
+    {% else %}
+      protected def optimize(llvm_mod)
+        LLVM::PassBuilderOptions.new do |options|
+          LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+        end
+      end
+    {% end %}
 
     private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
@@ -690,7 +685,7 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
-      @object_extension : String
+      getter object_extension : String
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)

@@ -725,6 +725,74 @@ span.flag.lime {
   visibility: visible
 }
 
+img {
+  max-width: 100%;
+}
+
+#sidebar-btn {
+  height: 32px;
+  width: 32px;
+}
+
+#sidebar-btn-label {
+  height: 2em;
+  width: 2em;
+}
+
+#sidebar-btn, #sidebar-btn-label {
+  display: none;
+  margin: .7rem;
+  appearance: none;
+  color: black;
+  cursor: pointer;
+}
+
+@media only screen and (max-width: 635px) {
+  .sidebar, .main-content {
+    /* svg size + vertical margin - .search-box padding-top */
+    padding-top: calc(2em + 2 * 0.7rem - 13px);
+  }
+
+  #sidebar-btn, #sidebar-btn-label {
+    display: block;
+    position: absolute;
+    z-index: 50;
+    transition-duration: 200ms;
+    left: 0;
+  }
+  
+  #sidebar-btn:not(:checked) ~ #sidebar-btn-label > .close,
+  #sidebar-btn:checked ~ #sidebar-btn-label > .open,
+  #sidebar-btn:checked ~ .main-content {
+    display: none;
+  }
+
+  #sidebar-btn:checked {
+    left: calc(100% - 32px - (2 * 0.7rem));
+  }
+
+  #sidebar-btn:checked ~ #sidebar-btn-label {
+    color: white;
+    /* 100% - svg size - horizontal margin */
+    left: calc(100% - 2em - (2 * 0.7rem));
+  }
+
+  #sidebar-btn~.sidebar {
+    width: 0%;
+  }
+
+  #sidebar-btn:checked~.sidebar {
+    visibility: visible;
+    width: 100%;
+  }
+
+  .sidebar {
+    transition-duration: 200ms;
+    max-width: 100vw;
+    visibility: hidden;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -871,5 +939,9 @@ span.flag.lime {
     color: white;
     background: #202020;
     border: 1px solid #353535;
+  }
+
+  #sidebar-btn, #sidebar-btn-label {
+    color: white; 
   }
 }

@@ -1,0 +1,138 @@
+name: Windows CI / Build Portable Package
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        required: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.9.2"
+
+      - name: Download Crystal source
+        uses: actions/checkout@v3
+
+      - name: Restore libraries
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/pcre.lib
+            libs/pcre2-8.lib
+            libs/iconv.lib
+            libs/gc.lib
+            libs/ffi.lib
+            libs/z.lib
+            libs/mpir.lib
+            libs/yaml.lib
+            libs/xml2.lib
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/crypto.lib
+            libs/ssl.lib
+            libs/openssl_VERSION
+          key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore DLLs
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/pcre-dynamic.lib
+            libs/pcre2-8-dynamic.lib
+            libs/iconv-dynamic.lib
+            libs/gc-dynamic.lib
+            libs/ffi-dynamic.lib
+            libs/z-dynamic.lib
+            libs/mpir-dynamic.lib
+            libs/yaml-dynamic.lib
+            libs/xml2-dynamic.lib
+            dlls/pcre.dll
+            dlls/pcre2-8.dll
+            dlls/libiconv.dll
+            dlls/gc.dll
+            dlls/libffi.dll
+            dlls/zlib1.dll
+            dlls/mpir.dll
+            dlls/yaml.dll
+            dlls/libxml2.dll
+          key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL DLLs
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            libs/crypto-dynamic.lib
+            libs/ssl-dynamic.lib
+            dlls/libcrypto-3-x64.dll
+            dlls/libssl-3-x64.dll
+          key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore LLVM
+        uses: actions/cache/restore@v3
+        with:
+          path: llvm
+          key: llvm-libs-16.0.3-msvc
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+
+      - name: Build LLVM extensions
+        run: make -f Makefile.win deps
+
+      - name: Build Crystal
+        run: |
+          bin/crystal.bat env
+          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
+
+      - name: Download shards release
+        uses: actions/checkout@v3
+        with:
+          repository: crystal-lang/shards
+          ref: v0.17.3
+          path: shards
+
+      - name: Download molinillo release
+        uses: actions/checkout@v3
+        with:
+          repository: crystal-lang/crystal-molinillo
+          ref: v0.2.0
+          path: shards/lib/molinillo
+
+      - name: Build shards release
+        working-directory: ./shards
+        run: ../bin/crystal.bat build ${{ inputs.release && '--release' || '' }} src/shards.cr
+
+      - name: Gather Crystal binaries
+        run: |
+          make -f Makefile.win install prefix=crystal
+          mkdir crystal/lib
+          cp shards/shards.exe crystal/
+          cp libs/* crystal/lib/
+          cp dlls/* crystal/
+          cp README.md crystal/
+
+      - name: Upload Crystal binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
+          path: crystal

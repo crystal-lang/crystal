@@ -66,6 +66,18 @@ struct YAML::Any
   def initialize(@raw : Type)
   end
 
+  # :ditto:
+  def self.new(raw : Int)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_i64)
+  end
+
+  # :ditto:
+  def self.new(raw : Float)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_f64)
+  end
+
   # Assumes the underlying value is an `Array` or `Hash` and returns its size.
   #
   # Raises if the underlying value is not an `Array` or `Hash`.

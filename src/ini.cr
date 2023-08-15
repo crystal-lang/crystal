@@ -46,7 +46,7 @@ module INI
         raise ParseException.new("Data after section", lineno, end_idx + 1) unless end_idx == line.size - 1
 
         current_section_name = line[offset + 1...end_idx]
-        current_section = ini[current_section_name] ||= Hash(String, String).new
+        current_section = ini.put_if_absent(current_section_name) { Hash(String, String).new }
       else
         key, eq, value = line.partition('=')
         raise ParseException.new("Expected declaration", lineno, key.size) if eq != "="

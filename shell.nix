@@ -23,9 +23,9 @@
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-22.05";
-    url = "https://github.com/NixOS/nixpkgs/archive/22.05.tar.gz";
-    sha256 = "0d643wp3l77hv2pmg2fi7vyxn4rwy0iyr8djcw1h5x72315ck9ik";
+    name = "nixpkgs-23.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
+    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
   }) {
     inherit system;
   };
@@ -52,31 +52,39 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.8.2/crystal-1.8.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:06hj2lcin4sdlmdb42asg677860c9ryca6wm5s6mps2fshbmq933";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-darwin-universal.tar.gz";
+      sha256 = "sha256:0ngiflk7yxb6ry5ax1zrbm3rh4psq7flv7xj6ph4g8qqx74qv79m";
     };
 
     aarch64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.8.2/crystal-1.8.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:06hj2lcin4sdlmdb42asg677860c9ryca6wm5s6mps2fshbmq933";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-darwin-universal.tar.gz";
+      sha256 = "sha256:0ngiflk7yxb6ry5ax1zrbm3rh4psq7flv7xj6ph4g8qqx74qv79m";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.8.2/crystal-1.8.2-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:16pkvr28n5ba4440apmnflx7i09hap37vv51x763aym34yq1a0xd";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:1d4wmr49m3ykylh4zwp184mm98vj0cqmflhgnmgry8nkwhkvs900";
     };
   }.${pkgs.stdenv.system});
 
   pkgconfig = pkgs.pkgconfig;
 
   llvm_suite = ({
+    llvm_16 = {
+      llvm = pkgs.llvm_16;
+      extra = [ pkgs.lld_16 pkgs.lldb_16 ];
+    };
+    llvm_15 = {
+      llvm = pkgs.llvm_15;
+      extra = [ pkgs.lld_15 pkgs.lldb_15 ];
+    };
     llvm_14 = {
       llvm = pkgs.llvm_14;
-      extra = [ pkgs.lld_14 ]; # lldb marked as broken
+      extra = [ pkgs.lld_14 pkgs.lldb_14 ];
     };
     llvm_13 = {
       llvm = pkgs.llvm_13;
-      extra = [ pkgs.lld_13 ]; # lldb marked as broken
+      extra = [ pkgs.lld_13 pkgs.lldb_13 ];
     };
     llvm_12 = {
       llvm = pkgs.llvm_12;
@@ -88,7 +96,7 @@ let
     };
     llvm_10 = {
       llvm = pkgs.llvm_10;
-      extra = [ pkgs.lld_10 pkgs.lldb_10 ];
+      extra = [ pkgs.lld_10 ]; # lldb marked as broken
     };
     llvm_9 = {
       llvm = pkgs.llvm_9;
@@ -98,23 +106,15 @@ let
       llvm = pkgs.llvm_8;
       extra = [ pkgs.lld_8 ]; # lldb marked as broken
     };
-    llvm_7 = {
-      llvm = pkgs.llvm_7;
-      extra = [ pkgs.lld_7 ]; # lldb it fails to compile on Darwin
-    };
-    llvm_6 = {
-      llvm = pkgs.llvm_6;
-      extra = [ pkgs.lld_6 ]; # lldb it fails to compile on Darwin
-    };
   }."llvm_${toString llvm}");
 
   boehmgc = pkgs.stdenv.mkDerivation rec {
     pname = "boehm-gc";
-    version = "8.2.0";
+    version = "8.2.4";
 
     src = builtins.fetchTarball {
       url = "https://github.com/ivmai/bdwgc/releases/download/v${version}/gc-${version}.tar.gz";
-      sha256 = "0f3m27sfc4wssdvk32vivdg64b04ydw0slxm45zdv23qddrihxq4";
+      sha256 = "0primpxl7hykfbmszf7ppbv7k1nj41f1r5m56n96q92mmzqlwybm";
     };
 
     configureFlags = [

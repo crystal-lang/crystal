@@ -1221,6 +1221,19 @@ describe "Restrictions" do
       CR
   end
 
+  it "matches number in bound free variable (#13605)" do
+    assert_type(<<-CR) { generic_class "Foo", 1.int32 }
+      class Foo(T)
+      end
+
+      def foo(x : Foo(T), y : Foo(T)) forall T
+        y
+      end
+
+      foo(Foo(1).new, Foo(1).new)
+      CR
+  end
+
   it "sets number as unbound generic type var (#13110)" do
     assert_type(<<-CR) { generic_class "Foo", 1.int32 }
       class Foo(T)

@@ -672,38 +672,10 @@ describe Iterator do
     end
   end
 
-  describe "with_index" do
-    it "does with_index from range" do
-      iter = (1..3).each.with_index
-      iter.next.should eq({1, 0})
-      iter.next.should eq({2, 1})
-      iter.next.should eq({3, 2})
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does with_index with offset from range" do
-      iter = (1..3).each.with_index(10)
-      iter.next.should eq({1, 10})
-      iter.next.should eq({2, 11})
-      iter.next.should eq({3, 12})
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does with_index from range, with block" do
-      tuples = [] of {Int32, Int32}
-      (1..3).each.with_index do |value, index|
-        tuples << {value, index}
-      end
-      tuples.should eq([{1, 0}, {2, 1}, {3, 2}])
-    end
-
-    it "does with_index from range, with block with offset" do
-      tuples = [] of {Int32, Int32}
-      (1..3).each.with_index(10) do |value, index|
-        tuples << {value, index}
-      end
-      tuples.should eq([{1, 10}, {2, 11}, {3, 12}])
-    end
+  describe "#with_index" do
+    it_iterates "with default offset", [{1, 0}, {2, 1}, {3, 2}], (1..3).each.with_index, tuple: true
+    it_iterates "with explicit offset", [{1, 10}, {2, 11}, {3, 12}], (1..3).each.with_index(10), tuple: true
+    it_iterates "with non-Int32 offset", [{1, Int64::MIN}, {2, Int64::MIN + 1}, {3, Int64::MIN + 2}], (1..3).each.with_index(Int64::MIN), tuple: true
   end
 
   describe "with object" do

@@ -1,6 +1,6 @@
 require "./spec_helper"
 require "spec/helpers/iterate"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "String" do
   describe "[]" do
@@ -682,47 +682,39 @@ describe "String" do
   end
 
   describe "#capitalize" do
-    it { "HELLO!".capitalize.should eq("Hello!") }
-    it { "HELLO MAN!".capitalize.should eq("Hello man!") }
-    it { "".capitalize.should eq("") }
-    it { "ﬄİ".capitalize.should eq("FFLi̇") }
-    it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
+    it { assert_prints "HELLO!".capitalize, "Hello!" }
+    it { assert_prints "HELLO MAN!".capitalize, "Hello man!" }
+    it { assert_prints "".capitalize, "" }
+    it { assert_prints "iO".capitalize(Unicode::CaseOptions::Turkic), "İo" }
+
+    it "handles multi-character mappings correctly (#13533)" do
+      assert_prints "ﬄİ".capitalize, "Ffli̇"
+    end
 
     it "does not touch invalid code units in an otherwise ascii string" do
       "\xB5!\xE0\xC1\xB5?".capitalize.should eq("\xB5!\xE0\xC1\xB5?")
-    end
-
-    describe "with IO" do
-      it { String.build { |io| "HELLO!".capitalize io }.should eq "Hello!" }
-      it { String.build { |io| "HELLO MAN!".capitalize io }.should eq "Hello man!" }
-      it { String.build { |io| "".capitalize io }.should be_empty }
-      it { String.build { |io| "ﬄİ".capitalize io }.should eq "FFLi̇" }
-      it { String.build { |io| "iO".capitalize io, Unicode::CaseOptions::Turkic }.should eq "İo" }
+      String.build { |io| "\xB5!\xE0\xC1\xB5?".capitalize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
     end
   end
 
   describe "#titleize" do
-    it { "hEllO tAb\tworld".titleize.should eq("Hello Tab\tWorld") }
-    it { "  spaces before".titleize.should eq("  Spaces Before") }
-    it { "testa-se muito".titleize.should eq("Testa-se Muito") }
-    it { "hÉllÕ tAb\tworld".titleize.should eq("Héllõ Tab\tWorld") }
-    it { "  spáçes before".titleize.should eq("  Spáçes Before") }
-    it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
-    it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+    it { assert_prints "hEllO tAb\tworld".titleize, "Hello Tab\tWorld" }
+    it { assert_prints "  spaces before".titleize, "  Spaces Before" }
+    it { assert_prints "testa-se muito".titleize, "Testa-se Muito" }
+    it { assert_prints "hÉllÕ tAb\tworld".titleize, "Héllõ Tab\tWorld" }
+    it { assert_prints "  spáçes before".titleize, "  Spáçes Before" }
+    it { assert_prints "testá-se múitô".titleize, "Testá-se Múitô" }
+    it { assert_prints "iO iO".titleize(Unicode::CaseOptions::Turkic), "İo İo" }
+
+    it "handles multi-character mappings correctly (#13533)" do
+      assert_prints "ﬄİ İﬄ ǳ Ǳ".titleize, "Ffli̇ İﬄ ǲ ǲ"
+    end
 
     it "does not touch invalid code units in an otherwise ascii string" do
       "\xB5!\xE0\xC1\xB5?".titleize.should eq("\xB5!\xE0\xC1\xB5?")
       "a\xA0b".titleize.should eq("A\xA0b")
-    end
-
-    describe "with IO" do
-      it { String.build { |io| "hEllO tAb\tworld".titleize io }.should eq "Hello Tab\tWorld" }
-      it { String.build { |io| "  spaces before".titleize io }.should eq "  Spaces Before" }
-      it { String.build { |io| "testa-se muito".titleize io }.should eq "Testa-se Muito" }
-      it { String.build { |io| "hÉllÕ tAb\tworld".titleize io }.should eq "Héllõ Tab\tWorld" }
-      it { String.build { |io| "  spáçes before".titleize io }.should eq "  Spáçes Before" }
-      it { String.build { |io| "testá-se múitô".titleize io }.should eq "Testá-se Múitô" }
-      it { String.build { |io| "iO iO".titleize io, Unicode::CaseOptions::Turkic }.should eq "İo İo" }
+      String.build { |io| "\xB5!\xE0\xC1\xB5?".titleize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
+      String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
     end
   end
 
@@ -2194,24 +2186,18 @@ describe "String" do
   end
 
   describe "#camelcase" do
-    it { "foo".camelcase.should eq "Foo" }
-    it { "foo_bar".camelcase.should eq "FooBar" }
-    it { "foo".camelcase(lower: true).should eq "foo" }
-    it { "foo_bar".camelcase(lower: true).should eq "fooBar" }
-    it { "Foo".camelcase.should eq "Foo" }
-    it { "Foo_bar".camelcase.should eq "FooBar" }
-    it { "Foo".camelcase(lower: true).should eq "foo" }
-    it { "Foo_bar".camelcase(lower: true).should eq "fooBar" }
+    it { assert_prints "foo".camelcase, "Foo" }
+    it { assert_prints "foo_bar".camelcase, "FooBar" }
+    it { assert_prints "foo".camelcase(lower: true), "foo" }
+    it { assert_prints "foo_bar".camelcase(lower: true), "fooBar" }
+    it { assert_prints "Foo".camelcase, "Foo" }
+    it { assert_prints "Foo_bar".camelcase, "FooBar" }
+    it { assert_prints "Foo".camelcase(lower: true), "foo" }
+    it { assert_prints "Foo_bar".camelcase(lower: true), "fooBar" }
 
-    describe "with IO" do
-      it { String.build { |io| "foo".camelcase io }.should eq "Foo" }
-      it { String.build { |io| "foo_bar".camelcase io }.should eq "FooBar" }
-      it { String.build { |io| "foo".camelcase io, lower: true }.should eq "foo" }
-      it { String.build { |io| "foo_bar".camelcase io, lower: true }.should eq "fooBar" }
-      it { String.build { |io| "Foo".camelcase io }.should eq "Foo" }
-      it { String.build { |io| "Foo_bar".camelcase io }.should eq "FooBar" }
-      it { String.build { |io| "Foo".camelcase io, lower: true }.should eq "foo" }
-      it { String.build { |io| "Foo_bar".camelcase io, lower: true }.should eq "fooBar" }
+    it "handles multi-character mappings correctly (#13533)" do
+      assert_prints "ﬄ_xﬄ".camelcase, "FflXﬄ"
+      assert_prints "İ_xﬄ".camelcase(lower: true), "i̇Xﬄ"
     end
   end
 

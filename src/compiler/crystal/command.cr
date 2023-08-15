@@ -19,6 +19,7 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
+        clear_cache              clear the compiler cache
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -112,6 +113,9 @@ class Crystal::Command
     when "tool".starts_with?(command)
       options.shift
       tool
+    when command == "clear_cache"
+      options.shift
+      clear_cache
     when "help".starts_with?(command), "--help" == command, "-h" == command
       puts USAGE
       exit
@@ -327,6 +331,7 @@ class Crystal::Command
     compiler : Compiler,
     sources : Array(Compiler::Source),
     output_filename : String,
+    emit_base_filename : String?,
     arguments : Array(String),
     specified_output : Bool,
     hierarchy_exp : String?,
@@ -334,7 +339,7 @@ class Crystal::Command
     output_format : String?,
     combine_rpath : Bool do
     def compile(output_filename = self.output_filename)
-      compiler.emit_base_filename = output_filename.rchop(File.extname(output_filename))
+      compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename, combine_rpath: combine_rpath
     end
 
@@ -549,8 +554,12 @@ class Crystal::Command
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
+    if run
+      emit_base_filename = ::Path[sources.first.filename].stem
+    end
+
     combine_rpath = run && !no_codegen
-    @config = CompilerConfig.new compiler, sources, output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
   end
 
   private def gather_sources(filenames)

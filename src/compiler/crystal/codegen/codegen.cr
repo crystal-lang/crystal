@@ -92,9 +92,6 @@ module Crystal
         # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`,
         # that is, consider Void like the size of a byte.
         1
-      elsif type.is_a?(BoolType)
-        # LLVM reports 0 for bool (i1) but it must be 1 because it does occupy memory
-        1
       else
         llvm_typer.size_of(llvm_typer.llvm_type(type))
       end
@@ -179,8 +176,7 @@ module Crystal
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
-      @single_module = !!single_module
+    def initialize(@program : Program, @node : ASTNode, @single_module : Bool = false, @debug = Debug::Default)
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")

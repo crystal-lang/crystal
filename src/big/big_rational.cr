@@ -78,11 +78,16 @@ struct BigRational < Number
   end
 
   def numerator : BigInt
-    BigInt.new { |mpz| LibGMP.mpq_get_num(mpz, self) }
+    # Returns `LibGMP.mpq_numref(self)`, whose C macro expansion effectively
+    # produces a raw member access. This is only as safe as copying `BigInt`s by
+    # value, as both involve copying `LibGMP::MPZ` around which has reference
+    # semantics, and `BigInt`s cannot be safely mutated in-place this way; see
+    # #9825 for details. Ditto for `#denominator`.
+    BigInt.new(@mpq._mp_num)
   end
 
   def denominator : BigInt
-    BigInt.new { |mpz| LibGMP.mpq_get_den(mpz, self) }
+    BigInt.new(@mpq._mp_den)
   end
 
   def <=>(other : BigRational)

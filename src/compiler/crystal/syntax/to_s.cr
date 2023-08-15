@@ -885,11 +885,7 @@ module Crystal
     end
 
     def visit_named_arg_name(name)
-      if Symbol.needs_quotes_for_named_argument?(name)
-        name.inspect(@str)
-      else
-        @str << name
-      end
+      Symbol.quote_for_named_argument(@str, name)
     end
 
     def visit(node : Underscore)
@@ -1038,7 +1034,15 @@ module Crystal
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           @str << '*' if i == node.splat_index
-          arg.accept self
+
+          if arg.name == ""
+            # This is an unpack
+            unpack = node.unpacks.not_nil![i]
+
+            visit_unpack(unpack)
+          else
+            arg.accept self
+          end
         end
         @str << '|'
       end
@@ -1050,6 +1054,19 @@ module Crystal
       @str << "end"
 
       false
+    end
+
+    def visit_unpack(node)
+      case node
+      when Expressions
+        @str << "("
+        node.expressions.join(@str, ", ") do |exp|
+          visit_unpack exp
+        end
+        @str << ")"
+      else
+        node.accept self
+      end
     end
 
     def visit(node : Include)
@@ -1123,11 +1140,7 @@ module Crystal
       else
         @str << node.name
         @str << " = "
-        if Symbol.needs_quotes_for_named_argument?(node.real_name)
-          node.real_name.inspect(@str)
-        else
-          @str << node.real_name
-        end
+        Symbol.quote_for_named_argument(@str, node.real_name)
       end
       if node.args.size > 0
         @str << '('

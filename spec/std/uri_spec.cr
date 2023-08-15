@@ -2,7 +2,7 @@ require "spec"
 require "uri"
 require "uri/json"
 require "uri/yaml"
-require "../support/string"
+require "spec/helpers/string"
 
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   it "`#{string}`", file, line do

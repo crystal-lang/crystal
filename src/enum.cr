@@ -247,7 +247,7 @@ struct Enum
     value.to_i32
   end
 
-  {% for name in %w(i8 i16 i32 i64 u8 u16 u32 u64 f32 f64) %}
+  {% for name in %w(i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64) %}
     {% prefix = name.starts_with?('i') ? "Int".id : (name.starts_with?('u') ? "UInt".id : "Float".id) %}
     {% type = "#{prefix}#{name[1..-1].id}".id %}
     # Returns the value of this enum member as a `{{type}}`
