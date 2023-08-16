@@ -1082,7 +1082,7 @@ class Crystal::Repl::Interpreter
     argv.size + 1
   end
 
-  @argv_unsafe : Pointer(Pointer(UInt8))?
+  @argv_unsafe = Pointer(Pointer(UInt8)).null
 
   private def argv_unsafe
     @argv_unsafe ||= begin

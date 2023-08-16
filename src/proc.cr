@@ -69,7 +69,7 @@
 # ```
 # module Ticker
 #   # The callback for the user doesn't have a Void*
-#   @@box : Pointer(Void)?
+#   @@box = Pointer(Void).null
 #
 #   def self.on_tick(&callback : Int32 ->)
 #     # Since Proc is a {Void*, Void*}, we can't turn that into a Void*, so we
