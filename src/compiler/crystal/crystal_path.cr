@@ -155,18 +155,16 @@ module Crystal
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
         yield "#{shard_src}/#{shard_name}/#{shard_path}/#{shard_path_stem}.cr"
+      else
+        basename = File.basename(relative_filename, ".cr")
 
-        return nil
-      end
+        # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
+        yield "#{relative_filename}/#{basename}.cr"
 
-      basename = File.basename(relative_filename, ".cr")
-
-      # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
-      yield "#{relative_filename}/#{basename}.cr"
-
-      unless filename_is_relative
-        # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
-        yield "#{relative_filename}/src/#{basename}.cr"
+        unless filename_is_relative
+          # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
+          yield "#{relative_filename}/src/#{basename}.cr"
+        end
       end
     end
 
