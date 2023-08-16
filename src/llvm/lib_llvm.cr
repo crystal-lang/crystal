@@ -10,7 +10,7 @@ end
   {% end %}
   @[Link(ldflags: {{"`#{LibLLVM::LLVM_CONFIG} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`"}})]
   lib LibLLVM
-    VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify.gsub(/git/,"")}}
+    VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify.gsub(/git/, "")}}
     BUILT_TARGETS = {{ (
                          env("LLVM_TARGETS") || `#{LibLLVM::LLVM_CONFIG} --targets-built`
                        ).strip.downcase.split(' ').map(&.id.symbolize) }}
