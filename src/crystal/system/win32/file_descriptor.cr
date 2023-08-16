@@ -11,7 +11,22 @@ module Crystal::System::FileDescriptor
   @system_blocking = true
 
   private def unbuffered_read(slice : Bytes)
-    if system_blocking?
+    handle = windows_handle
+    if LibC.GetConsoleMode(handle, nil) != 0
+      u16buffer = Slice(UInt16).new(slice.size)
+      chars_read = LibC::DWORD.new(0)
+      if 0 == LibC.ReadConsoleW(handle, u16buffer, u16buffer.size, pointerof(chars_read), nil)
+        raise IO::Error.from_winerror("Error reading from console")
+      end
+
+      appender = slice.to_unsafe.appender
+      String.each_utf16_char(u16buffer[0, chars_read]) do |char|
+        char.each_byte do |byte|
+          appender << byte
+        end
+      end
+      chars_read
+    elsif system_blocking?
       bytes_read = LibC._read(fd, slice, slice.size)
       if bytes_read == -1
         if Errno.value == Errno::EBADF
@@ -22,7 +37,6 @@ module Crystal::System::FileDescriptor
       end
       bytes_read
     else
-      handle = windows_handle
       overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}

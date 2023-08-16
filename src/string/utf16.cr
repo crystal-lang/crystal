@@ -128,8 +128,10 @@ class String
     {string, pointer + 1}
   end
 
+  # :nodoc:
+  #
   # Yields each decoded char in the given slice.
-  private def self.each_utf16_char(slice : Slice(UInt16), &)
+  def self.each_utf16_char(slice : Slice(UInt16), &)
     i = 0
     while i < slice.size
       byte = slice[i].to_i
@@ -153,8 +155,10 @@ class String
     end
   end
 
+  # :nodoc:
+  #
   # Yields each decoded char in the given pointer, stopping at the first null byte.
-  private def self.each_utf16_char(pointer : Pointer(UInt16), &) : Pointer(UInt16)
+  def self.each_utf16_char(pointer : Pointer(UInt16), &) : Pointer(UInt16)
     loop do
       byte = pointer.value.to_i
       break if byte == 0
