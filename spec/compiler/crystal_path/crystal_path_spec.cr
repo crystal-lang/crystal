@@ -111,8 +111,8 @@ describe Crystal::CrystalPath do
     it "foo.cr" do
       assert_iterates_yielding [
         "x/foo.cr",
-        "x/foo.cr/foo.cr.cr",
-        "x/foo.cr/src/foo.cr.cr",
+        "x/foo.cr/foo.cr",
+        "x/foo.cr/src/foo.cr",
       ], path.each_file_expansion("foo.cr", "x")
     end
 
@@ -130,11 +130,11 @@ describe Crystal::CrystalPath do
     it "foo.cr/bar.cr" do
       assert_iterates_yielding [
         "x/foo.cr/bar.cr",
-        "x/foo.cr/src/bar.cr.cr",
-        "x/foo.cr/src/foo.cr/bar.cr.cr",
-        "x/foo.cr/bar.cr/bar.cr.cr",
-        "x/foo.cr/src/bar.cr/bar.cr.cr",
-        "x/foo.cr/src/foo.cr/bar.cr/bar.cr.cr",
+        "x/foo.cr/src/bar.cr",
+        "x/foo.cr/src/foo.cr/bar.cr",
+        "x/foo.cr/bar.cr/bar.cr",
+        "x/foo.cr/src/bar.cr/bar.cr",
+        "x/foo.cr/src/foo.cr/bar.cr/bar.cr",
       ], path.each_file_expansion("foo.cr/bar.cr", "x")
     end
 
@@ -156,7 +156,7 @@ describe Crystal::CrystalPath do
     it "./foo.cr" do
       assert_iterates_yielding [
         "x/./foo.cr",
-        "x/./foo.cr/foo.cr.cr",
+        "x/./foo.cr/foo.cr",
       ], path.each_file_expansion("./foo.cr", "x")
     end
 
