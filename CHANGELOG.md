@@ -1,6 +1,7 @@
 # Changelog
 
-## 1.9.2 - 2023-07-19
+## [1.9.2] - 2023-07-19
+
 [1.9.2]: https://github.com/crystal-lang/crystal/releases/1.9.2
 
 ### Bugfixes
@@ -9,7 +10,8 @@
 
 - *(runtime)* Revert "Add default interrupt handlers" ([#13673](https://github.com/crystal-lang/crystal/pull/13673), thanks @straight-shoota)
 
-## 1.9.1 - 2023-07-17
+## [1.9.1] - 2023-07-17
+
 [1.9.1]: https://github.com/crystal-lang/crystal/releases/1.9.1
 
 ### Bugfixes
@@ -23,6 +25,7 @@
 - *(codegen)* Fix generated cc command for cross compile ([#13661](https://github.com/crystal-lang/crystal/pull/13661), thanks @fnordfish)
 
 ## [1.9.0] - 2023-07-11
+
 [1.9.0]: https://github.com/crystal-lang/crystal/releases/1.9.0
 ### Breaking changes
 
@@ -251,6 +254,7 @@
 - *(ci)* Split Windows library build scripts from CI ([#13478](https://github.com/crystal-lang/crystal/pull/13478), thanks @HertzDevil)
 
 ## [1.8.2] - 2023-05-08
+
 [1.8.2]: https://github.com/crystal-lang/crystal/releases/1.8.2
 
 ### Standard Library
@@ -283,6 +287,7 @@
 - Backport bugfixes to release/1.8 for release 1.8.2 ([#3435](https://github.com/crystal-lang/crystal/pull/13435), thanks @straight-shoota)
 
 ## [1.8.1] - 2023-04-20
+
 [1.8.1]: https://github.com/crystal-lang/crystal/releases/1.8.1
 
 ### Standard Library
@@ -297,6 +302,7 @@
 - Fix PCRE2 `Regex` with more than 127 named capture groups ([#13349](https://github.com/crystal-lang/crystal/pull/13349), thanks @HertzDevil)
 
 ## [1.8.0] - 2023-04-14
+
 [1.8.0]: https://github.com/crystal-lang/crystal/releases/1.8.0
 
 ### Language
@@ -568,6 +574,7 @@
 - [CI] Pin `use_pcre` in build environments where PCRE2 is not yet available ([#13102](https://github.com/crystal-lang/crystal/pull/13102), thanks @straight-shoota)
 
 ## [1.7.2] - 2023-01-23
+
 [1.7.2]: https://github.com/crystal-lang/crystal/releases/1.7.2
 ### Standard Library
 
@@ -590,6 +597,7 @@
 - Update `VERSION` to `1.7.2-dev` ([#12993](https://github.com/crystal-lang/crystal/pull/12993), thanks @straight-shoota)
 
 ## [1.7.1] - 2023-01-17
+
 [1.7.1]: https://github.com/crystal-lang/crystal/releases/1.7.1
 
 ### Tools
@@ -603,6 +611,7 @@
 - Update `VERSION` to 1.7.1-dev ([#12950](https://github.com/crystal-lang/crystal/pull/12950), thanks @straight-shoota)
 
 ## [1.7.0] - 2023-01-09
+
 [1.7.0]: https://github.com/crystal-lang/crystal/releases/1.7.0
 
 ### Language
@@ -826,6 +835,7 @@
 - Use context-specific heredoc deliminators ([#12816](https://github.com/crystal-lang/crystal/pull/12816), thanks @straight-shoota)
 
 ## [1.6.2] - 2022-11-03
+
 [1.6.2]: https://github.com/crystal-lang/crystal/releases/1.6.2
 
 ### Language
@@ -846,6 +856,7 @@
 - **(security)** CI: Update to OpenSSL 3.0.7 for bundled lib on Windows ([#12712](https://github.com/crystal-lang/crystal/pull/12712), thanks @beta-ziliani)
 
 ## [1.6.1] - 2022-10-21
+
 [1.6.1]: https://github.com/crystal-lang/crystal/releases/1.6.1
 
 ### Compiler
@@ -880,6 +891,7 @@
 - Detect `llvm-configXX` while building compiler ([#12602](https://github.com/crystal-lang/crystal/pull/12602), thanks @HertzDevil)
 
 ## [1.6.0] - 2022-10-06
+
 [1.6.0]: https://github.com/crystal-lang/crystal/releases/1.6.0
 
 ### Language
@@ -1131,6 +1143,7 @@
 - Remove `spec/win32_std_spec.cr` and `spec/generate_windows_spec.sh` ([#12282](https://github.com/crystal-lang/crystal/pull/12282), [#12549](https://github.com/crystal-lang/crystal/pull/12549), thanks @HertzDevil and @straight-shoota)
 
 ## [1.5.1] - 2022-09-07
+
 [1.5.1]: https://github.com/crystal-lang/crystal/releases/1.5.1
 
 ### Standard Library
@@ -1173,6 +1186,7 @@
 - [CI] Bumping xcode to 13.4.1 ([#12264](https://github.com/crystal-lang/crystal/pull/12264), thanks @beta-ziliani)
 
 ## [1.5.0] - 2022-07-06
+
 [1.5.0]: https://github.com/crystal-lang/crystal/releases/1.5.0
 
 ### Language
@@ -1351,6 +1365,7 @@
 - Samples: avoid `Symbol` variables ([#11923](https://github.com/crystal-lang/crystal/pull/11923), thanks @HertzDevil)
 
 ## [1.4.1] - 2022-04-22
+
 [1.4.1]: https://github.com/crystal-lang/crystal/releases/1.4.1
 
 ### Standard Library
@@ -1375,6 +1390,7 @@
 - Compiler: remove duplicate instance vars once we know them all ([#11995](https://github.com/crystal-lang/crystal/pull/11995), thanks @asterite)
 
 ## [1.4.0] - 2022-04-06
+
 [1.4.0]: https://github.com/crystal-lang/crystal/releases/1.4.0
 
 ### Language
@@ -1580,6 +1596,7 @@
 - [CI] Update distribution-scripts ([#11969](https://github.com/crystal-lang/crystal/pull/11969), thanks @straight-shoota)
 
 ## [1.3.2] - 2022-01-18
+
 [1.3.2]: https://github.com/crystal-lang/crystal/releases/1.3.2
 
 ### Standard Library
@@ -1589,6 +1606,7 @@
 - Fix buffer overflow in `String#index` ([#11747](https://github.com/crystal-lang/crystal/pull/11747), thanks @asterite, @straight-shoota)
 
 ## [1.3.1] - 2022-01-13
+
 [1.3.1]: https://github.com/crystal-lang/crystal/releases/1.3.1
 
 ### Standard Library
@@ -1613,6 +1631,7 @@
 - Fix typos ([#11725](https://github.com/crystal-lang/crystal/pull/11725), thanks @kianmeng)
 
 ## [1.3.0] - 2022-01-06
+
 [1.3.0]: https://github.com/crystal-lang/crystal/releases/1.3.0
 
 ### Compiler
@@ -1854,6 +1873,7 @@
 - Update NOTICE Copyright year to 2022 ([#11679](https://github.com/crystal-lang/crystal/pull/11679), thanks @matiasgarciaisaia)
 
 ## [1.2.2] - 2021-11-10
+
 [1.2.2]: https://github.com/crystal-lang/crystal/releases/1.2.2
 
 ### Compiler
@@ -1888,6 +1908,7 @@
 - [CI] Fix pcre download URL ([#11422](https://github.com/crystal-lang/crystal/pull/11422), thanks @straight-shoota)
 
 ## [1.2.1] - 2021-10-21
+
 [1.2.1]: https://github.com/crystal-lang/crystal/releases/1.2.1
 
 ### Compiler
@@ -1907,6 +1928,7 @@
 - Update markd subtree to v0.4.2 ([#11338](https://github.com/crystal-lang/crystal/pull/11338), thanks @straight-shoota)
 
 ## [1.2.0] - 2021-10-13
+
 [1.2.0]: https://github.com/crystal-lang/crystal/releases/1.2.0
 
 ### Compiler
@@ -2126,6 +2148,7 @@
 - [CI] Remove i386 builds ([#11287](https://github.com/crystal-lang/crystal/pull/11287), thanks @straight-shoota)
 
 ## [1.1.1] - 2021-07-26
+
 [1.1.1]: https://github.com/crystal-lang/crystal/releases/1.1.1
 
 ### Language changes
@@ -2147,6 +2170,7 @@
 - Updating aarch64 actions to use 1.0.0 images ([#10976](https://github.com/crystal-lang/crystal/pull/10976), thanks @beta-ziliani)
 
 ## [1.1.0] - 2021-07-14
+
 [1.1.0]: https://github.com/crystal-lang/crystal/releases/1.1.0
 
 ### Language changes
@@ -2369,6 +2393,7 @@
 - Add smoke tests for platforms where we don't run full tests ([#10848](https://github.com/crystal-lang/crystal/pull/10848), thanks @straight-shoota)
 
 ## [1.0.0] - 2021-03-22
+
 [1.0.0]: https://github.com/crystal-lang/crystal/releases/1.0.0
 
 ### Language changes
