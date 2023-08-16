@@ -78,7 +78,7 @@ module XML
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options) }
+    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, "utf-8", options) }
   end
 
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
@@ -92,7 +92,7 @@ module XML
       ->(ctx) { 0 },
       Box(IO).box(io),
       nil,
-      nil,
+      "utf-8",
       options,
     ) }
   end

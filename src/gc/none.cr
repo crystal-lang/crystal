@@ -66,7 +66,9 @@ module GC
       gc_no: 0,
       markers_m1: 0,
       bytes_reclaimed_since_gc: 0,
-      reclaimed_bytes_before_gc: 0)
+      reclaimed_bytes_before_gc: 0,
+      expl_freed_bytes_since_gc: 0,
+      obtained_from_os_bytes: 0)
   end
 
   {% if flag?(:win32) %}

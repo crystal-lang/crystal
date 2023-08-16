@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.9.2 - 2023-07-19
+[1.9.2]: https://github.com/crystal-lang/crystal/releases/1.9.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(runtime)* Revert "Add default interrupt handlers" ([#13673](https://github.com/crystal-lang/crystal/pull/13673), thanks @straight-shoota)
+
+## 1.9.1 - 2023-07-17
+[1.9.1]: https://github.com/crystal-lang/crystal/releases/1.9.1
+
+### Bugfixes
+
+#### stdlib
+
+- *(serialization)* Fix `Serializable` with converter parsing `null` value ([#13656](https://github.com/crystal-lang/crystal/pull/13656), thanks @straight-shoota)
+
+#### compiler
+
+- *(codegen)* Fix generated cc command for cross compile ([#13661](https://github.com/crystal-lang/crystal/pull/13661), thanks @fnordfish)
+
 ## [1.9.0] - 2023-07-11
 [1.9.0]: https://github.com/crystal-lang/crystal/releases/1.9.0
 ### Breaking changes
@@ -34,7 +56,7 @@
 - *(numeric)* Add `BigDecimal#%` ([#13255](https://github.com/crystal-lang/crystal/pull/13255), thanks @MattAlp)
 - *(numeric)* Improve conversions from `BigInt` to `Int::Primitive` ([#13562](https://github.com/crystal-lang/crystal/pull/13562), thanks @HertzDevil)
 - *(runtime)* Print error if unable to delay-load DLL on Windows ([#13475](https://github.com/crystal-lang/crystal/pull/13475), thanks @HertzDevil)
-- *(runtime)* Add default interrupt handlers ([#13568](https://github.com/crystal-lang/crystal/pull/13568), thanks @straight-shoota)
+- *(runtime)* Add default interrupt handlers ([#13568](https://github.com/crystal-lang/crystal/pull/13568), thanks @straight-shoota) ⚠️ This was reverted in 1.9.2
 - *(serialization)* Add `ignore_serialize` for `YAML::Serializable` ([#13556](https://github.com/crystal-lang/crystal/pull/13556), thanks @meatball133)
 - *(specs)* Add a testcase line number to the output of JUnitFormatter ([#13468](https://github.com/crystal-lang/crystal/pull/13468), thanks @nobodywasishere)
 - *(specs)* Publish the `assert_prints` spec helper ([#13599](https://github.com/crystal-lang/crystal/pull/13599), thanks @HertzDevil)

@@ -600,20 +600,26 @@ module Crystal
     property call : Call?
     property splat_index : Int32?
 
-    def initialize(@args = [] of Var, body = nil, @splat_index = nil)
+    # When a block argument unpacks, the corresponding Var will
+    # have an empty name, and `unpacks` will have the unpacked
+    # Expressions in that index.
+    property unpacks : Hash(Int32, Expressions)?
+
+    def initialize(@args = [] of Var, body = nil, @splat_index = nil, @unpacks = nil)
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
       @args.each &.accept visitor
       @body.accept visitor
+      @unpacks.try &.each_value &.accept visitor
     end
 
     def clone_without_location
-      Block.new(@args.clone, @body.clone, @splat_index)
+      Block.new(@args.clone, @body.clone, @splat_index, @unpacks.clone)
     end
 
-    def_equals_and_hash args, body, splat_index
+    def_equals_and_hash args, body, splat_index, unpacks
   end
 
   # A method call.
@@ -877,15 +883,11 @@ module Crystal
       @end_location || @values.last.end_location
     end
 
-    def ==(other : self)
-      other.targets == targets && other.values == values
-    end
-
     def clone_without_location
       MultiAssign.new(@targets.clone, @values.clone)
     end
 
-    def_hash @targets, @values
+    def_equals_and_hash @targets, @values
   end
 
   # An instance variable.

@@ -1014,7 +1014,6 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      arg_counter = 0
       body_exps = node.body.as?(Expressions).try(&.expressions)
 
       # Variables that we don't want to get their type merged
@@ -1025,26 +1024,30 @@ module Crystal
       ignored_vars_after_block = nil
 
       meta_vars = @meta_vars.dup
+
       node.args.each do |arg|
-        # The parser generates __argN block arguments for tuple unpacking,
-        # and they need a special treatment because they shouldn't override
-        # local variables. So we search the unpacked vars in the body.
-        if arg.name.starts_with?("__arg") && body_exps
-          ignored_vars_after_block = node.args.dup
-
-          while arg_counter < body_exps.size &&
-                (assign = body_exps[arg_counter]).is_a?(Assign) &&
-                (target = assign.target).is_a?(Var) &&
-                (call = assign.value).is_a?(Call) &&
-                (call_var = call.obj).is_a?(Var) &&
-                call_var.name == arg.name
-            bind_block_var(node, target, meta_vars, before_block_vars)
-            ignored_vars_after_block << Var.new(target.name)
-            arg_counter += 1
-          end
-        end
-
         bind_block_var(node, arg, meta_vars, before_block_vars)
+      end
+
+      # If the block has unpacking, like:
+      #
+      #     do |(x, y)|
+      #       ...
+      #     end
+      #
+      # it was transformed to unpack the block vars inside the body:
+      #
+      #     do |__temp_1|
+      #       x, y = __temp_1
+      #       ...
+      #     end
+      #
+      # We need to treat these variables as block arguments (so they don't override existing local variables).
+      if unpacks = node.unpacks
+        ignored_vars_after_block = node.args.dup
+        unpacks.each_value do |unpack|
+          handle_unpacked_block_argument(node, unpack, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
       end
 
       @block_nest += 1
@@ -1094,6 +1097,22 @@ module Crystal
       node.bind_to node.body
 
       false
+    end
+
+    def handle_unpacked_block_argument(node, arg, meta_vars, before_block_vars, ignored_vars_after_block)
+      case arg
+      when Var
+        bind_block_var(node, arg, meta_vars, before_block_vars)
+        ignored_vars_after_block << Var.new(arg.name)
+      when Underscore
+        # Nothing
+      when Splat
+        handle_unpacked_block_argument(node, arg.exp, meta_vars, before_block_vars, ignored_vars_after_block)
+      when Expressions
+        arg.expressions.each do |exp|
+          handle_unpacked_block_argument(node, exp, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
+      end
     end
 
     def bind_block_var(node, target, meta_vars, before_block_vars)
@@ -2266,7 +2285,7 @@ module Crystal
     def visit(node : Primitive)
       # If the method where this primitive is defined has a return type, use it
       if return_type = typed_def.return_type
-        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        node.type = (path_lookup || scope).lookup_type(return_type, free_vars: free_vars)
         return false
       end
 

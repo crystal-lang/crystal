@@ -31,6 +31,8 @@ jobs:
             flags: ""
           - crystal_bootstrap_version: 1.8.2
             flags: ""
+          - crystal_bootstrap_version: 1.9.2
+            flags: ""
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3

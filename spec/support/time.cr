@@ -1,3 +1,39 @@
+require "./env"
+
+class Time::Location
+  def __cached_zone=(zone)
+    @cached_zone = zone
+  end
+
+  def self.__clear_location_cache
+    @@location_cache.clear
+  end
+end
+
+ZONEINFO_ZIP = datapath("zoneinfo.zip")
+
+def with_zoneinfo(path = ZONEINFO_ZIP, &)
+  with_env("ZONEINFO": path) do
+    Time::Location.local = Time::Location.load_local
+    Time::Location.__clear_location_cache
+
+    yield
+  end
+end
+
+def with_tz(tz, &)
+  old_local = Time::Location.local
+  begin
+    with_env("TZ": tz) do
+      # Reset local time zone
+      Time::Location.local = Time::Location.load_local
+      yield
+    end
+  ensure
+    Time::Location.local = old_local
+  end
+end
+
 {% if flag?(:win32) %}
   lib LibC
     struct LUID
