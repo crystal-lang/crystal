@@ -15,8 +15,8 @@ struct String::Formatter(A)
     Named
   end
 
-  @format_buf : Pointer(UInt8)?
-  @temp_buf : Pointer(UInt8)?
+  @format_buf = Pointer(UInt8).null
+  @temp_buf = Pointer(UInt8).null
   @arg_mode : Mode = :none
 
   def initialize(string, @args : A, @io : IO)

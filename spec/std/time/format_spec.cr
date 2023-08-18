@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 require "spec/helpers/string"
 
 def parse_time(format, string)
