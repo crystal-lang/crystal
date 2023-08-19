@@ -358,7 +358,8 @@ module Crystal::System::FileDescriptor
     return count if reader.current_char_width == 0
 
     units_to_write = Utils.safe_copy(Utils.to_utf16(reader.current_char), units_buffer)
-    bytes_written = reader.current_char_width - bytes_residual
+    # NOTE: When there are some invalid UTF-8 bytes, `reader.current_char_width` may be less than `bytes_residual`.
+    bytes_written = reader.current_char_width > bytes_residual ? reader.current_char_width - bytes_residual : 0
     slice += bytes_written
 
     reader = Utils::UTF8Reader.new(slice)
