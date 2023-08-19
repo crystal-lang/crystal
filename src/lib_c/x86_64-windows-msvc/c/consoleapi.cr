@@ -14,6 +14,22 @@ lib LibC
   fun GetConsoleCP : DWORD
   fun GetConsoleOutputCP : DWORD
 
+  fun ReadConsoleW(
+    hConsoleInput : HANDLE,
+    lpBuffer : Void*,
+    nNumberOfCharsToRead : DWORD,
+    lpNumberOfCharsRead : DWORD*,
+    pInputControl : Void*
+  ) : BOOL
+
+  fun WriteConsoleW(
+    hConsoleOutput : HANDLE,
+    lpBuffer : Void*,
+    nNumberOfCharsToWrite : DWORD,
+    lpNumberOfCharsWritten : DWORD*,
+    lpReserved : Void*
+  ) : BOOL
+
   CTRL_C_EVENT     = 0
   CTRL_BREAK_EVENT = 1
 
