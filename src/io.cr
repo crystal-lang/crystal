@@ -433,6 +433,8 @@ abstract class IO
   # io.read_string(6) # raises IO::EOFError
   # ```
   def read_string(bytesize : Int) : String
+    return "" if bytesize == 0
+
     String.new(bytesize) do |ptr|
       if decoder = decoder()
         read = decoder.read_utf8(self, Slice.new(ptr, bytesize))
