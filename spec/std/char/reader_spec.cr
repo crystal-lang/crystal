@@ -86,6 +86,17 @@ describe "Char::Reader" do
     end.should be_nil
   end
 
+  describe "#each" do
+    it "checks bounds after block" do
+      string = "f"
+      reader = Char::Reader.new(string)
+      reader.each do |c|
+        c.should eq 'f'
+        reader.next_char
+      end
+    end
+  end
+
   it "starts at end" do
     reader = Char::Reader.new(at_end: "")
     reader.pos.should eq(0)
