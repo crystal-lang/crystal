@@ -27,7 +27,7 @@ describe "Code gen: def" do
   end
 
   it "uses self" do
-    run("struct Int; def foo; self + 1; end; end; 3.foo").to_i.should eq(4)
+    run("struct Int; def foo; self &+ 1; end; end; 3.foo").to_i.should eq(4)
   end
 
   it "uses var after external" do
@@ -164,23 +164,23 @@ describe "Code gen: def" do
     ")
   end
 
-  it "codegens with and witout default arguments" do
+  it "codegens with and without default arguments" do
     run("
       def foo(x = 1)
-        x + 1
+        x &+ 1
       end
 
-      foo(2) + foo
+      foo(2) &+ foo
       ").to_i.should eq(5)
   end
 
-  it "codegens with and witout many default arguments" do
+  it "codegens with and without many default arguments" do
     run("
       def foo(x = 1, y = 2, z = 3)
-        x + y + z
+        x &+ y &+ z
       end
 
-      foo + foo(9) + foo(3, 4) + foo(6, 3, 1)
+      foo &+ foo(9) &+ foo(3, 4) &+ foo(6, 3, 1)
       ").to_i.should eq(40)
   end
 
@@ -188,7 +188,7 @@ describe "Code gen: def" do
     run("
       class Foo
         def foo(x = self.bar)
-          x + 1
+          x &+ 1
         end
 
         def bar
@@ -198,7 +198,7 @@ describe "Code gen: def" do
 
       f = Foo.new
 
-      f.foo(2) + f.foo
+      f.foo(2) &+ f.foo
       ").to_i.should eq(5)
   end
 
@@ -292,7 +292,7 @@ describe "Code gen: def" do
         x
       end
 
-      foo(2).to_i
+      foo(2).to_i!
     ").to_i.should eq(0)
   end
 
@@ -512,8 +512,8 @@ describe "Code gen: def" do
 
   it "uses previous argument in default value (#1062)" do
     run(%(
-      def foo(x = 123, y = x + 456)
-        x + y
+      def foo(x = 123, y = x &+ 456)
+        x &+ y
       end
 
       foo
@@ -522,12 +522,50 @@ describe "Code gen: def" do
 
   it "can match N type argument of static array (#1203)" do
     run(%(
-      def fn(a : StaticArray(T, N))
+      def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
       )).to_i.should eq(10)
+  end
+
+  it "uses dispatch call type for phi (#3529)" do
+    codegen(%(
+      def foo(x : Int32)
+        yield
+        1.0
+      end
+
+      def foo(x : Int64)
+        yield
+        1.0
+      end
+
+      foo(1 || 1_i64) do
+        break
+      end
+      ), inject_primitives: false)
+  end
+
+  it "codegens union to union assignment of mutable arg (#3691)" do
+    codegen(%(
+      def foo(arg)
+        arg = ""
+      end
+
+      foo(1 || true)
+      ))
+  end
+
+  it "codegens yield with destructing tuple having unreachable element" do
+    codegen(%(
+      def foo
+        yield({1, while true; end})
+      end
+
+      foo { |a, b| }
+      ))
   end
 end

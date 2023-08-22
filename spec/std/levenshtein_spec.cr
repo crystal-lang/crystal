@@ -2,18 +2,22 @@ require "spec"
 require "levenshtein"
 
 describe "levenshtein" do
-  assert { Levenshtein.distance("algorithm", "altruistic").should eq(6) }
-  assert { Levenshtein.distance("1638452297", "444488444").should eq(9) }
-  assert { Levenshtein.distance("", "").should eq(0) }
-  assert { Levenshtein.distance("", "a").should eq(1) }
-  assert { Levenshtein.distance("aaapppp", "").should eq(7) }
-  assert { Levenshtein.distance("frog", "fog").should eq(1) }
-  assert { Levenshtein.distance("fly", "ant").should eq(3) }
-  assert { Levenshtein.distance("elephant", "hippo").should eq(7) }
-  assert { Levenshtein.distance("hippo", "elephant").should eq(7) }
-  assert { Levenshtein.distance("hippo", "zzzzzzzz").should eq(8) }
-  assert { Levenshtein.distance("hello", "hallo").should eq(1) }
-  assert { Levenshtein.distance("こんにちは", "こんちは").should eq(1) }
+  it { Levenshtein.distance("algorithm", "altruistic").should eq(6) }
+  it { Levenshtein.distance("1638452297", "444488444").should eq(9) }
+  it { Levenshtein.distance("", "").should eq(0) }
+  it { Levenshtein.distance("", "a").should eq(1) }
+  it { Levenshtein.distance("aaapppp", "").should eq(7) }
+  it { Levenshtein.distance("frog", "fog").should eq(1) }
+  it { Levenshtein.distance("fly", "ant").should eq(3) }
+  it { Levenshtein.distance("elephant", "hippo").should eq(7) }
+  it { Levenshtein.distance("hippo", "elephant").should eq(7) }
+  it { Levenshtein.distance("hippo", "zzzzzzzz").should eq(8) }
+  it { Levenshtein.distance("hello", "hallo").should eq(1) }
+  it { Levenshtein.distance("こんにちは", "こんちは").should eq(1) }
+  it { Levenshtein.distance("한자", "漢字").should eq(2) }
+  it { Levenshtein.distance("abc", "cba").should eq(2) }
+  it { Levenshtein.distance("かんじ", "じんか").should eq(2) }
+  it { Levenshtein.distance("", "かんじ").should eq(3) }
 
   it "finds with finder" do
     finder = Levenshtein::Finder.new "hallo"

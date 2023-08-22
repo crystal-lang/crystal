@@ -61,7 +61,7 @@ describe "Code gen: magic constants" do
       require "primitives"
 
       def foo(x, z = 10, line = __LINE__)
-        z + line
+        z &+ line
       end
 
       foo 1, 20
@@ -73,7 +73,7 @@ describe "Code gen: magic constants" do
       require "primitives"
 
       def foo(x, line = __LINE__, z = 1)
-        z + line
+        z &+ line
       end
 
       foo 1, z: 20
@@ -108,5 +108,50 @@ describe "Code gen: magic constants" do
 
       foo
       ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar")
+  end
+
+  it "does __END_LINE__ without block" do
+    run(%(
+      def foo(x = __END_LINE__)
+        x
+      end
+
+      foo
+      ), inject_primitives: false).to_i.should eq(6)
+  end
+
+  it "does __END_LINE__ with block" do
+    run(%(
+      def foo(x = __END_LINE__)
+        yield
+        x
+      end
+
+      foo do
+        1
+      end
+      ), inject_primitives: false).to_i.should eq(9)
+  end
+
+  it "does __END_LINE__ in macro without block" do
+    run(%(
+      macro foo(line = __END_LINE__)
+        {{line}}
+      end
+
+      foo
+      ), inject_primitives: false).to_i.should eq(6)
+  end
+
+  it "does __END_LINE__ in macro with block" do
+    run(%(
+      macro foo(line = __END_LINE__)
+        {{line}}
+      end
+
+      foo do
+        1
+      end
+      ), inject_primitives: false).to_i.should eq(8)
   end
 end

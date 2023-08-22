@@ -135,8 +135,8 @@ describe "Semantic: virtual" do
   end
 
   it "works with restriction alpha" do
-    nodes = parse("
-      require \"prelude\"
+    assert_no_errors <<-CRYSTAL
+      require "prelude"
 
       class Foo
       end
@@ -154,8 +154,7 @@ describe "Semantic: virtual" do
 
       a = [nil, Foo.new, Bar.new, Baz.new]
       a.push(Baz.new || Ban.new)
-      ")
-    semantic nodes
+      CRYSTAL
   end
 
   it "doesn't check cover for subclasses" do
@@ -385,7 +384,7 @@ describe "Semantic: virtual" do
       f = Bar1.new || Bar2.new || Baz.new
       foo(f)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Bar1 or Baz, not Foo"
   end
 
   it "checks cover in every concrete subclass" do
@@ -447,7 +446,7 @@ describe "Semantic: virtual" do
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Baz#foo' to be Bar1 or Baz, not Foo"
   end
 
   it "checks cover in every concrete subclass 3" do
@@ -608,7 +607,7 @@ describe "Semantic: virtual" do
   end
 
   it "uses virtual type as generic type if class is abstract" do
-    result = assert_type("
+    assert_type("
       abstract class Foo
       end
 
@@ -620,7 +619,7 @@ describe "Semantic: virtual" do
   end
 
   it "uses virtual type as generic type if class is abstract even in union" do
-    result = assert_type("
+    assert_type("
       abstract class Foo
       end
 
@@ -640,7 +639,7 @@ describe "Semantic: virtual" do
       class Bar < Foo; end
 
       Pointer(Foo).malloc(1_u64)
-      ") { pointer_of(types["Foo"].virtual_type) }
+      ", inject_primitives: true) { pointer_of(types["Foo"].virtual_type) }
   end
 
   it "types instance var as virtual when using type declaration and has subclasses" do

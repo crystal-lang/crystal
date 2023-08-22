@@ -22,7 +22,7 @@ describe "Block inference" do
     input.last.as(Call).block.not_nil!.body.type.should eq(result.program.int32)
   end
 
-  it "infer type of block argument" do
+  it "infer type of block parameter" do
     input = parse("
       def foo
         yield 1
@@ -67,11 +67,11 @@ describe "Block inference" do
     assert_type("
       require \"prelude\"
       a = [1] || [1.1]
-      a.each { |x| x }
+      a.tap { |x| x }
     ") { union_of(array_of(int32), array_of(float64)) }
   end
 
-  it "uses block arg, too many arguments" do
+  it "uses block arg, too many parameters" do
     assert_error %(
       def foo
         yield
@@ -81,7 +81,7 @@ describe "Block inference" do
         x
       end
       ),
-      "too many block arguments (given 1, expected maximum 0)"
+      "too many block parameters (given 1, expected maximum 0)"
   end
 
   it "yields with different types" do
@@ -130,7 +130,7 @@ describe "Block inference" do
         end
       end
 
-      def bar(&block : Int32 -> U)
+      def bar(&block : Int32 -> U) forall U
         Foo(U).new(yield 1)
       end
 
@@ -150,7 +150,7 @@ describe "Block inference" do
         end
       end
 
-      def foo(x : U, &block: U -> T)
+      def foo(x : U, &block: U -> T) forall T, U
         Foo(T).new(yield x)
       end
 
@@ -245,12 +245,27 @@ describe "Block inference" do
       "type must be Float64"
   end
 
+  it "reports error on method instantiate (#4543)" do
+    assert_error %(
+      class Foo
+        @foo = 42
+
+        def initialize(&block : -> Int32)
+          @foo = yield
+        end
+      end
+
+      Foo.new { 42u32 }
+      ),
+      "expected block to return Int32, not UInt32"
+  end
+
   it "matches block arg return type" do
     assert_type("
       class Foo(T)
       end
 
-      def foo(&block: Int32 -> Foo(T))
+      def foo(&block: Int32 -> Foo(T)) forall T
         yield 1
         Foo(T).new
       end
@@ -319,7 +334,7 @@ describe "Block inference" do
       "expected block to return Foo, not Int32"
   end
 
-  it "errors when using local variable with block argument name" do
+  it "errors when using local variable with block parameter name" do
     assert_error "def foo; yield 1; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
   end
@@ -428,7 +443,7 @@ describe "Block inference" do
         end
         false
       end
-    ") { union_of(int32, bool) }
+    ", inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "ignores block parameter if not used" do
@@ -440,7 +455,7 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows yielding multiple types when a union is expected" do
@@ -479,7 +494,7 @@ describe "Block inference" do
         a + 1
       end
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "passes #233: block with initialize with default args" do
@@ -643,7 +658,7 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if alias is not a fun type" do
@@ -659,6 +674,16 @@ describe "Block inference" do
       end
       ),
       "expected block type to be a function type, not Int32"
+  end
+
+  it "errors if proc is not instantiated" do
+    assert_error <<-CR, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
+      def capture(&block : Proc)
+        block
+      end
+
+      capture { }
+      CR
   end
 
   it "passes #262" do
@@ -721,7 +746,7 @@ describe "Block inference" do
       end
 
       extra
-      )) { nilable(int32) }
+      ), inject_primitives: true) { nilable(int32) }
   end
 
   it "ignores void return type (#427)" do
@@ -766,6 +791,20 @@ describe "Block inference" do
       )) { int32 }
   end
 
+  it "ignores void return type (4)" do
+    assert_type(%(
+      alias Alias = Void
+
+      def foo(&block : -> Alias)
+        yield
+      end
+
+      foo do
+        1
+      end
+      )) { int32 }
+  end
+
   it "uses block return type as return type, even if can't infer block type" do
     assert_type(%(
       class Foo
@@ -788,7 +827,7 @@ describe "Block inference" do
       foo = Foo.new(100)
       block = f.call(foo)
       block.call
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "uses block var with same name as local var" do
@@ -838,7 +877,7 @@ describe "Block inference" do
 
   it "recalculates call that uses block arg output as free var" do
     assert_type(%(
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block
         U
       end
@@ -871,7 +910,7 @@ describe "Block inference" do
         end
 
         class Bar
-          def initialize(&block : Int32 -> U)
+          def initialize(&block : Int32 -> U) forall U
             block
           end
         end
@@ -896,7 +935,7 @@ describe "Block inference" do
       end
 
       bar &->foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if declares class inside captured block" do
@@ -949,9 +988,39 @@ describe "Block inference" do
       "recursive block expansion"
   end
 
+  it "errors on recursive yield with non ProcNotation restriction (#6896)" do
+    assert_error %(
+      def foo(&block : -> Int32)
+        yield
+
+        foo do
+          1
+        end
+      end
+
+      foo { 1 }
+      ),
+      "recursive block expansion"
+  end
+
+  it "errors on recursive yield with ProcNotation restriction" do
+    assert_error %(
+      def foo(&block : -> Int32)
+        yield
+
+        foo do
+          1
+        end
+      end
+
+      foo { 1 }
+      ),
+      "recursive block expansion"
+  end
+
   it "binds to proc, not only to its body (#1796)" do
     assert_type(%(
-      def yielder(&block : Int32 -> U)
+      def yielder(&block : Int32 -> U) forall U
         yield 1
         U
       end
@@ -960,9 +1029,9 @@ describe "Block inference" do
       )) { union_of(int32, char).metaclass }
   end
 
-  it "binds block return type free variable even if there are no block arguments (#1797)" do
+  it "binds block return type free variable even if there are no block parameters (#1797)" do
     assert_type(%(
-      def yielder(&block : -> U)
+      def yielder(&block : -> U) forall U
         yield
         U
       end
@@ -982,7 +1051,7 @@ describe "Block inference" do
       }
 
       foo.call
-      )) { union_of int32, float64 }
+      ), inject_primitives: true) { union_of int32, float64 }
   end
 
   it "errors if returns from captured block" do
@@ -1016,7 +1085,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't break from captured block"
+      "can't break from captured block, try using `next`."
   end
 
   it "errors if doing next in proc literal" do
@@ -1026,12 +1095,12 @@ describe "Block inference" do
       }
       foo.call
       ),
-      "Invalid next"
+      "invalid next"
   end
 
   it "does next from captured block" do
     assert_type(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 
@@ -1044,7 +1113,7 @@ describe "Block inference" do
       end
 
       f.call
-      )) { union_of int32, float64 }
+      ), inject_primitives: true) { union_of int32, float64 }
   end
 
   it "sets captured block type to that of restriction" do
@@ -1073,7 +1142,7 @@ describe "Block inference" do
       class Foo(T)
       end
 
-      def foo(&block : -> Foo(T))
+      def foo(&block : -> Foo(T)) forall T
         block
         T
       end
@@ -1157,7 +1226,7 @@ describe "Block inference" do
       )) { tuple_of([nilable(char), union_of(int32, bool)]) }
   end
 
-  it "uses splat in block argument" do
+  it "uses splat in block parameter" do
     assert_type(%(
       def foo
         yield 1, 'a'
@@ -1169,7 +1238,7 @@ describe "Block inference" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "uses splat in block argument, many args" do
+  it "uses splat in block parameter, many args" do
     assert_type(%(
       def foo
         yield 1, 'a', true, nil, 1.5, "hello"
@@ -1181,7 +1250,7 @@ describe "Block inference" do
       )) { tuple_of([int32, tuple_of([char, bool, nil_type]), float64, string]) }
   end
 
-  it "uses splat in block argument, but not enough yield expressions" do
+  it "uses splat in block parameter, but not enough yield expressions" do
     assert_error %(
       def foo
         yield 1
@@ -1191,10 +1260,10 @@ describe "Block inference" do
         {x, y, z, w}
       end
       ),
-      "too many block arguments (given 3+, expected maximum 1+)"
+      "too many block parameters (given 3+, expected maximum 1)"
   end
 
-  it "errors if splat argument becomes a union" do
+  it "errors if splat parameter becomes a union" do
     assert_error %(
       def foo
         yield 1
@@ -1204,7 +1273,7 @@ describe "Block inference" do
       foo do |*args|
       end
       ),
-      "block splat argument must be a tuple type"
+      "yield argument to block splat parameter must be a Tuple"
   end
 
   it "auto-unpacks tuple" do
@@ -1242,10 +1311,62 @@ describe "Block inference" do
       foo do |x, y|
         x + y
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
-  it "doesn't auto-unpacks tuple, more args" do
+  it "auto-unpacks tuple, captured block" do
+    assert_type(%(
+      def foo(&block : {Int32, Char} -> _)
+        tup = {1, 'a'}
+        block.call tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      ), inject_primitives: true) { tuple_of([int32, char]) }
+  end
+
+  it "auto-unpacks tuple, captured empty block" do
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
+      def foo(&block : {Int32, Char} -> _)
+        tup = {1, 'a'}
+        block.call tup
+      end
+
+      foo do |x, y|
+      end
+      CRYSTAL
+  end
+
+  it "auto-unpacks tuple, captured block with multiple statements" do
+    assert_type(%(
+      def foo(&block : {Float64, Int32} -> _)
+        tup = {1.0, 3}
+        block.call tup
+      end
+
+      foo do |x, y|
+        z = x < y
+        {x, y, z}
+      end
+      ), inject_primitives: true) { tuple_of([float64, int32, bool]) }
+  end
+
+  it "auto-unpacks tuple, less than max, captured block" do
+    assert_type(%(
+      def foo(&block : {Int32, Char, Bool} -> _)
+        tup = {1, 'a', true}
+        block.call tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      ), inject_primitives: true) { tuple_of([int32, char]) }
+  end
+
+  it "doesn't auto-unpack tuple, more args" do
     assert_error %(
       def foo
         tup = {1, 'a'}
@@ -1255,7 +1376,7 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "too many block parameters (given 3, expected maximum 2)"
   end
 
   it "auto-unpacks tuple, too many args" do
@@ -1268,7 +1389,20 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "too many block parameters (given 3, expected maximum 2)"
+  end
+
+  it "auto-unpacks tuple, too many args, captured block" do
+    assert_error %(
+      def foo(&block : {Int32, Char} -> _)
+        tup = {1, 'a'}
+        block.call tup
+      end
+
+      foo do |x, y, z|
+      end
+      ),
+      "too many block parameters (given 3, expected maximum 2)"
   end
 
   it "doesn't crash on #2531" do
@@ -1297,5 +1431,214 @@ describe "Block inference" do
         x
       end
       )) { union_of(int32, int64) }
+  end
+
+  it "uses free var in return type in captured block" do
+    assert_type(%(
+      class U
+      end
+
+      def foo(&block : -> U) forall U
+        block
+        U
+      end
+
+      foo { 1 }
+      )) { int32.metaclass }
+  end
+
+  it "uses free var in return type with tuple type" do
+    assert_type(%(
+      class T; end
+
+      class U; end
+
+      class Foo(T)
+        def initialize(@x : T)
+        end
+
+        def foo(&block : T -> U) forall U
+          {yield(@x), U}
+        end
+      end
+
+      Foo.new(1).foo { |x| {x, x} }
+      )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
+  end
+
+  it "reports mismatch with generic argument type in output type" do
+    assert_error(<<-CRYSTAL, "expected block to return String, not Int32")
+      class Foo(T)
+        def foo(&block : -> T)
+        end
+      end
+
+      Foo(String).new.foo { 1 }
+      CRYSTAL
+  end
+
+  it "reports mismatch with generic argument type in input type" do
+    assert_error(<<-CRYSTAL, "argument #1 of yield expected to be String, not Int32")
+      class Foo(T)
+        def foo(&block : T -> )
+          yield 1
+        end
+      end
+
+      Foo(String).new.foo {}
+      CRYSTAL
+  end
+
+  it "unpacks block argument" do
+    assert_type(%(
+      def foo
+        yield({1, 'a'})
+      end
+
+      foo do |(x, y)|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "correctly types unpacked tuple block arg after block (#3339)" do
+    assert_type(%(
+      def foo
+        yield({""})
+      end
+
+      i = 1
+      foo do |(i)|
+
+      end
+      i
+      )) { int32 }
+  end
+
+  it "can infer block type given that the method has a return type (#7160)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          0
+        end
+      end
+
+      class Node
+        @child : Node?
+
+        def sum : Int32
+          if child = @child
+            child.call(&.sum)
+          else
+            0
+          end
+        end
+
+        def call(&block : self -> T) forall T
+          T.foo
+        end
+      end
+
+      Node.new.sum
+      )) { int32 }
+  end
+
+  it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
+    assert_no_errors <<-CRYSTAL
+      def foo(&)
+      end
+
+      foo do
+        typeof(bar)
+      end
+      CRYSTAL
+  end
+
+  it "respects block arg restriction when block has a splat parameter (#6473)" do
+    assert_type(%(
+      def foo(&block : Int32 ->)
+        yield 1
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo do |*x|
+        bar(*x)
+      end
+      )) { int32 }
+  end
+
+  it "respects block arg restriction when block has a splat parameter (2) (#9524)" do
+    assert_type(%(
+      def foo(&block : {Int32, Int32} ->)
+        yield({1, 2})
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo do |*x|
+        bar(*x)
+      end
+      )) { tuple_of([int32, int32]) }
+  end
+
+  it "allows underscore in block return type even if the return type can't be computed" do
+    assert_no_errors <<-CRYSTAL
+      def foo(& : -> _)
+        yield
+      end
+
+      def recursive
+        if true
+          foo { recursive }
+        end
+      end
+
+      recursive
+      CRYSTAL
+  end
+
+  it "doesn't fail with 'already had enclosing call' (#11200)" do
+    assert_no_errors <<-CRYSTAL
+      def capture(&block)
+        block
+      end
+
+      abstract class Foo
+      end
+
+      class Bar(Input) < Foo
+        def method
+        end
+
+        def foo
+          capture do
+            self.method
+            Baz(Input)
+          end
+        end
+      end
+
+      class Baz(Input) < Bar(Input)
+      end
+
+      foo = Bar(Bool).new.as(Foo)
+      foo.foo
+      CRYSTAL
+  end
+
+  it "renders expected block return type of a free variable on mismatch" do
+    assert_error(<<-CR, "expected block to return Int64, not String")
+      struct Foo
+        def bar(arg : U, &block : -> U) forall U
+        end
+      end
+
+      Foo.new.bar(1_i64) { "hi" }
+      CR
   end
 end

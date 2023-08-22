@@ -15,18 +15,18 @@ describe "Code gen: lib" do
   it "call to void function" do
     run("
       lib LibC
-        fun srandom(x : UInt32) : Void
+        fun srand(x : UInt32) : Void
       end
 
       def foo
-        LibC.srandom(0_u32)
+        LibC.srand(0_u32)
       end
 
       foo
     ")
   end
 
-  it "allows passing type to LibC if it has a coverter with to_unsafe" do
+  it "allows passing type to LibC if it has a converter with to_unsafe" do
     codegen("
       lib LibC
         fun foo(x : Int32) : Int32
@@ -42,7 +42,7 @@ describe "Code gen: lib" do
       ")
   end
 
-  it "allows passing type to LibC if it has a coverter with to_unsafe (bug)" do
+  it "allows passing type to LibC if it has a converter with to_unsafe (bug)" do
     codegen(%(
       require "prelude"
 
@@ -204,6 +204,37 @@ describe "Code gen: lib" do
       end
 
       LibFoo::Some.new.to_s
+      ))
+  end
+
+  it "doesn't crash when casting -1 to UInt32 (#3594)" do
+    codegen(%(
+      lib LibFoo
+        fun foo(x : UInt32) : Nil
+      end
+
+      LibFoo.foo(-1)
+      ))
+  end
+
+  it "doesn't crash with nil and varargs (#4414)" do
+    codegen(%(
+      lib LibFoo
+        fun foo(Void*, ...)
+      end
+
+      x = nil
+      LibFoo.foo(x)
+      ))
+  end
+
+  it "uses static array in lib extern (#5688)" do
+    codegen(%(
+      lib LibFoo
+        $x : Int32[10]
+      end
+
+      LibFoo.x
       ))
   end
 end

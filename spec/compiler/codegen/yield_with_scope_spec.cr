@@ -117,7 +117,7 @@ describe "Semantic: yield with scope" do
 
         def bar
           Foo.new.foo do
-            @x + 1
+            @x &+ 1
           end
         end
       end
@@ -137,7 +137,7 @@ describe "Semantic: yield with scope" do
       class Bar
         def bar
           Foo.new.foo do
-            baz + 1
+            baz &+ 1
           end
         end
 
@@ -162,7 +162,7 @@ describe "Semantic: yield with scope" do
         end
 
         def coco
-          @x + 1
+          @x &+ 1
         end
       end
 

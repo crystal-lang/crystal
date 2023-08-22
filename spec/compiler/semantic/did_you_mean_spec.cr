@@ -10,7 +10,7 @@ describe "Semantic: did you mean" do
 
       Foo.new.baz
       ",
-      "did you mean 'bar'"
+      "Did you mean 'bar'?"
   end
 
   it "says did you mean for two mistakes in long word in instance method" do
@@ -22,7 +22,7 @@ describe "Semantic: did you mean" do
 
       Foo.new.bazbaza
       ",
-      "did you mean 'barbara'"
+      "Did you mean 'barbara'?"
   end
 
   it "says did you mean for global method with parenthesis" do
@@ -32,7 +32,7 @@ describe "Semantic: did you mean" do
 
       baz()
       ",
-      "did you mean 'bar'"
+      "Did you mean 'bar'?"
   end
 
   it "says did you mean for global method without parenthesis" do
@@ -42,7 +42,7 @@ describe "Semantic: did you mean" do
 
       baz
       ",
-      "did you mean 'bar'"
+      "Did you mean 'bar'?"
   end
 
   it "says did you mean for variable" do
@@ -50,7 +50,7 @@ describe "Semantic: did you mean" do
       bar = 1
       baz
       ",
-      "did you mean 'bar'"
+      "Did you mean 'bar'?"
   end
 
   it "says did you mean for class" do
@@ -60,7 +60,7 @@ describe "Semantic: did you mean" do
 
       Fog.new
       ",
-      "did you mean 'Foo'"
+      "Did you mean 'Foo'?"
   end
 
   it "says did you mean for nested class" do
@@ -72,7 +72,7 @@ describe "Semantic: did you mean" do
 
       Foo::Baz.new
       ",
-      "did you mean 'Foo::Bar'"
+      "Did you mean 'Foo::Bar'?"
   end
 
   it "says did you mean finds most similar in def" do
@@ -85,7 +85,7 @@ describe "Semantic: did you mean" do
 
       barbarb
       ",
-      "did you mean 'barbara'"
+      "Did you mean 'barbara'?"
   end
 
   it "says did you mean finds most similar in type" do
@@ -98,24 +98,20 @@ describe "Semantic: did you mean" do
 
       Barbarb
       ",
-      "did you mean 'Barbara'"
+      "Did you mean 'Barbara'?"
   end
 
   it "doesn't suggest for operator" do
-    nodes = parse %(
+    error = assert_error <<-CRYSTAL
       class Foo
         def +
         end
       end
 
       Foo.new.a
-      )
-    begin
-      semantic nodes
-      fail "TypeException wasn't raised"
-    rescue ex : Crystal::TypeException
-      ex.to_s.includes?("did you mean").should be_false
-    end
+      CRYSTAL
+
+    error.to_s.should_not contain("Did you mean")
   end
 
   it "says did you mean for named argument" do
@@ -125,7 +121,7 @@ describe "Semantic: did you mean" do
 
       foo bazbaza: 1
       ",
-      "did you mean 'barbara'"
+      "Did you mean 'barbara'?"
   end
 
   it "says did you mean for instance var" do
@@ -142,7 +138,7 @@ describe "Semantic: did you mean" do
 
       Foo.new.foo
       ),
-      "did you mean @barbara"
+      "Did you mean '@barbara'?"
   end
 
   it "says did you mean for instance var in subclass" do
@@ -161,7 +157,7 @@ describe "Semantic: did you mean" do
 
       Bar.new.foo
       ),
-      "did you mean @barbara"
+      "Did you mean '@barbara'?"
   end
 
   it "doesn't suggest when declaring var with suffix if and using it (#946)" do
@@ -183,7 +179,7 @@ describe "Semantic: did you mean" do
       "If the variable was declared in a macro it's not visible outside it"
   end
 
-  it "suggest that there might be a type for an initialize method" do
+  it "suggest that there might be a typo for an initialize method" do
     assert_error %(
       class Foo
         def intialize(x)
@@ -195,7 +191,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggest that there might be a type for an initialize method in inherited class" do
+  it "suggest that there might be a typo for an initialize method in inherited class" do
     assert_error %(
       class Foo
         def initialize
@@ -212,7 +208,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggest that there might be a type for an initialize method with overload" do
+  it "suggest that there might be a typo for an initialize method with overload" do
     assert_error %(
       class Foo
         def initialize(x : Int32)
@@ -233,13 +229,11 @@ describe "Semantic: did you mean" do
         @@foobar = 1
         @@fooobar
       end
-      ), "did you mean @@foobar"
+      ), "Did you mean '@@foobar'?"
   end
 
   it "suggests a better alternative to logical operators (#2715)" do
-    message = "undefined method 'and'"
-    message = " (did you mean '&&'?)".colorize.yellow.bold.to_s
-    assert_error %(
+    ex = assert_error %(
       def rand(x : Int32)
       end
 
@@ -252,7 +246,10 @@ describe "Semantic: did you mean" do
       if "a".bytes and 1
         1
       end
-      ), message
+      ),
+      "undefined method 'and' for top-level"
+
+    ex.to_s.should contain "Did you mean '&&'?"
   end
 
   it "says did you mean in instance var declaration" do
@@ -264,6 +261,6 @@ describe "Semantic: did you mean" do
         @x : FooBaz
       end
       ),
-      "did you mean 'FooBar'"
+      "Did you mean 'FooBar'?"
   end
 end

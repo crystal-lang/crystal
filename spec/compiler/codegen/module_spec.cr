@@ -318,19 +318,19 @@ describe "Code gen: module" do
         end
       end
 
-      module IO2
+      module Moo
       end
 
-      module IO2::Sub
-        include IO2
+      module Moo::Sub
+        include Moo
       end
 
       class File2
-        include IO2::Sub
+        include Moo::Sub
       end
 
       file = File2.new
-      file2 = file.as(IO2)
+      file2 = file.as(Moo)
 
       file.method(file2)
       )).to_i.should eq(1)
@@ -488,7 +488,7 @@ describe "Code gen: module" do
       mooer = Mooer.new(Bar.new)
       y = mooer.moo
 
-      x + y
+      x &+ y
       )).to_i.should eq(3)
   end
 
@@ -527,7 +527,99 @@ describe "Code gen: module" do
       mooer = Mooer.new(Bar(Int32).new)
       y = mooer.moo
 
-      x + y
+      x &+ y
       )).to_i.should eq(3)
+  end
+
+  it "casts to union of module that is included in other module (#3323)" do
+    run(%(
+      require "prelude"
+
+      module Moo
+        def moo
+          0
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+      end
+
+      class Bar < Foo
+        def moo
+          10
+        end
+      end
+
+      struct Baz
+        include Moo
+      end
+
+      bar = Bar.new.as(Int32 | Moo)
+      bar.as(Moo).moo
+      )).to_i.should eq(10)
+  end
+
+  it "casts to union of generic module that is included in other module (#3323)" do
+    run(%(
+      require "prelude"
+
+      module Moo(T)
+        def moo
+          0
+        end
+      end
+
+      module Moo2(T)
+        include Moo(T)
+      end
+
+      class Foo
+        include Moo2(Char)
+      end
+
+      class Bar < Foo
+        def moo
+          10
+        end
+      end
+
+      struct Baz
+        include Moo(Char)
+      end
+
+      bar = Bar.new.as(Int32 | Moo(Char))
+      bar.as(Moo(Char)).moo
+      )).to_i.should eq(10)
+  end
+
+  it "codegens dispatch of union with module (#3647)" do
+    run(%(
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : Int32)
+        1
+      end
+
+      def foo(x)
+        234
+      end
+
+      m = Bar.new.as(Moo)
+      a = m || 1
+      foo(a)
+      )).to_i.should eq(234)
   end
 end

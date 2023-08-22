@@ -1,9 +1,6 @@
 struct Time::Format
   # :nodoc:
   module Pattern
-    MONTH_NAMES = %w(January February March April May June July August September October November December)
-    DAY_NAMES   = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
-
     def visit(pattern)
       reader = Char::Reader.new(pattern)
       while reader.has_next?
@@ -36,7 +33,11 @@ struct Time::Format
         when 'e'
           day_of_month_blank_padded
         when 'F'
-          iso_8601_date
+          year_month_day
+        when 'g'
+          calendar_week_year_modulo100
+        when 'G'
+          calendar_week_year
         when 'H'
           hour_24_zero_padded
         when 'I'
@@ -53,6 +54,8 @@ struct Time::Format
           month_zero_padded
         when 'M'
           minute
+        when 'N'
+          second_fraction
         when 'p'
           am_pm
         when 'P'
@@ -62,13 +65,15 @@ struct Time::Format
         when 'R'
           twenty_four_hour_time
         when 's'
-          epoch
+          unix_seconds
         when 'S'
           second
         when 'T', 'X'
           twenty_four_hour_time_with_seconds
         when 'u'
           day_of_week_monday_1_7
+        when 'V'
+          calendar_week_week
         when 'w'
           day_of_week_sunday_0_6
         when 'y'
@@ -77,6 +82,8 @@ struct Time::Format
           year
         when 'z'
           time_zone
+        when 'Z'
+          time_zone_name
         when '_'
           case char = reader.next_char
           when 'm'
@@ -107,6 +114,8 @@ struct Time::Format
             short_month_name_upcase
           when 'B'
             month_name_upcase
+          when 'Z'
+            time_zone_name(zone: true)
           else
             char '%'
             char '^'
@@ -129,6 +138,25 @@ struct Time::Format
           else
             char '%'
             char ':'
+            reader = check_char reader, char
+          end
+        when '3', '6', '9'
+          digit_char = char
+          case char = reader.next_char
+          when 'N'
+            case digit_char
+            when '3'
+              milliseconds
+            when '6'
+              microseconds
+            when '9'
+              nanoseconds
+            else
+              raise "Bug: someone forgot to match some numbers"
+            end
+          else
+            char '%'
+            char digit_char
             reader = check_char reader, char
           end
         when '%'
@@ -163,7 +191,7 @@ struct Time::Format
       year_modulo_100
     end
 
-    def iso_8601_date
+    def year_month_day
       year
       char '-'
       month_zero_padded

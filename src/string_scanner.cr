@@ -1,28 +1,33 @@
-# `StringScanner` provides for lexical scanning operations on a String.
+# `StringScanner` provides for lexical scanning operations on a `String`.
+#
+# NOTE: To use `StringScanner`, you must explicitly import it with `require "string_scanner"`
 #
 # ### Example
 #
-#     require "string_scanner"
-#     s = StringScanner.new("This is an example string")
-#     s.eos?         # => false
+# ```
+# require "string_scanner"
 #
-#     s.scan(/\w+/)  # => "This"
-#     s.scan(/\w+/)  # => nil
-#     s.scan(/\s+/)  # => " "
-#     s.scan(/\s+/)  # => nil
-#     s.scan(/\w+/)  # => "is"
-#     s.eos?         # => false
+# s = StringScanner.new("This is an example string")
+# s.eos? # => false
 #
-#     s.scan(/\s+/)  # => " "
-#     s.scan(/\w+/)  # => "an"
-#     s.scan(/\s+/)  # => " "
-#     s.scan(/\w+/)  # => "example"
-#     s.scan(/\s+/)  # => " "
-#     s.scan(/\w+/)  # => "string"
-#     s.eos?         # => true
+# s.scan(/\w+/) # => "This"
+# s.scan(/\w+/) # => nil
+# s.scan(/\s+/) # => " "
+# s.scan(/\s+/) # => nil
+# s.scan(/\w+/) # => "is"
+# s.eos?        # => false
 #
-#     s.scan(/\s+/)  # => nil
-#     s.scan(/\w+/)  # => nil
+# s.scan(/\s+/) # => " "
+# s.scan(/\w+/) # => "an"
+# s.scan(/\s+/) # => " "
+# s.scan(/\w+/) # => "example"
+# s.scan(/\s+/) # => " "
+# s.scan(/\w+/) # => "string"
+# s.eos?        # => true
+#
+# s.scan(/\s+/) # => nil
+# s.scan(/\w+/) # => nil
+# ```
 #
 # Scanning a string means remembering the position of a _scan offset_, which is
 # just an index. Scanning moves the offset forward, and matches are sought
@@ -37,9 +42,9 @@
 # * `#skip_until`
 #
 # Methods that look ahead:
-# * `#peek'
-# * `#check'
-# * `#check_until'
+# * `#peek`
+# * `#check`
+# * `#check_until`
 #
 # Methods that deal with the position of the offset:
 # * `#offset`
@@ -62,43 +67,51 @@ class StringScanner
     @byte_offset = 0
   end
 
-  # Sets the position of the scan offset.
+  # Sets the *position* of the scan offset.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
   end
 
   # Returns the current position of the scan offset.
-  def offset
+  def offset : Int32
     @str.byte_index_to_char_index(@byte_offset).not_nil!
   end
 
-  # Tries to match with `pattern` at the current position. If there's a match,
+  # Tries to match with *pattern* at the current position. If there's a match,
   # the scanner advances the scan offset, the last match is saved, and it
-  # returns the matched string.  Otherwise, the scanner returns nil.
+  # returns the matched string. Otherwise, the scanner returns `nil`.
   #
-  #     s = StringScanner.new("test string")
-  #     s.scan(/\w+/)   # => "test"
-  #     s.scan(/\w+/)   # => nil
-  #     s.scan(/\s\w+/) # => " string"
-  #     s.scan(/.*/)    # => nil
-  def scan(pattern)
-    match(pattern, advance: true, options: Regex::Options::ANCHORED)
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("test string")
+  # s.scan(/\w+/)   # => "test"
+  # s.scan(/\w+/)   # => nil
+  # s.scan(/\s\w+/) # => " string"
+  # s.scan(/.*/)    # => ""
+  # ```
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options | Regex::MatchOptions::ANCHORED)
   end
 
-  # Scans the string _until_ the `pattern` is matched. Returns the substring up
+  # Scans the string _until_ the *pattern* is matched. Returns the substring up
   # to and including the end of the match, the last match is saved, and
-  # advances the scan offset.  Returns `nil` if no match.
+  # advances the scan offset. Returns `nil` if no match.
   #
-  #     s = StringScanner.new("test string")
-  #     s.scan_until(/tr/)   # => "test str"
-  #     s.scan_until(/tr/)   # => nil
-  #     s.scan_until(/g/)    # => "ing"
-  def scan_until(pattern)
-    match(pattern, advance: true, options: Regex::Options::None)
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("test string")
+  # s.scan_until(/tr/) # => "test str"
+  # s.scan_until(/tr/) # => nil
+  # s.scan_until(/g/)  # => "ing"
+  # ```
+  def scan_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options)
   end
 
-  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
+  private def match(pattern, advance = true, options = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -112,22 +125,21 @@ class StringScanner
     end
   end
 
-  # Attempts to skip over the given `pattern` beginning with the scan offset.
+  # Attempts to skip over the given *pattern* beginning with the scan offset.
   # In other words, the pattern is not anchored to the current scan offset.
   #
   # If there's a match, the scanner advances the scan offset, the last match is
   # saved, and it returns the size of the skipped match. Otherwise it returns
-  # `nil` and does not
-  # advance the offset.
+  # `nil` and does not advance the offset.
   #
   # This method is the same as `#scan`, but without returning the matched
   # string.
-  def skip(pattern)
-    match = scan(pattern)
+  def skip(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan(pattern, options: options)
     match.size if match
   end
 
-  # Attempts to skip _until_ the given `pattern` is found after the scan
+  # Attempts to skip _until_ the given *pattern* is found after the scan
   # offset. In other words, the pattern is not anchored to the current scan
   # offset.
   #
@@ -138,79 +150,99 @@ class StringScanner
   #
   # This method is the same as `#scan_until`, but without returning the matched
   # string.
-  def skip_until(pattern)
-    match = scan_until(pattern)
+  def skip_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan_until(pattern, options: options)
     match.size if match
   end
 
   # Returns the value that `#scan` would return, without advancing the scan
   # offset. The last match is still saved, however.
   #
-  #     s = StringScanner.new("this is a string")
-  #     s.offset = 5
-  #     s.check(/\w+/)  # => "is"
-  #     s.check(/\w+/)  # => "is"
-  def check(pattern)
-    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("this is a string")
+  # s.offset = 5
+  # s.check(/\w+/) # => "is"
+  # s.check(/\w+/) # => "is"
+  # ```
+  def check(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options | Regex::MatchOptions::ANCHORED)
   end
 
   # Returns the value that `#scan_until` would return, without advancing the
   # scan offset. The last match is still saved, however.
   #
-  #     s = StringScanner.new("test string")
-  #     s.check_until(/tr/) # => "test str"
-  #     s.check_until(/g/)  # => "test string"
-  def check_until(pattern)
-    match(pattern, advance: false, options: Regex::Options::None)
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("test string")
+  # s.check_until(/tr/) # => "test str"
+  # s.check_until(/g/)  # => "test string"
+  # ```
+  def check_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options)
   end
 
-  # Returns the `n`-th subgroup in the most recent match.
+  # Returns the *n*-th subgroup in the most recent match.
   #
   # Raises an exception if there was no last match or if there is no subgroup.
   #
-  #     s = StringScanner.new("Fri Dec 12 1975 14:39")
-  #     regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
-  #     s.scan(regex)  # => "Fri Dec 12"
-  #     s[0]           # => "Fri Dec 12"
-  #     s[1]           # => "Fri"
-  #     s[2]           # => "Dec"
-  #     s[3]           # => "12"
-  #     s["wday"]      # => "Fri"
-  #     s["month"]     # => "Dec"
-  #     s["day"]       # => "12"
-  def [](n)
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("Fri Dec 12 1975 14:39")
+  # regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+  # s.scan(regex) # => "Fri Dec 12"
+  # s[0]          # => "Fri Dec 12"
+  # s[1]          # => "Fri"
+  # s[2]          # => "Dec"
+  # s[3]          # => "12"
+  # s["wday"]     # => "Fri"
+  # s["month"]    # => "Dec"
+  # s["day"]      # => "12"
+  # ```
+  def [](n) : String
     @last_match.not_nil![n]
   end
 
-  # Returns the nilable `n`-th subgroup in the most recent match.
+  # Returns the nilable *n*-th subgroup in the most recent match.
   #
   # Returns `nil` if there was no last match or if there is no subgroup.
   #
-  #     s = StringScanner.new("Fri Dec 12 1975 14:39")
-  #     regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
-  #     s.scan(regex)  # => "Fri Dec 12"
-  #     s[0]?           # => "Fri Dec 12"
-  #     s[1]?           # => "Fri"
-  #     s[2]?           # => "Dec"
-  #     s[3]?           # => "12"
-  #     s[4]?           # => nil
-  #     s["wday"]?      # => "Fri"
-  #     s["month"]?     # => "Dec"
-  #     s["day"]?       # => "12"
-  #     s["year"]?      # => nil
-  #     s.scan(/more/)  # => nil
-  #     s[0]?           # => nil
-  def []?(n)
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("Fri Dec 12 1975 14:39")
+  # regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+  # s.scan(regex)  # => "Fri Dec 12"
+  # s[0]?          # => "Fri Dec 12"
+  # s[1]?          # => "Fri"
+  # s[2]?          # => "Dec"
+  # s[3]?          # => "12"
+  # s[4]?          # => nil
+  # s["wday"]?     # => "Fri"
+  # s["month"]?    # => "Dec"
+  # s["day"]?      # => "12"
+  # s["year"]?     # => nil
+  # s.scan(/more/) # => nil
+  # s[0]?          # => nil
+  # ```
+  def []?(n) : String?
     @last_match.try(&.[n]?)
   end
 
-  # Returns true if the scan offset is at the end of the string.
+  # Returns `true` if the scan offset is at the end of the string.
   #
-  #     s = StringScanner.new("this is a string")
-  #     s.eos?                 # => false
-  #     s.scan(/(\w+\s?){4}/)  # => "this is a string"
-  #     s.eos?                 # => true
-  def eos?
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("this is a string")
+  # s.eos?                # => false
+  # s.scan(/(\w+\s?){4}/) # => "this is a string"
+  # s.eos?                # => true
+  # ```
+  def eos? : Bool
     @byte_offset >= @str.bytesize
   end
 
@@ -227,22 +259,26 @@ class StringScanner
   end
 
   # Returns the string being scanned.
-  def string
+  def string : String
     @str
   end
 
-  # Extracts a string corresponding to string[offset,`len`], without advancing
+  # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
-  def peek(len)
+  def peek(len) : String
     @str[offset, len]
   end
 
   # Returns the remainder of the string after the scan offset.
   #
-  #     s = StringScanner.new("this is a string")
-  #     s.scan(/(\w+\s?){2}/)  # => "this is "
-  #     s.rest                 # => "a string"
-  def rest
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("this is a string")
+  # s.scan(/(\w+\s?){2}/) # => "this is "
+  # s.rest                # => "a string"
+  # ```
+  def rest : String
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 
@@ -250,11 +286,11 @@ class StringScanner
   #
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<StringScanner "
     offset = offset()
-    io << offset << "/" << @str.size
-    start = Math.min(Math.max(offset - 2, 0), @str.size - 5)
+    io << offset << '/' << @str.size
+    start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
     io << " \"" << @str[start, 5] << "\" >"
   end
 end

@@ -14,7 +14,7 @@ describe "Semantic: class var" do
 
       Foo.x = true
       ),
-      "class variable '@@x' of Foo must be Int32, not Bool"
+      "expected argument #1 to 'Foo.x=' to be Int32, not Bool"
   end
 
   it "declares class variable (2)" do
@@ -79,27 +79,7 @@ describe "Semantic: class var" do
         f = -> { @@foo }
       end
       f.call
-      ") { int32 }
-  end
-
-  it "says illegal attribute for class var" do
-    assert_error %(
-      class Foo
-        @[Foo]
-        @@foo
-      end
-      ),
-      "illegal attribute"
-  end
-
-  it "says illegal attribute for class var assignment" do
-    assert_error %(
-      class Foo
-        @[Foo]
-        @@foo = 1
-      end
-      ),
-      "illegal attribute"
+      ", inject_primitives: true) { int32 }
   end
 
   it "allows self.class as type var in class body (#537)" do
@@ -143,35 +123,32 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "errors if using class var in generic type without instance" do
-    assert_error %(
+  it "declares class var in generic class" do
+    assert_type(%(
       class Foo(T)
+        @@bar = 1
+
+        def bar
+          @@bar
+        end
+      end
+
+      Foo(Int32).new.bar
+      )) { int32 }
+  end
+
+  it "declares class var in generic module" do
+    assert_type(%(
+      module Foo(T)
+        @@bar = 1
+
         def self.bar
           @@bar
         end
       end
 
       Foo.bar
-      ),
-      "can't use class variables in generic types"
-  end
-
-  it "errors if using class var in generic type without instance (2)" do
-    assert_error %(
-      class Foo(T)
-        @@bar = 1
-      end
-      ),
-      "can't use class variables in generic types"
-  end
-
-  it "errors if using class var in generic module without instance (2)" do
-    assert_error %(
-      module Foo(T)
-        @@bar = 1
-      end
-      ),
-      "can't use class variables in generic types"
+      )) { int32 }
   end
 
   it "types class var as nil if assigned for the first time inside method (#2059)" do
@@ -244,7 +221,7 @@ describe "Semantic: class var" do
 
       Foo.foo
       ",
-      "Can't infer the type of class variable '@@foo' of Foo"
+      "can't infer the type of class variable '@@foo' of Foo"
   end
 
   it "errors if using class variable at the top level" do
@@ -331,7 +308,7 @@ describe "Semantic: class var" do
         end
       end
       ),
-      "can't use Class as the type of class variable @@class of Foo, use a more specific type"
+      "can't use Class as the type of class variable '@@class' of Foo, use a more specific type"
   end
 
   it "gives correct error when trying to use Int as a class variable type" do
@@ -460,7 +437,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "doesn't error on recursive depdendency if var is nilable (#2943)" do
+  it "doesn't error on recursive dependency if var is nilable (#2943)" do
     assert_type(%(
       class Foo
         @@foo : Int32?
@@ -499,5 +476,38 @@ describe "Semantic: class var" do
       end
       ),
       "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
+  end
+
+  it "can assign to class variable if this type can be up-casted to ancestors class variable type (#4869)" do
+    assert_type(%(
+      class Foo
+        @@x : Int32?
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Bar < Foo
+        @@x = 42
+      end
+
+      Bar.x
+      )) { nilable(int32) }
+  end
+
+  it "can access constant from generic metaclass (#3719)" do
+    assert_type(%(
+      class Foo(T)
+        @@x = 0
+
+        def self.inc
+          @@x += 1
+          @@x
+        end
+      end
+
+      Foo(Int32).inc
+      ), inject_primitives: true) { int32 }
   end
 end

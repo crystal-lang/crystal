@@ -1,12 +1,16 @@
 # Crystal
 
-[![Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
-[![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
+[![Linux CI Build Status](https://github.com/crystal-lang/crystal/workflows/Linux%20CI/badge.svg)](https://github.com/crystal-lang/crystal/actions?query=workflow%3A%22Linux+CI%22+event%3Apush+branch%3Amaster)
+[![macOS CI Build Status](https://github.com/crystal-lang/crystal/workflows/macOS%20CI/badge.svg)](https://github.com/crystal-lang/crystal/actions?query=workflow%3A%22macOS+CI%22+event%3Apush+branch%3Amaster)
+[![AArch64 CI Build Status](https://github.com/crystal-lang/crystal/workflows/AArch64%20CI/badge.svg)](https://github.com/crystal-lang/crystal/actions?query=workflow%3A%22AArch64+CI%22+event%3Apush+branch%3Amaster)
+[![Windows CI Build Status](https://github.com/crystal-lang/crystal/workflows/Windows%20CI/badge.svg)](https://github.com/crystal-lang/crystal/actions?query=workflow%3A%22Windows+CI%22+event%3Apush+branch%3Amaster)
+[![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
+[![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
 ---
 
-[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](http://manas.com.ar/)
+[![Crystal - Born and raised at Manas](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](https://manas.tech/)
 
 Crystal is a programming language with the following goals:
 
@@ -31,16 +35,17 @@ We want full OOP.
 
 Oh, and we don't want to write C code to make the code run faster.
 
-Status
-------
+Project Status
+--------------
 
-* The project is in alpha stage: we are still tweaking the language and standard library.
-* The compiler is written in Crystal.
+Within a major version, language features won't be removed or changed in any way that could prevent a Crystal program written with that version from compiling and working. The built-in standard library might be enriched, but it will always be done with backwards compatibility in mind.
+
+Development of the Crystal language is possible thanks to the community's effort and the continued support of [84codes](https://www.84codes.com/), [Nikola Motor Company](https://nikolamotor.com/) and every other [sponsor](https://crystal-lang.org/sponsors).
 
 Installing
 ----------
 
-[Follow these instructions](https://crystal-lang.org/docs/installation/index.html)
+[Follow these installation instructions](https://crystal-lang.org/install)
 
 Try it online
 -------------
@@ -48,25 +53,26 @@ Try it online
 [play.crystal-lang.org](https://play.crystal-lang.org/)
 
 Documentation
-----------
+-------------
 
-Both in progress:
-
-* [Official docs](http://crystal-lang.org/docs)
+* [Language Reference](http://crystal-lang.org/reference)
 * [Standard library API](https://crystal-lang.org/api)
+* [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
 
 Community
 ---------
 
-Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang), join our IRC channel [#crystal-lang](http://webchat.freenode.net/?channels=#crystal-lang) at chat.freenode.net, ask on our [Gitter channel](https://gitter.im/crystal-lang/crystal) or ask on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag.
+Have any questions or suggestions? Ask on the [Crystal Forum](https://forum.crystal-lang.org), on our [Gitter channel](https://gitter.im/crystal-lang/crystal) or IRC channel [#crystal-lang](https://web.libera.chat/#crystal-lang) at irc.libera.chat, or on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag. There is also an archived [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang).
 
 Contributing
----------
+------------
 
-Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/Contributing.md), and then:
+The Crystal repository is hosted at [crystal-lang/crystal](https://github.com/crystal-lang/crystal) on GitHub.
 
-1. Fork it ( https://github.com/crystal-lang/crystal/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
+Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/CONTRIBUTING.md), and then:
+
+1. Fork it (<https://github.com/crystal-lang/crystal/fork>)
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request

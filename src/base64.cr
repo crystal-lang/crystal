@@ -1,16 +1,17 @@
-# The Base64 module provides for the encoding (`encode`, `strict_encode`,
-# `urlsafe_encode`) and decoding (`decode`, `strict_decode`, `urlsafe_decode`)
-# of binary data using a Base64 representation.
+# The `Base64` module provides for the encoding (`encode`, `strict_encode`,
+# `urlsafe_encode`) and decoding (`decode`)
+# of binary data using a base64 representation.
 #
-# ###Example
+# ### Example
 #
 # A simple encoding and decoding.
 #
-#     require "base64"
-#     enc   = Base64.encode("Send reinforcements")
-#                         # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
-#     plain = Base64.decode(enc)
-#                         # => "Send reinforcements"
+# ```
+# require "base64"
+#
+# enc = Base64.encode("Send reinforcements") # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
+# plain = Base64.decode_string(enc)          # => "Send reinforcements"
+# ```
 #
 # The purpose of using base64 to encode data is that it translates any binary
 # data into purely printable characters.
@@ -19,34 +20,28 @@ module Base64
 
   class Error < Exception; end
 
-  # :nodoc:
-  CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-  # :nodoc:
-  CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  # :nodoc:
-  LINE_SIZE = 60
-  # :nodoc:
-  PAD = '='.ord.to_u8
-  # :nodoc:
-  NL = '\n'.ord.to_u8
-  # :nodoc:
-  NR = '\r'.ord.to_u8
+  private CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  private CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  private LINE_SIZE  = 60
+  private PAD        = '='.ord.to_u8
+  private NL         = '\n'.ord.to_u8
+  private NR         = '\r'.ord.to_u8
 
-  class Error < Exception; end
-
-  # Returns the Base64-encoded version of `data`.
-  # This method complies with RFC 2045.
+  # Returns the base64-encoded version of *data*.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
-  #     require "base64"
-  #     puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
+  # puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
   #
   # Generates:
   #
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
+  # Q3J5c3RhbA==
   # ```
-  def encode(data)
+  def encode(data) : String
     slice = data.to_slice
     String.new(encode_size(slice.size, new_lines: true)) do |buf|
       appender = buf.appender
@@ -56,24 +51,24 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` to `io`.
-  # This method complies with RFC 2045.
+  # Writes the base64-encoded version of *data* to *io*.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
-  #     require "base64"
-  #     Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
+  # Base64.encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
+  # ```
   def encode(data, io : IO)
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
-      io.write_byte byte
+      io << byte.unsafe_chr
       count += 1
     end
     io.flush
     count
   end
 
-  # :nodoc:
-  private def encode_with_new_lines(data)
+  private def encode_with_new_lines(data, &)
     inc = 0
     to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
       yield byte
@@ -88,23 +83,23 @@ module Base64
     end
   end
 
-  # Returns the Base64-encoded version of `data` with no newlines.
-  # This method complies with RFC 4648.
+  # Returns the base64-encoded version of *data* with no newlines.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  #     require "base64"
-  #     puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
+  # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
   #
   # Generates:
   #
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
   # ```
-  def strict_encode(data)
+  def strict_encode(data) : String
     strict_encode data, CHARS_STD, pad: true
   end
 
-  # :nodoc:
-  def strict_encode(data, alphabet, pad = false)
+  private def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -114,35 +109,35 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` with no newlines to `io`.
-  # This method complies with RFC 4648.
+  # Writes the base64-encoded version of *data* with no newlines to *io*.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  #     require "base64"
-  #     Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
+  # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
+  # ```
   def strict_encode(data, io : IO)
     strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
   end
 
-  # :nodoc:
   private def strict_encode_to_io_internal(data, io, alphabet, pad)
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
       count += 1
-      io.write_byte byte
+      io << byte.unsafe_chr
     end
     io.flush
     count
   end
 
-  # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
+  # Returns the base64-encoded version of *data* using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
   #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
-  def urlsafe_encode(data, padding = false)
+  # The *padding* parameter defaults to `true`. When `false`, enough `=` characters
+  # are not added to make the output divisible by 4.
+  def urlsafe_encode(data, padding = true) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -152,21 +147,18 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` using a urlsafe alphabet to `io`.
+  # Writes the base64-encoded version of *data* using a urlsafe alphabet to *io*.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
-  #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
+  # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
   def urlsafe_encode(data, io : IO)
-    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: false)
+    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
-  # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
+  # Returns the base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data)
+  def decode(data) : Bytes
     slice = data.to_slice
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
@@ -174,7 +166,7 @@ module Base64
     Slice.new(buf, appender.size.to_i32)
   end
 
-  # Write the Base64-decoded version of `data` to `io`.
+  # Writes the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
     count = 0
@@ -186,11 +178,9 @@ module Base64
     count
   end
 
-  # Returns the Base64-decoded version of `data` as a string.
-  # If the data doesn't decode to a valid UTF8 string,
-  # *InvalidByteSequenceError* will be raised.
+  # Returns the base64-decoded version of *data* as a string.
   # This will decode either the normal or urlsafe alphabets.
-  def decode_string(data)
+  def decode_string(data) : String
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -201,7 +191,7 @@ module Base64
 
   private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 4
-    size += size / LINE_SIZE if new_lines
+    size += size // LINE_SIZE if new_lines
     size
   end
 
@@ -209,13 +199,16 @@ module Base64
     (str_size * 3 / 4.0).to_i + 4
   end
 
-  private def to_base64(data, chars, pad = false)
+  private def to_base64(data, chars, pad = false, &)
     bytes = chars.to_unsafe
     size = data.size
-    cstr = data.pointer(size)
-    endcstr = cstr + size - size % 3
+    cstr = data.to_unsafe
+    return if cstr.null? || size == 0
+    endcstr = cstr + size - size % 3 - 3
+
+    # process bunch of full triples
     while cstr < endcstr
-      n = Intrinsics.bswap32(cstr.as(UInt32*).value)
+      n = cstr.as(UInt32*).value.byte_swap
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
       yield bytes[(n >> 14) & 63]
@@ -223,6 +216,17 @@ module Base64
       cstr += 3
     end
 
+    # process last full triple manually, because reading UInt32 not correct for guarded memory
+    if size >= 3
+      n = (cstr.value.to_u32 << 16) | ((cstr + 1).value.to_u32 << 8) | (cstr + 2).value
+      yield bytes[(n >> 18) & 63]
+      yield bytes[(n >> 12) & 63]
+      yield bytes[(n >> 6) & 63]
+      yield bytes[(n) & 63]
+      cstr += 3
+    end
+
+    # process last partial triple
     pd = size % 3
     if pd == 1
       n = (cstr.value.to_u32 << 16)
@@ -241,62 +245,74 @@ module Base64
     end
   end
 
-  private def from_base64(data)
+  # Processes the given data and yields each byte.
+  private def from_base64(data : Bytes, &block : UInt8 -> Nil)
     size = data.size
-    dt = DECODE_TABLE.to_unsafe
-    cstr = data.pointer(size)
-    while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
+    bytes = data.to_unsafe
+    bytes_begin = bytes
+
+    # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
+    while (size > 0) && (sym = bytes[size - 1]) && sym.in?(NL, NR, PAD)
       size -= 1
     end
-    endcstr = cstr + size - 4
 
+    # Process combinations of four characters until there aren't any left
+    fin = bytes + size - 4
     while true
-      break if cstr > endcstr
-      while cstr.value == NL || cstr.value == NR
-        cstr += 1
+      break if bytes > fin
+
+      # Move the pointer by one byte until there is a valid base64 character
+      while bytes.value.in?(NL, NR)
+        bytes += 1
       end
+      break if bytes > fin
 
-      break if cstr > endcstr
-      a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
-
-      yield (a << 2 | b >> 4).to_u8
-      yield (b << 4 | c >> 2).to_u8
-      yield (c << 6 | d).to_u8
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], bytes[3], chunk_pos: bytes - bytes_begin)
+      bytes += 4
     end
 
-    mod = (endcstr - cstr) % 4
-    if mod == 2
-      a, b = next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8
-    elsif mod == 3
-      a, b, c = next_decoded_value, next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8
-      yield (b << 4 | c >> 2).to_u8
-    elsif mod != 0
-      raise Error.new("Wrong size")
+    # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
+    while (bytes < fin + 4) && bytes.value.in?(NL, NR)
+      bytes += 1
+    end
+
+    # If the amount of base64 characters is not divisible by 4, the remainder of the previous loop is handled here
+    unread_bytes = (fin - bytes) % 4
+    case unread_bytes
+    when 1
+      raise Base64::Error.new("Wrong size")
+    when 2
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], chunk_pos: bytes - bytes_begin)
+    when 3
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], chunk_pos: bytes - bytes_begin)
     end
   end
 
-  # :nodoc:
-  macro next_decoded_value
-    sym = cstr.value
-    res = dt[sym]
-    cstr += 1
-    if res < 0
-      raise Error.new("Unexpected symbol '#{sym.chr}'")
-    end
-    res
+  # This macro decodes the given chunk of (2-4) base64 characters.
+  # The argument chunk_pos is only used for the resulting error message.
+  # The resulting bytes are then each yielded.
+  private macro yield_decoded_chunk_bytes(*bytes, chunk_pos)
+    %buffer = 0_u32
+    {% for byte, i in bytes %}
+      %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
+      %buffer = (%buffer << 6) + %decoded
+      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
+    {% end %}
+
+    # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8
+    {% for i in 2..(bytes.size) %}
+      yield (%buffer >> {{ (4 - bytes.size) * 2 + (8 * (bytes.size - i)) }}).to_u8!
+    {% end %}
   end
 
-  # :nodoc:
-  DECODE_TABLE = Array(Int8).new(256) do |i|
+  private DECODE_TABLE = Array(UInt8).new(size: 256) do |i|
     case i.unsafe_chr
-    when 'A'..'Z' then (i - 0x41).to_i8
-    when 'a'..'z' then (i - 0x47).to_i8
-    when '0'..'9' then (i + 0x04).to_i8
-    when '+', '-' then 0x3E_i8
-    when '/', '_' then 0x3F_i8
-    else               -1_i8
+    when 'A'..'Z' then (i - 0x41).to_u8!
+    when 'a'..'z' then (i - 0x47).to_u8!
+    when '0'..'9' then (i + 0x04).to_u8!
+    when '+', '-' then 0x3E_u8
+    when '/', '_' then 0x3F_u8
+    else               255_u8
     end
   end
 end

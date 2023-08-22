@@ -1,4 +1,4 @@
-# Ported from Rust from https://gist.github.com/joshmarinacci/c84d0979e100d107f685 http://joshondesign.com/2014/09/17/rustlang
+# Ported from Rust from https://gist.github.com/joshmarinacci/c84d0979e100d107f685
 
 record Vector, x : Float64, y : Float64, z : Float64 do
   def scale(s)
@@ -132,7 +132,7 @@ scene = [
     if hit
       pixel = lut[shade_pixel(ray, hit.obj, hit.value)]
     else
-      pixel = " "
+      pixel = ' '
     end
 
     print pixel

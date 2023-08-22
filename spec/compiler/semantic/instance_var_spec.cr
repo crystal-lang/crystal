@@ -297,6 +297,60 @@ describe "Semantic: instance var" do
       )) { static_array_of(uint8, 3) }
   end
 
+  it "declares instance var of generic type, with splat" do
+    assert_type(%(
+      class Gen(*T)
+      end
+
+      class Foo(*T)
+        @x : Gen(*T)
+
+        def initialize(@x : Gen(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(Gen(Int32, String).new).x
+      )) { generic_class "Gen", int32, string }
+  end
+
+  it "declares instance var of generic type, with splat inside Tuple" do
+    assert_type(%(
+      class Foo(*T)
+        @x : Tuple(*T)
+
+        def initialize(@x : Tuple(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new({1, ""}).x
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "declares instance var of generic type, with splat inside Proc" do
+    assert_type(%(
+      class Foo(R, *T)
+        @x : Proc(*T, R)
+
+        def initialize(@x : Proc(*T, R))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(->(x : Int32, y : String) { true }).x
+      )) { proc_of([int32, string, bool]) }
+  end
+
   it "declares instance var with self, on generic" do
     assert_type(%(
       class Foo(T)
@@ -721,6 +775,22 @@ describe "Semantic: instance var" do
       )) { named_tuple_of({"x": int32, "y": string}) }
   end
 
+  it "infers type from proc literal with return type" do
+    assert_type(<<-CRYSTAL) { proc_of([int32, bool, string]) }
+      class Foo
+        def initialize
+          @x = ->(x : Int32, y : Bool) : String { "" }
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      CRYSTAL
+  end
+
   it "infers type from new expression" do
     assert_type(%(
       class Bar
@@ -753,7 +823,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "infers type from as?" do
@@ -769,7 +839,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "infers type from argument restriction" do
@@ -894,7 +964,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from ||= inside another assignemnt" do
+  it "infers type from ||= inside another assignment" do
     assert_type(%(
       class Foo
         def x
@@ -919,7 +989,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, bool) }
+      ), inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "infers type from case" do
@@ -962,7 +1032,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, bool) }
+      ), inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "infers type from begin" do
@@ -1126,6 +1196,26 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "infers type from offsetof" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = offsetof(Bar, @x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      struct Bar
+        @x = 0
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
   it "infers type from path that is a type" do
     assert_type(%(
       class Bar; end
@@ -1227,7 +1317,9 @@ describe "Semantic: instance var" do
   it "infers type from enum member" do
     assert_type(%(
       enum Color
-        Red, Green, Blue
+        Red
+        Green
+        Blue
       end
 
       class Foo
@@ -1626,7 +1718,7 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      )) { union_of(types["Foo"], types["Bar"]) }
+      ), inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "infers type for generic class, with case" do
@@ -1657,7 +1749,7 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      )) { union_of(types["Foo"], types["Bar"]) }
+      ), inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "infers type for generic class, with assign (1)" do
@@ -1838,7 +1930,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "says undefined instance variable on assign" do
@@ -1852,7 +1944,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "errors if declaring instance var and turns out to be nilable" do
@@ -1861,7 +1953,7 @@ describe "Semantic: instance var" do
         @x : Int32
       end
       ),
-      "instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "doesn't if declaring nilable instance var and turns out to be nilable" do
@@ -1884,7 +1976,7 @@ describe "Semantic: instance var" do
         @x : T
       end
       ),
-      "instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic module type" do
@@ -1897,7 +1989,7 @@ describe "Semantic: instance var" do
         include Moo(Int32)
       end
       ),
-      "instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "doesn't error if declaring instance var and doesn't out to be nilable, in generic module type" do
@@ -1932,7 +2024,7 @@ describe "Semantic: instance var" do
         include Moo(T)
       end
       ),
-      "instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "doesn't error if not initializing variables but calling super" do
@@ -1979,6 +2071,34 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "doesn't error if not initializing variables but calling super and previous_def" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super()
+        end
+
+        def initialize(x)
+          previous_def(x)
+        end
+      end
+
+      Bar.new(10).x
+      )) { int32 }
+  end
+
   it "doesn't error if not initializing variables but calling previous_def (2) (#3210)" do
     assert_type(%(
       class Some
@@ -2002,7 +2122,7 @@ describe "Semantic: instance var" do
       end
 
       Some.new.a + Some.new.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if not initializing super variables" do
@@ -2201,7 +2321,7 @@ describe "Semantic: instance var" do
 
       a = Foo.new
       a.a + a.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "ignores super module initialize (#456)" do
@@ -2231,7 +2351,7 @@ describe "Semantic: instance var" do
 
       a = Foo.new
       a.a + a.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "obeys super module initialize (#456)" do
@@ -2261,7 +2381,7 @@ describe "Semantic: instance var" do
 
       b = Foo.new
       b.a + b.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't error if initializing var in superclass, and then empty initialize" do
@@ -2412,7 +2532,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   pending "doesn't infer type to be nilable if using self.class in call in assign" do
@@ -2481,7 +2601,7 @@ describe "Semantic: instance var" do
 
       foo = Foo.new
       foo.x + foo.y
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "infers from another instance var" do
@@ -2560,7 +2680,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "errors on udefined instance var and subclass calling super" do
+  it "errors on undefined instance var and subclass calling super" do
     assert_error %(
       class Foo
         def initialize(@x)
@@ -2581,7 +2701,7 @@ describe "Semantic: instance var" do
       point = Bar.new(1)
       Foo.new(1).x
       ),
-      "Can't infer the type of instance variable '@x' of Bar"
+      "can't infer the type of instance variable '@x' of Bar"
   end
 
   it "infers type from array literal in generic type" do
@@ -2690,7 +2810,7 @@ describe "Semantic: instance var" do
     foo.instance_vars["@x"].type.should eq(result.program.int32)
 
     bar = result.program.types["Bar"].as(NonGenericClassType)
-    bar.instance_vars.empty?.should be_true
+    bar.instance_vars.should be_empty
   end
 
   it "infers type from custom array literal" do
@@ -2956,7 +3076,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { pointer_of(int32) }
+      ), inject_primitives: true) { pointer_of(int32) }
   end
 
   it "infers from Pointer.malloc with two arguments" do
@@ -3008,7 +3128,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { pointer_of(int32) }
+      ), inject_primitives: true) { pointer_of(int32) }
   end
 
   it "infers from Pointer.null in generic type" do
@@ -3064,7 +3184,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.bar
       ),
-      "can't use Bar(T) as the type of instance variable @bar of Foo(T), use a more specific type"
+      "can't infer the type parameter T for the generic class Bar(T)"
   end
 
   it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
@@ -3084,7 +3204,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
-  it "doesn't complain if not initliazed in one initialize, but has initializer (#2465)" do
+  it "doesn't complain if not initialized in one initialize, but has initializer (#2465)" do
     assert_type(%(
       class Foo
         @x = 1
@@ -3528,7 +3648,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return" do
@@ -3555,7 +3675,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return (2)" do
@@ -3583,7 +3703,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
   end
 
   it "infer from class method where new is redefined" do
@@ -3636,7 +3756,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "infers in multiple assign for tuple type (1)" do
@@ -3682,7 +3802,7 @@ describe "Semantic: instance var" do
 
       Foo.new(3).foo
       ),
-      "Can't infer the type of instance variable '@foo' of Foo(Int32)"
+      "can't infer the type of instance variable '@foo' of Foo(Int32)"
   end
 
   it "doesn't crash when inferring from new without matches (#2538)" do
@@ -3697,6 +3817,94 @@ describe "Semantic: instance var" do
       Foo.new("aaaa")
       ),
       "wrong number of arguments for 'Foo.new'"
+  end
+
+  it "infers from method on integer literal, with type annotation" do
+    assert_type(%(
+      struct Int32
+        def foo : Char
+          'a'
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1.foo
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { char }
+  end
+
+  it "infers from method in generic type, with type annotation" do
+    assert_type(%(
+      class Gen(T)
+        def foo : Gen(T)
+          self
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = Gen(Int32).new.foo
+        end
+      end
+
+      Foo.new.@x
+      )) { generic_class "Gen", int32 }
+  end
+
+  it "infers type by removing nil from || left side" do
+    assert_type(%(
+      struct Int32
+        def foo : Int32?
+          1
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1.foo || 2
+        end
+      end
+
+      Foo.new.@x
+      )) { int32 }
+  end
+
+  it "infers type from all call matches" do
+    assert_type(%(
+      class Base
+        def foo : Int32
+          1
+        end
+      end
+
+      class Sub1 < Base
+        def foo : Char
+          'a'
+        end
+      end
+
+      class Sub2 < Base
+        def foo
+          1 + 2
+        end
+      end
+
+      class Foo
+        def initialize(base : Base)
+          @x = base.foo
+        end
+      end
+
+      Foo.new(Base.new).@x
+      )) { union_of int32, char }
   end
 
   it "guesses inside macro if" do
@@ -3755,7 +3963,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "can't infer type from initializer in non-generic module" do
@@ -3774,7 +3982,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Moo"
+      "can't infer the type of instance variable '@x' of Moo"
   end
 
   it "can't infer type from initializer in generic module type" do
@@ -3793,7 +4001,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Moo(T)"
+      "can't infer the type of instance variable '@x' of Moo(T)"
   end
 
   it "can't infer type from initializer in generic class type" do
@@ -3808,7 +4016,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo(T)"
+      "can't infer the type of instance variable '@x' of Foo(T)"
   end
 
   it "infers type from self (#2575)" do
@@ -3947,7 +4155,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't use Class as the type of instance variable @class of Foo, use a more specific type"
+      "can't use Class as the type of instance variable '@class' of Foo, use a more specific type"
   end
 
   it "errors when using Class in generic type" do
@@ -3957,7 +4165,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't use Class as the type of instance variable @class of Foo(T), use a more specific type"
+      "can't use Class as the type of instance variable '@class' of Foo(T), use a more specific type"
   end
 
   it "doesn't error when using Class but specifying type" do
@@ -4029,7 +4237,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
-  %w(Object Reference).each do |type|
+  %w(Object Reference Class).each do |type|
     it "errors if declaring var in #{type}" do
       assert_error %(
         class #{type}
@@ -4040,7 +4248,12 @@ describe "Semantic: instance var" do
     end
   end
 
-  %w(Value Number Int Float Int32).each do |type|
+  [
+    "Value", "Number", "Int", "Float", "Int32",
+    "Tuple(*T)", "NamedTuple(T)", "Enum",
+    "Pointer(T)", "StaticArray(T, N)",
+    "Proc(*T, R)", "Union(*T)",
+  ].each do |type|
     it "errors if declaring var in #{type}" do
       assert_error %(
         struct #{type}
@@ -4154,7 +4367,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         @x : T
 
@@ -4172,7 +4385,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class after reopen" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
       end
 
@@ -4238,13 +4451,6 @@ describe "Semantic: instance var" do
       end
       ),
       "can't declare variable of generic non-instantiated type Foo"
-  end
-
-  it "errors (for now) when typing a local variable" do
-    assert_error %(
-      x : Int32
-      ),
-      "declaring the type of a local variable is not yet supported"
   end
 
   it "errors when typing an instance variable inside a method" do
@@ -4409,5 +4615,1171 @@ describe "Semantic: instance var" do
       Foo.new.test
       ),
       "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+  end
+
+  it "doesn't crash on #3580" do
+    assert_error %(
+      class Hoge
+        @hoge_dir : String = "~/.hoge" ? "~/.hoge" : default_hoge_dir
+      end
+      ),
+      "undefined local variable or method"
+  end
+
+  it "is more permissive with macro def initialize" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, bug with named args" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize(**args)
+          {% @type %}
+        end
+      end
+
+      Foo.new(x: 1)
+      ),
+      "instance variable '@x' of Foo was not initialized"
+  end
+
+  it "is more permissive with macro def initialize, other initialize" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+        @y : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+
+        def initialize(@x, @y)
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, multiple" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% begin %}
+            {% @type %}
+            @x = 1
+          {% end %}
+        end
+
+        def initialize(x)
+          {% begin %}
+            {% @type %}
+            @x = x
+          {% end %}
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new
+      Foo.new(1).x
+      )) { int32 }
+  end
+
+  it "errors with macro def but another def doesn't initialize all" do
+    assert_error %(
+      class Foo
+        @x : Int32
+        @y : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+
+        def initialize(@x)
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@y' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+  end
+
+  it "errors if finally not initialized in macro def" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+          {% end %}
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
+  end
+
+  it "doesn't error if initializes via super in macro def" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super
+          {% for ivar in @type.instance_vars %}
+          {% end %}
+        end
+      end
+
+      Bar.new(1)
+      )) { types["Bar"] }
+  end
+
+  it "doesn't error if uses typeof(@var)" do
+    assert_type(%(
+      struct Int32
+        def self.zero
+          0
+        end
+      end
+
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = typeof(@x).zero
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "doesn't error if not initialized in macro def but outside it" do
+    assert_type(%(
+      class Foo
+        @x = 1
+
+        def initialize
+          {% @type %}
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "doesn't error if inheriting generic instance (#3635)" do
+    assert_type(%(
+      module Core(T)
+        @a : Bool
+      end
+
+      class Base(T)
+        include Core(Int32)
+
+        @a = true
+      end
+
+      class Foo < Base(String)
+        def a
+          @a
+        end
+      end
+
+      Foo.new.a
+      )) { bool }
+  end
+
+  it "doesn't consider var as nilable if conditionally assigned inside initialize, but has initializer (#3669)" do
+    assert_type(%(
+      class Foo
+        @x = 0
+
+        def initialize
+          @x = 1 if 1 == 2
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ), inject_primitives: true) { int32 }
+  end
+
+  it "types generic instance as virtual type if generic type has subclasses (#3805)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Qux
+        def initialize
+          @ptr = Pointer(Foo(Int32)).malloc(1_u64)
+        end
+
+        def ptr=(ptr)
+          @ptr = ptr
+        end
+      end
+
+      Bar(Int32).new
+      Qux.new
+      ), inject_primitives: true) { types["Qux"] }
+  end
+
+  it "errors if unknown ivar through macro (#4050)" do
+    assert_error %(
+      class Foo
+        def initialize(**attributes)
+          {% for var in @type.instance_vars %}
+            if arg = attributes[:{{var.name.id}}]?
+              @{{var.name.id}} = arg
+            end
+          {% end %}
+        end
+      end
+
+      class Bar < Foo
+        def initialize(**attributes)
+          @bar = true
+          super
+        end
+      end
+
+      Bar.new
+      ),
+      "can't infer the type of instance variable '@bar' of Foo"
+  end
+
+  it "can't infer type when using operation on const (#4054)" do
+    assert_error %(
+      class Foo
+        BAR = 5
+
+        def initialize
+          @baz = BAR + 5
+        end
+      end
+
+      Foo.new
+      ),
+      "can't infer the type of instance variable '@baz' of Foo", inject_primitives: true
+  end
+
+  it "instance variables initializers are used in class variables initialized objects (#3988)" do
+    assert_type(%(
+       class Foo
+         @@foo = Foo.new
+
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      Foo.new.@never_nil
+      )) { int32 }
+  end
+
+  it "allow usage of instance variable initializer from instance variable initializer" do
+    assert_type(%(
+      class Foo
+        @bar = Bar.new
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      class Bar
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      {Foo.new.@never_nil, Bar.new.@never_nil}
+    )) { tuple_of([int32, int32]) }
+  end
+
+  it "errors when assigning instance variable at top level block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        @foo = 1
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "errors when assigning instance variable at top level control block" do
+    assert_error %(
+      if true
+        @foo = 1
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "doesn't check call of non-self instance (#4830)" do
+    assert_type(%(
+      class Container
+        def initialize(other : Container, x)
+          initialize(other)
+          @foo = "x"
+        end
+
+        def initialize(other : Container)
+          @foo = other.foo
+        end
+
+        def initialize(@foo : String, bar)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      container = Container.new("foo", nil)
+      Container.new(container, "foo2")
+      )) { types["Container"] }
+  end
+
+  it "errors when assigning instance variable inside nested expression" do
+    assert_error %(
+      class Foo
+        if true
+          @foo = 1
+        end
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "doesn't find T in generic type that's not the current type (#4460)" do
+    assert_error %(
+      class Gen(T)
+        def self.new
+          Gen(T).new
+        end
+      end
+
+      class Foo
+        @x = Gen.new
+      end
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
+    assert_type(%(
+      def f(x)
+      end
+
+      class A
+        def initialize
+          @a = 0
+          f(self)
+          @a = 0
+        end
+
+        def a
+          @a
+        end
+      end
+
+      A.new.a
+      )) { int32 }
+  end
+
+  it "doesn't combine union of Number and Number subclass (#5073)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      struct A < Number
+        def hash(hasher)
+          hasher
+        end
+
+        def to_s(io : IO)
+        end
+      end
+
+      class Foo
+        @foo = Gen(Int32 | A).new
+      end
+
+      Foo.new.@foo
+    )) { generic_class "Gen", union_of(int32, types["A"]) }
+  end
+
+  it "uses T.new (#4291)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Gen(T)
+        @x = T.new
+
+        def x
+          @x
+        end
+      end
+
+      Gen(Foo).new.x
+      )) { types["Foo"] }
+  end
+
+  it "can type ivar from module included by generic class (#5281)" do
+    assert_type(%(
+      module Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T)
+        include Foo
+
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "can type ivar from class inherited by generic class (#5281)" do
+    assert_type(%(
+      class Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T) < Foo
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "can guess the type from splat argument with splatted type" do
+    assert_type(%(
+      class Foo
+        def initialize(*@foo : *{Int32})
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).foo
+    )) { tuple_of([int32]) }
+  end
+
+  it "can guess the type from splat argument with splatted type variable" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(*@foo : *T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1, 2).foo
+    )) { tuple_of([int32, int32]) }
+  end
+
+  it "cannot guess the type from splat argument with not splatted type" do
+    assert_error %(
+      class Foo
+        def initialize(*@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).foo
+    ),
+      "can't infer the type of instance variable '@foo' of Foo"
+  end
+
+  it "can guess the type from double-splat argument with double-splatted type" do
+    assert_type(%(
+      class Foo
+        def initialize(**@foo : **{foo: Int32})
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1).foo
+    )) { named_tuple_of({"foo": int32}) }
+  end
+
+  it "can guess the type from double-splat argument with double-splatted type variable" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(**@foo : **T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1, bar: 2).foo
+    )) { named_tuple_of({"foo": int32, "bar": int32}) }
+  end
+
+  it "cannot guess the type from double-splat argument with not double-splatted type" do
+    assert_error %(
+      class Foo
+        def initialize(**@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1).foo
+    ),
+      "can't infer the type of instance variable '@foo' of Foo"
+  end
+
+  it "cannot guess type from argument assigned in body" do
+    assert_error %(
+      class Foo
+        def initialize(x : String)
+          x = 1
+          @x = x
+        end
+      end
+
+      Foo.new "foo"
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "can't infer type of generic method that returns self (#5383)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block : -> T) : self
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = Gen.new { 1 }
+        end
+      end
+
+      Foo.new
+      ),
+      "method Gen(T).new must return Gen(T) but it is returning Nil"
+  end
+
+  it "guesses virtual array type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [[1]]
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = Array { Array { 1 } }
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [] of Array(Int32)
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual hash type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = { {1 => 2} => 3}
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual hash type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = Hash { Hash { 1 => 2 } => 3 }
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = {} of Hash(Int32, Int32) => Int32
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "doesn't solve instance var initializer in instance context (1) (#5876)" do
+    assert_error %(
+      class Foo
+        @x : Int32 = bar
+
+        def bar
+          1
+        end
+      end
+
+      Foo.new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "doesn't solve instance var initializer in instance context (2) (#5876)" do
+    assert_error %(
+      class Foo(T)
+        @x : T = bar
+
+        def bar
+          1
+        end
+      end
+
+      Foo(Int32).new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "doesn't solve instance var initializer in instance context (3) (#5876)" do
+    assert_error %(
+      module Moo(T)
+        @x : T = bar
+
+        def bar
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "solves instance var initializer in metaclass context (#5876)" do
+    assert_type(%(
+      class Foo
+        @x : Int32 = bar
+
+        def self.bar
+          1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "doesn't infer unbound generic type on non-generic call (#6390)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block)
+          Gen(T).build
+        end
+
+        def self.build : self
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = Gen.new { }
+        end
+      end
+
+      Foo.new
+      ),
+      "can't infer the type parameter T for the generic class Gen(T)"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        def initialize
+          @x = Gen.new('a')
+        end
+      end
+
+      Foo.new
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass, metaclass context" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        @x = Gen.new('a')
+      end
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "errors when overriding inherited instance variable with incompatible type" do
+    assert_error <<-CRYSTAL, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+      class A
+        @a = 1
+      end
+
+      class B < A
+        @a = 'a'
+      end
+      CRYSTAL
+  end
+
+  it "accepts overriding inherited instance variable with compatible type" do
+    semantic <<-CRYSTAL
+      class A
+        @a = 1
+      end
+
+      class B < A
+        @a = 2
+      end
+      CRYSTAL
+  end
+
+  it "looks up return type restriction in defining type, not instantiated type (#11961)" do
+    assert_type(%(
+      module Foo(T)
+        def foo : T
+          x = uninitialized T
+          x
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      struct Tuple
+        include Bar(Union(*T))
+      end
+
+      class Test
+        def initialize
+          @foo = 0
+        end
+
+        def test
+          @foo = {@foo, 0}.foo
+        end
+      end
+
+      Test.new.@foo
+      )) { int32 }
+  end
+
+  it "looks up self restriction in instantiated type, not defined type" do
+    assert_type(<<-CRYSTAL) { types["Foo2"] }
+      class Foo1
+        def foo : self
+          self
+        end
+      end
+
+      class Foo2 < Foo1
+      end
+
+      class Bar
+        def initialize
+          @x = Foo2.new
+        end
+
+        def bar
+          @x = @x.foo
+        end
+      end
+
+      Bar.new.bar
+      CRYSTAL
+  end
+
+  it "inferrs Proc(Void) to Proc(Nil)" do
+    assert_type(%(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
+      class Foo
+        def initialize
+          @proc = Proc(Void).new { 1 }
+        end
+      end
+
+      Foo.new.@proc
+      )) { proc_of(nil_type) }
+  end
+
+  describe "instance variable inherited from multiple parents" do
+    context "with compatible type" do
+      it "module and class, with declarations" do
+        result = assert_type(%(
+          module M
+            @a : Int32 = 1
+          end
+
+          class A
+            @a : Int32 = 2
+          end
+
+          class B < A
+            include M
+          end
+
+          B.new.@a
+          )) { int32 }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+      end
+
+      it "module and class, with declarations (2)" do
+        result = assert_type(%(
+          module M
+            @a = 1
+          end
+
+          class A
+            include M
+          end
+
+          class B < A
+            @a = 1
+          end
+
+          B.new.@a
+          )) { int32 }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+      end
+
+      it "module and class, with declarations (3)" do
+        result = assert_type(%(
+          module M
+            @a = 1
+          end
+
+          class A
+            include M
+          end
+
+          class B < A
+            @a = 1
+          end
+
+          class C
+            @a = 1
+          end
+
+          class D < C
+            include M
+          end
+
+          {B.new.@a, D.new.@a}
+          )) { tuple_of [int32, int32] }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+        program.types["C"].instance_vars.size.should eq(1)
+        program.types["D"].instance_vars.size.should eq(0)
+      end
+
+      it "module and class, with definitions" do
+        result = assert_type(%(
+          module M
+            @a = 1
+          end
+
+          class A
+            @a = 2
+          end
+
+          class B < A
+            include M
+          end
+
+          B.new.@a
+          )) { int32 }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+      end
+
+      it "accepts module and module, with definitions" do
+        semantic <<-CRYSTAL
+          module M
+            @a = 1
+          end
+
+          module N
+            @a = 2
+          end
+
+          class B
+            include N
+            include M
+          end
+          CRYSTAL
+      end
+
+      it "accepts module and module, with declarations" do
+        semantic <<-CRYSTAL
+          module M
+            @a : Int32?
+          end
+
+          module N
+            @a : Int32?
+          end
+
+          class B
+            include N
+            include M
+          end
+          CRYSTAL
+      end
+    end
+
+    context "with incompatible type" do
+      it "module and class, with definitions" do
+        assert_error <<-CRYSTAL, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
+          module M
+            @a = 'a'
+          end
+
+          class A
+            @a = 1
+          end
+
+          class B < A
+            include M
+          end
+          CRYSTAL
+      end
+
+      it "module and class, with declarations" do
+        assert_error <<-CRYSTAL, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
+          module M
+            @a : Char = 'a'
+          end
+
+          class A
+            @a : Int32 = 1
+          end
+
+          class B < A
+            include M
+          end
+          CRYSTAL
+      end
+
+      it "errors module and module, with definitions" do
+        assert_error <<-CRYSTAL, "instance variable '@a' of B must be Char, not (Char | Int32)"
+          module M
+            @a = 'c'
+          end
+
+          module N
+            @a = 1
+          end
+
+          class B
+            include N
+            include M
+          end
+          CRYSTAL
+      end
+
+      it "errors module and module, with declarations" do
+        assert_error <<-CRYSTAL, "instance variable '@a' of B must be Int32, not (Char | Int32)"
+          module M
+            @a : Char = 'c'
+          end
+
+          module N
+            @a : Int32 = 1
+          end
+
+          class B
+            include N
+            include M
+          end
+          CRYSTAL
+      end
+    end
   end
 end

@@ -1,21 +1,29 @@
-require "./type"
+require "./node/type"
+require "./reader/type"
 require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
 
-@[Link("xml2")]
+@[Link("xml2", pkg_config: "libxml-2.0")]
 lib LibXML
   alias Int = LibC::Int
 
-  $xmlIndentTreeOutput : Int
-  $xmlTreeIndentString : UInt8*
+  # TODO: check if other platforms also support per-thread globals
+  {% if flag?(:win32) %}
+    fun xmlInitParser
+    fun __xmlIndentTreeOutput : Int*
+    fun __xmlTreeIndentString : UInt8**
+  {% else %}
+    $xmlIndentTreeOutput : Int
+    $xmlTreeIndentString : UInt8*
+  {% end %}
 
   type Dtd = Void*
   type Dict = Void*
 
   struct NS
     next : NS*
-    type : XML::Type
+    type : XML::Node::Type
     href : UInt8*
     prefix : UInt8*
     _private : Void*
@@ -24,7 +32,7 @@ lib LibXML
 
   struct NodeCommon
     _private : Void*
-    type : XML::Type
+    type : XML::Node::Type
     name : UInt8*
     children : Node*
     last : Node*
@@ -94,8 +102,13 @@ lib LibXML
   fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, enc : Int) : InputBuffer
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
 
+  fun xmlReaderForMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
+  fun xmlReaderForIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
+
   fun xmlTextReaderRead(reader : XMLTextReader) : Int
-  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Type
+  fun xmlTextReaderNext(reader : XMLTextReader) : Int
+  fun xmlTextReaderNextSibling(reader : XMLTextReader) : Int
+  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Reader::Type
   fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int
   fun xmlTextReaderConstValue(reader : XMLTextReader) : UInt8*
@@ -103,6 +116,14 @@ lib LibXML
   fun xmlTextReaderAttributeCount(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int
+  fun xmlTextReaderMoveToAttribute(reader : XMLTextReader, name : UInt8*) : Int
+  fun xmlTextReaderGetAttribute(reader : XMLTextReader, name : UInt8*) : UInt8*
+  fun xmlTextReaderMoveToElement(reader : XMLTextReader) : Int
+  fun xmlTextReaderDepth(reader : XMLTextReader) : Int
+  fun xmlTextReaderReadInnerXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
 
@@ -123,6 +144,7 @@ lib LibXML
   fun xmlNodeGetContent(node : Node*) : UInt8*
   fun xmlNodeSetContent(node : Node*, content : UInt8*)
   fun xmlNodeSetName(node : Node*, name : UInt8*)
+  fun xmlUnlinkNode(node : Node*)
 
   fun xmlGcMemSetup(free_func : Void* ->,
                     malloc_func : LibC::SizeT -> Void*,
@@ -138,6 +160,47 @@ lib LibXML
   fun xmlSaveToIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoding : UInt8*, options : XML::SaveOptions) : SaveCtxPtr
   fun xmlSaveTree(ctx : SaveCtxPtr, node : Node*) : LibC::Long
   fun xmlSaveClose(ctx : SaveCtxPtr) : Int
+
+  struct OutputBuffer
+    context : Void*
+    writecallback : OutputWriteCallback
+    closecallback : OutputCloseCallback
+    xmlCharEncodingHandlerPtr : Void*
+    buffer : Void*
+    conv : Void*
+    written : Int
+    error : Int
+  end
+
+  type TextWriter = Void*
+
+  fun xmlNewTextWriter(out : OutputBuffer*) : TextWriter
+  fun xmlTextWriterStartDocument(TextWriter, version : UInt8*, encoding : UInt8*, standalone : UInt8*) : Int
+  fun xmlTextWriterEndDocument(TextWriter) : Int
+  fun xmlTextWriterStartElement(TextWriter, name : UInt8*) : Int
+  fun xmlTextWriterEndElement(TextWriter) : Int
+  fun xmlTextWriterStartAttribute(TextWriter, name : UInt8*) : Int
+  fun xmlTextWriterEndAttribute(TextWriter) : Int
+  fun xmlTextWriterFlush(TextWriter) : Int
+  fun xmlTextWriterSetIndent(TextWriter, indent : Int) : Int
+  fun xmlTextWriterSetIndentString(TextWriter, str : UInt8*) : Int
+  fun xmlTextWriterSetQuoteChar(TextWriter, char : UInt8) : Int
+  fun xmlTextWriterWriteAttribute(TextWriter, name : UInt8*, content : UInt8*) : Int
+  fun xmlTextWriterWriteString(TextWriter, content : UInt8*) : Int
+  fun xmlTextWriterStartAttributeNS(TextWriter, prefix : UInt8*, name : UInt8*, namespaceURI : UInt8*) : Int
+  fun xmlTextWriterWriteAttributeNS(TextWriter, prefix : UInt8*, name : UInt8*, namespaceURI : UInt8*, content : UInt8*) : Int
+  fun xmlTextWriterStartElementNS(TextWriter, prefix : UInt8*, name : UInt8*, namespaceURI : UInt8*) : Int
+  fun xmlTextWriterStartCDATA(TextWriter) : Int
+  fun xmlTextWriterEndCDATA(TextWriter) : Int
+  fun xmlTextWriterWriteCDATA(TextWriter, content : UInt8*) : Int
+  fun xmlTextWriterStartComment(TextWriter) : Int
+  fun xmlTextWriterEndComment(TextWriter) : Int
+  fun xmlTextWriterWriteComment(TextWriter, content : UInt8*) : Int
+  fun xmlTextWriterStartDTD(TextWriter, name : UInt8*, pubid : UInt8*, sysid : UInt8*) : Int
+  fun xmlTextWriterEndDTD(TextWriter) : Int
+  fun xmlTextWriterWriteDTD(TextWriter, name : UInt8*, pubid : UInt8*, sysid : UInt8*, subset : UInt8*) : Int
+
+  fun xmlOutputBufferCreateIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoder : Void*) : OutputBuffer*
 
   enum ErrorLevel
     NONE    = 0
@@ -250,15 +313,30 @@ lib LibXML
   fun xmlSetGenericErrorFunc(ctx : Void*, f : GenericErrorFunc)
 
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
+
+  fun xmlSetProp(node : Node*, name : UInt8*, value : UInt8*) : Attr*
+
+  fun xmlUnsetProp(node : Node*, name : UInt8*) : Int
+
+  fun xmlValidateNameValue(value : UInt8*) : Int
 end
+
+{% if flag?(:win32) %}
+  LibXML.xmlInitParser
+{% end %}
 
 LibXML.xmlGcMemSetup(
   ->GC.free,
   ->GC.malloc(LibC::SizeT),
-  ->GC.malloc(LibC::SizeT),
+  # TODO(interpreted): remove this condition
+  {% if flag?(:interpreted) %}
+    ->GC.malloc(LibC::SizeT)
+  {% else %}
+    ->GC.malloc_atomic(LibC::SizeT)
+  {% end %},
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
-    len = LibC.strlen(str)
+    len = LibC.strlen(str) + 1
     copy = Pointer(UInt8).malloc(len)
     copy.copy_from(str, len)
     copy

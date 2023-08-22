@@ -31,6 +31,18 @@ describe "Code gen: union type" do
 
   it "codegens union type for instance var" do
     run("
+      struct Float
+        def &+(other)
+          self + other
+        end
+      end
+
+      struct Int32
+        def &+(other : Float)
+          self + other
+        end
+      end
+
       class Foo
         @value : Int32 | Float32
 
@@ -43,7 +55,7 @@ describe "Code gen: union type" do
 
       f = Foo.new(1)
       f.value = 1.5_f32
-      (f.value + f.value).to_f
+      (f.value &+ f.value).to_f
     ").to_f64.should eq(3)
   end
 
@@ -61,7 +73,7 @@ describe "Code gen: union type" do
         else
           2.5_f32
         end
-      end.to_i
+      end.to_i!
     ").to_i.should eq(1)
   end
 
@@ -118,7 +130,7 @@ describe "Code gen: union type" do
       a = b
       a.to_s
     ").to_string
-    value.includes?("Reference").should be_true
+    value.should contain("Reference")
   end
 
   it "assigns union to larger union when source is nilable 2" do
@@ -183,14 +195,14 @@ describe "Code gen: union type" do
     str = run(%(
       require "prelude"
 
-      def foo(x : T)
+      def foo(x : T) forall T
         T.to_s
       end
 
       a = 1 || 1.5
       foo(a)
       )).to_string
-    (str == "(Int32 | Float64)" || str == "(Float64 | Int32)").should be_true
+    str.in?("(Int32 | Float64)", "(Float64 | Int32)").should be_true
   end
 
   it "provides T as a tuple literal" do

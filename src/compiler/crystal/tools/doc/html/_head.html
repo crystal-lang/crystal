@@ -1,0 +1,20 @@
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs <%= Crystal::VERSION %>">
+<meta name="crystal_docs.project_version" content="<%= project_info.version %>">
+<meta name="crystal_docs.project_name" content="<%= project_info.name %>">
+<% if json_config_url = project_info.json_config_url %>
+  <meta name="crystal_docs.json_config_url" content="<%= json_config_url %>">
+<% end %>
+
+<%- if canonical_base_url = project_info.canonical_base_url -%>
+  <%- if current_type = self.current_type -%>
+    <link rel="canonical" href="<%= ::Path.posix(canonical_base_url, current_type.path) %>">
+  <%- else -%>
+    <link rel="canonical" href="<%= canonical_base_url %>">
+  <% end -%>
+<% end -%>
+
+<link href="<%= base_path %>css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="<%= base_path %>js/doc.js"></script>

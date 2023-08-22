@@ -23,7 +23,7 @@ describe "Semantic: generic class" do
       "wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
-  it "inhertis from generic with instantiation" do
+  it "inherits from generic with instantiation" do
     assert_type(%(
       class Foo(T)
         def t
@@ -38,7 +38,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (1)" do
+  it "inherits from generic with forwarding (1)" do
     assert_type(%(
       class Foo(T)
         def t
@@ -50,10 +50,10 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      ), inject_primitives: false) { int32.metaclass }
+      )) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (2)" do
+  it "inherits from generic with forwarding (2)" do
     assert_type(%(
       class Foo(T)
       end
@@ -68,7 +68,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with instantiation with instance var" do
+  it "inherits from generic with instantiation with instance var" do
     assert_type(%(
       class Foo(T)
         def initialize(@x : T)
@@ -120,6 +120,29 @@ describe "Semantic: generic class" do
 
       baz = Baz.new(1, 'a')
       baz.y
+      )) { int32 }
+  end
+
+  it "doesn't compute generic instance var initializers in formal superclass's context (#4753)" do
+    assert_type(%(
+      class Foo(T)
+        @foo = T.new
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz
+        def baz
+          1
+        end
+      end
+
+      Bar(Baz).new.foo.baz
       )) { int32 }
   end
 
@@ -202,7 +225,7 @@ describe "Semantic: generic class" do
       class Bar < Foo(Int32)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         T
       end
 
@@ -218,7 +241,7 @@ describe "Semantic: generic class" do
       class Bar(T) < Foo(T)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         T
       end
 
@@ -296,7 +319,7 @@ describe "Semantic: generic class" do
       ptr = Pointer(Foo(Int32)).malloc(1_u64)
       ptr.value = Bar.new
       ptr.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "creates pointer of generic type and uses it (2)" do
@@ -313,7 +336,7 @@ describe "Semantic: generic class" do
       ptr = Pointer(Foo(Int32)).malloc(1_u64)
       ptr.value = Bar(Int32).new
       ptr.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if inheriting generic type and not specifying type vars (#460)" do
@@ -324,7 +347,7 @@ describe "Semantic: generic class" do
       class Bar < Foo
       end
       ),
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when inheriting Foo(T)"
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -451,6 +474,13 @@ describe "Semantic: generic class" do
       Tuple(32)
       ),
       "argument to Tuple must be a type, not 32"
+  end
+
+  it "errors if passing integer literal to Union as generic argument" do
+    assert_error %(
+      Union(32)
+      ),
+      "argument to Union must be a type, not 32"
   end
 
   it "disallow using a non-instantiated generic type as a generic type argument" do
@@ -624,21 +654,17 @@ describe "Semantic: generic class" do
       )) { nilable int32 }
   end
 
-  it "doesn't duplicate overload on generic class class method (#2385)" do
-    nodes = parse(%(
+  it "doesn't duplicate overload on generic class with class method (#2385)" do
+    error = assert_error <<-CRYSTAL
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      ))
-    begin
-      semantic(nodes)
-    rescue ex : TypeException
-      msg = ex.to_s.lines.map(&.strip)
-      msg.count("- Foo(T).foo(x : Int32)").should eq(1)
-    end
+      CRYSTAL
+
+    error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
 
   # Given:
@@ -717,6 +743,36 @@ describe "Semantic: generic class" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
+  it "instantiates generic variadic class, accesses T from class method through superclass" do
+    assert_type(%(
+      class Foo(*T)
+        def self.t
+          T
+        end
+      end
+
+      class Bar(*T) < Foo(*T)
+      end
+
+      Bar(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method through superclass" do
+    assert_type(%(
+      class Foo(*T)
+        def t
+          T
+        end
+      end
+
+      class Bar(*T) < Foo(*T)
+      end
+
+      Bar(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
   it "splats generic type var" do
     assert_type(%(
       class Foo(X, Y)
@@ -751,6 +807,21 @@ describe "Semantic: generic class" do
 
       Foo(Int32, Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method through superclass, more args" do
+    assert_type(%(
+      class Foo(A, *T, B)
+        def t
+          {A, T, B}
+        end
+      end
+
+      class Bar(*T) < Foo(String, *T, Float64)
+      end
+
+      Bar(Int32, Char).new.t
+      )) { tuple_of([string.metaclass, tuple_of([int32, char]).metaclass, float64.metaclass]) }
   end
 
   it "virtual metaclass type implements super virtual metaclass type (#3007)" do
@@ -866,7 +937,7 @@ describe "Semantic: generic class" do
       a = Pointer(At).malloc(1_u64)
       a.value = Bt(Int32).new
       a.value.foo
-      )) { string }
+      ), inject_primitives: true) { string }
   end
 
   it "unifies generic metaclass types" do
@@ -892,7 +963,7 @@ describe "Semantic: generic class" do
 
       Gen(3).new("a")
       ),
-      "no overload matches"
+      "expected argument #1 to 'Gen(3).new' to be T, not String"
   end
 
   it "doesn't crash when matching restriction against number literal (2) (#3157)" do
@@ -929,5 +1000,286 @@ describe "Semantic: generic class" do
 
       Connection(Client).new.packets
       )) { generic_class "Array", generic_class("OutgoingPacket", types["Client"]).virtual_type! }
+  end
+
+  it "nests generics with the same type var (#3297)" do
+    assert_type(%(
+      class Foo(A)
+        @a : A
+
+        def initialize(@a : A)
+        end
+
+        def a
+          @a
+        end
+
+        class Bar(A) < Foo(A)
+        end
+      end
+
+      Foo::Bar.new(:a).a
+      )) { symbol }
+  end
+
+  it "restricts virtual generic instance type against generic (#3351)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      class Sub < Gen(String)
+      end
+
+      def foo(x : Gen(String))
+        1
+      end
+
+      foo(Gen(String).new.as(Gen(String)))
+      )) { int32 }
+  end
+
+  it "subclasses twice with same generic class (#3423)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32).new
+      )) { generic_class "Bar", int32 }
+  end
+
+  it "errors if invoking new on private new in generic type (#3485)" do
+    assert_error %(
+      class Foo(T)
+        private def self.new
+          super
+        end
+      end
+
+      Foo(String).new
+      ),
+      "private method 'new' called"
+  end
+
+  it "never types Path as virtual outside generic type parameter (#3989)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Derived < Base
+        def initialize(x : Int32)
+        end
+      end
+
+      class Generic(T)
+        def initialize
+          T.new
+        end
+
+        def t
+          T
+        end
+      end
+
+      Generic(Base).new.t
+    )) { types["Base"].metaclass }
+  end
+
+  it "never types Generic as virtual outside generic type parameter (#3989)" do
+    assert_type(%(
+      class Base(T)
+      end
+
+      class Derived(T) < Base(T)
+        def initialize(x : Int32)
+        end
+      end
+
+      class Generic(T)
+        def initialize
+          T.new
+        end
+
+        def t
+          T
+        end
+      end
+
+      Generic(Base(Int32)).new.t
+    )) { generic_class("Base", int32).metaclass }
+  end
+
+  it "doesn't find T type parameter of current type in superclass (#4604)" do
+    assert_error %(
+      class X(T)
+        abstract class A(T); end
+
+        class B < A(T)
+        end
+      end
+      ),
+      "undefined constant "
+  end
+
+  it "doesn't find unbound type parameter in main code inside generic type (#6168)" do
+    assert_error %(
+      class Foo(T)
+        Foo(T)
+      end
+      ),
+      "undefined constant T"
+  end
+
+  it "can use type var that resolves to number in restriction (#6502)" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1).new
+      f.foo
+      )) { generic_class "Foo", 1.int32 }
+  end
+
+  it "can use type var that resolves to number in restriction using Int128" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1_i128).new
+      f.foo
+      )) { generic_class "Foo", 1.int128 }
+  end
+
+  it "doesn't consider unbound generic instantiations as concrete (#7200)" do
+    assert_type(%(
+      module Moo
+      end
+
+      abstract class Foo(T)
+        include Moo
+
+        def call
+          T.as(Int32.class)
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class MooHolder
+        def initialize(@moo : Moo)
+        end
+      end
+
+      moo = MooHolder.new(Bar(Int32).new)
+      moo.@moo.call
+      )) { int32.metaclass }
+  end
+
+  it "shows error due to generic instantiation (#7083)" do
+    assert_error %(
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def valid? : Bool
+          # true
+        end
+      end
+
+      class Other < Base
+        def valid?
+          true
+        end
+      end
+
+      x = Pointer(Base).malloc(1)
+      x.value.valid?
+
+      Gen(String).new
+      ),
+      "method Gen(String)#valid? must return Bool but it is returning Nil", inject_primitives: true
+  end
+
+  it "resolves T through metaclass inheritance (#7914)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          1
+        end
+      end
+
+      class Matrix(T)
+        def self.foo
+          T.foo
+        end
+      end
+
+      class GeneralMatrix(T) < Matrix(T)
+      end
+
+      GeneralMatrix(Int32).foo
+    )) { int32 }
+  end
+
+  it "errors if splatting a non-tuple (#9853)" do
+    assert_error %(
+      Array(*Int32)
+      ),
+      "argument to splat must be a tuple type, not Int32"
+  end
+
+  it "correctly checks argument count when target type has a splat (#9855)" do
+    assert_type(%(
+      class T(A, B, *C)
+      end
+
+      T(*{Int32, Bool})
+      )) { generic_class("T", int32, bool).metaclass }
+  end
+
+  it "restricts generic type argument through alias in a non-strict way" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      alias G = Gen(String | Int32)
+
+      def foo(x : G)
+        x
+      end
+
+      foo(Gen(Int32).new)
+      )) { generic_class "Gen", int32 }
+  end
+
+  it "replaces type parameters in virtual metaclasses (#10691)" do
+    assert_type(%(
+      class Parent(T)
+      end
+
+      class Child < Parent(Int32)
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T)
+        @foo = Foo(Parent(T).class).new
+      end
+
+      Bar(Int32).new.@foo
+      )) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
   end
 end

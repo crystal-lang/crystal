@@ -3,22 +3,22 @@
 class OAuth2::Session
   getter oauth2_client : Client
   getter access_token : AccessToken
-  getter expires_at : Time
+  getter expires_at : Time?
 
-  # Creates an OAuth2::Session.
+  # Creates an `OAuth2::Session`.
   #
   # Params:
-  #   * oauth2_client: the OAuth2::Client used to refresh an access token.
-  #   * access_token: the OAuth2::AccessToken to make requests.
-  #   * expires_at: the Time when the access token expires.
-  #   * callback: invoked when an access token is refreshed, giving you a chance to persist it.
-  def initialize(@oauth2_client : Client, @access_token : AccessToken, @expires_at = Time.utc_now, &@callback : OAuth2::Session ->)
+  #   * *oauth2_client*: the OAuth2::Client used to refresh an access token.
+  #   * *access_token*: the OAuth2::AccessToken to make requests.
+  #   * *expires_at*: the Time when the access token expires.
+  #   * *callback*: invoked when an access token is refreshed, giving you a chance to persist it.
+  def initialize(@oauth2_client : Client, @access_token : AccessToken, @expires_at = Time.utc, &@callback : OAuth2::Session ->)
   end
 
-  # Authenticates an HTTP::Client, refreshing the access token if it is expired.
+  # Authenticates an `HTTP::Client`, refreshing the access token if it is expired.
   #
-  # Invoke this method on an HTTP::Client before executing an HTTP request.
-  def authenticate(http_client)
+  # Invoke this method on an `HTTP::Client` before executing an HTTP request.
+  def authenticate(http_client) : Nil
     check_refresh_token
     @access_token.authenticate http_client
   end
@@ -32,13 +32,25 @@ class OAuth2::Session
   end
 
   private def access_token_expired?
-    Time.utc_now >= @expires_at
+    if expires_at = @expires_at
+      Time.utc >= expires_at
+    else
+      false
+    end
   end
 
   private def refresh_access_token
     old_access_token = @access_token
     @access_token = @oauth2_client.get_access_token_using_refresh_token(@access_token.refresh_token)
-    @expires_at = Time.utc_now + @access_token.expires_in.seconds
+
+    expires_in = @access_token.expires_in
+    if expires_in
+      @expires_at = Time.utc + expires_in.seconds
+    else
+      # If there's no expires_in in the access token, we assume it never expires
+      @expires_at = nil
+    end
+
     @access_token.refresh_token ||= old_access_token.refresh_token
   end
 end

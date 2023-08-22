@@ -1,22 +1,25 @@
-# Defines a **struct** with the given name and properties.
+# Defines a **`Struct`** type called *name* with the given *properties*.
 #
 # The generated struct has a constructor with the given properties
 # in the same order as declared. The struct only provides getters,
 # not setters, making it immutable by default.
 #
-# The properties can be type declarations or assignments.
-#
-# You can pass a block to this macro, that will be inserted inside
-# the struct definition.
-#
 # ```
 # record Point, x : Int32, y : Int32
 #
-# point = Point.new 1, 2
-# point.to_s # => "Point(@x=1, @y=2)"
+# p = Point.new 1, 2 # => #<Point(@x=1, @y=2)>
+# p.x                # => 1
+# p.y                # => 2
 # ```
 #
-# An example with the block version:
+# The *properties* are a sequence of type declarations (`x : Int32`, `x : Int32 = 0`)
+# or assigns (`x = 0`).
+# They declare instance variables and respective getter methods of their name with
+# optional type restrictions and default value.
+#
+# When passing a block to this macro its body is inserted inside
+# the struct definition. This allows to define additional methods or include modules
+# into the record type (reopening the type would work as well).
 #
 # ```
 # record Person, first_name : String, last_name : String do
@@ -34,8 +37,8 @@
 # ```
 # record Point, x : Int32 = 0, y : Int32 = 0
 #
-# Point.new      # => Point(@x=0, @y=0)
-# Point.new y: 2 # => Point(@x=0, @y=2)
+# Point.new      # => #<Point(@x=0, @y=0)>
+# Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 #
 # An example with assignments (in this case the compiler must be able to
@@ -44,16 +47,35 @@
 # ```
 # record Point, x = 0, y = 0
 #
-# Point.new      # => Point(@x=0, @y=0)
-# Point.new y: 2 # => Point(@x=0, @y=2)
+# Point.new      # => #<Point(@x=0, @y=0)>
+# Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
-macro record(name, *properties)
+#
+# This macro also provides a `#copy_with` method which returns
+# a copy of the record with the provided properties altered.
+#
+# ```
+# record Point, x = 0, y = 0
+#
+# p = Point.new y: 2 # => #<Point(@x=0, @y=2)>
+# p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
+# p                  # => #<Point(@x=0, @y=2)>
+# ```
+macro record(__name name, *properties, **kwargs)
+  {% raise <<-TXT unless kwargs.empty?
+    macro `record` does not accept named arguments
+      Did you mean:
+
+      record #{name}, #{(properties + kwargs.map { |name, value| "#{name} : #{value}" }).join(", ").id}
+    TXT
+  %}
+
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
         getter {{property.target.id}}
       {% elsif property.is_a?(TypeDeclaration) %}
-        getter {{property.var}} : {{property.type}}
+        getter {{property}}
       {% else %}
         getter :{{property.id}}
       {% end %}
@@ -68,52 +90,110 @@ macro record(name, *properties)
 
     {{yield}}
 
+    def copy_with({{
+                    *properties.map do |property|
+                      if property.is_a?(Assign)
+                        "#{property.target.id} _#{property.target.id} = @#{property.target.id}".id
+                      elsif property.is_a?(TypeDeclaration)
+                        "#{property.var.id} _#{property.var.id} = @#{property.var.id}".id
+                      else
+                        "#{property.id} _#{property.id} = @#{property.id}".id
+                      end
+                    end
+                  }})
+      self.class.new({{
+                       *properties.map do |property|
+                         if property.is_a?(Assign)
+                           "_#{property.target.id}".id
+                         elsif property.is_a?(TypeDeclaration)
+                           "_#{property.var.id}".id
+                         else
+                           "_#{property.id}".id
+                         end
+                       end
+                     }})
+    end
+
     def clone
-      {{name.id}}.new({{
-                        *properties.map do |property|
-                          if property.is_a?(Assign)
-                            "@#{property.target.id}.clone".id
-                          elsif property.is_a?(TypeDeclaration)
-                            "@#{property.var.id}.clone".id
-                          else
-                            "@#{property.id}.clone".id
-                          end
-                        end
-                      }})
+      self.class.new({{
+                       *properties.map do |property|
+                         if property.is_a?(Assign)
+                           "@#{property.target.id}.clone".id
+                         elsif property.is_a?(TypeDeclaration)
+                           "@#{property.var.id}.clone".id
+                         else
+                           "@#{property.id}.clone".id
+                         end
+                       end
+                     }})
     end
   end
 end
 
-# Prints a series of expressions together with their values. Useful for print style debugging.
+# Prints a series of expressions together with their pretty printed values.
+# Useful for print style debugging.
 #
 # ```
 # a = 1
-# pp a # prints "a # => 1"
+# pp! a # => "a # => 1"
 #
-# pp [1, 2, 3].map(&.to_s) # prints "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
+# pp! [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
 # ```
-macro pp(*exps)
+#
+# See also: `pp`, `Object#pretty_inspect`.
+macro pp!(*exps)
   {% if exps.size == 0 %}
     # Nothing
   {% elsif exps.size == 1 %}
     {% exp = exps.first %}
-    ::puts "#{ {{exp.stringify}} } # => #{ ({{exp}}).inspect }"
+    %prefix = "#{{{ exp.stringify }}} # => "
+    ::print %prefix
+    ::pp({{exp}})
   {% else %}
-    %strings = [] of {String, String}
-    {% for exp in exps %}
-      %strings.push({ {{exp.stringify}}, ({{exp}}).inspect })
-    {% end %}
-    %max_size = %strings.max_of &.[0].size
-    %strings.each do |%left, %right|
-      ::puts "#{%left.ljust(%max_size)} # => #{%right}"
-    end
+    %names = { {{*exps.map(&.stringify)}} }
+    %max_size = %names.max_of &.size
+    {
+      {% for exp, i in exps %}
+        begin
+          %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
+          ::print %prefix
+          ::pp({{exp}})
+        end,
+      {% end %}
+    }
   {% end %}
 end
 
-macro assert_responds_to(var, method)
-  if {{var}}.responds_to?(:{{method}})
-    {{var}}
-  else
-    raise "expected {{var}} to respond to :{{method}}, not #{ {{var}} }"
-  end
+# Prints a series of expressions together with their inspected values.
+# Useful for print style debugging.
+#
+# ```
+# a = 1
+# p! a # => "a # => 1"
+#
+# p! [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
+# ```
+#
+# See also: `p`, `Object#inspect`.
+macro p!(*exps)
+  {% if exps.size == 0 %}
+    # Nothing
+  {% elsif exps.size == 1 %}
+    {% exp = exps.first %}
+    %prefix = "#{{{ exp.stringify }}} # => "
+    ::print %prefix
+    ::p({{exp}})
+  {% else %}
+    %names = { {{*exps.map(&.stringify)}} }
+    %max_size = %names.max_of &.size
+    {
+      {% for exp, i in exps %}
+        begin
+          %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
+          ::print %prefix
+          ::p({{exp}})
+        end,
+      {% end %}
+    }
+  {% end %}
 end

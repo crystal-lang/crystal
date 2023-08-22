@@ -7,7 +7,8 @@ class CSV::Lexer::IOBased < CSV::Lexer
     @current_char = @io.read_char || '\0'
   end
 
-  def rewind
+  def rewind : Nil
+    super
     @io.rewind
     @current_char = @io.read_char || '\0'
   end
@@ -22,7 +23,7 @@ class CSV::Lexer::IOBased < CSV::Lexer
       when '\r', '\n', '\0'
         break
       when @quote_char
-        raise "unexpected quote"
+        raise "Unexpected quote"
       else
         @buffer << current_char
         next_char

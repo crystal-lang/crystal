@@ -1,27 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta id="repository-name" content="<%= repository_name %>">
-  <link href="css/style.css" rel="stylesheet" type="text/css" />
-  <script type="text/javascript" src="js/doc.js"></script>
-  <title>README - <%= repository_name %></title>
+  <%= HeadTemplate.new(project_info, nil) %>
+  <meta name="repository-name" content="<%= project_info.name %>">
+  <title><%= project_info.name %> <%= project_info.version %></title>
+  <script type="text/javascript">
+  CrystalDocs.base_path = "";
+  </script>
 </head>
 <body>
 
-<div id="types-list">
-  <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search...">
-  </div>
+<%= Crystal::Doc::SVG_DEFS %>
+<%= Crystal::Doc::SIDEBAR_BUTTON %>
+<%= SidebarTemplate.new(project_info, types, nil) %>
 
-  <ul>
-    <li class="current"><a href="index.html">README</a></li>
-  </ul>
-
-  <%= ListItemsTemplate.new(types, nil) %>
-</div>
-
-<div id="main-content">
+<div class="main-content">
 <%= body %>
 </div>
 </body>

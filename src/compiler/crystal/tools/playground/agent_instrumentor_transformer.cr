@@ -59,7 +59,7 @@ module Crystal
       # so the instrumentor can ignore call's of methods with this name
       # this will avoid instrumenting calls to methods with the same name than
       # declared macros in the playground source. For a more accurate solution
-      # a compilation should be done to distigush whether each call refers to a macro or
+      # a compilation should be done to distinguish whether each call refers to a macro or
       # a method. Between the macro names collection and only instrumenting def's inside
       # modules/classes the generated instrumentation is pretty good enough. See #2355
       collector = MacroDefNameCollector.new
@@ -96,16 +96,16 @@ module Crystal
 
     def transform(node : MultiAssign)
       node.values = if node.values.size == 1
-                      [instrument(node.values[0])]
+                      [instrument(node.values[0])] of ASTNode
                     else
                       rhs = TupleLiteral.new(node.values)
                       rhs.location = node.location
-                      [instrument(rhs)]
+                      [instrument(rhs)] of ASTNode
                     end
       node
     end
 
-    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf | UnaryExpression | BinaryOp | IsA | ReadInstanceVar)
+    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | HashLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf | UnaryExpression | BinaryOp | IsA | ReadInstanceVar)
       instrument(node)
     end
 
@@ -227,7 +227,7 @@ module Crystal
       node
     end
 
-    def ignoring_line_of_node(node)
+    def ignoring_line_of_node(node, &)
       old_ignore_line = @ignore_line
       @ignore_line = node.location.try(&.line_number)
       res = yield

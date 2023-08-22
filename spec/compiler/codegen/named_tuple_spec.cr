@@ -102,7 +102,7 @@ describe "Code gen: named tuple" do
     run(%(
       ptr = Pointer({x: Int32, y: String}).malloc(1_u64)
 
-      # Here the compiler should reoder the values to match
+      # Here the compiler should reorder the values to match
       # the type inside the pointer
       ptr.value = {y: "hello", x: 42}
 
@@ -273,7 +273,7 @@ describe "Code gen: named tuple" do
       if v.is_a?(Float64)
         10
       else
-        v[0].to_i + v[1].to_i
+        v[0].to_i! &+ v[1].to_i!
       end
       )).to_i.should eq(42)
   end
@@ -296,5 +296,63 @@ describe "Code gen: named tuple" do
       t = {x: 2}
       t[:x]
       )).to_i.should eq(2)
+  end
+
+  it "downcasts union inside tuple to value (#3907)" do
+    codegen(%(
+      struct Foo
+      end
+
+      foo = Foo.new
+
+      x = {a: 0, b: foo}
+      z = x[:a]
+      x = {a: 0, b: z}
+      ))
+  end
+
+  it "accesses T and creates instance from it" do
+    run("
+      struct NamedTuple
+        def named_args
+          T
+        end
+      end
+
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      t = {a: Foo.new(1)}
+      f = t.named_args[:a].new(2)
+      f.x
+      ").to_i.should eq(2)
+  end
+
+  it "does to_s for NamedTuple class" do
+    run(%(
+      require "prelude"
+
+      NamedTuple(a: Int32, "b c": String, "+": Char).to_s
+      )).to_string.should eq(%(NamedTuple(a: Int32, "b c": String, "+": Char)))
+  end
+
+  it "doesn't error if NamedTuple includes a non-generic module (#10380)" do
+    codegen(%(
+      module Foo
+      end
+
+      struct NamedTuple
+        include Foo
+      end
+
+      x = uninitialized Foo
+      x = {a: 1}
+      ))
   end
 end

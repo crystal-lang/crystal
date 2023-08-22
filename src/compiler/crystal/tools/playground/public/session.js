@@ -2,7 +2,9 @@ CodeMirror.keyMap.macDefault["Cmd-/"] = "toggleComment";
 CodeMirror.keyMap.pcDefault["Ctrl-/"] = "toggleComment";
 
 CodeMirror.keyMap.macDefault["Cmd-Enter"] = "runCode";
+CodeMirror.keyMap.macDefault["Cmd-S"] = "runCode";
 CodeMirror.keyMap.pcDefault["Ctrl-Enter"] = "runCode";
+CodeMirror.keyMap.pcDefault["Ctrl-S"] = "runCode";
 
 CodeMirror.commands.runCode = function(editor) {
   if (editor._playgroundSession) {
@@ -15,7 +17,7 @@ function ModalDialog(options) {
 
   $("body").append(
     this.modalDom = $("<div>").addClass("modal modal-fixed-footer")
-      .append(this.modalContenDom = $("<div>").addClass("modal-content"))
+      .append(this.modalContentDom = $("<div>").addClass("modal-content"))
       .append($("<div>").addClass("modal-footer")
         .append($("<a>").text("Close")
           .addClass("modal-action modal-close waves-effect waves-green btn-flat")
@@ -37,7 +39,7 @@ function ModalDialog(options) {
 
   this.append = function() {
     for(var i = 0; i < arguments.length; i++) {
-      this.modalContenDom.append(arguments[i]);
+      this.modalContentDom.append(arguments[i]);
     }
     return this;
   }.bind(this);
@@ -128,20 +130,20 @@ Playground.OutputIndicator = function(dom) {
   this.dom = dom;
   this.blinkTimeout = null;
 
-  this.dom.append($("<span>").addClass("octicon octicon-terminal"));
+  this.dom.addClass("octicon octicon-terminal");
 
   this.turnOnWithBlink = function () {
-    this.dom.addClass('grey-text').removeClass('teal-text red-text');
+    this.dom.removeClass('teal-text red-text');
     this.blinkTimeout = window.setTimeout(function(){
       if (this.isError) return;
-      this.dom.removeClass('grey-text').addClass('teal-text');
+      this.dom.addClass('teal-text');
     }.bind(this), 200);
   }.bind(this);
 
   this.turnOff = function () {
     this.isError = false;
     this._cancelBlink();
-    this.dom.addClass('grey-text').removeClass('teal-text red-text');
+    this.dom.removeClass('teal-text red-text');
   }.bind(this);
 
   this.turnError = function () {
@@ -190,7 +192,7 @@ Playground.Inspector = function(session, line) {
       row.append($("<td>").text(message.data[labels[j]]));
     }
 
-    row.append($("<td>").text(message.value));
+    row.append($("<td>").html("<pre><code>" + message.html_value + "</code></pre>"));
     row.append($("<td>").text(message.value_type));
     tableBody.append(row);
   }
@@ -279,8 +281,9 @@ Playground.Session = function(options) {
         .append(this.sidebarDom = cdiv("sidebar"))
       )
   );
-
+  this.isRunning = false;
   this.stdout = options.stdout;
+  this.stdoutRawContent = "";
   this.outputIndicator = new Playground.OutputIndicator(options.outputIndicator);
 
   this.editor = CodeMirror(this.editorDom[0], {
@@ -291,12 +294,28 @@ Playground.Session = function(options) {
     tabSize: 2,
     viewportMargin: Infinity,
     dragDrop: false, // dragDrop functionality is implemented to capture drop anywhere and replace source
-    value: options.source
+    value: options.source,
+    // indent using spaces, see https://github.com/codemirror/codemirror5/issues/988
+    extraKeys: {
+      Tab: (cm) => {
+        if (cm.getMode().name === 'null') {
+          cm.execCommand('insertTab');
+        } else {
+          if (cm.somethingSelected()) {
+            cm.execCommand('indentMore');
+          } else {
+            cm.execCommand('insertSoftTab');
+          }
+        }
+      },
+      'Shift-Tab': (cm) => cm.execCommand('indentLess')
+    }
   });
   this.editor._playgroundSession = this;
 
   this.connect = function() {
-    this.ws = new WebSocket("ws://" + location.host + "/client");
+    var socketProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+    this.ws = new WebSocket(socketProtocol + "//" + location.host + "/client");
 
     this.ws.onopen = function() {
       this._triggerReady();
@@ -374,6 +393,10 @@ Playground.Session = function(options) {
             $("<pre>").append(message.exception.message)).openModal();
 
           break;
+        case "format":
+          codeFormatter.stop();
+          this.setSource(message.value);
+          break;
         default:
           console.error("ws message not handled", message);
       }
@@ -381,9 +404,26 @@ Playground.Session = function(options) {
   }.bind(this);
 
   this.runTag = 0;
+
+  this.format = function() {
+    this._removeScheduledRun();
+
+    this._clearInspectors();
+    this._hideEditorErrors();
+    this._clearStdout();
+
+    this.ws.send(JSON.stringify({
+      type: "format",
+      source: this.editor.getValue(),
+      tag: this.runTag
+    }));
+  }.bind(this);
+
   this.run = function() {
     if (Playground.connectLostShown) return;
+    if (this.isRunning) return;
 
+    this.isRunning = true;
     this._removeScheduledRun();
     this.runTag++;
 
@@ -431,7 +471,11 @@ Playground.Session = function(options) {
     }.bind(this);
 
     this.onFinish = function() {
+      this.isRunning = false;
       runButtons.showPlay();
+      if (codeFormatter && codeFormatter.isRunning) {
+        codeFormatter.stop();
+      }
     }.bind(this);
 
     this.onDisconnect = function() {
@@ -553,12 +597,13 @@ Playground.Session = function(options) {
 
   //stdout
   this._appendStdout = function(content) {
-    this.stdout[0].innerText += content;
-
+    this.stdoutRawContent += content;
+    this.stdout[0].innerHTML = ansi_up.ansi_to_html(ansi_up.escape_for_html(this.stdoutRawContent), {"use_classes": true});
   }.bind(this);
 
   this._clearStdout = function() {
-    this.stdout[0].innerText = "";
+    this.stdoutRawContent = "";
+    this.stdout[0].innerHTML = "";
     this.outputIndicator.turnOff();
   }.bind(this);
   //
@@ -576,6 +621,48 @@ Playground.Session = function(options) {
     this._scheduleRun();
   }.bind(this));
 
+  // code formatter
+  var sessionInstance = this;
+  var codeFormatter = (function() {
+    var isRunning = false;
+    var btn = document.getElementById('runFormatterBtn');
+    if (!btn) { return; }
+    btn.addEventListener('click', function(evt) {
+      evt.preventDefault();
+      run();
+    });
+
+    var iconCont = btn.getElementsByClassName('icon')[0];
+    if (iconCont) {
+      iconCont.classList.add('octicon', 'octicon-checklist');
+    }
+
+    function run() {
+      if (isRunning) {
+        return console.info('code formatter is already running. Attempt aborted...');
+      }
+      if (sessionInstance.isRunning) {
+        return console.info('compiler running. Formatter attempt aborted...')
+      }
+      btn.classList.add('running');
+      isRunning = true;
+      sessionInstance.format();
+    };
+
+    function stop() {
+      isRunning = false;
+      btn.classList.remove('running');
+    }
+
+    var publicProps = { run, stop };
+
+    Object.defineProperty(publicProps, "isRunning", {
+      get: function() { return isRunning; }
+    });
+
+    return publicProps;
+  })();
+
   // when clicking below the editor, set the cursor at the very end
   this.editorDom.click(function(e){
     this._hideEditorErrors();
@@ -589,7 +676,7 @@ Playground.Session = function(options) {
   $(window).resize(this._matchEditorSidebarHeight);
   this._matchEditorSidebarHeight();
 
-  $(window).unload(function(){
+  $(window).on("unload", function(){
     this.stop();
   }.bind(this));
 };

@@ -18,18 +18,18 @@ describe XML do
     html = doc.children[1]
     html.name.should eq("html")
 
-    head = html.children.find { |node| node.name == "head" }.not_nil!
+    head = html.children.find! { |node| node.name == "head" }
     head.name.should eq("head")
 
-    title = head.children.find { |node| node.name == "title" }.not_nil!
+    title = head.children.find! { |node| node.name == "title" }
     title.text.should eq("Samantha")
 
-    body = html.children.find { |node| node.name == "body" }.not_nil!
+    body = html.children.find! { |node| node.name == "body" }
 
-    h1 = body.children.find { |node| node.name == "h1" }.not_nil!
+    h1 = body.children.find! { |node| node.name == "h1" }
 
     attrs = h1.attributes
-    attrs.empty?.should be_false
+    attrs.should_not be_empty
     attrs.size.should eq(1)
 
     attr = attrs[0]
@@ -40,7 +40,7 @@ describe XML do
   end
 
   it "parses HTML from IO" do
-    io = MemoryIO.new(%(\
+    io = IO::Memory.new(%(\
       <!doctype html>
       <html>
       <head>
@@ -68,5 +68,15 @@ describe XML do
     expect_raises XML::Error, "Document is empty" do
       XML.parse_html("")
     end
+  end
+
+  it "gets name of HTML document node (#4040)" do
+    doc = XML.parse_html(%(\
+      <!doctype html>
+      <html>
+      </html>
+    ))
+    doc.document?.should be_true
+    doc.name.should eq("document")
   end
 end

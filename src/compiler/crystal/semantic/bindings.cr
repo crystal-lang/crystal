@@ -1,7 +1,6 @@
 module Crystal
   class ASTNode
     property! dependencies : Array(ASTNode)
-    property freeze_type : Type?
     property observers : Array(ASTNode)?
     property enclosing_call : Call?
 
@@ -10,16 +9,38 @@ module Crystal
     @type : Type?
 
     def type
-      @type || ::raise "Bug: `#{self}` at #{self.location} has no type"
+      type? || ::raise "BUG: `#{self}` at #{self.location} has no type"
     end
 
     def type?
-      @type
+      @type || freeze_type
+    end
+
+    def type(*, with_autocast = false)
+      type = self.type
+
+      if with_autocast
+        case self
+        when NumberLiteral
+          NumberAutocastType.new(type.program, self)
+        when SymbolLiteral
+          SymbolAutocastType.new(type.program, self)
+        else
+          case type
+          when IntegerType, FloatType
+            NumberAutocastType.new(type.program, self)
+          else
+            type
+          end
+        end
+      else
+        type
+      end
     end
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
-      if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
+      if !type.no_return? && (freeze_type = self.freeze_type) && !type.implements?(freeze_type)
         raise_frozen_type freeze_type, type, self
       end
       @type = type
@@ -33,9 +54,12 @@ module Crystal
       set_type type
     rescue ex : FrozenTypeException
       # See if we can find where the mismatched type came from
-      if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
+      if from && !ex.inner && (freeze_type = self.freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
         other_type = type.union_types.find { |type| type != freeze_type }
-        trace = from.find_owner_trace(other_type)
+        trace = from.find_owner_trace(freeze_type.program, other_type)
+        ex.inner = trace
+      elsif from && !ex.inner && (freeze_type = self.freeze_type)
+        trace = from.find_owner_trace(freeze_type.program, type)
         ex.inner = trace
       end
 
@@ -46,20 +70,29 @@ module Crystal
       end
     end
 
+    def freeze_type
+      nil
+    end
+
     def raise_frozen_type(freeze_type, invalid_type, from)
       if !freeze_type.includes_type?(invalid_type.program.nil) && invalid_type.includes_type?(invalid_type.program.nil)
         # This means that an instance variable become nil
         if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
-          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
+          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason, freeze_type.program.show_error_trace?)
         end
       end
 
-      if self.is_a?(MetaTypeVar)
+      case self
+      when MetaTypeVar
         if self.global?
           from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         else
-          from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+          from.raise "#{self.kind.to_s.underscore} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
+      when Def
+        (self.return_type || self).raise "method #{self.short_reference} must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
+      when NamedType
+        from.raise "type #{self.full_name} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       else
         from.raise "type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       end
@@ -73,25 +106,23 @@ module Crystal
       @type
     end
 
-    def bind_to(node : ASTNode)
+    def bind_to(node : ASTNode) : Nil
       bind(node) do |dependencies|
         dependencies.push node
         node.add_observer self
-        node
       end
     end
 
-    def bind_to(nodes : Array)
+    def bind_to(nodes : Indexable) : Nil
       return if nodes.empty?
 
       bind do |dependencies|
         dependencies.concat nodes
         nodes.each &.add_observer self
-        nodes.first
       end
     end
 
-    def bind(from = nil)
+    def bind(from = nil, &)
       # Quick check to provide a better error message when assigning a type
       # to a variable whose type is frozen
       if self.is_a?(MetaTypeVar) && (freeze_type = self.freeze_type) && from &&
@@ -101,14 +132,14 @@ module Crystal
 
       dependencies = @dependencies ||= [] of ASTNode
 
-      node = yield dependencies
+      yield dependencies
 
-      if dependencies.size == 1
-        new_type = node.type?
-      else
-        new_type = Type.merge dependencies
-      end
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
+
+      if new_type && (freeze_type = self.freeze_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
 
       return if @type.same? new_type
       return unless new_type
@@ -118,9 +149,8 @@ module Crystal
       propagate
     end
 
-    def unbind_all
-      @dependencies.try &.each &.remove_observer(self)
-      @dependencies = nil
+    def type_from_dependencies : Type?
+      Type.merge dependencies
     end
 
     def unbind_from(nodes : Nil)
@@ -147,8 +177,17 @@ module Crystal
     end
 
     def set_enclosing_call(enclosing_call)
-      raise "Bug: already had enclosing call" if @enclosing_call
-      @enclosing_call = enclosing_call
+      current_enclosing_call = @enclosing_call
+      if current_enclosing_call
+        # This can happen when a block is typed, and meanwhile a new
+        # generic instance type is created that triggers the block to
+        # be typed again, potentially analyzing a call twice.
+        unless current_enclosing_call.same?(enclosing_call)
+          raise "BUG: already had a different enclosing call"
+        end
+      else
+        @enclosing_call = enclosing_call
+      end
     end
 
     def remove_enclosing_call(enclosing_call)
@@ -165,8 +204,12 @@ module Crystal
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      new_type = Type.merge dependencies
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
+
+      if new_type && (freeze_type = self.freeze_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
 
       return if @type.same? new_type
 
@@ -192,25 +235,53 @@ module Crystal
       type
     end
 
-    def find_owner_trace(owner)
+    # Computes the type resulting from assigning type to freeze_type,
+    # in the case where freeze_type is not nil.
+    #
+    # Special cases are listed inside the method body.
+    def restrict_type_to_freeze_type(freeze_type, type)
+      if freeze_type.is_a?(ProcInstanceType)
+        # We allow assigning Proc(*T, R) to Proc(*T, Nil)
+        if freeze_type.return_type.nil_type? &&
+           type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) && a_type.arg_types == freeze_type.arg_types
+           }
+          return freeze_type
+        end
+
+        # We also allow assigning Proc(*T, NoReturn) to Proc(*T, U)
+        if type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) &&
+             (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&
+             a_type.arg_types == freeze_type.arg_types
+           }
+          return freeze_type
+        end
+      end
+
+      type
+    end
+
+    def find_owner_trace(program, owner)
       owner_trace = [] of ASTNode
       node = self
 
-      visited = Set(typeof(object_id)).new
-      visited.add node.object_id
+      visited = Set(ASTNode).new.compare_by_identity
+      owner_trace << node if node.type?.try &.includes_type?(owner)
+      visited.add node
       while deps = node.dependencies?
-        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
+        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
         if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
           owner_trace << node if node
-          visited.add node.object_id
+          visited.add node
         else
           break
         end
       end
 
-      MethodTraceException.new(owner, owner_trace, nil_reason)
+      MethodTraceException.new(owner, owner_trace, nil_reason, program.show_error_trace?)
     end
   end
 
@@ -230,7 +301,7 @@ module Crystal
   class PointerOf
     def map_type(type)
       old_type = self.type?
-      new_type = type.try &.program.pointer_of(type)
+      new_type = type.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
         raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end
@@ -251,7 +322,17 @@ module Crystal
       when UnionType
         haystack.union_types.any? { |sub| type_includes?(sub, needle) }
       when GenericClassInstanceType
-        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+        splat_index = haystack.generic_type.splat_index
+        haystack.type_vars.each_with_index do |(_, sub), index|
+          if sub.is_a?(Var)
+            if index == splat_index
+              return true if sub.type.as(TupleInstanceType).tuple_types.any? { |sub2| type_includes?(sub2, needle) }
+            else
+              return true if type_includes?(sub.type, needle)
+            end
+          end
+        end
+        false
       else
         false
       end
@@ -281,12 +362,60 @@ module Crystal
     end
   end
 
+  class Union
+    property? inside_is_a = false
+
+    def update(from = nil)
+      computed_types = types.compact_map do |subtype|
+        instance_type = subtype.type?
+        next unless instance_type
+
+        unless instance_type.can_be_stored?
+          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
+        end
+        instance_type.virtual_type
+      end
+
+      return if computed_types.empty?
+
+      program = computed_types.first.program
+
+      if inside_is_a?
+        self.type = program.type_merge_union_of(computed_types)
+      else
+        self.type = program.type_merge(computed_types)
+      end
+    end
+  end
+
   class Cast
     property? upcast = false
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
-      to_type = to.type
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
+
+      @upcast = false
 
       if obj_type && !(obj_type.pointer? || to_type.pointer?)
         filtered_type = obj_type.filter_by(to_type)
@@ -296,17 +425,21 @@ module Crystal
         #
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
-        if obj_type == filtered_type && obj_type != to_type &&
-           !to_type.is_a?(GenericClassType) && to_type.allowed_in_generics?
+        if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
+           to_type.can_be_stored?
           filtered_type = to_type
           @upcast = true
         end
       end
 
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      return if !filtered_type && !to_type.can_be_stored?
+
       # If we don't have a matching type, leave it as the to_type:
       # later (in cleanup) we will check again.
       filtered_type ||= to_type
-
       self.type = filtered_type.virtual_type
     end
   end
@@ -316,8 +449,30 @@ module Crystal
     getter! non_nilable_type : Type
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
-      to_type = to.type
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
+
+      @upcast = false
 
       if obj_type
         filtered_type = obj_type.filter_by(to_type)
@@ -327,11 +482,19 @@ module Crystal
         #
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
-        if obj_type == filtered_type && obj_type != to_type &&
-           !to_type.is_a?(GenericClassType) && to_type.allowed_in_generics?
+        if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
+           to_type.can_be_stored?
           filtered_type = to_type.virtual_type
           @upcast = true
         end
+      end
+
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      if !filtered_type && !to_type.can_be_stored?
+        self.type = to_type.program.nil_type
+        return
       end
 
       # If we don't have a matching type, leave it as the to_type:
@@ -349,17 +512,18 @@ module Crystal
   class ProcLiteral
     property? force_nil = false
     property expected_return_type : Type?
+    property? from_block = false
 
     def update(from = nil)
       return unless self.def.args.all? &.type?
       return unless self.def.type?
 
-      types = self.def.args.map &.type
-      return_type = @force_nil ? self.def.type.program.nil : self.def.type
+      types = self.def.args.map &.type.virtual_type
+      return_type = @force_nil ? self.def.type.program.nil : self.def.type.virtual_type
 
       expected_return_type = @expected_return_type
       if expected_return_type && !expected_return_type.nil_type? && !return_type.implements?(expected_return_type)
-        raise "expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
+        raise "expected #{from_block? ? "block" : "Proc"} to return #{expected_return_type.devirtualize}, not #{return_type}"
       end
 
       types << (expected_return_type || return_type)
@@ -376,10 +540,14 @@ module Crystal
     property! call : Call
 
     def map_type(type)
+      if self.expanded
+        return type
+      end
+
       return nil unless call.type?
 
-      arg_types = call.args.map &.type
-      arg_types.push call.type
+      arg_types = call.args.map &.type.virtual_type
+      arg_types.push call.type.virtual_type
 
       call.type.program.proc_of(arg_types)
     end
@@ -389,11 +557,13 @@ module Crystal
     property! instance_type : GenericType
     property scope : Type?
     property? in_type_args = false
+    property? inside_is_a = false
 
     def update(from = nil)
       instance_type = self.instance_type
       if instance_type.is_a?(NamedTupleType)
-        entries = named_args.not_nil!.map do |named_arg|
+        entries = Array(NamedArgumentType).new(named_args.try(&.size) || 0)
+        named_args.try &.each do |named_arg|
           node = named_arg.value
 
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
@@ -407,14 +577,14 @@ module Crystal
           node_type = node.type?
           return unless node_type
 
-          if node.is_a?(Path) && (target_const = node.target_const)
+          if node.is_a?(Path) && node.target_const
             node.raise "can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+          Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
-          NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)
@@ -428,6 +598,9 @@ module Crystal
             node = expanded
           end
           if node.is_a?(InstanceSizeOf) && (expanded = node.expanded)
+            node = expanded
+          end
+          if node.is_a?(OffsetOf) && (expanded = node.expanded)
             node = expanded
           end
 
@@ -454,15 +627,15 @@ module Crystal
                 visitor = target_const.visitor
                 if visitor
                   numeric_value = visitor.interpret_enum_value(value)
-                  numeric_type = node_type.program.int?(numeric_value) || raise "Bug: expected integer type, not #{numeric_value.class}"
-                  type_var = NumberLiteral.new(numeric_value, numeric_type.kind)
+                  numeric_type = node_type.program.int?(numeric_value) || raise "BUG: expected integer type, not #{numeric_value.class}"
+                  type_var = NumberLiteral.new(numeric_value.to_s, numeric_type.kind)
                   type_var.set_type_from(numeric_type, from)
                 else
                   node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
                 end
               end
             else
-              Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+              Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
               type_var = node_type.virtual_type
             end
           end
@@ -471,9 +644,18 @@ module Crystal
         end
 
         begin
-          generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
-        rescue ex : Crystal::Exception
-          raise ex.message
+          generic_instance_type = instance_type.as(GenericType)
+          generic_type =
+            if generic_instance_type.is_a?(GenericUnionType) && inside_is_a?
+              # In the case of `exp.is_a?(Union(X, Y))` we make it work exactly
+              # like `exp.is_a?(X | Y)`, which won't resolve `X | Y` to the virtual
+              # parent type.
+              generic_instance_type.instantiate(type_vars_types, type_merge_union_of: true)
+            else
+              generic_instance_type.instantiate(type_vars_types)
+            end
+        rescue ex : Crystal::CodeError
+          raise ex.message, ex
         end
       end
 
@@ -490,13 +672,27 @@ module Crystal
     property! program : Program
 
     def update(from = nil)
-      return unless elements.all? &.type?
+      types = [] of TypeVar
+      elements.each do |node|
+        if node.is_a?(Splat)
+          type = node.type?
+          return unless type.is_a?(TupleInstanceType)
+          types.concat(type.tuple_types)
+        else
+          type = node.type?
+          return unless type
+          types << type
+        end
+      end
 
-      types = elements.map &.type.as(TypeVar)
       tuple_type = program.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)
         raise "tuple type too nested: #{tuple_type}"
+      end
+
+      if types.size > 300
+        raise "tuple size cannot be greater than 300 (size is #{types.size})"
       end
 
       self.type = tuple_type
@@ -519,19 +715,38 @@ module Crystal
         raise "named tuple type too nested: #{named_tuple_type}"
       end
 
+      if entries.size > 300
+        raise "named tuple size cannot be greater than 300 (size is #{entries.size})"
+      end
+
       self.type = named_tuple_type
     end
   end
 
   class ReadInstanceVar
-    property! visitor : MainVisitor
-
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type
 
-      var = visitor.lookup_instance_var(self, obj_type)
-      self.type = var.type
+      self.type =
+        if obj_type.is_a?(UnionType)
+          obj_type.program.type_merge(
+            obj_type.union_types.map do |union_type|
+              lookup_instance_var(union_type).type
+            end
+          )
+        else
+          lookup_instance_var(obj_type).type
+        end
+    end
+
+    private def lookup_instance_var(type)
+      ivar = type.lookup_instance_var(self)
+      unless ivar
+        similar_name = type.lookup_similar_instance_var_name(name)
+        type.program.undefined_instance_variable(self, type, similar_name)
+      end
+      ivar
     end
   end
 
@@ -563,112 +778,96 @@ module Crystal
 
     def update(from = nil)
       # We compute all the types for each block arguments
-      args_size = block.args.size
-      block_arg_types = Array(Array(Type)?).new(args_size, nil)
-      splat_index = block.splat_index
+      block_arg_types = Array(Array(Type)?).new(block.args.size, nil)
 
       @yields.each do |a_yield, yield_vars|
-        i = 0
-
-        # Gather all exps types and then assign to block_arg_types.
-        # We need to do that in case of a block splat argument, we need
-        # to split and create tuple types for that case.
-        exps_types = Array(Type).new(a_yield.exps.size)
-
-        a_yield.exps.each do |exp|
-          exp_type = exp.type?
-          return unless exp_type
-
-          if exp.is_a?(Splat)
-            unless exp_type.is_a?(TupleInstanceType)
-              exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
-            end
-
-            exps_types.concat(exp_type.tuple_types)
-            i += exp_type.tuple_types.size
-          else
-            exps_types << exp_type
-            i += 1
-          end
-        end
-
-        # Check if there are missing yield expressions to match
-        # the (optional) block signature, and if they match the declared types
-        if yield_vars
-          if exps_types.size < yield_vars.size
-            a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
-          end
-
-          # Check that the types match
-          i = 0
-          yield_vars.zip(exps_types) do |yield_var, exp_type|
-            unless exp_type.implements?(yield_var.type)
-              a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
-            end
-            i += 1
-          end
-        end
-
-        # Now move exps_types to block_arg_types
-        if splat_index
-          # Error if there are less expressions than the number of block arguments
-          if exps_types.size < (args_size - 1)
-            block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
-          end
-
-          j = 0
-          args_size.times do |i|
-            types = block_arg_types[i] ||= [] of Type
-            if i == splat_index
-              tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
-              types << @program.tuple_of(tuple_types)
-              j += tuple_types.size
-            else
-              types << exps_types[j]
-              j += 1
-            end
-          end
-        else
-          # Check if tuple unpacking is needed
-          if exps_types.size == 1 &&
-             (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
-             args_size > 1
-            if block.args.size > exp_type.tuple_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
-            end
-
-            exp_type.tuple_types.each_with_index do |tuple_type, i|
-              break if i >= block_arg_types.size
-
-              types = block_arg_types[i] ||= [] of Type
-              types << tuple_type
-            end
-          else
-            if block.args.size > exps_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
-            end
-
-            exps_types.each_with_index do |exp_type, i|
-              break if i >= block_arg_types.size
-
-              types = block_arg_types[i] ||= [] of Type
-              types << exp_type
-            end
-          end
-        end
+        gather_yield_block_arg_types(a_yield, yield_vars, block, block_arg_types)
       end
 
       block.args.each_with_index do |arg, i|
         block_arg_type = block_arg_types[i]
         if block_arg_type
           arg_type = Type.merge(block_arg_type) || @program.nil
-          if i == splat_index && !arg_type.is_a?(TupleInstanceType)
-            arg.raise "block splat argument must be a tuple type, not #{arg_type}"
+          if i == block.splat_index && !arg_type.is_a?(TupleInstanceType)
+            arg.raise "yield argument to block splat parameter must be a Tuple, not #{arg_type}"
           end
           arg.type = arg_type
         else
           # Skip, no type info found in this position
         end
+      end
+    end
+
+    # Gather all exps types and then assign to block_arg_types.
+    # We need to do that in case of a block splat argument, we need
+    # to split and create tuple types for that case.
+    private def gather_yield_block_arg_types(a_yield, yield_vars, block, block_arg_types)
+      args_size = block.args.size
+      splat_index = block.splat_index
+      exps_types = Array(Type).new(a_yield.exps.size)
+
+      i = 0
+      a_yield.exps.each do |exp|
+        exp_type = exp.type?
+        return unless exp_type
+
+        if exp.is_a?(Splat)
+          unless exp_type.is_a?(TupleInstanceType)
+            exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
+          end
+
+          exps_types.concat(exp_type.tuple_types)
+          i += exp_type.tuple_types.size
+        else
+          exps_types << exp_type
+          i += 1
+        end
+      end
+
+      if splat_index
+        # Error if there are less expressions than the number of block arguments
+        if exps_types.size < (args_size - 1)
+          block.raise "too many block parameters (given #{args_size - 1}+, expected maximum #{exps_types.size})"
+        end
+        splat_range = (splat_index..splat_index - args_size)
+        exps_types[splat_range] = @program.tuple_of(exps_types[splat_range])
+      end
+
+      # Check if there are missing yield expressions to match
+      # the (optional) block signature, and if they match the declared types
+      if yield_vars
+        if exps_types.size < yield_vars.size
+          a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
+        end
+
+        # Check that the types match
+        i = 0
+        yield_vars.zip(exps_types) do |yield_var, exp_type|
+          unless exp_type.implements?(yield_var.type)
+            a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
+          end
+          i += 1
+        end
+      end
+
+      # Check if tuple unpacking is needed
+      if exps_types.size == 1 &&
+         (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
+         args_size > 1 &&
+         !splat_index
+        exps_types = exp_type.tuple_types
+      end
+
+      # Now move exps_types to block_arg_types
+      if block.args.size > exps_types.size
+        block.raise "too many block parameters (given #{block.args.size}, expected maximum #{exps_types.size})"
+      end
+
+      exps_types.each_with_index do |exp_type, i|
+        break if i >= block_arg_types.size
+
+        types = block_arg_types[i] ||= [] of Type
+        types << exp_type
       end
     end
 

@@ -2,52 +2,72 @@ require "./tcp_socket"
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
+# NOTE: To use `TCPServer`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 # ```
+# require "socket"
+#
+# def handle_client(client)
+#   message = client.gets
+#   client.puts message
+# end
+#
 # server = TCPServer.new("localhost", 1234)
-# loop do
-#   server.accept do |client|
-#     message = client.gets
-#     server << message # echo the message back
-#   end
+# while client = server.accept?
+#   spawn handle_client(client)
 # end
 # ```
+#
+# Options:
+# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *port* specific port to bind on, or `0` to receive an "ephemeral" (free, assigned by kernel) port.
+# - *backlog* to specify how many pending connections are allowed.
+# - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
 class TCPServer < TCPSocket
-  def initialize(host, port, backlog = 128)
-    getaddrinfo(host, port, nil, Type::STREAM, Protocol::TCP) do |addrinfo|
-      super create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
+  include Socket::Server
+
+  # Creates a new `TCPServer`, waiting to be bound.
+  def self.new(family : Family = Family::INET)
+    super(family)
+  end
+
+  # Binds a socket to the *host* and *port* combination.
+  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
+    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
+      self.reuse_port = true if reuse_port
 
-      if LibC.bind(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen) != 0
-        errno = Errno.new("Error binding TCP server at #{host}:#{port}")
+      if errno = system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
         close
-        next false if addrinfo.ai_next
-        raise errno
+        next errno
       end
 
-      if LibC.listen(@fd, backlog) != 0
-        errno = Errno.new("Error listening TCP server at #{host}:#{port}")
+      if errno = listen(backlog) { |errno| errno }
         close
-        next false if addrinfo.ai_next
-        raise errno
+        next errno
       end
-
-      true
     end
   end
 
+  # Creates a TCPServer from an already configured raw file descriptor
+  def initialize(*, fd : Handle, family : Family = Family::INET)
+    super(fd: fd, family: family)
+  end
+
   # Creates a new TCP server, listening on all local interfaces (`::`).
-  def self.new(port : Int, backlog = 128)
-    new("::", port, backlog)
+  def self.new(port : Int, backlog = SOMAXCONN, reuse_port = false)
+    new("::", port, backlog, reuse_port: reuse_port)
   end
 
   # Creates a new TCP server and yields it to the block. Eventually closes the
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port, backlog = 128)
-    server = new(host, port, backlog)
+  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false, &)
+    server = new(host, port, backlog, reuse_port: reuse_port)
     begin
       yield server
     ensure
@@ -59,8 +79,8 @@ class TCPServer < TCPSocket
   # block. Eventually closes the server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(port : Int, backlog = 128)
-    server = new(port, backlog)
+  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false, &)
+    server = new(port, backlog, reuse_port: reuse_port)
     begin
       yield server
     ensure
@@ -68,80 +88,15 @@ class TCPServer < TCPSocket
     end
   end
 
-  # Accepts an incoming connection and yields the client socket to the block.
-  # Eventually closes the connection when the block returns.
-  #
-  # Returns the value of the block. If the server is closed after invoking this
-  # method, an `IO::Error` (closed stream) exception will be raised.
-  #
-  # ```
-  # require "socket"
-  #
-  # server = TCPServer.new(2202)
-  # server.accept do |socket|
-  #   socket.puts Time.now
-  # end
-  # ```
-  def accept
-    sock = accept
-    begin
-      yield sock
-    ensure
-      sock.close
-    end
-  end
-
-  # Accepts an incoming connection and yields the client socket to the block.
-  # Eventualy closes the connection when the block returns.
-  #
-  # Returns the value of the block or `nil` if the server is closed after
-  # invoking this method.
-  #
-  # ```
-  # require "socket"
-  #
-  # server = TCPServer.new(2202)
-  # server.accept? do |socket|
-  #   socket.puts Time.now
-  # end
-  # ```
-  def accept?
-    sock = accept?
-    return unless sock
-
-    begin
-      yield sock
-    ensure
-      sock.close
-    end
-  end
-
   # Accepts an incoming connection.
   #
-  # Returns the client socket. Raises an `IO::Error` (closed stream) exception
-  # if the server is closed after invoking this method.
-  #
-  # ```
-  # require "socket"
-  #
-  # server = TCPServer.new(2202)
-  # socket = server.accept
-  # socket.puts Time.now
-  # socket.close
-  # ```
-  def accept : TCPSocket
-    accept? || raise IO::Error.new("closed stream")
-  end
-
-  # Accepts an incoming connection.
-  #
-  # Returns the client socket or `nil` if the server is closed after invoking
+  # Returns the client `TCPSocket` or `nil` if the server is closed after invoking
   # this method.
   #
   # ```
   # require "socket"
   #
-  # server = TCPServer.new(2202)
+  # server = TCPServer.new(2022)
   # loop do
   #   if socket = server.accept?
   #     # handle the client in a fiber
@@ -153,23 +108,10 @@ class TCPServer < TCPSocket
   # end
   # ```
   def accept? : TCPSocket?
-    loop do
-      client_addr = uninitialized LibC::SockaddrIn6
-      client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
-      client_fd = LibC.accept(fd, pointerof(client_addr).as(LibC::Sockaddr*), pointerof(client_addr_len))
-      if client_fd == -1
-        return nil if closed?
-
-        if Errno.value == Errno::EAGAIN
-          wait_readable
-        else
-          raise Errno.new "Error accepting socket"
-        end
-      else
-        sock = TCPSocket.new(client_fd)
-        sock.sync = sync?
-        return sock
-      end
+    if client_fd = system_accept
+      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
+      sock.sync = sync?
+      sock
     end
   end
 end

@@ -1,0 +1,70 @@
+all:
+
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
+
+SHELL := cmd.exe
+
+MKDIR = if not exist $1 mkdir $1
+RMDIR = if exist $1 rd /S /Q $1
+
+CRYSTAL := ..\bin\crystal.bat# Crystal compiler to use
+O := .build# Output directory
+
+BUILDABLE_SOURCES := $(wildcard *.cr llvm/*.cr compiler/*.cr)
+NONLINK_SOURCES := $(wildcard sdl/*.cr)
+
+BUILDABLE_BINARIES := $(patsubst %.cr,$(O)/%.exe,$(BUILDABLE_SOURCES))
+NONLINK_BINARIES := $(patsubst %.cr,$(O)/%.obj,$(NONLINK_SOURCES))
+
+.PHONY: all
+all: build
+
+.PHONY: build
+build: $(BUILDABLE_BINARIES) $(NONLINK_BINARIES) ## Build sample binaries
+
+$(O)/%.exe: %.cr
+	$(call MKDIR,"$(dir $@)")
+	$(CRYSTAL) build "$<" -o "$@"
+
+$(O)/%.obj: %.cr
+	$(call MKDIR,"$(dir $@)")
+	$(CRYSTAL) build --cross-compile "$<" -o "$(patsubst %.obj,%,$@)"
+
+.PHONY: clean
+clean: ## Remove build artifacts
+	$(call RMDIR,"$(O)")
+
+.PHONY: help
+help: ## Show this help
+	@setlocal EnableDelayedExpansion &\
+	echo. &\
+	echo targets: &\
+	(for /F "usebackq tokens=1* delims=:" %%g in ($(MAKEFILE_LIST)) do (\
+		if not "%%h" == "" (\
+			set "_line=%%g                " &\
+			set "_rest=%%h" &\
+			set "_comment=!_rest:* ## =!" &\
+			if not "!_comment!" == "!_rest!"\
+				if "!_line:_rest=!" == "!_line!"\
+					echo   !_line:~0,16!!_comment!\
+		)\
+	)) &\
+	echo. &\
+	echo optional variables: &\
+	(for /F "usebackq tokens=1,3 delims=?#" %%g in ($(MAKEFILE_LIST)) do (\
+		if not "%%h" == "" (\
+			set "_var=%%g              " &\
+			echo   !_var:~0,14! %%h\
+		)\
+	)) &\
+	echo. &\
+	echo recipes: &\
+	(for /F "usebackq tokens=* delims=" %%g in ($(MAKEFILE_LIST)) do (\
+		set "_line=%%g" &\
+		if "!_line:~0,7!" == "##   $$ " (\
+			echo !_name! &\
+			echo  !_line:~2!\
+		) else if "!_line:~0,3!" == "## "\
+			set "_name=  !_line:~3!"\
+	))

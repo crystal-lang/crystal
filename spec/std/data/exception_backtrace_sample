@@ -1,0 +1,17 @@
+class Kls
+  def callee1
+    (0..10).to_a[123]
+  end
+end
+
+def callee2
+  yield
+end
+
+def callee3
+  callee2 do
+    Kls.new.callee1
+  end
+end
+
+callee3

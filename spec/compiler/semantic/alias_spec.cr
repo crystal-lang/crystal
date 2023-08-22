@@ -8,6 +8,13 @@ describe "Semantic: alias" do
       ") { types["Int32"].metaclass }
   end
 
+  it "declares alias inside type" do
+    assert_type("
+      alias Foo::Bar = Int32
+      Foo::Bar
+      ") { types["Int32"].metaclass }
+  end
+
   it "works with alias type as restriction" do
     assert_type("
       alias Alias = Int32
@@ -80,7 +87,7 @@ describe "Semantic: alias" do
       alias Type = Nil | Pointer(Type)
       p = Pointer(Type).malloc(1_u64)
       1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if alias already defined" do
@@ -247,5 +254,100 @@ describe "Semantic: alias" do
       alias Alias = UInt8[CONST]
       Alias
       )) { static_array_of(uint8, 10).metaclass }
+  end
+
+  it "looks up alias for macro resolution (#3548)" do
+    assert_type(%(
+      class Foo
+        class Bar
+          def self.baz
+            1
+          end
+        end
+      end
+
+      alias Baz = Foo
+
+      Baz::Bar.baz
+      )) { int32 }
+  end
+
+  it "finds type through alias (#4645)" do
+    assert_type(%(
+      module FooBar
+        module Foo
+          A = 10
+        end
+
+        module Bar
+          include Foo
+        end
+      end
+
+      class Baz
+        alias Bar = FooBar::Bar
+
+        def test
+          Bar::A
+        end
+      end
+
+      Baz.new.test
+      )) { int32 }
+  end
+
+  it "doesn't find type parameter in alias (#3502)" do
+    assert_error %(
+      class A(T)
+        alias B = A(T)
+      end
+      ),
+      "undefined constant T"
+  end
+
+  it "doesn't crash by infinite recursion against type alias and generics (#5329)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(@foo : T)
+        end
+      end
+
+      alias Bar = Foo(Bar | Int32)
+
+      Foo(Bar).new(Foo.new(1).as(Bar))
+    ), "can't cast Foo(Int32) to Bar"
+  end
+
+  it "can pass recursive alias to proc" do
+    assert_type(%(
+      class Object
+        def itself
+          self
+        end
+      end
+
+      alias Rec = Int32 | Array(Rec)
+
+      a = uninitialized Rec
+
+      f = ->(x : Rec) {}
+      f.call(a.itself)
+      ), inject_primitives: true) { nil_type }
+  end
+
+  it "overloads union type through alias" do
+    assert_type(%(
+      alias X = Int8 | Int32
+
+      def foo(x : Int32)
+        1
+      end
+
+      def foo(x : X)
+        'a'
+      end
+
+      foo(1)
+     )) { int32 }
   end
 end

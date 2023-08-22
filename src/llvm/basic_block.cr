@@ -2,6 +2,10 @@ struct LLVM::BasicBlock
   def initialize(@unwrap : LibLLVM::BasicBlockRef)
   end
 
+  def self.null
+    LLVM::BasicBlock.new(Pointer(::Void).null.as(LibLLVM::BasicBlockRef))
+  end
+
   def instructions
     InstructionCollection.new self
   end
@@ -12,5 +16,10 @@ struct LLVM::BasicBlock
 
   def to_unsafe
     @unwrap
+  end
+
+  def name
+    block_name = LibLLVM.get_basic_block_name(self)
+    block_name ? String.new(block_name) : nil
   end
 end

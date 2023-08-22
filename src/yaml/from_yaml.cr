@@ -1,173 +1,376 @@
-def Object.from_yaml(string : String) : self
-  parser = YAML::PullParser.new(string)
-  parser.read_stream do
-    parser.read_document do
-      new parser
-    end
+# Deserializes the given YAML in *string_or_io* into
+# an instance of `self`. This simply creates an instance of
+# `YAML::ParseContext` and invokes `new(parser, yaml)`:
+# classes that want to provide YAML deserialization must provide an
+# `def initialize(parser : YAML::ParseContext, yaml : string_or_io)`
+# method.
+#
+# ```
+# Hash(String, String).from_yaml("{env: production}") # => {"env" => "production"}
+# ```
+def Object.from_yaml(string_or_io : String | IO)
+  new(YAML::ParseContext.new, parse_yaml(string_or_io))
+end
+
+def Array.from_yaml(string_or_io : String | IO, &)
+  new(YAML::ParseContext.new, parse_yaml(string_or_io)) do |element|
+    yield element
   end
 end
 
-def Array.from_yaml(string : String)
-  parser = YAML::PullParser.new(string)
-  parser.read_stream do
-    parser.read_document do
-      new(parser) do |element|
-        yield element
-      end
-    end
+private def parse_yaml(string_or_io)
+  document = YAML::Nodes.parse(string_or_io)
+
+  # If the document is empty we simulate an empty scalar with
+  # plain style, that parses to Nil
+  document.nodes.first? || begin
+    scalar = YAML::Nodes::Scalar.new("")
+    scalar.style = YAML::ScalarStyle::PLAIN
+    scalar
   end
 end
 
-def Nil.new(pull : YAML::PullParser)
-  value = pull.read_scalar
-  if value.empty?
-    nil
+private def parse_scalar(ctx, node, type : T.class) forall T
+  ctx.read_alias(node, T) do |obj|
+    return obj
+  end
+
+  if node.is_a?(YAML::Nodes::Scalar)
+    value = YAML::Schema::Core.parse_scalar(node)
+    if value.is_a?(T)
+      ctx.record_anchor(node, value)
+      value
+    else
+      node.raise "Expected #{T}, not #{node.value.inspect}"
+    end
   else
-    raise YAML::ParseException.new("expected nil, not #{value}", 0, 0)
+    node.raise "Expected scalar, not #{node.kind}"
   end
 end
 
-def Bool.new(pull : YAML::PullParser)
-  pull.read_scalar == "true"
+def Nil.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  parse_scalar(ctx, node, self)
+end
+
+def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  parse_scalar(ctx, node, self)
 end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-  def {{type.id}}.new(pull : YAML::PullParser)
-    begin
-      {{type.id}}.new(pull.read_scalar)
-    rescue ex
-      raise YAML::ParseException.new(ex.message.not_nil!, 0, 0)
-    end
+  def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    {{type.id}}.new! parse_scalar(ctx, node, Int64)
   end
 {% end %}
 
-def String.new(pull : YAML::PullParser)
-  pull.read_scalar
+def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  ctx.read_alias(node, String) do |obj|
+    return obj
+  end
+
+  if node.is_a?(YAML::Nodes::Scalar)
+    value = node.value
+    ctx.record_anchor(node, value)
+    value
+  else
+    node.raise "Expected String, not #{node.kind}"
+  end
 end
 
-def Float32.new(pull : YAML::PullParser)
-  pull.read_scalar.to_f32
+def Path.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  new(String.new(ctx, node))
 end
 
-def Float64.new(pull : YAML::PullParser)
-  pull.read_scalar.to_f64
+def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  parse_scalar(ctx, node, Float64).to_f32!
 end
 
-def Array.new(pull : YAML::PullParser)
+def Float64.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  parse_scalar(ctx, node, self)
+end
+
+def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  ctx.read_alias(node, self) do |obj|
+    return obj
+  end
+
   ary = new
-  new(pull) do |element|
+
+  ctx.record_anchor(node, ary)
+
+  new(ctx, node) do |element|
     ary << element
   end
   ary
 end
 
-def Array.new(pull : YAML::PullParser)
-  pull.read_sequence_start
-  while pull.kind != YAML::EventKind::SEQUENCE_END
-    yield T.new(pull)
+def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
+  unless node.is_a?(YAML::Nodes::Sequence)
+    node.raise "Expected sequence, not #{node.kind}"
   end
-  pull.read_next
+
+  node.each do |value|
+    yield T.new(ctx, value)
+  end
 end
 
-def Hash.new(pull : YAML::PullParser)
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  ctx.read_alias(node, self) do |obj|
+    return obj
+  end
+
+  ary = new
+
+  ctx.record_anchor(node, ary)
+
+  new(ctx, node) do |element|
+    ary << element
+  end
+  ary
+end
+
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
+  unless node.is_a?(YAML::Nodes::Sequence)
+    node.raise "Expected sequence, not #{node.kind}"
+  end
+
+  node.each do |value|
+    yield T.new(ctx, value)
+  end
+end
+
+def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  ctx.read_alias(node, self) do |obj|
+    return obj
+  end
+
   hash = new
-  new(pull) do |key, value|
+
+  ctx.record_anchor(node, hash)
+
+  new(ctx, node) do |key, value|
     hash[key] = value
   end
   hash
 end
 
-def Hash.new(pull : YAML::PullParser)
-  pull.read_mapping_start
-  while pull.kind != YAML::EventKind::MAPPING_END
-    yield K.new(pull), V.new(pull)
+def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
+  unless node.is_a?(YAML::Nodes::Mapping)
+    node.raise "Expected mapping, not #{node.kind}"
   end
-  pull.read_next
+
+  YAML::Schema::Core.each(node) do |key, value|
+    yield K.new(ctx, key), V.new(ctx, value)
+  end
 end
 
-def Tuple.new(pull : YAML::PullParser)
-  {% if true %}
-    pull.read_sequence_start
-    value = Tuple.new(
+def Tuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  unless node.is_a?(YAML::Nodes::Sequence)
+    node.raise "Expected sequence, not #{node.kind}"
+  end
+
+  if node.nodes.size != {{T.size}}
+    node.raise "Expected #{{{T.size}}} elements, not #{node.nodes.size}"
+  end
+
+  {% begin %}
+    Tuple.new(
       {% for i in 0...T.size %}
-        (self[{{i}}].new(pull)),
+        (self[{{i}}].new(ctx, node.nodes[{{i}}])),
       {% end %}
     )
-    pull.read_sequence_end
-    value
  {% end %}
 end
 
-def NamedTuple.new(pull : YAML::PullParser)
+def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  unless node.is_a?(YAML::Nodes::Mapping)
+    node.raise "Expected mapping, not #{node.kind}"
+  end
+
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
-    pull.read_mapping_start
-    while pull.kind != YAML::EventKind::MAPPING_END
-      key = pull.read_scalar
+    YAML::Schema::Core.each(node) do |key, value|
+      key = String.new(ctx, key)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(pull)
+            %var{key.id} = self[{{ key.symbolize }}].new(ctx, value)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
-        pull.skip
+        # ignore the key
       end
     end
-    pull.read_mapping_end
 
-    {% for key in T.keys %}
-      if %var{key.id}.nil?
-        raise YAML::ParseException.new("missing yaml attribute: {{key}}", 0, 0)
-      end
+    {% for key, type in T %}
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          node.raise "Missing yaml attribute: #{ {{ key.id.stringify }} }"
+        end
+      {% end %}
     {% end %}
 
-    {
+    NamedTuple.new(
       {% for key in T.keys %}
-        {{key}}: %var{key.id},
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
-    }
+    )
   {% end %}
 end
 
-def Enum.new(pull : YAML::PullParser)
-  string = pull.read_scalar
-  if value = string.to_i64?
-    from_value(value)
-  else
-    parse(string)
+# Reads a serialized enum member by name from *ctx* and *node*.
+#
+# See `#to_yaml` for reference.
+#
+# Raises `YAML::ParseException` if the deserialization fails.
+def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  {% if @type.annotation(Flags) %}
+    if node.is_a?(YAML::Nodes::Sequence)
+      value = {{ @type }}::None
+      node.each do |element|
+        string = parse_scalar(ctx, element, String)
+
+        value |= parse?(string) || element.raise "Unknown enum #{self} value: #{string.inspect}"
+      end
+
+      value
+    else
+      node.raise "Expected sequence, not #{node.kind}"
+    end
+  {% else %}
+    string = parse_scalar(ctx, node, String)
+    parse?(string) || node.raise "Unknown enum #{self} value: #{string.inspect}"
+  {% end %}
+end
+
+module Enum::ValueConverter(T)
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    from_yaml(ctx, node)
+  end
+
+  # Reads a serialized enum member by value from *ctx* and *node*.
+  #
+  # See `.to_yaml` for reference.
+  #
+  # Raises `YAML::ParseException` if the deserialization fails.
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    value = parse_scalar ctx, node, Int64
+
+    T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
   end
 end
 
-def Union.new(pull : YAML::PullParser)
-  string = pull.read_raw
-  {% for type in T %}
-    begin
-      return {{type}}.from_yaml(string)
-    rescue YAML::ParseException
-      # Ignore
-    end
+def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  if node.is_a?(YAML::Nodes::Alias)
+    {% for type in T %}
+      {% if type < ::Reference %}
+        ctx.read_alias?(node, {{type}}) do |obj|
+          return obj
+        end
+      {% end %}
+    {% end %}
+
+    node.raise("Error deserializing alias")
+  end
+
+  {% begin %}
+    # String must come last because anything can be parsed into a String.
+    # So, we give a chance first to types in the union to be parsed.
+    {% string_type = T.find { |type| type == ::String } %}
+
+    {% for type in T %}
+      {% unless type == string_type %}
+        begin
+          return {{type}}.new(ctx, node)
+        rescue YAML::ParseException
+          # Ignore
+        end
+      {% end %}
+    {% end %}
+
+    {% if string_type %}
+      begin
+        return {{string_type}}.new(ctx, node)
+      rescue YAML::ParseException
+        # Ignore
+      end
+    {% end %}
   {% end %}
-  raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+
+  node.raise "Couldn't parse #{self}"
+end
+
+def Time.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  parse_scalar(ctx, node, Time)
 end
 
 struct Time::Format
-  def from_yaml(pull : YAML::PullParser)
-    string = pull.read_scalar
-    parse(string)
+  def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.kind}"
+    end
+
+    parse(node.value, Time::Location::UTC)
   end
 end
 
 module Time::EpochConverter
-  def self.from_yaml(value : YAML::PullParser) : Time
-    Time.epoch(value.read_scalar.to_i)
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.kind}"
+    end
+
+    Time.unix(node.value.to_i)
   end
 end
 
 module Time::EpochMillisConverter
-  def self.from_yaml(value : YAML::PullParser) : Time
-    Time.epoch_ms(value.read_scalar.to_i64)
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.kind}"
+    end
+
+    Time.unix_ms(node.value.to_i64)
+  end
+end
+
+module YAML::ArrayConverter(Converter)
+  private struct WithInstance(T)
+    def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+      unless node.is_a?(YAML::Nodes::Sequence)
+        node.raise "Expected sequence, not #{node.kind}"
+      end
+
+      ary = Array(typeof(@converter.from_yaml(ctx, node))).new
+
+      node.each do |value|
+        ary << @converter.from_yaml(ctx, value)
+      end
+
+      ary
+    end
+  end
+
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+    WithInstance.new(Converter).from_yaml(ctx, node)
+  end
+end
+
+struct Slice
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    {% if T != UInt8 %}
+      {% raise "Can only deserialize Slice(UInt8), not #{@type}}" %}
+    {% end %}
+
+    parse_scalar(ctx, node, self)
   end
 end

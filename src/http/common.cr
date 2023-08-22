@@ -1,10 +1,15 @@
+require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "zlib"
+  require "compress/deflate"
+  require "compress/gzip"
 {% end %}
 
 module HTTP
-  # :nodoc:
-  DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+  # Default maximum permitted size (in bytes) of the request line in an HTTP request.
+  MAX_REQUEST_LINE_SIZE = 8192 # 8 KB
+
+  # Default maximum permitted combined size (in bytes) of the headers in an HTTP request.
+  MAX_HEADERS_SIZE = 16_384 # 16 KB
 
   # :nodoc:
   enum BodyType
@@ -13,37 +18,58 @@ module HTTP
     Mandatory
   end
 
+  SUPPORTED_VERSIONS = {"HTTP/1.0", "HTTP/1.1"}
+
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
+  record EndOfRequest
+  # :nodoc:
+  record HeaderLine, name : String, value : String, bytesize : Int32
+
+  # :nodoc:
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE, &) : HTTP::Status?
     headers = Headers.new
 
-    while line = io.gets
-      if line == "\r\n" || line == "\n"
+    max_size = max_headers_size
+    while header_line = read_header_line(io, max_size)
+      case header_line
+      when EndOfRequest
         body = nil
+
         if body_type.prohibited?
           body = nil
-        elsif content_length = headers["Content-Length"]?
-          content_length = content_length.to_u64
-          if content_length != 0
-            # Don't create IO for Content-Length == 0
-            body = FixedLengthContent.new(io, content_length)
-          end
+        elsif content_length = content_length(headers)
+          body = FixedLengthContent.new(io, content_length)
         elsif headers["Transfer-Encoding"]? == "chunked"
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
         end
 
+        if body.is_a?(Content) && expect_continue?(headers)
+          body.expects_continue = true
+        end
+
         if decompress && body
+          encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
-            raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            case encoding
+            when "gzip", "deflate"
+              raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            else
+              # not a format we support
+            end
           {% else %}
-            encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
-              body = Zlib::Inflate.gzip(body, sync_close: true)
+              body = Compress::Gzip::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             when "deflate"
-              body = Zlib::Inflate.new(body, sync_close: true)
+              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
+            else
+              # not a format we support
             end
           {% end %}
         end
@@ -51,43 +77,104 @@ module HTTP
         check_content_type_charset(body, headers)
 
         yield headers, body
-        break
-      end
+        return
+      else # HeaderLine
+        max_size -= header_line.bytesize
+        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if max_size < 0
 
-      name, value = parse_header(line)
-      headers.add(name, value)
+        return HTTP::Status::BAD_REQUEST unless headers.add?(header_line.name, header_line.value)
+      end
     end
+  end
+
+  private def self.read_header_line(io, max_size) : HeaderLine | EndOfRequest | Nil
+    # Optimization: check if we have a peek buffer
+    if peek = io.peek
+      # peek.empty? means EOF (so bad request)
+      return nil if peek.empty?
+
+      # See if we can find \n
+      index = peek.index('\n'.ord.to_u8)
+      if index
+        end_index = index
+
+        # Also check (and discard) \r before that
+        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+          end_index -= 1
+        end
+
+        # Check if we just have "\n" or "\r\n" (so end of request)
+        if end_index == 0
+          io.skip(index + 1)
+          return EndOfRequest.new
+        end
+
+        return HeaderLine.new name: "", value: "", bytesize: index + 1 if index > max_size
+
+        name, value = parse_header(peek[0, end_index])
+        io.skip(index + 1) # Must skip until after \n
+        return HeaderLine.new name: name, value: value, bytesize: index + 1
+      end
+    end
+
+    line = io.gets(max_size + 1, chomp: true)
+    return nil unless line
+    if line.bytesize > max_size
+      return HeaderLine.new name: "", value: "", bytesize: max_size
+    end
+
+    if line.empty?
+      return EndOfRequest.new
+    end
+
+    name, value = parse_header(line)
+    HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)
     return unless body
 
-    if charset = content_type_and_charset(headers).charset
-      body.set_encoding(charset, invalid: :skip)
-    end
+    content_type = headers["Content-Type"]?
+    return unless content_type
+
+    mime_type = MIME::MediaType.parse?(content_type)
+    return unless mime_type
+
+    charset = mime_type["charset"]?
+    return if !charset || charset == "utf-8"
+
+    body.set_encoding(charset, invalid: :skip)
   end
 
   # :nodoc:
-  def self.parse_header(line)
+  def self.parse_header(line : String) : {String, String}
+    parse_header(line.to_slice)
+  end
+
+  # :nodoc:
+  def self.parse_header(slice : Bytes) : {String, String}
     # This is basically
     #
-    #     name, value = line.split ':', 2
-    #     {name, value.lstrip}
+    # ```
+    # line = "Server: nginx"
+    # name, value = line.split ':', 2
+    # {name, value.lstrip} # => {"Server", "nginx"}
+    # ```
     #
     # except that it's faster because we only create 2 strings
     # instead of 3 (two from the split and one for the lstrip),
     # and there's no need for the array returned by split.
 
-    cstr = line.to_unsafe
-    bytesize = line.bytesize
+    cstr = slice.to_unsafe
+    bytesize = slice.size
 
     # Get the colon index and name
-    colon_index = cstr.to_slice(bytesize).index(':'.ord) || 0
-    name = line.byte_slice(0, colon_index)
+    colon_index = slice.index(':'.ord.to_u8) || 0
+    name = header_name(slice[0, colon_index])
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
       middle_index += 1
     end
 
@@ -95,186 +182,270 @@ module HTTP
     right_index = bytesize
     if middle_index >= right_index
       return {name, ""}
-    elsif right_index > 1 && cstr[right_index - 2] === '\r' && cstr[right_index - 1] === '\n'
+    elsif right_index > 1 && cstr[right_index - 2] == '\r'.ord.to_u8 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] === '\n'
+    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 1
     end
 
-    value = line.byte_slice(middle_index, right_index - middle_index)
+    value = String.new(slice[middle_index, right_index - middle_index])
 
     {name, value}
   end
 
+  # Important! These have to be in lexicographic order.
+  private COMMON_HEADERS = %w(
+    Accept-Encoding
+    Accept-Language
+    Accept-encoding
+    Accept-language
+    Allow
+    Cache-Control
+    Cache-control
+    Connection
+    Content-Disposition
+    Content-Encoding
+    Content-Language
+    Content-Length
+    Content-Type
+    Content-disposition
+    Content-encoding
+    Content-language
+    Content-length
+    Content-type
+    ETag
+    Etag
+    Expires
+    Host
+    Last-Modified
+    Last-modified
+    Location
+    Referer
+    User-Agent
+    User-agent
+    accept-encoding
+    accept-language
+    allow
+    cache-control
+    connection
+    content-disposition
+    content-encoding
+    content-language
+    content-length
+    content-type
+    etag
+    expires
+    host
+    last-modified
+    location
+    referer
+    user-agent
+  )
+
+  # :nodoc:
+  def self.header_name(slice : Bytes) : String
+    # Check if the header name is a common one.
+    # If so we avoid having to allocate a string for it.
+    if slice.size < 20
+      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
+      return name if name && name.to_slice == slice
+    end
+
+    String.new(slice)
+  end
+
   # :nodoc:
   def self.serialize_headers_and_body(io, headers, body, body_io, version)
-    # prepare either chunked response headers if protocol supports it
-    # or consume the io to get the Content-Length header
-    unless body
-      if body_io
-        if Client::Response.supports_chunked?(version)
-          headers["Transfer-Encoding"] = "chunked"
-          body = nil
-        else
-          body = body_io.gets_to_end
-          body_io = nil
+    if body
+      serialize_headers_and_string_body(io, headers, body)
+    elsif body_io
+      content_length = content_length(headers)
+      if content_length
+        headers.serialize(io)
+        io << "\r\n"
+        copied = IO.copy(body_io, io)
+        if copied != content_length
+          raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
-      end
-    end
-
-    if body
-      headers["Content-Length"] = body.bytesize.to_s
-    end
-
-    headers.each do |name, values|
-      values.each do |value|
-        io << name << ": " << value << "\r\n"
-      end
-    end
-
-    io << "\r\n"
-
-    if body
-      io << body
-    end
-
-    if body_io
-      buf = uninitialized UInt8[8192]
-      while (buf_length = body_io.read(buf.to_slice)) > 0
-        buf_length.to_s(16, io)
+      elsif Client::Response.supports_chunked?(version)
+        headers["Transfer-Encoding"] = "chunked"
+        headers.serialize(io)
         io << "\r\n"
-        io.write(buf.to_slice[0, buf_length])
-        io << "\r\n"
+        serialize_chunked_body(io, body_io)
+      else
+        body = body_io.gets_to_end
+        serialize_headers_and_string_body(io, headers, body)
       end
-      io << "0\r\n\r\n"
+    else
+      headers.serialize(io)
+      io << "\r\n"
     end
   end
 
+  def self.serialize_headers_and_string_body(io, headers, body)
+    headers["Content-Length"] = body.bytesize.to_s
+    headers.serialize(io)
+    io << "\r\n"
+    io << body
+  end
+
+  @[Deprecated("Use `HTTP::Headers#serialize` instead.")]
+  def self.serialize_headers(io, headers)
+    headers.serialize(io)
+    io << "\r\n"
+  end
+
+  def self.serialize_chunked_body(io, body)
+    buf = uninitialized UInt8[8192]
+    while (buf_length = body.read(buf.to_slice)) > 0
+      buf_length.to_s(io, 16)
+      io << "\r\n"
+      io.write(buf.to_slice[0, buf_length])
+      io << "\r\n"
+    end
+    io << "0\r\n\r\n"
+  end
+
   # :nodoc:
-  def self.keep_alive?(message)
+  def self.content_length(headers) : UInt64?
+    length_headers = headers.get? "Content-Length"
+    return nil unless length_headers
+    first_header = length_headers[0]
+    if length_headers.size > 1 && length_headers.any? { |header| header != first_header }
+      raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
+    end
+    first_header.to_u64
+  end
+
+  # :nodoc:
+  def self.keep_alive?(message) : Bool
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
-      return true
+      true
     when "close", "upgrade"
-      return false
-    end
-
-    case message.version
-    when "HTTP/1.0"
       false
     else
-      true
-    end
-  end
-
-  record ComputedContentTypeHeader,
-    content_type : String?,
-    charset : String?
-
-  # :nodoc:
-  def self.content_type_and_charset(headers)
-    content_type = headers["Content-Type"]?
-    return ComputedContentTypeHeader.new(nil, nil) unless content_type
-
-    # Avoid allocating an array for the split if there's no ';'
-    if content_type.index(';')
-      pieces = content_type.split(';')
-      content_type = pieces[0].strip
-      (1...pieces.size).each do |i|
-        piece = pieces[i]
-        eq_index = piece.index('=')
-        if eq_index
-          key = piece[0...eq_index].strip
-          if key == "charset"
-            value = piece[eq_index + 1..-1].strip
-            return ComputedContentTypeHeader.new(content_type, value)
-          end
-        end
+      case message.version
+      when "HTTP/1.0"
+        false
+      else
+        true
       end
-    else
-      content_type = content_type.strip
     end
-
-    ComputedContentTypeHeader.new(content_type.strip, nil)
   end
 
+  def self.expect_continue?(headers) : Bool
+    headers["Expect"]?.try(&.downcase) == "100-continue"
+  end
+
+  # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)
+  #
+  # ```
+  # require "http"
+  #
+  # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
+  # ```
+  #
+  # Uses `Time::Format::HTTP_DATE` as parser.
   def self.parse_time(time_str : String) : Time?
-    DATE_PATTERNS.each do |pattern|
-      begin
-        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
-      rescue Time::Format::Error
+    Time::Format::HTTP_DATE.parse(time_str)
+  rescue Time::Format::Error
+  end
+
+  # Format a `Time` object as a `String` using the format specified as `sane-cookie-date`
+  # by [RFC 6265](https://tools.ietf.org/html/rfc6265#section-4.1.1) which is
+  # according to [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1) a
+  # [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55) format with explicit
+  # timezone `GMT` (interpreted as `UTC`).
+  #
+  # ```
+  # require "http"
+  #
+  # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
+  # ```
+  #
+  # Uses `Time::Format::HTTP_DATE` as formatter.
+  def self.format_time(time : Time) : String
+    Time::Format::HTTP_DATE.format(time)
+  end
+
+  # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string.
+  #
+  # ```
+  # require "http"
+  #
+  # quoted = %q(\"foo\\bar\")
+  # HTTP.dequote_string(quoted) # => %q("foo\bar")
+  # ```
+  def self.dequote_string(str) : String
+    data = str.to_slice
+    quoted_pair_index = data.index('\\'.ord)
+    return str unless quoted_pair_index
+
+    String.build do |io|
+      while quoted_pair_index
+        io.write(data[0, quoted_pair_index])
+        io << data[quoted_pair_index + 1].unsafe_chr
+
+        data += quoted_pair_index + 2
+        quoted_pair_index = data.index('\\'.ord)
       end
+      io.write(data)
     end
-
-    nil
   end
 
-  def self.rfc1123_date(time : Time) : String
-    # TODO: GMT should come from the Time classes instead
-    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
+  # Encodes a string to an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string. Encoded string is written to *io*. May raise when *string*
+  # contains an invalid character.
+  #
+  # ```
+  # require "http"
+  #
+  # string = %q("foo\ bar")
+  # io = IO::Memory.new
+  # HTTP.quote_string(string, io)
+  # io.rewind
+  # io.gets_to_end # => %q(\"foo\\\ bar\")
+  # ```
+  def self.quote_string(string, io) : Nil
+    # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
+
+    string.each_char do |char|
+      case char
+      when '\t', ' ', '"', '\\'
+        io << '\\'
+      when '\u{00}'..'\u{1F}', '\u{7F}'
+        raise ArgumentError.new("String contained invalid character #{char.inspect}")
+      else
+        # output byte as is
+      end
+      io << char
+    end
   end
 
-  # Returns the default status message of the given HTTP status code.
-  def self.default_status_message_for(status_code : Int) : String
-    case status_code
-    when 100 then "Continue"
-    when 101 then "Switching Protocols"
-    when 200 then "OK"
-    when 201 then "Created"
-    when 202 then "Accepted"
-    when 203 then "Non-Authoritative Information"
-    when 204 then "No Content"
-    when 205 then "Reset Content"
-    when 206 then "Partial Content"
-    when 226 then "IM Used"
-    when 300 then "Multiple Choices"
-    when 301 then "Moved Permanently"
-    when 302 then "Found"
-    when 303 then "See Other"
-    when 304 then "Not Modified"
-    when 305 then "Use Proxy"
-    when 307 then "Temporary Redirect"
-    when 308 then "Permanent Redirect"
-    when 400 then "Bad Request"
-    when 401 then "Unauthorized"
-    when 402 then "Payment Required"
-    when 403 then "Forbidden"
-    when 404 then "Not Found"
-    when 405 then "Method Not Allowed"
-    when 406 then "Not Acceptable"
-    when 407 then "Proxy Authentication Required"
-    when 408 then "Request Timeout"
-    when 409 then "Conflict"
-    when 410 then "Gone"
-    when 411 then "Length Required"
-    when 412 then "Precondition Failed"
-    when 413 then "Request Entity Too Large"
-    when 414 then "Request-URI Too Long"
-    when 415 then "Unsupported Media Type"
-    when 416 then "Requested Range Not Satisfiable"
-    when 417 then "Expectation Failed"
-    when 421 then "Misdirected Request"
-    when 423 then "Locked"
-    when 426 then "Upgrade Required"
-    when 428 then "Precondition Required"
-    when 429 then "Too Many Requests"
-    when 431 then "Request Header Fields Too Large"
-    when 451 then "Unavailable For Legal Reasons"
-    when 500 then "Internal Server Error"
-    when 501 then "Not Implemented"
-    when 502 then "Bad Gateway"
-    when 503 then "Service Unavailable"
-    when 504 then "Gateway Timeout"
-    when 505 then "HTTP Version Not Supported"
-    when 506 then "Variant Also Negotiates"
-    when 510 then "Not Extended"
-    else          ""
+  # Encodes a string to an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string. May raise when *string* contains an invalid character.
+  #
+  # ```
+  # require "http"
+  #
+  # string = %q("foo\ bar")
+  # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
+  # ```
+  def self.quote_string(string) : String
+    String.build do |io|
+      quote_string(string, io)
     end
   end
 end
 
+require "./status"
 require "./request"
 require "./client/response"
 require "./headers"
 require "./content"
 require "./cookie"
+require "./formdata"

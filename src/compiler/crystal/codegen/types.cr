@@ -2,11 +2,17 @@ module Crystal
   class Type
     # Returns `true` if this type is passed as a `self` argument
     # in the codegen phase. For example a method whose receiver is
-    # the Program, or a Metaclass, doesn't have a `self` argument.
+    # the Program, or a non-generic metaclass, doesn't have a `self` argument.
     def passed_as_self?
       case self
-      when Program, FileModule, LibType, MetaclassType
+      when Program, FileModule, LibType
         false
+      when MetaclassType
+        # Given `type T = Void*`, `T.class` is not necessarily a non-generic
+        # metaclass, so we must resolve any typedefs here (we don't need to
+        # check for the cases above because `#remove_typedef` must return a
+        # metaclass)
+        !self.remove_typedef.is_a?(MetaclassType)
       else
         true
       end
@@ -23,9 +29,9 @@ module Crystal
       when VirtualType
         self.struct?
       when NonGenericModuleType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericModuleInstanceType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
         self.generic_type.passed_by_value?
       when TypeDefType
@@ -36,6 +42,57 @@ module Crystal
         self.struct?
       else
         false
+      end
+    end
+
+    # Returns `true` if the type has inner pointers.
+    # This is useful to know because if a type doesn't have
+    # inner pointers we can use `malloc_atomic` instead of
+    # `malloc` in `Pointer.malloc` for a tiny performance boost.
+    #
+    # This behaviour is documented in Pointer.malloc
+    def has_inner_pointers?
+      case self
+      when .void?
+        # We consider Void to have pointers, so doing
+        # Pointer(Void).malloc(...).as(ReferenceType)
+        # will consider potential inner pointers as such.
+        true
+      when PointerInstanceType
+        true
+      when ProcInstanceType
+        # A proc can have closure data which might have pointers
+        true
+      when StaticArrayInstanceType
+        self.element_type.has_inner_pointers?
+      when TupleInstanceType
+        self.tuple_types.any? &.has_inner_pointers?
+      when NamedTupleInstanceType
+        self.entries.any? &.type.has_inner_pointers?
+      when PrimitiveType
+        false
+      when EnumType
+        false
+      when UnionType
+        self.union_types.any? &.has_inner_pointers?
+      when AliasType
+        self.aliased_type.has_inner_pointers?
+      when TypeDefType
+        self.typedef.has_inner_pointers?
+      when VirtualType
+        if struct?
+          self.subtypes.any? &.has_inner_pointers?
+        else
+          true
+        end
+      when InstanceVarContainer
+        if struct?
+          all_instance_vars.each_value.any? &.type.has_inner_pointers?
+        else
+          true
+        end
+      else
+        true
       end
     end
 
@@ -71,7 +128,7 @@ module Crystal
     def llvm_name(io)
       if extern?
         io << (extern_union? ? "union" : "struct")
-        io << "."
+        io << '.'
       end
       to_s_with_options io, codegen: true
     end
@@ -80,7 +137,7 @@ module Crystal
   class NonGenericModuleType
     def append_to_expand_union_types(types)
       if including_types = @including_types
-        including_types.each &.append_to_expand_union_types(types)
+        including_types.each &.virtual_type.append_to_expand_union_types(types)
       else
         types << self
       end
@@ -90,7 +147,7 @@ module Crystal
   class GenericModuleInstanceType
     def append_to_expand_union_types(types)
       if including_types = @including_types
-        including_types.each &.append_to_expand_union_types(types)
+        including_types.each &.virtual_type.append_to_expand_union_types(types)
       else
         types << self
       end
@@ -99,7 +156,7 @@ module Crystal
 
   class UnionType
     def expand_union_types
-      if union_types.any?(&.is_a?(NonGenericModuleType))
+      if union_types.any?(NonGenericModuleType)
         types = [] of Type
         union_types.each &.append_to_expand_union_types(types)
         types
@@ -118,12 +175,57 @@ module Crystal
   class Const
     property initializer : LLVM::Value?
 
+    # Was this constant already read during the codegen phase?
+    # If not, and we are at the place that declares the constant, we can
+    # directly initialize the constant now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the constant was initialized or
+    # not when reading it.
+    property? no_init_flag = false
+
     def initialized_llvm_name
       "#{llvm_name}:init"
     end
 
+    # Returns `true` if this constant's value is a simple literal, like
+    # `nil`, a number, char, string or symbol literal.
     def simple?
+      return false if pointer_read?
+
       value.simple_literal?
+    end
+
+    def needs_init_flag?
+      return true if pointer_read?
+
+      !(initializer || no_init_flag? || simple?)
+    end
+
+    @compile_time_value : (Int128 | Int16 | Int32 | Int64 | Int8 | UInt128 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
+    @computed_compile_time_value = false
+
+    # Returns a value if this constant's value can be evaluated at
+    # compile time (things like `1 + 2` and such). Returns nil otherwise.
+    def compile_time_value
+      unless @computed_compile_time_value
+        @computed_compile_time_value = true
+
+        case value = self.value
+        when BoolLiteral
+          @compile_time_value = value.value
+        when CharLiteral
+          @compile_time_value = value.value
+        else
+          case value.type?
+          when IntegerType, EnumType
+            interpreter = MathInterpreter.new(namespace, visitor)
+            @compile_time_value = interpreter.interpret(value) rescue nil
+          end
+        end
+      end
+
+      @compile_time_value
     end
   end
 end

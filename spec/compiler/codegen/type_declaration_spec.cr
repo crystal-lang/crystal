@@ -62,4 +62,11 @@ describe "Code gen: type declaration" do
       Foo.new.x
       )).to_i.should eq(42)
   end
+
+  it "declares and initializes var" do
+    run(%(
+      a : Int32 = 42
+      a
+      )).to_i.should eq(42)
+  end
 end

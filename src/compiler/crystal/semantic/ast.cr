@@ -1,10 +1,9 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_allowed_in_generics(node, type, msg)
-    return if type.allowed_in_generics?
+  def self.check_type_can_be_stored(node, type, msg)
+    return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -20,6 +19,27 @@ module Crystal
         true
       else
         false
+      end
+    end
+
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
+    def supports_autocast?(number_autocast : Bool = true)
+      case self
+      when NumberLiteral, SymbolLiteral
+        true
+      else
+        if number_autocast
+          case self_type = self.type?
+          when IntegerType
+            self_type.kind.bytesize <= 64
+          when FloatType
+            self_type.kind.f32?
+          else
+            false
+          end
+        else
+          false
+        end
       end
     end
   end
@@ -48,9 +68,9 @@ module Crystal
 
   # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
-    getter index : Int32
+    getter index : TupleInstanceType::Index
 
-    def initialize(@index : Int32)
+    def initialize(@index)
       super("tuple_indexer_known_index")
     end
 
@@ -67,7 +87,7 @@ module Crystal
     end
 
     def to_macro_id
-      @type.to_s
+      @type.not_nil!.devirtualize.to_s
     end
 
     def clone_without_location
@@ -77,7 +97,25 @@ module Crystal
     def_equals_and_hash type
   end
 
+  # Fictitious node to represent an assignment with a type restriction,
+  # created to match the assignment of a method argument's default value.
+  class AssignWithRestriction < ASTNode
+    property assign
+    property restriction
+
+    def initialize(@assign : Assign, @restriction : ASTNode)
+    end
+
+    def clone_without_location
+      AssignWithRestriction.new @assign.clone, @restriction.clone
+    end
+
+    def_equals_and_hash assign, restriction
+  end
+
   class Arg
+    include Annotatable
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
@@ -94,35 +132,41 @@ module Crystal
   end
 
   class Def
+    include Annotatable
+
     property! owner : Type
     property! original_owner : Type
     property vars : MetaVars?
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
+    property freeze_type : Type?
     property block_nest = 0
-    getter? raises = false
+    property? raises = false
     property? closure = false
     property? self_closured = false
     property? captured_block = false
 
-    # `true` if this def has the `@[NoInline]` attribute
+    # `true` if this def has the `@[NoInline]` annotation
     property? no_inline = false
 
-    # `true` if this def has the `@[AlwaysInline]` attribute
+    # `true` if this def has the `@[AlwaysInline]` annotation
     property? always_inline = false
 
-    # `true` if this def has the `@[ReturnsTwice]` attribute
+    # `true` if this def has the `@[ReturnsTwice]` annotation
     property? returns_twice = false
 
-    # `true` if this def has the `@[Naked]` attribute
+    # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
 
     @macro_owner : Type?
+
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
 
     def macro_owner=(@macro_owner)
     end
@@ -140,30 +184,22 @@ module Crystal
       special_vars << name
     end
 
-    def raises=(value)
-      if value != @raises
-        @raises = value
-        @observers.try &.each do |obs|
-          if obs.is_a?(Call)
-            obs.raises = value
-          end
-        end
-      end
-    end
-
-    # Returns the minimum and maximum number of arguments that must
-    # be passed to this method.
+    # Returns the minimum and maximum number of positional arguments that must
+    # be passed to this method, assuming positional parameters are not matched
+    # by named arguments.
     def min_max_args_sizes
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
       splat_index = self.splat_index
       if splat_index
+        min_size = {default_value_index || splat_index, splat_index}.min
         if args[splat_index].name.empty?
-          min_size = {default_value_index || splat_index, splat_index}.min
           max_size = splat_index
         else
-          min_size -= 1 unless default_value_index && default_value_index < splat_index
+          if splat_restriction = args[splat_index].restriction
+            min_size += 1 unless splat_restriction.is_a?(Splat) || default_value_index.try(&.< splat_index)
+          end
           max_size = Int32::MAX
         end
       end
@@ -178,6 +214,8 @@ module Crystal
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
       a_def.naked = naked?
+      a_def.annotations = annotations
+      a_def.new = new?
       a_def
     end
 
@@ -189,9 +227,24 @@ module Crystal
         yield arg, arg_index, object, object_index
       end
     end
+
+    def free_var?(node : Path)
+      free_vars = @free_vars
+      return false unless free_vars
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
+    end
+
+    def free_var?(any)
+      false
+    end
   end
 
   class Macro
+    include Annotatable
+
+    property! owner : Type
+
     # Yields `arg, arg_index, object, object_index` corresponding
     # to arguments matching the given objects, taking into account this
     # macro's splat index.
@@ -381,18 +434,45 @@ module Crystal
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
+    property freeze_type : Type?
+
     # True if we need to mark this variable as nilable
     # if this variable is read.
     property? nil_if_read = false
 
     # A variable is closured if it's used in a ProcLiteral context
     # where it wasn't created.
-    property? closured = false
+    getter? closured = false
 
     # Is this metavar assigned a value?
     property? assigned_to = false
 
+    # Is this metavar closured in a mutable way?
+    # This means it's closured and it got a value assigned to it more than once.
+    # If that's the case, when it's closured then all local variable related to
+    # it will also be bound to it.
+    property? mutably_closured = false
+
+    # Local variables associated with this meta variable.
+    # Can be Var or MetaVar.
+    property(local_vars) { [] of ASTNode }
+
     def initialize(@name : String, @type : Type? = nil)
+    end
+
+    # Marks this variable as closured.
+    def mark_as_closured
+      @closured = true
+
+      return unless mutably_closured?
+
+      local_vars = @local_vars
+      return unless local_vars
+
+      # If a meta var is not readonly and it became a closure we must
+      # bind all previously related local vars to it so that
+      # they get all types assigned to it.
+      local_vars.each &.bind_to self
     end
 
     # True if this variable belongs to the given context
@@ -406,6 +486,11 @@ module Crystal
       @context.same?(context)
     end
 
+    # Is this metavar associated with any local vars?
+    def local_vars?
+      @local_vars
+    end
+
     def ==(other : self)
       name == other.name
     end
@@ -414,7 +499,7 @@ module Crystal
       self
     end
 
-    def inspect(io)
+    def inspect(io : IO) : Nil
       io << name
       if type = type?
         io << " : "
@@ -422,8 +507,13 @@ module Crystal
       end
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
+      io << " (mutably-closured)" if mutably_closured?
       io << " (assigned-to)" if assigned_to?
       io << " (object id: #{object_id})"
+    end
+
+    def pretty_print(pp)
+      pp.text inspect
     end
   end
 
@@ -432,6 +522,8 @@ module Crystal
   # A variable belonging to a type: a global,
   # class or instance variable (globals belong to the program).
   class MetaTypeVar < Var
+    include Annotatable
+
     property nil_reason : NilReason?
 
     # The owner of this variable, useful for showing good
@@ -441,6 +533,12 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    property freeze_type : Type?
+
+    # Flag used during codegen to indicate the initializer is simple
+    # and doesn't require a call to a function
+    property? simple_initializer = false
+
     # Is this variable thread local? Only applicable
     # to global and class variables.
     property? thread_local = false
@@ -448,21 +546,36 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
+    # Was this class_var already read during the codegen phase?
+    # If not, and we are at the place that declares the class var, we can
+    # directly initialize it now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the class var was initialized or
+    # not when reading it.
+    property? no_init_flag = false
+
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
+      kind.global?
     end
   end
 
@@ -478,6 +591,7 @@ module Crystal
 
   class Path
     property target_const : Const?
+    property target_type : Type?
     property syntax_replacement : ASTNode?
   end
 
@@ -501,6 +615,7 @@ module Crystal
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
+    property freeze_type : Type?
     property? visited = false
 
     getter(:break) { Var.new("%break") }
@@ -537,8 +652,8 @@ module Crystal
   {% for name in %w(And Or
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
-                   MacroExpression MacroIf MacroFor MultiAssign
-                   SizeOf InstanceSizeOf Global Require Select) %}
+                   MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
+                   SizeOf InstanceSizeOf OffsetOf Global Require Select) %}
     class {{name.id}}
       include ExpandableNode
     end
@@ -564,10 +679,17 @@ module Crystal
     property! resolved_type : AliasType
   end
 
+  class AnnotationDef
+    include Annotatable
+
+    property! resolved_type : AnnotationType
+  end
+
   class External < Def
     property real_name : String
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
+    property wasm_import_module : String?
 
     property? dead = false
     property? used = false
@@ -609,17 +731,23 @@ module Crystal
   end
 
   class NilReason
+    enum Reason
+      UsedBeforeInitialized
+      UsedSelfBeforeInitialized
+      InitializedInRescue
+    end
+
     getter name : String
-    getter reason : Symbol
+    getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
   class Asm
-    property ptrof : PointerOf?
+    property output_ptrofs : Array(PointerOf)?
   end
 
   # Fictitious node that means "all these nodes come from this file"
@@ -683,5 +811,43 @@ module Crystal
     end
 
     def_equals_and_hash value
+  end
+
+  # Fictitious node representing a variable in macros
+  class MetaMacroVar < ASTNode
+    property name : String
+    property default_value : ASTNode?
+
+    # The instance variable associated with this meta macro var
+    property! var : MetaTypeVar
+
+    def initialize(@name, @type)
+    end
+
+    def self.class_desc
+      "MetaVar"
+    end
+
+    def clone_without_location
+      self
+    end
+  end
+
+  # Fictitious node to mean a location in code shouldn't be reached.
+  # This is used in the implicit `else` branch of a case.
+  class Unreachable < ASTNode
+    def clone_without_location
+      Unreachable.new
+    end
+  end
+
+  class ProcLiteral
+    # If this ProcLiteral was created from expanding a ProcPointer,
+    # this holds the reference to it.
+    property proc_pointer : ProcPointer?
+  end
+
+  class ProcPointer
+    property expanded : ASTNode?
   end
 end

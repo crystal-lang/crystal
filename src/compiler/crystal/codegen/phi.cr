@@ -6,7 +6,7 @@ class Crystal::CodeGenVisitor
 
     property? force_exit_block = false
 
-    def self.open(codegen, node, needs_value = true)
+    def self.open(codegen, node, needs_value = true, &)
       block = new codegen, node, needs_value
       yield block
       block.close
@@ -31,6 +31,10 @@ class Crystal::CodeGenVisitor
 
     def llvm_typer
       @codegen.llvm_typer
+    end
+
+    def unreachable
+      @codegen.unreachable
     end
 
     def add(value, type : Nil, last = false)
@@ -89,7 +93,10 @@ class Crystal::CodeGenVisitor
           @codegen.last = llvm_nil
         else
           if @exit_block
-            @codegen.last = phi llvm_arg_type(@node_type.not_nil!), phi_table
+            node_type = @node_type.not_nil!
+            type = llvm_type(node_type)
+            type = type.pointer if node_type.passed_by_value?
+            @codegen.last = phi type, phi_table
           else
             @codegen.last = phi_table.values.first
           end

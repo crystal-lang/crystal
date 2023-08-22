@@ -2,43 +2,47 @@ require "spec"
 
 describe "Bool" do
   describe "!" do
-    assert { (!true).should be_false }
-    assert { (!false).should be_true }
+    it { (!true).should be_false }
+    it { (!false).should be_true }
   end
 
   describe "|" do
-    assert { (false | false).should be_false }
-    assert { (false | true).should be_true }
-    assert { (true | false).should be_true }
-    assert { (true | true).should be_true }
+    it { (false | false).should be_false }
+    it { (false | true).should be_true }
+    it { (true | false).should be_true }
+    it { (true | true).should be_true }
   end
 
   describe "&" do
-    assert { (false & false).should be_false }
-    assert { (false & true).should be_false }
-    assert { (true & false).should be_false }
-    assert { (true & true).should be_true }
+    it { (false & false).should be_false }
+    it { (false & true).should be_false }
+    it { (true & false).should be_false }
+    it { (true & true).should be_true }
   end
 
   describe "^" do
-    assert { (false ^ false).should be_false }
-    assert { (false ^ true).should be_true }
-    assert { (true ^ false).should be_true }
-    assert { (true ^ true).should be_false }
+    it { (false ^ false).should be_false }
+    it { (false ^ true).should be_true }
+    it { (true ^ false).should be_true }
+    it { (true ^ true).should be_false }
   end
 
   describe "hash" do
-    assert { true.hash.should eq(1) }
-    assert { false.hash.should eq(0) }
+    it { true.hash.should_not eq(false.hash) }
+  end
+
+  describe "to_unsafe" do
+    it { true.to_unsafe.should eq(1) }
+    it { false.to_unsafe.should eq(0) }
   end
 
   describe "to_s" do
-    assert { true.to_s.should eq("true") }
-    assert { false.to_s.should eq("false") }
+    it { true.to_s.should eq("true") }
+    it { false.to_s.should eq("false") }
   end
 
   describe "clone" do
-    assert { true.clone.should be_true }
-    assert { false.clone.should be_false }
+    it { true.clone.should be_true }
+    it { false.clone.should be_false }
   end
 end

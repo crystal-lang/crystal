@@ -21,7 +21,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(call)
-          {{call.args.join(" + ").id}}
+          {{call.args.join(" &+ ").id}}
         end
       end
 
@@ -45,7 +45,7 @@ describe "Code gen: method_missing" do
 
       a = 0
       Foo.new.foo do |x|
-        a += x
+        a &+= x
       end
       a
       )).to_i.should eq(6)
@@ -55,7 +55,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         def foo_something
-          1 + 2
+          1 &+ 2
         end
 
         macro method_missing(call)
@@ -300,7 +300,7 @@ describe "Code gen: method_missing" do
   it "does method_missing with assignment (2) (bug)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -315,7 +315,7 @@ describe "Code gen: method_missing" do
       end
 
       foo = Foo.new
-      foo.bar(1).to_i
+      foo.bar(1).to_i!
       )).to_i.should eq(1)
   end
 
@@ -339,7 +339,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(call)
-          {{call.args.join(" + ").id}}
+          {{call.args.join(" &+ ").id}}
         end
       end
 
@@ -351,7 +351,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Wrapped
         def foo(x, y, z)
-          x + y + z
+          x &+ y &+ z
         end
       end
 
@@ -366,5 +366,69 @@ describe "Code gen: method_missing" do
 
       Foo.new(Wrapped.new).foo(1, 2, 3)
       )).to_i.should eq(6)
+  end
+
+  it "does method_missing generating method" do
+    run(%(
+      class Foo
+        macro method_missing(call)
+          def {{call.name}}
+            {{call.name.stringify}}
+          end
+        end
+      end
+
+      Foo.new.bar
+      )).to_string.should eq("bar")
+  end
+
+  it "works with named arguments (#3654)" do
+    run(%(
+      class A
+        macro method_missing(call)
+          {{call.named_args[0].value}} &+
+            {{call.named_args[1].value}}
+        end
+      end
+
+      a = A.new
+      a.b(x: 1, y: 2)
+      )).to_i.should eq(3)
+  end
+
+  it "works with named arguments that aren't legal variable names (#10381)" do
+    run(%(
+      class A
+        macro method_missing(call)
+          {{call.named_args[0].value}} &+
+            {{call.named_args[1].value}}
+        end
+      end
+
+      a = A.new
+      a.b("@x": 1, Y: 2)
+      )).to_i.should eq(3)
+  end
+
+  it "finds method_missing with 'with ... yield'" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        macro method_missing(call)
+          @{{call.name.id}}
+        end
+      end
+
+      def bar
+        foo = Foo.new(10)
+        with foo yield
+      end
+
+      bar do
+        x
+      end
+      )).to_i.should eq(10)
   end
 end

@@ -1,17 +1,30 @@
 class LLVM::Module
-  getter name : String
+  # We let a module store a reference to the context so that if
+  # someone is still holding a reference to the module but not to
+  # the context, the context won't be disposed (if the context is disposed,
+  # the module will no longer be valid and segfaults will happen)
 
-  def initialize(@name : String)
-    @unwrap = LibLLVM.module_create_with_name @name
+  getter context : Context
+
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
     @owned = false
+  end
+
+  def name : String
+    bytes = LibLLVM.get_module_identifier(self, out bytesize)
+    String.new(Slice.new(bytes, bytesize))
+  end
+
+  def name=(name : String)
+    LibLLVM.set_module_identifier(self, name, name.bytesize)
   end
 
   def target=(target)
     LibLLVM.set_target(self, target)
   end
 
-  def data_layout=(data)
-    LibLLVM.set_data_layout(self, data)
+  def data_layout=(data : TargetData)
+    LibLLVM.set_module_data_layout(self, data)
   end
 
   def dump
@@ -26,8 +39,31 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
-  def write_bitcode(filename : String)
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
+    LibLLVM.add_module_flag(
+      self,
+      module_flag,
+      key,
+      key.bytesize,
+      LibLLVM.value_as_metadata(val.to_unsafe)
+    )
+  end
+
+  def write_bitcode_to_file(filename : String)
     LibLLVM.write_bitcode_to_file self, filename
+  end
+
+  @[Deprecated("ThinLTO is no longer supported; use `#write_bitcode_to_file` instead")]
+  def write_bitcode_with_summary_to_file(filename : String)
+    LibLLVM.write_bitcode_to_file self, filename
+  end
+
+  def write_bitcode_to_memory_buffer
+    MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
+  end
+
+  def write_bitcode_to_fd(fd : Int, should_close = false, buffered = false)
+    LibLLVM.write_bitcode_to_fd(self, fd, should_close ? 1 : 0, buffered ? 1 : 0)
   end
 
   def verify
@@ -48,11 +84,18 @@ class LLVM::Module
     self
   end
 
+  {% unless LibLLVM::IS_LT_130 %}
+    @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+  {% end %}
   def new_function_pass_manager
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
-  def to_s(io)
+  def ==(other : self)
+    @unwrap == other.@unwrap
+  end
+
+  def to_s(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
   end
@@ -61,16 +104,11 @@ class LLVM::Module
     @unwrap
   end
 
-  def take_ownership
+  def take_ownership(&)
     if @owned
       yield
     else
       @owned = true
     end
-  end
-
-  def finalize
-    return if @owned
-    LibLLVM.dispose_module(@unwrap)
   end
 end

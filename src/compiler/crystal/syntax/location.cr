@@ -1,14 +1,35 @@
-require "../../../partial_comparable"
-
 # A location of an `ASTnode`, including its filename, line number and column number.
 class Crystal::Location
-  include PartialComparable(self)
+  include Comparable(self)
 
   getter line_number
   getter column_number
   getter filename
 
   def initialize(@filename : String | VirtualFile | Nil, @line_number : Int32, @column_number : Int32)
+  end
+
+  # Returns a location from a string representation. Used by compiler tools like
+  # `context` and `implementations`.
+  def self.parse(cursor : String, *, expand : Bool = false) : self
+    file_and_line, _, col = cursor.rpartition(':')
+    file, _, line = file_and_line.rpartition(':')
+
+    raise ArgumentError.new "cursor location must be file:line:column" if file.empty? || line.empty? || col.empty?
+
+    file = File.expand_path(file) if expand
+
+    line_number = line.to_i? || 0
+    if line_number <= 0
+      raise ArgumentError.new "line must be a positive integer, not #{line}"
+    end
+
+    column_number = col.to_i? || 0
+    if column_number <= 0
+      raise ArgumentError.new "column must be a positive integer, not #{col}"
+    end
+
+    new(file, line_number, column_number)
   end
 
   # Returns the directory name of this location's filename. If
@@ -20,32 +41,51 @@ class Crystal::Location
 
   # Returns the Location whose filename is a String, not a VirtualFile,
   # traversing virtual file expanded locations.
-  def original_location
+  def expanded_location
     case filename = @filename
     when String
       self
     when VirtualFile
-      filename.expanded_location.try &.original_location
+      filename.expanded_location.try &.expanded_location
     else
       nil
     end
   end
 
-  # Returns the filename of the `original_location`
+  # Returns the Location whose filename is a String, not a VirtualFile,
+  # traversing virtual file expanded locations leading to the original user source code
+  def macro_location
+    case filename = @filename
+    when String
+      self
+    when VirtualFile
+      filename.macro.location.try(&.macro_location)
+    else
+      nil
+    end
+  end
+
+  # Returns the filename of the `expanded_location`
   def original_filename
-    original_location.try &.filename.as?(String)
+    expanded_location.try &.filename.as?(String)
   end
 
   def between?(min, max)
+    return false unless min && max
+
     min <= self && self <= max
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  def to_s(io)
-    io << filename << ":" << line_number << ":" << column_number
+  def to_s(io : IO) : Nil
+    io << filename << ':' << line_number << ':' << column_number
+  end
+
+  def pretty_print(pp)
+    pp.text to_s
   end
 
   def <=>(other)

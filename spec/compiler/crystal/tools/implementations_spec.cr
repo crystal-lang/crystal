@@ -1,10 +1,6 @@
-require "spec"
-require "yaml"
-require "../../../../src/compiler/crystal/**"
+require "../../../spec_helper"
 
-include Crystal
-
-def processed_implementation_visitor(code, cursor_location)
+private def processed_implementation_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
@@ -15,7 +11,7 @@ def processed_implementation_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-def assert_implementations(code)
+private def assert_implementations(code)
   cursor_location = nil
   expected_locations = [] of Location
 
@@ -29,14 +25,16 @@ def assert_implementations(code)
     end
   end
 
-  code = code.gsub('‸', "").gsub('༓', "")
+  code = code.delete &.in?('‸', '༓')
 
   if cursor_location
     visitor, result = processed_implementation_visitor(code, cursor_location)
 
-    result_location = result.implementations.not_nil!.map { |e| Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s }.sort
+    result_locations = result.implementations.not_nil!.map do |e|
+      Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s
+    end.sort!
 
-    result_location.should eq(expected_locations.map(&.to_s))
+    result_locations.should eq(expected_locations.map(&.to_s))
   else
     raise "no cursor found in spec"
   end
@@ -342,6 +340,142 @@ describe "implementations" do
     end
 
     Bar::Foo.bar_foo
+    )
+  end
+
+  it "find implementation inside contained file private method" do
+    assert_implementations %(
+    private ༓def foo
+    end
+
+    private def bar
+      f‸oo
+    end
+
+    bar
+    )
+  end
+
+  it "find implementation inside contained file private class' class method" do
+    assert_implementations %(
+    private ༓def foo
+    end
+
+    private class Bar
+      def self.bar
+        f‸oo
+      end
+    end
+
+    Bar.bar
+    )
+  end
+
+  it "find class implementation" do
+    assert_implementations %(
+    ༓class Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find open class implementation" do
+    assert_implementations %(
+    ༓class Foo
+      def foo
+      end
+    end
+
+    ༓class Foo
+      def bar
+      end
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find struct implementation" do
+    assert_implementations %(
+    ༓struct Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find module implementation" do
+    assert_implementations %(
+    ༓module Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find enum implementation" do
+    assert_implementations %(
+    ༓enum Foo
+      Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find enum value implementation" do
+    assert_implementations %(
+    enum Foo
+      ༓Foo
+    end
+
+    Foo::F‸oo
+    )
+  end
+
+  it "find alias implementation" do
+    assert_implementations %(
+    class Foo
+    end
+
+    ༓alias Bar = Foo
+
+    B‸ar
+    )
+  end
+
+  it "find class defined by macro" do
+    assert_implementations %(
+    macro foo
+      class Foo
+      end
+    end
+
+    ༓foo
+
+    F‸oo
+    )
+  end
+
+  it "find class inside method" do
+    assert_implementations %(
+    ༓class Foo
+    end
+
+    def foo
+      F‸oo
+    end
+
+    foo
+    )
+  end
+
+  it "find const implementation" do
+    assert_implementations %(
+    ༓Foo = 42
+
+    F‸oo
     )
   end
 end

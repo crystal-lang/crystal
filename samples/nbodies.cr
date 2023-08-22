@@ -1,4 +1,4 @@
-# Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u32/program.php?test=nbody&lang=yarv&id=2
+# Copied with little modifications from: https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/nbody-yarv-2.html
 
 SOLAR_MASS    = 4 * Math::PI**2
 DAYS_PER_YEAR = 365.24
@@ -124,8 +124,7 @@ BODIES = [
 ]
 
 if ARGV.size != 1
-  puts "Usage: nbody n"
-  exit 1
+  abort "Usage: nbodies n"
 end
 
 n = ARGV[0].to_i

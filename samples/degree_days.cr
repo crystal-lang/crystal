@@ -1,7 +1,7 @@
 # Copied with little modifications from: https://github.com/rubinius/rubinius-benchmark/blob/master/real_world/bench_degree_days.rb
 
 class DegreeDays
-  def initialize(@daily_temperatures : Array(Array(Int32)), @options = {} of Symbol => Float64)
+  def initialize(@daily_temperatures : Array(Array(Int32)), @options = {} of String => Float64)
   end
 
   property :daily_temperatures
@@ -28,10 +28,10 @@ class DegreeDays
     end
 
     {
-      :heating      => heating,
-      :cooling      => cooling,
-      :heating_days => heating_days,
-      :cooling_days => cooling_days,
+      "heating"      => heating,
+      "cooling"      => cooling,
+      "heating_days" => heating_days,
+      "cooling_days" => cooling_days,
     }
   end
 
@@ -64,31 +64,31 @@ class DegreeDays
   end
 
   private def base_temperature
-    @options[:base_temperature]? || 65.0
+    @options["base_temperature"]? || 65.0
   end
 
   private def heating_insulation
-    @options[:heating_insulation]? || insulation_factor || 3
+    @options["heating_insulation"]? || insulation_factor || 3
   end
 
   private def cooling_insulation
-    @options[:cooling_insulation]? || insulation_factor || 0
+    @options["cooling_insulation"]? || insulation_factor || 0
   end
 
   private def insulation_factor
-    @options[:insulation_factor]?
+    @options["insulation_factor"]?
   end
 
   private def heating_threshold
-    @options[:heating_threshold]? || threshold || 6
+    @options["heating_threshold"]? || threshold || 6
   end
 
   private def cooling_threshold
-    @options[:cooling_threshold]? || threshold || 3
+    @options["cooling_threshold"]? || threshold || 3
   end
 
   private def threshold
-    @options[:threshold]?
+    @options["threshold"]?
   end
 end
 
@@ -99,9 +99,9 @@ end
   hot_day = Array.new(hours_in_day, 92)
   cold_day = Array.new(hours_in_day, 37)
 
-  # TODO (formatter) separate in two lines
   # 182 hot days + 183 cold days
-  temperatures = Array.new((days_in_year / 2.0).floor.to_i, hot_day) + Array.new((days_in_year / 2.0).ceil.to_i, cold_day)
+  temperatures = Array.new((days_in_year / 2.0).floor.to_i, hot_day) +
+                 Array.new((days_in_year / 2.0).ceil.to_i, cold_day)
 
   degree_days = DegreeDays.new(temperatures)
   res = degree_days.calculate

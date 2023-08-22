@@ -1,4 +1,4 @@
-# Struct is the base type of structs you create in your program.
+# `Struct` is the base type of structs you create in your program.
 # It is set as a struct's superstruct when you don't specify one:
 #
 # ```
@@ -18,7 +18,7 @@
 # struct Mutable
 #   property value
 #
-#   def initialize(@value)
+#   def initialize(@value : Int32)
 #   end
 # end
 #
@@ -43,16 +43,16 @@
 # create immutable structs with some fields, similar to a `Tuple` but using
 # names instead of indices.
 struct Struct
-  # Returns `true` if this struct is equal to `other`.
+  # Returns `true` if this struct is equal to *other*.
   #
-  # Both structs's instance vars are compared to each other. Thus, two
+  # Both structs' instance vars are compared to each other. Thus, two
   # structs are considered equal if each of their instance variables are
   # equal. Subclasses should override this method to provide specific
   # equality semantics.
   #
   # ```
   # struct Point
-  #   def initialize(@x, @y)
+  #   def initialize(@x : Int32, @y : Int32)
   #   end
   # end
   #
@@ -63,22 +63,24 @@ struct Struct
   # p1 == p2 # => true
   # p1 == p3 # => false
   # ```
-  def ==(other : self) : Bool
-    {% for ivar in @type.instance_vars %}
-      return false unless @{{ivar.id}} == other.@{{ivar.id}}
-    {% end %}
-    true
+  def ==(other) : Bool
+    # TODO: This is a workaround for https://github.com/crystal-lang/crystal/issues/5249
+    if other.is_a?(self)
+      {% for ivar in @type.instance_vars %}
+        return false unless @{{ivar.id}} == other.@{{ivar.id}}
+      {% end %}
+      true
+    else
+      false
+    end
   end
 
-  # Returns a hash value based on this struct's instance variables hash values.
-  #
-  # See `Object#hash`
-  def hash : Int32
-    hash = 0
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for ivar in @type.instance_vars %}
-      hash = 31 * hash + @{{ivar.id}}.hash.to_i32
+      hasher = @{{ivar.id}}.hash(hasher)
     {% end %}
-    hash
+    hasher
   end
 
   # Appends this struct's name and instance variables names and values
@@ -86,7 +88,7 @@ struct Struct
   #
   # ```
   # struct Point
-  #   def initialize(@x, @y)
+  #   def initialize(@x : Int32, @y : Int32)
   #   end
   # end
   #
@@ -95,7 +97,7 @@ struct Struct
   # p1.inspect # "Point(@x=1, @y=2)"
   # ```
   def inspect(io : IO) : Nil
-    io << {{@type.name.id.stringify}} << "("
+    io << {{@type.name.id.stringify}} << '('
     {% for ivar, i in @type.instance_vars %}
       {% if i > 0 %}
         io << ", "
@@ -103,12 +105,33 @@ struct Struct
       io << "@{{ivar.id}}="
       @{{ivar.id}}.inspect(io)
     {% end %}
-    io << ")"
-    nil
+    io << ')'
+  end
+
+  def pretty_print(pp) : Nil
+    {% if @type.overrides?(Struct, "inspect") %}
+      pp.text inspect
+    {% else %}
+      prefix = "#{{{@type.name.id.stringify}}}("
+      pp.surround(prefix, ")", left_break: "", right_break: nil) do
+        {% for ivar, i in @type.instance_vars.map(&.name).sort %}
+          {% if i > 0 %}
+            pp.comma
+          {% end %}
+          pp.group do
+            pp.text "@{{ivar.id}}="
+            pp.nest do
+              pp.breakable ""
+              @{{ivar.id}}.pretty_print(pp)
+            end
+          end
+        {% end %}
+      end
+    {% end %}
   end
 
   # Same as `#inspect(io)`.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     inspect(io)
   end
 end

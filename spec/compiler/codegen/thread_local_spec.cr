@@ -1,64 +1,66 @@
+{% skip_file if flag?(:openbsd) %}
+
 require "../../spec_helper"
 
 describe "Codegen: thread local" do
   it "works with class variables" do
     run(%(
-      require "prelude"
+    require "prelude"
 
-      class Foo
-        @[ThreadLocal]
-        @@var = 123
+    class Foo
+      @[ThreadLocal]
+      @@var = 123
 
-        def self.var
-          @@var
-        end
-
-        def self.var=(@@var)
-        end
+      def self.var
+        @@var
       end
 
-      Thread.new { Foo.var = 456 }.join
+      def self.var=(@@var)
+      end
+    end
 
-      Foo.var
-    )).to_i.should eq(123)
+    Thread.new { Foo.var = 456 }.join
+
+    Foo.var
+  )).to_i.should eq(123)
   end
 
   it "works with class variable in main thread" do
     run(%(
-      require "prelude"
+    require "prelude"
 
-      class Foo
-        @[ThreadLocal]
-        @@a = 123
+    class Foo
+      @[ThreadLocal]
+      @@a = 123
 
-        def self.a
-          @@a
-        end
+      def self.a
+        @@a
       end
+    end
 
-      Foo.a
-      )).to_i.should eq(123)
+    Foo.a
+    )).to_i.should eq(123)
   end
 
   it "compiles with class variable referenced from initializer" do
     run(%(
-      require "prelude"
+    require "prelude"
 
-      class Foo
-        @[ThreadLocal]
-        @@x : Foo?
-        @@x = nil
+    class Foo
+      @[ThreadLocal]
+      @@x : Foo?
+      @@x = nil
 
-        def self.x
-          @@x ||= new
-        end
-
-        def initialize
-          Foo.x
-        end
+      def self.x
+        @@x ||= new
       end
 
-      0
-    ))
+      def initialize
+        Foo.x
+      end
+    end
+
+    0
+  ))
   end
 end

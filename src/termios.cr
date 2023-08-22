@@ -1,6 +1,8 @@
 require "c/termios"
 
+@[Deprecated]
 module Termios
+  @[Deprecated]
   @[Flags]
   enum InputMode
     BRKINT = LibC::BRKINT
@@ -18,6 +20,7 @@ module Termios
   end
 
   {% if flag?(:freebsd) %}
+    @[Deprecated]
     @[Flags]
     enum OutputMode
       OPOST  = LibC::OPOST
@@ -29,7 +32,32 @@ module Termios
       TAB0   = LibC::TAB0
       TAB3   = LibC::TAB3
     end
+  {% elsif flag?(:dragonfly) %}
+    # FIXME: Verify
+    @[Deprecated]
+    @[Flags]
+    enum OutputMode
+      OPOST  = LibC::OPOST
+      ONLCR  = LibC::ONLCR
+      OCRNL  = LibC::OCRNL
+      ONOCR  = LibC::ONOCR
+      ONLRET = LibC::ONLRET
+      TABDLY = LibC::TABDLY
+      TAB0   = LibC::TAB0
+      TAB3   = LibC::TAB3
+    end
+  {% elsif flag?(:netbsd) || flag?(:openbsd) %}
+    @[Deprecated]
+    @[Flags]
+    enum OutputMode
+      OPOST  = LibC::OPOST
+      ONLCR  = LibC::ONLCR
+      OCRNL  = LibC::OCRNL
+      ONOCR  = LibC::ONOCR
+      ONLRET = LibC::ONLRET
+    end
   {% else %}
+    @[Deprecated]
     @[Flags]
     enum OutputMode
       OPOST  = LibC::OPOST
@@ -64,6 +92,7 @@ module Termios
     end
   {% end %}
 
+  @[Deprecated]
   enum BaudRate
     B0     = LibC::B0
     B50    = LibC::B50
@@ -83,6 +112,7 @@ module Termios
     B38400 = LibC::B38400
   end
 
+  @[Deprecated]
   enum ControlMode
     CSIZE  = LibC::CSIZE
     CS5    = LibC::CS5
@@ -97,6 +127,7 @@ module Termios
     CLOCAL = LibC::CLOCAL
   end
 
+  @[Deprecated]
   @[Flags]
   enum LocalMode : Int64
     ECHO   = LibC::ECHO
@@ -110,6 +141,7 @@ module Termios
     TOSTOP = LibC::TOSTOP
   end
 
+  @[Deprecated]
   @[Flags]
   enum AttributeSelection
     TCSANOW   = LibC::TCSANOW
@@ -117,6 +149,7 @@ module Termios
     TCSAFLUSH = LibC::TCSAFLUSH
   end
 
+  @[Deprecated]
   enum LineControl
     TCSANOW   = LibC::TCSANOW
     TCSADRAIN = LibC::TCSADRAIN

@@ -106,25 +106,29 @@ describe "Code gen: enum" do
 
   it "codegens enum None redefined" do
     run(%(
-      @[Flags]
-      enum Foo
-        A
-        None = 10
+      lib Lib
+        @[Flags]
+        enum Foo
+          A
+          None = 10
+        end
       end
 
-      Foo::None
+      Lib::Foo::None
       )).to_i.should eq(10)
   end
 
   it "codegens enum All redefined" do
     run(%(
-      @[Flags]
-      enum Foo
-        A
-        All = 10
+      lib Lib
+        @[Flags]
+        enum Foo
+          A
+          All = 10
+        end
       end
 
-      Foo::All
+      Lib::Foo::All
       )).to_i.should eq(10)
   end
 
@@ -302,5 +306,69 @@ describe "Code gen: enum" do
 
       Foo::A.value
       )).to_i.should eq(30)
+  end
+
+  it "adds a none? method to flags enum" do
+    run(%(
+      @[Flags]
+      enum Foo
+        A
+        B
+      end
+
+      x = 0
+      x &+= 1 if Foo::None.none?
+      x &+= 2 if Foo::A.none?
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "can redefine Enum.new and use previous_def" do
+    run(%(
+      enum Foo
+        FOO = 1
+        BAR = 2
+
+        def self.new(x : Int32)
+          previous_def(2)
+        end
+      end
+
+      Foo.new(1)
+      )).to_i.should eq(2)
+  end
+
+  it "can define flags enum : UInt64 with more than 32 values (#7268)" do
+    run(%(
+      @[Flags]
+      enum Foo : UInt64
+        #{Array.new(33) { |i| "V#{i + 1}" }.join "\n"}
+      end
+
+      Foo::V33.value
+      )).to_u64.should eq(1_u64 << 32)
+  end
+
+  it "can define flags enum : UInt128 with 128 values" do
+    run(%(
+      @[Flags]
+      enum Foo : UInt128
+        #{Array.new(128) { |i| "V#{i + 1}" }.join "\n"}
+      end
+
+      Foo::V64.value.to_u64!
+      )).to_u64.should eq(1_u64 << 63)
+  end
+
+  it "can define flags enum : UInt128 with compile-time interpreted values" do
+    run(%(
+      enum Foo : UInt128
+        A = 1_u128 << 6
+        B = 1_u128 << 20
+        C = 1_u128 << 60
+      end
+
+      Foo::A.value.to_u64!
+      )).to_u64.should eq(1 << 6)
   end
 end

@@ -32,14 +32,31 @@ describe "Pointer" do
       p2 = Pointer.malloc(4) { 0 }
       p2.copy_from(p1, 4)
       4.times do |i|
-        p2[0].should eq(p1[0])
+        p2[i].should eq(p1[i])
       end
     end
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.copy_from(p1, -1)
+      end
+    end
+
+    it "copies from union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 1.5)
+      p3 = Pointer.malloc(4, 0 || 0.0)
+      p3.copy_from(p1 || p2, 4)
+      4.times { |i| p3[i].should eq(p1[i]) }
+    end
+  end
+
+  describe "realloc" do
+    it "raises on negative count" do
+      p1 = Pointer(Int32).new(123)
+      expect_raises(ArgumentError) do
+        p1.realloc(-1)
       end
     end
   end
@@ -50,15 +67,30 @@ describe "Pointer" do
       p2 = Pointer.malloc(4) { 0 }
       p1.copy_to(p2, 4)
       4.times do |i|
-        p2[0].should eq(p1[0])
+        p2[i].should eq(p1[i])
       end
     end
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.copy_to(p1, -1)
       end
+    end
+
+    it "copies to union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || 1.5)
+      p3 = Pointer.malloc(4, 0 || 'a')
+      p1.copy_to(p2 || p3, 4)
+      4.times { |i| p2[i].should eq(p1[i]) }
+    end
+
+    it "doesn't raise OverflowError on unsigned size and different target type" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || nil)
+      p1.copy_to(p2, 4_u32)
+      4.times { |i| p2[i].should eq(p1[i]) }
     end
   end
 
@@ -83,9 +115,17 @@ describe "Pointer" do
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.move_from(p1, -1)
       end
+    end
+
+    it "moves from union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 1.5)
+      p3 = Pointer.malloc(4, 0 || 0.0)
+      p3.move_from(p1 || p2, 4)
+      4.times { |i| p3[i].should eq(p1[i]) }
     end
   end
 
@@ -110,14 +150,22 @@ describe "Pointer" do
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.move_to(p1, -1)
       end
+    end
+
+    it "moves to union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || 1.5)
+      p3 = Pointer.malloc(4, 0 || 'a')
+      p1.move_to(p2 || p3, 4)
+      4.times { |i| p2[i].should eq(p1[i]) }
     end
   end
 
   describe "memcmp" do
-    assert do
+    it do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { |i| i }
       p3 = Pointer.malloc(4) { |i| i + 1 }
@@ -145,6 +193,24 @@ describe "Pointer" do
     Pointer(Int32).new(1234).address.should eq(1234)
   end
 
+  it "performs arithmetic with u64" do
+    p = Pointer(Int8).new(1234)
+    d = 4_u64
+    (p + d).address.should eq(1238)
+    (p - d).address.should eq(1230)
+
+    p = Pointer(Int8).new(UInt64::MAX)
+    d = UInt64::MAX - 1
+    (p - d).address.should eq(1)
+  end
+
+  it "performs arithmetic with u32" do
+    p = Pointer(Int8).new(1234)
+    d = 4_u32
+    (p + d).address.should eq(1238)
+    (p - d).address.should eq(1230)
+  end
+
   it "shuffles!" do
     a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.shuffle!(3)
@@ -152,7 +218,7 @@ describe "Pointer" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.to_slice(3).includes?(i + 1).should be_true
+      a.to_slice(3).should contain(i + 1)
     end
   end
 
@@ -162,6 +228,22 @@ describe "Pointer" do
     a[0].should eq(2)
     a[1].should eq(3)
     a[2].should eq(4)
+  end
+
+  it "maps_with_index!" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
+    a.map_with_index!(3) { |e, i| e + i }
+    a[0].should eq(1)
+    a[1].should eq(3)
+    a[2].should eq(5)
+  end
+
+  it "maps_with_index!, with offset" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
+    a.map_with_index!(3, offset: 10) { |e, i| e + i }
+    a[0].should eq(11)
+    a[1].should eq(13)
+    a[2].should eq(15)
   end
 
   it "raises if mallocs negative size" do
@@ -278,4 +360,30 @@ describe "Pointer" do
     ptr = Pointer(Int32).new(123)
     ptr.clone.should eq(ptr)
   end
+
+  {% if flag?(:bits32) %}
+    it "raises on copy_from with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.copy_from(ptr, UInt32::MAX.to_u64 + 1)
+      end
+    end
+
+    it "raises on move_from with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.move_from(ptr, UInt32::MAX.to_u64 + 1)
+      end
+    end
+
+    it "raises on clear with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.clear(UInt32::MAX.to_u64 + 1)
+      end
+    end
+  {% end %}
 end

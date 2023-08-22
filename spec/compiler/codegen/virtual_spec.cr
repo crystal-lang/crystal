@@ -110,7 +110,7 @@ describe "Code gen: virtual type" do
 
       class Bar < Foo
         def foo
-          @x + 1
+          @x &+ 1
         end
       end
 
@@ -249,7 +249,7 @@ describe "Code gen: virtual type" do
       end
 
       f = Bar.new || nil
-      f.foo.to_i
+      f.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -651,6 +651,8 @@ describe "Code gen: virtual type" do
 
   it "codegens new for virtual class with one type" do
     run(%(
+      require "prelude"
+
       abstract class Foo
       end
 
@@ -668,6 +670,8 @@ describe "Code gen: virtual type" do
 
   it "codegens new for virtual class with two types" do
     run(%(
+      require "prelude"
+
       abstract class Foo
       end
 
@@ -688,5 +692,61 @@ describe "Code gen: virtual type" do
       p.value = Baz
       p.value.new.foo
       )).to_i.should eq(456)
+  end
+
+  it "codegens new for new on virtual abstract class (#3835)" do
+    run(%(
+      require "prelude"
+
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          123
+        end
+      end
+
+      begin
+        (Foo || Bar).new
+        ""
+      rescue ex
+        ex.message.not_nil!
+      end
+      )).to_string.should eq("Can't instantiate abstract class Foo")
+  end
+
+  it "casts metaclass union type to virtual metaclass type (#6298)" do
+    run(%(
+      class Foo
+        def self.x
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.x
+          2
+        end
+      end
+
+      class Baz < Foo
+        def self.x
+          3
+        end
+      end
+
+      class Moo
+        def initialize(@foo : Foo.class)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      klass = Bar || Baz
+      Moo.new(klass).foo.x
+      )).to_i.should eq(2)
   end
 end

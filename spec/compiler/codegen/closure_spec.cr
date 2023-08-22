@@ -54,7 +54,7 @@ describe "Code gen: closure" do
       a = 1
       f = foo do
         b = 2
-        -> { a + b }
+        -> { a &+ b }
       end
       f.call
     ").to_i.should eq(3)
@@ -70,7 +70,7 @@ describe "Code gen: closure" do
 
       a = 1
       f = foo do |x|
-        -> { a + x }
+        -> { a &+ x }
       end
       f.call
     ").to_i.should eq(4)
@@ -85,7 +85,7 @@ describe "Code gen: closure" do
 
       f = foo do |x|
         a = 2
-        -> { a + x }
+        -> { a &+ x }
       end
       f.call
       ").to_i.should eq(3)
@@ -118,7 +118,7 @@ describe "Code gen: closure" do
         b = 1
         foo do |y|
           c = 1
-          -> { a + b + c + x + y }
+          -> { a &+ b &+ c &+ x &+ y }
         end
       end
       f.call
@@ -153,7 +153,7 @@ describe "Code gen: closure" do
       f = foo do
         b = 1
         bar do
-          -> { a + b }
+          -> { a &+ b }
         end
       end
       f.call
@@ -175,7 +175,7 @@ describe "Code gen: closure" do
         b = 1
         bar do |x|
           x
-          -> { a + b }
+          -> { a &+ b }
         end
       end
       f.call
@@ -187,7 +187,7 @@ describe "Code gen: closure" do
       a = 1
       f = -> { a }
       a = 2.5
-      f.call.to_i
+      f.call.to_i!
       ").to_i.should eq(2)
   end
 
@@ -210,7 +210,7 @@ describe "Code gen: closure" do
 
         def foo
           a = 2
-          ->{ self.x + a }
+          ->{ self.x &+ a }
         end
 
         def x
@@ -230,7 +230,7 @@ describe "Code gen: closure" do
 
         def foo
           a = 2
-          ->{ x + a }
+          ->{ x &+ a }
         end
 
         def x
@@ -250,7 +250,7 @@ describe "Code gen: closure" do
 
         def foo
           a = 2
-          ->{ @x + a }
+          ->{ @x &+ a }
         end
       end
 
@@ -286,7 +286,7 @@ describe "Code gen: closure" do
         def foo
           bar do
             a = 2
-            ->{ @x + a }
+            ->{ @x &+ a }
           end
         end
       end
@@ -392,7 +392,7 @@ describe "Code gen: closure" do
       a = 1
       ->{
         b = 2
-        ->{ a + b }
+        ->{ a &+ b }
       }.call.call
       )).to_i.should eq(3)
   end
@@ -412,7 +412,7 @@ describe "Code gen: closure" do
               c = 3
               foo do |d|
                 -> {
-                  a + b + c + d
+                  a &+ b &+ c &+ d
                 }
               end
             }
@@ -453,7 +453,7 @@ describe "Code gen: closure" do
 
       a = 1
       f = ->(foo : Foo) {
-        foo.x + a
+        foo.x &+ a
       }
 
       obj = Foo.new(2)
@@ -468,7 +468,7 @@ describe "Code gen: closure" do
         end
 
         def foo(x)
-          @x + x
+          @x &+ x
         end
 
         def bar
@@ -500,21 +500,21 @@ describe "Code gen: closure" do
 
       a = 1
       foo do |x|
-        x + a
+        x &+ a
       end
       ").to_i.should eq(2)
   end
 
   it "transforms block to proc literal with free var" do
     run("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block
       end
 
       a = 1
-      g = foo { |x| x + a }
+      g = foo { |x| x &+ a }
       h = foo { |x| x.to_f + a }
-      (g.call(3) + h.call(5)).to_i
+      (g.call(3) + h.call(5)).to_i!
       ").to_i.should eq(10)
   end
 
@@ -531,14 +531,14 @@ describe "Code gen: closure" do
       end
 
       a = 1
-      foo = Foo.new { |x| x.to_f + a }
-      foo.block.call(1).to_i
+      foo = Foo.new { |x| x.to_f! + a }
+      foo.block.call(1).to_i!
       ").to_i.should eq(2)
   end
 
   it "allows giving less block args when transforming block to proc literal" do
     run("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block.call(1)
       end
 
@@ -546,7 +546,7 @@ describe "Code gen: closure" do
       v = foo do
         1.5 + a
       end
-      v.to_i
+      v.to_i!
       ").to_i.should eq(2)
   end
 
@@ -557,7 +557,7 @@ describe "Code gen: closure" do
       end
 
       a = 1
-      f = ->(x : Int32) { x + a }
+      f = ->(x : Int32) { x &+ a }
       foo &f
       ").to_i.should eq(2)
   end
@@ -570,7 +570,7 @@ describe "Code gen: closure" do
       end
 
       a = 0
-      foo { |x| a += x }
+      foo { |x| a &+= x }
       a
       )).to_i.should eq(3)
   end
@@ -638,5 +638,91 @@ describe "Code gen: closure" do
       end
       coco
       )).to_i.should eq(1)
+  end
+
+  it "codegens closured self in block (#3388)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+
+        def foo
+          yield
+          ->{ self }
+        end
+      end
+
+      foo = Foo.new(42)
+      foo2 = foo.foo { }
+      foo2.call.x
+      )).to_i.should eq(42)
+  end
+
+  it "doesn't incorrectly consider local as closured (#4948)" do
+    codegen(%(
+      arg = 1
+
+      f1 = ->{
+        # Here 'local' isn't to be confused with
+        # the outer closured 'local'
+        local = 1
+        local &+ arg
+      }
+
+      arg = 2
+
+      local = 4_i64
+      f2 = ->{ local.to_i! }
+
+      f1.call &+ f2.call
+    ))
+  end
+
+  it "ensures it can raise from the closure check" do
+    expect_raises(Exception, "::raise must be of NoReturn return type!") do
+      codegen(%(
+        def raise(m : String)
+        end
+
+        fun a(a : -> Int32)
+        end
+
+        value = 1
+        p = ->{ value }
+        a(p)
+      ))
+    end
+  end
+
+  it "allows passing an external function along" do
+    codegen(%(
+      require "prelude"
+
+
+      lib LibA
+        fun a(a : Void* -> Void*)
+      end
+
+      fun b(a : Void* -> Void*)
+        LibA.a(a)
+      end
+    ))
+  end
+
+  it "allows passing an external function along (2)" do
+    codegen(%(
+      lib LibFoo
+        struct S
+          callback : ->
+        end
+      end
+
+      s = LibFoo::S.new
+      s.callback = nil
+    ))
   end
 end

@@ -14,7 +14,7 @@ module Crystal
   class Program
     def visit_class_vars_initializers(node)
       visitor = ClassVarsInitializerVisitor.new(self)
-      node.accept visitor
+      visit_with_finished_hooks(node, visitor)
 
       # First gather them all
       class_var_initializers = [] of ClassVarInitializer
@@ -68,7 +68,16 @@ module Crystal
         end
 
         main_visitor.pushing_type(owner.as(ModuleType)) do
-          node.accept main_visitor
+          # Check if we can autocast
+          if node.supports_autocast?(!@program.has_flag?("no_number_autocast")) && (class_var_type = class_var.type?)
+            cloned_node = node.clone
+            cloned_node.accept MainVisitor.new(self)
+            if casted_value = MainVisitor.check_automatic_cast(@program, cloned_node, class_var_type)
+              node = initializer.node = casted_value
+            end
+          end
+
+          node.accept main_visitor unless node.type?
         end
 
         unless had_class_var
@@ -77,7 +86,7 @@ module Crystal
 
         class_var.bind_to(node)
         class_var.initializer = initializer
-        self.class_var_and_const_initializers << initializer
+        self.class_var_initializers << initializer
       end
 
       node
@@ -120,7 +129,7 @@ module Crystal
       when TypeDeclaration
         node.var.is_a?(ClassVar)
       when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require,
-           MacroExpression, MacroIf, MacroFor
+           MacroExpression, MacroIf, MacroFor, VisibilityModifier
         true
       else
         false

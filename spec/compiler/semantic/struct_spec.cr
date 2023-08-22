@@ -87,7 +87,7 @@ describe "Semantic: struct" do
       ", "can't make class 'Bar' inherit struct 'Foo'"
   end
 
-  it "can't reopen as different type" do
+  it "can't reopen as class" do
     assert_error "
       struct Foo
       end
@@ -97,58 +97,14 @@ describe "Semantic: struct" do
       ", "Foo is not a class, it's a struct"
   end
 
-  it "errors on recursive struct" do
-    assert_error %(
-      struct Test
-        def initialize(@test : Test?)
-        end
-      end
-
-      Test.new(Test.new(nil))
-      ),
-      "recursive struct Test detected: `@test : (Test | Nil)`"
-  end
-
-  it "errors on recursive struct inside module" do
-    assert_error %(
-      struct Foo::Test
-        def initialize(@test : Foo::Test?)
-        end
-      end
-
-      Foo::Test.new(Foo::Test.new(nil))
-      ),
-      "recursive struct Foo::Test detected: `@test : (Foo::Test | Nil)`"
-  end
-
-  it "errors on recursive generic struct inside module" do
-    assert_error %(
-      struct Foo::Test(T)
-        def initialize(@test : Foo::Test(T)?)
-        end
-      end
-
-      Foo::Test(Int32).new(Foo::Test(Int32).new(nil))
-      ),
-      "recursive struct Foo::Test(T) detected: `@test : (Foo::Test(T) | Nil)`"
-  end
-
-  it "errors on mutually recursive struct" do
-    assert_error %(
+  it "can't reopen as module" do
+    assert_error "
       struct Foo
-        def initialize(@bar : Bar?)
-        end
       end
 
-      struct Bar
-        def initialize(@foo : Foo?)
-        end
+      module Foo
       end
-
-      Foo.new(Bar.new(nil))
-      Bar.new(Foo.new(nil))
-      ),
-      "recursive struct Foo detected: `@bar : (Bar | Nil)` -> `@foo : (Foo | Nil)`"
+      ", "Foo is not a module, it's a struct"
   end
 
   it "can't extend struct from non-abstract struct" do
@@ -173,7 +129,7 @@ describe "Semantic: struct" do
       ptr = Pointer(Foo).malloc(1_u64)
       ptr.value = Bar.new
       ptr.value
-      )) { types["Foo"].virtual_type! }
+      ), inject_primitives: true) { types["Foo"].virtual_type! }
   end
 
   it "doesn't error if method is not found in abstract type" do
@@ -197,7 +153,7 @@ describe "Semantic: struct" do
       ptr.value = Bar.new
       ptr.value = Baz.new
       ptr.value.foo
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "can cast to base abstract struct" do
@@ -215,30 +171,58 @@ describe "Semantic: struct" do
       )) { types["Foo"].virtual_type! }
   end
 
-  it "detects recursive struct through module" do
+  it "errors if defining finalize for struct (#3840)" do
     assert_error %(
-      module Moo
-      end
-
       struct Foo
-        include Moo
-
-        def initialize(@moo : Moo)
+        def finalize
         end
       end
       ),
-      "recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
+      "structs can't have finalizers because they are not tracked by the GC"
   end
 
-  it "detects recursive struct through inheritance (#3071)" do
-    assert_error %(
+  it "passes subtype check with generic module type on virtual type" do
+    mod = semantic(%(
+      module Base(T)
+      end
+
       abstract struct Foo
+        include Base(Foo)
+      end
+      )).program
+
+    base_foo = mod.generic_module("Base", mod.types["Foo"].virtual_type!)
+    mod.types["Foo"].implements?(base_foo).should be_true
+  end
+
+  it "passes subtype check with generic module type on virtual type (2) (#10302)" do
+    mod = semantic(%(
+      module Base(T)
+      end
+
+      abstract struct Foo
+        include Base(Foo)
       end
 
       struct Bar < Foo
-        @value = uninitialized Foo
       end
-      ),
-      "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
+      )).program
+
+    base_foo = mod.generic_module("Base", mod.types["Foo"].virtual_type)
+    mod.types["Bar"].implements?(base_foo).should be_true
+  end
+
+  it "passes subtype check with generic module type on virtual type (3)" do
+    mod = semantic(%(
+      module Base(T, N)
+      end
+
+      abstract struct Foo
+        include Base(Foo, 10)
+      end
+      )).program
+
+    mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("10", :i32))).should be_true
+    mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("9", :i32))).should be_false
   end
 end

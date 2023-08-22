@@ -1,0 +1,617 @@
+version: 2.1
+
+parameters:
+  distribution-scripts-version:
+    description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
+    type: string
+    default: "4b3af3fb9ebeb2c74850bc7025a17a38ab82c5f4"
+  previous_crystal_base_url:
+    description: "Prefix for URLs to Crystal bootstrap compiler"
+    type: string
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1"
+
+defaults:
+  environment: &env
+    TRAVIS_BRANCH: $CIRCLE_BRANCH
+    TRAVIS_PULL_REQUEST: $CI_PULL_REQUEST || "false"
+  steps: &ci_steps
+    - checkout
+    - run: bin/ci prepare_system
+    - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+    - run: bin/ci prepare_build
+    - run:
+        command: bin/ci build
+        no_output_timeout: 30m
+    - run:
+        when: always
+        command: |
+          mkdir -p ~/test-results/spec
+          cp .junit/*.xml ~/test-results/spec/
+    - store_test_results:
+        path: ~/test-results
+    - store_artifacts:
+        path: ~/test-results/spec
+
+jobs:
+  test_linux:
+    machine:
+      image: ubuntu-2004:202201-02
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    resource_class: large
+    steps:
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docs
+
+  test_alpine:
+    machine:
+      image: ubuntu-2004:202201-02
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64-musl
+      ARCH_CMD: linux64
+    resource_class: large
+    steps: *ci_steps
+
+  test_darwin:
+    macos:
+      xcode: 13.4.1
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: osx
+      LLVM_CONFIG: /usr/local/opt/llvm/bin/llvm-config
+    steps:
+      - restore_cache:
+          keys:
+            - brew-cache-v1
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
+      - save_cache:
+          key: brew-cache-v1
+          paths:
+            - /usr/local/Homebrew
+            - ~/Library/Caches/Homebrew/downloads
+
+  test_preview_mt:
+    machine:
+      image: ubuntu-2004:202201-02
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    steps:
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci with_build_env 'make crystal'
+      - run:
+          command: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+          no_output_timeout: 30m
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
+
+  prepare_common:
+    docker:
+      - image: docker:stable-git
+    steps:
+      # checkout specific distribution-scripts version to perform releases and nightly
+      - run: |
+          git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
+          cd ~/distribution-scripts
+          git checkout << pipeline.parameters.distribution-scripts-version >>
+      # persist relevant information for build process
+      - run: |
+          cd ~/distribution-scripts
+          touch build.env
+          echo "export DOCKER_REPOSITORY=crystallang/crystal" >> build.env
+
+          # What to build
+          echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
+
+          # Which previous version use
+          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-linux-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-darwin-universal.tar.gz" >> build.env
+
+          cat build.env
+      - persist_to_workspace:
+          root: ../
+          paths:
+            - distribution-scripts
+
+  # prepare build for tagged releases
+  prepare_tagged:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+
+          # How to brand it
+          echo "export CRYSTAL_VERSION=$CIRCLE_TAG" >> build.env
+          echo "export DOCKER_TAG=$CIRCLE_TAG" >> build.env
+
+          # Snapcraft configuration
+          echo "export SNAP_GRADE=stable" >> build.env
+          echo "export SNAP_CHANNEL=edge" >> build.env
+
+          cat build.env
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - distribution-scripts
+
+  # prepare build for nightly releases
+  prepare_nightly:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run: |
+          # We need CRYSTAL_VERSION in prepare_nightly to use src/VERSION so we publish them as x.y.z-dev in apt/rpm
+          #
+          # How to brand it
+          echo "export CRYSTAL_VERSION=$(cat src/VERSION)" >> /tmp/workspace/distribution-scripts/build.env
+          #
+          # TODO: We might want to do that on docker images also to support updates on multiple development versions the same date.
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+
+          echo "export DOCKER_TAG=nightly" >> build.env
+
+          # Build from working directory (needed for omnibus and when version does not match branch/tag)
+          echo "export FORCE_GIT_TAGGED=0" >> build.env
+
+          # Snapcraft configuration
+          echo "export SNAP_GRADE=devel" >> build.env
+          echo "export SNAP_CHANNEL=edge" >> build.env
+
+          cat build.env
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - distribution-scripts
+
+  # prepare build for manual triggered releases like ci branches, maintenance releases, etc.
+  prepare_maintenance:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+
+          # The version is based on the branch name.
+          VERSION=$CIRCLE_BRANCH
+
+          # We need to sanitize it because there are restrictions on some places
+          # where the version is use (Mac pkg names, snap branch).
+          VERSION=${VERSION/release\//}
+          VERSION=${VERSION//_/-}
+          VERSION=${VERSION//\//-}-dev
+
+          export VERSION
+          echo "export CRYSTAL_VERSION=$VERSION" >> build.env
+          echo "export DOCKER_TAG=$VERSION" >> build.env
+
+          # Build from working directory (needed for omnibus and when version does not match branch/tag)
+          echo "export FORCE_GIT_TAGGED=0" >> build.env
+
+          # Snapcraft configuration
+          echo "export SNAP_GRADE=devel" >> build.env
+          echo "export SNAP_CHANNEL=edge/$VERSION" >> build.env
+
+          cat build.env
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - distribution-scripts
+
+  dist_linux:
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          no_output_timeout: 20m
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd linux
+            make all64 release=true
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/linux/build
+          destination: build
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/linux/
+          paths:
+            - build
+
+  dist_darwin:
+    macos:
+      xcode: 13.4.1
+    shell: /bin/bash --login -eo pipefail
+    steps:
+      - restore_cache:
+          keys:
+            - brew-cache-v1
+      - run:
+          name: Setup environment
+          command: |
+            brew unlink python@2 || true
+
+            # We need ruby-install >= 0.8.3
+            brew install ruby-install
+
+            ruby-install ruby 2.7.3
+
+            brew install pkgconfig libtool
+
+            sudo mkdir -p /opt/crystal
+            sudo chown $(whoami) /opt/crystal/
+            sudo mkdir -p /var/cache
+            sudo chown $(whoami) /var/cache
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          no_output_timeout: 40m
+          command: |
+            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd omnibus
+            ruby --version
+            gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)"
+            bundle check || bundle install --binstubs
+            cd ../darwin
+            make
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/darwin/build
+          destination: build
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/darwin/
+          paths:
+            - build
+
+  push_obs_nightly:
+    docker:
+      - image: crystallang/osc
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+
+            packages/obs-setup.sh
+            packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_VERSION%-*} $(date '+%Y%m%d') $CRYSTAL_SHA1 \
+                /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
+                /tmp/workspace/build/crystal-*-docs.tar.gz
+
+  dist_docker:
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source build.env
+          cd docker
+          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb CRYSTAL_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/docker/
+          paths:
+            - build
+
+  publish_docker:
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source ./build.env
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-build.tar.gz | docker image load
+          docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine-build
+
+  dist_snap:
+    docker:
+      - image: cibuilds/snapcraft:stable
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          command: |
+            apt-get install -y make
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd snapcraft
+            CRYSTAL_RELEASE_LINUX64_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz make
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/snapcraft/build
+          destination: build
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/snapcraft/
+          paths:
+            - build
+
+  publish_snap:
+    docker:
+      - image: cibuilds/snapcraft:stable
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          # $SNAPCRAFT_TOKEN is generated using `snapcraft export-login --snaps crystal --channels edge,edge/* -`
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+
+            echo $SNAPCRAFT_TOKEN | snapcraft login --with -
+            snapcraft push /tmp/workspace/build/*.snap --release=$SNAP_CHANNEL
+
+  dist_docs:
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source build.env
+          cd docs
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/docs/build
+          destination: build
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/docs/
+          paths:
+            - build
+
+  publish_nightly_artifacts:
+    docker:
+      - image: manastech/s3cmd:2.2-alpine
+    environment:
+      <<: *env
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJDEDGK6MQ
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          mkdir -p /tmp/upload
+          cd /tmp/workspace/build
+          cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
+          cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+      - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
+
+  dist_artifacts:
+    docker:
+      - image: buildpack-deps:xenial
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - store_artifacts:
+          path: /tmp/workspace/build
+          destination: dist_packages
+
+  test_dist_linux_on_docker:
+    machine:
+      image: ubuntu-2004:202201-02
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source ./build.env
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          echo "export DOCKER_TEST_PREFIX=crystallang/crystal:${DOCKER_TAG}" >> $BASH_ENV
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run:
+          command: bin/ci build
+          no_output_timeout: 30m
+
+workflows:
+  version: 2
+  release:
+    jobs:
+      - test_linux:
+          filters: &release
+            branches:
+              only:
+                - /release\/.+/
+                - /.*\bci\b.*/
+            tags:
+              only: /.*/
+      - test_alpine:
+          filters: *release
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
+      #     filters: *release
+      - test_preview_mt:
+          filters: *release
+      - prepare_common:
+          filters: *release
+      - prepare_maintenance:
+          filters: &maintenance
+            branches:
+              only:
+                - /release\/.+/
+                - /.*\bci\b.*/
+          requires:
+            - prepare_common
+      - prepare_tagged:
+          filters: &tagged
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+          requires:
+            - prepare_common
+      - dist_linux:
+          filters: *release
+          requires:
+            - prepare_maintenance
+            - prepare_tagged
+      - dist_darwin:
+          filters: *release
+          requires:
+            - prepare_maintenance
+            - prepare_tagged
+      - dist_docker:
+          filters: *release
+          requires:
+            - dist_linux
+      - dist_snap:
+          filters: *release
+          requires:
+            - dist_linux
+      - publish_snap:
+          filters: *release
+          requires:
+            - dist_snap
+      - test_dist_linux_on_docker:
+          filters: *release
+          requires:
+            - dist_docker
+      - publish_docker:
+          filters: *release
+          requires:
+            - test_dist_linux_on_docker
+      - dist_docs:
+          filters: *release
+          requires:
+            - dist_docker
+      - dist_artifacts:
+          filters: *release
+          requires:
+            - dist_linux
+            - dist_darwin
+            - dist_snap
+            - dist_docs
+
+  nightly_release:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - test_linux
+      - test_alpine
+      # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
+      - test_preview_mt
+      - prepare_common
+      - prepare_nightly:
+          requires:
+            - prepare_common
+      - dist_linux:
+          requires:
+            - prepare_nightly
+      - dist_darwin:
+          requires:
+            - prepare_nightly
+      - push_obs_nightly:
+          requires:
+            - dist_linux
+            - dist_docs
+      - dist_docker:
+          requires:
+            - dist_linux
+      - dist_snap:
+          requires:
+            - dist_linux
+      - publish_snap:
+          requires:
+            - dist_snap
+      - test_dist_linux_on_docker:
+          requires:
+            - dist_docker
+      - publish_docker:
+          requires:
+            - dist_docker
+      - dist_docs:
+          requires:
+            - dist_docker
+      - publish_nightly_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
+      - dist_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
+            - dist_snap
+            - dist_docs

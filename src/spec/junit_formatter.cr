@@ -1,23 +1,12 @@
-require "xml"
+require "html"
 
 module Spec
   # :nodoc:
   class JUnitFormatter < Formatter
-    @output : IO
+    @started_at = Time.utc
+
     @results = [] of Spec::Result
-    @summary = {} of Symbol => Int32
-
-    def initialize(@output)
-    end
-
-    def push(context)
-    end
-
-    def pop
-    end
-
-    def before_example(description)
-    end
+    @summary = {} of Status => Int32
 
     def report(result)
       current = @summary[result.kind]? || 0
@@ -25,69 +14,115 @@ module Spec
       @results << result
     end
 
-    def finish
-      io = @output
-      io << "<testsuite tests=\"#{@results.size}\" \
-                        errors=\"#{@summary[:error]? || 0}\" \
-                        failed=\"#{@summary[:fail]? || 0}\">\n"
+    def finish(elapsed_time, aborted)
+      io = @io
+      io.puts %(<?xml version="1.0"?>)
+      io << %(<testsuite tests=") << @results.size
+      io << %(" skipped=") << (@summary[Status::Pending]? || 0)
+      io << %(" errors=") << (@summary[Status::Error]? || 0)
+      io << %(" failures=") << (@summary[Status::Fail]? || 0)
+      io << %(" time=") << elapsed_time.total_seconds
+      io << %(" timestamp=") << @started_at.to_rfc3339
+      io << %(" hostname=") << System.hostname
+      io << %(">)
+
+      io.puts
 
       @results.each { |r| write_report(r, io) }
 
-      io << "</testsuite>"
+      io << %(</testsuite>)
       io.close
     end
 
-    def self.file(output_dir)
-      Dir.mkdir_p(output_dir)
-      output_file_path = File.join(output_dir, "output.xml")
-      file = File.new(output_file_path, "w")
+    def self.file(output_path : Path)
+      if output_path.extension != ".xml"
+        output_path = output_path.join("output.xml")
+      end
+
+      Dir.mkdir_p(output_path.dirname)
+      file = File.new(output_path, "w")
       JUnitFormatter.new(file)
+    end
+
+    private def escape_xml_attr(value)
+      String.build do |io|
+        reader = Char::Reader.new(value)
+        while reader.has_next?
+          case current_char = reader.current_char
+          when .control?
+            current_char.to_s.inspect_unquoted(io)
+          else
+            current_char.to_s(io)
+          end
+          reader.next_char
+        end
+      end
     end
 
     # -------- private utility methods
     private def write_report(result, io)
-      io << "<testcase file=\"#{result.file}\" classname=\"#{classname(result)}\" name=\"#{XML.escape(result.description)}\">\n"
+      io << %(  <testcase file=")
+      HTML.escape(result.file, io)
+      io << %(" classname=")
+      HTML.escape(classname(result), io)
+      io << %(" name=")
+      HTML.escape(escape_xml_attr(result.description), io)
+      io << %(" line=")
+      io << result.line
 
-      if (has_inner_content(result.kind))
-        tag = inner_content_tag(result.kind)
-        ex = result.exception
-        if ex
-          write_inner_content(tag, ex, io)
-        else
-          io << "<#{tag} />\n"
-        end
+      if elapsed = result.elapsed
+        io << %(" time=")
+        io << elapsed.total_seconds
       end
 
-      io << "</testcase>\n"
-    end
+      if tag = inner_content_tag(result.kind)
+        io.puts %(">)
 
-    private def has_inner_content(kind)
-      kind == :fail || kind == :error
+        if (exception = result.exception) && !result.kind.pending?
+          write_inner_content(tag, exception, io)
+        else
+          io << "    <" << tag << "/>\n"
+        end
+        io.puts "  </testcase>"
+      else
+        io.puts %("/>)
+      end
     end
 
     private def inner_content_tag(kind)
       case kind
-      when :error
-        :error
-      when :fail
-        :failure
+      in .error?   then "error"
+      in .fail?    then "failure"
+      in .pending? then "skipped"
+      in .success? then nil
       end
     end
 
     private def write_inner_content(tag, exception, io)
-      m = exception.message
-      if m
-        io << "<#{tag} message=\"#{XML.escape(m)}\">"
-      else
-        io << "<#{tag}>"
+      io << "    <" << tag
+
+      if message = exception.message
+        io << %( message=")
+        HTML.escape(message, io)
+        io << '"'
       end
-      backtrace = exception.backtrace? || ([] of String)
-      io << XML.escape(backtrace.join("\n"))
-      io << "</#{tag}>\n"
+      if tag == "error"
+        io << %( type=")
+        io << exception.class.name
+        io << '"'
+      end
+      io << '>'
+
+      if backtrace = exception.backtrace?
+        HTML.escape(backtrace.join('\n'), io)
+      end
+
+      io << "</" << tag << ">\n"
     end
 
     private def classname(result)
-      result.file.sub(%r{\.[^/.]+\Z}, "").gsub("/", ".").gsub(/\A\.+|\.+\Z/, "")
+      path = Path.new result.file
+      path.expand.relative_to(Dir.current).parts.join('.').rchop path.extension
     end
   end
 end

@@ -221,6 +221,18 @@ describe "Semantic: cast" do
       )) { int32.metaclass }
   end
 
+  it "can cast to metaclass (2) (#11121)" do
+    assert_type(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      )) { types["A"].virtual_type.metaclass }
+  end
+
   # Later we might want casting something to Object to have a meaning
   # similar to casting to Void*, but for now it's useless.
   it "disallows casting to Object (#815)" do
@@ -306,6 +318,93 @@ describe "Semantic: cast" do
   it "doesn't cast to virtual primitive (bug)" do
     assert_type(%(
       1.as(Int)
+      )) { int32 }
+  end
+
+  it "doesn't crash with typeof no-type (#7441)" do
+    assert_type(%(
+      a = 1
+      if a.is_a?(Char)
+        1.as(typeof(a))
+      else
+        ""
+      end
+      )) { string }
+  end
+
+  it "doesn't cast to unbound generic type (as) (#5927)" do
+    assert_error %(
+      class Gen(T)
+        def foo
+          sizeof(T)
+        end
+      end
+
+      class Foo(I)
+        def initialize(@x : Gen(I))
+        end
+      end
+
+      Foo.new(Gen(Int32).new)
+
+      1.as(Gen).foo
+      ),
+      "can't cast Int32 to Gen(T)"
+  end
+
+  it "doesn't cast to unbound generic type (as?) (#5927)" do
+    assert_type(%(
+      class Gen(T)
+        def foo
+          sizeof(T)
+        end
+      end
+
+      class Foo(I)
+        def initialize(@x : Gen(I))
+        end
+      end
+
+      Foo.new(Gen(Int32).new)
+
+      x = 1.as?(Gen)
+      x.foo if x
+      )) { nil_type }
+  end
+
+  it "considers else to be unreachable (#9658)" do
+    assert_type(%(
+      case 1
+      in Int32
+        v = 1
+      end
+      v
+      )) { int32 }
+  end
+
+  it "casts uninstantiated generic class to itself (#10882)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar(T) < Foo
+      end
+
+      x = Foo.new.as(Foo)
+      if x.is_a?(Bar)
+        x.as(Bar)
+      end
+      )) { nilable types["Bar"] }
+  end
+
+  it "doesn't eagerly try to check cast type (#12268)" do
+    assert_type(%(
+      bar = 1
+      if bar.is_a?(Char)
+        pointerof(bar).as(Pointer(typeof(bar)))
+      else
+        bar
+      end
       )) { int32 }
   end
 end

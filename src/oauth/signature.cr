@@ -3,26 +3,26 @@ struct OAuth::Signature
   def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
-  def base_string(request, tls, ts, nonce)
+  def base_string(request, tls, ts, nonce) : String
     base_string request, tls, gather_params(request, ts, nonce)
   end
 
-  def key
+  def key : String
     String.build do |str|
-      URI.escape @client_shared_secret, str
+      URI.encode_www_form @client_shared_secret, str, space_to_plus: false
       str << '&'
       if token_shared_secret = @token_shared_secret
-        URI.escape token_shared_secret, str
+        URI.encode_www_form token_shared_secret, str, space_to_plus: false
       end
     end
   end
 
-  def compute(request, tls, ts, nonce)
+  def compute(request, tls, ts, nonce) : String
     base_string = base_string(request, tls, ts, nonce)
     Base64.strict_encode(OpenSSL::HMAC.digest :sha1, key, base_string)
   end
 
-  def authorization_header(request, tls, ts, nonce)
+  def authorization_header(request, tls, ts, nonce) : String
     oauth_signature = compute request, tls, ts, nonce
 
     auth_header = AuthorizationHeader.new
@@ -47,14 +47,13 @@ struct OAuth::Signature
       str << '&'
       str << (tls ? "https" : "http")
       str << "%3A%2F%2F"
-      URI.escape host, str
+      URI.encode_www_form host, str, space_to_plus: false
       if port
         str << "%3A"
         str << port
       end
-      uri_path = request.path || "/"
-      uri_path = "/" if uri_path.empty?
-      URI.escape(uri_path, str)
+      uri_path = request.path.presence || "/"
+      URI.encode_www_form(uri_path, str, space_to_plus: false)
       str << '&'
       str << params
     end
@@ -80,7 +79,9 @@ struct OAuth::Signature
     body = request.body
     content_type = request.headers["Content-type"]?
     if body && content_type == "application/x-www-form-urlencoded"
-      params.add_query body
+      form = body.gets_to_end
+      params.add_query form
+      request.body = form
     end
 
     params

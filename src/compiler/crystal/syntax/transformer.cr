@@ -124,13 +124,6 @@ module Crystal
       node
     end
 
-    def transform(node : IfDef)
-      node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self)
-      node.else = node.else.transform(self)
-      node
-    end
-
     def transform(node : MultiAssign)
       transform_many node.targets
       transform_many node.values
@@ -184,6 +177,12 @@ module Crystal
 
     def transform(node : InstanceSizeOf)
       node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : OffsetOf)
+      node.offsetof_type = node.offsetof_type.transform(self)
+      node.offset = node.offset.transform(self)
       node
     end
 
@@ -251,6 +250,10 @@ module Crystal
       node
     end
 
+    def transform(node : AnnotationDef)
+      node
+    end
+
     def transform(node : While)
       node.cond = node.cond.transform(self)
       node.body = node.body.transform(self)
@@ -264,7 +267,7 @@ module Crystal
     end
 
     def transform(node : Generic)
-      node.name = node.name.transform(self).as(Path)
+      node.name = node.name.transform(self)
       transform_many node.type_vars
       node
     end
@@ -380,6 +383,12 @@ module Crystal
     end
 
     def transform(node : Assign)
+      node.target = node.target.transform(self)
+      node.value = node.value.transform(self)
+      node
+    end
+
+    def transform(node : OpAssign)
       node.target = node.target.transform(self)
       node.value = node.value.transform(self)
       node
@@ -545,11 +554,12 @@ module Crystal
       node
     end
 
-    def transform(node : Attribute)
+    def transform(node : Annotation)
       node
     end
 
     def transform(node : MacroExpression)
+      node.exp = node.exp.transform(self)
       node
     end
 
@@ -557,11 +567,20 @@ module Crystal
       node
     end
 
+    def transform(node : MacroVerbatim)
+      node
+    end
+
     def transform(node : MacroIf)
+      node.cond = node.cond.transform(self)
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
       node
     end
 
     def transform(node : MacroFor)
+      node.exp = node.exp.transform(self)
+      node.body = node.body.transform(self)
       node
     end
 
@@ -574,8 +593,8 @@ module Crystal
     end
 
     def transform(node : Asm)
-      node.output = node.output.try &.transform(self)
-      node.inputs = node.inputs.try &.each &.transform(self)
+      node.outputs.try &.each &.transform(self)
+      node.inputs.try &.each &.transform(self)
       node
     end
 
@@ -585,7 +604,7 @@ module Crystal
     end
 
     def transform_many(exps)
-      exps.map! { |exp| exp.transform(self) } if exps
+      exps.map!(&.transform(self)) if exps
     end
   end
 end

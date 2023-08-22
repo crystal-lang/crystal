@@ -1,0 +1,18 @@
+class Kls
+  def callee1
+    foo = "foo".to_unsafe
+    foo.realloc(100)
+  end
+end
+
+def callee2
+  yield
+end
+
+def callee3
+  callee2 do
+    Kls.new.callee1
+  end
+end
+
+callee3

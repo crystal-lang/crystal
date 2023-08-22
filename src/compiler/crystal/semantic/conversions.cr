@@ -1,12 +1,12 @@
 module Crystal::Conversions
   def self.numeric_argument(node, var, visitor, unaliased_type, expected_type, actual_type)
-    convert_call_name = "to_#{unaliased_type.kind}"
-    convert_call = Call.new(var, convert_call_name)
+    convert_call_name = "to_#{unaliased_type.kind}!"
+    convert_call = Call.new(var, convert_call_name).at(node)
 
     begin
       convert_call.accept visitor
-    rescue ex : Crystal::Exception
-      if ex.message.try(&.includes?("undefined method '#{convert_call_name}'")) || ex.message.try(&.includes?("has no field '#{convert_call_name}'"))
+    rescue ex : Crystal::CodeError
+      if ex.message.try(&.includes?("undefined method '#{convert_call_name}'"))
         return nil
       end
 
@@ -33,8 +33,8 @@ module Crystal::Conversions
     unsafe_call
   end
 
-  def self.try_to_unsafe(target, visitor)
-    unsafe_call = Call.new(target, "to_unsafe")
+  def self.try_to_unsafe(target, visitor, &)
+    unsafe_call = Call.new(target, "to_unsafe").at(target)
     begin
       unsafe_call.accept visitor
     rescue ex : TypeException
@@ -44,6 +44,6 @@ module Crystal::Conversions
   end
 
   def self.to_unsafe_lookup_failed?(ex)
-    ex.message.try(&.includes?("undefined method 'to_unsafe'")) || ex.message.try(&.includes?("has no field 'to_unsafe'"))
+    !!ex.message.try(&.includes?("undefined method 'to_unsafe'"))
   end
 end

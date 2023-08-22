@@ -1,27 +1,28 @@
-# Copied with little modifications from: https://github.com/rubinius/rubinius-benchmark/blob/master/real_world/bench_red_black_tree.rb
+# Copied with little modifications from: https://github.com/rubinius/rubinius-benchmark/blob/cf4a2468f46d23cc300815afabc8150609383d6c/real_world/bench_red_black_tree.rb
 
 class RedBlackTree
   class Node
-    property :color
-    property :key
+    enum Color
+      Red
+      Black
+    end
+
+    property color : Color
+    property key : Int32
     property! :left
     property! :right
     property! parent : self
 
-    RED    = :red
-    BLACK  = :black
-    COLORS = [RED, BLACK]
-
-    def initialize(@key : Int32, @color = RED)
+    def initialize(@key, @color : Color = :red)
       @left = @right = @parent = NilNode.instance
     end
 
     def black?
-      color == BLACK
+      color.black?
     end
 
     def red?
-      color == RED
+      color.red?
     end
 
     def nil_node?
@@ -36,7 +37,7 @@ class RedBlackTree
 
     def initialize
       @key = 0
-      @color = BLACK
+      @color = :black
       @left = @right = @parent = self
     end
 
@@ -44,8 +45,6 @@ class RedBlackTree
       true
     end
   end
-
-  #  include Enumerable
 
   property root : Node
   property :size
@@ -62,43 +61,43 @@ class RedBlackTree
   def insert(x)
     insert_helper(x)
 
-    x.color = Node::RED
-    while x != root && x.parent.color == Node::RED
+    x.color = :red
+    while x != root && x.parent.red?
       if x.parent == x.parent.parent.left
         y = x.parent.parent.right
-        if !y.nil_node? && y.color == Node::RED
-          x.parent.color = Node::BLACK
-          y.color = Node::BLACK
-          x.parent.parent.color = Node::RED
+        if !y.nil_node? && y.red?
+          x.parent.color = :black
+          y.color = :black
+          x.parent.parent.color = :red
           x = x.parent.parent
         else
           if x == x.parent.right
             x = x.parent
             left_rotate(x)
           end
-          x.parent.color = Node::BLACK
-          x.parent.parent.color = Node::RED
+          x.parent.color = :black
+          x.parent.parent.color = :red
           right_rotate(x.parent.parent)
         end
       else
         y = x.parent.parent.left
-        if !y.nil_node? && y.color == Node::RED
-          x.parent.color = Node::BLACK
-          y.color = Node::BLACK
-          x.parent.parent.color = Node::RED
+        if !y.nil_node? && y.red?
+          x.parent.color = :black
+          y.color = :black
+          x.parent.parent.color = :red
           x = x.parent.parent
         else
           if x == x.parent.left
             x = x.parent
             right_rotate(x)
           end
-          x.parent.color = Node::BLACK
-          x.parent.parent.color = Node::RED
+          x.parent.color = :black
+          x.parent.parent.color = :red
           left_rotate(x.parent.parent)
         end
       end
     end
-    root.color = Node::BLACK
+    root.color = :black
   end
 
   def <<(x)
@@ -122,7 +121,7 @@ class RedBlackTree
 
     z.key = y.key if y != z
 
-    if y.color == Node::BLACK
+    if y.black?
       delete_fixup(x)
     end
 
@@ -168,7 +167,7 @@ class RedBlackTree
     y
   end
 
-  def inorder_walk(x = root)
+  def inorder_walk(x = root, &)
     x = self.minimum
     while !x.nil_node?
       yield x.key
@@ -176,11 +175,11 @@ class RedBlackTree
     end
   end
 
-  def each(x = root)
+  def each(x = root, &)
     inorder_walk(x) { |k| yield k }
   end
 
-  def reverse_inorder_walk(x = root)
+  def reverse_inorder_walk(x = root, &)
     x = self.maximum
     while !x.nil_node?
       yield x.key
@@ -188,7 +187,7 @@ class RedBlackTree
     end
   end
 
-  def reverse_each(x = root)
+  def reverse_each(x = root, &)
     reverse_inorder_walk(x) { |k| yield k }
   end
 
@@ -267,58 +266,58 @@ class RedBlackTree
   end
 
   private def delete_fixup(x)
-    while x != root && x.color == Node::BLACK
+    while x != root && x.black?
       if x == x.parent.left
         w = x.parent.right
-        if w.color == Node::RED
-          w.color = Node::BLACK
-          x.parent.color = Node::RED
+        if w.red?
+          w.color = :black
+          x.parent.color = :red
           left_rotate(x.parent)
           w = x.parent.right
         end
-        if w.left.color == Node::BLACK && w.right.color == Node::BLACK
-          w.color = Node::RED
+        if w.left.black? && w.right.black?
+          w.color = :red
           x = x.parent
         else
-          if w.right.color == Node::BLACK
-            w.left.color = Node::BLACK
-            w.color = Node::RED
+          if w.right.black?
+            w.left.color = :black
+            w.color = :red
             right_rotate(w)
             w = x.parent.right
           end
           w.color = x.parent.color
-          x.parent.color = Node::BLACK
-          w.right.color = Node::BLACK
+          x.parent.color = :black
+          w.right.color = :black
           left_rotate(x.parent)
           x = root
         end
       else
         w = x.parent.left
-        if w.color == Node::RED
-          w.color = Node::BLACK
-          x.parent.color = Node::RED
+        if w.red?
+          w.color = :black
+          x.parent.color = :red
           right_rotate(x.parent)
           w = x.parent.left
         end
-        if w.right.color == Node::BLACK && w.left.color == Node::BLACK
-          w.color = Node::RED
+        if w.right.black? && w.left.black?
+          w.color = :red
           x = x.parent
         else
-          if w.left.color == Node::BLACK
-            w.right.color = Node::BLACK
-            w.color = Node::RED
+          if w.left.black?
+            w.right.color = :black
+            w.color = :red
             left_rotate(w)
             w = x.parent.left
           end
           w.color = x.parent.color
-          x.parent.color = Node::BLACK
-          w.left.color = Node::BLACK
+          x.parent.color = :black
+          w.left.color = :black
           right_rotate(x.parent)
           x = root
         end
       end
     end
-    x.color = Node::BLACK
+    x.color = :black
   end
 end
 
@@ -329,10 +328,10 @@ class RedBlackTreeRunner
     @n = n
 
     random = Random.new(1234) # repeatable random seq
-    @a1 = Array(Int32).new(n) { rand(99_999) }
+    @a1 = Array(Int32).new(n) { random.rand(99_999) }
 
     random = Random.new(4321) # repeatable random seq
-    @a2 = Array(Int32).new(n) { rand(99_999) }
+    @a2 = Array(Int32).new(n) { random.rand(99_999) }
 
     @tree = RedBlackTree.new
   end
@@ -383,18 +382,18 @@ class RedBlackTreeRunner
   end
 end
 
-def bench(name, n = 1)
-  t = Time.now
+def bench(name, n = 1, &)
+  start = Time.monotonic
   print "#{name}: "
   res = nil
   n.times do
     res = yield
   end
-  puts "#{Time.now - t}, res: #{res}"
+
+  puts "#{Time.monotonic - start}, res: #{res}"
 end
 
-t = Time.now
-
+start = Time.monotonic
 b = RedBlackTreeRunner.new 100_000
 bench("delete", 10) { b.run_delete }
 bench("add", 10) { b.run_add }
@@ -404,4 +403,4 @@ bench("reverse_walk", 100) { b.run_reverse_inorder_walk }
 bench("min", 100) { b.run_min }
 bench("max", 100) { b.run_max }
 
-puts "summary time: #{Time.now - t}"
+puts "summary time: #{Time.monotonic - start}"

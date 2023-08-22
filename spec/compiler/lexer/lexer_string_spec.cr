@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 require "./lexer_objects/strings"
 
 describe "Lexer string" do
@@ -132,6 +132,15 @@ describe "Lexer string" do
     tester.string_should_end_correctly
   end
 
+  it "lexes simple string with %|" do
+    lexer = Lexer.new("%|hello|")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('|', '|')
+    tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
+  end
+
   [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']].each do |(left, right)|
     it "lexes simple string with nested %#{left}" do
       lexer = Lexer.new("%#{left}hello #{left}world#{right}#{right}")
@@ -152,6 +161,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
     tester.next_string_token_should_be("\nHER dress is beautiful.")
     tester.next_string_token_should_be("\nHE is OK.")
@@ -164,6 +174,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("foo")
     tester.next_string_token_should_be("\n")
     tester.string_should_end_correctly
@@ -174,6 +185,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("foo")
     tester.next_string_token_should_be("\r\n")
     tester.string_should_end_correctly
@@ -184,6 +196,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("foo")
     tester.string_should_end_correctly
   end
@@ -194,6 +207,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
     tester.token_should_be_at(line: 2)
     tester.next_string_token_should_be("\nHER dress is beautiful.")
@@ -212,7 +226,8 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
-    tester.next_string_token_should_be("abc")
+    tester.next_token_should_be(:NEWLINE)
+    tester.next_string_token_should_be("\abc")
     tester.string_should_have_an_interpolation_of("foo")
     tester.string_should_end_correctly
   end
@@ -222,50 +237,18 @@ describe "Lexer string" do
     token = lexer.next_token
     state = token.delimiter_state
 
-    expect_raises Crystal::SyntaxException, /unterminated heredoc/ do
+    expect_raises Crystal::SyntaxException, "Unterminated heredoc" do
       loop do
         token = lexer.next_string_token state
-        break if token.type == :DELIMITER_END
+        break if token.type.delimiter_end?
       end
     end
   end
 
-  it "raises on invalid heredoc identifier (<<-HERE A)" do
-    lexer = Lexer.new("<<-HERE A\ntest\nHERE\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises on invalid heredoc identifier (<<-HERE\\n)" do
-    lexer = Lexer.new("<<-HERE\\ntest\nHERE\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises when identifier doesn't start with a leter" do
-    lexer = Lexer.new("<<-123\\ntest\n123\n")
+  it "raises when identifier doesn't start with a letter or number" do
+    lexer = Lexer.new("<<-!!!\\ntest\n!!!\n")
 
     expect_raises Crystal::SyntaxException, /heredoc identifier starts with invalid character/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises when identifier contains a character not for identifier" do
-    lexer = Lexer.new("<<-aaa.bbb?\\ntest\naaa.bbb?\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises when identifier contains spaces" do
-    lexer = Lexer.new("<<-aaa  bbb\\ntest\naaabbb\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
       lexer.next_token
     end
   end
@@ -273,7 +256,7 @@ describe "Lexer string" do
   it "raises on unexpected EOF while lexing heredoc" do
     lexer = Lexer.new("<<-aaa")
 
-    expect_raises Crystal::SyntaxException, /unexpected EOF on heredoc identifier/ do
+    expect_raises Crystal::SyntaxException, "Unexpected EOF on heredoc identifier" do
       lexer.next_token
     end
   end
@@ -305,6 +288,10 @@ describe "Lexer string" do
   assert_syntax_error "\"\\uFEDZ\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{}\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{110000}\"", "invalid unicode codepoint (too large)"
+  assert_syntax_error "\"\\uD800\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\uDFFF\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\u{D800}\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\u{DFFF}\"", "invalid unicode codepoint (surrogate half)"
 
   it "lexes backtick string" do
     lexer = Lexer.new(%(`hello`))
@@ -321,6 +308,42 @@ describe "Lexer string" do
 
     tester.string_should_be_delimited_by('/', '/')
     tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped slash with /.../" do
+    lexer = Lexer.new(%(/\\//))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be("/")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped slash with %r(...)" do
+    lexer = Lexer.new(%(%r(\\/)))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('(', ')')
+    tester.next_string_token_should_be("/")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped space with /.../" do
+    lexer = Lexer.new(%(/\\ /))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be(" ")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped space with %r(...)" do
+    lexer = Lexer.new(%(%r(\\ )))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('(', ')')
+    tester.next_string_token_should_be(" ")
     tester.string_should_end_correctly
   end
 

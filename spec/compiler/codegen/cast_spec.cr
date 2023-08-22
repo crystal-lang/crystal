@@ -48,7 +48,7 @@ describe "Code gen: cast" do
         a.as(Char)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to Char failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Int32 to Char failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -72,7 +72,7 @@ describe "Code gen: cast" do
         a.as(Float64 | Char)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -120,7 +120,7 @@ describe "Code gen: cast" do
         a.as(CastSpecBaz)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -187,7 +187,7 @@ describe "Code gen: cast" do
         a.as(Nil)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Reference to Nil failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Reference to Nil failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -208,14 +208,14 @@ describe "Code gen: cast" do
 
       bar = Bar.new
       x = bar.as(Foo).foo
-      x.to_i
+      x.to_i!
       )).to_i.should eq(1)
   end
 
   it "casts to bigger union" do
     run(%(
       x = 1.5.as(Int32 | Float64)
-      x.to_i
+      x.to_i!
       )).to_i.should eq(1)
   end
 
@@ -288,5 +288,151 @@ describe "Code gen: cast" do
 
       Bar.new.as(Foo(Int32)).foo
       )).to_i.should eq(2)
+  end
+
+  it "upcasts type to virtual (#3304)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      Foo.new.as(Foo).foo
+      )).to_i.should eq(1)
+  end
+
+  it "upcasts type to virtual (2) (#3304)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      class Gen(T)
+        def self.cast(x)
+          x.as(T)
+        end
+      end
+
+      Gen(Foo).cast(Foo.new).foo
+      )).to_i.should eq(1)
+  end
+
+  it "casts with block var that changes type (#3341)" do
+    codegen(%(
+      require "prelude"
+
+      class Object
+        def try
+          yield self
+        end
+      end
+
+      class Foo
+      end
+
+      x = Foo.new.as(Int32 | Foo)
+      x.try &.as(Foo)
+      ))
+  end
+
+  it "casts between union types, where union has a tuple type (#3377)" do
+    codegen(%(
+      require "prelude"
+
+      v = 1 || true || 1.0
+      (v || {v}).as(Bool | Float64)
+      ))
+  end
+
+  it "codegens class method when type id is available but not a virtual type (#3490)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Super
+      end
+
+      module Mixin
+      end
+
+      class A < Super
+        include Mixin
+      end
+
+      class B < Super
+        include Mixin
+      end
+
+      a = A.new.as(Super)
+      if a.is_a?(Mixin)
+        a.class.name
+      else
+        "Nope"
+      end
+      )).to_string.should eq("A")
+  end
+
+  it "casts from nilable type to virtual type (#3512)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      foo = 1 == 2 ? nil : Foo.new
+      x = foo.as(Foo)
+      x.foo
+      )).to_i.should eq(1)
+  end
+
+  it "can cast to metaclass (#11121)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      ))
+  end
+
+  it "cast virtual metaclass type to nilable virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).as?(Base | Impl).nil?
+      CRYSTAL
   end
 end

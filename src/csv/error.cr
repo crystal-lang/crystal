@@ -1,7 +1,7 @@
-require "./csv"
+require "csv"
 
 class CSV
-  # Raises when an error related to a CSV is found
+  # Raises when an error related to a CSV is found.
   class Error < Exception
   end
 
@@ -11,7 +11,7 @@ class CSV
     getter column_number : Int32
 
     def initialize(message, @line_number, @column_number)
-      super("#{message} at #{@line_number}:#{@column_number}")
+      super("#{message} at line #{@line_number}, column #{@column_number}")
     end
   end
 end

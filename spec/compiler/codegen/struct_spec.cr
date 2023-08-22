@@ -171,7 +171,9 @@ describe "Code gen: struct" do
   end
 
   it "declares const struct" do
-    run("
+    run(%(
+      require "prelude"
+
       struct Foo
         def initialize(@x : Int32)
         end
@@ -184,11 +186,13 @@ describe "Code gen: struct" do
       FOO = Foo.new(1)
 
       FOO.x
-      ").to_i.should eq(1)
+      )).to_i.should eq(1)
   end
 
   it "uses struct in if" do
-    run("
+    run(%(
+      require "prelude"
+
       struct Foo
         def initialize(@x : Int32)
         end
@@ -206,7 +210,7 @@ describe "Code gen: struct" do
         foo = FOO
       end
       foo.x
-      ").to_i.should eq(1)
+      )).to_i.should eq(1)
   end
 
   it "uses nilable struct" do
@@ -284,7 +288,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "allows assinging to struct argument (bug)" do
+  it "allows assigning to struct argument (bug)" do
     run("
       struct Foo
         def bar
@@ -456,6 +460,8 @@ describe "Code gen: struct" do
 
   it "codegens virtual struct metaclass (#2551) (4)" do
     run(%(
+      require "prelude"
+
       abstract struct Foo
         def initialize
           @x = 21
@@ -623,5 +629,21 @@ describe "Code gen: struct" do
       entry = MyEntry.new("1", "GER")
       entry.as(Entry).uid
       )).to_string.should eq("1")
+  end
+
+  it "can call new on abstract struct with single child (#7309)" do
+    codegen(%(
+      require "prelude"
+
+      abstract struct Foo
+        @x = 1
+      end
+
+      struct A < Foo
+        @y = 2
+      end
+
+      A.as(Foo.class).new
+      ), inject_primitives: false)
   end
 end

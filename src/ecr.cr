@@ -12,58 +12,98 @@
 # * `<%-= ... %>`: removes previous indentation
 # * `<%= ... -%>`: removes next newline
 #
+# A comment can be created the same as normal code: `<% # hello %>` or by the special
+# tag: `<%# hello %>`. An ECR tag can be inserted directly (i.e. the tag itself may be
+# escaped) by using a second `%` like so: `<%% a = b %>` or `<%%= foo %>`.
+#
+# NOTE: To use `ECR`, you must explicitly import it with `require "ecr"`
+#
 # Quick Example:
 #
-#     require "ecr"
+# Create a simple ECR file named `greeter.ecr`:
 #
-#     class Greeting
-#       def initialize(@name : String)
-#       end
+# ```
+# Greetings, <%= @name %>!
+# ```
 #
-#       ECR.def_to_s "greeting.ecr"
-#     end
+# and then use it like so with the `#def_to_s` macro:
 #
-#     # greeting.ecr
-#     Greeting, <%= @name %>!
+# ```
+# require "ecr"
 #
-#     Greeting.new("John").to_s
-#     #=> Greeting, John!
+# class Greeter
+#   def initialize(@name : String)
+#   end
+#
+#   ECR.def_to_s "greeter.ecr"
+# end
+#
+# Greeter.new("John").to_s # => "Greetings, John!\n"
+# ```
 #
 # Using logical statements:
 #
-#     # greeting.ecr
-#     <%- if @name -%>
-#     Greeting, <%= @name %>!
-#     <%- else -%>
-#     Greeting!
-#     <%- end -%>
+# ```
+# # greeter.ecr
+# <%- if @name -%>
+# Greetings, <%= @name %>!
+# <%- else -%>
+# Greetings!
+# <%- end -%>
+# ```
 #
-#     Greeting.new(nil).to_s
-#     #=> Greeting!
+# ```
+# require "ecr"
+#
+# class Greeter
+#   def initialize(@name : String | Nil)
+#   end
+#
+#   ECR.def_to_s "greeter.ecr"
+# end
+#
+# Greeter.new(nil).to_s    # => "Greetings!\n"
+# Greeter.new("Jill").to_s # => "Greetings, Jill!\n"
+# ```
 #
 # Using loops:
 #
-#     require "ecr"
+# ```
+# # greeter.ecr
+# <%- @names.each do |name| -%>
+# Hi, <%= name %>!
+# <%- end -%>
+# ```
 #
-#     class Greeting
-#       @names : Array(String)
+# ```
+# require "ecr"
 #
-#       def initialize(*names)
-#        @names = names.to_a
-#       end
+# class Greeter
+#   @names : Array(String)
 #
-#       ECR.def_to_s "greeting.ecr"
-#     end
+#   def initialize(*names)
+#     @names = names.to_a
+#   end
 #
-#     # greeting.ecr
-#     <%- @names.each do |name| -%>
-#     Hi, <%= name %>!
-#     <%- end -%>
+#   ECR.def_to_s "greeter.ecr"
+# end
 #
-#     Greeting.new("John", "Zoe", "Ben").to_s
-#     #=> Hi, John!
-#     #=> Hi, Zoe!
-#     #=> Hi, Ben!
+# Greeter.new("John", "Zoe", "Ben").to_s # => "Hi, John!\nHi, Zoe!\nHi, Ben!\n"
+# ```
+#
+# Comments and Escapes:
+#
+# ```
+# # demo.ecr
+# <%# Demonstrate use of ECR tag -%>
+# A valid ECR tag looks like this: <%%= foo %>
+# ```
+#
+# ```
+# require "ecr"
+# foo = 2
+# ECR.render("demo.ecr") # => "A valid ECR tag looks like this: <%= foo %>\n"
+# ```
 #
 # Likewise, other Crystal logic can be implemented in ECR text.
 module ECR

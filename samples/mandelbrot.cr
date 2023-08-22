@@ -23,8 +23,8 @@ def mandelconverge(real, imag)
 end
 
 def mandelhelp(xmin, xmax, xstep, ymin, ymax, ystep)
-  ymin.step(ymax, ystep) do |y|
-    xmin.step(xmax, xstep) do |x|
+  ymin.step(to: ymax, by: ystep) do |y|
+    xmin.step(to: xmax, by: xstep) do |x|
       print_density mandelconverge(x, y)
     end
     puts

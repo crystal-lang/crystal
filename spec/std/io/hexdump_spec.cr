@@ -15,10 +15,10 @@ describe IO::Hexdump do
         EOF
 
       IO.pipe do |r, w|
-        io = MemoryIO.new(ascii_table.bytesize)
+        io = IO::Memory.new(ascii_table.bytesize)
         r = IO::Hexdump.new(r, output: io, read: true)
 
-        slice = Slice(UInt8).new(101) { |i| i.to_u8 + 32 }
+        slice = Bytes.new(101) { |i| i.to_u8 + 32 }
         w.write(slice)
 
         buf = uninitialized UInt8[101]
@@ -42,10 +42,10 @@ describe IO::Hexdump do
         EOF
 
       IO.pipe do |r, w|
-        io = MemoryIO.new(ascii_table.bytesize)
+        io = IO::Memory.new(ascii_table.bytesize)
         w = IO::Hexdump.new(w, output: io, write: true)
 
-        slice = Slice(UInt8).new(96) { |i| i.to_u8 + 32 }
+        slice = Bytes.new(96) { |i| i.to_u8 + 32 }
         w.write(slice)
 
         buf = uninitialized UInt8[96]

@@ -29,7 +29,8 @@ describe "Semantic: enum" do
       end
 
       foo 1
-      ), "no overload matches 'foo' with type Int32"
+      ),
+      "expected argument #1 to 'foo' to be Foo, not Int32"
   end
 
   it "finds method in enum type" do
@@ -183,6 +184,89 @@ describe "Semantic: enum" do
       )) { int32 }
   end
 
+  it "doesn't break assigned values in enum flags when a member has value 0 (#5767)" do
+    result = semantic(%(
+      @[Flags]
+      enum Foo
+        OtherNone = 0
+        Bar
+        Baz
+      end
+      ))
+    enum_type = result.program.types["Foo"].as(EnumType)
+    enum_type.types["OtherNone"].as(Const).value.should eq(NumberLiteral.new("0", :i32))
+    enum_type.types["Bar"].as(Const).value.should eq(NumberLiteral.new("1", :i32))
+    enum_type.types["Baz"].as(Const).value.should eq(NumberLiteral.new("2", :i32))
+  end
+
+  it "disallows redefining None to non-0 for @[Flags] enum" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None = 42
+        Dummy
+      end
+      ),
+      "flags enum can't redefine None member to non-0"
+
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None    # 1
+        Dummy
+      end
+      ),
+      "flags enum can't redefine None member to non-0"
+  end
+
+  it "allows redefining None to 0 for @[Flags] enum" do
+    assert_type(%(
+      @[Flags]
+      enum Foo
+        None = 0
+        Dummy
+      end
+
+      Foo::None.value
+      )) { int32 }
+  end
+
+  it "disallows All value for @[Flags] enum" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        All = 50
+      end
+      ),
+      "flags enum can't redefine All member"
+  end
+
+  it "doesn't error when defining a non-flags enum with None or All" do
+    assert_type(%(
+      enum Foo
+        None
+        All = 50
+      end
+
+      Foo::None.value
+      )) { int32 }
+  end
+
+  it "doesn't error when defining a flags enum in a lib with None or All" do
+    assert_type(%(
+      lib Lib
+        @[Flags]
+        enum Foo
+          None
+          Dummy
+          All = 50
+        end
+      end
+
+      Lib::Foo::None.value
+      )) { int32 }
+  end
+
   it "doesn't error when defining a method for an enum with flags" do
     assert_type(%(
       @[Flags]
@@ -266,7 +350,74 @@ describe "Semantic: enum" do
       SomeFacts::AppleLover
       ))
     enum_type = result.program.types["SomeFacts"].as(EnumType)
-    enum_type.has_attribute?("Flags").should be_true
+    annotation_type = result.program.types["Flags"].as(AnnotationType)
+    enum_type.annotation(annotation_type).should_not be_nil
+  end
+
+  it "reopens enum without base type (1)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo
+        X
+      end
+
+      enum Foo
+      end
+      CRYSTAL
+  end
+
+  it "reopens enum without base type (2)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo : UInt8
+        X
+      end
+
+      enum Foo
+      end
+      CRYSTAL
+  end
+
+  it "reopens enum with same base type (1)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo
+        X
+      end
+
+      enum Foo : Int32
+      end
+      CRYSTAL
+  end
+
+  it "reopens enum with same base type (2)" do
+    assert_no_errors <<-CRYSTAL
+      enum Foo : UInt8
+        X
+      end
+
+      enum Foo : UInt8
+      end
+      CRYSTAL
+  end
+
+  it "errors if reopening enum with different base type (1)" do
+    assert_error <<-CRYSTAL, "enum Foo's base type is Int32, not UInt8"
+      enum Foo
+        X
+      end
+
+      enum Foo : UInt8
+      end
+      CRYSTAL
+  end
+
+  it "errors if reopening enum with different base type (2)" do
+    assert_error <<-CRYSTAL, "enum Foo's base type is UInt8, not UInt16"
+      enum Foo : UInt8
+        X
+      end
+
+      enum Foo : UInt16
+      end
+      CRYSTAL
   end
 
   it "can use macro expression inside enum" do
@@ -289,5 +440,177 @@ describe "Semantic: enum" do
 
       Foo::A
       )) { types["Foo"] }
+  end
+
+  it "errors if inheriting Enum (#3592)" do
+    assert_error %(
+      struct Foo < Enum
+      end
+      ),
+      "can't inherit Enum. Use the enum keyword to define enums"
+  end
+
+  it "errors on enum without members (#3447)" do
+    assert_error %(
+      enum Foo
+      end
+      ),
+      "enum Foo must have at least one member"
+
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None = 0
+      end
+      ),
+      "enum Foo must have at least one member"
+  end
+
+  it "errors if declaring type inside enum (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar
+      end
+      ),
+      "can't declare type inside enum Foo"
+  end
+
+  it "errors if declaring type inside enum, nested (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar::Baz
+      end
+      ),
+      "can't declare type inside enum"
+  end
+
+  it "attaches annotation to enum method (#6690)" do
+    result = semantic(%(
+      enum Foo
+        X
+
+        @[AlwaysInline]
+        def bar
+        end
+      end
+      ))
+
+    method = result.program.types["Foo"].lookup_first_def("bar", block: false).not_nil!
+    method.always_inline?.should be_true
+  end
+
+  it "errors if defining initialize in Enum (#7238)" do
+    assert_error %(
+      enum Foo
+        FOO = 1
+
+        def initialize
+        end
+      end
+      ),
+      "enums can't define an `initialize` method, try using `def self.new`"
+  end
+
+  it "can redefine Enum.new" do
+    assert_type(%(
+      enum Foo
+        FOO = 1
+
+        def self.new(x : Int32)
+          "hello"
+        end
+      end
+
+      Foo.new(1)
+      )) { string }
+  end
+
+  it "gives error on enum overflow" do
+    assert_error %(
+      enum Foo : Int8
+        #{Array.new(129) { |i| "V#{i + 1}" }.join "\n"}
+      end
+      ),
+      "value of enum member V129 would overflow the base type Int8"
+  end
+
+  it "gives error on flags enum overflow" do
+    assert_error %(
+      @[Flags]
+      enum Foo : UInt8
+        #{Array.new(9) { |i| "V#{i + 1}" }.join "\n"}
+      end
+      ),
+      "value of enum member V9 would overflow the base type UInt8"
+  end
+
+  it "gives error on enum overflow after a member with value" do
+    assert_error <<-CRYSTAL, "value of enum member B would overflow the base type Int32"
+      enum Foo
+        A = 0x7FFFFFFF
+        B
+      end
+      CRYSTAL
+  end
+
+  it "gives error on signed flags enum overflow after a member with value" do
+    assert_error <<-CRYSTAL, "value of enum member B would overflow the base type Int32"
+      @[Flags]
+      enum Foo
+        A = 0x40000000
+        B
+      end
+      CRYSTAL
+  end
+
+  it "gives error on unsigned flags enum overflow after a member with value" do
+    assert_error <<-CRYSTAL, "value of enum member B would overflow the base type UInt32"
+      @[Flags]
+      enum Foo : UInt32
+        A = 0x80000000
+        B
+      end
+      CRYSTAL
+  end
+
+  it "doesn't overflow when going from negative to zero (#7874)" do
+    assert_no_errors <<-CRYSTAL
+      enum Nums
+        Zero  = -2
+        One
+        Two
+      end
+      CRYSTAL
+  end
+
+  it "doesn't overflow on flags member (#7877)" do
+    assert_no_errors <<-CRYSTAL
+      @[Flags]
+      enum Filter
+        A = 1 << 29
+        B
+      end
+      CRYSTAL
+  end
+
+  it "doesn't visit enum members generated by macros twice (#10104)" do
+    result = semantic(%(
+      enum Foo
+        A = 1
+
+        {% begin %}
+          def foo
+          end
+        {% end %}
+      end
+      ))
+    a_def = result.program.types["Foo"].lookup_defs("foo").first
+    a_def.previous.should be_nil
   end
 end

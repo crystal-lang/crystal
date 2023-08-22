@@ -7,9 +7,9 @@
     # number and negative number. It fixes this problem.
     if i < 0
       i = -i
-      -pointerof(i).as(Pointer(Float{{ p }})).value
+      -i.unsafe_as(Float{{ p }})
     else
-      pointerof(i).as(Pointer(Float{{ p }})).value
+      i.unsafe_as(Float{{ p }})
     end
   end
 
@@ -17,9 +17,9 @@
   private def float_as_int(f : Float{{ p }})
     if f < 0
       f = -f
-      -pointerof(f).as(Pointer(Int{{ p }})).value
+      -f.unsafe_as(Int{{ p }})
     else
-      pointerof(f).as(Pointer(Int{{ p }})).value
+      f.unsafe_as(Int{{ p }})
     end
   end
 
@@ -48,8 +48,8 @@
     saved_to = to
     satisfied = nil
     while from < to
-      mid = (from < 0) == (to < 0) ? from + (to - from) / 2
-          : (from < -to) ? -((- from - to - 1) / 2 + 1) : (from + to) / 2
+      mid = (from < 0) == (to < 0) ? from + ((to - from) >> 1)
+          : (from < -to) ? -(((- from - to - 1) >> 1) + 1) : ((from + to) >> 1)
 
       if yield mid
         satisfied = mid
@@ -68,20 +68,20 @@
 {% end %}
 
 struct Range(B, E)
-  # By using binary search, returns the first value
-  # for which the passed block returns `true`.
+  # By using binary search, returns the first element
+  # for which the passed block returns a truthy value.
   #
-  # If the block returns `false`, the finding value exists
-  # behind. If the block returns `true`, the finding value
-  # is itself or exists infront.
+  # If the block returns a falsey value, the element to be found lies
+  # behind. If the block returns a truthy value, the element to be found
+  # is itself or lies in front.
+  #
+  # Returns `nil` if the block didn't return a truthy value for any element.
   #
   # ```
   # (0..10).bsearch { |x| x >= 5 }                       # => 5
   # (0..Float64::INFINITY).bsearch { |x| x ** 4 >= 256 } # => 4
   # ```
-  #
-  # Returns `nil` if the block didn't return `true` for any value.
-  def bsearch
+  def bsearch(&block : B | E -> _)
     from = self.begin
     to = self.end
 
@@ -102,7 +102,7 @@ struct Range(B, E)
     saved_to = to
     satisfied = nil
     while from < to
-      mid = from + (to - from) / 2
+      mid = from + ((to - from) >> 1)
 
       if yield mid
         satisfied = mid

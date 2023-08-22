@@ -1,40 +1,42 @@
 require "fiber"
-require "./concurrent/*"
+require "channel"
+require "crystal/scheduler"
 
 # Blocks the current fiber for the specified number of seconds.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
-def sleep(seconds : Number)
+def sleep(seconds : Number) : Nil
   if seconds < 0
-    raise ArgumentError.new "sleep seconds must be positive"
+    raise ArgumentError.new "Sleep seconds must be positive"
   end
 
-  Fiber.sleep(seconds)
+  Crystal::Scheduler.sleep(seconds.seconds)
 end
 
 # Blocks the current Fiber for the specified time span.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
-def sleep(time : Time::Span)
-  sleep(time.total_seconds)
+def sleep(time : Time::Span) : Nil
+  Crystal::Scheduler.sleep(time)
 end
 
 # Blocks the current fiber forever.
 #
 # Meanwhile, other ready-to-execute fibers might start their execution.
-def sleep
-  Scheduler.reschedule
+def sleep : Nil
+  Crystal::Scheduler.reschedule
 end
 
 # Spawns a new fiber.
 #
 # The newly created fiber doesn't run as soon as spawned.
 #
-# Example: writing "1" every 1 second and "2" every 2 seconds for 6 seconds.
-#
+# Example:
 # ```
+# # Write "1" every 1 second and "2" every 2 seconds for 6 seconds.
+#
 # ch = Channel(Nil).new
 #
 # spawn do
@@ -55,14 +57,17 @@ end
 #
 # 2.times { ch.receive }
 # ```
-def spawn(*, name : String? = nil, &block)
+def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
-  Scheduler.enqueue fiber
+  if same_thread
+    fiber.@current_thread.set(Thread.current)
+  end
+  Crystal::Scheduler.enqueue fiber
   fiber
 end
 
-# Spawns a fiber by first creating a Proc, passing the *call*'s
-# expressions to it, and letting the Proc finally invoke the *call*.
+# Spawns a fiber by first creating a `Proc`, passing the *call*'s
+# expressions to it, and letting the `Proc` finally invoke the *call*.
 #
 # Compare this:
 #
@@ -90,12 +95,16 @@ end
 #
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
-# `i` are passed to a Proc that eventually invokes the call.
-macro spawn(call, *, name = nil)
+# *i* are passed to a `Proc` that eventually invokes the call.
+macro spawn(call, *, name = nil, same_thread = false, &block)
+  {% if block %}
+    {% raise "`spawn(call)` can't be invoked with a block, did you mean `spawn(name: ...) { ... }`?" %}
+  {% end %}
+
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
-        __arg{{i}} : typeof({{arg}}),
+        __arg{{i}} : typeof({{arg.is_a?(Splat) ? arg.exp : arg}}),
       {% end %}
       {% if call.named_args %}
         {% for narg, i in call.named_args %}
@@ -103,10 +112,10 @@ macro spawn(call, *, name = nil)
         {% end %}
       {% end %}
       ) {
-      spawn(name: {{name}}) do
-        {{call.name}}(
+      spawn(name: {{name}}, same_thread: {{same_thread}}) do
+        {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
-            __arg{{i}},
+            {% if arg.is_a?(Splat) %}*{% end %}__arg{{i}},
           {% end %}
           {% if call.named_args %}
             {% for narg, i in call.named_args %}
@@ -115,37 +124,17 @@ macro spawn(call, *, name = nil)
           {% end %}
         )
       end
-    {% if call.named_args %}
-      }.call({{*call.args}}, {{*call.named_args.map(&.value)}})
-    {% else %}
-      }.call({{*call.args}})
-    {% end %}
+      }.call(
+        {% for arg in call.args %}
+          {{arg.is_a?(Splat) ? arg.exp : arg}},
+        {% end %}
+        {% if call.named_args %}
+          {{call.named_args.map(&.value).splat}}
+        {% end %}
+      )
   {% else %}
     spawn do
       {{call}}
     end
   {% end %}
-end
-
-macro parallel(*jobs)
-  %channel = Channel(Nil).new
-
-  {% for job, i in jobs %}
-    %ret{i} = uninitialized typeof({{job}})
-    spawn do
-      begin
-        %ret{i} = {{job}}
-      ensure
-        %channel.send nil
-      end
-    end
-  {% end %}
-
-  {{ jobs.size }}.times { %channel.receive }
-
-  {
-    {% for job, i in jobs %}
-      %ret{i},
-    {% end %}
-  }
 end

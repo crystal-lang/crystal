@@ -1,20 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
 fail() {
   echo "${@}" >&2
   exit 1
-}
-
-on_deploy() {
-  if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
-    if [ "${DEPLOY}" = "true" ]; then
-      echo "${@}"
-      eval "${@}"
-      return $?
-    else
-      return 0
-    fi
-  fi
 }
 
 on_tag() {
@@ -58,12 +46,16 @@ on_os() {
   os="$1"
   shift
 
-  verify_environment
+  if [ -z "$CI_NIX_SHELL" ]; then
+    verify_environment
 
-  if [ "$TRAVIS_OS_NAME" = "$os" ]; then
-    echo "${@}"
-    eval "${@}"
-    return $?
+    if [ "$TRAVIS_OS_NAME" = "$os" ]; then
+      echo "${@}"
+      eval "${@}"
+      return $?
+    else
+      return 0
+    fi
   else
     return 0
   fi
@@ -77,116 +69,179 @@ on_osx() {
   fail_on_error on_os "osx" "${@}"
 }
 
+on_nix_shell_eval() {
+  if [ -n "$CI_NIX_SHELL" ]; then
+    echo "${@}"
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
+on_nix_shell() {
+  fail_on_error on_nix_shell_eval "${@}"
+}
+
+on_github() {
+  if [ "$GITHUB_ACTIONS" = "true" ]; then
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
 prepare_system() {
-  on_osx brew update
-  on_deploy sudo pip install awscli
+  on_linux 'echo '"'"'{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}'"'"' | sudo tee /etc/docker/daemon.json'
+  on_linux sudo service docker restart
 }
 
 build() {
-  with_build_env 'make std_spec clean'
-  with_build_env 'make crystal spec doc'
-  with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
-  with_build_env './bin/crystal tool format --check'
+  with_build_env 'bin/crystal scripts/print_regex_config.cr'
+  with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
+
+  case $ARCH in
+    i386)
+      with_build_env 'make crystal threads=1'
+      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1 junit_output=.junit/std_spec.0.xml'
+      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1 junit_output=.junit/std_spec.1.xml'
+      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1 junit_output=.junit/std_spec.2.xml'
+      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1 junit_output=.junit/std_spec.3.xml'
+
+      parts=16
+      i=0
+      while [ $i -lt $parts ]; do
+        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make compiler_spec threads=1 junit_output=.junit/compiler_spec.$i.xml"
+        i=$((i + 1))
+      done
+
+      with_build_env 'make primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
+      with_build_env 'make docs threads=1'
+      ;;
+    *)
+      with_build_env 'make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
+      ;;
+  esac
+
+  with_build_env 'make samples'
+  with_build_env 'CRYSTAL_OPTS=--debug make samples'
 }
 
-deploy() {
-  export CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
-  export GIT_VERSION=`git describe --tags --long --always 2>/dev/null`
-  on_deploy 'echo $GIT_VERSION > doc/revision.txt'
-
-  on_deploy aws s3 sync doc/ s3://crystal-api/api/$TRAVIS_BRANCH
-
-  on_deploy on_tag aws s3 sync doc/ s3://crystal-api/api/$CURRENT_TAG
-  cat - > .aws-config <<EOF
-    {
-      "IndexDocument": {
-        "Suffix": "index.html"
-      },
-      "RoutingRules": [
-        {
-          "Condition": {
-            "KeyPrefixEquals": "api/latest/${CURRENT_TAG}/"
-          },
-          "Redirect": {
-            "HttpRedirectCode": "302",
-            "ReplaceKeyWith": "404",
-            "Protocol": "https",
-            "HostName": "crystal-lang.org"
-          }
-        },
-        {
-          "Condition": {
-            "KeyPrefixEquals": "api/latest/"
-          },
-          "Redirect": {
-            "HttpRedirectCode": "302",
-            "ReplaceKeyPrefixWith": "api/${CURRENT_TAG}/",
-            "Protocol": "https",
-            "HostName": "crystal-lang.org"
-          }
-        },
-        {
-          "Condition": {
-            "KeyPrefixEquals": "api/",
-            "HttpErrorCodeReturnedEquals": "404"
-          },
-          "Redirect": {
-            "HttpRedirectCode": "301",
-            "ReplaceKeyPrefixWith": "api/latest/",
-            "Protocol": "https",
-            "HostName": "crystal-lang.org"
-          }
-        }
-      ]
-    }
-EOF
-  on_deploy on_tag cat .aws-config
-  on_deploy on_tag aws s3api put-bucket-website --bucket crystal-api --website-configuration file://.aws-config
+format() {
+  with_build_env 'make clean crystal format threads=1 check=1'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH:llvm38"
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.9.2-1 crystal;popd'
 
-  on_osx brew install llvm libevent pcre crystal-lang
+  # These commands may take a few minutes to run due to the large size of the repositories.
+  # This restriction has been made on GitHub's request because updating shallow
+  # clones is an extremely expensive operation due to the tree layout and
+  # traffic of Homebrew/homebrew-core and Homebrew/homebrew-cask. We don't do
+  # this for you automatically to avoid repeatedly performing an expensive
+  # unshallow operation in CI systems (which should instead be fixed to not use
+  # shallow clones). Sorry for the inconvenience!
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
+
+  on_osx brew update --preinstall
+  on_osx brew bundle --no-lock
+
+  # Install a recent bash version for nix-shell.
+  # macos ships with an ancient one.
+  if [ `uname` = "Darwin" ]; then
+    on_nix_shell "brew install bash"
+  fi
+  # initialize nix environment
+  on_nix_shell nix-shell
+
+  # Note: brew link --force might show:
+  #   Warning: Refusing to link macOS-provided software: llvm
+  #
+  #   If you need to have llvm first in your PATH run:
+  #     echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
+  #
+  # This is added in the .circleci/config.yml
+
+  on_tag verify_version
+}
+
+verify_version() {
+  # If building a tag, check it matches with file
+  FILE_VERSION=`cat ./src/VERSION`
+
+  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
+  then
+    fail "VERSION ($FILE_VERSION) does not match GIT TAG ($CURRENT_TAG)"
+  fi
 }
 
 with_build_env() {
   command="$1"
+  on_github "echo '::group::$1'"
 
   # Ensure non GMT timezone
   export TZ="America/New_York"
 
   on_linux verify_linux_environment
+
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:1.9.2}"
+
+  case $ARCH in
+    x86_64)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
+      ;;
+    x86_64-musl)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
+      ;;
+    i386)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
+      ;;
+  esac
+
   on_linux docker run \
-    --rm \
+    --rm -t \
     -u $(id -u) \
-    -v $(pwd):/mnt \
+    -v $PWD:/mnt \
+    -v /etc/passwd:/etc/passwd \
+    -v /etc/group:/etc/group \
     -w /mnt \
-    -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
-    "jhass/crystal-build-$ARCH:llvm38" \
-    "$ARCH_CMD" /bin/bash -c "'$command'"
+    -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
+    -e SPEC_SPLIT_DOTS \
+    -e USE_PCRE1 \
+    "$DOCKER_TEST_IMAGE" \
+    "$ARCH_CMD" /bin/sh -c "'$command'"
 
-  on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
+  on_osx sudo systemsetup -settimezone $TZ
+  on_osx PATH="~/crystal/bin:\$PATH" \
+    CRYSTAL_LIBRARY_PATH="~/crystal/embedded/lib" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    /bin/bash -c "'$command'"
+    /bin/sh -c "'$command'"
 
+  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
+
+  on_github echo "::endgroup::"
 }
 
 usage() {
-  echo -e "bin/ci [-h|--help] command [parameter ...]"
-  echo -e ""
-  echo -e "Helper script to prepare and run the testsuite on Travis CI."
-  echo -e ""
-  echo -e "Commands:"
-  echo -e "  prepare_system          setup any necessaries repositories etc."
-  echo -e "  prepare_build           download and extract any dependencies needed for the build"
-  echo -e "  build                   run specs, build crystal, run format check, build samples, build the docs"
-  echo -e "  deploy                  deploy the docs"
-  echo -e "  with_build_env command  run command in the build environment"
-  echo -e "  help                    display this"
-  echo -e ""
+  cat <<EOF
+bin/ci [-h|--help] command [parameter ...]
+
+Helper script to prepare and run the testsuite on Travis CI.
+
+Commands:
+  prepare_system          setup any necessaries repositories etc.
+  prepare_build           download and extract any dependencies needed for the build
+  build                   run specs, build crystal, build samples, build the docs
+  format                  build crystal, run format check
+  with_build_env command  run command in the build environment
+  help                    display this
+
+EOF
 }
 
 command="$1"
@@ -205,8 +260,8 @@ case $command in
   build)
     build
     ;;
-  deploy)
-    deploy
+  format)
+    format
     ;;
   -h|--help|help)
     usage

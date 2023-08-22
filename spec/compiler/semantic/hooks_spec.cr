@@ -70,31 +70,49 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "errors if wrong inherited args size" do
+  it "does not invoke 'method_added' hook recursively" do
+    assert_type("
+      class Foo
+        macro method_added(d)
+          def {{d.name.id}}
+            1
+          end
+        end
+
+        def foo
+          nil
+        end
+      end
+
+      Foo.new.foo
+      ") { int32 }
+  end
+
+  it "errors if wrong inherited params size" do
     assert_error %(
       class Foo
         macro inherited(x)
         end
       end
-      ), "macro 'inherited' must not have arguments"
+      ), "wrong number of parameters for macro 'inherited' (given 1, expected 0)"
   end
 
-  it "errors if wrong included args size" do
+  it "errors if wrong included params size" do
     assert_error %(
       module Foo
         macro included(x)
         end
       end
-      ), "macro 'included' must not have arguments"
+      ), "wrong number of parameters for macro 'included' (given 1, expected 0)"
   end
 
-  it "errors if wrong extended args size" do
+  it "errors if wrong extended params size" do
     assert_error %(
       module Foo
         macro extended(x)
         end
       end
-      ), "macro 'extended' must not have arguments"
+      ), "wrong number of parameters for macro 'extended' (given 1, expected 0)"
   end
 
   it "types initializer in inherited" do
@@ -122,13 +140,13 @@ describe "Semantic: hooks" do
       )) { string }
   end
 
-  it "errors if wrong extended args length" do
+  it "errors if wrong extended params length" do
     assert_error %(
       class Foo
         macro method_added
         end
       end
-      ), "macro 'method_added' must have a argument"
+      ), "wrong number of parameters for macro 'method_added' (given 0, expected 1)"
   end
 
   it "includes error message in included hook (#889)" do
@@ -181,5 +199,62 @@ describe "Semantic: hooks" do
 
       Klass.method
       )) { int32 }
+  end
+
+  it "errors if wrong finished params length" do
+    assert_error %(
+      class Foo
+        macro finished(x)
+        end
+      end
+      ), "wrong number of parameters for macro 'finished' (given 1, expected 0)"
+  end
+
+  it "types macro finished hook bug regarding initialize (#3964)" do
+    assert_type(%(
+      class A1
+        macro finished
+          @x : String
+          def initialize(@x)
+          end
+
+          def x; @x; end
+        end
+      end
+
+      class A2
+        macro finished
+          @y : Int32
+          def initialize(@y)
+          end
+
+          def y; @y; end
+        end
+      end
+
+      a1 = A1.new("x")
+      a2 = A2.new(1)
+      {a1.x, a2.y}
+      )) { tuple_of([string, int32]) }
+  end
+
+  it "does inherited macro through generic instance type (#9693)" do
+    assert_type("
+      class Foo(X)
+        macro inherited
+          def self.{{@type.name.downcase.id}}
+            1
+          end
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      class Baz < Bar
+      end
+
+      Baz.baz
+      ") { int32 }
   end
 end

@@ -47,7 +47,7 @@ describe "Codegen: class var" do
 
   it "codegens class var as nil if assigned for the first time inside method" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       class Foo
         def self.foo
@@ -56,7 +56,7 @@ describe "Codegen: class var" do
         end
       end
 
-      Foo.foo.to_i
+      Foo.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -106,11 +106,13 @@ describe "Codegen: class var" do
 
   it "uses var in class var initializer" do
     run(%(
+      require "prelude"
+
       class Foo
         @@var : Int32
         @@var = begin
           a = class_method
-          a + 3
+          a &+ 3
         end
 
         def self.var
@@ -118,7 +120,7 @@ describe "Codegen: class var" do
         end
 
         def self.class_method
-          1 + 2
+          1 &+ 2
         end
       end
 
@@ -128,9 +130,11 @@ describe "Codegen: class var" do
 
   it "reads simple class var before another complex one" do
     run(%(
+      require "prelude"
+
       class Foo
         @@var2 : Int32
-        @@var2 = @@var + 1
+        @@var2 = @@var &+ 1
 
         @@var = 41
 
@@ -145,6 +149,8 @@ describe "Codegen: class var" do
 
   it "initializes class var of union with single type" do
     run(%(
+      require "prelude"
+
       class Foo
         @@var : Int32 | String
         @@var = 42
@@ -196,10 +202,12 @@ describe "Codegen: class var" do
 
   it "initializes dependent constant before class var" do
     run(%(
+      require "prelude"
+
       def foo
         a = 1
         b = 2
-        a + b
+        a &+ b
       end
 
       CONST = foo()
@@ -233,6 +241,8 @@ describe "Codegen: class var" do
 
   it "doesn't use nilable type for initializer" do
     run(%(
+      require "prelude"
+
       class Foo
         @@foo : Int32?
         @@foo = 42
@@ -250,13 +260,15 @@ describe "Codegen: class var" do
   end
 
   it "codegens class var with begin and vars" do
-    run("
+    run(%(
+      require "prelude"
+
       class Foo
         @@foo : Int32
         @@foo = begin
           a = 1
           b = 2
-          a + b
+          a &+ b
         end
 
         def self.foo
@@ -265,16 +277,18 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(3)
+      )).to_i.should eq(3)
   end
 
   it "codegens class var with type declaration begin and vars" do
-    run("
+    run(%(
+      require "prelude"
+
       class Foo
         @@foo : Int32 = begin
           a = 1
           b = 2
-          a + b
+          a &+ b
         end
 
         def self.foo
@@ -283,7 +297,7 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(3)
+      )).to_i.should eq(3)
   end
 
   it "codegens class var with nilable reference type" do
@@ -338,6 +352,8 @@ describe "Codegen: class var" do
 
   it "gets pointerof class var complex constant" do
     run(%(
+      require "prelude"
+
       z = Foo.foo
 
       class Foo
@@ -524,5 +540,102 @@ describe "Codegen: class var" do
 
       Bar.bar
       )).to_i.should eq(1)
+  end
+
+  it "codegens generic class with class var" do
+    run(%(
+      class Foo(T)
+        @@bar = 1
+
+        def bar
+          @@bar
+        end
+
+        def bar=(@@bar)
+        end
+      end
+
+      f1 = Foo(Int32).new
+      f2 = Foo(String).new
+
+      a = f1.bar
+      b = f2.bar
+      f1.bar = 10
+      c = f2.bar
+      f2.bar = 20
+      d = f1.bar
+      a &+ b &+ c &+ d
+      )).to_i.should eq(1 + 1 + 10 + 20)
+  end
+
+  it "inline initialization of simple class var" do
+    mod = codegen(%(
+      class Foo
+        @@x = 1
+      end
+    ))
+
+    mod.to_s.should_not contain("x:init")
+  end
+
+  it "catch infinite loop in class var initializer" do
+    run(%(
+      require "prelude"
+
+      module Crystal
+        def self.main_user_code(argc : Int32, argv : UInt8**)
+          LibCrystalMain.__crystal_main(argc, argv)
+        rescue ex
+          print "error: \#{ex.message}"
+        end
+      end
+
+      class Foo
+        @@x : Int32 = init
+
+        def self.init
+          @@x + 1
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      nil
+    )).to_string.should eq("error: Recursion while initializing class variables and/or constants")
+  end
+
+  it "runs class var side effects (#8862)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@x = 0
+
+        def self.set
+          @@x = 3
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      a = Hello.value
+
+      class Hello
+        @@value : Int32 = begin
+          Foo.set
+          1 &+ 2
+        end
+
+        def self.value
+          @@value
+        end
+      end
+
+      a &+ Foo.x
+      )).to_i.should eq(6)
   end
 end

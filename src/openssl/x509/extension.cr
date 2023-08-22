@@ -1,8 +1,8 @@
 require "openssl/lib_crypto"
 
-# :nodoc;
+# :nodoc:
 module OpenSSL::X509
-  # :nodoc;
+  # :nodoc:
   class Extension
     def self.new(oid : String, value : String, critical = false)
       nid = LibCrypto.obj_ln2nid(oid)
@@ -42,12 +42,12 @@ module OpenSSL::X509
       LibCrypto.obj_obj2nid(obj)
     end
 
-    def oid
+    def oid : String
       obj = LibCrypto.x509_extension_get_object(@ext)
       LibCrypto.obj_obj2nid(obj)
 
       if (nid = LibCrypto.obj_obj2nid(obj)) == LibCrypto::NID_undef
-        buf = Slice(UInt8).new(512)
+        buf = Bytes.new(512)
         LibCrypto.i2t_asn1_object(buf, buf.size, obj)
       else
         buf = LibCrypto.obj_nid2sn(nid)
@@ -56,8 +56,8 @@ module OpenSSL::X509
       String.new(buf)
     end
 
-    def value
-      bio = OpenSSL::BIO.new(io = MemoryIO.new)
+    def value : String
+      bio = OpenSSL::BIO.new(io = IO::Memory.new)
 
       if LibCrypto.x509v3_ext_print(bio, @ext, 0, 0) == 0
         LibCrypto.asn1_string_print(bio, LibCrypto.x509_extension_get_data(@ext))

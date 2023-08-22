@@ -14,6 +14,7 @@ lib LibC
   fun getenv(name : Char*) : Char*
   fun malloc(size : SizeT) : Void*
   fun mkstemp(template : Char*) : Int
+  fun mkstemps(template : Char*, suffixlen : Int) : Int
   fun putenv(string : Char*) : Int
   fun realloc(ptr : Void*, size : SizeT) : Void*
   fun realpath(name : Char*, resolved : Char*) : Char*

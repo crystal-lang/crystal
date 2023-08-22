@@ -1,246 +1,359 @@
-require "c/arpa/inet"
-require "c/netdb"
-require "c/netinet/in"
-require "c/netinet/tcp"
-require "c/sys/socket"
-require "c/sys/un"
+require "crystal/system/socket"
 
-class Socket < IO::FileDescriptor
-  class Error < Exception
+class Socket < IO
+  include IO::Buffered
+  include Crystal::System::Socket
+
+  # :nodoc:
+  SOMAXCONN = 128
+
+  @volatile_fd : Atomic(Handle)
+
+  # Returns the handle associated with this socket from the operating system.
+  #
+  # * on POSIX platforms, this is a file descriptor (`Int32`)
+  # * on Windows, this is a SOCKET handle (`LibC::SOCKET`)
+  def fd
+    @volatile_fd.get
   end
 
-  enum Type
-    STREAM    = LibC::SOCK_STREAM
-    DGRAM     = LibC::SOCK_DGRAM
-    RAW       = LibC::SOCK_RAW
-    SEQPACKET = LibC::SOCK_SEQPACKET
+  @closed : Bool
+
+  getter family : Family
+  getter type : Type
+  getter protocol : Protocol
+
+  # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
+  # need full control over the socket.
+  def self.tcp(family : Family, blocking = false) : self
+    new(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
-  enum Protocol
-    IP   = LibC::IPPROTO_IP
-    TCP  = LibC::IPPROTO_TCP
-    UDP  = LibC::IPPROTO_UDP
-    RAW  = LibC::IPPROTO_RAW
-    ICMP = LibC::IPPROTO_ICMP
+  # Creates an UDP socket. Consider using `UDPSocket` unless you need full
+  # control over the socket.
+  def self.udp(family : Family, blocking = false)
+    new(family, Type::DGRAM, Protocol::UDP, blocking)
   end
 
-  enum Family : LibC::SaFamilyT
-    UNSPEC = LibC::AF_UNSPEC
-    UNIX   = LibC::AF_UNIX
-    INET   = LibC::AF_INET
-    INET6  = LibC::AF_INET6
+  # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
+  # you need full control over the socket.
+  def self.unix(type : Type = Type::STREAM, blocking = false) : self
+    new(Family::UNIX, type, blocking: blocking)
   end
 
-  struct IPAddress
-    getter family : Family
-    getter address : String
-    getter port : UInt16
+  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    # This method is `#initialize` instead of `.new` because it is used as super
+    # constructor from subclasses.
 
-    def initialize(@family : Family, @address : String, port : Int)
-      if family != Family::INET && family != Family::INET6
-        raise ArgumentError.new("Unsupported address family")
-      end
-
-      @port = port.to_u16
-    end
-
-    def initialize(sockaddr : LibC::SockaddrIn6, addrlen : LibC::SocklenT)
-      case addrlen
-      when LibC::SocklenT.new(sizeof(LibC::SockaddrIn))
-        sockaddrin = pointerof(sockaddr).as(LibC::SockaddrIn*).value
-        addr = sockaddrin.sin_addr
-        @family = Family::INET
-        @address = inet_ntop(family.value, pointerof(addr).as(Void*), addrlen)
-      when LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
-        addr6 = sockaddr.sin6_addr
-        @family = Family::INET6
-        @address = inet_ntop(family.value, pointerof(addr6).as(Void*), addrlen)
-      else
-        raise ArgumentError.new("Unsupported address family")
-      end
-      @port = LibC.htons(sockaddr.sin6_port).to_u16
-    end
-
-    def sockaddr
-      sockaddrin6 = LibC::SockaddrIn6.new
-      sockaddrin6.sin6_family = LibC::SaFamilyT.new(family.value)
-
-      case family
-      when Family::INET
-        sockaddrin = pointerof(sockaddrin6).as(LibC::SockaddrIn*).value
-        addr = sockaddrin.sin_addr
-        LibC.inet_pton(family.value, address, pointerof(addr).as(Void*))
-        sockaddrin.sin_addr = addr
-        sockaddrin6 = pointerof(sockaddrin).as(LibC::SockaddrIn6*).value
-      when Family::INET6
-        addr6 = sockaddrin6.sin6_addr
-        LibC.inet_pton(family.value, address, pointerof(addr6).as(Void*))
-        sockaddrin6.sin6_addr = addr6
-      end
-
-      sockaddrin6.sin6_port = LibC.ntohs(port).to_i16
-      sockaddrin6
-    end
-
-    def addrlen
-      case family
-      when Family::INET  then LibC::SocklenT.new(sizeof(LibC::SockaddrIn))
-      when Family::INET6 then LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
-      else                    LibC::SocklenT.new(0)
-      end
-    end
-
-    def to_s(io)
-      io << address << ":" << port
-    end
-
-    private def inet_ntop(af : Int, src : Void*, len : LibC::SocklenT)
-      dest = GC.malloc_atomic(addrlen.to_u32).as(UInt8*)
-      if LibC.inet_ntop(af, src, dest, len).null?
-        raise Errno.new("Failed to convert IP address")
-      end
-      String.new(dest)
-    end
+    fd = create_handle(family, type, protocol, blocking)
+    initialize(fd, family, type, protocol, blocking)
   end
 
-  struct UNIXAddress
-    getter path : String
+  # Creates a Socket from an existing socket file descriptor / handle.
+  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, blocking = false)
+    @volatile_fd = Atomic.new(fd)
+    @closed = false
+    initialize_handle(fd)
 
-    def initialize(@path : String)
-    end
-
-    def family
-      Family::UNIX
-    end
-
-    def to_s(io)
-      path.to_s(io)
-    end
-  end
-
-  def initialize(fd, blocking = false)
-    super fd, blocking
     self.sync = true
-  end
-
-  protected def create_socket(family, stype, protocol = 0)
-    sock = LibC.socket(family, stype, protocol)
-    raise Errno.new("Error opening socket") if sock <= 0
-    init_close_on_exec sock
-    sock
-  end
-
-  # only used when SOCK_CLOEXEC doesn't exist on the current platform
-  protected def init_close_on_exec(fd : Int32)
-    {% unless LibC.constants.includes?("SOCK_CLOEXEC".id) %}
-      LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-    {% end %}
-  end
-
-  # Calls shutdown(2) with SHUT_RD
-  def close_read
-    shutdown LibC::SHUT_RD
-  end
-
-  # Calls shutdown(2) with SHUT_WR
-  def close_write
-    shutdown LibC::SHUT_WR
-  end
-
-  private def shutdown(how)
-    if LibC.shutdown(@fd, how) != 0
-      raise Errno.new("shutdown #{how}")
+    unless blocking
+      self.blocking = false
     end
   end
 
-  def inspect(io)
-    io << "#<#{self.class}:fd #{@fd}>"
+  # Connects the socket to a remote host:port.
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.tcp(Socket::Family::INET)
+  # sock.connect "crystal-lang.org", 80
+  # ```
+  def connect(host : String, port : Int, connect_timeout = nil) : Nil
+    Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
+      connect(addrinfo, timeout: connect_timeout) { |error| error }
+    end
   end
 
-  def send_buffer_size
-    getsockopt LibC::SO_SNDBUF, 0
+  # Connects the socket to a remote address. Raises if the connection failed.
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.unix
+  # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
+  # ```
+  def connect(addr, timeout = nil) : Nil
+    connect(addr, timeout) { |error| raise error }
+  end
+
+  # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
+  # `Socket::ConnectError` error if the connection failed.
+  def connect(addr, timeout = nil, &)
+    system_connect(addr, timeout) { |error| yield error }
+  end
+
+  # Binds the socket to a local address.
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.tcp(Socket::Family::INET)
+  # sock.bind "localhost", 1234
+  # ```
+  def bind(host : String, port : Int) : Nil
+    Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
+      system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+    end
+  end
+
+  # Binds the socket on *port* to all local interfaces.
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.tcp(Socket::Family::INET6)
+  # sock.bind 1234
+  # ```
+  def bind(port : Int)
+    if family.inet?
+      address = "0.0.0.0"
+      address_and_port = "0.0.0.0:#{port}"
+    else
+      address = "::"
+      address_and_port = "[::]:#{port}"
+    end
+
+    Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
+      system_bind(addrinfo, address_and_port) { |errno| errno }
+    end
+  end
+
+  # Binds the socket to a local address.
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.udp(Socket::Family::INET)
+  # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
+  # ```
+  def bind(addr : Socket::Address) : Nil
+    system_bind(addr, addr.to_s) { |errno| raise errno }
+  end
+
+  # Tells the previously bound socket to listen for incoming connections.
+  def listen(backlog : Int = SOMAXCONN) : Nil
+    listen(backlog) { |errno| raise errno }
+  end
+
+  # Tries to listen for connections on the previously bound socket.
+  # Yields an `Socket::Error` on failure.
+  def listen(backlog : Int = SOMAXCONN, &)
+    system_listen(backlog) { |err| yield err }
+  end
+
+  # Accepts an incoming connection.
+  #
+  # Returns the client socket. Raises an `IO::Error` (closed stream) exception
+  # if the server is closed after invoking this method.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = TCPServer.new(2202)
+  # socket = server.accept
+  # socket.puts Time.utc
+  # socket.close
+  # ```
+  def accept : Socket
+    accept? || raise Socket::Error.new("Closed stream")
+  end
+
+  # Accepts an incoming connection.
+  #
+  # Returns the client `Socket` or `nil` if the server is closed after invoking
+  # this method.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = TCPServer.new(2202)
+  # if socket = server.accept?
+  #   socket.puts Time.utc
+  #   socket.close
+  # end
+  # ```
+  def accept? : Socket?
+    if client_fd = system_accept
+      sock = Socket.new(client_fd, family, type, protocol, blocking)
+      sock.sync = sync?
+      sock
+    end
+  end
+
+  # Sends a message to a previously connected remote address.
+  #
+  # ```
+  # require "socket"
+  #
+  # sock = Socket.udp(Socket::Family::INET)
+  # sock.connect("example.com", 2000)
+  # sock.send("text message")
+  #
+  # sock = Socket.unix(Socket::Type::DGRAM)
+  # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
+  # sock.send(Bytes[0])
+  # ```
+  def send(message) : Int32
+    system_send(message.to_slice)
+  end
+
+  # Sends a message to the specified remote address.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = Socket::IPAddress.new("10.0.3.1", 2022)
+  # sock = Socket.udp(Socket::Family::INET)
+  # sock.connect("example.com", 2000)
+  # sock.send("text query", to: server)
+  # ```
+  def send(message, to addr : Address) : Int32
+    system_send_to(message.to_slice, addr)
+  end
+
+  # Receives a text message from the previously bound address.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = Socket.udp(Socket::Family::INET)
+  # server.bind("localhost", 1234)
+  #
+  # message, client_addr = server.receive
+  # ```
+  def receive(max_message_size = 512) : {String, Address}
+    address = nil
+    message = String.new(max_message_size) do |buffer|
+      bytes_read, sockaddr, addrlen = system_receive(Slice.new(buffer, max_message_size))
+      address = Address.from(sockaddr, addrlen)
+      {bytes_read, 0}
+    end
+    {message, address.not_nil!}
+  end
+
+  # Receives a binary message from the previously bound address.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = Socket.udp(Socket::Family::INET)
+  # server.bind("localhost", 1234)
+  #
+  # message = Bytes.new(32)
+  # bytes_read, client_addr = server.receive(message)
+  # ```
+  def receive(message : Bytes) : {Int32, Address}
+    bytes_read, sockaddr, addrlen = system_receive(message)
+    {bytes_read, Address.from(sockaddr, addrlen)}
+  end
+
+  # Calls `shutdown(2)` with `SHUT_RD`
+  def close_read
+    system_close_read
+  end
+
+  # Calls `shutdown(2)` with `SHUT_WR`
+  def close_write
+    system_close_write
+  end
+
+  def inspect(io : IO) : Nil
+    io << "#<#{self.class}:fd #{fd}>"
+  end
+
+  def send_buffer_size : Int32
+    system_send_buffer_size
   end
 
   def send_buffer_size=(val : Int32)
-    setsockopt LibC::SO_SNDBUF, val
+    self.system_send_buffer_size = val
     val
   end
 
-  def recv_buffer_size
-    getsockopt LibC::SO_RCVBUF, 0
+  def recv_buffer_size : Int32
+    system_recv_buffer_size
   end
 
   def recv_buffer_size=(val : Int32)
-    setsockopt LibC::SO_RCVBUF, val
+    self.system_recv_buffer_size = val
     val
   end
 
-  def reuse_address?
-    getsockopt_bool LibC::SO_REUSEADDR
+  def reuse_address? : Bool
+    system_reuse_address?
   end
 
   def reuse_address=(val : Bool)
-    setsockopt_bool LibC::SO_REUSEADDR, val
-  end
-
-  def broadcast?
-    getsockopt_bool LibC::SO_BROADCAST
-  end
-
-  def broadcast=(val : Bool)
-    setsockopt_bool LibC::SO_BROADCAST, val
-  end
-
-  def keepalive?
-    getsockopt_bool LibC::SO_KEEPALIVE
-  end
-
-  def keepalive=(val : Bool)
-    setsockopt_bool LibC::SO_KEEPALIVE, val
-  end
-
-  def linger
-    v = LibC::Linger.new
-    ret = getsockopt LibC::SO_LINGER, v
-    ret.l_onoff == 0 ? nil : ret.l_linger
-  end
-
-  # WARNING: The behavior of SO_LINGER is platform specific.  Bad things may happen especially with nonblocking sockets.
-  # See https://www.nybek.com/blog/2015/04/29/so_linger-on-non-blocking-sockets/ for more information.
-  #
-  # nil => disable SO_LINGER
-  # Int => enable SO_LINGER and set timeout to Int seconds.
-  #
-  #   0 => abort on close (socket buffer is discarded and RST sent to peer).  Depends on platform and whether shutdown() was called first.
-  # >=1 => abort after Num seconds on close.  Linux and Cygwin may block on close.
-  def linger=(val : Int?)
-    v = LibC::Linger.new
-    case val
-    when Int
-      v.l_onoff = 1
-      v.l_linger = val
-    when nil
-      v.l_onoff = 0
-    end
-
-    setsockopt LibC::SO_LINGER, v
+    self.system_reuse_address = val
     val
   end
 
-  # returns the modified optval
-  def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    raise Errno.new("getsockopt") if ret == -1
-    optval
+  def reuse_port? : Bool
+    system_reuse_port?
   end
 
-  # optval is restricted to Int32 until sizeof works on variables
-  def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
-    raise Errno.new("setsockopt") if ret == -1
-    ret
+  def reuse_port=(val : Bool)
+    self.system_reuse_port = val
+    val
+  end
+
+  def broadcast? : Bool
+    system_broadcast?
+  end
+
+  def broadcast=(val : Bool)
+    self.system_broadcast = val
+    val
+  end
+
+  def keepalive?
+    system_keepalive?
+  end
+
+  def keepalive=(val : Bool)
+    self.system_keepalive = val
+    val
+  end
+
+  def linger
+    system_linger
+  end
+
+  # WARNING: The behavior of `SO_LINGER` is platform specific.
+  # Bad things may happen especially with nonblocking sockets.
+  # See [Cross-Platform Testing of SO_LINGER by Nybek](https://www.nybek.com/blog/2015/04/29/so_linger-on-non-blocking-sockets/)
+  # for more information.
+  #
+  # * `nil`: disable `SO_LINGER`
+  # * `Int`: enable `SO_LINGER` and set timeout to `Int` seconds
+  #   * `0`: abort on close (socket buffer is discarded and RST sent to peer). Depends on platform and whether `shutdown()` was called first.
+  #   * `>=1`: abort after `Int` seconds on close. Linux and Cygwin may block on close.
+  def linger=(val : Int?)
+    self.system_linger = val
+  end
+
+  # Returns the modified *optval*.
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(fd, optname, optval, level)
+  end
+
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
+    system_getsockopt(fd, optname, optval, level) { |value| yield value }
+  end
+
+  protected def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    system_setsockopt(fd, optname, optval, level)
   end
 
   private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
@@ -250,36 +363,62 @@ class Socket < IO::FileDescriptor
 
   private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
-    ret = setsockopt optname, v, level
+    setsockopt optname, v, level
     optval
   end
 
-  private def nonblocking_connect(host, port, addrinfo, timeout = nil)
-    loop do
-      ret =
-        {% if flag?(:freebsd) %}
-          LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
-        {% else %}
-          LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
-        {% end %}
-      return nil if ret == 0 # success
-
-      case Errno.value
-      when Errno::EISCONN
-        return nil # success
-      when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(msg: "connect timed out", timeout: timeout) { |err| return err }
-      else
-        return Errno.new("Error connecting to '#{host}:#{port}'")
-      end
-    end
+  def blocking
+    system_blocking?
   end
 
-  # Returns true if the string represents a valid IPv4 or IPv6 address.
-  def self.ip?(string : String)
-    addr = LibC::In6Addr.new
-    ptr = pointerof(addr).as(Void*)
-    LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
+  def blocking=(value)
+    self.system_blocking = value
+  end
+
+  def close_on_exec?
+    system_close_on_exec?
+  end
+
+  def close_on_exec=(arg : Bool)
+    self.system_close_on_exec = arg
+  end
+
+  def self.fcntl(fd, cmd, arg = 0)
+    Crystal::System::Socket.fcntl(fd, cmd, arg)
+  end
+
+  def fcntl(cmd, arg = 0)
+    self.class.fcntl fd, cmd, arg
+  end
+
+  def finalize
+    return if closed?
+
+    close rescue nil
+  end
+
+  def closed? : Bool
+    @closed
+  end
+
+  def tty?
+    system_tty?
+  end
+
+  private def unbuffered_rewind
+    raise Socket::Error.new("Can't rewind")
+  end
+
+  private def unbuffered_close
+    return if @closed
+
+    @closed = true
+
+    system_close
+  end
+
+  private def unbuffered_flush
+    # Nothing
   end
 end
 

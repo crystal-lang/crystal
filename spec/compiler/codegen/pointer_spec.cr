@@ -28,11 +28,11 @@ describe "Code gen: pointer" do
   end
 
   it "get value of pointer to union" do
-    run("a = 1.1; a = 1; b = pointerof(a); b.value.to_i").to_i.should eq(1)
+    run("a = 1.1; a = 1; b = pointerof(a); b.value.to_i!").to_i.should eq(1)
   end
 
   it "sets value of pointer to union" do
-    run("p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i").to_i.should eq(2)
+    run("p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i!").to_i.should eq(2)
   end
 
   it "increments pointer" do
@@ -53,15 +53,19 @@ describe "Code gen: pointer" do
   end
 
   it "codegens malloc" do
-    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value + 1_i64").to_i.should eq(2)
+    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value &+ 1_i64").to_i.should eq(2)
   end
 
   it "codegens realloc" do
-    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value + 1_i64").to_i.should eq(2)
+    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value &+ 1_i64").to_i.should eq(2)
   end
 
   it "codegens pointer cast" do
     run("a = 1_i64; pointerof(a).as(Int32*).value").to_i.should eq(1)
+  end
+
+  it "codegens pointer cast to Nil (#8015)" do
+    run("a = 1_i64; pointerof(a).as(Nil).nil? ? 3 : 7").to_i.should eq(3)
   end
 
   it "codegens pointer as if condition" do
@@ -246,10 +250,11 @@ describe "Code gen: pointer" do
   end
 
   it "gets pointer to constant" do
-    run("
+    run(%(
+      require "prelude"
       FOO = 1
       pointerof(FOO).value
-    ").to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "passes pointer of pointer to method" do
@@ -265,7 +270,7 @@ describe "Code gen: pointer" do
       ").to_i.should eq(1)
   end
 
-  it "codgens pointer as if condition inside union (1)" do
+  it "codegens pointer as if condition inside union (1)" do
     run(%(
       ptr = Pointer(Int32).new(0_u64) || Pointer(Float64).new(0_u64)
       if ptr
@@ -276,7 +281,7 @@ describe "Code gen: pointer" do
       )).to_i.should eq(2)
   end
 
-  it "codgens pointer as if condition inside union (2)" do
+  it "codegens pointer as if condition inside union (2)" do
     run(%(
       if 1 == 1
         ptr = Pointer(Int32).new(0_u64)
@@ -320,6 +325,8 @@ describe "Code gen: pointer" do
 
   it "does pointerof class variable with class" do
     run(%(
+      require "prelude"
+
       class Bar
         def initialize(@x : Int32)
         end
@@ -366,8 +373,6 @@ describe "Code gen: pointer" do
 
   it "can assign nil to void pointer" do
     codegen(%(
-      require "prelude"
-
       ptr = Pointer(Void).malloc(1_u64)
       ptr.value = ptr.value
       ))
@@ -431,6 +436,24 @@ describe "Code gen: pointer" do
       ))
   end
 
+  it "passes arguments correctly for typedef metaclass (#8544)" do
+    run <<-CRYSTAL
+      lib LibFoo
+        type Foo = Void*
+      end
+
+      class Class
+        def foo(x)
+          x
+        end
+      end
+
+      x = 1
+      LibFoo::Foo.foo(x)
+      Pointer(Void).foo(x)
+      CRYSTAL
+  end
+
   it "generates correct code for Pointer.malloc(0) (#2905)" do
     run(%(
       require "prelude"
@@ -473,5 +496,30 @@ describe "Code gen: pointer" do
       ptr = Pointer(Void).malloc(1_u64).as(LibFoo::Ptr)
       ptr == ptr
       )).to_b.should be_true
+  end
+
+  it "takes pointerof lib external var" do
+    test_c(
+      %(
+        int external_var = 0;
+      ),
+      %(
+        lib LibFoo
+          $external_var : Int32
+        end
+
+        LibFoo.external_var = 1
+
+        ptr = pointerof(LibFoo.external_var)
+        x = ptr.value
+
+        ptr.value = 10
+        y = ptr.value
+
+        ptr.value = 100
+        z = LibFoo.external_var
+
+        x + y + z
+      ), &.to_i.should eq(111))
   end
 end

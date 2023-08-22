@@ -1,27 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta id="repository-name" content="<%= type.repository_name %>">
-  <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
-  <script type="text/javascript" src="<%= type.path_to "js/doc.js" %>"></script>
-  <title><%= type.full_name %> - <%= type.repository_name %></title>
+  <%= HeadTemplate.new(project_info, type) %>
+  <meta name="repository-name" content="<%= project_info.name %>">
+  <title><%= type.full_name %> - <%= project_info.name %> <%= project_info.version %></title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "<%= type.path_to "" %>";
+  </script>
 </head>
 <body>
 
-<div id="types-list">
-  <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search...">
-  </div>
+<%= Crystal::Doc::SVG_DEFS %>
+<%= Crystal::Doc::SIDEBAR_BUTTON %>
+<%= SidebarTemplate.new(project_info, types, type) %>
 
-  <ul>
-    <li><a href="<%= type.path_to("index.html") %>">README</a></li>
-  </ul>
-
-  <%= ListItemsTemplate.new(types, type) %>
-</div>
-
-<div id="main-content">
+<div class="main-content">
 <h1 class="type-name">
 <% if type.program? %>
   <%= type.full_name %>
@@ -36,13 +29,19 @@
 
 
 <% if doc = type.formatted_doc %>
-  <h2>Overview</h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link("overview") %>
+    Overview
+  </h2>
 
   <%= doc %>
 <% end %>
 
 <% if type.alias? %>
-  <h2>Alias Definition</h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link("alias-definition") %>
+    Alias Definition
+  </h2>
   <code><%= type.formatted_alias_definition %></code>
 <% end %>
 
@@ -52,12 +51,17 @@
 <%= OtherTypesTemplate.new("Direct including types", type, type.including_types) %>
 
 <% if locations = type.locations %>
-  <h2>Defined in:</h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link("defined-in") %>
+    Defined in:
+  </h2>
   <% locations.each do |location| %>
-    <% if url = location.url %>
-      <a href="<%= url %>#L<%= location.line_number %>" target="_blank"><%= location.filename %></a>
+    <% if url = project_info.source_url(location) %>
+      <a href="<%= url %>" target="_blank">
+        <%= location.filename_in_project %><% if location.show_line_number %>:<%= location.line_number %><% end %>
+      </a>
     <% else %>
-      <%= location.filename %>
+      <%= location.filename_in_project %><% if location.show_line_number %>:<%= location.line_number %><% end %>
     <% end %>
     <br/>
   <% end %>
@@ -65,13 +69,19 @@
 
 <% unless type.constants.empty? %>
   <% if type.enum? %>
-    <h2>Enum Members</h2>
+    <h2>
+      <%= Crystal::Doc.anchor_link("enum-members") %>
+      Enum Members
+    </h2>
   <% else %>
-    <h2>Constant Summary</h2>
+    <h2>
+      <%= Crystal::Doc.anchor_link("constant-summary") %>
+      Constant Summary
+    </h2>
   <% end %>
   <dl>
     <% type.constants.each do |const| %>
-      <dt class="entry-const" id="<%= const.name %>">
+      <dt class="entry-const" id="<%= const.id %>">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
       </dt>
       <% if doc = const.formatted_doc %>
@@ -83,6 +93,7 @@
   </dl>
 <% end %>
 
+<%= MethodSummaryTemplate.new("Constructors", type.constructors) %>
 <%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
 <%= MethodSummaryTemplate.new("Instance Method Summary", type.instance_methods) %>
 <%= MethodSummaryTemplate.new("Macro Summary", type.macros) %>
@@ -90,10 +101,12 @@
 <div class="methods-inherited">
   <% type.ancestors.each do |ancestor| %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.instance_methods, "Instance") %>
+    <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.constructors, "Constructor") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.class_methods, "Class") %>
   <% end %>
 </div>
 
+<%= MethodDetailTemplate.new("Constructor Detail", type.constructors) %>
 <%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
 <%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>
 <%= MethodDetailTemplate.new("Macro Detail", type.macros) %>

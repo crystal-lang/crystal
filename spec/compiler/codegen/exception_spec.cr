@@ -1255,4 +1255,68 @@ describe "Code gen: exception" do
       print 5
       )).to_i.should eq(123)
   end
+
+  it "catches exception thrown by as inside method (#4030)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        a = 1 || ""
+        a.as(String)
+      end
+
+      begin
+        foo
+        "bad"
+      rescue ex : TypeCastError
+        "good"
+      end
+      )).to_string.should eq("good")
+  end
+
+  it "types parenthesized expression (#5511)" do
+    run(%(
+      require "prelude"
+
+      begin
+        ((raise "foo").bar).baz
+      rescue ex
+        ex.message
+      end
+      )).to_string.should eq("foo")
+  end
+
+  it "codegens return from rescue with value" do
+    run(%(
+      require "prelude"
+
+      def foo
+        begin
+          raise "foo"
+        rescue
+          return 5
+        end
+      end
+
+      foo
+      )).to_i.should eq(5)
+  end
+
+  it "closures rescue variable (#8141)" do
+    codegen(%(
+      require "prelude"
+
+      def invoke(&block)
+        block.call
+      end
+
+      ex = nil
+
+      invoke do
+        begin
+        rescue ex
+        end
+      end
+    ))
+  end
 end

@@ -1,7 +1,7 @@
-require "spec"
-require "big_int"
+require "./spec_helper"
+require "big"
 
-module StructSpec
+private module StructSpec
   struct TestClass
     @x : Int32
     @y : String
@@ -27,6 +27,15 @@ module StructSpec
 
     def_clone
   end
+
+  abstract struct GeneralStruct
+  end
+
+  struct FooStruct < GeneralStruct
+  end
+
+  struct BarStruct < GeneralStruct
+  end
 end
 
 describe "Struct" do
@@ -42,11 +51,12 @@ describe "Struct" do
 
   it "does hash" do
     s = StructSpec::TestClass.new(1, "hello")
-    s.hash.should eq(31 + "hello".hash)
+    s.hash.should eq(s.dup.hash)
   end
 
   it "does hash for struct wrapper (#1940)" do
-    StructSpec::BigIntWrapper.new(BigInt.new(0)).hash.should eq(0)
+    s = StructSpec::BigIntWrapper.new(BigInt.new(0))
+    s.hash.should eq(s.dup.hash)
   end
 
   it "does dup" do
@@ -68,5 +78,13 @@ describe "Struct" do
 
     original.x = 10
     clone.x.should_not eq(10)
+  end
+
+  it "should retrieve multiple descendants from hashed data structure" do
+    foo = StructSpec::FooStruct.new
+    bar = StructSpec::BarStruct.new
+    set = Set{foo, bar}
+    set.should contain(foo)
+    set.should contain(bar)
   end
 end

@@ -5,6 +5,10 @@ describe "Code gen: var" do
     run("a = 1; 1.5; a").to_i.should eq(1)
   end
 
+  it "codegens var with type declaration" do
+    run("a = (b : Int32 = 1); a").to_i.should eq(1)
+  end
+
   it "codegens ivar assignment when not-nil type filter applies" do
     run("
       class Foo
@@ -30,9 +34,9 @@ describe "Code gen: var" do
 
         def foo
           if 1 == 2
-            @angle += 1
+            @angle &+= 1
           else
-            @angle -= 1
+            @angle &-= 1
           end
         end
       end
@@ -119,11 +123,11 @@ describe "Code gen: var" do
 
   it "works with typeof with assignment (#828)" do
     run(%(
-      class String; def to_i; 0; end; end
+      class String; def to_i!; 0; end; end
 
       a = 123
       typeof(a = "hello")
-      a.to_i
+      a.to_i!
       )).to_i.should eq(123)
   end
 

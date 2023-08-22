@@ -8,7 +8,7 @@ describe "Code gen: generic class type" do
         end
 
         def x
-          @x + 1
+          @x &+ 1
         end
       end
 
@@ -30,7 +30,7 @@ describe "Code gen: generic class type" do
         end
       end
 
-      Foo(Int32).new.x + 1
+      Foo(Int32).new.x &+ 1
       )).to_i.should eq(2)
   end
 
@@ -96,7 +96,76 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "codegens statis array size after instantiating" do
+  it "runs generic instance var initializers in superclass's metaclass context (#4753)" do
+    run(%(
+      class Bar(T)
+        def x
+          {% if T == Int32 %} 1 {% else %} 2 {% end %}
+        end
+      end
+
+      class FooBase(T)
+        @bar = Bar(T).new
+
+        def bar
+          @bar
+        end
+      end
+
+      class Foo(T) < FooBase(T)
+      end
+
+      Foo(Int32).new.bar.x
+      )).to_i.should eq(1)
+  end
+
+  it "runs generic instance var initializers in superclass's metaclass context (2) (#6482)" do
+    run(%(
+      class Bar(T)
+        def x
+          {% if T == FooBase(Int32) %} 1 {% else %} 2 {% end %}
+        end
+      end
+
+      class FooBase(T)
+        @bar = Bar(FooBase(T)).new
+
+        def bar
+          @bar
+        end
+      end
+
+      class Foo(T) < FooBase(T)
+      end
+
+      Foo(Int32).new.bar.x
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't run generic instance var initializers in formal superclass's context (#4753)" do
+    run(%(
+      class Foo(T)
+        @foo = T.new
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz
+        def baz
+          7
+        end
+      end
+
+      Bar(Baz).new.foo.baz
+      )).to_i.should eq(7)
+  end
+
+  it "codegens static array size after instantiating" do
     run(%(
       struct StaticArray(T, N)
         def size
@@ -150,7 +219,7 @@ describe "Code gen: generic class type" do
       end
 
       baz = Baz.new
-      baz.x + baz.y
+      baz.x &+ baz.y
       )).to_i.should eq(42)
   end
 
@@ -282,5 +351,162 @@ describe "Code gen: generic class type" do
 
       Bar(Int32).new.as(Foo(Int32)).class.name
       )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "recomputes two calls that look the same due to generic type being instantiated (#7728)" do
+    run(%(
+      require "prelude"
+
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def initialize(@x : T)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      def foo(gen)
+        gen.x
+        gen.x
+      end
+
+      foo(Gen.new(1) || Gen.new(1.5))
+      foo(Gen.new(true) || Gen.new(1_u8))
+      foo(Gen.new("hello") || Gen.new('z')).as(String)
+      )).to_string.should eq("hello")
+  end
+
+  it "doesn't consider abstract types for including types (#7200)" do
+    codegen(%(
+      module Moo
+      end
+
+      abstract class Foo(T)
+        include Moo
+
+        def foo
+          bar
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        def bar
+        end
+      end
+
+      Bar(Int32).new.as(Moo).foo
+      ))
+  end
+
+  it "doesn't consider abstract generic instantiation when restricting type (#5190)" do
+    codegen(%(
+      abstract class Foo(E)
+        abstract def foo
+      end
+
+      abstract class Bar(E) < Foo(E)
+      end
+
+      class Baz(E) < Bar(E)
+        def foo
+        end
+      end
+
+      ptr = Pointer(Foo(String)).malloc(1_u64)
+
+      Baz(String).new
+
+      x = ptr.value
+      if x.is_a?(Bar)
+        x.foo
+      end
+      ))
+  end
+
+  it "doesn't crash on generic type restriction with initially no subtypes (#8411)" do
+    codegen(%(
+      class Foo
+      end
+
+      class Baz(T) < Foo
+        def baz
+        end
+      end
+
+      def x(z)
+      end
+
+      f = uninitialized Foo
+      if f.is_a?(Baz)
+        x(f.baz)
+      end
+
+      Baz(Int32).new
+      ))
+  end
+
+  it "doesn't crash on generic type restriction with no subtypes (#7583)" do
+    codegen(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Baz(T) < Foo
+        def baz
+        end
+      end
+
+      def x(z)
+      end
+
+      f = uninitialized Foo
+      if f.is_a?(Baz)
+        x(f.baz)
+      end
+      ))
+  end
+
+  it "doesn't override guessed instance var in generic type if already declared in superclass (#9431)" do
+    codegen(%(
+      class Foo
+        @x = 0
+      end
+
+      class Bar(T) < Foo
+        @x = 0
+      end
+
+      class Baz < Bar(Int32)
+        @valid = true
+      end
+
+      Baz.new
+      ))
+  end
+
+  it "codegens compile-time interpreted generic int128" do
+    run(%(
+      require "prelude"
+
+      CONST = 1_i128 + 2_i128
+      class Foo(T)
+        def initialize()
+        end
+
+        def t_incr
+          T + 1
+        end
+      end
+
+      class Bar < Foo(CONST)
+      end
+
+      Bar.new.t_incr
+      )).to_i.should eq(4)
   end
 end

@@ -7,7 +7,7 @@ class Crystal::Command
   private def playground
     server = Playground::Server.new
 
-    OptionParser.parse(options) do |opts|
+    OptionParser.parse(@options) do |opts|
       opts.banner = "Usage: crystal play [options] [file]\n\nOptions:"
 
       opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
@@ -19,7 +19,7 @@ class Crystal::Command
       end
 
       opts.on("-v", "--verbose", "Display detailed information of executed code") do
-        server.logger.level = Logger::Severity::DEBUG
+        Crystal::Playground::Log.level = :debug
       end
 
       opts.on("-h", "--help", "Show this message") do

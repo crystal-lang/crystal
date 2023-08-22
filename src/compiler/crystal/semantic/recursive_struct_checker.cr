@@ -22,6 +22,9 @@ class Crystal::RecursiveStructChecker
 
   def run
     check_types(@program)
+    @program.file_modules.each_value do |file_module|
+      check_types(file_module)
+    end
   end
 
   def check_types(type)
@@ -31,8 +34,8 @@ class Crystal::RecursiveStructChecker
   end
 
   def check_single(type)
-    return if @all_checked.includes?(type)
-    @all_checked << type
+    has_not_been_checked = @all_checked.add?(type)
+    return unless has_not_been_checked
 
     if struct?(type)
       target = type
@@ -41,13 +44,20 @@ class Crystal::RecursiveStructChecker
       check_recursive_instance_var_container(target, type, checked, path)
     end
 
+    if type.is_a?(AliasType) && !type.simple?
+      target = type
+      checked = Set(Type).new
+      path = [] of Var | Type
+      check_recursive(target, type.aliased_type, checked, path)
+    end
+
     check_types(type)
     check_generic_instances(type)
   end
 
   def check_generic_instances(type)
     if type.struct? && type.is_a?(GenericType)
-      type.generic_types.each_value do |instance|
+      type.each_instantiated_type do |instance|
         check_single(instance)
       end
     end
@@ -55,8 +65,14 @@ class Crystal::RecursiveStructChecker
 
   def check_recursive(target, type, checked, path)
     if target == type
+      if target.is_a?(AliasType)
+        alias_message = " (recursive aliases are structs)"
+      end
+
       msg = <<-MSG
-        recursive struct #{target} detected: #{path_to_s(path)}
+        recursive struct #{target} detected#{alias_message}
+
+          #{path_to_s(path)}
 
         The struct #{target} has, either directly or indirectly,
         an instance variable whose type is, eventually, this same
@@ -81,25 +97,25 @@ class Crystal::RecursiveStructChecker
 
     if type.is_a?(VirtualType)
       if type.struct?
-        path.push type
-        type.subtypes.each do |subtype|
-          path.push subtype
-          check_recursive(target, subtype, checked, path)
-          path.pop
+        push(path, type) do
+          type.subtypes.each do |subtype|
+            push(path, subtype) do
+              check_recursive(target, subtype, checked, path)
+            end
+          end
         end
-        path.pop
       end
     end
 
-    if type.is_a?(NonGenericModuleType)
-      path.push type
-      # Check if the module is composed, recursively, of the target struct
-      type.raw_including_types.try &.each do |module_type|
-        path.push module_type
-        check_recursive(target, module_type, checked, path)
-        path.pop
+    if type.is_a?(NonGenericModuleType) || type.is_a?(GenericModuleInstanceType)
+      push(path, type) do
+        # Check if the module is composed, recursively, of the target struct
+        type.raw_including_types.try &.each do |module_type|
+          push(path, module_type) do
+            check_recursive(target, module_type, checked, path)
+          end
+        end
       end
-      path.pop
     end
 
     if type.is_a?(InstanceVarContainer)
@@ -109,8 +125,32 @@ class Crystal::RecursiveStructChecker
     end
 
     if type.is_a?(UnionType)
-      type.union_types.each do |union_type|
-        check_recursive(target, union_type, checked, path)
+      push(path, type) do
+        type.union_types.each do |union_type|
+          push(path, union_type) do
+            check_recursive(target, union_type, checked, path)
+          end
+        end
+      end
+    end
+
+    if type.is_a?(TupleInstanceType)
+      push(path, type) do
+        type.tuple_types.each do |tuple_type|
+          push(path, tuple_type) do
+            check_recursive(target, tuple_type, checked, path)
+          end
+        end
+      end
+    end
+
+    if type.is_a?(NamedTupleInstanceType)
+      push(path, type) do
+        type.entries.each do |entry|
+          push(path, entry.type) do
+            check_recursive(target, entry.type, checked, path)
+          end
+        end
       end
     end
   end
@@ -121,9 +161,9 @@ class Crystal::RecursiveStructChecker
       var_type = var.type?
       next unless var_type
 
-      path.push var
-      check_recursive(target, var_type, checked, path)
-      path.pop
+      push(path, var) do
+        check_recursive(target, var_type, checked, path)
+      end
     end
     checked.delete type
   end
@@ -140,6 +180,16 @@ class Crystal::RecursiveStructChecker
   end
 
   def struct?(type)
-    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.is_a?(GenericClassType) && !type.abstract?
+    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.abstract?
+  end
+
+  def push(path, type, &)
+    if path.last? == type
+      yield
+    else
+      path.push type
+      yield
+      path.pop
+    end
   end
 end

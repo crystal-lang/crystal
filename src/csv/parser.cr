@@ -1,4 +1,4 @@
-require "./csv"
+require "csv"
 
 # A CSV parser. It lets you consume a CSV row by row.
 #
@@ -20,7 +20,7 @@ class CSV::Parser
   end
 
   # Yields each of the remaining rows as an `Array(String)`.
-  def each_row
+  def each_row(&) : Nil
     while row = next_row
       yield row
     end
@@ -53,6 +53,11 @@ class CSV::Parser
     next_row_internal(token, array)
   end
 
+  # Rewinds this parser to the beginning.
+  def rewind : Nil
+    @lexer.rewind
+  end
+
   private def next_row_internal(token, row)
     while true
       case token.kind
@@ -66,13 +71,7 @@ class CSV::Parser
     end
   end
 
-  # Rewinds this parser to the first row.
-  def rewind
-    @lexer.rewind
-  end
-
-  # :nodoc:
-  struct RowIterator
+  private struct RowIterator
     include Iterator(Array(String))
 
     @parser : Parser
@@ -82,10 +81,6 @@ class CSV::Parser
 
     def next
       @parser.next_row || stop
-    end
-
-    def rewind
-      @parser.rewind
     end
   end
 end

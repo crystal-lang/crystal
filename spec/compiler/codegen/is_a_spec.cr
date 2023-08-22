@@ -243,7 +243,7 @@ describe "Codegen: is_a?" do
     run("
       a = 1
       if a.is_a?(Int32 | Char)
-        a + 1
+        a &+ 1
       else
         0
       end
@@ -253,7 +253,7 @@ describe "Codegen: is_a?" do
   it "restricts union with union" do
     run("
       struct Char
-        def +(other : Int32)
+        def &+(other : Int32)
           other
         end
       end
@@ -266,7 +266,7 @@ describe "Codegen: is_a?" do
 
       a = 1 || 'a' || false
       if a.is_a?(Int32 | Char)
-        a + 2
+        a &+ 2
       else
         a.foo
       end
@@ -433,7 +433,7 @@ describe "Codegen: is_a?" do
       foo = Foo.new(1)
       x = foo.x
       if x.is_a?(Int32)
-        z = x + 1
+        z = x &+ 1
       else
         z = x.foo_bar
       end
@@ -455,7 +455,7 @@ describe "Codegen: is_a?" do
       )).to_b.should be_true
   end
 
-  it "works with inherited generic class against an instantiation (2)" do
+  it "doesn't work with inherited generic class against an instantiation (2)" do
     run(%(
       class Class1
       end
@@ -471,7 +471,7 @@ describe "Codegen: is_a?" do
 
       bar = Bar.new
       bar.is_a?(Foo(Class1))
-      )).to_b.should be_true
+      )).to_b.should be_false
   end
 
   it "works with inherited generic class against an instantiation (3)" do
@@ -513,7 +513,7 @@ describe "Codegen: is_a?" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
-        b + 1
+        b &+ 1
       else
         a
       end
@@ -524,7 +524,7 @@ describe "Codegen: is_a?" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
-        a + 2
+        a &+ 2
       else
         b
       end
@@ -537,7 +537,7 @@ describe "Codegen: is_a?" do
       if (b = a).is_a?(Char)
         b
       else
-        b + 1
+        b &+ 1
       end
       )).to_i.should eq(124)
   end
@@ -550,7 +550,7 @@ describe "Codegen: is_a?" do
       else
         a
       end
-      b ? b + 1 : 0
+      b ? b &+ 1 : 0
       )).to_i.should eq(124)
   end
 
@@ -685,5 +685,253 @@ describe "Codegen: is_a?" do
 
       Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
       )).to_i.should eq(2)
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance (1) (#9660)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz < Bar(Cxx)
+      end
+
+      Baz.new.is_a?(Foo)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance (2)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Cxx).new.is_a?(Foo)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance, through upcast (1)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz < Bar(Cxx)
+      end
+
+      Baz.new.as(Foo(Cxx)).is_a?(Bar)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance, through upcast (2)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Cxx).new.as(Foo(Cxx)).is_a?(Bar)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
+    run(%(
+      class Gen(T)
+      end
+
+      alias Type = Int32 | Gen(Type)
+      a = Gen(Int32).new
+      a.is_a?(Type)
+      )).to_b.should be_false
+  end
+
+  it "codegens untyped var (#4009)" do
+    codegen(%(
+      require "prelude"
+
+      i = 1
+      1 || i.is_a?(Int32) ? "" : i
+      ))
+  end
+
+  it "visits 1.to_s twice, may trigger enclosing_call (#4364)" do
+    run(%(
+      require "prelude"
+
+      B = String
+      1.to_s.is_a?(B)
+      )).to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class)
+    ").to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class.class)
+    ").to_b.should be_true
+  end
+
+  it "passes is_a? with generic module type on virtual type (#10302)" do
+    run(%(
+      module Mod(T)
+      end
+
+      abstract struct Sup
+        include Mod(Sup)
+      end
+
+      struct Sub < Sup
+      end
+
+      Sub.new.is_a?(Mod(Sup))
+      )).to_b.should be_true
+  end
+
+  it "restricts metaclass against virtual metaclass type" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      x = B || A
+      if x.is_a?(B.class)
+        1
+      elsif x.is_a?(A.class)
+        2
+      else
+        3
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "restricts virtual metaclass against virtual metaclass type" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < B
+      end
+
+      x = B || A
+      if x.is_a?(B.class)
+        1
+      elsif x.is_a?(A.class)
+        2
+      else
+        3
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "does is_a? with union type, don't resolve to virtual type (#10244)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      x = D.new || C.new
+      x.is_a?(B | C)
+    )).to_b.should be_false
+  end
+
+  it "does is_a? with union type as Union(X, Y), don't resolve to virtual type (#10244)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      x = D.new || C.new
+      x.is_a?(Union(B, C))
+    )).to_b.should be_false
+  end
+
+  it "restricts union metaclass to metaclass (#12295)" do
+    run(%(
+      x = true ? Union(String | Int32) : String
+      if x.is_a?(String.class)
+        1
+      else
+        2
+      end
+    )).to_i.should eq(2)
+  end
+
+  it "does is_a? for generic type against generic class instance type (#12304)" do
+    run(%(
+      require "prelude"
+
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      a = B(Int32).new.as(A)
+      b = a.as(B)
+
+      b.is_a?(B(Int32))
+    )).to_b.should be_true
+  end
+
+  it "virtual metaclass type is not virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).is_a?(Base | Impl)
+      CRYSTAL
   end
 end

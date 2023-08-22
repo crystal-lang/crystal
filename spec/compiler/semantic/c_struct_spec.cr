@@ -38,7 +38,7 @@ describe "Semantic: struct" do
       end
       bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x
-    ") { types["LibFoo"].types["Baz"] }
+    ", inject_primitives: true) { types["LibFoo"].types["Baz"] }
   end
 
   it "types struct getter multiple levels via new" do
@@ -53,7 +53,7 @@ describe "Semantic: struct" do
       end
       bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x.y
-    ") { int32 }
+    ", inject_primitives: true) { int32 }
   end
 
   it "types struct getter with keyword name" do
@@ -72,7 +72,7 @@ describe "Semantic: struct" do
 
   it "errors on struct setter if different type via new" do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = Pointer(LibFoo::Bar).malloc(1_u64); f.value.x = 'a'",
-      "field 'x' of struct LibFoo::Bar has type Int32, not Char"
+      "field 'x' of struct LibFoo::Bar has type Int32, not Char", inject_primitives: true
   end
 
   it "types struct getter on pointer type" do
@@ -150,15 +150,15 @@ describe "Semantic: struct" do
       )) { pointer_of(types["LibC"].types["Node"]) }
   end
 
-  it "supports ifdef inside struct" do
+  it "supports macro if inside struct" do
     assert_type(%(
       lib LibC
         struct Foo
-          ifdef some_flag
+          {% if flag?(:some_flag) %}
             a : Int32
-          else
+          {% else %}
             a : Float64
-          end
+          {% end %}
         end
       end
 
@@ -319,10 +319,10 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = 1_u8
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
-  it "errors if invoking to_i32 and got error in that call" do
+  it "errors if invoking to_i32! and got error in that call" do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -331,7 +331,7 @@ describe "Semantic: struct" do
       end
 
       class Foo
-        def to_i32
+        def to_i32!
           1 + 'a'
         end
       end
@@ -339,10 +339,10 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "converting from Foo to Int32 by invoking 'to_i32'"
+      "converting from Foo to Int32 by invoking 'to_i32!'"
   end
 
-  it "errors if invoking to_i32 and got wrong type" do
+  it "errors if invoking to_i32! and got wrong type" do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -351,7 +351,7 @@ describe "Semantic: struct" do
       end
 
       class Foo
-        def to_i32
+        def to_i32!
           'a'
         end
       end
@@ -359,7 +359,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+      "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
   end
 
   it "errors if invoking to_unsafe and got error in that call" do
@@ -379,7 +379,8 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "no overload matches 'Int32#+' with type Char"
+      "expected argument #1 to 'Int32#+' to be Float32, Float64, Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64 or UInt8, not Char",
+      inject_primitives: true
   end
 
   it "errors if invoking to_unsafe and got different type" do

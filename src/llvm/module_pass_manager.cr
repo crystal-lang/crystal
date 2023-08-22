@@ -1,10 +1,9 @@
+{% unless LibLLVM::IS_LT_130 %}
+  @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+{% end %}
 class LLVM::ModulePassManager
   def initialize
     @unwrap = LibLLVM.pass_manager_create
-  end
-
-  def add_target_data(target_data)
-    LibLLVM.add_target_data target_data, self
   end
 
   def run(mod)

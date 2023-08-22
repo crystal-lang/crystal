@@ -1,6 +1,7 @@
 require "spec"
+require "spec/helpers/iterate"
 
-class DequeTester
+private class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
 
   @deque : Deque(Int32)
@@ -8,7 +9,7 @@ class DequeTester
   @i : Int32
   @c : Array(Int32) | Deque(Int32) | Nil
 
-  def step
+  def step(&)
     @c = @deque
     yield
     @c = @array
@@ -29,12 +30,28 @@ class DequeTester
     @c.not_nil!
   end
 
-  def test
+  def test(&)
     with self yield
   end
 end
 
-alias RecursiveDeque = Deque(RecursiveDeque)
+private alias RecursiveDeque = Deque(RecursiveDeque)
+
+# Yields multiple forms of `Deque{}`, `Deque{0}`, `Deque{0, 1}`, `Deque{0, 1, 2}`, ...,
+# `Deque{0, 1, 2, ..., max_size - 1}`. All deques have *max_size* as their
+# capacity; each deque is yielded *max_size* times with a different start
+# position in the internal buffer. Every deque is a fresh instance.
+private def each_queue_repr(max_size, &)
+  (0..max_size).each do |size|
+    max_size.times do |i|
+      x = Deque(Int32).new(max_size, 0)
+      x.rotate!(i)
+      x.pop(max_size - size)
+      x.fill &.itself
+      yield x
+    end
+  end
+end
 
 describe "Deque" do
   describe "implementation" do
@@ -75,10 +92,10 @@ describe "Deque" do
     it "works the same as array when inserting at 1/8 size and deleting at 3/4 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size / 8, i) }
+          step { c.insert(c.size // 8, i) }
         end
         1000.times do
-          step { c.delete_at(c.size * 3 / 4) }
+          step { c.delete_at(c.size * 3 // 4) }
         end
       end
     end
@@ -86,10 +103,10 @@ describe "Deque" do
     it "works the same as array when inserting at 3/4 size and deleting at 1/8 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size * 3 / 4, i) }
+          step { c.insert(c.size * 3 // 4, i) }
         end
         1000.times do
-          step { c.delete_at(c.size / 8) }
+          step { c.delete_at(c.size // 8) }
         end
       end
     end
@@ -102,7 +119,7 @@ describe "Deque" do
     end
 
     it "creates with default value in block" do
-      deq = Deque(Int32).new(5) { |i| i * 2 }
+      deq = Deque.new(5) { |i| i * 2 }
       deq.should eq(Deque{0, 2, 4, 6, 8})
     end
 
@@ -112,13 +129,13 @@ describe "Deque" do
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative deque size") do
+      expect_raises(ArgumentError, "Negative deque size") do
         Deque.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative deque capacity") do
+      expect_raises(ArgumentError, "Negative deque capacity") do
         Deque(Int32).new(-1)
       end
     end
@@ -144,6 +161,15 @@ describe "Deque" do
       (a == b).should be_true
       (b == c).should be_false
       (a == d).should be_false
+    end
+
+    it "compares other types" do
+      a = Deque{1, 2, 3}
+      b = Deque{true, false}
+      c = "other type"
+      (a == b).should be_false
+      (b == c).should be_false
+      (a == c).should be_false
     end
   end
 
@@ -176,10 +202,6 @@ describe "Deque" do
       Deque{1, 2, 3}[2]?.should eq(3)
       Deque{1, 2, 3}[3]?.should be_nil
     end
-
-    it "same access by at" do
-      Deque{1, 2, 3}[1].should eq(Deque{1, 2, 3}.at(1))
-    end
   end
 
   describe "[]=" do
@@ -211,6 +233,13 @@ describe "Deque" do
     a[0].should_not be(b[0])
   end
 
+  it "does clone with recursive type" do
+    deq = Deque(RecursiveDeque).new
+    deq << deq
+    clone = deq.clone
+    clone.should be(clone.first)
+  end
+
   describe "concat" do
     it "concats deque" do
       a = Deque{1, 2, 3}
@@ -228,6 +257,44 @@ describe "Deque" do
       a = Deque{1, 2, 3}
       a.concat((4..1000))
       a.should eq(Deque.new((1..1000).to_a))
+    end
+
+    it "concats indexable" do
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = Array.new(10, &.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = Slice.new(10, &.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = StaticArray(Int32, 10).new(&.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = Deque.new(10, &.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+    end
+
+    it "concats itself" do
+      each_queue_repr(16) do |a|
+        size = a.size
+        a.concat(a).should be(a)
+        a.should eq(Deque.new((0...size).to_a * 2))
+      end
     end
   end
 
@@ -277,10 +344,17 @@ describe "Deque" do
     a.should eq(Deque{x})
   end
 
+  it "does each" do
+    a = Deque{1, 1, 1}
+    b = 0
+    a.each { |i| b += i }.should be_nil
+    b.should eq(3)
+  end
+
   it "does each_index" do
     a = Deque{1, 1, 1}
     b = 0
-    a.each_index { |i| b += i }
+    a.each_index { |i| b += i }.should be_nil
     b.should eq(3)
   end
 
@@ -312,7 +386,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         Deque(Int32).new.first
       end
     end
@@ -367,7 +441,7 @@ describe "Deque" do
   end
 
   describe "inspect" do
-    assert { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
+    it { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
   end
 
   describe "last" do
@@ -445,6 +519,24 @@ describe "Deque" do
     end
   end
 
+  describe "reject!" do
+    it "with block" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.reject! &.even?
+      a2.should eq(Deque{1, 3, 5})
+      a2.should be(a1)
+    end
+
+    it "with pattern" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.reject!(2..4)
+      a2.should eq(Deque{1, 5})
+      a2.should be(a1)
+    end
+  end
+
   describe "rotate!" do
     it "rotates" do
       a = Deque{1, 2, 3, 4, 5}
@@ -464,6 +556,36 @@ describe "Deque" do
       a.should eq(Deque{4, 1, 2, 3})
       a.rotate!(8)
       a.should eq(Deque{4, 1, 2, 3})
+    end
+
+    it "rotates with size=0" do
+      a = Deque(Int32).new
+      a.rotate!
+      a.should eq(Deque(Int32).new)
+    end
+
+    it "rotates with size=1" do
+      a = Deque{1}
+      a.rotate!
+      a.should eq(Deque{1})
+    end
+  end
+
+  describe "select!" do
+    it "with block" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.select! &.even?
+      a2.should eq(Deque{2, 4})
+      a2.should be(a1)
+    end
+
+    it "with pattern" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.select!(2..4)
+      a2.should eq(Deque{2, 3, 4})
+      a2.should be(a1)
     end
   end
 
@@ -530,7 +652,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      assert { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}")
     end
 
     it "does with recursive" do
@@ -548,21 +670,7 @@ describe "Deque" do
   end
 
   describe "each iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.each
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
-    end
-
-    it "cycles" do
-      Deque{1, 2, 3}.cycle.first(8).join.should eq("12312312")
-    end
+    it_iterates "#each", [1, 2, 3], Deque{1, 2, 3}.each
 
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
@@ -577,23 +685,13 @@ describe "Deque" do
   end
 
   describe "each_index iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.each_index
-      iter.next.should eq(0)
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
-    end
+    it_iterates "#each_index", [0, 1, 2], Deque{1, 2, 3}.each_index
 
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
       count = 0
       it = a.each_index
-      a.each_index.each do
+      it.each do
         count += 1
         a.clear
       end
@@ -601,44 +699,8 @@ describe "Deque" do
     end
   end
 
-  describe "reverse each iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
+  it_iterates "#reverse_each", [3, 2, 1], Deque{1, 2, 3}.reverse_each
 
-      iter.rewind
-      iter.next.should eq(3)
-    end
-  end
-
-  describe "cycle" do
-    it "cycles" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle do |x|
-        a << x
-        break if a.size == 9
-      end
-      a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles N times" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle(2) do |x|
-        a << x
-      end
-      a.should eq([1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles with iterator" do
-      Deque{1, 2, 3}.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
-    end
-
-    it "cycles with N and iterator" do
-      Deque{1, 2, 3}.cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
-    end
-  end
+  it_iterates "#cycle", [1, 2, 3, 1, 2, 3, 1, 2], Deque{1, 2, 3}.cycle, infinite: true
+  it_iterates "#cycle(limit)", [1, 2, 3, 1, 2, 3], Deque{1, 2, 3}.cycle(2)
 end

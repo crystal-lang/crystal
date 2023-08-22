@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: static array" do
   it "types static array with var declaration" do
-    assert_type("x = uninitialized Char[3]") { nil_type }
+    assert_type("x = uninitialized Char[3]") { static_array_of(char, 3) }
   end
 
   it "types static array new" do
@@ -60,16 +60,43 @@ describe "Semantic: static array" do
       )) { static_array_of(char, 3) }
   end
 
-  it "types static array new with size being a computed constant" do
+  it "types static array new with size being a nested constant inside type declaration (#5426)" do
     assert_type(%(
-      OTHER = 10
-      SIZE = OTHER * 20
-      x = StaticArray(Char, SIZE).new
-      x
-      )) { static_array_of(char, 200) }
+      module Moo
+        SIZE = 3
+      end
+
+      class Foo
+        @x : StaticArray(Char, Moo::SIZE)
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(StaticArray(Char, Moo::SIZE).new).x
+      )) { static_array_of(char, 3) }
   end
 
-  it "types staic array new with size being a computed constant, and use N (bug)" do
+  it "types static array new with size being a computed constant" do
+    assert_type(%(
+      struct Int
+        def //(other : Int)
+          0
+        end
+      end
+
+      OTHER = 10
+      SIZE = OTHER * 20 // 2
+      x = StaticArray(Char, SIZE).new
+      x
+      ), inject_primitives: true) { static_array_of(char, 100) }
+  end
+
+  it "types static array new with size being a computed constant, and use N (bug)" do
     assert_type(%(
       struct StaticArray(T, N)
         def size
@@ -81,7 +108,7 @@ describe "Semantic: static array" do
       x = uninitialized UInt8[SIZE]
       x.size
       a = 1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't crash on restriction (#584)" do
@@ -97,7 +124,7 @@ describe "Semantic: static array" do
 
   it "can match N type argument of static array (#1203)" do
     assert_type(%(
-      def fn(a : StaticArray(T, N))
+      def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 
@@ -108,7 +135,7 @@ describe "Semantic: static array" do
 
   it "can match number type argument of static array (#1203)" do
     assert_type(%(
-      def fn(a : StaticArray(T, 10))
+      def fn(a : StaticArray(T, 10)) forall T
         10
       end
 
@@ -119,13 +146,37 @@ describe "Semantic: static array" do
 
   it "doesn't match other number type argument of static array (#1203)" do
     assert_error %(
-      def fn(a : StaticArray(T, 11))
+      def fn(a : StaticArray(T, 11)) forall T
         10
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
       ),
-      "no overload matches"
+      "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
+  end
+
+  it "doesn't crash on sizeof (#8858)" do
+    assert_error %(
+      alias BadArray = Int32[sizeof(Int32)]
+    ),
+      "can't use sizeof(Int32) as a generic type argument"
+  end
+
+  it "doesn't crash on instance_sizeof (#8858)" do
+    assert_error %(
+      alias BadArray = Int32[instance_sizeof(String)]
+    ),
+      "can't use instance_sizeof(String) as a generic type argument"
+  end
+
+  it "doesn't crash on offsetof (#8858)" do
+    assert_error %(
+      class Foo
+        @foo : Int32 = 0
+      end
+      alias BadArray = Int32[offsetof(Foo, @foo)]
+    ),
+      "can't use offsetof(Foo, @foo) as a generic type argument"
   end
 end

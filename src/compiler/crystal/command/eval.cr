@@ -2,6 +2,12 @@
 
 class Crystal::Command
   private def eval
+    compiler = new_compiler
+    parse_with_crystal_opts do |opts|
+      opts.banner = "Usage: crystal eval [options] [source]\n\nOptions:"
+      setup_simple_compiler_options compiler, opts
+    end
+
     if options.empty?
       program_source = STDIN.gets_to_end
       program_args = [] of String
@@ -16,12 +22,11 @@ class Crystal::Command
       end
     end
 
-    compiler = Compiler.new
     sources = [Compiler::Source.new("eval", program_source)]
 
-    output_filename = Crystal.tempfile "eval"
+    output_filename = Crystal.temp_executable "eval"
 
-    result = compiler.compile sources, output_filename
-    execute output_filename, program_args
+    compiler.compile sources, output_filename, combine_rpath: true
+    execute output_filename, program_args, compiler
   end
 end

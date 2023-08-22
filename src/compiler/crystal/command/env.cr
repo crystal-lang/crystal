@@ -2,29 +2,43 @@
 
 class Crystal::Command
   private def env
-    if ARGV.size == 1 && {"--help", "-h"}.includes?(ARGV[0])
-      env_usage
+    var_names = [] of String
+
+    OptionParser.parse(@options) do |opts|
+      opts.banner = env_usage
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+
+      opts.unknown_args do |before, after|
+        var_names = before
+      end
     end
 
     vars = {
-      "CRYSTAL_CACHE_DIR" => CacheDir.instance.dir,
-      "CRYSTAL_PATH"      => CrystalPath.default_path,
-      "CRYSTAL_VERSION"   => Config.version || "",
+      "CRYSTAL_CACHE_DIR"     => CacheDir.instance.dir,
+      "CRYSTAL_PATH"          => CrystalPath.default_path,
+      "CRYSTAL_VERSION"       => Config.version || "",
+      "CRYSTAL_LIBRARY_PATH"  => CrystalLibraryPath.default_path,
+      "CRYSTAL_LIBRARY_RPATH" => CrystalLibraryPath.default_rpath,
+      "CRYSTAL_OPTS"          => ENV.fetch("CRYSTAL_OPTS", ""),
     }
 
-    if ARGV.empty?
+    if var_names.empty?
       vars.each do |key, value|
-        puts "#{key}=#{value.inspect}"
+        puts "#{key}=#{Process.quote(value)}"
       end
     else
-      ARGV.each do |key|
+      var_names.each do |key|
         puts vars[key]?
       end
     end
   end
 
   private def env_usage
-    puts <<-USAGE
+    <<-USAGE
     Usage: crystal env [var ...]
 
     Prints Crystal environment information.
@@ -32,8 +46,8 @@ class Crystal::Command
     By default it prints information as a shell script.
     If one or more variable names is given as arguments,
     it prints the value of each named variable on its own line.
-    USAGE
 
-    exit
+    Options:
+    USAGE
   end
 end

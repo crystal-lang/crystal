@@ -1,12 +1,92 @@
 require "json"
-require "./big"
+require "big"
 
-def BigInt.new(pull : JSON::PullParser)
-  pull.read_int
-  BigInt.new(pull.raw_value)
+class JSON::Builder
+  # Writes a big decimal.
+  def number(number : BigDecimal) : Nil
+    scalar do
+      @io << number
+    end
+  end
 end
 
-def BigFloat.new(pull : JSON::PullParser)
-  pull.read_float
-  BigFloat.new(pull.raw_value)
+struct BigInt
+  def self.new(pull : JSON::PullParser)
+    case pull.kind
+    when .int?
+      value = pull.raw_value
+      pull.read_next
+    else
+      value = pull.read_string
+    end
+    new(value)
+  end
+
+  def self.from_json_object_key?(key : String) : BigInt?
+    new(key)
+  rescue ArgumentError
+    nil
+  end
+
+  def to_json_object_key : String
+    to_s
+  end
+
+  def to_json(json : JSON::Builder) : Nil
+    json.number(self)
+  end
+end
+
+struct BigFloat
+  def self.new(pull : JSON::PullParser)
+    case pull.kind
+    when .int?, .float?
+      value = pull.raw_value
+      pull.read_next
+    else
+      value = pull.read_string
+    end
+    new(value)
+  end
+
+  def self.from_json_object_key?(key : String) : BigFloat?
+    new(key)
+  rescue ArgumentError
+    nil
+  end
+
+  def to_json_object_key
+    to_s
+  end
+
+  def to_json(json : JSON::Builder) : Nil
+    json.number(self)
+  end
+end
+
+struct BigDecimal
+  def self.new(pull : JSON::PullParser)
+    case pull.kind
+    when .int?, .float?
+      value = pull.raw_value
+      pull.read_next
+    else
+      value = pull.read_string
+    end
+    new(value)
+  end
+
+  def self.from_json_object_key?(key : String) : BigDecimal?
+    new(key)
+  rescue InvalidBigDecimalException
+    nil
+  end
+
+  def to_json_object_key
+    to_s
+  end
+
+  def to_json(json : JSON::Builder) : Nil
+    json.number(self)
+  end
 end

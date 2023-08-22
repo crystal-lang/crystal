@@ -10,16 +10,28 @@ module LLVM::ValueMethods
     String.new LibLLVM.get_value_name(self)
   end
 
-  def add_attribute(attribute)
-    LibLLVM.add_attribute self, attribute
+  def kind
+    LibLLVM.get_value_kind(self)
   end
 
-  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
-    LibLLVM.add_instr_attribute(self, index, attribute)
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context, type : LLVM::Type? = nil)
+    return if attribute.value == 0
+
+    attribute.each_kind do |kind|
+      LibLLVM.add_call_site_attribute(self, index, attribute_ref(context, kind, type))
+    end
   end
 
-  def attributes
-    LibLLVM.get_attribute(self)
+  private def attribute_ref(context, kind, type)
+    if type.is_a?(Type) && Attribute.requires_type?(kind)
+      {% if LibLLVM::IS_LT_120 %}
+        raise "Type arguments are only supported on LLVM 12.0 or above"
+      {% else %}
+        LibLLVM.create_type_attribute(context, kind, type)
+      {% end %}
+    else
+      LibLLVM.create_enum_attribute(context, kind, 0)
+    end
   end
 
   def constant?
@@ -44,6 +56,10 @@ module LLVM::ValueMethods
 
   def linkage
     LibLLVM.get_linkage(self)
+  end
+
+  def dll_storage_class=(storage_class)
+    LibLLVM.set_dll_storage_class(self, storage_class)
   end
 
   def call_convention=(call_convention)
@@ -71,17 +87,36 @@ module LLVM::ValueMethods
     init ? LLVM::Value.new(init) : nil
   end
 
+  def volatile=(volatile)
+    LibLLVM.set_volatile(self, volatile ? 1 : 0)
+  end
+
+  def ordering=(ordering)
+    LibLLVM.set_ordering(self, ordering)
+  end
+
+  def alignment=(bytes)
+    LibLLVM.set_alignment(self, bytes)
+  end
+
+  def const_int_get_sext_value
+    LibLLVM.const_int_get_sext_value(self)
+  end
+
+  def const_int_get_zext_value
+    LibLLVM.const_int_get_zext_value(self)
+  end
+
   def to_value
-    LLVM::Value.new unwrap
+    LLVM::Value.new @unwrap
   end
 
   def dump
     LibLLVM.dump_value self
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
   end
 
   def to_unsafe

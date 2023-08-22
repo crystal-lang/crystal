@@ -1,33 +1,45 @@
+require "log"
+
 # A handler that logs the request method, resource, status code, and
-# the time used to execute the next handler, to the given `IO`.
-class HTTP::LogHandler < HTTP::Handler
-  # Initializes this handler to log to the given `IO`.
-  def initialize(@io : IO = STDOUT)
+# the time used to execute the next handler
+#
+# NOTE: To use `LogHandler`, you must explicitly import it with `require "http"`
+class HTTP::LogHandler
+  include HTTP::Handler
+
+  def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context)
-    time = Time.now
-    call_next(context)
-    elapsed = Time.now - time
-    elapsed_text = elapsed_text(elapsed)
+  def call(context) : Nil
+    start = Time.monotonic
 
-    @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})"
-  rescue e
-    @io.puts "#{context.request.method} #{context.request.resource} - Unhandled exception:"
-    e.inspect_with_backtrace(@io)
-    raise e
+    begin
+      call_next(context)
+    ensure
+      elapsed = Time.monotonic - start
+      elapsed_text = elapsed_text(elapsed)
+
+      req = context.request
+      res = context.response
+
+      addr =
+        case remote_address = req.remote_address
+        when nil
+          "-"
+        when Socket::IPAddress
+          remote_address.address
+        else
+          remote_address
+        end
+
+      @log.info { "#{addr} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
+    end
   end
 
   private def elapsed_text(elapsed)
     minutes = elapsed.total_minutes
     return "#{minutes.round(2)}m" if minutes >= 1
 
-    seconds = elapsed.total_seconds
-    return "#{seconds.round(2)}s" if seconds >= 1
-
-    millis = elapsed.total_milliseconds
-    return "#{millis.round(2)}ms" if millis >= 1
-
-    "#{(millis * 1000).round(2)}µs"
+    "#{elapsed.total_seconds.humanize(precision: 2, significant: false)}s"
   end
 end

@@ -2,8 +2,11 @@
 # It allows a runtime to save memory by preserving strings in a pool, allowing to
 # reuse an instance of a common string instead of creating a new one.
 #
+# NOTE: To use `StringPool`, you must explicitly import it with `require "string_pool"`
+#
 # ```
 # require "string_pool"
+#
 # pool = StringPool.new
 # a = "foo" + "bar"
 # b = "foo" + "bar"
@@ -15,109 +18,160 @@
 # b.object_id # => 136294312
 # ```
 class StringPool
+  # Implementation uses open addressing scheme of hash table with [quadratic probing](https://en.wikipedia.org/wiki/Quadratic_probing).
+  # Quadratic probing, using the triangular numbers, avoids the clumping while keeping
+  # cache coherency in the common case.
+  # As long as the table size is a power of 2, the quadratic-probing method [described by "Triangular numbers mod 2^n"](https://fgiesen.wordpress.com/2015/02/22/triangular-numbers-mod-2n/)
+  # will explore every table element if necessary, to find a good place to insert.
+
   # Returns the size
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.size # => 0
   # ```
   getter size : Int32
 
   # Creates a new empty string pool.
-  def initialize
-    @buckets = Array(Array(String)?).new(11, nil)
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffers in case of growth. If you have an estimate
+  # of the maximum number of elements the pool will hold it should
+  # be initialized with that capacity for improved performance.
+  # Inputs lower than 8 are ignored.
+  #
+  # ```
+  # pool = StringPool.new(256)
+  # pool.size # => 0
+  # ```
+  def initialize(initial_capacity = 8)
+    @capacity = initial_capacity >= 8 ? Math.pw2ceil(initial_capacity) : 8
+    @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
+    @values = Pointer(String).malloc(@capacity, "")
     @size = 0
   end
 
-  # Returns `true` if the String Pool has no element otherwise returns `false`.
+  # Returns `true` if the `StringPool` has no element otherwise returns `false`.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.empty? # => true
   # pool.get("crystal")
   # pool.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @size == 0
   end
 
-  # Returns a string with the contents of the given slice.
+  # Returns a `String` with the contents of the given *slice*.
   #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
   # slice = Slice.new(ptr, 3)
   # pool.empty? # => true
   # pool.get(slice)
   # pool.empty? # => false
-  #  ```
-  def get(slice : Slice(UInt8))
-    get slice.pointer(slice.size), slice.size
+  # ```
+  def get(slice : Bytes) : String
+    get slice.to_unsafe, slice.size
   end
 
-  # Returns a string with the contents given by the pointer *str* of size *len*.
+  # Returns a `String` with the contents given by the pointer *str* of size *len*.
   #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
   # ```
-  def get(str : UInt8*, len)
-    rehash if @size > 5 * @buckets.size
+  def get(str : UInt8*, len) : String
+    hash = hash(str, len)
+    get(hash, str, len)
+  end
 
-    index = bucket_index str, len
-    bucket = @buckets[index]
+  private def get(hash : UInt64, str : UInt8*, len)
+    rehash if @size >= @capacity // 4 * 3
 
-    if bucket
-      entry = find_entry_in_bucket(bucket, str, len)
-      if entry
-        return entry
+    mask = (@capacity - 1).to_u64
+    index = hash & mask
+    next_probe_offset = 1_u64
+    while (h = @hashes[index]) != 0
+      if h == hash && @values[index].bytesize == len
+        if str.memcmp(@values[index].to_unsafe, len) == 0
+          return @values[index]
+        end
       end
-    else
-      @buckets[index] = bucket = Array(String).new
+      index = (index + next_probe_offset) & mask
+      next_probe_offset += 1_u64
     end
 
     @size += 1
     entry = String.new(str, len)
-    bucket.push entry
+    @hashes[index] = hash
+    @values[index] = entry
     entry
   end
 
-  # Returns a string with the contents of the given `MemoryIO`.
+  private def put_on_rehash(hash : UInt64, entry : String)
+    mask = (@capacity - 1).to_u64
+    index = hash & mask
+    next_probe_offset = 1_u64
+    while @hashes[index] != 0
+      index = (index + next_probe_offset) & mask
+      next_probe_offset += 1_u64
+    end
+
+    @hashes[index] = hash
+    @values[index] = entry
+  end
+
+  # Returns a `String` with the contents of the given `IO::Memory`.
   #
   # If a string with those contents was already present in the pool, that one is returned.
-  # Otherwise a new string is created, put in the pool and returned
+  # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
-  # io = MemoryIO.new "crystal"
+  # io = IO::Memory.new "crystal"
   # pool.empty? # => true
   # pool.get(io)
   # pool.empty? # => false
   # ```
-  def get(str : MemoryIO)
+  def get(str : IO::Memory) : String
     get(str.buffer, str.bytesize)
   end
 
-  # Returns a string with the contents of the given string.
+  # Returns a `String` with the contents of the given string.
   #
   # If a string with those contents was already present in the pool, that one is returned.
-  # Otherwise a new string is created, put in the pool and returned
+  # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # string = "crystal"
   # pool.empty? # => true
   # pool.get(string)
   # pool.empty? # => false
   # ```
-  def get(str : String)
+  def get(str : String) : String
     get(str.to_unsafe, str.bytesize)
   end
 
@@ -125,49 +179,30 @@ class StringPool
   # if values of key objects have changed since they were inserted.
   #
   # Call this method if you modified a string submitted to the pool.
-  def rehash
-    new_size = calculate_new_size(@size)
-    old_buckets = @buckets
-    @buckets = Array(Array(String)?).new(new_size, nil)
-    @size = 0
+  def rehash : Nil
+    if @capacity * 2 <= 0
+      raise "Hash table too big"
+    end
 
-    old_buckets.each do |bucket|
-      bucket.try &.each do |entry|
-        get(entry.to_unsafe, entry.size)
+    old_capacity = @capacity
+    old_hashes = @hashes
+    old_values = @values
+
+    @capacity *= 2
+    @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
+    @values = Pointer(String).malloc(@capacity, "")
+
+    old_capacity.times do |i|
+      if old_hashes[i] != 0
+        put_on_rehash(old_hashes[i], old_values[i])
       end
     end
-  end
-
-  private def bucket_index(str, len)
-    hash = hash(str, len)
-    (hash % @buckets.size).to_i
-  end
-
-  private def find_entry_in_bucket(bucket, str, len)
-    bucket.each do |entry|
-      if entry.size == len
-        if str.memcmp(entry.to_unsafe, len) == 0
-          return entry
-        end
-      end
-    end
-    nil
   end
 
   private def hash(str, len)
-    h = 0
-    str.to_slice(len).each do |c|
-      h = 31 * h + c
-    end
-    h
-  end
-
-  private def calculate_new_size(size)
-    new_size = 8
-    Hash::HASH_PRIMES.each do |hash_size|
-      return hash_size if new_size > size
-      new_size <<= 1
-    end
-    raise "Hash table too big"
+    hasher = Crystal::Hasher.new
+    hasher = str.to_slice(len).hash(hasher)
+    # hash should be non-zero, so `or` it with high bit
+    hasher.result | 0x8000000000000000_u64
   end
 end

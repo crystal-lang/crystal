@@ -1,4 +1,4 @@
-require "secure_random"
+require "random/secure"
 require "openssl/hmac"
 require "base64"
 require "./access_token"
@@ -12,17 +12,17 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_key : String
   property issued_at : Int64
 
-  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.epoch)
-    super(access_token, expires_in, refresh_token, scope)
+  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.utc.to_unix, extra = nil)
+    super(access_token, expires_in, refresh_token, scope, extra)
   end
 
-  def token_type
+  def token_type : String
     "Mac"
   end
 
   def authenticate(request : HTTP::Request, tls)
-    ts = Time.now.epoch
-    nonce = "#{ts - @issued_at}:#{SecureRandom.hex}"
+    ts = Time.utc.to_unix
+    nonce = "#{ts - @issued_at}:#{Random::Secure.hex}"
     method = request.method
     uri = request.resource
     host, port = host_and_port request, tls
@@ -34,26 +34,26 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     request.headers["Authorization"] = header
   end
 
-  def self.signature(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key)
+  def self.signature(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key) : String
     normalized_request_string = "#{ts}\n#{nonce}\n#{method}\n#{uri}\n#{host}\n#{port}\n#{ext}\n"
 
     digest = case mac_algorithm
-             when "hmac-sha-1"   then :sha1
-             when "hmac-sha-256" then :sha256
-             else                     raise "unsupported algorithm: #{mac_algorithm}"
+             when "hmac-sha-1"   then OpenSSL::Algorithm::SHA1
+             when "hmac-sha-256" then OpenSSL::Algorithm::SHA256
+             else                     raise "Unsupported algorithm: #{mac_algorithm}"
              end
     Base64.strict_encode OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
   end
 
-  def to_json(io)
-    io.json_object do |object|
-      object.field "token_type", "mac"
-      object.field "access_token", access_token
-      object.field "expires_in", expires_in
-      object.field "refresh_token", refresh_token if refresh_token
-      object.field "scope", scope if scope
-      object.field "mac_algorithm", mac_algorithm
-      object.field "mac_key", mac_key
+  def to_json(json : JSON::Builder) : Nil
+    json.object do
+      json.field "token_type", "mac"
+      json.field "access_token", access_token
+      json.field "expires_in", expires_in
+      json.field "refresh_token", refresh_token if refresh_token
+      json.field "scope", scope if scope
+      json.field "mac_algorithm", mac_algorithm
+      json.field "mac_key", mac_key
     end
   end
 

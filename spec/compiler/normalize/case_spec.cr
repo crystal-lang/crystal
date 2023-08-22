@@ -49,8 +49,16 @@ describe "Normalize: case" do
     assert_expand "case x; when .as?(T); 2; end", "__temp_1 = x\nif __temp_1.as?(T)\n  2\nend"
   end
 
+  it "normalizes case with implicit !" do
+    assert_expand "case x; when .!; 2; end", "__temp_1 = x\nif !__temp_1\n  2\nend"
+  end
+
   it "normalizes case with assignment" do
     assert_expand "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
+  end
+
+  it "normalizes case with assignment wrapped by paren" do
+    assert_expand "case (x = 1); when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
   end
 
   it "normalizes case without value" do
@@ -70,7 +78,7 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with multiple expressions and types" do
-    assert_expand_second "x, y = 1, 2; case {x, y}; when {Int32, Float64}; 4; end", "if (x.is_a?(Int32)) && (y.is_a?(Float64))\n  4\nend"
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {Int32, Float64}; 4; end", "if x.is_a?(Int32) && y.is_a?(Float64)\n  4\nend"
   end
 
   it "normalizes case with multiple expressions and implicit obj" do
@@ -94,10 +102,26 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with multiple expressions and non-tuple" do
-    assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === ({x, y})\n  4\nend"
+    assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === {x, y}\n  4\nend"
   end
 
-  it "normalizes case with single expressions with underscore" do
-    assert_expand_second "x = 1; case x; when _; 2; end", "if true\n  2\nend"
+  it "normalizes case without when and else" do
+    assert_expand "case x; end", "x\nnil"
+  end
+
+  it "normalizes case without when but else" do
+    assert_expand "case x; else; y; end", "x\ny"
+  end
+
+  it "normalizes case without cond, when and else" do
+    assert_expand "case; end", ""
+  end
+
+  it "normalizes case without cond, when but else" do
+    assert_expand "case; else; y; end", "y"
+  end
+
+  it "normalizes case with Path.class to is_a? (in)" do
+    assert_expand_second "x = 1; case x; in Foo.class; 'b'; end", "if x.is_a?(Foo.class)\n  'b'\nelse\n  raise \"unreachable\"\nend"
   end
 end

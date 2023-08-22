@@ -7,12 +7,14 @@ class LLVM::TargetMachine
     target ? Target.new(target) : raise "Couldn't get target"
   end
 
-  def data_layout
-    layout = LibLLVM.get_target_machine_data(self)
-    layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
+  def data_layout : LLVM::TargetData
+    @layout ||= begin
+      layout = LibLLVM.create_target_data_layout(self)
+      layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
+    end
   end
 
-  def triple
+  def triple : String
     triple_c = LibLLVM.get_target_machine_triple(self)
     LLVM.string_and_dispose(triple_c)
   end
@@ -23,6 +25,10 @@ class LLVM::TargetMachine
 
   def emit_asm_to_file(llvm_mod, filename)
     emit_to_file llvm_mod, filename, LLVM::CodeGenFileType::AssemblyFile
+  end
+
+  def enable_global_isel=(enable : Bool)
+    LibLLVMExt.target_machine_enable_global_isel(self, enable)
   end
 
   private def emit_to_file(llvm_mod, filename, type)
@@ -36,10 +42,18 @@ class LLVM::TargetMachine
   def abi
     triple = self.triple
     case triple
-    when /x86_64/
+    when /x86_64.+windows-msvc/
+      ABI::X86_Win64.new(self)
+    when /x86_64|amd64/
       ABI::X86_64.new(self)
-    when /i386|i686/
+    when /i386|i486|i586|i686/
       ABI::X86.new(self)
+    when /aarch64|arm64/
+      ABI::AArch64.new(self)
+    when /arm/
+      ABI::ARM.new(self)
+    when /wasm32/
+      ABI::Wasm32.new(self)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end

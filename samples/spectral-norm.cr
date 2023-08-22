@@ -1,7 +1,7 @@
 # Copied with little modifications from: https://github.com/wmoxam/Ruby-Benchmarks-Game/blob/master/benchmarks/spectral-norm.rb
 
 def eval_A(i, j)
-  return 1.0_f64 / ((i + j) * (i + j + 1.0) / 2.0 + i + 1.0)
+  1.0_f64 / ((i + j) * (i + j + 1.0) / 2.0 + i + 1.0)
 end
 
 def eval_A_times_u(u)
@@ -40,4 +40,4 @@ vBv = vv = 0.0_f64
   vBv += u[i] * v[i]
   vv += v[i] * v[i]
 end
-puts "#{(Math.sqrt(vBv / vv))}"
+puts Math.sqrt(vBv / vv)

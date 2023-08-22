@@ -48,6 +48,32 @@ describe "Semantic: not" do
         z = a + 10
       end
       z
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
+  end
+
+  it "doesn't restrict and" do
+    assert_type(%(
+      a = 1 || nil
+      z = nil
+      if !(a && (1 == 2))
+        z = a
+      end
+      z
+      ), inject_primitives: true) { nilable int32 }
+  end
+
+  it "doesn't restrict and in while (#4243)" do
+    assert_type(%(
+      x = nil
+      y = nil
+      z = nil
+
+      while !(x && y)
+        z = x
+        x = 1
+      end
+
+      z
+      )) { nilable int32 }
   end
 end

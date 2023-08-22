@@ -1,8 +1,6 @@
-require "spec"
-require "yaml"
-require "../../../../src/compiler/crystal/**"
+{% skip_file if flag?(:without_playground) %}
 
-include Crystal
+require "../../../spec_helper"
 
 private def instrument(source)
   ast = Parser.new(source).parse
@@ -16,7 +14,7 @@ private def assert_agent(source, expected)
 
   instrument(source).should contain(expected)
 
-  # whatever case should work beforeit should work with appended lines
+  # whatever case should work before it should work with appended lines
   instrument("#{source}\n1\n").should contain(expected)
 end
 
@@ -26,11 +24,11 @@ private def assert_agent_eq(source, expected)
   instrument(source).should eq(expected)
 end
 
-class Crystal::Playground::Agent
-  @ws : HTTP::WebSocket | Crystal::Playground::TestAgent::FakeSocket
+class Playground::Agent
+  @ws : HTTP::WebSocket | TestAgent::FakeSocket
 end
 
-class Crystal::Playground::TestAgent < Playground::Agent
+private class TestAgent < Playground::Agent
   class FakeSocket
     property message
 
@@ -47,18 +45,14 @@ class Crystal::Playground::TestAgent < Playground::Agent
   end
 end
 
-def a_sample_void
-  Pointer(Void).malloc(1_u64).value
-end
-
 describe Playground::Agent do
   it "should send json messages and return inspected value" do
-    agent = Crystal::Playground::TestAgent.new(".", 32)
+    agent = TestAgent.new(".", 32)
     agent.i(1) { 5 }.should eq(5)
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","html_value":"5","value_type":"Int32"}))
     x, y = 3, 4
     agent.i(1, ["x", "y"]) { {x, y} }.should eq({3, 4})
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","html_value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
   end
 end
 
@@ -72,6 +66,7 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %('c'), %(_p.i(1) { 'c' })
     assert_agent %(:foo), %(_p.i(1) { :foo })
     assert_agent %([1, 2]), %(_p.i(1) { [1, 2] })
+    assert_agent %({} of Int32 => Int32), %(_p.i(1) { {} of Int32 => Int32 })
     assert_agent %(/a/), %(_p.i(1) { /a/ })
   end
 
@@ -104,6 +99,10 @@ describe Playground::AgentInstrumentorTransformer do
   it "instrument binary expressions" do
     assert_agent %(a && b), %(_p.i(1) { a && b })
     assert_agent %(a || b), %(_p.i(1) { a || b })
+  end
+
+  it "instrument chained comparisons (#4663)" do
+    assert_agent %(1 <= 2 <= 3), %(_p.i(1) { 1 <= 2 <= 3 })
   end
 
   it "instrument unary expressions" do
@@ -142,22 +141,22 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(
     def foo
       4
-    end), <<-CR
+    end), <<-CRYSTAL
     def foo
       _p.i(3) { 4 }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument single statement var def" do
     assert_agent %(
     def foo(x)
       x
-    end), <<-CR
+    end), <<-CRYSTAL
     def foo(x)
       _p.i(3) { x }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument multi statement def" do
@@ -165,23 +164,23 @@ describe Playground::AgentInstrumentorTransformer do
     def foo
       2
       6
-    end), <<-CR
+    end), <<-CRYSTAL
     def foo
       _p.i(3) { 2 }
       _p.i(4) { 6 }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument returns inside def" do
     assert_agent %(
     def foo
       return 4
-    end), <<-CR
+    end), <<-CRYSTAL
     def foo
       return _p.i(3) { 4 }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument class defs" do
@@ -197,7 +196,7 @@ describe Playground::AgentInstrumentorTransformer do
       def self.bar(x, y)
         x+y
       end
-    end), <<-CR
+    end), <<-CRYSTAL
     class Foo
       def initialize
         @x = _p.i(4) { 3 }.as(typeof(3))
@@ -210,7 +209,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(11) { x + y }
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument instance variable and class variables reads and writes" do
@@ -226,7 +225,7 @@ describe Playground::AgentInstrumentorTransformer do
       def self.bar
         @@x
       end
-    end), <<-CR
+    end), <<-CRYSTAL
     class Foo
       def initialize
         @x = _p.i(4) { 3 }.as(typeof(3))
@@ -239,7 +238,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(11) { @@x }
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "do not instrument class initializing arguments" do
@@ -249,7 +248,7 @@ describe Playground::AgentInstrumentorTransformer do
         @z = @x + @y
       end
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     class Foo
       def initialize(x, y)
         @x = x
@@ -257,7 +256,7 @@ describe Playground::AgentInstrumentorTransformer do
         @z = _p.i(4) { @x + @y }.as(typeof(@x + @y))
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "allow visibility modifiers" do
@@ -269,7 +268,7 @@ describe Playground::AgentInstrumentorTransformer do
       protected def self.bar
         2
       end
-    end), <<-CR
+    end), <<-CRYSTAL
     class Foo
       private def bar
         _p.i(4) { 1 }
@@ -278,18 +277,18 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(7) { 2 }
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "do not instrument macro calls in class" do
     assert_agent %(
     class Foo
       property foo
-    end), <<-CR
+    end), <<-CRYSTAL
     class Foo
       property foo
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument nested class defs" do
@@ -300,7 +299,7 @@ describe Playground::AgentInstrumentorTransformer do
           @x = 3
         end
       end
-    end), <<-CR
+    end), <<-CRYSTAL
     class Bar
       class Foo
         def initialize
@@ -308,19 +307,19 @@ describe Playground::AgentInstrumentorTransformer do
         end
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "do not instrument records class" do
     assert_agent %(
     record Foo, x, y
-    ), <<-CR
+    ), <<-CRYSTAL
     record Foo, x, y
-    CR
+    CRYSTAL
   end
 
   it "do not instrument top level macro calls" do
-    assert_agent(<<-CR
+    assert_agent(<<-CRYSTAL, <<-CRYSTAL)
     macro bar
       def foo
         4
@@ -328,8 +327,7 @@ describe Playground::AgentInstrumentorTransformer do
     end
     bar
     foo
-    CR
-    , <<-CR
+    CRYSTAL
     macro bar
       def foo
         4
@@ -337,12 +335,11 @@ describe Playground::AgentInstrumentorTransformer do
     end
     bar
     _p.i(7) { foo }
-    CR
-    )
+    CRYSTAL
   end
 
   it "do not instrument class/module declared macro" do
-    assert_agent(<<-CR
+    assert_agent(<<-CRYSTAL, <<-CRYSTAL)
     module Bar
       macro bar
         4
@@ -356,8 +353,7 @@ describe Playground::AgentInstrumentorTransformer do
         8
       end
     end
-    CR
-    , <<-CR
+    CRYSTAL
     module Bar
       macro bar
         4
@@ -371,8 +367,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(11) { 8 }
       end
     end
-    CR
-    )
+    CRYSTAL
   end
 
   it "instrument inside modules" do
@@ -385,7 +380,7 @@ describe Playground::AgentInstrumentorTransformer do
           end
         end
       end
-    end), <<-CR
+    end), <<-CRYSTAL
     module Bar
       class Baz
         class Foo
@@ -395,7 +390,7 @@ describe Playground::AgentInstrumentorTransformer do
         end
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument if statement" do
@@ -405,13 +400,13 @@ describe Playground::AgentInstrumentorTransformer do
     else
       c
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     if a
       _p.i(3) { b }
     else
       _p.i(5) { c }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument unless statement" do
@@ -421,13 +416,13 @@ describe Playground::AgentInstrumentorTransformer do
     else
       c
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     unless a
       _p.i(3) { b }
     else
       _p.i(5) { c }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument while statement" do
@@ -436,12 +431,12 @@ describe Playground::AgentInstrumentorTransformer do
       b
       c
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     while a
       _p.i(3) { b }
       _p.i(4) { c }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument case statement" do
@@ -455,7 +450,7 @@ describe Playground::AgentInstrumentorTransformer do
     else
       d
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     case a
     when 0
       _p.i(4) { b }
@@ -464,7 +459,7 @@ describe Playground::AgentInstrumentorTransformer do
     else
       _p.i(8) { d }
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument blocks and single yields" do
@@ -475,7 +470,7 @@ describe Playground::AgentInstrumentorTransformer do
     foo do |a|
       a
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     def foo(x)
       yield _p.i(3) { x }
     end
@@ -484,7 +479,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(6) { a }
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument blocks and but non multi yields" do
@@ -495,7 +490,7 @@ describe Playground::AgentInstrumentorTransformer do
     foo do |a, i|
       a
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     def foo(x)
       yield x, 1
     end
@@ -504,7 +499,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(6) { a }
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument nested blocks unless in same line" do
@@ -516,7 +511,7 @@ describe Playground::AgentInstrumentorTransformer do
       end
       baz { 'c' }
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     a = _p.i(2) do
       foo do
         _p.i(3) { 'a' }
@@ -532,7 +527,7 @@ describe Playground::AgentInstrumentorTransformer do
         end
       end
     end
-    CR
+    CRYSTAL
   end
 
   it "instrument typeof" do
@@ -557,7 +552,7 @@ describe Playground::AgentInstrumentorTransformer do
     rescue
       0
     end
-    ), <<-CR
+    ), <<-CRYSTAL
     begin
       raise(_p.i(3) { "The exception" })
     rescue ex : String
@@ -576,6 +571,17 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(16) { 0 }
       end
     end
-    CR
+    CRYSTAL
   end
+end
+
+private def assert_compile(source)
+  sources = Playground::Session.instrument_and_prelude("", "", 0, source)
+  compiler = Compiler.new
+  compiler.no_codegen = true
+  compiler.compile sources, "fake-no-build"
+end
+
+describe Playground::Session do
+  it { assert_compile %(puts "1") }
 end

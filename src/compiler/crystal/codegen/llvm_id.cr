@@ -40,6 +40,10 @@ module Crystal
       type_id(type.typedef)
     end
 
+    def type_id(type : VirtualType | VirtualMetaclassType)
+      raise "BUG: called type_id for #{type} (#{type.class})"
+    end
+
     def type_id(type)
       min_max = @ids[type]?
       if min_max
@@ -74,7 +78,7 @@ module Crystal
     end
 
     private def assign_id_impl(type : GenericClassType)
-      subtypes = type.generic_types.values.reject(&.unbound?)
+      subtypes = type.instantiated_types.reject(&.unbound?)
       subtypes.concat(subclasses_of(type))
       assign_id_from_subtypes type, subtypes
     end
@@ -95,7 +99,7 @@ module Crystal
     end
 
     private def assign_id_impl(type)
-      raise "Bug: unhandled type in assign id: #{type}"
+      raise "BUG: unhandled type in assign id: #{type}"
     end
 
     private def assign_id_from_subtypes(type, subtypes)
@@ -135,8 +139,8 @@ module Crystal
 
     private def assign_id_to_metaclass(type : GenericClassType)
       assign_id_to_metaclass(type, type.metaclass)
-      type.generic_types.values.each do |generic_type|
-        assign_id_to_metaclass(generic_type)
+      type.each_instantiated_type do |instance|
+        assign_id_to_metaclass(instance) unless instance.unbound?
       end
       type.subclasses.each do |subclass|
         assign_id_to_metaclass(subclass)
@@ -148,7 +152,7 @@ module Crystal
     end
 
     private def assign_id_to_metaclass(type)
-      raise "Bug: unhandled type in assign id to metaclass: #{type}"
+      raise "BUG: unhandled type in assign id to metaclass: #{type}"
     end
 
     private def assign_id_to_metaclass(type, metaclass)
@@ -164,7 +168,7 @@ module Crystal
     end
 
     private def subclasses_of(type)
-      type.subclasses.reject(&.is_a?(GenericInstanceType))
+      type.subclasses.reject(GenericInstanceType)
     end
   end
 end

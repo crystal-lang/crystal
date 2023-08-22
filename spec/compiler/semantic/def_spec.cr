@@ -54,15 +54,15 @@ describe "Semantic: def" do
   end
 
   it "types simple recursion" do
-    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)") { int32 }
+    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types simple recursion 2" do
-    assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)") { int32 }
+    assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types mutual recursion" do
-    assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)") { int32 }
+    assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types empty body def" do
@@ -121,7 +121,7 @@ describe "Semantic: def" do
 
       foo 1 || 1.5
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
   end
 
   it "reports no overload matches 2" do
@@ -134,7 +134,7 @@ describe "Semantic: def" do
 
       foo(1 || 'a', 1 || 1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
   end
 
   it "reports no block given" do
@@ -169,6 +169,26 @@ describe "Semantic: def" do
       foo.bar
       ",
       "undefined method"
+  end
+
+  it "errors when default value is incompatible with type restriction" do
+    assert_error "
+      def foo(x : Int64 = 'a')
+      end
+
+      foo
+      ",
+      "can't restrict Char to Int64"
+  end
+
+  it "errors when default value is incompatible with non-type restriction" do
+    assert_error "
+      def foo(x : Tuple(_) = 'a')
+      end
+
+      foo
+      ",
+      "can't restrict Char to Tuple(_)"
   end
 
   it "types call with global scope" do
@@ -239,7 +259,9 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ), "no overload matches"
+      ),
+      "expected argument #1 to 'foo' to be Pointer(Node), not Node",
+      inject_primitives: true
   end
 
   it "says can only defined def on types and self" do
@@ -262,7 +284,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "type must be Int32, not Char"
+      "method top-level foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -275,7 +297,7 @@ describe "Semantic: def" do
 
       Foo.new.foo
       ),
-      "type must be Int32, not Char"
+      "method Foo#foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on class method" do
@@ -288,7 +310,7 @@ describe "Semantic: def" do
 
       Foo.foo
       ),
-      "type must be Int32, not Char"
+      "method Foo.foo must return Int32 but it is returning Char"
   end
 
   it "is ok if returns Int32? with explicit return" do
@@ -301,7 +323,7 @@ describe "Semantic: def" do
       end
 
       foo
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "says compile-time type on error" do
@@ -353,7 +375,49 @@ describe "Semantic: def" do
 
       Foo.bar
       ),
-      "no overload matches 'foo'"
+      "expected argument #1 to 'foo' to be String, not Int32"
+  end
+
+  it "gives correct error for methods in Class" do
+    assert_error %(
+      class Class
+        def foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo(1)
+      ),
+      <<-ERROR
+      wrong number of arguments for 'Foo.foo' (given 1, expected 0)
+
+      Overloads are:
+       - Class#foo()
+      ERROR
+  end
+
+  it "gives correct error for methods in Class (2)" do
+    assert_error %(
+      class Class
+        def self.foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo(1)
+      ),
+      <<-ERROR
+      wrong number of arguments for 'Foo.foo' (given 1, expected 0)
+
+      Overloads are:
+       - Class#foo()
+      ERROR
   end
 
   it "errors if declares def inside if" do
@@ -367,7 +431,7 @@ describe "Semantic: def" do
 
   it "accesses free var of default argument (#1101)" do
     assert_type(%(
-      def foo(x, y : U = nil)
+      def foo(x, y : U = nil) forall U
         U
       end
 
@@ -391,7 +455,7 @@ describe "Semantic: def" do
 
   it "doesn't find type in namespace through free var" do
     assert_error %(
-      def foo(x : T)
+      def foo(x : T) forall T
         T::String
       end
 
@@ -411,5 +475,95 @@ describe "Semantic: def" do
       end
       ),
       "can't define method in generic instance"
+  end
+
+  it "uses free variable" do
+    assert_type(%(
+      def foo(x : Free) forall Free
+        Free
+      end
+
+      foo(1)
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable with metaclass" do
+    assert_type(%(
+      def foo(x : Free.class) forall Free
+        Free
+      end
+
+      foo(Int32)
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable with metaclass and default value" do
+    assert_type(%(
+      def foo(x : Free.class = Int32) forall Free
+        Free
+      end
+
+      foo
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable as block return type" do
+    assert_type(%(
+      def foo(&block : -> Free) forall Free
+        yield
+        Free
+      end
+
+      foo { 1 }
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable and doesn't conflict with top-level type" do
+    assert_type(%(
+      class Free
+      end
+
+      def foo(x : Free) forall Free
+        Free
+      end
+
+      foo(1)
+      )) { int32.metaclass }
+  end
+
+  it "shows free variables if no overload matches" do
+    assert_error %(
+      class Foo(T)
+        def foo(x : T, y : U, z : V) forall U, V
+        end
+      end
+
+      Foo(Int32).new.foo("", "", "")
+      ),
+      <<-ERROR
+      Overloads are:
+       - Foo(T)#foo(x : T, y : U, z : V) forall U, V
+      ERROR
+  end
+
+  it "can't use self in toplevel method" do
+    assert_error %(
+      def foo
+        self
+      end
+
+      foo
+    ), "there's no self in this scope"
+  end
+
+  it "points error at name (#6937)" do
+    ex = assert_error <<-CRYSTAL,
+      1.
+        foobar
+      CRYSTAL
+      "undefined method"
+    ex.line_number.should eq(2)
+    ex.column_number.should eq(3)
+    ex.size.should eq(6)
   end
 end

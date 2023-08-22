@@ -31,6 +31,7 @@ enum XML::HTMLParserOptions
   IGNORE_ENC = 2097152
 
   # Returns default options for parsing HTML documents.
+  #
   # Default flags are: `RECOVER` | `NOERROR` | `NOWARNING`
   def self.default : self
     RECOVER | NOERROR | NOWARNING

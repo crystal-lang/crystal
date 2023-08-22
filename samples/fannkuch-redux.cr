@@ -1,4 +1,4 @@
-# Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u32/benchmark.php?test=fannkuchredux&lang=yarv&id=2&data=u32
+# Copied with little modifications from: https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/fannkuchredux-yarv-1.html
 
 def fannkuch(n)
   sign, maxflips, sum = 1, 0, 0
@@ -7,13 +7,13 @@ def fannkuch(n)
   q = w.dup
   s = w.dup
 
-  while (true)
+  while true
     # Copy and flip.
     q1 = w[1] # Cache 1st element.
     if q1 != 1
       q = w.dup
       flips = 1
-      while (true)
+      while true
         qq = q[q1]
         if qq == 1 # ... until 1st element is 1.
           sum = sum + sign * flips
