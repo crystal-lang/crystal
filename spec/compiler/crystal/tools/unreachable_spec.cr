@@ -1,7 +1,4 @@
-require "spec"
-require "yaml"
-require "../../../../src/compiler/crystal/**"
-
+require "../../../spec_helper"
 include Crystal
 
 def processed_unreachable_visitor(code)
@@ -28,7 +25,7 @@ private def assert_unreachable(code)
 
   visitor, result = processed_unreachable_visitor(code)
 
-  result_location = result.locations.not_nil!.map { |e| Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s }.sort
+  result_location = result.locations.try(&.map(&.to_s).sort!)
 
   result_location.should eq(expected_locations.map(&.to_s))
 end

@@ -4,11 +4,11 @@ require "json"
 
 module Crystal
   class UnreachableResult
-    JSON.mapping({
-      status:    {type: String},
-      message:   {type: String},
-      locations: {type: Array(LocationTrace), nilable: true},
-    })
+    include JSON::Serializable
+
+    getter status : String
+    getter message : String
+    property locations : Array(Location)?
 
     def initialize(@status, @message)
     end
@@ -16,13 +16,8 @@ module Crystal
     def to_text(io)
       io.puts message
       locations.try do |arr|
-        arr.each do |impl|
-          io.puts "#{impl.filename}:#{impl.line}:#{impl.column}"
-          expanded = impl.expands
-          while expanded
-            io.puts " ~> macro #{expanded.macro}: #{expanded.filename}:#{expanded.line}:#{expanded.column}"
-            expanded = expanded.expands
-          end
+        arr.each do |loc|
+          io.puts loc
         end
       end
     end
@@ -31,7 +26,7 @@ module Crystal
   class UnreachableVisitor < Visitor
     # object_id of used defs, extracted from DefInstanceKey of typed_defs
     @def_object_ids = Set(UInt64).new
-    @locations = [] of LocationTrace
+    @locations = [] of Location
 
     def initialize(@filename : String)
     end
@@ -88,7 +83,7 @@ module Crystal
         defs_with_meta.each do |def_with_meta|
           next if def_with_meta.yields
           if interested_in(def_with_meta.def.location) && !@def_object_ids.includes?(def_with_meta.def.object_id)
-            @locations << LocationTrace.new(def_with_meta.def.location.not_nil!)
+            @locations << def_with_meta.def.location.not_nil!
           end
         end
       end

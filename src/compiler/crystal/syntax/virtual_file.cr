@@ -3,6 +3,8 @@
 # code so the user can debug it as if there was a file in the
 # filesystem with those contents.
 class Crystal::VirtualFile
+  include JSON::Serializable
+
   # The macro that produced this VirtualFile
   getter macro : Macro
 
