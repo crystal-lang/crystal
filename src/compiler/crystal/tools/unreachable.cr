@@ -3,21 +3,23 @@ require "../compiler"
 require "json"
 
 module Crystal
-  class UnreachableResult
+  record UnreachableResult, defs : Array(Def) do
     include JSON::Serializable
 
-    getter status : String
-    getter message : String
-    property locations : Array(Location)?
-
-    def initialize(@status, @message)
+    def to_text(io)
+      defs.each do |a_def|
+        io << a_def.short_reference << "\t" << a_def.location
+        io.puts
+      end
     end
 
-    def to_text(io)
-      io.puts message
-      locations.try do |arr|
-        arr.each do |loc|
-          io.puts loc
+    def to_json(builder : JSON::Builder)
+      builder.array do
+        defs.each do |a_def|
+          builder.object do
+            builder.field "name", a_def.short_reference
+            builder.field "location", a_def.location
+          end
         end
       end
     end
@@ -26,7 +28,7 @@ module Crystal
   class UnreachableVisitor < Visitor
     # object_id of used defs, extracted from DefInstanceKey of typed_defs
     @def_object_ids = Set(UInt64).new
-    @locations = [] of Location
+    @defs = [] of Def
 
     def initialize(@filename : String)
     end
@@ -45,11 +47,8 @@ module Crystal
     end
 
     def process(result : Compiler::Result)
-      res = UnreachableResult.new "TODO", "TODO"
-      res.locations = @locations
-
       @def_object_ids.clear
-      @locations.clear
+      @defs.clear
       track_used_defs result.program
       track_unused_defs result.program
 
@@ -60,16 +59,7 @@ module Crystal
         end
       end
 
-      # result.node.accept(self)
-
-      # if @locations.empty?
-      #   return ImplementationResult.new("failed", "no implementations or method call found")
-      # else
-      #   res = ImplementationResult.new("ok", "#{@locations.size} implementation#{@locations.size > 1 ? "s" : ""} found")
-      #   res.implementations = @locations.map { |loc| LocationTrace.build(loc) }
-      #   return res
-      # end
-      res
+      UnreachableResult.new @defs
     end
 
     private def track_used_defs(container : DefInstanceContainer)
@@ -79,12 +69,14 @@ module Crystal
     end
 
     private def track_unused_defs(module_type : ModuleType)
+      return if module_type.is_a?(GenericType) # TODO: This avoids false positives
       module_type.defs.try &.each_value.each do |defs_with_meta|
         defs_with_meta.each do |def_with_meta|
-          next if def_with_meta.yields
-          if interested_in(def_with_meta.def.location) && !@def_object_ids.includes?(def_with_meta.def.object_id)
-            @locations << def_with_meta.def.location.not_nil!
-          end
+          next if def_with_meta.yields # TODO: This avoids false positives
+          next unless interested_in(def_with_meta.def.location)
+          next if @def_object_ids.includes?(def_with_meta.def.object_id)
+
+          @defs << def_with_meta.def
         end
       end
     end
