@@ -36,7 +36,7 @@ end
 #   ༓ marks the expected unreachable code to be found
 #
 describe "unreachable" do
-  it "find top level methods" do
+  it "finds top level methods" do
     assert_unreachable <<-CR
       ༓def foo
         1
@@ -50,7 +50,7 @@ describe "unreachable" do
       CR
   end
 
-  it "find instance methods" do
+  it "finds instance methods" do
     assert_unreachable <<-CR
       class Foo
         ༓def foo
@@ -66,7 +66,7 @@ describe "unreachable" do
       CR
   end
 
-  it "find class methods" do
+  it "finds class methods" do
     assert_unreachable <<-CR
       class Foo
         ༓def self.foo
@@ -82,7 +82,7 @@ describe "unreachable" do
       CR
   end
 
-  it "find instance methods in nested types" do
+  it "finds instance methods in nested types" do
     assert_unreachable <<-CR
       module Mod
         class Foo
@@ -112,10 +112,9 @@ describe "unreachable" do
       CR
   end
 
-  # TODO: This should be supported
-  it "does not find yielding methods" do
+  it "finds yielding methods" do
     assert_unreachable <<-CR
-      def foo
+      ༓def foo
         yield
       end
 
@@ -127,10 +126,9 @@ describe "unreachable" do
       CR
   end
 
-  # TODO: This should be supported
-  it "does not find methods with proc parameter" do
+  it "finds methods with proc parameter" do
     assert_unreachable <<-CR
-      def foo(&proc : ->)
+      ༓def foo(&proc : ->)
         proc.call
       end
 
@@ -142,21 +140,15 @@ describe "unreachable" do
       CR
   end
 
-  # TODO: This should be supported
-  it "does not find shadowed method (1)" do
+  it "finds shadowed method (1)" do
     assert_unreachable <<-CR
-      def foo
+      ༓def foo
       end
 
       ༓def foo
       end
-      CR
-  end
 
-  # TODO: This should be supported
-  it "does not find shadowed method (2)" do
-    assert_unreachable <<-CR
-      def bar
+      ༓def bar
       end
 
       def bar
@@ -166,11 +158,30 @@ describe "unreachable" do
       CR
   end
 
-  # TODO: This should be supported
-  it "does not find methods in generic type" do
+  it "does not find method with `previous_def`" do
+    assert_unreachable <<-CR
+      ༓def foo
+      end
+
+      ༓def foo
+        previous_def
+      end
+
+      def bar
+      end
+
+      def bar
+        previous_def
+      end
+
+      bar
+      CR
+  end
+
+  it "finds methods in generic type" do
     assert_unreachable <<-CR
       class Foo(T)
-        def foo
+        ༓def foo
           1
         end
 

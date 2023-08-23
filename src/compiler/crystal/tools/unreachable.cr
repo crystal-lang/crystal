@@ -28,6 +28,7 @@ module Crystal
   class UnreachableVisitor < Visitor
     # object_id of used defs, extracted from DefInstanceKey of typed_defs
     @def_object_ids = Set(UInt64).new
+    @used_def_locations = Set(Location).new
     @defs = [] of Def
 
     def initialize(@filename : String)
@@ -49,6 +50,9 @@ module Crystal
     def process(result : Compiler::Result)
       @def_object_ids.clear
       @defs.clear
+
+      result.node.accept(self)
+
       track_used_defs result.program
       track_unused_defs result.program
 
@@ -62,6 +66,21 @@ module Crystal
       UnreachableResult.new @defs
     end
 
+    def visit(node)
+      true
+    end
+
+    def visit(node : Call)
+      # Some defs (for example yielding methods or methods in generic types) are
+      # separate instantiations and thus cannot be identified by a unique
+      # object_id. Thus we're looking for location to identify the base def.
+      if location = node.target_defs.try(&.first.location)
+        @used_def_locations << location
+      end
+
+      true
+    end
+
     private def track_used_defs(container : DefInstanceContainer)
       container.def_instances.each_key do |def_instance_key|
         @def_object_ids << def_instance_key.def_object_id
@@ -69,16 +88,26 @@ module Crystal
     end
 
     private def track_unused_defs(module_type : ModuleType)
-      return if module_type.is_a?(GenericType) # TODO: This avoids false positives
       module_type.defs.try &.each_value.each do |defs_with_meta|
         defs_with_meta.each do |def_with_meta|
-          next if def_with_meta.yields # TODO: This avoids false positives
-          next unless interested_in(def_with_meta.def.location)
-          next if @def_object_ids.includes?(def_with_meta.def.object_id)
-
-          @defs << def_with_meta.def
+          check_def(def_with_meta.def)
         end
       end
+    end
+
+    private def check_def(a_def : Def)
+      return unless interested_in(a_def.location)
+
+      previous = a_def.previous.try(&.def)
+
+      check_def(previous) if previous && !a_def.calls_previous_def?
+
+      return if @def_object_ids.includes?(a_def.object_id)
+      return if @used_def_locations.includes?(a_def.location)
+
+      check_def(previous) if previous && a_def.calls_previous_def?
+
+      @defs << a_def
     end
 
     private def interested_in(location)
