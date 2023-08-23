@@ -26,7 +26,7 @@ private def assert_unreachable(code, file = __FILE__, line = __LINE__)
 
   visitor, result = processed_unreachable_visitor(code)
 
-  result_location = result.defs.try(&.map(&.location.to_s).sort!)
+  result_location = result.defs.try(&.compact_map(&.location).sort!.map(&.to_s))
 
   result_location.should eq(expected_locations.map(&.to_s)), file: file, line: line
 end
@@ -158,7 +158,7 @@ describe "unreachable" do
       CR
   end
 
-  it "does not find method with `previous_def`" do
+  it "finds method with `previous_def`" do
     assert_unreachable <<-CR
       ༓def foo
       end
@@ -191,6 +191,48 @@ describe "unreachable" do
       end
 
       Foo(Int32).new.bar
+      CR
+  end
+
+  it "finds method in abstract type" do
+    assert_unreachable <<-CR
+      abstract class Foo
+        ༓def foo
+        end
+
+        def bar
+        end
+      end
+
+      class Baz < Foo
+      end
+
+      Baz.new.bar
+      CR
+  end
+
+  it "finds abstract method" do
+    assert_unreachable <<-CR
+      abstract class Foo
+        ༓def foo
+        end
+
+        def bar
+        end
+      end
+
+      class Baz < Foo
+      end
+
+      class Qux < Foo
+        ༓def foo
+        end
+
+        def bar
+        end
+      end
+
+      Baz.new.as(Baz | Qux).bar
       CR
   end
 

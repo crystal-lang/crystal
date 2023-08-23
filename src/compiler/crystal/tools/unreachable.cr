@@ -71,11 +71,13 @@ module Crystal
     end
 
     def visit(node : Call)
-      # Some defs (for example yielding methods or methods in generic types) are
-      # separate instantiations and thus cannot be identified by a unique
-      # object_id. Thus we're looking for location to identify the base def.
-      if location = node.target_defs.try(&.first.location)
-        @used_def_locations << location
+      # Some defs (yielding, generic or virtual owner) are separate
+      # instantiations and thus cannot be identified by a unique object_id. Thus
+      # we're looking for location to identify the base def.
+      node.target_defs.try &.each do |a_def|
+        if location = a_def.location
+          @used_def_locations << location
+        end
       end
 
       true
