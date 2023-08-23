@@ -178,6 +178,31 @@ describe "unreachable" do
       CR
   end
 
+  # TODO: This should work (Foo#bar is reachable)
+  it "does not finds method with `super`" do
+    assert_unreachable <<-CR
+      class Foo
+        ༓def foo
+        end
+
+        ༓def bar
+        end
+      end
+
+      class Qux < Foo
+        ༓def foo
+          super
+        end
+
+        def bar
+          super
+        end
+      end
+
+      Qux.new.bar
+      CR
+  end
+
   it "finds methods in generic type" do
     assert_unreachable <<-CR
       class Foo(T)
