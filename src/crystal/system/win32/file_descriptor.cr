@@ -9,17 +9,9 @@ module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
   @system_blocking = true
 
-  # Residual bytes for character.
-  @console_bytes = Slice(UInt8).empty
-  @console_bytes_buffer : Slice(UInt8)?
-
-  # UTF-16 code units from/to console.
-  @console_units = Slice(UInt16).empty
-  @console_units_buffer : Slice(UInt16)?
-
   private def unbuffered_read(slice : Bytes)
     handle = windows_handle
-    if LibC.GetConsoleMode(handle, out _) != 0
+    if console_mode?(handle)
       read_console(handle, slice)
     elsif system_blocking?
       bytes_read = LibC._read(fd, slice, slice.size)
@@ -40,11 +32,8 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_write(slice : Bytes)
-    handle = windows_handle
     until slice.empty?
-      if LibC.GetConsoleMode(handle, out _) != 0
-        bytes_written = write_console(handle, slice)
-      elsif system_blocking?
+      if system_blocking?
         bytes_written = LibC._write(fd, slice, slice.size)
         if bytes_written == -1
           if Errno.value == Errno::EBADF
@@ -54,6 +43,7 @@ module Crystal::System::FileDescriptor
           end
         end
       else
+        handle = windows_handle
         bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
           ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
           {ret, byte_count}
@@ -284,262 +274,57 @@ module Crystal::System::FileDescriptor
     ret
   end
 
-  private CONSOLE_UNITS_BUFFER_SIZE = 1024
-
-  private def console_bytes_buffer
-    # Memory is allocated only when needed.
-    # A character can be up to 4 bytes.
-    @console_bytes_buffer ||= Slice(UInt8).new(4)
+  private def console_mode?(handle)
+    LibC.GetConsoleMode(handle, out _) != 0
   end
 
-  private def console_units_buffer
-    # Memory is allocated only when needed.
-    @console_units_buffer ||= Slice(UInt16).new(CONSOLE_UNITS_BUFFER_SIZE)
+  private def read_console(handle : LibC::HANDLE, buffer : UInt16*, count : Int) : Int32
+    if 0 == LibC.ReadConsoleW(handle, buffer, count, out units_read, nil)
+      raise IO::Error.from_winerror("ReadConsoleW")
+    end
+    units_read.to_i32!
   end
 
   private def read_console(handle : LibC::HANDLE, slice : Bytes) : Int32
-    # Handles residual bytes for character.
-    bytes_read = Utils.safe_copy(@console_bytes, slice)
-    @console_bytes += bytes_read
-    slice += bytes_read
-    return bytes_read if slice.empty?
+    # Characters between U+0000 and U+FFFF have 1 UTF-16 code unit and up to 3 UTF-8 code unit.
+    # Characters between U+10000 and U+10FFFF have 2 UTF-16 code units and 4 UTF-8 code units.
+    # The following conclusions can therefore be drawn:
+    # 1. N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
+    # 2. We can re-use the last 2/3 of the UTF-8 buffer to receive the UTF-16 data without worrying about data overlap.
 
-    reader = Utils::UTF16Reader.new(@console_units)
-    if reader.current_char_width == 0
-      units_buffer = console_units_buffer
+    third = slice.size // 3
+    bytes_buffer = slice.to_unsafe
+    units_buffer = (bytes_buffer + third).unsafe_as(Pointer(UInt16))
 
-      # Handles residual UTF-16 code units.
-      @console_units.copy_to(units_buffer)
-      units_to_read = units_buffer.size - @console_units.size
-      units_to_read = slice.size if slice.size < units_to_read
+    # One character may have two UTF-16 code units.
+    raise IO::Error.new("Buffer size too small") if third < 2
 
-      # Reads code units from console.
-      if 0 == LibC.ReadConsoleW(handle, units_buffer + @console_units.size, units_to_read, out units_read, nil)
-        raise IO::Error.from_winerror("ReadConsoleW")
-      end
-      return bytes_read if units_read == 0
-      @console_units = units_buffer[0, @console_units.size + units_read]
-      reader = Utils::UTF16Reader.new(@console_units)
+    # Reads in two batches to guarantee that the last character is intact.
+    units_read = read_console(handle, units_buffer, third - 1)
+    return 0 if units_read.zero?
+    if units_buffer[units_read - 1] & 0xFC00 == 0xD800
+      units_read += read_console(handle, units_buffer + units_read, 1)
     end
 
-    bytes_buffer = console_bytes_buffer
-    reader.each do |char, width|
-      # Handles `Ctrl-Z` (`EOF`)
-      if char == '\u001A'
-        @console_units += reader.pos > 0 ? reader.pos : width
-        return bytes_read
-      end
-
-      char_bytes = Utils.to_utf8(char)
-      count = Utils.safe_copy(char_bytes, slice)
-      @console_bytes = bytes_buffer[0, char_bytes.size - count]
-      @console_bytes.fill { |i| char_bytes[count + i] }
-
-      bytes_read += count
-      slice += count
-      if slice.empty?
-        @console_units += reader.pos + width
-        return bytes_read
+    appender = bytes_buffer.appender
+    String.each_utf16_char(Slice.new(units_buffer, units_read)) do |char|
+      char.each_byte do |byte|
+        appender << byte
       end
     end
-    @console_units += reader.pos
-    bytes_read
+    appender.size.to_i32!
+  end
+end
+
+# Enable UTF-8 console I/O for the duration of program execution
+if LibC.IsValidCodePage(LibC::CP_UTF8) != 0
+  old_input_cp = LibC.GetConsoleCP
+  if LibC.SetConsoleCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleCP(old_input_cp) }
   end
 
-  private def write_console(handle : LibC::HANDLE, slice : Bytes) : Int32
-    bytes_buffer = console_bytes_buffer
-    units_buffer = console_units_buffer
-
-    # Handles residual bytes for character.
-    bytes_residual = @console_bytes.size
-    count = Utils.safe_copy(slice, bytes_buffer + bytes_residual)
-    @console_bytes = bytes_buffer[0, bytes_residual + count]
-    reader = Utils::UTF8Reader.new(@console_bytes)
-    return count if reader.current_char_width == 0
-
-    units_to_write = Utils.safe_copy(Utils.to_utf16(reader.current_char), units_buffer)
-    # NOTE: When there are some invalid UTF-8 bytes, `reader.current_char_width` may be less than `bytes_residual`.
-    bytes_written = reader.current_char_width > bytes_residual ? reader.current_char_width - bytes_residual : 0
-    slice += bytes_written
-
-    reader = Utils::UTF8Reader.new(slice)
-    reader.each do |char|
-      char_units = Utils.to_utf16(char)
-      break if units_to_write + char_units.size > units_buffer.size
-      units_to_write += Utils.safe_copy(char_units, units_buffer + units_to_write)
-    end
-    bytes_written += reader.pos
-
-    # NOTE: `@console_bytes` must hold bytes for incomplete (not complete) characters.
-    if reader.current_char_width == 0
-      count = Utils.safe_copy(slice + reader.pos, bytes_buffer)
-      bytes_written += count
-      @console_bytes = bytes_buffer[0, count]
-    else
-      @console_bytes = Slice(UInt8).empty
-    end
-
-    units = units_buffer[0, units_to_write]
-    until units.empty?
-      if 0 == LibC.WriteConsoleW(handle, units, units.size, out units_written, nil)
-        raise IO::Error.from_winerror("WriteConsoleW")
-      end
-      units += units_written
-    end
-    bytes_written
-  end
-
-  # TODO: Some basic common APIs may be placed in the standard library in the future,
-  # but more discussion and design are needed, so let's put them in this private module for now.
-  private module Utils
-    extend self
-
-    private SURR0 = 0xD800
-    private SURR1 = 0xDC00
-    private SURR2 = 0xE000
-
-    def safe_copy(src, dst) : Int32
-      count = src.size < dst.size ? src.size : dst.size
-      count.times { |i| dst[i] = src[i] }
-      count
-    end
-
-    def safe_copy(src : Slice(T), dst : Slice(T)) : Int32 forall T
-      count = src.size < dst.size ? src.size : dst.size
-      src.copy_to(dst.to_unsafe, count)
-      count
-    end
-
-    def valid_char?(char : Char) : Bool
-      ord = char.ord
-      0 <= ord < SURR0 || SURR2 <= ord <= Char::MAX_CODEPOINT
-    end
-
-    def codepoint(char : Char) : Int32
-      valid_char?(char) ? char.ord : Char::REPLACEMENT.ord
-    end
-
-    def to_utf8(char : Char)
-      code = codepoint(char)
-      return {code.to_u8} if code < 0x80
-
-      unit0 = code & 0x3F | 0x80
-      code >>= 6
-      return {(code | 0xC0).to_u8, unit0.to_u8} if code < 0x20
-
-      unit1 = code & 0x3F | 0x80
-      code >>= 6
-      return {(code | 0xE0).to_u8, unit1.to_u8, unit0.to_u8} if code < 0x10
-
-      unit2 = code & 0x3F | 0x80
-      code >>= 6
-      {(code | 0xF0).to_u8, unit2.to_u8, unit1.to_u8, unit0.to_u8}
-    end
-
-    def to_utf16(char : Char)
-      code = codepoint(char)
-      return {code.to_u16} if 0 <= code < SURR1 || SURR2 <= code < 0x10000
-
-      code -= 0x10000
-      unit0 = (SURR0 | code >> 10).to_u16
-      unit1 = (SURR1 | code & 0x3FF).to_u16
-      {unit0, unit1}
-    end
-
-    # Similar to `Char::Reader`, but more basic and common,
-    # `Char::Reader` may be implemented by inheriting this class in the future.
-    abstract class CharReader(T)
-      # Returns the position of the current character.
-      getter pos : Int32 = 0
-
-      # Returns the current character.
-      getter current_char : Char = Char::ZERO
-
-      # Returns the code units width of the `#current_char`.
-      getter current_char_width : Int32 = 0
-
-      # If there was an error decoding the current char.
-      # Returns the code unit that produced the invalid encoding.
-      # Otherwise returns `nil`.
-      getter error : T?
-
-      private abstract def decode_char_at(pos : Int32) : {Char, Int32, T?}
-
-      def each(&) : Nil
-        @pos = 0
-        loop do
-          @current_char, @current_char_width, @error = decode_char_at(@pos)
-          break if @current_char_width == 0
-          yield @current_char, @current_char_width, @error
-          @pos += @current_char_width
-        end
-      end
-    end
-
-    class UTF8Reader < CharReader(UInt8)
-      def initialize(@units : Slice(UInt8))
-        @current_char, @current_char_width, @error = decode_char_at(0)
-      end
-
-      private def decode_char_at(pos : Int32) : {Char, Int32, T?}
-        units = @units + pos
-        return Char::ZERO, 0, nil if units.empty?
-        return units[0].unsafe_chr, 1, nil if units[0] < 0x80
-
-        if units[0] & 0xE0 == 0xC0
-          return Char::ZERO, 0, nil if units.size < 2
-          return Char::REPLACEMENT, 1, units[0] if units[1] & 0xC0 != 0x80
-          unit0 = (0x1F & units[0]) << 6
-          unit1 = 0x3F & units[1]
-          return (unit0 | unit1).unsafe_chr, 2, nil
-        end
-
-        if units[0] & 0xF0 == 0xE0
-          return Char::ZERO, 0, nil if units.size < 2
-          return Char::REPLACEMENT, 1, units[0] if units[1] & 0xC0 != 0x80
-          return Char::ZERO, 0, nil if units.size < 3
-          return Char::REPLACEMENT, 1, units[0] if units[2] & 0xC0 != 0x80
-          unit0 = (0x0F & units[0]) << 12
-          unit1 = (0x3F & units[1]) << 6
-          unit2 = 0x3F & units[2]
-          return (unit0 | unit1 | unit2).unsafe_chr, 3, nil
-        end
-
-        if units[0] & 0xF8 == 0xF0
-          return Char::ZERO, 0, nil if units.size < 2
-          return Char::REPLACEMENT, 1, units[0] if units[1] & 0xC0 != 0x80
-          return Char::ZERO, 0, nil if units.size < 3
-          return Char::REPLACEMENT, 1, units[0] if units[2] & 0xC0 != 0x80
-          return Char::ZERO, 0, nil if units.size < 4
-          return Char::REPLACEMENT, 1, units[0] if units[3] & 0xC0 != 0x80
-          unit0 = (0x07 & units[0]) << 18
-          unit1 = (0x3F & units[1]) << 12
-          unit2 = (0x3F & units[2]) << 6
-          unit3 = 0x3F & units[3]
-          return (unit0 | unit1 | unit2 | unit3).unsafe_chr, 4, nil
-        end
-
-        {Char::REPLACEMENT, 1, units[0]}
-      end
-    end
-
-    class UTF16Reader < CharReader(UInt16)
-      def initialize(@units : Slice(UInt16))
-        @current_char, @current_char_width, @error = decode_char_at(0)
-      end
-
-      private def decode_char_at(pos : Int32) : {Char, Int32, T?}
-        units = @units + pos
-        return Char::ZERO, 0, nil if units.empty?
-        return units[0].unsafe_chr, 1, nil if units[0] < SURR0 || SURR2 <= units[0] < 0x10000
-        return Char::REPLACEMENT, 1, units[0] if SURR1 <= units[0]
-        return Char::ZERO, 0, nil if units.size < 2
-        return Char::REPLACEMENT, 1, units[0] if units[1] < SURR1
-
-        unit0 = units[0].to_i32 - SURR0
-        unit1 = units[1].to_i32 - SURR1
-        {(0x10000 + (unit0 << 10 | unit1)).unsafe_chr, 2, nil}
-      end
-    end
+  old_output_cp = LibC.GetConsoleOutputCP
+  if LibC.SetConsoleOutputCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleOutputCP(old_output_cp) }
   end
 end
