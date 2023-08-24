@@ -120,6 +120,18 @@ struct HTTP::Headers
     false
   end
 
+  # Returns if among the headers for *key* there is some that contains *word* as a value.
+  # The *word* is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  #
+  # ```
+  # require "http/headers"
+  #
+  # headers = HTTP::Headers.new
+  # headers.add("Connection", "keep-alive")
+  # headers["Connection"] # => "keep-alive"
+  # headers.add("Connection", "Upgrade")
+  # headers["Connection"] # => "keep-alive,Upgrade"
+  # ```
   def add(key, value : String) : self
     check_invalid_header_content value
     unsafe_add(key, value)
