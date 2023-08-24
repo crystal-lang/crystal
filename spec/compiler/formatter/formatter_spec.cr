@@ -141,6 +141,8 @@ describe Crystal::Formatter do
   assert_format "NamedTuple(a: Int32,)", "NamedTuple(a: Int32)"
   assert_format "NamedTuple(\n  a: Int32,\n)"
   assert_format "NamedTuple(\n  a: Int32,)", "NamedTuple(\n  a: Int32,\n)"
+  assert_format "NamedTuple(\n  a: Int32,\n)", "NamedTuple(\n  a: Int32,\n)"
+  assert_format "NamedTuple(\n  a: Int32,# comment\n)", "NamedTuple(\n  a: Int32, # comment\n)"
   assert_format "class Foo\n  NamedTuple(\n    a: Int32,\n  )\nend"
 
   assert_format "::Tuple(T)"
