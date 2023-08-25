@@ -26,8 +26,6 @@ module Crystal
   end
 
   class UnreachableVisitor < Visitor
-    # object_id of used defs, extracted from DefInstanceKey of typed_defs
-    @def_object_ids = Set(UInt64).new
     @used_def_locations = Set(Location).new
     @defs = [] of Def
 
@@ -35,33 +33,23 @@ module Crystal
     end
 
     def process_type(type)
-      if type.is_a?(NamedType)
-        type.types?.try &.values.each do |inner_type|
-          process_type(inner_type)
-        end
+      if type.is_a?(ModuleType)
+        track_unused_defs type
       end
 
-      return unless type.is_a?(DefInstanceContainer)
-      return unless type.is_a?(ModuleType)
-      track_used_defs type
-      track_unused_defs type
+      type.types?.try &.each_value do |inner_type|
+        process_type(inner_type)
+      end
+
+      process_type(type.metaclass) if type.metaclass != type
     end
 
     def process(result : Compiler::Result)
-      @def_object_ids.clear
       @defs.clear
 
       result.node.accept(self)
 
-      track_used_defs result.program
-      track_unused_defs result.program
-
-      result.program.types?.try &.values.each do |type|
-        process_type type
-        if metaclass = type.metaclass
-          process_type metaclass
-        end
-      end
+      process_type(result.program)
 
       UnreachableResult.new @defs
     end
@@ -83,12 +71,6 @@ module Crystal
       true
     end
 
-    private def track_used_defs(container : DefInstanceContainer)
-      container.def_instances.each_key do |def_instance_key|
-        @def_object_ids << def_instance_key.def_object_id
-      end
-    end
-
     private def track_unused_defs(module_type : ModuleType)
       module_type.defs.try &.each_value.each do |defs_with_meta|
         defs_with_meta.each do |def_with_meta|
@@ -104,7 +86,6 @@ module Crystal
 
       check_def(previous) if previous && !a_def.calls_previous_def?
 
-      return if @def_object_ids.includes?(a_def.object_id)
       return if @used_def_locations.includes?(a_def.location)
 
       check_def(previous) if previous && a_def.calls_previous_def?
