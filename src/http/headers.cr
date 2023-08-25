@@ -120,8 +120,8 @@ struct HTTP::Headers
     false
   end
 
-  # Returns if among the headers for *key* there is some that contains *word* as a value.
-  # The *word* is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  # Adds a header with *key* and *value* to the header set.  If a header with
+  # *key* already exists in the set, *value* is appended to the existing header.
   #
   # ```
   # require "http/headers"
