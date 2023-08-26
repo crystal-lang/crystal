@@ -58,7 +58,11 @@ end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    {{type.id}}.new! parse_scalar(ctx, node, Int64)
+    begin
+      {{type.id}}.new parse_scalar(ctx, node, Int64)
+    rescue err : Exception
+      node.raise "Expected #{{{type.id}}}"
+    end
   end
 {% end %}
 
