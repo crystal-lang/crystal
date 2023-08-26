@@ -60,8 +60,8 @@ end
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     begin
       {{type.id}}.new parse_scalar(ctx, node, Int64)
-    rescue err : Exception
-      node.raise "Expected #{{{type.id}}}"
+    rescue err : OverflowError | ArgumentError
+      node.raise "Expected {{type.id}}"
     end
   end
 {% end %}
