@@ -1,7 +1,13 @@
 require "time"
 require "io"
-require "crystal/digest/sha1"
-require "crystal/digest/md5"
+
+{% if flag?(:wasm32) %}
+  require "crystal/digest/sha1"
+  require "crystal/digest/md5"
+{% else %}
+  require "digest/sha1"
+  require "digest/md5"
+{% end %}
 
 # Represents a UUID (Universally Unique IDentifier).
 #
@@ -272,7 +278,8 @@ struct UUID
   # Generates RFC 4122 v3 UUID using the `name` to generate the UUID, it can be a string of any size.
   # The `namespace` specifies the type of the name, usually one of `Namespace`.
   def self.v3(name : String, namespace : UUID) : self
-    hash = ::Crystal::Digest::MD5.digest do |ctx|
+    klass = {% if flag?(:without_openssl) %}::Crystal::Digest::MD5{% else %}::Digest::MD5{% end %}
+    hash = klass.digest do |ctx|
       ctx.update namespace.bytes
       ctx.update name
     end
@@ -290,7 +297,8 @@ struct UUID
   # Generates RFC 4122 v5 UUID using the `name` to generate the UUID, it can be a string of any size.
   # The `namespace` specifies the type of the name, usually one of `Namespace`.
   def self.v5(name : String, namespace : UUID) : self
-    hash = ::Crystal::Digest::SHA1.digest do |ctx|
+    klass = {% if flag?(:without_openssl) %}::Crystal::Digest::SHA1{% else %}::Digest::SHA1{% end %}
+    hash = klass.digest do |ctx|
       ctx.update namespace.bytes
       ctx.update name
     end
