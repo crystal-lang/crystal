@@ -301,7 +301,7 @@ module Crystal::System::FileDescriptor
 
     # Reads in two batches to guarantee that the last character is intact.
     units_read = read_console(handle, units_buffer, third - 1)
-    return 0 if units_read.zero?
+    return 0 if units_read < 1
     if units_buffer[units_read - 1] & 0xFC00 == 0xD800
       units_read += read_console(handle, units_buffer + units_read, 1)
     end
