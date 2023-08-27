@@ -6,6 +6,8 @@
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
 module IO::Buffered
+  @in_buffer = Pointer(UInt8).null
+  @out_buffer = Pointer(UInt8).null
   @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
