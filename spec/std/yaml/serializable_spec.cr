@@ -745,6 +745,26 @@ describe "YAML::Serializable" do
     typeof(yaml.bar).should eq(Int8)
   end
 
+  it "checks that values fit into integer types" do
+    expect_raises(YAML::ParseException, /Expected Int16/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21000, "bar": 7}))
+    end
+
+    expect_raises(YAML::ParseException, /Expected Int8/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7000}))
+    end
+  end
+
+  it "checks that non-integer values for integer fields report the expected type" do
+    expect_raises(YAML::ParseException, /Expected Int16, not String/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": "a", "bar": 7}))
+    end
+
+    expect_raises(YAML::ParseException, /Expected Int8, not String/) do
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": "a"}))
+    end
+  end
+
   it "parses recursive" do
     yaml = <<-YAML
       --- &1
