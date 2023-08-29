@@ -42,7 +42,7 @@ private def parse_scalar(ctx, node, type : T.class,
       ctx.record_anchor(node, value)
       value
     else
-      node.raise "Expected #{expected_type || T}, not #{node.value.inspect}"
+      node.raise "Expected #{expected_type}, not #{node.value.inspect}"
     end
   else
     node.raise "Expected scalar, not #{node.kind}"
