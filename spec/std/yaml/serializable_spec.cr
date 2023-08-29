@@ -756,11 +756,11 @@ describe "YAML::Serializable" do
   end
 
   it "checks that non-integer values for integer fields report the expected type" do
-    expect_raises(YAML::ParseException, /Expected Int16, not String/) do
+    expect_raises(YAML::ParseException, /Expected Int16, not "a"/) do
       YAMLAttrWithSmallIntegers.from_yaml(%({"foo": "a", "bar": 7}))
     end
 
-    expect_raises(YAML::ParseException, /Expected Int8, not String/) do
+    expect_raises(YAML::ParseException, /Expected Int8, not "a"/) do
       YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21, "bar": "a"}))
     end
   end
