@@ -747,7 +747,7 @@ describe "YAML::Serializable" do
 
   it "checks that values fit into integer types" do
     expect_raises(YAML::ParseException, /Expected Int16/) do
-      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21000, "bar": 7}))
+      YAMLAttrWithSmallIntegers.from_yaml(%({"foo": 21000000, "bar": 7}))
     end
 
     expect_raises(YAML::ParseException, /Expected Int8/) do
