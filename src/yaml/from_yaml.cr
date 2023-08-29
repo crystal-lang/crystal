@@ -31,7 +31,7 @@ private def parse_yaml(string_or_io)
 end
 
 private def parse_scalar(ctx, node, type : T.class,
-                         expected_type : Class? = nil) forall T
+                         expected_type : Class = T) forall T
   ctx.read_alias(node, T) do |obj|
     return obj
   end
