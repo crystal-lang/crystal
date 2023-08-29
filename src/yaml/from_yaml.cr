@@ -31,7 +31,7 @@ private def parse_yaml(string_or_io)
 end
 
 private def parse_scalar(ctx, node, type : T.class,
-                         expected_type : Class? = nil) forall T
+                         expected_type : Class = T) forall T
   ctx.read_alias(node, T) do |obj|
     return obj
   end
@@ -42,7 +42,7 @@ private def parse_scalar(ctx, node, type : T.class,
       ctx.record_anchor(node, value)
       value
     else
-      node.raise "Expected #{expected_type || T}, not #{node.value.inspect}"
+      node.raise "Expected #{expected_type}, not #{node.value.inspect}"
     end
   else
     node.raise "Expected scalar, not #{node.kind}"
