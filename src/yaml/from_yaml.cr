@@ -30,7 +30,8 @@ private def parse_yaml(string_or_io)
   end
 end
 
-private def parse_scalar(ctx, node, type : T.class) forall T
+private def parse_scalar(ctx, node, type : T.class,
+                         expected_type : Class? = nil) forall T
   ctx.read_alias(node, T) do |obj|
     return obj
   end
@@ -41,7 +42,7 @@ private def parse_scalar(ctx, node, type : T.class) forall T
       ctx.record_anchor(node, value)
       value
     else
-      node.raise "Expected #{T}, not #{node.value.inspect}"
+      node.raise "Expected #{expected_type || T}, not #{node.value.inspect}"
     end
   else
     node.raise "Expected scalar, not #{node.kind}"
@@ -59,7 +60,7 @@ end
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     begin
-      {{type.id}}.new parse_scalar(ctx, node, Int64)
+      {{type.id}}.new parse_scalar(ctx, node, Int64, {{type.id}})
     rescue err : OverflowError | ArgumentError
       node.raise "Expected {{type.id}}"
     end
