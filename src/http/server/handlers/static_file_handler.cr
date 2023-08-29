@@ -35,6 +35,12 @@ class HTTP::StaticFileHandler
     @public_dir = Path.new(public_dir).expand
   end
 
+  # :ditto:
+  @[Deprecated]
+  def self.new(public_dir : String, fallthrough = true, directory_listing = true)
+    new(public_dir, fallthrough: fallthrough, listing: listing)
+  end
+
   def call(context) : Nil
     unless context.request.method.in?("GET", "HEAD")
       if @fallthrough
