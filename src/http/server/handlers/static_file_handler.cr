@@ -31,10 +31,8 @@ class HTTP::StaticFileHandler
   #
   # If *directory_listing* is `false`, directory listing is disabled. This means that
   # paths matching directories are ignored and next handler is called.
-  def initialize(public_dir : String, fallthrough = true, directory_listing = true)
+  def initialize(public_dir : String, @fallthrough : Bool = true, @directory_listing : Bool = true)
     @public_dir = Path.new(public_dir).expand
-    @fallthrough = !!fallthrough
-    @directory_listing = !!directory_listing
   end
 
   def call(context) : Nil
