@@ -63,7 +63,7 @@ module Crystal
       # instantiations and thus cannot be identified by a unique object_id. Thus
       # we're looking for location to identify the base def.
       node.target_defs.try &.each do |a_def|
-        if location = a_def.location
+        if (location = a_def.location) && interested_in(location)
           @used_def_locations << location
         end
       end
