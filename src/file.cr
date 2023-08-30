@@ -800,6 +800,7 @@ class File < IO::FileDescriptor
         file.sync = true
         file.write(content)
       when IO
+        file.sync = true
         IO.copy(content, file)
       else
         file.print(content)
