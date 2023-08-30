@@ -796,7 +796,7 @@ class File < IO::FileDescriptor
   def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
-      when Bytes, String
+      when Bytes
         file.sync = true
         file.write(content)
       when IO
