@@ -795,9 +795,9 @@ class File < IO::FileDescriptor
   # See `self.new` for what *mode* can be.
   def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
-      file.sync = true
       case content
-      when Bytes
+      when Bytes, String
+        file.sync = true
         file.write(content)
       when IO
         IO.copy(content, file)
