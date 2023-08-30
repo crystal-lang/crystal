@@ -38,7 +38,7 @@ struct Exception::CallStack
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
   protected def self.unwind : Array(Void*)
-    callstack = [] of Void*
+    callstack = Array(Void*).new(16)
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       bt = data.as(typeof(callstack))
 
