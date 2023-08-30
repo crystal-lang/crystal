@@ -178,14 +178,33 @@ describe "unreachable" do
       CR
   end
 
-  # TODO: This should work (Foo#bar is reachable)
+  it "finds methods called from reachable code" do
+    assert_unreachable <<-CR
+      ༓def qux_foo
+      end
+
+      ༓def foo
+        qux_foo
+      end
+
+      def qux_bar
+      end
+
+      def bar
+        qux_bar
+      end
+
+      bar
+      CR
+  end
+
   it "does not finds method with `super`" do
     assert_unreachable <<-CR
       class Foo
         ༓def foo
         end
 
-        ༓def bar
+        def bar
         end
       end
 

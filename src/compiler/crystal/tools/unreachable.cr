@@ -28,6 +28,7 @@ module Crystal
   class UnreachableVisitor < Visitor
     @used_def_locations = Set(Location).new
     @defs = [] of Def
+    @visited_defs : Set(Def) = Set(Def).new.compare_by_identity
 
     def initialize(@filename : String)
     end
@@ -63,9 +64,11 @@ module Crystal
       # instantiations and thus cannot be identified by a unique object_id. Thus
       # we're looking for location to identify the base def.
       node.target_defs.try &.each do |a_def|
-        if (location = a_def.location) && interested_in(location)
-          @used_def_locations << location
+        if (location = a_def.location)
+          @used_def_locations << location if interested_in(location)
         end
+
+        a_def.body.accept(self) if @visited_defs.add?(a_def)
       end
 
       true
