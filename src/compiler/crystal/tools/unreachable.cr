@@ -83,6 +83,7 @@ module Crystal
     end
 
     private def check_def(a_def : Def)
+      return if a_def.abstract?
       return unless interested_in(a_def.location)
 
       previous = a_def.previous.try(&.def)

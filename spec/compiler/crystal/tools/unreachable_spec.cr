@@ -255,7 +255,28 @@ describe "unreachable" do
       CR
   end
 
+  # TODO: Should abstract Foo#bar be reported as well?
   it "finds abstract method" do
+    assert_unreachable <<-CR
+      abstract class Foo
+        abstract def foo
+
+        abstract def bar
+      end
+
+      class Baz < Foo
+        ༓def foo
+        end
+
+        def bar
+        end
+      end
+
+      Baz.new.bar
+      CR
+  end
+
+  it "finds virtual method" do
     assert_unreachable <<-CR
       abstract class Foo
         ༓def foo
