@@ -126,6 +126,42 @@ describe "unreachable" do
       CR
   end
 
+  it "finds method called from block" do
+    assert_unreachable <<-CR
+      ༓def foo
+      end
+
+      def bar
+      end
+
+      def baz
+        yield
+      end
+
+      baz do
+        bar
+      end
+      CR
+  end
+
+  it "finds method called from proc" do
+    assert_unreachable <<-CR
+      ༓def foo
+      end
+
+      def bar
+      end
+
+      def baz(&proc : ->)
+        proc.call
+      end
+
+      baz do
+        bar
+      end
+      CR
+  end
+
   it "finds methods with proc parameter" do
     assert_unreachable <<-CR
       ༓def foo(&proc : ->)
@@ -300,8 +336,4 @@ describe "unreachable" do
       Baz.new.as(Baz | Qux).bar
       CR
   end
-
-  # TODO macro expanded methods
-  # TODO generic types
-  # TODO methods with blocks does not have typed_def, we need to search for calls
 end
