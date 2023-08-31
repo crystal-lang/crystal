@@ -38,7 +38,7 @@ class HTTP::StaticFileHandler
   # :ditto:
   @[Deprecated]
   def self.new(public_dir : String, fallthrough = true, directory_listing = true)
-    new(public_dir, fallthrough: fallthrough, listing: listing)
+    new(public_dir, fallthrough: !!fallthrough, listing: !!listing)
   end
 
   def call(context) : Nil
