@@ -368,6 +368,10 @@ Show implementations for a given call. Use
 to specify the cursor position. The format for the cursor position is file:line:column.
 .It Cm types
 Show type of main variables of file.
+.It Cm unreachable
+Show methods that are never called. The output is a list of lines with columns
+separated by tab. The first column is the location of the def, the second column
+its reference name and the third column is the length in lines.
 .El
 .Pp
 .It

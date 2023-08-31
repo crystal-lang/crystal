@@ -53,9 +53,12 @@ module Crystal
     end
   end
 
-  # Some defs (yielding, generic or virtual owner) are separate
-  # instantiations and thus cannot be identified by a unique object_id. Thus
-  # we're looking for location to identify the base def.
+  # This visitor walks the entire reachable code tree and collect locations
+  # of all defs that are a target of a call into `@used_def_locations`.
+  # The locations are filtered to only those that we're interested in per
+  # `@includes` and `@excludes`.
+  # Then it traverses all types and their defs and reports those that are not
+  # in `@used_def_locations` (and match the filter).
   class UnreachableVisitor < Visitor
     @used_def_locations = Set(Location).new
     @defs = [] of Def

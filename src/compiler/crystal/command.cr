@@ -44,7 +44,7 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
-        unreachable              show code that is never used
+        unreachable              show methods that is never called
         types                    show type of main variables
         --help, -h               show this help
     USAGE
