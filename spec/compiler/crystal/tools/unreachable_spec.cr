@@ -7,7 +7,10 @@ def processed_unreachable_visitor(code)
   compiler.no_codegen = true
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
-  visitor = UnreachableVisitor.new(".")
+  visitor = UnreachableVisitor.new
+  visitor.excludes << Dir.current
+  visitor.includes << "\\."
+
   process_result = visitor.process(result)
 
   {visitor, process_result}
@@ -26,7 +29,7 @@ private def assert_unreachable(code, file = __FILE__, line = __LINE__)
 
   visitor, result = processed_unreachable_visitor(code)
 
-  result_location = result.defs.try(&.compact_map(&.location).sort!.map(&.to_s))
+  result_location = result.defs.try(&.compact_map(&.location).sort_by! { |l| {l.filename.as(String), l.line_number, l.column_number} }.map(&.to_s))
 
   result_location.should eq(expected_locations.map(&.to_s)), file: file, line: line
 end

@@ -243,8 +243,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false)
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -341,7 +341,9 @@ class Crystal::Command
     hierarchy_exp : String?,
     cursor_location : String?,
     output_format : String?,
-    combine_rpath : Bool do
+    combine_rpath : Bool,
+    includes : Array(String),
+    excludes : Array(String) do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename, combine_rpath: combine_rpath
@@ -354,7 +356,7 @@ class Crystal::Command
 
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
-                              single_file = false)
+                              single_file = false, path_filter = false)
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
@@ -367,6 +369,8 @@ class Crystal::Command
     hierarchy_exp = nil
     cursor_location = nil
     output_format = nil
+    excludes = [] of String
+    includes = [] of String
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -422,6 +426,16 @@ class Crystal::Command
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
+      end
+
+      if path_filter
+        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+          includes << f
+        end
+
+        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+          excludes << f
+        end
       end
 
       unless no_codegen
@@ -563,7 +577,7 @@ class Crystal::Command
     end
 
     combine_rpath = run && !no_codegen
-    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath, includes, excludes
   end
 
   private def gather_sources(filenames)

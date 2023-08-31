@@ -3,12 +3,37 @@ require "../compiler"
 require "json"
 
 module Crystal
+  class Command
+    private def unreachable
+      config, result = compile_no_codegen "tool unreachable", path_filter: true
+      format = config.output_format
+
+      unreachable = UnreachableVisitor.new
+
+      unreachable.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
+
+      unreachable.excludes.concat CrystalPath.default_paths.map { |path| ::Path[path].expand.to_s }
+      unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
+
+      defs = unreachable.process(result)
+
+      case format
+      when "json"
+        defs.to_json(STDOUT)
+      else
+        defs.to_text(STDOUT)
+      end
+    end
+  end
+
   record UnreachableResult, defs : Array(Def) do
     include JSON::Serializable
 
     def to_text(io)
       defs.each do |a_def|
-        io << a_def.short_reference << "\t" << a_def.location
+        io << a_def.location << "\t"
+        io << a_def.short_reference << "\t"
+        io << a_def.length << " lines"
         io.puts
       end
     end
@@ -19,19 +44,25 @@ module Crystal
           builder.object do
             builder.field "name", a_def.short_reference
             builder.field "location", a_def.location
+            if lines = a_def.length
+              builder.field "lines", lines
+            end
           end
         end
       end
     end
   end
 
+  # Some defs (yielding, generic or virtual owner) are separate
+  # instantiations and thus cannot be identified by a unique object_id. Thus
+  # we're looking for location to identify the base def.
   class UnreachableVisitor < Visitor
     @used_def_locations = Set(Location).new
     @defs = [] of Def
     @visited_defs : Set(Def) = Set(Def).new.compare_by_identity
 
-    def initialize(@filename : String)
-    end
+    property includes = [] of String
+    property excludes = [] of String
 
     def process_type(type)
       if type.is_a?(ModuleType)
@@ -60,15 +91,14 @@ module Crystal
     end
 
     def visit(node : Call)
-      # Some defs (yielding, generic or virtual owner) are separate
-      # instantiations and thus cannot be identified by a unique object_id. Thus
-      # we're looking for location to identify the base def.
       node.target_defs.try &.each do |a_def|
         if (location = a_def.location)
           @used_def_locations << location if interested_in(location)
         end
 
-        a_def.body.accept(self) if @visited_defs.add?(a_def)
+        if @visited_defs.add?(a_def)
+          a_def.body.accept(self)
+        end
       end
 
       true
@@ -98,7 +128,19 @@ module Crystal
     end
 
     private def interested_in(location)
-      (loc_filename = location.try &.filename) && loc_filename.is_a?(String) && loc_filename.starts_with?(@filename)
+      if filename = location.try(&.filename).as?(String)
+        match_path?(filename)
+      end
+    end
+
+    private def match_path?(path)
+      paths = ::Path[path].parents << ::Path[path]
+
+      match_any_pattern?(includes, paths) || !match_any_pattern?(excludes, paths)
+    end
+
+    private def match_any_pattern?(patterns, paths)
+      patterns.any? { |pattern| paths.any? { |path| File.match?(pattern, path) } }
     end
   end
 end

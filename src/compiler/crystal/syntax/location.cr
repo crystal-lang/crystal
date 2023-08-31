@@ -98,4 +98,12 @@ class Crystal::Location
       nil
     end
   end
+
+  # Returns the number of lines between start and finish locations.
+  def self.lines(start, finish)
+    return unless start && finish && start.filename == finish.filename
+    start, finish = finish, start if finish < start
+
+    finish.line_number - start.line_number + 1
+  end
 end

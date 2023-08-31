@@ -34,6 +34,11 @@ module Crystal
       self
     end
 
+    # Returns the number of lines between start and end locations
+    def length : Int32?
+      Location.lines(location, end_location)
+    end
+
     # Returns a deep copy of this node. Copied nodes retain
     # the location and end location of the original nodes.
     def clone

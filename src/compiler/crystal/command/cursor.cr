@@ -23,22 +23,6 @@ class Crystal::Command
     end
   end
 
-  private def unreachable
-    config, result = compile_no_codegen "tool unreachable", cursor_command: true
-    format = config.output_format
-
-    location = config.cursor_location || ""
-
-    result = UnreachableVisitor.new(location).process(result)
-
-    case format
-    when "json"
-      result.to_json(STDOUT)
-    else
-      result.to_text(STDOUT)
-    end
-  end
-
   private def cursor_command(command, no_cleanup = false, wants_doc = false, &)
     config, result = compile_no_codegen command,
       cursor_command: true,
