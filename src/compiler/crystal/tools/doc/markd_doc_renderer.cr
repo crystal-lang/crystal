@@ -1,3 +1,5 @@
+require "../../../../../lib/sanitize/src/sanitize"
+
 class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
   @anchor_map = Hash(String, Int32).new(0)
 
@@ -157,5 +159,26 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     base_match ||
       type.lookup_macro(name, args_count) ||
       type.program.lookup_macro(name, args_count)
+  end
+
+  def text(node : Markd::Node, entering : Bool)
+    output(sanitize(node))
+  end
+
+  def html_block(node : Markd::Node, entering : Bool)
+    newline
+    content = @options.safe? ? "<!-- raw HTML omitted -->" : sanitize(node)
+    literal(content)
+    newline
+  end
+
+  def html_inline(node : Markd::Node, entering : Bool)
+    content = @options.safe? ? "<!-- raw HTML omitted -->" : sanitize(node)
+    literal(content)
+  end
+
+  def sanitize(node : Markd::Node) : String
+    sanitizer = Sanitize::Policy::HTMLSanitizer.common
+    sanitizer.process(node.text)
   end
 end
