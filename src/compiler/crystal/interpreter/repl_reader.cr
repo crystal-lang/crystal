@@ -1,4 +1,4 @@
-require "../../../../lib/reply/src/reply"
+require "compiler/vendor/reply/src/reply"
 
 class Crystal::ReplReader < Reply::Reader
   KEYWORDS = %w(
