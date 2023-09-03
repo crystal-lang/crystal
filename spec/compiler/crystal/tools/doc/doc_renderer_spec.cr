@@ -374,7 +374,8 @@ describe Doc::MarkdDocRenderer do
     HTML
   end
 
-  describe "renders html" do
-    it_renders nil, %(<h1 align="center">Foo</h1>), %(<h1 align="center">Foo</h1>)
+  describe "renders html with sanitization" do
+    it_renders nil, %(<h1 align="center">Foo</h1>), %(<h1>Foo</h1>)
+    it_renders nil, %(<script>alert("hello world")</script>), %()
   end
 end
