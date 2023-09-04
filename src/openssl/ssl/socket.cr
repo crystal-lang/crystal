@@ -275,11 +275,12 @@ abstract class OpenSSL::SSL::Socket < IO
   # is returned does not indicate information about the verification state.
   def peer_certificate : OpenSSL::X509::Certificate?
     raw_cert = LibSSL.ssl_get_peer_certificate(@ssl)
-
     if raw_cert
-      cert = OpenSSL::X509::Certificate.new(raw_cert)
-      LibCrypto.x509_free(raw_cert)
-      cert
+      begin
+        OpenSSL::X509::Certificate.new(raw_cert)
+      ensure
+        LibCrypto.x509_free(raw_cert)
+      end
     end
   end
 end
