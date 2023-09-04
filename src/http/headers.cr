@@ -120,6 +120,18 @@ struct HTTP::Headers
     false
   end
 
+  # Adds a header with *key* and *value* to the header set.  If a header with
+  # *key* already exists in the set, *value* is appended to the existing header.
+  #
+  # ```
+  # require "http/headers"
+  #
+  # headers = HTTP::Headers.new
+  # headers.add("Connection", "keep-alive")
+  # headers["Connection"] # => "keep-alive"
+  # headers.add("Connection", "Upgrade")
+  # headers["Connection"] # => "keep-alive,Upgrade"
+  # ```
   def add(key, value : String) : self
     check_invalid_header_content value
     unsafe_add(key, value)
