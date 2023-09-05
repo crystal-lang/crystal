@@ -43,7 +43,7 @@ module Crystal
         defs.each do |a_def|
           builder.object do
             builder.field "name", a_def.short_reference
-            builder.field "location", a_def.location
+            builder.field "location", a_def.location.to_s
             if lines = a_def.length
               builder.field "lines", lines
             end

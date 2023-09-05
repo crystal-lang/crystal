@@ -1,7 +1,6 @@
 # A location of an `ASTnode`, including its filename, line number and column number.
 class Crystal::Location
   include Comparable(self)
-  include JSON::Serializable
 
   getter line_number
   getter column_number
