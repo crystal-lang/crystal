@@ -9,7 +9,7 @@ def processed_unreachable_visitor(code)
 
   visitor = UnreachableVisitor.new
   visitor.excludes << Dir.current
-  visitor.includes << "\\."
+  visitor.includes << "."
 
   process_result = visitor.process(result)
 
