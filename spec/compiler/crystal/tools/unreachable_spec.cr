@@ -377,7 +377,7 @@ describe "unreachable" do
     CRYSTAL
   end
 
-  it "finds mathod called from expanded macro" do
+  it "finds method called from expanded macro" do
     assert_unreachable <<-CRYSTAL
       ༓def foo
       end
@@ -394,6 +394,20 @@ describe "unreachable" do
       end
 
       go { bar_macro }
+      CRYSTAL
+  end
+
+  it "finds method called from expanded macro expression" do
+    assert_unreachable <<-CRYSTAL
+      ༓def foo
+      end
+
+      def bar
+      end
+
+      {% begin %}
+        bar
+      {% end %}
       CRYSTAL
   end
 end

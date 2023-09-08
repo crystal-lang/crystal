@@ -101,6 +101,14 @@ module Crystal
       true
     end
 
+    def visit(node : ExpandableNode)
+      if expanded = node.expanded
+        expanded.accept self
+      end
+
+      true
+    end
+
     def visit(node : Call)
       if expanded = node.expanded
         expanded.accept(self)
