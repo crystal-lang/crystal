@@ -102,6 +102,12 @@ module Crystal
     end
 
     def visit(node : Call)
+      if expanded = node.expanded
+        expanded.accept(self)
+
+        return true
+      end
+
       node.target_defs.try &.each do |a_def|
         if (location = a_def.location)
           @used_def_locations << location if interested_in(location)

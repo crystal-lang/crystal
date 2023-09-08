@@ -376,4 +376,24 @@ describe "unreachable" do
       Foo.new
     CR
   end
+
+  it "finds mathod called from expanded macro" do
+    assert_unreachable <<-CR
+      ༓def foo
+      end
+
+      def bar
+      end
+
+      macro bar_macro
+        bar
+      end
+
+      def go(&block)
+        block.call
+      end
+
+      go { bar_macro }
+      CR
+  end
 end
