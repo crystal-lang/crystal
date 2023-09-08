@@ -29,7 +29,9 @@ private def assert_unreachable(code, file = __FILE__, line = __LINE__)
 
   visitor, result = processed_unreachable_visitor(code)
 
-  result_location = result.defs.try(&.compact_map(&.location).sort_by! { |l| {l.filename.as(String), l.line_number, l.column_number} }.map(&.to_s))
+  result_location = result.defs.try &.compact_map(&.location).sort_by! do |loc|
+    {loc.filename.as(String), loc.line_number, loc.column_number}
+  end.map(&.to_s)
 
   result_location.should eq(expected_locations.map(&.to_s)), file: file, line: line
 end
