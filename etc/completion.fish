@@ -147,6 +147,18 @@ complete -c crystal -n "__fish_seen_subcommand_from context" -s p -l progress -d
 complete -c crystal -n "__fish_seen_subcommand_from context" -s t -l time -d "Enable execution time output"
 complete -c crystal -n "__fish_seen_subcommand_from context" -l stdin-filename -d "Source file name to be read from STDIN"
 
+complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "dependencies" -d "show tree of required source files" -x
+complete -c crystal -n "__fish_seen_subcommand_from context" -s i -l include -d "Include path in output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s e -l exclude -d "Exclude path in output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s D -l define -d "Define a compile-time flag"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s f -l format -d "Output format 'tree' (default), 'flat', 'dot', or 'mermaid'." -a "tree flat dot mermaid" -f
+complete -c crystal -n "__fish_seen_subcommand_from context" -l error-trace -d "Show full error trace"
+complete -c crystal -n "__fish_seen_subcommand_from context" -l no-color -d "Disable colored output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -l prelude -d "Use given file as prelude"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s s -l stats -d "Enable statistics output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s p -l progress -d "Enable progress output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s t -l time -d "Enable execution time output"
+
 complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "expand" -d "show macro expansion for given location" -x
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s D -l define -d "Define a compile-time flag"
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s c -l cursor -d "Cursor location with LOC as path/to/file.cr:line:column"
