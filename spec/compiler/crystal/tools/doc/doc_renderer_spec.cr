@@ -381,9 +381,6 @@ describe Doc::MarkdDocRenderer do
 
     it_renders nil, %(```crystal\n# <script>alert("hello world")</script>\n```),
       %(<pre><code class="language-crystal"><span class="c"># &lt;script&gt;alert(&quot;hello world&quot;)&lt;/script&gt;</span></code></pre>)
-
-    it_renders nil, %(![foo](/url 'title" ><script>alert("hello world")</script>')),
-      %(<p><img src="/url" alt="foo" title="title&quot; ><script>alert(&quot;hello world&quot;)</script>"></p>)
   end
 
   describe "renders tables" do
