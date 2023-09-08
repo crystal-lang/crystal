@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Crystal: clean",
+      "problemMatcher": [],
+      "type": "shell",
+      "command": "make clean",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Crystal: build",
+      "problemMatcher": [],
+      "type": "shell",
+      "command": "make crystal",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Crystal: release",
+      "problemMatcher": [],
+      "type": "shell",
+      "command": "make crystal release=1",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Crystal: spec",
+      "problemMatcher": [],
+      "type": "shell",
+      "command": "make spec",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Crystal: std_spec",
+      "problemMatcher": [],
+      "type": "shell",
+      "command": "make std_spec",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Crystal: compiler_spec",
+      "problemMatcher": [],
+      "type": "shell",
+      "command": "make compiler_spec",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ]
+}

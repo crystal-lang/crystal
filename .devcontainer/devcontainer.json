@@ -1,0 +1,15 @@
+{
+	"name": "Crystal",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"crystal-lang-tools.crystal-lang",
+				"ms-vscode.makefile-tools",
+				"ms-azuretools.vscode-docker"
+			]
+		}
+	}
+}
