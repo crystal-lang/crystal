@@ -69,7 +69,7 @@ module Crystal
   # in `@used_def_locations` (and match the filter).
   class UnreachableVisitor < Visitor
     @used_def_locations = Set(Location).new
-    @defs = [] of Def
+    @defs : Set(Def) = Set(Def).new.compare_by_identity
     @visited_defs : Set(Def) = Set(Def).new.compare_by_identity
 
     property includes = [] of String
@@ -94,7 +94,7 @@ module Crystal
 
       process_type(result.program)
 
-      UnreachableResult.new @defs
+      UnreachableResult.new @defs.to_a
     end
 
     def visit(node)
