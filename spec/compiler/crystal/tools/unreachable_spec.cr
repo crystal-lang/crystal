@@ -353,4 +353,27 @@ describe "unreachable" do
       end
       CR
   end
+
+  it "finds method called from instance variable initializer" do
+    assert_unreachable <<-CR
+      ༓def foo
+      end
+
+      def bar
+        1
+      end
+
+      class Foo
+        @status = Bar.new
+        @other : Int32 = bar
+      end
+
+      class Bar
+        def initialize
+        end
+      end
+
+      Foo.new
+    CR
+  end
 end

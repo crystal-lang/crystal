@@ -115,6 +115,14 @@ module Crystal
       true
     end
 
+    def visit(node : ClassDef)
+      node.resolved_type.instance_vars_initializers.try &.each do |initializer|
+        initializer.value.accept(self)
+      end
+
+      true
+    end
+
     private def track_unused_defs(module_type : ModuleType)
       module_type.defs.try &.each_value.each do |defs_with_meta|
         defs_with_meta.each do |def_with_meta|
