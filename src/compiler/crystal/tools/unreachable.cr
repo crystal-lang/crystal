@@ -16,7 +16,14 @@ module Crystal
       unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
 
       defs = unreachable.process(result)
-      defs.defs.sort_by! { |a_def| location = a_def.location.not_nil!; {location.filename.as(String), location.line_number, location.column_number} }
+      defs.defs.sort_by! do |a_def|
+        location = a_def.location.not_nil!
+        {
+          location.filename.as(String),
+          location.line_number,
+          location.column_number,
+        }
+      end
 
       case format
       when "json"
