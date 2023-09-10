@@ -29,6 +29,11 @@ module Spec
         non_nil_block = block
         start = Time.monotonic
 
+        if Spec.dry_run?
+          @parent.report(:success, description, file, line, Time.monotonic - start)
+          return
+        end
+
         ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
         ran || internal_run(start, non_nil_block)
 
