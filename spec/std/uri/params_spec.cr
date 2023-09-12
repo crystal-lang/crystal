@@ -61,6 +61,14 @@ class URI
 
         encoded.should eq("foo%20bar=hello%20world")
       end
+
+      it "builds with IO" do
+        io = IO::Memory.new
+        Params.build(io) do |form|
+          form.add("custom", "key")
+        end
+        io.to_s.should eq("custom=key")
+      end
     end
 
     describe ".encode" do
@@ -69,9 +77,21 @@ class URI
         encoded.should eq("foo=bar&baz=quux&baz=quuz")
       end
 
+      it "builds from hash with IO" do
+        io = IO::Memory.new
+        Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]}, io)
+        io.to_s.should eq("foo=bar&baz=quux&baz=quuz")
+      end
+
       it "builds from named tuple" do
         encoded = Params.encode({foo: "bar", baz: ["quux", "quuz"]})
         encoded.should eq("foo=bar&baz=quux&baz=quuz")
+      end
+
+      it "builds from named tuple with IO" do
+        io = IO::Memory.new
+        encoded = Params.encode({foo: "bar", baz: ["quux", "quuz"]}, io)
+        io.to_s.should eq("foo=bar&baz=quux&baz=quuz")
       end
     end
 
