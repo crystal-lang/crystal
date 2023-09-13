@@ -27,7 +27,7 @@ jobs:
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache LLVM
         id: cache-llvm

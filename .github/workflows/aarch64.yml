@@ -12,7 +12,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
@@ -30,7 +30,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
         with:
@@ -47,7 +47,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
         with:
@@ -63,7 +63,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-build
         with:
@@ -81,7 +81,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
         with:
@@ -98,7 +98,7 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
         with:
