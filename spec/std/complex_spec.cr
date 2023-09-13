@@ -266,6 +266,24 @@ describe "Complex" do
     end
   end
 
+  describe "**" do
+    it "complex ** 0" do
+      (Complex.new(1.1, 2.2)**0).should be_close(Complex.new(1), 1e-8)
+    end
+
+    it "complex ** 1" do
+      (Complex.new(1.1, 2.2)**1).should be_close(Complex.new(1.1, 2.2), 1e-8)
+    end
+
+    it "complex ** number" do
+      (Complex.new(1.1, 2.2)**3.3).should be_close(Complex.new(-16.994052617360477, -9.550401710419234), 1e-8)
+    end
+
+    it "complex ** complex" do
+      (Complex.new(1.1, 2.2)**Complex.new(3.3, 4.4)).should be_close(Complex.new(0.03554270582524886, 0.1450751598103773), 1e-8)
+    end
+  end
+
   it "clones" do
     c = Complex.new(4, 6.2)
     c.clone.should eq(c)

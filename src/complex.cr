@@ -271,6 +271,11 @@ struct Complex
     Complex.new(@real / other, @imag / other)
   end
 
+  # Returns the base `self` exponential of *other*.
+  def **(other) : Complex
+    Math.exp(other * Math.log(self))
+  end
+
   def clone
     self
   end
