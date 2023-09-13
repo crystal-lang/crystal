@@ -318,11 +318,13 @@ def Enum.new(pull : JSON::PullParser)
   {% if @type.annotation(Flags) %}
     value = {{ @type }}::None
     pull.read_array do
-      value |= parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
+      string = pull.read_string
+      value |= parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
     end
     value
   {% else %}
-    parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
+    string = pull.read_string
+    parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
   {% end %}
 end
 
