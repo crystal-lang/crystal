@@ -100,10 +100,10 @@ class URI
     # require "uri/params"
     #
     # io = IO::Memory.new
-    # URI::Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]}, io)
+    # URI::Params.encode(io, {"foo" => "bar", "baz" => ["quux", "quuz"]})
     # io.to_s # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(hash : Hash(String, String | Array(String)), io : IO) : Nil
+    def self.encode(io : IO, hash : Hash(String, String | Array(String))) : Nil
       build(io) do |builder|
         hash.each do |key, value|
           builder.add key, value
@@ -132,10 +132,10 @@ class URI
     # require "uri/params"
     #
     # io = IO::Memory.new
-    # URI::Params.encode({foo: "bar", baz: ["quux", "quuz"]}, io)
+    # URI::Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
     # io.to_s # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(named_tuple : NamedTuple, io : IO) : Nil
+    def self.encode(io : IO, named_tuple : NamedTuple) : Nil
       build(io) do |builder|
         named_tuple.each do |key, value|
           builder.add key.to_s, value
