@@ -302,6 +302,9 @@ describe "JSON serialization" do
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "three")) do
           JSONSpecEnum.from_json(%("three"))
         end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "three")) do
+          NamedTuple(foo: JSONSpecEnum).from_json(%({"foo": "three", "other": 1}))
+        end
         expect_raises(JSON::ParseException, %(Expected String but was Int)) do
           JSONSpecEnum.from_json(%(1))
         end

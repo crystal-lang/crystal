@@ -13,7 +13,7 @@ jobs:
     container: crystallang/crystal:1.9.2-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Uninstall openssl 1.1
         run: apk del openssl-dev
       - name: Upgrade alpine-keys
@@ -30,7 +30,7 @@ jobs:
     container: crystallang/crystal:1.9.2-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Uninstall openssl
         run: apk del openssl-dev
       - name: Install openssl 1.1.1
@@ -45,7 +45,7 @@ jobs:
     container: crystallang/crystal:1.9.2-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Uninstall openssl
         run: apk del openssl-dev openssl-libs-static
       - name: Upgrade alpine-keys

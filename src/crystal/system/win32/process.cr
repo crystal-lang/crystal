@@ -218,7 +218,7 @@ struct Crystal::System::Process
 
     if LibC.CreateProcessW(
          nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
+         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
