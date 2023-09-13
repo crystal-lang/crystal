@@ -7,19 +7,14 @@ class LLVM::TargetMachine
     target ? Target.new(target) : raise "Couldn't get target"
   end
 
-  def data_layout
+  def data_layout : LLVM::TargetData
     @layout ||= begin
-      layout = {% if LibLLVM::IS_38 %}
-                 LibLLVM.get_target_machine_data(self)
-               {% else %}
-                 # LLVM >= 3.9
-                 LibLLVM.create_target_data_layout(self)
-               {% end %}
+      layout = LibLLVM.create_target_data_layout(self)
       layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
     end
   end
 
-  def triple
+  def triple : String
     triple_c = LibLLVM.get_target_machine_triple(self)
     LLVM.string_and_dispose(triple_c)
   end
@@ -53,10 +48,12 @@ class LLVM::TargetMachine
       ABI::X86_64.new(self)
     when /i386|i486|i586|i686/
       ABI::X86.new(self)
-    when /aarch64/
+    when /aarch64|arm64/
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
+    when /wasm32/
+      ABI::Wasm32.new(self)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end

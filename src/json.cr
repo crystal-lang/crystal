@@ -1,5 +1,7 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
+# NOTE: To use `JSON` or its children, you must explicitly import it with `require "json"`
+#
 # ### General type-safe interface
 #
 # The general type-safe interface for parsing JSON is to invoke `T.from_json` on a
@@ -57,10 +59,14 @@
 #
 # value = JSON.parse("[1, 2, 3]") # : JSON::Any
 #
-# value[0]              # => 1
-# typeof(value[0])      # => JSON::Any
-# value[0].as_i         # => 1
-# typeof(value[0].as_i) # => Int32
+# value[0]               # => 1
+# typeof(value[0])       # => JSON::Any
+# value[0].as_i          # => 1
+# typeof(value[0].as_i)  # => Int32
+# value[0].as_i?         # => 1
+# typeof(value[0].as_i?) # => Int32 | Nil
+# value[0].as_s?         # => nil
+# typeof(value[0].as_s?) # => String | Nil
 #
 # value[0] + 1       # Error, because value[0] is JSON::Any
 # value[0].as_i + 10 # => 11
@@ -118,10 +124,10 @@ module JSON
     getter column_number : Int32
 
     def initialize(message, @line_number, @column_number, cause = nil)
-      super "#{message} at #{@line_number}:#{@column_number}", cause
+      super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end

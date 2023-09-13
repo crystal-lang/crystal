@@ -4,6 +4,8 @@
 
 # An HTTP Client.
 #
+# NOTE: To use `Client`, you must explicitly import it with `require "http/client"`
+#
 # ### One-shot usage
 #
 # Without a block, an `HTTP::Client::Response` is returned and the response's body
@@ -19,14 +21,14 @@
 #
 # ### Parameters
 #
-# Parameters can be added to any request with the `HTTP::Params#encode` method, which
+# Parameters can be added to any request with the `URI::Params.encode` method, which
 # converts a `Hash` or `NamedTuple` to a URL encoded HTTP query.
 #
 # ```
 # require "http/client"
 #
-# params = HTTP::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
-# response = HTTP::Client.get "http://www.example.com?" + params
+# params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => "author=John+Doe&offset=20"
+# response = HTTP::Client.get URI.new("http", "www.example.com", query: params)
 # response.status_code # => 200
 # ```
 #
@@ -57,6 +59,8 @@
 # response.body.lines.first # => "<!doctype html>"
 # client.close
 # ```
+#
+# WARNING: A single `HTTP::Client` instance is not safe for concurrent use by multiple fibers.
 #
 # ### Compression
 #
@@ -227,7 +231,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls : TLSContext = nil)
+  def self.new(uri : URI, tls : TLSContext = nil, &)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     client = new(host, uri.port, tls)
@@ -248,7 +252,7 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host : String, port = nil, tls : TLSContext = nil)
+  def self.new(host : String, port = nil, tls : TLSContext = nil, &)
     client = new(host, port, tls)
     begin
       yield client
@@ -259,7 +263,7 @@ class HTTP::Client
 
   # Configures this client to perform basic authentication in every
   # request.
-  def basic_auth(username, password)
+  def basic_auth(username, password) : Nil
     header = "Basic #{Base64.strict_encode("#{username}:#{password}")}"
     before_request do |request|
       request.headers["Authorization"] = header
@@ -398,7 +402,7 @@ class HTTP::Client
   # end
   # client.get "/"
   # ```
-  def before_request(&callback : HTTP::Request ->)
+  def before_request(&callback : HTTP::Request ->) : Nil
     before_request = @before_request ||= [] of (HTTP::Request ->)
     before_request << callback
   end
@@ -509,7 +513,7 @@ class HTTP::Client
     # response = client.{{method.id}} "/", form: {"foo" => "bar"}
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}} path, form: body, headers: headers
     end
 
@@ -526,7 +530,7 @@ class HTTP::Client
     # end
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}}(path, form: body, headers: headers) do |response|
         yield response
       end
@@ -583,21 +587,27 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
-    response = exec_internal_single(request)
+    implicit_compression = implicit_compression?(request)
+    begin
+      response = exec_internal_single(request, implicit_compression: implicit_compression)
+    rescue exc : IO::Error
+      raise exc if @io.nil? # do not retry if client was closed
+      response = nil
+    end
     return handle_response(response) if response
 
-    # Server probably closed the connection, so retry one
+    # Server probably closed the connection, so retry once
     close
     request.body.try &.rewind
-    response = exec_internal_single(request)
+    response = exec_internal_single(request, implicit_compression: implicit_compression)
     return handle_response(response) if response
 
-    raise "Unexpected end of http response"
+    raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
+  private def exec_internal_single(request, implicit_compression = false)
+    send_request(request)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression)
   end
 
   private def handle_response(response)
@@ -605,7 +615,7 @@ class HTTP::Client
     response
   end
 
-  # Executes a request request and yields an `HTTP::Client::Response` to the block.
+  # Executes a request and yields an `HTTP::Client::Response` to the block.
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
@@ -625,59 +635,64 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block : Response -> T) : T forall T
-    exec_internal_single(request) do |response|
+    implicit_compression = implicit_compression?(request)
+    exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
       end
+    end
 
-      # Server probably closed the connection, so retry once
-      close
-      request.body.try &.rewind
-      exec_internal_single(request) do |response|
-        if response
-          return handle_response(response) do
-            yield response
-          end
-        end
+    # Server probably closed the connection, so retry once
+    close
+    request.body.try &.rewind
+    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
+      if response
+        return handle_response(response) { yield response }
       end
     end
-    raise "Unexpected end of http response"
+    raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false, &)
+    begin
+      send_request(request)
+    rescue ex : IO::Error
+      return yield nil if ignore_io_error && !@io.nil? # ignore_io_error only if client was not closed
+      raise ex
+    end
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression) do |response|
       yield response
     end
   end
 
-  private def handle_response(response)
-    value = yield
+  private def handle_response(response, &)
+    yield
+  ensure
     response.body_io?.try &.close
     close unless response.keep_alive?
-    value
   end
 
   private def send_request(request)
-    decompress = set_defaults request
+    set_defaults request
     run_before_request_callbacks(request)
     request.to_io(io)
     io.flush
-    decompress
   end
 
   private def set_defaults(request)
     request.headers["Host"] ||= host_header
     request.headers["User-Agent"] ||= "Crystal"
+
+    if implicit_compression?(request)
+      request.headers["Accept-Encoding"] = "gzip, deflate"
+    end
+  end
+
+  private def implicit_compression?(request)
     {% if flag?(:without_zlib) %}
       false
     {% else %}
-      if compress? && !request.headers.has_key?("Accept-Encoding")
-        request.headers["Accept-Encoding"] = "gzip, deflate"
-        true
-      else
-        false
-      end
+      compress? && !request.headers.has_key?("Accept-Encoding")
     {% end %}
   end
 
@@ -717,7 +732,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil)
+  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil, &)
     exec(new_request(method, path, headers, body)) do |response|
       yield response
     end
@@ -749,7 +764,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil)
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil, &)
     headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec(method, path, headers, body) do |response|
@@ -759,8 +774,11 @@ class HTTP::Client
   end
 
   # Closes this client. If used again, a new connection will be opened.
-  def close
+  def close : Nil
     @io.try &.close
+  rescue IO::Error
+    nil
+  ensure
     @io = nil
   end
 
@@ -785,7 +803,7 @@ class HTTP::Client
       if tls = @tls
         tcp_socket = io
         begin
-          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host.rchop('.'))
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
@@ -805,7 +823,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(string : String, tls : TLSContext = nil)
+  private def self.exec(string : String, tls : TLSContext = nil, &)
     uri = URI.parse(string)
 
     unless uri.scheme && uri.host
@@ -850,16 +868,16 @@ class HTTP::Client
     raise ArgumentError.new "Request URI must have host (URI is: #{uri})"
   end
 
-  private def self.exec(uri : URI, tls : TLSContext = nil)
+  private def self.exec(uri : URI, tls : TLSContext = nil, &)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
 
     port = uri.port
-    path = uri.full_path
+    path = uri.request_target
     user = uri.user
     password = uri.password
 
-    HTTP::Client.new(host, port, tls) do |client|
+    new(host, port, tls) do |client|
       if user && password
         client.basic_auth(user, password)
       end
@@ -869,8 +887,8 @@ class HTTP::Client
 
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
-  # able to add new behaviors without loosing prior existing ones.
-  protected def around_exec(request)
+  # able to add new behaviors without losing prior existing ones.
+  protected def around_exec(request, &)
     yield
   end
 
@@ -892,7 +910,7 @@ class HTTP::Client
     protected def around_exec(%request)
       previous_def do
         {% if block.args.size != 1 %}
-          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+          {% raise "Wrong number of block parameters for macro 'def_around_exec' (given #{block.args.size}, expected 1)" %}
         {% end %}
 
         {{ block.args.first.id }} = %request

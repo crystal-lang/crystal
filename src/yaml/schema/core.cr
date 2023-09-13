@@ -4,14 +4,14 @@ module YAML::Schema::Core
   # Deserializes a YAML document.
   #
   # Same as `YAML.parse`.
-  def self.parse(data : String | IO)
+  def self.parse(data : String | IO) : YAML::Any
     Parser.new data, &.parse
   end
 
   # Deserializes multiple YAML documents.
   #
   # Same as `YAML.parse_all`.
-  def self.parse_all(data : String | IO)
+  def self.parse_all(data : String | IO) : Array(YAML::Any)
     Parser.new data, &.parse_all
   end
 
@@ -128,10 +128,8 @@ module YAML::Schema::Core
 
   # If `node` parses to a null value, returns `nil`, otherwise
   # invokes the given block.
-  def self.parse_null_or(node : YAML::Nodes::Node)
-    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node.value)
-      nil
-    else
+  def self.parse_null_or(node : YAML::Nodes::Node, &)
+    unless parse_null?(node)
       yield
     end
   end
@@ -140,7 +138,7 @@ module YAML::Schema::Core
   # values, resolving merge keys (<<) when found (keys and
   # values of the resolved merge mappings are yielded,
   # recursively).
-  def self.each(node : YAML::Nodes::Mapping)
+  def self.each(node : YAML::Nodes::Mapping, &)
     # We can't just traverse the nodes and invoke yield because
     # yield can't recurse. So, we use a stack of {Mapping, index}.
     # We pop from the stack and traverse the mapping values.
@@ -266,13 +264,13 @@ module YAML::Schema::Core
       raise(YAML::ParseException.new("Invalid timestamp", *location))
   end
 
-  protected def self.process_scalar_tag(scalar)
+  protected def self.process_scalar_tag(scalar, &)
     process_scalar_tag(scalar, scalar.tag) do |value|
       yield value
     end
   end
 
-  protected def self.process_scalar_tag(source, tag)
+  protected def self.process_scalar_tag(source, tag, &)
     case tag
     when "tag:yaml.org,2002:binary"
       yield parse_binary(source.value, source.location)
@@ -290,6 +288,15 @@ module YAML::Schema::Core
       yield parse_time(source.value, source.location)
     else
       # not a tag we support
+    end
+  end
+
+  # Returns `true` if *node* parses to a null value.
+  def self.parse_null?(node : Nodes::Node)
+    if node.is_a?(Nodes::Scalar)
+      parse_null?(node.value) && node.style.plain?
+    else
+      false
     end
   end
 

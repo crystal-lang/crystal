@@ -1,8 +1,8 @@
 require "llvm"
-require "../exception"
+require "../error"
 
 class Crystal::Codegen::Target
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   getter architecture : String
@@ -19,16 +19,29 @@ class Crystal::Codegen::Target
     end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
 
-    # Perform additional normalisation and parsing
+    # Perform additional normalization and parsing
     case @architecture
     when "i486", "i586", "i686"
       @architecture = "i386"
     when "amd64"
       @architecture = "x86_64"
+    when "arm64"
+      @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
     else
       # no need to tweak the architecture
+    end
+
+    if linux? && environment_parts.size == 1
+      case @vendor
+      when "suse", "redhat", "slackware", "amazon", "unknown", "montavista", "mti"
+        # Build string instead of setting it as "linux-gnu"
+        # since "linux6E" & "linuxspe" are available.
+        @environment = "#{@environment}-gnu"
+      else
+        # no need to tweak the environment
+      end
     end
   end
 
@@ -57,8 +70,25 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .android?
+      "android"
     else
       environment
+    end
+  end
+
+  def executable_extension
+    case
+    when windows? then ".exe"
+    else               ""
+    end
+  end
+
+  def object_extension
+    case
+    when windows?                  then ".obj"
+    when @architecture == "wasm32" then ".wasm"
+    else                                ".o"
     end
   end
 
@@ -90,8 +120,16 @@ class Crystal::Codegen::Target
     @environment.starts_with?("netbsd")
   end
 
+  def android?
+    environment_parts.any? &.starts_with?("android")
+  end
+
   def linux?
     @environment.starts_with?("linux")
+  end
+
+  def wasi?
+    @environment.starts_with?("wasi")
   end
 
   def bsd?
@@ -99,7 +137,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux?
+    macos? || bsd? || linux? || wasi?
   end
 
   def gnu?
@@ -142,6 +180,8 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "wasm32"
+      LLVM.init_webassembly
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end

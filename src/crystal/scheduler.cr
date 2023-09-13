@@ -12,6 +12,12 @@ require "crystal/system/thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
+  @event_loop = Crystal::EventLoop.create
+
+  def self.event_loop
+    Thread.current.scheduler.@event_loop
+  end
+
   def self.current_fiber : Fiber
     Thread.current.scheduler.@current
   end
@@ -67,7 +73,7 @@ class Crystal::Scheduler
   {% end %}
 
   {% if flag?(:preview_mt) %}
-    @fiber_channel = Crystal::FiberChannel.new
+    private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
     @free_stacks = Deque(Void*).new
   {% end %}
   @lock = Crystal::SpinLock.new
@@ -92,11 +98,21 @@ class Crystal::Scheduler
     {% if flag?(:preview_mt) %}
       set_current_thread(fiber)
       GC.lock_read
+    {% elsif flag?(:interpreted) %}
+      # No need to change the stack bottom!
     {% else %}
       GC.set_stackbottom(fiber.@stack_bottom)
     {% end %}
 
     current, @current = @current, fiber
+
+    {% if flag?(:interpreted) %}
+      # TODO: ideally we could set this in the interpreter if the
+      # @context had a pointer back to the fiber.
+      # I also wonder why this isn't done always like that instead of in asm.
+      current.@context.resumable = 1
+    {% end %}
+
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -120,11 +136,7 @@ class Crystal::Scheduler
 
   private def fatal_resume_error(fiber, message)
     Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
-    {% unless flag?(:win32) %}
-      # FIXME: Enable when caller is supported on win32
-      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
-    {% end %}
-
+    caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
     exit 1
   end
 
@@ -143,12 +155,12 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        unless runnable == Fiber.current
+        unless runnable == @current
           runnable.resume
         end
         break
       else
-        Crystal::EventLoop.run_once
+        @event_loop.run_once
       end
     end
 
@@ -163,7 +175,10 @@ class Crystal::Scheduler
   end
 
   protected def yield : Nil
-    sleep(0.seconds)
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      sleep(0.seconds)
+    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil
@@ -184,6 +199,7 @@ class Crystal::Scheduler
     end
 
     def run_loop
+      fiber_channel = self.fiber_channel
       loop do
         @lock.lock
         if runnable = @runnables.shift?
@@ -193,7 +209,7 @@ class Crystal::Scheduler
         else
           @sleeping = true
           @lock.unlock
-          fiber = @fiber_channel.receive
+          fiber = fiber_channel.receive
 
           @lock.lock
           @sleeping = false
@@ -207,7 +223,7 @@ class Crystal::Scheduler
     def send_fiber(fiber : Fiber)
       @lock.lock
       if @sleeping
-        @fiber_channel.send(fiber)
+        fiber_channel.send(fiber)
       else
         @runnables << fiber
       end

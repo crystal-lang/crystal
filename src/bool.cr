@@ -6,6 +6,8 @@ require "comparable"
 # true  # A Bool that is true
 # false # A Bool that is false
 # ```
+#
+# See [`Bool` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/bool.html) in the language reference.
 struct Bool
   include Comparable(self)
 

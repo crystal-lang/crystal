@@ -5,6 +5,8 @@ require "random"
 # A `BigInt` can represent arbitrarily large integers.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# NOTE: To use `BigInt`, you must explicitly import it with `require "big"`
 struct BigInt < Int
   include Comparable(Int::Signed)
   include Comparable(Int::Unsigned)
@@ -45,25 +47,61 @@ struct BigInt < Int
   end
 
   # Creates a `BigInt` from the given *num*.
-  def initialize(num : Int::Signed)
-    if LibC::Long::MIN <= num <= LibC::Long::MAX
-      LibGMP.init_set_si(out @mpz, num)
+  def self.new(num : Int::Primitive)
+    if LibGMP::SI::MIN <= num <= LibGMP::UI::MAX
+      if num <= LibGMP::SI::MAX
+        LibGMP.init_set_si(out mpz1, LibGMP::SI.new!(num))
+        new(mpz1)
+      else
+        LibGMP.init_set_ui(out mpz2, LibGMP::UI.new!(num))
+        new(mpz2)
+      end
     else
-      LibGMP.init_set_str(out @mpz, num.to_s, 10)
+      negative = num < 0
+      num = num.abs_unsigned
+      capacity = (num.bit_length - 1) // (sizeof(LibGMP::MpLimb) * 8) + 1
+
+      # This assumes GMP wasn't built with its experimental nails support:
+      # https://gmplib.org/manual/Low_002dlevel-Functions
+      unsafe_build(capacity) do |limbs|
+        appender = limbs.to_unsafe.appender
+        limbs.size.times do
+          appender << LibGMP::MpLimb.new!(num)
+          num = num.unsafe_shr(sizeof(LibGMP::MpLimb) * 8)
+        end
+        {capacity, negative}
+      end
     end
   end
 
-  # :ditto:
-  def initialize(num : Int::Unsigned)
-    if num <= LibC::ULong::MAX
-      LibGMP.init_set_ui(out @mpz, num)
-    else
-      LibGMP.init_set_str(out @mpz, num.to_s, 10)
-    end
+  private def self.unsafe_build(capacity : Int, & : Slice(LibGMP::MpLimb) -> {Int, Bool})
+    # https://gmplib.org/manual/Initializing-Integers:
+    #
+    # > In preparation for an operation, GMP often allocates one limb more than
+    # > ultimately needed. To make sure GMP will not perform reallocation for x,
+    # > you need to add the number of bits in mp_limb_t to n.
+    LibGMP.init2(out mpz, (capacity + 1) * sizeof(LibGMP::MpLimb) * 8)
+    limbs = LibGMP.limbs_write(pointerof(mpz), capacity)
+    size, negative = yield Slice.new(limbs, capacity)
+    LibGMP.limbs_finish(pointerof(mpz), size * (negative ? -1 : 1))
+    new(mpz)
+  end
+
+  # Returns a read-only `Slice` of the limbs that make up this integer, which
+  # is effectively `abs.digits(2 ** N)` where `N` is the number of bits in
+  # `LibGMP::MpLimb`, except that an empty `Slice` is returned for zero.
+  #
+  # This assumes GMP wasn't built with its experimental nails support:
+  # https://gmplib.org/manual/Low_002dlevel-Functions
+  private def limbs
+    Slice.new(LibGMP.limbs_read(self), LibGMP.size(self), read_only: true)
   end
 
   # :ditto:
+  #
+  # *num* must be finite.
   def initialize(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
     LibGMP.init_set_d(out @mpz, num)
   end
 
@@ -93,7 +131,7 @@ struct BigInt < Int
   end
 
   # :nodoc:
-  def self.new
+  def self.new(&)
     LibGMP.init(out mpz)
     yield pointerof(mpz)
     new(mpz)
@@ -119,8 +157,8 @@ struct BigInt < Int
     end
   end
 
-  def <=>(other : Float)
-    LibGMP.cmp_d(mpz, other)
+  def <=>(other : Float::Primitive)
+    LibGMP.cmp_d(mpz, other) unless other.nan?
   end
 
   def +(other : BigInt) : BigInt
@@ -253,7 +291,7 @@ struct BigInt < Int
     check_division_by_zero other
 
     if other < 0
-      -(-self).unsafe_floored_mod(-other)
+      -(-self).unsafe_floored_mod(other.abs)
     else
       unsafe_floored_mod(other)
     end
@@ -265,7 +303,7 @@ struct BigInt < Int
     unsafe_truncated_mod(other)
   end
 
-  def divmod(number : BigInt)
+  def divmod(number : BigInt) : {BigInt, BigInt}
     check_division_by_zero number
 
     unsafe_floored_divmod(number)
@@ -276,7 +314,7 @@ struct BigInt < Int
     unsafe_floored_divmod(number)
   end
 
-  def divmod(number : Int::Signed)
+  def divmod(number : Int::Signed) : {BigInt, BigInt}
     check_division_by_zero number
     if number > 0 && number <= LibC::Long::MAX
       unsafe_floored_divmod(LibGMP::ULong.new(number))
@@ -320,13 +358,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs.to_big_i) }
   end
 
-  def unsafe_floored_divmod(number : BigInt)
+  def unsafe_floored_divmod(number : BigInt) : {BigInt, BigInt}
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.fdiv_qr(the_q, r, self, number) }
     {the_q, the_r}
   end
 
-  def unsafe_floored_divmod(number : LibGMP::ULong)
+  def unsafe_floored_divmod(number : LibGMP::ULong) : {BigInt, BigInt}
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, self, number) }
     {the_q, the_r}
@@ -342,6 +380,35 @@ struct BigInt < Int
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.tdiv_qr_ui(the_q, r, self, number) }
     {the_q, the_r}
+  end
+
+  def divisible_by?(number : BigInt) : Bool
+    LibGMP.divisible_p(self, number) != 0
+  end
+
+  def divisible_by?(number : LibGMP::ULong) : Bool
+    LibGMP.divisible_ui_p(self, number) != 0
+  end
+
+  def divisible_by?(number : Int) : Bool
+    if 0 <= number <= LibGMP::ULong::MAX
+      LibGMP.divisible_ui_p(self, number) != 0
+    elsif LibGMP::Long::MIN < number < 0
+      LibGMP.divisible_ui_p(self, number.abs) != 0
+    else
+      divisible_by?(number.to_big_i)
+    end
+  end
+
+  # :nodoc:
+  # returns `{reduced, count}` such that `self % (number ** count) == 0`,
+  # `self % (number ** (count + 1)) != 0`, and `reduced == self / (number ** count)`
+  def factor_by(number : Int) : {BigInt, UInt64}
+    return {self, 0_u64} unless divisible_by?(number)
+
+    reduced = BigInt.new
+    count = LibGMP.remove(reduced, self, number.to_big_i)
+    {reduced, count.to_u64}
   end
 
   def ~ : BigInt
@@ -378,23 +445,30 @@ struct BigInt < Int
   def **(other : Int) : BigInt
     if other < 0
       raise ArgumentError.new("Negative exponent isn't supported")
+    elsif other == 1
+      self
+    else
+      BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
     end
-    BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
+  # Returns the greatest common divisor of `self` and *other*.
   def gcd(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
+  # :ditto:
   def gcd(other : Int) : Int
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
     result == 0 ? self : result
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
 
+  # :ditto:
   def lcm(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
@@ -403,42 +477,134 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # TODO: improve this
-  def_hash to_u64
+  # TODO: check hash equality for numbers >= 2**63
+  def_hash to_i64!
 
-  # Returns a string representation of self.
-  #
-  # ```
-  # require "big"
-  #
-  # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
-  # ```
-  def to_s : String
-    String.new(to_cstr)
+  def to_s(base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : String
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
+
+    case {self, precision}
+    when {0, 0}
+      ""
+    when {0, 1}
+      "0"
+    when {1, 1}
+      "1"
+    else
+      count = LibGMP.sizeinbase(self, base).to_i
+      negative = self < 0
+
+      if precision <= count
+        len = count + (negative ? 1 : 0)
+        String.new(len + 1) do |buffer| # null terminator required by GMP
+          buffer[len - 1] = 0
+          LibGMP.get_str(buffer, upcase ? -base : base, self)
+
+          # `sizeinbase` may be 1 greater than the exact value
+          if buffer[len - 1] == 0
+            if precision == count
+              # In this case the exact `count` is `precision - 1`, i.e. one zero
+              # should be inserted at the beginning of the number
+              # e.g. precision = 3, count = 3, exact count = 2
+              # "85\0\0" -> "085\0" for positive
+              # "-85\0\0" -> "-085\0" for negative
+              start = buffer + (negative ? 1 : 0)
+              start.move_to(start + 1, count - 1)
+              start.value = '0'.ord.to_u8
+            else
+              len -= 1
+            end
+          end
+
+          base62_swapcase(Slice.new(buffer, len)) if base == 62
+          {len, len}
+        end
+      else
+        len = precision + (negative ? 1 : 0)
+        String.new(len + 1) do |buffer|
+          # e.g. precision = 13, count = 8
+          # "_____12345678\0" for positive
+          # "_____-12345678\0" for negative
+          buffer[len - 1] = 0
+          start = buffer + precision - count
+          LibGMP.get_str(start, upcase ? -base : base, self)
+
+          # `sizeinbase` may be 1 greater than the exact value
+          if buffer[len - 1] == 0
+            # e.g. precision = 7, count = 3, exact count = 2
+            # "____85\0\0" -> "____885\0" for positive
+            # "____-85\0\0" -> "____-885\0" for negative
+            # `start` will be zero-filled later
+            count -= 1
+            start += 1 if negative
+            start.move_to(start + 1, count)
+          end
+
+          base62_swapcase(Slice.new(buffer + len - count, count)) if base == 62
+
+          if negative
+            buffer.value = '-'.ord.to_u8
+            buffer += 1
+          end
+          Slice.new(buffer, precision - count).fill('0'.ord.to_u8)
+
+          {len, len}
+        end
+      end
+    end
   end
 
-  # :ditto:
-  def to_s(io : IO) : Nil
-    str = to_cstr
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+  def to_s(io : IO, base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : Nil
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
+
+    case {self, precision}
+    when {0, 0}
+      # do nothing
+    when {0, 1}
+      io << '0'
+    when {1, 1}
+      io << '1'
+    else
+      count = LibGMP.sizeinbase(self, base).to_i
+      ptr = LibGMP.get_str(nil, upcase ? -base : base, self)
+      negative = self < 0
+
+      # `sizeinbase` may be 1 greater than the exact value
+      count -= 1 if ptr[count + (negative ? 0 : -1)] == 0
+
+      if precision <= count
+        buffer = Slice.new(ptr, count + (negative ? 1 : 0))
+      else
+        if negative
+          io << '-'
+          ptr += 1 # this becomes the absolute value
+        end
+
+        (precision - count).times { io << '0' }
+        buffer = Slice.new(ptr, count)
+      end
+
+      base62_swapcase(buffer) if base == 62
+      io.write_string buffer
+    end
   end
 
-  # Returns a string containing the representation of big radix base (2 through 36).
-  #
-  # ```
-  # require "big"
-  #
-  # BigInt.new("123456789101101987654321").to_s(8)  # => "32111154373025463465765261"
-  # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
-  # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
-  # ```
-  def to_s(base : Int) : String
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36
-    cstr = LibGMP.get_str(nil, base, self)
-    String.new(cstr)
+  private def base62_swapcase(buffer)
+    buffer.map! do |x|
+      # for ASCII integers as returned by GMP the only possible characters are
+      # '\0', '-', '0'..'9', 'A'..'Z', and 'a'..'z'
+      if x & 0x40 != 0 # 'A'..'Z', 'a'..'z'
+        x ^ 0x20
+      else # '\0', '-', '0'..'9'
+        x
+      end
+    end
   end
 
-  # :nodoc:
   def digits(base = 10) : Array(Int32)
     if self < 0
       raise ArgumentError.new("Can't request digits of negative number")
@@ -450,120 +616,143 @@ struct BigInt < Int
     ary
   end
 
-  def popcount
+  def popcount : Int
     LibGMP.popcount(self)
   end
 
-  def trailing_zeros_count
+  def trailing_zeros_count : Int
     LibGMP.scan1(self, 0)
   end
 
-  def to_i
+  # :nodoc:
+  def next_power_of_two : self
+    one = BigInt.new(1)
+    return one if self <= 0
+
+    popcount == 1 ? self : one << bit_length
+  end
+
+  def to_i : Int32
     to_i32
   end
 
-  def to_i8
-    to_i32.to_i8
-  end
-
-  def to_i16
-    to_i32.to_i16
-  end
-
-  def to_i32
-    LibGMP.get_si(self).to_i32
-  end
-
-  def to_i64
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_si(self).to_i64
-    else
-      to_s.to_i64
-    end
-  end
-
-  def to_i!
+  def to_i! : Int32
     to_i32!
   end
 
-  def to_i8!
-    LibGMP.get_si(self).to_i8!
-  end
-
-  def to_i16!
-    LibGMP.get_si(self).to_i16!
-  end
-
-  def to_i32!
-    LibGMP.get_si(self).to_i32!
-  end
-
-  def to_i64!
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_si(self).to_i64!
-    else
-      to_s.to_i64
-    end
-  end
-
-  def to_u
+  def to_u : UInt32
     to_u32
   end
 
-  def to_u8
-    to_u32.to_u8
-  end
-
-  def to_u16
-    to_u32.to_u16
-  end
-
-  def to_u32
-    to_u64.to_u32
-  end
-
-  def to_u64
-    raise OverflowError.new if self < 0
-    if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
-      LibGMP.get_ui(self).to_u64
-    else
-      to_s.to_u64
-    end
-  end
-
-  def to_u!
+  def to_u! : UInt32
     to_u32!
   end
 
-  def to_u8!
-    LibGMP.get_ui(self).to_u8!
-  end
-
-  def to_u16!
-    LibGMP.get_ui(self).to_u16!
-  end
-
-  def to_u32!
-    LibGMP.get_ui(self).to_u32!
-  end
-
-  def to_u64!
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_ui(self).to_u64!
-    else
-      to_s.to_u64
+  {% for n in [8, 16, 32, 64, 128] %}
+    def to_i{{n}} : Int{{n}}
+      \{% if Int{{n}} == LibGMP::SI %}
+        LibGMP.{{ flag?(:win32) ? "fits_si_p".id : "fits_slong_p".id }}(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
+      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::SI::MAX %}
+        LibGMP::SI.new(self).to_i{{n}}
+      \{% else %}
+        to_primitive_i(Int{{n}})
+      \{% end %}
     end
+
+    def to_u{{n}} : UInt{{n}}
+      \{% if UInt{{n}} == LibGMP::UI %}
+        LibGMP.{{ flag?(:win32) ? "fits_ui_p".id : "fits_ulong_p".id }}(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
+      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
+        LibGMP::UI.new(self).to_u{{n}}
+      \{% else %}
+        to_primitive_u(UInt{{n}})
+      \{% end %}
+    end
+
+    def to_i{{n}}! : Int{{n}}
+      to_u{{n}}!.to_i{{n}}!
+    end
+
+    def to_u{{n}}! : UInt{{n}}
+      \{% if UInt{{n}} == LibGMP::UI %}
+        LibGMP.get_ui(self) &* sign
+      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
+        LibGMP::UI.new!(self).to_u{{n}}!
+      \{% else %}
+        to_primitive_u!(UInt{{n}})
+      \{% end %}
+    end
+  {% end %}
+
+  private def to_primitive_i(type : T.class) : T forall T
+    self >= 0 ? to_primitive_i_positive(T) : to_primitive_i_negative(T)
   end
 
-  def to_f
+  private def to_primitive_u(type : T.class) : T forall T
+    self >= 0 ? to_primitive_i_positive(T) : raise OverflowError.new
+  end
+
+  private def to_primitive_u!(type : T.class) : T forall T
+    limbs = self.limbs
+    max_bits = sizeof(T) * 8
+    bits_per_limb = sizeof(LibGMP::MpLimb) * 8
+
+    x = T.zero
+    limbs.each_with_index do |limb, i|
+      break if i * bits_per_limb >= max_bits
+      x |= T.new!(limb) << (i * bits_per_limb)
+    end
+    x &* sign
+  end
+
+  private def to_primitive_i_positive(type : T.class) : T forall T
+    limbs = self.limbs
+    bits_per_limb = sizeof(LibGMP::MpLimb) * 8
+
+    highest_limb_index = (sizeof(T) * 8 - 1) // bits_per_limb
+    raise OverflowError.new if limbs.size > highest_limb_index + 1
+    if highest_limb = limbs[highest_limb_index]?
+      mask = LibGMP::MpLimb.new!(T::MAX >> (bits_per_limb * highest_limb_index))
+      raise OverflowError.new if highest_limb > mask
+    end
+
+    x = T.zero
+    preshift_limit = T::MAX >> bits_per_limb
+    limbs.reverse_each do |limb|
+      x <<= bits_per_limb
+      x |= limb
+    end
+    x
+  end
+
+  private def to_primitive_i_negative(type : T.class) : T forall T
+    limbs = self.limbs
+    bits_per_limb = sizeof(LibGMP::MpLimb) * 8
+
+    x = T.zero.abs_unsigned
+    limit = T::MIN.abs_unsigned
+    preshift_limit = limit >> bits_per_limb
+    limbs.reverse_each do |limb|
+      raise OverflowError.new if x > preshift_limit
+      x <<= bits_per_limb
+
+      # precondition: T must be larger than LibGMP::MpLimb, otherwise overflows
+      # like `0_i8 | 256` would happen and `x += limb` should be called instead
+      x |= limb
+      raise OverflowError.new if x > limit
+    end
+    x.neg_signed
+  end
+
+  def to_f : Float64
     to_f64
   end
 
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
-  def to_f64
+  def to_f64 : Float64
     LibGMP.get_d(self)
   end
 
@@ -579,19 +768,19 @@ struct BigInt < Int
     LibGMP.get_d(self)
   end
 
-  def to_big_i
+  def to_big_i : BigInt
     self
   end
 
-  def to_big_f
+  def to_big_f : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
   end
 
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 
-  def to_big_r
+  def to_big_r : BigRational
     BigRational.new(self)
   end
 
@@ -607,10 +796,6 @@ struct BigInt < Int
 
   private def mpz
     pointerof(@mpz)
-  end
-
-  private def to_cstr
-    LibGMP.get_str(nil, 10, mpz)
   end
 
   def to_unsafe
@@ -662,10 +847,12 @@ struct Int
     to_big_i % other
   end
 
-  def gcm(other : BigInt) : Int
-    other.gcm(self)
+  # Returns the greatest common divisor of `self` and *other*.
+  def gcd(other : BigInt) : Int
+    other.gcd(self)
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     other.lcm(self)
   end
@@ -685,7 +872,8 @@ struct Float
   include Comparable(BigInt)
 
   def <=>(other : BigInt)
-    -(other <=> self)
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Returns a `BigInt` representing this float (rounded using `floor`).
@@ -714,15 +902,34 @@ class String
 end
 
 module Math
-  # Returns the sqrt of a `BigInt`.
+  # Calculates the square root of *value*.
   #
   # ```
   # require "big"
   #
-  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # Math.sqrt(1_000_000_000_000.to_big_i * 1_000_000_000_000.to_big_i) # => 1000000000000.0
   # ```
-  def sqrt(value : BigInt)
+  def sqrt(value : BigInt) : BigFloat
     sqrt(value.to_big_f)
+  end
+
+  # Calculates the integer square root of *value*.
+  def isqrt(value : BigInt)
+    BigInt.new { |mpz| LibGMP.sqrt(mpz, value) }
+  end
+
+  # Computes the smallest nonnegative power of 2 that is greater than or equal
+  # to *v*.
+  #
+  # The returned value has the same type as the argument.
+  #
+  # ```
+  # Math.pw2ceil(33) # => 64
+  # Math.pw2ceil(64) # => 64
+  # Math.pw2ceil(-5) # => 1
+  # ```
+  def pw2ceil(v : BigInt) : BigInt
+    v.next_power_of_two
   end
 end
 

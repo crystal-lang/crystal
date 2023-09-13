@@ -6,12 +6,14 @@
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
 module IO::Buffered
+  @in_buffer = Pointer(UInt8).null
+  @out_buffer = Pointer(UInt8).null
   @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
   @read_buffering = true
   @flush_on_newline = false
-  @buffer_size = 8192
+  @buffer_size = IO::DEFAULT_BUFFER_SIZE
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
@@ -31,7 +33,7 @@ module IO::Buffered
   abstract def unbuffered_rewind
 
   # Return the buffer size used
-  def buffer_size
+  def buffer_size : Int32
     @buffer_size
   end
 
@@ -66,7 +68,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#read(slice)`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
@@ -179,6 +181,28 @@ module IO::Buffered
     end
   end
 
+  # Returns the current position (in bytes) in this `IO`.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
+  # ```
+  def pos : Int64
+    flush
+    in_rem = @in_buffer_rem.size
+
+    # TODO In 2.0 we should make `unbuffered_pos` an abstract method of Buffered
+    if self.responds_to?(:unbuffered_pos)
+      self.unbuffered_pos - in_rem
+    else
+      super - in_rem
+    end
+  end
+
   # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
   # will be done (that is, writing to this `IO` is immediately synced to the
   # underlying `IO`).
@@ -188,7 +212,7 @@ module IO::Buffered
   end
 
   # Determines if this `IO` does write buffering. If `true`, no buffering is done.
-  def sync?
+  def sync? : Bool
     @sync
   end
 
@@ -198,7 +222,7 @@ module IO::Buffered
   end
 
   # Determines whether this `IO` buffers reads.
-  def read_buffering?
+  def read_buffering? : Bool
     @read_buffering
   end
 
@@ -208,7 +232,7 @@ module IO::Buffered
   end
 
   # Determines if this `IO` flushes automatically when a newline is written.
-  def flush_on_newline?
+  def flush_on_newline? : Bool
     @flush_on_newline
   end
 

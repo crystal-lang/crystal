@@ -1,6 +1,8 @@
 require "./spec_helper"
+require "../../support/tempfile"
+require "../../support/win32"
 
-describe Socket do
+describe Socket, tags: "network" do
   describe ".unix" do
     it "creates a unix socket" do
       sock = Socket.unix
@@ -8,8 +10,30 @@ describe Socket do
       sock.family.should eq(Socket::Family::UNIX)
       sock.type.should eq(Socket::Type::STREAM)
 
-      sock = Socket.unix(Socket::Type::DGRAM)
-      sock.type.should eq(Socket::Type::DGRAM)
+      # Datagram socket type is not supported on Windows yet:
+      # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+      # https://github.com/microsoft/WSL/issues/5272
+      {% unless flag?(:win32) %}
+        sock = Socket.unix(Socket::Type::DGRAM)
+        sock.type.should eq(Socket::Type::DGRAM)
+      {% end %}
+
+      error = expect_raises(Socket::Error) do
+        TCPSocket.new(family: :unix)
+      end
+      error.os_error.should eq({% if flag?(:win32) %}
+        WinError::WSAEPROTONOSUPPORT
+      {% elsif flag?(:wasi) %}
+        WasiError::PROTONOSUPPORT
+      {% else %}
+        Errno.new(LibC::EPROTONOSUPPORT)
+      {% end %})
+    end
+  end
+
+  describe "#tty?" do
+    it "with non TTY" do
+      Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP).tty?.should be_false
     end
   end
 
@@ -75,6 +99,23 @@ describe Socket do
     server.try &.close
   end
 
+  # Datagram socket type is not supported on Windows yet
+  {% unless flag?(:win32) %}
+    it "sends datagram over unix socket" do
+      with_tempfile("datagram_unix") do |path|
+        server = Socket.unix(Socket::Type::DGRAM)
+        server.bind Socket::UNIXAddress.new(path)
+
+        client = Socket.unix(Socket::Type::DGRAM)
+        client.connect Socket::UNIXAddress.new(path)
+        client.send "foo"
+
+        message, _ = server.receive
+        message.should eq "foo"
+      end
+    end
+  {% end %}
+
   describe "#bind" do
     each_ip_family do |family, _, any_address|
       it "binds to port" do
@@ -99,6 +140,22 @@ describe Socket do
         address.port.should be > 0
       ensure
         socket.try &.close
+      end
+
+      it "binds to port using default IP" do
+        socket = TCPSocket.new family
+        socket.bind unused_local_port
+        socket.listen
+
+        address = socket.local_address.as(Socket::IPAddress)
+        address.address.should eq(any_address)
+        address.port.should be > 0
+
+        socket.close
+
+        socket = UDPSocket.new family
+        socket.bind unused_local_port
+        socket.close
       end
     end
   end

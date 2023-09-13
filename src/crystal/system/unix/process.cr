@@ -8,7 +8,7 @@ struct Crystal::System::Process
   getter pid : LibC::PidT
 
   def initialize(@pid : LibC::PidT)
-    @channel = Crystal::SignalChildHandler.wait(@pid)
+    @channel = Crystal::System::SignalChildHandler.wait(@pid)
   end
 
   def release
@@ -22,8 +22,8 @@ struct Crystal::System::Process
     !@channel.closed? && Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    Crystal::System::Process.signal(@pid, LibC::SIGTERM)
+  def terminate(*, graceful)
+    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
   def self.exit(status)
@@ -42,7 +42,7 @@ struct Crystal::System::Process
 
   def self.pgid(pid)
     # Disallow users from depending on ppid(0) instead of `pgid`
-    raise RuntimeError.from_errno("getpgid", Errno::EINVAL) if pid == 0
+    raise RuntimeError.from_os_error("getpgid", Errno::EINVAL) if pid == 0
 
     ret = LibC.getpgid(pid)
     raise RuntimeError.from_errno("getpgid") if ret < 0
@@ -56,6 +56,22 @@ struct Crystal::System::Process
   def self.signal(pid, signal)
     ret = LibC.kill(pid, signal)
     raise RuntimeError.from_errno("kill") if ret < 0
+  end
+
+  def self.on_interrupt(&handler : ->) : Nil
+    ::Signal::INT.trap { |_signal| handler.call }
+  end
+
+  def self.ignore_interrupts! : Nil
+    ::Signal::INT.ignore
+  end
+
+  def self.restore_interrupts! : Nil
+    ::Signal::INT.reset
+  end
+
+  def self.start_interrupt_loop : Nil
+    # do nothing; `Crystal::System::Signal.start_loop` takes care of this
   end
 
   def self.exists?(pid)
@@ -94,7 +110,7 @@ struct Crystal::System::Process
       pid = nil
       if will_exec
         # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::Signal.after_fork_before_exec
+        Crystal::System::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
@@ -107,13 +123,35 @@ struct Crystal::System::Process
       # error:
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_errno("fork", errno)
+      raise RuntimeError.from_os_error("fork", errno)
     else
       # parent:
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
 
     pid
+  end
+
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork(&)
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    if pid = fork
+      return pid
+    end
+
+    begin
+      yield
+      LibC._exit 0
+    rescue ex
+      ex.inspect_with_backtrace STDERR
+      STDERR.flush
+      LibC._exit 1
+    ensure
+      LibC._exit 254 # not reached
+    end
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -171,7 +209,7 @@ struct Crystal::System::Process
 
       if args
         unless command.includes?(%("${@}"))
-          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+          raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
 
         {% if flag?(:freebsd) || flag?(:dragonfly) %}
@@ -219,10 +257,10 @@ struct Crystal::System::Process
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
     case errno
-    when Errno::EACCES, Errno::ENOENT
-      raise ::File::Error.from_errno("Error executing process", errno, file: command)
+    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
-      raise IO::Error.from_errno("Error executing process: '#{command}'", errno)
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
     end
   end
 

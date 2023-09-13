@@ -1,4 +1,5 @@
-require "./spec_helper"
+require "../spec_helper"
+require "spec/helpers/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
   { {1981, 1, 1}, {1981, 1, 4} },
@@ -211,6 +212,32 @@ describe Time do
     time.utc?.should be_true
   end
 
+  describe ".unix_ns" do
+    it "supports Int64 values" do
+      nanoseconds = 1439404155001457425i64
+      time = Time.unix_ns(nanoseconds)
+      time.should eq(Time.utc(2015, 8, 12, 18, 29, 15, nanosecond: 1457425))
+      time.to_unix_ns.should eq(nanoseconds)
+      time.utc?.should be_true
+    end
+
+    it "supports maximum valid time" do
+      nanoseconds = Int128.new("253402300799999999999")
+      time = Time.unix_ns(nanoseconds)
+      time.should eq(Time.utc(9999, 12, 31, 23, 59, 59, nanosecond: 999999999))
+      time.to_unix_ns.should eq(nanoseconds)
+      time.utc?.should be_true
+    end
+
+    it "supports minimum valid time" do
+      nanoseconds = Int128.new("-62135596800000000000")
+      time = Time.unix_ns(nanoseconds)
+      time.should eq(Time.utc(1, 1, 1, 0, 0, 0, nanosecond: 0))
+      time.to_unix_ns.should eq(nanoseconds)
+      time.utc?.should be_true
+    end
+  end
+
   describe ".local without arguments" do
     it "current time is similar in different locations" do
       (Time.local - Time.utc).should be_close(0.seconds, 1.second)
@@ -237,7 +264,7 @@ describe Time do
 
   it "#clone" do
     time = Time.local
-    (time == time.clone).should be_true
+    time.clone.should eq(time)
   end
 
   describe "#shift" do
@@ -295,7 +322,7 @@ describe Time do
       time.shift(0, 0).should eq time
     end
 
-    describe "irregular calendrical unit ratios" do
+    describe "irregular calendaric unit ratios" do
       it "shifts by a week if one day is left out" do
         # The week from 2011-12-25 to 2012-01-01 for example lasted only 6 days in Samoa,
         # because it skipped 2011-12-28 due to changing time zone from -11:00 to +13:00.
@@ -353,10 +380,9 @@ describe Time do
         end
       end
 
-      pending "out of range max (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range max (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: 10000000
         end
       end
@@ -368,10 +394,9 @@ describe Time do
         end
       end
 
-      pending "out of range min (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range min (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: -10000000
         end
       end
@@ -451,6 +476,11 @@ describe Time do
 
       Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
     end
+
+    it "covers date boundaries with zone offset (#10869)" do
+      location = Time::Location.fixed(2 * 3600)
+      Time.local(2021, 7, 1, location: location).shift(months: 1).should eq Time.local(2021, 8, 1, location: location)
+    end
   end
 
   it "#time_of_day" do
@@ -511,6 +541,11 @@ describe Time do
       time = Time.local(Time::Location.fixed(1234))
       (time.to_utc <=> time).should eq(0)
     end
+  end
+
+  describe "#step" do
+    days = (1..24).map { |d| Time.utc(2020, 12, d) }.to_a
+    it_iterates "advent", days, Time.utc(2020, 12, 1).step(to: Time.utc(2020, 12, 24), by: 1.day)
   end
 
   describe "#to_unix" do
@@ -650,6 +685,37 @@ describe Time do
       Time.utc(2014, 11, i).at_beginning_of_week.should eq Time.utc(2014, 11, 3)
     end
 
+    sunday_day_of_week = Time::DayOfWeek::Sunday
+    Time.utc(2014, 11, 1).at_beginning_of_week(sunday_day_of_week).should eq Time.utc(2014, 10, 26)
+    2.upto(8) do |i|
+      Time.utc(2014, 11, i).at_beginning_of_week(sunday_day_of_week).should eq Time.utc(2014, 11, 2)
+    end
+    Time.utc(2014, 11, 9).at_beginning_of_week(sunday_day_of_week).should eq Time.utc(2014, 11, 9)
+
+    Time.utc(2014, 11, 1).at_beginning_of_week(:sunday).should eq Time.utc(2014, 10, 26)
+    2.upto(8) do |i|
+      Time.utc(2014, 11, i).at_beginning_of_week(:sunday).should eq Time.utc(2014, 11, 2)
+    end
+    Time.utc(2014, 11, 9).at_beginning_of_week(:sunday).should eq Time.utc(2014, 11, 9)
+
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Sunday).should eq Time.utc(2014, 11, 9)
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Monday).should eq Time.utc(2014, 11, 10)
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Tuesday).should eq Time.utc(2014, 11, 4)
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Wednesday).should eq Time.utc(2014, 11, 5)
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Thursday).should eq Time.utc(2014, 11, 6)
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Friday).should eq Time.utc(2014, 11, 7)
+    Time.utc(2014, 11, 10).at_beginning_of_week(Time::DayOfWeek::Saturday).should eq Time.utc(2014, 11, 8)
+
+    at_beginning_of_week_default = Time.local.at_beginning_of_week
+    at_beginning_of_week_default.hour.should eq 0
+    at_beginning_of_week_default.minute.should eq 0
+    at_beginning_of_week_default.second.should eq 0
+
+    at_beginning_of_week_sunday = Time.local.at_beginning_of_week(:sunday)
+    at_beginning_of_week_sunday.hour.should eq 0
+    at_beginning_of_week_sunday.minute.should eq 0
+    at_beginning_of_week_sunday.second.should eq 0
+
     t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
     t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)
     t1.at_beginning_of_minute.should eq Time.utc(2014, 11, 25, 10, 11)
@@ -786,7 +852,7 @@ describe Time do
       end
     end
 
-    it "knows that typical non-century leap years are divisibly by 4" do
+    it "knows that typical non-century leap years are divisible by 4" do
       {1968, 1972, 2004, 2020}.each do |year|
         Time.leap_year?(year).should be_true
       end

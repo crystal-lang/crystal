@@ -16,13 +16,13 @@ class Compress::Zlib::Reader < IO
   def initialize(@io : IO, @sync_close = false, dict : Bytes? = nil)
     Compress::Zlib::Reader.read_header(io, dict)
     @flate_io = Compress::Deflate::Reader.new(@io, dict: dict)
-    @adler32 = Digest::Adler32.initial
+    @adler32 = ::Digest::Adler32.initial
     @end = false
   end
 
   # Creates a new reader from the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, sync_close = false, dict : Bytes? = nil)
+  def self.open(io : IO, sync_close = false, dict : Bytes? = nil, &)
     reader = new(io, sync_close: sync_close, dict: dict)
     yield reader ensure reader.close
   end
@@ -50,7 +50,7 @@ class Compress::Zlib::Reader < IO
       end
 
       checksum = io.read_bytes(UInt32, IO::ByteFormat::BigEndian)
-      dict_checksum = Digest::Adler32.checksum(dict)
+      dict_checksum = ::Digest::Adler32.checksum(dict)
       if checksum != dict_checksum
         raise Compress::Zlib::Error.new("Dictionary ADLER-32 checksum mismatch")
       end
@@ -58,7 +58,7 @@ class Compress::Zlib::Reader < IO
   end
 
   # See `IO#read`.
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     return 0 if slice.empty?
@@ -75,21 +75,21 @@ class Compress::Zlib::Reader < IO
       end
     else
       # Update ADLER-32 checksum
-      @adler32 = Digest::Adler32.update(slice[0, read_bytes], @adler32)
+      @adler32 = ::Digest::Adler32.update(slice[0, read_bytes], @adler32)
     end
     read_bytes
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : NoReturn
     raise IO::Error.new "Can't write to Compress::Zlib::Reader"
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : NoReturn
     raise IO::Error.new "Can't flush Compress::Zlib::Reader"
   end
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -97,7 +97,7 @@ class Compress::Zlib::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind

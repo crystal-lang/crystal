@@ -74,7 +74,7 @@ describe "Semantic: module" do
 
       Bar.new.foo(1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Bar#foo' to be Int, not Float64"
   end
 
   it "includes module but not generic" do
@@ -101,7 +101,7 @@ describe "Semantic: module" do
       "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
-  it "includes generic module but wrong number of arguments 2" do
+  it "errors if including generic module and not specifying type vars" do
     assert_error "
       module Foo(T)
       end
@@ -110,7 +110,7 @@ describe "Semantic: module" do
         include Foo
       end
       ",
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when including Foo(T)"
   end
 
   it "includes generic module explicitly" do
@@ -143,7 +143,7 @@ describe "Semantic: module" do
 
       Bar(Int32).new.foo(1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Bar(Int32)#foo' to be Int32, not Float64"
   end
 
   it "reports can't use instance variables inside module" do
@@ -307,7 +307,8 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo Baz2.new
-      ", "no overload matches"
+      ",
+      "expected argument #1 to 'Baz1#foo' to be Bar(Int32), not Baz2"
   end
 
   it "includes generic module with self (check argument superclass type, success)" do
@@ -383,7 +384,7 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ", "method must return Bar(Float64) but it is returning Bar(Int32)"
+      ", "method Baz#foo must return Bar(Float64) but it is returning Bar(Int32)"
   end
 
   it "includes generic module with self (check return subclass type, error)" do
@@ -405,7 +406,7 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo
-      ", "method must return Bar(Int32) but it is returning Baz2"
+      ", "method Baz1#foo must return Bar(Int32) but it is returning Baz2"
   end
 
   it "includes module but can't access metaclass methods" do
@@ -473,6 +474,67 @@ describe "Semantic: module" do
 
       module Foo
         include Bar
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error when including self, generic module" do
+    assert_error "
+      module Foo(T)
+        include self
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error when including instantiation of self, generic module" do
+    assert_error "
+      module Foo(T)
+        include Foo(Int32)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include, generic module" do
+    assert_error "
+      module Foo(T)
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      module Foo(T)
+        include Bar(T)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include between non-generic and generic module" do
+    assert_error "
+      module Foo
+      end
+
+      module Bar(T)
+        include Foo
+      end
+
+      module Foo
+        include Bar(Int32)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include between non-generic and generic module (2)" do
+    assert_error "
+      module Bar(T)
+      end
+
+      module Foo
+        include Bar(Int32)
+      end
+
+      module Bar(T)
+        include Foo
       end
       ", "cyclic include detected"
   end
@@ -559,7 +621,7 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value
-      ") { types["Moo"] }
+      ", inject_primitives: true) { types["Moo"] }
   end
 
   it "types pointer of module with method" do
@@ -578,7 +640,7 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value.foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types pointer of module with method with two including types" do
@@ -606,7 +668,7 @@ describe "Semantic: module" do
       p.value = Foo.new
       p.value = Bar.new
       p.value.foo
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types pointer of module with generic type" do
@@ -625,7 +687,7 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo(Int32).new
       p.value.foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types pointer of module with generic type" do
@@ -660,7 +722,7 @@ describe "Semantic: module" do
       p.value = Foo(Baz).new
 
       x
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "allows overloading with included generic module" do
@@ -792,7 +854,7 @@ describe "Semantic: module" do
       )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
   end
 
-  it "works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)" do
+  it "works ok in a case where a typed-def type has an underlying type that has an included generic module (bug)" do
     assert_type(%(
       lib LibC
         type X = Void*
@@ -817,7 +879,7 @@ describe "Semantic: module" do
 
       p = Pointer(Void).malloc(1_u64)
       p.bar(p)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "finds inner class from inherited one (#476)" do
@@ -868,7 +930,7 @@ describe "Semantic: module" do
 
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types proc of module with generic class" do
@@ -886,7 +948,7 @@ describe "Semantic: module" do
 
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
-      )) { char }
+      ), inject_primitives: true) { char }
   end
 
   it "errors if declares module inside if" do
@@ -896,6 +958,92 @@ describe "Semantic: module" do
       end
       ),
       "can't declare module dynamically"
+  end
+
+  it "can't reopen as class" do
+    assert_error "
+      module Foo
+      end
+
+      class Foo
+      end
+      ", "Foo is not a class, it's a module"
+  end
+
+  it "can't reopen as struct" do
+    assert_error "
+      module Foo
+      end
+
+      struct Foo
+      end
+      ", "Foo is not a struct, it's a module"
+  end
+
+  it "errors if reopening non-generic module as generic" do
+    assert_error %(
+      module Foo
+      end
+
+      module Foo(T)
+      end
+      ),
+      "Foo is not a generic module"
+  end
+
+  it "errors if reopening generic module with different type vars" do
+    assert_error %(
+      module Foo(T)
+      end
+
+      module Foo(U)
+      end
+      ),
+      "type var must be T, not U"
+  end
+
+  it "errors if reopening generic module with different type vars (2)" do
+    assert_error %(
+      module Foo(A, B)
+      end
+
+      module Foo(C)
+      end
+      ),
+      "type vars must be A, B, not C"
+  end
+
+  it "errors if reopening generic module with different splat index" do
+    assert_error %(
+      module Foo(A)
+      end
+
+      module Foo(*A)
+      end
+      ),
+      "type var must be A, not *A"
+  end
+
+  it "errors if reopening generic module with different splat index (2)" do
+    assert_error %(
+      module Foo(*A)
+      end
+
+      module Foo(A)
+      end
+      ),
+      "type var must be *A, not A"
+  end
+
+  it "errors if reopening generic module with different splat index (3)" do
+    assert_error %(
+      module Foo(*A, B)
+      end
+
+      module Foo(A, *B)
+      end
+      ),
+      "type vars must be *A, B, not A, *B"
   end
 
   it "uses :Module name for modules in errors" do
@@ -1105,7 +1253,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "declares and includes generic module" do
+  it "instantiates generic variadic module, accesses T from instance method" do
     assert_type(%(
       module Moo(*T)
         def t
@@ -1121,7 +1269,55 @@ describe "Semantic: module" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
-  it "declares and includes generic module, more args" do
+  it "instantiates generic variadic module, accesses T from class method" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo
+        extend Moo(Int32, Char)
+      end
+
+      Foo.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        include Moo(*T)
+      end
+
+      Foo(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from class method through generic extend" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        extend Moo(*T)
+      end
+
+      Foo(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method, more args" do
     assert_type(%(
       module Moo(A, *T, B)
         def t
@@ -1134,6 +1330,22 @@ describe "Semantic: module" do
       end
 
       Foo.new.t
+      )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include, more args" do
+    assert_type(%(
+      module Moo(A, *T, B)
+        def t
+          {A, T, B}
+        end
+      end
+
+      class Foo(*T)
+        include Moo(Int32, *T, String)
+      end
+
+      Foo(Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
   end
 
@@ -1269,18 +1481,122 @@ describe "Semantic: module" do
   it "errors when extending module that defines instance vars (#4065)" do
     assert_error %(
       module Foo
-        @foo : Int32?
-
-        def foo
-          @foo
-        end
+        @x = 0
       end
 
-      class Bar
+      module Bar
         extend Foo
       end
       ),
-      "can't declare instance variables in Bar.class"
+      "can't declare instance variables in Foo because Bar extends it"
+  end
+
+  it "errors when extending module that defines instance vars (2) (#4065)" do
+    assert_error %(
+      module Foo
+        @x : Int32?
+      end
+
+      module Bar
+        extend Foo
+      end
+      ),
+      "can't declare instance variables in Foo because Bar extends it"
+  end
+
+  it "errors when extending generic module that defines instance vars" do
+    assert_error %(
+      module Foo(T)
+        @x = 0
+      end
+
+      module Bar(T)
+        extend Foo(T)
+      end
+      ),
+      "can't declare instance variables in Foo(T) because Bar(T) extends it"
+  end
+
+  it "errors when extending generic module that defines instance vars (2)" do
+    assert_error %(
+      module Foo(T)
+        @x : T?
+      end
+
+      module Bar(T)
+        extend Foo(T)
+      end
+      ),
+      "can't declare instance variables in Foo(T) because Bar(T) extends it"
+  end
+
+  it "errors when recursively extending module that defines instance vars" do
+    assert_error %(
+      module Foo
+        @x = 0
+      end
+
+      module Bar
+        include Foo
+      end
+
+      module Baz
+        extend Bar
+      end
+      ),
+      "can't declare instance variables in Foo because Baz extends it"
+  end
+
+  it "errors when recursively extending module that defines instance vars (2)" do
+    assert_error %(
+      module Foo
+        @x : Int32?
+      end
+
+      module Bar
+        include Foo
+      end
+
+      module Baz
+        extend Bar
+      end
+      ),
+      "can't declare instance variables in Foo because Baz extends it"
+  end
+
+  it "errors when extending self and self defines instance vars (#9568)" do
+    assert_error %(
+      module Foo
+        extend self
+
+        @x = 0
+      end
+      ),
+      "can't declare instance variables in Foo because Foo extends it"
+  end
+
+  it "errors when extending self and self defines instance vars (2) (#9568)" do
+    assert_error %(
+      module Foo
+        extend self
+
+        @x : Int32?
+      end
+      ),
+      "can't declare instance variables in Foo because Foo extends it"
+  end
+
+  it "errors when extending self and self defines instance vars (3) (#9568)" do
+    assert_error %(
+      module Foo
+        extend self
+
+        def initialize
+          @x = 0
+        end
+      end
+      ),
+      "can't declare instance variables in Foo because Foo extends it"
   end
 
   it "can't pass module class to virtual metaclass (#6113)" do
@@ -1302,7 +1618,7 @@ describe "Semantic: module" do
 
       Gen(Foo.class).foo(Moo)
       ),
-      "no overload matches"
+      "expected argument #1 to 'Gen(Foo.class).foo' to be Foo.class, not Moo:Module"
   end
 
   it "extends module from generic class and calls class method (#7167)" do
@@ -1367,5 +1683,31 @@ describe "Semantic: module" do
       Foo.new
       ),
       "wrong number of arguments"
+  end
+
+  it "gives helpful error message when generic type var is missing" do
+    assert_error %(
+      module Foo(T)
+        def self.foo
+          T.bar
+        end
+      end
+
+      Foo.foo
+      ),
+      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
+  end
+
+  it "gives helpful error message when generic type var is missing in block spec" do
+    assert_error %(
+      module Foo(T)
+        def self.foo(&block : T -> )
+          block
+        end
+      end
+
+      Foo.foo { |x| }
+      ),
+      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
   end
 end

@@ -49,7 +49,7 @@ class Log
   at_exit { @@builder.close }
 
   # Returns the default `Log::Builder` used for `Log.for` calls.
-  def self.builder
+  def self.builder : Log::Builder
     @@builder
   end
 
@@ -82,18 +82,20 @@ class Log
   end
 
   # Method to save and restore the current logging context.
+  # Temporary context for the duration of the block can be set via arguments.
   #
   # ```
   # Log.context.set a: 1
   # Log.info { %(message with {"a" => 1} context) }
-  # Log.with_context do
-  #   Log.context.set b: 2
-  #   Log.info { %(message with {"a" => 1, "b" => 2} context) }
+  # Log.with_context(b: 2) do
+  #   Log.context.set c: 3
+  #   Log.info { %(message with {"a" => 1, "b" => 2, "c" => 3} context) }
   # end
   # Log.info { %(message with {"a" => 1} context) }
   # ```
-  def self.with_context
+  def self.with_context(**kwargs, &)
     previous = Log.context
+    Log.context.set(**kwargs) unless kwargs.empty?
     begin
       yield
     ensure
@@ -102,8 +104,26 @@ class Log
   end
 
   # :ditto:
-  def with_context
-    self.class.with_context do
+  def self.with_context(values, &)
+    previous = Log.context
+    Log.context.set(values) unless values.empty?
+    begin
+      yield
+    ensure
+      Log.context = previous
+    end
+  end
+
+  # :ditto:
+  def with_context(**kwargs, &)
+    self.class.with_context(**kwargs) do
+      yield
+    end
+  end
+
+  # :ditto:
+  def with_context(values, &)
+    self.class.with_context(values) do
       yield
     end
   end
@@ -120,7 +140,7 @@ class Log
     # Log.context.clear
     # Log.info { "message with empty context" }
     # ```
-    def clear
+    def clear : Nil
       Fiber.current.logging_context = @metadata = Log::Metadata.empty
     end
 
@@ -142,7 +162,7 @@ class Log
     end
 
     # :ditto:
-    def set(values)
+    def set(values) : Nil
       extend_fiber_context(Fiber.current, values)
     end
 
@@ -161,10 +181,10 @@ class Log
     # Emits a logs entry with a message, and data attached to
     #
     # ```
-    # Log.info &.emit("Program started")                          # No data, same as Log.info { "Program started" }
-    # Log.info &.emit("User logged in", user_id: 42)              # With entry data
-    # Log.info &.emit(action: "Logged in", user_id: 42)           # Empty string message, only data
-    # Log.error exception: ex, &.emit("Oopps", account: {id: 42}) # With data and exception
+    # Log.info &.emit("Program started")                         # No data, same as Log.info { "Program started" }
+    # Log.info &.emit("User logged in", user_id: 42)             # With entry data
+    # Log.info &.emit(action: "Logged in", user_id: 42)          # Empty string message, only data
+    # Log.error exception: ex, &.emit("Oops", account: {id: 42}) # With data and exception
     # ```
     def emit(message : String) : Entry
       emit(message, Metadata.empty)

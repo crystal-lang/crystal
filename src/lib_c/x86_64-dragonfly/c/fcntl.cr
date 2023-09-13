@@ -9,6 +9,7 @@ lib LibC
   F_SETFL    =       4
   FD_CLOEXEC =       1
   O_CLOEXEC  = 0x20000
+  O_EXCL     =  0x0800
   O_TRUNC    =  0x0400
   O_CREAT    =  0x0200
   O_NOFOLLOW =  0x0100

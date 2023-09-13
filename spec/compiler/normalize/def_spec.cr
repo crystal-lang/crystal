@@ -98,9 +98,9 @@ module Crystal
     end
 
     it "expands with named argument and yield" do
-      a_def = parse("def foo(x = 1, y = 2); yield x + y; end").as(Def)
+      a_def = parse("def foo(x = 1, y = 2, &); yield x + y; end").as(Def)
       actual = a_def.expand_default_arguments(Program.new, 0, ["y"])
-      actual.to_s.should eq("def foo:y(y)\n  x = 1\n  yield x + y\nend")
+      actual.to_s.should eq("def foo:y(y, &)\n  x = 1\n  yield x + y\nend")
     end
 
     # Small optimizations: no need to create a separate def in these cases
@@ -147,9 +147,9 @@ module Crystal
     end
 
     it "expands with magic constant with named arg with yield" do
-      a_def = parse("def foo(x, file = __FILE__, line = __LINE__); yield x, file, line; end").as(Def)
+      a_def = parse("def foo(x, file = __FILE__, line = __LINE__, &); yield x, file, line; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 1, ["line"])
-      other_def.to_s.should eq("def foo:line(x, line, file = __FILE__)\n  yield x, file, line\nend")
+      other_def.to_s.should eq("def foo:line(x, line, file = __FILE__, &)\n  yield x, file, line\nend")
     end
 
     it "expands a def with double splat and no args" do
@@ -230,6 +230,26 @@ module Crystal
       a_def = parse("def foo(abstract __arg0, **options); @abstract = __arg0; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 0, ["abstract"])
       other_def.to_s.should eq("def foo:abstract(abstract __arg0)\n  options = {}\n  @abstract = __arg0\nend")
+    end
+
+    describe "gives correct body location with" do
+      {"default arg"                  => "def testing(foo = 5)",
+       "default arg with restriction" => "def testing(foo : Int = 5)",
+       "splat arg"                    => "def testing(*foo : Array)",
+       "block instance var arg"       => "def testing(&@foo : ->)",
+      }.each do |(suffix1, definition)|
+        {"with body"    => "zzz = 7\n",
+         "without body" => "",
+        }.each do |(suffix2, body)|
+          it "#{suffix1}, #{suffix2}" do
+            a_def = parse("#{definition}\n#{body}end").as(Def)
+            actual = a_def.expand_default_arguments(Program.new, 1)
+
+            actual.location.should eq Location.new("", line_number: 1, column_number: 1)
+            actual.body.location.should eq Location.new("", line_number: 2, column_number: 1)
+          end
+        end
+      end
     end
   end
 end

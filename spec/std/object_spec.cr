@@ -122,6 +122,10 @@ private class TestObject
   def self.test_annotation_count
     {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
   end
+
+  def self.do_set_crystal_type_id(ptr)
+    set_crystal_type_id(ptr)
+  end
 end
 
 private class DelegatedTestObject
@@ -133,13 +137,7 @@ private class DelegatedTestObject
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
 end
@@ -166,6 +164,14 @@ private class DefEquals
   end
 
   def_equals @x
+end
+
+private struct TestMutableStruct
+  getter x = 0
+
+  def foo
+    @x += 1
+  end
 end
 
 describe Object do
@@ -470,14 +476,14 @@ describe Object do
 
   describe "#in?" do
     it "works with Enumerable-s" do
-      :foo.in?([:foo, :bar]).should be_true
-      :bar.in?({:foo, :baz}).should be_false
+      "foo".in?(["foo", "bar"]).should be_true
+      "bar".in?({"foo", "baz"}).should be_false
       42.in?(0..100).should be_true
       4242.in?(0..100).should be_false
     end
 
     it "works with splatted arguments" do
-      :baz.in?(:foo, :bar).should be_false
+      "baz".in?("foo", "bar").should be_false
       1.in?(1, 10, 100).should be_true
     end
 
@@ -494,7 +500,7 @@ describe Object do
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do
@@ -518,5 +524,50 @@ describe Object do
       (x == x).should be_true
       (x == y).should be_false
     end
+  end
+
+  describe "#not_nil!" do
+    it "basic" do
+      1.not_nil!
+      expect_raises(NilAssertionError, "Nil assertion failed") do
+        nil.not_nil!
+      end
+    end
+
+    it "removes Nil type" do
+      x = TestObject.new.as(TestObject?)
+      typeof(x.not_nil!).should eq TestObject
+      x.not_nil!.should be x
+    end
+
+    it "raises NilAssertionError" do
+      x = nil.as(TestObject?)
+      typeof(x.not_nil!).should eq TestObject
+      expect_raises(NilAssertionError, "Nil assertion failed") do
+        x.not_nil!
+      end
+    end
+
+    it "with message" do
+      x = TestObject.new
+      x.not_nil!("custom message").should be x
+      expect_raises(NilAssertionError, "custom message") do
+        nil.not_nil!("custom message")
+      end
+    end
+
+    it "does not copy its receiver when it is a value (#13263)" do
+      x = TestMutableStruct.new
+      x.not_nil!.foo.should eq(1)
+      x.not_nil!.foo.should eq(2)
+      x.foo.should eq(3)
+    end
+  end
+
+  it ".set_crystal_type_id" do
+    ary = StaticArray[Int32::MAX, Int32::MAX]
+    TestObject.do_set_crystal_type_id(pointerof(ary))
+    ary[0].should eq TestObject.crystal_instance_type_id
+    ary[1].should eq Int32::MAX
   end
 end

@@ -77,7 +77,7 @@ module IO::ByteFormat
   abstract def decode(int : Int128.class, bytes : Bytes)
   abstract def decode(int : UInt128.class, bytes : Bytes)
 
-  def encode(float : Float32, io : IO)
+  def encode(float : Float32, io : IO) : Nil
     encode(float.unsafe_as(Int32), io)
   end
 
@@ -85,15 +85,15 @@ module IO::ByteFormat
     encode(float.unsafe_as(Int32), bytes)
   end
 
-  def decode(type : Float32.class, io : IO)
+  def decode(type : Float32.class, io : IO) : Float32
     decode(Int32, io).unsafe_as(Float32)
   end
 
-  def decode(type : Float32.class, bytes : Bytes)
+  def decode(type : Float32.class, bytes : Bytes) : Float32
     decode(Int32, bytes).unsafe_as(Float32)
   end
 
-  def encode(float : Float64, io : IO)
+  def encode(float : Float64, io : IO) : Nil
     encode(float.unsafe_as(Int64), io)
   end
 
@@ -101,11 +101,11 @@ module IO::ByteFormat
     encode(float.unsafe_as(Int64), bytes)
   end
 
-  def decode(type : Float64.class, io : IO)
+  def decode(type : Float64.class, io : IO) : Float64
     decode(Int64, io).unsafe_as(Float64)
   end
 
-  def decode(type : Float64.class, bytes : Bytes)
+  def decode(type : Float64.class, bytes : Bytes) : Float64
     decode(Int64, bytes).unsafe_as(Float64)
   end
 
@@ -137,18 +137,28 @@ module IO::ByteFormat
           buffer.to_slice.copy_to(bytes)
         end
 
-        def self.decode(type : {{type.id}}.class, io : IO)
+        def self.decode(int : {{type.id}}.class, io : IO)
           buffer = uninitialized UInt8[{{bytesize}}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
           buffer.unsafe_as({{type.id}})
         end
 
-        def self.decode(type : {{type.id}}.class, bytes : Bytes)
+        def self.decode(int : {{type.id}}.class, bytes : Bytes)
           buffer = uninitialized UInt8[{{bytesize}}]
-          bytes.to_slice[0, {{bytesize}}].copy_to(buffer.to_slice)
+          bytes.copy_to(buffer.to_unsafe, {{bytesize}})
           buffer.reverse! unless SystemEndian == self
           buffer.unsafe_as({{type.id}})
+        end
+
+        @[Deprecated("Use `.decode(int : {{type.id}}.class, io : IO)` instead")]
+        def self.decode(*, type : {{type.id}}.class, io : IO)
+          decode(type, io)
+        end
+
+        @[Deprecated("Use `.decode(int : {{type.id}}.class, bytes : Bytes)` instead")]
+        def self.decode(*, type : {{type.id}}.class, bytes : Bytes)
+          decode(type, bytes)
         end
       {% end %}
     end

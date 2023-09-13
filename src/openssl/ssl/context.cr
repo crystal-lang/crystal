@@ -1,5 +1,8 @@
 require "uri/punycode"
 require "log"
+{% if flag?(:win32) %}
+  require "crystal/system/win32/crypto"
+{% end %}
 
 # An `SSL::Context` represents a generic secure socket protocol configuration.
 #
@@ -9,7 +12,7 @@ require "log"
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:tls_method) %}
       LibSSL.tls_method
     {% else %}
       LibSSL.sslv23_method
@@ -43,7 +46,7 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_server"
       {% end %}
 
@@ -98,6 +101,14 @@ abstract class OpenSSL::SSL::Context
         end
       }, hostname.as(Void*))
     end
+
+    private def alpn_protocol=(protocol : Bytes)
+      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_protos) %}
+        LibSSL.ssl_ctx_set_alpn_protos(@handle, protocol, protocol.size)
+      {% else %}
+        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_protos")
+      {% end %}
+    end
   end
 
   class Server < Context
@@ -122,8 +133,7 @@ abstract class OpenSSL::SSL::Context
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
-      add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+      {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_client"
       {% end %}
 
@@ -166,11 +176,29 @@ abstract class OpenSSL::SSL::Context
     # unidirectionally, the server connects, then sends a ticket
     # after the connect handshake, the ticket send can fail with Broken Pipe.
     # So if you have that kind of behavior (clients that never read) call this method.
-    def disable_session_resume_tickets
+    def disable_session_resume_tickets : Nil
       add_options(OpenSSL::SSL::Options::NO_TICKET) # TLS v1.2 and below
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
+      {% if LibSSL.has_method?(:ssl_ctx_set_num_tickets) %}
         ret = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
         raise OpenSSL::Error.new("SSL_CTX_set_num_tickets") if ret != 1
+      {% end %}
+    end
+
+    private def alpn_protocol=(protocol : Bytes)
+      {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
+        alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
+          proto = Box(Bytes).unbox(data)
+          ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
+          if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
+            LibSSL::SSL_TLSEXT_ERR_NOACK
+          else
+            LibSSL::SSL_TLSEXT_ERR_OK
+          end
+        }
+        @alpn_protocol = alpn_protocol = Box.box(protocol)
+        LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
+      {% else %}
+        raise NotImplementedError.new("LibSSL.ssl_ctx_set_alpn_select_cb")
       {% end %}
     end
   end
@@ -197,6 +225,12 @@ abstract class OpenSSL::SSL::Context
     {% end %}
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+
+    # OpenSSL does not support reading from the system root certificate store on
+    # Windows, so we have to import them ourselves
+    {% if flag?(:win32) %}
+      Crystal::System::Crypto.populate_system_root_certificates(self)
+    {% end %}
   end
 
   # Overriding initialize or new in the child classes as public methods,
@@ -207,6 +241,12 @@ abstract class OpenSSL::SSL::Context
   protected def _initialize_insecure(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+
+    # since an insecure context on non-Windows systems still has access to the
+    # system certificates, we do the same for Windows
+    {% if flag?(:win32) %}
+      Crystal::System::Crypto.populate_system_root_certificates(self)
+    {% end %}
   end
 
   protected def self.insecure(method : LibSSL::SSLMethod)
@@ -268,7 +308,7 @@ abstract class OpenSSL::SSL::Context
   #
   # See `#security_level=` for some sensible system configuration.
   def cipher_suites=(cipher_suites : String)
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
       raise OpenSSL::Error.new("SSL_CTX_set_ciphersuites") if ret == 0
     {% else %}
@@ -281,7 +321,7 @@ abstract class OpenSSL::SSL::Context
   # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`. See `#security_level=` for some
   # sensible system configuration.
   def set_modern_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       self.cipher_suites = CIPHER_SUITES_MODERN
     {% else %}
       self.ciphers = CIPHERS_MODERN
@@ -292,7 +332,7 @@ abstract class OpenSSL::SSL::Context
   # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`. See `#security_level=` for some
   # sensible system configuration.
   def set_intermediate_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       self.cipher_suites = CIPHER_SUITES_INTERMEDIATE
     {% else %}
       self.ciphers = CIPHERS_INTERMEDIATE
@@ -303,7 +343,7 @@ abstract class OpenSSL::SSL::Context
   # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`. See `#security_level=` for some
   # sensible system configuration.
   def set_old_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       self.cipher_suites = CIPHER_SUITES_OLD
     {% else %}
       self.ciphers = CIPHERS_OLD
@@ -312,7 +352,7 @@ abstract class OpenSSL::SSL::Context
 
   # Returns the security level used by this TLS context.
   def security_level : Int32
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:ssl_ctx_get_security_level) %}
       LibSSL.ssl_ctx_get_security_level(@handle)
     {% else %}
       Log.warn { "SSL_CTX_get_security_level not supported" }
@@ -326,7 +366,7 @@ abstract class OpenSSL::SSL::Context
   # * https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_security_level.html
   # * https://wiki.debian.org/ContinuousIntegration/TriagingTips/openssl-1.1.1
   def security_level=(value : Int32)
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibSSL.has_method?(:ssl_ctx_set_security_level) %}
       LibSSL.ssl_ctx_set_security_level(@handle, value)
     {% else %}
       Log.warn { "SSL_CTX_set_security_level not supported" }
@@ -336,7 +376,7 @@ abstract class OpenSSL::SSL::Context
 
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
-  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)
+  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1) : Nil
     key = LibCrypto.ec_key_new_by_curve_name(curve)
     raise OpenSSL::Error.new("ec_key_new_by_curve_name") if key.null?
     LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TMP_ECDH, 0, key)
@@ -344,7 +384,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current modes set on the TLS context.
-  def modes
+  def modes : LibSSL::Modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
   end
 
@@ -359,8 +399,8 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current options set on the TLS context.
-  def options
-    opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+  def options : LibSSL::Options
+    opts = {% if LibSSL.has_method?(:ssl_ctx_get_options) %}
              LibSSL.ssl_ctx_get_options(@handle)
            {% else %}
              LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
@@ -379,7 +419,7 @@ abstract class OpenSSL::SSL::Context
   # )
   # ```
   def add_options(options : OpenSSL::SSL::Options)
-    opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    opts = {% if LibSSL.has_method?(:ssl_ctx_set_options) %}
              LibSSL.ssl_ctx_set_options(@handle, options)
            {% else %}
              LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
@@ -394,7 +434,7 @@ abstract class OpenSSL::SSL::Context
   # context.remove_options(OpenSSL::SSL::Options::NO_SSL_V3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
-    opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    opts = {% if LibSSL.has_method?(:ssl_ctx_clear_options) %}
              LibSSL.ssl_ctx_clear_options(@handle, options)
            {% else %}
              LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
@@ -403,7 +443,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode
+  def verify_mode : LibSSL::VerifyMode
     LibSSL.ssl_ctx_get_verify_mode(@handle)
   end
 
@@ -412,57 +452,49 @@ abstract class OpenSSL::SSL::Context
     LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-    @alpn_protocol : Pointer(Void)?
+  @alpn_protocol = Pointer(Void).null
 
-    # Specifies an ALPN protocol to negotiate with the remote endpoint. This is
-    # required to negotiate HTTP/2 with browsers, since browser vendors decided
-    # not to implement HTTP/2 over insecure connections.
-    #
-    # Example:
-    # ```
-    # context.alpn_protocol = "h2"
-    # ```
-    def alpn_protocol=(protocol : String)
-      proto = Bytes.new(protocol.bytesize + 1)
-      proto[0] = protocol.bytesize.to_u8
-      protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
-      self.alpn_protocol = proto
-    end
+  # Specifies an ALPN protocol to negotiate with the remote endpoint. This is
+  # required to negotiate HTTP/2 with browsers, since browser vendors decided
+  # not to implement HTTP/2 over insecure connections.
+  #
+  # Example:
+  # ```
+  # context.alpn_protocol = "h2"
+  # ```
+  def alpn_protocol=(protocol : String)
+    proto = Bytes.new(protocol.bytesize + 1)
+    proto[0] = protocol.bytesize.to_u8
+    protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
+    self.alpn_protocol = proto
+  end
 
-    private def alpn_protocol=(protocol : Bytes)
-      alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-        proto = Box(Bytes).unbox(data)
-        ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
-        if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
-          LibSSL::SSL_TLSEXT_ERR_NOACK
-        else
-          LibSSL::SSL_TLSEXT_ERR_OK
-        end
-      }
-      @alpn_protocol = alpn_protocol = Box.box(protocol)
-      LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
-    end
-
-    # Sets this context verify param to the default one of the given name.
-    #
-    # Depending on the OpenSSL version, the available defaults are
-    # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
-    def default_verify_param=(name : String)
+  # Sets this context verify param to the default one of the given name.
+  #
+  # Depending on the OpenSSL version, the available defaults are
+  # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
+  def default_verify_param=(name : String)
+    {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
       param = LibCrypto.x509_verify_param_lookup(name)
       raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
       ret = LibSSL.ssl_ctx_set1_param(@handle, param)
       raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
-    end
+    {% else %}
+      raise NotImplementedError.new("LibSSL.x509_verify_param_lookup")
+    {% end %}
+  end
 
-    # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to
-    # the already set ones.
-    def add_x509_verify_flags(flags : OpenSSL::X509VerifyFlags)
+  # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
+  # the already set ones.
+  def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
+    {% if LibSSL.has_method?(:x509_verify_param_set_flags) %}
       param = LibSSL.ssl_ctx_get0_param(@handle)
       ret = LibCrypto.x509_verify_param_set_flags(param, flags)
       raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
-    end
-  {% end %}
+    {% else %}
+      raise NotImplementedError.new("LibSSL.x509_verify_param_set_flags")
+    {% end %}
+  end
 
   def to_unsafe
     @handle

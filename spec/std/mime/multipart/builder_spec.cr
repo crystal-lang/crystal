@@ -41,8 +41,8 @@ describe MIME::Multipart::Builder do
     headers = HTTP::Headers{"X-Type" => "Empty-Body", "X-Foo" => "Bar"}
     builder.body_part headers
 
-    builder.epilogue "Irelevant text"
-    builder.epilogue "Much more irelevant text"
+    builder.epilogue "Irrelevant text"
+    builder.epilogue "Much more irrelevant text"
 
     builder.finish
 
@@ -56,7 +56,7 @@ describe MIME::Multipart::Builder do
       X-Type: Empty-Body
       X-Foo: Bar
       --fixed-boundary--
-      Irelevant textMuch more irelevant text
+      Irrelevant textMuch more irrelevant text
       MULTIPART
 
     io.to_s.should eq(expected_message.gsub('\n', "\r\n"))

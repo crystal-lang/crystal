@@ -9,7 +9,7 @@ describe "Code gen: no return" do
     run("Pointer(NoReturn).malloc(1_u64); 1").to_i.should eq(1)
   end
 
-  it "codegens if with no reutrn and variable used afterwards" do
+  it "codegens if with no return and variable used afterwards" do
     codegen(%(
       require "prelude"
 

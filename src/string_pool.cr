@@ -2,6 +2,8 @@
 # It allows a runtime to save memory by preserving strings in a pool, allowing to
 # reuse an instance of a common string instead of creating a new one.
 #
+# NOTE: To use `StringPool`, you must explicitly import it with `require "string_pool"`
+#
 # ```
 # require "string_pool"
 #
@@ -38,13 +40,14 @@ class StringPool
   # of the internal buffers in case of growth. If you have an estimate
   # of the maximum number of elements the pool will hold it should
   # be initialized with that capacity for improved performance.
+  # Inputs lower than 8 are ignored.
   #
   # ```
   # pool = StringPool.new(256)
   # pool.size # => 0
   # ```
   def initialize(initial_capacity = 8)
-    @capacity = initial_capacity
+    @capacity = initial_capacity >= 8 ? Math.pw2ceil(initial_capacity) : 8
     @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
     @values = Pointer(String).malloc(@capacity, "")
     @size = 0
@@ -60,7 +63,7 @@ class StringPool
   # pool.get("crystal")
   # pool.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @size == 0
   end
 
@@ -79,7 +82,7 @@ class StringPool
   # pool.get(slice)
   # pool.empty? # => false
   # ```
-  def get(slice : Bytes)
+  def get(slice : Bytes) : String
     get slice.to_unsafe, slice.size
   end
 
@@ -95,7 +98,7 @@ class StringPool
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
   # ```
-  def get(str : UInt8*, len)
+  def get(str : UInt8*, len) : String
     hash = hash(str, len)
     get(hash, str, len)
   end
@@ -150,7 +153,7 @@ class StringPool
   # pool.get(io)
   # pool.empty? # => false
   # ```
-  def get(str : IO::Memory)
+  def get(str : IO::Memory) : String
     get(str.buffer, str.bytesize)
   end
 
@@ -168,7 +171,7 @@ class StringPool
   # pool.get(string)
   # pool.empty? # => false
   # ```
-  def get(str : String)
+  def get(str : String) : String
     get(str.to_unsafe, str.bytesize)
   end
 
@@ -176,7 +179,7 @@ class StringPool
   # if values of key objects have changed since they were inserted.
   #
   # Call this method if you modified a string submitted to the pool.
-  def rehash
+  def rehash : Nil
     if @capacity * 2 <= 0
       raise "Hash table too big"
     end

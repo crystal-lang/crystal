@@ -1,3 +1,7 @@
+{% if flag?(:preview_mt) %}
+  require "crystal/thread_local_value"
+{% end %}
+
 # `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
@@ -25,7 +29,7 @@ class Reference
 
   # Returns `true` if this reference is the same as *other*. This is only
   # `true` if this reference's `object_id` is the same as *other*'s.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     object_id == other.object_id
   end
 
@@ -135,7 +139,8 @@ class Reference
 
   # :nodoc:
   module ExecRecursive
-    alias Registry = Hash({UInt64, Symbol}, Bool)
+    # NOTE: can't use `Set` here because of prelude require order
+    alias Registry = Hash({UInt64, Symbol}, Nil)
 
     {% if flag?(:preview_mt) %}
       @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
@@ -152,16 +157,61 @@ class Reference
     end
   end
 
-  private def exec_recursive(method)
+  private def exec_recursive(method, &)
     hash = ExecRecursive.hash
     key = {object_id, method}
-    if hash[key]?
-      false
-    else
-      hash[key] = true
-      value = yield
+    hash.put(key, nil) do
+      yield
       hash.delete(key)
-      true
+      return true
     end
+    false
+  end
+
+  # :nodoc:
+  module ExecRecursiveClone
+    alias Registry = Hash(UInt64, UInt64)
+
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
+
+    def self.hash
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
+    end
+  end
+
+  # Helper method to perform clone by also checking recursiveness.
+  # When clone is wanted, call this method. Then create the clone
+  # instance without any contents (don't fill it out yet), then
+  # put the clone's object id into the hash yielded into the block.
+  # At the end of the block return the cloned object.
+  #
+  # For example:
+  #
+  # ```
+  # def clone
+  #   exec_recursive_clone do |hash|
+  #     clone = SomeClass.new
+  #     hash[object_id] = clone.object_id
+  #     # fill out the clone object
+  #     clone
+  #   end
+  # end
+  # ```
+  private def exec_recursive_clone(&)
+    hash = ExecRecursiveClone.hash
+    clone_object_id = hash[object_id]?
+    unless clone_object_id
+      clone_object_id = yield(hash).object_id
+      hash.delete(object_id)
+    end
+    Pointer(Void).new(clone_object_id).as(self)
   end
 end

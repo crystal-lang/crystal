@@ -1,7 +1,9 @@
+{% skip_file if flag?(:win32) || flag?(:aarch64) %}
+
 require "./spec_helper"
 
 describe VaList do
-  it "works with C code" do
+  it "works with C code", tags: %w[slow] do
     compile_and_run_source_with_c(
       %(
           #include <stdarg.h>

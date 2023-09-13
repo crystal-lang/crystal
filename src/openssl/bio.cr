@@ -3,7 +3,7 @@ require "./lib_crypto"
 # :nodoc:
 struct OpenSSL::BIO
   def self.get_data(bio) : Void*
-    {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibCrypto.has_method?(:BIO_get_data) %}
       LibCrypto.BIO_get_data(bio)
     {% else %}
       bio.value.ptr
@@ -11,7 +11,7 @@ struct OpenSSL::BIO
   end
 
   def self.set_data(bio, data : Void*)
-    {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibCrypto.has_method?(:BIO_set_data) %}
       LibCrypto.BIO_set_data(bio, data)
     {% else %}
       bio.value.ptr = data
@@ -55,7 +55,11 @@ struct OpenSSL::BIO
             when LibCrypto::CTRL_FLUSH
               io.flush
               1
-            when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP
+            when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP, LibCrypto::CTRL_EOF
+              0
+            when LibCrypto::CTRL_SET_KTLS_SEND
+              0
+            when LibCrypto::CTRL_GET_KTLS_SEND, LibCrypto::CTRL_GET_KTLS_RECV
               0
             else
               STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
@@ -65,7 +69,7 @@ struct OpenSSL::BIO
     end
 
     create = LibCrypto::BioMethodCreate.new do |bio|
-      {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      {% if LibCrypto.has_method?(:BIO_set_shutdown) %}
         LibCrypto.BIO_set_shutdown(bio, 1)
         LibCrypto.BIO_set_init(bio, 1)
         # bio.value.num = -1
@@ -82,10 +86,10 @@ struct OpenSSL::BIO
       1
     end
 
-    {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if LibCrypto.has_method?(:BIO_meth_new) %}
       biom = LibCrypto.BIO_meth_new(Int32::MAX, "Crystal BIO")
 
-      {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.1") >= 0 %}
+      {% if LibCrypto.has_method?(:BIO_meth_set_write_ex) %}
         LibCrypto.BIO_meth_set_write_ex(biom, bwrite_ex)
         LibCrypto.BIO_meth_set_read_ex(biom, bread_ex)
       {% else %}

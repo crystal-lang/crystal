@@ -2,6 +2,8 @@ require "crystal/system/user"
 
 # Represents a user on the host system.
 #
+# NOTE: To use User, you must explicitly import it with `require "system/user"`
+#
 # Users can be retrieved by either username or their user ID:
 #
 # ```
@@ -27,6 +29,9 @@ class System::User
   getter group_id : String
 
   # The user's real or full name.
+  #
+  # May not be present on all platforms. Returns the same value as `#username`
+  # if neither a real nor full name is available.
   getter name : String
 
   # The user's home directory.
@@ -43,28 +48,28 @@ class System::User
   # Returns the user associated with the given username.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find_by(*, name : String)
+  def self.find_by(*, name : String) : System::User
     find_by?(name: name) || raise NotFoundError.new("No such user: #{name}")
   end
 
   # Returns the user associated with the given username.
   #
   # Returns `nil` if no such user exists.
-  def self.find_by?(*, name : String)
+  def self.find_by?(*, name : String) : System::User?
     from_username?(name)
   end
 
   # Returns the user associated with the given ID.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find_by(*, id : String)
+  def self.find_by(*, id : String) : System::User
     find_by?(id: id) || raise NotFoundError.new("No such user: #{id}")
   end
 
   # Returns the user associated with the given ID.
   #
   # Returns `nil` if no such user exists.
-  def self.find_by?(*, id : String)
+  def self.find_by?(*, id : String) : System::User?
     from_id?(id)
   end
 

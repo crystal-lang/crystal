@@ -1,5 +1,6 @@
 require "spec"
 require "xml"
+require "spec/helpers/string"
 
 describe XML do
   it "parses" do
@@ -14,18 +15,18 @@ describe XML do
     )
     doc.document.should eq(doc)
     doc.name.should eq("document")
-    doc.attributes.empty?.should be_true
+    doc.attributes.should be_empty
     doc.namespace.should be_nil
 
     people = doc.root.not_nil!
     people.name.should eq("people")
     people.type.should eq(XML::Node::Type::ELEMENT_NODE)
 
-    people.attributes.empty?.should be_true
+    people.attributes.should be_empty
 
     children = doc.children
     children.size.should eq(1)
-    children.empty?.should be_false
+    children.should_not be_empty
 
     people = children[0]
     people.name.should eq("people")
@@ -46,7 +47,7 @@ describe XML do
     text.content.should eq("\n")
 
     attrs = person.attributes
-    attrs.empty?.should be_false
+    attrs.should_not be_empty
     attrs.size.should eq(2)
 
     attr = attrs[0]
@@ -70,7 +71,7 @@ describe XML do
     person["id3"]?.should be_nil
     expect_raises(KeyError) { person["id3"] }
 
-    name = person.children.find { |node| node.name == "name" }.not_nil!
+    name = person.children.find! { |node| node.name == "name" }
     name.content.should eq("John")
 
     name.parent.should eq(person)
@@ -91,8 +92,8 @@ describe XML do
     doc.document.should eq(doc)
     doc.name.should eq("document")
 
-    people = doc.children.find { |node| node.name == "people" }.not_nil!
-    person = people.children.find { |node| node.name == "person" }.not_nil!
+    people = doc.children.find! { |node| node.name == "people" }
+    person = people.children.find! { |node| node.name == "person" }
     person["id"].should eq("1")
   end
 
@@ -157,56 +158,207 @@ describe XML do
     person2.previous_element.should eq(person)
   end
 
-  it "handles errors" do
+  it "#errors" do
     xml = XML.parse(%(<people></foo>))
     xml.root.not_nil!.name.should eq("people")
-    errors = xml.errors.not_nil!
-    errors.size.should eq(1)
+    xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
 
-    errors[0].message.should eq("Opening and ending tag mismatch: people line 1 and foo")
-    errors[0].line_number.should eq(1)
-    errors[0].to_s.should eq("Opening and ending tag mismatch: people line 1 and foo")
+    xml = XML.parse(%(<foo></foo>))
+    xml.errors.should be_nil
   end
 
-  it "gets root namespaces scopes" do
-    doc = XML.parse(<<-XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
-      </feed>
-      XML
-    )
-    namespaces = doc.root.not_nil!.namespace_scopes
+  describe "#namespace" do
+    describe "when the node has a namespace" do
+      describe "with a prefix" do
+        it "return the prefixed namespace" do
+          doc = XML.parse(<<-XML)
+            <?xml version="1.0" encoding="UTF-8"?>
+            <openSearch:feed xmlns:foo="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/"></feed>
+            XML
 
-    namespaces.size.should eq(2)
-    namespaces[0].href.should eq("http://www.w3.org/2005/Atom")
-    namespaces[0].prefix.should be_nil
-    namespaces[1].href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")
-    namespaces[1].prefix.should eq("openSearch")
+          namespace = doc.root.not_nil!.namespace.should be_a XML::Namespace
+          namespace.href.should eq "http://a9.com/-/spec/opensearchrss/1.0/"
+          namespace.prefix.should eq "openSearch"
+        end
+      end
+
+      describe "with a default prefix" do
+        it "return the default namespace" do
+          doc = XML.parse(<<-XML)
+            <?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns:foo="http://www.w3.org/2005/Atom" xmlns="http://a9.com/-/spec/opensearchrss/1.0/"></feed>
+            XML
+
+          namespace = doc.root.not_nil!.namespace.should be_a XML::Namespace
+          namespace.href.should eq "http://a9.com/-/spec/opensearchrss/1.0/"
+          namespace.prefix.should be_nil
+        end
+      end
+
+      describe "without an explicit declaration on the node" do
+        it "returns the related namespace" do
+          doc = XML.parse(<<-XML)
+            <?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom" xmlns:a="https://a-namespace">
+              <name></name>
+              <a:age></a:age>
+            </feed>
+            XML
+
+          root = doc.root.not_nil!
+
+          namespace = root.children[1].namespace.should be_a XML::Namespace
+          namespace.href.should eq "http://www.w3.org/2005/Atom"
+          namespace.prefix.should be_nil
+
+          namespace = root.children[3].namespace.should be_a XML::Namespace
+          namespace.href.should eq "https://a-namespace"
+          namespace.prefix.should eq "a"
+        end
+      end
+    end
+
+    describe "when the node does not have namespace" do
+      it "should return nil" do
+        doc = XML.parse(<<-XML)
+          <?xml version="1.0" encoding="UTF-8"?>
+          <feed></feed>
+          XML
+
+        doc.root.not_nil!.namespace.should be_nil
+      end
+    end
+
+    describe "when the element does not have a namespace, but has namespace declarations" do
+      it "should return nil" do
+        doc = XML.parse(<<-XML)
+          <?xml version="1.0" encoding="UTF-8"?>
+          <feed xmlns:foo="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/"></feed>
+          XML
+
+        doc.root.not_nil!.namespace.should be_nil
+      end
+    end
   end
 
-  it "returns empty array if no namespaces scopes exists" do
-    doc = XML.parse(<<-XML
-      <?xml version='1.0' encoding='UTF-8'?>
-      <name>John</name>
-      XML
-    )
-    namespaces = doc.root.not_nil!.namespace_scopes
+  describe "#namespace_definitions" do
+    it "returns namespaces explicitly defined" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
+          <item xmlns:c="http://c"></item>
+        </feed>
+        XML
 
-    namespaces.size.should eq(0)
+      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespace_definitions
+
+      namespaces.size.should eq(1)
+      namespaces[0].href.should eq("http://c")
+      namespaces[0].prefix.should eq "c"
+    end
+
+    it "returns an empty array if no namespaces are defined" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
+          <item></item>
+        </feed>
+        XML
+
+      doc.root.not_nil!.first_element_child.not_nil!.namespace_definitions.should be_empty
+    end
   end
 
-  it "gets root namespaces as hash" do
-    doc = XML.parse(<<-XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
-      </feed>
-      XML
-    )
-    namespaces = doc.root.not_nil!.namespaces
-    namespaces.should eq({
-      "xmlns"          => "http://www.w3.org/2005/Atom",
-      "xmlns:openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
-    })
+  describe "#namespace_scopes" do
+    it "gets root namespaces scopes" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
+        </feed>
+        XML
+
+      namespaces = doc.root.not_nil!.namespace_scopes
+
+      namespaces.size.should eq(2)
+      namespaces[0].href.should eq("http://www.w3.org/2005/Atom")
+      namespaces[0].prefix.should be_nil
+      namespaces[1].href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")
+      namespaces[1].prefix.should eq("openSearch")
+    end
+
+    it "returns empty array if no namespaces scopes exists" do
+      doc = XML.parse(<<-XML)
+        <?xml version='1.0' encoding='UTF-8'?>
+        <name>John</name>
+        XML
+
+      namespaces = doc.root.not_nil!.namespace_scopes
+
+      namespaces.size.should eq(0)
+    end
+
+    it "includes parent namespaces" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
+          <item xmlns:c="http://c"></item>
+        </feed>
+        XML
+
+      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespace_scopes
+
+      namespaces.size.should eq(3)
+      namespaces[0].href.should eq("http://c")
+      namespaces[0].prefix.should eq "c"
+      namespaces[1].href.should eq("http://www.w3.org/2005/Atom")
+      namespaces[1].prefix.should be_nil
+      namespaces[2].href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")
+      namespaces[2].prefix.should eq("openSearch")
+    end
+  end
+
+  describe "#namespaces" do
+    it "gets root namespaces as hash" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
+        </feed>
+        XML
+
+      namespaces = doc.root.not_nil!.namespaces
+      namespaces.should eq({
+        "xmlns"            => "http://www.w3.org/2005/Atom",
+        "xmlns:openSearch" => "http://a9.com/-/spec/opensearchrss/1.0/",
+      })
+    end
+
+    it "includes parent namespaces" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
+          <item xmlns:c="http://c"></item>
+        </feed>
+        XML
+
+      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespaces
+      namespaces.should eq({
+        "xmlns:c"          => "http://c",
+        "xmlns"            => "http://www.w3.org/2005/Atom",
+        "xmlns:openSearch" => "http://a9.com/-/spec/opensearchrss/1.0/",
+      })
+    end
+
+    it "returns an empty hash if there are no namespaces" do
+      doc = XML.parse(<<-XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed>
+          <item></item>
+        </feed>
+        XML
+
+      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespaces
+      namespaces.should eq({} of String => String?)
+    end
   end
 
   it "reads big xml file (#1455)" do
@@ -217,11 +369,11 @@ describe XML do
   end
 
   it "sets node text/content" do
-    doc = XML.parse(<<-XML
+    doc = XML.parse(<<-XML)
       <?xml version='1.0' encoding='UTF-8'?>
       <name>John</name>
       XML
-    )
+
     root = doc.root.not_nil!
     root.text = "Peter"
     root.text.should eq("Peter")
@@ -231,11 +383,11 @@ describe XML do
   end
 
   it "doesn't set invalid node content" do
-    doc = XML.parse(<<-XML
+    doc = XML.parse(<<-XML)
       <?xml version='1.0' encoding='UTF-8'?>
       <name>John</name>
       XML
-    )
+
     root = doc.root.not_nil!
     expect_raises(Exception, "Cannot escape") do
       root.content = "\0"
@@ -252,7 +404,7 @@ describe XML do
     root.text = "<foo>"
     root.text.should eq("<foo>")
 
-    root.to_xml.should eq(%(<name>&lt;foo&gt;</name>))
+    assert_prints root.to_xml, %(<name>&lt;foo&gt;</name>)
   end
 
   it "escapes content HTML fragment" do
@@ -264,7 +416,39 @@ describe XML do
     node.text = "<foo>"
     node.text.should eq("<foo>")
 
-    node.to_xml.should eq(%(<p>&lt;foo&gt;</p>))
+    assert_prints node.to_xml, %(<p>&lt;foo&gt;</p>)
+  end
+
+  it "parses HTML UTF-8 from memory (#13703)" do
+    doc = XML.parse_html("<p>České psaní</p>")
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
+  it "parses HTML UTF-8 from IO (#13703)" do
+    doc = XML.parse_html(IO::Memory.new("<p>České psaní</p>"))
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
+  it "parses XML UTF-8 from memory (#13703)" do
+    doc = XML.parse("<p>České psaní</p>")
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
+  end
+
+  it "parses XML UTF-8 from IO (#13703)" do
+    doc = XML.parse(IO::Memory.new("<p>České psaní</p>"))
+
+    node = doc.root.try(&.children.first).should_not be_nil
+
+    node.text.should eq "České psaní"
   end
 
   it "gets empty content" do

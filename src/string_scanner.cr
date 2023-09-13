@@ -1,5 +1,7 @@
 # `StringScanner` provides for lexical scanning operations on a `String`.
 #
+# NOTE: To use `StringScanner`, you must explicitly import it with `require "string_scanner"`
+#
 # ### Example
 #
 # ```
@@ -72,7 +74,7 @@ class StringScanner
   end
 
   # Returns the current position of the scan offset.
-  def offset
+  def offset : Int32
     @str.byte_index_to_char_index(@byte_offset).not_nil!
   end
 
@@ -89,8 +91,8 @@ class StringScanner
   # s.scan(/\s\w+/) # => " string"
   # s.scan(/.*/)    # => ""
   # ```
-  def scan(pattern)
-    match(pattern, advance: true, options: Regex::Options::ANCHORED)
+  def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options | Regex::MatchOptions::ANCHORED)
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
@@ -105,11 +107,11 @@ class StringScanner
   # s.scan_until(/tr/) # => nil
   # s.scan_until(/g/)  # => "ing"
   # ```
-  def scan_until(pattern)
-    match(pattern, advance: true, options: Regex::Options::None)
+  def scan_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: true, options: options)
   end
 
-  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
+  private def match(pattern, advance = true, options = Regex::MatchOptions::ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -132,8 +134,8 @@ class StringScanner
   #
   # This method is the same as `#scan`, but without returning the matched
   # string.
-  def skip(pattern)
-    match = scan(pattern)
+  def skip(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan(pattern, options: options)
     match.size if match
   end
 
@@ -148,8 +150,8 @@ class StringScanner
   #
   # This method is the same as `#scan_until`, but without returning the matched
   # string.
-  def skip_until(pattern)
-    match = scan_until(pattern)
+  def skip_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+    match = scan_until(pattern, options: options)
     match.size if match
   end
 
@@ -164,8 +166,8 @@ class StringScanner
   # s.check(/\w+/) # => "is"
   # s.check(/\w+/) # => "is"
   # ```
-  def check(pattern)
-    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+  def check(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options | Regex::MatchOptions::ANCHORED)
   end
 
   # Returns the value that `#scan_until` would return, without advancing the
@@ -178,8 +180,8 @@ class StringScanner
   # s.check_until(/tr/) # => "test str"
   # s.check_until(/g/)  # => "test string"
   # ```
-  def check_until(pattern)
-    match(pattern, advance: false, options: Regex::Options::None)
+  def check_until(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    match(pattern, advance: false, options: options)
   end
 
   # Returns the *n*-th subgroup in the most recent match.
@@ -200,7 +202,7 @@ class StringScanner
   # s["month"]    # => "Dec"
   # s["day"]      # => "12"
   # ```
-  def [](n)
+  def [](n) : String
     @last_match.not_nil![n]
   end
 
@@ -226,7 +228,7 @@ class StringScanner
   # s.scan(/more/) # => nil
   # s[0]?          # => nil
   # ```
-  def []?(n)
+  def []?(n) : String?
     @last_match.try(&.[n]?)
   end
 
@@ -240,7 +242,7 @@ class StringScanner
   # s.scan(/(\w+\s?){4}/) # => "this is a string"
   # s.eos?                # => true
   # ```
-  def eos?
+  def eos? : Bool
     @byte_offset >= @str.bytesize
   end
 
@@ -257,13 +259,13 @@ class StringScanner
   end
 
   # Returns the string being scanned.
-  def string
+  def string : String
     @str
   end
 
   # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
-  def peek(len)
+  def peek(len) : String
     @str[offset, len]
   end
 
@@ -276,7 +278,7 @@ class StringScanner
   # s.scan(/(\w+\s?){2}/) # => "this is "
   # s.rest                # => "a string"
   # ```
-  def rest
+  def rest : String
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 

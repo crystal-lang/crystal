@@ -10,6 +10,8 @@ require "base64"
 # version 1.1 to/from native Crystal data structures, with the additional
 # independent types specified in http://yaml.org/type/
 #
+# NOTE: To use `YAML`, you must explicitly import it with `require "yaml"`
+#
 # ### Parsing with `#parse` and `#parse_all`
 #
 # `YAML.parse` will return an `Any`, which is a convenient wrapper around all possible
@@ -19,14 +21,14 @@ require "base64"
 # ```
 # require "yaml"
 #
-# data = YAML.parse <<-END
+# data = YAML.parse <<-YAML
 #          ---
 #          foo:
 #            bar:
 #              baz:
 #                - qux
 #                - fox
-#          END
+#          YAML
 # data["foo"]["bar"]["baz"][1].as_s # => "fox"
 # ```
 #
@@ -94,7 +96,7 @@ module YAML
       end
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end
@@ -155,7 +157,7 @@ module YAML
   end
 
   # Serializes an object to YAML, writing it to *io*.
-  def self.dump(object, io : IO)
+  def self.dump(object, io : IO) : Nil
     object.to_yaml(io)
   end
 

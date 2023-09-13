@@ -14,7 +14,7 @@ describe "Semantic: class var" do
 
       Foo.x = true
       ),
-      "class variable '@@x' of Foo must be Int32, not Bool"
+      "expected argument #1 to 'Foo.x=' to be Int32, not Bool"
   end
 
   it "declares class variable (2)" do
@@ -79,7 +79,7 @@ describe "Semantic: class var" do
         f = -> { @@foo }
       end
       f.call
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "allows self.class as type var in class body (#537)" do
@@ -508,6 +508,6 @@ describe "Semantic: class var" do
       end
 
       Foo(Int32).inc
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 end

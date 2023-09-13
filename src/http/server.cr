@@ -15,6 +15,8 @@ require "log"
 # A server is initialized with a handler chain responsible for processing each
 # incoming request.
 #
+# NOTE: To use `Server`, you must explicitly import it with `require "http/server"`
+#
 # ```
 # require "http/server"
 #
@@ -389,7 +391,7 @@ class HTTP::Server
     when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
-        context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
+        context = OpenSSL::SSL::Context::Server.from_hash(uri.query_params)
 
         bind_tls(address, context)
       {% else %}
@@ -443,8 +445,14 @@ class HTTP::Server
     listen
   end
 
+  # Overwrite this method to implement an alternative concurrency handler
+  # one example could be the use of a fiber pool
+  protected def dispatch(io)
+    spawn handle_client(io)
+  end
+
   # Starts the server. Blocks until the server is closed.
-  def listen
+  def listen : Nil
     raise "Can't re-start closed server" if closed?
     raise "Can't start server with no sockets to listen to, use HTTP::Server#bind first" if @sockets.empty?
     raise "Can't start running server" if listening?
@@ -454,18 +462,18 @@ class HTTP::Server
 
     @sockets.each do |socket|
       spawn do
-        until closed?
+        loop do
           io = begin
             socket.accept?
           rescue e
             handle_exception(e)
-            nil
+            next
           end
 
           if io
-            # a non nillable version of the closured io
-            _io = io
-            spawn handle_client(_io)
+            dispatch(io)
+          else
+            break
           end
         end
       ensure
@@ -478,7 +486,7 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close : Nil
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
@@ -512,7 +520,12 @@ class HTTP::Server
 
     @processor.process(io, io)
   ensure
-    io.close rescue IO::Error
+    {% begin %}
+      begin
+        io.close
+      rescue IO::Error{% unless flag?(:without_openssl) %} | OpenSSL::SSL::Error{% end %}
+      end
+    {% end %}
   end
 
   # This method handles exceptions raised at `Socket#accept?`.

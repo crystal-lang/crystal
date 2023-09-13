@@ -61,14 +61,14 @@ module Base64
   def encode(data, io : IO)
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
-      io.write_byte byte
+      io << byte.unsafe_chr
       count += 1
     end
     io.flush
     count
   end
 
-  private def encode_with_new_lines(data)
+  private def encode_with_new_lines(data, &)
     inc = 0
     to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
       yield byte
@@ -123,7 +123,7 @@ module Base64
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
       count += 1
-      io.write_byte byte
+      io << byte.unsafe_chr
     end
     io.flush
     count
@@ -199,13 +199,16 @@ module Base64
     (str_size * 3 / 4.0).to_i + 4
   end
 
-  private def to_base64(data, chars, pad = false)
+  private def to_base64(data, chars, pad = false, &)
     bytes = chars.to_unsafe
     size = data.size
     cstr = data.to_unsafe
-    endcstr = cstr + size - size % 3
+    return if cstr.null? || size == 0
+    endcstr = cstr + size - size % 3 - 3
+
+    # process bunch of full triples
     while cstr < endcstr
-      n = Intrinsics.bswap32(cstr.as(UInt32*).value)
+      n = cstr.as(UInt32*).value.byte_swap
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
       yield bytes[(n >> 14) & 63]
@@ -213,6 +216,17 @@ module Base64
       cstr += 3
     end
 
+    # process last full triple manually, because reading UInt32 not correct for guarded memory
+    if size >= 3
+      n = (cstr.value.to_u32 << 16) | ((cstr + 1).value.to_u32 << 8) | (cstr + 2).value
+      yield bytes[(n >> 18) & 63]
+      yield bytes[(n >> 12) & 63]
+      yield bytes[(n >> 6) & 63]
+      yield bytes[(n) & 63]
+      cstr += 3
+    end
+
+    # process last partial triple
     pd = size % 3
     if pd == 1
       n = (cstr.value.to_u32 << 16)
@@ -231,65 +245,74 @@ module Base64
     end
   end
 
-  private def from_base64(data)
+  # Processes the given data and yields each byte.
+  private def from_base64(data : Bytes, &block : UInt8 -> Nil)
     size = data.size
-    dt = DECODE_TABLE.to_unsafe
-    cstr = data.to_unsafe
-    start_cstr = cstr
-    while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
+    bytes = data.to_unsafe
+    bytes_begin = bytes
+
+    # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
+    while (size > 0) && (sym = bytes[size - 1]) && sym.in?(NL, NR, PAD)
       size -= 1
     end
-    endcstr = cstr + size - 4
 
+    # Process combinations of four characters until there aren't any left
+    fin = bytes + size - 4
     while true
-      break if cstr > endcstr
-      while cstr.value == NL || cstr.value == NR
-        cstr += 1
+      break if bytes > fin
+
+      # Move the pointer by one byte until there is a valid base64 character
+      while bytes.value.in?(NL, NR)
+        bytes += 1
       end
+      break if bytes > fin
 
-      break if cstr > endcstr
-      a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
-
-      yield (a << 2 | b >> 4).to_u8!
-      yield (b << 4 | c >> 2).to_u8!
-      yield (c << 6 | d).to_u8!
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], bytes[3], chunk_pos: bytes - bytes_begin)
+      bytes += 4
     end
 
-    while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
-      cstr += 1
+    # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
+    while (bytes < fin + 4) && bytes.value.in?(NL, NR)
+      bytes += 1
     end
 
-    mod = (endcstr - cstr) % 4
-    if mod == 2
-      a, b = next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8!
-    elsif mod == 3
-      a, b, c = next_decoded_value, next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8!
-      yield (b << 4 | c >> 2).to_u8!
-    elsif mod != 0
-      raise Error.new("Wrong size")
+    # If the amount of base64 characters is not divisible by 4, the remainder of the previous loop is handled here
+    unread_bytes = (fin - bytes) % 4
+    case unread_bytes
+    when 1
+      raise Base64::Error.new("Wrong size")
+    when 2
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], chunk_pos: bytes - bytes_begin)
+    when 3
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], chunk_pos: bytes - bytes_begin)
     end
   end
 
-  private macro next_decoded_value
-    sym = cstr.value
-    res = dt[sym]
-    cstr += 1
-    if res < 0
-      raise Error.new("Unexpected byte 0x#{sym.to_s(16)} at #{cstr - start_cstr - 1}")
-    end
-    res
+  # This macro decodes the given chunk of (2-4) base64 characters.
+  # The argument chunk_pos is only used for the resulting error message.
+  # The resulting bytes are then each yielded.
+  private macro yield_decoded_chunk_bytes(*bytes, chunk_pos)
+    %buffer = 0_u32
+    {% for byte, i in bytes %}
+      %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
+      %buffer = (%buffer << 6) + %decoded
+      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
+    {% end %}
+
+    # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8
+    {% for i in 2..(bytes.size) %}
+      yield (%buffer >> {{ (4 - bytes.size) * 2 + (8 * (bytes.size - i)) }}).to_u8!
+    {% end %}
   end
 
-  private DECODE_TABLE = Array(Int8).new(256) do |i|
+  private DECODE_TABLE = Array(UInt8).new(size: 256) do |i|
     case i.unsafe_chr
-    when 'A'..'Z' then (i - 0x41).to_i8
-    when 'a'..'z' then (i - 0x47).to_i8
-    when '0'..'9' then (i + 0x04).to_i8
-    when '+', '-' then 0x3E_i8
-    when '/', '_' then 0x3F_i8
-    else               -1_i8
+    when 'A'..'Z' then (i - 0x41).to_u8!
+    when 'a'..'z' then (i - 0x47).to_u8!
+    when '0'..'9' then (i + 0x04).to_u8!
+    when '+', '-' then 0x3E_u8
+    when '/', '_' then 0x3F_u8
+    else               255_u8
     end
   end
 end

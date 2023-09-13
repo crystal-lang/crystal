@@ -182,7 +182,7 @@ module Crystal
 
     def transform(node : OffsetOf)
       node.offsetof_type = node.offsetof_type.transform(self)
-      node.instance_var = node.instance_var.transform(self)
+      node.offset = node.offset.transform(self)
       node
     end
 
@@ -559,6 +559,7 @@ module Crystal
     end
 
     def transform(node : MacroExpression)
+      node.exp = node.exp.transform(self)
       node
     end
 
@@ -571,10 +572,15 @@ module Crystal
     end
 
     def transform(node : MacroIf)
+      node.cond = node.cond.transform(self)
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
       node
     end
 
     def transform(node : MacroFor)
+      node.exp = node.exp.transform(self)
+      node.body = node.body.transform(self)
       node
     end
 
@@ -598,7 +604,7 @@ module Crystal
     end
 
     def transform_many(exps)
-      exps.map! { |exp| exp.transform(self) } if exps
+      exps.map!(&.transform(self)) if exps
     end
   end
 end

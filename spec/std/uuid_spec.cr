@@ -1,7 +1,25 @@
 require "spec"
 require "uuid"
+require "spec/helpers/string"
 
 describe "UUID" do
+  describe "#==" do
+    it "matches identical UUIDs" do
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    end
+  end
+
+  describe "#<=>" do
+    it "correctly compares two UUIDs" do
+      uuid_1 = UUID.new("00330000-0000-0000-0000-000000000000")
+      uuid_2 = UUID.new("00000011-0000-0000-5500-000099000000")
+      (uuid_1 <=> uuid_2).should be > 0
+      (uuid_2 <=> uuid_1).should be < 0
+      (uuid_1 <=> uuid_1).should eq 0
+    end
+  end
+
   describe "random initialize" do
     it "works with no options" do
       subject = UUID.random
@@ -61,18 +79,18 @@ describe "UUID" do
   end
 
   describe "initialize with String" do
-    it "works with static array only" do
+    it "works with string only" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000")
       subject.to_s.should eq "00000000-0000-0000-0000-000000000000"
     end
 
-    it "works with static array and variant" do
+    it "works with string and variant" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000", variant: UUID::Variant::Future)
       subject.to_s.should eq "00000000-0000-0000-e000-000000000000"
       subject.variant.should eq UUID::Variant::Future
     end
 
-    it "works with static array and version" do
+    it "works with string and version" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
       subject.to_s.should eq "00000000-0000-5000-0000-000000000000"
       subject.version.should eq UUID::Version::V5
@@ -84,6 +102,23 @@ describe "UUID" do
       UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("C20335C37F464126AAE9F665434AD12B").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").to_s.should eq("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892")
+    end
+  end
+
+  describe "parsing strings" do
+    it "returns a properly parsed UUID" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12b").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+    end
+
+    it "returns nil if it has the wrong number of characters" do
+      UUID.parse?("nope").should eq nil
+    end
+
+    it "returns nil if it has incorrect characters" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12?").should eq nil
+      UUID.parse?("lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+      UUID.parse?("lol!wut?asdfforktypoomglolwtfbbq").should eq nil
+      UUID.parse?("urn:uuid:lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
     end
   end
 
@@ -105,7 +140,7 @@ describe "UUID" do
 
   describe "supports different string formats" do
     it "normal output" do
-      UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s.should eq "ee843b26-56d8-472b-b343-0b94ed9077ff"
+      assert_prints UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s, "ee843b26-56d8-472b-b343-0b94ed9077ff"
     end
 
     it "hexstring" do

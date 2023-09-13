@@ -1,5 +1,6 @@
 require "c/fcntl"
 require "io/evented"
+require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
@@ -43,6 +44,10 @@ module Crystal::System::FileDescriptor
     fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
+  private def system_blocking_init(value)
+    self.system_blocking = false unless value
+  end
+
   private def system_close_on_exec?
     flags = fcntl(LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
@@ -63,12 +68,19 @@ module Crystal::System::FileDescriptor
     r
   end
 
-  private def system_info
-    if LibC.fstat(fd, out stat) != 0
+  def self.system_info(fd)
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
+
+    if ret != 0
       raise IO::Error.from_errno("Unable to get info")
     end
 
-    FileInfo.new(stat)
+    ::File::Info.new(stat)
+  end
+
+  private def system_info
+    FileDescriptor.system_info fd
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
@@ -80,7 +92,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC.lseek(fd, 0, IO::Seek::Current)
+    pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
@@ -122,7 +134,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
+  def file_descriptor_close : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
@@ -153,7 +165,7 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(fd, buffer, offset)
-    bytes_read = LibC.pread(fd, buffer, buffer.size, offset)
+    bytes_read = LibC.pread(fd, buffer, buffer.size, offset).to_i64
 
     if bytes_read == -1
       raise IO::Error.from_errno "Error reading file"
@@ -180,5 +192,44 @@ module Crystal::System::FileDescriptor
     io.close_on_exec = true
     io.sync = true
     io
+  end
+
+  private def system_echo(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
+      mode.c_lflag = enable ? (mode.c_lflag | flags) : (mode.c_lflag & ~flags)
+      if LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  private def system_raw(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      if enable
+        LibC.cfmakeraw(pointerof(mode))
+      else
+        mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
+        mode.c_oflag |= LibC::OPOST
+        mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
+      end
+      if LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  @[AlwaysInline]
+  private def system_console_mode(&)
+    if LibC.tcgetattr(fd, out mode) != 0
+      raise IO::Error.from_errno("tcgetattr")
+    end
+
+    before = mode
+    ret = yield mode
+    LibC.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
+    ret
   end
 end

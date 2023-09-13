@@ -78,14 +78,17 @@ end
 # Returns the byte offset of an instance variable in a struct or class type.
 #
 # *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
-# *variable*  must be the name of an instance variable of *type*, prefixed
-# by `@`.
+# *offset*  must be the name of an instance variable of *type*, prefixed by `@`,
+# or the index of an element in a Tuple, starting from 0, if *type* is a `Tuple`.
 # ```
-# offsetof(String, @bytesize)   # => 4
-# offsetof(Exception, @message) # => 8
-# offsetof(Time, @location)     # => 16
+# offsetof(String, @bytesize)       # => 4
+# offsetof(Exception, @message)     # => 8
+# offsetof(Time, @location)         # => 16
+# offsetof({Int32, Int8, Int32}, 0) # => 0
+# offsetof({Int32, Int8, Int32}, 1) # => 4
+# offsetof({Int32, Int8, Int32}, 2) # => 8
 # ```
-def __crystal_pseudo_offsetof(type : Class, variable) : Int32
+def __crystal_pseudo_offsetof(type : Class, offset) : Int32
 end
 
 class Object
@@ -151,7 +154,7 @@ class Object
   # typeof(a.as(Bool)) # Compile Error: can't cast (Int32 | String) to Bool
   #
   # typeof(a.as(String)) # => String
-  # a.as(String)         # Runtime Error: cast from Int32 to String failed
+  # a.as(String)         # Runtime Error: Cast from Int32 to String failed
   #
   # typeof(a.as(Int32 | Bool)) # => Int32
   # a.as(Int32 | Bool)         # => 1

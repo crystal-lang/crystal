@@ -80,7 +80,7 @@ struct Crystal::Hasher
   private HASH_INF_MINUS = (-314159_i64).unsafe_as(UInt64)
 
   @@seed = uninitialized UInt64[2]
-  Crystal::System::Random.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), sizeof(typeof(@@seed))))
+  Crystal::System::Random.random_bytes(@@seed.to_slice.to_unsafe_bytes)
 
   def initialize(@a : UInt64 = @@seed[0], @b : UInt64 = @@seed[1])
   end
@@ -88,13 +88,9 @@ struct Crystal::Hasher
   private C1 = 0xacd5ad43274593b9_u64
   private C2 = 0x6956abd6ed268a3d_u64
 
-  private def rotl32(v : UInt64)
-    (v << 32) | (v >> 32)
-  end
-
   private def permute(v : UInt64)
-    @a = rotl32(@a ^ v) &* C1
-    @b = (rotl32(@b) ^ v) &* C2
+    @a = (@a ^ v).rotate_left(32) &* C1
+    @b = (@b.rotate_left(32) ^ v) &* C2
     self
   end
 
@@ -159,7 +155,7 @@ struct Crystal::Hasher
     {x, exp}
   end
 
-  private def float_normalize_wrap(value)
+  private def float_normalize_wrap(value, &)
     return HASH_NAN if value.nan?
     if value.infinite?
       return value > 0 ? HASH_INF_PLUS : HASH_INF_MINUS
@@ -176,7 +172,7 @@ struct Crystal::Hasher
 
   def float(value : Float32)
     normalized_hash = float_normalize_wrap(value) do |value|
-      # This optimized version works on every architecture where endianess
+      # This optimized version works on every architecture where endianness
       # of Float32 and Int32 matches and float is IEEE754. All supported
       # architectures fall into this category.
       unsafe_int = value.unsafe_as(Int32)
@@ -196,7 +192,7 @@ struct Crystal::Hasher
 
   def float(value : Float64)
     normalized_hash = float_normalize_wrap(value) do |value|
-      # This optimized version works on every architecture where endianess
+      # This optimized version works on every architecture where endianness
       # of Float64 and Int64 matches and float is IEEE754. All supported
       # architectures fall into this category.
       unsafe_int = value.unsafe_as(Int64)

@@ -50,35 +50,35 @@ module Float::Printer::IEEE
   DENORMAL_EXPONENT_32         = -EXPONENT_BIAS_32 + 1
   SIGN_MASK_32                 = 0x80000000_u32
 
-  def to_uint(v : Float64)
+  def to_uint(v : Float64) : UInt64
     v.unsafe_as(UInt64)
   end
 
-  def to_uint(v : Float32)
+  def to_uint(v : Float32) : UInt32
     v.unsafe_as(UInt32)
   end
 
-  def sign(d64 : UInt64)
+  def sign(d64 : UInt64) : Int32
     (d64 & SIGN_MASK_64) == 0 ? 1 : -1
   end
 
-  def sign(d32 : UInt32)
+  def sign(d32 : UInt32) : Int32
     (d32 & SIGN_MASK_32) == 0 ? 1 : -1
   end
 
-  def special?(d64 : UInt64)
+  def special?(d64 : UInt64) : Bool
     (d64 & EXPONENT_MASK_64) == EXPONENT_MASK_64
   end
 
-  def special?(d32 : UInt32)
+  def special?(d32 : UInt32) : Bool
     (d32 & EXPONENT_MASK_32) == EXPONENT_MASK_32
   end
 
-  def inf?(d64 : UInt64)
+  def inf?(d64 : UInt64) : Bool
     special?(d64) && (d64 & SIGNIFICAND_MASK_64 == 0)
   end
 
-  def inf?(d32 : UInt32)
+  def inf?(d32 : UInt32) : Bool
     special?(d32) && (d32 & SIGNIFICAND_MASK_32 == 0)
   end
 
@@ -96,7 +96,7 @@ module Float::Printer::IEEE
   # exponent as *m_plus*.
   #
   # Precondition: the value encoded by this `Float` must be greater than 0.
-  def normalized_boundaries(v : Float64)
+  def normalized_boundaries(v : Float64) : {minus: DiyFP, plus: DiyFP}
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
 
@@ -113,18 +113,16 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d64 & SIGNIFICAND_MASK_64) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d64) != DENORMAL_EXPONENT_64)
-    calculated_exp = exponent(d64)
-    calc_denormal = denormal?(d64)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
            else
              {(w.frac << 1) - 1, w.exp - 1}
            end
     m_minus = DiyFP.new(f << (e - m_plus.exp), m_plus.exp)
-    return {minus: m_minus, plus: m_plus}
+    {minus: m_minus, plus: m_plus}
   end
 
-  def normalized_boundaries(v : Float32)
+  def normalized_boundaries(v : Float32) : {minus: DiyFP, plus: DiyFP}
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
 
@@ -133,18 +131,16 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d32 & SIGNIFICAND_MASK_32) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d32) != DENORMAL_EXPONENT_32)
-    calculated_exp = exponent(d32)
-    calc_denormal = denormal?(d32)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
            else
              {(w.frac << 1) - 1, w.exp - 1}
            end
     m_minus = DiyFP.new(f << (e - m_plus.exp), m_plus.exp)
-    return {minus: m_minus, plus: m_plus}
+    {minus: m_minus, plus: m_plus}
   end
 
-  def frac_and_exp(v : Float64)
+  def frac_and_exp(v : Float64) : {UInt64, Int32}
     d64 = to_uint(v)
 
     if (d64 & EXPONENT_MASK_64) == 0 # denormal float
@@ -158,7 +154,7 @@ module Float::Printer::IEEE
     {frac, exp}
   end
 
-  def frac_and_exp(v : Float32)
+  def frac_and_exp(v : Float32) : {UInt64, Int32}
     d32 = to_uint(v)
 
     if (d32 & EXPONENT_MASK_32) == 0 # denormal float
@@ -182,13 +178,13 @@ module Float::Printer::IEEE
 
   private def exponent(d64 : UInt64)
     return DENORMAL_EXPONENT_64 if denormal?(d64)
-    baised_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
-    baised_e - EXPONENT_BIAS_64
+    biased_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
+    biased_e - EXPONENT_BIAS_64
   end
 
   private def exponent(d32 : UInt32)
     return DENORMAL_EXPONENT_32 if denormal?(d32)
-    baised_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
-    baised_e - EXPONENT_BIAS_32
+    biased_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
+    biased_e - EXPONENT_BIAS_32
   end
 end
