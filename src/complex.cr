@@ -30,6 +30,11 @@ struct Complex
     c
   end
 
+  # Returns a complex object which denotes the given polar form.
+  def self.polar(abs : Number, phase : Number = 0)
+    Complex.new(abs*Math.cos(phase), abs*Math.sin(phase))
+  end
+
   # Determines whether `self` equals *other* or not.
   def ==(other : Complex)
     @real == other.real && @imag == other.imag
@@ -272,8 +277,14 @@ struct Complex
   end
 
   # Returns the base `self` exponential of *other*.
-  def **(other) : Complex
-    Math.exp(other * Math.log(self))
+  def **(other : Complex) : Complex
+    abs, phase = polar
+    Complex.polar((abs**other.real) / Math.exp(phase*other.imag), phase*other.real + Math.log(abs)*other.imag)
+  end
+
+  # :ditto:
+  def **(other : Number) : Complex
+    Complex.polar(abs**other, phase*other)
   end
 
   def clone
