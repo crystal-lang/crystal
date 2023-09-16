@@ -114,7 +114,7 @@ module Spec
       opts.on("--no-color", "Disable ANSI colored output") do
         Colorize.enabled = false
       end
-      opts.on("--dry-run", "Don't execute / pass all non-pending tests") do
+      opts.on("--dry-run", "Pass all tests without execution") do
         Spec.dry_run = true
       end
       opts.unknown_args do |args|
