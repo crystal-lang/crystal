@@ -30,9 +30,9 @@ struct Complex
     c
   end
 
-  # Returns a complex object which denotes the given polar form.
+  # Returns a complex number which denotes the given polar form.
   def self.polar(abs : Number, phase : Number = 0)
-    Complex.new(abs*Math.cos(phase), abs*Math.sin(phase))
+    new(abs*Math.cos(phase), abs*Math.sin(phase))
   end
 
   # Determines whether `self` equals *other* or not.
