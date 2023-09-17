@@ -279,12 +279,27 @@ struct Complex
   # Returns the base `self` exponential of *other*.
   def **(other : Complex) : Complex
     abs, phase = polar
-    Complex.polar((abs**other.real) / Math.exp(phase*other.imag), phase*other.real + Math.log(abs)*other.imag)
+    if abs.zero?
+      return Complex.zero if other.real > 0
+      if other.imag.zero?
+        return Complex.new(1) if other.real.zero?
+        return Complex.new(Float64::INFINITY) if other.real < 0
+      end
+      return Complex.new(Float64::NAN, Float64::NAN)
+    end
+
+    r = abs ** other.real
+    t = phase * other.real
+    if !other.imag.zero?
+      r /= Math.exp(phase * other.imag)
+      t += Math.log(abs) * other.imag
+    end
+    Complex.polar(r, t)
   end
 
   # :ditto:
   def **(other : Number) : Complex
-    Complex.polar(abs**other, phase*other)
+    self ** other.to_c
   end
 
   def clone
@@ -362,6 +377,22 @@ struct Number
 
   def /(other : Complex) : Complex
     self * other.inv
+  end
+
+  def **(other : Complex) : Complex
+    self.to_c ** other
+  end
+end
+
+struct Float64
+  def **(other : Complex) : Complex
+    self.to_c ** other
+  end
+end
+
+struct Float32
+  def **(other : Complex) : Complex
+    self.to_c ** other
   end
 end
 

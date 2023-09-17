@@ -282,6 +282,48 @@ describe "Complex" do
     it "complex ** complex" do
       (Complex.polar(Math::E, 1)**Complex.new(1, 2)).should be_close(Complex.polar(1/Math::E, 3), 1e-8)
     end
+
+    it "number ** complex" do
+      (Math::E**Complex.new(1, 2)).should be_close(Complex.polar(Math::E, 2), 1e-8)
+    end
+
+    it "0 ** 0" do
+      (Complex.zero ** 0).should eq(Complex.new(1))
+      (Complex.zero ** Complex.zero).should eq(Complex.new(1))
+
+      z = Complex.zero ** Complex.new(0, 1)
+      z.real.nan?.should be_true
+      z.imag.nan?.should be_true
+
+      z = Complex.zero ** Complex.new(0, -1)
+      z.real.nan?.should be_true
+      z.imag.nan?.should be_true
+    end
+
+    it "0 ** 1" do
+      (Complex.zero ** 1).should eq(Complex.zero)
+      (Complex.zero ** Complex.new(1, 0)).should eq(Complex.zero)
+      (Complex.zero ** Complex.new(1, 1)).should eq(Complex.zero)
+      (Complex.zero ** Complex.new(1, -1)).should eq(Complex.zero)
+    end
+
+    it "0 ** -1" do
+      z = (Complex.zero ** -1)
+      z.real.infinite?.should eq(1)
+      z.imag.zero?.should be_true
+
+      z = Complex.zero ** Complex.new(-1, 0)
+      z.real.infinite?.should eq(1)
+      z.imag.zero?.should be_true
+
+      z = Complex.zero ** Complex.new(-1, 1)
+      z.real.nan?.should be_true
+      z.imag.nan?.should be_true
+
+      z = Complex.zero ** Complex.new(-1, -1)
+      z.real.nan?.should be_true
+      z.imag.nan?.should be_true
+    end
   end
 
   it "clones" do
