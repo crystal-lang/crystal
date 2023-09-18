@@ -101,16 +101,16 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler : Interrupt ->) : Nil
+  def self.on_interrupt(&@@interrupt_handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       @@last_interrupt = case event_type
                          when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
-                           Interrupt::USER_SIGNALLED
+                           ::Process::ExitReason::Interrupted
                          when LibC::CTRL_CLOSE_EVENT
-                           Interrupt::TERMINAL_DISCONNECTED
+                           ::Process::ExitReason::TerminalDisconnected
                          when LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT
-                           Interrupt::SESSION_ENDED
+                           ::Process::ExitReason::SessionEnded
                          else
                            next 0
                          end

@@ -58,17 +58,17 @@ struct Crystal::System::Process
     raise RuntimeError.from_errno("kill") if ret < 0
   end
 
-  def self.on_interrupt(&handler : Interrupt ->) : Nil
+  def self.on_interrupt(&handler : ::Process::ExitReason ->) : Nil
     sig_handler = Proc(::Signal, Nil).new do |signal|
       int_type = case signal
                  when .int?
-                   Interrupt::USER_SIGNALLED
+                   ::Process::ExitReason::Interrupted
                  when .hup?
-                   Interrupt::TERMINAL_DISCONNECTED
+                   ::Process::ExitReason::TerminalDisconnected
                  when .term?
-                   Interrupt::SESSION_ENDED
+                   ::Process::ExitReason::SessionEnded
                  else
-                   Interrupt::USER_SIGNALLED
+                   ::Process::ExitReason::Interrupted
                  end
       handler.call int_type
 

@@ -48,7 +48,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&handler : ->) : Nil
+  def self.on_interrupt(&handler : ::Process::ExitReason ->) : Nil
     raise NotImplementedError.new("Process.on_interrupt")
   end
 

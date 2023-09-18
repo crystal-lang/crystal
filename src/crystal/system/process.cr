@@ -44,7 +44,7 @@ struct Crystal::System::Process
 
   # Installs *handler* as the new handler for interrupt requests. Removes any
   # previously set interrupt handler.
-  # def self.on_interrupt(&handler : ->)
+  # def self.on_interrupt(&handler : ::Process::ExitReason ->)
 
   # Ignores all interrupt requests. Removes any custom interrupt handler set
   # def self.ignore_interrupts!
@@ -77,15 +77,6 @@ struct Crystal::System::Process
 
   # Changes the root directory for the current process.
   # def self.chroot(path : String)
-
-  enum Interrupt
-    # sigint, ctrl-c or ctrl-break events
-    USER_SIGNALLED
-    # sighup or closed event
-    TERMINAL_DISCONNECTED
-    # sigterm, logoff or shutdown events
-    SESSION_ENDED
-  end
 end
 
 module Crystal::System
