@@ -278,8 +278,7 @@ struct Complex
 
   # Returns the base `self` exponential of *other*.
   def **(other : Complex) : Complex
-    abs, phase = polar
-    if abs.zero?
+    if self.zero?
       return Complex.zero if other.real > 0
       if other.imag.zero?
         return Complex.new(1) if other.real.zero?
@@ -288,6 +287,7 @@ struct Complex
       return Complex.new(Float64::NAN, Float64::NAN)
     end
 
+    abs, phase = polar
     r = abs ** other.real
     t = phase * other.real
     if !other.imag.zero?
