@@ -50,8 +50,6 @@ class Process
     Crystal::System::Process.signal(pid, signal.value)
   end
 
-  alias Interrupt = Crystal::System::Process::Interrupt
-
   # Installs *handler* as the new handler for interrupt requests. Removes any
   # previously set interrupt handler.
   #
