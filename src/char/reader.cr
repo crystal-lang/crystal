@@ -177,14 +177,15 @@ struct Char
     # C
     # ```
     def each(&) : Nil
+      return unless has_next?
+
+      yield current_char
+
       while has_next?
-        yield current_char
-
-        # Need to check again in case reader progressed in block
-        break unless has_next?
-
         @pos += @current_char_width
         decode_current_char
+
+        yield current_char
       end
     end
 
