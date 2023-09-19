@@ -88,7 +88,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: llvm
-          key: llvm-libs-16.0.3-msvc
+          key: llvm-libs-17.0.1-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
