@@ -10,11 +10,11 @@ struct Crystal::System::Process
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
 
-  @@interrupt_handler : Proc(Interrupt, Nil)?
+  @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
-  @@last_interrupt = Interrupt::USER_SIGNALLED
+  @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
