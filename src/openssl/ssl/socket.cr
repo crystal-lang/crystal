@@ -274,7 +274,13 @@ abstract class OpenSSL::SSL::Socket < IO
   # an anonymous cipher is used, no certificates are sent. That a certificate
   # is returned does not indicate information about the verification state.
   def peer_certificate : OpenSSL::X509::Certificate?
-    cert = LibSSL.ssl_get_peer_certificate(@ssl)
-    OpenSSL::X509::Certificate.new cert if cert
+    raw_cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    if raw_cert
+      begin
+        OpenSSL::X509::Certificate.new(raw_cert)
+      ensure
+        LibCrypto.x509_free(raw_cert)
+      end
+    end
   end
 end

@@ -18,7 +18,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache libraries
         id: cache-libs
@@ -90,7 +90,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache libraries
         id: cache-dlls
@@ -218,7 +218,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
@@ -268,7 +268,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
