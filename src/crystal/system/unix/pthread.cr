@@ -1,62 +1,34 @@
 require "c/pthread"
 require "c/sched"
 
-class Thread
-  # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+module Crystal::System::Thread
+  alias Handle = LibC::PthreadT
 
-  @th : LibC::PthreadT
-  @exception : Exception?
-  @detached = Atomic(UInt8).new(0)
-  @main_fiber : Fiber?
-
-  # :nodoc:
-  property next : Thread?
-
-  # :nodoc:
-  property previous : Thread?
-
-  def self.unsafe_each(&)
-    threads.unsafe_each { |thread| yield thread }
+  def to_unsafe
+    @th
   end
 
-  # Starts a new system thread.
-  def initialize(&@func : ->)
-    @th = uninitialized LibC::PthreadT
+  def self.new_handle(thread_obj : ::Thread) : Handle
+    handle = uninitialized LibC::PthreadT
 
-    ret = GC.pthread_create(pointerof(@th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
-      (data.as(Thread)).start
-      Pointer(Void).null
-    }, self.as(Void*))
+    ret = GC.pthread_create(
+      thread: pointerof(handle),
+      attr: Pointer(LibC::PthreadAttrT).null,
+      start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
+      arg: thread_obj.as(Void*),
+    )
 
-    if ret != 0
-      raise RuntimeError.from_os_error("pthread_create", Errno.new(ret))
-    end
+    raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
+    handle
   end
 
-  # Used once to initialize the thread object representing the main thread of
-  # the process (that already exists).
-  def initialize
-    @func = ->{}
-    @th = LibC.pthread_self
-    @main_fiber = Fiber.new(stack_address, self)
-
-    Thread.threads.push(self)
+  def self.current_handle : Handle
+    LibC.pthread_self
   end
 
-  private def detach(&)
-    if @detached.compare_and_set(0, 1).last
-      yield
-    end
-  end
-
-  # Suspends the current thread until this thread terminates.
-  def join : Nil
-    detach { GC.pthread_join(@th) }
-
-    if exception = @exception
-      raise exception
-    end
+  def self.yield_current : Nil
+    ret = LibC.sched_yield
+    raise RuntimeError.from_errno("sched_yield") unless ret == 0
   end
 
   {% if flag?(:openbsd) %}
@@ -70,68 +42,34 @@ class Thread
       current_key
     end
 
-    # Returns the Thread object associated to the running system thread.
-    def self.current : Thread
+    def self.current_thread : ::Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
-        ptr.as(Thread)
+        ptr.as(::Thread)
       else
-        # Thread#start sets @@current as soon it starts. Thus we know
-        # that if @@current is not set then we are in the main thread
-        self.current = new
+        # Thread#start sets `Thread.current` as soon it starts. Thus we know
+        # that if `Thread.current` is not set then we are in the main thread
+        self.current_thread = ::Thread.new
       end
     end
 
-    # Associates the Thread object to the running system thread.
-    protected def self.current=(thread : Thread) : Thread
+    def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
       raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(ret)) unless ret == 0
       thread
     end
   {% else %}
     @[ThreadLocal]
-    @@current : Thread?
-
-    # Returns the Thread object associated to the running system thread.
-    def self.current : Thread
-      # Thread#start sets @@current as soon it starts. Thus we know
-      # that if @@current is not set then we are in the main thread
-      @@current ||= new
-    end
-
-    # Associates the Thread object to the running system thread.
-    protected def self.current=(@@current : Thread) : Thread
-    end
+    class_getter current_thread : ::Thread { ::Thread.new }
+    class_setter current_thread
   {% end %}
 
-  def self.yield : Nil
-    ret = LibC.sched_yield
-    raise RuntimeError.from_errno("sched_yield") unless ret == 0
+  private def system_join : Exception?
+    ret = GC.pthread_join(@th)
+    RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
   end
 
-  # Returns the Fiber representing the thread's main stack.
-  def main_fiber : Fiber
-    @main_fiber.not_nil!
-  end
-
-  # :nodoc:
-  def scheduler : Crystal::Scheduler
-    @scheduler ||= Crystal::Scheduler.new(main_fiber)
-  end
-
-  protected def start
-    Thread.threads.push(self)
-    Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address, self)
-
-    begin
-      @func.call
-    rescue ex
-      @exception = ex
-    ensure
-      Thread.threads.delete(self)
-      Fiber.inactive(fiber)
-      detach { GC.pthread_detach(@th) }
-    end
+  private def system_close
+    GC.pthread_detach(@th)
   end
 
   private def stack_address : Void*
@@ -171,11 +109,6 @@ class Thread
     {% end %}
 
     address
-  end
-
-  # :nodoc:
-  def to_unsafe
-    @th
   end
 end
 
