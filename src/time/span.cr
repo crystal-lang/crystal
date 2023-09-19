@@ -65,7 +65,7 @@ struct Time::Span
   # ```
   def initialize(*, seconds : Int, nanoseconds : Int)
     # Normalize nanoseconds in the range 0...1_000_000_000
-    @seconds = seconds.to_i64 + nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    @seconds = seconds.to_i64 + nanoseconds.tdiv(NANOSECONDS_PER_SECOND).to_i64
     @nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND).to_i32
 
     # Make sure that if seconds is positive, nanoseconds is
