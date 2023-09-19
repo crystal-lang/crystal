@@ -177,15 +177,11 @@ struct Char
     # C
     # ```
     def each(&) : Nil
-      return unless has_next?
+      while @pos < @string.bytesize
+        yield current_char
 
-      yield current_char
-
-      while has_next?
         @pos += @current_char_width
         decode_current_char
-
-        yield current_char
       end
     end
 
