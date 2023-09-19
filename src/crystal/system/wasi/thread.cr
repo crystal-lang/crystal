@@ -6,7 +6,7 @@ module Crystal::System::Thread
   end
 
   def self.current_handle : Handle
-    raise NotImplementedError.new("Crystal::System::Thread.current_handle")
+    nil
   end
 
   def self.yield_current : Nil
