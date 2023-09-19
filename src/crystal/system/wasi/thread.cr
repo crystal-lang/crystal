@@ -13,8 +13,7 @@ module Crystal::System::Thread
     raise NotImplementedError.new("Crystal::System::Thread.yield_current")
   end
 
-  class_getter current_thread : ::Thread { ::Thread.new }
-  class_setter current_thread
+  class_property current_thread : ::Thread { ::Thread.new }
 
   private def system_join : Exception?
     NotImplementedError.new("Crystal::System::Thread#system_join")

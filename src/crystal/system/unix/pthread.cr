@@ -59,8 +59,7 @@ module Crystal::System::Thread
     end
   {% else %}
     @[ThreadLocal]
-    class_getter current_thread : ::Thread { ::Thread.new }
-    class_setter current_thread
+    class_property current_thread : ::Thread { ::Thread.new }
   {% end %}
 
   private def system_join : Exception?
