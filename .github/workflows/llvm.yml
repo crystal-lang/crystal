@@ -22,6 +22,8 @@ jobs:
             llvm_ubuntu_version: "18.04"
           - llvm_version: "15.0.6"
             llvm_ubuntu_version: "18.04"
+          - llvm_version: "16.0.3"
+            llvm_ubuntu_version: "22.04"
           - llvm_version: "17.0.1"
             llvm_ubuntu_version: "22.04"
     name: "LLVM ${{ matrix.llvm_version }}"
