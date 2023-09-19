@@ -10,10 +10,10 @@ module Crystal
 
       unreachable = UnreachableVisitor.new
 
-      unreachable.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
+      unreachable.includes.concat config.includes.map { |path| ::Path[path].expand.to_posix.to_s }
 
-      unreachable.excludes.concat CrystalPath.default_paths.map { |path| ::Path[path].expand.to_s }
-      unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
+      unreachable.excludes.concat CrystalPath.default_paths.map { |path| ::Path[path].expand.to_posix.to_s }
+      unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
 
       defs = unreachable.process(result)
       defs.defs.sort_by! do |a_def|
@@ -167,14 +167,14 @@ module Crystal
       end
     end
 
-    private def match_path?(path)
+    def match_path?(path)
       paths = ::Path[path].parents << ::Path[path]
 
       match_any_pattern?(includes, paths) || !match_any_pattern?(excludes, paths)
     end
 
     private def match_any_pattern?(patterns, paths)
-      patterns.any? { |pattern| paths.any? { |path| File.match?(pattern, path) } }
+      patterns.any? { |pattern| paths.any? { |path| path == pattern || File.match?(pattern, path.to_posix) } }
     end
   end
 end

@@ -8,7 +8,7 @@ def processed_unreachable_visitor(code)
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = UnreachableVisitor.new
-  visitor.excludes << Dir.current
+  visitor.excludes << Path[Dir.current].to_posix.to_s
   visitor.includes << "."
 
   process_result = visitor.process(result)
