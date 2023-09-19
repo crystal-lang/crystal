@@ -1657,6 +1657,16 @@ describe "Semantic: macro" do
     method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
+  it "unpacks block parameters inside macros (#13742)" do
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      CRYSTAL
+  end
+
   it "executes OpAssign (#9356)" do
     assert_type(<<-CRYSTAL) { int32 }
       {% begin %}
