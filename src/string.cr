@@ -3312,12 +3312,17 @@ class String
   # Update rolling hash for Rabin-Karp algorithm `String#index`.
   private macro update_hash(n)
     {% for i in 1..n %}
-      {% if i != 1 %}
-        byte = head_pointer.value
-      {% end %}
+      byte = head_pointer.value
       hash = hash &* PRIME_RK &+ pointer.value &- pow &* byte
       pointer += 1
       head_pointer += 1
+    {% end %}
+  end
+
+  private macro update_simplehash(n)
+    {% for i in 1..n %}
+      hash = (hash << 8) | pointer.value
+      pointer += 1
     {% end %}
   end
 
@@ -3360,13 +3365,6 @@ class String
     # Rabin-Karp algorithm
     # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
 
-    # calculate a rolling hash of search text (needle)
-    search_hash = 0u32
-    search.each_byte do |b|
-      search_hash = search_hash &* PRIME_RK &+ b
-    end
-    pow = PRIME_RK &** search.bytesize
-
     # Find start index with offset
     char_index = 0
     pointer = to_unsafe
@@ -3377,16 +3375,56 @@ class String
       char_index += 1
     end
 
-    head_pointer = pointer
+    return if pointer + search.bytesize > end_pointer
 
-    # calculate a rolling hash of this text (haystack)
+    if search.bytesize == 1
+      byte = search.to_unsafe[0]
+      while pointer < end_pointer
+        return char_index if pointer.value == byte
+        pointer += String.char_bytesize_at(pointer)
+        char_index += 1
+      end
+      return nil
+    end
+
+    head_pointer = pointer
+    search_hash = 0u32
     hash = 0u32
-    hash_end_pointer = pointer + search.bytesize
-    return if hash_end_pointer > end_pointer
-    while pointer < hash_end_pointer
+
+    if search.bytesize <= 4
+      # simplified version with multiplier == 256
+      mask = 0u32
+      search.each_byte do |b|
+        search_hash = (search_hash << 8) | b
+        hash = (hash << 8) | pointer.value
+        mask = (mask << 8) | 0xff
+        pointer += 1
+      end
+
+      while true
+        return char_index if (hash & mask) == search_hash
+
+        char_bytesize = String.char_bytesize_at(head_pointer)
+        return if pointer + char_bytesize > end_pointer
+        case char_bytesize
+        when 1 then update_simplehash 1
+        when 2 then update_simplehash 2
+        when 3 then update_simplehash 3
+        else        update_simplehash 4
+        end
+
+        head_pointer += char_bytesize
+        char_index += 1
+      end
+    end
+
+    # calculate a rolling hash of search text (needle) and this text (haystack)
+    search.each_byte do |b|
+      search_hash = search_hash &* PRIME_RK &+ b
       hash = hash &* PRIME_RK &+ pointer.value
       pointer += 1
     end
+    pow = PRIME_RK &** search.bytesize
 
     while true
       # check hash equality and real string equality
@@ -3394,7 +3432,6 @@ class String
         return char_index
       end
 
-      byte = head_pointer.value
       char_bytesize = String.char_bytesize_at(head_pointer)
       return if pointer + char_bytesize > end_pointer
       case char_bytesize
@@ -3731,27 +3768,46 @@ class String
     return if offset < 0
 
     return bytesize < offset ? nil : offset if search.empty?
+    return byte_index(search.to_unsafe[0], offset) if search.bytesize == 1
 
     # Rabin-Karp algorithm
     # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
 
-    # calculate a rolling hash of search text (needle)
+    pointer = to_unsafe + offset
+    end_pointer = to_unsafe + bytesize
+    return if pointer + search.bytesize > end_pointer
+
     search_hash = 0u32
+    hash = 0u32
+
+    if search.bytesize <= 4
+      # simplified version with multiplier == 256
+      mask = 0u32
+      search.each_byte do |b|
+        search_hash = (search_hash << 8) | b
+        hash = (hash << 8) | pointer.value
+        mask = (mask << 8) | 0xff
+        pointer += 1
+      end
+
+      while true
+        return offset if (hash & mask) == search_hash
+        return if pointer >= end_pointer
+        hash = (hash << 8) | pointer.value
+        pointer += 1
+        offset += 1
+      end
+    end
+
+    head_pointer = pointer
+
+    # calculate a rolling hash of search text (needle) and this text (haystack)
     search.each_byte do |b|
       search_hash = search_hash &* PRIME_RK &+ b
-    end
-    pow = PRIME_RK &** search.bytesize
-
-    # calculate a rolling hash of this text (haystack)
-    pointer = head_pointer = to_unsafe + offset
-    hash_end_pointer = pointer + search.bytesize
-    end_pointer = to_unsafe + bytesize
-    hash = 0u32
-    return if hash_end_pointer > end_pointer
-    while pointer < hash_end_pointer
       hash = hash &* PRIME_RK &+ pointer.value
       pointer += 1
     end
+    pow = PRIME_RK &** search.bytesize
 
     while true
       # check hash equality and real string equality
