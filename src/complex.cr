@@ -291,7 +291,7 @@ struct Complex
       r = (-@real) ** other
       k = other * 2
     else
-      return Complex.polar(abs**other, phase*other.to_f64) if !@real.zero?
+      return Complex.polar(abs**other, phase*other.to_f64) unless @real.zero?
       if @imag > 0
         r = @imag ** other
         k = other
