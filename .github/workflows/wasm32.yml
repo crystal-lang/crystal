@@ -15,7 +15,7 @@ jobs:
     container: crystallang/crystal:1.9.2-build
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install wasmtime
         uses: mwilliamson/setup-wasmtime-action@v2

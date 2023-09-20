@@ -66,7 +66,9 @@ module GC
     gc_no : UInt64,
     markers_m1 : UInt64,
     bytes_reclaimed_since_gc : UInt64,
-    reclaimed_bytes_before_gc : UInt64
+    reclaimed_bytes_before_gc : UInt64,
+    expl_freed_bytes_since_gc : UInt64,
+    obtained_from_os_bytes : UInt64
 
   # Allocates and clears *size* bytes of memory.
   #

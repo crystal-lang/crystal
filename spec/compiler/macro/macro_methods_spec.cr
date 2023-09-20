@@ -1694,6 +1694,16 @@ module Crystal
         end
       end
 
+      describe "#id" do
+        it "does not include trailing + for virtual type" do
+          assert_macro("{{klass.id}}", "Foo") do |program|
+            foo = NonGenericClassType.new(program, program, "Foo", program.reference)
+            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            {klass: TypeNode.new(foo.virtual_type)}
+          end
+        end
+      end
+
       describe "#warning" do
         it "emits a warning at a specific node" do
           assert_warning <<-CRYSTAL, "Oh noes"

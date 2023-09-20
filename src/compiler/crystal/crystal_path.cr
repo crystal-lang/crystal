@@ -138,34 +138,33 @@ module Crystal
 
       if !filename_is_relative && shard_path
         shard_src = "#{relative_to}/#{shard_name}/src"
+        shard_path_stem = shard_path.rchop(".cr")
 
         # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
-        yield "#{shard_src}/#{shard_path}.cr"
+        yield "#{shard_src}/#{shard_path_stem}.cr"
 
         # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
-        yield "#{shard_src}/#{shard_name}/#{shard_path}.cr"
+        yield "#{shard_src}/#{shard_name}/#{shard_path_stem}.cr"
 
         # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
-        basename = File.basename(relative_filename)
+        basename = File.basename(relative_filename, ".cr")
         yield "#{relative_filename}/#{basename}.cr"
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
-        yield "#{shard_src}/#{shard_path}/#{shard_path}.cr"
+        yield "#{shard_src}/#{shard_path}/#{shard_path_stem}.cr"
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
-        yield "#{shard_src}/#{shard_name}/#{shard_path}/#{shard_path}.cr"
+        yield "#{shard_src}/#{shard_name}/#{shard_path}/#{shard_path_stem}.cr"
+      else
+        basename = File.basename(relative_filename, ".cr")
 
-        return nil
-      end
+        # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
+        yield "#{relative_filename}/#{basename}.cr"
 
-      basename = File.basename(relative_filename)
-
-      # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
-      yield "#{relative_filename}/#{basename}.cr"
-
-      unless filename_is_relative
-        # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
-        yield "#{relative_filename}/src/#{basename}.cr"
+        unless filename_is_relative
+          # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
+          yield "#{relative_filename}/src/#{basename}.cr"
+        end
       end
     end
 
