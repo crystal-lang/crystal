@@ -302,13 +302,13 @@ struct Complex
     end
 
     n = k.to_i64
-    return case n % 4
+    return Complex.polar(r, k.to_f64 * Math::PI/2) unless n == k
+    case n % 4
     when 0 then Complex.new(r, 0)
     when 1 then Complex.new(0, r)
     when 2 then Complex.new(-r, 0)
     else        Complex.new(0, -r)
-    end if n == k
-    Complex.polar(r, k.to_f64 * Math::PI/2)
+    end
   end
 
   # :ditto:
