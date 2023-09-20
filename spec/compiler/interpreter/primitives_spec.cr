@@ -275,7 +275,7 @@ describe Crystal::Repl::Interpreter do
         interpret("23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
       end
 
-      {% unless target_type.starts_with?("u") %}
+      {% unless target_type.starts_with?("u") %} # Do not test undefined behavior that might differ (#13736)
         it "interprets Float32#to_{{target_type}}! (negative)" do
           f = -23.8_f32
           interpret("-23.8_f32.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
