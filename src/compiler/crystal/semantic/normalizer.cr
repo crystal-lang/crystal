@@ -451,7 +451,10 @@ module Crystal
       return node unless unpacks
 
       # as `node` is mutated in-place, ensure it can only be mutated once
-      node.unpacks = nil
+      # we consider a block to be mutated if any unpack already has a
+      # corresponding block parameter with a name (as the fictitious packed
+      # parameters have empty names)
+      return node if unpacks.any? { |index, _| !node.args[index].name.empty? }
 
       extra_expressions = [] of ASTNode
       next_unpacks = [] of {String, Expressions}
