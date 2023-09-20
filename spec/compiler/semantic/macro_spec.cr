@@ -1665,6 +1665,15 @@ describe "Semantic: macro" do
 
       foo
       CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      foo
+      CRYSTAL
   end
 
   it "executes OpAssign (#9356)" do

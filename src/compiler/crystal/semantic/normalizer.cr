@@ -450,6 +450,9 @@ module Crystal
       unpacks = node.unpacks
       return node unless unpacks
 
+      # as `node` is mutated in-place, ensure it can only be mutated once
+      node.unpacks = nil
+
       extra_expressions = [] of ASTNode
       next_unpacks = [] of {String, Expressions}
 
