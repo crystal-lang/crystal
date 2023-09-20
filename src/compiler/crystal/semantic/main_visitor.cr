@@ -2433,7 +2433,7 @@ module Crystal
                when FloatType
                  element_type.kind
                else
-                 call.raise "Only slice literals of integer or float types can be created"
+                 call.raise "Only slice literals of primitive integer or float types can be created"
                end
 
         call.args.each do |arg|
