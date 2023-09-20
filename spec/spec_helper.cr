@@ -82,8 +82,9 @@ record TopLevelSemanticResult,
   node : ASTNode
 
 def top_level_semantic(code : String, wants_doc = true, inject_primitives = false)
-  code = inject_primitives(code) if inject_primitives
-  top_level_semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
+  node = parse(code, wants_doc: wants_doc)
+  node = inject_primitives(node) if inject_primitives
+  top_level_semantic node, wants_doc: wants_doc
 end
 
 def top_level_semantic(node : ASTNode, wants_doc = true)
@@ -94,6 +95,7 @@ def top_level_semantic(node : ASTNode, wants_doc = true)
   TopLevelSemanticResult.new(program, node)
 end
 
+def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
   from_nodes = Parser.parse(from)
