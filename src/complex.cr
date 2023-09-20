@@ -278,28 +278,52 @@ struct Complex
 
   # Returns the base `self` exponential of *other*.
   def **(other : Complex) : Complex
-    if self.zero?
-      return Complex.zero if other.real > 0
-      if other.imag.zero?
-        return Complex.new(1) if other.real.zero?
-        return Complex.new(Float64::INFINITY) if other.real < 0
-      end
-      return Complex.new(Float64::NAN, Float64::NAN)
-    end
-
+    return self ** other.real if other.imag.zero?
+    return Complex.zero if zero? && other.real > 0
     abs, phase = polar
-    r = abs ** other.real
-    t = phase * other.real
-    if !other.imag.zero?
-      r /= Math.exp(phase * other.imag)
-      t += Math.log(abs) * other.imag
-    end
-    Complex.polar(r, t)
+    Complex.polar((abs**other.real) / Math.exp(phase*other.imag), phase*other.real + Math.log(abs)*other.imag)
   end
 
   # :ditto:
   def **(other : Number) : Complex
-    self ** other.to_c
+    if @imag.zero?
+      return Complex.new(@real ** other) if @real >= 0
+      r = (-@real) ** other
+      k = other * 2
+    else
+      return Complex.polar(abs**other, phase*other.to_f64) if !@real.zero?
+      if @imag > 0
+        r = @imag ** other
+        k = other
+      else
+        r = (-@imag) ** other
+        k = other * 3
+      end
+    end
+
+    n = k.to_i64
+    return case n % 4
+    when 0 then Complex.new(r, 0)
+    when 1 then Complex.new(0, r)
+    when 2 then Complex.new(-r, 0)
+    else        Complex.new(0, -r)
+    end if n == k
+    Complex.polar(r, k.to_f64 * Math::PI/2)
+  end
+
+  # :ditto:
+  def **(other : Int) : Complex
+    return Complex.new(@real ** other) if @imag.zero?
+    if @real.zero?
+      power = @imag ** other
+      return case other % 4
+      when 0 then Complex.new(power, 0)
+      when 1 then Complex.new(0, power)
+      when 2 then Complex.new(-power, 0)
+      else        Complex.new(0, -power)
+      end
+    end
+    Complex.polar(abs ** other, phase * other.to_f64)
   end
 
   def clone
