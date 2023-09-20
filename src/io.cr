@@ -433,6 +433,8 @@ abstract class IO
   # io.read_string(6) # raises IO::EOFError
   # ```
   def read_string(bytesize : Int) : String
+    return "" if bytesize == 0
+
     String.new(bytesize) do |ptr|
       if decoder = decoder()
         read = decoder.read_utf8(self, Slice.new(ptr, bytesize))
@@ -449,7 +451,7 @@ abstract class IO
   # Peeks into this IO, if possible.
   #
   # It returns:
-  # - `nil` if this IO isn't peekable
+  # - `nil` if this IO isn't peekable at this moment or at all
   # - an empty slice if it is, but EOF was reached
   # - a non-empty slice if some data can be peeked
   #
@@ -716,7 +718,15 @@ abstract class IO
           peek = self.peek
         end
 
-        if !peek || peek.empty?
+        unless peek
+          # If for some reason this IO became unpeekable,
+          # default to the slow method. One example where this can
+          # happen is `IO::Delimited`.
+          gets_slow(delimiter, limit, chomp, buffer)
+          break
+        end
+
+        if peek.empty?
           if buffer.bytesize == 0
             return nil
           else
@@ -741,14 +751,18 @@ abstract class IO
   end
 
   private def gets_slow(delimiter : Char, limit, chomp)
+    buffer = String::Builder.new
+    gets_slow(delimiter, limit, chomp, buffer)
+    buffer.empty? ? nil : buffer.to_s
+  end
+
+  private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Nil
     chomp_rn = delimiter == '\n' && chomp
 
-    buffer = String::Builder.new
-    total = 0
     while true
       info = read_char_with_bytesize
       unless info
-        return buffer.empty? ? nil : buffer.to_s
+        break
       end
 
       char, char_bytesize = info
@@ -767,12 +781,14 @@ abstract class IO
         end
 
         buffer << '\r'
-        total += char_bytesize
-        break if total >= limit
+
+        break if char_bytesize >= limit
+        limit -= char_bytesize
 
         buffer << char2
-        total += char_bytesize2
-        break if total >= limit
+
+        break if char_bytesize2 >= limit
+        limit -= char_bytesize2
 
         next
       elsif char == delimiter
@@ -782,10 +798,9 @@ abstract class IO
         buffer << char
       end
 
-      total += char_bytesize
-      break if total >= limit
+      break if char_bytesize >= limit
+      limit -= char_bytesize
     end
-    buffer.to_s
   end
 
   # Reads until *delimiter* is found or the end of the `IO` is reached.

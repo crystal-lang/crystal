@@ -219,8 +219,14 @@ module JSON
           {% for name, value in properties %}
             when {{value[:key]}}
               begin
-                {% if (value[:has_default] && !value[:nilable]) || value[:root] %}
-                  next if pull.read_null?
+                {% if value[:has_default] || value[:nilable] || value[:root] %}
+                  if pull.read_null?
+                    {% if value[:nilable] %}
+                      %var{name} = nil
+                      %found{name} = true
+                    {% end %}
+                    next
+                  end
                 {% end %}
 
                 %var{name} =

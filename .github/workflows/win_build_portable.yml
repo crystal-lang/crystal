@@ -21,10 +21,10 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.8.2"
+          crystal: "1.9.2"
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Restore libraries
         uses: actions/cache/restore@v3
@@ -105,14 +105,14 @@ jobs:
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
 
       - name: Download shards release
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: crystal-lang/shards
           ref: v0.17.3
           path: shards
 
       - name: Download molinillo release
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: crystal-lang/crystal-molinillo
           ref: v0.2.0

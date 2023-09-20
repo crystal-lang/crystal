@@ -323,8 +323,9 @@ module Crystal
 
         target_machine.emit_obj_to_file llvm_mod, output_filename
       end
-
-      _, command, args = linker_command(program, [output_filename], output_filename, nil)
+      object_names = [output_filename]
+      output_filename = output_filename.rchop(unit.object_extension)
+      _, command, args = linker_command(program, object_names, output_filename, nil)
       print_command(command, args)
     end
 
@@ -383,7 +384,7 @@ module Crystal
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
 
-            if !program.has_flag?("no_win32_delay_load")
+            if program.has_flag?("preview_win32_delay_load")
               # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
               # it is harmless to skip this error because not all import libraries are always used, much
               # less the individual DLLs they refer to
@@ -684,7 +685,7 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
-      @object_extension : String
+      getter object_extension : String
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)

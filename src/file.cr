@@ -866,6 +866,12 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Rename the current `File`
+  def rename(new_filename : Path | String) : Nil
+    File.rename(@path, new_filename)
+    @path = new_filename.to_s
+  end
+
   # Sets the access and modification times of *filename*.
   #
   # Use `#utime` if the `File` is already open.

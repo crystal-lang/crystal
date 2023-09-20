@@ -235,4 +235,22 @@ describe "Semantic: primitives" do
       list.next(Int32)
       )) { int32 }
   end
+
+  it "looks up return type in correct scope (#13652)" do
+    assert_type(<<-CRYSTAL) { types["A"] }
+      class A
+      end
+
+      class Foo
+        @[Primitive(:foo)]
+        def foo : A
+        end
+      end
+
+      class Bar::A < Foo
+      end
+
+      Bar::A.new.foo
+      CRYSTAL
+  end
 end

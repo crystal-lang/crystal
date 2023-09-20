@@ -68,6 +68,12 @@ describe Process do
       end
     end
 
+    it "accepts nilable string for `chdir` (#13767)" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new("foobarbaz", chdir: nil.as(String?))
+      end
+    end
+
     it "raises if command is not executable" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path

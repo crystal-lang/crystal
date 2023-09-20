@@ -54,6 +54,8 @@ lib LibGC
     markers_m1 : Word
     bytes_reclaimed_since_gc : Word
     reclaimed_bytes_before_gc : Word
+    expl_freed_bytes_since_gc : Word
+    obtained_from_os_bytes : Word
   end
 
   fun init = GC_init
@@ -241,7 +243,9 @@ module GC
       gc_no: stats.gc_no.to_u64!,
       markers_m1: stats.markers_m1.to_u64!,
       bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc.to_u64!,
-      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc.to_u64!)
+      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc.to_u64!,
+      expl_freed_bytes_since_gc: stats.expl_freed_bytes_since_gc.to_u64!,
+      obtained_from_os_bytes: stats.obtained_from_os_bytes.to_u64!)
   end
 
   {% if flag?(:win32) %}
