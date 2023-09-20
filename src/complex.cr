@@ -316,14 +316,15 @@ struct Complex
     return Complex.new(@real ** other) if @imag.zero?
     if @real.zero?
       power = @imag ** other
-      return case other % 4
+      case other % 4
       when 0 then Complex.new(power, 0)
       when 1 then Complex.new(0, power)
       when 2 then Complex.new(-power, 0)
       else        Complex.new(0, -power)
       end
+    else
+      Complex.polar(abs ** other, phase * other.to_f64)
     end
-    Complex.polar(abs ** other, phase * other.to_f64)
   end
 
   def clone
