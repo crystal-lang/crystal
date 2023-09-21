@@ -278,8 +278,8 @@ module Crystal::System::FileDescriptor
     LibC.GetConsoleMode(handle, out _) != 0
   end
 
-  private def read_console(handle : LibC::HANDLE, buffer : UInt16*, count : Int) : Int32
-    if 0 == LibC.ReadConsoleW(handle, buffer, count, out units_read, nil)
+  private def read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+    if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
       raise IO::Error.from_winerror("ReadConsoleW")
     end
     units_read.to_i32!
@@ -293,21 +293,21 @@ module Crystal::System::FileDescriptor
     # 2. We can re-use the last 2/3 of the UTF-8 buffer to receive the UTF-16 data without worrying about data overlap.
 
     third = slice.size // 3
-    bytes_buffer = slice.to_unsafe
-    units_buffer = (bytes_buffer + third).unsafe_as(Pointer(UInt16))
+    units_buffer = (slice + third).unsafe_slice_of(UInt16)
 
     # One character may have two UTF-16 code units.
     raise IO::Error.new("Buffer size too small") if third < 2
 
     # Reads in two batches to guarantee that the last character is intact.
-    units_read = read_console(handle, units_buffer, third - 1)
+    units_read = read_console(handle, units_buffer[...-1])
     return 0 if units_read < 1
-    if units_buffer[units_read - 1] & 0xFC00 == 0xD800
-      units_read += read_console(handle, units_buffer + units_read, 1)
+    remainder = units_buffer + units_read
+    if remainder.size == 1 && units_buffer[units_read - 1] & 0xFC00 == 0xD800
+      units_read += read_console(handle, remainder)
     end
 
-    appender = bytes_buffer.appender
-    String.each_utf16_char(Slice.new(units_buffer, units_read)) do |char|
+    appender = slice.to_unsafe.appender
+    String.each_utf16_char(units_buffer[...units_read]) do |char|
       char.each_byte do |byte|
         appender << byte
       end
