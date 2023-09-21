@@ -6,6 +6,7 @@ describe Crystal::Config do
     {% begin %}
       # TODO: CRYSTAL_SPEC_COMPILER_BIN must be quoted (#11456)
       {% compiler = (env("CRYSTAL_SPEC_COMPILER_BIN") || "bin/crystal").id %}
+      # TODO: check against Crystal::HOST_TRIPLE instead
       Crystal::Config.host_target.should eq Crystal::Codegen::Target.new({{ `#{compiler} --version`.lines[-1] }}.lchop("Default target: "))
     {% end %}
   end
