@@ -286,18 +286,14 @@ module Random
   # Random.new.rand(6.2..21.768) # => 15.2989
   # ```
   def rand(range : Range(Float, Float)) : Float
-    span = range.end - range.begin
-    if range.excludes_end?
-      unless range.begin < range.end
-        raise ArgumentError.new "Invalid range for rand: #{range}"
-      end
-      range.begin + rand(span)
-    else
-      unless range.begin <= range.end
-        raise ArgumentError.new "Invalid range for rand: #{range}"
-      end
-      range.begin + rand * span
-    end
+    half_begin = range.begin / 2
+    half_end = range.end / 2
+    half_span = half_end - half_begin
+
+    # NOTE: This expression takes into account float number overflow and return value type.
+    return half_end + half_begin + half_span*(2*rand - 1) if half_span.finite? && half_span > 0
+    return range.end if half_span.zero? && !range.exclusive?
+    raise ArgumentError.new "Invalid range for rand: #{range}"
   end
 
   {% for type, values in {
