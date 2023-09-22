@@ -67,6 +67,16 @@
   end
 {% end %}
 
+private def bsearch_increment(x)
+  if x < -1
+    x >> 1
+  elsif x >= -1 && x < 1
+    1
+  else
+    x << 1
+  end
+end
+
 struct Range(B, E)
   # By using binary search, returns the first element
   # for which the passed block returns a truthy value.
@@ -77,11 +87,14 @@ struct Range(B, E)
   #
   # Returns `nil` if the block didn't return a truthy value for any element.
   #
+  # If the range type is `Int`, has no upper bound, and the block never returns
+  # a truthy value, then this method will loop forever.
+  #
   # ```
   # (0..10).bsearch { |x| x >= 5 }                       # => 5
   # (0..Float64::INFINITY).bsearch { |x| x ** 4 >= 256 } # => 4
   # ```
-  def bsearch(&block : B | E -> _)
+  def bsearch(&block)
     from = self.begin
     to = self.end
 
@@ -98,6 +111,25 @@ struct Range(B, E)
         end
       end
     {% end %}
+
+    {% if B < Int %}
+      # If the range has no upper bound, we'll increase the value of `begin` until we find _a_ match,
+      # then use the normal algorithm to find the _first_ match.
+      if to.nil?
+        candidate_bound = from
+        next_candidate_bound = bsearch_increment(candidate_bound)
+        loop do
+          if yield next_candidate_bound
+            to = next_candidate_bound
+            break
+          end
+          candidate_bound = next_candidate_bound
+          next_candidate_bound = bsearch_increment(candidate_bound)
+        end
+      end
+    {% end %}
+
+    return if to.nil?
 
     saved_to = to
     satisfied = nil

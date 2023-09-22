@@ -155,6 +155,10 @@ describe "Range" do
       (0_u8...10_u8).bsearch { |x| x >= 10 }.should eq nil
       (0_u32..10_u32).bsearch { |x| x >= 10 }.should eq 10_u32
       (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
+
+      # No upper bound
+      (0..).bsearch { true }.should eq 0
+      (-10...).bsearch { |x| x > 10 }.should eq 11
     end
 
     it "BigInt" do
