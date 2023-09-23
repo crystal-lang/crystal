@@ -59,10 +59,16 @@ end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    begin
-      {{type.id}}.new parse_scalar(ctx, node, Int64, {{type.id}})
-    rescue err : OverflowError | ArgumentError
-      node.raise "Expected {{type.id}}"
+    ctx.read_alias(node, {{type.id}}) do |obj|
+      return obj
+    end
+
+    if node.is_a?(YAML::Nodes::Scalar)
+      value = YAML::Schema::Core.parse_int(node, {{type.id}})
+      ctx.record_anchor(node, value)
+      value
+    else
+      node.raise "Expected scalar, not #{node.kind}"
     end
   end
 {% end %}
