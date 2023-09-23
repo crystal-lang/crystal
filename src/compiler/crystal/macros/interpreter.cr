@@ -571,6 +571,24 @@ module Crystal
       false
     end
 
+    def visit(node : While)
+      while true
+        node.cond.accept self
+        break if !@last.truthy?
+        node.body.accept self
+      end
+      false
+    end
+
+    def visit(node : Until)
+      while true
+        node.cond.accept self
+        break if @last.truthy?
+        node.body.accept self
+      end
+      false
+    end
+
     def visit(node : ASTNode)
       node.raise "can't execute #{node.class_desc} in a macro"
     end
