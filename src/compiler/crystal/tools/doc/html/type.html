@@ -17,9 +17,9 @@
 <div class="main-content">
 <h1 class="type-name">
 <% if type.program? %>
-  <%= type.full_name.gsub(/::/, "::<wbr>") %>
+  <%= type.full_name %>
 <% else %>
-  <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name.gsub(/::/, "::<wbr>") %>
+  <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name %>
 <% end %>
 </h1>
 
