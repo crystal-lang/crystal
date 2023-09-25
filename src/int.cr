@@ -890,7 +890,17 @@ struct Int8
     0_i8 - self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt8
     self < 0 ? 0_u8 &- self : to_u8!
   end
@@ -1000,7 +1010,17 @@ struct Int16
     0_i16 - self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt16
     self < 0 ? 0_u16 &- self : to_u16!
   end
@@ -1110,7 +1130,17 @@ struct Int32
     0 - self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt32
     self < 0 ? 0_u32 &- self : to_u32!
   end
@@ -1220,7 +1250,17 @@ struct Int64
     0_i64 - self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt64
     self < 0 ? 0_u64 &- self : to_u64!
   end
@@ -1333,7 +1373,17 @@ struct Int128
     Int128.new(0) - self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt128
     self < 0 ? UInt128.new(0) &- self : to_u128!
   end
@@ -1447,7 +1497,17 @@ struct UInt8
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
@@ -1561,7 +1621,17 @@ struct UInt16
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
@@ -1675,7 +1745,17 @@ struct UInt32
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
@@ -1789,7 +1869,17 @@ struct UInt64
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
@@ -1905,7 +1995,17 @@ struct UInt128
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
