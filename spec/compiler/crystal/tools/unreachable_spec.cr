@@ -239,7 +239,7 @@ describe "unreachable" do
       CRYSTAL
   end
 
-  it "does not finds method with `super`" do
+  it "finds method with `super`" do
     assert_unreachable <<-CRYSTAL
       class Foo
         ༓def foo
