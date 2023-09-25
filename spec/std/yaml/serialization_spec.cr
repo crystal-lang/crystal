@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/number"
 require "yaml"
 require "big"
 require "big/yaml"
@@ -53,7 +54,7 @@ describe "YAML serialization" do
       end
     end
 
-    {% for int in [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64] %}
+    {% for int in BUILTIN_INTEGER_TYPES %}
       it "does {{ int }}.from_yaml" do
         {{ int }}.from_yaml("0").should(be_a({{ int }})).should eq(0)
         {{ int }}.from_yaml("123").should(be_a({{ int }})).should eq(123)
