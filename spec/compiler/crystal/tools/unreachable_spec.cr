@@ -105,6 +105,22 @@ describe "unreachable" do
       CRYSTAL
   end
 
+  it "finds initializer" do
+    assert_unreachable <<-CRYSTAL
+      class Foo
+        ༓def initialize
+        end
+      end
+
+      class Bar
+        def initialize
+        end
+      end
+
+      Bar.new
+      CRYSTAL
+  end
+
   it "finds method with free variable" do
     assert_unreachable <<-CRYSTAL
       ༓def foo(u : U) forall U
@@ -181,7 +197,7 @@ describe "unreachable" do
       CRYSTAL
   end
 
-  it "finds shadowed method (1)" do
+  it "finds shadowed method" do
     assert_unreachable <<-CRYSTAL
       ༓def foo
       end
