@@ -101,7 +101,7 @@ describe "HTML" do
     end
 
     it "invalid utf-8" do
-      expect_raises(ArgumentError, "UTF-8 error: illegal byte") do
+      expect_raises(ArgumentError, "UTF-8 error") do
         HTML.unescape("test \xff\xfe").should eq "test \xff\xfe"
       end
     end
