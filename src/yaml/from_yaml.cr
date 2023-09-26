@@ -57,7 +57,7 @@ def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+{% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     ctx.read_alias(node, {{type.id}}) do |obj|
       return obj
