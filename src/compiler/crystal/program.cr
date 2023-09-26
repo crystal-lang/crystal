@@ -84,6 +84,14 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
+    record ConstSliceInfo,
+      name : String,
+      element_type : NumberKind,
+      args : Array(ASTNode)
+
+    # All constant slices constructed via the `Slice.literal` primitive.
+    getter const_slices = [] of ConstSliceInfo
+
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.

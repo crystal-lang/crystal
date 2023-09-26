@@ -1014,7 +1014,6 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      arg_counter = 0
       body_exps = node.body.as?(Expressions).try(&.expressions)
 
       # Variables that we don't want to get their type merged
@@ -1025,26 +1024,30 @@ module Crystal
       ignored_vars_after_block = nil
 
       meta_vars = @meta_vars.dup
+
       node.args.each do |arg|
-        # The parser generates __argN block arguments for tuple unpacking,
-        # and they need a special treatment because they shouldn't override
-        # local variables. So we search the unpacked vars in the body.
-        if arg.name.starts_with?("__arg") && body_exps
-          ignored_vars_after_block = node.args.dup
-
-          while arg_counter < body_exps.size &&
-                (assign = body_exps[arg_counter]).is_a?(Assign) &&
-                (target = assign.target).is_a?(Var) &&
-                (call = assign.value).is_a?(Call) &&
-                (call_var = call.obj).is_a?(Var) &&
-                call_var.name == arg.name
-            bind_block_var(node, target, meta_vars, before_block_vars)
-            ignored_vars_after_block << Var.new(target.name)
-            arg_counter += 1
-          end
-        end
-
         bind_block_var(node, arg, meta_vars, before_block_vars)
+      end
+
+      # If the block has unpacking, like:
+      #
+      #     do |(x, y)|
+      #       ...
+      #     end
+      #
+      # it was transformed to unpack the block vars inside the body:
+      #
+      #     do |__temp_1|
+      #       x, y = __temp_1
+      #       ...
+      #     end
+      #
+      # We need to treat these variables as block arguments (so they don't override existing local variables).
+      if unpacks = node.unpacks
+        ignored_vars_after_block = node.args.dup
+        unpacks.each_value do |unpack|
+          handle_unpacked_block_argument(node, unpack, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
       end
 
       @block_nest += 1
@@ -1094,6 +1097,22 @@ module Crystal
       node.bind_to node.body
 
       false
+    end
+
+    def handle_unpacked_block_argument(node, arg, meta_vars, before_block_vars, ignored_vars_after_block)
+      case arg
+      when Var
+        bind_block_var(node, arg, meta_vars, before_block_vars)
+        ignored_vars_after_block << Var.new(arg.name)
+      when Underscore
+        # Nothing
+      when Splat
+        handle_unpacked_block_argument(node, arg.exp, meta_vars, before_block_vars, ignored_vars_after_block)
+      when Expressions
+        arg.expressions.each do |exp|
+          handle_unpacked_block_argument(node, exp, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
+      end
     end
 
     def bind_block_var(node, target, meta_vars, before_block_vars)
@@ -2266,7 +2285,7 @@ module Crystal
     def visit(node : Primitive)
       # If the method where this primitive is defined has a return type, use it
       if return_type = typed_def.return_type
-        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        node.type = (path_lookup || scope).lookup_type(return_type, free_vars: free_vars)
         return false
       end
 
@@ -2279,6 +2298,8 @@ module Crystal
         visit_pointer_set node
       when "pointer_new"
         visit_pointer_new node
+      when "slice_literal"
+        visit_slice_literal node
       when "argc"
         # Already typed
       when "argv"
@@ -2396,6 +2417,51 @@ module Crystal
       end
 
       node.type = scope.instance_type
+    end
+
+    def visit_slice_literal(node)
+      call = self.call.not_nil!
+
+      case slice_type = scope.instance_type
+      when GenericClassType # Slice
+        call.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
+      when GenericClassInstanceType # Slice(T)
+        element_type = slice_type.type_vars["T"].type
+        kind = case element_type
+               when IntegerType
+                 element_type.kind
+               when FloatType
+                 element_type.kind
+               else
+                 call.raise "Only slice literals of primitive integer or float types can be created"
+               end
+
+        call.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+        end
+
+        # create the internal constant `$Slice:n` to hold the slice contents
+        const_name = "$Slice:#{@program.const_slices.size}"
+        const_value = Nop.new
+        const_value.type = @program.static_array_of(element_type, call.args.size)
+        const = Const.new(@program, @program, const_name, const_value)
+        @program.types[const_name] = const
+        @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, call.args)
+
+        # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
+        pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
+        size_node = NumberLiteral.new(call.args.size.to_s, :i32).at(node)
+        read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
+        extra = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
+
+        extra.accept self
+        node.extra = extra
+        node.type = slice_type
+        call.expanded = extra
+      else
+        node.raise "BUG: Unknown scope for slice_literal primitive"
+      end
     end
 
     def visit_struct_or_union_set(node)

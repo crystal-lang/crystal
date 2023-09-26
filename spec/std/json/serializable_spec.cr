@@ -212,6 +212,20 @@ class JSONAttrWithTimeEpoch
   property value : Time
 end
 
+class JSONAttrNilableWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class JSONAttrDefaultWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
+end
+
 class JSONAttrWithTimeEpochMillis
   include JSON::Serializable
 
@@ -789,6 +803,16 @@ describe "JSON mapping" do
       json = JSONAttrWithDefaults.from_json(%({}))
       json.h.should eq [1, 2, 3]
     end
+  end
+
+  it "converter with null value (#13655)" do
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value": null})).value.should be_nil
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value": null})).value.should eq Time.unix(0)
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
   end
 
   it "uses Time::EpochConverter" do

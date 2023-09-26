@@ -343,15 +343,17 @@ describe JSON::PullParser do
     assert_raw %({"foo":"bar"})
   end
 
-  describe "read?" do
+  describe "#read?" do
     {% for pair in [[Int8, 1_i8],
                     [Int16, 1_i16],
                     [Int32, 1_i32],
                     [Int64, 1_i64],
+                    [Int128, "Int128.new(1)".id],
                     [UInt8, 1_u8],
                     [UInt16, 1_u16],
                     [UInt32, 1_u32],
                     [UInt64, 1_u64],
+                    [UInt128, "UInt128.new(1)".id],
                     [Float32, 1.0_f32],
                     [Float64, 1.0],
                     [String, "foo"],
@@ -370,33 +372,27 @@ describe JSON::PullParser do
       end
     {% end %}
 
-    it_reads Float32::MIN
-    it_reads -10_f32
-    it_reads 0_f32
-    it_reads 10_f32
-    it_reads Float32::MAX
+    {% for num in Int::Primitive.union_types %}
+      it_reads {{ num }}::MIN
+      {% unless num < Int::Unsigned %}
+        it_reads {{ num }}.new(-10)
+        it_reads {{ num }}.zero
+      {% end %}
+      it_reads {{ num }}.new(10)
+      it_reads {{ num }}::MAX
+    {% end %}
 
-    it_reads Float64::MIN
-    it_reads -10_f64
-    it_reads 0_f64
-    it_reads 10_f64
-    it_reads Float64::MAX
+    {% for i in [8, 16, 32, 64, 128] %}
+      it "returns nil in place of Int{{i}} when an overflow occurs" do
+        JSON::PullParser.new(Int{{i}}::MAX.to_s + "0").read?(Int{{i}}).should be_nil
+        JSON::PullParser.new(Int{{i}}::MIN.to_s + "0").read?(Int{{i}}).should be_nil
+      end
 
-    it_reads Int64::MIN
-    it_reads -10_i64
-    it_reads 0_i64
-    it_reads 10_i64
-    it_reads Int64::MAX
-
-    it "reads > Int64::MAX" do
-      pull = JSON::PullParser.new(Int64::MAX.to_s + "0")
-      pull.read?(Int64).should be_nil
-    end
-
-    it "reads < Int64::MIN" do
-      pull = JSON::PullParser.new(Int64::MIN.to_s + "0")
-      pull.read?(Int64).should be_nil
-    end
+      it "returns nil in place of UInt{{i}} when an overflow occurs" do
+        JSON::PullParser.new(UInt{{i}}::MAX.to_s + "0").read?(UInt{{i}}).should be_nil
+        JSON::PullParser.new("-1").read?(UInt{{i}}).should be_nil
+      end
+    {% end %}
 
     it "reads > Float32::MAX" do
       pull = JSON::PullParser.new(Float64::MAX.to_s)
@@ -408,16 +404,6 @@ describe JSON::PullParser do
       pull.read?(Float32).should be_nil
     end
 
-    it "reads > UInt64::MAX" do
-      pull = JSON::PullParser.new(UInt64::MAX.to_s + "0")
-      pull.read?(UInt64).should be_nil
-    end
-
-    it "reads == UInt64::MAX" do
-      pull = JSON::PullParser.new(UInt64::MAX.to_s)
-      pull.read?(UInt64).should eq(UInt64::MAX)
-    end
-
     it "reads > Float64::MAX" do
       pull = JSON::PullParser.new("1" + Float64::MAX.to_s)
       pull.read?(Float64).should be_nil
@@ -427,23 +413,6 @@ describe JSON::PullParser do
       pull = JSON::PullParser.new("-1" + Float64::MAX.to_s)
       pull.read?(Float64).should be_nil
     end
-
-    {% for pair in [[Int8, Int64::MAX],
-                    [Int16, Int64::MAX],
-                    [Int32, Int64::MAX],
-                    [UInt8, -1],
-                    [UInt16, -1],
-                    [UInt32, -1],
-                    [UInt64, -1],
-                    [Float32, Float64::MAX]] %}
-      {% type = pair[0] %}
-      {% value = pair[1] %}
-
-      it "returns nil in place of {{type}} when an overflow occurs" do
-        pull = JSON::PullParser.new({{value}}.to_json)
-        pull.read?({{type}}).should be_nil
-      end
-    {% end %}
 
     it "doesn't accept nan or infinity" do
       pull = JSON::PullParser.new(%("nan"))

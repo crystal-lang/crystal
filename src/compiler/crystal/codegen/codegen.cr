@@ -176,8 +176,7 @@ module Crystal
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
-      @single_module = !!single_module
+    def initialize(@program : Program, @node : ASTNode, @single_module : Bool = false, @debug = Debug::Default)
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")
@@ -233,6 +232,10 @@ module Crystal
       unless program.symbols.empty?
         symbol_table = define_symbol_table @llvm_mod, @llvm_typer
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
+      end
+
+      program.const_slices.each do |info|
+        define_slice_constant(info)
       end
 
       @last = llvm_nil
@@ -292,6 +295,34 @@ module Crystal
 
     def define_symbol_table(llvm_mod, llvm_typer)
       llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+    end
+
+    def define_slice_constant(info : Program::ConstSliceInfo)
+      args = info.args.to_unsafe
+      kind = info.element_type
+      llvm_element_type = llvm_type(@program.type_from_literal_kind(kind))
+      llvm_elements = Array.new(info.args.size) do |i|
+        num = args[i].as(NumberLiteral)
+        case kind
+        in .i8?   then llvm_element_type.const_int(num.value.to_i8)
+        in .i16?  then llvm_element_type.const_int(num.value.to_i16)
+        in .i32?  then llvm_element_type.const_int(num.value.to_i32)
+        in .i64?  then llvm_element_type.const_int(num.value.to_i64)
+        in .i128? then llvm_element_type.const_int(num.value.to_i128)
+        in .u8?   then llvm_element_type.const_int(num.value.to_u8)
+        in .u16?  then llvm_element_type.const_int(num.value.to_u16)
+        in .u32?  then llvm_element_type.const_int(num.value.to_u32)
+        in .u64?  then llvm_element_type.const_int(num.value.to_u64)
+        in .u128? then llvm_element_type.const_int(num.value.to_u128)
+        in .f32?  then llvm_element_type.const_float(num.value)
+        in .f64?  then llvm_element_type.const_double(num.value)
+        end
+      end
+
+      global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
+      global.linkage = LLVM::Linkage::Private
+      global.global_constant = true
+      global.initializer = llvm_element_type.const_array(llvm_elements)
     end
 
     def data_layout

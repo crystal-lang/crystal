@@ -633,7 +633,7 @@ class Crystal::Call
         msg << '\n'
         if similar_name == def_name
           # This check is for the case `a if a = 1`
-          msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)"
+          msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it."
         else
           msg << "Did you mean '#{similar_name}'?"
         end

@@ -797,8 +797,10 @@ class File < IO::FileDescriptor
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
+        file.sync = true
         file.write(content)
       when IO
+        file.sync = true
         IO.copy(content, file)
       else
         file.print(content)
@@ -864,6 +866,12 @@ class File < IO::FileDescriptor
     if error = Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
       raise error
     end
+  end
+
+  # Rename the current `File`
+  def rename(new_filename : Path | String) : Nil
+    File.rename(@path, new_filename)
+    @path = new_filename.to_s
   end
 
   # Sets the access and modification times of *filename*.
@@ -943,12 +951,12 @@ class File < IO::FileDescriptor
   # file.info.permissions.value # => 0o700
   # ```
   def chmod(permissions : Int | Permissions) : Nil
-    Crystal::System::File.fchmod(@path, fd, permissions)
+    system_chmod(@path, permissions)
   end
 
   # Sets the access and modification times
   def utime(atime : Time, mtime : Time) : Nil
-    Crystal::System::File.futimens(@path, fd, atime, mtime)
+    system_utime(atime, mtime, @path)
   end
 
   # Attempts to set the access and modification times

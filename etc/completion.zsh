@@ -7,6 +7,7 @@ _crystal_commands() {
   commands=(
     "init:generate new crystal project"
     "build:build an executable"
+    "clear_cache:clear the compiler cache"
     "docs:generate documentation"
     "env:print Crystal environment information"
     "eval:eval code from args or standard input"

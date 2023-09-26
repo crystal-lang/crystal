@@ -235,4 +235,100 @@ describe "Semantic: primitives" do
       list.next(Int32)
       )) { int32 }
   end
+
+  it "looks up return type in correct scope (#13652)" do
+    assert_type(<<-CRYSTAL) { types["A"] }
+      class A
+      end
+
+      class Foo
+        @[Primitive(:foo)]
+        def foo : A
+        end
+      end
+
+      class Bar::A < Foo
+      end
+
+      Bar::A.new.foo
+      CRYSTAL
+  end
+
+  describe "Slice.literal" do
+    def_slice_literal = <<-CRYSTAL
+      struct Slice(T)
+        def initialize(pointer : T*, size : Int32, *, read_only : Bool)
+        end
+
+        @[Primitive(:slice_literal)]
+        def self.literal(*args)
+        end
+      end
+      CRYSTAL
+
+    context "with element type" do
+      it "types primitive int literal" do
+        assert_type(<<-CRYSTAL) { generic_class "Slice", uint8 }
+          #{def_slice_literal}
+          Slice(UInt8).literal(0, 1, 4, 9)
+          CRYSTAL
+      end
+
+      it "types primitive float literal" do
+        assert_type(<<-CRYSTAL) { generic_class "Slice", float64 }
+          #{def_slice_literal}
+          Slice(Float64).literal(0, 1, 4, 9)
+          CRYSTAL
+      end
+
+      it "types empty literal" do
+        assert_type(<<-CRYSTAL) { generic_class "Slice", int32 }
+          #{def_slice_literal}
+          Slice(Int32).literal
+          CRYSTAL
+      end
+
+      it "errors if element type is not primitive int or float" do
+        assert_error <<-CRYSTAL, "Only slice literals of primitive integer or float types can be created"
+          #{def_slice_literal}
+          Slice(String).literal
+          CRYSTAL
+
+        assert_error <<-CRYSTAL, "Only slice literals of primitive integer or float types can be created"
+          #{def_slice_literal}
+          Slice(Bool).literal
+          CRYSTAL
+
+        assert_error <<-CRYSTAL, "Only slice literals of primitive integer or float types can be created"
+          #{def_slice_literal}
+          Slice(Int32 | Int64).literal
+          CRYSTAL
+      end
+
+      it "errors if element is not number literal" do
+        assert_error <<-CRYSTAL, "Expected NumberLiteral, got StringLiteral"
+          #{def_slice_literal}
+          Slice(Int32).literal("")
+          CRYSTAL
+
+        assert_error <<-CRYSTAL, "Expected NumberLiteral, got Var"
+          #{def_slice_literal}
+          x = 1
+          Slice(Int32).literal(x)
+          CRYSTAL
+      end
+
+      it "errors if element is out of range" do
+        assert_error <<-CRYSTAL, "Argument out of range for a Slice(UInt8)"
+          #{def_slice_literal}
+          Slice(UInt8).literal(-1)
+          CRYSTAL
+
+        assert_error <<-CRYSTAL, "Argument out of range for a Slice(UInt8)"
+          #{def_slice_literal}
+          Slice(UInt8).literal(256)
+          CRYSTAL
+      end
+    end
+  end
 end

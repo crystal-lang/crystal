@@ -18,7 +18,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache libraries
         id: cache-libs
@@ -90,7 +90,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache libraries
         id: cache-dlls
@@ -218,7 +218,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v3
@@ -252,14 +252,14 @@ jobs:
         run: make -f Makefile.win samples
 
   x86_64-windows-release:
-    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/ci/'))
+    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
     needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
 
   x86_64-windows-installer:
-    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/ci/'))
+    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
     runs-on: windows-2022
     needs: [x86_64-windows-release]
     steps:
@@ -268,7 +268,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download Crystal executable
         uses: actions/download-artifact@v3

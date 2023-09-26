@@ -45,6 +45,7 @@ class Crystal::Command
         hierarchy                show type hierarchy
         dependencies             show file dependency tree
         implementations          show implementations for given call in location
+        unreachable              show methods that are never called
         types                    show type of main variables
         --help, -h               show this help
     USAGE
@@ -191,6 +192,9 @@ class Crystal::Command
     when "types".starts_with?(tool)
       options.shift
       types
+    when "unreachable".starts_with?(tool)
+      options.shift
+      unreachable
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
@@ -243,8 +247,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false)
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -358,7 +362,8 @@ class Crystal::Command
 
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
-                              single_file = false, dependencies = false)
+                              single_file = false, dependencies = false,
+                              path_filter = false)
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
@@ -449,6 +454,16 @@ class Crystal::Command
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
+      end
+
+      if path_filter
+        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+          includes << f
+        end
+
+        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+          excludes << f
+        end
       end
 
       unless no_codegen
