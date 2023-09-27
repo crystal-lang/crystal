@@ -346,12 +346,33 @@ Disable colored output.
 .Op --
 .Op arguments
 .Pp
-Run a tool. The available tools are: context, format, hierarchy, implementations, and types.
+Run a tool. The available tools are: context, dependencies, format, hierarchy, implementations, and types.
 .Pp
 Tools:
 .Bl -tag -offset indent
 .It Cm context
 Show context for given location.
+.It Cm dependencies
+Show tree of required source files.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl D Ar FLAG, Fl -define= Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl f Ar FORMAT, Fl -format= Ar FORMAT
+Output format 'tree' (default), 'flat', 'dot', or 'mermaid'.
+.It Fl i Ar PATH, Fl -include= Ar PATH
+Include path in output.
+.It Fl e Ar PATH, Fl -exclude= Ar PATH
+Exclude path in output.
+.It Fl -error-trace
+Show full error trace.
+.It Fl -prelude
+Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.It Fl -verbose
+Show skipped and heads of filtered paths
+.El
 .It Cm expand
 Show macro expansion for given location.
 .It Cm format
