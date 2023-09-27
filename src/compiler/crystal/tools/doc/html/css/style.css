@@ -1,3 +1,7 @@
+:root {
+  color-scheme: light dark;
+}
+
 html, body {
   background: #FFFFFF;
   position: relative;
@@ -818,10 +822,6 @@ table td {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
-
   html, body {
     background: #1b1b1b;
   }
@@ -846,6 +846,10 @@ table td {
     color: white;
     background-color: #202020;
     border: 1px solid #353535;
+  }
+
+  .project-versions-nav > option {
+    background-color: #222;
   }
 
   .superclass-hierarchy .superclass a,
