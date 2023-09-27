@@ -8,18 +8,18 @@ module Crystal::System::Thread
     @th
   end
 
-  def self.new_handle(thread_obj : ::Thread) : Handle
-    handle = uninitialized LibC::PthreadT
-
+  private def init_handle
+    # NOTE: the thread may start before `pthread_create` returns, so `@th` must
+    # be set as soon as possible; we cannot use a separate handle and assign it
+    # to `@th`, which would have been too late
     ret = GC.pthread_create(
-      thread: pointerof(handle),
+      thread: pointerof(@th),
       attr: Pointer(LibC::PthreadAttrT).null,
       start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
-      arg: thread_obj.as(Void*),
+      arg: self.as(Void*),
     )
 
     raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
-    handle
   end
 
   def self.current_handle : Handle

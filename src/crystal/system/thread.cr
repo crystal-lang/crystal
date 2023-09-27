@@ -54,16 +54,9 @@ class Thread
   end
 
   # Creates and starts a new system thread.
-  def self.new(&func : ->)
-    instance = allocate
-    instance.initialize(instance, func)
-    instance
-  end
-
-  # `myself` is equal to `self`; this workaround is needed to avoid the compiler
-  # complaining about indirect initialization
-  private def initialize(myself : self, @func : ->)
-    @th = Crystal::System::Thread.new_handle(myself)
+  def initialize(&@func : ->)
+    @th = uninitialized Crystal::System::Thread::Handle
+    init_handle
   end
 
   # Used once to initialize the thread object representing the main thread of

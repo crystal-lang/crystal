@@ -8,8 +8,8 @@ module Crystal::System::Thread
     @th
   end
 
-  def self.new_handle(thread_obj : ::Thread) : Handle
-    GC.beginthreadex(
+  private def init_handle
+    @th = GC.beginthreadex(
       security: Pointer(Void).null,
       stack_size: LibC::UInt.zero,
       start_address: ->(data : Void*) { data.as(::Thread).start; LibC::UInt.zero },
