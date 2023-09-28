@@ -24,6 +24,14 @@ class File::Error < IO::Error
     "#{message}: '#{file.inspect_unquoted}'"
   end
 
+  protected def self.build_message(message, *, file : File) : String
+    build_message(message, file: file.path)
+  end
+
+  protected def self.build_message(message, *, file) : String
+    build_message(message, file: file.to_s)
+  end
+
   protected def self.build_message(message, *, file : String, other : String) : String
     "#{message}: '#{file.inspect_unquoted}' -> '#{other.inspect_unquoted}'"
   end
@@ -38,6 +46,14 @@ class File::Error < IO::Error
       end
     end
   {% end %}
+
+  def self.new(message, *, file : File, other : String? = nil)
+    new(message, file: file.path, other: other)
+  end
+
+  def self.new(message, *, file, other : String? = nil)
+    new(message, file: file.to_s, other: other)
+  end
 
   def initialize(message, *, file : String | Path, @other : String? = nil)
     @file = file.to_s

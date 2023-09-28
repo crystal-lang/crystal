@@ -52,12 +52,12 @@ module IO::Overlapped
       if timeout && error.wait_timeout?
         return true
       else
-        raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
+        raise File::Error.from_os_error("GetQueuedCompletionStatusEx", error)
       end
     end
 
     if removed == 0
-      raise IO::Error.new("GetQueuedCompletionStatusEx returned 0")
+      raise File::Error.new("GetQueuedCompletionStatusEx returned 0")
     end
 
     removed.times do |i|
@@ -112,7 +112,7 @@ module IO::Overlapped
         error = WinError.value
         yield error
 
-        raise IO::Error.from_os_error("GetOverlappedResult", error)
+        raise File::Error.from_os_error("GetOverlappedResult", error)
       end
 
       bytes
@@ -126,7 +126,7 @@ module IO::Overlapped
         error = WinError.wsa_value
         yield error
 
-        raise IO::Error.from_os_error("WSAGetOverlappedResult", error)
+        raise File::Error.from_os_error("WSAGetOverlappedResult", error)
       end
 
       bytes
@@ -190,9 +190,9 @@ module IO::Overlapped
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}"
+          raise File::Error.new "File not open for #{writing ? "writing" : "reading"}", file: self
         else
-          raise IO::Error.from_os_error(method, error)
+          raise File::Error.from_os_error(method, error, file: self)
         end
       else
         operation.synchronous = true
@@ -224,7 +224,7 @@ module IO::Overlapped
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
         else
-          raise IO::Error.from_os_error(method, error)
+          raise File::Error.from_os_error(method, error, file: self)
         end
       else
         operation.synchronous = true
