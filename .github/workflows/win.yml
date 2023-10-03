@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  CI_LLVM_VERSION: "17.0.1"
+  CI_LLVM_VERSION: "17.0.2"
 
 jobs:
   x86_64-windows-libs:
