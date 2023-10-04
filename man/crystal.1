@@ -117,6 +117,8 @@ Generate the output without any symbolic debug symbols.
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -emit Op asm|llvm-bc|llvm-ir|obj
 Comma separated list of types of output for the compiler to emit. You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
+.It Fl -frame-pointers Op auto|always|non-leaf
+Control the preservation of frame pointers. The default value, --frame-pointers=auto, will preserve frame pointers on debug builds and try to omit them on release builds (certain platforms require them to stay enabled). --frame-pointers=always will always preserve them, and non-leaf will only force their preservation on non-leaf functions.
 .It Fl f Ar text|json, Fl -format Ar text|json
 Format of output. Defaults to text. The json format can be used to get a more parser-friendly output.
 .It Fl -error-trace

@@ -397,6 +397,14 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
+
+        opts.on("--frame-pointers auto|always|non-leaf", "Control the preservation of frame pointers") do |frame_pointers_s|
+          if frame_pointers = FramePointers.parse? frame_pointers_s
+            compiler.frame_pointers = frame_pointers
+          else
+            error "Invalid value `#{frame_pointers_s}` for frame-pointers"
+          end
+        end
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
