@@ -1,7 +1,7 @@
 module Crystal
   module DWARF
     struct Strings
-      def initialize(@io : IO::FileDescriptor, @offset : UInt32 | UInt64, size)
+      def initialize(@io : SimpleFileDescriptor, @offset : UInt32 | UInt64, size)
         # Read a good chunk of bytes to decode strings faster
         # (avoid seeking/reading the IO too many times)
         @buffer = Bytes.new(Math.max(16384, size))

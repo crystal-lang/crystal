@@ -15,7 +15,7 @@ module Crystal
       @offset : Int64
       @ref_offset : Int64
 
-      def initialize(@io : IO::FileDescriptor, @offset)
+      def initialize(@io : SimpleFileDescriptor, @offset)
         @ref_offset = offset
 
         @unit_length = @io.read_bytes(UInt32)

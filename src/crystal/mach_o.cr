@@ -92,11 +92,11 @@ module Crystal
 
     def self.open(path, &)
       File.open(path, "r") do |file|
-        yield new(file)
+        yield new(SimpleFileDescriptor.new(file.fd))
       end
     end
 
-    def initialize(@io : IO::FileDescriptor)
+    def initialize(@io : SimpleFileDescriptor)
       @magic = read_magic
       @cputype = CpuType.new(@io.read_bytes(Int32, endianness))
       @cpusubtype = @io.read_bytes(Int32, endianness)

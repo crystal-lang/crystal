@@ -148,11 +148,11 @@ module Crystal
 
     def self.open(path, &)
       File.open(path, "r") do |file|
-        yield new(file)
+        yield new(SimpleFileDescriptor.new(file.fd))
       end
     end
 
-    def initialize(@io : IO::FileDescriptor)
+    def initialize(@io : SimpleFileDescriptor)
       read_magic
       read_ident
       read_header

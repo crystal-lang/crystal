@@ -1,4 +1,5 @@
 require "crystal/system/file_descriptor"
+require "crystal/simple_file_descriptor"
 
 # An `IO` over a file descriptor.
 class IO::FileDescriptor < IO

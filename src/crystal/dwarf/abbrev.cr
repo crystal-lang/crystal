@@ -237,7 +237,7 @@ module Crystal
         @children
       end
 
-      def self.read(io : IO::FileDescriptor, offset)
+      def self.read(io : SimpleFileDescriptor, offset)
         abbreviations = [] of Abbrev
 
         io.seek(io.tell + offset)
