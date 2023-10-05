@@ -6,6 +6,9 @@ on:
       release:
         required: true
         type: boolean
+      llvm_version:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -88,7 +91,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: llvm
-          key: llvm-libs-16.0.3-msvc
+          key: llvm-libs-${{ inputs.llvm_version }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
