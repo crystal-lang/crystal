@@ -9,7 +9,7 @@ module Crystal
     end
 
     def read(slice : Bytes)
-      LibC.read(@fd, slice, slice.size)
+      LibC.read(@fd, slice, slice.size).to_i
     end
 
     def write(slice : Bytes) : Nil
@@ -22,6 +22,7 @@ module Crystal
 
     def pos=(value)
       seek(value)
+      value
     end
 
     def seek(offset, whence : Seek = Seek::Set)
