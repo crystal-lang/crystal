@@ -15,9 +15,9 @@ module Crystal::System::FileDescriptor
       bytes_read = LibC._read(fd, slice, slice.size)
       if bytes_read == -1
         if Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for reading"
+          raise IO::Error.new "File not open for reading", target: self
         else
-          raise IO::Error.from_errno("Error reading file")
+          raise IO::Error.from_errno("Error reading file", target: self)
         end
       end
       bytes_read
@@ -36,9 +36,9 @@ module Crystal::System::FileDescriptor
         bytes_written = LibC._write(fd, slice, slice.size)
         if bytes_written == -1
           if Errno.value == Errno::EBADF
-            raise IO::Error.new "File not open for writing"
+            raise IO::Error.new "File not open for writing", target: self
           else
-            raise IO::Error.from_errno("Error writing file")
+            raise IO::Error.from_errno("Error writing file", target: self)
           end
         end
       else
@@ -106,7 +106,7 @@ module Crystal::System::FileDescriptor
 
       if file_type == LibC::FILE_TYPE_UNKNOWN
         error = WinError.value
-        raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+        raise IO::Error.from_os_error("Unable to get info", error, target: self) unless error == WinError::ERROR_SUCCESS
       end
     end
 
@@ -129,13 +129,13 @@ module Crystal::System::FileDescriptor
     seek_value = LibC._lseeki64(fd, offset, whence)
 
     if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek", target: self
     end
   end
 
   private def system_pos
     pos = LibC._lseeki64(fd, 0, IO::Seek::Current)
-    raise IO::Error.from_errno "Unable to tell" if pos == -1
+    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
     pos
   end
 
@@ -165,7 +165,7 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file")
+        raise IO::Error.from_errno("Error closing file", target: self)
       end
     end
   end
@@ -204,7 +204,7 @@ module Crystal::System::FileDescriptor
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
       return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error
+      raise IO::Error.from_os_error "Error reading file", error, target: self
     end
 
     bytes_read.to_i64

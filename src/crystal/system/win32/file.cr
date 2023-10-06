@@ -493,7 +493,7 @@ module Crystal::System::File
       if winerror == WinError::ERROR_LOCK_VIOLATION
         false
       else
-        raise IO::Error.from_os_error("LockFileEx", winerror)
+        raise IO::Error.from_os_error("LockFileEx", winerror, target: self)
       end
     end
   end
@@ -509,7 +509,7 @@ module Crystal::System::File
 
   private def system_fsync(flush_metadata = true) : Nil
     if LibC._commit(fd) != 0
-      raise IO::Error.from_errno("Error syncing file")
+      raise IO::Error.from_errno("Error syncing file", target: self)
     end
   end
 end
