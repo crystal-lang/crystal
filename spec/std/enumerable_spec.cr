@@ -436,9 +436,14 @@ describe "Enumerable" do
     end
   end
 
-  describe "empty?" do
+  describe "#empty?" do
     it { SpecEnumerable.new.empty?.should be_false }
     it { SpecEmptyEnumerable.new.empty?.should be_true }
+  end
+
+  describe "#present?" do
+    it { SpecEnumerable.new.present?.should be_true }
+    it { SpecEmptyEnumerable.new.present?.should be_false }
   end
 
   describe "find" do
