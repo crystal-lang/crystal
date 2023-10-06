@@ -715,6 +715,24 @@ describe "FileUtils" do
       end
     end
 
+    {% if flag?(:unix) %}
+      it "overwrites a destination named pipe" do
+        with_tempfile("ln_sf_src", "ln_sf_dst_pipe_exists") do |path1, path2|
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            FileUtils.touch([path1])
+            `mkfifo #{path2}`
+            File.symlink?(path1).should be_false
+            File.symlink?(path2).should be_false
+
+            FileUtils.ln_sf(arg1, arg2)
+            File.symlink?(path1).should be_false
+            File.symlink?(path2).should be_true
+            FileUtils.rm_rf([path1, path2])
+          end
+        end
+      end
+    {% end %}
+
     it "overwrites a destination file inside a dir" do
       with_tempfile("ln_sf_dst_dir", "ln_sf_dst") do |dir, path2|
         dir += File::SEPARATOR
