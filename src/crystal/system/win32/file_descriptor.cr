@@ -11,8 +11,8 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_read(slice : Bytes)
     handle = windows_handle
-    if console_mode?(handle)
-      read_console(handle, slice)
+    if ConsoleUtils.console?(handle)
+      ConsoleUtils.read(handle, slice)
     elsif system_blocking?
       bytes_read = LibC._read(fd, slice, slice.size)
       if bytes_read == -1
@@ -275,46 +275,58 @@ module Crystal::System::FileDescriptor
     end
     ret
   end
+end
 
-  private def console_mode?(handle)
+private class ConsoleUtils
+  # N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
+  private BUFFER_SIZE = 64
+  @@utf16_buffer = Slice(UInt16).new(BUFFER_SIZE)
+  @@utf8_buffer = Slice(UInt8).new(3 * BUFFER_SIZE)
+
+  # `@@buffer` points to part of `@@utf8_buffer`.
+  # It represents data that has not been read yet.
+  @@buffer : Bytes = @@utf8_buffer[0, 0]
+
+  # Determines if *handle* is a console.
+  def self.console?(handle : LibC::HANDLE) : Bool
     LibC.GetConsoleMode(handle, out _) != 0
   end
 
-  private def read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-    if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
-      raise IO::Error.from_winerror("ReadConsoleW")
-    end
-    units_read.to_i32!
+  # Reads to *slice* from the console specified by *handle*,
+  # and return the actual number of bytes read.
+  def self.read(handle : LibC::HANDLE, slice : Bytes) : Int32
+    return 0 if slice.empty?
+    fill_buffer(handle) if @@buffer.empty?
+
+    bytes_read = slice.size < @@buffer.size ? slice.size : @@buffer.size
+    @@buffer[0, bytes_read].copy_to(slice)
+    @@buffer += bytes_read
+    bytes_read
   end
 
-  private def read_console(handle : LibC::HANDLE, slice : Bytes) : Int32
-    # Characters between U+0000 and U+FFFF have 1 UTF-16 code unit and up to 3 UTF-8 code unit.
-    # Characters between U+10000 and U+10FFFF have 2 UTF-16 code units and 4 UTF-8 code units.
-    # The following conclusions can therefore be drawn:
-    # 1. N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
-    # 2. We can re-use the last 2/3 of the UTF-8 buffer to receive the UTF-16 data without worrying about data overlap.
-
-    third = slice.size // 3
-    units_buffer = (slice + third).unsafe_slice_of(UInt16)
-
-    # One character may have two UTF-16 code units.
-    raise IO::Error.new("Buffer size too small") if third < 2
-
+  private def self.fill_buffer(handle : LibC::HANDLE) : Nil
     # Reads in two batches to guarantee that the last character is intact.
-    units_read = read_console(handle, units_buffer[...-1])
-    return 0 if units_read < 1
-    remainder = units_buffer + units_read
-    if remainder.size == 1 && units_buffer[units_read - 1] & 0xFC00 == 0xD800
-      units_read += read_console(handle, remainder)
+    units_read = read_utf16_units(handle, @@utf16_buffer[...-1])
+    return if units_read < 1
+    remainder = @@utf16_buffer + units_read
+    if remainder.size == 1 && @@utf16_buffer[units_read - 1] & 0xFC00 == 0xD800
+      units_read += read_utf16_units(handle, remainder)
     end
 
-    appender = slice.to_unsafe.appender
-    String.each_utf16_char(units_buffer[...units_read]) do |char|
+    appender = @@utf8_buffer.to_unsafe.appender
+    String.each_utf16_char(@@utf16_buffer[0, units_read]) do |char|
       char.each_byte do |byte|
         appender << byte
       end
     end
-    appender.size.to_i32!
+    @@buffer = @@utf8_buffer[0, appender.size]
+  end
+
+  private def self.read_utf16_units(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+    if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
+      raise IO::Error.from_winerror("ReadConsoleW")
+    end
+    units_read.to_i32
   end
 end
 
