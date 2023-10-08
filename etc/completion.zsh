@@ -61,6 +61,11 @@ local -a cursor_args; cursor_args=(
   '(-c --cursor)'{-c,--cursor}'[cursor location with LOC as path/to/file.cr:line:column]:LOC'
 )
 
+local -a include_exclude_args; cursor_args=(
+  '(-i --include)'{-i,--include}'[Include path in output]' \
+  '(-i --exclude)'{-i,--exclude}'[Exclude path in output]'
+)
+
 local -a programfile; programfile='*:Crystal File:_files -g "*.cr(.)"'
 
 # TODO make 'emit' allow completion with more than one
@@ -158,6 +163,7 @@ _crystal-tool() {
 
       commands=(
         "context:show context for given location"
+        "dependencies:show tree of required source files"
         "expand:show macro expansion for given location"
         "format:format project, directories and/or files"
         "hierarchy:show type hierarchy"
@@ -181,6 +187,17 @@ _crystal-tool() {
             $format_args \
             $prelude_args \
             $cursor_args
+        ;;
+
+        (dependencies)
+          _arguments \
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $exec_args \
+            '(-f --format)'{-f,--format}'[output format 'tree' (default), 'flat', 'dot', or 'mermaid']:' \
+            $prelude_args \
+            $include_exclude_args
         ;;
 
         (expand)

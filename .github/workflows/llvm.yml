@@ -24,10 +24,12 @@ jobs:
             llvm_ubuntu_version: "18.04"
           - llvm_version: "16.0.3"
             llvm_ubuntu_version: "22.04"
+          - llvm_version: "17.0.2"
+            llvm_ubuntu_version: "22.04"
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache LLVM
         id: cache-llvm

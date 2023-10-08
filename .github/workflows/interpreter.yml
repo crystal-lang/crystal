@@ -16,7 +16,7 @@ jobs:
       image: crystallang/crystal:1.9.2-build
     name: "Test Interpreter"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Test interpreter_spec
         run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
@@ -27,7 +27,7 @@ jobs:
       image: crystallang/crystal:1.9.2-build
     name: Build interpreter
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build compiler
         run: make interpreter=1 release=1
@@ -49,7 +49,7 @@ jobs:
         part: [0, 1, 2, 3]
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download compiler artifact
         uses: actions/download-artifact@v3

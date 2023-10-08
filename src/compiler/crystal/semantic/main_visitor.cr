@@ -2298,6 +2298,8 @@ module Crystal
         visit_pointer_set node
       when "pointer_new"
         visit_pointer_new node
+      when "slice_literal"
+        visit_slice_literal node
       when "argc"
         # Already typed
       when "argv"
@@ -2415,6 +2417,51 @@ module Crystal
       end
 
       node.type = scope.instance_type
+    end
+
+    def visit_slice_literal(node)
+      call = self.call.not_nil!
+
+      case slice_type = scope.instance_type
+      when GenericClassType # Slice
+        call.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
+      when GenericClassInstanceType # Slice(T)
+        element_type = slice_type.type_vars["T"].type
+        kind = case element_type
+               when IntegerType
+                 element_type.kind
+               when FloatType
+                 element_type.kind
+               else
+                 call.raise "Only slice literals of primitive integer or float types can be created"
+               end
+
+        call.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+        end
+
+        # create the internal constant `$Slice:n` to hold the slice contents
+        const_name = "$Slice:#{@program.const_slices.size}"
+        const_value = Nop.new
+        const_value.type = @program.static_array_of(element_type, call.args.size)
+        const = Const.new(@program, @program, const_name, const_value)
+        @program.types[const_name] = const
+        @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, call.args)
+
+        # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
+        pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
+        size_node = NumberLiteral.new(call.args.size.to_s, :i32).at(node)
+        read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
+        extra = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
+
+        extra.accept self
+        node.extra = extra
+        node.type = slice_type
+        call.expanded = extra
+      else
+        node.raise "BUG: Unknown scope for slice_literal primitive"
+      end
     end
 
     def visit_struct_or_union_set(node)

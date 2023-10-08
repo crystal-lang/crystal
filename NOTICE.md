@@ -41,7 +41,7 @@ Crystal playground includes the following libraries, which have their own licens
 
    * [jQuery][] - [MIT][]
      `Copyright JS Foundation and other contributors, https://js.foundation/`
-   * [Octicons][] - [MIT][] (for codes) or [OFL-1.1][] (for fonts) `(c) 2012-2016 GitHub, Inc.`
+   * [Octicons][] - [MIT][] `(c) 2023 GitHub Inc.`
    * [Materialize][] - [MIT][] `Copyright (c) 2014-2015 Materialize`
    * [CodeMirror][] - [MIT][] `Copyright (C) 2016 by Marijn Haverbeke <marijnh@gmail.com> and others`
    * [ansi\_up][] - [MIT][] `Copyright (c) 2011 Dru Nelson`

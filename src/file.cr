@@ -797,8 +797,10 @@ class File < IO::FileDescriptor
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
+        file.sync = true
         file.write(content)
       when IO
+        file.sync = true
         IO.copy(content, file)
       else
         file.print(content)
