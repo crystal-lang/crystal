@@ -75,9 +75,6 @@
 - *(docs-generator)* Allow word breaks between module names in docs ([#13827](https://github.com/crystal-lang/crystal/pull/13827), thanks @nobodywasishere)
 - *(docs-generator)* Fix docs dark mode dropdown background on blink ([#13840](https://github.com/crystal-lang/crystal/pull/13840), thanks @GeopJr)
 - *(init)* Fix shard crystal version in `crystal init` ([#13730](https://github.com/crystal-lang/crystal/pull/13730), thanks @xendk)
-
-#### other
-
 - Hierarchy tool: Fix byte sizes for `Proc`s inside extern structs ([#13711](https://github.com/crystal-lang/crystal/pull/13711), thanks @HertzDevil)
 
 ### Performance
