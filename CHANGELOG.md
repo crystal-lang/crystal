@@ -2,6 +2,10 @@
 
 ### Features
 
+### lang
+
+- Add unlimited block unpacking ([#11597](https://github.com/crystal-lang/crystal/pull/11597), thanks @asterite)
+
 #### stdlib
 
 - Add more `Colorize::Mode` flags ([#13745](https://github.com/crystal-lang/crystal/pull/13745), thanks @HertzDevil)
@@ -23,7 +27,6 @@
 
 #### compiler
 
-- Add unlimited block unpacking ([#11597](https://github.com/crystal-lang/crystal/pull/11597), thanks @asterite)
 - Experimental: Add `Slice.literal` for numeric slice constants ([#13716](https://github.com/crystal-lang/crystal/pull/13716), thanks @HertzDevil)
 
 #### tools
