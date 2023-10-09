@@ -209,7 +209,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: false
-      llvm_version: ${{ env.CI_LLVM_VERSION }}
+      llvm_version: "17.0.2"
 
   x86_64-windows-test:
     runs-on: windows-2022
@@ -262,7 +262,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
-      llvm_version: ${{ env.CI_LLVM_VERSION }}
+      llvm_version: "17.0.2"
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
