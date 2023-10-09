@@ -114,7 +114,7 @@ module Enumerable(T)
   # * `#any?(&)` and `#any(pattern)` allow custom conditions.
   #
   # NOTE: `#any?` usually has the same semantics as `#present?`. They only
-  # differ if the element type can be falsey (i.e. `T < Nil || T < Pointer || T < Bool`).
+  # differ if the element type can be falsey (i.e. `T <= Nil || T <= Pointer || T <= Bool`).
   # It's typically advised to prefer `#present?` unless these specific truthiness
   # semantics are required.
   def any? : Bool
