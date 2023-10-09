@@ -8,17 +8,18 @@ struct BigFloat
     self.class.new(self / other)
   end
 
-  def /(other : UInt8 | UInt16 | UInt32 | UInt64) : BigFloat
+  def /(other : Int::Primitive) : BigFloat
     # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
-    if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
-      BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
-    else
-      BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other.to_big_f) }
+    Int.primitive_ui_check(other) do |ui, neg_ui, _|
+      {
+        BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
+        BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
+      }
     end
   end
 
-  Number.expand_div [Int8, Int16, Int32, Int64, Int128, UInt128], BigFloat
   Number.expand_div [Float32, Float64], BigFloat
 end
 
@@ -30,6 +31,61 @@ end
 struct BigRational
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], BigRational
   Number.expand_div [Float32, Float64], BigRational
+end
+
+struct Int
+  # :nodoc:
+  # Yields 3 expressions: `Call`s nodes that convert *var* into a `LibGMP::SI`,
+  # a `LibGMP::UI`, and a `BigInt` respectively. These expressions are not
+  # evaluated unless they are interpolated in *block*.
+  #
+  # *block* should return a 3-tuple: the first element is returned by the macro
+  # if *var* fits into a `LibGMP::SI`, the second returned if *var* fits into a
+  # `LibGMP::UI`, and the third otherwise.
+  macro primitive_si_ui_check(var, &block)
+    {%
+      exps = yield(
+        "::LibGMP::SI.new!(#{var.id})".id,
+        "::LibGMP::UI.new!(#{var.id})".id,
+        "::BigInt.new(#{var.id})".id,
+      )
+    %}
+    if ::LibGMP::SI::MIN <= {{ var }} <= ::LibGMP::UI::MAX
+      if {{ var }} <= ::LibGMP::SI::MAX
+        {{ exps[0] }}
+      else
+        {{ exps[1] }}
+      end
+    else
+      {{ exps[2] }}
+    end
+  end
+
+  # :nodoc:
+  # Yields 3 expressions: `Call`s nodes that convert *var* into a `LibGMP::UI`,
+  # the negative of *var* into a `LibGMP::UI`, and *var* into a `BigInt`,
+  # respectively. These expressions are not evaluated unless they are
+  # interpolated in *block*.
+  #
+  # *block* should return a 3-tuple: the first element is returned by the macro
+  # if *var* fits into a `LibGMP::UI`, the second returned if the negative of
+  # *var* fits into a `LibGMP::UI`, and the third otherwise.
+  macro primitive_ui_check(var, &block)
+    {%
+      exps = yield(
+        "::LibGMP::UI.new!(#{var.id})".id,
+        "::LibGMP::UI.new!((#{var.id}).abs_unsigned)".id,
+        "::BigInt.new(#{var.id})".id,
+      )
+    %}
+    if ::LibGMP::UI::MIN <= {{ var }} <= ::LibGMP::UI::MAX
+      {{ exps[0] }}
+    elsif {{ var }}.responds_to?(:abs_unsigned) && {{ var }}.abs_unsigned <= ::LibGMP::UI::MAX
+      {{ exps[1] }}
+    else
+      {{ exps[2] }}
+    end
+  end
 end
 
 struct Int8

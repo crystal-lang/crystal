@@ -102,15 +102,13 @@ struct BigRational < Number
     self <=> other.to_big_r
   end
 
-  def <=>(other : Int::Primitive)
-    if LibGMP::SI::MIN <= other <= LibGMP::UI::MAX
-      if other <= LibGMP::SI::MAX
-        LibGMP.mpq_cmp_si(self, LibGMP::SI.new!(other), 1)
-      else
-        LibGMP.mpq_cmp_ui(self, LibGMP::UI.new!(other), 1)
-      end
-    else
-      self <=> other.to_big_i
+  def <=>(other : Int)
+    Int.primitive_si_ui_check(other) do |si, ui, big_i|
+      {
+        LibGMP.mpq_cmp_si(self, {{ si }}, 1),
+        LibGMP.mpq_cmp_ui(self, {{ ui }}, 1),
+        self <=> {{ big_i }},
+      }
     end
   end
 
