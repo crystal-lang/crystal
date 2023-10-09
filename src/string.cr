@@ -3408,7 +3408,7 @@ class String
 
     if search.bytesize <= 8
       search_bytesize = search.bytesize
-      return index_short(UInt64, char_index, pointer, end_pointer, search) {|pointer|
+      return index_short(UInt64, char_index, pointer, end_pointer, search) { |pointer|
         String.char_bytesize_at(pointer - search_bytesize)
       }
     end
