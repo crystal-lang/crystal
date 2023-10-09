@@ -2,7 +2,7 @@
 
 ### Features
 
-### lang
+#### lang
 
 - Add unlimited block unpacking ([#11597](https://github.com/crystal-lang/crystal/pull/11597), thanks @asterite)
 
@@ -31,10 +31,10 @@
 
 #### tools
 
-- Support generic types in `crystal tool hierarchy` ([#13715](https://github.com/crystal-lang/crystal/pull/13715), thanks @HertzDevil)
 - Add `tool unreachable` ([#13783](https://github.com/crystal-lang/crystal/pull/13783), thanks @straight-shoota)
 - *(dependencies)* Add `crystal tool dependencies` ([#13631](https://github.com/crystal-lang/crystal/pull/13631), thanks @straight-shoota)
 - *(docs-generator)* Add CSS for tables ([#13822](https://github.com/crystal-lang/crystal/pull/13822), thanks @nobodywasishere)
+- *(hierarchy)* Support generic types in `crystal tool hierarchy` ([#13715](https://github.com/crystal-lang/crystal/pull/13715), thanks @HertzDevil)
 - *(playground)* Update octicons to v19.5.0 ([#13738](https://github.com/crystal-lang/crystal/pull/13738), thanks @GeopJr)
 
 ### Bugfixes
@@ -73,7 +73,7 @@
 - *(docs-generator)* Allow word breaks between module names in docs ([#13827](https://github.com/crystal-lang/crystal/pull/13827), thanks @nobodywasishere)
 - *(docs-generator)* Fix docs dark mode dropdown background on blink ([#13840](https://github.com/crystal-lang/crystal/pull/13840), thanks @GeopJr)
 - *(init)* Fix shard crystal version in `crystal init` ([#13730](https://github.com/crystal-lang/crystal/pull/13730), thanks @xendk)
-- *(hierarchy): Fix byte sizes for `Proc`s inside extern structs ([#13711](https://github.com/crystal-lang/crystal/pull/13711), thanks @HertzDevil)
+- *(hierarchy)*: Fix byte sizes for `Proc`s inside extern structs ([#13711](https://github.com/crystal-lang/crystal/pull/13711), thanks @HertzDevil)
 
 ### Performance
 
