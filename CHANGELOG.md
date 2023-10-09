@@ -51,7 +51,6 @@
 - *(llvm)* Chop git suffix from `LibLLVM::VERSION` ([#13699](https://github.com/crystal-lang/crystal/pull/13699), thanks @HOMODELUNA)
 - *(macros)* Do not add trailing `+` in `TypeNode#id` for virtual types ([#13708](https://github.com/crystal-lang/crystal/pull/13708), thanks @HertzDevil)
 - *(numeric)* Fix `BigDecimal#round` for large digit counts in base 10 ([#13811](https://github.com/crystal-lang/crystal/pull/13811), thanks @HertzDevil)
-- *(numeric)* Remove overflowing `Float#to_u!` interpreter primitive specs ([#13737](https://github.com/crystal-lang/crystal/pull/13737), thanks @HertzDevil)
 - *(serialization)* Set encoding in `XML.parse_html` explicitly to UTF-8 ([#13705](https://github.com/crystal-lang/crystal/pull/13705), thanks @straight-shoota)
 - *(serialization)* Fix error message when parsing unknown JSON enum value ([#13728](https://github.com/crystal-lang/crystal/pull/13728), thanks @willhbr)
 - *(serialization)* Fix YAML scalar type validation error message ([#13771](https://github.com/crystal-lang/crystal/pull/13771), thanks @MistressRemilia)
@@ -60,7 +59,6 @@
 - *(system)* Fix typo in unistd.cr ([#13850](https://github.com/crystal-lang/crystal/pull/13850), thanks @kojix2)
 - *(text)* Fix `Char::Reader#each` bounds check after block ([#13817](https://github.com/crystal-lang/crystal/pull/13817), thanks @straight-shoota)
 - *(text)* Minor fixup for `HTML.decode_codepoint` ([#13843](https://github.com/crystal-lang/crystal/pull/13843), thanks @straight-shoota)
-- *(time)* Clear `Time::Location` cache before `.load_android` specs ([#13718](https://github.com/crystal-lang/crystal/pull/13718), thanks @HertzDevil)
 
 #### compiler
 
@@ -75,7 +73,7 @@
 - *(docs-generator)* Allow word breaks between module names in docs ([#13827](https://github.com/crystal-lang/crystal/pull/13827), thanks @nobodywasishere)
 - *(docs-generator)* Fix docs dark mode dropdown background on blink ([#13840](https://github.com/crystal-lang/crystal/pull/13840), thanks @GeopJr)
 - *(init)* Fix shard crystal version in `crystal init` ([#13730](https://github.com/crystal-lang/crystal/pull/13730), thanks @xendk)
-- Hierarchy tool: Fix byte sizes for `Proc`s inside extern structs ([#13711](https://github.com/crystal-lang/crystal/pull/13711), thanks @HertzDevil)
+- *(hierarchy): Fix byte sizes for `Proc`s inside extern structs ([#13711](https://github.com/crystal-lang/crystal/pull/13711), thanks @HertzDevil)
 
 ### Performance
 
@@ -120,6 +118,8 @@
 #### stdlib
 
 - *(numeric)* Update specs for `Int::Primitive.from_json` ([#13835](https://github.com/crystal-lang/crystal/pull/13835), thanks @HertzDevil)
+- *(numeric)* Remove overflowing `Float#to_u!` interpreter primitive specs ([#13737](https://github.com/crystal-lang/crystal/pull/13737), thanks @HertzDevil)
+- *(time)* Clear `Time::Location` cache before `.load_android` specs ([#13718](https://github.com/crystal-lang/crystal/pull/13718), thanks @HertzDevil)
 
 ### Infrastructure
 
