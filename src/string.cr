@@ -3355,11 +3355,10 @@ class String
     nil
   end
 
-  private macro gen_index_short(int_class, by_char)
-    # simplified Rabin-Karp version with multiplier == 256
-    search_hash = {{int_class}}.new(0)
-    hash = {{int_class}}.new(0)
-    mask = {{int_class}}.new(0)
+  private def index_short(hash_type, offset : Int32, pointer : UInt8*, end_pointer : UInt8*, search, &)
+    search_hash = hash_type.new(0)
+    hash = hash_type.new(0)
+    mask = hash_type.new(0)
 
     search.each_byte do |b|
       search_hash = (search_hash << 8) | b
@@ -3367,18 +3366,11 @@ class String
       mask = (mask << 8) | 0xff
       pointer += 1
     end
-    {% if by_char %}
-    search_bytesize = search.bytesize
-    {% end %}
 
     while true
       return offset if (hash & mask) == search_hash
 
-      {% if by_char %}
-      char_bytesize = String.char_bytesize_at(pointer - search_bytesize)
-      {% else %}
-      char_bytesize = 1
-      {% end %}
+      char_bytesize = yield pointer
       return if pointer + char_bytesize > end_pointer
       case char_bytesize
       when 1 then update_simplehash 1
@@ -3389,10 +3381,6 @@ class String
 
       offset &+= 1
     end
-  end
-
-  private def index_2to8bytes(offset : Int32, pointer : UInt8*, end_pointer : UInt8*, search : String)
-    gen_index_short(UInt64, true)
   end
 
   # :ditto:
@@ -3419,7 +3407,10 @@ class String
     return if pointer + search.bytesize > end_pointer
 
     if search.bytesize <= 8
-      return index_2to8bytes(char_index, pointer, end_pointer, search)
+      search_bytesize = search.bytesize
+      return index_short(UInt64, char_index, pointer, end_pointer, search) {|pointer|
+        String.char_bytesize_at(pointer - search_bytesize)
+      }
     end
 
     head_pointer = pointer
@@ -3734,11 +3725,7 @@ class String
 
     pointer = to_unsafe + offset
     end_pointer = to_unsafe + bytesize
-    gen_index_short(UInt32, false)
-  end
-
-  private def byte_index_2to8bytes(offset : Int32, pointer : UInt8*, end_pointer : UInt8*, search : String)
-    gen_index_short(UInt64, false)
+    index_short(UInt32, offset, pointer, end_pointer, search) { 1 }
   end
 
   # Returns the byte index of *search* in the string, or `nil` if the string is not present.
@@ -3772,7 +3759,7 @@ class String
     hash = 0u32
 
     if search.bytesize <= 8
-      return byte_index_2to8bytes(offset, pointer, end_pointer, search)
+      return index_short(UInt64, offset, pointer, end_pointer, search) { 1 }
     end
 
     head_pointer = pointer
