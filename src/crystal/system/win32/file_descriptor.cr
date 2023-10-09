@@ -277,7 +277,7 @@ module Crystal::System::FileDescriptor
   end
 end
 
-private class ConsoleUtils
+private module ConsoleUtils
   # N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
   private BUFFER_SIZE = 64
   @@utf16_buffer = Slice(UInt16).new(BUFFER_SIZE)
@@ -306,11 +306,11 @@ private class ConsoleUtils
 
   private def self.fill_buffer(handle : LibC::HANDLE) : Nil
     # Reads in two batches to guarantee that the last character is intact.
-    units_read = read_utf16_units(handle, @@utf16_buffer[...-1])
+    units_read = read_console(handle, @@utf16_buffer[...-1])
     return if units_read < 1
     remainder = @@utf16_buffer + units_read
     if remainder.size == 1 && @@utf16_buffer[units_read - 1] & 0xFC00 == 0xD800
-      units_read += read_utf16_units(handle, remainder)
+      units_read += read_console(handle, remainder)
     end
 
     appender = @@utf8_buffer.to_unsafe.appender
@@ -322,7 +322,7 @@ private class ConsoleUtils
     @@buffer = @@utf8_buffer[0, appender.size]
   end
 
-  private def self.read_utf16_units(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+  private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
     if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
       raise IO::Error.from_winerror("ReadConsoleW")
     end
