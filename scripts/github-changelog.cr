@@ -152,9 +152,18 @@ record PullRequest,
   end
 
   def topic
-    labels.find { |label|
-      label.starts_with?("topic:") && label != "topic:multithreading"
-    }.try(&.lchop("topic:").split(/:|\//))
+    topics[0]
+  end
+
+  def topics
+    topics = labels.compact_map { |label|
+      label.lchop?("topic:").try(&.split(/:|\//))
+    }
+    topics.reject! &.[0].==("multithreading")
+
+    topics.sort_by! { |parts|
+      {parts[0] == "lang" ? 0 : 1, parts[0]}
+    }
   end
 
   def deprecated?
