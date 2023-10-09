@@ -196,9 +196,9 @@ record PullRequest,
   def type
     case
     when feature?     then "feature"
-    when fix?         then "fix"
     when docs?        then "docs"
     when specs?       then "specs"
+    when fix?         then "fix"
     when performance? then "performance"
     when refactor?    then "refactor"
     else                   nil
