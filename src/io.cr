@@ -752,11 +752,12 @@ abstract class IO
 
   private def gets_slow(delimiter : Char, limit, chomp)
     buffer = String::Builder.new
-    gets_slow(delimiter, limit, chomp, buffer)
-    buffer.empty? ? nil : buffer.to_s
+    bytes_read = gets_slow(delimiter, limit, chomp, buffer)
+    bytes_read.zero? ? nil : buffer.to_s
   end
 
-  private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Nil
+  private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Int32
+    bytes_read = 0
     chomp_rn = delimiter == '\n' && chomp
 
     while true
@@ -766,6 +767,7 @@ abstract class IO
       end
 
       char, char_bytesize = info
+      bytes_read += char_bytesize
 
       # Consider the case of \r\n when the delimiter is \n and chomp = true
       if chomp_rn && char == '\r'
@@ -776,6 +778,7 @@ abstract class IO
         end
 
         char2, char_bytesize2 = info2
+        bytes_read += char_bytesize2
         if char2 == '\n'
           break
         end
@@ -801,6 +804,8 @@ abstract class IO
       break if char_bytesize >= limit
       limit -= char_bytesize
     end
+
+    bytes_read
   end
 
   # Reads until *delimiter* is found or the end of the `IO` is reached.
