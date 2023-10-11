@@ -753,7 +753,7 @@ abstract class IO
   private def gets_slow(delimiter : Char, limit, chomp)
     buffer = String::Builder.new
     bytes_read = gets_slow(delimiter, limit, chomp, buffer)
-    bytes_read ? buffer.to_s : nil
+    buffer.to_s if bytes_read
   end
 
   private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Bool
