@@ -65,7 +65,7 @@ class Log
 
     # Write the entry timestamp in RFC3339 format
     def timestamp : Nil
-      @entry.timestamp.to_rfc3339(@io, fraction_digits: 6)
+      @io << @entry.timestamp.to_rfc3339(@io, fraction_digits: 6)
     end
 
     # Write a fixed string
@@ -83,7 +83,7 @@ class Log
     # This writes the severity in uppercase and left padded
     # with enough space so all the severities fit
     def severity : Nil
-      @entry.severity.label.rjust(@io, 6)
+      @io << @entry.severity.label.rjust(@io, 6)
     end
 
     # Write the source for non-root entries
