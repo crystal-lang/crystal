@@ -1,16 +1,11 @@
 # 1.10.1 (2023-10-12)
 
-### Features
-
-#### stdlib
-
-- Support Android API levels 24 - 27 ([#13884](https://github.com/crystal-lang/crystal/pull/13884), thanks @HertzDevil)
-
 ### Bugfixes
 
 #### stdlib
 
 - `IO#gets` should have same result regardless of `#peek` availability ([#13882](https://github.com/crystal-lang/crystal/pull/13882), thanks @compumike)
+- Support Android API levels 24 - 27 ([#13884](https://github.com/crystal-lang/crystal/pull/13884), thanks @HertzDevil)
 
 ### Infrastructure
 
