@@ -10,7 +10,7 @@
 
 #### stdlib
 
-- `IO#gets` should have same result regardless of #peek availability ([#13882](https://github.com/crystal-lang/crystal/pull/13882), thanks @compumike)
+- `IO#gets` should have same result regardless of `#peek` availability ([#13882](https://github.com/crystal-lang/crystal/pull/13882), thanks @compumike)
 
 ### Infrastructure
 
