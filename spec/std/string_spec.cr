@@ -1277,6 +1277,19 @@ describe "String" do
       "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
     }
 
+    it { "foo".byte_index('o').should eq(1) }
+    it { "foo bar booz".byte_index('o', 3).should eq(9) }
+    it { "foo".byte_index('a').should be_nil }
+    it { "foo".byte_index('a').should be_nil }
+    it { "foo".byte_index('o', 3).should be_nil }
+    it { "Hi, 💣".byte_index('💣').should eq(4) }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z').should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z', 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z', -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z', -17).should be_nil
+    }
+
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
       "hello world".byte_index("lo").should eq(3)

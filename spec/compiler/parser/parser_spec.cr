@@ -2630,6 +2630,34 @@ module Crystal
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
+
+      it "sets correct location for fun def" do
+        source = "lib LibFoo; fun foo(x : Int32); end"
+        node = Parser.new(source).parse.as(LibDef).body
+
+        node_source(source, node).should eq("fun foo(x : Int32)")
+      end
+
+      it "sets correct location for fun def with return type" do
+        source = "lib LibFoo; fun foo(x : Int32) : Void; end"
+        node = Parser.new(source).parse.as(LibDef).body
+
+        node_source(source, node).should eq("fun foo(x : Int32) : Void")
+      end
+
+      it "sets correct location for fun def on multiple lines" do
+        source = "lib LibFoo\nfun foo(\n    x : Int32\n  )\nend"
+        node = Parser.new(source).parse.as(LibDef).body
+
+        node_source(source, node).should eq("fun foo(\n    x : Int32\n  )")
+      end
+
+      it "sets correct location for fun def with body" do
+        source = "fun foo(x : Int32) : Void\nend"
+        node = Parser.new(source).parse.as(FunDef)
+
+        node_source(source, node).should eq("fun foo(x : Int32) : Void\nend")
+      end
     end
 
     it "sets correct location of parameter in proc literal" do

@@ -17,9 +17,8 @@ end
 describe "Complex" do
   describe "as numbers" do
     it_can_convert_between([Complex], [Complex])
-    it_can_convert_between({{BUILTIN_NUMBER_TYPES_LTE_64}}, [Complex])
-    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES_LTE_64}})
-    # TODO pending conversion between Int128
+    it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, [Complex])
+    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES}})
 
     division_between_returns {{BUILTIN_NUMBER_TYPES}}, [Complex], Complex
     division_between_returns [Complex], {{BUILTIN_NUMBER_TYPES}}, Complex
