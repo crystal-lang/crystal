@@ -1,3 +1,16 @@
+# 1.10.1 (2023-10-13)
+
+### Bugfixes
+
+#### stdlib
+
+- `IO#gets` should have same result regardless of `#peek` availability ([#13882](https://github.com/crystal-lang/crystal/pull/13882), thanks @compumike)
+- Support Android API levels 24 - 27 ([#13884](https://github.com/crystal-lang/crystal/pull/13884), thanks @HertzDevil)
+
+### Infrastructure
+
+- *(ci)* Fix `win.yml` ([#13876](https://github.com/crystal-lang/crystal/pull/13876), thanks @straight-shoota)
+
 # 1.10.0 (2023-10-09)
 
 ### Features

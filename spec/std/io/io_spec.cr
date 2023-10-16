@@ -183,6 +183,40 @@ describe IO do
       io.gets(chomp: false).should be_nil
     end
 
+    it "does gets with empty string (no peek)" do
+      io = SimpleIOMemory.new("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with empty string (with peek)" do
+      io = IO::Memory.new("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\n (no peek)" do
+      io = SimpleIOMemory.new("\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\n (with peek)" do
+      io = IO::Memory.new("\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\r\\n (no peek)" do
+      io = SimpleIOMemory.new("\r\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\r\\n (with peek)" do
+      io = IO::Memory.new("\r\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
     it "does gets with big line" do
       big_line = "a" * 20_000
       io = SimpleIOMemory.new("#{big_line}\nworld\n")
