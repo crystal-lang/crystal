@@ -35,8 +35,8 @@ class Box(T)
   # specify T: `Box(T).unbox(data)`.
   #
   # WARNING: It is undefined behavior to box an object in one type and unbox it
-  # via a different type; in particular, when boxing a `T` as a `T?`, or
-  # vice-versa.
+  # via a different type; in particular, when boxing a `T` and unboxing it as a
+  # `T?`, or vice-versa.
   def self.unbox(pointer : Void*) : T
     {% if T.union_types.all? { |t| t == Nil || t < Reference } %}
       pointer.as(T)
