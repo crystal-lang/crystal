@@ -8,7 +8,7 @@ parameters:
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.10.1/crystal-1.10.1-1"
 
 defaults:
   environment: &env

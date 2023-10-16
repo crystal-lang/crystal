@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2]
+        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1]
         flags: [""]
         include:
           # libffi is only available starting from the 1.2.2 build images
