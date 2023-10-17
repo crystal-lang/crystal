@@ -752,7 +752,7 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
+    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+', 'i', 'I', 'n', 'N')
 
     v, endptr = yield
 
@@ -3666,6 +3666,49 @@ class String
       if to_unsafe[i] == byte
         return i
       end
+    end
+    nil
+  end
+
+  # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "Hello, World".byte_index('o')          # => 4
+  # "Hello, World".byte_index('Z')          # => nil
+  # "Hello, World".byte_index('o', 5)       # => 8
+  # "Hi, 💣".byte_index('💣')                 # => 4
+  # "Dizzy Miss Lizzy".byte_index('z')      # => 2
+  # "Dizzy Miss Lizzy".byte_index('z', 3)   # => 3
+  # "Dizzy Miss Lizzy".byte_index('z', -4)  # => 13
+  # "Dizzy Miss Lizzy".byte_index('z', -17) # => nil
+  # ```
+  def byte_index(char : Char, offset = 0) : Int32?
+    return byte_index(char.ord, offset) if char.ascii?
+
+    offset += bytesize if offset < 0
+    return if offset < 0
+    return if offset + char.bytesize > bytesize
+
+    # Simplified "Rabin-Karp" algorithm
+    search_hash = 0u32
+    search_mask = 0u32
+    hash = 0u32
+    char.each_byte do |byte|
+      search_hash = (search_hash << 8) | byte
+      search_mask = (search_mask << 8) | 0xff
+      hash = (hash << 8) | to_unsafe[offset]
+      offset += 1
+    end
+
+    offset.upto(bytesize) do |i|
+      if (hash & search_mask) == search_hash
+        return i - char.bytesize
+      end
+      # rely on zero terminating byte
+      hash = (hash << 8) | to_unsafe[i]
     end
     nil
   end

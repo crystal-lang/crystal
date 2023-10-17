@@ -192,7 +192,7 @@ module HTML
     case codepoint
     when 0x80..0x9F
       # Replace characters from Windows-1252 with UTF-8 equivalents.
-      CHARACTER_REPLACEMENTS[codepoint - 0x80].to_s
+      CHARACTER_REPLACEMENTS[codepoint - 0x80]
     when 0,
          .>(Char::MAX_CODEPOINT),
          0xD800..0xDFFF # unicode surrogate characters
@@ -205,7 +205,7 @@ module HTML
              (0xFDD0..0xFDEF).includes?(codepoint) ||
              # last two of each plane (nonchars) disallowed
              codepoint & 0xFFFF >= 0xFFFE ||
-             # unicode control characters expect space
+             # unicode control characters except space
              (codepoint < 0x0020 && !codepoint.in?(0x0009, 0x000A, 0x000C))
         codepoint.unsafe_chr
       end
