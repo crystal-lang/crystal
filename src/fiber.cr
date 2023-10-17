@@ -162,7 +162,7 @@ class Fiber
     {% end %}
 
     # Remove the current fiber from the linked list
-    Fiber.fibers.delete(self)
+    Fiber.inactive(self)
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free

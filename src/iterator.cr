@@ -1283,18 +1283,14 @@ module Iterator(T)
     include IteratorWrapper
 
     def initialize(@iterator : I, @func : T -> U)
-      @hash = {} of U => Bool
+      @set = Set(U).new
     end
 
     def next
       while true
         value = wrapped_next
         transformed = @func.call value
-
-        unless @hash[transformed]?
-          @hash[transformed] = true
-          return value
-        end
+        return value if @set.add?(transformed)
       end
     end
   end
@@ -1322,7 +1318,7 @@ module Iterator(T)
   end
 
   private class WithIndexIterator(I, T, O)
-    include Iterator({T, Int32})
+    include Iterator({T, O})
     include IteratorWrapper
 
     def initialize(@iterator : I, @offset : O, @index : O = offset)

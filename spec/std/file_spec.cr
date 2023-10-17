@@ -351,7 +351,7 @@ describe "File" do
   end
 
   describe "chmod" do
-    it "changes file permissions" do
+    it "changes file permissions with class method" do
       path = datapath("chmod.txt")
       begin
         File.write(path, "")
@@ -362,7 +362,7 @@ describe "File" do
       end
     end
 
-    it "changes file permissions with fchmod" do
+    it "changes file permissions with instance method" do
       path = datapath("chmod.txt")
       begin
         File.open(path, "w") do |file|
@@ -602,6 +602,16 @@ describe "File" do
         expect_raises(File::NotFoundError, "Error renaming file: '#{source_path.inspect_unquoted}' -> '#{target_path.inspect_unquoted}'") do
           File.rename(source_path, target_path)
         end
+      end
+    end
+
+    it "renames a File instance" do
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        f = File.new(source_path, "w")
+        f.rename target_path
+        f.path.should eq target_path
+        File.exists?(source_path).should be_false
+        File.exists?(target_path).should be_true
       end
     end
   end
@@ -1270,7 +1280,7 @@ describe "File" do
   end
 
   describe "utime" do
-    it "sets times with utime" do
+    it "sets times with class method" do
       with_tempfile("utime-set.txt") do |path|
         File.write(path, "")
 
@@ -1284,7 +1294,7 @@ describe "File" do
       end
     end
 
-    it "sets times with futime" do
+    it "sets times with instance method" do
       with_tempfile("utime-set.txt") do |path|
         File.open(path, "w") do |file|
           atime = Time.utc(2000, 1, 2)

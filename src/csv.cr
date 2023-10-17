@@ -181,7 +181,7 @@ class CSV
       headers = @headers = headers.map &.strip
       indices = @indices = {} of String => Int32
       headers.each_with_index do |header, index|
-        indices[header] ||= index
+        indices.put_if_absent(header, index)
       end
     end
     @traversed = false

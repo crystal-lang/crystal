@@ -20,13 +20,15 @@ module Spec
   class_property? focus = false
 
   # :nodoc:
+  class_property? dry_run = false
+
+  # :nodoc:
   class_property? list_tags = false
 
   # :nodoc:
   def self.add_location(file, line)
     locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
+    locations.put_if_absent(File.expand_path(file)) { [] of Int32 } << line
   end
 
   # :nodoc:
@@ -117,6 +119,9 @@ module Spec
       end
       opts.on("--no-color", "Disable ANSI colored output") do
         Colorize.enabled = false
+      end
+      opts.on("--dry-run", "Pass all tests without execution") do
+        Spec.dry_run = true
       end
       opts.unknown_args do |args|
       end

@@ -56,9 +56,6 @@ struct Crystal::System::Process
   # thread.
   # def self.start_interrupt_loop
 
-  # Trap interrupt to exit normally with `at_exit` handlers being executed.
-  # def self.setup_default_interrupt_handler
-
   # Whether the process identified by *pid* is still registered in the system.
   # def self.exists?(pid : Int) : Bool
 

@@ -154,16 +154,29 @@ struct BigRational < Number
   Number.expand_div [BigInt, BigFloat, BigDecimal], BigRational
 
   def ceil : BigRational
-    diff = (denominator - numerator % denominator) % denominator
-    BigRational.new(numerator + diff, denominator)
+    BigRational.new(-(-numerator // denominator))
   end
 
   def floor : BigRational
-    BigRational.new(numerator - numerator % denominator, denominator)
+    BigRational.new(numerator // denominator)
   end
 
   def trunc : BigRational
-    self < 0 ? ceil : floor
+    BigRational.new(numerator.tdiv(denominator))
+  end
+
+  def round_away : BigRational
+    rem2 = numerator.remainder(denominator).abs * 2
+    x = BigRational.new(numerator.tdiv(denominator))
+    x += sign if rem2 >= denominator
+    x
+  end
+
+  def round_even : BigRational
+    rem2 = numerator.remainder(denominator).abs * 2
+    x = BigRational.new(numerator.tdiv(denominator))
+    x += sign if rem2 > denominator || (rem2 == denominator && x.numerator.odd?)
+    x
   end
 
   # Divides the rational by (2 ** *other*)

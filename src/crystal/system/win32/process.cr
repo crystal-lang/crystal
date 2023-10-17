@@ -149,13 +149,6 @@ struct Crystal::System::Process
     end
   end
 
-  def self.setup_default_interrupt_handlers
-    on_interrupt do
-      # Exit code 3 indicates `std::abort` was called which corresponds to the interrupt handler
-      ::exit 3
-    end
-  end
-
   def self.exists?(pid)
     handle = LibC.OpenProcess(LibC::PROCESS_QUERY_INFORMATION, 0, pid)
     return false unless handle
@@ -214,7 +207,7 @@ struct Crystal::System::Process
 
     if LibC.CreateProcessW(
          nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
+         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value

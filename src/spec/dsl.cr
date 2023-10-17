@@ -308,7 +308,7 @@ module Spec
   def self.finish_run
     elapsed_time = Time.monotonic - @@start_time.not_nil!
     root_context.finish(elapsed_time, @@aborted)
-    exit 1 if !root_context.succeeded || @@aborted
+    exit 1 if !root_context.succeeded || @@aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
   end
 
   # :nodoc:

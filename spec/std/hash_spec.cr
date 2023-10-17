@@ -169,7 +169,7 @@ describe "Hash" do
     end
   end
 
-  describe "put" do
+  describe "#put" do
     it "puts in a small hash" do
       a = {} of Int32 => Int32
       a.put(1, 2) { nil }.should eq(nil)
@@ -188,6 +188,33 @@ describe "Hash" do
     it "yields key" do
       a = {} of Int32 => Int32
       a.put(1, 2, &.to_s).should eq("1")
+    end
+  end
+
+  describe "#put_if_absent" do
+    it "puts if key doesn't exist" do
+      v = [] of String
+      h = {} of Int32 => Array(String)
+      h.put_if_absent(1, v).should be(v)
+      h.should eq({1 => v})
+      h[1].should be(v)
+    end
+
+    it "returns existing value if key exists" do
+      v = [] of String
+      h = {1 => v}
+      h.put_if_absent(1, [] of String).should be(v)
+      h.should eq({1 => v})
+      h[1].should be(v)
+    end
+
+    it "accepts a block" do
+      v = [] of String
+      h = {1 => v}
+      h.put_if_absent(1) { [] of String }.should be(v)
+      h.put_if_absent(2) { |key| [key.to_s] }.should eq(["2"])
+      h.should eq({1 => v, 2 => ["2"]})
+      h[1].should be(v)
     end
   end
 
@@ -855,6 +882,13 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms keys with values included" do
+    h1 = {1 => "a", 2 => "b", 3 => "c"}
+
+    h2 = h1.transform_keys { |k, v| "#{k}#{v}" }
+    h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+  end
+
   it "transforms values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
@@ -878,11 +912,25 @@ describe "Hash" do
     h2.should be_empty
   end
 
+  it "transforms values with keys included" do
+    h1 = {"a" => 1, "b" => 2, "c" => 3}
+
+    h2 = h1.transform_values { |v, k| "#{k}#{v}" }
+    h2.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
+  end
+
   it "transform values in place" do
     h = {"a" => 1, "b" => 2, "c" => 3}
 
     h.transform_values!(&.+(1))
     h.should eq({"a" => 2, "b" => 3, "c" => 4})
+  end
+
+  it "transform values in place with keys included" do
+    h = {"a" => "1", "b" => "2", "c" => "3"}
+
+    h.transform_values! { |v, k| "#{k}#{v}" }
+    h.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
   end
 
   it "zips" do

@@ -299,6 +299,100 @@ describe BigRational do
     br(-291, 100).trunc.should eq(-2)
   end
 
+  describe "#round" do
+    describe "rounding modes" do
+      it "to_zero" do
+        br(-9, 6).round(:to_zero).should eq BigRational.new(-1)
+        br(-6, 6).round(:to_zero).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_zero).should eq BigRational.new(0)
+        br(-3, 6).round(:to_zero).should eq BigRational.new(0)
+        br(-1, 6).round(:to_zero).should eq BigRational.new(0)
+        br(0, 6).round(:to_zero).should eq BigRational.new(0)
+        br(1, 6).round(:to_zero).should eq BigRational.new(0)
+        br(3, 6).round(:to_zero).should eq BigRational.new(0)
+        br(5, 6).round(:to_zero).should eq BigRational.new(0)
+        br(6, 6).round(:to_zero).should eq BigRational.new(1)
+        br(9, 6).round(:to_zero).should eq BigRational.new(1)
+      end
+
+      it "to_positive" do
+        br(-9, 6).round(:to_positive).should eq BigRational.new(-1)
+        br(-6, 6).round(:to_positive).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_positive).should eq BigRational.new(0)
+        br(-3, 6).round(:to_positive).should eq BigRational.new(0)
+        br(-1, 6).round(:to_positive).should eq BigRational.new(0)
+        br(0, 6).round(:to_positive).should eq BigRational.new(0)
+        br(1, 6).round(:to_positive).should eq BigRational.new(1)
+        br(3, 6).round(:to_positive).should eq BigRational.new(1)
+        br(5, 6).round(:to_positive).should eq BigRational.new(1)
+        br(6, 6).round(:to_positive).should eq BigRational.new(1)
+        br(9, 6).round(:to_positive).should eq BigRational.new(2)
+      end
+
+      it "to_negative" do
+        br(-9, 6).round(:to_negative).should eq BigRational.new(-2)
+        br(-6, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-3, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-1, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(0, 6).round(:to_negative).should eq BigRational.new(0)
+        br(1, 6).round(:to_negative).should eq BigRational.new(0)
+        br(3, 6).round(:to_negative).should eq BigRational.new(0)
+        br(5, 6).round(:to_negative).should eq BigRational.new(0)
+        br(6, 6).round(:to_negative).should eq BigRational.new(1)
+        br(9, 6).round(:to_negative).should eq BigRational.new(1)
+      end
+
+      it "ties_even" do
+        br(-15, 6).round(:ties_even).should eq BigRational.new(-2)
+        br(-9, 6).round(:ties_even).should eq BigRational.new(-2)
+        br(-6, 6).round(:ties_even).should eq BigRational.new(-1)
+        br(-5, 6).round(:ties_even).should eq BigRational.new(-1)
+        br(-3, 6).round(:ties_even).should eq BigRational.new(0)
+        br(-1, 6).round(:ties_even).should eq BigRational.new(0)
+        br(0, 6).round(:ties_even).should eq BigRational.new(0)
+        br(1, 6).round(:ties_even).should eq BigRational.new(0)
+        br(3, 6).round(:ties_even).should eq BigRational.new(0)
+        br(5, 6).round(:ties_even).should eq BigRational.new(1)
+        br(6, 6).round(:ties_even).should eq BigRational.new(1)
+        br(9, 6).round(:ties_even).should eq BigRational.new(2)
+        br(15, 6).round(:ties_even).should eq BigRational.new(2)
+      end
+
+      it "ties_away" do
+        br(-15, 6).round(:ties_away).should eq BigRational.new(-3)
+        br(-9, 6).round(:ties_away).should eq BigRational.new(-2)
+        br(-6, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-5, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-3, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-1, 6).round(:ties_away).should eq BigRational.new(0)
+        br(0, 6).round(:ties_away).should eq BigRational.new(0)
+        br(1, 6).round(:ties_away).should eq BigRational.new(0)
+        br(3, 6).round(:ties_away).should eq BigRational.new(1)
+        br(5, 6).round(:ties_away).should eq BigRational.new(1)
+        br(6, 6).round(:ties_away).should eq BigRational.new(1)
+        br(9, 6).round(:ties_away).should eq BigRational.new(2)
+        br(15, 6).round(:ties_away).should eq BigRational.new(3)
+      end
+
+      it "default (=ties_even)" do
+        br(-15, 6).round.should eq BigRational.new(-2)
+        br(-9, 6).round.should eq BigRational.new(-2)
+        br(-6, 6).round.should eq BigRational.new(-1)
+        br(-5, 6).round.should eq BigRational.new(-1)
+        br(-3, 6).round.should eq BigRational.new(0)
+        br(-1, 6).round.should eq BigRational.new(0)
+        br(0, 6).round.should eq BigRational.new(0)
+        br(1, 6).round.should eq BigRational.new(0)
+        br(3, 6).round.should eq BigRational.new(0)
+        br(5, 6).round.should eq BigRational.new(1)
+        br(6, 6).round.should eq BigRational.new(1)
+        br(9, 6).round.should eq BigRational.new(2)
+        br(15, 6).round.should eq BigRational.new(2)
+      end
+    end
+  end
+
   it "#hash" do
     b = br(10, 3)
     hash = b.hash

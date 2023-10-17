@@ -177,8 +177,9 @@ struct Char
     # C
     # ```
     def each(&) : Nil
-      while has_next?
+      while @pos < @string.bytesize
         yield current_char
+
         @pos += @current_char_width
         decode_current_char
       end

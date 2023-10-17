@@ -139,7 +139,8 @@ class Reference
 
   # :nodoc:
   module ExecRecursive
-    alias Registry = Hash({UInt64, Symbol}, Bool)
+    # NOTE: can't use `Set` here because of prelude require order
+    alias Registry = Hash({UInt64, Symbol}, Nil)
 
     {% if flag?(:preview_mt) %}
       @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
@@ -159,14 +160,12 @@ class Reference
   private def exec_recursive(method, &)
     hash = ExecRecursive.hash
     key = {object_id, method}
-    if hash[key]?
-      false
-    else
-      hash[key] = true
+    hash.put(key, nil) do
       yield
       hash.delete(key)
-      true
+      return true
     end
+    false
   end
 
   # :nodoc:
