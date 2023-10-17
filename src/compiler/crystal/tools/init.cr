@@ -238,8 +238,8 @@ module Crystal
       end
 
       def run
-        if File.file?(config.expanded_dir)
-          raise Error.new "#{config.dir.inspect} is a file"
+        if (info = File.info?(config.expanded_dir)) && !info.directory?
+          raise Error.new "#{config.dir.inspect} is a #{info.type.to_s.downcase}"
         end
 
         views = self.views

@@ -168,8 +168,6 @@ lib LibC
     c_cc : StaticArray(CcT, 19) # cc_t[NCCS]
   end
 
-  # TODO: defined inline for `21 <= ANDROID_API < 28` in terms of `ioctl`, but
-  # `lib/reply/src/term_size.cr` contains an incompatible definition of it
   {% if ANDROID_API >= 28 %}
     fun tcgetattr(__fd : Int, __t : Termios*) : Int
     fun tcsetattr(__fd : Int, __optional_actions : Int, __t : Termios*) : Int

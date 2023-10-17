@@ -84,6 +84,14 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
+    record ConstSliceInfo,
+      name : String,
+      element_type : NumberKind,
+      args : Array(ASTNode)
+
+    # All constant slices constructed via the `Slice.literal` primitive.
+    getter const_slices = [] of ConstSliceInfo
+
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
@@ -459,6 +467,22 @@ module Crystal
     # Remembers that the program depends on this require.
     def record_require(filename, relative_to) : Nil
       recorded_requires << RecordedRequire.new(filename, relative_to)
+    end
+
+    def run_requires(node : Require, filenames) : Nil
+      dependency_printer = compiler.try(&.dependency_printer)
+
+      filenames.each do |filename|
+        unseen_file = requires.add?(filename)
+
+        dependency_printer.try(&.enter_file(filename, unseen_file))
+
+        if unseen_file
+          yield filename
+        end
+
+        dependency_printer.try(&.leave_file)
+      end
     end
 
     # Finds *filename* in the configured CRYSTAL_PATH for this program,

@@ -137,6 +137,7 @@ end
                          "UInt128" => "u128",
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
+    # TODO: use `PullParser#read?` instead
     location = pull.location
     value =
       {% if type == "UInt64" || type == "UInt128" || type == "Int128" %}
@@ -401,7 +402,7 @@ def Union.new(pull : JSON::PullParser)
       return pull.read_string
     {% end %}
     when .int?
-    {% type_order = [Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
+    {% type_order = [Int128, UInt128, Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
     {% for type in type_order.select { |t| T.includes? t } %}
       value = pull.read?({{type}})
       return value unless value.nil?
