@@ -70,20 +70,31 @@ describe "Char::Reader" do
     reader.current_char.ord.should eq(225)
   end
 
-  it "is an Enumerable(Char)" do
-    reader = Char::Reader.new("abc")
-    sum = 0
-    reader.each do |char|
-      sum += char.ord
-    end.should be_nil
-    sum.should eq(294)
-  end
+  describe "#each" do
+    it "yields chars" do
+      reader = Char::Reader.new("abc")
+      chars = [] of Char
+      reader.each do |char|
+        chars << char
+      end.should be_nil
+      chars.should eq ['a', 'b', 'c']
+    end
 
-  it "is an Enumerable(Char) but doesn't yield if empty" do
-    reader = Char::Reader.new("")
-    reader.each do |char|
-      fail "reader each shouldn't yield on empty string"
-    end.should be_nil
+    it "does not yield if empty" do
+      reader = Char::Reader.new("")
+      reader.each do |char|
+        fail "reader each shouldn't yield on empty string"
+      end.should be_nil
+    end
+
+    it "checks bounds after block" do
+      string = "f"
+      reader = Char::Reader.new(string)
+      reader.each do |c|
+        c.should eq 'f'
+        reader.next_char
+      end
+    end
   end
 
   it "starts at end" do

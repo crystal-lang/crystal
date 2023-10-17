@@ -27,7 +27,7 @@ lib LibC
 
   {% if flag?(:android) %}
     {% default_api_version = 31 %}
-    {% min_supported_version = 28 %}
+    {% min_supported_version = 24 %}
     {% api_version_var = env("ANDROID_PLATFORM") || env("ANDROID_NATIVE_API_LEVEL") %}
     {% api_version = api_version_var ? api_version_var.gsub(/^android-/, "").to_i : default_api_version %}
     {% raise "TODO: Support Android API level below #{min_supported_version}" unless api_version >= min_supported_version %}
