@@ -16,7 +16,7 @@ class IO
       "#{message} (#{target})"
     end
 
-    def initialize(message, *, target = nil)
+    def initialize(message : String? = nil, *, target = nil)
       @target = target.try(&.to_s)
 
       super message
