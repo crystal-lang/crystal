@@ -1,7 +1,7 @@
 require "time"
 require "io"
 
-{% if flag?(:wasm32) %}
+{% if flag?(:without_openssl) %}
   require "crystal/digest/sha1"
   require "crystal/digest/md5"
 {% else %}
