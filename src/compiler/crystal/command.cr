@@ -43,7 +43,9 @@ class Crystal::Command
         expand                   show macro expansion for given location
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
+        dependencies             show file dependency tree
         implementations          show implementations for given call in location
+        unreachable              show methods that are never called
         types                    show type of main variables
         --help, -h               show this help
     USAGE
@@ -181,12 +183,18 @@ class Crystal::Command
     when "hierarchy".starts_with?(tool)
       options.shift
       hierarchy
+    when "dependencies".starts_with?(tool)
+      options.shift
+      dependencies
     when "implementations".starts_with?(tool)
       options.shift
       implementations
     when "types".starts_with?(tool)
       options.shift
       types
+    when "unreachable".starts_with?(tool)
+      options.shift
+      unreachable
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
@@ -239,8 +247,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false)
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -337,7 +345,11 @@ class Crystal::Command
     hierarchy_exp : String?,
     cursor_location : String?,
     output_format : String?,
-    combine_rpath : Bool do
+    dependency_output_format : DependencyPrinter::Format,
+    combine_rpath : Bool,
+    includes : Array(String),
+    excludes : Array(String),
+    verbose : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename, combine_rpath: combine_rpath
@@ -350,7 +362,8 @@ class Crystal::Command
 
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
-                              single_file = false)
+                              single_file = false, dependencies = false,
+                              path_filter = false)
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
@@ -363,6 +376,10 @@ class Crystal::Command
     hierarchy_exp = nil
     cursor_location = nil
     output_format = nil
+    dependency_output_format = nil
+    excludes = [] of String
+    includes = [] of String
+    verbose = false
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -406,8 +423,27 @@ class Crystal::Command
         end
       end
 
-      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-        output_format = f
+      if dependencies
+        opts.on("-f tree|flat|dot|mermaid", "--format tree|flat|dot|mermaid", "Output format tree (default), flat, dot, or mermaid") do |f|
+          dependency_output_format = DependencyPrinter::Format.parse?(f)
+          error "Invalid format: #{f}. Options are: tree, flat, dot, or mermaid" unless dependency_output_format
+        end
+
+        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+          includes << f
+        end
+
+        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+          excludes << f
+        end
+
+        opts.on("--verbose", "Show skipped and filtered paths") do
+          verbose = true
+        end
+      else
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          output_format = f
+        end
       end
 
       opts.on("--error-trace", "Show full error trace") do
@@ -418,6 +454,16 @@ class Crystal::Command
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
+      end
+
+      if path_filter
+        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+          includes << f
+        end
+
+        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+          excludes << f
+        end
       end
 
       unless no_codegen
@@ -543,6 +589,8 @@ class Crystal::Command
       end
     end
 
+    dependency_output_format ||= DependencyPrinter::Format::Tree
+
     output_format ||= "text"
     unless output_format.in?("text", "json")
       error "You have input an invalid format, only text and JSON are supported"
@@ -559,14 +607,13 @@ class Crystal::Command
     end
 
     combine_rpath = run && !no_codegen
-    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format, combine_rpath
+    @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
+      arguments, specified_output, hierarchy_exp, cursor_location, output_format,
+      dependency_output_format.not_nil!, combine_rpath, includes, excludes, verbose
   end
 
   private def gather_sources(filenames)
     filenames.map do |filename|
-      unless File.file?(filename)
-        error "file '#{filename}' does not exist"
-      end
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end

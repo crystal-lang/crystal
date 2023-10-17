@@ -34,6 +34,23 @@ describe Time::Span do
     t1.to_s.should eq("1.01:00:00")
   end
 
+  it "initializes with type restrictions" do
+    t = Time::Span.new seconds: 1_u8, nanoseconds: 1_u8
+    t.should eq(Time::Span.new seconds: 1, nanoseconds: 1)
+
+    t = Time::Span.new seconds: 127_i8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 128)
+
+    t = Time::Span.new seconds: -128_i8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -129)
+
+    t = Time::Span.new seconds: 255_u8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 256)
+
+    t = Time::Span.new seconds: 0_u8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -1)
+  end
+
   it "initializes with big seconds value" do
     t = Time::Span.new hours: 0, minutes: 0, seconds: 1231231231231
     t.total_seconds.should eq(1231231231231)

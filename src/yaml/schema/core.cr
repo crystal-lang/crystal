@@ -238,7 +238,7 @@ module YAML::Schema::Core
     raise YAML::ParseException.new("Invalid bool", *location)
   end
 
-  protected def self.parse_int(string, location) : Int64
+  protected def self.parse_int(string : String, location) : Int64
     return 0_i64 if string == "0"
 
     string.to_i64?(underscore: true, prefix: true, leading_zero_is_octal: true) ||
@@ -322,6 +322,25 @@ module YAML::Schema::Core
 
   private def self.parse_number?(string)
     parse_int?(string) || parse_float?(string)
+  end
+
+  # Parses an integer of the given *type* according to the core schema.
+  #
+  # *type* must be a primitive integer type. Raises `YAML::ParseException` if
+  # *node* is not a valid integer or its value is outside *type*'s range.
+  def self.parse_int(node : Nodes::Node, type : T.class) : T forall T
+    {% unless Int::Primitive.union_types.includes?(T) %}
+      {% raise "Expected `type` to be a primitive integer type, not #{T}" %}
+    {% end %}
+
+    string = node.value
+    return T.zero if string == "0"
+
+    begin
+      T.new(string, underscore: true, prefix: true, leading_zero_is_octal: true)
+    rescue ex : ArgumentError
+      raise YAML::ParseException.new("Can't read #{T}", *node.location)
+    end
   end
 
   private def self.parse_int?(string)
