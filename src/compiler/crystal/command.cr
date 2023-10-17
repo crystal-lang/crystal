@@ -614,9 +614,6 @@ class Crystal::Command
 
   private def gather_sources(filenames)
     filenames.map do |filename|
-      unless File.file?(filename)
-        error "file '#{filename}' does not exist"
-      end
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end
