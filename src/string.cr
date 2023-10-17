@@ -752,7 +752,7 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
+    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+', 'i', 'I', 'n', 'N')
 
     v, endptr = yield
 
