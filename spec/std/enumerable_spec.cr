@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class SpecEnumerable
   include Enumerable(Int32)
@@ -390,6 +391,43 @@ describe "Enumerable" do
       iter.next.should eq([3, 4])
       iter.next.should eq([5])
       iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
+  describe "each_step" do
+    it_iterates "yields every 2nd element", %w[a c e], %w[a b c d e f].each_step(2)
+    it_iterates "accepts an optional offset parameter", %w[b d f], %w[a b c d e f].each_step(2, offset: 1)
+    it_iterates "accepts an offset of 0", %w[a c e], %w[a b c d e f].each_step(2, offset: 0)
+    it_iterates "accepts an offset larger then the step size", %w[d f], %w[a b c d e f].each_step(2, offset: 3)
+
+    it_iterates "accepts a step larger then the enumerable size", %w[a], %w[a b c d e f].each_step(7)
+    it_iterates "accepts an offset larger then the enumerable size", %w[], %w[a b c d e f].each_step(1, offset: 7)
+
+    it "doesn't accept a negative step" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(-2)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(-2) { }
+      end
+    end
+
+    it "doesn't accept a step of 0" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(0)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(0) { }
+      end
+    end
+
+    it "doesn't accept a negative offset" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(2, offset: -2)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(2, offset: -2) { }
+      end
     end
   end
 
