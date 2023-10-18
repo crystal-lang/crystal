@@ -120,7 +120,7 @@ module Crystal
 
       each_file_expansion(filename, relative_to) do |path|
         absolute_path = File.expand_path(path, dir: @current_dir)
-        return absolute_path if File.exists?(absolute_path)
+        return absolute_path if File.file?(absolute_path)
       end
 
       nil
