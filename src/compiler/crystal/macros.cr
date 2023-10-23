@@ -1878,9 +1878,28 @@ module Crystal::Macros
   # class MacroLiteral < ASTNode
   # end
 
-  # if inside a macro
-  # class MacroIf < ASTNode
-  # end
+  # An `if` inside a macro, e.g.
+  #
+  # ```
+  # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  # ```
+  class MacroIf < ASTNode
+    # The condition of the `if` clause
+    def cond : ASTNode
+    end
+
+    # The code to be executed when the condition is truthy
+    def then : ASTNode
+    end
+
+    # The code to be executed when the condition is falsey
+    def else : ASTNode
+    end
+  end
 
   # for inside a macro:
   # class MacroFor < ASTNode
