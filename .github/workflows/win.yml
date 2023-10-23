@@ -1,4 +1,4 @@
-  name: Windows CI
+name: Windows CI
 
 on: [push, pull_request]
 
