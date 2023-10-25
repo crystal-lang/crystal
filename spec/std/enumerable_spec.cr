@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class SpecEnumerable
   include Enumerable(Int32)
@@ -393,6 +394,43 @@ describe "Enumerable" do
     end
   end
 
+  describe "each_step" do
+    it_iterates "yields every 2nd element", %w[a c e], %w[a b c d e f].each_step(2)
+    it_iterates "accepts an optional offset parameter", %w[b d f], %w[a b c d e f].each_step(2, offset: 1)
+    it_iterates "accepts an offset of 0", %w[a c e], %w[a b c d e f].each_step(2, offset: 0)
+    it_iterates "accepts an offset larger then the step size", %w[d f], %w[a b c d e f].each_step(2, offset: 3)
+
+    it_iterates "accepts a step larger then the enumerable size", %w[a], %w[a b c d e f].each_step(7)
+    it_iterates "accepts an offset larger then the enumerable size", %w[], %w[a b c d e f].each_step(1, offset: 7)
+
+    it "doesn't accept a negative step" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(-2)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(-2) { }
+      end
+    end
+
+    it "doesn't accept a step of 0" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(0)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(0) { }
+      end
+    end
+
+    it "doesn't accept a negative offset" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(2, offset: -2)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(2, offset: -2) { }
+      end
+    end
+  end
+
   describe "each_with_index" do
     it "yields the element and the index" do
       collection = [] of {String, Int32}
@@ -436,9 +474,14 @@ describe "Enumerable" do
     end
   end
 
-  describe "empty?" do
+  describe "#empty?" do
     it { SpecEnumerable.new.empty?.should be_false }
     it { SpecEmptyEnumerable.new.empty?.should be_true }
+  end
+
+  describe "#present?" do
+    it { SpecEnumerable.new.present?.should be_true }
+    it { SpecEmptyEnumerable.new.present?.should be_false }
   end
 
   describe "find" do

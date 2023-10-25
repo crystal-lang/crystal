@@ -2194,8 +2194,8 @@ module Crystal
     def consume_non_braced_unicode_escape
       codepoint = 0
       4.times do
-        hex_value = char_to_hex(next_char) { expected_hexadecimal_character_in_unicode_escape }
-        codepoint = 16 * codepoint + hex_value
+        hex_value = next_char.to_i?(16) || expected_hexadecimal_character_in_unicode_escape
+        codepoint = 16 &* codepoint &+ hex_value
       end
       if 0xD800 <= codepoint <= 0xDFFF
         raise "invalid unicode codepoint (surrogate half)"
@@ -2224,8 +2224,8 @@ module Crystal
             expected_hexadecimal_character_in_unicode_escape
           end
         else
-          hex_value = char_to_hex(char) { expected_hexadecimal_character_in_unicode_escape }
-          codepoint = 16 * codepoint + hex_value
+          hex_value = char.to_i?(16) || expected_hexadecimal_character_in_unicode_escape
+          codepoint = 16 &* codepoint &+ hex_value
           found_digit = true
         end
       end
@@ -2337,18 +2337,6 @@ module Crystal
       set_token_raw_from_start(start)
 
       @token
-    end
-
-    def char_to_hex(char, &)
-      if '0' <= char <= '9'
-        char - '0'
-      elsif 'a' <= char <= 'f'
-        10 + (char - 'a')
-      elsif 'A' <= char <= 'F'
-        10 + (char - 'A')
-      else
-        yield
-      end
     end
 
     def consume_loc_pragma

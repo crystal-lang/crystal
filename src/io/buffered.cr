@@ -98,7 +98,7 @@ module IO::Buffered
   # peek data if the current buffer is empty:
   # otherwise no read is performed and whatever
   # is in the buffer is returned.
-  def peek : Bytes?
+  def peek : Bytes
     check_open
 
     if @in_buffer_rem.empty?

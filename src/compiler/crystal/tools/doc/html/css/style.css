@@ -1,3 +1,7 @@
+:root {
+  color-scheme: light dark;
+}
+
 html, body {
   background: #FFFFFF;
   position: relative;
@@ -729,6 +733,30 @@ img {
   max-width: 100%;
 }
 
+table {
+  font-size: 14px;
+  display: block;
+  max-width: -moz-fit-content;
+  max-width: fit-content;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: #fdfdfd;
+  text-align: center;
+  border: 1px solid #eee;
+  border-collapse: collapse;
+  padding: 0px 5px 0px 5px;
+}
+
+table th {
+  padding: 10px;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #eee;
+}
+
+table td {
+  padding: 10px;
+}
+
 #sidebar-btn {
   height: 32px;
   width: 32px;
@@ -794,10 +822,6 @@ img {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
-
   html, body {
     background: #1b1b1b;
   }
@@ -822,6 +846,10 @@ img {
     color: white;
     background-color: #202020;
     border: 1px solid #353535;
+  }
+
+  .project-versions-nav > option {
+    background-color: #222;
   }
 
   .superclass-hierarchy .superclass a,
@@ -935,13 +963,18 @@ img {
     color: white;
   }
 
-  pre {
+  pre,
+  table {
     color: white;
     background: #202020;
     border: 1px solid #353535;
   }
 
+  table th {
+    border-bottom: 1px solid #353535;
+  }
+
   #sidebar-btn, #sidebar-btn-label {
-    color: white; 
+    color: white;
   }
 }
