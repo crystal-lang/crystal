@@ -367,6 +367,13 @@ module Crystal
       end
     end
 
+    describe "char methods" do
+      it "executes ord" do
+        assert_macro %({{'a'.ord}}), %(97)
+        assert_macro %({{'龍'.ord}}), %(40845)
+      end
+    end
+
     describe "string methods" do
       it "executes string == string" do
         assert_macro %({{"foo" == "foo"}}), %(true)
