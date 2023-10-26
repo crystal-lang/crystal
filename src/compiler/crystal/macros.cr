@@ -1917,7 +1917,7 @@ module Crystal::Macros
     def exp : ASTNode
     end
 
-    # The body to be executed for each item.
+    # The body of the `for` loop.
     def body : ASTNode
     end
   end
