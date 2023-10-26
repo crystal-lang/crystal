@@ -1888,15 +1888,15 @@ module Crystal::Macros
   # {% end %}
   # ```
   class MacroIf < ASTNode
-    # The condition of the `if` clause
+    # The condition of the `if` clause.
     def cond : ASTNode
     end
 
-    # The code to be executed when the condition is truthy
+    # The `then` branch of the `if`.
     def then : ASTNode
     end
 
-    # The code to be executed when the condition is falsey
+    # The `else` branch of the `if`.
     def else : ASTNode
     end
   end
@@ -1909,15 +1909,15 @@ module Crystal::Macros
   # {% end %}
   # ```
   class MacroFor < ASTNode
-    # The variables declared after `for`
+    # The variables declared after `for`.
     def vars : ArrayLiteral(Var)
     end
 
-    # The expression after `in`
+    # The expression after `in`.
     def exp : ASTNode
     end
 
-    # The body to be executed for each item
+    # The body to be executed for each item.
     def body : ASTNode
     end
   end
