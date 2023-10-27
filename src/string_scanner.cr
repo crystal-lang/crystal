@@ -388,7 +388,7 @@ class StringScanner
   end
 
   # :nodoc:
-  class StringMatchData
+  struct StringMatchData
     def initialize(@str : String)
     end
 
