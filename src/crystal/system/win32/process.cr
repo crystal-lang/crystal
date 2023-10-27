@@ -74,7 +74,7 @@ struct Crystal::System::Process
     # stuck forever in that case?
     # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
     @completion_key.fiber = ::Fiber.current
-    sleep
+    Crystal::Scheduler.reschedule
 
     # If the IOCP notification is delivered before the process fully exits,
     # wait for it
