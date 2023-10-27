@@ -482,21 +482,27 @@ class File < IO::FileDescriptor
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
+    if path.is_a?(Path)
+      separators = Path.separators(path.@kind)
+      path = path.to_s
+    else
+      separators = Path.separators(Path::Kind::POSIX)
+    end
+
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path)
+      return true if match_single_pattern(expanded_pattern, path, separators)
     end
     false
   end
 
-  private def self.match_single_pattern(pattern : String, path : Path | String)
+  private def self.match_single_pattern(pattern : String, path : String, separators)
     # linear-time algorithm adapted from https://research.swtch.com/glob
     preader = Char::Reader.new(pattern)
-    sreader = Char::Reader.new(path.to_s)
+    sreader = Char::Reader.new(path)
     next_ppos = 0
     next_spos = 0
-    strlen = path.to_s.bytesize
+    strlen = path.bytesize
     escaped = false
-    separators = Path.separators(path.is_a?(Path) ? path.@kind : Path::Kind::POSIX)
 
     while true
       pnext = preader.has_next?
