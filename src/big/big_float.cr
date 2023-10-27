@@ -152,7 +152,7 @@ struct BigFloat < Float
   def **(other : BigInt) : BigFloat
     is_zero = self.zero?
     if is_zero
-      case other <=> 0
+      case other
       when .>(0)
         return self
       when .<(0)
