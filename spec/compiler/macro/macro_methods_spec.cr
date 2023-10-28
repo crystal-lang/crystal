@@ -2510,6 +2510,34 @@ module Crystal
       end
     end
 
+    describe "macro if methods" do
+      it "executes cond" do
+        assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
+      end
+
+      it "executes then" do
+        assert_macro %({{x.then}}), "\"test\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+    end
+
+    describe "macro for methods" do
+      it "executes vars" do
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+    end
+
     describe "unary expression methods" do
       it "executes exp" do
         assert_macro %({{x.exp}}), "some_call", {x: Not.new("some_call".call)}

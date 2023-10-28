@@ -1478,6 +1478,36 @@ module Crystal
     end
   end
 
+  class MacroIf
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "cond"
+        interpret_check_args { @cond }
+      when "then"
+        interpret_check_args { @then }
+      when "else"
+        interpret_check_args { @else }
+      else
+        super
+      end
+    end
+  end
+
+  class MacroFor
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "vars"
+        interpret_check_args { ArrayLiteral.map(@vars, &.itself) }
+      when "exp"
+        interpret_check_args { @exp }
+      when "body"
+        interpret_check_args { @body }
+      else
+        super
+      end
+    end
+  end
+
   class UnaryExpression
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
