@@ -602,6 +602,19 @@ module Crystal
     def to_macro_id
       @value.to_s
     end
+
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "ord"
+        interpret_check_args { NumberLiteral.new(ord) }
+      else
+        super
+      end
+    end
+
+    def ord
+      @value.ord
+    end
   end
 
   class StringLiteral

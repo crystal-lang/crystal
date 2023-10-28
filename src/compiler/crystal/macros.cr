@@ -562,6 +562,10 @@ module Crystal::Macros
     # Returns a `MacroId` for this character's contents.
     def id : MacroId
     end
+
+    # Similar to `Char#ord`.
+    def ord : NumberLiteral
+    end
   end
 
   # A string literal.
