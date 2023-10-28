@@ -3,6 +3,11 @@ require "c/handleapi"
 require "crystal/system/thread_linked_list"
 
 module IO::Overlapped
+  # :nodoc:
+  class CompletionKey
+    property fiber : Fiber?
+  end
+
   @read_timeout : Time::Span?
   @write_timeout : Time::Span?
 
@@ -61,7 +66,23 @@ module IO::Overlapped
     end
 
     removed.times do |i|
-      OverlappedOperation.schedule(overlapped_entries[i].lpOverlapped) { |fiber| yield fiber }
+      entry = overlapped_entries[i]
+
+      # at the moment only `::Process#wait` uses a non-nil completion key; all
+      # I/O operations, including socket ones, do not set this field
+      case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
+      when Nil
+        OverlappedOperation.schedule(entry.lpOverlapped) { |fiber| yield fiber }
+      else
+        case entry.dwNumberOfBytesTransferred
+        when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
+          if fiber = completion_key.fiber
+            yield fiber
+          else
+            # the `Process` exits before a call to `#wait`; do nothing
+          end
+        end
+      end
     end
 
     false

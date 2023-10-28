@@ -1,5 +1,6 @@
 require "c/processthreadsapi"
 require "c/handleapi"
+require "c/jobapi2"
 require "c/synchapi"
 require "c/tlhelp32"
 require "process/shell"
@@ -9,6 +10,8 @@ struct Crystal::System::Process
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
+  @job_object : LibC::HANDLE
+  @completion_key = IO::Overlapped::CompletionKey.new
 
   @@interrupt_handler : Proc(Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
@@ -19,15 +22,62 @@ struct Crystal::System::Process
     @pid = process_info.dwProcessId
     @thread_id = process_info.dwThreadId
     @process_handle = process_info.hProcess
+
+    @job_object = LibC.CreateJobObjectW(nil, nil)
+
+    # enable IOCP notifications
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
+      LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
+        completionKey: @completion_key.as(Void*),
+        completionPort: Crystal::Scheduler.event_loop.iocp,
+      ),
+    )
+
+    # but not for any child processes
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::ExtendedLimitInformation,
+      LibC::JOBOBJECT_EXTENDED_LIMIT_INFORMATION.new(
+        basicLimitInformation: LibC::JOBOBJECT_BASIC_LIMIT_INFORMATION.new(
+          limitFlags: LibC::JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK,
+        ),
+      ),
+    )
+
+    if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
+      raise RuntimeError.from_winerror("AssignProcessToJobObject")
+    end
+  end
+
+  private def config_job_object(kind, info)
+    if LibC.SetInformationJobObject(@job_object, kind, pointerof(info), sizeof(typeof(info))) == 0
+      raise RuntimeError.from_winerror("SetInformationJobObject")
+    end
   end
 
   def release
     return if @process_handle == LibC::HANDLE.null
     close_handle(@process_handle)
     @process_handle = LibC::HANDLE.null
+    close_handle(@job_object)
+    @job_object = LibC::HANDLE.null
   end
 
   def wait
+    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
+      raise RuntimeError.from_winerror("GetExitCodeProcess")
+    end
+    return exit_code unless exit_code == LibC::STILL_ACTIVE
+
+    # let `@job_object` do its job
+    # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
+    # stuck forever in that case?
+    # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
+    @completion_key.fiber = ::Fiber.current
+    Crystal::Scheduler.reschedule
+
+    # If the IOCP notification is delivered before the process fully exits,
+    # wait for it
     if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
@@ -38,7 +88,7 @@ struct Crystal::System::Process
     # waitpid returns, we wait 5 milliseconds to attempt to replicate this behaviour.
     sleep 5.milliseconds
 
-    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
+    if LibC.GetExitCodeProcess(@process_handle, pointerof(exit_code)) == 0
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
     if exit_code == LibC::STILL_ACTIVE

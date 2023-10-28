@@ -227,7 +227,7 @@ $(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
 	$(call export_build_vars)
-	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib -D without_playground $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
+	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
 	$(call MV,"$(O)\crystal-next.exe","$@")
 	$(call MV,"$(O)\crystal-next.pdb","$(O)\crystal.pdb")
 
