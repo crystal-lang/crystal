@@ -13,9 +13,9 @@ struct BigFloat
     raise DivisionByZeroError.new if other == 0
     Int.primitive_ui_check(other) do |ui, neg_ui, _|
       {
-        BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
-        BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
-        BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
+        ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i: BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
       }
     end
   end
@@ -67,9 +67,10 @@ struct Int
   # respectively. These expressions are not evaluated unless they are
   # interpolated in *block*.
   #
-  # *block* should return a 3-tuple: the first element is returned by the macro
-  # if *var* fits into a `LibGMP::UI`, the second returned if the negative of
-  # *var* fits into a `LibGMP::UI`, and the third otherwise.
+  # *block* should return a named tuple: the value for `:ui` is returned by the
+  # macro if *var* fits into a `LibGMP::UI`, the value for `:neg_ui` returned if
+  # the negative of *var* fits into a `LibGMP::UI`, and the value for `:big_i`
+  # otherwise.
   macro primitive_ui_check(var, &block)
     {%
       exps = yield(
@@ -79,11 +80,11 @@ struct Int
       )
     %}
     if ::LibGMP::UI::MIN <= {{ var }} <= ::LibGMP::UI::MAX
-      {{ exps[0] }}
+      {{ exps[:ui] }}
     elsif {{ var }}.responds_to?(:abs_unsigned) && {{ var }}.abs_unsigned <= ::LibGMP::UI::MAX
-      {{ exps[1] }}
+      {{ exps[:neg_ui] }}
     else
-      {{ exps[2] }}
+      {{ exps[:big_i] }}
     end
   end
 end
