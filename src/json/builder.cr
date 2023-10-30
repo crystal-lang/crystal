@@ -25,6 +25,7 @@ class JSON::Builder
   def initialize(@io : IO)
     @state = [StartState.new] of State
     @current_indent = 0
+    @escape = Escape.new(io)
   end
 
   # Starts a document.
@@ -101,13 +102,32 @@ class JSON::Builder
   #
   # This method can also be used to write the name of an object field.
   def string(value) : Nil
-    string = value.to_s
+    string do |io|
+      value.to_s(io)
+    end
+  end
 
+  def string(& : IO ->) : Nil
     scalar(string: true) do
       io << '"'
+      yield @escape
+      io << '"'
+    end
+  end
 
-      cursor = start = string.to_unsafe
-      fin = cursor + string.bytesize
+  class Escape < IO
+    def initialize(@io : IO)
+    end
+
+    delegate :flush, :tty?, :pos, :pos=, :seek, to: @io
+
+    def read(slice : Bytes)
+      raise ""
+    end
+
+    def write(slice : Bytes) : Nil
+      cursor = start = slice.to_unsafe
+      fin = cursor + slice.bytesize
 
       while cursor < fin
         case byte = cursor.value
@@ -118,11 +138,11 @@ class JSON::Builder
         when '\n' then escape = "\\n"
         when '\r' then escape = "\\r"
         when '\t' then escape = "\\t"
-        when .<(0x20), 0x7F # Char#ascii_control?
-          io.write_string Slice.new(start, cursor - start)
-          io << "\\u00"
-          io << '0' if byte < 0x10
-          byte.to_s(io, 16)
+        when .<(0x20), 0x7f # Char#ascii_control?
+          @io.write_string Slice.new(start, cursor - start)
+          @io << "\\u00"
+          @io << '0' if byte < 0x10
+          byte.to_s(@io, 16)
           cursor += 1
           start = cursor
           next
@@ -131,15 +151,13 @@ class JSON::Builder
           next
         end
 
-        io.write_string Slice.new(start, cursor - start)
-        io << escape
+        @io.write_string Slice.new(start, cursor - start)
+        @io << escape
         cursor += 1
         start = cursor
       end
 
-      io.write_string Slice.new(start, cursor - start)
-
-      io << '"'
+      @io.write_string Slice.new(start, cursor - start)
     end
   end
 
