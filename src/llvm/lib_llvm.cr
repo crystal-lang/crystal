@@ -355,7 +355,7 @@ lib LibLLVM
   {% end %}
 
   fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : UInt8*, length : UInt32, dont_null_terminate : Int32) : ValueRef
-  fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef
+  fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef
 
   fun get_md_kind_id_in_context = LLVMGetMDKindIDInContext(c : ContextRef, name : UInt8*, slen : UInt32) : UInt32
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, values : ValueRef*, count : Int32) : ValueRef
