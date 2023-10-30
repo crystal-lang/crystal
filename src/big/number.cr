@@ -39,9 +39,9 @@ struct Int
   # a `LibGMP::UI`, and a `BigInt` respectively. These expressions are not
   # evaluated unless they are interpolated in *block*.
   #
-  # *block* should return a 3-tuple: the first element is returned by the macro
-  # if *var* fits into a `LibGMP::SI`, the second returned if *var* fits into a
-  # `LibGMP::UI`, and the third otherwise.
+  # *block* should return a named tuple: the value for `:si` is returned by the
+  # macro if *var* fits into a `LibGMP::SI`, the value for `:ui` returned if
+  # *var* fits into a `LibGMP::UI`, and the value for `:big_i` otherwise.
   macro primitive_si_ui_check(var, &block)
     {%
       exps = yield(
@@ -52,12 +52,12 @@ struct Int
     %}
     if ::LibGMP::SI::MIN <= {{ var }} <= ::LibGMP::UI::MAX
       if {{ var }} <= ::LibGMP::SI::MAX
-        {{ exps[0] }}
+        {{ exps[:si] }}
       else
-        {{ exps[1] }}
+        {{ exps[:ui] }}
       end
     else
-      {{ exps[2] }}
+      {{ exps[:big_i] }}
     end
   end
 

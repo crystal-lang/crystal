@@ -50,15 +50,15 @@ struct BigInt < Int
   def self.new(num : Int::Primitive)
     Int.primitive_si_ui_check(num) do |si, ui, _|
       {
-        begin
+        si: begin
           LibGMP.init_set_si(out mpz1, {{ si }})
           new(mpz1)
         end,
-        begin
+        ui: begin
           LibGMP.init_set_ui(out mpz2, {{ ui }})
           new(mpz2)
         end,
-        begin
+        big_i: begin
           negative = num < 0
           num = num.abs_unsigned
           capacity = (num.bit_length - 1) // (sizeof(LibGMP::MpLimb) * 8) + 1
@@ -148,9 +148,9 @@ struct BigInt < Int
   def <=>(other : Int)
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
-        LibGMP.cmp_si(self, {{ si }}),
-        LibGMP.cmp_ui(self, {{ ui }}),
-        self <=> {{ big_i }},
+        si: LibGMP.cmp_si(self, {{ si }}),
+        ui: LibGMP.cmp_ui(self, {{ ui }}),
+        big_i: self <=> {{ big_i }},
       }
     end
   end
@@ -219,9 +219,9 @@ struct BigInt < Int
   def *(other : Int) : BigInt
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
-        BigInt.new { |mpz| LibGMP.mul_si(mpz, self, {{ si }}) },
-        BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, {{ ui }}) },
-        self * {{ big_i }},
+        si: BigInt.new { |mpz| LibGMP.mul_si(mpz, self, {{ si }}) },
+        ui: BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, {{ ui }}) },
+        big_i: self * {{ big_i }},
       }
     end
   end
