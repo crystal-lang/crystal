@@ -111,7 +111,7 @@ module Crystal
   # Then it traverses all types and their defs and reports those that are not
   # in `@used_def_locations` (and match the filter).
   class UnreachableVisitor < Visitor
-    @used_def_locations = Set(Location).new
+    @used_def_locations = Hash(Location, Int32).new(0)
     @defs : Set(Def) = Set(Def).new.compare_by_identity
     @visited : Set(ASTNode) = Set(ASTNode).new.compare_by_identity
 
@@ -163,7 +163,7 @@ module Crystal
 
       node.target_defs.try &.each do |a_def|
         if (location = a_def.location)
-          @used_def_locations << location if interested_in(location)
+          @used_def_locations.update(location, &.+(1)) if interested_in(location)
         end
 
         if @visited.add?(a_def)
@@ -199,7 +199,7 @@ module Crystal
 
       check_def(previous) if previous && !a_def.calls_previous_def?
 
-      return if @used_def_locations.includes?(a_def.location)
+      return if @used_def_locations[a_def.location] > 0
 
       check_def(previous) if previous && a_def.calls_previous_def?
 
