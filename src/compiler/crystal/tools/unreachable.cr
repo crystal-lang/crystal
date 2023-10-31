@@ -42,6 +42,10 @@ module Crystal
         io << a_def.location << "\t"
         io << a_def.short_reference << "\t"
         io << a_def.length << " lines"
+        if annotations = a_def.all_annotations
+          io << "\t"
+          annotations.join(io, " ")
+        end
         io.puts
       end
     end
@@ -54,6 +58,9 @@ module Crystal
             builder.field "location", a_def.location.to_s
             if lines = a_def.length
               builder.field "lines", lines
+            end
+            if annotations = a_def.all_annotations
+              builder.field "annotations", annotations.map(&.to_s)
             end
           end
         end
