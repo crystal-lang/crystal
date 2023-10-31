@@ -247,8 +247,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false, unreachable_command = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter, unreachable_command: unreachable_command
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false, unreachable_command = false, allowed_formats = ["text", "json"])
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter, unreachable_command: unreachable_command, allowed_formats: allowed_formats
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -364,7 +364,8 @@ class Crystal::Command
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
                               single_file = false, dependencies = false,
-                              path_filter = false, unreachable_command = false)
+                              path_filter = false, unreachable_command = false,
+                              allowed_formats = ["text", "json"])
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
@@ -443,7 +444,7 @@ class Crystal::Command
           verbose = true
         end
       else
-        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        opts.on("-f #{allowed_formats.join("|")}", "--format #{allowed_formats.join("|")}", "Output format: #{allowed_formats[0]} (default), #{allowed_formats[1..].join(", ")}") do |f|
           output_format = f
         end
       end
@@ -600,8 +601,8 @@ class Crystal::Command
     dependency_output_format ||= DependencyPrinter::Format::Tree
 
     output_format ||= "text"
-    unless output_format.in?("text", "json")
-      error "You have input an invalid format, only text and JSON are supported"
+    unless output_format.in?(allowed_formats)
+      error "You have input an invalid format: #{output_format}. Supported formats: #{allowed_formats.join(", ")}"
     end
 
     error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
