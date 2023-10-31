@@ -70,7 +70,7 @@ module Crystal
   class UnreachableVisitor < Visitor
     @used_def_locations = Set(Location).new
     @defs : Set(Def) = Set(Def).new.compare_by_identity
-    @visited_defs : Set(Def) = Set(Def).new.compare_by_identity
+    @visited : Set(ASTNode) = Set(ASTNode).new.compare_by_identity
 
     property includes = [] of String
     property excludes = [] of String
@@ -102,6 +102,8 @@ module Crystal
     end
 
     def visit(node : ExpandableNode)
+      return false unless @visited.add?(node)
+
       if expanded = node.expanded
         expanded.accept self
       end
@@ -121,7 +123,7 @@ module Crystal
           @used_def_locations << location if interested_in(location)
         end
 
-        if @visited_defs.add?(a_def)
+        if @visited.add?(a_def)
           a_def.body.accept(self)
         end
       end
