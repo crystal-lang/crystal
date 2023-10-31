@@ -15,8 +15,8 @@ module Crystal
       unreachable.excludes.concat CrystalPath.default_paths.map { |path| ::Path[path].expand.to_posix.to_s }
       unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
 
-      defs = unreachable.process(result)
-      defs.sort_by! do |a_def|
+      tallies = unreachable.process(result)
+      tallies.sort_by! do |a_def, _|
         location = a_def.location.not_nil!
         {
           location.filename.as(String),
@@ -25,15 +25,15 @@ module Crystal
         }
       end
 
-      UnreachablePresenter.new(defs, format: config.output_format).to_s(STDOUT)
+      UnreachablePresenter.new(tallies, format: config.output_format).to_s(STDOUT)
 
       if config.check
-        exit 1 unless defs.empty?
+        exit 1 if tallies.any?(&.[1].zero?)
       end
     end
   end
 
-  record UnreachablePresenter, defs : Array(Def), format : String? do
+  record UnreachablePresenter, tallies : Array({Def, Int32}), format : String? do
     include JSON::Serializable
 
     def to_s(io)
@@ -49,7 +49,8 @@ module Crystal
 
     def each(&)
       current_dir = Dir.current
-      defs.each do |a_def|
+      tallies.each do |a_def, count|
+        next unless count.zero?
         location = a_def.location.not_nil!
         filename = ::Path[location.filename.as(String)].relative_to(current_dir).to_s
         location = Location.new(filename, location.line_number, location.column_number)
@@ -112,7 +113,7 @@ module Crystal
   # in `@used_def_locations` (and match the filter).
   class UnreachableVisitor < Visitor
     @used_def_locations = Hash(Location, Int32).new(0)
-    @defs : Set(Def) = Set(Def).new.compare_by_identity
+    @tallies = Hash(Def, Int32).new.compare_by_identity
     @visited : Set(ASTNode) = Set(ASTNode).new.compare_by_identity
 
     property includes = [] of String
@@ -130,14 +131,14 @@ module Crystal
       process_type(type.metaclass) if type.metaclass != type
     end
 
-    def process(result : Compiler::Result) : Array(Def)
-      @defs.clear
+    def process(result : Compiler::Result) : Array({Def, Int32})
+      @tallies.clear
 
       result.node.accept(self)
 
       process_type(result.program)
 
-      @defs.to_a
+      @tallies.to_a
     end
 
     def visit(node)
@@ -199,11 +200,10 @@ module Crystal
 
       check_def(previous) if previous && !a_def.calls_previous_def?
 
-      return if @used_def_locations[a_def.location] > 0
+      tally = @used_def_locations[a_def.location]
+      @tallies[a_def] = tally
 
-      check_def(previous) if previous && a_def.calls_previous_def?
-
-      @defs << a_def
+      check_def(previous) if previous && a_def.calls_previous_def? if tally == 0
     end
 
     private def interested_in(location)
