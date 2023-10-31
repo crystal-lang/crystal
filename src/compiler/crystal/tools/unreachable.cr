@@ -37,9 +37,20 @@ module Crystal
   record UnreachableResult, defs : Array(Def) do
     include JSON::Serializable
 
-    def to_text(io)
+    def each(&)
+      current_dir = Dir.current
+
       defs.each do |a_def|
-        io << a_def.location << "\t"
+        location = a_def.location.not_nil!
+        filename = ::Path[location.filename.as(String)].relative_to(current_dir).to_s
+        location = Location.new(filename, location.line_number, location.column_number)
+        yield a_def, location
+      end
+    end
+
+    def to_text(io)
+      each do |a_def, location|
+        io << location << "\t"
         io << a_def.short_reference << "\t"
         io << a_def.length << " lines"
         io.puts
@@ -48,10 +59,10 @@ module Crystal
 
     def to_json(builder : JSON::Builder)
       builder.array do
-        defs.each do |a_def|
+        each do |a_def, location|
           builder.object do
             builder.field "name", a_def.short_reference
-            builder.field "location", a_def.location.to_s
+            builder.field "location", location.to_s
             if lines = a_def.length
               builder.field "lines", lines
             end
