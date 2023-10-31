@@ -148,8 +148,8 @@ struct BigInt < Int
   def <=>(other : Int)
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
-        si: LibGMP.cmp_si(self, {{ si }}),
-        ui: LibGMP.cmp_ui(self, {{ ui }}),
+        si:    LibGMP.cmp_si(self, {{ si }}),
+        ui:    LibGMP.cmp_ui(self, {{ ui }}),
         big_i: self <=> {{ big_i }},
       }
     end
@@ -166,9 +166,9 @@ struct BigInt < Int
   def +(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.add_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.add_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, {{ neg_ui }}) },
-        big_i: self + {{ big_i }},
+        big_i:  self + {{ big_i }},
       }
     end
   end
@@ -184,9 +184,9 @@ struct BigInt < Int
   def -(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.add_ui(mpz, self, {{ neg_ui }}) },
-        big_i: self - {{ big_i }},
+        big_i:  self - {{ big_i }},
       }
     end
   end
@@ -219,8 +219,8 @@ struct BigInt < Int
   def *(other : Int) : BigInt
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
-        si: BigInt.new { |mpz| LibGMP.mul_si(mpz, self, {{ si }}) },
-        ui: BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, {{ ui }}) },
+        si:    BigInt.new { |mpz| LibGMP.mul_si(mpz, self, {{ si }}) },
+        ui:    BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, {{ ui }}) },
         big_i: self * {{ big_i }},
       }
     end
@@ -253,9 +253,9 @@ struct BigInt < Int
   def unsafe_floored_div(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, -self, {{ neg_ui }}) },
-        big_i: unsafe_floored_div({{ big_i }}),
+        big_i:  unsafe_floored_div({{ big_i }}),
       }
     end
   end
@@ -267,9 +267,9 @@ struct BigInt < Int
   def unsafe_truncated_div(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.tdiv_q_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.tdiv_q_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.tdiv_q_ui(mpz, self, {{ neg_ui }}); LibGMP.neg(mpz, mpz) },
-        big_i: unsafe_truncated_div({{ big_i }}),
+        big_i:  unsafe_truncated_div({{ big_i }}),
       }
     end
   end
@@ -299,9 +299,9 @@ struct BigInt < Int
   def unsafe_floored_mod(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, {{ neg_ui }}); LibGMP.neg(mpz, mpz) },
-        big_i: unsafe_floored_mod({{ big_i }}),
+        big_i:  unsafe_floored_mod({{ big_i }}),
       }
     end
   end
@@ -313,9 +313,9 @@ struct BigInt < Int
   def unsafe_truncated_mod(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, {{ neg_ui }}) },
-        big_i: unsafe_truncated_mod({{ big_i }}),
+        big_i:  unsafe_truncated_mod({{ big_i }}),
       }
     end
   end
@@ -330,9 +330,9 @@ struct BigInt < Int
     the_q = BigInt.new
     the_r = Int.primitive_ui_check(number) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, self, {{ ui }}) },
+        ui:     BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, self, {{ ui }}) },
         neg_ui: BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, -self, {{ neg_ui }}); LibGMP.neg(r, r) },
-        big_i: BigInt.new { |r| LibGMP.fdiv_qr(the_q, r, self, {{ big_i }}) },
+        big_i:  BigInt.new { |r| LibGMP.fdiv_qr(the_q, r, self, {{ big_i }}) },
       }
     end
     {the_q, the_r}
@@ -348,9 +348,9 @@ struct BigInt < Int
     the_q = BigInt.new
     the_r = Int.primitive_ui_check(number) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |r| LibGMP.tdiv_qr_ui(the_q, r, self, {{ ui }}) },
+        ui:     BigInt.new { |r| LibGMP.tdiv_qr_ui(the_q, r, self, {{ ui }}) },
         neg_ui: BigInt.new { |r| LibGMP.tdiv_qr_ui(the_q, r, self, {{ neg_ui }}); LibGMP.neg(the_q, the_q) },
-        big_i: BigInt.new { |r| LibGMP.tdiv_qr(the_q, r, self, {{ big_i }}) },
+        big_i:  BigInt.new { |r| LibGMP.tdiv_qr(the_q, r, self, {{ big_i }}) },
       }
     end
     {the_q, the_r}
@@ -363,9 +363,9 @@ struct BigInt < Int
   def divisible_by?(number : Int) : Bool
     Int.primitive_ui_check(number) do |ui, neg_ui, big_i|
       {
-        ui: LibGMP.divisible_ui_p(self, {{ ui }}) != 0,
+        ui:     LibGMP.divisible_ui_p(self, {{ ui }}) != 0,
         neg_ui: LibGMP.divisible_ui_p(self, {{ neg_ui }}) != 0,
-        big_i: divisible_by?({{ big_i }}),
+        big_i:  divisible_by?({{ big_i }}),
       }
     end
   end
@@ -453,9 +453,9 @@ struct BigInt < Int
   def lcm(other : Int) : BigInt
     Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, {{ neg_ui }}) },
-        big_i: lcm({{ big_i }}),
+        big_i:  lcm({{ big_i }}),
       }
     end
   end
@@ -808,9 +808,9 @@ struct Int
   def -(other : BigInt) : BigInt
     Int.primitive_ui_check(self) do |ui, neg_ui, big_i|
       {
-        ui: BigInt.new { |mpz| LibGMP.neg(mpz, other); LibGMP.add_ui(mpz, mpz, {{ ui }}) },
+        ui:     BigInt.new { |mpz| LibGMP.neg(mpz, other); LibGMP.add_ui(mpz, mpz, {{ ui }}) },
         neg_ui: BigInt.new { |mpz| LibGMP.neg(mpz, other); LibGMP.sub_ui(mpz, mpz, {{ neg_ui }}) },
-        big_i: {{ big_i }} - other,
+        big_i:  {{ big_i }} - other,
       }
     end
   end

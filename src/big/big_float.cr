@@ -43,8 +43,8 @@ struct BigFloat < Float
   def initialize(num : Int)
     Int.primitive_si_ui_check(num) do |si, ui, big_i|
       {
-        si: LibGMP.mpf_init_set_si(out @mpf, {{ si }}),
-        ui: LibGMP.mpf_init_set_ui(out @mpf, {{ ui }}),
+        si:    LibGMP.mpf_init_set_si(out @mpf, {{ si }}),
+        ui:    LibGMP.mpf_init_set_ui(out @mpf, {{ ui }}),
         big_i: begin
           LibGMP.mpf_init(out @mpf)
           LibGMP.mpf_set_z(self, {{ big_i }})
@@ -103,8 +103,8 @@ struct BigFloat < Float
   def <=>(other : Int)
     Int.primitive_si_ui_check(other) do |si, ui, big_i|
       {
-        si: LibGMP.mpf_cmp_si(self, {{ si }}),
-        ui: LibGMP.mpf_cmp_ui(self, {{ ui }}),
+        si:    LibGMP.mpf_cmp_si(self, {{ si }}),
+        ui:    LibGMP.mpf_cmp_ui(self, {{ ui }}),
         big_i: self <=> {{ big_i }},
       }
     end

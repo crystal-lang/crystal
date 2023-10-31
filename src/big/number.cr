@@ -13,9 +13,9 @@ struct BigFloat
     raise DivisionByZeroError.new if other == 0
     Int.primitive_ui_check(other) do |ui, neg_ui, _|
       {
-        ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
         neg_ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
-        big_i: BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
       }
     end
   end
