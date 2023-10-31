@@ -23,11 +23,11 @@ describe "HTML" do
 
     context "numeric entities" do
       it "decimal" do
-        HTML.unescape("3 &#43; 2 &#00061 5").should eq("3 + 2 = 5")
+        HTML.unescape("3 &#43; 2 &#00061 5 &#9;").should eq("3 + 2 = 5 \t")
       end
 
       it "hex" do
-        HTML.unescape("&#x000033; &#x2B; 2 &#x0003D &#x000035").should eq("3 + 2 = 5")
+        HTML.unescape("&#x000033; &#x2B; 2 &#x0003D &#x000035; &#x9;").should eq("3 + 2 = 5 \t")
       end
 
       it "early termination" do

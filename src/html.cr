@@ -177,8 +177,8 @@ module HTML
       x = 0_u32
     end
 
-    size = ptr - start_ptr
-    unless size > 2 && (char = decode_codepoint(x))
+    size = ptr - start_ptr - (hex ? 2 : 1)
+    unless size > 0 && (char = decode_codepoint(x))
       # No characters matched or invalid codepoint
       io << '&'
       return start_ptr
