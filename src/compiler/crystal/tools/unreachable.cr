@@ -6,7 +6,6 @@ module Crystal
   class Command
     private def unreachable
       config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true
-      format = config.output_format
 
       unreachable = UnreachableVisitor.new
 
@@ -25,12 +24,7 @@ module Crystal
         }
       end
 
-      case format
-      when "json"
-        defs.to_json(STDOUT)
-      else
-        defs.to_text(STDOUT)
-      end
+      defs.to_s(STDOUT, format: config.output_format)
 
       if config.check
         exit 1 unless defs.defs.empty?
@@ -40,6 +34,15 @@ module Crystal
 
   record UnreachableResult, defs : Array(Def) do
     include JSON::Serializable
+
+    def to_s(io, *, format)
+      case format
+      when "json"
+        to_json(STDOUT)
+      else
+        to_text(STDOUT)
+      end
+    end
 
     def to_text(io)
       defs.each do |a_def|
