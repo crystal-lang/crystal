@@ -5,15 +5,15 @@ module Crystal::System::Thread
   alias Handle = LibC::PthreadT
 
   def to_unsafe
-    @th
+    @system_handle
   end
 
   private def init_handle
-    # NOTE: the thread may start before `pthread_create` returns, so `@th` must
-    # be set as soon as possible; we cannot use a separate handle and assign it
-    # to `@th`, which would have been too late
+    # NOTE: the thread may start before `pthread_create` returns, so
+    # `@system_handle` must be set as soon as possible; we cannot use a separate
+    # handle and assign it to `@system_handle`, which would have been too late
     ret = GC.pthread_create(
-      thread: pointerof(@th),
+      thread: pointerof(@system_handle),
       attr: Pointer(LibC::PthreadAttrT).null,
       start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
       arg: self.as(Void*),
@@ -63,12 +63,12 @@ module Crystal::System::Thread
   {% end %}
 
   private def system_join : Exception?
-    ret = GC.pthread_join(@th)
+    ret = GC.pthread_join(@system_handle)
     RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
   end
 
   private def system_close
-    GC.pthread_detach(@th)
+    GC.pthread_detach(@system_handle)
   end
 
   private def stack_address : Void*
@@ -76,7 +76,7 @@ module Crystal::System::Thread
 
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
-      address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
+      address = LibC.pthread_get_stackaddr_np(@system_handle) - LibC.pthread_get_stacksize_np(@system_handle)
     {% elsif flag?(:bsd) && !flag?(:openbsd) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
@@ -84,19 +84,19 @@ module Crystal::System::Thread
         raise RuntimeError.from_os_error("pthread_attr_init", Errno.new(ret))
       end
 
-      if LibC.pthread_attr_get_np(@th, pointerof(attr)) == 0
+      if LibC.pthread_attr_get_np(@system_handle, pointerof(attr)) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:linux) %}
-      if LibC.pthread_getattr_np(@th, out attr) == 0
+      if LibC.pthread_getattr_np(@system_handle, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:openbsd) %}
-      ret = LibC.pthread_stackseg_np(@th, out stack)
+      ret = LibC.pthread_stackseg_np(@system_handle, out stack)
       raise RuntimeError.from_os_error("pthread_stackseg_np", Errno.new(ret)) unless ret == 0
 
       address =

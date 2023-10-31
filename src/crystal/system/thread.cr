@@ -36,7 +36,7 @@ class Thread
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
   protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
-  @th : Crystal::System::Thread::Handle
+  @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?
   @detached = Atomic::Flag.new
 
@@ -55,7 +55,7 @@ class Thread
 
   # Creates and starts a new system thread.
   def initialize(&@func : ->)
-    @th = uninitialized Crystal::System::Thread::Handle
+    @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
   end
 
@@ -63,7 +63,7 @@ class Thread
   # the process (that already exists).
   def initialize
     @func = ->{}
-    @th = Crystal::System::Thread.current_handle
+    @system_handle = Crystal::System::Thread.current_handle
     @main_fiber = Fiber.new(stack_address, self)
 
     Thread.threads.push(self)

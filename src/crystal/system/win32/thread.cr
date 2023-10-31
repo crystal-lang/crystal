@@ -5,11 +5,11 @@ module Crystal::System::Thread
   alias Handle = LibC::HANDLE
 
   def to_unsafe
-    @th
+    @system_handle
   end
 
   private def init_handle
-    @th = GC.beginthreadex(
+    @system_handle = GC.beginthreadex(
       security: Pointer(Void).null,
       stack_size: LibC::UInt.zero,
       start_address: ->(data : Void*) { data.as(::Thread).start; LibC::UInt.zero },
@@ -37,16 +37,16 @@ module Crystal::System::Thread
   class_property current_thread : ::Thread { ::Thread.new }
 
   private def system_join : Exception?
-    if LibC.WaitForSingleObject(@th, LibC::INFINITE) != LibC::WAIT_OBJECT_0
+    if LibC.WaitForSingleObject(@system_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       return RuntimeError.from_winerror("WaitForSingleObject")
     end
-    if LibC.CloseHandle(@th) == 0
+    if LibC.CloseHandle(@system_handle) == 0
       return RuntimeError.from_winerror("CloseHandle")
     end
   end
 
   private def system_close
-    LibC.CloseHandle(@th)
+    LibC.CloseHandle(@system_handle)
   end
 
   private def stack_address : Void*
