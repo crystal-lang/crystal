@@ -79,8 +79,14 @@ struct Crystal::System::Process
     if ret == 0
       true
     else
-      return false if Errno.value == Errno::ESRCH
-      raise RuntimeError.from_errno("kill")
+      case Errno.value
+      when Errno::EPERM
+        true
+      when Errno::ESRCH
+        false
+      else
+        raise RuntimeError.from_errno("kill")
+      end
     end
   end
 

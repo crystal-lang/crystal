@@ -511,10 +511,16 @@ describe "String" do
     " NaN".to_f?.try(&.nan?).should be_true
     "NaN".to_f?.try(&.nan?).should be_true
     "-NaN".to_f?.try(&.nan?).should be_true
+    "nan".to_f?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f?(whitespace: false).should be_nil
+    "nan ".to_f?(whitespace: false).should be_nil
+    "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
     "-INF".to_f?.should eq -Float64::INFINITY
     " +INF".to_f?.should eq Float64::INFINITY
+    "inf".to_f?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f?(strict: true).should be_nil
   end
 
   it "does to_f32" do
@@ -548,10 +554,16 @@ describe "String" do
     " NaN".to_f32?.try(&.nan?).should be_true
     "NaN".to_f32?.try(&.nan?).should be_true
     "-NaN".to_f32?.try(&.nan?).should be_true
+    "nan".to_f32?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f32?(whitespace: false).should be_nil
+    "nan ".to_f32?(whitespace: false).should be_nil
+    "nani".to_f32?(strict: true).should be_nil
     " INF".to_f32?.should eq Float32::INFINITY
     "INF".to_f32?.should eq Float32::INFINITY
     "-INF".to_f32?.should eq -Float32::INFINITY
     " +INF".to_f32?.should eq Float32::INFINITY
+    "inf".to_f32?(whitespace: false).should eq Float32::INFINITY
+    "info".to_f32?(strict: true).should be_nil
   end
 
   it "does to_f64" do
@@ -585,10 +597,16 @@ describe "String" do
     " NaN".to_f64?.try(&.nan?).should be_true
     "NaN".to_f64?.try(&.nan?).should be_true
     "-NaN".to_f64?.try(&.nan?).should be_true
+    "nan".to_f64?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f64?(whitespace: false).should be_nil
+    "nan ".to_f64?(whitespace: false).should be_nil
+    "nani".to_f64?(strict: true).should be_nil
     " INF".to_f64?.should eq Float64::INFINITY
     "INF".to_f64?.should eq Float64::INFINITY
     "-INF".to_f64?.should eq -Float64::INFINITY
     " +INF".to_f64?.should eq Float64::INFINITY
+    "inf".to_f64?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f64?(strict: true).should be_nil
   end
 
   it "compares strings: different size" do

@@ -1075,7 +1075,7 @@ class Hash(K, V)
   # Otherwise *value* is returned.
   #
   # ```
-  # h = {} of Int32 => Array(String)
+  # h = {} of Int32 => String
   # h.put_if_absent(1, "one") # => "one"
   # h.put_if_absent(1, "uno") # => "one"
   # h.put_if_absent(2, "two") # => "two"
