@@ -156,6 +156,12 @@ module HTML
 
     x = 0_u32
 
+    # skip leading zeros
+    while ptr.value === '0'
+      ptr += 1
+    end
+    number_start_ptr = ptr
+
     while digit = ptr.value.unsafe_chr.to_i?(base)
       # The number of consumed digits is limited to the representation of
       # Char::MAX_CODEPOINT which is below that of UInt32::MAX
@@ -165,13 +171,13 @@ module HTML
       ptr += 1
     end
 
-    size = ptr - start_ptr
-    if size > 8
+    if ptr - number_start_ptr > 8
       # size exceeds maxlength, so it can't be a valid codepoint and might have
       # overflow.
       x = 0_u32
     end
 
+    size = ptr - start_ptr
     unless size > 2 && (char = decode_codepoint(x))
       # No characters matched or invalid codepoint
       io << '&'

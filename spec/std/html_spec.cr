@@ -51,6 +51,11 @@ describe "HTML" do
         HTML.unescape("limit &#x110000000000000;").should eq("limit \uFFFD")
       end
 
+      it "ignores leading zeros" do
+        HTML.unescape("&#0000000065;").should eq("A")
+        HTML.unescape("&#x0000000065;").should eq("e")
+      end
+
       it "space characters" do
         HTML.unescape("&#x0020;&#32;&#x0009;&#x000A;&#x000C;&#x0080;&#x009F;").should eq("  \t\n\f\u20AC\u0178")
       end
