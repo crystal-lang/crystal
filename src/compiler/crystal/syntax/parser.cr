@@ -1292,12 +1292,11 @@ module Crystal
 
     def parse_generic_or_custom_literal
       type = parse_generic(expression: true)
+      skip_space
       parse_custom_literal type
     end
 
     def parse_custom_literal(type)
-      skip_space
-
       if @token.type.op_lcurly?
         tuple_or_hash = parse_hash_or_tuple_literal allow_of: false
 
@@ -1676,6 +1675,8 @@ module Crystal
       call
     end
 
+    StatementEnd = [:OP_SEMICOLON, :NEWLINE, :SPACE] of Token::Kind
+
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
       @type_nest += 1
 
@@ -1685,9 +1686,15 @@ module Crystal
       name_location = @token.location
 
       name = parse_path
+      found_space = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
+
+      if type_vars
+        found_space = @token.type.space?
+        skip_space
+      end
 
       superclass = nil
 
@@ -1700,6 +1707,8 @@ module Crystal
           superclass = parse_generic
         end
       end
+
+      check(StatementEnd) if superclass || !found_space
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -1756,7 +1765,7 @@ module Crystal
           raise "must specify at least one type var"
         end
 
-        next_token_skip_space
+        next_token
       end
       {type_vars, splat_index}
     end
@@ -1771,9 +1780,12 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
+      found_space = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
+
+      check(StatementEnd) if type_vars || !found_space
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -1800,6 +1812,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
+      check StatementEnd
       skip_statement_end
 
       end_location = token_end_location
@@ -2004,6 +2017,7 @@ module Crystal
         end
       when .const?
         obj = parse_generic global: global, location: location, expression: false
+        skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
         equals_sign, end_location = consume_def_equals_sign_skip_space
@@ -3036,6 +3050,7 @@ module Crystal
         next_token_skip_space
       else
         name = parse_generic
+        skip_space
       end
 
       klass.new name
@@ -3546,6 +3561,7 @@ module Crystal
 
       if @token.type.const?
         receiver = parse_path
+        skip_space
         last_was_space = false
       elsif @token.type.ident?
         check_valid_def_name
@@ -4922,6 +4938,7 @@ module Crystal
         set_visibility parse_var_or_call global: true, location: location
       when .const?
         ident = parse_generic global: true, location: location, expression: true
+        skip_space
         parse_custom_literal ident
       else
         unexpected_token
@@ -4995,7 +5012,9 @@ module Crystal
         next_token_skip_space
         Underscore.new.at(location)
       when .const?, .op_colon_colon?
-        parse_generic
+        type = parse_generic
+        skip_space
+        type
       when .op_lcurly?
         next_token_skip_space_or_newline
         if named_tuple_start? || @token.type.delimiter_start?
@@ -5085,8 +5104,6 @@ module Crystal
         type = make_nilable_expression(type).at_end(end_location)
       end
 
-      skip_space
-
       type
     end
 
@@ -5101,9 +5118,7 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
-      skip_space
-      path
+      parse_path(global, location)
     end
 
     def parse_path(global, location)
@@ -5617,6 +5632,7 @@ module Crystal
 
       name_location = @token.location
       name = parse_path
+      check StatementEnd
       skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }
@@ -5947,7 +5963,9 @@ module Crystal
       location = @token.location
       next_token_skip_space_or_newline
       name = check_const
-      next_token_skip_statement_end
+      next_token
+      check StatementEnd
+      skip_statement_end
       body = parse_c_struct_or_union_body_expressions
       check_ident :end
       end_location = token_end_location
@@ -6026,16 +6044,13 @@ module Crystal
       name = parse_path
       skip_space
 
-      case @token.type
-      when .op_colon?
+      if @token.type.op_colon?
         next_token_skip_space_or_newline
-        base_type = parse_bare_proc_type
-        skip_statement_end
-      when .op_semicolon?, .newline?
-        skip_statement_end
-      else
-        unexpected_token
+        base_type = parse_path
       end
+
+      check SemicolonOrNewLine
+      skip_statement_end
 
       members = parse_enum_body_expressions
 
@@ -6296,7 +6311,7 @@ module Crystal
     end
 
     def check(token_types : Array(Token::Kind))
-      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type}')", @token unless token_types.any? { |type| @token.type == type }
+      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token}')", @token unless token_types.any? { |type| @token.type == type }
     end
 
     def check(token_type : Token::Kind)

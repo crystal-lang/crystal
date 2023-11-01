@@ -2170,7 +2170,35 @@ module Crystal
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
-    assert_syntax_error "lib Foo%end", %(unexpected token: "%")
+    assert_syntax_error "lib Foo%end", "expecting any of these tokens: ;, NEWLINE, SPACE (not '%')"
+
+    [
+      {"annotation Foo", %w(; NEWLINE SPACE)},
+      {"class Foo", %w(; NEWLINE SPACE)},
+      {"class Foo < Bar", %w(; NEWLINE SPACE)},
+      {"enum Foo", %w(; NEWLINE)},
+      {"enum Foo : Int32", %w(; NEWLINE)},
+      {"lib Foo", %w(; NEWLINE SPACE)},
+      {"lib Foo; enum Bar", %w(; NEWLINE)},
+      {"lib Foo; struct Bar", %w(; NEWLINE SPACE)},
+      {"lib Foo; union Bar", %w(; NEWLINE SPACE)},
+      {"module Foo", %w(; NEWLINE SPACE)},
+      {"struct Foo", %w(; NEWLINE SPACE)},
+    ].each do |(header, expected)|
+      expected = expected.join ", "
+      assert_syntax_error %(#{header}"a"), "expecting any of these tokens: #{expected} (not 'DELIMITER_START')"
+      assert_syntax_error "#{header}'a'", "expecting any of these tokens: #{expected} (not 'a')"
+      assert_syntax_error "#{header}[1]", "expecting any of these tokens: #{expected} (not '[')"
+      assert_syntax_error "#{header}{1}", "expecting any of these tokens: #{expected} (not '{')"
+      assert_syntax_error "#{header}{|a|a}", "expecting any of these tokens: #{expected} (not '{')"
+      assert_syntax_error "#{header}->{}", "expecting any of these tokens: #{expected} (not '->')"
+      assert_syntax_error "#{header}->(x : Qux){}", "expecting any of these tokens: #{expected} (not '->')"
+      assert_syntax_error "#{header}:Qux", "expecting any of these tokens: #{expected} (not 'Qux')"
+      assert_syntax_error "#{header}:qux", "expecting any of these tokens: #{expected} (not 'qux')"
+      assert_syntax_error "#{header}%x()", "expecting any of these tokens: #{expected} (not 'DELIMITER_START')"
+      assert_syntax_error "#{header}%w()", "expecting any of these tokens: #{expected} (not 'STRING_ARRAY_START')"
+      assert_syntax_error "#{header}%()", "expecting any of these tokens: #{expected} (not 'DELIMITER_START')"
+    end
 
     describe "end locations" do
       assert_end_location "nil"
