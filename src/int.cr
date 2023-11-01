@@ -274,6 +274,13 @@ struct Int
     self
   end
 
+  # :inherit:
+  #
+  # Always returns `true` for `Int`.
+  def integer? : Bool
+    true
+  end
+
   # Returns the value of raising `self` to the power of *exponent*.
   #
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,

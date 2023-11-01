@@ -393,6 +393,15 @@ describe BigRational do
     end
   end
 
+  describe "#integer?" do
+    it { br(0, 1).integer?.should be_true }
+    it { br(1, 1).integer?.should be_true }
+    it { br(9, 3).integer?.should be_true }
+    it { br(-126, 7).integer?.should be_true }
+    it { br(5, 2).integer?.should be_false }
+    it { br(7, -3).integer?.should be_false }
+  end
+
   it "#hash" do
     b = br(10, 3)
     hash = b.hash

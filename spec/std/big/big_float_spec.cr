@@ -526,6 +526,12 @@ describe "BigFloat" do
     end
   end
 
+  describe "#integer?" do
+    it { BigFloat.zero.integer?.should be_true }
+    it { 1.to_big_f.integer?.should be_true }
+    it { 1.2.to_big_f.integer?.should be_false }
+  end
+
   it "#hash" do
     b = 123.to_big_f
     b.hash.should eq(b.to_f64.hash)
