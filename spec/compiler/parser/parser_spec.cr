@@ -2736,5 +2736,17 @@ module Crystal
       node = Parser.parse(source).as(EnumDef).members.first
       node_source(source, node).should eq("protected macro foo; end")
     end
+
+    it "sets correct location of global path in class def" do
+      source = "class ::Foo; end"
+      node = Parser.parse(source).as(ClassDef).name
+      node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets correct location of global path in annotation" do
+      source = "@[::Foo]"
+      node = Parser.parse(source).as(Annotation).path
+      node_source(source, node).should eq("::Foo")
+    end
   end
 end
