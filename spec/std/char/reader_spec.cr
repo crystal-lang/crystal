@@ -102,6 +102,7 @@ describe "Char::Reader" do
     reader.pos.should eq(0)
     reader.current_char.ord.should eq(0)
     reader.has_previous?.should be_false
+    reader.has_next?.should be_false
   end
 
   it "gets previous char (ascii)" do
@@ -109,8 +110,10 @@ describe "Char::Reader" do
     reader.pos.should eq(4)
     reader.current_char.should eq('o')
     reader.has_previous?.should be_true
+    reader.has_next?.should be_true
 
     reader.previous_char.should eq('l')
+    reader.has_next?.should be_true
     reader.previous_char.should eq('l')
     reader.previous_char.should eq('e')
     reader.previous_char.should eq('h')
@@ -126,8 +129,10 @@ describe "Char::Reader" do
     reader.pos.should eq(9)
     reader.current_char.should eq('語')
     reader.has_previous?.should be_true
+    reader.has_next?.should be_true
 
     reader.previous_char.should eq('本')
+    reader.has_next?.should be_true
     reader.previous_char.should eq('日')
     reader.previous_char.should eq('á')
     reader.previous_char.should eq('h')
