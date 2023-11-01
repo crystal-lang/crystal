@@ -5,7 +5,7 @@ require "json"
 module Crystal
   class Command
     private def unreachable
-      config, result = compile_no_codegen "tool unreachable", path_filter: true
+      config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true
       format = config.output_format
 
       unreachable = UnreachableVisitor.new
@@ -30,6 +30,10 @@ module Crystal
         defs.to_json(STDOUT)
       else
         defs.to_text(STDOUT)
+      end
+
+      if config.check
+        exit 1 unless defs.defs.empty?
       end
     end
   end
