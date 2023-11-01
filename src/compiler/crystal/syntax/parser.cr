@@ -1460,7 +1460,6 @@ module Crystal
       end
     end
 
-    SemicolonOrNewLine = [:OP_SEMICOLON, :NEWLINE] of Token::Kind
     ConstOrDoubleColon = [:CONST, :OP_COLON_COLON] of Token::Kind
 
     def parse_rescue
@@ -1488,9 +1487,8 @@ module Crystal
         # keep going
       end
 
-      check SemicolonOrNewLine
-
-      next_token_skip_space_or_newline
+      consume_expression_delimiter
+      skip_space_or_newline
 
       if @token.keyword?(:end)
         body = nil
@@ -1684,7 +1682,8 @@ module Crystal
       next_token_skip_space_or_newline
       name_location = @token.location
 
-      name = parse_path
+      name = parse_path_no_skip_space
+      has_space_after_name = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1699,6 +1698,10 @@ module Crystal
         else
           superclass = parse_generic
         end
+      end
+
+      if superclass || type_vars || !has_space_after_name
+        consume_statement_end
       end
       skip_statement_end
 
@@ -1770,10 +1773,15 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_path
+      name = parse_path_no_skip_space
+      has_space_after_name = @token.type.space?
       skip_space
 
       type_vars, splat_index = parse_type_vars
+
+      if type_vars || !has_space_after_name
+        consume_statement_end
+      end
       skip_statement_end
 
       body = push_visibility { parse_expressions }
@@ -3713,6 +3721,7 @@ module Crystal
         body = Nop.new
       else
         slash_is_regex!
+        consume_expression_delimiter
         skip_statement_end
 
         end_location = token_end_location
@@ -5092,7 +5101,7 @@ module Crystal
 
     # Parse type path.
     # It also consumes prefix `::` to specify global path.
-    def parse_path
+    def parse_path_no_skip_space
       location = @token.location
 
       global = false
@@ -5101,7 +5110,12 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
+      parse_path(global, @token.location)
+    end
+
+    # :ditto:
+    def parse_path
+      path = parse_path_no_skip_space
       skip_space
       path
     end
@@ -5700,6 +5714,7 @@ module Crystal
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
+        consume_expression_delimiter
         skip_statement_end
         ExternalVar.new(name, type, real_name)
       when .op_lcurly_lcurly?
@@ -5965,6 +5980,9 @@ module Crystal
       exps = [] of ASTNode
 
       while true
+        break if @token.type.eof?
+        consume_expression_delimiter unless exps.empty?
+        skip_statement_end
         case @token.type
         when .ident?
           case @token.value
@@ -5984,8 +6002,6 @@ module Crystal
           exps << parse_percent_macro_expression
         when .op_lcurly_percent?
           exps << parse_percent_macro_control
-        when .newline?, .op_semicolon?
-          skip_statement_end
         else
           break
         end
@@ -6010,8 +6026,6 @@ module Crystal
 
       type = parse_bare_proc_type
 
-      skip_statement_end
-
       vars.each do |var|
         exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
@@ -6030,6 +6044,7 @@ module Crystal
       when .op_colon?
         next_token_skip_space_or_newline
         base_type = parse_bare_proc_type
+        consume_expression_delimiter
         skip_statement_end
       when .op_semicolon?, .newline?
         skip_statement_end
@@ -6363,6 +6378,25 @@ module Crystal
       arg_name = "__arg#{@temp_arg_count}"
       @temp_arg_count += 1
       arg_name
+    end
+
+    def consume_expression_delimiter
+      skip_space
+      case @token.type
+      when .newline?, .op_semicolon?
+        next_token
+      else
+        unexpected_token %(expected ";" or newline)
+      end
+    end
+
+    def consume_statement_end
+      case @token.type
+      when .space?, .newline?, .op_semicolon?
+        next_token
+      else
+        unexpected_token "expected ';' or newline"
+      end
     end
   end
 

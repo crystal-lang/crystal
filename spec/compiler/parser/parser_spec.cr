@@ -2039,6 +2039,36 @@ module Crystal
     assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
 
     assert_syntax_error "def f end", %(unexpected token: "end" (expected ";" or newline))
+    assert_syntax_error "def foo : Int32 1 end", %(unexpected token: "1" (expected ";" or newline))
+    assert_syntax_error "def foo(x : U) forall U end", %(unexpected token: "end" (expected ";" or newline))
+    assert_syntax_error <<-CR, %(unexpected token: "buzz" (expected ";" or newline))
+      lib Foo
+        struct Bar
+          fizz : Int32 buzz : Int32
+        end
+      end
+      CR
+    assert_syntax_error <<-CR, %(unexpected token: "$buzz" (expected ";" or newline))
+      lib Foo
+        $fizz : Int32 $buzz : Int32
+      end
+      CR
+    assert_syntax_error "enum Foo : Int8 end", %(unexpected token: "end" (expected ";" or newline))
+    %w(class module).each do |keyword|
+      assert_syntax_error %(#{keyword} Foo"a" end), %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo'a' end", %(unexpected token: "a" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo[1] end", %(unexpected token: "[" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo{1} end", %(unexpected token: "{" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo{|a|a} end", %(unexpected token: "{" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo->{} end", %(unexpected token: "->" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo->(x : Bar){}", %(unexpected token: "->" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo:Bar end", %(unexpected token: "Bar" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo:bar end", %(unexpected token: "bar" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo%x() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo%w() end", %(unexpected token: "STRING_ARRAY_START" (expected ';' or newline))
+      assert_syntax_error "#{keyword} Foo%() end", %(unexpected token: "DELIMITER_START" (expected ';' or newline))
+    end
+    assert_syntax_error "class Foo < Bar:Qux end", %(unexpected token: "Qux" (expected ';' or newline))
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"
