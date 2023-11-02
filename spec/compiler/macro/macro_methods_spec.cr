@@ -367,6 +367,13 @@ module Crystal
       end
     end
 
+    describe "char methods" do
+      it "executes ord" do
+        assert_macro %({{'a'.ord}}), %(97)
+        assert_macro %({{'龍'.ord}}), %(40845)
+      end
+    end
+
     describe "string methods" do
       it "executes string == string" do
         assert_macro %({{"foo" == "foo"}}), %(true)
@@ -2500,6 +2507,34 @@ module Crystal
       it "executes visibility" do
         assert_macro %({{x.visibility}}), ":public", {x: Macro.new("some_macro")}
         assert_macro %({{x.visibility}}), ":private", {x: Macro.new("some_macro").tap { |d| d.visibility = Visibility::Private }}
+      end
+    end
+
+    describe "macro if methods" do
+      it "executes cond" do
+        assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
+      end
+
+      it "executes then" do
+        assert_macro %({{x.then}}), "\"test\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+    end
+
+    describe "macro for methods" do
+      it "executes vars" do
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
       end
     end
 

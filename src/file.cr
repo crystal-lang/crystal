@@ -458,33 +458,44 @@ class File < IO::FileDescriptor
   #
   # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
   #
-  # * `*` matches an unlimited number of arbitrary characters excluding `/`.
+  # * `*` matches an unlimited number of arbitrary characters, excluding any directory separators.
   #   * `"*"` matches all regular files.
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
   # * `**` matches directories recursively if followed by `/`.
   #   If this path segment contains any other characters, it is the same as the usual `*`.
-  # * `?` matches any one character excluding `/`.
+  # * `?` matches one arbitrary character, excluding any directory separators.
   # * character sets:
-  #   * `[abc]` matches any one of these character.
+  #   * `[abc]` matches any one of these characters.
   #   * `[^abc]` matches any one character other than these.
   #   * `[a-z]` matches any one character in the range.
   # * `{a,b}` matches subpattern `a` or `b`.
   # * `\\` escapes the next character.
   #
-  # NOTE: Only `/` is recognized as path separator in both *pattern* and *path*.
+  # If *path* is a `Path`, all directory separators supported by *path* are
+  # recognized, according to the path's kind. If *path* is a `String`, only `/`
+  # is considered a directory separator.
+  #
+  # NOTE: Only `/` in *pattern* matches directory separators in *path*.
   def self.match?(pattern : String, path : Path | String) : Bool
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
+    if path.is_a?(Path)
+      separators = Path.separators(path.@kind)
+      path = path.to_s
+    else
+      separators = Path.separators(Path::Kind::POSIX)
+    end
+
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path.to_s)
+      return true if match_single_pattern(expanded_pattern, path, separators)
     end
     false
   end
 
-  private def self.match_single_pattern(pattern : String, path : String)
+  private def self.match_single_pattern(pattern : String, path : String, separators)
     # linear-time algorithm adapted from https://research.swtch.com/glob
     preader = Char::Reader.new(pattern)
     sreader = Char::Reader.new(path)
@@ -509,14 +520,14 @@ class File < IO::FileDescriptor
           preader.next_char
           next
         when {'?', false}
-          if snext && char != '/'
+          if snext && !char.in?(separators)
             preader.next_char
             sreader.next_char
             next
           end
         when {'*', false}
           double_star = preader.peek_next_char == '*'
-          if char == '/' && !double_star
+          if char.in?(separators) && !double_star
             preader.next_char
             next_spos = 0
             next
@@ -797,8 +808,10 @@ class File < IO::FileDescriptor
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
+        file.sync = true
         file.write(content)
       when IO
+        file.sync = true
         IO.copy(content, file)
       else
         file.print(content)

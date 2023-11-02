@@ -1880,7 +1880,7 @@ describe "Code gen: macro" do
       )).to_b.should eq(true)
   end
 
-  it "does block unpacking inside macro expression (##13707)" do
+  it "does block unpacking inside macro expression (#13707)" do
     run(%(
       {% begin %}
         {%

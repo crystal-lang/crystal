@@ -6,6 +6,9 @@ on:
       release:
         required: true
         type: boolean
+      llvm_version:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -21,7 +24,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.9.2"
+          crystal: "1.10.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -88,7 +91,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: llvm
-          key: llvm-libs-16.0.3-msvc
+          key: llvm-libs-${{ inputs.llvm_version }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment

@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "4b3af3fb9ebeb2c74850bc7025a17a38ab82c5f4"
+    default: "e15cbd3b6b3e1bac1b16905f1b1a15ba6ae4e554"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.9.2/crystal-1.9.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.10.1/crystal-1.10.1-1"
 
 defaults:
   environment: &env
