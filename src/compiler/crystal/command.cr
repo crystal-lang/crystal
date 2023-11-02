@@ -344,8 +344,7 @@ class Crystal::Command
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String?,
-    dependency_output_format : DependencyPrinter::Format,
+    output_format : String,
     combine_rpath : Bool,
     includes : Array(String),
     excludes : Array(String),
@@ -378,7 +377,6 @@ class Crystal::Command
     hierarchy_exp = nil
     cursor_location = nil
     output_format = nil
-    dependency_output_format = nil
     excludes = [] of String
     includes = [] of String
     verbose = false
@@ -427,11 +425,6 @@ class Crystal::Command
       end
 
       if dependencies
-        opts.on("-f tree|flat|dot|mermaid", "--format tree|flat|dot|mermaid", "Output format tree (default), flat, dot, or mermaid") do |f|
-          dependency_output_format = DependencyPrinter::Format.parse?(f)
-          error "Invalid format: #{f}. Options are: tree, flat, dot, or mermaid" unless dependency_output_format
-        end
-
         opts.on("-i <path>", "--include <path>", "Include path") do |f|
           includes << f
         end
@@ -443,10 +436,10 @@ class Crystal::Command
         opts.on("--verbose", "Show skipped and filtered paths") do
           verbose = true
         end
-      else
-        opts.on("-f #{allowed_formats.join("|")}", "--format #{allowed_formats.join("|")}", "Output format: #{allowed_formats[0]} (default), #{allowed_formats[1..].join(", ")}") do |f|
-          output_format = f
-        end
+      end
+
+      opts.on("-f #{allowed_formats.join("|")}", "--format #{allowed_formats.join("|")}", "Output format: #{allowed_formats[0]} (default), #{allowed_formats[1..].join(", ")}") do |f|
+        output_format = f
       end
 
       if unreachable_command
@@ -598,9 +591,7 @@ class Crystal::Command
       end
     end
 
-    dependency_output_format ||= DependencyPrinter::Format::Tree
-
-    output_format ||= "text"
+    output_format ||= allowed_formats[0]
     unless output_format.in?(allowed_formats)
       error "You have input an invalid format: #{output_format}. Supported formats: #{allowed_formats.join(", ")}"
     end
@@ -617,8 +608,8 @@ class Crystal::Command
 
     combine_rpath = run && !no_codegen
     @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
-      arguments, specified_output, hierarchy_exp, cursor_location, output_format,
-      dependency_output_format.not_nil!, combine_rpath, includes, excludes, verbose, check
+      arguments, specified_output, hierarchy_exp, cursor_location, output_format.not_nil!,
+      combine_rpath, includes, excludes, verbose, check
   end
 
   private def gather_sources(filenames)
