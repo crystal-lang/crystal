@@ -247,8 +247,8 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false, path_filter = false, unreachable_command = false)
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command, path_filter: path_filter, unreachable_command: unreachable_command
     config.compiler.no_codegen = true
     config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
@@ -349,7 +349,8 @@ class Crystal::Command
     combine_rpath : Bool,
     includes : Array(String),
     excludes : Array(String),
-    verbose : Bool do
+    verbose : Bool,
+    check : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename, combine_rpath: combine_rpath
@@ -363,7 +364,7 @@ class Crystal::Command
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
                               single_file = false, dependencies = false,
-                              path_filter = false)
+                              path_filter = false, unreachable_command = false)
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
@@ -380,6 +381,7 @@ class Crystal::Command
     excludes = [] of String
     includes = [] of String
     verbose = false
+    check = false
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -443,6 +445,12 @@ class Crystal::Command
       else
         opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
           output_format = f
+        end
+      end
+
+      if unreachable_command
+        opts.on("--check", "Exits with error if there is any unreachable code") do |f|
+          check = true
         end
       end
 
@@ -609,7 +617,7 @@ class Crystal::Command
     combine_rpath = run && !no_codegen
     @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
       arguments, specified_output, hierarchy_exp, cursor_location, output_format,
-      dependency_output_format.not_nil!, combine_rpath, includes, excludes, verbose
+      dependency_output_format.not_nil!, combine_rpath, includes, excludes, verbose, check
   end
 
   private def gather_sources(filenames)
