@@ -165,6 +165,34 @@ describe "Int" do
     {% end %}
   end
 
+  describe "#neg_signed" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+
+        x = {{ int }}.new(-123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(123)
+
+        expect_raises(OverflowError) { {{ int }}::MIN.neg_signed }
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+      end
+
+      it "does not overflow on {{ int }}::MIN.abs_unsigned" do
+        x = {{ int }}::MIN.abs_unsigned.neg_signed
+        x.should be_a({{ int }})
+        x.should eq({{ int }}::MIN)
+      end
+    {% end %}
+  end
+
   describe "gcd" do
     it { 14.gcd(0).should eq(14) }
     it { 14.gcd(1).should eq(1) }
