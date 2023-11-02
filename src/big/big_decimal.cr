@@ -459,6 +459,12 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
+  # :inherit:
+  def integer? : Bool
+    factor_powers_of_ten
+    scale == 0
+  end
+
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
     return self if zero?
 

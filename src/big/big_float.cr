@@ -411,7 +411,8 @@ struct BigFloat < Float
     end
   end
 
-  protected def integer?
+  # :inherit:
+  def integer? : Bool
     !LibGMP.mpf_integer_p(mpf).zero?
   end
 

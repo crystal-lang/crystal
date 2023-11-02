@@ -13,6 +13,13 @@ private macro it_converts_to_s(num, str, **opts)
 end
 
 describe "Int" do
+  describe "#integer?" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it { {{ int }}::MIN.integer?.should be_true }
+      it { {{ int }}::MAX.integer?.should be_true }
+    {% end %}
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
