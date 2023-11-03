@@ -279,7 +279,6 @@ lib LibLLVM
   fun get_global_parent = LLVMGetGlobalParent(global : ValueRef) : ModuleRef
 
   fun create_memory_buffer_with_contents_of_file = LLVMCreateMemoryBufferWithContentsOfFile(path : UInt8*, out_mem_buf : MemoryBufferRef*, out_message : UInt8**) : Int32
-  fun parse_ir_in_context = LLVMParseIRInContext(context : ContextRef, mem_buf : MemoryBufferRef, out_m : ModuleRef*, out_message : UInt8**) : Int32
   fun context_dispose = LLVMContextDispose(ContextRef)
 
   fun void_type_in_context = LLVMVoidTypeInContext(ContextRef) : TypeRef
