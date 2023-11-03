@@ -48,22 +48,13 @@ lib LibLLVM
   alias Int = LibC::Int
   alias UInt = LibC::UInt
   alias ULongLong = LibC::ULongLong
+  alias Double = LibC::Double
   alias SizeT = LibC::SizeT
 end
 
 require "./lib_llvm/**"
 
 lib LibLLVM
-  type ExecutionEngineRef = Void*
-  type GenericValueRef = Void*
-
-  struct JITCompilerOptions
-    opt_level : UInt32
-    code_model : LLVM::CodeModel
-    no_frame_pointer_elim : Int32
-    enable_fast_isel : Int32
-  end
-
   enum InlineAsmDialect
     ATT
     Intel
@@ -160,10 +151,6 @@ lib LibLLVM
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : UInt8*) : ValueRef
   fun count_param_types = LLVMCountParamTypes(function_type : TypeRef) : UInt32
-  fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
-  fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
-  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
-  fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
   {% unless LibLLVM::IS_LT_120 %}
     fun create_type_attribute = LLVMCreateTypeAttribute(ctx : ContextRef, kind_id : UInt, ty : TypeRef) : AttributeRef
   {% end %}
@@ -173,9 +160,6 @@ lib LibLLVM
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
-  fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
-  fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
-  fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
   fun get_basic_block_name = LLVMGetBasicBlockName(basic_block : BasicBlockRef) : Char*
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
   {% unless LibLLVM::IS_LT_90 %}
@@ -190,7 +174,6 @@ lib LibLLVM
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
   fun get_params = LLVMGetParams(fn : ValueRef, params : ValueRef*)
-  fun get_pointer_to_global = LLVMGetPointerToGlobal(ee : ExecutionEngineRef, global : ValueRef) : Void*
   fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
@@ -202,7 +185,6 @@ lib LibLLVM
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun print_module_to_file = LLVMPrintModuleToFile(m : ModuleRef, filename : UInt8*, error_msg : UInt8**) : Int32
-  fun run_function = LLVMRunFunction(ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
   fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun is_global_constant = LLVMIsGlobalConstant(global : ValueRef) : Int32
@@ -221,7 +203,6 @@ lib LibLLVM
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : UInt8*) : TypeRef
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
-  fun link_in_mc_jit = LLVMLinkInMCJIT
   fun start_multithreaded = LLVMStartMultithreaded : Int32
   fun stop_multithreaded = LLVMStopMultithreaded
   fun is_multithreaded = LLVMIsMultithreaded : Int32
@@ -252,8 +233,6 @@ lib LibLLVM
   {% end %}
   fun create_context = LLVMContextCreate : ContextRef
   fun dispose_builder = LLVMDisposeBuilder(BuilderRef)
-  fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
-  fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
   fun dispose_context = LLVMContextDispose(ContextRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
