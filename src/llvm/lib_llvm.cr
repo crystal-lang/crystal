@@ -56,8 +56,6 @@ require "./lib_llvm/**"
 lib LibLLVM
   type ExecutionEngineRef = Void*
   type GenericValueRef = Void*
-  type TargetRef = Void*
-  type TargetMachineRef = Void*
   type PassBuilderOptionsRef = Void*
 
   struct JITCompilerOptions
@@ -167,7 +165,6 @@ lib LibLLVM
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
-  fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
   {% unless LibLLVM::IS_LT_120 %}
     fun create_type_attribute = LLVMCreateTypeAttribute(ctx : ContextRef, kind_id : UInt, ty : TypeRef) : AttributeRef
   {% end %}
@@ -176,7 +173,6 @@ lib LibLLVM
   fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
-  fun target_machine_emit_to_file = LLVMTargetMachineEmitToFile(t : TargetMachineRef, m : ModuleRef, filename : UInt8*, codegen : LLVM::CodeGenFileType, error_msg : UInt8**) : Int32
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
@@ -187,23 +183,16 @@ lib LibLLVM
     fun get_current_debug_location2 = LLVMGetCurrentDebugLocation2(builder : BuilderRef) : MetadataRef
   {% end %}
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
-  fun get_first_target = LLVMGetFirstTarget : TargetRef
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_count_params = LLVMCountParams(fn : ValueRef) : UInt
-  fun get_host_cpu_name = LLVMGetHostCPUName : UInt8*
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
   fun get_params = LLVMGetParams(fn : ValueRef, params : ValueRef*)
   fun get_pointer_to_global = LLVMGetPointerToGlobal(ee : ExecutionEngineRef, global : ValueRef) : Void*
   fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
-  fun get_target_name = LLVMGetTargetName(target : TargetRef) : UInt8*
-  fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
-  fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
-  fun get_target_from_triple = LLVMGetTargetFromTriple(triple : UInt8*, target : TargetRef*, error_message : UInt8**) : Int32
-  fun normalize_target_triple = LLVMNormalizeTargetTriple(triple : Char*) : Char*
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
@@ -241,8 +230,6 @@ lib LibLLVM
   fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
   fun get_next_instruction = LLVMGetNextInstruction(inst : ValueRef) : ValueRef
-  fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
-  fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
   fun print_type_to_string = LLVMPrintTypeToString(ty : TypeRef) : UInt8*
   fun print_value_to_string = LLVMPrintValueToString(v : ValueRef) : UInt8*
@@ -259,7 +246,6 @@ lib LibLLVM
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_array_length = LLVMGetArrayLength(ty : TypeRef) : UInt32
   fun get_vector_size = LLVMGetVectorSize(ty : TypeRef) : UInt32
-  fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   {% if !LibLLVM::IS_LT_130 %}
     fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect, can_throw : Int32) : ValueRef
   {% else %}
@@ -267,7 +253,6 @@ lib LibLLVM
   {% end %}
   fun create_context = LLVMContextCreate : ContextRef
   fun dispose_builder = LLVMDisposeBuilder(BuilderRef)
-  fun dispose_target_machine = LLVMDisposeTargetMachine(TargetMachineRef)
   fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
   fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
   fun dispose_context = LLVMContextDispose(ContextRef)
@@ -278,8 +263,6 @@ lib LibLLVM
   fun dispose_memory_buffer = LLVMDisposeMemoryBuffer(buf : MemoryBufferRef) : Void
   fun get_buffer_start = LLVMGetBufferStart(buf : MemoryBufferRef) : UInt8*
   fun get_buffer_size = LLVMGetBufferSize(buf : MemoryBufferRef) : LibC::SizeT
-
-  fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
 
   alias AttributeIndex = UInt
 
