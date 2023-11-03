@@ -255,7 +255,6 @@ lib LibLLVM
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : UInt8*) : TypeRef
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
-  fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : UInt8*) : Int32
   fun link_in_mc_jit = LLVMLinkInMCJIT
   fun start_multithreaded = LLVMStartMultithreaded : Int32
   fun stop_multithreaded = LLVMStopMultithreaded
@@ -301,13 +300,9 @@ lib LibLLVM
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
   fun get_return_type = LLVMGetReturnType(TypeRef) : TypeRef
 
-  fun write_bitcode_to_memory_buffer = LLVMWriteBitcodeToMemoryBuffer(mod : ModuleRef) : MemoryBufferRef
-
   fun dispose_memory_buffer = LLVMDisposeMemoryBuffer(buf : MemoryBufferRef) : Void
   fun get_buffer_start = LLVMGetBufferStart(buf : MemoryBufferRef) : UInt8*
   fun get_buffer_size = LLVMGetBufferSize(buf : MemoryBufferRef) : LibC::SizeT
-
-  fun write_bitcode_to_fd = LLVMWriteBitcodeToFD(mod : ModuleRef, fd : LibC::Int, should_close : LibC::Int, unbuffered : LibC::Int) : LibC::Int
 
   fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
   fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
