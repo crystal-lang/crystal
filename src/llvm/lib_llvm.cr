@@ -48,23 +48,18 @@ lib LibLLVM
   alias Int = LibC::Int
   alias UInt = LibC::UInt
   alias SizeT = LibC::SizeT
+end
 
-  type ContextRef = Void*
-  type ModuleRef = Void*
-  type MetadataRef = Void*
-  type TypeRef = Void*
-  type ValueRef = Void*
-  type BasicBlockRef = Void*
-  type BuilderRef = Void*
+require "./lib_llvm/**"
+
+lib LibLLVM
   type ExecutionEngineRef = Void*
   type GenericValueRef = Void*
   type TargetRef = Void*
   type TargetDataRef = Void*
   type TargetMachineRef = Void*
-  type MemoryBufferRef = Void*
   type PassBuilderOptionsRef = Void*
   type ErrorRef = Void*
-  type DIBuilderRef = Void*
 
   struct JITCompilerOptions
     opt_level : UInt32
@@ -319,7 +314,6 @@ lib LibLLVM
   fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
   fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
 
-  type AttributeRef = Void*
   alias AttributeIndex = UInt
 
   fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind : UInt
@@ -509,7 +503,6 @@ lib LibLLVM
   fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(target_metadata : MetadataRef, replacement : MetadataRef)
 
   {% if LibLLVM::IS_LT_170 %}
-    type PassManagerRef = Void*
     fun pass_manager_create = LLVMCreatePassManager : PassManagerRef
     fun create_function_pass_manager_for_module = LLVMCreateFunctionPassManagerForModule(mod : ModuleRef) : PassManagerRef
     fun run_pass_manager = LLVMRunPassManager(pm : PassManagerRef, m : ModuleRef) : Int32
@@ -518,7 +511,6 @@ lib LibLLVM
     fun finalize_function_pass_manager = LLVMFinalizeFunctionPassManager(fpm : PassManagerRef) : Int32
     fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
 
-    type PassRegistryRef = Void*
     fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
     fun initialize_core = LLVMInitializeCore(r : PassRegistryRef)
     fun initialize_transform_utils = LLVMInitializeTransformUtils(r : PassRegistryRef)
