@@ -510,16 +510,5 @@ lib LibLLVM
     fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
 
     fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
-
-    type PassManagerBuilderRef = Void*
-    fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
-    fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
-    fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)
-    fun pass_manager_builder_set_disable_unroll_loops = LLVMPassManagerBuilderSetDisableUnrollLoops(builder : PassManagerBuilderRef, value : Int32)
-    fun pass_manager_builder_set_disable_simplify_lib_calls = LLVMPassManagerBuilderSetDisableSimplifyLibCalls(builder : PassManagerBuilderRef, value : Int32)
-    fun pass_manager_builder_use_inliner_with_threshold = LLVMPassManagerBuilderUseInlinerWithThreshold(builder : PassManagerBuilderRef, threshold : UInt32)
-    fun pass_manager_builder_populate_function_pass_manager = LLVMPassManagerBuilderPopulateFunctionPassManager(builder : PassManagerBuilderRef, pm : PassManagerRef)
-    fun pass_manager_builder_populate_module_pass_manager = LLVMPassManagerBuilderPopulateModulePassManager(builder : PassManagerBuilderRef, pm : PassManagerRef)
-    fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   {% end %}
 end
