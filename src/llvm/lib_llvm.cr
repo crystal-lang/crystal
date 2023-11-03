@@ -59,7 +59,6 @@ lib LibLLVM
   type TargetDataRef = Void*
   type TargetMachineRef = Void*
   type PassBuilderOptionsRef = Void*
-  type ErrorRef = Void*
 
   struct JITCompilerOptions
     opt_level : UInt32
