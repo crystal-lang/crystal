@@ -106,11 +106,11 @@ class JSON::Builder
     scalar(string: true) do
       io << '"'
 
-      start_pos = 0
-      reader = Char::Reader.new(string)
+      cursor = start = string.to_unsafe
+      fin = cursor + string.bytesize
 
-      while reader.has_next?
-        case char = reader.current_char
+      while cursor < fin
+        case byte = cursor.value
         when '\\'
           escape = "\\\\"
         when '"'
@@ -125,29 +125,26 @@ class JSON::Builder
           escape = "\\r"
         when '\t'
           escape = "\\t"
-        when .ascii_control?
-          io.write_string string.to_slice[start_pos, reader.pos - start_pos]
-          io << "\\u"
-          ord = char.ord
-          io << '0' if ord < 0x1000
-          io << '0' if ord < 0x100
-          io << '0' if ord < 0x10
-          ord.to_s(io, 16)
-          reader.next_char
-          start_pos = reader.pos
+        when .<(0x20), 0x7F # Char#ascii_control?
+          io.write_string Slice.new(start, cursor - start)
+          io << "\\u00"
+          io << '0' if byte < 0x10
+          byte.to_s(io, 16)
+          cursor += 1
+          start = cursor
           next
         else
-          reader.next_char
+          cursor += 1
           next
         end
 
-        io.write_string string.to_slice[start_pos, reader.pos - start_pos]
+        io.write_string Slice.new(start, cursor - start)
         io << escape
-        reader.next_char
-        start_pos = reader.pos
+        cursor += 1
+        start = cursor
       end
 
-      io.write_string string.to_slice[start_pos, reader.pos - start_pos]
+      io.write_string Slice.new(start, cursor - start)
 
       io << '"'
     end
