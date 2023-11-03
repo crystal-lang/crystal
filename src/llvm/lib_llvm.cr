@@ -47,6 +47,7 @@ lib LibLLVM
   alias Char = LibC::Char
   alias Int = LibC::Int
   alias UInt = LibC::UInt
+  alias ULongLong = LibC::ULongLong
   alias SizeT = LibC::SizeT
 end
 
@@ -56,7 +57,6 @@ lib LibLLVM
   type ExecutionEngineRef = Void*
   type GenericValueRef = Void*
   type TargetRef = Void*
-  type TargetDataRef = Void*
   type TargetMachineRef = Void*
   type PassBuilderOptionsRef = Void*
 
@@ -208,30 +208,9 @@ lib LibLLVM
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
   fun get_value_kind = LLVMGetValueKind(value : ValueRef) : LLVM::Value::Kind
-  fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
-  fun initialize_x86_asm_parser = LLVMInitializeX86AsmParser
-  fun initialize_x86_target = LLVMInitializeX86Target
-  fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
-  fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
-  fun initialize_aarch64_asm_printer = LLVMInitializeAArch64AsmPrinter
-  fun initialize_aarch64_asm_parser = LLVMInitializeAArch64AsmParser
-  fun initialize_aarch64_target = LLVMInitializeAArch64Target
-  fun initialize_aarch64_target_info = LLVMInitializeAArch64TargetInfo
-  fun initialize_aarch64_target_mc = LLVMInitializeAArch64TargetMC
-  fun initialize_arm_asm_printer = LLVMInitializeARMAsmPrinter
-  fun initialize_arm_asm_parser = LLVMInitializeARMAsmParser
-  fun initialize_arm_target = LLVMInitializeARMTarget
-  fun initialize_arm_target_info = LLVMInitializeARMTargetInfo
-  fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
-  fun initialize_webassembly_asm_printer = LLVMInitializeWebAssemblyAsmPrinter
-  fun initialize_webassembly_asm_parser = LLVMInitializeWebAssemblyAsmParser
-  fun initialize_webassembly_target = LLVMInitializeWebAssemblyTarget
-  fun initialize_webassembly_target_info = LLVMInitializeWebAssemblyTargetInfo
-  fun initialize_webassembly_target_mc = LLVMInitializeWebAssemblyTargetMC
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
-  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : UInt64
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun print_module_to_file = LLVMPrintModuleToFile(m : ModuleRef, filename : UInt8*, error_msg : UInt8**) : Int32
@@ -251,7 +230,6 @@ lib LibLLVM
   fun set_value_name = LLVMSetValueName(val : ValueRef, name : UInt8*)
   fun set_personality_fn = LLVMSetPersonalityFn(fn : ValueRef, personality_fn : ValueRef)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
-  fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : UInt8*) : TypeRef
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
@@ -281,8 +259,6 @@ lib LibLLVM
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_array_length = LLVMGetArrayLength(ty : TypeRef) : UInt32
   fun get_vector_size = LLVMGetVectorSize(ty : TypeRef) : UInt32
-  fun abi_size_of_type = LLVMABISizeOfType(td : TargetDataRef, ty : TypeRef) : UInt64
-  fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   {% if !LibLLVM::IS_LT_130 %}
     fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect, can_throw : Int32) : ValueRef
@@ -295,7 +271,6 @@ lib LibLLVM
   fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
   fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
   fun dispose_context = LLVMContextDispose(ContextRef)
-  fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
   fun get_return_type = LLVMGetReturnType(TypeRef) : TypeRef
@@ -305,7 +280,6 @@ lib LibLLVM
   fun get_buffer_size = LLVMGetBufferSize(buf : MemoryBufferRef) : LibC::SizeT
 
   fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
-  fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
 
   alias AttributeIndex = UInt
 
