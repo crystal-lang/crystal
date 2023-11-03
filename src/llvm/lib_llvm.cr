@@ -256,7 +256,6 @@ lib LibLLVM
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : UInt8*) : Int32
-  fun verify_module = LLVMVerifyModule(module : ModuleRef, action : LLVM::VerifierFailureAction, outmessage : UInt8**) : Int32
   fun link_in_mc_jit = LLVMLinkInMCJIT
   fun start_multithreaded = LLVMStartMultithreaded : Int32
   fun stop_multithreaded = LLVMStopMultithreaded
