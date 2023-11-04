@@ -102,7 +102,7 @@ class JSON::Builder
   #
   # ```
   # JSON.build do |builder|
-  #   builder.string(foo)
+  #   builder.string("foo")
   # end # => %("foo")
   # JSON.build do |builder|
   #   builder.string([1, 2])
