@@ -111,20 +111,13 @@ class JSON::Builder
 
       while cursor < fin
         case byte = cursor.value
-        when '\\'
-          escape = "\\\\"
-        when '"'
-          escape = "\\\""
-        when '\b'
-          escape = "\\b"
-        when '\f'
-          escape = "\\f"
-        when '\n'
-          escape = "\\n"
-        when '\r'
-          escape = "\\r"
-        when '\t'
-          escape = "\\t"
+        when '\\' then escape = "\\\\"
+        when '"'  then escape = "\\\""
+        when '\b' then escape = "\\b"
+        when '\f' then escape = "\\f"
+        when '\n' then escape = "\\n"
+        when '\r' then escape = "\\r"
+        when '\t' then escape = "\\t"
         when .<(0x20), 0x7F # Char#ascii_control?
           io.write_string Slice.new(start, cursor - start)
           io << "\\u00"
