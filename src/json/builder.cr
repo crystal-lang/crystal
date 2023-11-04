@@ -97,8 +97,17 @@ class JSON::Builder
     end
   end
 
-  # Writes a string. The given *value* is first converted to a `String`
-  # by invoking `to_s` on it.
+  # Writes a string with the content of `value`.
+  # The payload is stringified via `to_s(IO)` and escaped for JSON representation.
+  #
+  # ```
+  # JSON.build do |builder|
+  #   builder.string(foo)
+  # end # => %("foo")
+  # JSON.build do |builder|
+  #   builder.string([1, 2])
+  # end # => %("[1, 2]")
+  # ```
   #
   # This method can also be used to write the name of an object field.
   def string(value) : Nil
@@ -107,6 +116,19 @@ class JSON::Builder
     end
   end
 
+  # Writes a string with the contents written to the yielded `IO`.
+  # The payload gets escaped for JSON representation.
+  #
+  # ```
+  # JSON.build do |builder|
+  #   builder.string do |io|
+  #     io << "foo"
+  #     io << [1, 2]
+  #   end # => %("foo[1, 2]")
+  # end
+  # ```
+  #
+  # This method can also be used to write the name of an object field.
   def string(& : IO ->) : Nil
     scalar(string: true) do
       io << '"'
