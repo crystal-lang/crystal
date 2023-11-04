@@ -137,7 +137,7 @@ class JSON::Builder
     end
   end
 
-  class Escape < IO
+  private class Escape < IO
     def initialize(@io : IO)
     end
 
