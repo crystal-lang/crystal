@@ -167,7 +167,7 @@ lib LibLLVM
   fun const_null = LLVMConstNull(ty : TypeRef) : ValueRef
   fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
-  fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : UInt8*) : ValueRef
+  fun const_real_of_string_and_size = LLVMConstRealOfStringAndSize(real_ty : TypeRef, text : Char*, s_len : UInt) : ValueRef
   fun count_param_types = LLVMCountParamTypes(function_type : TypeRef) : UInt32
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
@@ -212,7 +212,7 @@ lib LibLLVM
   fun normalize_target_triple = LLVMNormalizeTargetTriple(triple : Char*) : Char*
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
-  fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
+  fun get_value_name2 = LLVMGetValueName2(val : ValueRef, length : SizeT*) : Char*
   fun get_value_kind = LLVMGetValueKind(value : ValueRef) : LLVM::Value::Kind
   fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
   fun initialize_x86_asm_parser = LLVMInitializeX86AsmParser
@@ -254,7 +254,7 @@ lib LibLLVM
   fun set_target = LLVMSetTarget(mod : ModuleRef, triple : UInt8*)
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
   fun is_thread_local = LLVMIsThreadLocal(global_var : ValueRef) : Int32
-  fun set_value_name = LLVMSetValueName(val : ValueRef, name : UInt8*)
+  fun set_value_name2 = LLVMSetValueName2(val : ValueRef, name : Char*, name_len : SizeT)
   fun set_personality_fn = LLVMSetPersonalityFn(fn : ValueRef, personality_fn : ValueRef)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
@@ -358,8 +358,8 @@ lib LibLLVM
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef
 
   fun get_md_kind_id_in_context = LLVMGetMDKindIDInContext(c : ContextRef, name : UInt8*, slen : UInt32) : UInt32
-  fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, values : ValueRef*, count : Int32) : ValueRef
-  fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
+  fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : ValueRef*, count : SizeT) : ValueRef
+  fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : ValueRef
 
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
   fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
