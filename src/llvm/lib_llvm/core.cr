@@ -106,7 +106,7 @@ lib LibLLVM
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
 
-  fun const_int = LLVMConstInt(int_ty : TypeRef, n : UInt, sign_extend : Bool) : ValueRef
+  fun const_int = LLVMConstInt(int_ty : TypeRef, n : ULongLong, sign_extend : Bool) : ValueRef
   fun const_int_of_arbitrary_precision = LLVMConstIntOfArbitraryPrecision(int_ty : TypeRef, num_words : UInt, words : UInt64*) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Double) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_ty : TypeRef, text : Char*) : ValueRef
