@@ -326,21 +326,32 @@ describe "Dir" do
       ].sort
     end
 
-    it "tests with \\" do
-      Dir[Path[datapath, "dir", %q(\\g*)]].sort.should eq [
-        datapath("dir", "\\g3"),
-        datapath("dir", "\\g4*"),
-      ].sort
+    {% if flag?(:windows) %}
+      pending "tests with \\"
+    {% else %}
+      it "tests with \\" do
+        with_tempfile "glob-escape-pattern" do |path|
+          Dir.mkdir_p path
+          Dir.cd(path) do
+            File.touch "g1.txt"
+            File.touch %q(\g3)
+            File.touch %q(\g4*)
 
-      Dir[Path[datapath, "dir", %q(*g?\*)]].sort.should eq [
-        datapath("dir", "\\g4*"),
-      ].sort
-    end
+            Dir[%q(\\g*)].sort.should eq [
+              "\\g3",
+              "\\g4*",
+            ].sort
+
+            Dir[%q(*g?\*)].sort.should eq [
+              "\\g4*",
+            ].sort
+          end
+        end
+      end
+    {% end %}
 
     it "tests with *" do
       Dir["#{datapath}/dir/*"].sort.should eq [
-        datapath("dir", "\\g3"),
-        datapath("dir", "\\g4*"),
         datapath("dir", "dots"),
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
@@ -353,8 +364,6 @@ describe "Dir" do
 
     it "tests with ** (same as *)" do
       Dir["#{datapath}/dir/**"].sort.should eq [
-        datapath("dir", "\\g3"),
-        datapath("dir", "\\g4*"),
         datapath("dir", "dots"),
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
