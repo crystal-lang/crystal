@@ -5,8 +5,7 @@ require "json"
 module Crystal
   class Command
     private def unreachable
-      config, result = compile_no_codegen "tool unreachable", path_filter: true
-      format = config.output_format
+      config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true
 
       unreachable = UnreachableVisitor.new
 
@@ -16,7 +15,7 @@ module Crystal
       unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
 
       defs = unreachable.process(result)
-      defs.defs.sort_by! do |a_def|
+      defs.sort_by! do |a_def|
         location = a_def.location.not_nil!
         {
           location.filename.as(String),
@@ -25,21 +24,28 @@ module Crystal
         }
       end
 
-      case format
-      when "json"
-        defs.to_json(STDOUT)
-      else
-        defs.to_text(STDOUT)
+      UnreachablePresenter.new(defs, format: config.output_format).to_s(STDOUT)
+
+      if config.check
+        exit 1 unless defs.empty?
       end
     end
   end
 
-  record UnreachableResult, defs : Array(Def) do
+  record UnreachablePresenter, defs : Array(Def), format : String? do
     include JSON::Serializable
+
+    def to_s(io)
+      case format
+      when "json"
+        to_json(STDOUT)
+      else
+        to_text(STDOUT)
+      end
+    end
 
     def each(&)
       current_dir = Dir.current
-
       defs.each do |a_def|
         location = a_def.location.not_nil!
         filename = ::Path[location.filename.as(String)].relative_to(current_dir).to_s
@@ -53,6 +59,10 @@ module Crystal
         io << location << "\t"
         io << a_def.short_reference << "\t"
         io << a_def.length << " lines"
+        if annotations = a_def.all_annotations
+          io << "\t"
+          annotations.join(io, " ")
+        end
         io.puts
       end
     end
@@ -65,6 +75,9 @@ module Crystal
             builder.field "location", location.to_s
             if lines = a_def.length
               builder.field "lines", lines
+            end
+            if annotations = a_def.all_annotations
+              builder.field "annotations", annotations.map(&.to_s)
             end
           end
         end
@@ -81,7 +94,7 @@ module Crystal
   class UnreachableVisitor < Visitor
     @used_def_locations = Set(Location).new
     @defs : Set(Def) = Set(Def).new.compare_by_identity
-    @visited_defs : Set(Def) = Set(Def).new.compare_by_identity
+    @visited : Set(ASTNode) = Set(ASTNode).new.compare_by_identity
 
     property includes = [] of String
     property excludes = [] of String
@@ -98,14 +111,14 @@ module Crystal
       process_type(type.metaclass) if type.metaclass != type
     end
 
-    def process(result : Compiler::Result)
+    def process(result : Compiler::Result) : Array(Def)
       @defs.clear
 
       result.node.accept(self)
 
       process_type(result.program)
 
-      UnreachableResult.new @defs.to_a
+      @defs.to_a
     end
 
     def visit(node)
@@ -113,6 +126,8 @@ module Crystal
     end
 
     def visit(node : ExpandableNode)
+      return false unless @visited.add?(node)
+
       if expanded = node.expanded
         expanded.accept self
       end
@@ -132,7 +147,7 @@ module Crystal
           @used_def_locations << location if interested_in(location)
         end
 
-        if @visited_defs.add?(a_def)
+        if @visited.add?(a_def)
           a_def.body.accept(self)
         end
       end

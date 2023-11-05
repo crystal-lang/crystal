@@ -9,6 +9,11 @@ private def it_converts_to_s(num, str, *, file = __FILE__, line = __LINE__, **op
 end
 
 describe "BigInt" do
+  describe "#integer?" do
+    it { BigInt.zero.integer?.should be_true }
+    it { 12345.to_big_i.integer?.should be_true }
+  end
+
   it "creates with a value of zero" do
     BigInt.new.to_s.should eq("0")
   end

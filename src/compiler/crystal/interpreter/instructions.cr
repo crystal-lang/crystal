@@ -1837,6 +1837,16 @@ require "./repl"
         push:       true,
         code:       LibM.floor_f64(value),
       },
+      libm_fma_f32: {
+        pop_values: [value1 : Float32, value2 : Float32, value3 : Float32],
+        push:       true,
+        code:       LibM.fma_f32(value1, value2, value3),
+      },
+      libm_fma_f64: {
+        pop_values: [value1 : Float64, value2 : Float64, value3 : Float64],
+        push:       true,
+        code:       LibM.fma_f64(value1, value2, value3),
+      },
       libm_log_f32: {
         pop_values: [value : Float32],
         push:       true,

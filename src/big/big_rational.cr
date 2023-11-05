@@ -179,6 +179,13 @@ struct BigRational < Number
     x
   end
 
+  # :inherit:
+  def integer? : Bool
+    # since all `BigRational`s are canonicalized, the denominator must be
+    # positive and coprime with the numerator
+    denominator == 1
+  end
+
   # Divides the rational by (2 ** *other*)
   #
   # ```

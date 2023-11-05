@@ -160,7 +160,7 @@ module Crystal::Doc
     end
 
     def self.read_shard_properties
-      return {nil, nil} unless File.readable?("shard.yml")
+      return {nil, nil} unless File.exists?("shard.yml")
 
       name = nil
       version = nil
