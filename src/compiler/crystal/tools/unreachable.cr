@@ -6,7 +6,6 @@ module Crystal
   class Command
     private def unreachable
       config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true
-      format = config.output_format
 
       unreachable = UnreachableVisitor.new
 
@@ -16,7 +15,7 @@ module Crystal
       unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
 
       defs = unreachable.process(result)
-      defs.defs.sort_by! do |a_def|
+      defs.sort_by! do |a_def|
         location = a_def.location.not_nil!
         {
           location.filename.as(String),
@@ -25,21 +24,25 @@ module Crystal
         }
       end
 
-      case format
-      when "json"
-        defs.to_json(STDOUT)
-      else
-        defs.to_text(STDOUT)
-      end
+      UnreachablePresenter.new(defs, format: config.output_format).to_s(STDOUT)
 
       if config.check
-        exit 1 unless defs.defs.empty?
+        exit 1 unless defs.empty?
       end
     end
   end
 
-  record UnreachableResult, defs : Array(Def) do
+  record UnreachablePresenter, defs : Array(Def), format : String? do
     include JSON::Serializable
+
+    def to_s(io)
+      case format
+      when "json"
+        to_json(STDOUT)
+      else
+        to_text(STDOUT)
+      end
+    end
 
     def to_text(io)
       defs.each do |a_def|
@@ -98,14 +101,14 @@ module Crystal
       process_type(type.metaclass) if type.metaclass != type
     end
 
-    def process(result : Compiler::Result)
+    def process(result : Compiler::Result) : Array(Def)
       @defs.clear
 
       result.node.accept(self)
 
       process_type(result.program)
 
-      UnreachableResult.new @defs.to_a
+      @defs.to_a
     end
 
     def visit(node)
