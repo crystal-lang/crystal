@@ -309,6 +309,23 @@ describe "Dir" do
       ].sort
     end
 
+    it "tests with []" do
+      Dir["#{datapath}/dir/[a-z][0-9].txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ].sort
+    end
+
+    it "tests with {}" do
+      Dir["#{datapath}/dir/{f,g}{1,2,3}.tx{t,x}"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "f3.txx"),
+        datapath("dir", "g2.txt"),
+      ].sort
+    end
+
     it "tests with *" do
       Dir["#{datapath}/dir/*"].sort.should eq [
         datapath("dir", "dots"),
