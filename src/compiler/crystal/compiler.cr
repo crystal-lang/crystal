@@ -83,17 +83,17 @@ module Crystal
     # Optimization mode
     enum OptimizationMode
       # [default] no optimization, fastest compilation, slowest runtime
-      O0
+      O0 = 0
 
       # low, compilation slower than O0, runtime faster than O0
-      O1
+      O1 = 1
 
       # middle, compilation slower than O1, runtime faster than O1
-      O2
+      O2 = 2
 
       # high, slowest compilation, fastest runtime
       # enables with --release flag
-      O3
+      O3 = 3
 
       def suffix
         ".#{to_s.downcase}"
