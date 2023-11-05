@@ -326,8 +326,21 @@ describe "Dir" do
       ].sort
     end
 
+    it "tests with \\" do
+      Dir[Path[datapath, "dir", %q(\\g*)]].sort.should eq [
+        datapath("dir", "\\g3"),
+        datapath("dir", "\\g4*"),
+      ].sort
+
+      Dir[Path[datapath, "dir", %q(*g?\*)]].sort.should eq [
+        datapath("dir", "\\g4*"),
+      ].sort
+    end
+
     it "tests with *" do
       Dir["#{datapath}/dir/*"].sort.should eq [
+        datapath("dir", "\\g3"),
+        datapath("dir", "\\g4*"),
         datapath("dir", "dots"),
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
@@ -340,6 +353,8 @@ describe "Dir" do
 
     it "tests with ** (same as *)" do
       Dir["#{datapath}/dir/**"].sort.should eq [
+        datapath("dir", "\\g3"),
+        datapath("dir", "\\g4*"),
         datapath("dir", "dots"),
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
