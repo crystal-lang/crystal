@@ -93,6 +93,8 @@ lib LibLLVM
 
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
   fun get_value_kind = LLVMGetValueKind(val : ValueRef) : LLVM::Value::Kind
+  fun get_value_name2 = LLVMGetValueName2(val : ValueRef, length : SizeT*) : Char*
+  fun set_value_name2 = LLVMSetValueName2(val : ValueRef, name : Char*, name_len : SizeT)
   fun dump_value = LLVMDumpValue(val : ValueRef)
   fun print_value_to_string = LLVMPrintValueToString(val : ValueRef) : Char*
   fun is_constant = LLVMIsConstant(val : ValueRef) : Bool
@@ -110,6 +112,7 @@ lib LibLLVM
   fun const_int_of_arbitrary_precision = LLVMConstIntOfArbitraryPrecision(int_ty : TypeRef, num_words : UInt, words : UInt64*) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Double) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_ty : TypeRef, text : Char*) : ValueRef
+  fun const_real_of_string_and_size = LLVMConstRealOfStringAndSize(real_ty : TypeRef, text : Char*, s_len : UInt) : ValueRef
   fun const_int_get_zext_value = LLVMConstIntGetZExtValue(constant_val : ValueRef) : ULongLong
   fun const_int_get_sext_value = LLVMConstIntGetSExtValue(constant_val : ValueRef) : LongLong
 
@@ -148,6 +151,8 @@ lib LibLLVM
   fun get_param = LLVMGetParam(fn : ValueRef, index : UInt) : ValueRef
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
 
+  fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : ValueRef
+  fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : ValueRef*, count : SizeT) : ValueRef
   fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
   fun get_md_node_num_operands = LLVMGetMDNodeNumOperands(v : ValueRef) : UInt
