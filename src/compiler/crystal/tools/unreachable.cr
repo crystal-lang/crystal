@@ -6,7 +6,7 @@ require "csv"
 module Crystal
   class Command
     private def unreachable
-      config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true, allowed_formats: ["text", "json", "csv"]
+      config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true, allowed_formats: %w[text json csv]
 
       unreachable = UnreachableVisitor.new
 
@@ -25,7 +25,7 @@ module Crystal
         }
       end
 
-      UnreachablePresenter.new(defs, format: config.output_format || "text").to_s(STDOUT)
+      UnreachablePresenter.new(defs, format: config.output_format).to_s(STDOUT)
 
       if config.check
         exit 1 unless defs.empty?
