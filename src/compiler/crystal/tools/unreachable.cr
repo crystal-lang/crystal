@@ -25,7 +25,7 @@ module Crystal
         }
       end
 
-      UnreachablePresenter.new(tallies, format: config.output_format).to_s(STDOUT)
+      UnreachablePresenter.new(tallies, format: config.output_format, print_tallies: config.tallies).to_s(STDOUT)
 
       if config.check
         exit 1 if tallies.any?(&.[1].zero?)
@@ -33,7 +33,7 @@ module Crystal
     end
   end
 
-  record UnreachablePresenter, tallies : Array({Def, Int32}), format : String? do
+  record UnreachablePresenter, tallies : Array({Def, Int32}), format : String?, print_tallies : Bool do
     include JSON::Serializable
 
     def to_s(io)
@@ -50,16 +50,18 @@ module Crystal
     def each(&)
       current_dir = Dir.current
       tallies.each do |a_def, count|
-        next unless count.zero?
+        next unless print_tallies || count.zero?
+
         location = a_def.location.not_nil!
         filename = ::Path[location.filename.as(String)].relative_to(current_dir).to_s
         location = Location.new(filename, location.line_number, location.column_number)
-        yield a_def, location
+        yield a_def, location, count
       end
     end
 
     def to_text(io)
-      each do |a_def, location|
+      each do |a_def, location, count|
+        io << count << "\t" if print_tallies
         io << location << "\t"
         io << a_def.short_reference << "\t"
         io << a_def.length << " lines"
@@ -73,13 +75,14 @@ module Crystal
 
     def to_json(builder : JSON::Builder)
       builder.array do
-        each do |a_def, location|
+        each do |a_def, location, count|
           builder.object do
             builder.field "name", a_def.short_reference
             builder.field "location", location.to_s
             if lines = a_def.length
               builder.field "lines", lines
             end
+            builder.field "count", count if print_tallies
             if annotations = a_def.all_annotations
               builder.field "annotations", annotations.map(&.to_s)
             end
@@ -90,9 +93,14 @@ module Crystal
 
     def to_csv(io)
       CSV.build(io) do |builder|
-        builder.row %w[name file line column length annotations]
-        each do |a_def, location|
+        builder.row do |row|
+          row << "count" if print_tallies
+          row.concat %w[name file line column length annotations]
+        end
+
+        each do |a_def, location, count|
           builder.row do |row|
+            row << count if print_tallies
             row << a_def.short_reference
             row << location.filename
             row << location.line_number
