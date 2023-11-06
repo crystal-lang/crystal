@@ -499,8 +499,11 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--release", "Compile in release mode") do
-          compiler.release = true
+        opts.on("--release", "Compile in release mode (-O3 --single-module)") do
+          compiler.release!
+        end
+        opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
+          compiler.optimization_mode = Compiler::OptimizationMode.from_value?(level.to_i) || raise Error.new("Unknown optimization mode #{level}")
         end
       end
 
@@ -633,8 +636,11 @@ class Crystal::Command
       @error_trace = true
       compiler.show_error_trace = true
     end
-    opts.on("--release", "Compile in release mode") do
-      compiler.release = true
+    opts.on("--release", "Compile in release mode (-O3 --single-module)") do
+      compiler.release!
+    end
+    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
+      compiler.optimization_mode = Compiler::OptimizationMode.from_value?(level.to_i) || raise Error.new("Unknown optimization mode #{level}")
     end
     opts.on("-s", "--stats", "Enable statistics output") do
       compiler.progress_tracker.stats = true
