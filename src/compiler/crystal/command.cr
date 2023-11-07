@@ -503,7 +503,8 @@ class Crystal::Command
           compiler.release!
         end
         opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
-          compiler.optimization_mode = Compiler::OptimizationMode.from_value?(level.to_i) || raise Error.new("Unknown optimization mode #{level}")
+          optimization_mode = level.to_i?.try { |v| Compiler::OptimizationMode.from_value?(v) }
+          compiler.optimization_mode = optimization_mode || raise Error.new("Invalid optimization mode: #{level}")
         end
       end
 
@@ -524,7 +525,7 @@ class Crystal::Command
           compiler.single_module = true
         end
         opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
-          compiler.n_threads = n_threads.to_i
+          compiler.n_threads = n_threads.to_i? || raise Error.new("Invalid thread count: #{n_threads}")
         end
         unless run
           opts.on("--target TRIPLE", "Target triple") do |triple|
