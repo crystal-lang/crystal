@@ -925,6 +925,34 @@ struct Int8
     self
   end
 
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    to_u8
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    to_u8!
+  end
+
   # Returns the absolute value of `self` as an unsigned value of the same size.
   #
   # Returns `self` if `self` is already an `Int::Unsigned`. This method never
@@ -1081,6 +1109,34 @@ struct Int16
   # ```
   def to_signed! : Int16
     self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    to_u16
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    to_u16!
   end
 
   # Returns the absolute value of `self` as an unsigned value of the same size.
@@ -1241,6 +1297,34 @@ struct Int32
     self
   end
 
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    to_u32
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    to_u32!
+  end
+
   # Returns the absolute value of `self` as an unsigned value of the same size.
   #
   # Returns `self` if `self` is already an `Int::Unsigned`. This method never
@@ -1397,6 +1481,34 @@ struct Int64
   # ```
   def to_signed! : Int64
     self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    to_u64
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    to_u64!
   end
 
   # Returns the absolute value of `self` as an unsigned value of the same size.
@@ -1560,6 +1672,34 @@ struct Int128
     self
   end
 
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    to_u128
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    to_u128!
+  end
+
   # Returns the absolute value of `self` as an unsigned value of the same size.
   #
   # Returns `self` if `self` is already an `Int::Unsigned`. This method never
@@ -1716,6 +1856,34 @@ struct UInt8
   # ```
   def to_signed! : Int8
     to_i8!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    self
   end
 
   def abs : self
@@ -1880,6 +2048,34 @@ struct UInt16
     to_i16!
   end
 
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    self
+  end
+
   def abs : self
     self
   end
@@ -2040,6 +2236,34 @@ struct UInt32
   # ```
   def to_signed! : Int32
     to_i32!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    self
   end
 
   def abs : self
@@ -2204,6 +2428,34 @@ struct UInt64
     to_i64!
   end
 
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    self
+  end
+
   def abs : self
     self
   end
@@ -2366,6 +2618,34 @@ struct UInt128
   # ```
   def to_signed! : Int128
     to_i128!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    self
   end
 
   def abs

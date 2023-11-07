@@ -195,6 +195,53 @@ describe "Int" do
     {% end %}
   end
 
+  describe "#to_unsigned" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = 123_i{{n}}.to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.zero.to_unsigned.should eq(UInt{{n}}::MIN)
+        Int{{n}}::MAX.to_unsigned.should eq(UInt{{n}}.new(Int{{n}}::MAX))
+        expect_raises(OverflowError) { Int{{n}}::MIN.to_unsigned }
+      end
+
+      it "does for UInt{{n}}" do
+        x = 123_u{{n}}.to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        (-123_i{{n}}).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
+        Int{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MAX // 2 + 1)
+        Int{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX // 2)
+        (-1_i{{n}}).to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = 123_u{{n}}.to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
   describe "#abs_unsigned" do
     {% for int in Int::Signed.union_types %}
       it "does for {{ int }}" do
