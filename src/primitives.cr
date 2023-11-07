@@ -254,6 +254,25 @@ struct Pointer(T)
   end
 end
 
+struct Slice(T)
+  # Constructs a read-only `Slice` constant from the given *args*. The slice
+  # contents are stored in the program's read-only data section.
+  #
+  # `T` must be one of the `Number::Primitive` types and cannot be a union. It
+  # also cannot be inferred. The *args* must all be number literals that fit
+  # into `T`'s range, as if they are autocasted into `T`.
+  #
+  # ```
+  # x = Slice(UInt8).literal(0, 1, 4, 9, 16, 25)
+  # x            # => Slice[0, 1, 4, 9, 16, 25]
+  # x.read_only? # => true
+  # ```
+  @[Experimental("Slice literals are still under development. Join the discussion at [#2886](https://github.com/crystal-lang/crystal/issues/2886).")]
+  @[Primitive(:slice_literal)]
+  def self.literal(*args)
+  end
+end
+
 struct Proc
   # Invokes this `Proc` and returns the result.
   #

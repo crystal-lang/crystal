@@ -5101,7 +5101,7 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
+      path = parse_path(global, location)
       skip_space
       path
     end
@@ -5793,11 +5793,13 @@ module Crystal
               break
             end
           end
+          end_location = token_end_location
           next_token_skip_statement_end
         end
 
         if @token.type.op_colon?
           next_token_skip_space_or_newline
+          end_location = token_end_location
           return_type = parse_bare_proc_type
         end
 
@@ -5818,7 +5820,6 @@ module Crystal
           @fun_nest -= 1
         else
           body = nil
-          end_location = token_end_location
         end
 
         fun_def = FunDef.new name, params, return_type, varargs, body, real_name

@@ -6,6 +6,8 @@
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
 module IO::Buffered
+  @in_buffer = Pointer(UInt8).null
+  @out_buffer = Pointer(UInt8).null
   @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
@@ -96,7 +98,7 @@ module IO::Buffered
   # peek data if the current buffer is empty:
   # otherwise no read is performed and whatever
   # is in the buffer is returned.
-  def peek : Bytes?
+  def peek : Bytes
     check_open
 
     if @in_buffer_rem.empty?

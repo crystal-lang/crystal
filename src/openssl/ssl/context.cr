@@ -452,7 +452,7 @@ abstract class OpenSSL::SSL::Context
     LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
   end
 
-  @alpn_protocol : Pointer(Void)?
+  @alpn_protocol = Pointer(Void).null
 
   # Specifies an ALPN protocol to negotiate with the remote endpoint. This is
   # required to negotiate HTTP/2 with browsers, since browser vendors decided

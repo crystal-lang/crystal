@@ -149,6 +149,36 @@ struct BigFloat < Float
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 
+  def **(other : BigInt) : BigFloat
+    is_zero = self.zero?
+    if is_zero
+      case other
+      when .>(0)
+        return self
+      when .<(0)
+        # there is no BigFloat::Infinity
+        raise ArgumentError.new "Cannot raise 0 to a negative power"
+      end
+    end
+
+    BigFloat.new do |result|
+      LibGMP.mpf_init_set_si(result, 1)
+      next if is_zero # define `0 ** 0 == 1`
+
+      # these are mutated and must be copies of `other` and `self`!
+      exponent = BigInt.new { |mpz| LibGMP.abs(mpz, other) } # `other.abs`
+      k = BigFloat.new { |mpf| LibGMP.mpf_set(mpf, self) }   # `self`
+
+      while exponent > 0
+        LibGMP.mpf_mul(result, result, k) if exponent.to_i!.odd? # `result *= k`
+        LibGMP.fdiv_q_2exp(exponent, exponent, 1)                # `exponent /= 2`
+        LibGMP.mpf_mul(k, k, k) if exponent > 0                  # `k *= k`
+      end
+
+      LibGMP.mpf_ui_div(result, 1, result) if other < 0 # `result = 1 / result`
+    end
+  end
+
   def **(other : Int) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
   end
@@ -381,7 +411,8 @@ struct BigFloat < Float
     end
   end
 
-  protected def integer?
+  # :inherit:
+  def integer? : Bool
     !LibGMP.mpf_integer_p(mpf).zero?
   end
 

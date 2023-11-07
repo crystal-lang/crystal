@@ -58,9 +58,9 @@ struct String::Grapheme
   # ranges in this slice are numerically sorted.
   #
   # These ranges were taken from
-  # http://www.unicode.org/Public/15.0.0/ucd/auxiliary/GraphemeBreakProperty.txt
+  # http://www.unicode.org/Public/15.1.0/ucd/auxiliary/GraphemeBreakProperty.txt
   # as well as
-  # http://www.unicode.org/Public/15.0.0/ucd/emoji/emoji-data.txt
+  # http://www.unicode.org/Public/15.1.0/ucd/emoji/emoji-data.txt
   # ("Extended_Pictographic" only). See
   # https://www.unicode.org/license.html for the Unicode license agreement.
   @@codepoints : Array(Tuple(Int32, Int32, Property))?

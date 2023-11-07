@@ -76,6 +76,23 @@ describe "Float" do
     it { 2.9.ceil.should eq(3) }
   end
 
+  describe "#integer?" do
+    it { 1.0_f32.integer?.should be_true }
+    it { 1.0_f64.integer?.should be_true }
+
+    it { 1.2_f32.integer?.should be_false }
+    it { 1.2_f64.integer?.should be_false }
+
+    it { Float32::MAX.integer?.should be_true }
+    it { Float64::MAX.integer?.should be_true }
+
+    it { Float32::INFINITY.integer?.should be_false }
+    it { Float64::INFINITY.integer?.should be_false }
+
+    it { Float32::NAN.integer?.should be_false }
+    it { Float64::NAN.integer?.should be_false }
+  end
+
   describe "fdiv" do
     it { 1.0.fdiv(1).should eq 1.0 }
     it { 1.0.fdiv(2).should eq 0.5 }

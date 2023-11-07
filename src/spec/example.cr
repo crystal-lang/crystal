@@ -21,6 +21,11 @@ module Spec
       Spec.root_context.check_nesting_spec(file, line) do
         Spec.formatters.each(&.before_example(description))
 
+        if Spec.dry_run?
+          @parent.report(:success, description, file, line)
+          return
+        end
+
         unless block = @block
           @parent.report(:pending, description, file, line)
           return

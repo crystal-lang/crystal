@@ -80,14 +80,35 @@ module Crystal
     # the source file to compile.
     property prelude = "prelude"
 
-    # If `true`, runs LLVM optimizations.
-    property? release = false
+    # Optimization mode
+    enum OptimizationMode
+      # [default] no optimization, fastest compilation, slowest runtime
+      O0 = 0
+
+      # low, compilation slower than O0, runtime faster than O0
+      O1 = 1
+
+      # middle, compilation slower than O1, runtime faster than O1
+      O2 = 2
+
+      # high, slowest compilation, fastest runtime
+      # enables with --release flag
+      O3 = 3
+
+      def suffix
+        ".#{to_s.downcase}"
+      end
+    end
+
+    # Sets the Optimization mode.
+    property optimization_mode = OptimizationMode::O0
 
     # Sets the code model. Check LLVM docs to learn about this.
     property mcmodel = LLVM::CodeModel::Default
 
     # If `true`, generates a single LLVM module. By default
     # one LLVM module is created for each type in a program.
+    # --release automatically enable this option
     property? single_module = false
 
     # A `ProgressTracker` object which tracks compilation progress.
@@ -143,6 +164,8 @@ module Crystal
 
     # Whether to link statically
     property? static = false
+
+    property dependency_printer : DependencyPrinter? = nil
 
     # Program that was created for the last compilation.
     property! program : Program
@@ -200,6 +223,16 @@ module Crystal
       Result.new program, node
     end
 
+    # Set maximum level of optimization.
+    def release!
+      @optimization_mode = OptimizationMode::O3
+      @single_module = true
+    end
+
+    def release?
+      @optimization_mode.o3? && @single_module
+    end
+
     private def new_program(sources)
       @program = program = Program.new
       program.compiler = self
@@ -252,8 +285,8 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}|#{@mcmodel}"
-      bc_flags_filename = "#{output_dir}/bc_flags"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}"
+      bc_flags_filename = "#{output_dir}/bc_flags#{optimization_mode.suffix}"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
         bc_flags_changed = previous_bc_flags != current_bc_flags
@@ -264,7 +297,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none?
+        program.codegen node, debug: debug, single_module: @single_module || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -317,7 +350,7 @@ module Crystal
       llvm_mod = unit.llvm_mod
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod if @release
+        optimize llvm_mod unless @optimization_mode.o0?
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
@@ -579,7 +612,7 @@ module Crystal
     end
 
     getter(target_machine : LLVM::TargetMachine) do
-      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release, @mcmodel)
+      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @optimization_mode, @mcmodel)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
       stderr.print "llc: "
@@ -613,16 +646,35 @@ module Crystal
           registry.initialize_all
 
           builder = LLVM::PassManagerBuilder.new
-          builder.opt_level = 3
+          case optimization_mode
+          in .o3?
+            builder.opt_level = 3
+            builder.use_inliner_with_threshold = 275
+          in .o2?
+            builder.opt_level = 2
+            builder.use_inliner_with_threshold = 275
+          in .o1?
+            builder.opt_level = 1
+            builder.use_inliner_with_threshold = 150
+          in .o0?
+            # default behaviour, no optimizations
+          end
+
           builder.size_level = 0
-          builder.use_inliner_with_threshold = 275
+
           builder
         end
       end
     {% else %}
       protected def optimize(llvm_mod)
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+          mode = case @optimization_mode
+                 in .o3? then "default<O3>"
+                 in .o2? then "default<O2>"
+                 in .o1? then "default<O1>"
+                 in .o0? then "default<O0>"
+                 end
+          LLVM.run_passes(llvm_mod, mode, target_machine, options)
         end
       end
     {% end %}
@@ -711,6 +763,7 @@ module Crystal
           @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
+        @name = "#{@name}#{@compiler.optimization_mode.suffix}"
         @object_extension = compiler.codegen_target.object_extension
       end
 
@@ -728,8 +781,8 @@ module Crystal
         # in the cache directory.
         #
         # On a next compilation of the same project, and if the compile
-        # flags didn't change (a combination of the target triple, mcpu,
-        # release and link flags, amongst others), we check if the new
+        # flags didn't change (a combination of the target triple, mcpu
+        # and link flags, amongst others), we check if the new
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
@@ -773,7 +826,7 @@ module Crystal
         end
 
         if must_compile
-          compiler.optimize llvm_mod if compiler.release?
+          compiler.optimize llvm_mod unless compiler.optimization_mode.o0?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
           File.rename(temporary_object_name, object_name)
         else
