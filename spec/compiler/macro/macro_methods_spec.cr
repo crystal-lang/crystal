@@ -10,6 +10,37 @@ private def declare_class_var(container : ClassVarContainer, name, var_type : Ty
   container.class_vars[name] = var
 end
 
+private def exit_code_command(code)
+  {% if flag?(:win32) %}
+    %(cmd.exe /c "exit #{code}")
+  {% else %}
+    case code
+    when 0
+      "true"
+    when 1
+      "false"
+    else
+      "/bin/sh -c 'exit #{code}'"
+    end
+  {% end %}
+end
+
+private def shell_command(command)
+  {% if flag?(:win32) %}
+    "cmd.exe /c #{Process.quote(command)}"
+  {% else %}
+    "/bin/sh -c #{Process.quote(command)}"
+  {% end %}
+end
+
+private def newline
+  {% if flag?(:win32) %}
+    "\r\n"
+  {% else %}
+    "\n"
+  {% end %}
+end
+
 module Crystal
   describe Macro do
     describe "node methods" do
@@ -333,6 +364,13 @@ module Crystal
         assert_macro "{{18446744073709551_i128 - 1_u128}}", "18446744073709550_i128"
         assert_macro "{{18446744073709551615_u128 * 10}}", "184467440737095516150_u128"
         assert_macro "{{18446744073709551610_u128 // 10}}", "1844674407370955161_u128"
+      end
+    end
+
+    describe "char methods" do
+      it "executes ord" do
+        assert_macro %({{'a'.ord}}), %(97)
+        assert_macro %({{'龍'.ord}}), %(40845)
       end
     end
 
@@ -1579,6 +1617,55 @@ module Crystal
           end
         end
 
+        describe "generic instance" do
+          it "prints generic type arguments" do
+            assert_macro("{{klass.name}}", "Foo(Int32, 3)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, 3.int32] of TypeVar))}
+            end
+          end
+
+          it "prints empty splat type var" do
+            assert_macro("{{klass.name}}", "Foo()") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([] of TypeVar))}
+            end
+          end
+
+          it "prints multiple arguments for splat type var" do
+            assert_macro("{{klass.name}}", "Foo(Int32, String)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, program.string] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (1)" do
+            assert_macro("{{klass.name}}", "Foo(Int32)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              generic_type.splat_index = 1
+              {klass: TypeNode.new(generic_type.instantiate([program.int32] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (2)" do
+            assert_macro("{{klass.name}}", "Foo(Int32)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U"])
+              generic_type.splat_index = 0
+              {klass: TypeNode.new(generic_type.instantiate([program.int32] of TypeVar))}
+            end
+          end
+
+          it "does not print extra commas for empty splat type var (3)" do
+            assert_macro("{{klass.name}}", "Foo(Int32, String)") do |program|
+              generic_type = GenericClassType.new(program, program, "Foo", program.reference, ["T", "U", "V"])
+              generic_type.splat_index = 1
+              {klass: TypeNode.new(generic_type.instantiate([program.int32, program.string] of TypeVar))}
+            end
+          end
+        end
+
         describe :generic_args do
           describe true do
             it "includes the generic_args of the type" do
@@ -1611,6 +1698,28 @@ module Crystal
               end
             end
           end
+        end
+      end
+
+      describe "#id" do
+        it "does not include trailing + for virtual type" do
+          assert_macro("{{klass.id}}", "Foo") do |program|
+            foo = NonGenericClassType.new(program, program, "Foo", program.reference)
+            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            {klass: TypeNode.new(foo.virtual_type)}
+          end
+        end
+      end
+
+      describe "#warning" do
+        it "emits a warning at a specific node" do
+          assert_warning <<-CRYSTAL, "Oh noes"
+            macro test(node)
+              {% node.warning "Oh noes" %}
+            end
+
+            test 10
+          CRYSTAL
         end
       end
 
@@ -2165,14 +2274,14 @@ module Crystal
             {x: TypeNode.new(mod)}
           end
 
-          assert_type(<<-CR) { int32 }
+          assert_type(<<-CRYSTAL) { int32 }
             class Foo(T)
             end
 
             alias Bar = Foo(Bar)?
 
             {{ Bar.nilable? ? 1 : 'a' }}
-            CR
+            CRYSTAL
         end
       end
 
@@ -2337,7 +2446,7 @@ module Crystal
       end
 
       it "executes accepts_block?" do
-        assert_macro %({{x.accepts_block?}}), "true", {x: Def.new("some_def", ["x".arg, "y".arg], yields: 1)}
+        assert_macro %({{x.accepts_block?}}), "true", {x: Def.new("some_def", ["x".arg, "y".arg], block_arity: 1)}
         assert_macro %({{x.accepts_block?}}), "false", {x: Def.new("some_def")}
       end
 
@@ -2398,6 +2507,34 @@ module Crystal
       it "executes visibility" do
         assert_macro %({{x.visibility}}), ":public", {x: Macro.new("some_macro")}
         assert_macro %({{x.visibility}}), ":private", {x: Macro.new("some_macro").tap { |d| d.visibility = Visibility::Private }}
+      end
+    end
+
+    describe "macro if methods" do
+      it "executes cond" do
+        assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
+      end
+
+      it "executes then" do
+        assert_macro %({{x.then}}), "\"test\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+    end
+
+    describe "macro for methods" do
+      it "executes vars" do
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
       end
     end
 
@@ -2986,6 +3123,18 @@ module Crystal
       assert_macro %({{compare_versions("1.10.3", "1.2.3")}}), %(1)
     end
 
+    describe "#warning" do
+      it "emits a top level warning" do
+        assert_warning <<-CRYSTAL, "Oh noes"
+          macro test
+            {% warning "Oh noes" %}
+          end
+
+          test
+        CRYSTAL
+      end
+    end
+
     describe "#parse_type" do
       it "path" do
         assert_type(%[class Bar; end; {{ parse_type("Bar").is_a?(Path) ? 1 : 'a'}}]) { int32 }
@@ -3055,6 +3204,15 @@ module Crystal
             {foo: "bar".string}
           end
         end.should eq %(bar\n)
+      end
+
+      it "print" do
+        String.build do |io|
+          assert_macro(%({% print foo %}), "") do |program|
+            program.stdout = io
+            {foo: "bar".string}
+          end
+        end.should eq %(bar)
       end
 
       it "p" do
@@ -3134,9 +3292,9 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CR,
+        assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
-          CR
+          CRYSTAL
           "No such file or directory"
       end
     end
@@ -3149,9 +3307,9 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CR,
+        assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
-          CR
+          CRYSTAL
           "No such file or directory"
       end
     end
@@ -3172,6 +3330,26 @@ module Crystal
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
           >, filename: __FILE__).to_i.should eq(20)
       end
+    end
+  end
+
+  describe ".system" do
+    it "command does not exist" do
+      assert_error %({{ `commanddoesnotexist` }}), "error executing command: commanddoesnotexist"
+    end
+
+    it "successful command" do
+      assert_macro %({{ `#{exit_code_command(0)}` }}), ""
+    end
+
+    it "successful command with output" do
+      assert_macro %({{ `#{shell_command("echo foobar")}` }}), "foobar#{newline}"
+    end
+
+    it "failing command" do
+      assert_error %({{ `#{exit_code_command(1)}` }}), "error executing command: #{exit_code_command(1)}, got exit status 1"
+      assert_error %({{ `#{exit_code_command(2)}` }}), "error executing command: #{exit_code_command(2)}, got exit status 2"
+      assert_error %({{ `#{exit_code_command(127)}` }}), "error executing command: #{exit_code_command(127)}, got exit status 127"
     end
   end
 

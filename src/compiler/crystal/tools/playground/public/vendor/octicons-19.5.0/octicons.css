@@ -1,0 +1,22 @@
+/*
+
+.octicon is optimized for 16px.
+.mega-octicon is optimized for larger sizes.
+
+*/
+.octicon, .mega-octicon {
+  display: inline-block;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+}
+
+.mega-octicon {
+  width: 50px;
+  height: 50px;
+  vertical-align: middle;
+}

@@ -10,7 +10,7 @@
 # class Three
 #   include Enumerable(Int32)
 #
-#   def each
+#   def each(&)
 #     yield 1
 #     yield 2
 #     yield 3
@@ -107,7 +107,16 @@ module Enumerable(T)
   # ```
   # [nil, true, 99].any? # => true
   # [nil, false].any?    # => false
+  # ([] of Int32).any?   # => false
   # ```
+  #
+  # * `#present?` does not consider truthiness of elements.
+  # * `#any?(&)` and `#any(pattern)` allow custom conditions.
+  #
+  # NOTE: `#any?` usually has the same semantics as `#present?`. They only
+  # differ if the element type can be falsey (i.e. `T <= Nil || T <= Pointer || T <= Bool`).
+  # It's typically advised to prefer `#present?` unless these specific truthiness
+  # semantics are required.
   def any? : Bool
     any? &.itself
   end
@@ -131,8 +140,8 @@ module Enumerable(T)
   #
   # See also: `Iterator#chunk`.
   def chunks(&block : T -> U) forall U
-    res = [] of Tuple(U, Array(T))
-    chunks_internal(block) { |k, v| res << {k, v} }
+    res = [] of Tuple(typeof(Chunk.key_type(self, block)), Array(T))
+    chunks_internal(block) { |*kv| res << kv }
     res
   end
 
@@ -166,7 +175,6 @@ module Enumerable(T)
       end
 
       def init(key, val)
-        return if key == Drop
         @key = key
 
         if @reuse
@@ -190,33 +198,44 @@ module Enumerable(T)
 
       def same_as?(key) : Bool
         return false unless @initialized
-        return false if key.in?(Alone, Drop)
+        return false if key.is_a?(Alone.class) || key.is_a?(Drop.class)
         @key == key
       end
 
-      def reset
-        @initialized = false
-        @data.clear
+      def acc(key, val, &)
+        if same_as?(key)
+          add(val)
+        else
+          if tuple = fetch
+            yield *tuple
+          end
+
+          init(key, val) unless key.is_a?(Drop.class)
+        end
       end
+    end
+
+    def self.key_type(ary, block)
+      ary.each do |item|
+        key = block.call(item)
+        ::raise "" if key.is_a?(Drop.class)
+        return key
+      end
+      ::raise ""
     end
   end
 
-  private def chunks_internal(original_block : T -> U) forall U
-    acc = Chunk::Accumulator(T, U).new
+  private def chunks_internal(original_block : T -> U, &) forall U
+    acc = Chunk::Accumulator(T, typeof(Chunk.key_type(self, original_block))).new
     each do |val|
       key = original_block.call(val)
-      if acc.same_as?(key)
-        acc.add(val)
-      else
-        if tuple = acc.fetch
-          yield(*tuple)
-        end
-        acc.init(key, val)
+      acc.acc(key, val) do |*tuple|
+        yield *tuple
       end
     end
 
     if tuple = acc.fetch
-      yield(*tuple)
+      yield *tuple
     end
   end
 
@@ -299,7 +318,7 @@ module Enumerable(T)
   # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
   # implementation for the special case of `count == 2` which avoids heap
   # allocations.
-  def each_cons(count : Int, reuse = false)
+  def each_cons(count : Int, reuse = false, &)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
       # we use an initial capacity of double the count, because a second
@@ -310,7 +329,7 @@ module Enumerable(T)
     end
   end
 
-  private def each_cons_internal(count : Int, reuse, cons)
+  private def each_cons_internal(count : Int, reuse, cons, &)
     each do |elem|
       cons << elem
       cons.shift if cons.size > count
@@ -385,11 +404,11 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_slice(count : Int, reuse = false)
+  def each_slice(count : Int, reuse = false, &)
     each_slice_internal(count, Array(T), reuse) { |slice| yield slice }
   end
 
-  private def each_slice_internal(count : Int, type, reuse)
+  private def each_slice_internal(count : Int, type, reuse, &)
     if reuse
       unless reuse.is_a?(Array)
         reuse = type.new(count)
@@ -414,6 +433,44 @@ module Enumerable(T)
     end
     yield slice unless slice.empty?
     nil
+  end
+
+  # Iterates over the collection, yielding every *n*th element, starting with the first.
+  #
+  # ```
+  # %w[Alice Bob Charlie David].each_step(2) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # User: Alice
+  # User: Charlie
+  # ```
+  #
+  # Accepts an optional *offset* parameter
+  #
+  # ```
+  # %w[Alice Bob Charlie David].each_step(2, offset: 1) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Which would print:
+  #
+  # ```text
+  # User: Bob
+  # User: David
+  # ```
+  def each_step(n : Int, *, offset : Int = 0, & : T ->) : Nil
+    raise ArgumentError.new("Invalid n size: #{n}") if n <= 0
+    raise ArgumentError.new("Invalid offset size: #{offset}") if offset < 0
+    offset_mod = offset % n
+    each_with_index do |elem, i|
+      yield elem if i >= offset && i % n == offset_mod
+    end
   end
 
   # Iterates over the collection, yielding both the elements and their index.
@@ -446,7 +503,7 @@ module Enumerable(T)
   # User # 1: Alice
   # User # 2: Bob
   # ```
-  def each_with_index(offset = 0)
+  def each_with_index(offset = 0, &)
     i = offset
     each do |elem|
       yield elem, i
@@ -629,6 +686,22 @@ module Enumerable(T)
     end
   end
 
+  # Returns an `Array` with chunks in the given size.
+  # Last chunk can be smaller depending on the number of remaining items.
+  #
+  # ```
+  # [1, 2, 3].in_slices_of(2) # => [[1, 2], [3]]
+  # ```
+  def in_slices_of(size : Int) : Array(Array(T))
+    raise ArgumentError.new("Size must be positive") if size <= 0
+
+    ary = Array(Array(T)).new
+    each_slice_internal(size, Array(T), false) do |slice|
+      ary << slice
+    end
+    ary
+  end
+
   # Returns `true` if the collection contains *obj*, `false` otherwise.
   #
   # ```
@@ -730,7 +803,7 @@ module Enumerable(T)
   # [1, 2, 3, 4, 5].reduce { |acc, i| "#{acc}-#{i}" } # => "1-2-3-4-5"
   # [1].reduce { |acc, i| "#{acc}-#{i}" }             # => 1
   # ```
-  def reduce
+  def reduce(&)
     memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
@@ -748,7 +821,7 @@ module Enumerable(T)
   # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }             # => 25
   # [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) } # => [3, 2, 1]
   # ```
-  def reduce(memo)
+  def reduce(memo, &)
     each do |elem|
       memo = yield memo, elem
     end
@@ -761,7 +834,7 @@ module Enumerable(T)
   # ```
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
-  def reduce?
+  def reduce?(&)
     memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
@@ -933,7 +1006,7 @@ module Enumerable(T)
   # (1), (2), (3), (4), (5)
   # ```
   @[Deprecated(%(Use `#join(io : IO, separator = "", & : T, IO ->) instead`))]
-  def join(separator, io : IO)
+  def join(separator, io : IO, &)
     join(io, separator) do |elem, io|
       yield elem, io
     end
@@ -965,6 +1038,35 @@ module Enumerable(T)
     ary
   end
 
+  private def quickselect_internal(data : Array(T), left : Int, right : Int, k : Int) : T
+    loop do
+      return data[left] if left == right
+      pivot_index = left + (right - left)//2
+      pivot_index = quickselect_partition_internal(data, left, right, pivot_index)
+      if k == pivot_index
+        return data[k]
+      elsif k < pivot_index
+        right = pivot_index - 1
+      else
+        left = pivot_index + 1
+      end
+    end
+  end
+
+  private def quickselect_partition_internal(data : Array(T), left : Int, right : Int, pivot_index : Int) : Int
+    pivot_value = data[pivot_index]
+    data.swap(pivot_index, right)
+    store_index = left
+    (left...right).each do |i|
+      if compare_or_raise(data[i], pivot_value) < 0
+        data.swap(store_index, i)
+        store_index += 1
+      end
+    end
+    data.swap(right, store_index)
+    store_index
+  end
+
   # Returns the element with the maximum value in the collection.
   #
   # It compares using `>` so it will work for any type that supports that method.
@@ -982,6 +1084,30 @@ module Enumerable(T)
   # Like `max` but returns `nil` if the collection is empty.
   def max? : T?
     max_by? &.itself
+  end
+
+  # Returns an array of the maximum *count* elements, sorted descending.
+  #
+  # It compares using `<=>` so it will work for any type that supports that method.
+  #
+  # ```
+  # [7, 5, 2, 4, 9].max(3)                 # => [9, 7, 5]
+  # %w[Eve Alice Bob Mallory Carol].max(2) # => ["Mallory", "Eve"]
+  # ```
+  #
+  # Returns all elements sorted descending if *count* is greater than the number
+  # of elements in the source.
+  #
+  # Raises `Enumerable::ArgumentError` if *count* is negative or if any elements
+  # are not comparable.
+  def max(count : Int) : Array(T)
+    raise ArgumentError.new("Count must be positive") if count < 0
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    count = n if count > n
+    (0...count).map do |i|
+      quickselect_internal(data, 0, n - 1, n - 1 - i)
+    end
   end
 
   # Returns the element for which the passed block returns with the maximum value.
@@ -1071,6 +1197,30 @@ module Enumerable(T)
   # Like `min` but returns `nil` if the collection is empty.
   def min? : T?
     min_by? &.itself
+  end
+
+  # Returns an array of the minimum *count* elements, sorted ascending.
+  #
+  # It compares using `<=>` so it will work for any type that supports that method.
+  #
+  # ```
+  # [7, 5, 2, 4, 9].min(3)                 # => [2, 4, 5]
+  # %w[Eve Alice Bob Mallory Carol].min(2) # => ["Alice", "Bob"]
+  # ```
+  #
+  # Returns all elements sorted ascending if *count* is greater than the number
+  # of elements in the source.
+  #
+  # Raises `Enumerable::ArgumentError` if *count* is negative or if any elements
+  # are not comparable.
+  def min(count : Int) : Array(T)
+    raise ArgumentError.new("Count must be positive") if count < 0
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    count = n if count > n
+    (0...count).map do |i|
+      quickselect_internal(data, 0, n - 1, i)
+    end
   end
 
   # Returns the element for which the passed block returns with the minimum value.
@@ -1338,6 +1488,29 @@ module Enumerable(T)
     {a, b}
   end
 
+  # Returns a `Tuple` with two arrays. The first one contains the elements
+  # in the collection that are of the given *type*,
+  # and the second one that are **not** of the given *type*.
+  #
+  # ```
+  # ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
+  # ints           # => [1, 3]
+  # others         # => [true, nil, false, "string", 'c']
+  # typeof(ints)   # => Array(Int32)
+  # typeof(others) # => Array(String | Char | Nil)
+  # ```
+  def partition(type : U.class) forall U
+    a = [] of U
+    b = [] of typeof(begin
+      e = Enumerable.element_type(self)
+      e.is_a?(U) ? raise("") : e
+    end)
+    each do |e|
+      e.is_a?(U) ? a.push(e) : b.push(e)
+    end
+    {a, b}
+  end
+
   # Returns an `Array` with all the elements in the collection for which
   # the passed block is falsey.
   #
@@ -1389,7 +1562,7 @@ module Enumerable(T)
   # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
   # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
   # ```
-  def sample(n : Int, random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
     # Unweighted reservoir sampling:
@@ -1425,7 +1598,7 @@ module Enumerable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 3
   # ```
-  def sample(random = Random::DEFAULT) : T
+  def sample(random : Random = Random::DEFAULT) : T
     value = uninitialized T
     found = false
 
@@ -1487,15 +1660,33 @@ module Enumerable(T)
     count { true }
   end
 
-  # Returns `true` if `self` is empty, `false` otherwise.
+  # Returns `true` if `self` does not contain any element.
   #
   # ```
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
+  # [nil, false].empty?  # => false
   # ```
+  #
+  # * `#present?` returns the inverse.
   def empty? : Bool
     each { return false }
     true
+  end
+
+  # Returns `true` if `self` contains at least one element.
+  #
+  # ```
+  # ([] of Int32).present? # => false
+  # ([1]).present?         # => true
+  # [nil, false].present?  # => true
+  # ```
+  #
+  # * `#empty?` returns the inverse.
+  # * `#any?` considers only truthy elements.
+  # * `#any?(&)` and `#any(pattern)` allow custom conditions.
+  def present? : Bool
+    !empty?
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1556,6 +1747,9 @@ module Enumerable(T)
     {% elsif T < Array %}
       # optimize for array
       flat_map &.itself
+    {% elsif T < Slice && @type < Indexable %}
+      # optimize for slice
+      Slice.join(self)
     {% else %}
       sum additive_identity(Reflect(T))
     {% end %}
@@ -1763,7 +1957,7 @@ module Enumerable(T)
   # words.each { |word| word.chars.tally_by(hash, &.downcase) }
   # hash # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
-  def tally_by(hash)
+  def tally_by(hash, &)
     each_with_object(hash) do |item, hash|
       value = yield item
 
@@ -1939,7 +2133,7 @@ module Enumerable(T)
   # 2 -- 5 -- 8
   # 3 -- nil -- nil
   # ```
-  def zip?(*others : Indexable | Iterable | Iterator)
+  def zip?(*others : Indexable | Iterable | Iterator, &)
     Enumerable.zip?(self, others) do |elems|
       yield elems
     end

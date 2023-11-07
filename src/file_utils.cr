@@ -1,3 +1,4 @@
+# NOTE: To use `FileUtils`, you must explicitly import it with `require "file_utils"`
 module FileUtils
   extend self
 
@@ -24,7 +25,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : Path | String)
+  def cd(path : Path | String, &)
     Dir.cd(path) { yield }
   end
 
@@ -222,7 +223,7 @@ module FileUtils
       dest_path = File.join(dest_path, File.basename(src_path))
     end
 
-    File.delete(dest_path) if File.file?(dest_path)
+    rm_rf(dest_path) if File.exists?(dest_path)
     File.symlink(src_path, dest_path)
   end
 

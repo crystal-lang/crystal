@@ -419,7 +419,7 @@ describe "Semantic: doc" do
   end
 
   it "stores doc for macro defined in macro call" do
-    result = semantic <<-CR, wants_doc: true
+    result = semantic <<-CRYSTAL, wants_doc: true
       macro def_foo
         macro foo
         end
@@ -427,7 +427,7 @@ describe "Semantic: doc" do
 
       # Hello
       def_foo
-      CR
+      CRYSTAL
     program = result.program
     foo = program.macros.not_nil!["foo"].first
     foo.doc.should eq("Hello")

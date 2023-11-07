@@ -26,7 +26,7 @@ module Crystal
       return unless @warnings.level.all?
       return if compiler_expanded_call(node)
 
-      node.target_defs.each do |target_def|
+      node.target_defs.try &.each do |target_def|
         check_deprecation(target_def, node, @deprecated_methods_detected)
       end
     end

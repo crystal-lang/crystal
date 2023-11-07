@@ -135,7 +135,7 @@ describe "Semantic: virtual" do
   end
 
   it "works with restriction alpha" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       require "prelude"
 
       class Foo
@@ -154,7 +154,7 @@ describe "Semantic: virtual" do
 
       a = [nil, Foo.new, Bar.new, Baz.new]
       a.push(Baz.new || Ban.new)
-      CR
+      CRYSTAL
   end
 
   it "doesn't check cover for subclasses" do

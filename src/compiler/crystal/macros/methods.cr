@@ -4,7 +4,7 @@ require "semantic_version"
 
 module Crystal
   class MacroInterpreter
-    private def find_source_file(filename)
+    private def find_source_file(filename, &)
       # Support absolute paths
       if filename.starts_with?('/')
         filename = "#{filename}.cr" unless filename.ends_with?(".cr")
@@ -59,6 +59,8 @@ module Crystal
         interpret_parse_type(node)
       when "puts"
         interpret_puts(node)
+      when "print"
+        interpret_print(node)
       when "p", "pp"
         interpret_p(node)
       when "p!", "pp!"
@@ -69,6 +71,8 @@ module Crystal
         interpret_system(node)
       when "raise"
         interpret_raise(node)
+      when "warning"
+        interpret_warning(node)
       when "file_exists?"
         interpret_file_exists?(node)
       when "read_file"
@@ -196,6 +200,18 @@ module Crystal
       @last = Nop.new
     end
 
+    def interpret_print(node)
+      node.args.each do |arg|
+        arg.accept self
+        last = @last
+        last = last.value if last.is_a?(StringLiteral)
+
+        @program.stdout.print last
+      end
+
+      @last = Nop.new
+    end
+
     def interpret_p(node)
       node.args.each do |arg|
         arg.accept self
@@ -232,18 +248,31 @@ module Crystal
       end
       cmd = cmd.join " "
 
-      result = `#{cmd}`
+      begin
+        result = `#{cmd}`
+      rescue exc : File::Error | IO::Error
+        # Taking the os_error message to avoid duplicating the "error executing process: "
+        # prefix of the error message and ensure uniqueness between all error messages.
+        node.raise "error executing command: #{cmd}: #{exc.os_error.try(&.message) || exc.message}"
+      rescue exc
+        node.raise "error executing command: #{cmd}: #{exc.message}"
+      end
+
       if $?.success?
         @last = MacroId.new(result)
       elsif result.empty?
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}"
+        node.raise "error executing command: #{cmd}, got exit status #{$?}"
       else
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
+        node.raise "error executing command: #{cmd}, got exit status #{$?}:\n\n#{result}\n"
       end
     end
 
     def interpret_raise(node)
-      macro_raise(node, node.args, self)
+      macro_raise(node, node.args, self, Crystal::TopLevelMacroRaiseException)
+    end
+
+    def interpret_warning(node)
+      macro_warning(node, node.args, self)
     end
 
     def interpret_file_exists?(node)
@@ -372,7 +401,9 @@ module Crystal
       when "class_name"
         interpret_check_args { class_name }
       when "raise"
-        macro_raise self, args, interpreter
+        macro_raise self, args, interpreter, Crystal::MacroRaiseException
+      when "warning"
+        macro_warning self, args, interpreter
       when "filename"
         interpret_check_args do
           filename = location.try &.original_filename
@@ -518,21 +549,21 @@ module Crystal
       to_number <=> other.to_number
     end
 
-    def bool_bin_op(method, args, named_args, block)
+    def bool_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         BoolLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def num_bin_op(method, args, named_args, block)
+    def num_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         NumberLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def int_bin_op(method, args, named_args, block)
+    def int_bin_op(method, args, named_args, block, &)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         me = to_number
@@ -570,6 +601,19 @@ module Crystal
   class CharLiteral
     def to_macro_id
       @value.to_s
+    end
+
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "ord"
+        interpret_check_args { NumberLiteral.new(ord) }
+      else
+        super
+      end
+    end
+
+    def ord
+      @value.ord
     end
   end
 
@@ -1017,11 +1061,7 @@ module Crystal
 
     private def to_double_splat(trailing_string = "")
       MacroId.new(entries.join(", ") do |entry|
-        if Symbol.needs_quotes_for_named_argument?(entry.key)
-          "#{entry.key.inspect}: #{entry.value}"
-        else
-          "#{entry.key}: #{entry.value}"
-        end
+        "#{Symbol.quote_for_named_argument(entry.key)}: #{entry.value}"
       end + trailing_string)
     end
   end
@@ -1073,7 +1113,7 @@ module Crystal
       end
     end
 
-    def interpret_map(interpreter)
+    def interpret_map(interpreter, &)
       ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
         yield num
       end
@@ -1374,7 +1414,7 @@ module Crystal
       when "block_arg"
         interpret_check_args { @block_arg || Nop.new }
       when "accepts_block?"
-        interpret_check_args { BoolLiteral.new(@yields != nil) }
+        interpret_check_args { BoolLiteral.new(@block_arity != nil) }
       when "return_type"
         interpret_check_args { @return_type || Nop.new }
       when "free_vars"
@@ -1432,6 +1472,36 @@ module Crystal
         interpret_check_args do
           visibility_to_symbol(@visibility)
         end
+      else
+        super
+      end
+    end
+  end
+
+  class MacroIf
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "cond"
+        interpret_check_args { @cond }
+      when "then"
+        interpret_check_args { @then }
+      when "else"
+        interpret_check_args { @else }
+      else
+        super
+      end
+    end
+  end
+
+  class MacroFor
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "vars"
+        interpret_check_args { ArrayLiteral.map(@vars, &.itself) }
+      when "exp"
+        interpret_check_args { @exp }
+      when "body"
+        interpret_check_args { @body }
       else
         super
       end
@@ -2659,14 +2729,26 @@ private def visibility_to_symbol(visibility)
   Crystal::SymbolLiteral.new(visibility_name)
 end
 
-private def macro_raise(node, args, interpreter)
+private def macro_raise(node, args, interpreter, exception_type)
   msg = args.map do |arg|
     arg.accept interpreter
     interpreter.last.to_macro_id
   end
   msg = msg.join " "
 
-  node.raise msg, exception_type: Crystal::MacroRaiseException
+  node.raise msg, exception_type: exception_type
+end
+
+private def macro_warning(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  interpreter.warnings.add_warning_at(node.location, msg)
+
+  Crystal::NilLiteral.new
 end
 
 private def empty_no_return_array
@@ -2683,7 +2765,7 @@ private def filter(object, klass, block, interpreter, keep = true)
   end)
 end
 
-private def fetch_annotation(node, method, args, named_args, block)
+private def fetch_annotation(node, method, args, named_args, block, &)
   interpret_check_args(node: node) do |arg|
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
@@ -2699,7 +2781,7 @@ private def fetch_annotation(node, method, args, named_args, block)
   end
 end
 
-private def fetch_annotations(node, method, args, named_args, block)
+private def fetch_annotations(node, method, args, named_args, block, &)
   interpret_check_args(node: node, min_count: 0) do |arg|
     unless arg
       return yield(nil) || Crystal::NilLiteral.new

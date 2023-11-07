@@ -6,7 +6,7 @@ class LLVM::PassBuilderOptions
     @disposed = false
   end
 
-  def self.new
+  def self.new(&)
     options = new
     begin
       yield options

@@ -238,7 +238,7 @@ module Crystal
       visit_macro_for_array_like node, exp, exp.elements, &.itself
     end
 
-    def visit_macro_for_array_like(node, exp, entries)
+    def visit_macro_for_array_like(node, exp, entries, &)
       element_var = node.vars[0]
       index_var = node.vars[1]?
 
@@ -254,7 +254,7 @@ module Crystal
       @vars.delete index_var.name if index_var
     end
 
-    def visit_macro_for_hash_like(node, exp, entries)
+    def visit_macro_for_hash_like(node, exp, entries, &)
       key_var = node.vars[0]
       value_var = node.vars[1]?
       index_var = node.vars[2]?
@@ -358,9 +358,13 @@ module Crystal
         args = node.args.map { |arg| accept arg }
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
+        # normalize needed for param unpacking
+        block = node.block.try { |b| @program.normalize(b) }
+
         begin
-          @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
+          @last = receiver.interpret(node.name, args, named_args, block, self, node.name_location)
         rescue ex : MacroRaiseException
+          # Re-raise to avoid the logic in the other rescue blocks and to retain the original location
           raise ex
         rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
@@ -369,6 +373,7 @@ module Crystal
         end
       else
         # no receiver: special calls
+        # may raise `Crystal::TopLevelMacroRaiseException`
         interpret_top_level_call node
       end
 

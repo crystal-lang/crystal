@@ -53,9 +53,15 @@ module Crystal::System::FileInfo
       ::File::Type::CharacterDevice
     when LibC::FILE_TYPE_DISK
       # See: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365511(v=vs.85).aspx
-      if @file_attributes.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) &&
-         @reparse_tag.bits_set? File::REPARSE_TAG_NAME_SURROGATE_MASK
-        ::File::Type::Symlink
+      if @file_attributes.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT)
+        case @reparse_tag
+        when LibC::IO_REPARSE_TAG_SYMLINK
+          ::File::Type::Symlink
+        when LibC::IO_REPARSE_TAG_AF_UNIX
+          ::File::Type::Socket
+        else
+          ::File::Type::Unknown
+        end
       elsif @file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_DIRECTORY
         ::File::Type::Directory
       else

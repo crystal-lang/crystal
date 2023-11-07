@@ -154,7 +154,7 @@ class Object
   # typeof(a.as(Bool)) # Compile Error: can't cast (Int32 | String) to Bool
   #
   # typeof(a.as(String)) # => String
-  # a.as(String)         # Runtime Error: cast from Int32 to String failed
+  # a.as(String)         # Runtime Error: Cast from Int32 to String failed
   #
   # typeof(a.as(Int32 | Bool)) # => Int32
   # a.as(Int32 | Bool)         # => 1

@@ -1,3 +1,7 @@
+{% if flag?(:preview_mt) %}
+  require "crystal/thread_local_value"
+{% end %}
+
 # `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
@@ -135,7 +139,8 @@ class Reference
 
   # :nodoc:
   module ExecRecursive
-    alias Registry = Hash({UInt64, Symbol}, Bool)
+    # NOTE: can't use `Set` here because of prelude require order
+    alias Registry = Hash({UInt64, Symbol}, Nil)
 
     {% if flag?(:preview_mt) %}
       @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
@@ -152,17 +157,15 @@ class Reference
     end
   end
 
-  private def exec_recursive(method)
+  private def exec_recursive(method, &)
     hash = ExecRecursive.hash
     key = {object_id, method}
-    if hash[key]?
-      false
-    else
-      hash[key] = true
+    hash.put(key, nil) do
       yield
       hash.delete(key)
-      true
+      return true
     end
+    false
   end
 
   # :nodoc:
@@ -202,7 +205,7 @@ class Reference
   #   end
   # end
   # ```
-  private def exec_recursive_clone
+  private def exec_recursive_clone(&)
     hash = ExecRecursiveClone.hash
     clone_object_id = hash[object_id]?
     unless clone_object_id

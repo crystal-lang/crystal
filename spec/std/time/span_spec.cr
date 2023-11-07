@@ -1,7 +1,7 @@
 require "spec"
 require "spec/helpers/iterate"
 
-private def expect_overflow
+private def expect_overflow(&)
   expect_raises ArgumentError, "Time::Span too big or too small" do
     yield
   end
@@ -32,6 +32,23 @@ describe Time::Span do
 
     t1 = Time::Span.new hours: 25
     t1.to_s.should eq("1.01:00:00")
+  end
+
+  it "initializes with type restrictions" do
+    t = Time::Span.new seconds: 1_u8, nanoseconds: 1_u8
+    t.should eq(Time::Span.new seconds: 1, nanoseconds: 1)
+
+    t = Time::Span.new seconds: 127_i8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 128)
+
+    t = Time::Span.new seconds: -128_i8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -129)
+
+    t = Time::Span.new seconds: 255_u8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 256)
+
+    t = Time::Span.new seconds: 0_u8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -1)
   end
 
   it "initializes with big seconds value" do

@@ -140,7 +140,7 @@ class Crystal::AbstractDefChecker
   def implements?(target_type : Type, t1 : Type, m1 : Def, free_vars1, t2 : Type, m2 : Def, free_vars2)
     return false if m1.abstract?
     return false unless m1.name == m2.name
-    return false unless m1.yields == m2.yields
+    return false unless m1.block_arity == m2.block_arity
 
     m1_args, m1_kargs = def_arg_ranges(m1)
     m2_args, m2_kargs = def_arg_ranges(m2)

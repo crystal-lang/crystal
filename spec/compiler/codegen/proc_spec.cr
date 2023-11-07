@@ -10,11 +10,11 @@ describe "Code gen: proc" do
   end
 
   it "call proc literal with return type" do
-    run(<<-CR).to_b.should be_true
+    run(<<-CRYSTAL).to_b.should be_true
       f = -> : Int32 | Float64 { 1 }
       x = f.call
       x.is_a?(Int32) && x == 1
-      CR
+      CRYSTAL
   end
 
   it "call proc pointer" do

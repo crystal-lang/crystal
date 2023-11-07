@@ -46,22 +46,34 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # Remember that the program depends on this require
     @program.record_require(filename, relative_to)
 
-    filenames = @program.find_in_path(filename, relative_to)
+    filenames = begin
+      @program.find_in_path(filename, relative_to)
+    rescue ex : CrystalPath::NotFoundError
+      message = "can't find file '#{ex.filename}'"
+      notes = [] of String
+
+      if ex.filename.starts_with? '.'
+        if relative_to
+          message += " relative to '#{relative_to}'"
+        end
+      else
+        notes << <<-NOTE
+          If you're trying to require a shard:
+          - Did you remember to run `shards install`?
+          - Did you make sure you're running the compiler in the same directory as your shard.yml?
+          NOTE
+      end
+
+      node.raise "#{message}\n\n#{notes.join("\n")}"
+    end
+
     if filenames
       nodes = Array(ASTNode).new(filenames.size)
-      filenames.each do |filename|
-        if @program.requires.add?(filename)
-          parser = @program.new_parser(File.read(filename))
-          parser.filename = filename
-          parser.wants_doc = @program.wants_doc?
-          parsed_nodes = parser.parse
-          parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
-          # We must type the node immediately, in case a file requires another
-          # *before* one of the files in `filenames`
-          parsed_nodes.accept self
-          nodes << FileNode.new(parsed_nodes, filename)
-        end
+
+      @program.run_requires(node, filenames) do |filename|
+        nodes << require_file(node, filename)
       end
+
       expanded = Expressions.from(nodes)
     else
       expanded = Nop.new
@@ -70,27 +82,25 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.expanded = expanded
     node.bind_to(expanded)
     false
-  rescue ex : CrystalPath::NotFoundError
-    message = "can't find file '#{ex.filename}'"
-    notes = [] of String
+  end
 
-    if ex.filename.starts_with? '.'
-      if relative_to
-        message += " relative to '#{relative_to}'"
-      end
-    else
-      notes << <<-NOTE
-          If you're trying to require a shard:
-          - Did you remember to run `shards install`?
-          - Did you make sure you're running the compiler in the same directory as your shard.yml?
-          NOTE
+  private def require_file(node : Require, filename : String)
+    parser = @program.new_parser(File.read(filename))
+    parser.filename = filename
+    parser.wants_doc = @program.wants_doc?
+    begin
+      parsed_nodes = parser.parse
+      parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+      # We must type the node immediately, in case a file requires another
+      # *before* one of the files in `filenames`
+      parsed_nodes.accept self
+    rescue ex : CodeError
+      node.raise "while requiring \"#{node.string}\"", ex
+    rescue ex
+      raise Error.new "while requiring \"#{node.string}\"", ex
     end
 
-    node.raise "#{message}\n\n#{notes.join("\n")}"
-  rescue ex : Crystal::CodeError
-    node.raise "while requiring \"#{node.string}\"", ex
-  rescue ex
-    raise Error.new("while requiring \"#{node.string}\"", ex)
+    FileNode.new(parsed_nodes, filename)
   end
 
   def visit(node : ClassDef)
@@ -328,7 +338,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     true
   end
 
-  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true)
+  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true, &)
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
@@ -426,7 +436,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return expanded
     end
 
-    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
+    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node)
 
     skip_macro_exception = nil
 
@@ -447,15 +457,31 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     generated_nodes
   end
 
-  def eval_macro(node)
+  def eval_macro(node, &)
     yield
+  rescue ex : TopLevelMacroRaiseException
+    # If the node that caused a top level macro raise is a `Call`, it denotes it happened within the context of a macro.
+    # In this case, we want the inner most exception to be the call of the macro itself so that it's the last frame in the trace.
+    # This will make the actual `#raise` method call be the first frame.
+    if node.is_a? Call
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
+    end
+
+    # Otherwise, if the current node is _NOT_ a `Call`, it denotes a top level raise within a method.
+    # In this case, we want the same behavior as if it were a `Call`, but do not want to set the inner exception here since that will be handled via `Call#bubbling_exception`.
+    # So just re-raise the exception to keep the original location intact.
+    raise ex
   rescue ex : MacroRaiseException
-    node.raise ex.message, exception_type: MacroRaiseException
+    # Raise another exception on this node, keeping the original as the inner exception.
+    # This will retain the location of the node specific raise as the last frame, while also adding in this node into the trace.
+    #
+    # If the original exception does not have a location, it'll essentially be dropped and this node will take its place as the last frame.
+    node.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
   rescue ex : Crystal::CodeError
     node.raise "expanding macro", ex
   end
 
-  def process_annotations(annotations)
+  def process_annotations(annotations, &)
     annotations.try &.each do |ann|
       annotation_type = lookup_annotation(ann)
       validate_annotation(annotation_type, ann)
@@ -556,7 +582,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @exp_nest > 0
   end
 
-  def pushing_type(type : ModuleType)
+  def pushing_type(type : ModuleType, &)
     old_type = @current_type
     @current_type = type
     read_annotations

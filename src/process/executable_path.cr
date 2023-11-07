@@ -3,7 +3,11 @@
 # - http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 
 class Process
-  PATH_DELIMITER = {% if flag?(:windows) %} ';' {% else %} ':' {% end %}
+  {% if flag?(:windows) %}
+    PATH_DELIMITER = ';'
+  {% else %}
+    PATH_DELIMITER = ':'
+  {% end %}
 
   # :nodoc:
   INITIAL_PATH = ENV["PATH"]?
@@ -60,7 +64,7 @@ class Process
     nil
   end
 
-  private def self.find_executable_possibilities(name, path, pwd)
+  private def self.find_executable_possibilities(name, path, pwd, &)
     return if name.to_s.empty?
 
     {% if flag?(:win32) %}

@@ -31,20 +31,12 @@ module Spec
 
   # :nodoc:
   def self.color(str, status : Status)
-    if use_colors?
-      str.colorize(STATUS_COLORS[status])
-    else
-      str
-    end
+    str.colorize(STATUS_COLORS[status])
   end
 
   # :nodoc:
   def self.color(str, kind : InfoKind)
-    if use_colors?
-      str.colorize(INFO_COLORS[kind])
-    else
-      str
-    end
+    str.colorize(INFO_COLORS[kind])
   end
 
   # :nodoc:
@@ -259,7 +251,7 @@ module Spec
   def self.finish_run
     elapsed_time = Time.monotonic - @@start_time.not_nil!
     root_context.finish(elapsed_time, @@aborted)
-    exit 1 if !root_context.succeeded || @@aborted
+    exit 1 if !root_context.succeeded || @@aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
   end
 
   # :nodoc:

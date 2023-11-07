@@ -155,7 +155,7 @@ struct Crystal::Hasher
     {x, exp}
   end
 
-  private def float_normalize_wrap(value)
+  private def float_normalize_wrap(value, &)
     return HASH_NAN if value.nan?
     if value.infinite?
       return value > 0 ? HASH_INF_PLUS : HASH_INF_MINUS

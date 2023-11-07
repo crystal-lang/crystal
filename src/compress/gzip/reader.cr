@@ -65,14 +65,14 @@ class Compress::Gzip::Reader < IO
 
   # Creates a new reader from the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, sync_close = false)
+  def self.open(io : IO, sync_close = false, &)
     reader = new(io, sync_close: sync_close)
     yield reader ensure reader.close
   end
 
   # Creates a new reader from the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String)
+  def self.open(filename : String, &)
     reader = new(filename)
     yield reader ensure reader.close
   end

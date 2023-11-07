@@ -241,7 +241,7 @@ class Crystal::Call
     end
   end
 
-  private def gather_names_in_all_overloads(call_errors, error_type : T.class) forall T
+  private def gather_names_in_all_overloads(call_errors, error_type : T.class, &) forall T
     return unless call_errors.all?(T)
 
     call_errors = call_errors.map &.as(T)
@@ -379,7 +379,7 @@ class Crystal::Call
     end
   end
 
-  private def raise_no_overload_matches(node, defs, arg_types, inner_exception)
+  private def raise_no_overload_matches(node, defs, arg_types, inner_exception, &)
     error_message = String.build do |str|
       yield str
 
@@ -405,7 +405,7 @@ class Crystal::Call
     extra_types : Array(Type)?
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
-    if (block && !a_def.yields) || (!block && a_def.yields)
+    if (block && !a_def.block_arity) || (!block && a_def.block_arity)
       return BlockMismatch.new
     end
 
@@ -532,7 +532,7 @@ class Crystal::Call
     unless expected_type
       restriction = def_arg.restriction
       if restriction
-        expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.free_vars)
+        expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.bound_free_vars)
       end
     end
     expected_type ||= def_arg.restriction.not_nil!
@@ -633,7 +633,7 @@ class Crystal::Call
         msg << '\n'
         if similar_name == def_name
           # This check is for the case `a if a = 1`
-          msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)"
+          msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it."
         else
           msg << "Did you mean '#{similar_name}'?"
         end
@@ -643,7 +643,8 @@ class Crystal::Call
       if obj.is_a?(InstanceVar)
         scope = self.scope
         ivar = scope.lookup_instance_var(obj.name)
-        if ivar.dependencies.size == 1 && ivar.dependencies.first.same?(program.nil_var)
+        deps = ivar.dependencies?
+        if deps && deps.size == 1 && deps.first.same?(program.nil_var)
           similar_name = scope.lookup_similar_instance_var_name(ivar.name)
           if similar_name
             msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
@@ -660,7 +661,7 @@ class Crystal::Call
     all_arguments_sizes = [] of Int32
     min_splat = Int32::MAX
     defs.each do |a_def|
-      next if (block && !a_def.yields) || (!block && a_def.yields)
+      next if (block && !a_def.block_arity) || (!block && a_def.block_arity)
 
       min_size, max_size = a_def.min_max_args_sizes
       if max_size == Int32::MAX
@@ -869,7 +870,7 @@ class Crystal::Call
       printed = true
     end
 
-    if a_def.yields
+    if a_def.block_arity
       str << ", " if printed
       str << '&'
       if block_arg = a_def.block_arg
@@ -976,7 +977,7 @@ class Crystal::Call
     end
   end
 
-  def check_recursive_splat_call(a_def, args)
+  def check_recursive_splat_call(a_def, args, &)
     if a_def.splat_index
       previous_splat_types = program.splat_expansions[a_def] ||= [] of Type
       previous_splat_types.push(args.values.last.type)
@@ -1004,7 +1005,7 @@ class Crystal::Call
 
   def self.full_name(owner, method_name = name)
     case owner
-    when Program
+    when Program, Nil
       method_name
     when owner.program.class_type
       # Class's instance_type is Object, not Class, so we cannot treat it like
@@ -1015,6 +1016,41 @@ class Crystal::Call
     else
       "#{owner}##{method_name}"
     end
+  end
+
+  def signature(io : IO) : Nil
+    io << full_name(obj.try(&.type)) << '('
+
+    first = true
+    args.each do |arg|
+      case {arg_type = arg.type, arg}
+      when {TupleInstanceType, Splat}
+        next if arg_type.tuple_types.empty?
+        io << ", " unless first
+        arg_type.tuple_types.join(io, ", ")
+      when {NamedTupleInstanceType, DoubleSplat}
+        next if arg_type.entries.empty?
+        io << ", " unless first
+        arg_type.entries.join(io, ", ") do |entry|
+          Symbol.quote_for_named_argument(io, entry.name)
+          io << ": " << entry.type
+        end
+      else
+        io << ", " unless first
+        io << arg.type
+      end
+      first = false
+    end
+
+    if named_args = @named_args
+      io << ", " unless first
+      named_args.join(io, ", ") do |named_arg|
+        Symbol.quote_for_named_argument(io, named_arg.name)
+        io << ": " << named_arg.value.type
+      end
+    end
+
+    io << ')'
   end
 
   private def colorize(obj)

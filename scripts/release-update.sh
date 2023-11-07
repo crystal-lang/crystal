@@ -26,6 +26,9 @@ sed -i -E "s|crystal-[0-9.]+-[0-9]|crystal-$CRYSTAL_VERSION-1|g" bin/ci
 sed -i -E "/crystal_bootstrap_version:/ s/(, ${CRYSTAL_VERSION%.*}\.[0-9]*)?\]\$/, $CRYSTAL_VERSION]/" .github/workflows/linux.yml
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
+# Edit .github/workflows/*.yml to update version for install-crystal action
+sed -i -E "s|crystal: \"[0-9.]+\"|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
+
 # Edit shell.nix latestCrystalBinary using nix-prefetch-url --unpack <url>
 darwin_url="https://github.com/crystal-lang/crystal/releases/download/$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1-darwin-universal.tar.gz"
 darwin_sha=$(nix-prefetch-url --unpack $darwin_url)

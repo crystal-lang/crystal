@@ -13,6 +13,13 @@ private macro it_converts_to_s(num, str, **opts)
 end
 
 describe "Int" do
+  describe "#integer?" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it { {{ int }}::MIN.integer?.should be_true }
+      it { {{ int }}::MAX.integer?.should be_true }
+    {% end %}
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
@@ -137,6 +144,60 @@ describe "Int" do
       1_u32.abs.should eq(1_u32)
       1_u64.abs.should eq(1_u64)
     end
+  end
+
+  describe "#abs_unsigned" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+
+        x = {{ int }}.new(-123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does not overflow on {{ int }}::MIN" do
+        x = {{ int }}::MIN.abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(U{{ int }}.zero &- {{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#neg_signed" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+
+        x = {{ int }}.new(-123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(123)
+
+        expect_raises(OverflowError) { {{ int }}::MIN.neg_signed }
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+      end
+
+      it "does not overflow on {{ int }}::MIN.abs_unsigned" do
+        x = {{ int }}::MIN.abs_unsigned.neg_signed
+        x.should be_a({{ int }})
+        x.should eq({{ int }}::MIN)
+      end
+    {% end %}
   end
 
   describe "gcd" do
@@ -768,6 +829,52 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
+  end
+
+  describe "#bit_reverse" do
+    it { 0x12_u8.bit_reverse.should eq(0x48_u8) }
+    it { 0x1234_u16.bit_reverse.should eq(0x2C48_u16) }
+    it { 0x12345678_u32.bit_reverse.should eq(0x1E6A2C48_u32) }
+    it { 0x123456789ABCDEF0_u64.bit_reverse.should eq(0x0F7B3D591E6A2C48_u64) }
+    it { 1.to_u128.bit_reverse.should eq(1.to_u128 << 127) }
+    it { (1.to_u128 << 127).bit_reverse.should eq(0x1.to_u128) }
+    it { 0x12345678.to_u128.bit_reverse.should eq(0x1E6A2C48.to_u128 << 96) }
+
+    it { 0x12_i8.bit_reverse.should eq(0x48_i8) }
+    it { 0x1234_i16.bit_reverse.should eq(0x2C48_i16) }
+    it { 0x12345678_i32.bit_reverse.should eq(0x1E6A2C48_i32) }
+    it { 0x123456789ABCDEF0_i64.bit_reverse.should eq(0x0F7B3D591E6A2C48_i64) }
+    it { 1.to_i128.bit_reverse.should eq(1.to_i128 << 127) }
+    it { (1.to_i128 << 127).bit_reverse.should eq(0x1.to_i128) }
+    it { 0x12345678.to_i128.bit_reverse.should eq(0x1E6A2C48.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.bit_reverse.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.bit_reverse.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
+  describe "#byte_swap" do
+    it { 0x12_u8.byte_swap.should eq(0x12_u8) }
+    it { 0x1234_u16.byte_swap.should eq(0x3412_u16) }
+    it { 0x12345678_u32.byte_swap.should eq(0x78563412_u32) }
+    it { 0x123456789ABCDEF0_u64.byte_swap.should eq(0xF0DEBC9A78563412_u64) }
+    it { 1.to_u128.byte_swap.should eq(1.to_u128 << 120) }
+    it { (1.to_u128 << 127).byte_swap.should eq(0x80.to_u128) }
+    it { 0x12345678.to_u128.byte_swap.should eq(0x78563412.to_u128 << 96) }
+
+    it { 0x12_i8.byte_swap.should eq(0x12_i8) }
+    it { 0x1234_i16.byte_swap.should eq(0x3412_i16) }
+    it { 0x12345678_i32.byte_swap.should eq(0x78563412_i32) }
+    it { 0x123456789ABCDEF0_i64.byte_swap.should eq(0xF0DEBC9A78563412_u64.to_i64!) }
+    it { 1.to_i128.byte_swap.should eq(1.to_i128 << 120) }
+    it { (1.to_i128 << 127).byte_swap.should eq(0x80.to_i128) }
+    it { 0x12345678.to_i128.byte_swap.should eq(0x78563412.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.byte_swap.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.byte_swap.should be_a(UInt{{width}}) }
+    {% end %}
   end
 
   describe "#popcount" do

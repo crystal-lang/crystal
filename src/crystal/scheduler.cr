@@ -73,7 +73,7 @@ class Crystal::Scheduler
   {% end %}
 
   {% if flag?(:preview_mt) %}
-    @fiber_channel = Crystal::FiberChannel.new
+    private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
     @free_stacks = Deque(Void*).new
   {% end %}
   @lock = Crystal::SpinLock.new
@@ -175,7 +175,10 @@ class Crystal::Scheduler
   end
 
   protected def yield : Nil
-    sleep(0.seconds)
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      sleep(0.seconds)
+    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil
@@ -196,6 +199,7 @@ class Crystal::Scheduler
     end
 
     def run_loop
+      fiber_channel = self.fiber_channel
       loop do
         @lock.lock
         if runnable = @runnables.shift?
@@ -205,7 +209,7 @@ class Crystal::Scheduler
         else
           @sleeping = true
           @lock.unlock
-          fiber = @fiber_channel.receive
+          fiber = fiber_channel.receive
 
           @lock.lock
           @sleeping = false
@@ -219,7 +223,7 @@ class Crystal::Scheduler
     def send_fiber(fiber : Fiber)
       @lock.lock
       if @sleeping
-        @fiber_channel.send(fiber)
+        fiber_channel.send(fiber)
       else
         @runnables << fiber
       end

@@ -59,7 +59,6 @@ struct Char
       @pos = pos.to_i
       @current_char = '\0'
       @current_char_width = 0
-      @end = false
       decode_current_char
     end
 
@@ -69,7 +68,6 @@ struct Char
       @pos = @string.bytesize
       @current_char = '\0'
       @current_char_width = 0
-      @end = false
       decode_previous_char
     end
 
@@ -83,7 +81,7 @@ struct Char
     # reader.peek_next_char # => '\0'
     # ```
     def has_next? : Bool
-      !@end
+      @pos < @string.bytesize
     end
 
     # Reads the next character in the string,
@@ -176,9 +174,10 @@ struct Char
     # B
     # C
     # ```
-    def each : Nil
+    def each(&) : Nil
       while has_next?
         yield current_char
+
         @pos += @current_char_width
         decode_current_char
       end
@@ -250,26 +249,22 @@ struct Char
     private def decode_current_char
       decode_char_at(@pos) do |code_point, width, error|
         @current_char_width = width
-        @end = @pos == @string.bytesize
         @error = error
         @current_char = code_point.unsafe_chr
       end
     end
 
     private def decode_previous_char
-      if @pos == 0
-        @end = @pos == @string.bytesize
-      else
-        while @pos > 0
-          @pos -= 1
-          break if (byte_at(@pos) & 0xC0) != 0x80
-        end
-        decode_char_at(@pos) do |code_point, width, error|
-          @current_char_width = width
-          @end = @pos == @string.bytesize
-          @error = error
-          @current_char = code_point.unsafe_chr
-        end
+      return if @pos == 0
+
+      while @pos > 0
+        @pos -= 1
+        break if (byte_at(@pos) & 0xC0) != 0x80
+      end
+      decode_char_at(@pos) do |code_point, width, error|
+        @current_char_width = width
+        @error = error
+        @current_char = code_point.unsafe_chr
       end
     end
 

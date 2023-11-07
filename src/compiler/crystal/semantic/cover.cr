@@ -4,9 +4,9 @@ require "../types"
 module Crystal
   struct Cover
     getter signature : CallSignature
-    getter matches : ZeroOneOrMany(Match)
+    getter matches : Array(Match)
 
-    def self.create(signature : CallSignature, matches : ZeroOneOrMany(Match))
+    def self.create(signature, matches)
       if matches
         matches.empty? ? false : Cover.new(signature, matches)
       else
@@ -14,7 +14,7 @@ module Crystal
       end
     end
 
-    def initialize(@signature : CallSignature, @matches : ZeroOneOrMany(Match))
+    def initialize(@signature, @matches)
     end
 
     def all?
@@ -178,7 +178,7 @@ module Crystal
   end
 
   class Type
-    def each_cover
+    def each_cover(&)
       yield self
     end
 
@@ -214,7 +214,7 @@ module Crystal
   end
 
   class UnionType
-    def each_cover
+    def each_cover(&)
       @union_types.each do |union_type|
         yield union_type
       end
@@ -236,7 +236,7 @@ module Crystal
   end
 
   class VirtualType
-    def each_cover
+    def each_cover(&)
       subtypes.each do |subtype|
         yield subtype
       end

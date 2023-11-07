@@ -9,12 +9,7 @@ class LLVM::TargetMachine
 
   def data_layout : LLVM::TargetData
     @layout ||= begin
-      layout = {% if LibLLVM::IS_38 %}
-                 LibLLVM.get_target_machine_data(self)
-               {% else %}
-                 # LLVM >= 3.9
-                 LibLLVM.create_target_data_layout(self)
-               {% end %}
+      layout = LibLLVM.create_target_data_layout(self)
       layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
     end
   end

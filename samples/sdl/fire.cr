@@ -204,7 +204,7 @@ class RainbowColorPattern < ColorPattern
   end
 
   def interpolate(life)
-    raise "shouldn't reach here"
+    raise "Shouldn't reach here"
   end
 end
 
@@ -233,7 +233,7 @@ class Points
     end
   end
 
-  def each
+  def each(&)
     @points.each do |point|
       yield point unless point.dead?
     end

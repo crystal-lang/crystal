@@ -48,7 +48,7 @@ describe "Code gen: cast" do
         a.as(Char)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to Char failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Int32 to Char failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -72,7 +72,7 @@ describe "Code gen: cast" do
         a.as(Float64 | Char)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -120,7 +120,7 @@ describe "Code gen: cast" do
         a.as(CastSpecBaz)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -187,7 +187,7 @@ describe "Code gen: cast" do
         a.as(Nil)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Reference to Nil failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Reference to Nil failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -425,7 +425,7 @@ describe "Code gen: cast" do
   end
 
   it "cast virtual metaclass type to nilable virtual instance type (#12628)" do
-    run(<<-CR).to_b.should be_true
+    run(<<-CRYSTAL).to_b.should be_true
       abstract struct Base
       end
 
@@ -433,6 +433,6 @@ describe "Code gen: cast" do
       end
 
       Base.as(Base | Base.class).as?(Base | Impl).nil?
-      CR
+      CRYSTAL
   end
 end

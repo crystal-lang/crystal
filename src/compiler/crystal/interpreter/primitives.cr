@@ -7,15 +7,16 @@ require "./compiler"
 
 class Crystal::Repl::Compiler
   private def visit_primitive(node, body, target_def)
+    owner = node.super? ? node.scope : node.target_def.owner
     obj = node.obj
 
     case body.name
     when "unchecked_convert"
-      primitive_convert(node, body, checked: false)
+      primitive_convert(node, body, owner, checked: false)
     when "convert"
-      primitive_convert(node, body, checked: true)
+      primitive_convert(node, body, owner, checked: true)
     when "binary"
-      primitive_binary(node, body)
+      primitive_binary(node, body, owner)
     when "pointer_new"
       accept_call_members(node)
       return false unless @wants_value
@@ -25,30 +26,28 @@ class Crystal::Repl::Compiler
       discard_value(obj) if obj
       request_value(node.args.first)
 
-      scope_type = ((obj.try &.type) || scope).instance_type
-
-      pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
+      pointer_instance_type = owner.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       element_size = inner_sizeof_type(element_type)
 
       pointer_malloc(element_size, node: node)
-      pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
+      pop(aligned_sizeof_type(pointer_instance_type), node: nil) unless @wants_value
     when "pointer_realloc"
       obj ? request_value(obj) : put_self(node: node)
       request_value(node.args.first)
 
-      scope_type = (obj.try &.type) || scope
-
-      pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
+      pointer_instance_type = owner.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       element_size = inner_sizeof_type(element_type)
 
       pointer_realloc(element_size, node: node)
-      pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
+      pop(aligned_sizeof_type(pointer_instance_type), node: nil) unless @wants_value
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
       obj = obj.not_nil!
-      element_type = obj.type.as(PointerInstanceType).element_type
+
+      pointer_instance_type = owner.instance_type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
 
       arg = node.args.first
       request_value(arg)
@@ -59,7 +58,8 @@ class Crystal::Repl::Compiler
 
       pointer_set(inner_sizeof_type(element_type), node: node)
     when "pointer_get"
-      element_type = obj.not_nil!.type.as(PointerInstanceType).element_type
+      pointer_instance_type = owner.instance_type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
 
       accept_call_members(node)
       return unless @wants_value
@@ -74,12 +74,18 @@ class Crystal::Repl::Compiler
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_diff(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
+      pointer_instance_type = owner.instance_type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+
+      pointer_diff(inner_sizeof_type(element_type), node: node)
     when "pointer_add"
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_add(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
+      pointer_instance_type = owner.instance_type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+
+      pointer_add(inner_sizeof_type(element_type), node: node)
     when "class"
       obj = obj.not_nil!
       type = obj.type.remove_indirection
@@ -102,23 +108,21 @@ class Crystal::Repl::Compiler
         put_type type, node: node
       end
     when "object_crystal_type_id"
-      type = obj.try(&.type) || scope
-
       unless @wants_value
         discard_value obj if obj
         return
       end
 
-      if type.is_a?(VirtualMetaclassType)
+      if owner.is_a?(VirtualMetaclassType)
         # For a virtual metaclass type, the value is already an int
         # that's exactly the crystal_type_id, so there's nothing else to do.
         if obj
-          obj.accept self
+          request_obj_and_cast_if_needed(obj, owner)
         else
           put_self node: node
         end
       else
-        put_i32 type_id(type), node: node
+        put_i32 type_id(owner), node: node
       end
     when "class_crystal_instance_type_id"
       type =
@@ -173,14 +177,15 @@ class Crystal::Repl::Compiler
         end
       end
     when "tuple_indexer_known_index"
-      obj = obj.not_nil!
+      unless @wants_value
+        accept_call_members(node)
+        return
+      end
 
-      type = obj.type
+      type = owner
       case type
       when TupleInstanceType
-        obj.accept self
-        return unless @wants_value
-
+        request_obj_or_self_and_cast_if_needed(node, obj, type)
         index = body.as(TupleIndexer).index
         case index
         in Int32
@@ -201,9 +206,7 @@ class Crystal::Repl::Compiler
           push_zeros(aligned_sizeof_type(element_type) - value_size, node: node)
         end
       when NamedTupleInstanceType
-        obj.accept self
-        return unless @wants_value
-
+        request_obj_or_self_and_cast_if_needed(node, obj, type)
         index = body.as(TupleIndexer).index
         case index
         when Int32
@@ -214,9 +217,7 @@ class Crystal::Repl::Compiler
           node.raise "BUG: missing handling of primitive #{body.name} with range"
         end
       else
-        discard_value obj
-        return unless @wants_value
-
+        discard_value obj if obj
         type = type.instance_type
         case type
         when TupleInstanceType
@@ -254,7 +255,7 @@ class Crystal::Repl::Compiler
 
       pointer_address(node: node)
     when "proc_call"
-      proc_type = (obj.try(&.type) || scope).as(ProcInstanceType)
+      proc_type = owner.as(ProcInstanceType)
 
       node.args.each_with_index do |arg, arg_index|
         request_value(arg)
@@ -268,13 +269,17 @@ class Crystal::Repl::Compiler
         end
       end
 
-      obj ? request_value(obj) : put_self(node: node)
+      if obj
+        request_obj_and_cast_if_needed(obj, owner)
+      else
+        put_self(node: node)
+      end
 
       proc_call(node: node)
 
       pop(aligned_sizeof_type(node.type), node: nil) unless @wants_value
     when "load_atomic"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args.first.type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -282,7 +287,7 @@ class Crystal::Repl::Compiler
 
       load_atomic(element_size, node: node)
     when "store_atomic"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args.first.type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -290,7 +295,7 @@ class Crystal::Repl::Compiler
 
       store_atomic(element_size, node: node)
     when "atomicrmw"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args[1].type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -298,7 +303,7 @@ class Crystal::Repl::Compiler
 
       atomicrmw(element_size, node: node)
     when "cmpxchg"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args[0].type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -413,10 +418,18 @@ class Crystal::Repl::Compiler
       {% if flag?(:i386) || flag?(:x86_64) %}
         interpreter_intrinsics_pause(node: node)
       {% end %}
-    when "interpreter_intrinsics_bswap32"
-      interpreter_intrinsics_bswap32(node: node)
     when "interpreter_intrinsics_bswap16"
+      accept_call_args(node)
       interpreter_intrinsics_bswap16(node: node)
+    when "interpreter_intrinsics_bswap32"
+      accept_call_args(node)
+      interpreter_intrinsics_bswap32(node: node)
+    when "interpreter_intrinsics_bswap64"
+      accept_call_args(node)
+      interpreter_intrinsics_bswap64(node: node)
+    when "interpreter_intrinsics_bswap128"
+      accept_call_args(node)
+      interpreter_intrinsics_bswap128(node: node)
     when "interpreter_intrinsics_read_cycle_counter"
       interpreter_intrinsics_read_cycle_counter(node: node)
     when "interpreter_intrinsics_popcount8"
@@ -464,6 +477,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_counttrailing128"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing128(node: node)
+    when "interpreter_intrinsics_bitreverse8"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse8(node: node)
     when "interpreter_intrinsics_bitreverse16"
       accept_call_args(node)
       interpreter_intrinsics_bitreverse16(node: node)
@@ -473,6 +489,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_bitreverse64"
       accept_call_args(node)
       interpreter_intrinsics_bitreverse64(node: node)
+    when "interpreter_intrinsics_bitreverse128"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse128(node: node)
     when "interpreter_intrinsics_fshl8"
       accept_call_args(node)
       interpreter_intrinsics_fshl8(node: node)
@@ -533,6 +552,12 @@ class Crystal::Repl::Compiler
     when "interpreter_libm_floor_f64"
       accept_call_args(node)
       libm_floor_f64 node: node
+    when "interpreter_libm_fma_f32"
+      accept_call_args(node)
+      libm_fma_f32 node: node
+    when "interpreter_libm_fma_f64"
+      accept_call_args(node)
+      libm_fma_f64 node: node
     when "interpreter_libm_log_f32"
       accept_call_args(node)
       libm_log_f32 node: node
@@ -620,21 +645,16 @@ class Crystal::Repl::Compiler
     node.args.each { |arg| request_value(arg) }
   end
 
-  private def primitive_convert(node : ASTNode, body : Primitive, checked : Bool)
+  private def primitive_convert(node : ASTNode, body : Primitive, owner : Type, checked : Bool)
     obj = node.obj
 
-    return false if !obj && !@wants_value
+    unless @wants_value
+      discard_value(obj) if obj
+      return
+    end
 
-    obj_type =
-      if obj
-        obj.accept self
-        obj.type
-      else
-        put_self(node: node)
-        scope
-      end
-
-    return false unless @wants_value
+    obj_type = owner
+    request_obj_or_self_and_cast_if_needed(node, obj, obj_type)
 
     target_type = body.type
 
@@ -821,30 +841,29 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def primitive_binary(node, body)
+  private def primitive_binary(node, body, owner)
     unless @wants_value
-      node.obj.try &.accept self
-      node.args.each &.accept self
+      accept_call_members(node)
       return
     end
 
     case node.name
     when "+", "&+", "-", "&-", "*", "&*", "^", "|", "&", "unsafe_shl", "unsafe_shr", "unsafe_div", "unsafe_mod"
-      primitive_binary_op_math(node, body, node.name)
+      primitive_binary_op_math(node, body, owner, node.name)
     when "<", "<=", ">", ">=", "==", "!="
-      primitive_binary_op_cmp(node, body, node.name)
+      primitive_binary_op_cmp(node, body, owner, node.name)
     when "/", "fdiv"
-      primitive_binary_float_div(node, body)
+      primitive_binary_float_div(node, body, owner)
     else
       node.raise "BUG: missing handling of binary op #{node.name}"
     end
   end
 
-  private def primitive_binary_op_math(node : ASTNode, body : Primitive, op : String)
+  private def primitive_binary_op_math(node : ASTNode, body : Primitive, owner : Type, op : String)
     obj = node.obj
     arg = node.args.first
 
-    obj_type = obj.try(&.type) || scope
+    obj_type = owner
     arg_type = arg.type
 
     primitive_binary_op_math(obj_type, arg_type, obj, arg, node, op)
@@ -857,7 +876,7 @@ class Crystal::Repl::Compiler
       in .mixed64?
         if left_type.rank > right_type.rank
           # It's UInt64 op X where X is a signed integer
-          left_node ? left_node.accept(self) : put_self(node: node)
+          request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
           right_node.accept self
 
           # TODO: do we need to check for overflow here?
@@ -884,7 +903,7 @@ class Crystal::Repl::Compiler
           kind = NumberKind::U64
         else
           # It's X op UInt64 where X is a signed integer
-          left_node ? left_node.accept(self) : put_self(node: node)
+          request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
 
           # TODO: do we need to check for overflow here?
           primitive_convert(node, left_type.kind, :i64, checked: false)
@@ -913,7 +932,7 @@ class Crystal::Repl::Compiler
       in .mixed128?
         if left_type.rank > right_type.rank
           # It's UInt128 op X where X is a signed integer
-          left_node ? left_node.accept(self) : put_self(node: node)
+          request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
           right_node.accept self
 
           # TODO: do we need to check for overflow here?
@@ -940,7 +959,7 @@ class Crystal::Repl::Compiler
           kind = NumberKind::U128
         else
           # It's X op UInt128 where X is a signed integer
-          left_node ? left_node.accept(self) : put_self(node: node)
+          request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
 
           # TODO: do we need to check for overflow here?
           primitive_convert(node, left_type.kind, :i128, checked: false)
@@ -981,7 +1000,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    left_node ? left_node.accept(self) : put_self(node: node)
+    request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
     primitive_convert node, left_type.kind, right_type.kind, checked: false
     right_node.accept self
 
@@ -989,7 +1008,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : FloatType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    left_node ? left_node.accept(self) : put_self(node: node)
+    request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
     right_node.accept self
     primitive_convert right_node, right_type.kind, left_type.kind, checked: false
 
@@ -998,18 +1017,18 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary_op_math(left_type : FloatType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
     if left_type == right_type
-      left_node ? left_node.accept(self) : put_self(node: node)
+      request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
       right_node.accept self
       kind = left_type.kind
     elsif left_type.rank < right_type.rank
       # TODO: not tested
-      left_node ? left_node.accept(self) : put_self(node: node)
+      request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
       primitive_convert node, left_type.kind, right_type.kind, checked: false
       right_node.accept self
       kind = right_type.kind
     else
       # TODO: not tested
-      left_node ? left_node.accept(self) : put_self(node: node)
+      request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
       right_node.accept self
       primitive_convert right_node, right_type.kind, left_type.kind, checked: false
       kind = left_type.kind
@@ -1158,11 +1177,11 @@ class Crystal::Repl::Compiler
     node.raise "BUG: primitive_binary_op_math called with #{left_type} #{op} #{right_type}"
   end
 
-  private def primitive_binary_op_cmp(node : ASTNode, body : Primitive, op : String)
+  private def primitive_binary_op_cmp(node : ASTNode, body : Primitive, owner : Type, op : String)
     obj = node.obj.not_nil!
     arg = node.args.first
 
-    obj_type = obj.type
+    obj_type = owner
     arg_type = arg.type
 
     primitive_binary_op_cmp(obj_type, arg_type, obj, arg, node, op)
@@ -1342,7 +1361,7 @@ class Crystal::Repl::Compiler
     if left_type.rank <= 5 && right_type.rank <= 5
       # If both fit in an Int32
       # Convert them to Int32 first, then do the comparison
-      left_node ? left_node.accept(self) : put_self(node: node)
+      request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
       primitive_convert(left_node || right_node, left_type.kind, :i32, checked: false) if left_type.rank < 5
 
       right_node.accept self
@@ -1351,16 +1370,16 @@ class Crystal::Repl::Compiler
       NumberKind::I32
     elsif left_type.signed? == right_type.signed?
       if left_type.rank == right_type.rank
-        left_node ? left_node.accept(self) : put_self(node: node)
+        request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
         right_node.accept self
         left_type.kind
       elsif left_type.rank < right_type.rank
-        left_node ? left_node.accept(self) : put_self(node: node)
+        request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
         primitive_convert(left_node || right_node, left_type.kind, right_type.kind, checked: false)
         right_node.accept self
         right_type.kind
       else
-        left_node ? left_node.accept(self) : put_self(node: node)
+        request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
         right_node.accept self
         primitive_convert(right_node, right_type.kind, left_type.kind, checked: false)
         left_type.kind
@@ -1368,7 +1387,7 @@ class Crystal::Repl::Compiler
     elsif left_type.rank <= 7 && right_type.rank <= 7
       # If both fit in an Int64
       # Convert them to Int64 first, then do the comparison
-      left_node ? left_node.accept(self) : put_self(node: node)
+      request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
       primitive_convert(left_node || right_node, left_type.kind, :i64, checked: false) if left_type.rank < 7
 
       right_node.accept self
@@ -1380,7 +1399,7 @@ class Crystal::Repl::Compiler
     elsif left_type.rank <= 9 && right_type.rank <= 9
       # If both fit in an Int128
       # Convert them to Int128 first, then do the comparison
-      left_node ? left_node.accept(self) : put_self(node: node)
+      request_obj_or_self_and_cast_if_needed(node, left_node, left_type)
       primitive_convert(left_node || right_node, left_type.kind, :i128, checked: false) if left_type.rank < 9
 
       right_node.accept self
@@ -1392,12 +1411,12 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def primitive_binary_float_div(node : ASTNode, body)
+  private def primitive_binary_float_div(node : ASTNode, body, owner : Type)
     # TODO: don't assume Float64 op Float64
     obj = node.obj.not_nil!
     arg = node.args.first
 
-    obj_type = obj.type
+    obj_type = owner
     arg_type = arg.type
 
     obj_kind = integer_or_float_kind(obj_type).not_nil!
@@ -1439,6 +1458,23 @@ class Crystal::Repl::Compiler
       type.kind
     else
       nil
+    end
+  end
+
+  private def request_obj_and_cast_if_needed(obj, owner)
+    request_value(obj)
+
+    obj_type = obj.try &.type?.try &.remove_indirection
+    if obj_type && obj_type != owner
+      downcast(obj, obj_type, owner)
+    end
+  end
+
+  private def request_obj_or_self_and_cast_if_needed(node, obj, owner)
+    if obj
+      request_obj_and_cast_if_needed(obj, owner)
+    else
+      put_self(node: node)
     end
   end
 end

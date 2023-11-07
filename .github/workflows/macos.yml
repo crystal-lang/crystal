@@ -2,18 +2,22 @@ name: macOS CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 env:
   SPEC_SPLIT_DOTS: 160
   CI_NIX_SHELL: true
 
 jobs:
   x86_64-darwin-test:
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v18
+      - uses: cachix/install-nix-action@v23
         with:
           install_url: https://releases.nixos.org/nix/nix-2.9.2/install
           extra_nix_config: |
@@ -33,4 +37,4 @@ jobs:
         run: bin/ci build
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'bin/crystal spec --order=random spec/compiler/interpreter_spec.cr'
+        run: bin/ci with_build_env 'make interpreter_spec'

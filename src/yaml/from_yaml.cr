@@ -12,7 +12,7 @@ def Object.from_yaml(string_or_io : String | IO)
   new(YAML::ParseContext.new, parse_yaml(string_or_io))
 end
 
-def Array.from_yaml(string_or_io : String | IO)
+def Array.from_yaml(string_or_io : String | IO, &)
   new(YAML::ParseContext.new, parse_yaml(string_or_io)) do |element|
     yield element
   end
@@ -30,7 +30,8 @@ private def parse_yaml(string_or_io)
   end
 end
 
-private def parse_scalar(ctx, node, type : T.class) forall T
+private def parse_scalar(ctx, node, type : T.class,
+                         expected_type : Class = T) forall T
   ctx.read_alias(node, T) do |obj|
     return obj
   end
@@ -41,7 +42,7 @@ private def parse_scalar(ctx, node, type : T.class) forall T
       ctx.record_anchor(node, value)
       value
     else
-      node.raise "Expected #{T}, not #{node.value.inspect}"
+      node.raise "Expected #{expected_type}, not #{node.value.inspect}"
     end
   else
     node.raise "Expected scalar, not #{node.kind}"
@@ -56,9 +57,19 @@ def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+{% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    {{type.id}}.new! parse_scalar(ctx, node, Int64)
+    ctx.read_alias(node, {{type.id}}) do |obj|
+      return obj
+    end
+
+    if node.is_a?(YAML::Nodes::Scalar)
+      value = YAML::Schema::Core.parse_int(node, {{type.id}})
+      ctx.record_anchor(node, value)
+      value
+    else
+      node.raise "Expected scalar, not #{node.kind}"
+    end
   end
 {% end %}
 
@@ -103,7 +114,7 @@ def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ary
 end
 
-def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.kind}"
   end
@@ -128,7 +139,7 @@ def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ary
 end
 
-def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.kind}"
   end
@@ -153,7 +164,7 @@ def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   hash
 end
 
-def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, &)
   unless node.is_a?(YAML::Nodes::Mapping)
     node.raise "Expected mapping, not #{node.kind}"
   end
