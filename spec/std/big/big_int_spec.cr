@@ -198,7 +198,7 @@ describe "BigInt" do
 
   it "raises if factorial of 2^64" do
     expect_raises ArgumentError do
-      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+      (LibGMP::UI::MAX.to_big_i + 1).factorial
     end
   end
 
