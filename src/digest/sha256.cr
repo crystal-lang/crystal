@@ -1,5 +1,5 @@
 require "./digest"
-require "openssl"
+require "openssl/digest"
 
 # Implements the SHA256 digest algorithm.
 #

@@ -19,21 +19,27 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2]
-        flags: ["USE_PCRE1=true"]
+        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1]
+        flags: [""]
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
             flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
           - crystal_bootstrap_version: 1.1.1
             flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
-          - crystal_bootstrap_version: 1.7.3
-            flags: ""
-          - crystal_bootstrap_version: 1.8.2
-            flags: ""
+          - crystal_bootstrap_version: 1.2.2
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.3.2
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.4.1
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.5.1
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.6.2
+            flags: "USE_PCRE1=true"
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -51,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -69,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -90,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -109,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -124,7 +130,7 @@ jobs:
         run: echo $GITHUB_SHA > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

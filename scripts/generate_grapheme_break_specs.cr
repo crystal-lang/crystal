@@ -39,6 +39,9 @@ File.open(path, "w") do |file|
 
     format, _, comment = line.partition('#')
 
+    # TODO: implement grapheme boundary rule GB9c in UAX29
+    pending = comment.includes?("[9.3]")
+
     graphemes = [] of String | Char
     string = String.build do |io|
       grapheme = String::Builder.new
@@ -61,7 +64,7 @@ File.open(path, "w") do |file|
       graphemes << string_or_char(grapheme.to_s)
     end
 
-    file.puts "  it_iterates_graphemes #{string.dump}, [#{graphemes.join(", ", &.dump)}] # #{comment}"
+    file.puts "  #{%(pending "GB9c" { ) if pending} it_iterates_graphemes #{string.dump}, [#{graphemes.join(", ", &.dump)}] #{" }" if pending} # #{comment}"
   end
   file.puts "end"
 end

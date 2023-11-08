@@ -23,6 +23,6 @@ class URI
   # URI.parse("http://example.com").to_json # => %("http://example.com")
   # ```
   def to_json(builder : JSON::Builder)
-    builder.string to_s
+    builder.string self
   end
 end

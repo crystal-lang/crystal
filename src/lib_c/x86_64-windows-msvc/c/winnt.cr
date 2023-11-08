@@ -16,8 +16,10 @@ lib LibC
 
   INVALID_FILE_ATTRIBUTES      = DWORD.new!(-1)
   FILE_ATTRIBUTE_DIRECTORY     =  0x10
+  FILE_ATTRIBUTE_HIDDEN        =   0x2
   FILE_ATTRIBUTE_READONLY      =   0x1
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
+  FILE_ATTRIBUTE_SYSTEM        =   0x4
 
   FILE_APPEND_DATA = 0x00000004
 
@@ -87,6 +89,51 @@ lib LibC
     # (STANDARD_RIGHTS_WRITE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY) & ~SYNCHRONIZE
     WRITE = 0x20006
   end
+
+  enum JOBOBJECTINFOCLASS
+    AssociateCompletionPortInformation = 7
+    ExtendedLimitInformation           = 9
+  end
+
+  struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+    perProcessUserTimeLimit : LARGE_INTEGER
+    perJobUserTimeLimit : LARGE_INTEGER
+    limitFlags : DWORD
+    minimumWorkingSetSize : SizeT
+    maximumWorkingSetSize : SizeT
+    activeProcessLimit : DWORD
+    affinity : ULONG_PTR
+    priorityClass : DWORD
+    schedulingClass : DWORD
+  end
+
+  struct IO_COUNTERS
+    readOperationCount : ULongLong
+    writeOperationCount : ULongLong
+    otherOperationCount : ULongLong
+    readTransferCount : ULongLong
+    writeTransferCount : ULongLong
+    otherTransferCount : ULongLong
+  end
+
+  struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    basicLimitInformation : JOBOBJECT_BASIC_LIMIT_INFORMATION
+    ioInfo : IO_COUNTERS
+    processMemoryLimit : SizeT
+    jobMemoryLimit : SizeT
+    peakProcessMemoryUsed : SizeT
+    peakJobMemoryUsed : SizeT
+  end
+
+  struct JOBOBJECT_ASSOCIATE_COMPLETION_PORT
+    completionKey : Void*
+    completionPort : HANDLE
+  end
+
+  JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK = 0x00001000
+
+  JOB_OBJECT_MSG_EXIT_PROCESS          = 7
+  JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS = 8
 
   struct CONTEXT
     p1Home : DWORD64

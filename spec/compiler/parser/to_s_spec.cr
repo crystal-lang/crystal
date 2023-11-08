@@ -178,6 +178,7 @@ describe "ASTNode#to_s" do
   expect_to_s %q(%r{#{1}\/\0}), %q(/#{1}\/\0/)
   expect_to_s %q(`\n\0`), %q(`\n\u0000`)
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
+  expect_to_s Call.new(nil, "`", Call.new("String".path, "interpolation", "x".var, global: true)), %q(`#{::String.interpolation(x)}`)
   expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
   expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
   expect_to_s "foo.*"
@@ -219,6 +220,16 @@ describe "ASTNode#to_s" do
   expect_to_s "->::foo(Int32, String)"
   expect_to_s "->::Foo::Bar.foo"
   expect_to_s "yield(1)"
+  expect_to_s "foo { |(x, y)| x }", <<-CODE
+    foo do |(x, y)|
+      x
+    end
+    CODE
+  expect_to_s "foo { |(x, (y, z))| x }", <<-CODE
+    foo do |(x, (y, z))|
+      x
+    end
+    CODE
   expect_to_s "def foo\n  yield\nend", "def foo(&)\n  yield\nend"
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"

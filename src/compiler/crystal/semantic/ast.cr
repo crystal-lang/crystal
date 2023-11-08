@@ -87,7 +87,7 @@ module Crystal
     end
 
     def to_macro_id
-      @type.to_s
+      @type.not_nil!.devirtualize.to_s
     end
 
     def clone_without_location

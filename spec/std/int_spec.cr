@@ -13,6 +13,13 @@ private macro it_converts_to_s(num, str, **opts)
 end
 
 describe "Int" do
+  describe "#integer?" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it { {{ int }}::MIN.integer?.should be_true }
+      it { {{ int }}::MAX.integer?.should be_true }
+    {% end %}
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
@@ -137,6 +144,60 @@ describe "Int" do
       1_u32.abs.should eq(1_u32)
       1_u64.abs.should eq(1_u64)
     end
+  end
+
+  describe "#abs_unsigned" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+
+        x = {{ int }}.new(-123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does not overflow on {{ int }}::MIN" do
+        x = {{ int }}::MIN.abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(U{{ int }}.zero &- {{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#neg_signed" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+
+        x = {{ int }}.new(-123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(123)
+
+        expect_raises(OverflowError) { {{ int }}::MIN.neg_signed }
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+      end
+
+      it "does not overflow on {{ int }}::MIN.abs_unsigned" do
+        x = {{ int }}::MIN.abs_unsigned.neg_signed
+        x.should be_a({{ int }})
+        x.should eq({{ int }}::MIN)
+      end
+    {% end %}
   end
 
   describe "gcd" do

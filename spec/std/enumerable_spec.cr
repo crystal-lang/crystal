@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class SpecEnumerable
   include Enumerable(Int32)
@@ -177,6 +178,7 @@ describe "Enumerable" do
 
     it "drop all" do
       result = [1, 2].chunk { Enumerable::Chunk::Drop }.to_a
+      result.should be_a(Array(Tuple(NoReturn, Array(Int32))))
       result.size.should eq 0
     end
 
@@ -192,14 +194,14 @@ describe "Enumerable" do
 
     it "reuses true" do
       iter = [1, 1, 2, 3, 3].chunk(reuse: true, &.itself)
-      a = iter.next.as(Tuple)
+      a = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       a.should eq({1, [1, 1]})
 
-      b = iter.next.as(Tuple)
+      b = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       b.should eq({2, [2]})
       b[1].should be(a[1])
 
-      c = iter.next.as(Tuple)
+      c = iter.next.should be_a(Tuple(Int32, Array(Int32)))
       c.should eq({3, [3, 3]})
       c[1].should be(a[1])
     end
@@ -239,6 +241,7 @@ describe "Enumerable" do
 
     it "drop all" do
       result = [1, 2].chunks { Enumerable::Chunk::Drop }
+      result.should be_a(Array(Tuple(NoReturn, Array(Int32))))
       result.size.should eq 0
     end
 
@@ -391,6 +394,43 @@ describe "Enumerable" do
     end
   end
 
+  describe "each_step" do
+    it_iterates "yields every 2nd element", %w[a c e], %w[a b c d e f].each_step(2)
+    it_iterates "accepts an optional offset parameter", %w[b d f], %w[a b c d e f].each_step(2, offset: 1)
+    it_iterates "accepts an offset of 0", %w[a c e], %w[a b c d e f].each_step(2, offset: 0)
+    it_iterates "accepts an offset larger then the step size", %w[d f], %w[a b c d e f].each_step(2, offset: 3)
+
+    it_iterates "accepts a step larger then the enumerable size", %w[a], %w[a b c d e f].each_step(7)
+    it_iterates "accepts an offset larger then the enumerable size", %w[], %w[a b c d e f].each_step(1, offset: 7)
+
+    it "doesn't accept a negative step" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(-2)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(-2) { }
+      end
+    end
+
+    it "doesn't accept a step of 0" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(0)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(0) { }
+      end
+    end
+
+    it "doesn't accept a negative offset" do
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(2, offset: -2)
+      end
+      expect_raises(ArgumentError) do
+        %w[a b c d e f].each_step(2, offset: -2) { }
+      end
+    end
+  end
+
   describe "each_with_index" do
     it "yields the element and the index" do
       collection = [] of {String, Int32}
@@ -434,9 +474,14 @@ describe "Enumerable" do
     end
   end
 
-  describe "empty?" do
+  describe "#empty?" do
     it { SpecEnumerable.new.empty?.should be_false }
     it { SpecEmptyEnumerable.new.empty?.should be_true }
+  end
+
+  describe "#present?" do
+    it { SpecEnumerable.new.present?.should be_true }
+    it { SpecEmptyEnumerable.new.present?.should be_false }
   end
 
   describe "find" do
@@ -1047,6 +1092,38 @@ describe "Enumerable" do
   describe "partition" do
     it { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
     it { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
+
+    it "with mono type on union type" do
+      ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
+      ints.should eq([1, 3])
+      others.should eq([true, nil, false, "string", 'c'])
+      ints.should be_a(Array(Int32))
+      others.should be_a(Array(Bool | String | Char | Nil))
+    end
+
+    it "with union type on union type" do
+      ints_bools, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32 | Bool)
+      ints_bools.should eq([1, true, 3, false])
+      others.should eq([nil, "string", 'c'])
+      ints_bools.should be_a(Array(Int32 | Bool))
+      others.should be_a(Array(String | Char | Nil))
+    end
+
+    it "with missing type on union type" do
+      symbols, others = [1, true, nil, 3, false, "string", 'c'].partition(Symbol)
+      symbols.empty?.should be_true
+      others.should eq([1, true, nil, 3, false, "string", 'c'])
+      symbols.should be_a(Array(Symbol))
+      others.should be_a(Array(Int32 | Bool | String | Char | Nil))
+    end
+
+    it "with mono type on mono type" do
+      ints, others = [1, 3].partition(Int32)
+      ints.should eq([1, 3])
+      others.empty?.should be_true
+      ints.should be_a(Array(Int32))
+      others.should be_a(Array(NoReturn))
+    end
   end
 
   describe "reject" do

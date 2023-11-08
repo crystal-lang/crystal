@@ -421,4 +421,18 @@ describe "Set" do
       set.clone.compare_by_identity?.should be_true
     end
   end
+
+  describe "#rehash" do
+    it "rehashes" do
+      a = [1]
+      s = Set{a}
+      (10..100).each do |i|
+        s << [i]
+      end
+      a << 2
+      s.should_not contain(a)
+      s.rehash
+      s.should contain(a)
+    end
+  end
 end

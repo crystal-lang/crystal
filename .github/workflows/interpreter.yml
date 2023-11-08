@@ -13,10 +13,10 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.8.2-build
+      image: crystallang/crystal:1.10.1-build
     name: "Test Interpreter"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Test interpreter_spec
         run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
@@ -24,10 +24,10 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.8.2-build
+      image: crystallang/crystal:1.10.1-build
     name: Build interpreter
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build compiler
         run: make interpreter=1 release=1
@@ -43,13 +43,13 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.8.2-build
+      image: crystallang/crystal:1.10.1-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download compiler artifact
         uses: actions/download-artifact@v3

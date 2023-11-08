@@ -1,6 +1,6 @@
 require "spec"
 require "spec/helpers/iterate"
-require "../support/string"
+require "spec/helpers/string"
 
 private class BadSortingClass
   include Comparable(self)

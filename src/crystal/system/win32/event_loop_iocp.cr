@@ -88,7 +88,9 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   end
 end
 
-struct Crystal::Iocp::Event < Crystal::EventLoop::Event
+class Crystal::Iocp::Event
+  include Crystal::EventLoop::Event
+
   getter fiber
   getter wake_at
   getter? timeout

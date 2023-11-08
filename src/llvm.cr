@@ -68,6 +68,7 @@ module LLVM
     {% end %}
   end
 
+  @[Deprecated("This method has no effect")]
   def self.start_multithreaded : Bool
     if multithreaded?
       true
@@ -76,6 +77,7 @@ module LLVM
     end
   end
 
+  @[Deprecated("This method has no effect")]
   def self.stop_multithreaded
     if multithreaded?
       LibLLVM.stop_multithreaded
@@ -88,10 +90,14 @@ module LLVM
 
   def self.default_target_triple : String
     chars = LibLLVM.get_default_target_triple
-    triple = string_and_dispose(chars)
-    if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
+    case triple = string_and_dispose(chars)
+    when .starts_with?("x86_64-apple-macosx"), .starts_with?("x86_64-apple-darwin")
+      # normalize on `macosx` and remove minimum deployment target version
       "x86_64-apple-macosx"
-    elsif triple =~ /aarch64-unknown-linux-android/
+    when .starts_with?("aarch64-apple-macosx"), .starts_with?("aarch64-apple-darwin")
+      # normalize on `macosx` and remove minimum deployment target version
+      "aarch64-apple-macosx"
+    when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"
     else

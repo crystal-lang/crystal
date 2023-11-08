@@ -78,11 +78,16 @@ struct BigRational < Number
   end
 
   def numerator : BigInt
-    BigInt.new { |mpz| LibGMP.mpq_get_num(mpz, self) }
+    # Returns `LibGMP.mpq_numref(self)`, whose C macro expansion effectively
+    # produces a raw member access. This is only as safe as copying `BigInt`s by
+    # value, as both involve copying `LibGMP::MPZ` around which has reference
+    # semantics, and `BigInt`s cannot be safely mutated in-place this way; see
+    # #9825 for details. Ditto for `#denominator`.
+    BigInt.new(@mpq._mp_num)
   end
 
   def denominator : BigInt
-    BigInt.new { |mpz| LibGMP.mpq_get_den(mpz, self) }
+    BigInt.new(@mpq._mp_den)
   end
 
   def <=>(other : BigRational)
@@ -94,11 +99,27 @@ struct BigRational < Number
   end
 
   def <=>(other : BigFloat)
-    to_big_f <=> other.to_big_f
+    self <=> other.to_big_r
   end
 
-  def <=>(other : Int)
-    LibGMP.mpq_cmp(mpq, other.to_big_r)
+  def <=>(other : Int::Primitive)
+    if LibGMP::SI::MIN <= other <= LibGMP::UI::MAX
+      if other <= LibGMP::SI::MAX
+        LibGMP.mpq_cmp_si(self, LibGMP::SI.new!(other), 1)
+      else
+        LibGMP.mpq_cmp_ui(self, LibGMP::UI.new!(other), 1)
+      end
+    else
+      self <=> other.to_big_i
+    end
+  end
+
+  def <=>(other : BigInt)
+    LibGMP.mpq_cmp_z(self, other)
+  end
+
+  def ==(other : BigRational) : Bool
+    LibGMP.mpq_equal(self, other) != 0
   end
 
   def +(other : BigRational) : BigRational
@@ -133,16 +154,36 @@ struct BigRational < Number
   Number.expand_div [BigInt, BigFloat, BigDecimal], BigRational
 
   def ceil : BigRational
-    diff = (denominator - numerator % denominator) % denominator
-    BigRational.new(numerator + diff, denominator)
+    BigRational.new(-(-numerator // denominator))
   end
 
   def floor : BigRational
-    BigRational.new(numerator - numerator % denominator, denominator)
+    BigRational.new(numerator // denominator)
   end
 
   def trunc : BigRational
-    self < 0 ? ceil : floor
+    BigRational.new(numerator.tdiv(denominator))
+  end
+
+  def round_away : BigRational
+    rem2 = numerator.remainder(denominator).abs * 2
+    x = BigRational.new(numerator.tdiv(denominator))
+    x += sign if rem2 >= denominator
+    x
+  end
+
+  def round_even : BigRational
+    rem2 = numerator.remainder(denominator).abs * 2
+    x = BigRational.new(numerator.tdiv(denominator))
+    x += sign if rem2 > denominator || (rem2 == denominator && x.numerator.odd?)
+    x
+  end
+
+  # :inherit:
+  def integer? : Bool
+    # since all `BigRational`s are canonicalized, the denominator must be
+    # positive and coprime with the numerator
+    denominator == 1
   end
 
   # Divides the rational by (2 ** *other*)
@@ -350,6 +391,12 @@ struct Float
   def <=>(other : BigRational)
     cmp = other <=> self
     -cmp if cmp
+  end
+end
+
+struct BigFloat
+  def <=>(other : BigRational)
+    -(other <=> self)
   end
 end
 

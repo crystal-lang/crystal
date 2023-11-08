@@ -41,7 +41,7 @@ lib LibC
   fun lseek(__fd : Int, __offset : OffT, __whence : Int) : OffT
   fun pipe(__fds : Int[2]) : Int
   fun read(__fd : Int, __buf : Void*, __count : SizeT) : SSizeT
-  fun pread(__fd : Int, __buf : Void*, __count : SizeT, __offest : OffT) : SSizeT
+  fun pread(__fd : Int, __buf : Void*, __count : SizeT, __offset : OffT) : SSizeT
   fun rmdir(__path : Char*) : Int
   fun symlink(__old_path : Char*, __new_path : Char*) : Int
   fun readlink(__path : Char*, __buf : Char*, __buf_size : SizeT) : SSizeT

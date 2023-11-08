@@ -68,9 +68,24 @@ describe Process do
       end
     end
 
-    pending_win32 "raises if command is not executable" do
+    it "accepts nilable string for `chdir` (#13767)" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new("foobarbaz", chdir: nil.as(String?))
+      end
+    end
+
+    it "raises if command is not executable" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new(path)
+        end
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
           Process.new(path)
         end
@@ -171,8 +186,21 @@ describe Process do
       $?.exit_code.should eq(0)
     end
 
-    it "sets working directory" do
+    it "sets working directory with string" do
       parent = File.dirname(Dir.current)
+      command = {% if flag?(:win32) %}
+                  "cmd.exe /c echo %cd%"
+                {% else %}
+                  "pwd"
+                {% end %}
+      value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should eq "#{parent}#{newline}"
+    end
+
+    it "sets working directory with path" do
+      parent = Path.new File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
                   "cmd.exe /c echo %cd%"
                 {% else %}
@@ -392,14 +420,16 @@ describe Process do
     process.terminated?.should be_true
   end
 
-  pending_win32 ".pgid" do
-    process = Process.new(*standing_command)
-    Process.pgid(process.pid).should be_a(Int64)
-    process.terminate
-    Process.pgid.should eq(Process.pgid(Process.pid))
-  ensure
-    process.try(&.wait)
-  end
+  {% unless flag?(:win32) %}
+    it ".pgid" do
+      process = Process.new(*standing_command)
+      Process.pgid(process.pid).should be_a(Int64)
+      process.terminate
+      Process.pgid.should eq(Process.pgid(Process.pid))
+    ensure
+      process.try(&.wait)
+    end
+  {% end %}
 
   {% unless flag?(:preview_mt) || flag?(:win32) %}
     describe ".fork" do
@@ -428,7 +458,7 @@ describe Process do
 
   describe ".chroot" do
     {% if flag?(:unix) && !flag?(:android) %}
-      it "raises when unprivileged" do
+      it "raises when unprivileged", tags: %w[slow] do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
           # Try to drop privileges. Ignoring any errors because dropping is only
           # necessary for a privileged user and it doesn't matter when it fails

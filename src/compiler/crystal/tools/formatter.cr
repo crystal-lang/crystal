@@ -491,11 +491,7 @@ module Crystal
       while true
         case @token.type
         when .string?
-          if @token.invalid_escape
-            write @token.value
-          else
-            write @token.raw
-          end
+          write_sanitized_string_body(@token.delimiter_state.allow_escapes && !is_regex)
           next_string_token
         when .interpolation_start?
           # This is the case of #{__DIR__}
@@ -532,6 +528,12 @@ module Crystal
       end
 
       false
+    end
+
+    private def write_sanitized_string_body(escape)
+      body = @token.invalid_escape ? @token.value.as(String) : @token.raw
+      body = Lexer.escape_forbidden_characters(body) if escape
+      write body
     end
 
     def visit(node : StringInterpolation)
@@ -609,7 +611,7 @@ module Crystal
           else
             loop do
               check :STRING
-              write @token.invalid_escape ? @token.value : @token.raw
+              write_sanitized_string_body(delimiter_state.allow_escapes && !is_regex)
               next_string_token
 
               # On heredoc, pieces of contents are combined due to removing indentation.
@@ -3215,53 +3217,11 @@ module Crystal
     def format_block_args(args, node)
       return node.body if args.empty?
 
-      to_skip = 0
-
       write_token " ", :OP_BAR
       skip_space_or_newline
-      args.each_with_index do |arg, i|
-        if @token.type.op_star?
-          write_token :OP_STAR
-        end
+      args.each_index do |i|
+        format_block_arg
 
-        if @token.type.op_lparen?
-          write "("
-          next_token_skip_space_or_newline
-
-          while true
-            case @token.type
-            when .ident?
-              underscore = false
-            when .underscore?
-              underscore = true
-            else
-              raise "expecting block parameter name, not #{@token.type}"
-            end
-
-            write(underscore ? "_" : @token.value)
-
-            unless underscore
-              to_skip += 1
-            end
-
-            next_token_skip_space_or_newline
-            if @token.type.op_comma?
-              next_token_skip_space_or_newline
-            end
-
-            if @token.type.op_rparen?
-              next_token
-              write ")"
-              break
-            else
-              write ", "
-            end
-          end
-        else
-          accept arg
-        end
-
-        skip_space_or_newline
         if @token.type.op_comma?
           next_token_skip_space_or_newline
           write ", " unless last?(i, args)
@@ -3271,7 +3231,44 @@ module Crystal
       write_token :OP_BAR
       skip_space
 
-      remove_to_skip node, to_skip
+      node.body
+    end
+
+    def format_block_arg
+      if @token.type.op_star?
+        write_token :OP_STAR
+      end
+
+      case @token.type
+      when .op_lparen?
+        write "("
+        next_token_skip_space_or_newline
+
+        while true
+          format_block_arg
+          if @token.type.op_comma?
+            next_token_skip_space_or_newline
+          end
+
+          if @token.type.op_rparen?
+            next_token
+            write ")"
+            break
+          else
+            write ", "
+          end
+        end
+      when .ident?
+        write @token.value
+        next_token
+      when .underscore?
+        write("_")
+        next_token
+      else
+        raise "BUG: unexpected token #{@token.type}"
+      end
+
+      skip_space_or_newline
     end
 
     def remove_to_skip(node, to_skip)

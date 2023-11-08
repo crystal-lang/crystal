@@ -89,6 +89,22 @@ private def it_fetches_from_hash?(key, *equivalent_keys)
 end
 
 describe YAML::Any do
+  it ".new" do
+    YAML::Any.new(nil).raw.should be_nil
+    YAML::Any.new(true).raw.should eq true
+    YAML::Any.new(1_i64).raw.should eq 1_i64
+    YAML::Any.new(1).raw.should eq 1
+    YAML::Any.new(1_u8).raw.should eq 1
+    YAML::Any.new(0.0).raw.should eq 0.0
+    YAML::Any.new(0.0_f32).raw.should eq 0.0
+    YAML::Any.new("foo").raw.should eq "foo"
+    YAML::Any.new(Time.utc(2023, 7, 2)).raw.should eq Time.utc(2023, 7, 2)
+    YAML::Any.new(Bytes[1, 2, 3]).raw.should eq Bytes[1, 2, 3]
+    YAML::Any.new([] of YAML::Any).raw.should eq [] of YAML::Any
+    YAML::Any.new({} of YAML::Any => YAML::Any).raw.should eq({} of YAML::Any => YAML::Any)
+    YAML::Any.new(Set(YAML::Any).new).raw.should eq Set(YAML::Any).new
+  end
+
   describe "casts" do
     it "gets nil" do
       YAML.parse("").as_nil.should be_nil
@@ -235,6 +251,26 @@ describe YAML::Any do
       expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 1" do
         YAML.parse("*foo")
       end
+    end
+
+    it "gets yes/no unquoted booleans" do
+      YAML.parse("yes").as_bool.should be_true
+      YAML.parse("no").as_bool.should be_false
+      YAML.parse("'yes'").as_bool?.should be_nil
+      YAML.parse("'no'").as_bool?.should be_nil
+      YAML::Any.from_yaml("yes").as_bool.should be_true
+      YAML::Any.from_yaml("no").as_bool.should be_false
+      YAML::Any.from_yaml("'yes'").as_bool?.should be_nil
+      YAML::Any.from_yaml("'no'").as_bool?.should be_nil
+    end
+
+    it "doesn't get quoted numbers" do
+      YAML.parse("1").as_i64.should eq(1)
+      YAML.parse("'1'").as_i64?.should be_nil
+      YAML.parse("'1'").as_s?.should eq("1")
+      YAML::Any.from_yaml("1").as_i64.should eq(1)
+      YAML::Any.from_yaml("'1'").as_i64?.should be_nil
+      YAML::Any.from_yaml("'1'").as_s?.should eq("1")
     end
   end
 

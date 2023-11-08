@@ -367,6 +367,13 @@ module Crystal
       end
     end
 
+    describe "char methods" do
+      it "executes ord" do
+        assert_macro %({{'a'.ord}}), %(97)
+        assert_macro %({{'龍'.ord}}), %(40845)
+      end
+    end
+
     describe "string methods" do
       it "executes string == string" do
         assert_macro %({{"foo" == "foo"}}), %(true)
@@ -1694,6 +1701,16 @@ module Crystal
         end
       end
 
+      describe "#id" do
+        it "does not include trailing + for virtual type" do
+          assert_macro("{{klass.id}}", "Foo") do |program|
+            foo = NonGenericClassType.new(program, program, "Foo", program.reference)
+            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            {klass: TypeNode.new(foo.virtual_type)}
+          end
+        end
+      end
+
       describe "#warning" do
         it "emits a warning at a specific node" do
           assert_warning <<-CRYSTAL, "Oh noes"
@@ -2493,6 +2510,34 @@ module Crystal
       end
     end
 
+    describe "macro if methods" do
+      it "executes cond" do
+        assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
+      end
+
+      it "executes then" do
+        assert_macro %({{x.then}}), "\"test\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+    end
+
+    describe "macro for methods" do
+      it "executes vars" do
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+    end
+
     describe "unary expression methods" do
       it "executes exp" do
         assert_macro %({{x.exp}}), "some_call", {x: Not.new("some_call".call)}
@@ -3159,6 +3204,15 @@ module Crystal
             {foo: "bar".string}
           end
         end.should eq %(bar\n)
+      end
+
+      it "print" do
+        String.build do |io|
+          assert_macro(%({% print foo %}), "") do |program|
+            program.stdout = io
+            {foo: "bar".string}
+          end
+        end.should eq %(bar)
       end
 
       it "p" do

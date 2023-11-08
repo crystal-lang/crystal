@@ -8,6 +8,18 @@ private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, 
   end
 end
 
+private def assert_file_matches(pattern, path : String, *, file = __FILE__, line = __LINE__)
+  File.match?(pattern, path).should be_true, file: file, line: line
+  File.match?(pattern, Path.posix(path)).should be_true, file: file, line: line
+  File.match?(pattern, Path.posix(path).to_windows).should be_true, file: file, line: line
+end
+
+private def refute_file_matches(pattern, path : String, *, file = __FILE__, line = __LINE__)
+  File.match?(pattern, path).should be_false, file: file, line: line
+  File.match?(pattern, Path.posix(path)).should be_false, file: file, line: line
+  File.match?(pattern, Path.posix(path).to_windows).should be_false, file: file, line: line
+end
+
 private def normalize_permissions(permissions, *, directory)
   {% if flag?(:win32) %}
     normalized_permissions = 0o444
@@ -220,7 +232,7 @@ describe "File" do
       other = datapath("test_file.ini")
 
       with_tempfile("test_file_symlink.txt") do |symlink|
-        File.symlink(File.real_path(file), symlink)
+        File.symlink(File.realpath(file), symlink)
 
         File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
@@ -351,7 +363,7 @@ describe "File" do
   end
 
   describe "chmod" do
-    it "changes file permissions" do
+    it "changes file permissions with class method" do
       path = datapath("chmod.txt")
       begin
         File.write(path, "")
@@ -362,7 +374,7 @@ describe "File" do
       end
     end
 
-    it "changes file permissions with fchmod" do
+    it "changes file permissions with instance method" do
       path = datapath("chmod.txt")
       begin
         File.open(path, "w") do |file|
@@ -514,7 +526,7 @@ describe "File" do
     end
   end
 
-  describe "delete" do
+  describe ".delete" do
     it "deletes a file" do
       with_tempfile("delete-file.txt") do |filename|
         File.open(filename, "w") { }
@@ -530,6 +542,20 @@ describe "File" do
         File.exists?(file.path).should be_true
         file.delete
         File.exists?(file.path).should be_false
+      end
+    end
+
+    it "deletes a read-only file" do
+      with_tempfile("delete-file-dir") do |path|
+        Dir.mkdir(path)
+        File.chmod(path, 0o755)
+
+        filename = File.join(path, "foo")
+        File.open(filename, "w") { }
+        File.exists?(filename).should be_true
+        File.chmod(filename, 0o000)
+        File.delete(filename)
+        File.exists?(filename).should be_false
       end
     end
 
@@ -588,6 +614,16 @@ describe "File" do
         expect_raises(File::NotFoundError, "Error renaming file: '#{source_path.inspect_unquoted}' -> '#{target_path.inspect_unquoted}'") do
           File.rename(source_path, target_path)
         end
+      end
+    end
+
+    it "renames a File instance" do
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        f = File.new(source_path, "w")
+        f.rename target_path
+        f.path.should eq target_path
+        File.exists?(source_path).should be_false
+        File.exists?(target_path).should be_true
       end
     end
   end
@@ -891,7 +927,26 @@ describe "File" do
     end
   end
 
-  pending_win32 "raises when reading a file with no permission" do
+  # Crystal does not expose ways to make a file unreadable on Windows
+  {% unless flag?(:win32) %}
+    it "raises when reading a file with no permission" do
+      with_tempfile("file.txt") do |path|
+        File.touch(path)
+        File.chmod(path, File::Permissions::None)
+        {% if flag?(:unix) %}
+          # TODO: Find a better way to execute this spec when running as privileged
+          # user. Compiling a program and running a separate process would be a
+          # lot of overhead.
+          if LibC.getuid == 0
+            pending! "Spec cannot run as superuser"
+          end
+        {% end %}
+        expect_raises(File::AccessDeniedError) { File.read(path) }
+      end
+    end
+  {% end %}
+
+  it "raises when writing to a file with no permission" do
     with_tempfile("file.txt") do |path|
       File.touch(path)
       File.chmod(path, File::Permissions::None)
@@ -903,7 +958,7 @@ describe "File" do
           pending! "Spec cannot run as superuser"
         end
       {% end %}
-      expect_raises(File::AccessDeniedError) { File.read(path) }
+      expect_raises(File::AccessDeniedError) { File.write(path, "foo") }
     end
   end
 
@@ -1237,7 +1292,7 @@ describe "File" do
   end
 
   describe "utime" do
-    it "sets times with utime" do
+    it "sets times with class method" do
       with_tempfile("utime-set.txt") do |path|
         File.write(path, "")
 
@@ -1251,7 +1306,7 @@ describe "File" do
       end
     end
 
-    it "sets times with futime" do
+    it "sets times with instance method" do
       with_tempfile("utime-set.txt") do |path|
         File.open(path, "w") do |file|
           atime = Time.utc(2000, 1, 2)
@@ -1376,29 +1431,29 @@ describe "File" do
       end
     end
 
-    pending_win32 "copies permissions" do
+    it "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
-        File.chmod(src_path, 0o700)
+        File.chmod(src_path, 0o444)
 
         File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
         File.same_content?(src_path, out_path).should be_true
       end
     end
 
-    pending_win32 "overwrites existing destination and permissions" do
+    it "overwrites existing destination and permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
-        File.chmod(src_path, 0o700)
+        File.chmod(src_path, 0o444)
 
         File.write(out_path, "bar")
-        File.chmod(out_path, 0o777)
+        File.chmod(out_path, 0o666)
 
         File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
         File.same_content?(src_path, out_path).should be_true
       end
     end
@@ -1406,73 +1461,89 @@ describe "File" do
 
   describe ".match?" do
     it "matches basics" do
-      File.match?("abc", Path["abc"]).should be_true
-      File.match?("abc", "abc").should be_true
-      File.match?("*", "abc").should be_true
-      File.match?("*c", "abc").should be_true
-      File.match?("a*", "a").should be_true
-      File.match?("a*", "abc").should be_true
-      File.match?("a*/b", "abc/b").should be_true
-      File.match?("*x", "xxx").should be_true
+      assert_file_matches "abc", "abc"
+      assert_file_matches "*", "abc"
+      assert_file_matches "*c", "abc"
+      assert_file_matches "a*", "a"
+      assert_file_matches "a*", "abc"
+      assert_file_matches "a*/b", "abc/b"
+      assert_file_matches "*x", "xxx"
     end
+
     it "matches multiple expansions" do
-      File.match?("a*b*c*d*e*/f", "axbxcxdxe/f").should be_true
-      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/f").should be_true
-      File.match?("a*b?c*x", "abxbbxdbxebxczzx").should be_true
-      File.match?("a*b?c*x", "abxbbxdbxebxczzy").should be_false
+      assert_file_matches "a*b*c*d*e*/f", "axbxcxdxe/f"
+      assert_file_matches "a*b*c*d*e*/f", "axbxcxdxexxx/f"
+      assert_file_matches "a*b?c*x", "abxbbxdbxebxczzx"
+      refute_file_matches "a*b?c*x", "abxbbxdbxebxczzy"
     end
+
     it "matches unicode characters" do
-      File.match?("a?b", "a☺b").should be_true
-      File.match?("a???b", "a☺b").should be_false
+      assert_file_matches "a?b", "a☺b"
+      refute_file_matches "a???b", "a☺b"
     end
-    it "* don't match /" do
-      File.match?("a*", "ab/c").should be_false
-      File.match?("a*/b", "a/c/b").should be_false
-      File.match?("a*b*c*d*e*/f", "axbxcxdxe/xxx/f").should be_false
-      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/fff").should be_false
+
+    it "* don't match path separator" do
+      refute_file_matches "a*", "ab/c"
+      refute_file_matches "a*/b", "a/c/b"
+      refute_file_matches "a*b*c*d*e*/f", "axbxcxdxe/xxx/f"
+      refute_file_matches "a*b*c*d*e*/f", "axbxcxdxexxx/fff"
     end
-    it "** matches /" do
-      File.match?("a**", "ab/c").should be_true
-      File.match?("a**/b", "a/c/b").should be_true
-      File.match?("a*b*c*d*e**/f", "axbxcxdxe/xxx/f").should be_true
-      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/f").should be_true
-      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/fff").should be_false
+
+    it "** matches path separator" do
+      assert_file_matches "a**", "ab/c"
+      assert_file_matches "a**/b", "a/c/b"
+      assert_file_matches "a*b*c*d*e**/f", "axbxcxdxe/xxx/f"
+      assert_file_matches "a*b*c*d*e**/f", "axbxcxdxexxx/f"
+      refute_file_matches "a*b*c*d*e**/f", "axbxcxdxexxx/fff"
     end
+
     it "classes" do
-      File.match?("ab[c]", "abc").should be_true
-      File.match?("ab[b-d]", "abc").should be_true
-      File.match?("ab[d-b]", "abc").should be_false
-      File.match?("ab[e-g]", "abc").should be_false
-      File.match?("ab[e-gc]", "abc").should be_true
-      File.match?("ab[^c]", "abc").should be_false
-      File.match?("ab[^b-d]", "abc").should be_false
-      File.match?("ab[^e-g]", "abc").should be_true
-      File.match?("a[^a]b", "a☺b").should be_true
-      File.match?("a[^a][^a][^a]b", "a☺b").should be_false
-      File.match?("[a-ζ]*", "α").should be_true
-      File.match?("*[a-ζ]", "A").should be_false
+      assert_file_matches "ab[c]", "abc"
+      assert_file_matches "ab[b-d]", "abc"
+      refute_file_matches "ab[d-b]", "abc"
+      refute_file_matches "ab[e-g]", "abc"
+      assert_file_matches "ab[e-gc]", "abc"
+      refute_file_matches "ab[^c]", "abc"
+      refute_file_matches "ab[^b-d]", "abc"
+      assert_file_matches "ab[^e-g]", "abc"
+      assert_file_matches "a[^a]b", "a☺b"
+      refute_file_matches "a[^a][^a][^a]b", "a☺b"
+      assert_file_matches "[a-ζ]*", "α"
+      refute_file_matches "*[a-ζ]", "A"
     end
+
     it "escape" do
+      # NOTE: `*` is forbidden in Windows paths
       File.match?("a\\*b", "a*b").should be_true
-      File.match?("a\\*b", "ab").should be_false
+      refute_file_matches "a\\*b", "ab"
       File.match?("a\\**b", "a*bb").should be_true
-      File.match?("a\\**b", "abb").should be_false
+      refute_file_matches "a\\**b", "abb"
       File.match?("a*\\*b", "ab*b").should be_true
-      File.match?("a*\\*b", "abb").should be_false
+      refute_file_matches "a*\\*b", "abb"
+
+      assert_file_matches "a\\[b\\]", "a[b]"
+      refute_file_matches "a\\[b\\]", "ab"
+      assert_file_matches "a\\[bb\\]", "a[bb]"
+      refute_file_matches "a\\[bb\\]", "abb"
+      assert_file_matches "a[b]\\[b\\]", "ab[b]"
+      refute_file_matches "a[b]\\[b\\]", "abb"
     end
+
     it "special chars" do
-      File.match?("a?b", "a/b").should be_false
-      File.match?("a*b", "a/b").should be_false
+      refute_file_matches "a?b", "a/b"
+      refute_file_matches "a*b", "a/b"
     end
+
     it "classes escapes" do
-      File.match?("[\\]a]", "]").should be_true
-      File.match?("[\\-]", "-").should be_true
-      File.match?("[x\\-]", "x").should be_true
-      File.match?("[x\\-]", "-").should be_true
-      File.match?("[x\\-]", "z").should be_false
-      File.match?("[\\-x]", "x").should be_true
-      File.match?("[\\-x]", "-").should be_true
-      File.match?("[\\-x]", "a").should be_false
+      assert_file_matches "[\\]a]", "]"
+      assert_file_matches "[\\-]", "-"
+      assert_file_matches "[x\\-]", "x"
+      assert_file_matches "[x\\-]", "-"
+      refute_file_matches "[x\\-]", "z"
+      assert_file_matches "[\\-x]", "x"
+      assert_file_matches "[\\-x]", "-"
+      refute_file_matches "[\\-x]", "a"
+
       expect_raises(File::BadPatternError, "empty character set") do
         File.match?("[]a]", "]")
       end
@@ -1504,18 +1575,19 @@ describe "File" do
         File.match?("a[", "a")
       end
     end
+
     it "alternates" do
-      File.match?("{abc,def}", "abc").should be_true
-      File.match?("ab{c,}", "abc").should be_true
-      File.match?("ab{c,}", "ab").should be_true
-      File.match?("ab{d,e}", "abc").should be_false
-      File.match?("ab{*,/cde}", "abcde").should be_true
-      File.match?("ab{*,/cde}", "ab/cde").should be_true
-      File.match?("ab{?,/}de", "abcde").should be_true
-      File.match?("ab{?,/}de", "ab/de").should be_true
-      File.match?("ab{{c,d}ef,}", "ab").should be_true
-      File.match?("ab{{c,d}ef,}", "abcef").should be_true
-      File.match?("ab{{c,d}ef,}", "abdef").should be_true
+      assert_file_matches "{abc,def}", "abc"
+      assert_file_matches "ab{c,}", "abc"
+      assert_file_matches "ab{c,}", "ab"
+      refute_file_matches "ab{d,e}", "abc"
+      assert_file_matches "ab{*,/cde}", "abcde"
+      assert_file_matches "ab{*,/cde}", "ab/cde"
+      assert_file_matches "ab{?,/}de", "abcde"
+      assert_file_matches "ab{?,/}de", "ab/de"
+      assert_file_matches "ab{{c,d}ef,}", "ab"
+      assert_file_matches "ab{{c,d}ef,}", "abcef"
+      assert_file_matches "ab{{c,d}ef,}", "abdef"
     end
   end
 

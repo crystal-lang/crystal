@@ -243,7 +243,7 @@ class Process
     fork_output = stdio_to_fd(output, for: STDOUT)
     fork_error = stdio_to_fd(error, for: STDERR)
 
-    pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir)
+    pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)

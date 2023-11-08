@@ -145,6 +145,10 @@ end
       {% end %}
     {% end %}
 
-    fun ioctl(fd : Int, request : ULong, ...) : Int
+    {% if flag?(:android) %}
+      fun ioctl(__fd : Int, __request : Int, ...) : Int
+    {% else %}
+      fun ioctl(fd : Int, request : ULong, ...) : Int
+    {% end %}
   end
 {% end %}

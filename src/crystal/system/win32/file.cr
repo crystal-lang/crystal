@@ -126,16 +126,14 @@ module Crystal::System::File
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     winpath = System.to_wstr(path)
 
-    unless follow_symlinks
-      # First try using GetFileAttributes to check if it's a reparse point
-      file_attributes = uninitialized LibC::WIN32_FILE_ATTRIBUTE_DATA
-      ret = LibC.GetFileAttributesExW(
-        winpath,
-        LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
-        pointerof(file_attributes)
-      )
-      return check_not_found_error("Unable to get file info", path) if ret == 0
-
+    # First try using GetFileAttributes to check if it's a reparse point
+    file_attributes = uninitialized LibC::WIN32_FILE_ATTRIBUTE_DATA
+    ret = LibC.GetFileAttributesExW(
+      winpath,
+      LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
+      pointerof(file_attributes)
+    )
+    if ret != 0
       if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
         # Could be a symlink, retrieve its reparse tag with FindFirstFile
         handle = LibC.FindFirstFileW(winpath, out find_data)
@@ -145,7 +143,10 @@ module Crystal::System::File
           raise RuntimeError.from_winerror("FindClose")
         end
 
-        if find_data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
+        case find_data.dwReserved0
+        when LibC::IO_REPARSE_TAG_SYMLINK
+          return ::File::Info.new(find_data) unless follow_symlinks
+        when LibC::IO_REPARSE_TAG_AF_UNIX
           return ::File::Info.new(find_data)
         end
       end
@@ -232,9 +233,26 @@ module Crystal::System::File
     end
   end
 
-  def self.fchmod(path : String, fd : Int, mode : Int32 | ::File::Permissions) : Nil
-    # TODO: use fd instead of path
-    chmod path, mode
+  private def system_chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
+    mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
+    handle = windows_handle
+
+    basic_info = uninitialized LibC::FILE_BASIC_INFO
+    if LibC.GetFileInformationByHandleEx(handle, LibC::FILE_INFO_BY_HANDLE_CLASS::FileBasicInfo, pointerof(basic_info), sizeof(typeof(basic_info))) == 0
+      raise ::File::Error.from_winerror("Error changing permissions", file: path)
+    end
+
+    # Only the owner writable bit is used, since windows only supports
+    # the read only attribute.
+    if mode.owner_write?
+      basic_info.fileAttributes &= ~LibC::FILE_ATTRIBUTE_READONLY
+    else
+      basic_info.fileAttributes |= LibC::FILE_ATTRIBUTE_READONLY
+    end
+
+    if LibC.SetFileInformationByHandle(handle, LibC::FILE_INFO_BY_HANDLE_CLASS::FileBasicInfo, pointerof(basic_info), sizeof(typeof(basic_info))) == 0
+      raise ::File::Error.from_winerror("Error changing permissions", file: path)
+    end
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
@@ -247,11 +265,21 @@ module Crystal::System::File
       return false
     end
 
+    # Windows cannot delete read-only files, so we unset the attribute here, but
+    # restore it afterwards if deletion still failed
+    read_only_removed = false
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+      if LibC.SetFileAttributesW(win_path, attributes & ~LibC::FILE_ATTRIBUTE_READONLY) != 0
+        read_only_removed = true
+      end
+    end
+
     # all reparse point directories should be deleted like a directory, not just
     # symbolic links, so we don't care about the reparse tag here
     is_reparse_dir = attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
     result = is_reparse_dir ? LibC._wrmdir(win_path) : LibC._wunlink(win_path)
     return true if result == 0
+    LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
     raise ::File::Error.from_errno("Error deleting file", file: path)
   end
 
@@ -363,7 +391,8 @@ module Crystal::System::File
             end
             return {name, is_relative}
           else
-            raise ::File::Error.new("Not a symlink", file: path)
+            # not a symlink (e.g. IO_REPARSE_TAG_AF_UNIX)
+            return nil
           end
         end
 
@@ -389,12 +418,10 @@ module Crystal::System::File
   end
 
   def self.utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
-    atime = Crystal::System::Time.to_filetime(access_time)
-    mtime = Crystal::System::Time.to_filetime(modification_time)
     handle = LibC.CreateFileW(
       System.to_wstr(path),
       LibC::FILE_WRITE_ATTRIBUTES,
-      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
+      LibC::DEFAULT_SHARE_MODE,
       nil,
       LibC::OPEN_EXISTING,
       LibC::FILE_FLAG_BACKUP_SEMANTICS,
@@ -403,18 +430,24 @@ module Crystal::System::File
     if handle == LibC::INVALID_HANDLE_VALUE
       raise ::File::Error.from_winerror("Error setting time on file", file: path)
     end
+
     begin
-      if LibC.SetFileTime(handle, nil, pointerof(atime), pointerof(mtime)) == 0
-        raise ::File::Error.from_winerror("Error setting time on file", file: path)
-      end
+      utime(handle, access_time, modification_time, path)
     ensure
       LibC.CloseHandle(handle)
     end
   end
 
-  def self.futimens(path : String, fd : Int, access_time : ::Time, modification_time : ::Time) : Nil
-    # TODO: use fd instead of path
-    utime access_time, modification_time, path
+  def self.utime(handle : LibC::HANDLE, access_time : ::Time, modification_time : ::Time, path : String) : Nil
+    atime = Crystal::System::Time.to_filetime(access_time)
+    mtime = Crystal::System::Time.to_filetime(modification_time)
+    if LibC.SetFileTime(handle, nil, pointerof(atime), pointerof(mtime)) == 0
+      raise ::File::Error.from_winerror("Error setting time on file", file: path)
+    end
+  end
+
+  private def system_utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
+    Crystal::System::File.utime(windows_handle, access_time, modification_time, path)
   end
 
   private def system_truncate(size : Int) : Nil
