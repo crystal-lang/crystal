@@ -2087,13 +2087,14 @@ module Crystal
       end
       )
 
-    assert_syntax_error %(
+    assert_syntax_error <<-CRYSTAL, "invalid trailing comma in call", line: 2, column: 8
       if 1
         foo 1,
       end
-      ), "invalid trailing comma in call"
+      CRYSTAL
 
-    assert_syntax_error "foo 1,", "invalid trailing comma in call"
+    assert_syntax_error "foo 1,", "invalid trailing comma in call", line: 1, column: 6
+
     assert_syntax_error "def foo:String\nend", "a space is mandatory between ':' and return type"
     assert_syntax_error "def foo :String\nend", "a space is mandatory between ':' and return type"
     assert_syntax_error "def foo():String\nend", "a space is mandatory between ':' and return type"
