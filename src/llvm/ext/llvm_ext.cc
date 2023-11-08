@@ -1,6 +1,5 @@
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/DebugLoc.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
@@ -9,23 +8,11 @@ using namespace llvm;
 #define LLVM_VERSION_GE(major, minor) \
   (LLVM_VERSION_MAJOR > (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR >= (minor))
 
-#define LLVM_VERSION_EQ(major, minor) \
-  (LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR == (minor))
-
-#define LLVM_VERSION_LE(major, minor) \
-  (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
-
 #include <llvm/Target/CodeGenCWrappers.h>
 
 #if LLVM_VERSION_GE(16, 0)
 #define makeArrayRef ArrayRef
 #endif
-
-typedef DIBuilder *DIBuilderRef;
-#define DIArray DINodeArray
-template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
-  return (T *)(v ? unwrap<MDNode>(v) : NULL);
-}
 
 extern "C" {
 
@@ -36,25 +23,11 @@ LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(
   DIEnumerator *e = unwrap(Dref)->createEnumerator(Name, Value);
   return wrap(e);
 }
-#endif
 
-void LLVMExtSetCurrentDebugLocation(
-  LLVMBuilderRef Bref, unsigned Line, unsigned Col, LLVMMetadataRef Scope,
-  LLVMMetadataRef InlinedAt) {
-#if LLVM_VERSION_GE(12, 0)
-  if (!Scope)
-    unwrap(Bref)->SetCurrentDebugLocation(DebugLoc());
-  else
-    unwrap(Bref)->SetCurrentDebugLocation(
-      DILocation::get(unwrap<MDNode>(Scope)->getContext(), Line, Col,
-                      unwrapDIptr<DILocalScope>(Scope),
-                      unwrapDIptr<DILocation>(InlinedAt)));
-#else
-  unwrap(Bref)->SetCurrentDebugLocation(
-      DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
-                    InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
-#endif
+void LLVMExtClearCurrentDebugLocation(LLVMBuilderRef B) {
+  unwrap(B)->SetCurrentDebugLocation(DebugLoc::get(0, 0, nullptr));
 }
+#endif
 
 OperandBundleDef *LLVMExtBuildOperandBundleDef(
     const char *Name, LLVMValueRef *Inputs, unsigned NumInputs) {
