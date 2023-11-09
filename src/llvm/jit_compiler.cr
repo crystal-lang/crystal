@@ -9,7 +9,7 @@ class LLVM::JITCompiler
       raise LLVM.string_and_dispose(error)
     end
 
-    # We need to disable global isel until https://reviews.llvm.org/D80898 is released,
+    # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and Crystal::Codegen::Target.
     # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270
