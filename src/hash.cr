@@ -319,7 +319,7 @@ class Hash(K, V)
   # ```
   #
   # * `.new(&block : (Hash(K, V), K -> V))` is an alternative with a block that
-  #   can return a different default value for each invokation.
+  #   can return a different default value for each invocation.
   #
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
