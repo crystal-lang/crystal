@@ -4692,15 +4692,13 @@ class String
   # It also updates `$~` with the result.
   #
   # ```
-  # "foo".match_full(/foo/)   # => Regex::MatchData("foo")
-  # $~                        # => Regex::MatchData("foo")
-  # "fooo".match_full(/foo/)  # => nil
-  # $~                        # raises Exception
+  # "foo".match_full(/foo/)  # => Regex::MatchData("foo")
+  # $~                       # => Regex::MatchData("foo")
+  # "fooo".match_full(/foo/) # => nil
+  # $~                       # raises Exception
   # ```
   def match_full(regex : Regex) : Regex::MatchData?
-    match = /(?:#{regex})\z/.match_at_byte_index(self, 0, Regex::Options::ANCHORED)
-    $~ = match
-    match
+    match(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
   # Returns `true` if the regular expression *regex* matches this string entirely.
@@ -4713,7 +4711,7 @@ class String
   # $~ # raises Exception
   # ```
   def matches_full?(regex : Regex) : Bool
-    starts_with?(/(?:#{regex})\z/)
+    matches?(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
   # Searches the string for instances of *pattern*,
