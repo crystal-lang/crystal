@@ -28,5 +28,6 @@ lib LibLLVM
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(out_jit : ExecutionEngineRef*, m : ModuleRef, options : MCJITCompilerOptions*, size_of_options : SizeT, out_error : Char**) : Bool
   fun dispose_execution_engine = LLVMDisposeExecutionEngine(ee : ExecutionEngineRef)
   fun run_function = LLVMRunFunction(ee : ExecutionEngineRef, f : ValueRef, num_args : UInt, args : GenericValueRef*) : GenericValueRef
+  fun get_execution_engine_target_machine = LLVMGetExecutionEngineTargetMachine(ee : ExecutionEngineRef) : TargetMachineRef
   fun get_pointer_to_global = LLVMGetPointerToGlobal(ee : ExecutionEngineRef, global : ValueRef) : Void*
 end
