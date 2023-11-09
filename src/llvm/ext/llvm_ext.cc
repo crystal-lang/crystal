@@ -15,12 +15,13 @@ using namespace llvm;
 #define makeArrayRef ArrayRef
 #endif
 
+#if !LLVM_VERSION_GE(9, 0)
+#include <llvm/IR/DIBuilder.h>
+#endif
+
 extern "C" {
 
-#if LLVM_VERSION_GE(9, 0)
-#else
-#include <llvm/IR/DIBuilder.h>
-
+#if !LLVM_VERSION_GE(9, 0)
 LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(
     LLVMDIBuilderRef Dref, const char *Name, int64_t Value) {
   DIEnumerator *e = unwrap(Dref)->createEnumerator(Name, Value);
