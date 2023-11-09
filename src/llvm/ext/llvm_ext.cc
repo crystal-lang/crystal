@@ -2,6 +2,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/DebugLoc.h>
 #include <llvm/Target/TargetMachine.h>
+#include <llvm-c/TargetMachine.h>
 
 using namespace llvm;
 
@@ -13,8 +14,6 @@ using namespace llvm;
 
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
-
-#include <llvm/Target/CodeGenCWrappers.h>
 
 #if LLVM_VERSION_GE(16, 0)
 #define makeArrayRef ArrayRef
