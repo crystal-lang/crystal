@@ -4701,6 +4701,21 @@ class String
     match(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match_full!(/foo/)  # => Regex::MatchData("foo")
+  # $~                        # => Regex::MatchData("foo")
+  # "fooo".match_full!(/foo/) # Regex::Error
+  # $~                        # raises Exception
+  # ```
+  def match_full!(regex : Regex) : Regex::MatchData?
+    match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
   # Returns `true` if the regular expression *regex* matches this string entirely.
   #
   # ```

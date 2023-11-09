@@ -2359,6 +2359,14 @@ describe "String" do
     "_pattern_".match_full(/(\A)?pattern(\z)?/).should be_nil
   end
 
+  it "#match_full!" do
+    "foo".match_full!(/foo/).not_nil![0].should eq "foo"
+    expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
+    expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
+    "pattern".match_full!(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    expect_raises(Regex::Error) { "_pattern_".match_full!(/(\A)?pattern(\z)?/) }
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
