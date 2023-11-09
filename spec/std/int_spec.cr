@@ -149,17 +149,17 @@ describe "Int" do
   describe "#to_signed" do
     {% for n in [8, 16, 32, 64, 128] %}
       it "does for Int{{n}}" do
-        x = 123_i{{n}}.to_signed
+        x = Int{{n}}.new(123).to_signed
         x.should be_a(Int{{n}})
         x.should eq(123)
 
-        (-123_i{{n}}).to_signed.should eq(-123)
+        Int{{n}}.new(-123).to_signed.should eq(-123)
         Int{{n}}::MIN.to_signed.should eq(Int{{n}}::MIN)
         Int{{n}}::MAX.to_signed.should eq(Int{{n}}::MAX)
       end
 
       it "does for UInt{{n}}" do
-        x = 123_u{{n}}.to_signed
+        x = UInt{{n}}.new(123).to_signed
         x.should be_a(Int{{n}})
         x.should eq(123)
 
@@ -173,17 +173,17 @@ describe "Int" do
   describe "#to_signed!" do
     {% for n in [8, 16, 32, 64, 128] %}
       it "does for Int{{n}}" do
-        x = 123_i{{n}}.to_signed!
+        x = Int{{n}}.new(123).to_signed!
         x.should be_a(Int{{n}})
         x.should eq(123)
 
-        (-123_i{{n}}).to_signed!.should eq(-123)
+        Int{{n}}.new(-123).to_signed!.should eq(-123)
         Int{{n}}::MIN.to_signed!.should eq(Int{{n}}::MIN)
         Int{{n}}::MAX.to_signed!.should eq(Int{{n}}::MAX)
       end
 
       it "does for UInt{{n}}" do
-        x = 123_u{{n}}.to_signed!
+        x = UInt{{n}}.new(123).to_signed!
         x.should be_a(Int{{n}})
         x.should eq(123)
 
@@ -198,7 +198,7 @@ describe "Int" do
   describe "#to_unsigned" do
     {% for n in [8, 16, 32, 64, 128] %}
       it "does for Int{{n}}" do
-        x = 123_i{{n}}.to_unsigned
+        x = Int{{n}}.new(123).to_unsigned
         x.should be_a(UInt{{n}})
         x.should eq(123)
 
@@ -208,7 +208,7 @@ describe "Int" do
       end
 
       it "does for UInt{{n}}" do
-        x = 123_u{{n}}.to_unsigned
+        x = UInt{{n}}.new(123).to_unsigned
         x.should be_a(UInt{{n}})
         x.should eq(123)
 
@@ -225,14 +225,14 @@ describe "Int" do
         x.should be_a(UInt{{n}})
         x.should eq(123)
 
-        (-123_i{{n}}).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
+        Int{{n}}.new(-123).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
         Int{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MAX // 2 + 1)
         Int{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX // 2)
-        (-1_i{{n}}).to_unsigned!.should eq(UInt{{n}}::MAX)
+        Int{{n}}.new(-1).to_unsigned!.should eq(UInt{{n}}::MAX)
       end
 
       it "does for UInt{{n}}" do
-        x = 123_u{{n}}.to_unsigned!
+        x = UInt{{n}}.new(123).to_unsigned!
         x.should be_a(UInt{{n}})
         x.should eq(123)
 
