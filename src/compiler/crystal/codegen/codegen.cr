@@ -181,7 +181,7 @@ module Crystal
     def initialize(@program : Program, @node : ASTNode,
                    @single_module : Bool = false,
                    @debug = Debug::Default,
-                   @frame_pointers : FramePointers = FramePointers::Auto)
+                   @frame_pointers : FramePointers = :auto)
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")
