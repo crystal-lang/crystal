@@ -1,12 +1,13 @@
-#include <llvm/IR/DIBuilder.h>
+#include <llvm/Config/llvm-config.h>
+
+#define LLVM_VERSION_GE(major, minor) \
+  (LLVM_VERSION_MAJOR > (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR >= (minor))
+
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
 using namespace llvm;
-
-#define LLVM_VERSION_GE(major, minor) \
-  (LLVM_VERSION_MAJOR > (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR >= (minor))
 
 #include <llvm/Target/CodeGenCWrappers.h>
 
@@ -18,6 +19,8 @@ extern "C" {
 
 #if LLVM_VERSION_GE(9, 0)
 #else
+#include <llvm/IR/DIBuilder.h>
+
 LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(
     LLVMDIBuilderRef Dref, const char *Name, int64_t Value) {
   DIEnumerator *e = unwrap(Dref)->createEnumerator(Name, Value);
