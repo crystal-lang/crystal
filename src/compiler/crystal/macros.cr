@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:docs) %}
+
 # Defines string related macro methods.
 #
 # Many `StringLiteral` methods can be called from `SymbolLiteral` and `MacroId`,
