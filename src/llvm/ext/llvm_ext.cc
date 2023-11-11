@@ -1,20 +1,19 @@
 #include <llvm/Config/llvm-config.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm-c/TargetMachine.h>
+
+using namespace llvm;
 
 #define LLVM_VERSION_GE(major, minor) \
   (LLVM_VERSION_MAJOR > (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR >= (minor))
 
-#include <llvm/IR/IRBuilder.h>
-
-using namespace llvm;
+#if !LLVM_VERSION_GE(9, 0)
+#include <llvm/IR/DIBuilder.h>
+#endif
 
 #if LLVM_VERSION_GE(16, 0)
 #define makeArrayRef ArrayRef
-#endif
-
-#if !LLVM_VERSION_GE(9, 0)
-#include <llvm/IR/DIBuilder.h>
 #endif
 
 extern "C" {
