@@ -1,11 +1,12 @@
 require "../syntax/ast"
 require "../compiler"
 require "json"
+require "csv"
 
 module Crystal
   class Command
     private def unreachable
-      config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true
+      config, result = compile_no_codegen "tool unreachable", path_filter: true, unreachable_command: true, allowed_formats: %w[text json csv]
 
       unreachable = UnreachableVisitor.new
 
@@ -39,6 +40,8 @@ module Crystal
       case format
       when "json"
         to_json(STDOUT)
+      when "csv"
+        to_csv(STDOUT)
       else
         to_text(STDOUT)
       end
@@ -79,6 +82,22 @@ module Crystal
             if annotations = a_def.all_annotations
               builder.field "annotations", annotations.map(&.to_s)
             end
+          end
+        end
+      end
+    end
+
+    def to_csv(io)
+      CSV.build(io) do |builder|
+        builder.row %w[name file line column length annotations]
+        each do |a_def, location|
+          builder.row do |row|
+            row << a_def.short_reference
+            row << location.filename
+            row << location.line_number
+            row << location.column_number
+            row << a_def.length
+            row << a_def.all_annotations.try(&.join(" "))
           end
         end
       end

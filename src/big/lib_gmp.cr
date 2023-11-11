@@ -23,10 +23,6 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = UI
 
-  alias IntPrimitiveSigned = Int8 | Int16 | Int32 | LibC::Long
-  alias IntPrimitiveUnsigned = UInt8 | UInt16 | UInt32 | LibC::ULong
-  alias IntPrimitive = IntPrimitiveSigned | IntPrimitiveUnsigned
-
   {% if flag?(:win32) && flag?(:bits64) %}
     alias MpExp = LibC::Long
     alias MpSize = LibC::LongLong

@@ -103,6 +103,7 @@
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.instance_methods, "Instance") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.constructors, "Constructor") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.class_methods, "Class") %>
+    <%= MacrosInheritedTemplate.new(type, ancestor, ancestor.macros) %>
   <% end %>
 </div>
 
