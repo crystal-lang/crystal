@@ -1,0 +1,47 @@
+This CI job installs Crystal and shard dependencies, then executes `crystal spec` to run the test suite
+# More configuration options are available at https://crystal-lang.github.io/install-crystal/configurator.html
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 6 * * 6'  # Every Saturday 6 AM
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: ubuntu-latest
+            crystal: 1.2
+          - os: ubuntu-latest
+            crystal: nightly
+          - os: macos-latest
+          - os: windows-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Download source
+        uses: actions/checkout@v3
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: ${{ matrix.crystal }}
+      - name: Cache shards
+        uses: actions/cache@v3
+        with:
+          path: lib
+          key: ${{ runner.os }}-shards-${{ hashFiles('**/shard.lock') }}
+      - name: Install shards
+        run: shards check || shards install --ignore-crystal-version
+      - name: Run tests
+        run: crystal spec --order=random
+      - name: Build
+        run: shards build
+      - name: Check formatting
+        run: crystal tool format; git diff --exit-code
+        if: matrix.crystal == null && matrix.os
