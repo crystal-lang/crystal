@@ -231,16 +231,12 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["/bin/sh", "-c", command, "--"]
+      shell_args = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
-
-        {% if flag?(:freebsd) || flag?(:dragonfly) %}
-          shell_args << ""
-        {% end %}
 
         shell_args.concat(args)
       end
