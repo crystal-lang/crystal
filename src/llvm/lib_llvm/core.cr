@@ -183,8 +183,11 @@ lib LibLLVM
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun dispose_builder = LLVMDisposeBuilder(builder : BuilderRef)
 
-  {% unless LibLLVM::IS_LT_90 %}
+  {% if LibLLVM::IS_LT_90 %}
+    fun set_current_debug_location = LLVMSetCurrentDebugLocation(builder : BuilderRef, l : ValueRef)
+  {% else %}
     fun get_current_debug_location2 = LLVMGetCurrentDebugLocation2(builder : BuilderRef) : MetadataRef
+    fun set_current_debug_location2 = LLVMSetCurrentDebugLocation2(builder : BuilderRef, loc : MetadataRef)
   {% end %}
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
 

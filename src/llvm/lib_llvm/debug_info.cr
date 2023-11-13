@@ -45,6 +45,10 @@ lib LibLLVM
     builder : DIBuilderRef, scope : MetadataRef, file_scope : MetadataRef, discriminator : UInt
   ) : MetadataRef
 
+  fun di_builder_create_debug_location = LLVMDIBuilderCreateDebugLocation(
+    ctx : ContextRef, line : UInt, column : UInt, scope : MetadataRef, inlined_at : MetadataRef
+  ) : MetadataRef
+
   fun di_builder_get_or_create_type_array = LLVMDIBuilderGetOrCreateTypeArray(builder : DIBuilderRef, types : MetadataRef*, length : SizeT) : MetadataRef
 
   fun di_builder_create_subroutine_type = LLVMDIBuilderCreateSubroutineType(
