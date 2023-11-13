@@ -121,7 +121,7 @@ module Crystal
   # in `@used_def_locations` (and match the filter).
   class UnreachableVisitor < Visitor
     @used_def_locations = Hash(Location, Int32).new(0)
-    @tallies = Hash(Def, Int32).new.compare_by_identity
+    @tallies : Hash(Def, Int32) = Hash(Def, Int32).new.compare_by_identity
     @visited : Set(ASTNode) = Set(ASTNode).new.compare_by_identity
 
     property includes = [] of String
