@@ -53,6 +53,7 @@ class Log
 
     def dispatch(entry : Entry, backend : Backend) : Nil
       @channel.send({entry, backend})
+    rescue Channel::ClosedError
     end
 
     private def write_logs
