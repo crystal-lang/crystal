@@ -2344,7 +2344,7 @@ describe "String" do
   end
 
   it "#matches_full?" do
-    pending! if Regex::Engine == Regex::PCRE
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
     "foo".matches_full?(/foo/).should be_true
     "fooo".matches_full?(/foo/).should be_false
     "ofoo".matches_full?(/foo/).should be_false
@@ -2353,7 +2353,7 @@ describe "String" do
   end
 
   it "#match_full" do
-    pending! if Regex::Engine == Regex::PCRE
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
     "foo".match_full(/foo/).not_nil![0].should eq "foo"
     "fooo".match_full(/foo/).should be_nil
     "ofoo".match_full(/foo/).should be_nil
@@ -2362,7 +2362,7 @@ describe "String" do
   end
 
   it "#match_full!" do
-    pending! if Regex::Engine == Regex::PCRE
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
     "foo".match_full!(/foo/).not_nil![0].should eq "foo"
     expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
     expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
