@@ -205,18 +205,23 @@ module Spec
   def self.run
     @@start_time = Time.monotonic
 
-    at_exit do
-      log_setup
-      maybe_randomize
-      run_filters
-      root_context.run
-    rescue ex
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
-      @@aborted = true
-    ensure
-      finish_run
+    at_exit do |status|
+      # Do not run specs if the process is exiting on an error
+      next unless status == 0
+
+      begin
+        log_setup
+        maybe_randomize
+        run_filters
+        root_context.run
+      rescue ex
+        STDERR.print "Unhandled exception: "
+        ex.inspect_with_backtrace(STDERR)
+        STDERR.flush
+        @@aborted = true
+      ensure
+        finish_run
+      end
     end
   end
 
