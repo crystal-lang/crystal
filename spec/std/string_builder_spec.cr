@@ -40,4 +40,15 @@ describe String::Builder do
       str.chomp!(44).to_s.should eq("a,b,c")
     end
   end
+
+  it "raises EOFError" do
+    builder = String::Builder.new
+    initial_capacity = builder.capacity
+    expect_raises(IO::EOFError) do
+      builder.write Slice.new(Pointer(UInt8).null, Int32::MAX)
+    end
+    # nothing get's written
+    builder.bytesize.should eq 0
+    builder.capacity.should eq initial_capacity
+  end
 end
