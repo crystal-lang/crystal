@@ -70,11 +70,12 @@ struct Crystal::System::Process
                  else
                    ::Process::ExitReason::Interrupted
                  end
+
       # maintain backwards compatibility
-      if handler.arity == 0
-        handler.as(Proc(Nil)).call
+      if handler.is_a? Proc(Nil)
+        handler.call
       else
-        handler.as(Proc(::Process::ExitReason, Nil)).call int_type
+        handler.call int_type
       end
 
       # ignore prevents system defaults and clears registered interrupts
