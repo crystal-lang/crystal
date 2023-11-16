@@ -60,21 +60,20 @@ struct Crystal::System::Process
 
   def self.on_interrupt(&handler) : Nil
     sig_handler = Proc(::Signal, Nil).new do |signal|
-      int_type = case signal
-                 when .int?
-                   ::Process::ExitReason::Interrupted
-                 when .hup?
-                   ::Process::ExitReason::TerminalDisconnected
-                 when .term?
-                   ::Process::ExitReason::SessionEnded
-                 else
-                   ::Process::ExitReason::Interrupted
-                 end
-
       # maintain backwards compatibility
       if handler.is_a? Proc(Nil)
         handler.call
       else
+        int_type = case signal
+                   when .int?
+                     ::Process::ExitReason::Interrupted
+                   when .hup?
+                     ::Process::ExitReason::TerminalDisconnected
+                   when .term?
+                     ::Process::ExitReason::SessionEnded
+                   else
+                     ::Process::ExitReason::Interrupted
+                   end
         handler.call int_type
       end
 
