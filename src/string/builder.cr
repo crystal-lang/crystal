@@ -41,21 +41,14 @@ class String::Builder < IO
     return if slice.empty?
 
     count = slice.size
-    new_bytesize = real_bytesize + count
-    if new_bytesize > @capacity
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
 
+    increase_capacity_by count
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
   end
 
   def write_byte(byte : UInt8) : Nil
-    new_bytesize = real_bytesize + 1
-    if new_bytesize > @capacity
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
-
+    increase_capacity_by 1
     @buffer[real_bytesize] = byte
 
     @bytesize += 1
@@ -124,6 +117,18 @@ class String::Builder < IO
 
   private def real_bytesize
     @bytesize + String::HEADER_SIZE
+  end
+
+  private def increase_capacity_by(count)
+    new_bytesize = real_bytesize + count
+    return if new_bytesize <= @capacity
+
+    new_capacity = calculate_new_capacity(new_bytesize)
+    resize_to_capacity(new_capacity)
+  end
+
+  private def calculate_new_capacity(new_bytesize)
+    Math.pw2ceil(new_bytesize)
   end
 
   private def resize_to_capacity(capacity)
