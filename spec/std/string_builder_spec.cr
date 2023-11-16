@@ -51,4 +51,19 @@ describe String::Builder do
     builder.bytesize.should eq 0
     builder.capacity.should eq initial_capacity
   end
+
+  it "allocates for > 1 GB", tags: %w[slow] do
+    String::Builder.build do |str|
+      mbstring = "a" * 1024 * 1024
+      1023.times { str << mbstring }
+
+      str.bytesize.should eq (1 << 30) - (1 << 20)
+      str.capacity.should eq 1 << 30
+
+      str << mbstring
+
+      str.bytesize.should eq 1 << 30
+      str.capacity.should eq Int32::MAX
+    end
+  end
 end
