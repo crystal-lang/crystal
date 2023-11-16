@@ -55,7 +55,7 @@ class Process
   #
   # The handler is executed on a fresh fiber every time an interrupt occurs.
   #
-  # * On Unix-like systems, this traps `SIGINT`, `SIGHUP`, `SIGTERM`.
+  # * On Unix-like systems, this traps `SIGINT`, `SIGHUP` and `SIGTERM`.
   # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd>,
   #   <kbd>Ctrl</kbd> + <kbd>Break</kbd>, terminal close, windows logoff
   #   and shutdown signals sent to a console application.
