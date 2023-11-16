@@ -59,7 +59,7 @@ class Process
   # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd>,
   #   <kbd>Ctrl</kbd> + <kbd>Break</kbd>, terminal close, windows logoff
   #   and shutdown signals sent to a console application.
-  def self.on_interrupt(&handler : ::Process::ExitReason ->) : Nil
+  def self.on_interrupt(&handler) : Nil
     Crystal::System::Process.on_interrupt(&handler)
   end
 
