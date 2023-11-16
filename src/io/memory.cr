@@ -451,6 +451,8 @@ class IO::Memory < IO
   end
 
   private def increase_capacity_by(count)
+    raise IO::EOFError.new if count >= Int32::MAX - bytesize
+
     new_bytesize = @pos + count
     return if new_bytesize <= @capacity
 

@@ -18,6 +18,17 @@ describe IO::Memory do
     io.gets_to_end.should eq(s)
   end
 
+  it "write raises EOFError" do
+    io = IO::Memory.new
+    initial_capacity = io.@capacity
+    expect_raises(IO::EOFError) do
+      io.write Slice.new(Pointer(UInt8).null, Int32::MAX)
+    end
+    # nothing get's written
+    io.bytesize.should eq 0
+    io.@capacity.should eq initial_capacity
+  end
+
   it "reads byte" do
     io = IO::Memory.new("abc")
     io.read_byte.should eq('a'.ord)
