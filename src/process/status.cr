@@ -82,8 +82,8 @@ enum Process::ExitReason
 
   # The process exited due to the user closing the terminal window or ending an ssh session.
   #
-  # * On Unix-like systems, this corresponds to `Signal::HUP`
-  # * On Windows, this corresponds to the `CTRL_CLOSE_EVENT` message
+  # * On Unix-like systems, this corresponds to `Signal::HUP`.
+  # * On Windows, this corresponds to the `CTRL_CLOSE_EVENT` message.
   TerminalDisconnected
 
   # The process exited due to the user logging off or shutting down the OS.
