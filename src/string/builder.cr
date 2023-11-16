@@ -101,17 +101,18 @@ class String::Builder < IO
     raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
-    write_byte 0_u8
+    real_bytesize = real_bytesize()
+    @buffer[real_bytesize] = 0_u8
+    real_bytesize += 1
 
     # Try to reclaim some memory if capacity is bigger than what we need
-    real_bytesize = real_bytesize()
     if @capacity > real_bytesize
       resize_to_capacity(real_bytesize)
     end
 
     String.set_crystal_type_id(@buffer)
     str = @buffer.as(String)
-    str.initialize_header((bytesize - 1).to_i)
+    str.initialize_header(bytesize)
     str
   end
 

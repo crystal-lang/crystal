@@ -518,5 +518,13 @@ describe IO::Memory do
 
     io.bytesize.should eq (1 << 30) + (1 << 20)
     io.@capacity.should eq Int32::MAX
+
+    1022.times { io << mbstring }
+
+    io.write mbstring.to_slice[0..-4]
+    io << "a"
+    expect_raises(IO::EOFError) do
+      io << "a"
+    end
   end
 end

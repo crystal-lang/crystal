@@ -64,6 +64,14 @@ describe String::Builder do
 
       str.bytesize.should eq 1 << 30
       str.capacity.should eq Int32::MAX
+
+      1023.times { str << mbstring }
+
+      str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
+      str << "a"
+      expect_raises(IO::EOFError) do
+        str << "a"
+      end
     end
   end
 end
