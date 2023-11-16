@@ -13,7 +13,7 @@ struct Crystal::System::Process
   @job_object : LibC::HANDLE
   @completion_key = IO::Overlapped::CompletionKey.new
 
-  @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
+  @@interrupt_handler : Proc(::Process::ExitReason, Nil) | Proc(Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
@@ -151,7 +151,7 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler : ::Process::ExitReason ->) : Nil
+  def self.on_interrupt(&@@interrupt_handler) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       @@last_interrupt = case event_type
@@ -198,7 +198,11 @@ struct Crystal::System::Process
           non_nil_handler = handler # if handler is closured it will also have the Nil type
           int_type = @@last_interrupt
           spawn do
-            non_nil_handler.call int_type
+            if non_nil_handler.arity == 0
+              non_nil_handler.as(Proc(Nil)).call
+            else
+              non_nil_handler.as(Proc(::Process::ExitReason, Nil)).call int_type
+            end
           rescue ex
             ex.inspect_with_backtrace(STDERR)
             STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
