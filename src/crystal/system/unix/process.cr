@@ -58,7 +58,7 @@ struct Crystal::System::Process
     raise RuntimeError.from_errno("kill") if ret < 0
   end
 
-  def self.on_interrupt(&handler : ::Process::ExitReason ->) : Nil
+  def self.on_interrupt(&handler) : Nil
     sig_handler = Proc(::Signal, Nil).new do |signal|
       int_type = case signal
                  when .int?
@@ -70,7 +70,12 @@ struct Crystal::System::Process
                  else
                    ::Process::ExitReason::Interrupted
                  end
-      handler.call int_type
+      # maintain backwards compatibility
+      if handler.arity == 0
+        handler.as(Proc(Nil)).call
+      else
+        handler.as(Proc(::Process::ExitReason, Nil)).call int_type
+      end
 
       # ignore prevents system defaults and clears registered interrupts
       # hence we need to re-register
