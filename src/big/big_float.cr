@@ -171,7 +171,18 @@ struct BigFloat < Float
   end
 
   def **(other : Int) : BigFloat
-    BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
+    # there is no BigFloat::Infinity
+    if zero? && other < 0
+      raise ArgumentError.new "Cannot raise 0 to a negative power"
+    end
+
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_ui_div(mpf, 1, mpf) },
+        big_i:  self ** {{ big_i }},
+      }
+    end
   end
 
   def abs : BigFloat
