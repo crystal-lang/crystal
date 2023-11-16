@@ -88,8 +88,8 @@ enum Process::ExitReason
 
   # The process exited due to the user logging off or shutting down the OS.
   #
-  # * On Unix-like systems, this corresponds to `Signal::TERM`
-  # * On Windows, this corresponds to the `CTRL_LOGOFF_EVENT`, `CTRL_SHUTDOWN_EVENT` messages
+  # * On Unix-like systems, this corresponds to `Signal::TERM`.
+  # * On Windows, this corresponds to the `CTRL_LOGOFF_EVENT` and `CTRL_SHUTDOWN_EVENT` messages.
   SessionEnded
 end
 
