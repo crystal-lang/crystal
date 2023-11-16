@@ -463,6 +463,12 @@ class IO::Memory < IO
   end
 
   private def calculate_new_capacity(new_bytesize : Int32)
+    # If the new bytesize is bigger than 1 << 30, the next power of two would
+    # be 1 << 31, which is out of range for Int32.
+    # So we limit the capacity to Int32::MAX in order to be able to use the
+    # range (1 << 30) < new_bytesize < Int32::MAX
+    return Int32::MAX if new_bytesize > 1 << 30
+
     Math.pw2ceil(new_bytesize)
   end
 

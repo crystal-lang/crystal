@@ -505,4 +505,18 @@ describe IO::Memory do
       end
     end
   {% end %}
+
+  it "allocates for > 1 GB", tags: %w[slow] do
+    io = IO::Memory.new
+    mbstring = "a" * 1024 * 1024
+    1024.times { io << mbstring }
+
+    io.bytesize.should eq(1 << 30)
+    io.@capacity.should eq 1 << 30
+
+    io << mbstring
+
+    io.bytesize.should eq (1 << 30) + (1 << 20)
+    io.@capacity.should eq Int32::MAX
+  end
 end
