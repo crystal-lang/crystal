@@ -90,11 +90,7 @@ class IO::Memory < IO
 
     return if count == 0
 
-    new_bytesize = @pos + count
-    if new_bytesize > @capacity
-      check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
+    increase_capacity_by(count)
 
     slice.copy_to(@buffer + @pos, count)
 
@@ -112,11 +108,7 @@ class IO::Memory < IO
     check_writeable
     check_open
 
-    new_bytesize = @pos + 1
-    if new_bytesize > @capacity
-      check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
+    increase_capacity_by(1)
 
     (@buffer + @pos).value = byte
 
@@ -456,6 +448,20 @@ class IO::Memory < IO
     unless @resizeable
       raise IO::Error.new "Non-resizeable stream"
     end
+  end
+
+  private def increase_capacity_by(count)
+    new_bytesize = @pos + count
+    return if new_bytesize <= @capacity
+
+    check_resizeable
+
+    new_capacity = calculate_new_capacity(new_bytesize)
+    resize_to_capacity(new_capacity)
+  end
+
+  private def calculate_new_capacity(new_bytesize : Int32)
+    Math.pw2ceil(new_bytesize)
   end
 
   private def resize_to_capacity(capacity)
