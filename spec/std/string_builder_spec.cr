@@ -52,26 +52,39 @@ describe String::Builder do
     builder.capacity.should eq initial_capacity
   end
 
-  it "allocates for > 1 GB", tags: %w[slow] do
+  it "allocates for > 1 GB", tags: %w[slow], focus: true do
+    Crystal::System.print_error "start test\n"
     String::Builder.build do |str|
+      Crystal::System.print_error "start block\n"
       mbstring = "a" * 1024 * 1024
+      Crystal::System.print_error "allocated mbstring\n"
       1023.times { str << mbstring }
+      Crystal::System.print_error "wrote 999 MB\n"
 
       str.bytesize.should eq (1 << 30) - (1 << 20)
       str.capacity.should eq 1 << 30
+      Crystal::System.print_error "tested bytesize and capacity\n"
 
       str << mbstring
 
+      Crystal::System.print_error "wrote another MB\n"
+
       str.bytesize.should eq 1 << 30
       str.capacity.should eq Int32::MAX
+      Crystal::System.print_error "tested bytesize and capacity\n"
 
       1023.times { str << mbstring }
+      Crystal::System.print_error "wrote 999 MB\n"
 
       str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
+      Crystal::System.print_error "wrote almost 1 MB\n"
       str << "a"
+      Crystal::System.print_error "wrote last byte\n"
       expect_raises(IO::EOFError) do
         str << "a"
       end
+      Crystal::System.print_error "end block\n"
     end
+    Crystal::System.print_error "end test\n"
   end
 end
