@@ -1,4 +1,4 @@
-require "../../../../../lib/sanitize/src/sanitize"
+require "sanitize"
 
 class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
   @anchor_map = Hash(String, Int32).new(0)
