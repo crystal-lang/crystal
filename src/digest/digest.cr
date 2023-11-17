@@ -213,6 +213,8 @@ abstract class Digest
   # Reads the file's content and updates the digest with it.
   def file(file_name : Path | String) : self
     File.open(file_name) do |io|
+      # `#update` works with big buffers so there's no need for additional read buffering in the file
+      io.read_buffering = false
       self << io
     end
   end

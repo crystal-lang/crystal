@@ -68,6 +68,9 @@ describe Crystal::CrystalPath do
   assert_finds "../test_folder", relative_to: "test_files/test_folder/file_three.cr", results: [
     "test_files/test_folder/test_folder.cr",
   ]
+  assert_finds "foo.cr", results: [
+    "foo.cr/foo.cr",
+  ]
 
   # For `require "foo"`:
   # 1. foo.cr (to find something in the standard library)

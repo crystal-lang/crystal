@@ -165,7 +165,7 @@ module Crystal
           parsed["version"].should eq("0.1.0")
           parsed["authors"].should eq(["John Smith <john@smith.com>"])
           parsed["license"].should eq("MIT")
-          parsed["crystal"].should eq(Crystal::Config.version)
+          parsed["crystal"].should eq(">= #{Crystal::Config.version}")
           parsed["targets"]?.should be_nil
         end
 

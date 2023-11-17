@@ -5101,7 +5101,7 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
+      path = parse_path(global, location)
       skip_space
       path
     end
