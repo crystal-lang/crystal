@@ -409,7 +409,7 @@ describe "Dir" do
     it "tests with relative path (starts with ..)" do
       Dir.cd(datapath) do
         base_path = Path["..", "data", "dir"]
-        Dir["#{base_path}/*/"].sort.should eq [
+        Dir["#{base_path.to_posix}/*/"].sort.should eq [
           base_path.join("dots", "").to_s,
           base_path.join("subdir", "").to_s,
           base_path.join("subdir2", "").to_s,
@@ -435,11 +435,11 @@ describe "Dir" do
         File.symlink(datapath("dir", "f1.txt"), link)
         File.symlink(datapath("dir", "nonexisting"), non_link)
 
-        Dir["#{path}/*_link.txt"].sort.should eq [
+        Dir["#{Path[path].to_posix}/*_link.txt"].sort.should eq [
           link.to_s,
           non_link.to_s,
         ].sort
-        Dir["#{path}/non_link.txt"].should eq [non_link.to_s]
+        Dir["#{Path[path].to_posix}/non_link.txt"].should eq [non_link.to_s]
       end
     end
 
@@ -455,8 +455,8 @@ describe "Dir" do
         File.write(non_link, "")
         File.symlink(target, link_dir)
 
-        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
-        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
+        Dir.glob("#{Path[path].to_posix}/glob/*/a.txt").sort.should eq [] of String
+        Dir.glob("#{Path[path].to_posix}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
           File.join(path, "glob", "dir", "a.txt"),
         ]
       end
@@ -575,10 +575,10 @@ describe "Dir" do
           expected_hidden = (expected + [hidden_txt, hidden_dir, inside_hidden]).sort!
           expected_system_hidden = (expected_hidden + [system_hidden_txt, system_hidden_dir, inside_system_hidden]).sort!
 
-          Dir.glob("#{path}/**/*", match: :none).sort.should eq(expected)
-          Dir.glob("#{path}/**/*", match: :native_hidden).sort.should eq(expected_hidden)
-          Dir.glob("#{path}/**/*", match: :os_hidden).sort.should eq(expected)
-          Dir.glob("#{path}/**/*", match: File::MatchOptions[NativeHidden, OSHidden]).sort.should eq(expected_system_hidden)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: :none).sort.should eq(expected)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: :native_hidden).sort.should eq(expected_hidden)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: :os_hidden).sort.should eq(expected)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: File::MatchOptions[NativeHidden, OSHidden]).sort.should eq(expected_system_hidden)
         end
       end
     {% end %}
@@ -591,8 +591,8 @@ describe "Dir" do
       ]
 
       it "posix path" do
-        Dir[Path.posix(datapath, "dir", "*.txt")].sort.should eq expected
-        Dir[[Path.posix(datapath, "dir", "*.txt")]].sort.should eq expected
+        Dir[Path.posix(Path[datapath].to_posix, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.posix(Path[datapath].to_posix, "dir", "*.txt")]].sort.should eq expected
       end
 
       it "windows path" do
