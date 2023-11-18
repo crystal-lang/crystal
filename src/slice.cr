@@ -37,7 +37,7 @@ struct Slice(T)
     {% if @type.name != "Slice(T)" && T < Number %}
       {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
+      %ptr = Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}

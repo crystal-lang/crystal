@@ -1,53 +1,25 @@
-class Thread
-  @main_fiber : Fiber?
+module Crystal::System::Thread
+  alias Handle = Nil
 
-  def initialize
-    @main_fiber = Fiber.new(stack_address, self)
-
-    # TODO: Create thread
+  def self.new_handle(thread_obj : ::Thread) : Handle
+    raise NotImplementedError.new("Crystal::System::Thread.new_handle")
   end
 
-  def initialize(&func : ->)
-    initialize
+  def self.current_handle : Handle
+    nil
   end
 
-  def join : Nil
-    raise NotImplementedError.new("Thread#join")
+  def self.yield_current : Nil
+    raise NotImplementedError.new("Crystal::System::Thread.yield_current")
   end
 
-  def self.yield : Nil
-    raise NotImplementedError.new("Thread.yield")
+  class_property current_thread : ::Thread { ::Thread.new }
+
+  private def system_join : Exception?
+    NotImplementedError.new("Crystal::System::Thread#system_join")
   end
 
-  @@current = Thread.new
-
-  # Associates the Thread object to the running system thread.
-  protected def self.current=(@@current : Thread) : Thread
-  end
-
-  # Returns the Thread object associated to the running system thread.
-  def self.current : Thread
-    @@current
-  end
-
-  # Create the thread object for the current thread (aka the main thread of the
-  # process).
-  #
-  # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
-  self.current = new
-
-  # Returns the Fiber representing the thread's main stack.
-  def main_fiber
-    @main_fiber.not_nil!
-  end
-
-  # :nodoc:
-  def scheduler
-    @scheduler ||= Crystal::Scheduler.new(main_fiber)
-  end
-
-  protected def start
-    raise NotImplementedError.new("Thread#start")
+  private def system_close
   end
 
   private def stack_address : Void*

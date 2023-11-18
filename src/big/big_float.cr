@@ -40,29 +40,16 @@ struct BigFloat < Float
     LibGMP.mpf_set(self, num)
   end
 
-  def initialize(num : Int8 | Int16 | Int32)
-    LibGMP.mpf_init_set_si(out @mpf, num)
-  end
-
-  def initialize(num : UInt8 | UInt16 | UInt32)
-    LibGMP.mpf_init_set_ui(out @mpf, num)
-  end
-
-  def initialize(num : Int64)
-    if LibGMP::Long == Int64
-      LibGMP.mpf_init_set_si(out @mpf, num)
-    else
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set_z(self, num.to_big_i)
-    end
-  end
-
-  def initialize(num : UInt64)
-    if LibGMP::ULong == UInt64
-      LibGMP.mpf_init_set_ui(out @mpf, num)
-    else
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set_z(self, num.to_big_i)
+  def initialize(num : Int)
+    Int.primitive_si_ui_check(num) do |si, ui, big_i|
+      {
+        si:    LibGMP.mpf_init_set_si(out @mpf, {{ si }}),
+        ui:    LibGMP.mpf_init_set_ui(out @mpf, {{ ui }}),
+        big_i: begin
+          LibGMP.mpf_init(out @mpf)
+          LibGMP.mpf_set_z(self, {{ big_i }})
+        end,
+      }
     end
   end
 
@@ -113,14 +100,18 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_d(self, other) unless other.nan?
   end
 
-  def <=>(other : Number)
-    if other.is_a?(Int8 | Int16 | Int32) || (LibGMP::Long == Int64 && other.is_a?(Int64))
-      LibGMP.mpf_cmp_si(self, other)
-    elsif other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
-      LibGMP.mpf_cmp_ui(self, other)
-    else
-      LibGMP.mpf_cmp(self, other.to_big_f)
+  def <=>(other : Int)
+    Int.primitive_si_ui_check(other) do |si, ui, big_i|
+      {
+        si:    LibGMP.mpf_cmp_si(self, {{ si }}),
+        ui:    LibGMP.mpf_cmp_ui(self, {{ ui }}),
+        big_i: self <=> {{ big_i }},
+      }
     end
+  end
+
+  def <=>(other : Number)
+    LibGMP.mpf_cmp(self, other.to_big_f)
   end
 
   def - : BigFloat
@@ -180,7 +171,18 @@ struct BigFloat < Float
   end
 
   def **(other : Int) : BigFloat
-    BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
+    # there is no BigFloat::Infinity
+    if zero? && other < 0
+      raise ArgumentError.new "Cannot raise 0 to a negative power"
+    end
+
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_ui_div(mpf, 1, mpf) },
+        big_i:  self ** {{ big_i }},
+      }
+    end
   end
 
   def abs : BigFloat

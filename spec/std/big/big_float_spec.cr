@@ -186,6 +186,9 @@ describe "BigFloat" do
     it { ("-0.05".to_big_f ** 10.to_big_i).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
     it { ("0.1234567890".to_big_f ** 3.to_big_i).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
 
+    it { ("10".to_big_f ** -5).should be_close("0.00001".to_big_f, 1e-12) }
+    it { ("0.1".to_big_f ** -5).should be_close("100000".to_big_f, 1e-12) }
+
     it { ("10".to_big_f ** (-5).to_big_i).should be_close("0.00001".to_big_f, 1e-12) }
     it { ("0.1".to_big_f ** (-5).to_big_i).should be_close("100000".to_big_f, 1e-12) }
     it { ("0".to_big_f ** 1.to_big_i).should eq(0.to_big_f) }

@@ -3145,11 +3145,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% operands = instruction[:operands] || [] of Nil %}
 
     def {{name.id}}(
-      {% if operands.empty? %}
-        *, node : ASTNode?
-      {% else %}
-        {{*operands}}, *, node : ASTNode?
-      {% end %}
+      {{operands.splat(", ")}}*, node : ASTNode?
     ) : Nil
       node = @node_override || node
       @instructions.nodes[instructions_index] = node if node

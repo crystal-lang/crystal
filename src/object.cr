@@ -1086,7 +1086,7 @@ class Object
     # end
     # ```
     macro {{macro_prefix}}property!(*names)
-      {{macro_prefix}}getter! \{{*names}}
+      {{macro_prefix}}getter! \{{names.splat}}
 
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
@@ -1377,8 +1377,8 @@ class Object
   # end
   # ```
   macro def_equals_and_hash(*fields)
-    def_equals {{*fields}}
-    def_hash {{*fields}}
+    def_equals {{fields.splat}}
+    def_hash {{fields.splat}}
   end
 
   # Forwards missing methods to *delegate*.

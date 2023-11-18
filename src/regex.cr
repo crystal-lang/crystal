@@ -403,7 +403,7 @@ class Regex
       str.each_byte do |byte|
         {% begin %}
           case byte.unsafe_chr
-          when {{*SPECIAL_CHARACTERS}}
+          when {{SPECIAL_CHARACTERS.splat}}
             result << '\\'
             result.write_byte byte
           else

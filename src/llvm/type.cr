@@ -149,7 +149,7 @@ struct LLVM::Type
   end
 
   def const_float(value : String) : Value
-    Value.new LibLLVM.const_real_of_string(self, value)
+    Value.new LibLLVM.const_real_of_string_and_size(self, value, value.bytesize)
   end
 
   def const_double(value : Float64) : Value
@@ -157,7 +157,7 @@ struct LLVM::Type
   end
 
   def const_double(string : String) : Value
-    Value.new LibLLVM.const_real_of_string(self, string)
+    Value.new LibLLVM.const_real_of_string_and_size(self, string, string.bytesize)
   end
 
   def const_array(values : Array(LLVM::Value)) : Value

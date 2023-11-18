@@ -145,7 +145,7 @@ class Crystal::Program
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
-      host_compiler.release = true
+      host_compiler.release!
 
       # Don't cleanup old directories after compiling: it might happen
       # that in doing so we remove the directory associated with the current

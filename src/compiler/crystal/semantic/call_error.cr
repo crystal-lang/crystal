@@ -902,7 +902,6 @@ class Crystal::Call
 
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros.is_a?(Array(Macro))
-    macros = macros.reject &.visibility.private?
 
     if msg = single_def_error_message(macros, named_args)
       raise msg
