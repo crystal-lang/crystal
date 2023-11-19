@@ -121,7 +121,7 @@ class Crystal::Command
         end
       elsif Dir.exists?(filename)
         filename = filename.chomp('/')
-        filenames = Dir["#{filename}/**/*.cr"]
+        filenames = Dir[::Path.new(filename, "**/*.cr").to_posix]
         format_many filenames
       else
         error "file or directory does not exist: #{filename}"
