@@ -1,5 +1,5 @@
 require "spec"
-require "../support/string"
+require "spec/helpers/string"
 
 private LENGTH_UNITS = ->(magnitude : Int32, number : Float64) do
   case magnitude

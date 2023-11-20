@@ -535,6 +535,21 @@ struct Time
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
+  # Creates a new `Time` instance that corresponds to the number of
+  # *nanoseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00.000000000 UTC`).
+  #
+  # The time zone is always UTC.
+  #
+  # ```
+  # time = Time.unix_ns(981173106789479273) # => 2001-02-03 04:05:06.789479273 UTC
+  # time.nanosecond                         # => 789479273
+  # ```
+  def self.unix_ns(nanoseconds : Int) : Time
+    seconds = UNIX_EPOCH.total_seconds + (nanoseconds // 1_000_000_000)
+    nanoseconds = nanoseconds % 1_000_000_000
+    utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+  end
+
   # Creates a new `Time` instance with the same local date-time representation
   # (wall clock) in a different *location*.
   #
@@ -1026,7 +1041,7 @@ struct Time
       raise ArgumentError.new "Invalid year"
     end
 
-    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+    year.divisible_by?(4) && (!year.divisible_by?(100) || year.divisible_by?(400))
   end
 
   # Prints this `Time` to *io*.
@@ -1252,6 +1267,17 @@ struct Time
   # ```
   def to_unix_ms : Int64
     to_unix * 1_000 + (nanosecond // NANOSECONDS_PER_MILLISECOND)
+  end
+
+  # Returns the number of nanoseconds since the Unix epoch
+  # (`1970-01-01 00:00:00.000000000 UTC`).
+  #
+  # ```
+  # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_910_123)
+  # time.to_unix_ns # => 1452567845678910123
+  # ```
+  def to_unix_ns : Int128
+    (to_unix.to_i128 * NANOSECONDS_PER_SECOND) + nanosecond
   end
 
   # Returns the number of seconds since the Unix epoch

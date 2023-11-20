@@ -100,11 +100,11 @@ class LLVM::Context
   end
 
   def md_string(value : String) : Value
-    LLVM::Value.new LibLLVM.md_string_in_context(self, value, value.bytesize)
+    LLVM::Value.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
   end
 
   def md_node(values : Array(Value)) : Value
-    Value.new LibLLVM.md_node_in_context(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+    Value.new LibLLVM.md_node_in_context2(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
   def parse_ir(buf : MemoryBuffer)

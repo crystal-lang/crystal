@@ -438,7 +438,30 @@ module HTTP
         request.query = new_query
         request.query_params.to_s.should eq(new_query)
       end
+    end
 
+    describe "#form_params" do
+      it "returns can safely be called on get requests" do
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource HTTP/1.1\r\n\r\n")).as(Request)
+        request.form_params?.should eq(nil)
+        request.form_params.size.should eq(0)
+      end
+
+      it "returns parsed HTTP::Params" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not eq(nil)
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
+      it "returns ignors invalid content-type" do
+        request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should eq(nil)
+        request.form_params.size.should eq(0)
+      end
+    end
+
+    describe "#hostname" do
       it "gets request hostname from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.hostname.should eq("host.example.org")
@@ -472,7 +495,9 @@ module HTTP
         request = Request.new("GET", "/")
         request.hostname.should be_nil
       end
+    end
 
+    describe "#host_with_port" do
       it "gets request host with port from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")

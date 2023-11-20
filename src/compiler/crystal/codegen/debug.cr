@@ -463,7 +463,9 @@ module Crystal
       scope = get_current_debug_scope(location)
 
       if scope
-        builder.set_current_debug_location(location.line_number || 1, location.column_number, scope)
+        debug_loc = di_builder.create_debug_location(location.line_number || 1, location.column_number, scope)
+        # NOTE: `di_builder.context` is only necessary for LLVM 8
+        builder.set_current_debug_location(debug_loc, di_builder.context)
       else
         clear_current_debug_location
       end
@@ -472,7 +474,7 @@ module Crystal
     def clear_current_debug_location
       @current_debug_location = nil
 
-      builder.set_current_debug_location(0, 0, nil)
+      builder.clear_current_debug_location
     end
 
     def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LibLLVM::MetadataRef, is_optimized = false)

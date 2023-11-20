@@ -127,12 +127,21 @@ class Array(T)
   #
   # ```
   # Array.new(3, 'a') # => ['a', 'a', 'a']
+  # ```
   #
+  # WARNING: The initial value is filled into the array as-is. It gets neither
+  # duplicated nor cloned. For types with reference semantics this means every
+  # item will point to the *same* object.
+  #
+  # ```
   # ary = Array.new(3, [1])
   # ary # => [[1], [1], [1]]
   # ary[0][0] = 2
   # ary # => [[2], [2], [2]]
   # ```
+  #
+  # * `.new(Int, & : Int32 -> T)` is an alternative that allows using a
+  #   different initial value for each position.
   def initialize(size : Int, value : T)
     if size < 0
       raise ArgumentError.new("Negative array size: #{size}")
@@ -256,7 +265,7 @@ class Array(T)
     return Array(T).new if self.empty? || other.empty?
 
     # Heuristic: for small arrays we do a linear scan, which is usually
-    # faster than creating an intermediate Hash.
+    # faster than creating an intermediate Set.
     if self.size + other.size <= SMALL_ARRAY_SIZE * 2
       ary = Array(T).new
       each do |elem|
@@ -265,20 +274,13 @@ class Array(T)
       return ary
     end
 
-    hash = other.to_lookup_hash
-    hash_size = hash.size
+    set = other.to_set
     Array(T).build(Math.min(size, other.size)) do |buffer|
-      i = 0
+      appender = buffer.appender
       each do |obj|
-        hash.delete(obj)
-        new_hash_size = hash.size
-        if hash_size != new_hash_size
-          hash_size = new_hash_size
-          buffer[i] = obj
-          i += 1
-        end
+        appender << obj if set.delete(obj)
       end
-      i
+      appender.size.to_i
     end
   end
 
@@ -292,7 +294,7 @@ class Array(T)
   # See also: `#uniq`.
   def |(other : Array(U)) : Array(T | U) forall U
     # Heuristic: if the combined size is small we just do a linear scan
-    # instead of using a Hash for lookup.
+    # instead of using a Set for lookup.
     if size + other.size <= SMALL_ARRAY_SIZE
       ary = Array(T | U).new
       each do |elem|
@@ -305,23 +307,15 @@ class Array(T)
     end
 
     Array(T | U).build(size + other.size) do |buffer|
-      hash = Hash(T, Bool).new
-      i = 0
+      set = Set(T).new
+      appender = buffer.appender
       each do |obj|
-        unless hash.has_key?(obj)
-          buffer[i] = obj
-          hash[obj] = true
-          i += 1
-        end
+        appender << obj if set.add?(obj)
       end
       other.each do |obj|
-        unless hash.has_key?(obj)
-          buffer[i] = obj
-          hash[obj] = true
-          i += 1
-        end
+        appender << obj if set.add?(obj)
       end
-      i
+      appender.size.to_i
     end
   end
 
@@ -356,7 +350,7 @@ class Array(T)
   # ```
   def -(other : Array(U)) : Array(T) forall U
     # Heuristic: if any of the arrays is small we just do a linear scan
-    # instead of using a Hash for lookup.
+    # instead of using a Set for lookup.
     if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
       ary = Array(T).new
       each do |elem|
@@ -366,9 +360,9 @@ class Array(T)
     end
 
     ary = Array(T).new(Math.max(size - other.size, 0))
-    hash = other.to_lookup_hash
+    set = other.to_set
     each do |obj|
-      ary << obj unless hash.has_key?(obj)
+      ary << obj unless set.includes?(obj)
     end
     ary
   end
@@ -1858,7 +1852,7 @@ class Array(T)
     end
 
     # Heuristic: for a small array it's faster to do a linear scan
-    # than creating a Hash to find out duplicates.
+    # than creating a Set to find out duplicates.
     if size <= SMALL_ARRAY_SIZE
       ary = Array(T).new
       each do |elem|
@@ -1867,8 +1861,8 @@ class Array(T)
       return ary
     end
 
-    # Convert the Array into a Hash and then ask for its values
-    to_lookup_hash.values
+    # Convert the Array into a Set and then ask for its values
+    to_set.to_a
   end
 
   # Returns a new `Array` by removing duplicate values in `self`, using the block's
@@ -2174,10 +2168,6 @@ class Array(T)
   private def to_unsafe_slice(start : Int, count : Int)
     start, count = normalize_start_and_count(start, count)
     Slice.new(@buffer + start, count)
-  end
-
-  protected def to_lookup_hash
-    to_lookup_hash { |elem| elem }
   end
 
   protected def to_lookup_hash(& : T -> U) forall U

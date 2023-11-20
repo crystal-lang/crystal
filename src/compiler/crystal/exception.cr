@@ -7,15 +7,12 @@ module Crystal
   abstract class CodeError < Error
     property? color = false
     property? error_trace = false
+    property? warning = false
 
     @filename : String | VirtualFile | Nil
 
     def to_s(io) : Nil
       to_s_with_source(io, nil)
-    end
-
-    def warning=(warning)
-      @warning = !!warning
     end
 
     abstract def to_s_with_source(io : IO, source)

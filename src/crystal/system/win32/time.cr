@@ -71,7 +71,7 @@ module Crystal::System::Time
   end
 
   def self.load_localtime : ::Time::Location?
-    if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_UNKNOWN
+    if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_INVALID
       initialize_location_from_TZI(info, "Local")
     end
   end

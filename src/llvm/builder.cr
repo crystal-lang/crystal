@@ -89,12 +89,24 @@ class LLVM::Builder
     Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
   end
 
-  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
+    # check_type("call", type)
+    # check_func(func)
+    # check_values(args)
+
+    Value.new LibLLVM.build_call2(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, name)
+  end
+
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String, bundle : LLVM::OperandBundleDef)
     # check_type("call", type)
     # check_func(func)
     # check_values(args)
 
     Value.new LibLLVMExt.build_call2(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
+  end
+
+  def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), bundle : LLVM::OperandBundleDef)
+    call(type, func, args, "", bundle)
   end
 
   def alloca(type, name = "")
@@ -281,7 +293,14 @@ class LLVM::Builder
     Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
   end
 
-  def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
+  def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, *, name = "")
+    # check_type("invoke", type)
+    # check_func(fn)
+
+    Value.new LibLLVM.build_invoke2 self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, name
+  end
+
+  def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef, name = "")
     # check_type("invoke", type)
     # check_func(fn)
 
@@ -314,8 +333,25 @@ class LLVM::Builder
     Value.new LibLLVM.build_va_arg(self, list, type, name)
   end
 
+  @[Deprecated("Call `#set_current_debug_location(metadata, context)` or `#clear_current_debug_location` instead")]
   def set_current_debug_location(line, column, scope, inlined_at = nil)
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  end
+
+  def set_current_debug_location(metadata, context : LLVM::Context)
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVM.set_current_debug_location(self, LibLLVM.metadata_as_value(context, metadata))
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, metadata)
+    {% end %}
+  end
+
+  def clear_current_debug_location
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVMExt.clear_current_debug_location(self)
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, nil)
+    {% end %}
   end
 
   def set_metadata(value, kind, node)

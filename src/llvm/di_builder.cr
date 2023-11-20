@@ -14,6 +14,10 @@ struct LLVM::DIBuilder
     LibLLVM.dispose_di_builder(self)
   end
 
+  def context
+    @llvm_module.context
+  end
+
   def create_compile_unit(lang : DwarfSourceLanguage, file, dir, producer, optimized, flags, runtime_version)
     file = create_file(file, dir)
     {% if LibLLVM::IS_LT_110 %}
@@ -151,6 +155,10 @@ struct LLVM::DIBuilder
     LibLLVM.di_builder_get_or_create_subrange(self, lo, count)
   end
 
+  def create_debug_location(line, column, scope, inlined_at = nil)
+    LibLLVM.di_builder_create_debug_location(context, line, column, scope, inlined_at)
+  end
+
   def end
     LibLLVM.di_builder_finalize(self)
   end
@@ -191,7 +199,7 @@ struct LLVM::DIBuilder
   end
 
   private def extract_metadata_array(metadata : LibLLVM::MetadataRef)
-    metadata_as_value = LibLLVM.metadata_as_value(@llvm_module.context, metadata)
+    metadata_as_value = LibLLVM.metadata_as_value(context, metadata)
     operand_count = LibLLVM.get_md_node_num_operands(metadata_as_value).to_i
     operands = Pointer(LibLLVM::ValueRef).malloc(operand_count)
     LibLLVM.get_md_node_operands(metadata_as_value, operands)

@@ -84,7 +84,7 @@ require "./std/float_printer/ieee_spec.cr"
 require "./std/float_spec.cr"
 require "./std/gc_spec.cr"
 require "./std/hash_spec.cr"
-require "./std/html_spec.cr"
+# require "./std/html_spec.cr" (failed to run)
 # require "./std/http/chunked_content_spec.cr" (failed linking)
 # require "./std/http/client/client_spec.cr" (failed linking)
 # require "./std/http/client/response_spec.cr" (failed linking)

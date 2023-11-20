@@ -227,8 +227,9 @@ struct BigDecimal < Number
   # Divides `self` with another `BigDecimal`, with an optionally configurable
   # *precision*.
   #
-  # When the division is inexact, the returned value's scale is never greater
-  # than `scale - other.scale + precision`.
+  # When the division is inexact, the returned value rounds towards negative
+  # infinity, and its scale is never greater than
+  # `scale - other.scale + precision`.
   #
   # ```
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
@@ -325,7 +326,30 @@ struct BigDecimal < Number
     end
   end
 
-  def <=>(other : Int | Float | BigRational)
+  def <=>(other : BigRational) : Int32
+    if @scale == 0
+      @value <=> other
+    else
+      # `@value / power_ten_to(@scale) <=> other.numerator / other.denominator`
+      @value * other.denominator <=> power_ten_to(@scale) * other.numerator
+    end
+  end
+
+  def <=>(other : Float::Primitive) : Int32?
+    return nil if other.nan?
+
+    if sign = other.infinite?
+      return -sign
+    end
+
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : BigFloat) : Int32
+    self <=> other.to_big_r
+  end
+
+  def <=>(other : Int)
     self <=> BigDecimal.new(other)
   end
 
@@ -435,28 +459,44 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
+  # :inherit:
+  def integer? : Bool
+    factor_powers_of_ten
+    scale == 0
+  end
+
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
-    return self if (base == 10 && @scale <= digits) || zero?
+    return self if zero?
 
-    # the following is same as the overload in `Number` except `base.to_f`
-    # becomes `.to_big_d`
-    if digits < 0
-      multiplier = base.to_big_d ** digits.abs
-      shifted = self / multiplier
+    if base == 10
+      return self if @scale <= digits
+
+      # optimized version that skips `#div` completely, always exact
+      shifted = mul_power_of_ten(digits)
+      rounded = shifted.round(mode)
+      rounded.mul_power_of_ten(-digits)
     else
-      multiplier = base.to_big_d ** digits
-      shifted = self * multiplier
+      # the following is same as the overload in `Number` except `base.to_f`
+      # becomes `base.to_big_d`; note that the `#/` calls always use
+      # `DEFAULT_PRECISION`
+      if digits < 0
+        multiplier = base.to_big_d ** digits.abs
+        shifted = self / multiplier
+      else
+        multiplier = base.to_big_d ** digits
+        shifted = self * multiplier
+      end
+
+      rounded = shifted.round(mode)
+
+      if digits < 0
+        result = rounded * multiplier
+      else
+        result = rounded / multiplier
+      end
+
+      BigDecimal.new result
     end
-
-    rounded = shifted.round(mode)
-
-    if digits < 0
-      result = rounded * multiplier
-    else
-      result = rounded / multiplier
-    end
-
-    BigDecimal.new result
   end
 
   def to_s(io : IO) : Nil
@@ -735,6 +775,15 @@ struct BigDecimal < Number
     TEN_I ** x
   end
 
+  # returns `self * 10 ** exponent`
+  protected def mul_power_of_ten(exponent : Int)
+    if exponent <= scale
+      BigDecimal.new(@value, @scale - exponent)
+    else
+      BigDecimal.new(@value * power_ten_to(exponent - scale), 0_u64)
+    end
+  end
+
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
   protected def factor_powers_of_ten
@@ -784,7 +833,8 @@ struct Float
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    cmp = other <=> self
+    -cmp if cmp
   end
 
   # Converts `self` to `BigDecimal`.
@@ -800,11 +850,17 @@ struct Float
   end
 end
 
+struct BigFloat
+  def <=>(other : BigDecimal)
+    -(other <=> self)
+  end
+end
+
 struct BigRational
   include Comparable(BigDecimal)
 
   def <=>(other : BigDecimal)
-    to_big_d <=> other
+    -(other <=> self)
   end
 
   # Converts `self` to `BigDecimal`.

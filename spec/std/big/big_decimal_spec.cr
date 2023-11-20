@@ -1,6 +1,6 @@
 require "spec"
 require "big"
-require "../../support/string"
+require "spec/helpers/string"
 
 describe BigDecimal do
   it "initializes from valid input" do
@@ -377,8 +377,23 @@ describe BigDecimal do
     (BigDecimal.new("7.5") > 6.6).should be_true
     (6.6 < BigDecimal.new("7.5")).should be_true
 
-    BigDecimal.new("6.6").should eq(6.6)
-    6.6.should eq(BigDecimal.new("6.6"))
+    "1.0000000000000002".to_big_d.should be < 1.0.next_float
+    (1.0.to_big_d + 0.5.to_big_d ** 52).should eq(1.0.next_float)
+    "1.0000000000000003".to_big_d.should be > 1.0.next_float
+
+    1.0.next_float.should be > "1.0000000000000002".to_big_d
+    1.0.next_float.should eq(1.0.to_big_d + 0.5.to_big_d ** 52)
+    1.0.next_float.should be < "1.0000000000000003".to_big_d
+
+    0.to_big_d.should be < Float64::INFINITY
+    (Float64::MAX.to_big_d ** 7).should be < Float64::INFINITY
+    0.to_big_d.should be > -Float64::INFINITY
+    (Float64::MIN.to_big_d ** 7).should be > -Float64::INFINITY
+
+    Float64::INFINITY.should be > 0.to_big_d
+    Float64::INFINITY.should be > (Float64::MAX.to_big_d ** 7)
+    (-Float64::INFINITY).should be < 0.to_big_d
+    (-Float64::INFINITY).should be < (Float64::MIN.to_big_d ** 7)
 
     (BigDecimal.new("6.5") > 7).should be_false
     (BigDecimal.new("7.5") > 6).should be_true
@@ -388,6 +403,40 @@ describe BigDecimal do
 
     BigRational.new(1, 2).should eq(BigDecimal.new("0.5"))
     BigRational.new(1, 4).should eq(BigDecimal.new("0.25"))
+
+    (1.to_big_d / 3).should be < BigRational.new(1, 3)
+    (-(1.to_big_d / 3)).should be > BigRational.new(-1, 3)
+    (-1.to_big_d / 3).should be < BigRational.new(-1, 3)
+
+    BigRational.new(1, 3).should be > 1.to_big_d / 3
+    BigRational.new(-1, 3).should be < -(1.to_big_d / 3)
+    BigRational.new(-1, 3).should be > -1.to_big_d / 3
+
+    (1.to_big_d / 3 + BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION)).should be > BigRational.new(1, 3)
+    (-(1.to_big_d / 3) - BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION)).should be < BigRational.new(-1, 3)
+
+    BigRational.new(1, 3).should be < (1.to_big_d / 3 + BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
+    BigRational.new(-1, 3).should be > (-(1.to_big_d / 3) - BigDecimal.new(1, BigDecimal::DEFAULT_PRECISION))
+
+    (0.5.to_big_d ** 10000).should eq(0.5.to_big_f ** 10000)
+    "5.0123727492064520093e-3011".to_big_d.should be > 0.5.to_big_f ** 10000
+
+    (0.5.to_big_f ** 10000).should eq(0.5.to_big_d ** 10000)
+    (0.5.to_big_f ** 10000).should be < "5.0123727492064520093e-3011".to_big_d
+  end
+
+  describe "#<=>" do
+    it "compares against NaNs" do
+      (1.to_big_d <=> Float64::NAN).should be_nil
+      (1.to_big_d <=> Float32::NAN).should be_nil
+      (Float64::NAN <=> 1.to_big_d).should be_nil
+      (Float32::NAN <=> 1.to_big_d).should be_nil
+
+      typeof(1.to_big_d <=> Float64::NAN).should eq(Int32?)
+      typeof(1.to_big_d <=> Float32::NAN).should eq(Int32?)
+      typeof(Float64::NAN <=> 1.to_big_d).should eq(Int32?)
+      typeof(Float32::NAN <=> 1.to_big_d).should eq(Int32?)
+    end
   end
 
   it "keeps precision" do
@@ -769,6 +818,23 @@ describe BigDecimal do
         "-12.345".to_big_d.round(0, mode: :to_zero).should eq "-12".to_big_d
         "-12.345".to_big_d.round(1, mode: :to_zero).should eq "-12.3".to_big_d
         "-12.345".to_big_d.round(2, mode: :to_zero).should eq "-12.34".to_big_d
+
+        # 1 + 3.0000e-200 -> 1 + 3.0e-200 (ditto for others)
+        (1.to_big_d + BigDecimal.new(30000, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(30001, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(39999, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(40000, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40001, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(49999, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(50000, 204)).round(200, mode: :to_zero).should eq(1.to_big_d + BigDecimal.new(5, 200))
+
+        (-1.to_big_d - BigDecimal.new(30000, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(30001, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(39999, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(40000, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40001, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(49999, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(50000, 204)).round(200, mode: :to_zero).should eq(-1.to_big_d - BigDecimal.new(5, 200))
       end
 
       it "to_positive" do
@@ -780,6 +846,23 @@ describe BigDecimal do
         "-12.345".to_big_d.round(0, mode: :to_positive).should eq "-12".to_big_d
         "-12.345".to_big_d.round(1, mode: :to_positive).should eq "-12.3".to_big_d
         "-12.345".to_big_d.round(2, mode: :to_positive).should eq "-12.34".to_big_d
+
+        # 1 + 3.0000e-200 -> 1 + 3.0e-200 (ditto for others)
+        (1.to_big_d + BigDecimal.new(30000, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(30001, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(39999, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40000, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40001, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(5, 200))
+        (1.to_big_d + BigDecimal.new(49999, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(5, 200))
+        (1.to_big_d + BigDecimal.new(50000, 204)).round(200, mode: :to_positive).should eq(1.to_big_d + BigDecimal.new(5, 200))
+
+        (-1.to_big_d - BigDecimal.new(30000, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(30001, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(39999, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(40000, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40001, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(49999, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(50000, 204)).round(200, mode: :to_positive).should eq(-1.to_big_d - BigDecimal.new(5, 200))
       end
 
       it "to_negative" do
@@ -791,6 +874,23 @@ describe BigDecimal do
         "-12.345".to_big_d.round(0, mode: :to_negative).should eq "-13".to_big_d
         "-12.345".to_big_d.round(1, mode: :to_negative).should eq "-12.4".to_big_d
         "-12.345".to_big_d.round(2, mode: :to_negative).should eq "-12.35".to_big_d
+
+        # 1 + 3.0000e-200 -> 1 + 3.0e-200 (ditto for others)
+        (1.to_big_d + BigDecimal.new(30000, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(30001, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(39999, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(40000, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40001, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(49999, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(50000, 204)).round(200, mode: :to_negative).should eq(1.to_big_d + BigDecimal.new(5, 200))
+
+        (-1.to_big_d - BigDecimal.new(30000, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(30001, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(39999, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40000, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40001, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(5, 200))
+        (-1.to_big_d - BigDecimal.new(49999, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(5, 200))
+        (-1.to_big_d - BigDecimal.new(50000, 204)).round(200, mode: :to_negative).should eq(-1.to_big_d - BigDecimal.new(5, 200))
       end
 
       it "ties_away" do
@@ -802,6 +902,33 @@ describe BigDecimal do
         "-13.825".to_big_d.round(0, mode: :ties_away).should eq "-14".to_big_d
         "-13.825".to_big_d.round(1, mode: :ties_away).should eq "-13.8".to_big_d
         "-13.825".to_big_d.round(2, mode: :ties_away).should eq "-13.83".to_big_d
+
+        # 1 + 3.0000e-200 -> 1 + 3.0e-200 (ditto for others)
+        (1.to_big_d + BigDecimal.new(30000, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(30001, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(34999, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(35000, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(35001, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(39999, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40000, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40001, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(44999, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(45000, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(5, 200))
+        (1.to_big_d + BigDecimal.new(45001, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(5, 200))
+        (1.to_big_d + BigDecimal.new(50000, 204)).round(200, mode: :ties_away).should eq(1.to_big_d + BigDecimal.new(5, 200))
+
+        (-1.to_big_d - BigDecimal.new(30000, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(30001, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(34999, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(35000, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(35001, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(39999, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40000, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40001, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(44999, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(45000, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(5, 200))
+        (-1.to_big_d - BigDecimal.new(45001, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(5, 200))
+        (-1.to_big_d - BigDecimal.new(50000, 204)).round(200, mode: :ties_away).should eq(-1.to_big_d - BigDecimal.new(5, 200))
       end
 
       it "ties_even" do
@@ -813,7 +940,46 @@ describe BigDecimal do
         "-15.255".to_big_d.round(0, mode: :ties_even).should eq "-15".to_big_d
         "-15.255".to_big_d.round(1, mode: :ties_even).should eq "-15.3".to_big_d
         "-15.255".to_big_d.round(2, mode: :ties_even).should eq "-15.26".to_big_d
+
+        # 1 + 3.0000e-200 -> 1 + 3.0e-200 (ditto for others)
+        (1.to_big_d + BigDecimal.new(30000, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(30001, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(34999, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(3, 200))
+        (1.to_big_d + BigDecimal.new(35000, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(35001, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(39999, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40000, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(40001, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(44999, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(45000, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(4, 200))
+        (1.to_big_d + BigDecimal.new(45001, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(5, 200))
+        (1.to_big_d + BigDecimal.new(50000, 204)).round(200, mode: :ties_even).should eq(1.to_big_d + BigDecimal.new(5, 200))
+
+        (-1.to_big_d - BigDecimal.new(30000, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(30001, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(34999, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(3, 200))
+        (-1.to_big_d - BigDecimal.new(35000, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(35001, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(39999, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40000, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(40001, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(44999, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(45000, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(4, 200))
+        (-1.to_big_d - BigDecimal.new(45001, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(5, 200))
+        (-1.to_big_d - BigDecimal.new(50000, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(5, 200))
       end
+    end
+
+    describe "#integer?" do
+      it { BigDecimal.new(0, 0).integer?.should be_true }
+      it { BigDecimal.new(1, 0).integer?.should be_true }
+      it { BigDecimal.new(10, 0).integer?.should be_true }
+      it { BigDecimal.new(-10, 1).integer?.should be_true }
+      it { BigDecimal.new(10000, 4).integer?.should be_true }
+
+      it { BigDecimal.new(1, 1).integer?.should be_false }
+      it { BigDecimal.new(13, 2).integer?.should be_false }
+      it { BigDecimal.new(-2400, 3).integer?.should be_false }
     end
   end
 

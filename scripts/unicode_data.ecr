@@ -87,6 +87,17 @@ module Unicode
     data
   end
 
+  # Titlecase transformation that differs from the uppercase transformation.
+  # The maximum transformation is always 3 codepoints, so we store them all as 3
+  # codepoints and 0 means end.
+  private class_getter special_cases_titlecase : Hash(Int32, {Int32, Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_titlecase.size %>)
+    <%- special_cases_titlecase.each do |a_case| -%>
+      put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+    <%- end %>
+    data
+  end
+
   # Fold case transformation that involve mapping a codepoint
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.

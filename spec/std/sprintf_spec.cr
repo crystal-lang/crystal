@@ -1,5 +1,5 @@
 require "./spec_helper"
-require "../support/string"
+require "spec/helpers/string"
 require "big"
 
 # use same name for `sprintf` and `IO#printf` so that `assert_prints` can be leveraged

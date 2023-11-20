@@ -11,14 +11,15 @@
 <body>
 
 <%= Crystal::Doc::SVG_DEFS %>
+<%= Crystal::Doc::SIDEBAR_BUTTON %>
 <%= SidebarTemplate.new(project_info, types, type) %>
 
 <div class="main-content">
 <h1 class="type-name">
 <% if type.program? %>
-  <%= type.full_name %>
+  <%= type.full_name.gsub("::", "::<wbr>") %>
 <% else %>
-  <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name %>
+  <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name.gsub("::", "::<wbr>") %>
 <% end %>
 </h1>
 
@@ -102,6 +103,7 @@
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.instance_methods, "Instance") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.constructors, "Constructor") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.class_methods, "Class") %>
+    <%= MacrosInheritedTemplate.new(type, ancestor, ancestor.macros) %>
   <% end %>
 </div>
 

@@ -81,7 +81,7 @@ require "./regex/match_data"
 #
 # Many programming languages and tools implement their own regular expression
 # language, but Crystal uses [PCRE2](http://www.pcre.org/), a popular C library, with
-# [JIT complication](http://www.pcre.org/current/doc/html/pcre2jit.html) enabled
+# [JIT compilation](http://www.pcre.org/current/doc/html/pcre2jit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
 # alternation - but the feature set of PCRE2 extends far beyond these, and we
@@ -403,7 +403,7 @@ class Regex
       str.each_byte do |byte|
         {% begin %}
           case byte.unsafe_chr
-          when {{*SPECIAL_CHARACTERS}}
+          when {{SPECIAL_CHARACTERS.splat}}
             result << '\\'
             result.write_byte byte
           else

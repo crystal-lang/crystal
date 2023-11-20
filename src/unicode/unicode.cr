@@ -1,7 +1,7 @@
 # Provides the `Unicode::CaseOptions` enum for special case conversions like Turkic.
 module Unicode
   # The currently supported [Unicode](https://home.unicode.org) version.
-  VERSION = "15.0.0"
+  VERSION = "15.1.0"
 
   # Case options to pass to various `Char` and `String` methods such as `upcase` or `downcase`.
   @[Flags]
@@ -298,6 +298,52 @@ module Unicode
   end
 
   # :nodoc:
+  def self.titlecase(char : Char, options : CaseOptions) : Char
+    result = check_upcase_ascii(char, options)
+    return result if result
+
+    result = check_upcase_turkic(char, options)
+    return result if result
+
+    # there are no ASCII or Turkic special cases for titlecasing; this is the
+    # only part that differs from `.upcase`
+    result = special_cases_titlecase[char.ord]?
+    return result.first.unsafe_chr if result && result[1] == 0 && result[2] == 0
+
+    check_upcase_ranges(char)
+  end
+
+  # :nodoc:
+  def self.titlecase(char : Char, options : CaseOptions, &)
+    result = check_upcase_ascii(char, options)
+    if result
+      yield result
+      return
+    end
+
+    result = check_upcase_turkic(char, options)
+    if result
+      yield result
+      return
+    end
+
+    # there are no ASCII or Turkic special cases for titlecasing; this is the
+    # only part that differs from `.upcase`
+    result = special_cases_titlecase[char.ord]?
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    result = special_cases_upcase[char.ord]?
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    yield check_upcase_ranges(char)
+  end
+
   def self.foldcase(char : Char, options : CaseOptions) : Char
     results = check_foldcase(char, options)
     return results[0].unsafe_chr if results && results.size == 1
@@ -334,6 +380,11 @@ module Unicode
   # :nodoc:
   def self.uppercase?(char : Char) : Bool
     in_category?(char.ord, category_Lu)
+  end
+
+  # :nodoc:
+  def self.titlecase?(char : Char) : Bool
+    in_category?(char.ord, category_Lt)
   end
 
   # :nodoc:

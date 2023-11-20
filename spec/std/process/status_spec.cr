@@ -1,5 +1,5 @@
 require "spec"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def exit_status(status)
   {% if flag?(:unix) %}

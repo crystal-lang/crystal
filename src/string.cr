@@ -752,7 +752,7 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
+    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+', 'i', 'I', 'n', 'N')
 
     v, endptr = yield
 
@@ -1499,7 +1499,7 @@ class String
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char_with_index do |char, i|
       if i.zero?
-        char.upcase(options) { |c| io << c }
+        char.titlecase(options) { |c| io << c }
       else
         char.downcase(options) { |c| io << c }
       end
@@ -1551,8 +1551,11 @@ class String
     upcase_next = true
 
     each_char_with_index do |char, i|
-      replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
-      io << replaced_char
+      if upcase_next
+        char.titlecase(options) { |c| io << c }
+      else
+        char.downcase(options) { |c| io << c }
+      end
       upcase_next = char.whitespace?
     end
   end
@@ -3667,6 +3670,49 @@ class String
     nil
   end
 
+  # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "Hello, World".byte_index('o')          # => 4
+  # "Hello, World".byte_index('Z')          # => nil
+  # "Hello, World".byte_index('o', 5)       # => 8
+  # "Hi, 💣".byte_index('💣')                 # => 4
+  # "Dizzy Miss Lizzy".byte_index('z')      # => 2
+  # "Dizzy Miss Lizzy".byte_index('z', 3)   # => 3
+  # "Dizzy Miss Lizzy".byte_index('z', -4)  # => 13
+  # "Dizzy Miss Lizzy".byte_index('z', -17) # => nil
+  # ```
+  def byte_index(char : Char, offset = 0) : Int32?
+    return byte_index(char.ord, offset) if char.ascii?
+
+    offset += bytesize if offset < 0
+    return if offset < 0
+    return if offset + char.bytesize > bytesize
+
+    # Simplified "Rabin-Karp" algorithm
+    search_hash = 0u32
+    search_mask = 0u32
+    hash = 0u32
+    char.each_byte do |byte|
+      search_hash = (search_hash << 8) | byte
+      search_mask = (search_mask << 8) | 0xff
+      hash = (hash << 8) | to_unsafe[offset]
+      offset += 1
+    end
+
+    offset.upto(bytesize) do |i|
+      if (hash & search_mask) == search_hash
+        return i - char.bytesize
+      end
+      # rely on zero terminating byte
+      hash = (hash << 8) | to_unsafe[i]
+    end
+    nil
+  end
+
   # Returns the byte index of *search* in the string, or `nil` if the string is not present.
   # If *offset* is present, it defines the position to start the search.
   #
@@ -4356,11 +4402,15 @@ class String
 
     each_char do |char|
       if first
-        io << (lower ? char.downcase(options) : char.upcase(options))
+        if lower
+          char.downcase(options) { |c| io << c }
+        else
+          char.titlecase(options) { |c| io << c }
+        end
       elsif char == '_'
         last_is_underscore = true
       elsif last_is_underscore
-        io << char.upcase(options)
+        char.titlecase(options) { |c| io << c }
         last_is_underscore = false
       else
         io << char
@@ -5131,7 +5181,14 @@ class String
   # "22hh".ends_with?(/[a-z]{2}/) # => true
   # ```
   def ends_with?(re : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
-    !!($~ = /#{re}\z/.match(self, options: options))
+    if Regex.supports_match_options?(Regex::MatchOptions::ENDANCHORED)
+      result = re.match(self, options: options | Regex::MatchOptions::ENDANCHORED)
+    else
+      # Workaround when ENDANCHORED is unavailable (PCRE).
+      result = /#{re}\z/.match(self, options: options)
+    end
+    $~ = result
+    !!result
   end
 
   # Interpolates *other* into the string using top-level `::sprintf`.
