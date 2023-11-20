@@ -256,8 +256,9 @@ struct Crystal::System::Process
     process_info = LibC::PROCESS_INFORMATION.new
 
     if command_args.is_a?(String)
+      raise ArgumentError.new("Command line contains newline") if command_args.includes?('\n')
       result = LibC.CreateProcessW(
-        CMD_EXE, System.to_wstr(%(/c "#{command_args}")), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+        CMD_EXE, System.to_wstr(%(/s /c "#{command_args}")), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
         pointerof(startup_info), pointerof(process_info)
       )

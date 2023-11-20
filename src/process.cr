@@ -234,7 +234,7 @@ class Process
   # * On Windows this is implemented by passing the string as-is to `%COMSPEC%`,
   #   and passing *args* is not supported. The user is responsible for correctly
   #   quoting the command string, as `Process.quote_windows` does not handle
-  #   this.
+  #   this. Additionally, *command* cannot contain the newline character (`\n`).
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
