@@ -333,9 +333,7 @@ describe Process do
       {% end %}
     end
 
-    # TODO: this spec gives "WaitForSingleObject: The handle is invalid."
-    # is this because standard streams on windows aren't async?
-    pending_win32 "can link processes together" do
+    it "can link processes together" do
       buffer = IO::Memory.new
       Process.run(*stdin_to_stdout_command) do |cat|
         Process.run(*stdin_to_stdout_command, input: cat.output, output: buffer) do
