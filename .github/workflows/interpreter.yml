@@ -42,8 +42,6 @@ jobs:
   test-interpreter-std_spec:
     needs: build-interpreter
     runs-on: macos-12
-    container:
-      image: crystallang/crystal:1.10.1-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]
@@ -60,5 +58,8 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
 
+      - name: Setup docker
+        run: brew install docker colima && colima start --cpu 1 --memory 12 --disk 10
+
       - name: Run std_spec with interpreter
-        run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
+        run: docker run -v ${PWD}:/workspace -w /workspace -e SPEC_SPLIT="${{ matrix.part }}%4" crystallang/crystal:1.10.1-build bash bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
