@@ -3,6 +3,20 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
+  def self.mkfifo(filename : String, perm : Int32 | ::File::Permissions)
+    perm = ::File::Permissions.new(perm) if perm.is_a? Int32
+
+    filename.check_no_null_byte
+
+    fd = LibC.mkfifo(filename, perm)
+
+    if fd < 0
+      raise ::File::Error.from_os_error("Error creating pipe with permission '#{perm}'", Errno.value, file: filename)
+    end
+
+    fd
+  end
+
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions)
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 

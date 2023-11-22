@@ -163,6 +163,12 @@ class File < IO::FileDescriptor
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
 
+  def self.mkfifo(filename : Path | String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    filename = filename.to_s
+    fd = Crystal::System::File.mkfifo(filename, perm)
+    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  end
+
   getter path : String
 
   # Returns a `File::Info` object for the file given by *path* or returns `nil`
