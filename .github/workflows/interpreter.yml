@@ -41,7 +41,7 @@ jobs:
 
   test-interpreter-std_spec:
     needs: build-interpreter
-    runs-on: ubuntu-22.04
+    runs-on: macos-12
     container:
       image: crystallang/crystal:1.10.1-build
     strategy:
