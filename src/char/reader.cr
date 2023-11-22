@@ -18,7 +18,7 @@ struct Char
   #
   # ```
   # def lstrip(reader)
-  #   until reader.current_char == 'd'
+  #   until reader.current_char.whitespace?
   #     reader.next_char
   #   end
   #   reader
