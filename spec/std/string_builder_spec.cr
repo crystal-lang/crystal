@@ -52,29 +52,31 @@ describe String::Builder do
     builder.capacity.should eq initial_capacity
   end
 
-  it "allocates for > 1 GB", tags: %w[slow] do
-    String::Builder.build do |str|
-      mbstring = "a" * 1024 * 1024
-      1023.times { str << mbstring }
+  # FIXME(wasm32): https://github.com/crystal-lang/crystal/pull/13989#issuecomment-1817481289
+  {% if flag?(:wasm32) %}
+    pending "allocation for > 1 GB"
+  {% else %}
+    it "allocates for > 1 GB", tags: %w[slow] do
+      String::Builder.build do |str|
+        mbstring = "a" * 1024 * 1024
+        1023.times { str << mbstring }
 
-      str.bytesize.should eq (1 << 30) - (1 << 20)
-      str.capacity.should eq 1 << 30
+        str.bytesize.should eq (1 << 30) - (1 << 20)
+        str.capacity.should eq 1 << 30
 
-      str << mbstring
+        str << mbstring
 
-      str.bytesize.should eq 1 << 30
-      str.capacity.should eq Int32::MAX
+        str.bytesize.should eq 1 << 30
+        str.capacity.should eq Int32::MAX
 
-      1023.times { str << mbstring }
+        1023.times { str << mbstring }
 
-      # FIXME: https://github.com/crystal-lang/crystal/actions/runs/6895836942/job/18764260201?pr=13989
-      {% unless flag?(:wasm32) %}
         str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
         str << "a"
         expect_raises(IO::EOFError) do
           str << "a"
         end
-      {% end %}
+      end
     end
-  end
+  {% end %}
 end
