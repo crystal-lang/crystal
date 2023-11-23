@@ -145,6 +145,55 @@ describe "Char::Reader" do
     reader.current_char.should eq('語')
   end
 
+  it "#current_char?" do
+    reader = Char::Reader.new("há日本語")
+    reader.current_char?.should eq('h')
+    reader.next_char
+    reader.current_char?.should eq('á')
+    reader.next_char
+    reader.current_char?.should eq('日')
+    reader.next_char
+    reader.current_char?.should eq('本')
+    reader.next_char
+    reader.current_char?.should eq('語')
+    reader.next_char
+    reader.current_char?.should be_nil
+    reader.previous_char
+    reader.current_char?.should eq('語')
+  end
+
+  it "#next_char?" do
+    reader = Char::Reader.new("há日本語")
+    reader.next_char?.should eq('á')
+    reader.pos.should eq(1)
+    reader.next_char?.should eq('日')
+    reader.pos.should eq(3)
+    reader.next_char?.should eq('本')
+    reader.pos.should eq(6)
+    reader.next_char?.should eq('語')
+    reader.pos.should eq(9)
+    reader.next_char?.should be_nil
+    reader.pos.should eq(12)
+    reader.next_char?.should be_nil
+    reader.pos.should eq(12)
+  end
+
+  it "#previous_char?" do
+    reader = Char::Reader.new("há日本語", pos: 12)
+    reader.previous_char?.should eq('語')
+    reader.pos.should eq(9)
+    reader.previous_char?.should eq('本')
+    reader.pos.should eq(6)
+    reader.previous_char?.should eq('日')
+    reader.pos.should eq(3)
+    reader.previous_char?.should eq('á')
+    reader.pos.should eq(1)
+    reader.previous_char?.should eq('h')
+    reader.pos.should eq(0)
+    reader.previous_char?.should be_nil
+    reader.pos.should eq(0)
+  end
+
   it "errors if 0x80 <= first_byte < 0xC2" do
     assert_invalid_byte_sequence Bytes[0x80]
     assert_invalid_byte_sequence Bytes[0xC1]
