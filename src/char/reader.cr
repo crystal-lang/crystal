@@ -7,10 +7,32 @@ struct Char
   # Successive calls to `next_char` return the next chars in the string,
   # advancing `pos`.
   #
-  # Note that the null character `'\0'` will be returned in `current_char` when
+  # NOTE: The null character `'\0'` will be returned in `current_char` when
   # the end is reached (as well as when the string is empty). Thus, `has_next?`
   # will return `false` only when `pos` is equal to the string's bytesize, in which
   # case `current_char` will always be `'\0'`.
+  #
+  # NOTE: For performance reasons, `Char::Reader` has value semantics, so care
+  # must be taken when a reader is declared as a local variable and passed to
+  # another method:
+  #
+  # ```
+  # def lstrip(reader)
+  #   until reader.current_char.whitespace?
+  #     reader.next_char
+  #   end
+  #   reader
+  # end
+  #
+  # # caller's internal state is untouched
+  # reader = Char::Reader.new("   abc")
+  # lstrip(reader)
+  # reader.current_char # => ' '
+  #
+  # # to modify caller's internal state, the method must return a new reader
+  # reader = lstrip(reader)
+  # reader.current_char # => 'a'
+  # ```
   struct Reader
     include Enumerable(Char)
 
