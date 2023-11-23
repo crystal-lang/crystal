@@ -163,7 +163,7 @@ class File < IO::FileDescriptor
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
 
-  # Creates a named pipe (also known as a fifo file) at specified *path",
+  # Creates a named pipe (also known as a fifo file) at specified *path*,
   # raises an exception on error, returns nil on success.
   #
   # You can also set permissions via the second parameter 
