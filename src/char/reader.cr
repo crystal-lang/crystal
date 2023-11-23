@@ -242,7 +242,7 @@ struct Char
     end
 
     private macro invalid_byte_sequence
-      return yield Char::REPLACEMENT.ord.to_u32!, 1, first.to_u8
+      return yield Char::REPLACEMENT.ord.to_u32!, 1, first.to_u8!
     end
 
     @[AlwaysInline]
@@ -254,15 +254,92 @@ struct Char
       end
     end
 
-    private def decode_previous_char
-      return if @pos == 0
-
-      while @pos > 0
-        @pos -= 1
-        break if (byte_at(@pos) & 0xC0) != 0x80
+    # The reverse UTF-8 DFA transition table for reference: (contrast with
+    # `Unicode::UTF8_ENCODING_DFA`)
+    #
+    #              accepted (initial state)
+    #              | 1 continuation byte
+    #              | | 2 continuation bytes; disallow overlong encodings up to U+07FF
+    #              | | | 2 continuation bytes; disallow surrogate pairs
+    #              | | | | 3 continuation bytes; disallow overlong encodings up to U+FFFF
+    #              | | | | | 3 continuation bytes; disallow codepoints above U+10FFFF
+    #              v v v v v v
+    #
+    #            | 0 2 3 4 5 6
+    # -----------+------------
+    # 0x00..0x7F | 0 _ _ _ _ _
+    # 0x80..0x8F | 2 3 5 5 _ _
+    # 0x90..0x9F | 2 3 6 6 _ _
+    # 0xA0..0xBF | 2 4 6 6 _ _
+    # 0xC2..0xDF | _ 0 _ _ _ _
+    # 0xE0..0xE0 | _ _ _ 0 _ _
+    # 0xE1..0xEC | _ _ 0 0 _ _
+    # 0xED..0xED | _ _ 0 _ _ _
+    # 0xEE..0xEF | _ _ 0 0 _ _
+    # 0xF0..0xF0 | _ _ _ _ _ 0
+    # 0xF1..0xF3 | _ _ _ _ 0 0
+    # 0xF4..0xF4 | _ _ _ _ 0 _
+    private def decode_char_before(pos, & : UInt32, Int32, UInt8? ->)
+      fourth = byte_at(pos - 1)
+      if fourth <= 0x7f
+        return yield fourth, 1, nil
       end
-      decode_char_at(@pos) do |code_point, width, error|
+
+      if fourth > 0xbf || pos < 2
+        invalid_byte_sequence_before
+      end
+
+      third = byte_at(pos - 2)
+      if 0xc2 <= third <= 0xdf
+        return yield (third << 6) &+ (fourth &- 0x3080), 2, nil
+      end
+
+      if (third & 0xc0) != 0x80 || pos < 3
+        invalid_byte_sequence_before
+      end
+
+      second = byte_at(pos - 3)
+      if second & 0xf0 == 0xe0
+        if second == 0xe0 && third <= 0x9f
+          invalid_byte_sequence_before
+        end
+
+        if second == 0xed && third >= 0xa0
+          invalid_byte_sequence_before
+        end
+
+        return yield (second << 12) &+ (third << 6) &+ (fourth &- 0xE2080), 3, nil
+      end
+
+      if (second & 0xc0) != 0x80 || pos < 4
+        invalid_byte_sequence_before
+      end
+
+      first = byte_at(pos - 4)
+      if second <= 0x8f
+        unless 0xf1 <= first <= 0xf4
+          invalid_byte_sequence_before
+        end
+      else
+        unless 0xf0 <= first <= 0xf3
+          invalid_byte_sequence_before
+        end
+      end
+
+      return yield (first << 18) &+ (second << 12) &+ (third << 6) &+ (fourth &- 0x3C82080), 4, nil
+    end
+
+    private macro invalid_byte_sequence_before
+      return yield Char::REPLACEMENT.ord.to_u32!, 1, fourth.to_u8!
+    end
+
+    @[AlwaysInline]
+    private def decode_previous_char
+      return nil if @pos == 0
+
+      decode_char_before(@pos) do |code_point, width, error|
         @current_char_width = width
+        @pos -= width
         @error = error
         @current_char = code_point.unsafe_chr
       end
