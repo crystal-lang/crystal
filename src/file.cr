@@ -169,8 +169,8 @@ class File < IO::FileDescriptor
   # You can also set permissions via the second parameter 
   #
   #```
-  # File,mkfifo("foo")
-  # File,mkfifo("foo", 0o600)
+  # File.mkfifo("foo")
+  # File.mkfifo("foo", 0o600)
   #```
   def self.mkfifo(path : Path | String, perm = DEFAULT_CREATE_PERMISSIONS) : Nil
     path = path.to_s
