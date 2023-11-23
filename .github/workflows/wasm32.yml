@@ -46,6 +46,6 @@ jobs:
 
       - name: Run wasm32_std_spec.wasm
         run: |
-          wasmtime run wasm32_std_spec.wasm -- --verbose
+          wasmtime run wasm32_std_spec.wasm --verbose
         env:
           WASMTIME_BACKTRACE_DETAILS: "1"
