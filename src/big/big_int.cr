@@ -385,16 +385,34 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
 
+  def &(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.and(mpz, self, other) }
+  end
+
   def &(other : Int) : BigInt
-    BigInt.new { |mpz| LibGMP.and(mpz, self, other.to_big_i) }
+    ret = other.to_big_i
+    LibGMP.and(ret, ret, self)
+    ret
+  end
+
+  def |(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.ior(mpz, self, other) }
   end
 
   def |(other : Int) : BigInt
-    BigInt.new { |mpz| LibGMP.ior(mpz, self, other.to_big_i) }
+    ret = other.to_big_i
+    LibGMP.ior(ret, ret, self)
+    ret
+  end
+
+  def ^(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.xor(mpz, self, other) }
   end
 
   def ^(other : Int) : BigInt
-    BigInt.new { |mpz| LibGMP.xor(mpz, self, other.to_big_i) }
+    ret = other.to_big_i
+    LibGMP.xor(ret, ret, self)
+    ret
   end
 
   def >>(other : Int) : BigInt
