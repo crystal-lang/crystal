@@ -163,10 +163,18 @@ class File < IO::FileDescriptor
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
 
-  def self.mkfifo(filename : Path | String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    filename = filename.to_s
-    fd = Crystal::System::File.mkfifo(filename, perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  # Creates a named pipe (also known as a fifo file) at specified *path",
+  # raises an exception on error, returns nil on success.
+  #
+  # You can also set permissions via the second parameter 
+  #
+  #```
+  # File,mkfifo("foo")
+  # File,mkfifo("foo", 0o600)
+  #```
+  def self.mkfifo(path : Path | String, perm = DEFAULT_CREATE_PERMISSIONS) : Nil
+    path = path.to_s
+    Crystal::System::File.mkfifo(path, perm)
   end
 
   getter path : String
