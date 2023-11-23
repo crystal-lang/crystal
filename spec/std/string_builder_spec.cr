@@ -70,13 +70,11 @@ describe String::Builder do
       # FIXME: https://github.com/crystal-lang/crystal/actions/runs/6895836942/job/18764260201?pr=13989
       {% unless flag?(:wasm32) %}
         str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
-        str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
         str << "a"
         expect_raises(IO::EOFError) do
           str << "a"
         end
       {% end %}
-      Crystal::System.print_error "end block\n"
     end
   end
 end
