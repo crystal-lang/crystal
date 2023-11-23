@@ -1,3 +1,5 @@
+#! /usr/bin/env crystal
+#
 # This script generates the file src/unicode/data.cr
 # that contains compact representations of the UnicodeData.txt
 # file from the unicode specification.
