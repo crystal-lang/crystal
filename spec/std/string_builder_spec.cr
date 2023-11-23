@@ -76,13 +76,16 @@ describe String::Builder do
       1023.times { str << mbstring }
       Crystal::System.print_error "wrote 999 MB\n"
 
-      str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
-      Crystal::System.print_error "wrote almost 1 MB\n"
-      str << "a"
-      Crystal::System.print_error "wrote last byte\n"
-      expect_raises(IO::EOFError) do
+      # FIXME: https://github.com/crystal-lang/crystal/actions/runs/6895836942/job/18764260201?pr=13989
+      {% unless flag?(:wasm32) %}
+        str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
+        Crystal::System.print_error "wrote almost 1 MB\n"
         str << "a"
-      end
+        Crystal::System.print_error "wrote last byte\n"
+        expect_raises(IO::EOFError) do
+          str << "a"
+        end
+      {% end %}
       Crystal::System.print_error "end block\n"
     end
     Crystal::System.print_error "end test\n"
