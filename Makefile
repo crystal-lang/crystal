@@ -143,27 +143,27 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ... (usually wi
 
 generate_data: spec/std/string/graphemes_break_spec.cr
 spec/std/string/graphemes_break_spec.cr: scripts/generate_grapheme_break_specs.cr
-	$(CRYSTAL) run $<
+	bin/crystal run $<
 
 generate_data: src/string/grapheme/properties.cr
 src/string/grapheme/properties.cr: scripts/generate_grapheme_properties.cr
-	$(CRYSTAL) run $<
+	bin/crystal run $<
 
 generate_data: src/openssl/ssl/defaults.cr
 src/openssl/ssl/defaults.cr: scripts/generate_ssl_server_defaults.cr
-	$(CRYSTAL) run $<
+	bin/crystal run $<
 
 generate_data: src/unicode/data.cr
 src/unicode/data.cr: scripts/generate_unicode_data.cr
-	$(CRYSTAL) run $<
+	bin/crystal run $<
 
 generate_data: src/crystal/system/win32/zone_names.cr
 src/crystal/system/win32/zone_names.cr: scripts/generate_windows_zone_names.cr
-	$(CRYSTAL) run $<
+	bin/crystal run $<
 
 generate_data: src/html/entities.cr
 src/html/entities.cr: scripts/generate_html_entities.cr scripts/html_entities.ecr
-	$(CRYSTAL) run $<
+	bin/crystal run $<
 
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
