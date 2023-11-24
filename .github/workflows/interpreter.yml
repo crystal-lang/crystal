@@ -42,7 +42,7 @@ jobs:
   test-interpreter-std_spec:
     needs: build-interpreter
     runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    timeout-minutes: 60
     container:
       image: crystallang/crystal:1.10.1-build
       env:
@@ -64,7 +64,7 @@ jobs:
         run: |
           status=0
           for part in $(seq 0 7); do
-            SPEC_SPLIT="${part}%8" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${part}.xml
+            timeout 900 env SPEC_SPLIT="${part}%8" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${part}.xml
             job_status=$?
             echo $job_status
             if [ $job_status -ne 0 ]; then
