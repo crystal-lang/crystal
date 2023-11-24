@@ -49,6 +49,7 @@ jobs:
         HANDLE_SIGNAL_IN_INTERPRETER: "1"
     strategy:
       matrix:
+        fail-fast: false
         part: [0, 1, 2, 3, 4, 5, 6, 7]
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
