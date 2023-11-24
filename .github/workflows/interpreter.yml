@@ -47,10 +47,7 @@ jobs:
       image: crystallang/crystal:1.10.1-build
       env:
         HANDLE_SIGNAL_IN_INTERPRETER: "1"
-    strategy:
-      matrix:
-        part: [0, 1, 2, 3, 4, 5, 6, 7]
-    name: "Test std_spec with interpreter (${{ matrix.part }})"
+    name: "Test std_spec with interpreter"
     steps:
       - uses: actions/checkout@v4
 
@@ -64,4 +61,14 @@ jobs:
         run: chmod +x .build/crystal
 
       - name: Run std_spec with interpreter
-        run: SPEC_SPLIT="${{ matrix.part }}%8" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
+        run: |
+          status=0
+          for part in $(seq 0 7); do
+            SPEC_SPLIT="${part}%8" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${part}.xml
+            job_status=$?
+            echo $job_status
+            if [ $job_status -ne 0 ]; then
+              status = $?
+            fi
+          done
+          exit status
