@@ -31,12 +31,10 @@ describe "Signal" do
       ran.should be_true
     end
 
-    {% unless flag?(:interpreted) %}
-      it "ignores a signal" do
-        Signal::USR2.ignore
-        Process.signal Signal::USR2, Process.pid
-      end
-    {% end %}
+    it "ignores a signal" do
+      Signal::USR2.ignore
+      Process.signal Signal::USR2, Process.pid
+    end
 
     it "CHLD.reset sets default Crystal child handler" do
       Signal::CHLD.reset
