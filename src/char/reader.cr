@@ -39,13 +39,16 @@ struct Char
     # Returns the reader's String.
     getter string : String
 
-    # Returns the current character.
+    # Returns the current character, or `'\0'` if the reader is at the end of
+    # the string.
     #
     # ```
     # reader = Char::Reader.new("ab")
     # reader.current_char # => 'a'
     # reader.next_char
     # reader.current_char # => 'b'
+    # reader.next_char
+    # reader.current_char # => '\0'
     # ```
     getter current_char : Char
 
@@ -59,7 +62,7 @@ struct Char
     # ```
     getter current_char_width : Int32
 
-    # Returns the position of the current character.
+    # Returns the byte position of the current character.
     #
     # ```
     # reader = Char::Reader.new("ab")
@@ -93,40 +96,81 @@ struct Char
       decode_previous_char
     end
 
-    # Returns `true` if there is a character left to read.
-    # The terminating byte `'\0'` is considered a valid character
-    # by this method.
+    # Returns the current character.
+    #
+    # Returns `nil` if the reader is at the end of the string.
+    def current_char? : Char?
+      if has_next?
+        current_char
+      end
+    end
+
+    # Returns `true` if the reader is not at the end of the string.
+    #
+    # NOTE: This only means `#next_char` will successfully increment `#pos`; if
+    # the reader is already at the last character, `#next_char` will return the
+    # terminating null byte because there isn't really a next character.
     #
     # ```
-    # reader = Char::Reader.new("a")
-    # reader.has_next?      # => true
-    # reader.peek_next_char # => '\0'
+    # reader = Char::Reader.new("ab")
+    # reader.has_next? # => true
+    # reader.next_char # => 'b'
+    # reader.has_next? # => true
+    # reader.next_char # => '\0'
+    # reader.has_next? # => false
     # ```
     def has_next? : Bool
       @pos < @string.bytesize
     end
 
-    # Reads the next character in the string,
-    # `#pos` is incremented. Raises `IndexError` if the reader is
-    # at the end of the `#string`.
+    # Tries to read the next character in the string.
+    #
+    # If the reader is at the end of the string before or after incrementing
+    # `#pos`, returns `nil`.
     #
     # ```
-    # reader = Char::Reader.new("ab")
-    # reader.next_char # => 'b'
+    # reader = Char::Reader.new("abc")
+    # reader.next_char?   # => 'b'
+    # reader.next_char?   # => 'c'
+    # reader.next_char?   # => nil
+    # reader.current_char # => '\0'
     # ```
-    def next_char : Char
-      @pos += @current_char_width
-      if @pos > @string.bytesize
-        raise IndexError.new
+    def next_char? : Char?
+      next_pos = @pos + @current_char_width
+      if next_pos <= @string.bytesize
+        @pos = next_pos
+        decode_current_char
+        current_char?
       end
-
-      decode_current_char
     end
 
-    # Returns the next character in the `#string`
-    # without incrementing `#pos`.
-    # Raises `IndexError` if the reader is at
-    # the end of the `#string`.
+    # Reads the next character in the string.
+    #
+    # If the reader is at the end of the string after incrementing `#pos`,
+    # returns `'\0'`. If the reader is already at the end beforehand, raises
+    # `IndexError`.
+    #
+    # ```
+    # reader = Char::Reader.new("abc")
+    # reader.next_char # => 'b'
+    # reader.next_char # => 'c'
+    # reader.next_char # => '\0'
+    # reader.next_char # raise IndexError
+    # ```
+    def next_char : Char
+      next_pos = @pos + @current_char_width
+      if next_pos <= @string.bytesize
+        @pos = next_pos
+        decode_current_char
+      else
+        raise IndexError.new
+      end
+    end
+
+    # Returns the next character in the `#string` without incrementing `#pos`.
+    #
+    # Returns `'\0'` if the reader is at the last character of the string.
+    # Raises `IndexError` if the reader is at the end.
     #
     # ```
     # reader = Char::Reader.new("ab")
@@ -145,16 +189,39 @@ struct Char
       end
     end
 
-    # Returns `true` if there are characters before
-    # the current one.
+    # Returns `true` if the reader is not at the beginning of the string.
     def has_previous? : Bool
       @pos > 0
     end
 
-    # Returns the previous character, `#pos`
-    # is decremented.
-    # Raises `IndexError` if the reader is at the beginning of
-    # the `#string`
+    # Tries to read the previous character in the string.
+    #
+    # Returns `nil` if the reader is already at the beginning of the string.
+    # Otherwise decrements `#pos`.
+    #
+    # ```
+    # reader = Char::Reader.new(at_end: "abc")
+    # reader.previous_char? # => 'b'
+    # reader.previous_char? # => 'a'
+    # reader.previous_char? # => nil
+    # ```
+    def previous_char? : Char?
+      if has_previous?
+        decode_previous_char
+      end
+    end
+
+    # Reads the previous character in the string.
+    #
+    # Raises `IndexError` if the reader is already at the beginning of the
+    # string. Otherwise decrements `#pos`.
+    #
+    # ```
+    # reader = Char::Reader.new(at_end: "abc")
+    # reader.previous_char # => 'b'
+    # reader.previous_char # => 'a'
+    # reader.previous_char # raises IndexError
+    # ```
     def previous_char : Char
       unless has_previous?
         raise IndexError.new
