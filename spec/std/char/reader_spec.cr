@@ -10,7 +10,8 @@ end
 
 private def assert_reads_at_end(bytes, *, file = __FILE__, line = __LINE__)
   str = String.new bytes
-  reader = Char::Reader.new(at_end: str)
+  reader = Char::Reader.new(str, pos: bytes.size)
+  reader.previous_char
   reader.current_char.should eq(str[0]), file: file, line: line
   reader.current_char_width.should eq(bytes.size), file: file, line: line
   reader.pos.should eq(0), file: file, line: line
@@ -18,7 +19,9 @@ private def assert_reads_at_end(bytes, *, file = __FILE__, line = __LINE__)
 end
 
 private def assert_invalid_byte_sequence_at_end(bytes, *, file = __FILE__, line = __LINE__)
-  reader = Char::Reader.new(at_end: String.new bytes)
+  str = String.new bytes
+  reader = Char::Reader.new(str, pos: bytes.size)
+  reader.previous_char
   reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
   reader.current_char_width.should eq(1), file: file, line: line
   reader.pos.should eq(bytes.size - 1), file: file, line: line
@@ -211,7 +214,7 @@ describe "Char::Reader" do
     assert_invalid_byte_sequence Bytes[0xf4, 0x8f, 0xa0]
   end
 
-  describe "#previous_char / at_end" do
+  describe "#previous_char" do
     it "reads on valid UTF-8" do
       assert_reads_at_end Bytes[0x00]
       assert_reads_at_end Bytes[0x7f]
