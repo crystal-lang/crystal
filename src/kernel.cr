@@ -590,3 +590,10 @@ end
     Crystal::Scheduler.init_workers
   {% end %}
 {% end %}
+
+{% if flag?(:interpreted) %}
+  if ENV["HANDLE_SIGNAL_IN_INTERPRETER"]? == "1"
+    Signal::CHLD.reset
+    Crystal::System::Signal.start_loop
+  end
+{% end %}

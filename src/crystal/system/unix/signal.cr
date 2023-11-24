@@ -56,7 +56,7 @@ module Crystal::System::Signal
     end
   end
 
-  private def self.start_loop
+  def self.start_loop
     spawn(name: "Signal Loop") do
       loop do
         value = reader.read_bytes(Int32)

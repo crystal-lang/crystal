@@ -11,6 +11,9 @@ set +x
 export SPEC_SUITE=$1
 export OUT_FILE=$2
 export CRYSTAL_BIN=${CRYSTAL_BIN:-./bin/crystal}
+# Enable signal handlers in interpreted code
+export HANDLE_SIGNAL_IN_INTERPRETER=1
+
 job_size=${3:-64}
 
 command="$0 $*"

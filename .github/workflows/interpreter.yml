@@ -42,8 +42,11 @@ jobs:
   test-interpreter-std_spec:
     needs: build-interpreter
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     container:
       image: crystallang/crystal:1.10.1-build
+      env:
+        HANDLE_SIGNAL_IN_INTERPRETER: "1"
     strategy:
       matrix:
         part: [0, 1, 2, 3]
