@@ -62,9 +62,11 @@ jobs:
 
       - name: Run std_spec with interpreter
         run: |
+          set -e
+          export HANDLE_SIGNAL_IN_INTERPRETER=1
           status=0
           for part in $(seq 0 15); do
-            echo "Running part ${part}"
+            echo "Running part ${part} of 15"
             timeout 900 env SPEC_SPLIT="${part}%16" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${part}.xml
             job_status=$?
             echo $job_status
@@ -73,4 +75,4 @@ jobs:
             fi
           done
           echo "final status: ${status}"
-          exit status
+          exit $status
