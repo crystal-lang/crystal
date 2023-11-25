@@ -969,6 +969,18 @@ describe BigDecimal do
         (-1.to_big_d - BigDecimal.new(50000, 204)).round(200, mode: :ties_even).should eq(-1.to_big_d - BigDecimal.new(5, 200))
       end
     end
+
+    describe "#integer?" do
+      it { BigDecimal.new(0, 0).integer?.should be_true }
+      it { BigDecimal.new(1, 0).integer?.should be_true }
+      it { BigDecimal.new(10, 0).integer?.should be_true }
+      it { BigDecimal.new(-10, 1).integer?.should be_true }
+      it { BigDecimal.new(10000, 4).integer?.should be_true }
+
+      it { BigDecimal.new(1, 1).integer?.should be_false }
+      it { BigDecimal.new(13, 2).integer?.should be_false }
+      it { BigDecimal.new(-2400, 3).integer?.should be_false }
+    end
   end
 
   describe "#inspect" do

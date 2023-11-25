@@ -165,7 +165,9 @@ end
 
 struct Time::Format
   def to_json(value : Time, json : JSON::Builder) : Nil
-    format(value).to_json(json)
+    json.string do |io|
+      format(value, io)
+    end
   end
 end
 
@@ -274,7 +276,9 @@ struct Time
   #
   # See `#from_json` for reference.
   def to_json(json : JSON::Builder) : Nil
-    json.string(Time::Format::RFC_3339.format(self, fraction_digits: 0))
+    json.string do |io|
+      Time::Format::RFC_3339.format(self, io, fraction_digits: 0)
+    end
   end
 end
 

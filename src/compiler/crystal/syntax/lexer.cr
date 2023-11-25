@@ -335,18 +335,20 @@ module Crystal
               @token.type = :OP_PERCENT
             end
           when 'r'
-            case next_char
+            case peek_next_char
             when '(', '[', '{', '<', '|'
+              next_char
               delimited_pair :regex, current_char, closing_char, start
             else
-              raise "unknown %r char"
+              @token.type = :OP_PERCENT
             end
           when 'x'
-            case next_char
+            case peek_next_char
             when '(', '[', '{', '<', '|'
+              next_char
               delimited_pair :command, current_char, closing_char, start
             else
-              raise "unknown %x char"
+              @token.type = :OP_PERCENT
             end
           when 'w'
             case peek_next_char

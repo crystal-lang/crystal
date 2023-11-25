@@ -511,12 +511,14 @@ module Crystal
     end
 
     def visit(node : Splat)
+      warnings.add_warning(node, "Deprecated use of splat operator. Use `#splat` instead")
       node.exp.accept self
       @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
+      warnings.add_warning(node, "Deprecated use of double splat operator. Use `#double_splat` instead")
       node.exp.accept self
       @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false

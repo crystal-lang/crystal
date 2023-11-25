@@ -602,6 +602,19 @@ module Crystal
     def to_macro_id
       @value.to_s
     end
+
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "ord"
+        interpret_check_args { NumberLiteral.new(ord) }
+      else
+        super
+      end
+    end
+
+    def ord
+      @value.ord
+    end
   end
 
   class StringLiteral
@@ -1459,6 +1472,36 @@ module Crystal
         interpret_check_args do
           visibility_to_symbol(@visibility)
         end
+      else
+        super
+      end
+    end
+  end
+
+  class MacroIf
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "cond"
+        interpret_check_args { @cond }
+      when "then"
+        interpret_check_args { @then }
+      when "else"
+        interpret_check_args { @else }
+      else
+        super
+      end
+    end
+  end
+
+  class MacroFor
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "vars"
+        interpret_check_args { ArrayLiteral.map(@vars, &.itself) }
+      when "exp"
+        interpret_check_args { @exp }
+      when "body"
+        interpret_check_args { @body }
       else
         super
       end

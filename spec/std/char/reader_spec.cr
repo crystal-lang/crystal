@@ -102,6 +102,7 @@ describe "Char::Reader" do
     reader.pos.should eq(0)
     reader.current_char.ord.should eq(0)
     reader.has_previous?.should be_false
+    reader.has_next?.should be_false
   end
 
   it "gets previous char (ascii)" do
@@ -109,8 +110,10 @@ describe "Char::Reader" do
     reader.pos.should eq(4)
     reader.current_char.should eq('o')
     reader.has_previous?.should be_true
+    reader.has_next?.should be_true
 
     reader.previous_char.should eq('l')
+    reader.has_next?.should be_true
     reader.previous_char.should eq('l')
     reader.previous_char.should eq('e')
     reader.previous_char.should eq('h')
@@ -126,8 +129,10 @@ describe "Char::Reader" do
     reader.pos.should eq(9)
     reader.current_char.should eq('語')
     reader.has_previous?.should be_true
+    reader.has_next?.should be_true
 
     reader.previous_char.should eq('本')
+    reader.has_next?.should be_true
     reader.previous_char.should eq('日')
     reader.previous_char.should eq('á')
     reader.previous_char.should eq('h')
@@ -138,6 +143,55 @@ describe "Char::Reader" do
     reader = Char::Reader.new("há日本語", pos: 9)
     reader.pos.should eq(9)
     reader.current_char.should eq('語')
+  end
+
+  it "#current_char?" do
+    reader = Char::Reader.new("há日本語")
+    reader.current_char?.should eq('h')
+    reader.next_char
+    reader.current_char?.should eq('á')
+    reader.next_char
+    reader.current_char?.should eq('日')
+    reader.next_char
+    reader.current_char?.should eq('本')
+    reader.next_char
+    reader.current_char?.should eq('語')
+    reader.next_char
+    reader.current_char?.should be_nil
+    reader.previous_char
+    reader.current_char?.should eq('語')
+  end
+
+  it "#next_char?" do
+    reader = Char::Reader.new("há日本語")
+    reader.next_char?.should eq('á')
+    reader.pos.should eq(1)
+    reader.next_char?.should eq('日')
+    reader.pos.should eq(3)
+    reader.next_char?.should eq('本')
+    reader.pos.should eq(6)
+    reader.next_char?.should eq('語')
+    reader.pos.should eq(9)
+    reader.next_char?.should be_nil
+    reader.pos.should eq(12)
+    reader.next_char?.should be_nil
+    reader.pos.should eq(12)
+  end
+
+  it "#previous_char?" do
+    reader = Char::Reader.new("há日本語", pos: 12)
+    reader.previous_char?.should eq('語')
+    reader.pos.should eq(9)
+    reader.previous_char?.should eq('本')
+    reader.pos.should eq(6)
+    reader.previous_char?.should eq('日')
+    reader.pos.should eq(3)
+    reader.previous_char?.should eq('á')
+    reader.pos.should eq(1)
+    reader.previous_char?.should eq('h')
+    reader.pos.should eq(0)
+    reader.previous_char?.should be_nil
+    reader.pos.should eq(0)
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do

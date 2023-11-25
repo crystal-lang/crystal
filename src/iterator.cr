@@ -39,6 +39,46 @@ require "./enumerable"
 # iter.size # => 0
 # ```
 #
+# ### Iterating step-by-step
+#
+# An iterator returns its next element on the method `#next`.
+# Its return type is a union of the iterator's element type and the `Stop` type:
+# `T | Iterator::Stop`.
+# The stop type is a sentinel value which indicates that the iterator has
+# reached its end. It usually needs to be handled and filtered out in order to
+# use the element value for anything useful.
+# Unlike `Nil` it's not an implicitly falsey type.
+#
+# ```
+# iter = (1..5).each
+#
+# # Unfiltered elements contain `Iterator::Stop` type
+# iter.next + iter.next # Error: expected argument #1 to 'Int32#+' to be Int32, not (Int32 | Iterator::Stop)
+#
+# # Type filtering eliminates the stop type
+# a = iter.next
+# b = iter.next
+# unless a.is_a?(Iterator::Stop) || b.is_a?(Iterator::Stop)
+#   a + b # => 3
+# end
+# ```
+#
+# `Iterator::Stop` is only present in the return type of `#next`. All other
+# methods remove it from their return types.
+#
+# Iterators can be used to build a loop.
+#
+# ```
+# iter = (1..5).each
+# sum = 0
+# while !(elem = iter.next).is_a?(Iterator::Stop)
+#   sum += elem
+# end
+# sum # => 15
+# ```
+#
+# ### Implementing an Iterator
+#
 # To implement an `Iterator` you need to define a `next` method that must return the next
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).

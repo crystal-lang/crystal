@@ -23,11 +23,11 @@ describe "HTML" do
 
     context "numeric entities" do
       it "decimal" do
-        HTML.unescape("3 &#43; 2 &#00061 5").should eq("3 + 2 = 5")
+        HTML.unescape("3 &#43; 2 &#00061 5 &#9;").should eq("3 + 2 = 5 \t")
       end
 
       it "hex" do
-        HTML.unescape("&#x000033; &#x2B; 2 &#x0003D &#x000035").should eq("3 + 2 = 5")
+        HTML.unescape("&#x000033; &#x2B; 2 &#x0003D &#x000035; &#x9;").should eq("3 + 2 = 5 \t")
       end
 
       it "early termination" do
@@ -48,6 +48,12 @@ describe "HTML" do
       it "does not unescape characters above Char::MAX_CODEPOINT" do
         HTML.unescape("limit &#x110000;").should eq("limit \uFFFD")
         HTML.unescape("limit &#1114112;").should eq("limit \uFFFD")
+        HTML.unescape("limit &#x110000000000000;").should eq("limit \uFFFD")
+      end
+
+      it "ignores leading zeros" do
+        HTML.unescape("&#0000000065;").should eq("A")
+        HTML.unescape("&#x0000000065;").should eq("e")
       end
 
       it "space characters" do
@@ -101,9 +107,7 @@ describe "HTML" do
     end
 
     it "invalid utf-8" do
-      expect_raises(ArgumentError, "UTF-8 error") do
-        HTML.unescape("test \xff\xfe").should eq "test \xff\xfe"
-      end
+      HTML.unescape("test \xff\xfe").should eq "test \xff\xfe"
     end
   end
 end
