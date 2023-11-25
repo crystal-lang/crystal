@@ -96,8 +96,8 @@ module Spec
 
   def self.add_split_filter(filter)
     if filter
-      r, m = filter.split('%').map &.to_i
-      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
+      r, _, m = filter.partition('%')
+      @@split_filter = SplitFilter.new(remainder: r.to_i, quotient: m.to_i)
     else
       @@split_filter = nil
     end
