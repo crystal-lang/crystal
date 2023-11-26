@@ -1,3 +1,5 @@
+#! /usr/bin/env crystal
+#
 # This script generates the file spec/std/string/graphemes_break_spec.cr
 # that contains test cases for Unicode grapheme clusters based on the default
 # Grapheme_Cluster_Break Test

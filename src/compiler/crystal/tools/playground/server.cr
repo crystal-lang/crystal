@@ -2,7 +2,7 @@ require "http/server"
 require "log"
 require "ecr/macros"
 require "compiler/crystal/tools/formatter"
-require "../../../../../lib/markd/src/markd"
+require "markd"
 
 module Crystal::Playground
   Log = ::Log.for("crystal.playground")
