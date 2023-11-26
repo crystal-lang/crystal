@@ -1173,7 +1173,7 @@ class String
   # only remaining bytes are returned.
   #
   # This method should be avoided,
-  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # unless the string is known to only contain single-byte characters (for example `#ascii_only?`),
   # or the byte positions are known to be at character boundaries.
   # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
   #
@@ -1206,7 +1206,7 @@ class String
   # If the end index is bigger than `#bytesize`, only remaining bytes are returned.
   #
   # This method should be avoided,
-  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # unless the string is known to only contain single-byte characters (for example `#ascii_only?`),
   # or the byte positions are known to be at character boundaries.
   # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
   #
@@ -1272,7 +1272,7 @@ class String
   # from the end of the string.
   #
   # This method should be avoided,
-  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # unless the string is known to only contain single-byte characters (for example `#ascii_only?`),
   # or the byte positions are known to be at character boundaries.
   # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
   #
@@ -1299,7 +1299,7 @@ class String
   # from the end of the string.
   #
   # This method should be avoided,
-  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # unless the string is known to only contain single-byte characters (for example `#ascii_only?`),
   # or the byte positions are known to be at character boundaries.
   # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
   #
