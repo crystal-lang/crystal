@@ -60,7 +60,8 @@ class Crystal::Command
           locations << {file, line}
         else
           if Dir.exists?(filename)
-            target_filenames.concat Dir[::Path.new(filename, "/**/*_spec.cr").to_posix]
+            filename = ::Path[filename].to_posix
+            target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
           elsif File.file?(filename)
             target_filenames << filename
           else
