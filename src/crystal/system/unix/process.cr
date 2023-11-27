@@ -15,6 +15,13 @@ struct Crystal::System::Process
   end
 
   def wait
+    {% if flag?(:interpreted) %}
+      # Block interpreter until child process is terminated
+      r_pid = LibC.waitpid(pid, out exit_code, 0)
+      @channel.send(exit_code)
+      # Close channel properly
+      @channel.close
+    {% end %}
     @channel.receive
   end
 
