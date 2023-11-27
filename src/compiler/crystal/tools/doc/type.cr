@@ -117,7 +117,7 @@ class Crystal::Doc::Type
 
   def ast_node?
     type = @type
-    type.is_a?(ClassType) && type.full_name == Crystal::Macros::ASTNode.name
+    type.is_a?(ClassType) && type.full_name == "Crystal::Macros::ASTNode"
   end
 
   def locations
