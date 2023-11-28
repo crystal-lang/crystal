@@ -941,7 +941,7 @@ describe "File" do
             pending! "Spec cannot run as superuser"
           end
         {% end %}
-        expect_raises(File::AccessDeniedError) { File.read(path) }
+        expect_raises(File::AccessDeniedError, path) { File.read(path) }
       end
     end
   {% end %}
@@ -958,7 +958,7 @@ describe "File" do
           pending! "Spec cannot run as superuser"
         end
       {% end %}
-      expect_raises(File::AccessDeniedError) { File.write(path, "foo") }
+      expect_raises(File::AccessDeniedError, path) { File.write(path, "foo") }
     end
   end
 

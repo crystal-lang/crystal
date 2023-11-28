@@ -211,9 +211,9 @@ module IO::Overlapped
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}"
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: self
         else
-          raise IO::Error.from_os_error(method, error)
+          raise IO::Error.from_os_error(method, error, target: self)
         end
       else
         operation.synchronous = true
@@ -245,7 +245,7 @@ module IO::Overlapped
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
         else
-          raise IO::Error.from_os_error(method, error)
+          raise IO::Error.from_os_error(method, error, target: self)
         end
       else
         operation.synchronous = true
