@@ -214,12 +214,12 @@ struct Float32
 
   def to_s : String
     String.build(22) do |buffer|
-      Printer.print(self, buffer)
+      Printer.shortest(self, buffer)
     end
   end
 
   def to_s(io : IO) : Nil
-    Printer.print(self, io)
+    Printer.shortest(self, io)
   end
 
   def clone
@@ -338,12 +338,12 @@ struct Float64
   def to_s : String
     # the longest `Float64` strings are of the form `-1.2345678901234567e+123`
     String.build(24) do |buffer|
-      Printer.print(self, buffer)
+      Printer.shortest(self, buffer)
     end
   end
 
   def to_s(io : IO) : Nil
-    Printer.print(self, io)
+    Printer.shortest(self, io)
   end
 
   def clone
