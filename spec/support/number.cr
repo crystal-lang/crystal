@@ -89,7 +89,7 @@ end
 macro hexfloat(str)
   {% raise "`str` must be a StringLiteral, not #{str.class_name}" unless str.is_a?(StringLiteral) %}
   {% if str.ends_with?("_f32") %}
-    ::Float32.parse_hexfloat({{ str[...-4] }})
+    ::Float32.parse_hexfloat({{ str[0...-4] }})
   {% else %}
     ::Float64.parse_hexfloat({{ str }})
   {% end %}
