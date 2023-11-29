@@ -88,6 +88,22 @@ module Float::Printer
     end
   end
 
+  # Writes *v*'s hexadecimal-significand representation to the given *io*.
+  #
+  # Used by `Float::Primitive#to_hexfloat`.
+  def hexfloat(v : Float64, io : IO) : Nil
+    check_finite_float(v, io) do
+      Hexfloat(Float64, UInt64).to_s(io, v)
+    end
+  end
+
+  # :ditto:
+  def hexfloat(v : Float32, io : IO) : Nil
+    check_finite_float(v, io) do
+      Hexfloat(Float32, UInt32).to_s(io, v)
+    end
+  end
+
   # If *v* is finite, yields its absolute value, otherwise writes *v* to *io*.
   private def check_finite_float(v : Float::Primitive, io : IO, &)
     d = IEEE.to_uint(v)
