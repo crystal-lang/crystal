@@ -281,12 +281,14 @@ end
 private module ConsoleUtils
   # N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
   private BUFFER_SIZE = 64
-  @@utf16_buffer = Slice(UInt16).new(BUFFER_SIZE)
   @@utf8_buffer = Slice(UInt8).new(3 * BUFFER_SIZE)
 
   # `@@buffer` points to part of `@@utf8_buffer`.
   # It represents data that has not been read yet.
   @@buffer : Bytes = @@utf8_buffer[0, 0]
+
+  # Remaining UTF-16 code unit.
+  @@remaining_unit : UInt16?
 
   # Determines if *handle* is a console.
   def self.console?(handle : LibC::HANDLE) : Bool
@@ -306,16 +308,25 @@ private module ConsoleUtils
   end
 
   private def self.fill_buffer(handle : LibC::HANDLE) : Nil
-    # Reads in two batches to guarantee that the last character is intact.
-    units_read = read_console(handle, @@utf16_buffer[...-1])
-    return if units_read < 1
-    remainder = @@utf16_buffer + units_read
-    if remainder.size == 1 && @@utf16_buffer[units_read - 1] & 0xFC00 == 0xD800
-      units_read += read_console(handle, remainder)
+    utf16_buffer = uninitialized UInt16[BUFFER_SIZE]
+    remaining_unit = @@remaining_unit
+    if remaining_unit
+      utf16_buffer[0] = remaining_unit
+      index = read_console(handle, utf16_buffer.to_slice + 1)
+    else
+      index = read_console(handle, utf16_buffer.to_slice) - 1
     end
 
+    if index >= 0 && utf16_buffer[index] & 0xFC00 == 0xD800
+      @@remaining_unit = utf16_buffer[index]
+      index -= 1
+    else
+      @@remaining_unit = nil
+    end
+    return if index < 0
+
     appender = @@utf8_buffer.to_unsafe.appender
-    String.each_utf16_char(@@utf16_buffer[0, units_read]) do |char|
+    String.each_utf16_char(utf16_buffer.to_slice[..index]) do |char|
       char.each_byte do |byte|
         appender << byte
       end
