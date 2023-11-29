@@ -562,6 +562,10 @@ module Crystal::Macros
     # Returns a `MacroId` for this character's contents.
     def id : MacroId
     end
+
+    # Similar to `Char#ord`.
+    def ord : NumberLiteral
+    end
   end
 
   # A string literal.
@@ -1878,13 +1882,49 @@ module Crystal::Macros
   # class MacroLiteral < ASTNode
   # end
 
-  # if inside a macro
-  # class MacroIf < ASTNode
-  # end
+  # An `if` inside a macro, e.g.
+  #
+  # ```
+  # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  # ```
+  class MacroIf < ASTNode
+    # The condition of the `if` clause.
+    def cond : ASTNode
+    end
 
-  # for inside a macro:
-  # class MacroFor < ASTNode
-  # end
+    # The `then` branch of the `if`.
+    def then : ASTNode
+    end
+
+    # The `else` branch of the `if`.
+    def else : ASTNode
+    end
+  end
+
+  # A `for` loop inside a macro, e.g.
+  #
+  # ```
+  # {% for x in exp %}
+  #   puts {{x}}
+  # {% end %}
+  # ```
+  class MacroFor < ASTNode
+    # The variables declared after `for`.
+    def vars : ArrayLiteral(Var)
+    end
+
+    # The expression after `in`.
+    def exp : ASTNode
+    end
+
+    # The body of the `for` loop.
+    def body : ASTNode
+    end
+  end
 
   # The `_` expression. May appear in code, such as an assignment target, and in
   # type names.

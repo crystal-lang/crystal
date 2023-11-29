@@ -11,9 +11,7 @@ def processed_unreachable_visitor(code)
   visitor.excludes << Path[Dir.current].to_posix.to_s
   visitor.includes << "."
 
-  process_result = visitor.process(result)
-
-  {visitor, process_result}
+  visitor.process(result)
 end
 
 private def assert_unreachable(code, file = __FILE__, line = __LINE__)
@@ -27,9 +25,9 @@ private def assert_unreachable(code, file = __FILE__, line = __LINE__)
 
   code = code.gsub('༓', "")
 
-  visitor, result = processed_unreachable_visitor(code)
+  defs = processed_unreachable_visitor(code)
 
-  result_location = result.defs.try &.compact_map(&.location).sort_by! do |loc|
+  result_location = defs.try &.compact_map(&.location).sort_by! do |loc|
     {loc.filename.as(String), loc.line_number, loc.column_number}
   end.map(&.to_s)
 

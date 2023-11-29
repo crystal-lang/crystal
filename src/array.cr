@@ -127,12 +127,21 @@ class Array(T)
   #
   # ```
   # Array.new(3, 'a') # => ['a', 'a', 'a']
+  # ```
   #
+  # WARNING: The initial value is filled into the array as-is. It gets neither
+  # duplicated nor cloned. For types with reference semantics this means every
+  # item will point to the *same* object.
+  #
+  # ```
   # ary = Array.new(3, [1])
   # ary # => [[1], [1], [1]]
   # ary[0][0] = 2
   # ary # => [[2], [2], [2]]
   # ```
+  #
+  # * `.new(Int, & : Int32 -> T)` is an alternative that allows using a
+  #   different initial value for each position.
   def initialize(size : Int, value : T)
     if size < 0
       raise ArgumentError.new("Negative array size: #{size}")

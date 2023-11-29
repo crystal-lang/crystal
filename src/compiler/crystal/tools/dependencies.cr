@@ -4,9 +4,9 @@ require "../syntax/ast"
 
 class Crystal::Command
   private def dependencies
-    config = create_compiler "tool dependencies", no_codegen: true, dependencies: true
+    config = create_compiler "tool dependencies", no_codegen: true, dependencies: true, allowed_formats: DependencyPrinter::Format.names.map!(&.downcase)
 
-    dependency_printer = DependencyPrinter.create(STDOUT, format: config.dependency_output_format, verbose: config.verbose)
+    dependency_printer = DependencyPrinter.create(STDOUT, format: DependencyPrinter::Format.parse(config.output_format), verbose: config.verbose)
 
     dependency_printer.includes.concat config.includes.map { |path| ::Path[path].expand.to_s }
     dependency_printer.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_s }
@@ -21,8 +21,8 @@ end
 module Crystal
   abstract class DependencyPrinter
     enum Format
-      Flat
       Tree
+      Flat
       Dot
       Mermaid
     end

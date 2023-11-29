@@ -163,6 +163,10 @@ generate_data: src\crystal\system\win32\zone_names.cr
 src\crystal\system\win32\zone_names.cr: scripts\generate_windows_zone_names.cr
 	$(CRYSTAL) run $<
 
+generate_data: src\html\entities.cr
+src\html\entities.cr: scripts\generate_html_entities.cr scripts\html_entities.ecr
+	$(CRYSTAL) run $<
+
 .PHONY: install
 install: $(O)\crystal.exe ## Install the compiler at prefix
 	$(call MKDIR,"$(BINDIR)")
@@ -227,7 +231,7 @@ $(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
 	$(call export_build_vars)
-	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib -D without_playground $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
+	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
 	$(call MV,"$(O)\crystal-next.exe","$@")
 	$(call MV,"$(O)\crystal-next.pdb","$(O)\crystal.pdb")
 

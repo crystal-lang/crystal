@@ -262,10 +262,8 @@ module GC
     end
 
     # :nodoc:
-    def self.pthread_join(thread : LibC::PthreadT) : Void*
-      ret = LibGC.pthread_join(thread, out value)
-      raise RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
-      value
+    def self.pthread_join(thread : LibC::PthreadT)
+      LibGC.pthread_join(thread, nil)
     end
 
     # :nodoc:

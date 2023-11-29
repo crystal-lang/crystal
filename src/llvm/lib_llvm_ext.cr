@@ -13,9 +13,8 @@ lib LibLLVMExt
 
   {% if LibLLVM::IS_LT_90 %}
     fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : LibLLVM::DIBuilderRef, name : Char*, value : Int64) : LibLLVM::MetadataRef
+    fun clear_current_debug_location = LLVMExtClearCurrentDebugLocation(b : LibLLVM::BuilderRef)
   {% end %}
-
-  fun set_current_debug_location = LLVMExtSetCurrentDebugLocation(LibLLVM::BuilderRef, Int, Int, LibLLVM::MetadataRef, LibLLVM::MetadataRef)
 
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,
@@ -33,5 +32,4 @@ lib LibLLVMExt
                                           name : LibC::Char*) : LibLLVM::ValueRef
 
   fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
-  fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
 end

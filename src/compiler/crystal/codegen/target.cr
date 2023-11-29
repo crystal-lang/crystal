@@ -164,7 +164,7 @@ class Crystal::Codegen::Target
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
-  def to_target_machine(cpu = "", features = "", release = false,
+  def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
                         code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
     when "i386", "x86_64"
@@ -186,11 +186,16 @@ class Crystal::Codegen::Target
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end
 
-    opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
+    opt_level = case optimization_mode
+                in .o3? then LLVM::CodeGenOptLevel::Aggressive
+                in .o2? then LLVM::CodeGenOptLevel::Default
+                in .o1? then LLVM::CodeGenOptLevel::Less
+                in .o0? then LLVM::CodeGenOptLevel::None
+                end
 
     target = LLVM::Target.from_triple(self.to_s)
     machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
-    # We need to disable global isel until https://reviews.llvm.org/D80898 is released,
+    # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and jit compiler.
     # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270

@@ -511,10 +511,16 @@ describe "String" do
     " NaN".to_f?.try(&.nan?).should be_true
     "NaN".to_f?.try(&.nan?).should be_true
     "-NaN".to_f?.try(&.nan?).should be_true
+    "nan".to_f?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f?(whitespace: false).should be_nil
+    "nan ".to_f?(whitespace: false).should be_nil
+    "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
     "-INF".to_f?.should eq -Float64::INFINITY
     " +INF".to_f?.should eq Float64::INFINITY
+    "inf".to_f?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f?(strict: true).should be_nil
   end
 
   it "does to_f32" do
@@ -548,10 +554,16 @@ describe "String" do
     " NaN".to_f32?.try(&.nan?).should be_true
     "NaN".to_f32?.try(&.nan?).should be_true
     "-NaN".to_f32?.try(&.nan?).should be_true
+    "nan".to_f32?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f32?(whitespace: false).should be_nil
+    "nan ".to_f32?(whitespace: false).should be_nil
+    "nani".to_f32?(strict: true).should be_nil
     " INF".to_f32?.should eq Float32::INFINITY
     "INF".to_f32?.should eq Float32::INFINITY
     "-INF".to_f32?.should eq -Float32::INFINITY
     " +INF".to_f32?.should eq Float32::INFINITY
+    "inf".to_f32?(whitespace: false).should eq Float32::INFINITY
+    "info".to_f32?(strict: true).should be_nil
   end
 
   it "does to_f64" do
@@ -585,10 +597,16 @@ describe "String" do
     " NaN".to_f64?.try(&.nan?).should be_true
     "NaN".to_f64?.try(&.nan?).should be_true
     "-NaN".to_f64?.try(&.nan?).should be_true
+    "nan".to_f64?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f64?(whitespace: false).should be_nil
+    "nan ".to_f64?(whitespace: false).should be_nil
+    "nani".to_f64?(strict: true).should be_nil
     " INF".to_f64?.should eq Float64::INFINITY
     "INF".to_f64?.should eq Float64::INFINITY
     "-INF".to_f64?.should eq -Float64::INFINITY
     " +INF".to_f64?.should eq Float64::INFINITY
+    "inf".to_f64?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f64?(strict: true).should be_nil
   end
 
   it "compares strings: different size" do
@@ -2737,7 +2755,7 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) || flag?(:freebsd) %}
+      {% unless flag?(:musl) || flag?(:freebsd) || flag?(:dragonfly) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2746,7 +2764,7 @@ describe "String" do
 
       # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) %}
         it "flushes the shift state (#11992)" do
           "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2790,7 +2808,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:freebsd) %}
+      {% unless flag?(:freebsd) || flag?(:dragonfly) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -2799,7 +2817,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
