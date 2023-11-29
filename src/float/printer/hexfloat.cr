@@ -12,7 +12,6 @@ module Float::Printer::Hexfloat(F, U)
   # hexSequence     = /#{sign}?#{hexIndicator}#{hexSignificand}#{decExponent}/
   #                 = /[+−]?0[Xx](?:[0-9A-Fa-f]*\.[0-9A-Fa-f]+|[0-9A-Fa-f]+\.?)[Pp][+−]?[0-9]+/
   # ```
-  @[AlwaysInline]
   def self.to_f(str : String, &)
     ptr = str.to_unsafe
     finish = ptr + str.bytesize
