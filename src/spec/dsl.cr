@@ -221,7 +221,7 @@ module Spec
         STDERR.flush
         @@aborted = true
       ensure
-        finish_run
+        finish_run unless Spec.list_tags?
       end
     end
   end
@@ -239,7 +239,6 @@ module Spec
     run_filters
     tag_counts = collect_tags(root_context)
     print_list_tags(tag_counts)
-    exit
   end
 
   # :nodoc:
@@ -267,9 +266,7 @@ module Spec
     if tags.empty?
       tag_counts.update("untagged") { |count| count + 1 }
     else
-      tags.each do |tag|
-        tag_counts.update(tag) { |count| count + 1 }
-      end
+      tags.tally(tag_counts)
     end
   end
 
