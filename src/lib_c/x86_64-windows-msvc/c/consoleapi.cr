@@ -13,8 +13,6 @@ lib LibC
 
   fun GetConsoleCP : DWORD
   fun GetConsoleOutputCP : DWORD
-  fun SetConsoleCP(wCodePageID : DWORD) : BOOL
-  fun SetConsoleOutputCP(wCodePageID : DWORD) : BOOL
 
   fun ReadConsoleW(
     hConsoleInput : HANDLE,

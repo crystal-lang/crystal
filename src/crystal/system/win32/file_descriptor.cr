@@ -1,5 +1,6 @@
 require "c/io"
 require "c/consoleapi"
+require "c/consoleapi2"
 require "c/winnls"
 require "io/overlapped"
 
