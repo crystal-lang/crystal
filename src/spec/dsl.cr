@@ -241,14 +241,12 @@ module Spec
     print_list_tags(tag_counts)
   end
 
-  # :nodoc:
   private def self.collect_tags(context) : Hash(String, Int32)
     tag_counts = Hash(String, Int32).new(0)
     collect_tags(tag_counts, context, Set(String).new)
     tag_counts
   end
 
-  # :nodoc:
   private def self.collect_tags(tag_counts, context : Context, tags)
     if context.responds_to?(:tags) && (context_tags = context.tags)
       tags += context_tags
@@ -258,7 +256,6 @@ module Spec
     end
   end
 
-  # :nodoc:
   private def self.collect_tags(tag_counts, example : Example, tags)
     if example_tags = example.tags
       tags += example_tags
@@ -270,7 +267,6 @@ module Spec
     end
   end
 
-  # :nodoc:
   private def self.print_list_tags(tag_counts : Hash(String, Int32)) : Nil
     return if tag_counts.empty?
     longest_name_size = tag_counts.keys.max_of(&.size)
