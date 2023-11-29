@@ -299,7 +299,7 @@ private module ConsoleUtils
     return 0 if slice.empty?
     fill_buffer(handle) if @@buffer.empty?
 
-    bytes_read = slice.size < @@buffer.size ? slice.size : @@buffer.size
+    bytes_read = {slice.size, @@buffer.size}.min
     @@buffer[0, bytes_read].copy_to(slice)
     @@buffer += bytes_read
     bytes_read
