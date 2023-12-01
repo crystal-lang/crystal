@@ -28,7 +28,11 @@ class LLVM::TargetMachine
   end
 
   def enable_global_isel=(enable : Bool)
-    LibLLVMExt.target_machine_enable_global_isel(self, enable)
+    {% if LibLLVM::IS_LT_180 %}
+      LibLLVMExt.target_machine_enable_global_isel(self, enable)
+    {% else %}
+      LibLLVM.set_target_machine_global_isel(self, enable ? 1 : 0)
+    {% end %}
   end
 
   private def emit_to_file(llvm_mod, filename, type)
