@@ -96,8 +96,8 @@ module Spec
 
   def self.add_split_filter(filter)
     if filter
-      r, m = filter.split('%').map &.to_i
-      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
+      r, _, m = filter.partition('%')
+      @@split_filter = SplitFilter.new(remainder: r.to_i, quotient: m.to_i)
     else
       @@split_filter = nil
     end
@@ -205,18 +205,23 @@ module Spec
   def self.run
     @@start_time = Time.monotonic
 
-    at_exit do
-      log_setup
-      maybe_randomize
-      run_filters
-      root_context.run
-    rescue ex
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
-      @@aborted = true
-    ensure
-      finish_run
+    at_exit do |status|
+      # Do not run specs if the process is exiting on an error
+      next unless status == 0
+
+      begin
+        log_setup
+        maybe_randomize
+        run_filters
+        root_context.run
+      rescue ex
+        STDERR.print "Unhandled exception: "
+        ex.inspect_with_backtrace(STDERR)
+        STDERR.flush
+        @@aborted = true
+      ensure
+        finish_run
+      end
     end
   end
 

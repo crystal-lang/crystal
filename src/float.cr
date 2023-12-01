@@ -129,8 +129,10 @@ struct Float32
   MIN_10_EXP = -37
   # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
   MAX_10_EXP = 38
-  # Smallest representable positive value
+  # Smallest normal positive value, whose previous representable value is subnormal
   MIN_POSITIVE = 1.17549435e-38_f32
+  # Smallest representable positive value, whose previous representable value is zero
+  MIN_SUBNORMAL = 1.0e-45_f32
 
   # Returns a `Float32` by invoking `String#to_f32` on *value*.
   #
@@ -249,8 +251,10 @@ struct Float64
   MIN_10_EXP = -307
   # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
   MAX_10_EXP = 308
-  # Smallest representable positive value
+  # Smallest normal positive value, whose previous representable value is subnormal
   MIN_POSITIVE = 2.2250738585072014e-308_f64
+  # Smallest representable positive value, whose previous representable value is zero
+  MIN_SUBNORMAL = 5.0e-324_f64
 
   # Returns a `Float64` by invoking `String#to_f64` on *value*.
   #

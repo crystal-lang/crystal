@@ -329,6 +329,7 @@ class Process
     Process::Status.new(@process_info.wait)
   ensure
     close
+    @process_info.release
   end
 
   # Whether the process is still registered in the system.
@@ -347,7 +348,6 @@ class Process
     close_io @input
     close_io @output
     close_io @error
-    @process_info.release
   end
 
   # Asks this process to terminate.

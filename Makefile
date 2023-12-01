@@ -161,6 +161,10 @@ generate_data: src/crystal/system/win32/zone_names.cr
 src/crystal/system/win32/zone_names.cr: scripts/generate_windows_zone_names.cr
 	$(CRYSTAL) run $<
 
+generate_data: src/html/entities.cr
+src/html/entities.cr: scripts/generate_html_entities.cr scripts/html_entities.ecr
+	$(CRYSTAL) run $<
+
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(BINDIR)/"

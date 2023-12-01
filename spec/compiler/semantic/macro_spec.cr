@@ -271,6 +271,24 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors if find macros but missing argument" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      private macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+  end
+
   describe "raise" do
     describe "inside macro" do
       describe "without node" do

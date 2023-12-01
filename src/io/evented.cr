@@ -58,7 +58,7 @@ module IO::Evented
       if Errno.value == Errno::EAGAIN
         wait_readable
       else
-        raise IO::Error.from_errno(errno_msg)
+        raise IO::Error.from_errno(errno_msg, target: self)
       end
     end
   ensure
@@ -79,7 +79,7 @@ module IO::Evented
           if Errno.value == Errno::EAGAIN
             wait_writable
           else
-            raise IO::Error.from_errno(errno_msg)
+            raise IO::Error.from_errno(errno_msg, target: self)
           end
         end
       end

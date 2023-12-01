@@ -15,7 +15,7 @@ module Crystal::System::FileDescriptor
     evented_read(slice, "Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for reading"
+          raise IO::Error.new "File not open for reading", target: self
         end
       end
     end
@@ -25,7 +25,7 @@ module Crystal::System::FileDescriptor
     evented_write(slice, "Error writing file") do |slice|
       LibC.write(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing"
+          raise IO::Error.new "File not open for writing", target: self
         end
       end
     end
@@ -90,13 +90,13 @@ module Crystal::System::FileDescriptor
     seek_value = LibC.lseek(fd, offset, whence)
 
     if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek", target: self
     end
   end
 
   private def system_pos
     pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
-    raise IO::Error.from_errno "Unable to tell" if pos == -1
+    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
     pos
   end
 
@@ -147,7 +147,7 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file")
+        raise IO::Error.from_errno("Error closing file", target: self)
       end
     end
   end

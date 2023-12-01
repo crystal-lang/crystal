@@ -225,7 +225,7 @@ describe "Float" do
 
   describe "#next_float" do
     it "does for f64" do
-      0.0.next_float.should eq(5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      0.0.next_float.should eq(Float64::MIN_SUBNORMAL)
       1.0.next_float.should eq(1.0000000000000002)
       (-1.0).next_float.should eq(-0.9999999999999999)
       Float64::MAX.next_float.should eq(Float64::INFINITY)
@@ -235,7 +235,7 @@ describe "Float" do
     end
 
     it "does for f32" do
-      0.0_f32.next_float.should eq(1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      0.0_f32.next_float.should eq(Float32::MIN_SUBNORMAL)
       1.0_f32.next_float.should eq(1.0000001_f32)
       (-1.0_f32).next_float.should eq(-0.99999994_f32)
       Float32::MAX.next_float.should eq(Float32::INFINITY)
@@ -247,7 +247,7 @@ describe "Float" do
 
   describe "#prev_float" do
     it "does for f64" do
-      0.0.prev_float.should eq(-5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      0.0.prev_float.should eq(-Float64::MIN_SUBNORMAL)
       1.0.prev_float.should eq(0.9999999999999999)
       (-1.0).prev_float.should eq(-1.0000000000000002)
       Float64::MIN.prev_float.should eq(-Float64::INFINITY)
@@ -257,7 +257,7 @@ describe "Float" do
     end
 
     it "does for f32" do
-      0.0_f32.prev_float.should eq(-1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      0.0_f32.prev_float.should eq(-Float32::MIN_SUBNORMAL)
       1.0_f32.prev_float.should eq(0.99999994_f32)
       (-1.0_f32).prev_float.should eq(-1.0000001_f32)
       Float32::MIN.prev_float.should eq(-Float32::INFINITY)
