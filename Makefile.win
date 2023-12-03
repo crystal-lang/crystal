@@ -141,6 +141,7 @@ llvm_ext: $(LLVM_EXT_OBJ)
 format: ## Format sources
 	.\bin\crystal tool format$(if $(check), --check) src spec samples scripts
 
+.PHONY: generate_data
 generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
