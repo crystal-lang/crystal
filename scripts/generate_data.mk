@@ -1,8 +1,6 @@
 
 ## Run all data generators
-##   $ make -B -f scripts/generate_data.mk
-## Run specific data generator
-##   $ make -B -f scripts/generate_data.mk spec/std/string/graphemes_break_spec.cr
+##   $ make -f scripts/generate_data.mk
 
 ifeq ($(OS),Windows_NT)
   BIN_CRYSTAL=bin\crystal
@@ -10,32 +8,14 @@ else
   BIN_CRYSTAL=bin/crystal
 endif
 
-all: ## Run all generators
 .PHONY: all
-
-all: spec/std/string/graphemes_break_spec.cr
-spec/std/string/graphemes_break_spec.cr: scripts/generate_grapheme_break_specs.cr
-	$(BIN_CRYSTAL) run $<
-
-all: src/string/grapheme/properties.cr
-src/string/grapheme/properties.cr: scripts/generate_grapheme_properties.cr
-	$(BIN_CRYSTAL) run $<
-
-all: src/openssl/ssl/defaults.cr
-src/openssl/ssl/defaults.cr: scripts/generate_ssl_server_defaults.cr
-	$(BIN_CRYSTAL) run $<
-
-all: src/unicode/data.cr
-src/unicode/data.cr: scripts/generate_unicode_data.cr
-	$(BIN_CRYSTAL) run $<
-
-all: src/crystal/system/win32/zone_names.cr
-src/crystal/system/win32/zone_names.cr: scripts/generate_windows_zone_names.cr
-	$(BIN_CRYSTAL) run $<
-
-all: src/html/entities.cr
-src/html/entities.cr: scripts/generate_html_entities.cr scripts/html_entities.ecr
-	$(BIN_CRYSTAL) run $<
+all: ## Run all generators
+	$(BIN_CRYSTAL) run scripts/generate_grapheme_break_specs.cr
+	$(BIN_CRYSTAL) run scripts/generate_grapheme_properties.cr
+	$(BIN_CRYSTAL) run scripts/generate_ssl_server_defaults.cr
+	$(BIN_CRYSTAL) run scripts/generate_unicode_data.cr
+	$(BIN_CRYSTAL) run scripts/generate_windows_zone_names.cr
+	$(BIN_CRYSTAL) run scripts/generate_html_entities.cr
 
 ifneq ($(OS),Windows_NT)
 .PHONY: help
