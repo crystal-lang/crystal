@@ -389,8 +389,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     type = node.type.as(TupleInstanceType)
 
-    # A tuple potentially has the values packed (unaligned).
-    # The values in the stack are aligned, so we must adjust that:
+    # The elements inside a tuple do not follow the stack alignment.
+    # Each element expression is stack-aligned, so we must adjust that:
     # if the value in the stack has more bytes than needed, we pop
     # the extra ones; if it has less bytes that needed we pad the value
     # with zeros.
