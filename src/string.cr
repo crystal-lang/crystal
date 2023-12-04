@@ -3416,9 +3416,19 @@ class String
     self.match(search, offset, options: options).try &.begin
   end
 
-  # :ditto:
+  # Returns the index of the _first_ occurrence of *search* in the string. If *offset* is present,
+  # it defines the position to start the search.
   #
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".index!('o')    # => 4
+  # "Hello, World".index!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".index!("o", 5) # => 8
+  # "Hello, World".index!("H", 2) # raises Enumerable::NotFoundError
+  # "Hello, World".index!(/[ ]+/) # => 6
+  # "Hello, World".index!(/\d+/)  # raises Enumerable::NotFoundError
+  # ```
   def index!(search, offset = 0) : Int32
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
