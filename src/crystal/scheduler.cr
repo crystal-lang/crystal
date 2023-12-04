@@ -191,7 +191,7 @@ class Crystal::Scheduler
 
     protected def find_target_thread
       if workers = @@workers
-        @rr_target += 1
+        @rr_target &+= 1
         workers[@rr_target % workers.size]
       else
         Thread.current
