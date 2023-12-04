@@ -35,7 +35,7 @@ static ?=       ## Enable static linking
 target ?=       ## Cross-compilation target
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
-order ?=        ## Enable order for spec execution (values: "default" | "random" | seed number)
+order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
