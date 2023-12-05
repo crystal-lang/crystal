@@ -225,7 +225,7 @@ module Crystal
         end
       end
 
-      describe "#docs", focus: true do
+      describe "#docs" do
         it "returns an empty string if there are no docs on the node (wants_doc = false)" do
           assert_macro "{{ x.docs }}", %(""), {x: Call.new(nil, "some_call")}
         end
