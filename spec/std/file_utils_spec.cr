@@ -715,6 +715,7 @@ describe "FileUtils" do
       end
     end
 
+    # FIXME: `Process.run` and backtick don't work in the interpreter (#12241)
     {% if flag?(:unix) && !flag?(:interpreted) %}
       it "overwrites a destination named pipe" do
         with_tempfile("ln_sf_src", "ln_sf_dst_pipe_exists") do |path1, path2|
