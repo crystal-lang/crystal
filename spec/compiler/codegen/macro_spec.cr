@@ -1902,7 +1902,7 @@ describe "Code gen: macro" do
         {{@caller.args[0] == 1 ? 1 : 0}}
       end
 
-      test(1) + test(2)
+      test(1) &+ test(2)
       )).to_i.should eq(1)
   end
 
