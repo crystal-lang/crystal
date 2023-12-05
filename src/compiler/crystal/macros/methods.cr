@@ -400,6 +400,24 @@ module Crystal
         interpret_check_args { symbolize }
       when "class_name"
         interpret_check_args { class_name }
+      when "docs"
+        interpret_check_args(named_params: ["comment"]) do
+          is_comment = if named_args && (comment_arg = named_args["comment"]?)
+                         comment_arg.raise "named argument 'comment' to ASTNode#docs must be a BoolLiteral, not #{comment_arg.class_desc}" unless comment_arg.is_a?(BoolLiteral)
+
+                         comment_arg
+                       else
+                         BoolLiteral.new false
+                       end
+
+          docs = self.doc || ""
+
+          if is_comment.value
+            docs = docs.gsub("\n", "\n# ")
+          end
+
+          StringLiteral.new docs
+        end
       when "raise"
         macro_raise self, args, interpreter, Crystal::MacroRaiseException
       when "warning"
