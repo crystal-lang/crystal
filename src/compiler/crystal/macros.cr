@@ -434,7 +434,7 @@ module Crystal::Macros
     # Returns a `StringLiteral` that contains the documentation comments attached to this node, or an empty string if there are none.
     #
     # WARNING: The return value will be an empty string when executed outside of the `crystal docs` command.
-    def docs : StringLiteral
+    def doc : StringLiteral
     end
 
     # Returns a `MacroId` that contains the documentation comments attached to this node, or an empty `MacroId` if there are none.

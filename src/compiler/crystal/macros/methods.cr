@@ -400,7 +400,7 @@ module Crystal
         interpret_check_args { symbolize }
       when "class_name"
         interpret_check_args { class_name }
-      when "docs"
+      when "doc"
         interpret_check_args do
           StringLiteral.new self.doc || ""
         end
