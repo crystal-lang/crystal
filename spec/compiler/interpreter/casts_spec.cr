@@ -94,7 +94,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts between tuple types, respects alignment (#14036)" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq(123.to_s)
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("123")
         a = {100, 20, 3}.as({Int32 | Int64, Int32, Int32})
         a[0].as(Int32) + a[1] + a[2]
       CRYSTAL
@@ -127,7 +127,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts between named tuple types, respects alignment (#14036)" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq(123.to_s)
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("123")
         a = {x: 100, y: 20_i64, z: 3}.as({y: Int64, z: Int32, x: Int32})
         a[:x] + a[:y] + a[:z]
       CRYSTAL
