@@ -52,7 +52,7 @@ describe String::Builder do
     builder.capacity.should eq initial_capacity
   end
 
-  # FIXME(wasm32): https://github.com/crystal-lang/crystal/pull/13989#issuecomment-1817481289
+  # FIXME(wasm32): https://github.com/crystal-lang/crystal/issues/14057
   {% if flag?(:wasm32) %}
     pending "allocation for > 1 GB"
   {% else %}
