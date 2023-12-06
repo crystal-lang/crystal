@@ -235,7 +235,7 @@ module HTML
     # The entity name cannot be longer than the longest name in the lookup tables.
     entity_name = Slice.new(start_ptr, Math.min(ptr - start_ptr, MAX_ENTITY_NAME_SIZE))
 
-    # If we cann't find an entity on the first try, we need to search each prefix
+    # If we can't find an entity on the first try, we need to search each prefix
     # of it, starting from the largest.
     while entity_name.size >= 2
       case
