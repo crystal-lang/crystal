@@ -234,16 +234,22 @@ module Crystal
           assert_macro "{{ x.docs }}", %("Some docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
         end
 
-        it "returns the call's docs as is when not in comment mode" do
+        it "returns a multiline comment" do
           assert_macro "{{ x.docs }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
         end
+      end
 
-        it "ensures each newline has a `#` prefix when in comment mode" do
-          assert_macro "{{ x.docs comment: true }}", %("Some\\n# multi\\n# line\\n# docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+      describe "#doc_comment" do
+        it "returns an empty MacroId if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new(nil, "some_call")}
         end
 
-        it "enforces a BoolLiteral for the comment named argument" do
-          assert_macro_error "{{ x.docs comment: 123 }}", "named argument 'comment' to ASTNode#docs must be a BoolLiteral, not NumberLiteral", {x: Call.new(nil, "some_call")}
+        it "returns the call's docs if present as a MacroId (wants_doc = true)" do
+          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "ensures each newline has a `#` prefix" do
+          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
         end
       end
     end
