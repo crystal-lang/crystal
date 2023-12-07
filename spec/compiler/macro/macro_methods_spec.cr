@@ -1693,7 +1693,7 @@ module Crystal
 
           describe "with an invalid type argument" do
             it "should raise the proper exception" do
-              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do |program|
+              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a BoolLiteral, not NumberLiteral") do |program|
                 {x: TypeNode.new(program.string)}
               end
             end
@@ -3093,6 +3093,44 @@ module Crystal
           x: Annotation.new(Path.new("Foo"), [] of ASTNode),
           y: true.bool,
         }
+      end
+    end
+
+    describe ModuleDef do
+      module_def1 = ModuleDef.new(Path.new("Foo"))
+      module_def2 = ModuleDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, body: CharLiteral.new('a'))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(module), {x: module_def1}
+        assert_macro %({{x.kind}}), %(module), {x: module_def2}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name}}), %(::Foo::Bar(A, B, *C, D)), {x: module_def2}
+
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar(A, B, *C, D)), {x: module_def2}
+
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: module_def2}
+
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to ModuleDef#name must be a BoolLiteral, not NumberLiteral", {x: module_def1}
+      end
+
+      it "executes type_vars" do
+        assert_macro %({{x.type_vars}}), %([] of ::NoReturn), {x: module_def1}
+        assert_macro %({{x.type_vars}}), %([A, B, C, D]), {x: module_def2}
+      end
+
+      it "executes splat_index" do
+        assert_macro %({{x.splat_index}}), %(nil), {x: module_def1}
+        assert_macro %({{x.splat_index}}), %(2), {x: module_def2}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: module_def1}
+        assert_macro %({{x.body}}), %('a'), {x: module_def2}
       end
     end
 
