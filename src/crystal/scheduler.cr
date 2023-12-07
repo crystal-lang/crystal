@@ -23,20 +23,19 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
+    thread = Thread.current
+    scheduler = thread.scheduler
+
     {% if flag?(:preview_mt) %}
-      th = fiber.@current_thread.lazy_get
+      th = fiber.@current_thread.lazy_get || scheduler.find_target_thread
 
-      if th.nil?
-        th = Thread.current.scheduler.find_target_thread
-      end
-
-      if th == Thread.current
-        Thread.current.scheduler.enqueue(fiber)
+      if th == thread
+        scheduler.enqueue(fiber)
       else
         th.scheduler.send_fiber(fiber)
       end
     {% else %}
-      Thread.current.scheduler.enqueue(fiber)
+      scheduler.enqueue(fiber)
     {% end %}
   end
 
