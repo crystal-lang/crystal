@@ -27,7 +27,9 @@ class Crystal::Scheduler
     scheduler = thread.scheduler
 
     {% if flag?(:preview_mt) %}
-      th = fiber.@current_thread.lazy_get || scheduler.find_target_thread
+      unless th = fiber.get_current_thread
+        th = fiber.set_current_thread(scheduler.find_target_thread)
+      end
 
       if th == thread
         scheduler.enqueue(fiber)
@@ -50,6 +52,7 @@ class Crystal::Scheduler
   end
 
   def self.resume(fiber : Fiber) : Nil
+    validate_running_thread(fiber)
     Thread.current.scheduler.resume(fiber)
   end
 
@@ -65,7 +68,20 @@ class Crystal::Scheduler
   end
 
   def self.yield(fiber : Fiber) : Nil
+    validate_running_thread(fiber)
     Thread.current.scheduler.yield(fiber)
+  end
+
+  private def validate_running_thread(fiber : Fiber) : Nil
+    {% if flag?(:preview_mt) %}
+      if th = fiber.get_current_thread
+        unless th == Thread.current
+          raise "BUG: tried to manually resume #{fiber} on #{Thread.current} instead of #{th}"
+        end
+      else
+        fiber.set_current_thread
+      end
+    {% end %}
   end
 
   {% if flag?(:preview_mt) %}
@@ -78,11 +94,15 @@ class Crystal::Scheduler
     private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
     @free_stacks = Deque(Void*).new
   {% end %}
+
+  @main : Fiber
   @lock = Crystal::SpinLock.new
   @sleeping = false
 
   # :nodoc:
-  def initialize(@main : Fiber)
+  def initialize(thread : Thread)
+    @main = thread.main_fiber
+    {% if flag?(:preview_mt) %} @main.set_current_thread(thread) {% end %}
     @current = @main
     @runnables = Deque(Fiber).new
   end
@@ -97,8 +117,8 @@ class Crystal::Scheduler
 
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
+
     {% if flag?(:preview_mt) %}
-      set_current_thread(fiber)
       GC.lock_read
     {% elsif flag?(:interpreted) %}
       # No need to change the stack bottom!
@@ -130,10 +150,6 @@ class Crystal::Scheduler
     else
       fatal_resume_error(fiber, "can't resume a running fiber")
     end
-  end
-
-  private def set_current_thread(fiber)
-    fiber.@current_thread.set(Thread.current)
   end
 
   private def fatal_resume_error(fiber, message)
@@ -230,6 +246,7 @@ class Crystal::Scheduler
       @@workers = Array(Thread).new(count) do |i|
         if i == 0
           worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
+          worker_loop.set_current_thread
           Thread.current.scheduler.enqueue worker_loop
           Thread.current
         else
