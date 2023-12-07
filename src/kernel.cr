@@ -563,14 +563,6 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
-    end
-  end
-
   {% if flag?(:win32) %}
     Crystal::System::Process.start_interrupt_loop
   {% else %}
@@ -586,7 +578,5 @@ end
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 
-  {% if flag?(:preview_mt) %}
-    Crystal::Scheduler.init_workers
-  {% end %}
+  Crystal::Scheduler.init
 {% end %}
