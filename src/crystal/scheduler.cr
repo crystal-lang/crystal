@@ -158,9 +158,7 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        unless runnable == @current
-          runnable.resume
-        end
+        resume(runnable) unless runnable == @current
         break
       else
         @event_loop.run_once
@@ -198,10 +196,11 @@ class Crystal::Scheduler
       fiber_channel = self.fiber_channel
       loop do
         @lock.lock
+
         if runnable = @runnables.shift?
           @runnables << Fiber.current
           @lock.unlock
-          runnable.resume
+          resume(runnable)
         else
           @sleeping = true
           @lock.unlock
@@ -211,7 +210,7 @@ class Crystal::Scheduler
           @sleeping = false
           @runnables << Fiber.current
           @lock.unlock
-          fiber.resume
+          resume(fiber)
         end
       end
     end
