@@ -77,6 +77,10 @@ module IO::Overlapped
         case entry.dwNumberOfBytesTransferred
         when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
           if fiber = completion_key.fiber
+            # this ensures the `::Process` doesn't keep an indirect reference to
+            # `::Thread.current`, as that leads to a finalization cycle
+            completion_key.fiber = nil
+
             yield fiber
           else
             # the `Process` exits before a call to `#wait`; do nothing
