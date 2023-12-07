@@ -2768,7 +2768,7 @@ private def parse_generic_args_argument(node, method, named_args, *, default)
   case named_arg = named_args.try &.["generic_args"]?
   when Nil
     default
-  when BoolLiteral
+  when Crystal::BoolLiteral
     named_arg.value
   else
     named_arg.raise "named argument 'generic_args' to #{node.class_desc}##{method} must be a BoolLiteral, not #{named_arg.class_desc}"
