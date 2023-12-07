@@ -1798,6 +1798,12 @@ module Crystal::Macros
   end
 
   # An `include` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # include {{ node.name }}
+  # ```
   class Include < ASTNode
     # Returns the name of the type being included.
     def name : ASTNode
@@ -1805,6 +1811,12 @@ module Crystal::Macros
   end
 
   # An `extend` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # extend {{ node.name }}
+  # ```
   class Extend < ASTNode
     # Returns the name of the type being extended.
     def name : ASTNode
