@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "./ryu_printf_table"
 
 # Source port of Ryu Printf's reference implementation in C.

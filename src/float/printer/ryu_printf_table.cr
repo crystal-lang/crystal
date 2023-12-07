@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 module Float::Printer::RyuPrintf
   {% begin %}
     # A table of all two-digit numbers. This is used to speed up decimal digit

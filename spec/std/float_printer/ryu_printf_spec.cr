@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 # This file contains test cases derived from:
 #
 # * https://github.com/ulfjack/ryu
