@@ -59,7 +59,10 @@ class Crystal::Scheduler
   end
 
   def self.yield : Nil
-    Thread.current.scheduler.yield
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      Thread.current.scheduler.sleep(0.seconds)
+    {% end %}
   end
 
   def self.yield(fiber : Fiber) : Nil
@@ -172,13 +175,6 @@ class Crystal::Scheduler
   protected def sleep(time : Time::Span) : Nil
     @current.resume_event.add(time)
     reschedule
-  end
-
-  protected def yield : Nil
-    # TODO: Fiber switching and libevent for wasm32
-    {% unless flag?(:wasm32) %}
-      sleep(0.seconds)
-    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil
