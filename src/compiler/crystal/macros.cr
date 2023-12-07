@@ -1931,8 +1931,20 @@ module Crystal::Macros
   class Underscore < ASTNode
   end
 
-  # class MagicConstant < ASTNode
+  # A pseudo constant used to provide information about source code location.
+  #
+  # Usually this node is resolved by the compiler. It appears unresolved when
+  # used as a default parameter value:
+  #
+  # ```
+  # # the `__FILE__` here is a `MagicConstant`
+  # def foo(file = __FILE__)
+  #   # the `__LINE__` here becomes a `NumberLiteral`
+  #   __LINE__
   # end
+  # ```
+  class MagicConstant < ASTNode
+  end
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
