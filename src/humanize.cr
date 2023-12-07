@@ -41,7 +41,7 @@ struct Number
       else
         string = String.build do |io|
           # Make sure to avoid scientific notation of default Float#to_s
-          Float::Printer.print(number.abs, io, point_range: ..)
+          Float::Printer.shortest(number.abs, io, point_range: ..)
         end
         _, _, decimals = string.partition(".")
         integer, _, _ = ("%f" % number.abs).partition(".")
