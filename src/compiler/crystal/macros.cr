@@ -1596,9 +1596,11 @@ module Crystal::Macros
   # Every module definition `node` is equivalent to:
   #
   # ```
-  # {{ node.kind }} {{ node.name }}
-  #   {{ node.body }}
-  # end
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
   # ```
   class ModuleDef < ASTNode
     # Returns the keyword used to define this type.
