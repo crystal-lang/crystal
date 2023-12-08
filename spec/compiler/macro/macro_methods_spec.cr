@@ -3182,6 +3182,25 @@ module Crystal
       end
     end
 
+    describe AnnotationDef do
+      annotation_def = AnnotationDef.new(Path.new("Foo", "Bar", global: true))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(annotation), {x: annotation_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(::Foo::Bar), {x: annotation_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar), {x: annotation_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: annotation_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to AnnotationDef#name must be a BoolLiteral, not NumberLiteral", {x: annotation_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: annotation_def}
+      end
+    end
+
     describe "env" do
       it "has key" do
         ENV["FOO"] = "foo"

@@ -2456,6 +2456,25 @@ module Crystal
       end
     end
   end
+
+  class AnnotationDef
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "kind"
+        interpret_check_args { MacroId.new("annotation") }
+      when "name"
+        interpret_check_args(named_params: ["generic_args"]) do
+          # parse the argument, but ignore it otherwise
+          parse_generic_args_argument(self, method, named_args, default: true)
+          @name
+        end
+      when "body"
+        interpret_check_args { Nop.new }
+      else
+        super
+      end
+    end
+  end
 end
 
 private def get_named_annotation_args(object)

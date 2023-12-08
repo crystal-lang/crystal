@@ -1649,6 +1649,39 @@ module Crystal::Macros
     end
   end
 
+  # An annotation definition.
+  #
+  # Every annotation definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class AnnotationDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `AnnotationDef` this is always `annotation`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    #
+    # Currently this is always a `Nop`, because annotation definitions cannot
+    # contain anything at all.
+    def body : Nop
+    end
+  end
+
   # A `while` expression
   class While < ASTNode
     # Returns this while's condition.
