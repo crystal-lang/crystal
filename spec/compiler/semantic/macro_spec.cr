@@ -1109,13 +1109,11 @@ describe "Semantic: macro" do
       module T
       end
 
-      module Foo
-        def self.foo(foo : T) forall T
-          {{ ::T.module? ? 1 : 'a' }}
-        end
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
       end
 
-      Foo.foo("")
+      foo("")
       CRYSTAL
   end
 
