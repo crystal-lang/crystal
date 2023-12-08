@@ -224,6 +224,34 @@ module Crystal
           assert_macro %({{ x.is_a?(ModuleDef) }}), "false", {x: ClassDef.new("Foo".path)}
         end
       end
+
+      describe "#doc" do
+        it "returns an empty string if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc }}", %(""), {x: Call.new(nil, "some_call")}
+        end
+
+        it "returns the call's docs if present (wants_doc = true)" do
+          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "returns a multiline comment" do
+          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+        end
+      end
+
+      describe "#doc_comment" do
+        it "returns an empty MacroId if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new(nil, "some_call")}
+        end
+
+        it "returns the call's docs if present as a MacroId (wants_doc = true)" do
+          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "ensures each newline has a `#` prefix" do
+          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+        end
+      end
     end
 
     describe "number methods" do

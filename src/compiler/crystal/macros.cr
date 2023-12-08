@@ -431,6 +431,19 @@ module Crystal::Macros
     def warning(message : StringLiteral) : NilLiteral
     end
 
+    # Returns a `StringLiteral` that contains the documentation comments attached to this node, or an empty string if there are none.
+    #
+    # WARNING: The return value will be an empty string when executed outside of the `crystal docs` command.
+    def doc : StringLiteral
+    end
+
+    # Returns a `MacroId` that contains the documentation comments attached to this node, or an empty `MacroId` if there are none.
+    # Each line is prefixed with a `#` character to allow the output to be used directly within another node's documentation comment.
+    #
+    # WARNING: The return value will be empty when executed outside of the `crystal docs` command.
+    def doc_comment : MacroId
+    end
+
     # Returns `true` if this node's type is the given *type* or any of its
     # subclasses.
     #

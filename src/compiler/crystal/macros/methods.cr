@@ -400,6 +400,14 @@ module Crystal
         interpret_check_args { symbolize }
       when "class_name"
         interpret_check_args { class_name }
+      when "doc"
+        interpret_check_args do
+          StringLiteral.new self.doc || ""
+        end
+      when "doc_comment"
+        interpret_check_args do
+          MacroId.new (self.doc || "").gsub("\n", "\n# ")
+        end
       when "raise"
         macro_raise self, args, interpreter, Crystal::MacroRaiseException
       when "warning"
