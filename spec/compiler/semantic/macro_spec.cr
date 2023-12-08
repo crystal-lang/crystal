@@ -1104,6 +1104,21 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      module Foo
+        def self.foo(foo : T) forall T
+          {{ ::T.module? ? 1 : 'a' }}
+        end
+      end
+
+      Foo.foo("")
+      CRYSTAL
+  end
+
   it "gets named arguments in double splat" do
     assert_type(<<-CRYSTAL) { named_tuple_of({"x": string, "y": bool}) }
       macro foo(**options)

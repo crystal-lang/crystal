@@ -418,7 +418,7 @@ module Crystal
     end
 
     def resolve?(node : Path)
-      if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
+      if (single_name = node.single_name?) && (match = @free_vars.try &.[single_name]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
