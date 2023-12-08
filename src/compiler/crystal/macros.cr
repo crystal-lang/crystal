@@ -1605,8 +1605,49 @@ module Crystal::Macros
   end
 
   # A module definition.
-  # class ModuleDef < ASTNode
-  # end
+  #
+  # Every module definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class ModuleDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `ModuleDef` this is always `module`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # If this node defines a generic type, and *generic_args* is true, returns a
+    # `Generic` whose type arguments are `MacroId`s, possibly with a `Splat` at
+    # the splat index. Otherwise, this method returns a `Path`.
+    def name(*, generic_args : BoolLiteral = true) : Path | Generic
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+
+    # Returns an array of `MacroId`s of this type definition's generic type
+    # parameters.
+    #
+    # On a non-generic type definition, returns an empty array.
+    def type_vars : ArrayLiteral
+    end
+
+    # Returns the splat index of this type definition's generic type parameters.
+    #
+    # Returns `nil` if this type definition isn't generic or if there isn't a
+    # splat parameter.
+    def splat_index : NumberLiteral | NilLiteral
+    end
+  end
 
   # A `while` expression
   class While < ASTNode
