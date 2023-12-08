@@ -916,6 +916,20 @@ describe Crystal::Formatter do
       CRYSTAL
 
     assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      fun foo(
+        a : Int32,
+        b : Int32
+      )
+      end
+      CRYSTAL
+      fun foo(
+        a : Int32,
+        b : Int32,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
       def foo(
         a,
         b
@@ -925,6 +939,48 @@ describe Crystal::Formatter do
       def foo(
         a,
         b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a : Int32,
+        b : Int32
+      )
+      end
+      CRYSTAL
+      def foo(
+        a : Int32,
+        b : Int32,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a : Int32,
+        b : Int32 = 1
+      )
+      end
+      CRYSTAL
+      def foo(
+        a : Int32,
+        b : Int32 = 1,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        b c
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        b c,
       )
       end
       CRYSTAL
