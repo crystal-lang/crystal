@@ -1601,7 +1601,62 @@ module Crystal::Macros
   end
 
   # A class definition.
+  #
+  # Every class definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {% "abstract".id if node.abstract? %} {{ node.kind }} {{ node.name }} {% if superclass = node.superclass %}< {{ superclass }}{% end %}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
   class ClassDef < ASTNode
+    # Returns whether this node defines an abstract class or struct.
+    def abstract? : BoolLiteral
+    end
+
+    # Returns the keyword used to define this type.
+    #
+    # For `ClassDef` this is either `class` or `struct`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # If this node defines a generic type, and *generic_args* is true, returns a
+    # `Generic` whose type arguments are `MacroId`s, possibly with a `Splat` at
+    # the splat index. Otherwise, this method returns a `Path`.
+    def name(*, generic_args : BoolLiteral = true) : Path | Generic
+    end
+
+    # Returns the superclass of this type definition, or a `Nop` if one isn't
+    # specified.
+    def superclass : ASTNode
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+
+    # Returns an array of `MacroId`s of this type definition's generic type
+    # parameters.
+    #
+    # On a non-generic type definition, returns an empty array.
+    def type_vars : ArrayLiteral
+    end
+
+    # Returns the splat index of this type definition's generic type parameters.
+    #
+    # Returns `nil` if this type definition isn't generic or if there isn't a
+    # splat parameter.
+    def splat_index : NumberLiteral | NilLiteral
+    end
+
+    # Returns `true` if this node defines a struct, `false` if this node defines
+    # a class.
+    def struct? : BoolLiteral
+    end
   end
 
   # A module definition.

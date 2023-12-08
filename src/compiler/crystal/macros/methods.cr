@@ -2415,6 +2415,54 @@ module Crystal
     end
   end
 
+  class ClassDef
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "kind"
+        interpret_check_args { MacroId.new(@struct ? "struct" : "class") }
+      when "name"
+        interpret_check_args(named_params: ["generic_args"]) do
+          if parse_generic_args_argument(self, method, named_args, default: true) && (type_vars = @type_vars)
+            type_vars = type_vars.map_with_index do |type_var, i|
+              param = MacroId.new(type_var)
+              param = Splat.new(param) if i == @splat_index
+              param
+            end
+            Generic.new(@name, type_vars)
+          else
+            @name
+          end
+        end
+      when "superclass"
+        interpret_check_args { @superclass || Nop.new }
+      when "type_vars"
+        interpret_check_args do
+          if (type_vars = @type_vars) && type_vars.present?
+            ArrayLiteral.map(type_vars) { |type_var| MacroId.new(type_var) }
+          else
+            empty_no_return_array
+          end
+        end
+      when "splat_index"
+        interpret_check_args do
+          if splat_index = @splat_index
+            NumberLiteral.new(splat_index)
+          else
+            NilLiteral.new
+          end
+        end
+      when "body"
+        interpret_check_args { @body }
+      when "abstract?"
+        interpret_check_args { BoolLiteral.new(@abstract) }
+      when "struct?"
+        interpret_check_args { BoolLiteral.new(@struct) }
+      else
+        super
+      end
+    end
+  end
+
   class ModuleDef
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method

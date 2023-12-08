@@ -3144,6 +3144,60 @@ module Crystal
       end
     end
 
+    describe ClassDef do
+      class_def = ClassDef.new(Path.new("Foo"), abstract: true, superclass: Path.new("Parent"))
+      struct_def = ClassDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, struct: true, body: CharLiteral.new('a'))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(class), {x: class_def}
+        assert_macro %({{x.kind}}), %(struct), {x: struct_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: class_def}
+        assert_macro %({{x.name}}), %(::Foo::Bar(A, B, *C, D)), {x: struct_def}
+
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: class_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar(A, B, *C, D)), {x: struct_def}
+
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: class_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: struct_def}
+
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to ClassDef#name must be a BoolLiteral, not NumberLiteral", {x: class_def}
+      end
+
+      it "executes superclass" do
+        assert_macro %({{x.superclass}}), %(Parent), {x: class_def}
+        assert_macro %({{x.superclass}}), %(Parent(*T)), {x: ClassDef.new(Path.new("Foo"), superclass: Generic.new(Path.new("Parent"), [Splat.new(Path.new("T"))] of ASTNode))}
+        assert_macro %({{x.superclass}}), %(), {x: struct_def}
+      end
+
+      it "executes type_vars" do
+        assert_macro %({{x.type_vars}}), %([] of ::NoReturn), {x: class_def}
+        assert_macro %({{x.type_vars}}), %([A, B, C, D]), {x: struct_def}
+      end
+
+      it "executes splat_index" do
+        assert_macro %({{x.splat_index}}), %(nil), {x: class_def}
+        assert_macro %({{x.splat_index}}), %(2), {x: struct_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: class_def}
+        assert_macro %({{x.body}}), %('a'), {x: struct_def}
+      end
+
+      it "executes abstract?" do
+        assert_macro %({{x.abstract?}}), %(true), {x: class_def}
+        assert_macro %({{x.abstract?}}), %(false), {x: struct_def}
+      end
+
+      it "executes struct?" do
+        assert_macro %({{x.struct?}}), %(false), {x: class_def}
+        assert_macro %({{x.struct?}}), %(true), {x: struct_def}
+      end
+    end
+
     describe ModuleDef do
       module_def1 = ModuleDef.new(Path.new("Foo"))
       module_def2 = ModuleDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, body: CharLiteral.new('a'))
