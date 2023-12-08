@@ -1851,11 +1851,31 @@ module Crystal::Macros
     end
   end
 
-  # class Include < ASTNode
-  # end
+  # An `include` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # include {{ node.name }}
+  # ```
+  class Include < ASTNode
+    # Returns the name of the type being included.
+    def name : ASTNode
+    end
+  end
 
-  # class Extend < ASTNode
-  # end
+  # An `extend` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # extend {{ node.name }}
+  # ```
+  class Extend < ASTNode
+    # Returns the name of the type being extended.
+    def name : ASTNode
+    end
+  end
 
   # class LibDef < ASTNode
   # end

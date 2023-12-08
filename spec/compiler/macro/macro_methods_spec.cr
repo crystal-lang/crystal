@@ -2590,6 +2590,26 @@ module Crystal
       end
     end
 
+    describe Include do
+      foo = Include.new("Foo".path)
+      bar = Include.new(Generic.new("Bar".path, ["Int32".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), "Foo", {x: foo}
+        assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
+    describe Extend do
+      foo = Extend.new("Foo".path)
+      bar = Extend.new(Generic.new("Bar".path, ["Int32".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), "Foo", {x: foo}
+        assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
     describe "visibility modifier methods" do
       node = VisibilityModifier.new(Visibility::Protected, Def.new("some_def"))
 
