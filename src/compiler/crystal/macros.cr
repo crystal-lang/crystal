@@ -1704,6 +1704,39 @@ module Crystal::Macros
     end
   end
 
+  # An enum definition.
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }} {% if base_type = node.base_type %}: {{ base_type }}{% end %}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class EnumDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `EnumDef` this is always `enum`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the base type of this enum definition, or a `Nop` if one isn't
+    # specified.
+    def base_type : ASTNode
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
   # An annotation definition.
   #
   # Every annotation definition `node` is equivalent to:
@@ -1981,9 +2014,6 @@ module Crystal::Macros
   # end
 
   # class UnionDef < CStructOrUnionDef
-  # end
-
-  # class EnumDef < ASTNode
   # end
 
   # class ExternalVar < ASTNode

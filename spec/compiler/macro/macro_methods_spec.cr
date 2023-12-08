@@ -3236,6 +3236,30 @@ module Crystal
       end
     end
 
+    describe EnumDef do
+      enum_def = EnumDef.new(Path.new("Foo", "Bar", global: true), [Path.new("X")] of ASTNode, Path.global("Int32"))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(enum), {x: enum_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(::Foo::Bar), {x: enum_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar), {x: enum_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: enum_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to EnumDef#name must be a BoolLiteral, not NumberLiteral", {x: enum_def}
+      end
+
+      it "executes base_type" do
+        assert_macro %({{x.base_type}}), %(::Int32), {x: enum_def}
+        assert_macro %({{x.base_type}}), %(), {x: EnumDef.new(Path.new("Baz"))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(X), {x: enum_def}
+      end
+    end
+
     describe AnnotationDef do
       annotation_def = AnnotationDef.new(Path.new("Foo", "Bar", global: true))
 

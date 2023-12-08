@@ -2505,6 +2505,27 @@ module Crystal
     end
   end
 
+  class EnumDef
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "kind"
+        interpret_check_args { MacroId.new("enum") }
+      when "name"
+        interpret_check_args(named_params: ["generic_args"]) do
+          # parse the argument, but ignore it otherwise
+          parse_generic_args_argument(self, method, named_args, default: true)
+          @name
+        end
+      when "base_type"
+        interpret_check_args { @base_type || Nop.new }
+      when "body"
+        interpret_check_args { Expressions.from(@members) }
+      else
+        super
+      end
+    end
+  end
+
   class AnnotationDef
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
