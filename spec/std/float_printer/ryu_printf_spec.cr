@@ -1,3 +1,4 @@
+# FIXME: this leads to an OOB on wasm32 (#13918)
 {% skip_file if flag?(:wasm32) %}
 
 # This file contains test cases derived from:
