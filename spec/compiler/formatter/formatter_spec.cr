@@ -929,6 +929,14 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      fun foo(
+        a : Int32,
+        ...
+      )
+      end
+      CRYSTAL
+
     assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
       def foo(
         a,
