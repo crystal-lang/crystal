@@ -9,10 +9,12 @@ lib LibLLVMExt
   alias Int = LibC::Int
   alias UInt = LibC::UInt
 
+  alias SizeT = LibC::SizeT
+
   type OperandBundleDefRef = Void*
 
   {% if LibLLVM::IS_LT_90 %}
-    fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : LibLLVM::DIBuilderRef, name : Char*, value : Int64) : LibLLVM::MetadataRef
+    fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : LibLLVM::DIBuilderRef, name : Char*, name_len : SizeT, value : Int64, is_unsigned : LibLLVM::Bool) : LibLLVM::MetadataRef
     fun clear_current_debug_location = LLVMExtClearCurrentDebugLocation(b : LibLLVM::BuilderRef)
   {% end %}
 

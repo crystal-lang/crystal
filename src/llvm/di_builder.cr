@@ -103,11 +103,8 @@ struct LLVM::DIBuilder
   end
 
   def create_enumerator(name, value)
-    {% if LibLLVM::IS_LT_90 %}
-      LibLLVMExt.di_builder_create_enumerator(self, name, value)
-    {% else %}
-      LibLLVM.di_builder_create_enumerator(self, name, name.bytesize, value, 0)
-    {% end %}
+    {{ LibLLVM::IS_LT_90 ? LibLLVMExt : LibLLVM }}.di_builder_create_enumerator(
+      self, name, name.bytesize, value.to_i64!, value.is_a?(Int::Unsigned) ? 1 : 0)
   end
 
   def create_enumeration_type(scope, name, file, line_number, size_in_bits, align_in_bits, elements, underlying_type)
