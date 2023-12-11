@@ -16,6 +16,11 @@ using namespace llvm;
 #define makeArrayRef ArrayRef
 #endif
 
+#if !LLVM_VERSION_GE(18, 0)
+typedef struct LLVMOpaqueOperandBundle *LLVMOperandBundleRef;
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OperandBundleDef, LLVMOperandBundleRef)
+#endif
+
 extern "C" {
 
 #if !LLVM_VERSION_GE(9, 0)
@@ -31,9 +36,6 @@ void LLVMExtClearCurrentDebugLocation(LLVMBuilderRef B) {
 #endif
 
 #if !LLVM_VERSION_GE(18, 0)
-typedef struct LLVMOpaqueOperandBundle *LLVMOperandBundleRef;
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OperandBundleDef, LLVMOperandBundleRef)
-
 LLVMOperandBundleRef LLVMExtCreateOperandBundle(const char *Tag, size_t TagLen,
                                                 LLVMValueRef *Args,
                                                 unsigned NumArgs) {
