@@ -31,5 +31,5 @@ lib LibLLVMExt
                                           bundle : LibLLVMExt::OperandBundleDefRef,
                                           name : LibC::Char*) : LibLLVM::ValueRef
 
-  fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
+  fun set_target_machine_global_isel = LLVMExtSetTargetMachineGlobalISel(t : LibLLVM::TargetMachineRef, enable : LibLLVM::Bool)
 end
