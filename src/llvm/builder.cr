@@ -89,7 +89,7 @@ class LLVM::Builder
     bundle_ref = bundle.to_unsafe
     bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
     num_bundles = bundle_ref ? 1 : 0
-    Value.new LibLLVMExt.build_call_with_operand_bundles(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_call_with_operand_bundles(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
   end
 
   def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
@@ -108,7 +108,7 @@ class LLVM::Builder
     bundle_ref = bundle.to_unsafe
     bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
     num_bundles = bundle_ref ? 1 : 0
-    Value.new LibLLVMExt.build_call_with_operand_bundles(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_call_with_operand_bundles(self, type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundles, num_bundles, name)
   end
 
   def call(type : LLVM::Type, func : LLVM::Function, args : Array(LLVM::Value), bundle : LLVM::OperandBundleDef)
@@ -285,7 +285,7 @@ class LLVM::Builder
   end
 
   def build_operand_bundle_def(name, values : Array(LLVM::Value))
-    LLVM::OperandBundleDef.new LibLLVMExt.create_operand_bundle(name, name.bytesize, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
+    LLVM::OperandBundleDef.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.create_operand_bundle(name, name.bytesize, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
   end
 
   def build_catch_ret(pad, basic_block)
@@ -299,7 +299,7 @@ class LLVM::Builder
     bundle_ref = bundle.to_unsafe
     bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
     num_bundles = bundle_ref ? 1 : 0
-    Value.new LibLLVMExt.build_invoke_with_operand_bundles(self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_invoke_with_operand_bundles(self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
   end
 
   def invoke(type : LLVM::Type, fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, *, name = "")
@@ -316,7 +316,7 @@ class LLVM::Builder
     bundle_ref = bundle.to_unsafe
     bundles = bundle_ref ? pointerof(bundle_ref) : Pointer(Void).null.as(LibLLVM::OperandBundleRef*)
     num_bundles = bundle_ref ? 1 : 0
-    Value.new LibLLVMExt.build_invoke_with_operand_bundles(self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
+    Value.new {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.build_invoke_with_operand_bundles(self, type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundles, num_bundles, name)
   end
 
   def switch(value, otherwise, cases)

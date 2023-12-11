@@ -26,7 +26,7 @@ lib LibLLVMExt
 
   fun build_invoke_with_operand_bundles = LLVMExtBuildInvokeWithOperandBundles(LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
                                                                                args : LibLLVM::ValueRef*, num_args : UInt,
-                                          then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
+                                                                               then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
                                                                                bundles : LibLLVM::OperandBundleRef*, num_bundles : UInt,
                                                                                name : Char*) : LibLLVM::ValueRef
 
