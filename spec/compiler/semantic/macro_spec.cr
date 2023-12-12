@@ -271,6 +271,24 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors if find macros but missing argument" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      private macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+  end
+
   describe "raise" do
     describe "inside macro" do
       describe "without node" do
@@ -1083,6 +1101,19 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).foo("foo")
+      CRYSTAL
+  end
+
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
+      end
+
+      foo("")
       CRYSTAL
   end
 

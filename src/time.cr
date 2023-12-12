@@ -1041,7 +1041,7 @@ struct Time
       raise ArgumentError.new "Invalid year"
     end
 
-    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+    year.divisible_by?(4) && (!year.divisible_by?(100) || year.divisible_by?(400))
   end
 
   # Prints this `Time` to *io*.

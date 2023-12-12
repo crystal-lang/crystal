@@ -210,7 +210,7 @@ module Spec
             puts
 
             message = ex.is_a?(SpecError) ? ex.to_s : ex.inspect_with_backtrace
-            message.split('\n').each do |line|
+            message.split('\n') do |line|
               print "       "
               puts Spec.color(line, :error)
             end

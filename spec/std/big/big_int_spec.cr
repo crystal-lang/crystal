@@ -283,6 +283,34 @@ describe "BigInt" do
     -5.to_big_i.remainder(-3).should eq(-2)
   end
 
+  it "#bit" do
+    x = 123.to_big_i
+    x.bit(-10.to_big_i ** 99).should eq(0)
+    x.bit(-(2.to_big_i ** 64)).should eq(0)
+    x.bit(-1).should eq(0)
+    x.bit(0).should eq(1)
+    x.bit(2).should eq(0)
+    x.bit(3).should eq(1)
+    x.bit(6).should eq(1)
+    x.bit(7).should eq(0)
+    x.bit(64).should eq(0)
+    x.bit(2.to_big_i ** 64).should eq(0)
+    x.bit(10.to_big_i ** 99).should eq(0)
+
+    x = ~(123.to_big_i)
+    x.bit(-10.to_big_i ** 99).should eq(0)
+    x.bit(-(2.to_big_i ** 64)).should eq(0)
+    x.bit(-1).should eq(0)
+    x.bit(0).should eq(0)
+    x.bit(2).should eq(1)
+    x.bit(3).should eq(0)
+    x.bit(6).should eq(0)
+    x.bit(7).should eq(1)
+    x.bit(64).should eq(1)
+    x.bit(2.to_big_i ** 64).should eq(1)
+    x.bit(10.to_big_i ** 99).should eq(1)
+  end
+
   it "does bitwise and" do
     (123.to_big_i & 321).should eq(65)
     (BigInt.new("96238761238973286532") & 86325735648).should eq(69124358272)

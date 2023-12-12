@@ -563,10 +563,7 @@ abstract class IO
           decoder.write(str)
         end
       else
-        buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
-        while (read_bytes = read(buffer.to_slice)) > 0
-          str.write buffer.to_slice[0, read_bytes]
-        end
+        IO.copy(self, str)
       end
     end
   end
