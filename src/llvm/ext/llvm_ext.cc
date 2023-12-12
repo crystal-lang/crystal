@@ -55,12 +55,14 @@ LLVMValueRef LLVMExtBuildInvoke2(
                                       Bundles, Name));
 }
 
+#if !LLVM_VERSION_GE(18, 0)
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {
   return reinterpret_cast<TargetMachine *>(P);
 }
 
-void LLVMExtTargetMachineEnableGlobalIsel(LLVMTargetMachineRef T, LLVMBool Enable) {
+void LLVMExtSetTargetMachineGlobalISel(LLVMTargetMachineRef T, LLVMBool Enable) {
   unwrap(T)->setGlobalISel(Enable);
 }
+#endif
 
 } // extern "C"
