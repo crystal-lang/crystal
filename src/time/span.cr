@@ -479,7 +479,8 @@ struct Int
 
   # Returns a `Time::Span` of `self` microseconds.
   def microseconds : Time::Span
-    Time::Span.new(nanoseconds: (self.to_i64 * Time::NANOSECONDS_PER_MICROSECOND))
+    sec, m = self.to_i64.divmod(1_000_000)
+    Time::Span.new(seconds: sec, nanoseconds: m * 1_000)
   end
 
   # :ditto:
