@@ -2421,18 +2421,7 @@ module Crystal
       when "kind"
         interpret_check_args { MacroId.new(@struct ? "struct" : "class") }
       when "name"
-        interpret_check_args(named_params: ["generic_args"]) do
-          if parse_generic_args_argument(self, method, named_args, default: true) && (type_vars = @type_vars)
-            type_vars = type_vars.map_with_index do |type_var, i|
-              param = MacroId.new(type_var)
-              param = Splat.new(param) if i == @splat_index
-              param
-            end
-            Generic.new(@name, type_vars)
-          else
-            @name
-          end
-        end
+        type_definition_generic_name(self, method, args, named_args, block)
       when "superclass"
         interpret_check_args { @superclass || Nop.new }
       when "type_vars"
@@ -2469,18 +2458,7 @@ module Crystal
       when "kind"
         interpret_check_args { MacroId.new("module") }
       when "name"
-        interpret_check_args(named_params: ["generic_args"]) do
-          if parse_generic_args_argument(self, method, named_args, default: true) && (type_vars = @type_vars)
-            type_vars = type_vars.map_with_index do |type_var, i|
-              param = MacroId.new(type_var)
-              param = Splat.new(param) if i == @splat_index
-              param
-            end
-            Generic.new(@name, type_vars)
-          else
-            @name
-          end
-        end
+        type_definition_generic_name(self, method, args, named_args, block)
       when "type_vars"
         interpret_check_args do
           if (type_vars = @type_vars) && type_vars.present?
@@ -2890,6 +2868,21 @@ private def parse_generic_args_argument(node, method, named_args, *, default)
     named_arg.value
   else
     named_arg.raise "named argument 'generic_args' to #{node.class_desc}##{method} must be a BoolLiteral, not #{named_arg.class_desc}"
+  end
+end
+
+private def type_definition_generic_name(node, method, args, named_args, block)
+  interpret_check_args(node: node, named_params: ["generic_args"]) do
+    if parse_generic_args_argument(node, method, named_args, default: true) && (type_vars = node.type_vars)
+      type_vars = type_vars.map_with_index do |type_var, i|
+        param = Crystal::MacroId.new(type_var)
+        param = Crystal::Splat.new(param) if i == node.splat_index
+        param
+      end
+      Crystal::Generic.new(node.name, type_vars)
+    else
+      node.name
+    end
   end
 end
 
