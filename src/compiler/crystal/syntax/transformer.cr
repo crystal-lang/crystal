@@ -559,7 +559,6 @@ module Crystal
     end
 
     def transform(node : MacroExpression)
-      node.exp = node.exp.transform(self)
       node
     end
 
@@ -572,15 +571,10 @@ module Crystal
     end
 
     def transform(node : MacroIf)
-      node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self)
-      node.else = node.else.transform(self)
       node
     end
 
     def transform(node : MacroFor)
-      node.exp = node.exp.transform(self)
-      node.body = node.body.transform(self)
       node
     end
 

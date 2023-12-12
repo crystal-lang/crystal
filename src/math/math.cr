@@ -575,6 +575,27 @@ module Math
     hypot(value1.to_f, value2.to_f)
   end
 
+  # Fused multiply-add; returns `value1 * value2 + value3`, performing a single
+  # rounding instead of two.
+  #
+  # ```
+  # Math.fma(0.1, 10.0, -1.0) # => 5.551115123125783e-17
+  # 1.0 * 10.0 - 1.0          # => 0.0
+  # ```
+  def fma(value1 : Float32, value2 : Float32, value3 : Float32) : Float32
+    LibM.fma_f32(value1, value2, value3)
+  end
+
+  # :ditto:
+  def fma(value1 : Float64, value2 : Float64, value3 : Float64) : Float64
+    LibM.fma_f64(value1, value2, value3)
+  end
+
+  # :ditto:
+  def fma(value1, value2, value3)
+    fma(value1.to_f, value2.to_f, value3.to_f)
+  end
+
   # Returns the unbiased base 2 exponent of the given floating-point *value*.
   def ilogb(value : Float32) : Int32
     LibM.ilogb_f32(value)

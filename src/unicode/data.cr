@@ -752,7 +752,7 @@ module Unicode
     data
   end
   private class_getter category_Lo : Array({Int32, Int32, Int32}) do
-    data = Array({Int32, Int32, Int32}).new(485)
+    data = Array({Int32, Int32, Int32}).new(486)
     put(data, 170, 186, 16)
     put(data, 443, 448, 5)
     put(data, 449, 451, 1)
@@ -1235,6 +1235,7 @@ module Unicode
     put(data, 177984, 178205, 1)
     put(data, 178208, 183969, 1)
     put(data, 183984, 191456, 1)
+    put(data, 191472, 192093, 1)
     put(data, 194560, 195101, 1)
     put(data, 196608, 201546, 1)
     put(data, 201552, 205743, 1)

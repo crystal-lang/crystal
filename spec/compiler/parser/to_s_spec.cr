@@ -178,6 +178,7 @@ describe "ASTNode#to_s" do
   expect_to_s %q(%r{#{1}\/\0}), %q(/#{1}\/\0/)
   expect_to_s %q(`\n\0`), %q(`\n\u0000`)
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
+  expect_to_s Call.new(nil, "`", Call.new("String".path, "interpolation", "x".var, global: true)), %q(`#{::String.interpolation(x)}`)
   expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
   expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
   expect_to_s "foo.*"

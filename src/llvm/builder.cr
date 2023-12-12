@@ -333,8 +333,25 @@ class LLVM::Builder
     Value.new LibLLVM.build_va_arg(self, list, type, name)
   end
 
+  @[Deprecated("Call `#set_current_debug_location(metadata, context)` or `#clear_current_debug_location` instead")]
   def set_current_debug_location(line, column, scope, inlined_at = nil)
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  end
+
+  def set_current_debug_location(metadata, context : LLVM::Context)
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVM.set_current_debug_location(self, LibLLVM.metadata_as_value(context, metadata))
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, metadata)
+    {% end %}
+  end
+
+  def clear_current_debug_location
+    {% if LibLLVM::IS_LT_90 %}
+      LibLLVMExt.clear_current_debug_location(self)
+    {% else %}
+      LibLLVM.set_current_debug_location2(self, nil)
+    {% end %}
   end
 
   def set_metadata(value, kind, node)

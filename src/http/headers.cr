@@ -315,7 +315,7 @@ struct HTTP::Headers
 
   # Serializes headers according to the HTTP protocol.
   #
-  # Prints a list of HTTP header fields in the format desribed in [RFC 7230 §3.2](https://www.rfc-editor.org/rfc/rfc7230#section-3.2),
+  # Prints a list of HTTP header fields in the format described in [RFC 7230 §3.2](https://www.rfc-editor.org/rfc/rfc7230#section-3.2),
   # with each field terminated by a CRLF sequence (`"\r\n"`).
   #
   # The serialization does *not* include a double CRLF sequence at the end.

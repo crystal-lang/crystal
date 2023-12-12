@@ -389,8 +389,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     type = node.type.as(TupleInstanceType)
 
-    # A tuple potentially has the values packed (unaligned).
-    # The values in the stack are aligned, so we must adjust that:
+    # The elements inside a tuple do not follow the stack alignment.
+    # Each element expression is stack-aligned, so we must adjust that:
     # if the value in the stack has more bytes than needed, we pop
     # the extra ones; if it has less bytes that needed we pad the value
     # with zeros.
@@ -1418,6 +1418,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     return false unless @wants_value
 
     put_i32 inner_sizeof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : InstanceSizeOf)
+    return false unless @wants_value
+
+    put_i32 inner_instance_sizeof_type(node.exp), node: node
 
     false
   end
@@ -3145,11 +3153,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% operands = instruction[:operands] || [] of Nil %}
 
     def {{name.id}}(
-      {% if operands.empty? %}
-        *, node : ASTNode?
-      {% else %}
-        {{*operands}}, *, node : ASTNode?
-      {% end %}
+      {{operands.splat(", ")}}*, node : ASTNode?
     ) : Nil
       node = @node_override || node
       @instructions.nodes[instructions_index] = node if node
@@ -3365,25 +3369,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions.instructions.size
   end
 
-  private def aligned_sizeof_type(node : ASTNode) : Int32
-    @context.aligned_sizeof_type(node)
-  end
-
-  private def aligned_sizeof_type(type : Type?) : Int32
-    @context.aligned_sizeof_type(type)
-  end
-
-  private def inner_sizeof_type(node : ASTNode) : Int32
-    @context.inner_sizeof_type(node)
-  end
-
-  private def inner_sizeof_type(type : Type?) : Int32
-    @context.inner_sizeof_type(type)
-  end
-
-  private def aligned_instance_sizeof_type(type : Type) : Int32
-    @context.aligned_instance_sizeof_type(type)
-  end
+  private delegate inner_sizeof_type, aligned_sizeof_type,
+    inner_instance_sizeof_type, aligned_instance_sizeof_type, to: @context
 
   private def ivar_offset(type : Type, name : String) : Int32
     if type.extern_union?

@@ -1,5 +1,6 @@
 require "spec"
 require "spec/helpers/string"
+require "big"
 
 private LENGTH_UNITS = ->(magnitude : Int32, number : Float64) do
   case magnitude
@@ -91,6 +92,13 @@ describe Number do
     it { assert_prints Float64::INFINITY.format, "Infinity" }
     it { assert_prints (-Float64::INFINITY).format, "-Infinity" }
     it { assert_prints Float64::NAN.format, "NaN" }
+
+    it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
+
+    it "extracts integer part correctly (#12997)" do
+      assert_prints 1.9999998.format, "1.9999998"
+      assert_prints 1111111.999999998.format, "1,111,111.999999998"
+    end
   end
 
   describe "#humanize" do

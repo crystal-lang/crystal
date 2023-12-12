@@ -234,6 +234,10 @@ module Crystal
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end
 
+      program.const_slices.each do |info|
+        define_slice_constant(info)
+      end
+
       @last = llvm_nil
       @fun_literal_count = 0
 
@@ -251,7 +255,7 @@ module Crystal
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
-      codgen_well_known_functions @node
+      codegen_well_known_functions @node
 
       initialize_predefined_constants
 
@@ -293,6 +297,34 @@ module Crystal
       llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
     end
 
+    def define_slice_constant(info : Program::ConstSliceInfo)
+      args = info.args.to_unsafe
+      kind = info.element_type
+      llvm_element_type = llvm_type(@program.type_from_literal_kind(kind))
+      llvm_elements = Array.new(info.args.size) do |i|
+        num = args[i].as(NumberLiteral)
+        case kind
+        in .i8?   then llvm_element_type.const_int(num.value.to_i8)
+        in .i16?  then llvm_element_type.const_int(num.value.to_i16)
+        in .i32?  then llvm_element_type.const_int(num.value.to_i32)
+        in .i64?  then llvm_element_type.const_int(num.value.to_i64)
+        in .i128? then llvm_element_type.const_int(num.value.to_i128)
+        in .u8?   then llvm_element_type.const_int(num.value.to_u8)
+        in .u16?  then llvm_element_type.const_int(num.value.to_u16)
+        in .u32?  then llvm_element_type.const_int(num.value.to_u32)
+        in .u64?  then llvm_element_type.const_int(num.value.to_u64)
+        in .u128? then llvm_element_type.const_int(num.value.to_u128)
+        in .f32?  then llvm_element_type.const_float(num.value)
+        in .f64?  then llvm_element_type.const_double(num.value)
+        end
+      end
+
+      global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
+      global.linkage = LLVM::Linkage::Private
+      global.global_constant = true
+      global.initializer = llvm_element_type.const_array(llvm_elements)
+    end
+
     def data_layout
       @program.target_machine.data_layout
     end
@@ -327,7 +359,7 @@ module Crystal
       end
     end
 
-    def codgen_well_known_functions(node)
+    def codegen_well_known_functions(node)
       visitor = CodegenWellKnownFunctions.new(self)
       node.accept visitor
     end

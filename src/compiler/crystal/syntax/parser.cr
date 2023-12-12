@@ -4584,7 +4584,7 @@ module Crystal
       when Splat
         push_block_vars(node.exp)
       else
-        raise "BUG: unxpected block var: #{node} (#{node.class})"
+        raise "BUG: unexpected block var: #{node} (#{node.class})"
       end
     end
 
@@ -4753,7 +4753,7 @@ module Crystal
           location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
-          raise "invalid trailing comma in call" if (@token.keyword?(:end) && !next_comes_colon_space?) || @token.type.eof?
+          raise "invalid trailing comma in call", location if (@token.keyword?(:end) && !next_comes_colon_space?) || @token.type.eof?
         else
           break
         end
@@ -5101,7 +5101,7 @@ module Crystal
         global = true
       end
 
-      path = parse_path(global, @token.location)
+      path = parse_path(global, location)
       skip_space
       path
     end

@@ -511,10 +511,16 @@ describe "String" do
     " NaN".to_f?.try(&.nan?).should be_true
     "NaN".to_f?.try(&.nan?).should be_true
     "-NaN".to_f?.try(&.nan?).should be_true
+    "nan".to_f?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f?(whitespace: false).should be_nil
+    "nan ".to_f?(whitespace: false).should be_nil
+    "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
     "-INF".to_f?.should eq -Float64::INFINITY
     " +INF".to_f?.should eq Float64::INFINITY
+    "inf".to_f?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f?(strict: true).should be_nil
   end
 
   it "does to_f32" do
@@ -548,10 +554,16 @@ describe "String" do
     " NaN".to_f32?.try(&.nan?).should be_true
     "NaN".to_f32?.try(&.nan?).should be_true
     "-NaN".to_f32?.try(&.nan?).should be_true
+    "nan".to_f32?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f32?(whitespace: false).should be_nil
+    "nan ".to_f32?(whitespace: false).should be_nil
+    "nani".to_f32?(strict: true).should be_nil
     " INF".to_f32?.should eq Float32::INFINITY
     "INF".to_f32?.should eq Float32::INFINITY
     "-INF".to_f32?.should eq -Float32::INFINITY
     " +INF".to_f32?.should eq Float32::INFINITY
+    "inf".to_f32?(whitespace: false).should eq Float32::INFINITY
+    "info".to_f32?(strict: true).should be_nil
   end
 
   it "does to_f64" do
@@ -585,10 +597,16 @@ describe "String" do
     " NaN".to_f64?.try(&.nan?).should be_true
     "NaN".to_f64?.try(&.nan?).should be_true
     "-NaN".to_f64?.try(&.nan?).should be_true
+    "nan".to_f64?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f64?(whitespace: false).should be_nil
+    "nan ".to_f64?(whitespace: false).should be_nil
+    "nani".to_f64?(strict: true).should be_nil
     " INF".to_f64?.should eq Float64::INFINITY
     "INF".to_f64?.should eq Float64::INFINITY
     "-INF".to_f64?.should eq -Float64::INFINITY
     " +INF".to_f64?.should eq Float64::INFINITY
+    "inf".to_f64?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f64?(strict: true).should be_nil
   end
 
   it "compares strings: different size" do
@@ -1275,6 +1293,19 @@ describe "String" do
       "Dizzy Miss Lizzy".byte_index('z'.ord, 3).should eq(3)
       "Dizzy Miss Lizzy".byte_index('z'.ord, -4).should eq(13)
       "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
+    }
+
+    it { "foo".byte_index('o').should eq(1) }
+    it { "foo bar booz".byte_index('o', 3).should eq(9) }
+    it { "foo".byte_index('a').should be_nil }
+    it { "foo".byte_index('a').should be_nil }
+    it { "foo".byte_index('o', 3).should be_nil }
+    it { "Hi, 💣".byte_index('💣').should eq(4) }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z').should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z', 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z', -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z', -17).should be_nil
     }
 
     it "gets byte index of string" do
@@ -2312,6 +2343,33 @@ describe "String" do
     "foo".matches?(/bar/).should eq(false)
   end
 
+  it "#matches_full?" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".matches_full?(/foo/).should be_true
+    "fooo".matches_full?(/foo/).should be_false
+    "ofoo".matches_full?(/foo/).should be_false
+    "pattern".matches_full?(/(\A)?pattern(\z)?/).should be_true
+    "_pattern_".matches_full?(/(\A)?pattern(\z)?/).should be_false
+  end
+
+  it "#match_full" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full(/foo/).not_nil![0].should eq "foo"
+    "fooo".match_full(/foo/).should be_nil
+    "ofoo".match_full(/foo/).should be_nil
+    "pattern".match_full(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    "_pattern_".match_full(/(\A)?pattern(\z)?/).should be_nil
+  end
+
+  it "#match_full!" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full!(/foo/).not_nil![0].should eq "foo"
+    expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
+    expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
+    "pattern".match_full!(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    expect_raises(Regex::Error) { "_pattern_".match_full!(/(\A)?pattern(\z)?/) }
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
@@ -2724,7 +2782,7 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) || flag?(:freebsd) %}
+      {% unless flag?(:musl) || flag?(:freebsd) || flag?(:dragonfly) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2733,7 +2791,7 @@ describe "String" do
 
       # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) %}
         it "flushes the shift state (#11992)" do
           "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2777,7 +2835,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:freebsd) %}
+      {% unless flag?(:freebsd) || flag?(:dragonfly) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -2786,7 +2844,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) %}
+      {% if flag?(:freebsd) || flag?(:dragonfly) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")

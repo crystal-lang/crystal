@@ -160,6 +160,34 @@ module Crystal
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
     it_parses "2**3**4", Call.new(2.int32, "**", Call.new(3.int32, "**", 4.int32))
 
+    it_parses %(foo%i), Call.new("foo".call, "%", "i".call)
+    it_parses %(foo%q), Call.new("foo".call, "%", "q".call)
+    it_parses %(foo%Q), Call.new("foo".call, "%", "Q".path)
+    it_parses %(foo%r), Call.new("foo".call, "%", "r".call)
+    it_parses %(foo%x), Call.new("foo".call, "%", "x".call)
+    it_parses %(foo%w), Call.new("foo".call, "%", "w".call)
+
+    it_parses %(foo %i), Call.new("foo".call, "%", "i".call)
+    it_parses %(foo %q), Call.new("foo".call, "%", "q".call)
+    it_parses %(foo %Q), Call.new("foo".call, "%", "Q".path)
+    it_parses %(foo %r), Call.new("foo".call, "%", "r".call)
+    it_parses %(foo %x), Call.new("foo".call, "%", "x".call)
+    it_parses %(foo %w), Call.new("foo".call, "%", "w".call)
+
+    it_parses %(foo %i()), "foo".call(([] of ASTNode).array_of(Path.global("Symbol")))
+    it_parses %(foo %q()), "foo".call("".string)
+    it_parses %(foo %Q()), "foo".call("".string)
+    it_parses %(foo %r()), "foo".call(regex(""))
+    it_parses %(foo %x()), "foo".call(Call.new(nil, "`", "".string))
+    it_parses %(foo %w()), "foo".call(([] of ASTNode).array_of(Path.global("String")))
+
+    it_parses %(foo % i()), Call.new("foo".call, "%", "i".call)
+    it_parses %(foo % q()), Call.new("foo".call, "%", "q".call)
+    it_parses %(foo % Q()), Call.new("foo".call, "%", Generic.new("Q".path, [] of ASTNode))
+    it_parses %(foo % r()), Call.new("foo".call, "%", "r".call)
+    it_parses %(foo % x()), Call.new("foo".call, "%", "x".call)
+    it_parses %(foo % w()), Call.new("foo".call, "%", "w".call)
+
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
     it_parses "+ 1", Call.new(1.int32, "+")
@@ -2059,13 +2087,14 @@ module Crystal
       end
       )
 
-    assert_syntax_error %(
+    assert_syntax_error <<-CRYSTAL, "invalid trailing comma in call", line: 2, column: 8
       if 1
         foo 1,
       end
-      ), "invalid trailing comma in call"
+      CRYSTAL
 
-    assert_syntax_error "foo 1,", "invalid trailing comma in call"
+    assert_syntax_error "foo 1,", "invalid trailing comma in call", line: 1, column: 6
+
     assert_syntax_error "def foo:String\nend", "a space is mandatory between ':' and return type"
     assert_syntax_error "def foo :String\nend", "a space is mandatory between ':' and return type"
     assert_syntax_error "def foo():String\nend", "a space is mandatory between ':' and return type"
@@ -2735,6 +2764,18 @@ module Crystal
       source = "enum X; protected macro foo; end; end"
       node = Parser.parse(source).as(EnumDef).members.first
       node_source(source, node).should eq("protected macro foo; end")
+    end
+
+    it "sets correct location of global path in class def" do
+      source = "class ::Foo; end"
+      node = Parser.parse(source).as(ClassDef).name
+      node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets correct location of global path in annotation" do
+      source = "@[::Foo]"
+      node = Parser.parse(source).as(Annotation).path
+      node_source(source, node).should eq("::Foo")
     end
   end
 end

@@ -95,7 +95,7 @@ class Process
     end
 
     if path && !has_separator
-      path.split(PATH_DELIMITER).each do |path_entry|
+      path.split(PATH_DELIMITER) do |path_entry|
         yield Path.new(path_entry, name)
       end
     end

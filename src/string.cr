@@ -752,7 +752,7 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
+    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+', 'i', 'I', 'n', 'N')
 
     v, endptr = yield
 
@@ -3416,9 +3416,19 @@ class String
     self.match(search, offset, options: options).try &.begin
   end
 
-  # :ditto:
+  # Returns the index of the _first_ occurrence of *search* in the string. If *offset* is present,
+  # it defines the position to start the search.
   #
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".index!('o')    # => 4
+  # "Hello, World".index!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".index!("o", 5) # => 8
+  # "Hello, World".index!("H", 2) # raises Enumerable::NotFoundError
+  # "Hello, World".index!(/[ ]+/) # => 6
+  # "Hello, World".index!(/\d+/)  # raises Enumerable::NotFoundError
+  # ```
   def index!(search, offset = 0) : Int32
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
@@ -3666,6 +3676,49 @@ class String
       if to_unsafe[i] == byte
         return i
       end
+    end
+    nil
+  end
+
+  # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "Hello, World".byte_index('o')          # => 4
+  # "Hello, World".byte_index('Z')          # => nil
+  # "Hello, World".byte_index('o', 5)       # => 8
+  # "Hi, 💣".byte_index('💣')                 # => 4
+  # "Dizzy Miss Lizzy".byte_index('z')      # => 2
+  # "Dizzy Miss Lizzy".byte_index('z', 3)   # => 3
+  # "Dizzy Miss Lizzy".byte_index('z', -4)  # => 13
+  # "Dizzy Miss Lizzy".byte_index('z', -17) # => nil
+  # ```
+  def byte_index(char : Char, offset = 0) : Int32?
+    return byte_index(char.ord, offset) if char.ascii?
+
+    offset += bytesize if offset < 0
+    return if offset < 0
+    return if offset + char.bytesize > bytesize
+
+    # Simplified "Rabin-Karp" algorithm
+    search_hash = 0u32
+    search_mask = 0u32
+    hash = 0u32
+    char.each_byte do |byte|
+      search_hash = (search_hash << 8) | byte
+      search_mask = (search_mask << 8) | 0xff
+      hash = (hash << 8) | to_unsafe[offset]
+      offset += 1
+    end
+
+    offset.upto(bytesize) do |i|
+      if (hash & search_mask) == search_hash
+        return i - char.bytesize
+      end
+      # rely on zero terminating byte
+      hash = (hash << 8) | to_unsafe[i]
     end
     nil
   end
@@ -4642,6 +4695,48 @@ class String
   # ```
   def matches?(regex : Regex, pos = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Bool
     regex.matches? self, pos, options: options
+  end
+
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  #
+  # ```
+  # "foo".match_full(/foo/)  # => Regex::MatchData("foo")
+  # $~                       # => Regex::MatchData("foo")
+  # "fooo".match_full(/foo/) # => nil
+  # $~                       # raises Exception
+  # ```
+  def match_full(regex : Regex) : Regex::MatchData?
+    match(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match_full!(/foo/)  # => Regex::MatchData("foo")
+  # $~                        # => Regex::MatchData("foo")
+  # "fooo".match_full!(/foo/) # Regex::Error
+  # $~                        # raises Exception
+  # ```
+  def match_full!(regex : Regex) : Regex::MatchData?
+    match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
+  # Returns `true` if the regular expression *regex* matches this string entirely.
+  #
+  # ```
+  # "foo".matches_full?(/foo/)  # => true
+  # "fooo".matches_full?(/foo/) # => false
+  #
+  # # `$~` is not set even if last match succeeds.
+  # $~ # raises Exception
+  # ```
+  def matches_full?(regex : Regex) : Bool
+    matches?(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
   end
 
   # Searches the string for instances of *pattern*,

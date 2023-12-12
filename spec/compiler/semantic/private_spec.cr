@@ -318,76 +318,64 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "doesn't find private class from outside namespace" do
-    assert_error %(
-      class Foo
-        private class Bar
+  {% for kind, decl in {
+                         "class"    => %(class Bar; end),
+                         "module"   => %(module Bar; end),
+                         "enum"     => %(enum Bar; A; end),
+                         "alias"    => %(alias Bar = Int32),
+                         "lib"      => %(lib Bar; end),
+                         "constant" => %(Bar = 1),
+                       } %}
+    it "doesn't find private {{ kind.id }} from outside namespace" do
+      assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
+        module Foo
+          private {{ decl.id }}
         end
-      end
 
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+        Foo::Bar
+        CRYSTAL
+    end
+  {% end %}
 
-  it "doesn't find private module from outside namespace" do
-    assert_error %(
-      class Foo
-        private module Bar
-        end
-      end
+  {% for kind, decl in {
+                         "class"    => %(class Foo::Bar; end),
+                         "module"   => %(module Foo::Bar; end),
+                         "enum"     => %(enum Foo::Bar; A; end),
+                         "alias"    => %(alias Foo::Bar = Int32),
+                         "lib"      => %(lib Foo::Bar; end),
+                         "constant" => %(Foo::Bar = 1),
+                       } %}
+    it "doesn't find private {{ kind.id }} from outside namespace, long name (#8831)" do
+      assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
+        private {{ decl.id }}
 
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+        Foo::Bar
+        CRYSTAL
+    end
 
-  it "doesn't find private enum from outside namespace" do
-    assert_error %(
-      class Foo
-        private enum Bar
-          A
-        end
-      end
+    it "doesn't define incorrect type in top-level namespace (#13511)" do
+      assert_error <<-CRYSTAL, "undefined constant Bar"
+        private {{ decl.id }}
 
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+        Bar
+        CRYSTAL
+    end
+  {% end %}
 
-  it "doesn't find private alias from outside namespace" do
-    assert_error %(
-      class Foo
-        private alias Bar = Int32
-      end
-
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
-
-  it "doesn't find private lib from outside namespace" do
-    assert_error %(
-      class Foo
-        private lib LibBar
-        end
-      end
-
-      Foo::LibBar
-      ),
-      "private constant Foo::LibBar referenced"
-  end
-
-  it "doesn't find private constant from outside namespace" do
-    assert_error %(
-      class Foo
-        private Bar = 1
-      end
-
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+  {% for kind, decl in {
+                         "class"    => %(class ::Foo; end),
+                         "module"   => %(module ::Foo; end),
+                         "enum"     => %(enum ::Foo; A; end),
+                         "alias"    => %(alias ::Foo = Int32),
+                         "lib"      => %(lib ::Foo; end),
+                         "constant" => %(::Foo = 1),
+                       } %}
+    it "doesn't define private {{ kind.id }} with global type name" do
+      assert_error <<-CRYSTAL, "can't declare private type in the global namespace"
+        private {{ decl.id }}
+        CRYSTAL
+    end
+  {% end %}
 
   it "finds private type from inside namespace" do
     assert_type(%(

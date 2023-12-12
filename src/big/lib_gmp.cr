@@ -23,10 +23,6 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = UI
 
-  alias IntPrimitiveSigned = Int8 | Int16 | Int32 | LibC::Long
-  alias IntPrimitiveUnsigned = UInt8 | UInt16 | UInt32 | LibC::ULong
-  alias IntPrimitive = IntPrimitiveSigned | IntPrimitiveUnsigned
-
   {% if flag?(:win32) && flag?(:bits64) %}
     alias MpExp = LibC::Long
     alias MpSize = LibC::LongLong
@@ -119,6 +115,8 @@ lib LibGMP
   fun ior = __gmpz_ior(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun xor = __gmpz_xor(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun com = __gmpz_com(rop : MPZ*, op : MPZ*)
+
+  fun tstbit = __gmpz_tstbit(op : MPZ*, bit_index : BitcntT) : Int
 
   fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : BitcntT)
   fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : BitcntT)
@@ -238,6 +236,7 @@ lib LibGMP
   fun mpf_mul = __gmpf_mul(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_div = __gmpf_div(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_div_ui = __gmpf_div_ui(rop : MPF*, op1 : MPF*, op2 : UI)
+  fun mpf_ui_div = __gmpf_ui_div(rop : MPF*, op1 : UI, op2 : MPF*)
   fun mpf_neg = __gmpf_neg(rop : MPF*, op : MPF*)
   fun mpf_abs = __gmpf_abs(rop : MPF*, op : MPF*)
   fun mpf_sqrt = __gmpf_sqrt(rop : MPF*, op : MPF*)

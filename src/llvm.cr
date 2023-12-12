@@ -68,6 +68,7 @@ module LLVM
     {% end %}
   end
 
+  @[Deprecated("This method has no effect")]
   def self.start_multithreaded : Bool
     if multithreaded?
       true
@@ -76,6 +77,7 @@ module LLVM
     end
   end
 
+  @[Deprecated("This method has no effect")]
   def self.stop_multithreaded
     if multithreaded?
       LibLLVM.stop_multithreaded

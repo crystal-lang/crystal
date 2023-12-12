@@ -274,6 +274,13 @@ struct Int
     self
   end
 
+  # :inherit:
+  #
+  # Always returns `true` for `Int`.
+  def integer? : Bool
+    true
+  end
+
   # Returns the value of raising `self` to the power of *exponent*.
   #
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,
@@ -480,30 +487,23 @@ struct Int
     return v if u == 0
     return u if v == 0
 
-    shift = self.class.zero
     # Let shift := lg K, where K is the greatest power of 2
     # dividing both u and v.
-    while (u | v) & 1 == 0
-      shift &+= 1
-      u = u.unsafe_shr 1
-      v = v.unsafe_shr 1
-    end
-    while u & 1 == 0
-      u = u.unsafe_shr 1
-    end
+    shift = (u | v).trailing_zeros_count
+    u = u.unsafe_shr(u.trailing_zeros_count)
+
     # From here on, u is always odd.
     loop do
       # remove all factors of 2 in v -- they are not common
-      # note: v is not zero, so while will terminate
-      while v & 1 == 0
-        v = v.unsafe_shr 1
-      end
+      v = v.unsafe_shr(v.trailing_zeros_count)
+
       # Now u and v are both odd. Swap if necessary so u <= v,
       # then set v = v - u (which is even).
       u, v = v, u if u > v
       v &-= u
       break if v.zero?
     end
+
     # restore common factors of 2
     u.unsafe_shl shift
   end
@@ -890,12 +890,88 @@ struct Int8
     0_i8 - self
   end
 
-  # :nodoc:
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int8
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int8
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    to_u8
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    to_u8!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt8
     self < 0 ? 0_u8 &- self : to_u8!
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : self
     -self
   end
@@ -1000,12 +1076,88 @@ struct Int16
     0_i16 - self
   end
 
-  # :nodoc:
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int16
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int16
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    to_u16
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    to_u16!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt16
     self < 0 ? 0_u16 &- self : to_u16!
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : self
     -self
   end
@@ -1110,12 +1262,88 @@ struct Int32
     0 - self
   end
 
-  # :nodoc:
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int32
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int32
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    to_u32
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    to_u32!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt32
     self < 0 ? 0_u32 &- self : to_u32!
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : self
     -self
   end
@@ -1220,12 +1448,88 @@ struct Int64
     0_i64 - self
   end
 
-  # :nodoc:
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int64
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int64
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    to_u64
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    to_u64!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt64
     self < 0 ? 0_u64 &- self : to_u64!
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : self
     -self
   end
@@ -1333,12 +1637,88 @@ struct Int128
     Int128.new(0) - self
   end
 
-  # :nodoc:
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int128
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    to_u128
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    to_u128!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : UInt128
     self < 0 ? UInt128.new(0) &- self : to_u128!
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : self
     -self
   end
@@ -1443,16 +1823,92 @@ struct UInt8
     0_u8 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int8
+    to_i8
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int8
+    to_i8!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    self
+  end
+
   def abs : self
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : Int8
     0_i8 - self
   end
@@ -1557,16 +2013,92 @@ struct UInt16
     0_u16 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int16
+    to_i16
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int16
+    to_i16!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    self
+  end
+
   def abs : self
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : Int16
     0_i16 - self
   end
@@ -1671,16 +2203,92 @@ struct UInt32
     0_u32 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int32
+    to_i32
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int32
+    to_i32!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    self
+  end
+
   def abs : self
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : Int32
     0_i32 - self
   end
@@ -1785,16 +2393,92 @@ struct UInt64
     0_u64 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int64
+    to_i64
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int64
+    to_i64!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    self
+  end
+
   def abs : self
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : Int64
     0_i64 - self
   end
@@ -1901,16 +2585,92 @@ struct UInt128
     UInt128.new(0) &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int128
+    to_i128
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int128
+    to_i128!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    self
+  end
+
   def abs
     self
   end
 
-  # :nodoc:
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
   def abs_unsigned : self
     self
   end
 
-  # :nodoc:
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
   def neg_signed : Int128
     Int128.new(0) - self
   end

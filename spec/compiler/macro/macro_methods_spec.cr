@@ -224,6 +224,34 @@ module Crystal
           assert_macro %({{ x.is_a?(ModuleDef) }}), "false", {x: ClassDef.new("Foo".path)}
         end
       end
+
+      describe "#doc" do
+        it "returns an empty string if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc }}", %(""), {x: Call.new(nil, "some_call")}
+        end
+
+        it "returns the call's docs if present (wants_doc = true)" do
+          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "returns a multiline comment" do
+          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+        end
+      end
+
+      describe "#doc_comment" do
+        it "returns an empty MacroId if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new(nil, "some_call")}
+        end
+
+        it "returns the call's docs if present as a MacroId (wants_doc = true)" do
+          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "ensures each newline has a `#` prefix" do
+          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+        end
+      end
     end
 
     describe "number methods" do
@@ -364,6 +392,13 @@ module Crystal
         assert_macro "{{18446744073709551_i128 - 1_u128}}", "18446744073709550_i128"
         assert_macro "{{18446744073709551615_u128 * 10}}", "184467440737095516150_u128"
         assert_macro "{{18446744073709551610_u128 // 10}}", "1844674407370955161_u128"
+      end
+    end
+
+    describe "char methods" do
+      it "executes ord" do
+        assert_macro %({{'a'.ord}}), %(97)
+        assert_macro %({{'龍'.ord}}), %(40845)
       end
     end
 
@@ -1686,7 +1721,7 @@ module Crystal
 
           describe "with an invalid type argument" do
             it "should raise the proper exception" do
-              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do |program|
+              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a BoolLiteral, not NumberLiteral") do |program|
                 {x: TypeNode.new(program.string)}
               end
             end
@@ -2503,6 +2538,34 @@ module Crystal
       end
     end
 
+    describe "macro if methods" do
+      it "executes cond" do
+        assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
+      end
+
+      it "executes then" do
+        assert_macro %({{x.then}}), "\"test\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "\"foo\"", {x: MacroIf.new(BoolLiteral.new(true), StringLiteral.new("test"), StringLiteral.new("foo"))}
+      end
+    end
+
+    describe "macro for methods" do
+      it "executes vars" do
+        assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "foo", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+    end
+
     describe "unary expression methods" do
       it "executes exp" do
         assert_macro %({{x.exp}}), "some_call", {x: Not.new("some_call".call)}
@@ -2524,6 +2587,26 @@ module Crystal
 
       it "executes offset" do
         assert_macro %({{x.offset}}), "@some_ivar", {x: OffsetOf.new("SomeType".path, "@some_ivar".instance_var)}
+      end
+    end
+
+    describe Include do
+      foo = Include.new("Foo".path)
+      bar = Include.new(Generic.new("Bar".path, ["Int32".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), "Foo", {x: foo}
+        assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
+    describe Extend do
+      foo = Extend.new("Foo".path)
+      bar = Extend.new(Generic.new("Bar".path, ["Int32".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), "Foo", {x: foo}
+        assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
       end
     end
 
@@ -3058,6 +3141,44 @@ module Crystal
           x: Annotation.new(Path.new("Foo"), [] of ASTNode),
           y: true.bool,
         }
+      end
+    end
+
+    describe ModuleDef do
+      module_def1 = ModuleDef.new(Path.new("Foo"))
+      module_def2 = ModuleDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, body: CharLiteral.new('a'))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(module), {x: module_def1}
+        assert_macro %({{x.kind}}), %(module), {x: module_def2}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name}}), %(::Foo::Bar(A, B, *C, D)), {x: module_def2}
+
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar(A, B, *C, D)), {x: module_def2}
+
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: module_def2}
+
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to ModuleDef#name must be a BoolLiteral, not NumberLiteral", {x: module_def1}
+      end
+
+      it "executes type_vars" do
+        assert_macro %({{x.type_vars}}), %([] of ::NoReturn), {x: module_def1}
+        assert_macro %({{x.type_vars}}), %([A, B, C, D]), {x: module_def2}
+      end
+
+      it "executes splat_index" do
+        assert_macro %({{x.splat_index}}), %(nil), {x: module_def1}
+        assert_macro %({{x.splat_index}}), %(2), {x: module_def2}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: module_def1}
+        assert_macro %({{x.body}}), %('a'), {x: module_def2}
       end
     end
 
