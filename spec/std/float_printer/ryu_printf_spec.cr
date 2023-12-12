@@ -361,29 +361,29 @@ ALL_POWERS_OF_TEN = [
   {1e-3, 60, 57},
   {1e-2, 59, 57},
   {1e-1, 55, 54},
-  {1e0, 0, 1}, # TODO: fix exp_reference
-  {1e1, 0, 1},
-  {1e2, 0, 1},
-  {1e3, 0, 1},
-  {1e4, 0, 1},
-  {1e5, 0, 1},
-  {1e6, 0, 1},
-  {1e7, 0, 1},
-  {1e8, 0, 1},
-  {1e9, 0, 1},
-  {1e10, 0, 1},
-  {1e11, 0, 1},
-  {1e12, 0, 1},
-  {1e13, 0, 1},
-  {1e14, 0, 1},
-  {1e15, 0, 1},
-  {1e16, 0, 1},
-  {1e17, 0, 1},
-  {1e18, 0, 1},
-  {1e19, 0, 1},
-  {1e20, 0, 1},
-  {1e21, 0, 1},
-  {1e22, 0, 1},
+  {1e0, 0, 0},
+  {1e1, 0, 0},
+  {1e2, 0, 0},
+  {1e3, 0, 0},
+  {1e4, 0, 0},
+  {1e5, 0, 0},
+  {1e6, 0, 0},
+  {1e7, 0, 0},
+  {1e8, 0, 0},
+  {1e9, 0, 0},
+  {1e10, 0, 0},
+  {1e11, 0, 0},
+  {1e12, 0, 0},
+  {1e13, 0, 0},
+  {1e14, 0, 0},
+  {1e15, 0, 0},
+  {1e16, 0, 0},
+  {1e17, 0, 0},
+  {1e18, 0, 0},
+  {1e19, 0, 0},
+  {1e20, 0, 0},
+  {1e21, 0, 0},
+  {1e22, 0, 0},
   {1e23, 0, 22},
   {1e24, 0, 23},
   {1e25, 0, 25},
@@ -2725,13 +2725,13 @@ ALL_BINARY_EXPONENTS = [
 ]
 
 struct BigFloat
-  def to_s(*, point_range : Range = -3..15)
+  def to_s_with_range(*, point_range : Range = -3..15)
     String.build do |io|
-      to_s(io, point_range: point_range)
+      to_s_with_range(io, point_range: point_range)
     end
   end
 
-  def to_s(io : IO, *, point_range : Range = -3..15) : Nil
+  def to_s_with_range(io : IO, *, point_range : Range = -3..15) : Nil
     cstr = LibGMP.mpf_get_str(nil, out decimal_exponent, 10, 0, self)
     length = LibC.strlen(cstr)
     buffer = Slice.new(cstr, length)
@@ -2762,20 +2762,22 @@ struct BigFloat
       buffer = buffer[point...]
     end
 
-    # TODO: allow this to be not written at all
-    io << '.'
+    # skip `.0000...`
+    unless buffer.all?(&.=== '0')
+      io << '.'
 
-    # add leading zeros after point
-    if point < 0
-      (-point).times { io << '0' }
-    end
+      # add leading zeros after point
+      if point < 0
+        (-point).times { io << '0' }
+      end
 
-    # add fractional part digits
-    io.write_string buffer
+      # add fractional part digits
+      io.write_string buffer
 
-    # print trailing 0 if whole number or exp notation of power of ten
-    if (decimal_exponent >= length && !exp_mode) || ((exp != point || exp_mode) && length == 1)
-      io << '0'
+      # print trailing 0 if whole number or exp notation of power of ten
+      if (decimal_exponent >= length && !exp_mode) || ((exp != point || exp_mode) && length == 1)
+        io << '0'
+      end
     end
 
     # exp notation
@@ -2791,12 +2793,12 @@ private def fixed_reference(value, precision)
   if precision == 0
     value.to_big_i.to_s
   else
-    BigFloat.new(value, 4096).to_s(point_range: ..)
+    BigFloat.new(value, 4096).to_s_with_range(point_range: ..)
   end
 end
 
 private def exp_reference(value, precision)
-  BigFloat.new(value, 4096).to_s(point_range: 0...0)
+  BigFloat.new(value, 4096).to_s_with_range(point_range: 0...0)
 end
 
 private def ieee_parts_to_f64(sign, exponent, mantissa)
