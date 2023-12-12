@@ -67,7 +67,7 @@ class Crystal::Call
     # Another special case: `new` and `initialize` are only looked up one level,
     # so we must find the first one defined.
     new_owner = owner
-    while defs.empty? && (def_name == "initialize" || def_name == "new")
+    while defs.empty? && def_name.in?("initialize", "new")
       new_owner = new_owner.superclass
       if new_owner
         defs = new_owner.lookup_defs(def_name)
@@ -100,13 +100,13 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+    if !with_autocast && (args.any?(&.supports_autocast? number_autocast) ||
        named_args.try &.any? &.value.supports_autocast? number_autocast)
       ::raise RetryLookupWithLiterals.new
     end
 
     # If it's on an initialize method and there's a similar method name, it's probably a typo
-    if (def_name == "initialize" || def_name == "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
+    if def_name.in?("initialize", "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
       inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
       inner_exception = TypeException.for_node(similar_def, inner_msg)
     end
@@ -123,6 +123,7 @@ class Crystal::Call
     check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
     check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
     check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)
@@ -215,7 +216,7 @@ class Crystal::Call
         # Show did you mean for the simplest case for now
         if names.size == 1 && call_errors.size == 1
           extra_name = names.first
-          name_index = call_errors.first.names.index(extra_name).not_nil!
+          name_index = call_errors.first.names.index!(extra_name)
           similar_name = call_errors.first.similar_names[name_index]
           if similar_name
             str.puts
@@ -240,7 +241,7 @@ class Crystal::Call
     end
   end
 
-  private def gather_names_in_all_overloads(call_errors, error_type : T.class) forall T
+  private def gather_names_in_all_overloads(call_errors, error_type : T.class, &) forall T
     return unless call_errors.all?(T)
 
     call_errors = call_errors.map &.as(T)
@@ -257,6 +258,40 @@ class Crystal::Call
     return unless call_errors.all?(WrongNumberOfArguments)
 
     raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
+  end
+
+  private def check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    call_errors = call_errors.select(ArgumentsTypeMismatch)
+    return if call_errors.empty?
+
+    call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
+    argument_type_mismatches = call_errors.flat_map(&.errors)
+
+    argument_type_mismatches.select!(&.extra_types)
+    return if argument_type_mismatches.empty?
+
+    argument_type_mismatches.each do |target_error|
+      index_or_name = target_error.index_or_name
+
+      mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
+      expected_types = mismatches.map(&.expected_type).uniq!
+      actual_type = mismatches.first.actual_type
+
+      actual_types =
+        if actual_type.is_a?(UnionType)
+          actual_type.union_types
+        else
+          [actual_type] of Type
+        end
+
+      # It could happen that a type that's missing in one overload is actually
+      # covered in another overload, and eventually all overloads are covered
+      if expected_types.to_set == actual_types.to_set
+        expected_types = [target_error.expected_type]
+      end
+
+      raise_argument_type_mismatch(index_or_name, actual_type, expected_types.sort_by!(&.to_s), owner, defs, def_name, arg_types, inner_exception)
+    end
   end
 
   private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
@@ -280,6 +315,10 @@ class Crystal::Call
     expected_types = mismatches.map(&.expected_type).uniq!.sort_by!(&.to_s)
     actual_type = mismatches.first.actual_type
 
+    raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
+  end
+
+  private def raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
     arg =
       case index_or_name
       in Int32
@@ -324,7 +363,7 @@ class Crystal::Call
       else
         str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
         to_sentence(str, expected_types, " or ")
-        str << ", not #{actual_type}"
+        str << ", not #{actual_type.devirtualize}"
       end
     end
   end
@@ -340,7 +379,7 @@ class Crystal::Call
     end
   end
 
-  private def raise_no_overload_matches(node, defs, arg_types, inner_exception)
+  private def raise_no_overload_matches(node, defs, arg_types, inner_exception, &)
     error_message = String.build do |str|
       yield str
 
@@ -359,10 +398,14 @@ class Crystal::Call
   record ExtraNamedArguments, names : Array(String), similar_names : Array(String?)
   record ArgumentsAlreadySpecified, names : Array(String)
   record ArgumentsTypeMismatch, errors : Array(ArgumentTypeMismatch)
-  record ArgumentTypeMismatch, index_or_name : (Int32 | String), expected_type : Type | ASTNode, actual_type : Type
+  record ArgumentTypeMismatch,
+    index_or_name : (Int32 | String),
+    expected_type : Type | ASTNode,
+    actual_type : Type,
+    extra_types : Array(Type)?
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
-    if (block && !a_def.yields) || (!block && a_def.yields)
+    if (block && !a_def.block_arity) || (!block && a_def.block_arity)
       return BlockMismatch.new
     end
 
@@ -461,23 +504,60 @@ class Crystal::Call
 
   private def check_argument_type_mismatch(def_arg, index_or_name, arg_type, match_context, arguments_type_mismatch)
     restricted = arg_type.restrict(def_arg, match_context)
-    unless restricted
-      expected_type = def_arg.type?
-      unless expected_type
-        restriction = def_arg.restriction
-        if restriction
-          expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.free_vars)
-        end
-      end
-      expected_type ||= def_arg.restriction.not_nil!
-      expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
 
-      arguments_type_mismatch << ArgumentTypeMismatch.new(
-        index_or_name: index_or_name,
-        expected_type: expected_type,
-        actual_type: arg_type.remove_literal,
-      )
+    arg_type = arg_type.remove_literal
+    return if restricted == arg_type
+
+    expected_type = compute_expected_type(def_arg, match_context)
+
+    extra_types =
+      if restricted
+        # This was a partial match
+        compute_extra_types(arg_type, expected_type)
+      else
+        # This wasn't a match
+        nil
+      end
+
+    arguments_type_mismatch << ArgumentTypeMismatch.new(
+      index_or_name: index_or_name,
+      expected_type: expected_type,
+      actual_type: arg_type.remove_literal,
+      extra_types: extra_types,
+    )
+  end
+
+  private def compute_expected_type(def_arg, match_context)
+    expected_type = def_arg.type?
+    unless expected_type
+      restriction = def_arg.restriction
+      if restriction
+        expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.bound_free_vars)
+      end
     end
+    expected_type ||= def_arg.restriction.not_nil!
+    expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
+    expected_type
+  end
+
+  private def compute_extra_types(actual_type, expected_type)
+    expected_types =
+      if expected_type.is_a?(UnionType)
+        expected_type.union_types
+      elsif expected_type.is_a?(Type)
+        [expected_type] of Type
+      else
+        return
+      end
+
+    actual_types =
+      if actual_type.is_a?(UnionType)
+        actual_type.union_types
+      else
+        [actual_type] of Type
+      end
+
+    actual_types - expected_types
   end
 
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
@@ -553,7 +633,7 @@ class Crystal::Call
         msg << '\n'
         if similar_name == def_name
           # This check is for the case `a if a = 1`
-          msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)"
+          msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it."
         else
           msg << "Did you mean '#{similar_name}'?"
         end
@@ -563,7 +643,8 @@ class Crystal::Call
       if obj.is_a?(InstanceVar)
         scope = self.scope
         ivar = scope.lookup_instance_var(obj.name)
-        if ivar.dependencies.size == 1 && ivar.dependencies.first.same?(program.nil_var)
+        deps = ivar.dependencies?
+        if deps && deps.size == 1 && deps.first.same?(program.nil_var)
           similar_name = scope.lookup_similar_instance_var_name(ivar.name)
           if similar_name
             msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
@@ -580,7 +661,7 @@ class Crystal::Call
     all_arguments_sizes = [] of Int32
     min_splat = Int32::MAX
     defs.each do |a_def|
-      next if (block && !a_def.yields) || (!block && a_def.yields)
+      next if (block && !a_def.block_arity) || (!block && a_def.block_arity)
 
       min_size, max_size = a_def.min_max_args_sizes
       if max_size == Int32::MAX
@@ -730,7 +811,7 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def, arg_types = nil)
-    Call.def_full_name(owner, a_def, arg_types = nil)
+    Call.def_full_name(owner, a_def, arg_types)
   end
 
   def self.def_full_name(owner, a_def, arg_types = nil)
@@ -778,7 +859,7 @@ class Crystal::Call
       end
       if arg_default = arg.default_value
         str << " = "
-        str << arg.default_value
+        str << arg_default
       end
       printed = true
     end
@@ -789,7 +870,7 @@ class Crystal::Call
       printed = true
     end
 
-    if a_def.yields
+    if a_def.block_arity
       str << ", " if printed
       str << '&'
       if block_arg = a_def.block_arg
@@ -805,8 +886,6 @@ class Crystal::Call
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
-    arg_types = args.map &.type
-
     owner.each_concrete_type do |concrete_type|
       defs = concrete_type.instance_type.lookup_defs_with_modules("initialize")
       defs = defs.select { |a_def| a_def.args.size != args.size }
@@ -819,12 +898,10 @@ class Crystal::Call
   end
 
   def check_macro_wrong_number_of_arguments(def_name)
-    obj = self.obj
-    return if obj && !obj.is_a?(Path)
+    return if (obj = self.obj) && !obj.is_a?(Path)
 
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros.is_a?(Array(Macro))
-    macros = macros.reject &.visibility.private?
 
     if msg = single_def_error_message(macros, named_args)
       raise msg
@@ -899,7 +976,7 @@ class Crystal::Call
     end
   end
 
-  def check_recursive_splat_call(a_def, args)
+  def check_recursive_splat_call(a_def, args, &)
     if a_def.splat_index
       previous_splat_types = program.splat_expansions[a_def] ||= [] of Type
       previous_splat_types.push(args.values.last.type)
@@ -927,7 +1004,7 @@ class Crystal::Call
 
   def self.full_name(owner, method_name = name)
     case owner
-    when Program
+    when Program, Nil
       method_name
     when owner.program.class_type
       # Class's instance_type is Object, not Class, so we cannot treat it like
@@ -938,6 +1015,41 @@ class Crystal::Call
     else
       "#{owner}##{method_name}"
     end
+  end
+
+  def signature(io : IO) : Nil
+    io << full_name(obj.try(&.type)) << '('
+
+    first = true
+    args.each do |arg|
+      case {arg_type = arg.type, arg}
+      when {TupleInstanceType, Splat}
+        next if arg_type.tuple_types.empty?
+        io << ", " unless first
+        arg_type.tuple_types.join(io, ", ")
+      when {NamedTupleInstanceType, DoubleSplat}
+        next if arg_type.entries.empty?
+        io << ", " unless first
+        arg_type.entries.join(io, ", ") do |entry|
+          Symbol.quote_for_named_argument(io, entry.name)
+          io << ": " << entry.type
+        end
+      else
+        io << ", " unless first
+        io << arg.type
+      end
+      first = false
+    end
+
+    if named_args = @named_args
+      io << ", " unless first
+      named_args.join(io, ", ") do |named_arg|
+        Symbol.quote_for_named_argument(io, named_arg.name)
+        io << ": " << named_arg.value.type
+      end
+    end
+
+    io << ')'
   end
 
   private def colorize(obj)

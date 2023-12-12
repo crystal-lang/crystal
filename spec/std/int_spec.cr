@@ -13,6 +13,13 @@ private macro it_converts_to_s(num, str, **opts)
 end
 
 describe "Int" do
+  describe "#integer?" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it { {{ int }}::MIN.integer?.should be_true }
+      it { {{ int }}::MAX.integer?.should be_true }
+    {% end %}
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
@@ -137,6 +144,156 @@ describe "Int" do
       1_u32.abs.should eq(1_u32)
       1_u64.abs.should eq(1_u64)
     end
+  end
+
+  describe "#to_signed" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_signed
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_signed.should eq(-123)
+        Int{{n}}::MIN.to_signed.should eq(Int{{n}}::MIN)
+        Int{{n}}::MAX.to_signed.should eq(Int{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_signed
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_signed.should eq(0)
+        expect_raises(OverflowError) { UInt{{n}}::MAX.to_signed }
+        expect_raises(OverflowError) { (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed }
+      end
+    {% end %}
+  end
+
+  describe "#to_signed!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_signed!
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_signed!.should eq(-123)
+        Int{{n}}::MIN.to_signed!.should eq(Int{{n}}::MIN)
+        Int{{n}}::MAX.to_signed!.should eq(Int{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_signed!
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_signed!.should eq(0)
+        UInt{{n}}::MAX.to_signed!.should eq(-1)
+        (UInt{{n}}::MAX - 122).to_signed!.should eq(-123)
+        (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed!.should eq(Int{{n}}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.zero.to_unsigned.should eq(UInt{{n}}::MIN)
+        Int{{n}}::MAX.to_unsigned.should eq(UInt{{n}}.new(Int{{n}}::MAX))
+        expect_raises(OverflowError) { Int{{n}}::MIN.to_unsigned }
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
+        Int{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MAX // 2 + 1)
+        Int{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX // 2)
+        Int{{n}}.new(-1).to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#abs_unsigned" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+
+        x = {{ int }}.new(-123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does not overflow on {{ int }}::MIN" do
+        x = {{ int }}::MIN.abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(U{{ int }}.zero &- {{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#neg_signed" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+
+        x = {{ int }}.new(-123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(123)
+
+        expect_raises(OverflowError) { {{ int }}::MIN.neg_signed }
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+      end
+
+      it "does not overflow on {{ int }}::MIN.abs_unsigned" do
+        x = {{ int }}::MIN.abs_unsigned.neg_signed
+        x.should be_a({{ int }})
+        x.should eq({{ int }}::MIN)
+      end
+    {% end %}
   end
 
   describe "gcd" do
@@ -770,6 +927,52 @@ describe "Int" do
     iter.next.should be_a(Iterator::Stop)
   end
 
+  describe "#bit_reverse" do
+    it { 0x12_u8.bit_reverse.should eq(0x48_u8) }
+    it { 0x1234_u16.bit_reverse.should eq(0x2C48_u16) }
+    it { 0x12345678_u32.bit_reverse.should eq(0x1E6A2C48_u32) }
+    it { 0x123456789ABCDEF0_u64.bit_reverse.should eq(0x0F7B3D591E6A2C48_u64) }
+    it { 1.to_u128.bit_reverse.should eq(1.to_u128 << 127) }
+    it { (1.to_u128 << 127).bit_reverse.should eq(0x1.to_u128) }
+    it { 0x12345678.to_u128.bit_reverse.should eq(0x1E6A2C48.to_u128 << 96) }
+
+    it { 0x12_i8.bit_reverse.should eq(0x48_i8) }
+    it { 0x1234_i16.bit_reverse.should eq(0x2C48_i16) }
+    it { 0x12345678_i32.bit_reverse.should eq(0x1E6A2C48_i32) }
+    it { 0x123456789ABCDEF0_i64.bit_reverse.should eq(0x0F7B3D591E6A2C48_i64) }
+    it { 1.to_i128.bit_reverse.should eq(1.to_i128 << 127) }
+    it { (1.to_i128 << 127).bit_reverse.should eq(0x1.to_i128) }
+    it { 0x12345678.to_i128.bit_reverse.should eq(0x1E6A2C48.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.bit_reverse.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.bit_reverse.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
+  describe "#byte_swap" do
+    it { 0x12_u8.byte_swap.should eq(0x12_u8) }
+    it { 0x1234_u16.byte_swap.should eq(0x3412_u16) }
+    it { 0x12345678_u32.byte_swap.should eq(0x78563412_u32) }
+    it { 0x123456789ABCDEF0_u64.byte_swap.should eq(0xF0DEBC9A78563412_u64) }
+    it { 1.to_u128.byte_swap.should eq(1.to_u128 << 120) }
+    it { (1.to_u128 << 127).byte_swap.should eq(0x80.to_u128) }
+    it { 0x12345678.to_u128.byte_swap.should eq(0x78563412.to_u128 << 96) }
+
+    it { 0x12_i8.byte_swap.should eq(0x12_i8) }
+    it { 0x1234_i16.byte_swap.should eq(0x3412_i16) }
+    it { 0x12345678_i32.byte_swap.should eq(0x78563412_i32) }
+    it { 0x123456789ABCDEF0_i64.byte_swap.should eq(0xF0DEBC9A78563412_u64.to_i64!) }
+    it { 1.to_i128.byte_swap.should eq(1.to_i128 << 120) }
+    it { (1.to_i128 << 127).byte_swap.should eq(0x80.to_i128) }
+    it { 0x12345678.to_i128.byte_swap.should eq(0x78563412.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.byte_swap.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.byte_swap.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
   describe "#popcount" do
     it { 5_i8.popcount.should eq(2) }
     it { 127_i8.popcount.should eq(7) }
@@ -905,11 +1108,11 @@ describe "Int" do
     end
 
     it "works for maximums" do
-      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
-      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
-      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
+      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse!)
     end
 
     it "works for non-Int32" do

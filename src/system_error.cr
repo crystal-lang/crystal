@@ -36,7 +36,7 @@
 #   Returns the respective error message for *os_error*.
 #   By default it returns the result of `Errno#message` or `WinError#message`.
 #   This method can be overridden for customization of the error message based
-#   on *or_error*  and *opts*.
+#   on *os_error* and *opts*.
 module SystemError
   macro included
     extend ::SystemError::ClassMethods

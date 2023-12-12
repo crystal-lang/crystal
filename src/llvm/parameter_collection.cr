@@ -5,7 +5,7 @@ struct LLVM::ParameterCollection
   end
 
   def size
-    @function.function_type.params_size
+    LibLLVM.get_count_params(@function).to_i
   end
 
   def to_a : Array(LLVM::Value)
@@ -21,6 +21,6 @@ struct LLVM::ParameterCollection
   end
 
   def types
-    @function.function_type.params_types
+    to_a.map(&.type)
   end
 end

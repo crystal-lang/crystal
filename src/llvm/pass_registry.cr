@@ -1,3 +1,6 @@
+{% unless LibLLVM::IS_LT_130 %}
+  @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+{% end %}
 struct LLVM::PassRegistry
   def self.instance : self
     new LibLLVM.get_global_pass_registry

@@ -274,6 +274,13 @@ struct Int
     self
   end
 
+  # :inherit:
+  #
+  # Always returns `true` for `Int`.
+  def integer? : Bool
+    true
+  end
+
   # Returns the value of raising `self` to the power of *exponent*.
   #
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,
@@ -369,16 +376,16 @@ struct Int
   def bits(range : Range)
     start_index = range.begin
     if start_index
-      raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
+      raise IndexError.new("Start index (#{start_index}) must be positive") if start_index < 0
     else
       start_index = 0
     end
 
     end_index = range.end
     if end_index
-      raise IndexError.new("end index (#{end_index}) must be positive") if end_index < 0
+      raise IndexError.new("End index (#{end_index}) must be positive") if end_index < 0
       end_index += 1 unless range.exclusive?
-      raise IndexError.new("end index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
+      raise IndexError.new("End index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
     else
       # if there is no end index then we only need to shift
       return self >> start_index
@@ -448,6 +455,22 @@ struct Int
     end
   end
 
+  # :nodoc:
+  def next_power_of_two : self
+    one = self.class.new!(1)
+
+    bits = sizeof(self) * 8
+    shift = bits &- (self &- 1).leading_zeros_count
+    if self.is_a?(Int::Signed)
+      shift = 0 if shift >= bits &- 1
+    else
+      shift = 0 if shift == bits
+    end
+
+    result = one << shift
+    result >= self ? result : raise OverflowError.new
+  end
+
   # Returns the greatest common divisor of `self` and *other*. Signed
   # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
@@ -464,30 +487,23 @@ struct Int
     return v if u == 0
     return u if v == 0
 
-    shift = self.class.zero
     # Let shift := lg K, where K is the greatest power of 2
     # dividing both u and v.
-    while (u | v) & 1 == 0
-      shift &+= 1
-      u = u.unsafe_shr 1
-      v = v.unsafe_shr 1
-    end
-    while u & 1 == 0
-      u = u.unsafe_shr 1
-    end
+    shift = (u | v).trailing_zeros_count
+    u = u.unsafe_shr(u.trailing_zeros_count)
+
     # From here on, u is always odd.
     loop do
       # remove all factors of 2 in v -- they are not common
-      # note: v is not zero, so while will terminate
-      while v & 1 == 0
-        v = v.unsafe_shr 1
-      end
+      v = v.unsafe_shr(v.trailing_zeros_count)
+
       # Now u and v are both odd. Swap if necessary so u <= v,
       # then set v = v - u (which is even).
       u, v = v, u if u > v
       v &-= u
       break if v.zero?
     end
+
     # restore common factors of 2
     u.unsafe_shl shift
   end
@@ -550,6 +566,7 @@ struct Int
     UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
+  # Calls the given block with each integer value from self down to `to`.
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
@@ -560,6 +577,7 @@ struct Int
     end
   end
 
+  # Get an iterator for counting down from self to `to`.
   def downto(to)
     DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
@@ -726,7 +744,7 @@ struct Int
     end
   end
 
-  private def internal_to_s(base, precision, upcase = false)
+  private def internal_to_s(base, precision, upcase = false, &)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).
@@ -872,8 +890,117 @@ struct Int8
     0_i8 - self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int8
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int8
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    to_u8
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    to_u8!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt8
+    self < 0 ? 0_u8 &- self : to_u8!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
   def popcount : Int8
     Intrinsics.popcount8(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self).to_i8!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12_i8.byte_swap # => 0x12
+  # ```
+  def byte_swap : self
+    self
   end
 
   # Returns the number of leading `0`-bits.
@@ -949,8 +1076,117 @@ struct Int16
     0_i16 - self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int16
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int16
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    to_u16
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    to_u16!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt16
+    self < 0 ? 0_u16 &- self : to_u16!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
   def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self).to_i16!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_i16.byte_swap # => 0x3412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self).to_i16!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1026,8 +1262,117 @@ struct Int32
     0 - self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int32
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int32
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    to_u32
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    to_u32!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt32
+    self < 0 ? 0_u32 &- self : to_u32!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
   def popcount : Int32
     Intrinsics.popcount32(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self).to_i32!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12345678_i32.byte_swap # => 0x78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self).to_i32!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1103,8 +1448,118 @@ struct Int64
     0_i64 - self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int64
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int64
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    to_u64
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    to_u64!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt64
+    self < 0 ? 0_u64 &- self : to_u64!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
   def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self).to_i64!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12345678_i64.byte_swap         # => 0x7856341200000000
+  # 0x123456789ABCDEF0_i64.byte_swap # => -0xf21436587a9cbee
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self).to_i64!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1182,8 +1637,117 @@ struct Int128
     Int128.new(0) - self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int128
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    to_u128
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    to_u128!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt128
+    self < 0 ? UInt128.new(0) &- self : to_u128!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self).to_i128!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x123456789_i128.byte_swap # ＝> -0x7698badcff0000000000000000000000
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self).to_i128!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1259,12 +1823,121 @@ struct UInt8
     0_u8 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int8
+    to_i8
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int8
+    to_i8!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    self
+  end
+
   def abs : self
     self
   end
 
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int8
+    0_i8 - self
+  end
+
   def popcount : Int8
     Intrinsics.popcount8(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12_u8.byte_swap # => 0x12
+  # ```
+  def byte_swap : self
+    self
   end
 
   # Returns the number of leading `0`-bits.
@@ -1340,12 +2013,121 @@ struct UInt16
     0_u16 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int16
+    to_i16
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int16
+    to_i16!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    self
+  end
+
   def abs : self
     self
   end
 
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int16
+    0_i16 - self
+  end
+
   def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap # => 0x3412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1421,12 +2203,121 @@ struct UInt32
     0_u32 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int32
+    to_i32
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int32
+    to_i32!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    self
+  end
+
   def abs : self
     self
   end
 
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int32
+    0_i32 - self
+  end
+
   def popcount : Int32
     Intrinsics.popcount32(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12345678_u32.byte_swap # => 0x78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1502,12 +2393,121 @@ struct UInt64
     0_u64 &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int64
+    to_i64
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int64
+    to_i64!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    self
+  end
+
   def abs : self
     self
   end
 
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int64
+    0_i64 - self
+  end
+
   def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x123456789ABCDEF0_u64.byte_swap # => 0xF0DEBC9A78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1585,12 +2585,121 @@ struct UInt128
     UInt128.new(0) &- self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int128
+    to_i128
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int128
+    to_i128!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    self
+  end
+
   def abs
     self
   end
 
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int128
+    Int128.new(0) - self
+  end
+
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x123456789ABCDEF013579BDF2468ACE0_u128.byte_swap # ＝> 0xE0AC6824DF9B5713F0DEBC9A78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self)
   end
 
   # Returns the number of leading `0`-bits.

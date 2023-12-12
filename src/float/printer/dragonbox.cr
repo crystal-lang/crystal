@@ -19,7 +19,7 @@
 #   is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 #   KIND, either express or implied.
 module Float::Printer::Dragonbox
-  # Current revision: https://github.com/jk-jeon/dragonbox/tree/b5b4f65a83da14019bcec7ae31965216215a3e10
+  # Current revision: https://github.com/jk-jeon/dragonbox/tree/33a9e021290d529bcb41773be2c7c3c91726a9cb
   #
   # Assumes the following policies:
   #
@@ -80,34 +80,32 @@ module Float::Printer::Dragonbox
       ac &+ (intermediate >> 32) &+ (ad >> 32) &+ (bc >> 32)
     end
 
-    # Get upper 64-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
-    def self.umul192_upper64(x : UInt64, y : UInt128) : UInt64
-      g0 = umul128(x, y.high)
-      g0.unsafe_add! umul128_upper64(x, y.low)
-      g0.high
+    # Get upper 128-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
+    def self.umul192_upper128(x : UInt64, y : UInt128) : UInt128
+      r = umul128(x, y.high)
+      r.unsafe_add!(umul128_upper64(x, y.low))
+      r
     end
 
-    # Get upper 32-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
-    def self.umul96_upper32(x : UInt32, y : UInt64) : UInt32
-      # a = 0_u32
-      b = x
-      c = (y >> 32).to_u32!
-      d = y.to_u32!
+    # Get upper 64-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
+    def self.umul96_upper64(x : UInt32, y : UInt64) : UInt64
+      yh = (y >> 32).to_u32!
+      yl = y.to_u32!
 
-      # ac = 0_u64
-      bc = umul64(b, c)
-      # ad = 0_u64
-      bd = umul64(b, d)
+      xyh = umul64(x, yh)
+      xyl = umul64(x, yl)
 
-      intermediate = (bd >> 32) &+ bc
-      (intermediate >> 32).to_u32!
+      xyh &+ (xyl >> 32)
     end
 
-    # Get middle 64-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
-    def self.umul192_middle64(x : UInt64, y : UInt128) : UInt64
-      g01 = x &* y.high
-      g10 = umul128_upper64(x, y.low)
-      g01 &+ g10
+    # Get lower 128-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
+    def self.umul192_lower128(x : UInt64, y : UInt128) : UInt128
+      high = x &* y.high
+      high_low = umul128(x, y.low)
+      UInt128.new(
+        high: high &+ high_low.high,
+        low: high_low.low,
+      )
     end
 
     # Get lower 64-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
@@ -119,8 +117,8 @@ module Float::Printer::Dragonbox
   # Utilities for fast log computation.
   private module Log
     def self.floor_log10_pow2(e : Int)
-      # Precondition: `-1700 <= e <= 1700`
-      (e &* 1262611) >> 22
+      # Precondition: `-2620 <= e <= 2620`
+      (e &* 315653) >> 20
     end
 
     def self.floor_log2_pow10(e : Int)
@@ -129,8 +127,8 @@ module Float::Printer::Dragonbox
     end
 
     def self.floor_log10_pow2_minus_log10_4_over_3(e : Int)
-      # Precondition: `-1700 <= e <= 1700`
-      (e &* 1262611 &- 524031) >> 22
+      # Precondition: `-2985 <= e <= 2936`
+      (e &* 631305 &- 261663) >> 21
     end
   end
 
@@ -190,52 +188,40 @@ module Float::Printer::Dragonbox
       {0xdcd618596be30fe5_u64, 0x000000000000060b_u64},
     ]
 
-    module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32
-      MAGIC_NUMBER        = 0xcccd_u32
-      BITS_FOR_COMPARISON =         16
-      THRESHOLD           = 0x3333_u32
-      SHIFT_AMOUNT        =         19
+    module DIVIDE_BY_POW10_INFO_F32
+      MAGIC_NUMBER = 6554_u32
+      SHIFT_AMOUNT =       16
     end
 
-    module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64
-      MAGIC_NUMBER        = 0x147c29_u32
-      BITS_FOR_COMPARISON =           12
-      THRESHOLD           =     0xa3_u32
-      SHIFT_AMOUNT        =           27
+    module DIVIDE_BY_POW10_INFO_F64
+      MAGIC_NUMBER = 656_u32
+      SHIFT_AMOUNT =      16
     end
 
-    def self.divisible_by_power_of_5?(x : UInt32, exp : Int)
-      mod_inv, max_quotients = CACHED_POWERS_OF_5_TABLE_U32[exp]
-      x &* mod_inv <= max_quotients
-    end
-
-    def self.divisible_by_power_of_5?(x : UInt64, exp : Int)
-      mod_inv, max_quotients = CACHED_POWERS_OF_5_TABLE_U64[exp]
-      x &* mod_inv <= max_quotients
-    end
-
-    def self.divisible_by_power_of_2?(x : Int::Unsigned, exp : Int)
-      x.trailing_zeros_count >= exp
-    end
-
+    # N == 1
     def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
-      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::BITS_FOR_COMPARISON
-      comparison_mask = ~(UInt32::MAX << bits_for_comparison)
+      n &*= DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
 
-      n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
-      c = ((n >> 1) | (n << (bits_for_comparison - 1))) & comparison_mask
-      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::SHIFT_AMOUNT
-      {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::THRESHOLD}
+      # Mask for the lowest (divisibility_check_bits)-bits.
+      divisibility_check_bits = DIVIDE_BY_POW10_INFO_F32::SHIFT_AMOUNT
+      comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
+      result = n & comparison_mask < DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
+
+      n >>= divisibility_check_bits
+      {n, result}
     end
 
+    # N == 2
     def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32)
-      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::BITS_FOR_COMPARISON
-      comparison_mask = ~(UInt32::MAX << bits_for_comparison)
+      n &*= DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
 
-      n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
-      c = ((n >> 2) | (n << (bits_for_comparison - 2))) & comparison_mask
-      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::SHIFT_AMOUNT
-      {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::THRESHOLD}
+      # Mask for the lowest (divisibility_check_bits)-bits.
+      divisibility_check_bits = DIVIDE_BY_POW10_INFO_F64::SHIFT_AMOUNT
+      comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
+      result = n & comparison_mask < DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
+
+      n >>= divisibility_check_bits
+      {n, result}
     end
   end
 
@@ -246,11 +232,11 @@ module Float::Printer::Dragonbox
     end
 
     def remove_exponent_bits(u : D::CarrierUInt, exponent_bits)
-      D::SignedSignificand.new!(u ^ (D::CarrierUInt.new!(exponent_bits) << D::SIGNIFICAND_BITS))
+      u ^ (D::CarrierUInt.new!(exponent_bits) << D::SIGNIFICAND_BITS)
     end
 
-    def remove_sign_bit_and_shift(s : D::SignedSignificand)
-      D::CarrierUInt.new!(s) << 1
+    def remove_sign_bit_and_shift(u : D::CarrierUInt)
+      u << 1
     end
 
     def check_divisibility_and_divide_by_pow10(n : UInt32)
@@ -259,7 +245,7 @@ module Float::Printer::Dragonbox
       {% elsif D::KAPPA == 2 %}
         Div.check_divisibility_and_divide_by_pow10_k2(n)
       {% else %}
-        {% raise "expected kappa == 1 or kappa == 2" %}
+        {% raise "Expected kappa == 1 or kappa == 2" %}
       {% end %}
     end
   end
@@ -275,7 +261,6 @@ module Float::Printer::Dragonbox
     DECIMAL_DIGITS   =    9
 
     alias CarrierUInt = UInt32
-    alias SignedSignificand = Int32
     CARRIER_BITS = 32
 
     KAPPA =   1
@@ -283,11 +268,6 @@ module Float::Printer::Dragonbox
     # MAX_K = 46
     CACHE_BITS = 64
 
-    DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  39
-    CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -1
-    CASE_FC_PM_HALF_UPPER_THRESHOLD                     =   6
-    CASE_FC_LOWER_THRESHOLD                             =  -2
-    CASE_FC_UPPER_THRESHOLD                             =   6
     SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -35
     SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -35
     CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
@@ -308,7 +288,6 @@ module Float::Printer::Dragonbox
     DECIMAL_DIGITS   =    17
 
     alias CarrierUInt = UInt64
-    alias SignedSignificand = Int64
     CARRIER_BITS = 64
 
     KAPPA =    2
@@ -316,11 +295,6 @@ module Float::Printer::Dragonbox
     # MAX_K = 326
     CACHE_BITS = 128
 
-    DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  86
-    CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -2
-    CASE_FC_PM_HALF_UPPER_THRESHOLD                     =   9
-    CASE_FC_LOWER_THRESHOLD                             =  -4
-    CASE_FC_UPPER_THRESHOLD                             =   9
     SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -77
     SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -77
     CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
@@ -331,8 +305,8 @@ module Float::Printer::Dragonbox
   end
 
   private module Impl(F, ImplInfo)
-    def self.break_rounding_tie(significand)
-      significand % 2 == 0 ? significand : significand - 1
+    def self.prefer_round_down?(significand)
+      significand % 2 != 0
     end
 
     def self.compute_nearest_normal(two_fc, exponent, is_closed)
@@ -341,13 +315,21 @@ module Float::Printer::Dragonbox
       # Compute k and beta.
       minus_k = Log.floor_log10_pow2(exponent) - ImplInfo::KAPPA
       cache = ImplInfo.get_cache(-minus_k)
-      beta_minus_1 = exponent + Log.floor_log2_pow10(-minus_k)
+      beta = exponent + Log.floor_log2_pow10(-minus_k)
 
       # Compute zi and deltai.
       # 10^kappa <= deltai < 10^(kappa + 1)
-      deltai = compute_delta(cache, beta_minus_1)
-      two_fr = two_fc | 1
-      zi = compute_mul(two_fr << beta_minus_1, cache)
+      deltai = compute_delta(cache, beta)
+      # For the case of binary32, the result of integer check is not correct for
+      # 29711844 * 2^-82
+      # = 6.1442653300000000008655037797566933477355632930994033813476... * 10^-18
+      # and 29711844 * 2^-81
+      # = 1.2288530660000000001731007559513386695471126586198806762695... * 10^-17,
+      # and they are the unique counterexamples. However, since 29711844 is even,
+      # this does not cause any problem for the endpoints calculations; it can only
+      # cause a problem when we need to perform integer check for the center.
+      # Fortunately, with these inputs, that branch is never executed, so we are fine.
+      zi, is_z_integer = compute_mul((two_fc | 1) << beta, cache)
 
       # Step 2: Try larger divisor
       big_divisor = ImplInfo::BIG_DIVISOR
@@ -361,7 +343,7 @@ module Float::Printer::Dragonbox
         # do nothing
       when .<(deltai)
         # Exclude the right endpoint if necessary.
-        if r == 0 && !is_closed && is_product_integer_pm_half?(two_fr, exponent, minus_k)
+        if r == 0 && is_z_integer && !is_closed
           significand -= 1
           r = big_divisor
         else
@@ -370,10 +352,9 @@ module Float::Printer::Dragonbox
         end
       else
         # r == deltai; compare fractional parts.
-        # Check conditions in the order different from the paper
-        # to take advantage of short-circuiting.
-        two_fl = two_fc - 1
-        unless (!is_closed || !is_product_integer_pm_half?(two_fl, exponent, minus_k)) && !compute_mul_parity(two_fl, cache, beta_minus_1)
+        xi_parity, x_is_integer = compute_mul_parity(two_fc - 1, cache, beta)
+
+        if xi_parity || (x_is_integer && is_closed)
           ret_exponent = minus_k + ImplInfo::KAPPA + 1
           return {significand, ret_exponent}
         end
@@ -387,25 +368,26 @@ module Float::Printer::Dragonbox
       approx_y_parity = ((dist ^ (small_divisor // 2)) & 1) != 0
 
       # Is dist divisible by 10^kappa?
-      dist, divisible_by_10_to_the_kappa = ImplInfo.check_divisibility_and_divide_by_pow10(dist)
+      dist, divisible_by_small_divisor = ImplInfo.check_divisibility_and_divide_by_pow10(dist)
 
       # Add dist / 10^kappa to the significand.
       significand += dist
 
-      if divisible_by_10_to_the_kappa
-        # Check z^(f) >= epsilon^(f)
+      if divisible_by_small_divisor
+        # Check z^(f) >= epsilon^(f).
         # We have either yi == zi - epsiloni or yi == (zi - epsiloni) - 1,
-        # where yi == zi - epsiloni if and only if z^(f) >= epsilon^(f)
+        # where yi == zi - epsiloni if and only if z^(f) >= epsilon^(f).
         # Since there are only 2 possibilities, we only need to care about the parity.
         # Also, zi and r should have the same parity since the divisor
         # is an even number.
-        if compute_mul_parity(two_fc, cache, beta_minus_1) != approx_y_parity
+        yi_parity, is_y_integer = compute_mul_parity(two_fc, cache, beta)
+        if yi_parity != approx_y_parity
           significand -= 1
-        elsif is_product_integer?(two_fc, exponent, minus_k)
+        elsif prefer_round_down?(significand) && is_y_integer
           # If z^(f) >= epsilon^(f), we might have a tie
           # when z^(f) == epsilon^(f), or equivalently, when y is an integer.
           # For tie-to-up case, we can just choose the upper one.
-          significand = break_rounding_tie(significand)
+          significand -= 1
         end
       end
 
@@ -415,13 +397,13 @@ module Float::Printer::Dragonbox
     def self.compute_nearest_shorter(exponent)
       # Compute k and beta.
       minus_k = Log.floor_log10_pow2_minus_log10_4_over_3(exponent)
-      beta_minus_1 = exponent + Log.floor_log2_pow10(-minus_k)
+      beta = exponent + Log.floor_log2_pow10(-minus_k)
 
       # Compute xi and zi.
       cache = ImplInfo.get_cache(-minus_k)
 
-      xi = compute_left_endpoint_for_shorter_interval_case(cache, beta_minus_1)
-      zi = compute_right_endpoint_for_shorter_interval_case(cache, beta_minus_1)
+      xi = compute_left_endpoint_for_shorter_interval_case(cache, beta)
+      zi = compute_right_endpoint_for_shorter_interval_case(cache, beta)
 
       # If we don't accept the left endpoint or
       # if the left endpoint is not an integer, increase it.
@@ -437,12 +419,12 @@ module Float::Printer::Dragonbox
       end
 
       # Otherwise, compute the round-up of y
-      significand = compute_round_up_for_shorter_interval_case(cache, beta_minus_1)
+      significand = compute_round_up_for_shorter_interval_case(cache, beta)
       ret_exponent = minus_k
 
       # When tie occurs, choose one of them according to the rule.
-      if ImplInfo::SHORTER_INTERVAL_TIE_LOWER_THRESHOLD <= exponent <= ImplInfo::SHORTER_INTERVAL_TIE_UPPER_THRESHOLD
-        significand = break_rounding_tie(significand)
+      if prefer_round_down?(significand) && (ImplInfo::SHORTER_INTERVAL_TIE_LOWER_THRESHOLD <= exponent <= ImplInfo::SHORTER_INTERVAL_TIE_UPPER_THRESHOLD)
+        significand -= 1
       elsif significand < xi
         significand += 1
       end
@@ -450,97 +432,86 @@ module Float::Printer::Dragonbox
       {significand, ret_exponent}
     end
 
-    def self.compute_mul(u, cache)
+    def self.compute_mul(u, cache) # : {result: ImplInfo::CarrierUInt, is_integer: Bool}
       {% if F == Float32 %}
-        WUInt.umul96_upper32(u, cache)
+        r = WUInt.umul96_upper64(u, cache)
+        {
+          ImplInfo::CarrierUInt.new!(r >> 32),
+          ImplInfo::CarrierUInt.new!(r) == 0,
+        }
       {% else %}
         # F == Float64
-        WUInt.umul192_upper64(u, cache)
+        r = WUInt.umul192_upper128(u, cache)
+        {r.high, r.low == 0}
       {% end %}
     end
 
-    def self.compute_delta(cache, beta_minus_1) : UInt32
+    def self.compute_delta(cache, beta) : UInt32
       {% if F == Float32 %}
-        (cache >> (ImplInfo::CACHE_BITS - 1 - beta_minus_1)).to_u32!
+        (cache >> (ImplInfo::CACHE_BITS - 1 - beta)).to_u32!
       {% else %}
         # F == Float64
-        (cache.high >> (ImplInfo::CARRIER_BITS - 1 - beta_minus_1)).to_u32!
+        (cache.high >> (ImplInfo::CARRIER_BITS - 1 - beta)).to_u32!
       {% end %}
     end
 
-    def self.compute_mul_parity(two_f, cache, beta_minus_1) : Bool
+    def self.compute_mul_parity(two_f, cache, beta) # : {parity: Bool, is_integer: Bool}
       {% if F == Float32 %}
-        ((WUInt.umul96_lower64(two_f, cache) >> (64 - beta_minus_1)) & 1) != 0
+        r = WUInt.umul96_lower64(two_f, cache)
+        {
+          ((r >> (64 - beta)) & 1) != 0,
+          UInt32.new!(r >> (32 - beta)) == 0,
+        }
       {% else %}
         # F == Float64
-        ((WUInt.umul192_middle64(two_f, cache) >> (64 - beta_minus_1)) & 1) != 0
+        r = WUInt.umul192_lower128(two_f, cache)
+        {
+          ((r.high >> (64 - beta)) & 1) != 0,
+          (r.high << beta) | (r.low >> (64 - beta)) == 0,
+        }
       {% end %}
     end
 
-    def self.compute_left_endpoint_for_shorter_interval_case(cache, beta_minus_1)
+    def self.compute_left_endpoint_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
         {% if F == Float32 %}
-          (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta_minus_1)
+          (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
         {% else %}
           # F == Float64
-          (cache.high - (cache.high >> (significand_bits + 2))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta_minus_1)
+          (cache.high - (cache.high >> (significand_bits + 2))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
         {% end %}
       )
     end
 
-    def self.compute_right_endpoint_for_shorter_interval_case(cache, beta_minus_1)
+    def self.compute_right_endpoint_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
         {% if F == Float32 %}
-          (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta_minus_1)
+          (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
         {% else %}
           # F == Float64
-          (cache.high + (cache.high >> (significand_bits + 1))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta_minus_1)
+          (cache.high + (cache.high >> (significand_bits + 1))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
         {% end %}
       )
     end
 
-    def self.compute_round_up_for_shorter_interval_case(cache, beta_minus_1)
+    def self.compute_round_up_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       {% if F == Float32 %}
-        (ImplInfo::CarrierUInt.new!(cache >> (ImplInfo::CACHE_BITS - significand_bits - 2 - beta_minus_1)) + 1) // 2
+        (ImplInfo::CarrierUInt.new!(cache >> (ImplInfo::CACHE_BITS - significand_bits - 2 - beta)) + 1) // 2
       {% else %}
         # F == Float64
-        ((cache.high >> (ImplInfo::CARRIER_BITS - significand_bits - 2 - beta_minus_1)) + 1) // 2
+        ((cache.high >> (ImplInfo::CARRIER_BITS - significand_bits - 2 - beta)) + 1) // 2
       {% end %}
     end
 
     def self.is_left_endpoint_integer_shorter_interval?(exponent)
       ImplInfo::CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD <=
         exponent <= ImplInfo::CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_UPPER_THRESHOLD
-    end
-
-    def self.is_product_integer_pm_half?(two_f, exponent, minus_k)
-      # Case I: f = fc +- 1/2
-
-      return false if exponent < ImplInfo::CASE_FC_PM_HALF_LOWER_THRESHOLD
-      # For k >= 0
-      return true if exponent <= ImplInfo::CASE_FC_PM_HALF_UPPER_THRESHOLD
-      # For k < 0
-      return false if exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
-      Div.divisible_by_power_of_5?(two_f, minus_k)
-    end
-
-    def self.is_product_integer?(two_f, exponent, minus_k)
-      # Case II: f = fc + 1
-      # Case III: f = fc
-
-      # Exponent for 5 is negative
-      return false if exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
-      return Div.divisible_by_power_of_5?(two_f, minus_k) if exponent > ImplInfo::CASE_FC_UPPER_THRESHOLD
-      # Both exponents are nonnegative
-      return true if exponent >= ImplInfo::CASE_FC_LOWER_THRESHOLD
-      # Exponent for 2 is negative
-      Div.divisible_by_power_of_2?(two_f, minus_k - exponent + 1)
     end
 
     def self.to_decimal(signed_significand_bits, exponent_bits)
@@ -552,28 +523,27 @@ module Float::Printer::Dragonbox
         exponent += ImplInfo::EXPONENT_BIAS - ImplInfo::SIGNIFICAND_BITS
 
         # Shorter interval case; proceed like Schubfach.
-        # One might think this condition is wrong,
-        # since when exponent_bits == 1 and two_fc == 0,
-        # the interval is actullay regular.
-        # However, it turns out that this seemingly wrong condition
-        # is actually fine, because the end result is anyway the same.
+        # One might think this condition is wrong, since when exponent_bits == 1
+        # and two_fc == 0, the interval is actually regular. However, it turns out
+        # that this seemingly wrong condition is actually fine, because the end
+        # result is anyway the same.
         #
         # [binary32]
-        # floor( (fc-1/2) * 2^e ) = 1.175'494'28... * 10^-38
-        # floor( (fc-1/4) * 2^e ) = 1.175'494'31... * 10^-38
-        # floor(    fc    * 2^e ) = 1.175'494'35... * 10^-38
-        # floor( (fc+1/2) * 2^e ) = 1.175'494'42... * 10^-38
+        # (fc-1/2) * 2^e = 1.175'494'28... * 10^-38
+        # (fc-1/4) * 2^e = 1.175'494'31... * 10^-38
+        #    fc    * 2^e = 1.175'494'35... * 10^-38
+        # (fc+1/2) * 2^e = 1.175'494'42... * 10^-38
         #
         # Hence, shorter_interval_case will return 1.175'494'4 * 10^-38.
-        # 1.175'494'3 * 10^-38 is also a correct shortest representation
-        # that will be rejected if we assume shorter interval,
-        # but 1.175'494'4 * 10^-38 is closer to the true value so it doesn't matter.
+        # 1.175'494'3 * 10^-38 is also a correct shortest representation that will
+        # be rejected if we assume shorter interval, but 1.175'494'4 * 10^-38 is
+        # closer to the true value so it doesn't matter.
         #
         # [binary64]
-        # floor( (fc-1/2) * 2^e ) = 2.225'073'858'507'201'13... * 10^-308
-        # floor( (fc-1/4) * 2^e ) = 2.225'073'858'507'201'25... * 10^-308
-        # floor(    fc    * 2^e ) = 2.225'073'858'507'201'38... * 10^-308
-        # floor( (fc+1/2) * 2^e ) = 2.225'073'858'507'201'63... * 10^-308
+        # (fc-1/2) * 2^e = 2.225'073'858'507'201'13... * 10^-308
+        # (fc-1/4) * 2^e = 2.225'073'858'507'201'25... * 10^-308
+        #    fc    * 2^e = 2.225'073'858'507'201'38... * 10^-308
+        # (fc+1/2) * 2^e = 2.225'073'858'507'201'63... * 10^-308
         #
         # Hence, shorter_interval_case will return 2.225'073'858'507'201'4 * 10^-308.
         # This is indeed of the shortest length, and it is the unique one

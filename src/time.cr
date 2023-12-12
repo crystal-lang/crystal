@@ -37,12 +37,12 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.utc(2016, 2, 15, 10, 20, 30)
-# time.to_s # => 2016-02-15 10:20:30 UTC
+# time.to_s # => "2016-02-15 10:20:30 UTC"
 # time = Time.local(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-# time.to_s # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+# time.to_s # => "2016-02-15 10:20:30 +01:00"
 # # The time-of-day can be omitted and defaults to midnight (start of day):
 # time = Time.utc(2016, 2, 15)
-# time.to_s # => 2016-02-15 00:00:00 UTC
+# time.to_s # => "2016-02-15 00:00:00 UTC"
 # ```
 #
 # ### Retrieving Time Information
@@ -535,6 +535,21 @@ struct Time
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
+  # Creates a new `Time` instance that corresponds to the number of
+  # *nanoseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00.000000000 UTC`).
+  #
+  # The time zone is always UTC.
+  #
+  # ```
+  # time = Time.unix_ns(981173106789479273) # => 2001-02-03 04:05:06.789479273 UTC
+  # time.nanosecond                         # => 789479273
+  # ```
+  def self.unix_ns(nanoseconds : Int) : Time
+    seconds = UNIX_EPOCH.total_seconds + (nanoseconds // 1_000_000_000)
+    nanoseconds = nanoseconds % 1_000_000_000
+    utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+  end
+
   # Creates a new `Time` instance with the same local date-time representation
   # (wall clock) in a different *location*.
   #
@@ -660,7 +675,7 @@ struct Time
   # change:
   #
   # ```
-  # start = Time.new(2017, 10, 28, 13, 37, location: Time::Location.load("Europe/Berlin"))
+  # start = Time.local(2017, 10, 28, 13, 37, location: Time::Location.load("Europe/Berlin"))
   # one_day_later = start.shift days: 1
   #
   # one_day_later - start # => 25.hours
@@ -1026,7 +1041,7 @@ struct Time
       raise ArgumentError.new "Invalid year"
     end
 
-    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+    year.divisible_by?(4) && (!year.divisible_by?(100) || year.divisible_by?(400))
   end
 
   # Prints this `Time` to *io*.
@@ -1254,6 +1269,17 @@ struct Time
     to_unix * 1_000 + (nanosecond // NANOSECONDS_PER_MILLISECOND)
   end
 
+  # Returns the number of nanoseconds since the Unix epoch
+  # (`1970-01-01 00:00:00.000000000 UTC`).
+  #
+  # ```
+  # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_910_123)
+  # time.to_unix_ns # => 1452567845678910123
+  # ```
+  def to_unix_ns : Int128
+    (to_unix.to_i128 * NANOSECONDS_PER_SECOND) + nanosecond
+  end
+
   # Returns the number of seconds since the Unix epoch
   # (`1970-01-01 00:00:00 UTC`) as `Float64` with nanosecond precision.
   #
@@ -1359,9 +1385,17 @@ struct Time
 
   # Returns a copy of this `Time` representing the beginning of the week.
   #
+  # The week starts on Monday by default, but can be configured by passing a different `start_day` as a `Time::DayOfWeek`.
+  #
+  # ```
+  # now = Time.utc(2023, 5, 16, 17, 53, 22)
+  # now.at_beginning_of_week             # => 2023-05-15 00:00:00 UTC
+  # now.at_beginning_of_week(:sunday)    # => 2023-05-14 00:00:00 UTC
+  # now.at_beginning_of_week(:wednesday) # => 2023-05-10 00:00:00 UTC
+  # ```
   # TODO: Ensure correctness in local time-line.
-  def at_beginning_of_week : Time
-    (self - (day_of_week.value - 1).days).at_beginning_of_day
+  def at_beginning_of_week(start_day : Time::DayOfWeek = :monday) : Time
+    (self - ((day_of_week.value - start_day.value) % 7).days).at_beginning_of_day
   end
 
   def_at_end(year) { Time.local(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }

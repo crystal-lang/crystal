@@ -40,8 +40,12 @@ module ENV
     value
   end
 
-  # Returns `true` if the environment variable named *key* exists and `false`
-  # if it doesn't.
+  # Returns `true` if the environment variable named *key* exists and `false` if it doesn't.
+  #
+  # ```
+  # ENV.has_key?("NOT_A_REAL_KEY") # => false
+  # ENV.has_key?("PATH")           # => true
+  # ```
   def self.has_key?(key : String) : Bool
     Crystal::System::Env.has_key?(key)
   end
@@ -64,7 +68,7 @@ module ENV
   # the *key* does not exist.
   def self.fetch(key : String, &block : String -> T) : String | T forall T
     if value = Crystal::System::Env.get(key)
-      return value
+      value
     else
       yield key
     end
@@ -128,7 +132,7 @@ module ENV
   end
 
   def self.pretty_print(pp)
-    pp.list("{", keys.sort, "}") do |key|
+    pp.list("{", keys.sort!, "}") do |key|
       pp.group do
         key.pretty_print(pp)
         pp.text " =>"

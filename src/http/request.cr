@@ -12,6 +12,8 @@ require "socket"
 # When creating a request with a `String` or `Bytes` its body
 # will be a `IO::Memory` wrapping these, and the `Content-Length`
 # header will be set appropriately.
+#
+# NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
 class HTTP::Request
   property method : String
   property headers : Headers
@@ -19,6 +21,7 @@ class HTTP::Request
   property version : String
   @cookies : Cookies?
   @query_params : URI::Params?
+  @form_params : HTTP::Params?
   @uri : URI?
 
   # The network address that sent the request to an HTTP server.
@@ -78,6 +81,24 @@ class HTTP::Request
     @query_params ||= uri.query_params
   end
 
+  # Returns a convenience wrapper to parse form params, see `URI::Params`.
+  # Returns `nil` in case the content type `"application/x-www-form-urlencoded"`
+  # is not present or the body is `nil`.
+  def form_params? : HTTP::Params?
+    @form_params ||= begin
+      if headers["Content-Type"]? == "application/x-www-form-urlencoded"
+        if body = self.body
+          HTTP::Params.parse(body.gets_to_end)
+        end
+      end
+    end
+  end
+
+  # Returns a convenience wrapper to parse form params, see `URI::Params`.
+  def form_params : HTTP::Params
+    form_params? || HTTP::Params.new
+  end
+
   def resource : String
     update_uri
     @uri.try(&.request_target) || @resource
@@ -113,7 +134,7 @@ class HTTP::Request
   end
 
   def body=(@body : Nil)
-    @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
+    @headers["Content-Length"] = "0" if @method.in?("POST", "PUT")
   end
 
   def to_io(io)

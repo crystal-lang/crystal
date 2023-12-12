@@ -31,20 +31,12 @@ module Spec
 
   # :nodoc:
   def self.color(str, status : Status)
-    if use_colors?
-      str.colorize(STATUS_COLORS[status])
-    else
-      str
-    end
+    str.colorize(STATUS_COLORS[status])
   end
 
   # :nodoc:
   def self.color(str, kind : InfoKind)
-    if use_colors?
-      str.colorize(INFO_COLORS[kind])
-    else
-      str
-    end
+    str.colorize(INFO_COLORS[kind])
   end
 
   # :nodoc:
@@ -104,8 +96,8 @@ module Spec
 
   def self.add_split_filter(filter)
     if filter
-      r, m = filter.split('%').map &.to_i
-      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
+      r, _, m = filter.partition('%')
+      @@split_filter = SplitFilter.new(remainder: r.to_i, quotient: m.to_i)
     else
       @@split_filter = nil
     end
@@ -213,18 +205,23 @@ module Spec
   def self.run
     @@start_time = Time.monotonic
 
-    at_exit do
-      log_setup
-      maybe_randomize
-      run_filters
-      root_context.run
-    rescue ex
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
-      @@aborted = true
-    ensure
-      finish_run
+    at_exit do |status|
+      # Do not run specs if the process is exiting on an error
+      next unless status == 0
+
+      begin
+        log_setup
+        maybe_randomize
+        run_filters
+        root_context.run
+      rescue ex
+        STDERR.print "Unhandled exception: "
+        ex.inspect_with_backtrace(STDERR)
+        STDERR.flush
+        @@aborted = true
+      ensure
+        finish_run
+      end
     end
   end
 
@@ -259,7 +256,7 @@ module Spec
   def self.finish_run
     elapsed_time = Time.monotonic - @@start_time.not_nil!
     root_context.finish(elapsed_time, @@aborted)
-    exit 1 if !root_context.succeeded || @@aborted
+    exit 1 if !root_context.succeeded || @@aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
   end
 
   # :nodoc:

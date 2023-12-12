@@ -812,14 +812,14 @@ describe "Semantic: splat" do
   end
 
   it "doesn't shift a call's location" do
-    result = semantic <<-CR
+    result = semantic <<-CRYSTAL
       class Foo
         def bar(x)
           bar(*{"test"})
         end
       end
       Foo.new.bar("test")
-      CR
+      CRYSTAL
     program = result.program
     a_typ = program.types["Foo"].as(NonGenericClassType)
     a_def = a_typ.def_instances.values[0]

@@ -121,7 +121,7 @@ describe "Semantic: def" do
 
       foo 1 || 1.5
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
   end
 
   it "reports no overload matches 2" do
@@ -134,7 +134,7 @@ describe "Semantic: def" do
 
       foo(1 || 'a', 1 || 1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
   end
 
   it "reports no block given" do
@@ -284,7 +284,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "method top-level foo must return Int32 but it is returning Char"
+      "method ::foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -557,10 +557,10 @@ describe "Semantic: def" do
   end
 
   it "points error at name (#6937)" do
-    ex = assert_error <<-CODE,
+    ex = assert_error <<-CRYSTAL,
       1.
         foobar
-      CODE
+      CRYSTAL
       "undefined method"
     ex.line_number.should eq(2)
     ex.column_number.should eq(3)

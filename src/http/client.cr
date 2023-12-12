@@ -4,6 +4,8 @@
 
 # An HTTP Client.
 #
+# NOTE: To use `Client`, you must explicitly import it with `require "http/client"`
+#
 # ### One-shot usage
 #
 # Without a block, an `HTTP::Client::Response` is returned and the response's body
@@ -229,7 +231,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls : TLSContext = nil)
+  def self.new(uri : URI, tls : TLSContext = nil, &)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     client = new(host, uri.port, tls)
@@ -250,7 +252,7 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host : String, port = nil, tls : TLSContext = nil)
+  def self.new(host : String, port = nil, tls : TLSContext = nil, &)
     client = new(host, port, tls)
     begin
       yield client
@@ -651,7 +653,7 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false)
+  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false, &)
     begin
       send_request(request)
     rescue ex : IO::Error
@@ -663,11 +665,11 @@ class HTTP::Client
     end
   end
 
-  private def handle_response(response)
-    value = yield
+  private def handle_response(response, &)
+    yield
+  ensure
     response.body_io?.try &.close
     close unless response.keep_alive?
-    value
   end
 
   private def send_request(request)
@@ -730,7 +732,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil)
+  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil, &)
     exec(new_request(method, path, headers, body)) do |response|
       yield response
     end
@@ -762,7 +764,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil)
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil, &)
     headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec(method, path, headers, body) do |response|
@@ -801,7 +803,7 @@ class HTTP::Client
       if tls = @tls
         tcp_socket = io
         begin
-          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host.rchop('.'))
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
@@ -821,7 +823,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(string : String, tls : TLSContext = nil)
+  private def self.exec(string : String, tls : TLSContext = nil, &)
     uri = URI.parse(string)
 
     unless uri.scheme && uri.host
@@ -866,7 +868,7 @@ class HTTP::Client
     raise ArgumentError.new "Request URI must have host (URI is: #{uri})"
   end
 
-  private def self.exec(uri : URI, tls : TLSContext = nil)
+  private def self.exec(uri : URI, tls : TLSContext = nil, &)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
 
@@ -886,7 +888,7 @@ class HTTP::Client
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
   # able to add new behaviors without losing prior existing ones.
-  protected def around_exec(request)
+  protected def around_exec(request, &)
     yield
   end
 

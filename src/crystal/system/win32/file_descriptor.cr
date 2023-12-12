@@ -2,30 +2,50 @@ require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
 require "c/winnls"
+require "io/overlapped"
 
 module Crystal::System::FileDescriptor
+  include IO::Overlapped
+
   @volatile_fd : Atomic(LibC::Int)
+  @system_blocking = true
 
   private def unbuffered_read(slice : Bytes)
-    bytes_read = LibC._read(fd, slice, slice.size)
-    if bytes_read == -1
-      if Errno.value == Errno::EBADF
-        raise IO::Error.new "File not open for reading"
-      else
-        raise IO::Error.from_errno("Error reading file")
+    if system_blocking?
+      bytes_read = LibC._read(fd, slice, slice.size)
+      if bytes_read == -1
+        if Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for reading", target: self
+        else
+          raise IO::Error.from_errno("Error reading file", target: self)
+        end
+      end
+      bytes_read
+    else
+      handle = windows_handle
+      overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
+        ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
+        {ret, byte_count}
       end
     end
-    bytes_read
   end
 
   private def unbuffered_write(slice : Bytes)
     until slice.empty?
-      bytes_written = LibC._write(fd, slice, slice.size)
-      if bytes_written == -1
-        if Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing"
-        else
-          raise IO::Error.from_errno("Error writing file")
+      if system_blocking?
+        bytes_written = LibC._write(fd, slice, slice.size)
+        if bytes_written == -1
+          if Errno.value == Errno::EBADF
+            raise IO::Error.new "File not open for writing", target: self
+          else
+            raise IO::Error.from_errno("Error writing file", target: self)
+          end
+        end
+      else
+        handle = windows_handle
+        bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
+          ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+          {ret, byte_count}
         end
       end
 
@@ -34,11 +54,17 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking?
-    true
+    @system_blocking
   end
 
   private def system_blocking=(blocking)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor#system_blocking=") unless blocking
+    unless blocking == @system_blocking
+      raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
+    end
+  end
+
+  private def system_blocking_init(value)
+    @system_blocking = value
   end
 
   private def system_close_on_exec?
@@ -53,9 +79,24 @@ module Crystal::System::FileDescriptor
     false
   end
 
+  def self.fcntl(fd, cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor.fcntl"
+  end
+
   private def windows_handle
+    FileDescriptor.windows_handle!(fd)
+  end
+
+  def self.windows_handle(fd)
+    ret = LibC._get_osfhandle(fd)
+    return LibC::INVALID_HANDLE_VALUE if ret == -1 || ret == -2
+    LibC::HANDLE.new(ret)
+  end
+
+  def self.windows_handle!(fd)
     ret = LibC._get_osfhandle(fd)
     raise RuntimeError.from_errno("_get_osfhandle") if ret == -1
+    raise RuntimeError.new("_get_osfhandle returned -2") if ret == -2
     LibC::HANDLE.new(ret)
   end
 
@@ -65,7 +106,7 @@ module Crystal::System::FileDescriptor
 
       if file_type == LibC::FILE_TYPE_UNKNOWN
         error = WinError.value
-        raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+        raise IO::Error.from_os_error("Unable to get info", error, target: self) unless error == WinError::ERROR_SUCCESS
       end
     end
 
@@ -88,13 +129,13 @@ module Crystal::System::FileDescriptor
     seek_value = LibC._lseeki64(fd, offset, whence)
 
     if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek", target: self
     end
   end
 
   private def system_pos
     pos = LibC._lseeki64(fd, 0, IO::Seek::Current)
-    raise IO::Error.from_errno "Unable to tell" if pos == -1
+    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
     pos
   end
 
@@ -103,60 +144,59 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?("dup3") %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
-      flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.fd, self.fd, flags) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-    {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC._dup2(other.fd, self.fd) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
-      end
-    {% end %}
+    # Windows doesn't implement the CLOEXEC flag
+    if LibC._dup2(other.fd, self.fd) == -1
+      raise IO::Error.from_errno("Could not reopen file descriptor")
+    end
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
   end
 
   private def system_close
+    LibC.CancelIoEx(windows_handle, nil) unless system_blocking?
+
     file_descriptor_close
   end
 
   def file_descriptor_close
-    err = nil
     if LibC._close(fd) != 0
       case Errno.value
       when Errno::EINTR
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file")
+        raise IO::Error.from_errno("Error closing file", target: self)
       end
     end
   end
 
-  def self.pipe(read_blocking, write_blocking)
-    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC._pipe(pipe_fds, 8192, LibC::O_BINARY | LibC::O_NOINHERIT) != 0
-      raise IO::Error.from_errno("Could not create pipe")
-    end
+  private PIPE_BUFFER_SIZE = 8192
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+  def self.pipe(read_blocking, write_blocking)
+    pipe_name = ::Path.windows(::File.tempname("crystal", nil, dir: %q(\\.\pipe))).normalize.to_s
+    pipe_mode = 0 # PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT
+
+    w_pipe_flags = LibC::PIPE_ACCESS_OUTBOUND | LibC::FILE_FLAG_FIRST_PIPE_INSTANCE
+    w_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless write_blocking
+    w_pipe = LibC.CreateNamedPipeA(pipe_name, w_pipe_flags, pipe_mode, 1, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nil)
+    raise IO::Error.from_winerror("CreateNamedPipeA") if w_pipe == LibC::INVALID_HANDLE_VALUE
+    Crystal::Scheduler.event_loop.create_completion_port(w_pipe) unless write_blocking
+
+    r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
+    r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
+    r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
+    raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
+    Crystal::Scheduler.event_loop.create_completion_port(r_pipe) unless read_blocking
+
+    r = IO::FileDescriptor.new(LibC._open_osfhandle(r_pipe, 0), read_blocking)
+    w = IO::FileDescriptor.new(LibC._open_osfhandle(w_pipe, 0), write_blocking)
     w.sync = true
 
     {r, w}
   end
 
   def self.pread(fd, buffer, offset)
-    handle = LibC._get_osfhandle(fd)
-    raise IO::Error.from_errno("_get_osfhandle") if handle == -1
-    handle = LibC::HANDLE.new(handle)
+    handle = windows_handle!(fd)
 
     overlapped = LibC::OVERLAPPED.new
     overlapped.union.offset.offset = LibC::DWORD.new(offset)
@@ -164,7 +204,7 @@ module Crystal::System::FileDescriptor
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
       return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error
+      raise IO::Error.from_os_error "Error reading file", error, target: self
     end
 
     bytes_read.to_i64
@@ -172,9 +212,9 @@ module Crystal::System::FileDescriptor
 
   def self.from_stdio(fd)
     console_handle = false
-    handle = LibC._get_osfhandle(fd)
-    if handle != -1
-      handle = LibC::HANDLE.new(handle)
+    handle = windows_handle(fd)
+    if handle != LibC::INVALID_HANDLE_VALUE
+      LibC._setmode fd, LibC::O_BINARY
       # TODO: use `out old_mode` after implementing interpreter out closured var
       old_mode = uninitialized LibC::DWORD
       if LibC.GetConsoleMode(handle, pointerof(old_mode)) != 0
@@ -187,7 +227,7 @@ module Crystal::System::FileDescriptor
       end
     end
 
-    io = IO::FileDescriptor.new(fd)
+    io = IO::FileDescriptor.new(fd, blocking: true)
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
     if console_handle
@@ -207,7 +247,7 @@ module Crystal::System::FileDescriptor
   end
 
   @[AlwaysInline]
-  private def system_console_mode(enable, on_mask, off_mask)
+  private def system_console_mode(enable, on_mask, off_mask, &)
     windows_handle = self.windows_handle
     if LibC.GetConsoleMode(windows_handle, out old_mode) == 0
       raise IO::Error.from_winerror("GetConsoleMode")

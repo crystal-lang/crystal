@@ -12,6 +12,12 @@ require "crystal/system/thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
+  @event_loop = Crystal::EventLoop.create
+
+  def self.event_loop
+    Thread.current.scheduler.@event_loop
+  end
+
   def self.current_fiber : Fiber
     Thread.current.scheduler.@current
   end
@@ -67,7 +73,7 @@ class Crystal::Scheduler
   {% end %}
 
   {% if flag?(:preview_mt) %}
-    @fiber_channel = Crystal::FiberChannel.new
+    private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
     @free_stacks = Deque(Void*).new
   {% end %}
   @lock = Crystal::SpinLock.new
@@ -154,7 +160,7 @@ class Crystal::Scheduler
         end
         break
       else
-        Crystal::EventLoop.run_once
+        @event_loop.run_once
       end
     end
 
@@ -169,7 +175,10 @@ class Crystal::Scheduler
   end
 
   protected def yield : Nil
-    sleep(0.seconds)
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      sleep(0.seconds)
+    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil
@@ -190,6 +199,7 @@ class Crystal::Scheduler
     end
 
     def run_loop
+      fiber_channel = self.fiber_channel
       loop do
         @lock.lock
         if runnable = @runnables.shift?
@@ -199,7 +209,7 @@ class Crystal::Scheduler
         else
           @sleeping = true
           @lock.unlock
-          fiber = @fiber_channel.receive
+          fiber = fiber_channel.receive
 
           @lock.lock
           @sleeping = false
@@ -213,7 +223,7 @@ class Crystal::Scheduler
     def send_fiber(fiber : Fiber)
       @lock.lock
       if @sleeping
-        @fiber_channel.send(fiber)
+        fiber_channel.send(fiber)
       else
         @runnables << fiber
       end

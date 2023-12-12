@@ -42,7 +42,11 @@ struct LLVM::Type
   end
 
   def pointer : LLVM::Type
-    Type.new LibLLVM.pointer_type(self, 0)
+    {% if LibLLVM::IS_LT_150 %}
+      Type.new LibLLVM.pointer_type(self, 0)
+    {% else %}
+      Type.new LibLLVM.pointer_type_in_context(LibLLVM.get_type_context(self), 0)
+    {% end %}
   end
 
   def array(count) : LLVM::Type
@@ -67,7 +71,7 @@ struct LLVM::Type
   # The name can be `nil` if the struct is anonymous.
   # Raises if this type is not a struct.
   def struct_name : String?
-    raise "not a Struct" unless kind == Kind::Struct
+    raise "Not a Struct" unless kind == Kind::Struct
 
     name = LibLLVM.get_struct_name(self)
     name ? String.new(name) : nil
@@ -85,8 +89,14 @@ struct LLVM::Type
 
   def element_type : LLVM::Type
     case kind
-    when Kind::Array, Kind::Vector, Kind::Pointer
+    when Kind::Array, Kind::Vector
       Type.new LibLLVM.get_element_type(self)
+    when Kind::Pointer
+      {% if LibLLVM::IS_LT_150 %}
+        Type.new LibLLVM.get_element_type(self)
+      {% else %}
+        raise "Typed pointers are unavailable on LLVM 15.0 or above"
+      {% end %}
     else
       raise "Not a sequential type"
     end
@@ -98,12 +108,12 @@ struct LLVM::Type
   end
 
   def vector_size
-    raise "not a Vector" unless kind == Kind::Vector
+    raise "Not a Vector" unless kind == Kind::Vector
     LibLLVM.get_vector_size(self).to_i32
   end
 
   def return_type
-    raise "not a Function" unless kind == Kind::Function
+    raise "Not a Function" unless kind == Kind::Function
     Type.new LibLLVM.get_return_type(self)
   end
 
@@ -116,12 +126,12 @@ struct LLVM::Type
   end
 
   def params_size
-    raise "not a Function" unless kind == Kind::Function
+    raise "Not a Function" unless kind == Kind::Function
     LibLLVM.count_param_types(self).to_i
   end
 
   def varargs?
-    raise "not a Function" unless kind == Kind::Function
+    raise "Not a Function" unless kind == Kind::Function
     LibLLVM.is_function_var_arg(self) != 0
   end
 
@@ -139,7 +149,7 @@ struct LLVM::Type
   end
 
   def const_float(value : String) : Value
-    Value.new LibLLVM.const_real_of_string(self, value)
+    Value.new LibLLVM.const_real_of_string_and_size(self, value, value.bytesize)
   end
 
   def const_double(value : Float64) : Value
@@ -147,7 +157,7 @@ struct LLVM::Type
   end
 
   def const_double(string : String) : Value
-    Value.new LibLLVM.const_real_of_string(self, string)
+    Value.new LibLLVM.const_real_of_string_and_size(self, string, string.bytesize)
   end
 
   def const_array(values : Array(LLVM::Value)) : Value
@@ -156,15 +166,7 @@ struct LLVM::Type
 
   def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false)
     value =
-      {% if LibLLVM::IS_LT_70 %}
-        LibLLVM.const_inline_asm(
-          self,
-          asm_string,
-          constraints,
-          (has_side_effects ? 1 : 0),
-          (is_align_stack ? 1 : 0)
-        )
-      {% elsif LibLLVM::IS_LT_130 %}
+      {% if LibLLVM::IS_LT_130 %}
         LibLLVM.get_inline_asm(
           self,
           asm_string,

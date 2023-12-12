@@ -34,7 +34,7 @@ class IO::MultiWriter < IO
 
     return if slice.empty?
 
-    @writers.each { |writer| writer.write(slice) }
+    @writers.each(&.write(slice))
   end
 
   def read(slice : Bytes) : NoReturn
@@ -45,7 +45,7 @@ class IO::MultiWriter < IO
     return if @closed
     @closed = true
 
-    @writers.each { |writer| writer.close } if sync_close?
+    @writers.each(&.close) if sync_close?
   end
 
   def flush : Nil

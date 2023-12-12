@@ -84,8 +84,13 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
-    # The cache directory where temporary files are placed.
-    setter cache_dir : String?
+    record ConstSliceInfo,
+      name : String,
+      element_type : NumberKind,
+      args : Array(ASTNode)
+
+    # All constant slices constructed via the `Slice.literal` primitive.
+    getter const_slices = [] of ConstSliceInfo
 
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
@@ -113,7 +118,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.host_target
+    getter codegen_target = Config.host_target
 
     getter predefined_constants = Array(Const).new
 
@@ -141,7 +146,7 @@ module Crystal
 
       types["NoReturn"] = @no_return = NoReturnType.new self, self, "NoReturn"
       types["Void"] = @void = VoidType.new self, self, "Void"
-      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
+      types["Nil"] = @nil = NilType.new self, self, "Nil", value, 1
       types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
       types["Char"] = @char = CharType.new self, self, "Char", value, 4
 
@@ -281,8 +286,11 @@ module Crystal
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
       define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path
+      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath
       define_crystal_string_constant "VERSION", Crystal::Config.version
       define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
+      define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s
+      define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s
     end
 
     private def define_crystal_string_constant(name, value)
@@ -300,6 +308,11 @@ module Crystal
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
+
+    def codegen_target=(@codegen_target : Codegen::Target) : Codegen::Target
+      crystal.types["TARGET_TRIPLE"].as(Const).value.as(StringLiteral).value = codegen_target.to_s
+      @codegen_target
+    end
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)
@@ -454,6 +467,22 @@ module Crystal
     # Remembers that the program depends on this require.
     def record_require(filename, relative_to) : Nil
       recorded_requires << RecordedRequire.new(filename, relative_to)
+    end
+
+    def run_requires(node : Require, filenames) : Nil
+      dependency_printer = compiler.try(&.dependency_printer)
+
+      filenames.each do |filename|
+        unseen_file = requires.add?(filename)
+
+        dependency_printer.try(&.enter_file(filename, unseen_file))
+
+        if unseen_file
+          yield filename
+        end
+
+        dependency_printer.try(&.leave_file)
+      end
     end
 
     # Finds *filename* in the configured CRYSTAL_PATH for this program,

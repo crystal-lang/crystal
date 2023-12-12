@@ -1,3 +1,5 @@
+all:
+
 -include Makefile.win.local # for optional local options e.g. threads
 
 # Recipes for this Makefile
@@ -5,13 +7,19 @@
 ## Build the compiler
 ##   $ make -f Makefile.win
 ## Build the compiler with progress output
-##   $ make -f Makefile.win progress=true
+##   $ make -f Makefile.win progress=1
 ## Clean up built files then build the compiler
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
-##   $ make -f Makefile.win crystal release=1
-## Run all specs in verbose mode
-##   $ make -f Makefile.win spec verbose=1
+##   $ make -f Makefile.win crystal release=1 interpreter=1
+## Run tests
+##   $ make -f Makefile.win test
+## Run stdlib tests
+##   $ make -f Makefile.win std_spec
+## Run compiler tests
+##   $ make -f Makefile.win compiler_spec
+## Run generators (Unicode, SSL config, ...)
+##   $ make -B generate_data
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
@@ -24,8 +32,10 @@ debug ?=        ## Add symbolic debug info
 verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
+target ?=       ## Cross-compilation target
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
+order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
@@ -37,9 +47,9 @@ RC := rc.exe
 GLOB = $(shell dir $1 /B /S)
 MKDIR = if not exist $1 mkdir $1
 CP = copy /B /Y $1 $2
-CPDIR = robocopy /E /NJH /NJS $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+CPDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
 INSTALL = copy /B /Y $1 $2
-INSTALLDIR = robocopy /E /NJH /NJS $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+INSTALLDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
 MV = move /Y $1 $2
 RM = if exist $1 del /F /Q $1
 RMDIR = if exist $1 rd /S /Q $1
@@ -47,9 +57,9 @@ RMDIR = if exist $1 rd /S /Q $1
 O := .build
 SOURCES := $(call GLOB,src\\*.cr)
 SPEC_SOURCES := $(call GLOB,spec\\*.cr)
-override FLAGS += -D strict_multi_assign $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
+override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
 SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives
-SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
+SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
 CRYSTAL_CONFIG_PATH := $$ORIGIN\src
@@ -81,9 +91,11 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
+.PHONY: test
+test: spec ## Run tests
+
 .PHONY: spec
-spec: $(O)\all_spec.exe ## Run all specs
-	$(O)\all_spec $(SPEC_FLAGS)
+spec: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
 std_spec: $(O)\std_spec.exe ## Run standard library specs
@@ -97,9 +109,17 @@ compiler_spec: $(O)\compiler_spec.exe ## Run compiler specs
 primitives_spec: $(O)\primitives_spec.exe ## Run primitives specs
 	$(O)\primitives_spec $(SPEC_FLAGS)
 
+.PHONY: interpreter_spec
+interpreter_spec: $(O)\interpreter_spec ## Run interpreter specs
+	$(O)\interpreter_spec $(SPEC_FLAGS)
+
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)\std_spec.exe $(O)\compiler_spec.exe $(O)\crystal.exe
+
+.PHONY: all_spec
+all_spec: $(O)\all_spec.exe ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
+	$(O)\all_spec $(SPEC_FLAGS)
 
 .PHONY: samples
 samples: ## Build example programs
@@ -119,7 +139,11 @@ llvm_ext: $(LLVM_EXT_OBJ)
 
 .PHONY: format
 format: ## Format sources
-	.\bin\crystal tool format$(if $(check), --check) src spec samples
+	.\bin\crystal tool format$(if $(check), --check) src spec samples scripts
+
+.PHONY: generate_data
+generate_data: ## Run generator scripts for Unicode, SSL config, ...
+	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
 install: $(O)\crystal.exe ## Install the compiler at prefix
@@ -147,6 +171,7 @@ install_docs: docs ## Install docs at prefix
 	$(call MKDIR,"$(DATADIR)")
 	$(call INSTALLDIR,docs,"$(DATADIR)\docs")
 	$(call INSTALLDIR,samples,"$(DATADIR)\examples")
+	$(call RM,"$(DATADIR)\examples\.gitignore")
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from prefix
@@ -168,24 +193,29 @@ $(O)\compiler_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(call check_llvm_config)
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
-	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\compiler_spec.cr
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\compiler_spec.cr --release
 
 $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
+
+$(O)\interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+	$(eval interpreter=1)
+	@$(call MKDIR, "$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr
 
 $(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 	$(call check_llvm_config)
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
 	$(call export_build_vars)
-	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib -D without_playground --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
+	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
 	$(call MV,"$(O)\crystal-next.exe","$@")
 	$(call MV,"$(O)\crystal-next.pdb","$(O)\crystal.pdb")
 
 $(O)\crystal.res: $(O)\crystal.rc
 	@$(call MKDIR,"$(O)")
-	$(RC) /Fo "$@" "$<"
+	$(RC) /nologo /Fo "$@" "$<"
 
 $(O)\crystal.rc: $(MAKEFILE_LIST)
 	@$(call MKDIR,"$(O)")
@@ -193,7 +223,11 @@ $(O)\crystal.rc: $(MAKEFILE_LIST)
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	$(call check_llvm_config)
-	$(CXX) /c $(CXXFLAGS) "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
+	@rem Disable some harmless warnings:
+	@rem - warning C4244: 'initializing': conversion from '_Ty' to '_Ty2', possible loss of data
+	@rem - warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+	@rem - warning C4624: '...': destructor was implicitly defined as deleted
+	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files

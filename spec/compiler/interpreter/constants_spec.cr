@@ -4,31 +4,31 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "constants" do
     it "returns nil in the assignment" do
-      interpret(<<-CODE).should eq(nil)
+      interpret(<<-CRYSTAL).should eq(nil)
         A = 123
-      CODE
+      CRYSTAL
     end
 
     it "interprets constant literal" do
-      interpret(<<-CODE).should eq(123)
+      interpret(<<-CRYSTAL).should eq(123)
         A = 123
         A
-      CODE
+      CRYSTAL
     end
 
     it "interprets complex constant" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
         A = begin
           a = 1
           b = 2
           a + b
         end
         A + A
-      CODE
+      CRYSTAL
     end
 
     it "hoists constants" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
         x = A + A
 
         A = begin
@@ -38,11 +38,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         x
-      CODE
+      CRYSTAL
     end
 
     it "interprets self inside constant inside class" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         class Foo
           X = self.foo
 
@@ -56,19 +56,19 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo::X
-      CODE
+      CRYSTAL
     end
   end
 
   context "magic constants" do
     it "does line number" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
           def foo(x, line = __LINE__)
             x + line
           end
 
           foo(1)
-        CODE
+        CRYSTAL
     end
   end
 end

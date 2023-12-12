@@ -70,8 +70,11 @@ module Crystal::System::LibraryArchive
       sig2 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
       return unless sig2 == 0xFFFF
 
-      # version(2) + machine(2) + time(4) + size(4) + ordinal/hint(2) + flags(2)
-      io.skip(16)
+      version = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+      return unless version == 0 # 1 and 2 are used by object files (ANON_OBJECT_HEADER)
+
+      # machine(2) + time(4) + size(4) + ordinal/hint(2) + flags(2)
+      io.skip(14)
 
       # TODO: is there a way to do this without constructing a temporary string,
       # but with the optimizations present in `IO#gets`?

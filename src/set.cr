@@ -492,6 +492,15 @@ struct Set(T)
   def same?(other : Set) : Bool
     @hash.same?(other.@hash)
   end
+
+  # Rebuilds the set based on the current elements.
+  #
+  # When using mutable data types as elements, modifying an elements after it
+  # was inserted into the `Set` may lead to undefined behaviour. This method
+  # re-indexes the set using the current elements.
+  def rehash : Nil
+    @hash.rehash
+  end
 end
 
 module Enumerable

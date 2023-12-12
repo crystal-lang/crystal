@@ -186,6 +186,10 @@ module Crystal::Macros
   def puts(*expressions) : Nop
   end
 
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def print(*expressions) : Nop
+  end
+
   # Same as `puts`.
   def p(*expressions) : Nop
   end
@@ -226,6 +230,10 @@ module Crystal::Macros
 
   # Gives a compile-time error with the given *message*.
   def raise(message) : NoReturn
+  end
+
+  # Emits a compile-time warning with the given *message*.
+  def warning(message : StringLiteral) : NilLiteral
   end
 
   # Returns `true` if the given *filename* exists, `false` otherwise.
@@ -413,9 +421,27 @@ module Crystal::Macros
     def !=(other : ASTNode) : BoolLiteral
     end
 
-    # Gives a compile-time error with the given *message*. This will
-    # highlight this node in the error message.
+    # Gives a compile-time error with the given *message*.
+    # This will highlight this node in the error message.
     def raise(message) : NoReturn
+    end
+
+    # Emits a compile-time warning with the given *message*.
+    # This will highlight this node in the warning message.
+    def warning(message : StringLiteral) : NilLiteral
+    end
+
+    # Returns a `StringLiteral` that contains the documentation comments attached to this node, or an empty string if there are none.
+    #
+    # WARNING: The return value will be an empty string when executed outside of the `crystal docs` command.
+    def doc : StringLiteral
+    end
+
+    # Returns a `MacroId` that contains the documentation comments attached to this node, or an empty `MacroId` if there are none.
+    # Each line is prefixed with a `#` character to allow the output to be used directly within another node's documentation comment.
+    #
+    # WARNING: The return value will be empty when executed outside of the `crystal docs` command.
+    def doc_comment : MacroId
     end
 
     # Returns `true` if this node's type is the given *type* or any of its
@@ -548,6 +574,10 @@ module Crystal::Macros
   class CharLiteral < ASTNode
     # Returns a `MacroId` for this character's contents.
     def id : MacroId
+    end
+
+    # Similar to `Char#ord`.
+    def ord : NumberLiteral
     end
   end
 
@@ -705,6 +735,10 @@ module Crystal::Macros
 
     # Similar to `Array#+`.
     def +(other : ArrayLiteral) : ArrayLiteral
+    end
+
+    # Similar to `Array#-`.
+    def -(other : ArrayLiteral) : ArrayLiteral
     end
 
     # Returns the type specified at the end of the array literal, if any.
@@ -883,6 +917,131 @@ module Crystal::Macros
   #
   # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
+    # Similar to `Enumerable#any?`
+    def any?(&) : BoolLiteral
+    end
+
+    # Similar to `Enumerable#all?`
+    def all?(&) : BoolLiteral
+    end
+
+    # Returns a `MacroId` with all of this tuple's elements joined
+    # by commas.
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this tuple is empty. This lets you
+    # splat a tuple and optionally write a trailing comma
+    # if needed.
+    def splat(trailing_string : StringLiteral = nil) : MacroId
+    end
+
+    # Similar to `Tuple#empty?`
+    def empty? : BoolLiteral
+    end
+
+    # Similar to `Enumerable#find`
+    def find(&) : ASTNode | NilLiteral
+    end
+
+    # Similar to `Tuple#first`, but returns a `NilLiteral` if the tuple is empty.
+    def first : ASTNode | NilLiteral
+    end
+
+    # Similar to `Enumerable#includes?(obj)`.
+    def includes?(node : ASTNode) : BoolLiteral
+    end
+
+    # Similar to `Enumerable#join`
+    def join(separator) : StringLiteral
+    end
+
+    # Similar to `Tuple#last`, but returns a `NilLiteral` if the tuple is empty.
+    def last : ASTNode | NilLiteral
+    end
+
+    # Similar to `Tuple#size`
+    def size : NumberLiteral
+    end
+
+    # Similar to `Enumerable#map`
+    def map(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&) : TupleLiteral
+    end
+
+    # Similar to `Tuple#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `Enumerable#each_with_index`
+    def each_with_index(&) : Nil
+    end
+
+    # Similar to `Enumerable#select`
+    def select(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#reject`
+    def reject(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(&) : ASTNode
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &) : ASTNode
+    end
+
+    # Similar to `Array#shuffle`
+    def shuffle : TupleLiteral
+    end
+
+    # Similar to `Array#sort`
+    def sort : TupleLiteral
+    end
+
+    # Similar to `Array#sort_by`
+    def sort_by(&) : TupleLiteral
+    end
+
+    # Similar to `Array#uniq`
+    def uniq : TupleLiteral
+    end
+
+    # Similar to `Tuple#[]`, but returns `NilLiteral` on out of bounds.
+    def [](index : NumberLiteral) : ASTNode
+    end
+
+    # Similar to `Tuple#[]`.
+    def [](index : RangeLiteral) : TupleLiteral(ASTNode)
+    end
+
+    # Similar to `Array#[]=`.
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `Array#unshift`.
+    def unshift(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Array#push`.
+    def push(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Array#<<`.
+    def <<(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Tuple#+`.
+    def +(other : TupleLiteral) : TupleLiteral
+    end
+
+    # Similar to `Array#-`.
+    def -(other : TupleLiteral) : TupleLiteral
+    end
   end
 
   # A fictitious node representing a variable or instance
@@ -1387,7 +1546,7 @@ module Crystal::Macros
     end
 
     # Returns the `else` of this `case`.
-    def else : ArrayLiteral(When)
+    def else : ASTNode
     end
 
     # Returns whether this `case` is exhaustive (`case ... in`).
@@ -1446,8 +1605,49 @@ module Crystal::Macros
   end
 
   # A module definition.
-  # class ModuleDef < ASTNode
-  # end
+  #
+  # Every module definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class ModuleDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `ModuleDef` this is always `module`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # If this node defines a generic type, and *generic_args* is true, returns a
+    # `Generic` whose type arguments are `MacroId`s, possibly with a `Splat` at
+    # the splat index. Otherwise, this method returns a `Path`.
+    def name(*, generic_args : BoolLiteral = true) : Path | Generic
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+
+    # Returns an array of `MacroId`s of this type definition's generic type
+    # parameters.
+    #
+    # On a non-generic type definition, returns an empty array.
+    def type_vars : ArrayLiteral
+    end
+
+    # Returns the splat index of this type definition's generic type parameters.
+    #
+    # Returns `nil` if this type definition isn't generic or if there isn't a
+    # splat parameter.
+    def splat_index : NumberLiteral | NilLiteral
+    end
+  end
 
   # A `while` expression
   class While < ASTNode
@@ -1651,11 +1851,31 @@ module Crystal::Macros
     end
   end
 
-  # class Include < ASTNode
-  # end
+  # An `include` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # include {{ node.name }}
+  # ```
+  class Include < ASTNode
+    # Returns the name of the type being included.
+    def name : ASTNode
+    end
+  end
 
-  # class Extend < ASTNode
-  # end
+  # An `extend` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # extend {{ node.name }}
+  # ```
+  class Extend < ASTNode
+    # Returns the name of the type being extended.
+    def name : ASTNode
+    end
+  end
 
   # class LibDef < ASTNode
   # end
@@ -1736,21 +1956,69 @@ module Crystal::Macros
   # class MacroLiteral < ASTNode
   # end
 
-  # if inside a macro
-  # class MacroIf < ASTNode
-  # end
+  # An `if` inside a macro, e.g.
+  #
+  # ```
+  # {% if cond %}
+  #   puts "Then"
+  # {% else %}
+  #   puts "Else"
+  # {% end %}
+  # ```
+  class MacroIf < ASTNode
+    # The condition of the `if` clause.
+    def cond : ASTNode
+    end
 
-  # for inside a macro:
-  # class MacroFor < ASTNode
-  # end
+    # The `then` branch of the `if`.
+    def then : ASTNode
+    end
+
+    # The `else` branch of the `if`.
+    def else : ASTNode
+    end
+  end
+
+  # A `for` loop inside a macro, e.g.
+  #
+  # ```
+  # {% for x in exp %}
+  #   puts {{x}}
+  # {% end %}
+  # ```
+  class MacroFor < ASTNode
+    # The variables declared after `for`.
+    def vars : ArrayLiteral(Var)
+    end
+
+    # The expression after `in`.
+    def exp : ASTNode
+    end
+
+    # The body of the `for` loop.
+    def body : ASTNode
+    end
+  end
 
   # The `_` expression. May appear in code, such as an assignment target, and in
   # type names.
   class Underscore < ASTNode
   end
 
-  # class MagicConstant < ASTNode
+  # A pseudo constant used to provide information about source code location.
+  #
+  # Usually this node is resolved by the compiler. It appears unresolved when
+  # used as a default parameter value:
+  #
+  # ```
+  # # the `__FILE__` here is a `MagicConstant`
+  # def foo(file = __FILE__)
+  #   # the `__LINE__` here becomes a `NumberLiteral`
+  #   __LINE__
   # end
+  # ```
+  class MagicConstant < ASTNode
+  end
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #

@@ -6,6 +6,12 @@ require "big/json"
 require "uuid"
 require "uuid/json"
 
+class JSONAttrValue(T)
+  include JSON::Serializable
+
+  property value : T
+end
+
 record JSONAttrPoint, x : Int32, y : Int32 do
   include JSON::Serializable
 end
@@ -82,24 +88,6 @@ class JSONAttrPersonEmittingNullsByOptions
   property value2 : Int32?
 end
 
-class JSONAttrWithBool
-  include JSON::Serializable
-
-  property value : Bool
-end
-
-class JSONAttrWithUUID
-  include JSON::Serializable
-
-  property value : UUID
-end
-
-class JSONAttrWithBigDecimal
-  include JSON::Serializable
-
-  property value : BigDecimal
-end
-
 class JSONAttrWithTime
   include JSON::Serializable
 
@@ -169,12 +157,6 @@ class JSONAttrWithTimeHash3
   property value : Hash(String, Time)
 end
 
-class JSONAttrWithPropertiesKey
-  include JSON::Serializable
-
-  property properties : Hash(String, String)
-end
-
 class JSONAttrWithSimpleMapping
   include JSON::Serializable
 
@@ -203,12 +185,6 @@ class JSONAttrWithProblematicKeys
   property pull : Int32
 end
 
-class JSONAttrWithSet
-  include JSON::Serializable
-
-  property set : Set(String)
-end
-
 class JSONAttrWithDefaults
   include JSON::Serializable
 
@@ -234,6 +210,20 @@ class JSONAttrWithTimeEpoch
 
   @[JSON::Field(converter: Time::EpochConverter)]
   property value : Time
+end
+
+class JSONAttrNilableWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class JSONAttrDefaultWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
 end
 
 class JSONAttrWithTimeEpochMillis
@@ -269,18 +259,6 @@ class JSONAttrWithNilableRootEmitNull
 
   @[JSON::Field(root: "heroes", emit_null: true)]
   property result : Array(JSONAttrPerson)?
-end
-
-class JSONAttrWithNilableUnion
-  include JSON::Serializable
-
-  property value : Int32?
-end
-
-class JSONAttrWithNilableUnion2
-  include JSON::Serializable
-
-  property value : Int32 | Nil
 end
 
 class JSONAttrWithPresence
@@ -462,6 +440,23 @@ end
 class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
 end
 
+class JSONStrictDiscriminator
+  include JSON::Serializable
+  include JSON::Serializable::Strict
+
+  property type : String
+
+  use_json_discriminator "type", {foo: JSONStrictDiscriminatorFoo, bar: JSONStrictDiscriminatorBar}
+end
+
+class JSONStrictDiscriminatorFoo < JSONStrictDiscriminator
+end
+
+class JSONStrictDiscriminatorBar < JSONStrictDiscriminator
+  property x : JSONStrictDiscriminator
+  property y : JSONStrictDiscriminator
+end
+
 module JSONNamespace
   struct FooRequest
     include JSON::Serializable
@@ -481,6 +476,31 @@ module JSONNamespace
 
     def initialize # Allow for default value above
     end
+  end
+end
+
+class JSONSomething
+  include JSON::Serializable
+
+  property value : JSONSomething?
+end
+
+module JsonDiscriminatorBug
+  abstract class Base
+    include JSON::Serializable
+
+    use_json_discriminator("type", {"a" => A, "b" => B, "c" => C})
+  end
+
+  class A < Base
+  end
+
+  class B < Base
+    property source : Base
+    property value : Int32 = 1
+  end
+
+  class C < B
   end
 end
 
@@ -627,13 +647,18 @@ describe "JSON mapping" do
   end
 
   it "doesn't raises on false value when not-nil" do
-    json = JSONAttrWithBool.from_json(%({"value": false}))
+    json = JSONAttrValue(Bool).from_json(%({"value": false}))
     json.value.should be_false
   end
 
+  it "parses JSON integer into a float property (#8618)" do
+    json = JSONAttrValue(Float64).from_json(%({"value": 123}))
+    json.value.should eq(123.0)
+  end
+
   it "parses UUID" do
-    uuid = JSONAttrWithUUID.from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
-    uuid.should be_a(JSONAttrWithUUID)
+    uuid = JSONAttrValue(UUID).from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
+    uuid.should be_a(JSONAttrValue(UUID))
     uuid.value.should eq(UUID.new("ba714f86-cac6-42c7-8956-bcf5105e1b81"))
   end
 
@@ -667,11 +692,11 @@ describe "JSON mapping" do
     json.to_json.should eq(%({"value":null}))
   end
 
-  it "outputs JSON with properties key" do
+  it "outputs JSON with Hash" do
     input = {
-      properties: {"foo" => "bar"},
+      value: {"foo" => "bar"},
     }.to_json
-    json = JSONAttrWithPropertiesKey.from_json(input)
+    json = JSONAttrValue(Hash(String, String)).from_json(input)
     json.to_json.should eq(input)
   end
 
@@ -695,8 +720,8 @@ describe "JSON mapping" do
   end
 
   it "parses json array as set" do
-    json = JSONAttrWithSet.from_json(%({"set": ["a", "a", "b"]}))
-    json.set.should eq(Set(String){"a", "b"})
+    json = JSONAttrValue(Set(String)).from_json(%({"value": ["a", "a", "b"]}))
+    json.value.should eq(Set(String){"a", "b"})
   end
 
   it "allows small types of integer" do
@@ -727,9 +752,10 @@ describe "JSON mapping" do
       json.a.should eq 11
       json.b.should eq "Haha"
 
-      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null}))
+      json = JSONAttrWithDefaults.from_json(%({"a":null,"b":null,"f":null}))
       json.a.should eq 11
       json.b.should eq "Haha"
+      json.f.should be_nil
     end
 
     it "bool" do
@@ -777,6 +803,16 @@ describe "JSON mapping" do
       json = JSONAttrWithDefaults.from_json(%({}))
       json.h.should eq [1, 2, 3]
     end
+  end
+
+  it "converter with null value (#13655)" do
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value": null})).value.should be_nil
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value": null})).value.should eq Time.unix(0)
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
   end
 
   it "uses Time::EpochConverter" do
@@ -891,29 +927,15 @@ describe "JSON mapping" do
   end
 
   it "parses nilable union" do
-    obj = JSONAttrWithNilableUnion.from_json(%({"value": 1}))
+    obj = JSONAttrValue(Int32?).from_json(%({"value": 1}))
     obj.value.should eq(1)
     obj.to_json.should eq(%({"value":1}))
 
-    obj = JSONAttrWithNilableUnion.from_json(%({"value": null}))
+    obj = JSONAttrValue(Int32?).from_json(%({"value": null}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
 
-    obj = JSONAttrWithNilableUnion.from_json(%({}))
-    obj.value.should be_nil
-    obj.to_json.should eq(%({}))
-  end
-
-  it "parses nilable union2" do
-    obj = JSONAttrWithNilableUnion2.from_json(%({"value": 1}))
-    obj.value.should eq(1)
-    obj.to_json.should eq(%({"value":1}))
-
-    obj = JSONAttrWithNilableUnion2.from_json(%({"value": null}))
-    obj.value.should be_nil
-    obj.to_json.should eq(%({}))
-
-    obj = JSONAttrWithNilableUnion2.from_json(%({}))
+    obj = JSONAttrValue(Int32?).from_json(%({}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
   end
@@ -1014,24 +1036,29 @@ describe "JSON mapping" do
 
   describe "BigDecimal" do
     it "parses json string with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
     end
 
     it "parses large json ints with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": 9223372036854775808}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": 9223372036854775808}))
       json.value.should eq(BigDecimal.new("9223372036854775808"))
     end
 
     it "parses json float with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": 10.05}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": 10.05}))
       json.value.should eq(BigDecimal.new("10.05"))
     end
 
     it "parses large precision json floats with BigDecimal" do
-      json = JSONAttrWithBigDecimal.from_json(%({"value": 0.00045808999999999997}))
+      json = JSONAttrValue(BigDecimal).from_json(%({"value": 0.00045808999999999997}))
       json.value.should eq(BigDecimal.new("0.00045808999999999997"))
     end
+  end
+
+  it "parses 128-bit integer" do
+    json = JSONAttrValue(Int128).from_json(%({"value": #{Int128::MAX}}))
+    json.value.should eq Int128::MAX
   end
 
   describe "work with module and inheritance" do
@@ -1111,6 +1138,24 @@ describe "JSON mapping" do
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum8)
     end
+
+    it "deserializes with discriminator, strict recursive type" do
+      foo = JSONStrictDiscriminator.from_json(%({"type": "foo"}))
+      foo = foo.should be_a(JSONStrictDiscriminatorFoo)
+
+      bar = JSONStrictDiscriminator.from_json(%({"type": "bar", "x": {"type": "foo"}, "y": {"type": "foo"}}))
+      bar = bar.should be_a(JSONStrictDiscriminatorBar)
+      bar.x.should be_a(JSONStrictDiscriminatorFoo)
+      bar.y.should be_a(JSONStrictDiscriminatorFoo)
+    end
+
+    it "deserializes with discriminator, another recursive type, fixes: #13429" do
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}, "value": 2})
+      c.as(JsonDiscriminatorBug::C).value.should eq 2
+
+      c = JsonDiscriminatorBug::Base.from_json %q({"type": "c", "source": {"type": "a"}})
+      c.as(JsonDiscriminatorBug::C).value.should eq 1
+    end
   end
 
   describe "namespaced classes" do
@@ -1119,5 +1164,9 @@ describe "JSON mapping" do
       request.foo.id.should eq "id:foo"
       request.bar.id.should eq "id:bar"
     end
+  end
+
+  it "fixes #13337" do
+    JSONSomething.from_json(%({"value":{}})).value.should_not be_nil
   end
 end

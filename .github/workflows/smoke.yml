@@ -7,12 +7,14 @@
 #
 # ```terminal-session
 # $ find src/lib_c -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sort
+# aarch64-android
 # aarch64-darwin
 # aarch64-linux-gnu
 # aarch64-linux-musl
 # arm-linux-gnueabihf
 # i386-linux-gnu
 # i386-linux-musl
+# wasm32-wasi
 # x86_64-darwin
 # x86_64-dragonfly
 # x86_64-freebsd
@@ -27,6 +29,10 @@
 name: Smoke tests
 
 on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
   TRAVIS_OS_NAME: linux
@@ -43,11 +49,11 @@ jobs:
       fail-fast: false
       matrix:
         target:
+          - aarch64-linux-android
           - aarch64-darwin
           - arm-linux-gnueabihf
           - i386-linux-gnu
           - i386-linux-musl
-          - wasm32-unknown-wasi
           - x86_64-dragonfly
           - x86_64-freebsd
           - x86_64-netbsd
@@ -55,7 +61,7 @@ jobs:
 
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Build fresh compiler
         run: bin/ci with_build_env make
