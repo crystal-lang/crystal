@@ -1601,7 +1601,62 @@ module Crystal::Macros
   end
 
   # A class definition.
+  #
+  # Every class definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {% "abstract".id if node.abstract? %} {{ node.kind }} {{ node.name }} {% if superclass = node.superclass %}< {{ superclass }}{% end %}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
   class ClassDef < ASTNode
+    # Returns whether this node defines an abstract class or struct.
+    def abstract? : BoolLiteral
+    end
+
+    # Returns the keyword used to define this type.
+    #
+    # For `ClassDef` this is either `class` or `struct`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # If this node defines a generic type, and *generic_args* is true, returns a
+    # `Generic` whose type arguments are `MacroId`s, possibly with a `Splat` at
+    # the splat index. Otherwise, this method returns a `Path`.
+    def name(*, generic_args : BoolLiteral = true) : Path | Generic
+    end
+
+    # Returns the superclass of this type definition, or a `Nop` if one isn't
+    # specified.
+    def superclass : ASTNode
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+
+    # Returns an array of `MacroId`s of this type definition's generic type
+    # parameters.
+    #
+    # On a non-generic type definition, returns an empty array.
+    def type_vars : ArrayLiteral
+    end
+
+    # Returns the splat index of this type definition's generic type parameters.
+    #
+    # Returns `nil` if this type definition isn't generic or if there isn't a
+    # splat parameter.
+    def splat_index : NumberLiteral | NilLiteral
+    end
+
+    # Returns `true` if this node defines a struct, `false` if this node defines
+    # a class.
+    def struct? : BoolLiteral
+    end
   end
 
   # A module definition.
@@ -1646,6 +1701,72 @@ module Crystal::Macros
     # Returns `nil` if this type definition isn't generic or if there isn't a
     # splat parameter.
     def splat_index : NumberLiteral | NilLiteral
+    end
+  end
+
+  # An enum definition.
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }} {% if base_type = node.base_type %}: {{ base_type }}{% end %}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class EnumDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `EnumDef` this is always `enum`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the base type of this enum definition, or a `Nop` if one isn't
+    # specified.
+    def base_type : ASTNode
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # An annotation definition.
+  #
+  # Every annotation definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class AnnotationDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `AnnotationDef` this is always `annotation`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    #
+    # Currently this is always a `Nop`, because annotation definitions cannot
+    # contain anything at all.
+    def body : Nop
     end
   end
 
@@ -1893,9 +2014,6 @@ module Crystal::Macros
   # end
 
   # class UnionDef < CStructOrUnionDef
-  # end
-
-  # class EnumDef < ASTNode
   # end
 
   # class ExternalVar < ASTNode
