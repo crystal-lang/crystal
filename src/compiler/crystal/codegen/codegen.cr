@@ -91,7 +91,7 @@ module Crystal
         # We need `sizeof(Void)` to be 1 because doing
         # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`,
         # that is, consider Void like the size of a byte.
-        1
+        1_u64
       else
         llvm_typer.size_of(llvm_typer.llvm_type(type))
       end
@@ -99,6 +99,20 @@ module Crystal
 
     def instance_size_of(type)
       llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
+    end
+
+    def align_of(type)
+      if type.void?
+        # We need `alignof(Void)` to be 1 because it is effectively the smallest
+        # possible alignment for any type.
+        1_u32
+      else
+        llvm_typer.align_of(llvm_typer.llvm_type(type))
+      end
+    end
+
+    def instance_align_of(type)
+      llvm_typer.align_of(llvm_typer.llvm_struct_type(type))
     end
 
     def offset_of(type, element_index)
@@ -821,6 +835,16 @@ module Crystal
 
     def visit(node : InstanceSizeOf)
       @last = trunc(llvm_struct_size(node.exp.type.sizeof_type), llvm_context.int32)
+      false
+    end
+
+    def visit(node : AlignOf)
+      @last = trunc(llvm_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      false
+    end
+
+    def visit(node : InstanceAlignOf)
+      @last = trunc(llvm_struct_alignment(node.exp.type.sizeof_type), llvm_context.int32)
       false
     end
 

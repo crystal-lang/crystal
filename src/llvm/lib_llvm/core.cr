@@ -120,6 +120,7 @@ lib LibLLVM
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt, packed : Bool) : ValueRef
   fun const_array = LLVMConstArray(element_ty : TypeRef, constant_vals : ValueRef*, length : UInt) : ValueRef
 
+  fun align_of = LLVMAlignOf(ty : TypeRef) : ValueRef
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
 
   fun get_global_parent = LLVMGetGlobalParent(global : ValueRef) : ModuleRef
