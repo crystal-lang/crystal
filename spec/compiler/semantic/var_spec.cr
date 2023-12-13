@@ -22,6 +22,10 @@ describe "Semantic: var" do
     node.type.should eq(mod.int32)
   end
 
+  it "types an assign with type declaration" do
+    assert_type("a : Int32 = 1") { int32 }
+  end
+
   it "reports undefined local variable or method" do
     assert_error "
       def foo

@@ -19,7 +19,11 @@ module Crystal::System::Dir
             when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
             else                                     false
             end
-      Entry.new(name, dir)
+
+      # TODO: support `st_flags & UF_HIDDEN` on BSD-like systems: https://man.freebsd.org/cgi/man.cgi?query=stat&sektion=2
+      # TODO: support hidden file attributes on macOS / HFS+: https://stackoverflow.com/a/15236292
+      # (are these the same?)
+      Entry.new(name, dir, false)
     elsif Errno.value != Errno::NONE
       raise ::File::Error.from_errno("Error reading directory entries", file: path)
     else

@@ -3,7 +3,7 @@ require "../syntax/ast"
 module Crystal
   class ASTNode
     def no_returns?
-      type?.try &.no_return?
+      !!type?.try &.no_return?
     end
   end
 
@@ -83,6 +83,10 @@ module Crystal
       end
 
       @c_calling_convention ? self : nil
+    end
+
+    def llvm_intrinsic?
+      self.is_a?(External) && self.real_name.starts_with?("llvm.")
     end
 
     private def compute_c_calling_convention

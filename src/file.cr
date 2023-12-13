@@ -85,6 +85,43 @@ class File < IO::FileDescriptor
            "/dev/null"
          {% end %}
 
+  # Options used to control the behavior of `Dir.glob`.
+  @[Flags]
+  enum MatchOptions
+    # Includes files whose name begins with a period (`.`).
+    DotFiles
+
+    # Includes files which have a hidden attribute backed by the native
+    # filesystem.
+    #
+    # On Windows, this matches files that have the NTFS hidden attribute set.
+    # This option alone doesn't match files with _both_ the hidden and the
+    # system attributes, `OSHidden` must also be used.
+    #
+    # On other systems, this has no effect.
+    NativeHidden
+
+    # Includes files which are considered hidden by operating system
+    # conventions (apart from `DotFiles`), but not by the filesystem.
+    #
+    # On Windows, this option alone has no effect. However, combining it with
+    # `NativeHidden` matches files that have both the NTFS hidden and system
+    # attributes set. Note that files with just the system attribute, but not
+    # the hidden attribute, are always matched regardless of this option or
+    # `NativeHidden`.
+    #
+    # On other systems, this has no effect.
+    OSHidden
+
+    # Returns a suitable platform-specific default set of options for
+    # `Dir.glob` and `Dir.[]`.
+    #
+    # Currently this is always `NativeHidden | OSHidden`.
+    def self.glob_default
+      NativeHidden | OSHidden
+    end
+  end
+
   include Crystal::System::File
 
   # This constructor is provided for subclasses to be able to initialize an
@@ -92,6 +129,11 @@ class File < IO::FileDescriptor
   private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
     self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking)
+  end
+
+  # :nodoc:
+  def self.from_fd(path : String, fd : Int, *, blocking = false, encoding = nil, invalid = nil)
+    new(path, fd, blocking: blocking, encoding: encoding, invalid: invalid)
   end
 
   # Opens the file named by *filename*.
@@ -163,7 +205,10 @@ class File < IO::FileDescriptor
     Crystal::System::File.info(path.to_s, follow_symlinks)
   end
 
-  # Returns `true` if *path* exists else returns `false`
+  # Returns whether the file given by *path* exists.
+  #
+  # Symbolic links are dereferenced, possibly recursively. Returns `false` if a
+  # symbolic link refers to a non-existent file.
   #
   # ```
   # File.delete("foo") if File.exists?("foo")
@@ -352,7 +397,10 @@ class File < IO::FileDescriptor
     Crystal::System::File.chmod(path.to_s, permissions)
   end
 
-  # Deletes the file at *path*. Deleting non-existent file will raise an exception.
+  # Deletes the file at *path*. Raises `File::Error` on failure.
+  #
+  # On Windows, this also deletes reparse points, including symbolic links,
+  # regardless of whether the reparse point is a directory.
   #
   # ```
   # File.write("foo", "")
@@ -363,8 +411,11 @@ class File < IO::FileDescriptor
     Crystal::System::File.delete(path.to_s, raise_on_missing: true)
   end
 
-  # Deletes the file at *path*.
-  # Returns `false` if the file does not exist.
+  # Deletes the file at *path*, or returns `false` if the file does not exist.
+  # Raises `File::Error` on other kinds of failure.
+  #
+  # On Windows, this also deletes reparse points, including symbolic links,
+  # regardless of whether the reparse point is a directory.
   #
   # ```
   # File.write("foo", "")
@@ -407,33 +458,44 @@ class File < IO::FileDescriptor
   #
   # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
   #
-  # * `*` matches an unlimited number of arbitrary characters excluding `/`.
+  # * `*` matches an unlimited number of arbitrary characters, excluding any directory separators.
   #   * `"*"` matches all regular files.
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
   # * `**` matches directories recursively if followed by `/`.
   #   If this path segment contains any other characters, it is the same as the usual `*`.
-  # * `?` matches any one character excluding `/`.
+  # * `?` matches one arbitrary character, excluding any directory separators.
   # * character sets:
-  #   * `[abc]` matches any one of these character.
+  #   * `[abc]` matches any one of these characters.
   #   * `[^abc]` matches any one character other than these.
   #   * `[a-z]` matches any one character in the range.
   # * `{a,b}` matches subpattern `a` or `b`.
   # * `\\` escapes the next character.
   #
-  # NOTE: Only `/` is recognized as path separator in both *pattern* and *path*.
+  # If *path* is a `Path`, all directory separators supported by *path* are
+  # recognized, according to the path's kind. If *path* is a `String`, only `/`
+  # is considered a directory separator.
+  #
+  # NOTE: Only `/` in *pattern* matches directory separators in *path*.
   def self.match?(pattern : String, path : Path | String) : Bool
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
+    if path.is_a?(Path)
+      separators = Path.separators(path.@kind)
+      path = path.to_s
+    else
+      separators = Path.separators(Path::Kind::POSIX)
+    end
+
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path.to_s)
+      return true if match_single_pattern(expanded_pattern, path, separators)
     end
     false
   end
 
-  private def self.match_single_pattern(pattern : String, path : String)
+  private def self.match_single_pattern(pattern : String, path : String, separators)
     # linear-time algorithm adapted from https://research.swtch.com/glob
     preader = Char::Reader.new(pattern)
     sreader = Char::Reader.new(path)
@@ -458,14 +520,14 @@ class File < IO::FileDescriptor
           preader.next_char
           next
         when {'?', false}
-          if snext && char != '/'
+          if snext && !char.in?(separators)
             preader.next_char
             sreader.next_char
             next
           end
         when {'*', false}
           double_star = preader.peek_next_char == '*'
-          if char == '/' && !double_star
+          if char.in?(separators) && !double_star
             preader.next_char
             next_spos = 0
             next
@@ -659,7 +721,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -703,7 +765,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
     open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
@@ -746,8 +808,10 @@ class File < IO::FileDescriptor
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
+        file.sync = true
         file.write(content)
       when IO
+        file.sync = true
         IO.copy(content, file)
       else
         file.print(content)
@@ -813,6 +877,12 @@ class File < IO::FileDescriptor
     if error = Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
       raise error
     end
+  end
+
+  # Rename the current `File`
+  def rename(new_filename : Path | String) : Nil
+    File.rename(@path, new_filename)
+    @path = new_filename.to_s
   end
 
   # Sets the access and modification times of *filename*.
@@ -892,12 +962,12 @@ class File < IO::FileDescriptor
   # file.info.permissions.value # => 0o700
   # ```
   def chmod(permissions : Int | Permissions) : Nil
-    Crystal::System::File.fchmod(@path, fd, permissions)
+    system_chmod(@path, permissions)
   end
 
   # Sets the access and modification times
   def utime(atime : Time, mtime : Time) : Nil
-    Crystal::System::File.futimens(@path, fd, atime, mtime)
+    system_utime(atime, mtime, @path)
   end
 
   # Attempts to set the access and modification times

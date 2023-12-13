@@ -2,7 +2,10 @@ require "./unix_socket"
 
 # A local interprocess communication server socket.
 #
-# Only available on UNIX and UNIX-like operating systems.
+# Available on UNIX-like operating systems, and Windows 10 Build 17063 or above.
+# Not all features are supported on Windows.
+#
+# NOTE: To use `UNIXServer`, you must explicitly import it with `require "socket"`
 #
 # Example usage:
 # ```
@@ -28,9 +31,12 @@ class UNIXServer < UNIXSocket
   #
   # The server is of stream type by default, but this can be changed for
   # another type. For example datagram messages:
+  #
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
+  #
+  # [Only the stream type is supported on Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable).
   def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
@@ -55,7 +61,7 @@ class UNIXServer < UNIXSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+  def self.open(path, type : Type = Type::STREAM, backlog = 128, &)
     server = new(path, type, backlog)
     begin
       yield server

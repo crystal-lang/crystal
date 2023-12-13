@@ -1,8 +1,6 @@
 require "./spec_helper"
-require "../support/string"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "spec/helpers/string"
+require "big"
 
 # use same name for `sprintf` and `IO#printf` so that `assert_prints` can be leveraged
 private def fprintf(format, *args)
@@ -368,7 +366,7 @@ describe "::sprintf" do
       assert_sprintf "%d", Int64::MIN, "-9223372036854775808"
     end
 
-    pending_win32 "works with BigInt" do
+    it "works with BigInt" do
       assert_sprintf "%d", 123.to_big_i, "123"
       assert_sprintf "%300.250d", 10.to_big_i ** 200, "#{" " * 50}#{"0" * 49}1#{"0" * 200}"
       assert_sprintf "%- #300.250X", 16.to_big_i ** 200 - 1, " 0X#{"0" * 50}#{"F" * 200}#{" " * 47}"
@@ -380,20 +378,37 @@ describe "::sprintf" do
   end
 
   describe "floats" do
-    pending_win32 "works" do
-      assert_sprintf "%f", 123, "123.000000"
+    context "fixed format" do
+      it "works" do
+        assert_sprintf "%f", 123, "123.000000"
 
+        assert_sprintf "%12f", 123.45, "  123.450000"
+        assert_sprintf "%-12f", 123.45, "123.450000  "
+        assert_sprintf "% f", 123.45, " 123.450000"
+        assert_sprintf "%+f", 123, "+123.000000"
+        assert_sprintf "%012f", 123, "00123.000000"
+        assert_sprintf "%.f", 1234.56, "1235"
+        assert_sprintf "%.2f", 1234.5678, "1234.57"
+        assert_sprintf "%10.2f", 1234.5678, "   1234.57"
+        assert_sprintf "%*.2f", [10, 1234.5678], "   1234.57"
+        assert_sprintf "%*.*f", [10, 2, 1234.5678], "   1234.57"
+        assert_sprintf "%.2f", 2.536_f32, "2.54"
+        assert_sprintf "%+0*.*f", [10, 2, 2.536_f32], "+000002.54"
+        assert_sprintf "%#.0f", 1234.56, "1235."
+        assert_sprintf "%#.1f", 1234.56, "1234.6"
+
+        expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
+          sprintf("%*f", ["not a number", 2.536_f32])
+        end
+
+        assert_sprintf "%12.2f %12.2f %6.2f %.2f", [2.0, 3.0, 4.0, 5.0], "        2.00         3.00   4.00 5.00"
+
+        assert_sprintf "%f", 1e15, "1000000000000000.000000"
+      end
+    end
+
+    pending_win32 "works for other formats" do
       assert_sprintf "%g", 123, "123"
-      assert_sprintf "%12f", 123.45, "  123.450000"
-      assert_sprintf "%-12f", 123.45, "123.450000  "
-      assert_sprintf "% f", 123.45, " 123.450000"
-      assert_sprintf "%+f", 123, "+123.000000"
-      assert_sprintf "%012f", 123, "00123.000000"
-      assert_sprintf "%.f", 1234.56, "1235"
-      assert_sprintf "%.2f", 1234.5678, "1234.57"
-      assert_sprintf "%10.2f", 1234.5678, "   1234.57"
-      assert_sprintf "%*.2f", [10, 1234.5678], "   1234.57"
-      assert_sprintf "%0*.2f", [10, 1234.5678], "0001234.57"
       assert_sprintf "%e", 123.45, "1.234500e+02"
       assert_sprintf "%E", 123.45, "1.234500E+02"
       assert_sprintf "%G", 12345678.45, "1.23457E+07"
@@ -401,17 +416,6 @@ describe "::sprintf" do
       assert_sprintf "%A", 12345678.45, "0X1.78C29CE666666P+23"
       assert_sprintf "%100.50g", 123.45, "                                                  123.4500000000000028421709430404007434844970703125"
       assert_sprintf "%#.12g", 12345.0, "12345.0000000"
-
-      assert_sprintf "%.2f", 2.536_f32, "2.54"
-      assert_sprintf "%0*.*f", [10, 2, 2.536_f32], "0000002.54"
-
-      expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
-        sprintf("%*f", ["not a number", 2.536_f32])
-      end
-
-      assert_sprintf "%12.2f %12.2f %6.2f %.2f", [2.0, 3.0, 4.0, 5.0], "        2.00         3.00   4.00 5.00"
-
-      assert_sprintf "%f", 1e15, "1000000000000000.000000"
     end
 
     [Float32, Float64].each do |float|

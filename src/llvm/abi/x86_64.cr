@@ -23,7 +23,6 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       ret_ty = ArgType.direct(context.void)
     end
 
-    arg_tys = Array(LLVM::Type).new(atys.size)
     arg_tys = atys.map do |arg_type|
       abi_type, needed_int_regs, needed_sse_regs = x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
       if available_int_regs >= needed_int_regs && available_sse_regs >= needed_sse_regs
@@ -45,7 +44,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
   # returns the LLVM type (with attributes) and the number of integer and SSE
   # registers needed to pass this value directly (ie. not using the stack)
-  def x86_64_type(type, ind_attr, context) : Tuple(ArgType, Int32, Int32)
+  def x86_64_type(type, ind_attr, context, &) : Tuple(ArgType, Int32, Int32)
     if int_register?(type)
       attr = type == context.int1 ? Attribute::ZExt : nil
       {ArgType.direct(type, attr: attr), 1, 0}
@@ -89,7 +88,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     return false if cls.empty?
 
     cl = cls.first
-    cl == RegClass::Memory || cl == RegClass::X87 || cl == RegClass::ComplexX87
+    cl.in?(RegClass::Memory, RegClass::X87, RegClass::ComplexX87)
   end
 
   def sret?(cls) : Bool
@@ -161,7 +160,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     i = 0
     ty_kind = ty.kind
     e = cls.size
-    if e > 2 && (ty_kind == Type::Kind::Struct || ty_kind == Type::Kind::Array)
+    if e > 2 && ty_kind.in?(Type::Kind::Struct, Type::Kind::Array)
       if cls[i].sse?
         i += 1
         while i < e

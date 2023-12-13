@@ -47,9 +47,10 @@ struct StaticArray(T, N)
   # ary.class # => StaticArray(Char | Int32, 2)
   # ```
   #
-  # See also: `Number.static_array`.
+  # * `Number.static_array` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args)
-    %array = uninitialized StaticArray(typeof({{*args}}), {{args.size}})
+    %array = uninitialized StaticArray(typeof({{args.splat}}), {{args.size}})
     {% for arg, i in args %}
       %array.to_unsafe[{{i}}] = {{arg}}
     {% end %}
@@ -227,7 +228,7 @@ struct StaticArray(T, N)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.=
   def sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     ary = dup
@@ -250,7 +251,7 @@ struct StaticArray(T, N)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     ary = dup
@@ -272,7 +273,7 @@ struct StaticArray(T, N)
   # :inherit:
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     to_slice.sort!(&block)
@@ -282,7 +283,7 @@ struct StaticArray(T, N)
   # :inherit:
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     to_slice.unstable_sort!(&block)

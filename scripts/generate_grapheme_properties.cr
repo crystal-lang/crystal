@@ -1,3 +1,5 @@
+#! /usr/bin/env crystal
+#
 # This script generates the file src/string/grapheme/properties.cr
 # that contains compact representations of the GraphemeBreakProperty.txt and emoji-data.txt
 # file from the unicode specification.

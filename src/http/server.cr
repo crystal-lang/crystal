@@ -15,6 +15,8 @@ require "log"
 # A server is initialized with a handler chain responsible for processing each
 # incoming request.
 #
+# NOTE: To use `Server`, you must explicitly import it with `require "http/server"`
+#
 # ```
 # require "http/server"
 #
@@ -443,6 +445,12 @@ class HTTP::Server
     listen
   end
 
+  # Overwrite this method to implement an alternative concurrency handler
+  # one example could be the use of a fiber pool
+  protected def dispatch(io)
+    spawn handle_client(io)
+  end
+
   # Starts the server. Blocks until the server is closed.
   def listen : Nil
     raise "Can't re-start closed server" if closed?
@@ -463,9 +471,7 @@ class HTTP::Server
           end
 
           if io
-            # a non nillable version of the closured io
-            _io = io
-            spawn handle_client(_io)
+            dispatch(io)
           else
             break
           end

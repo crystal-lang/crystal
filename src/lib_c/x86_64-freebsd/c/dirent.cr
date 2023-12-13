@@ -8,8 +8,8 @@ lib LibC
   DT_LNK     = 10
 
   struct Dirent
-    d_fileno : ULong
-    d_off : ULong
+    d_fileno : InoT
+    d_off : OffT
     d_reclen : UShort
     d_type : UChar
     d_pad0 : UChar

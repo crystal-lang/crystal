@@ -33,7 +33,7 @@ module Crystal::System::Random
       return unless urandom.info.type.character_device?
 
       urandom.close_on_exec = true
-      urandom.sync = true # don't buffer bytes
+      urandom.read_buffering = false # don't buffer bytes
       @@urandom = urandom
     end
   end
@@ -103,7 +103,7 @@ module Crystal::System::Random
       read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), Syscall::GRND_NONBLOCK)
       if read_bytes < 0
         err = Errno.new(-read_bytes.to_i)
-        if err == Errno::EINTR || err == Errno::EAGAIN
+        if err.in?(Errno::EINTR, Errno::EAGAIN)
           ::Fiber.yield
         else
           raise RuntimeError.from_os_error("getrandom", err)

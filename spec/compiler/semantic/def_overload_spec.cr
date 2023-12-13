@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 def assert_stricter(params1, params2, args, *, file = __FILE__, line = __LINE__)
-  assert_type(<<-CR, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
+  assert_type(<<-CRYSTAL, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
     def foo(#{params1}); 1; end
     def foo(#{params2}); 'x'; end
 
@@ -11,11 +11,11 @@ def assert_stricter(params1, params2, args, *, file = __FILE__, line = __LINE__)
     a = foo(#{args})
     b = bar(#{args})
     {a, b}
-    CR
+    CRYSTAL
 end
 
 def assert_unordered(params1, params2, args, *, file = __FILE__, line = __LINE__)
-  assert_type(<<-CR, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
+  assert_type(<<-CRYSTAL, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
     def foo(#{params1}); 1; end
     def foo(#{params2}); 'x'; end
 
@@ -25,7 +25,7 @@ def assert_unordered(params1, params2, args, *, file = __FILE__, line = __LINE__
     a = foo(#{args})
     b = bar(#{args})
     {a, b}
-    CR
+    CRYSTAL
 end
 
 describe "Semantic: def overload" do
@@ -763,16 +763,16 @@ describe "Semantic: def overload" do
   end
 
   it "does not consider global paths as free variables (1)" do
-    assert_error <<-CR, "undefined constant ::Foo"
+    assert_error <<-CRYSTAL, "undefined constant ::Foo"
       def foo(x : ::Foo) forall Foo
       end
 
       foo(1)
-      CR
+      CRYSTAL
   end
 
   it "does not consider global paths as free variables (2)" do
-    assert_error <<-CR, "expected argument #1 to 'foo' to be Foo, not Int32"
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo, not Int32"
       class Foo
       end
 
@@ -780,7 +780,7 @@ describe "Semantic: def overload" do
       end
 
       foo(1)
-      CR
+      CRYSTAL
   end
 
   it "prefers more specific overload than one with free variables" do
@@ -1437,7 +1437,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
   end
 
   it "errors if no overload matches on union against named arg with external param name (#10516)" do
@@ -1448,7 +1448,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
   end
 
   it "dispatches with named arg" do
@@ -1642,11 +1642,11 @@ describe "Semantic: def overload" do
       x = uninitialized Foo
       foo(x)
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Bar, not Foo"
   end
 
   it "treats single splats with same restriction as equivalent (#12579)" do
-    assert_type(<<-CR) { int32 }
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(*x : Int32)
         'a'
       end
@@ -1656,11 +1656,11 @@ describe "Semantic: def overload" do
       end
 
       foo(1)
-      CR
+      CRYSTAL
   end
 
   it "treats single splats with same restriction as equivalent (2) (#12579)" do
-    assert_type(<<-CR) { int32 }
+    assert_type(<<-CRYSTAL) { int32 }
       def foo(*x : Int32)
         'a'
       end
@@ -1670,11 +1670,11 @@ describe "Semantic: def overload" do
       end
 
       foo(1)
-      CR
+      CRYSTAL
   end
 end
 
-private def each_union_variant(t1, t2)
+private def each_union_variant(t1, t2, &)
   yield "#{t1} | #{t2}"
   yield "#{t2} | #{t1}"
   # yield "Union(#{t1}, #{t2})"

@@ -405,7 +405,7 @@ module Crystal
     end
 
     def llvm_embedded_c_type(type : ProcInstanceType, wants_size = false)
-      proc_type(type)
+      proc_type(type).pointer
     end
 
     def llvm_embedded_c_type(type, wants_size = false)
@@ -413,11 +413,11 @@ module Crystal
     end
 
     def llvm_c_type(type : ProcInstanceType)
-      proc_type(type)
+      proc_type(type).pointer
     end
 
     def llvm_c_type(type : NilableProcType)
-      proc_type(type.proc_type)
+      proc_type(type.proc_type).pointer
     end
 
     def llvm_c_type(type : TupleInstanceType)
@@ -458,15 +458,31 @@ module Crystal
       llvm_type(type)
     end
 
+    # Since LLVM 15, LLVM intrinsics must return unnamed structs, and instances
+    # of the named `Tuple` struct are no longer substitutable
+    # This happens when binding to intrinsics like `llvm.sadd.with.overflow.*`
+    # as lib funs directly
+    def llvm_intrinsic_return_type(type : TupleInstanceType)
+      @llvm_context.struct(type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type).as(LLVM::Type) })
+    end
+
+    def llvm_intrinsic_return_type(type : NamedTupleInstanceType)
+      @llvm_context.struct(type.entries.map { |entry| llvm_embedded_type(entry.type).as(LLVM::Type) })
+    end
+
+    def llvm_intrinsic_return_type(type : Type)
+      llvm_return_type(type)
+    end
+
     def closure_type(type : ProcInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type) }
       arg_types.insert(0, @llvm_context.void_pointer)
-      LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
+      LLVM::Type.function(arg_types, llvm_type(type.return_type))
     end
 
     def proc_type(type : ProcInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type).as(LLVM::Type) }
-      LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
+      LLVM::Type.function(arg_types, llvm_type(type.return_type))
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)
@@ -507,7 +523,11 @@ module Crystal
       when .double?
         @llvm_context.double
       when .pointer?
-        copy_type(type.element_type).pointer
+        {% if LibLLVM::IS_LT_150 %}
+          copy_type(type.element_type).pointer
+        {% else %}
+          @llvm_context.pointer
+        {% end %}
       when .array?
         copy_type(type.element_type).array(type.array_size)
       when .vector?

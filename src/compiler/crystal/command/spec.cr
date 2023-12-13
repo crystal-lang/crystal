@@ -60,6 +60,7 @@ class Crystal::Command
           locations << {file, line}
         else
           if Dir.exists?(filename)
+            filename = ::Path[filename].to_posix
             target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
           elsif File.file?(filename)
             target_filenames << filename
@@ -87,15 +88,15 @@ class Crystal::Command
 
     source_filename = File.expand_path("spec")
 
-    source = target_filenames.map { |filename|
-      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix}")
-    }.join('\n')
+    source = target_filenames.join('\n') do |filename|
+      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix.to_s.inspect_unquoted}")
+    end
     sources = [Compiler::Source.new(source_filename, source)]
 
     output_filename = Crystal.temp_executable "spec"
 
     ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= Process.executable_path
-    result = compiler.compile sources, output_filename
+    compiler.compile sources, output_filename, combine_rpath: true
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end

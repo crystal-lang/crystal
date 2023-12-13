@@ -71,7 +71,7 @@ class Channel(T)
     # Implementor that returns `Channel::UseDefault` in `#execute`
     # must redefine `#default_result`
     def default_result
-      raise "unreachable"
+      raise "Unreachable"
     end
   end
 
@@ -288,7 +288,7 @@ class Channel(T)
     receive_impl { return nil }
   end
 
-  private def receive_impl
+  private def receive_impl(&)
     receiver = Receiver(T).new
 
     @lock.lock
@@ -406,7 +406,7 @@ class Channel(T)
   # :nodoc:
   def self.select(ops : Indexable(SelectAction))
     i, m = select_impl(ops, false)
-    raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
+    raise "BUG: Blocking select returned not ready status" if m.is_a?(NotReady)
     return i, m
   end
 
@@ -421,24 +421,40 @@ class Channel(T)
   end
 
   private def self.select_impl(ops : Indexable(SelectAction), non_blocking)
+    # ops_locks is a duplicate of ops that can be sorted without disturbing the
+    # index positions of ops
+    if ops.responds_to?(:unstable_sort_by!)
+      # If the collection type implements `unstable_sort_by!` we can dup it.
+      # This applies to two types:
+      # * `Array`: `Array#to_a` does not dup and would return the same instance,
+      #   thus we'd be sorting ops and messing up the index positions.
+      # * `StaticArray`: This avoids a heap allocation because we can dup a
+      #   static array on the stack.
+      ops_locks = ops.dup
+    elsif ops.responds_to?(:to_static_array)
+      # If the collection type implements `to_static_array` we can create a
+      # copy without allocating an array. This applies to `Tuple` types, which
+      # the compiler generates for `select` expressions.
+      ops_locks = ops.to_static_array
+    else
+      ops_locks = ops.to_a
+    end
+
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
-    ops_locks = ops
-      .to_a
-      .uniq!(&.lock_object_id)
-      .sort_by!(&.lock_object_id)
+    ops_locks.unstable_sort_by!(&.lock_object_id)
 
-    ops_locks.each &.lock
+    each_skip_duplicates(ops_locks, &.lock)
 
     ops.each_with_index do |op, index|
       state = op.execute
 
       case state
       in .delivered?
-        ops_locks.each &.unlock
+        each_skip_duplicates(ops_locks, &.unlock)
         return index, op.result
       in .closed?
-        ops_locks.each &.unlock
+        each_skip_duplicates(ops_locks, &.unlock)
         return index, op.default_result
       in .none?
         # do nothing
@@ -446,7 +462,7 @@ class Channel(T)
     end
 
     if non_blocking
-      ops_locks.each &.unlock
+      each_skip_duplicates(ops_locks, &.unlock)
       return ops.size, NotReady.new
     end
 
@@ -456,7 +472,7 @@ class Channel(T)
     shared_state = SelectContextSharedState.new(SelectState::Active)
     contexts = ops.map &.create_context_and_wait(shared_state)
 
-    ops_locks.each &.unlock
+    each_skip_duplicates(ops_locks, &.unlock)
     Crystal::Scheduler.reschedule
 
     contexts.each_with_index do |context, index|
@@ -473,6 +489,19 @@ class Channel(T)
     end
 
     raise "BUG: Fiber was awaken from select but no action was activated"
+  end
+
+  private def self.each_skip_duplicates(ops_locks, &)
+    # Avoid deadlocks from trying to lock the same lock twice.
+    # `ops_lock` is sorted by `lock_object_id`, so identical onces will be in
+    # a row and we skip repeats while iterating.
+    last_lock_id = nil
+    ops_locks.each do |op|
+      if op.lock_object_id != last_lock_id
+        last_lock_id = op.lock_object_id
+        yield op
+      end
+    end
   end
 
   # :nodoc:

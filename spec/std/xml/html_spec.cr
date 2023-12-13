@@ -18,15 +18,15 @@ describe XML do
     html = doc.children[1]
     html.name.should eq("html")
 
-    head = html.children.find { |node| node.name == "head" }.not_nil!
+    head = html.children.find! { |node| node.name == "head" }
     head.name.should eq("head")
 
-    title = head.children.find { |node| node.name == "title" }.not_nil!
+    title = head.children.find! { |node| node.name == "title" }
     title.text.should eq("Samantha")
 
-    body = html.children.find { |node| node.name == "body" }.not_nil!
+    body = html.children.find! { |node| node.name == "body" }
 
-    h1 = body.children.find { |node| node.name == "h1" }.not_nil!
+    h1 = body.children.find! { |node| node.name == "h1" }
 
     attrs = h1.attributes
     attrs.should_not be_empty

@@ -39,7 +39,7 @@ require "../semantic/main_visitor"
 # end
 # ```
 module Crystal::Repl::Multidispatch
-  def self.create_def(context : Context, node : Call, target_defs : ZeroOneOrMany(Def))
+  def self.create_def(context : Context, node : Call, target_defs : Array(Def))
     if node.block
       a_def = create_def_uncached(context, node, target_defs)
 
@@ -70,7 +70,7 @@ module Crystal::Repl::Multidispatch
     a_def
   end
 
-  private def self.create_def_uncached(context : Context, node : Call, target_defs : ZeroOneOrMany(Def))
+  private def self.create_def_uncached(context : Context, node : Call, target_defs : Array(Def))
     autocast_types = nil
 
     # The generated multidispatch method should handle autocasted
@@ -133,7 +133,7 @@ module Crystal::Repl::Multidispatch
         a_def.uses_block_arg = true
       else
         a_def.block_arg = Arg.new("")
-        a_def.yields = block.args.size
+        a_def.block_arity = block.args.size
       end
     end
 
@@ -200,7 +200,7 @@ module Crystal::Repl::Multidispatch
         end
 
       call = Call.new(call_obj, node.name, call_args)
-      call.target_defs = ZeroOneOrMany(Def).new(target_def)
+      call.target_defs = [target_def]
       call.type = target_def.type
 
       if block

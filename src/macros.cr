@@ -61,7 +61,15 @@
 # p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
 # p                  # => #<Point(@x=0, @y=2)>
 # ```
-macro record(name, *properties)
+macro record(__name name, *properties, **kwargs)
+  {% raise <<-TXT unless kwargs.empty?
+    macro `record` does not accept named arguments
+      Did you mean:
+
+      record #{name}, #{(properties + kwargs.map { |name, value| "#{name} : #{value}" }).join(", ").id}
+    TXT
+  %}
+
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
@@ -74,16 +82,16 @@ macro record(name, *properties)
     {% end %}
 
     def initialize({{
-                     *properties.map do |field|
+                     properties.map do |field|
                        "@#{field.id}".id
-                     end
+                     end.splat
                    }})
     end
 
     {{yield}}
 
     def copy_with({{
-                    *properties.map do |property|
+                    properties.map do |property|
                       if property.is_a?(Assign)
                         "#{property.target.id} _#{property.target.id} = @#{property.target.id}".id
                       elsif property.is_a?(TypeDeclaration)
@@ -91,10 +99,10 @@ macro record(name, *properties)
                       else
                         "#{property.id} _#{property.id} = @#{property.id}".id
                       end
-                    end
+                    end.splat
                   }})
       self.class.new({{
-                       *properties.map do |property|
+                       properties.map do |property|
                          if property.is_a?(Assign)
                            "_#{property.target.id}".id
                          elsif property.is_a?(TypeDeclaration)
@@ -102,13 +110,13 @@ macro record(name, *properties)
                          else
                            "_#{property.id}".id
                          end
-                       end
+                       end.splat
                      }})
     end
 
     def clone
       self.class.new({{
-                       *properties.map do |property|
+                       properties.map do |property|
                          if property.is_a?(Assign)
                            "@#{property.target.id}.clone".id
                          elsif property.is_a?(TypeDeclaration)
@@ -116,7 +124,7 @@ macro record(name, *properties)
                          else
                            "@#{property.id}.clone".id
                          end
-                       end
+                       end.splat
                      }})
     end
   end
@@ -142,7 +150,7 @@ macro pp!(*exps)
     ::print %prefix
     ::pp({{exp}})
   {% else %}
-    %names = { {{*exps.map(&.stringify)}} }
+    %names = { {{exps.map(&.stringify).splat}} }
     %max_size = %names.max_of &.size
     {
       {% for exp, i in exps %}
@@ -176,7 +184,7 @@ macro p!(*exps)
     ::print %prefix
     ::p({{exp}})
   {% else %}
-    %names = { {{*exps.map(&.stringify)}} }
+    %names = { {{exps.map(&.stringify).splat}} }
     %max_size = %names.max_of &.size
     {
       {% for exp, i in exps %}

@@ -2,7 +2,7 @@ require "http/server"
 require "log"
 require "ecr/macros"
 require "compiler/crystal/tools/formatter"
-require "../../../../../lib/markd/src/markd"
+require "markd"
 
 module Crystal::Playground
   Log = ::Log.for("crystal.playground")
@@ -22,7 +22,7 @@ module Crystal::Playground
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
       Log.info { "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}" }
 
-      prelude = %(
+      prelude = <<-CRYSTAL
         require "compiler/crystal/tools/playground/agent"
 
         class Crystal::Playground::Agent
@@ -36,7 +36,7 @@ module Crystal::Playground
         def _p
           Crystal::Playground::Agent.instance
         end
-        )
+        CRYSTAL
 
       [
         Compiler::Source.new("playground_prelude", prelude),
@@ -124,7 +124,7 @@ module Crystal::Playground
       Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 
-    def send_with_json_builder
+    def send_with_json_builder(&)
       send(JSON.build do |json|
         json.object do
           yield json
@@ -172,12 +172,11 @@ module Crystal::Playground
       spawn do
         status = process.wait
         Log.info { "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})." }
-        exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
         send_with_json_builder do |json|
           json.field "type", "exit"
           json.field "tag", tag
-          json.field "status", exit_status
+          json.field "status", status.to_s
         end
       end
 
@@ -231,7 +230,7 @@ module Crystal::Playground
                   File.read(@filename)
                 end
 
-      if extname == ".md" || extname == ".cr"
+      if extname.in?(".md", ".cr")
         content = Markd.to_html(content)
       end
       content
@@ -390,6 +389,22 @@ module Crystal::Playground
   class EnvironmentHandler
     include HTTP::Handler
 
+    DEFAULT_SOURCE = <<-CRYSTAL
+      def find_string(text, word)
+        (0..text.size-word.size).each do |i|
+          { i, text[i..i+word.size-1] }
+          if text[i..i+word.size-1] == word
+            return i
+          end
+        end
+
+        nil
+      end
+
+      find_string "Crystal is awesome!", "awesome"
+      find_string "Crystal is awesome!", "not sure"
+      CRYSTAL
+
     def initialize(@server : Playground::Server)
     end
 
@@ -397,31 +412,17 @@ module Crystal::Playground
       case {context.request.method, context.request.resource}
       when {"GET", "/environment.js"}
         context.response.headers["Content-Type"] = "application/javascript"
-        context.response.puts %(Environment = {})
 
-        context.response.puts %(Environment.version = #{Crystal::Config.description.inspect})
-
-        defaultSource = <<-CR
-          def find_string(text, word)
-            (0..text.size-word.size).each do |i|
-              { i, text[i..i+word.size-1] }
-              if text[i..i+word.size-1] == word
-                return i
-              end
-            end
-
-            nil
-          end
-
-          find_string "Crystal is awesome!", "awesome"
-          find_string "Crystal is awesome!", "not sure"
-          CR
-        context.response.puts "Environment.defaultSource = #{defaultSource.inspect}"
+        context.response.puts <<-JS
+          Environment = {}
+          Environment.version = #{Crystal::Config.description.inspect}
+          Environment.defaultSource = #{DEFAULT_SOURCE.inspect}
+          JS
 
         if source = @server.source
-          context.response.puts "Environment.source = #{source.code.inspect};"
+          context.response.puts "Environment.source = #{source.code.inspect}"
         else
-          context.response.puts "Environment.source = null;"
+          context.response.puts "Environment.source = null"
         end
       else
         call_next(context)
@@ -534,7 +535,7 @@ module Crystal::Playground
     private def accept_request?(origin)
       case @host
       when nil, "localhost", "127.0.0.1"
-        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
+        origin.in?("http://localhost:#{@port}", "http://127.0.0.1:#{@port}")
       when "0.0.0.0"
         true
       else

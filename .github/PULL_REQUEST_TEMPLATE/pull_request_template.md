@@ -5,3 +5,5 @@ We thank you for helping improve Crystal. In order to ease the reviewing process
 2. Focus the PR to the referred issue, and restraint from adding unrelated changes/additions. We do welcome another PR if you fixed another issue.
 
 3. If your change is big, consider breaking it into several smaller PRs. In general, the smaller the change, the quicker we can review it.
+
+4. ⚠️ Please do not amend previous commits and force push to the PR branch. This makes reviews much harder because reference to previous state is hidden.

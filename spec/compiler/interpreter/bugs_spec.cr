@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "bugs" do
     it "doesn't pass self to top-level method" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         struct Int32
           def foo(x)
             self
@@ -22,11 +22,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Moo.moo
-      CODE
+      CRYSTAL
     end
 
     it "doesn't pass self to top-level method (FileNode)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         enum Color
           Red
           Green
@@ -50,11 +50,11 @@ describe Crystal::Repl::Interpreter do
         other = 2
         e = Color::Green.should eq(t :green)
         e.value
-      CODE
+      CRYSTAL
     end
 
     it "breaks from current block, not from outer block" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         def twice
           # index: 1, block_caller: 0
 
@@ -92,21 +92,21 @@ describe Crystal::Repl::Interpreter do
         end
 
         x
-      CODE
+      CRYSTAL
     end
 
     it "doesn't incorrectly consider a non-closure as closure" do
-      interpret(<<-CODE, prelude: "prelude").should eq("false")
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("false")
         c = 0
         ->{
           c
           ->{}.closure?
         }.call
-      CODE
+      CRYSTAL
     end
 
     it "doesn't override local variable value with block var with the same name" do
-      interpret(<<-CODE).should eq(0)
+      interpret(<<-CRYSTAL).should eq(0)
         def block
           yield 1
         end
@@ -126,17 +126,17 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo
-      CODE
+      CRYSTAL
     end
 
     it "does leading zeros" do
-      interpret(<<-CODE, prelude: "prelude").should eq("8")
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("8")
         0_i8.leading_zeros_count
-      CODE
+      CRYSTAL
     end
 
     it "does multidispatch on virtual struct" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         abstract struct Base
         end
 
@@ -160,11 +160,11 @@ describe Crystal::Repl::Interpreter do
 
         address = Foo.new.as(Base)
         address.foo
-      CODE
+      CRYSTAL
     end
 
     it "correctly puts virtual metaclass type in union" do
-      interpret(<<-CODE).should eq("Bar")
+      interpret(<<-CRYSTAL).should eq("Bar")
         abstract struct Foo
         end
 
@@ -183,11 +183,11 @@ describe Crystal::Repl::Interpreter do
         foo = Bar.new.as(Foo)
         foo2 = foo || nil
         foo2.class.name
-      CODE
+      CRYSTAL
     end
 
     it "does multidispatch on virtual struct union nil" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         abstract struct Foo
           @value = 1
         end
@@ -208,7 +208,7 @@ describe Crystal::Repl::Interpreter do
         foo = Bar.new.as(Foo)
         bar = (foo || nil).itself
         bar.is_a?(Bar)
-     CODE
+     CRYSTAL
     end
   end
 end

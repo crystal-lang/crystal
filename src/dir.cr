@@ -246,6 +246,11 @@ class Dir
   end
 
   # Returns `true` if the given path exists and is a directory
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # Dir.exists?("testdir") # => true
+  # ```
   def self.exists?(path : Path | String) : Bool
     if info = File.info?(path)
       info.type.directory?
@@ -274,6 +279,11 @@ class Dir
   # can be specified, with a default of 777 (0o777).
   #
   # NOTE: *mode* is ignored on windows.
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # Dir.exists?("testdir") # => true
+  # ```
   def self.mkdir(path : Path | String, mode = 0o777) : Nil
     Crystal::System::Dir.create(path.to_s, mode)
   end
@@ -292,13 +302,21 @@ class Dir
     mkdir(path, mode) unless Dir.exists?(path)
   end
 
-  # Removes the directory at the given path.
+  # Removes the directory at *path*. Raises `File::Error` on failure.
+  #
+  # On Windows, also raises `File::Error` if *path* points to a directory that
+  # is a reparse point, such as a symbolic link. Those directories can be
+  # deleted using `File.delete` instead.
   def self.delete(path : Path | String) : Nil
     Crystal::System::Dir.delete(path.to_s, raise_on_missing: true)
   end
 
-  # Removes the directory at the given path.
-  # Returns `false` if the directory does not exist.
+  # Removes the directory at *path*, or returns `false` if the directory does
+  # not exist. Raises `File::Error` on other kinds of failure.
+  #
+  # On Windows, also raises `File::Error` if *path* points to a directory that
+  # is a reparse point, such as a symbolic link. Those directories can be
+  # deleted using `File.delete?` instead.
   def self.delete?(path : Path | String) : Bool
     Crystal::System::Dir.delete(path.to_s, raise_on_missing: false)
   end

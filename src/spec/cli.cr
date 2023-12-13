@@ -5,9 +5,6 @@ require "option_parser"
 
 module Spec
   # :nodoc:
-  class_property? use_colors = true
-
-  # :nodoc:
   class_property pattern : Regex?
 
   # :nodoc:
@@ -23,10 +20,12 @@ module Spec
   class_property? focus = false
 
   # :nodoc:
+  class_property? dry_run = false
+
+  # :nodoc:
   def self.add_location(file, line)
     locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
+    locations.put_if_absent(File.expand_path(file)) { [] of Int32 } << line
   end
 
   # :nodoc:
@@ -53,7 +52,7 @@ module Spec
       when UInt64
         mode
       else
-        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
+        raise ArgumentError.new("Order must be either 'default', 'random', or a numeric seed value")
       end
 
     @@randomizer_seed = seed
@@ -88,7 +87,7 @@ module Spec
         Spec.add_tag tag
       end
       opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
-        if mode == "default" || mode == "random"
+        if mode.in?("default", "random")
           Spec.order = mode
         elsif seed = mode.to_u64?
           Spec.order = seed
@@ -109,8 +108,14 @@ module Spec
       opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
         configure_formatter("tap")
       end
-      opts.on("--no-color", "Disable colored output") do
-        Spec.use_colors = false
+      opts.on("--color", "Enabled ANSI colored output") do
+        Colorize.enabled = true
+      end
+      opts.on("--no-color", "Disable ANSI colored output") do
+        Colorize.enabled = false
+      end
+      opts.on("--dry-run", "Pass all tests without execution") do
+        Spec.dry_run = true
       end
       opts.unknown_args do |args|
       end

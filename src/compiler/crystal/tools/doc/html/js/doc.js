@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var openTypes = typesList.querySelectorAll('.current');
     if (openTypes.length > 0) {
       var lastOpenType = openTypes[openTypes.length - 1];
-      lastOpenType.scrollIntoView();
+      lastOpenType.scrollIntoView(!(window.matchMedia('only screen and (max-width: 635px)')).matches);
     }
   }
 

@@ -1,3 +1,7 @@
+{% if flag?(:win32) %}
+  require "c/process"
+{% end %}
+
 module GC
   def self.init
   end
@@ -62,20 +66,27 @@ module GC
       gc_no: 0,
       markers_m1: 0,
       bytes_reclaimed_since_gc: 0,
-      reclaimed_bytes_before_gc: 0)
+      reclaimed_bytes_before_gc: 0,
+      expl_freed_bytes_since_gc: 0,
+      obtained_from_os_bytes: 0)
   end
 
-  {% unless flag?(:win32) || flag?(:wasm32) %}
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
+  {% elsif !flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)
     end
 
     # :nodoc:
-    def self.pthread_join(thread : LibC::PthreadT) : Void*
-      ret = LibC.pthread_join(thread, out value)
-      raise RuntimeError.from_errno("pthread_join") unless ret == 0
-      value
+    def self.pthread_join(thread : LibC::PthreadT)
+      LibC.pthread_join(thread, nil)
     end
 
     # :nodoc:

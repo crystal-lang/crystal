@@ -3,14 +3,16 @@
 # The a is the real part of the number, and the b is the imaginary part of
 # the number.
 #
+# NOTE: To use `Complex`, you must explicitly import it with `require "complex"`
+#
 # ```
 # require "complex"
 #
-# Complex.new(1, 0)   # => 1.0 + 0.0i
-# Complex.new(5, -12) # => 5.0 - 12.0i
+# Complex.new(1, 0)   # => 1.0 + 0.0.i
+# Complex.new(5, -12) # => 5.0 - 12.0.i
 #
-# 1.to_c # => 1.0 + 0.0i
-# 1.i    # => 0.0 + 1.0i
+# 1.to_c # => 1.0 + 0.0.i
+# 1.i    # => 0.0 + 1.0.i
 # ```
 struct Complex
   # Returns the real part.
@@ -57,32 +59,14 @@ struct Complex
     @real
   end
 
-  # Returns the value as a `Float32` if possible (the imaginary part should be exactly zero),
-  # raises otherwise.
-  def to_f32 : Float32
-    to_f64.to_f32
-  end
-
   # See `#to_f64`.
   def to_f
     to_f64
   end
 
-  # Returns the value as an `Int64` if possible (the imaginary part should be exactly zero),
-  # raises otherwise.
-  def to_i64 : Int64
-    to_f64.to_i64
-  end
-
-  delegate to_i32, to_i16, to_i8, to: to_i64
-
-  # Returns the value as an `UInt64` if possible (the imaginary part should be exactly zero),
-  # raises otherwise.
-  def to_u64 : UInt64
-    to_f64.to_u64
-  end
-
-  delegate to_u32, to_u16, to_u8, to: to_u64
+  delegate to_i128, to_i64, to_i32, to_i16, to_i8, to: to_f64
+  delegate to_u128, to_u64, to_u32, to_u16, to_u8, to: to_f64
+  delegate to_f32, to: to_f64
 
   # See `#to_i32`.
   def to_i
@@ -151,9 +135,9 @@ struct Complex
   # ```
   # require "complex"
   #
-  # Complex.new(7, -24).sign        # => (0.28 - 0.96i)
-  # Complex.new(1.0 / 0.0, 24).sign # => (1.0 + 0.0i)
-  # Complex.new(-0.0, +0.0).sign    # => (-0.0 + 0.0i)
+  # Complex.new(7, -24).sign        # => (0.28 - 0.96.i)
+  # Complex.new(1.0 / 0.0, 24).sign # => (1.0 + 0.0.i)
+  # Complex.new(-0.0, +0.0).sign    # => (-0.0 + 0.0.i)
   # ```
   def sign : Complex
     return self if zero?
@@ -199,8 +183,8 @@ struct Complex
   # ```
   # require "complex"
   #
-  # Complex.new(42, 2).conj  # => 42.0 - 2.0i
-  # Complex.new(42, -2).conj # => 42.0 + 2.0i
+  # Complex.new(42, 2).conj  # => 42.0 - 2.0.i
+  # Complex.new(42, -2).conj # => 42.0 + 2.0.i
   # ```
   def conj : Complex
     Complex.new(@real, -@imag)
@@ -353,7 +337,7 @@ module Math
   # ```
   # require "complex"
   #
-  # Math.exp(4 + 2.i) # => -22.720847417619233 + 49.645957334580565i
+  # Math.exp(4 + 2.i) # => -22.720847417619233 + 49.645957334580565.i
   # ```
   def exp(value : Complex) : Complex
     r = exp(value.real)
@@ -365,7 +349,7 @@ module Math
   # ```
   # require "complex"
   #
-  # Math.log(4 + 2.i) # => 1.4978661367769956 + 0.4636476090008061i
+  # Math.log(4 + 2.i) # => 1.4978661367769956 + 0.4636476090008061.i
   # ```
   def log(value : Complex) : Complex
     Complex.new(Math.log(value.abs), value.phase)
@@ -376,7 +360,7 @@ module Math
   # ```
   # require "complex"
   #
-  # Math.log2(4 + 2.i) # => 2.1609640474436813 + 0.6689021062254881i
+  # Math.log2(4 + 2.i) # => 2.1609640474436813 + 0.6689021062254881.i
   # ```
   def log2(value : Complex) : Complex
     log(value) / LOG2
@@ -387,7 +371,7 @@ module Math
   # ```
   # require "complex"
   #
-  # Math.log10(4 + 2.i) # => 0.6505149978319906 + 0.20135959813668655i
+  # Math.log10(4 + 2.i) # => 0.6505149978319906 + 0.20135959813668655.i
   # ```
   def log10(value : Complex) : Complex
     log(value) / LOG10
@@ -399,7 +383,7 @@ module Math
   # ```
   # require "complex"
   #
-  # Math.sqrt(4 + 2.i) # => 2.0581710272714924 + 0.48586827175664565i
+  # Math.sqrt(4 + 2.i) # => 2.0581710272714924 + 0.48586827175664565.i
   # ```
   #
   # Although the imaginary number is defined as i = sqrt(-1),
@@ -409,7 +393,7 @@ module Math
   #
   # ```
   # Math.sqrt(-1.0)         # => -NaN
-  # Math.sqrt(-1.0 + 0.0.i) # => 0.0 + 1.0i
+  # Math.sqrt(-1.0 + 0.0.i) # => 0.0 + 1.0.i
   # ```
   def sqrt(value : Complex) : Complex
     r = value.abs

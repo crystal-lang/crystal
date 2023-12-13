@@ -29,14 +29,15 @@ struct Slice(T)
   # If `T` is a `Number` then this is equivalent to
   # `Number.slice` (numbers will be coerced to the type `T`)
   #
-  # See also: `Number.slice`.
+  # * `Number.slice` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
       {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
+      %ptr = Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
@@ -102,7 +103,7 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice # => Slice[10, 11, 12]
   # ```
-  def self.new(size : Int, *, read_only = false)
+  def self.new(size : Int, *, read_only = false, &)
     pointer = Pointer.malloc(size) { |i| yield i }
     new(pointer, size, read_only: read_only)
   end
@@ -167,6 +168,48 @@ struct Slice(T)
     check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
+  end
+
+  # Returns a new slice that has `self`'s elements followed by *other*'s
+  # elements.
+  #
+  # ```
+  # Slice[1, 2] + Slice[3, 4, 5]          # => Slice[1, 2, 3, 4, 5]
+  # Slice[1, 2, 3] + Slice['a', 'b', 'c'] # => Slice[1, 2, 3, 'a', 'b', 'c']
+  # ```
+  #
+  # See also: `Slice.join` to join multiple slices at once without creating
+  # intermediate results.
+  def +(other : Slice) : Slice
+    Slice.join({self, other})
+  end
+
+  # Returns a new slice that has the elements from *slices* joined together.
+  #
+  # ```
+  # Slice.join([Slice[1, 2], Slice[3, 4, 5]])        # => Slice[1, 2, 3, 4, 5]
+  # Slice.join({Slice[1], Slice['a'], Slice["xyz"]}) # => Slice[1, 'a', "xyz"]
+  # ```
+  #
+  # See also: `#+(other : Slice)`.
+  def self.join(slices : Indexable(Slice)) : Slice
+    total_size = slices.sum(&.size)
+    buf = Pointer(typeof(Enumerable.element_type Enumerable.element_type slices)).malloc(total_size)
+
+    ptr = buf
+    slices.each do |slice|
+      slice.to_unsafe.copy_to(ptr, slice.size)
+      ptr += slice.size
+    end
+
+    Slice.new(buf, total_size)
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # This is an empty slice.
+  def self.additive_identity : self
+    self.new(0)
   end
 
   # :inherit:
@@ -301,7 +344,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def shuffle!(random = Random::DEFAULT) : self
+  def shuffle!(random : Random = Random::DEFAULT) : self
     check_writable
     super
   end
@@ -445,14 +488,14 @@ struct Slice(T)
     super(range) { |i| yield i }
   end
 
-  def copy_from(source : Pointer(T), count)
+  def copy_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.copy_from(source, count)
   end
 
-  def copy_to(target : Pointer(T), count)
+  def copy_to(target : Pointer(T), count) : Nil
     check_size(count)
 
     @pointer.copy_to(target, count)
@@ -470,7 +513,7 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.copy_to src # raises IndexError
   # ```
-  def copy_to(target : self)
+  def copy_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -481,18 +524,18 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def copy_from(source : self)
+  def copy_from(source : self) : Nil
     source.copy_to(self)
   end
 
-  def move_from(source : Pointer(T), count)
+  def move_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.move_from(source, count)
   end
 
-  def move_to(target : Pointer(T), count)
+  def move_to(target : Pointer(T), count) : Nil
     @pointer.move_to(target, count)
   end
 
@@ -511,7 +554,7 @@ struct Slice(T)
   # ```
   #
   # See also: `Pointer#move_to`.
-  def move_to(target : self)
+  def move_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -523,7 +566,7 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def move_from(source : self)
+  def move_from(source : self) : Nil
     source.move_to(self)
   end
 
@@ -889,7 +932,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.sort! &block
@@ -911,7 +954,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1012,7 +1055,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -1055,7 +1098,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)

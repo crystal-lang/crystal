@@ -43,3 +43,4 @@ $driver $SCRIPT_ROOT/top_level.cr $debugger
 $driver $SCRIPT_ROOT/strings.cr $debugger
 $driver $SCRIPT_ROOT/arrays.cr $debugger
 $driver $SCRIPT_ROOT/blocks.cr $debugger
+$driver $SCRIPT_ROOT/large_enums.cr $debugger

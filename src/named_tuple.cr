@@ -31,8 +31,8 @@
 #
 # ```
 # language = {name: "Crystal", year: 2011}
-# language[:name]?         # => 1
-# typeof(language[:name]?) # => Int32
+# language[:name]?         # => "Crystal"
+# typeof(language[:name]?) # => String
 # ```
 #
 # `NamedTuple`'s own instance classes may also be indexed in a similar manner,
@@ -85,7 +85,7 @@ struct NamedTuple
   # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # => {name: "number", val: 42}
   #
   # num_or_str = "a string".as(Int32 | String)
-  # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # raises TypeCastError (cast from String to Int32 failed)
+  # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # raises TypeCastError (Cast from String to Int32 failed)
   # ```
   # See also: `#from`.
   def self.from(hash : Hash) : self
@@ -243,9 +243,9 @@ struct NamedTuple
   # Returns `nil` if not found.
   #
   # ```
-  # h = {a: {b: [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+  # h.dig? :a, :b, :c # => [10, 20]
+  # h.dig? "a", "x"   # => nil
   # ```
   def dig?(key : Symbol | String, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -262,9 +262,9 @@ struct NamedTuple
   # raises `KeyError`.
   #
   # ```
-  # h = {a: {b: [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+  # h.dig :a, :b, :c # => [10, 20]
+  # h.dig "a", "x"   # raises KeyError
   # ```
   def dig(key : Symbol | String, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
@@ -449,12 +449,7 @@ struct NamedTuple
       {% if i > 0 %}
         io << ", "
       {% end %}
-      key = {{key.stringify}}
-      if Symbol.needs_quotes_for_named_argument?(key)
-        key.inspect(io)
-      else
-        io << key
-      end
+      Symbol.quote_for_named_argument io, {{key.stringify}}
       io << ": "
       self[{{key.symbolize}}].inspect(io)
     {% end %}
@@ -468,12 +463,7 @@ struct NamedTuple
           pp.comma
         {% end %}
         pp.group do
-          key = {{key.stringify}}
-          if Symbol.needs_quotes_for_named_argument?(key)
-            pp.text key.inspect
-          else
-            pp.text key
-          end
+          pp.text Symbol.quote_for_named_argument({{key.stringify}})
           pp.text ": "
           pp.nest do
             pp.breakable ""
@@ -499,7 +489,7 @@ struct NamedTuple
   # name = Crystal
   # year = 2011
   # ```
-  def each : Nil
+  def each(&) : Nil
     {% for key in T %}
       yield {{key.symbolize}}, self[{{key.symbolize}}]
     {% end %}
@@ -520,7 +510,7 @@ struct NamedTuple
   # name
   # year
   # ```
-  def each_key : Nil
+  def each_key(&) : Nil
     {% for key in T %}
       yield {{key.symbolize}}
     {% end %}
@@ -541,7 +531,7 @@ struct NamedTuple
   # Crystal
   # 2011
   # ```
-  def each_value : Nil
+  def each_value(&) : Nil
     {% for key in T %}
       yield self[{{key.symbolize}}]
     {% end %}
@@ -562,7 +552,7 @@ struct NamedTuple
   # 1) name = Crystal
   # 2) year = 2011
   # ```
-  def each_with_index(offset = 0)
+  def each_with_index(offset = 0, &)
     i = offset
     each do |key, value|
       yield key, value, i
@@ -577,7 +567,7 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
-  def map
+  def map(&)
     {% if T.size == 0 %}
       [] of NoReturn
     {% else %}
@@ -676,8 +666,7 @@ struct NamedTuple
     {% for key in T %}
       return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]?
     {% end %}
-
-    return true
+    true
   end
 
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.

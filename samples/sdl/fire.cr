@@ -204,7 +204,7 @@ class RainbowColorPattern < ColorPattern
   end
 
   def interpolate(life)
-    raise "shouldn't reach here"
+    raise "Shouldn't reach here"
   end
 end
 
@@ -233,7 +233,7 @@ class Points
     end
   end
 
-  def each
+  def each(&)
     @points.each do |point|
       yield point unless point.dead?
     end
@@ -257,7 +257,7 @@ def parse_rectangles(filename)
 
   rects = [] of Rectangle
   lines = File.read(filename)
-  lines = lines.split('\n').map { |line| line.rstrip }
+  lines = lines.split('\n').map(&.rstrip)
   lines.each_with_index do |line, y|
     x = 0
     line.each_char do |c|
@@ -294,7 +294,7 @@ class Screen
     background_intensity = intensity(@background[offset])
     color_intensity = intensity(color)
 
-    if color_intensity >= background_intensity && @rects.any? { |rect| rect.contains?(point) }
+    if color_intensity >= background_intensity && @rects.any?(&.contains?(point))
       @background[offset] = color
     end
   end

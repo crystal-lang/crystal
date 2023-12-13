@@ -1,4 +1,4 @@
-{% raise("Please use `make spec` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
+{% raise("Please use `make test` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
 
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
@@ -10,6 +10,8 @@ require "./support/tempfile"
 require "./support/win32"
 
 class Crystal::Program
+  setter temp_var_counter
+
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
   end
@@ -35,7 +37,7 @@ record SemanticResult,
   program : Program,
   node : ASTNode
 
-def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
+def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__, &)
   result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
@@ -80,10 +82,25 @@ end
 def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  to_nodes_str = to_nodes.to_s.strip
+  to_nodes_str.should eq(to.strip), file: file, line: line
+
+  # first idempotency check: the result should be fully normalized
+  to_nodes_str2 = program.normalize(to_nodes).to_s.strip
+  unless to_nodes_str2 == to_nodes_str
+    fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
+  end
+
+  # second idempotency check: if the normalizer mutates the original node,
+  # further normalizations should not produce a different result
+  program.temp_var_counter = 0
+  to_nodes_str2 = program.normalize(from_nodes).to_s.strip
+  unless to_nodes_str2 == to_nodes_str
+    fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
+  end
+
   to_nodes
 end
 
@@ -167,7 +184,7 @@ def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE_
   end
 end
 
-def prepare_macro_call(macro_body, flags = nil)
+def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   args = yield program
@@ -281,7 +298,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   end
 end
 
-def test_c(c_code, crystal_code, *, file = __FILE__)
+def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
     yield run(%(
     require "prelude"

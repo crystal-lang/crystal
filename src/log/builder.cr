@@ -84,7 +84,7 @@ class Log::Builder
   end
 
   # :nodoc:
-  private def each_log
+  private def each_log(&)
     @logs.reject! { |_, log_ref| log_ref.value.nil? }
 
     @logs.each_value do |log_ref|
@@ -100,26 +100,24 @@ class Log::Builder
     when Nil
       log.backend = backend
       log.initial_level = level
-    when BroadcastBackend
-      current_backend.append(backend, level)
-      # initial_level needs to be recomputed since the append_backend
-      # might be called with the same backend as before but with a
-      # different (higher) level
-      log.initial_level = current_backend.min_level
-      current_backend.level = log.changed_level
+    when backend
+      # if the bind applies for the same backend, the last applied
+      # level should be used
+      log.initial_level = level
     else
-      if current_backend == backend
-        # if the bind applies for the same backend, the last applied
-        # level should be used
-        log.initial_level = level
-      else
+      broadcast = current_backend.as?(BroadcastBackend)
+      # If the current backend is not a broadcast backend , we need to
+      # auto-create a broadcast backend for distributing the different log backends.
+      # A broadcast backend explicitly added as a binding, must not be mutated,
+      # so that requires to create a new one as well.
+      if !broadcast || @bindings.any? { |binding| binding.backend.same?(current_backend) }
         broadcast = BroadcastBackend.new
         broadcast.append(current_backend, log.initial_level)
-        broadcast.append(backend, level)
-        broadcast.level = log.changed_level
         log.backend = broadcast
-        log.initial_level = broadcast.min_level
       end
+      broadcast.append(backend, level)
+      broadcast.level = log.changed_level
+      log.initial_level = broadcast.min_level
     end
   end
 

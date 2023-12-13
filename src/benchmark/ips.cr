@@ -14,7 +14,7 @@ module Benchmark
   module IPS
     class Job
       # List of all entries in the benchmark.
-      # After #execute, these are populated with the resulting statistics.
+      # After `#execute`, these are populated with the resulting statistics.
       property items : Array(Entry)
 
       @warmup_time : Time::Span
@@ -115,7 +115,7 @@ module Benchmark
       end
 
       private def run_comparison
-        fastest = ran_items.max_by { |i| i.mean }
+        fastest = ran_items.max_by(&.mean)
         ran_items.each do |item|
           item.slower = (fastest.mean / item.mean).to_f
         end
@@ -129,7 +129,7 @@ module Benchmark
       # Code to be benchmarked
       property action : ->
 
-      # Number of cycles needed to run for approx 100ms
+      # Number of cycles needed to run `action` for approximately 100ms.
       # Calculated during the warmup stage
       property! cycles : Int32
 
