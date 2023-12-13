@@ -12,7 +12,7 @@ describe "HTML" do
     end
   end
 
-  pending_wasm32 ".unescape" do
+  pending_wasm32 describe: ".unescape" do
     it "identity" do
       HTML.unescape("safe_string").should be("safe_string")
     end
