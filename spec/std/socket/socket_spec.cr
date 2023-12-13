@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "../../support/tempfile"
+require "../../support/win32"
 
 describe Socket, tags: "network" do
   describe ".unix" do

@@ -1,6 +1,7 @@
 {% skip_file if flag?(:wasm32) %}
 
 require "./spec_helper"
+require "../../support/win32"
 
 describe TCPSocket, tags: "network" do
   describe "#connect" do

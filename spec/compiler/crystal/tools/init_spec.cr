@@ -7,6 +7,7 @@ require "spec"
 require "yaml"
 require "../../../support/tempfile"
 require "../../../support/env"
+require "../../../support/win32"
 
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
