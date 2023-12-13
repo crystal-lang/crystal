@@ -2687,14 +2687,12 @@ describe "String" do
       end
     end
 
-    {% unless flag?(:wasm32) %}
-      it "allocates buffer of correct size (#3332)" do
-        String.new(255_u8) do |buffer|
-          LibGC.size(buffer).should be > 255
-          {255, 0}
-        end
+    pending_wasm32 "allocates buffer of correct size (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be > 255
+        {255, 0}
       end
-    {% end %}
+    end
 
     it "raises if returned bytesize is greater than capacity" do
       expect_raises ArgumentError, "Bytesize out of capacity bounds" do

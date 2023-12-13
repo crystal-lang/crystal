@@ -8,6 +8,7 @@ require "compiler/requires"
 require "./support/syntax"
 require "./support/tempfile"
 require "./support/win32"
+require "./support/wasm32"
 
 class Crystal::Program
   setter temp_var_counter

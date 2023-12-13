@@ -1,6 +1,5 @@
 require "spec"
 require "socket"
-require "../../support/win32"
 require "spec/helpers/string"
 
 describe Socket::Address do

@@ -2,6 +2,7 @@ require "spec"
 require "../support/tempfile"
 require "../support/fibers"
 require "../support/win32"
+require "../support/wasm32"
 
 def datapath(*components)
   File.join("spec", "std", "data", *components)

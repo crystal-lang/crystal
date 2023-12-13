@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 require "html"
 
 describe "HTML" do
@@ -12,7 +12,7 @@ describe "HTML" do
     end
   end
 
-  describe ".unescape" do
+  pending_wasm32 ".unescape" do
     it "identity" do
       HTML.unescape("safe_string").should be("safe_string")
     end
