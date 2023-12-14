@@ -165,7 +165,27 @@ module Crystal
       node
     end
 
-    def transform(node : UnaryExpression)
+    def transform(node : PointerOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : SizeOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : InstanceSizeOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : AlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : InstanceAlignOf)
       node.exp = node.exp.transform(self)
       node
     end
@@ -384,6 +404,11 @@ module Crystal
       node
     end
 
+    def transform(node : Out)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : Nop)
       node
     end
@@ -484,6 +509,11 @@ module Crystal
       node
     end
 
+    def transform(node : Not)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : TupleLiteral)
       transform_many node.elements
       node
@@ -516,6 +546,16 @@ module Crystal
 
     def transform(node : Alias)
       node.value = node.value.transform(self)
+      node
+    end
+
+    def transform(node : Splat)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : DoubleSplat)
+      node.exp = node.exp.transform(self)
       node
     end
 
