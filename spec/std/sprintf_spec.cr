@@ -417,6 +417,9 @@ describe "::sprintf" do
         assert_sprintf "%e", Float64::MIN_SUBNORMAL, "4.940656e-324"
         assert_sprintf "%e", 0.0, "0.000000e+0"
         assert_sprintf "%e", -0.0, "-0.000000e+0"
+        assert_sprintf "%e", -Float64::MIN_SUBNORMAL, "-4.940656e-324"
+        assert_sprintf "%e", -Float64::MIN_POSITIVE, "-2.225074e-308"
+        assert_sprintf "%e", Float64::MIN, "-1.797693e+308"
       end
 
       context "width specifier" do
