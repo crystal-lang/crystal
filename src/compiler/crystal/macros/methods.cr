@@ -2415,24 +2415,15 @@ module Crystal
     end
   end
 
-  class ModuleDef
+  class ClassDef
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "kind"
-        interpret_check_args { MacroId.new("module") }
+        interpret_check_args { MacroId.new(@struct ? "struct" : "class") }
       when "name"
-        interpret_check_args(named_params: ["generic_args"]) do
-          if parse_generic_args_argument(self, method, named_args, default: true) && (type_vars = @type_vars)
-            type_vars = type_vars.map_with_index do |type_var, i|
-              param = MacroId.new(type_var)
-              param = Splat.new(param) if i == @splat_index
-              param
-            end
-            Generic.new(@name, type_vars)
-          else
-            @name
-          end
-        end
+        type_definition_generic_name(self, method, args, named_args, block)
+      when "superclass"
+        interpret_check_args { @superclass || Nop.new }
       when "type_vars"
         interpret_check_args do
           if (type_vars = @type_vars) && type_vars.present?
@@ -2451,6 +2442,81 @@ module Crystal
         end
       when "body"
         interpret_check_args { @body }
+      when "abstract?"
+        interpret_check_args { BoolLiteral.new(@abstract) }
+      when "struct?"
+        interpret_check_args { BoolLiteral.new(@struct) }
+      else
+        super
+      end
+    end
+  end
+
+  class ModuleDef
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "kind"
+        interpret_check_args { MacroId.new("module") }
+      when "name"
+        type_definition_generic_name(self, method, args, named_args, block)
+      when "type_vars"
+        interpret_check_args do
+          if (type_vars = @type_vars) && type_vars.present?
+            ArrayLiteral.map(type_vars) { |type_var| MacroId.new(type_var) }
+          else
+            empty_no_return_array
+          end
+        end
+      when "splat_index"
+        interpret_check_args do
+          if splat_index = @splat_index
+            NumberLiteral.new(splat_index)
+          else
+            NilLiteral.new
+          end
+        end
+      when "body"
+        interpret_check_args { @body }
+      else
+        super
+      end
+    end
+  end
+
+  class EnumDef
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "kind"
+        interpret_check_args { MacroId.new("enum") }
+      when "name"
+        interpret_check_args(named_params: ["generic_args"]) do
+          # parse the argument, but ignore it otherwise
+          parse_generic_args_argument(self, method, named_args, default: true)
+          @name
+        end
+      when "base_type"
+        interpret_check_args { @base_type || Nop.new }
+      when "body"
+        interpret_check_args { Expressions.from(@members) }
+      else
+        super
+      end
+    end
+  end
+
+  class AnnotationDef
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "kind"
+        interpret_check_args { MacroId.new("annotation") }
+      when "name"
+        interpret_check_args(named_params: ["generic_args"]) do
+          # parse the argument, but ignore it otherwise
+          parse_generic_args_argument(self, method, named_args, default: true)
+          @name
+        end
+      when "body"
+        interpret_check_args { Nop.new }
       else
         super
       end
@@ -2802,6 +2868,21 @@ private def parse_generic_args_argument(node, method, named_args, *, default)
     named_arg.value
   else
     named_arg.raise "named argument 'generic_args' to #{node.class_desc}##{method} must be a BoolLiteral, not #{named_arg.class_desc}"
+  end
+end
+
+private def type_definition_generic_name(node, method, args, named_args, block)
+  interpret_check_args(node: node, named_params: ["generic_args"]) do
+    if parse_generic_args_argument(node, method, named_args, default: true) && (type_vars = node.type_vars)
+      type_vars = type_vars.map_with_index do |type_var, i|
+        param = Crystal::MacroId.new(type_var)
+        param = Crystal::Splat.new(param) if i == node.splat_index
+        param
+      end
+      Crystal::Generic.new(node.name, type_vars)
+    else
+      node.name
+    end
   end
 end
 

@@ -219,6 +219,7 @@ struct String::Formatter(A)
       int flags, arg
     when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
       flags.type = char
+      flags.float = true
       float flags, arg
     else
       raise ArgumentError.new("Malformed format string - %#{char.inspect}")
@@ -297,7 +298,6 @@ struct String::Formatter(A)
     end
   end
 
-  # We don't actually format the float ourselves, we delegate to snprintf
   def float(flags, arg) : Nil
     if arg.responds_to?(:to_f64)
       float = arg.is_a?(Float64) ? arg : arg.to_f64
@@ -307,13 +307,25 @@ struct String::Formatter(A)
       elsif float.nan?
         float_special("nan", 1, flags)
       else
-        format_buf = recreate_float_format_string(flags)
-
-        len = LibC.snprintf(nil, 0, format_buf, float) + 1
-        temp_buf = temp_buf(len)
-        LibC.snprintf(temp_buf, len, format_buf, float)
-
-        @io.write_string Slice.new(temp_buf, len - 1)
+        # FIXME: wasm32 appears to run out of memory if we use Ryu Printf, which
+        # initializes very large lookup tables, so we always fall back to
+        # `LibC.snprintf` (#13918)
+        {% if flag?(:wasm32) %}
+          float_fallback(float, flags)
+        {% else %}
+          case flags.type
+          when 'f'
+            float_fixed(float, flags)
+          when 'e', 'E'
+            float_scientific(float, flags)
+          when 'g', 'G'
+            float_general(float, flags)
+          when 'a', 'A'
+            float_hex(float, flags)
+          else
+            raise "BUG: Unknown format type '#{flags.type}'"
+          end
+        {% end %}
       end
     else
       raise ArgumentError.new("Expected a float, not #{arg.inspect}")
@@ -332,6 +344,75 @@ struct String::Formatter(A)
     @io << '-' if sign < 0
     @io << str
     pad(str_size, flags) if flags.right_padding?
+  end
+
+  {% unless flag?(:wasm32) %}
+    # Formats floats with `%f`
+    private def float_fixed(float, flags)
+      # the longest string possible is due to `Float64::MIN_SUBNORMAL`, which
+      # produces `0.` followed by 1074 nonzero digits; there is also no need
+      # for any precision > 1074 because all trailing digits will be zeros
+      if precision = flags.precision
+        printf_precision = {precision.to_u32, 1074_u32}.min
+        trailing_zeros = {precision - printf_precision, 0}.max
+      else
+        # default precision for C's `%f`
+        printf_precision = 6_u32
+        trailing_zeros = 0
+      end
+
+      printf_buf = uninitialized UInt8[1076]
+      printf_size = Float::Printer::RyuPrintf.d2fixed_buffered_n(float, printf_precision, printf_buf.to_unsafe)
+      printf_slice = printf_buf.to_slice[0, printf_size]
+      dot_index = printf_slice.index('.'.ord)
+      sign = Math.copysign(1.0, float)
+
+      str_size = printf_size + trailing_zeros
+      str_size += 1 if sign < 0 || flags.plus || flags.space
+      str_size += 1 if flags.sharp && dot_index.nil?
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
+
+      # this preserves -0.0's sign correctly
+      write_plus_or_space(sign, flags)
+      @io << '-' if sign < 0
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char == '0'
+      @io.write_string(printf_slice)
+      trailing_zeros.times { @io << '0' }
+      @io << '.' if flags.sharp && dot_index.nil?
+
+      pad(str_size, flags) if flags.right_padding?
+    end
+
+    # Formats floats with `%e` or `%E`
+    private def float_scientific(float, flags)
+      # TODO: implement using `Float::Printer::RyuPrintf`
+      float_fallback(float, flags)
+    end
+
+    # Formats floats with `%g` or `%G`
+    private def float_general(float, flags)
+      # TODO: implement using `Float::Printer::RyuPrintf`
+      float_fallback(float, flags)
+    end
+
+    # Formats floats with `%a` or `%A`
+    private def float_hex(float, flags)
+      # TODO: implement using `Float::Printer::Hexfloat`
+      float_fallback(float, flags)
+    end
+  {% end %}
+
+  # Delegate to `LibC.snprintf` for float formats not yet ported to Crystal
+  private def float_fallback(float, flags)
+    format_buf = recreate_float_format_string(flags)
+
+    len = LibC.snprintf(nil, 0, format_buf, float) + 1
+    temp_buf = temp_buf(len)
+    LibC.snprintf(temp_buf, len, format_buf, float)
+
+    @io.write_string Slice.new(temp_buf, len - 1)
   end
 
   # Here we rebuild the original format string, like %f or %.2g and use snprintf
@@ -451,13 +532,13 @@ struct String::Formatter(A)
   end
 
   struct Flags
-    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
+    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, float : Bool, base : Int32
     property width : Int32, width_size : Int32
     property type : Char, precision : Int32?, precision_size : Int32
     property index : Int32?
 
     def initialize
-      @space = @sharp = @plus = @minus = @zero = false
+      @space = @sharp = @plus = @minus = @zero = @float = false
       @width = 0
       @width_size = 0
       @base = 10
@@ -475,7 +556,7 @@ struct String::Formatter(A)
     end
 
     def padding_char : Char
-      @zero && !right_padding? && !@precision ? '0' : ' '
+      @zero && !right_padding? && (@float || !@precision) ? '0' : ' '
     end
   end
 end

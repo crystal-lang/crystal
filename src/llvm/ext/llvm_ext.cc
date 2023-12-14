@@ -24,10 +24,12 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OperandBundleDef, LLVMOperandBundleRef)
 extern "C" {
 
 #if !LLVM_VERSION_GE(9, 0)
-LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(
-    LLVMDIBuilderRef Dref, const char *Name, int64_t Value) {
-  DIEnumerator *e = unwrap(Dref)->createEnumerator(Name, Value);
-  return wrap(e);
+LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(LLVMDIBuilderRef Builder,
+                                                 const char *Name, size_t NameLen,
+                                                 int64_t Value,
+                                                 LLVMBool IsUnsigned) {
+  return wrap(unwrap(Builder)->createEnumerator({Name, NameLen}, Value,
+                                                IsUnsigned != 0));
 }
 
 void LLVMExtClearCurrentDebugLocation(LLVMBuilderRef B) {
@@ -73,12 +75,14 @@ LLVMValueRef LLVMExtBuildInvokeWithOperandBundles(
 }
 #endif
 
+#if !LLVM_VERSION_GE(18, 0)
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {
   return reinterpret_cast<TargetMachine *>(P);
 }
 
-void LLVMExtTargetMachineEnableGlobalIsel(LLVMTargetMachineRef T, LLVMBool Enable) {
+void LLVMExtSetTargetMachineGlobalISel(LLVMTargetMachineRef T, LLVMBool Enable) {
   unwrap(T)->setGlobalISel(Enable);
 }
+#endif
 
 } // extern "C"

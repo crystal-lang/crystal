@@ -11,7 +11,7 @@ lib LibLLVMExt
   alias SizeT = LibC::SizeT
 
   {% if LibLLVM::IS_LT_90 %}
-    fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : LibLLVM::DIBuilderRef, name : Char*, value : Int64) : LibLLVM::MetadataRef
+    fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : LibLLVM::DIBuilderRef, name : Char*, name_len : SizeT, value : Int64, is_unsigned : LibLLVM::Bool) : LibLLVM::MetadataRef
     fun clear_current_debug_location = LLVMExtClearCurrentDebugLocation(b : LibLLVM::BuilderRef)
   {% end %}
 
@@ -30,5 +30,5 @@ lib LibLLVMExt
                                                                                bundles : LibLLVM::OperandBundleRef*, num_bundles : UInt,
                                                                                name : Char*) : LibLLVM::ValueRef
 
-  fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
+  fun set_target_machine_global_isel = LLVMExtSetTargetMachineGlobalISel(t : LibLLVM::TargetMachineRef, enable : LibLLVM::Bool)
 end
