@@ -100,8 +100,8 @@ describe Spec do
         end
         CRYSTAL
             slow: 5
-          flakey: 1
         describe: 1
+          flakey: 1
         OUT
     end
 
