@@ -78,7 +78,7 @@ class Crystal::Scheduler
     Thread.current.scheduler.yield(fiber)
   end
 
-  private def validate_running_thread(fiber : Fiber) : Nil
+  private def self.validate_running_thread(fiber : Fiber) : Nil
     {% if flag?(:preview_mt) %}
       if th = fiber.get_current_thread
         unless th == Thread.current
