@@ -18,18 +18,19 @@
     {% llvm_config = env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify %}
     {% llvm_version = `#{llvm_config.id} --version`.stringify %}
     {% llvm_targets = env("LLVM_TARGETS") || `#{llvm_config.id} --targets-built`.stringify %}
-    {% llvm_ldflags = `#{llvm_config.id} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`.stringify %}
+    {% llvm_ldflags = "`#{llvm_config.id} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`" %}
     {% extra_lib = flag?(:win32) ? nil : "stdc++" %}
   {% end %}
 
   {% if extra_lib %}
     @[Link({{ extra_lib }})]
   {% end %}
-  @[Link(ldflags: {{ llvm_ldflags.strip }})]
+  @[Link(ldflags: {{ llvm_ldflags }})]
   lib LibLLVM
     VERSION = {{ llvm_version.strip.gsub(/git/, "") }}
     BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
   end
+  {% debug %}
 {% end %}
 
 {% begin %}
