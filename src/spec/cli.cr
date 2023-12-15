@@ -23,6 +23,9 @@ module Spec
   class_property? dry_run = false
 
   # :nodoc:
+  class_property? list_tags = false
+
+  # :nodoc:
   def self.add_location(file, line)
     locations = @@locations ||= {} of String => Array(Int32)
     locations.put_if_absent(File.expand_path(file)) { [] of Int32 } << line
@@ -85,6 +88,9 @@ module Spec
       end
       opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
         Spec.add_tag tag
+      end
+      opts.on("--list-tags", "lists all the tags used.") do
+        Spec.list_tags = true
       end
       opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
         if mode.in?("default", "random")
