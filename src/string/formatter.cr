@@ -387,8 +387,45 @@ struct String::Formatter(A)
 
     # Formats floats with `%e` or `%E`
     private def float_scientific(float, flags)
-      # TODO: implement using `Float::Printer::RyuPrintf`
-      float_fallback(float, flags)
+      # the longest string possible is due to
+      # `Float64::MIN_POSITIVE.prev_float`, which produces `2.` followed by 766
+      # nonzero digits and then `e-308`; there is also no need for any precision
+      # > 766 because all trailing digits will be zeros
+      if precision = flags.precision
+        printf_precision = {precision.to_u32, 766_u32}.min
+        trailing_zeros = {precision - printf_precision, 0}.max
+      else
+        # default precision for C's `%e`
+        printf_precision = 6_u32
+        trailing_zeros = 0
+      end
+
+      printf_buf = uninitialized UInt8[773]
+      printf_size = Float::Printer::RyuPrintf.d2exp_buffered_n(float, printf_precision, printf_buf.to_unsafe)
+      printf_slice = printf_buf.to_slice[0, printf_size]
+      dot_index = printf_slice.index('.'.ord)
+      e_index = printf_slice.rindex!('e'.ord)
+      sign = Math.copysign(1.0, float)
+
+      printf_slice[e_index] = 'E'.ord.to_u8! if flags.type == 'E'
+
+      str_size = printf_size + trailing_zeros
+      str_size += 1 if sign < 0 || flags.plus || flags.space
+      str_size += 1 if flags.sharp && dot_index.nil?
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
+
+      # this preserves -0.0's sign correctly
+      write_plus_or_space(sign, flags)
+      @io << '-' if sign < 0
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char == '0'
+      @io.write_string(printf_slice[0, e_index])
+      trailing_zeros.times { @io << '0' }
+      @io << '.' if flags.sharp && dot_index.nil?
+      @io.write_string(printf_slice[e_index..])
+
+      pad(str_size, flags) if flags.right_padding?
     end
 
     # Formats floats with `%g` or `%G`

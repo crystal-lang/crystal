@@ -407,10 +407,182 @@ describe "::sprintf" do
       end
     end
 
+    context "scientific format" do
+      it "works" do
+        assert_sprintf "%e", 123.45, "1.234500e+2"
+        assert_sprintf "%E", 123.45, "1.234500E+2"
+
+        assert_sprintf "%e", Float64::MAX, "1.797693e+308"
+        assert_sprintf "%e", Float64::MIN_POSITIVE, "2.225074e-308"
+        assert_sprintf "%e", Float64::MIN_SUBNORMAL, "4.940656e-324"
+        assert_sprintf "%e", 0.0, "0.000000e+0"
+        assert_sprintf "%e", -0.0, "-0.000000e+0"
+        assert_sprintf "%e", -Float64::MIN_SUBNORMAL, "-4.940656e-324"
+        assert_sprintf "%e", -Float64::MIN_POSITIVE, "-2.225074e-308"
+        assert_sprintf "%e", Float64::MIN, "-1.797693e+308"
+      end
+
+      context "width specifier" do
+        it "sets the minimum length of the string" do
+          assert_sprintf "%20e", 123.45, "         1.234500e+2"
+          assert_sprintf "%20e", -123.45, "        -1.234500e+2"
+          assert_sprintf "%+20e", 123.45, "        +1.234500e+2"
+
+          assert_sprintf "%12e", 123.45, " 1.234500e+2"
+          assert_sprintf "%12e", -123.45, "-1.234500e+2"
+          assert_sprintf "%+12e", 123.45, "+1.234500e+2"
+
+          assert_sprintf "%11e", 123.45, "1.234500e+2"
+          assert_sprintf "%11e", -123.45, "-1.234500e+2"
+          assert_sprintf "%+11e", 123.45, "+1.234500e+2"
+
+          assert_sprintf "%2e", 123.45, "1.234500e+2"
+          assert_sprintf "%2e", -123.45, "-1.234500e+2"
+          assert_sprintf "%+2e", 123.45, "+1.234500e+2"
+        end
+
+        it "left-justifies on negative width" do
+          assert_sprintf "%*e", [-20, 123.45], "1.234500e+2         "
+        end
+      end
+
+      context "precision specifier" do
+        it "sets the minimum length of the fractional part" do
+          assert_sprintf "%.0e", 2.0, "2e+0"
+          assert_sprintf "%.0e", 2.5.prev_float, "2e+0"
+          assert_sprintf "%.0e", 2.5, "2e+0"
+          assert_sprintf "%.0e", 2.5.next_float, "3e+0"
+          assert_sprintf "%.0e", 3.0, "3e+0"
+          assert_sprintf "%.0e", 3.5.prev_float, "3e+0"
+          assert_sprintf "%.0e", 3.5, "4e+0"
+          assert_sprintf "%.0e", 3.5.next_float, "4e+0"
+          assert_sprintf "%.0e", 4.0, "4e+0"
+
+          assert_sprintf "%.0e", 9.5, "1e+1"
+
+          assert_sprintf "%.100e", 1.1, "1.1000000000000000888178419700125232338905334472656250000000000000000000000000000000000000000000000000e+0"
+
+          assert_sprintf "%.10000e", 1.0, "1.#{"0" * 10000}e+0"
+
+          assert_sprintf "%.1000e", Float64::MIN_POSITIVE.prev_float,
+            "2.2250738585072008890245868760858598876504231122409594654935248025624400092282356951" \
+            "787758888037591552642309780950434312085877387158357291821993020294379224223559819827" \
+            "501242041788969571311791082261043971979604000454897391938079198936081525613113376149" \
+            "842043271751033627391549782731594143828136275113838604094249464942286316695429105080" \
+            "201815926642134996606517803095075913058719846423906068637102005108723282784678843631" \
+            "944515866135041223479014792369585208321597621066375401613736583044193603714778355306" \
+            "682834535634005074073040135602968046375918583163124224521599262546494300836851861719" \
+            "422417646455137135420132217031370496583210154654068035397417906022589503023501937519" \
+            "773030945763173210852507299305089761582519159720757232455434770912461317493580281734" \
+            "466552734375000000000000000000000000000000000000000000000000000000000000000000000000" \
+            "000000000000000000000000000000000000000000000000000000000000000000000000000000000000" \
+            "000000000000000000000000000000000000000000000000000000000000000000000000000000e-308"
+        end
+
+        it "can be used with width" do
+          assert_sprintf "%20.12e", 123.45, "   1.234500000000e+2"
+          assert_sprintf "%20.12e", -123.45, "  -1.234500000000e+2"
+          assert_sprintf "%20.12e", 0.0, "   0.000000000000e+0"
+
+          assert_sprintf "%-20.12e", 123.45, "1.234500000000e+2   "
+          assert_sprintf "%-20.12e", -123.45, "-1.234500000000e+2  "
+          assert_sprintf "%-20.12e", 0.0, "0.000000000000e+0   "
+
+          assert_sprintf "%8.12e", 123.45, "1.234500000000e+2"
+          assert_sprintf "%8.12e", -123.45, "-1.234500000000e+2"
+          assert_sprintf "%8.12e", 0.0, "0.000000000000e+0"
+        end
+
+        it "is ignored if precision argument is negative" do
+          assert_sprintf "%.*e", [-2, 123.45], "1.234500e+2"
+        end
+      end
+
+      context "sharp flag" do
+        it "prints a decimal point even if no digits follow" do
+          assert_sprintf "%#.0e", 1.0, "1.e+0"
+          assert_sprintf "%#.0e", 10000.0, "1.e+4"
+          assert_sprintf "%#.0e", 1.0e+23, "1.e+23"
+          assert_sprintf "%#.0e", 1.0e-100, "1.e-100"
+          assert_sprintf "%#.0e", 0.0, "0.e+0"
+          assert_sprintf "%#.0e", -0.0, "-0.e+0"
+        end
+      end
+
+      context "plus flag" do
+        it "writes a plus sign for positive values" do
+          assert_sprintf "%+e", 123.45, "+1.234500e+2"
+          assert_sprintf "%+e", -123.45, "-1.234500e+2"
+          assert_sprintf "%+e", 0.0, "+0.000000e+0"
+        end
+
+        it "writes plus sign after left space-padding" do
+          assert_sprintf "%+20e", 123.45, "        +1.234500e+2"
+          assert_sprintf "%+20e", -123.45, "        -1.234500e+2"
+          assert_sprintf "%+20e", 0.0, "        +0.000000e+0"
+        end
+
+        it "writes plus sign before left zero-padding" do
+          assert_sprintf "%+020e", 123.45, "+000000001.234500e+2"
+          assert_sprintf "%+020e", -123.45, "-000000001.234500e+2"
+          assert_sprintf "%+020e", 0.0, "+000000000.000000e+0"
+        end
+      end
+
+      context "space flag" do
+        it "writes a space for positive values" do
+          assert_sprintf "% e", 123.45, " 1.234500e+2"
+          assert_sprintf "% e", -123.45, "-1.234500e+2"
+          assert_sprintf "% e", 0.0, " 0.000000e+0"
+        end
+
+        it "writes space before left space-padding" do
+          assert_sprintf "% 20e", 123.45, "         1.234500e+2"
+          assert_sprintf "% 20e", -123.45, "        -1.234500e+2"
+          assert_sprintf "% 20e", 0.0, "         0.000000e+0"
+
+          assert_sprintf "% 020e", 123.45, " 000000001.234500e+2"
+          assert_sprintf "% 020e", -123.45, "-000000001.234500e+2"
+          assert_sprintf "% 020e", 0.0, " 000000000.000000e+0"
+        end
+
+        it "is ignored if plus flag is also specified" do
+          assert_sprintf "% +e", 123.45, "+1.234500e+2"
+          assert_sprintf "%+ e", -123.45, "-1.234500e+2"
+        end
+      end
+
+      context "zero flag" do
+        it "left-pads the result with zeros" do
+          assert_sprintf "%020e", 123.45, "0000000001.234500e+2"
+          assert_sprintf "%020e", -123.45, "-000000001.234500e+2"
+          assert_sprintf "%020e", 0.0, "0000000000.000000e+0"
+        end
+
+        it "is ignored if string is left-justified" do
+          assert_sprintf "%-020e", 123.45, "1.234500e+2         "
+          assert_sprintf "%-020e", -123.45, "-1.234500e+2        "
+          assert_sprintf "%-020e", 0.0, "0.000000e+0         "
+        end
+
+        it "can be used with precision" do
+          assert_sprintf "%020.12e", 123.45, "0001.234500000000e+2"
+          assert_sprintf "%020.12e", -123.45, "-001.234500000000e+2"
+          assert_sprintf "%020.12e", 0.0, "0000.000000000000e+0"
+        end
+      end
+
+      context "minus flag" do
+        it "left-justifies the string" do
+          assert_sprintf "%-20e", 123.45, "1.234500e+2         "
+          assert_sprintf "%-20e", -123.45, "-1.234500e+2        "
+          assert_sprintf "%-20e", 0.0, "0.000000e+0         "
+        end
+      end
+    end
+
     pending_win32 "works for other formats" do
       assert_sprintf "%g", 123, "123"
-      assert_sprintf "%e", 123.45, "1.234500e+02"
-      assert_sprintf "%E", 123.45, "1.234500E+02"
       assert_sprintf "%G", 12345678.45, "1.23457E+07"
       assert_sprintf "%a", 12345678.45, "0x1.78c29ce666666p+23"
       assert_sprintf "%A", 12345678.45, "0X1.78C29CE666666P+23"
