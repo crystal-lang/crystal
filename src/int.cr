@@ -487,30 +487,23 @@ struct Int
     return v if u == 0
     return u if v == 0
 
-    shift = self.class.zero
     # Let shift := lg K, where K is the greatest power of 2
     # dividing both u and v.
-    while (u | v) & 1 == 0
-      shift &+= 1
-      u = u.unsafe_shr 1
-      v = v.unsafe_shr 1
-    end
-    while u & 1 == 0
-      u = u.unsafe_shr 1
-    end
+    shift = (u | v).trailing_zeros_count
+    u = u.unsafe_shr(u.trailing_zeros_count)
+
     # From here on, u is always odd.
     loop do
       # remove all factors of 2 in v -- they are not common
-      # note: v is not zero, so while will terminate
-      while v & 1 == 0
-        v = v.unsafe_shr 1
-      end
+      v = v.unsafe_shr(v.trailing_zeros_count)
+
       # Now u and v are both odd. Swap if necessary so u <= v,
       # then set v = v - u (which is even).
       u, v = v, u if u > v
       v &-= u
       break if v.zero?
     end
+
     # restore common factors of 2
     u.unsafe_shl shift
   end

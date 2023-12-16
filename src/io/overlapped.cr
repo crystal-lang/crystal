@@ -77,6 +77,10 @@ module IO::Overlapped
         case entry.dwNumberOfBytesTransferred
         when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
           if fiber = completion_key.fiber
+            # this ensures the `::Process` doesn't keep an indirect reference to
+            # `::Thread.current`, as that leads to a finalization cycle
+            completion_key.fiber = nil
+
             yield fiber
           else
             # the `Process` exits before a call to `#wait`; do nothing
@@ -211,9 +215,9 @@ module IO::Overlapped
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}"
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: self
         else
-          raise IO::Error.from_os_error(method, error)
+          raise IO::Error.from_os_error(method, error, target: self)
         end
       else
         operation.synchronous = true
@@ -245,7 +249,7 @@ module IO::Overlapped
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
         else
-          raise IO::Error.from_os_error(method, error)
+          raise IO::Error.from_os_error(method, error, target: self)
         end
       else
         operation.synchronous = true

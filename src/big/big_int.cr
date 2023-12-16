@@ -385,6 +385,12 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
 
+  def bit(bit : Int)
+    return 0 if bit < 0
+    return self < 0 ? 1 : 0 if bit > LibGMP::BitcntT::MAX
+    LibGMP.tstbit(self, LibGMP::BitcntT.new!(bit))
+  end
+
   def &(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.and(mpz, self, other) }
   end

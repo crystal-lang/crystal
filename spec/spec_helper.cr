@@ -8,6 +8,7 @@ require "compiler/requires"
 require "./support/syntax"
 require "./support/tempfile"
 require "./support/win32"
+require "./support/wasm32"
 
 class Crystal::Program
   setter temp_var_counter
@@ -76,6 +77,20 @@ def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
+  SemanticResult.new(program, node)
+end
+
+def top_level_semantic(code : String, wants_doc = false, inject_primitives = false)
+  node = parse(code, wants_doc: wants_doc)
+  node = inject_primitives(node) if inject_primitives
+  top_level_semantic node, wants_doc: wants_doc
+end
+
+def top_level_semantic(node : ASTNode, wants_doc = false)
+  program = new_program
+  program.wants_doc = wants_doc
+  node = program.normalize node
+  node, _ = program.top_level_semantic node
   SemanticResult.new(program, node)
 end
 

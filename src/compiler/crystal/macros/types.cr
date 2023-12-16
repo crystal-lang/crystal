@@ -129,6 +129,8 @@ module Crystal
 
     # Returns the macro type named by a given AST node in the macro language.
     def lookup_macro_type(name : Path)
+      # NOTE: `name.global?` doesn't matter since there are no namespaces for
+      # the AST node types
       if name.names.size == 1
         macro_type = @macro_types[name.names.first]?
       end

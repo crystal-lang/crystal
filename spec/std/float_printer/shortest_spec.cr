@@ -34,9 +34,9 @@
 # * https://github.com/microsoft/STL/tree/main/tests/std/tests/P0067R5_charconv
 
 require "spec"
-require "./spec_helper"
+require "../spec_helper"
 require "spec/helpers/string"
-require "../support/number"
+require "../../support/number"
 
 # Tests that `v.to_s` is the same as the *v* literal is written in the source
 # code, except possibly omitting the `_f32` suffix for `Float32` literals.

@@ -15,5 +15,6 @@ lib LibLLVM
   {% if LibLLVM::IS_LT_170 %}
     type PassRegistryRef = Void*
   {% end %}
+  type OperandBundleRef = Void*
   type AttributeRef = Void*
 end

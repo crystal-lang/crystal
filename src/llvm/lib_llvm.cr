@@ -19,6 +19,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_180 = {{LibLLVM::VERSION.starts_with?("18.0")}}
     IS_170 = {{LibLLVM::VERSION.starts_with?("17.0")}}
     IS_160 = {{LibLLVM::VERSION.starts_with?("16.0")}}
     IS_150 = {{LibLLVM::VERSION.starts_with?("15.0")}}
@@ -40,6 +41,7 @@ end
     IS_LT_150 = {{compare_versions(LibLLVM::VERSION, "15.0.0") < 0}}
     IS_LT_160 = {{compare_versions(LibLLVM::VERSION, "16.0.0") < 0}}
     IS_LT_170 = {{compare_versions(LibLLVM::VERSION, "17.0.0") < 0}}
+    IS_LT_180 = {{compare_versions(LibLLVM::VERSION, "18.0.0") < 0}}
   end
 {% end %}
 
