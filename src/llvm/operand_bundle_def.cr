@@ -9,4 +9,8 @@ struct LLVM::OperandBundleDef
   def to_unsafe
     @unwrap
   end
+
+  def dispose
+    {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.dispose_operand_bundle(@unwrap) if @unwrap
+  end
 end

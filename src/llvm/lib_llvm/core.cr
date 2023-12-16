@@ -162,6 +162,7 @@ lib LibLLVM
 
   {% unless LibLLVM::IS_LT_180 %}
     fun create_operand_bundle = LLVMCreateOperandBundle(tag : Char*, tag_len : SizeT, args : ValueRef*, num_args : UInt) : OperandBundleRef
+    fun dispose_operand_bundle = LLVMDisposeOperandBundle(bundle : OperandBundleRef)
   {% end %}
 
   fun get_basic_block_name = LLVMGetBasicBlockName(bb : BasicBlockRef) : Char*

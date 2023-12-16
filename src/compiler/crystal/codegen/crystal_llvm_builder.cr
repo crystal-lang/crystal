@@ -45,7 +45,11 @@ module Crystal
         funclet = LLVM::OperandBundleDef.null
       end
 
-      call @printf, [global_string_pointer(format)] + args, bundle: funclet
+      begin
+        call @printf, [global_string_pointer(format)] + args, bundle: funclet
+      ensure
+        funclet.dispose
+      end
     end
 
     def position_at_end(block)
