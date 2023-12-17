@@ -51,6 +51,17 @@ describe "Primitives: reference" do
       foo.str.should eq("abc")
     end
 
+    # see notes in `Reference.pre_initialize`
+    {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
+      it "works with virtual type" do
+        foo_buffer = GC.malloc(instance_sizeof(Foo))
+        foo = Foo.as(Base.class).pre_initialize(foo_buffer).should be_a(Foo)
+        foo.str.should eq("abc")
+      end
+    {% else %}
+      pending! "works with virtual type"
+    {% end %}
+
     it "raises on abstract virtual type" do
       expect_raises(Exception, "Can't pre-initialize abstract class Base") do
         Base.as(Base.class).pre_initialize(Pointer(Void).null)

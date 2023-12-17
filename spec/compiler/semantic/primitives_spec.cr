@@ -337,6 +337,7 @@ describe "Semantic: primitives" do
       class Reference
         @[Primitive(:pre_initialize)]
         def self.pre_initialize(address : Pointer)
+          {% @type %}
         end
       end
       CRYSTAL
