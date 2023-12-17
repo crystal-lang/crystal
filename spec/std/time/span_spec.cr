@@ -367,4 +367,12 @@ describe Time::Span do
     past2 = jan_1_2k + delta.microseconds
     past2.should eq(past)
   end
+
+  it "can substract big amount using milliseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_milliseconds.to_i64
+    past2 = jan_1_2k + delta.milliseconds
+    past2.should eq(past)
+  end
 end
