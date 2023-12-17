@@ -2649,7 +2649,7 @@ module Crystal
     def new_generic_instance(program, generic_type, type_vars)
       t = type_vars["T"].type
 
-      unless t.is_a?(TypeParameter) || t.class?
+      unless t.is_a?(TypeParameter) || (t.class? && !t.struct?)
         raise TypeException.new "can't instantiate ReferenceStorage(T) with T = #{t} (T must be a reference type)"
       end
 
