@@ -87,10 +87,6 @@ class Reference
   @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
   @[Primitive(:pre_initialize)]
   def self.pre_initialize(address : Pointer)
-    # This ensures `.pre_initialize` is instantiated for every subclass,
-    # otherwise all calls will refer to the sole instantiation in
-    # `Reference.class`. Apparently this works even for primitives
-    {% @type %}
   end
 end
 
