@@ -247,7 +247,7 @@ struct String::Formatter(A)
     int = arg.is_a?(Int) ? arg : arg.to_i
 
     precision = int_precision(int, flags)
-    base_str = int.to_s(flags.base, precision: precision, upcase: flags.type == 'X')
+    base_str = int.to_s(flags.base, precision: precision, upcase: flags.uppercase?)
     str_size = base_str.bytesize
     str_size += 1 if int >= 0 && (flags.plus || flags.space)
     str_size += 2 if flags.sharp && flags.base != 10 && int != 0
@@ -334,7 +334,7 @@ struct String::Formatter(A)
 
   # Formats infinities and not-a-numbers
   private def float_special(str, sign, flags)
-    str = str.upcase if flags.type.in?('A', 'E', 'G')
+    str = str.upcase if flags.uppercase?
     str_size = str.bytesize
     str_size += 1 if sign < 0 || (flags.plus || flags.space)
 
@@ -407,7 +407,7 @@ struct String::Formatter(A)
       e_index = printf_slice.rindex!('e'.ord)
       sign = Math.copysign(1.0, float)
 
-      printf_slice[e_index] = 'E'.ord.to_u8! if flags.type == 'E'
+      printf_slice[e_index] = 'E'.ord.to_u8! if flags.uppercase?
 
       str_size = printf_size + trailing_zeros
       str_size += 1 if sign < 0 || flags.plus || flags.space
@@ -436,8 +436,25 @@ struct String::Formatter(A)
 
     # Formats floats with `%a` or `%A`
     private def float_hex(float, flags)
-      # TODO: implement using `Float::Printer::Hexfloat`
-      float_fallback(float, flags)
+      sign = Math.copysign(1.0, float)
+      float = float.abs
+
+      str_size = Float::Printer::Hexfloat(Float64, UInt64).to_s_size(float,
+        precision: flags.precision, alternative: flags.sharp)
+      str_size += 1 if sign < 0 || flags.plus || flags.space
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
+
+      # this preserves -0.0's sign correctly
+      write_plus_or_space(sign, flags)
+      @io << '-' if sign < 0
+
+      @io << (flags.uppercase? ? "0X" : "0x")
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char == '0'
+      Float::Printer.hexfloat(float, @io,
+        prefix: false, upcase: flags.uppercase?, precision: flags.precision, alternative: flags.sharp)
+
+      pad(str_size, flags) if flags.right_padding?
     end
   {% end %}
 
@@ -594,6 +611,10 @@ struct String::Formatter(A)
 
     def padding_char : Char
       @zero && !right_padding? && (@float || !@precision) ? '0' : ' '
+    end
+
+    def uppercase? : Bool
+      @type.ascii_uppercase?
     end
   end
 end
