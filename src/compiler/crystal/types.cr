@@ -2650,7 +2650,7 @@ module Crystal
       t = type_vars["T"].type
 
       unless t.is_a?(TypeParameter) || (t.class? && !t.struct?)
-        raise TypeException.new "can't instantiate ReferenceStorage(T) with T = #{t} (T must be a reference type)"
+        raise TypeException.new "Can't instantiate ReferenceStorage(T) with T = #{t} (T must be a reference type)"
       end
 
       ReferenceStorageType.new program, t
