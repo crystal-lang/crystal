@@ -25,6 +25,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_convert node, target_def, call_args, checked: false
             when "allocate"
               codegen_primitive_allocate node, target_def, call_args
+            when "pre_initialize"
+              codegen_primitive_pre_initialize node, target_def, call_args
             when "pointer_malloc"
               codegen_primitive_pointer_malloc node, target_def, call_args
             when "pointer_set"
@@ -732,6 +734,21 @@ class Crystal::CodeGenVisitor
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     allocate_aggregate base_type
+
+    if type.is_a?(VirtualType)
+      @last = upcast(@last, type, base_type)
+    end
+
+    @last
+  end
+
+  def codegen_primitive_pre_initialize(node, target_def, call_args)
+    type = node.type
+
+    base_type = type.is_a?(VirtualType) ? type.base_type : type
+
+    ptr = call_args[target_def.owner.passed_as_self? ? 1 : 0]
+    pre_initialize_aggregate base_type, llvm_struct_type(base_type), ptr
 
     if type.is_a?(VirtualType)
       @last = upcast(@last, type, base_type)

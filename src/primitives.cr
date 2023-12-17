@@ -49,6 +49,49 @@ class Reference
   @[Primitive(:object_id)]
   def object_id : UInt64
   end
+
+  # Performs basic initialization so that the given *address* is ready for use
+  # as an object's instance data. Returns *address* cast to `self`'s type.
+  #
+  # More specifically, this is the part of object initialization that occurs
+  # after memory allocation and before calling one of the `#initialize`
+  # overloads. It zeroes the memory, sets up the type ID (necessary for dynamic
+  # dispatch), and then runs all inline instance variable initializers.
+  #
+  # *address* must point to a suitably aligned buffer of at least
+  # `instance_sizeof(self)` bytes.
+  #
+  # WARNING: This method is unsafe, as it assumes the caller is responsible for
+  # managing the memory at the given *address* manually.
+  #
+  # ```
+  # class Foo
+  #   getter i : Int64
+  #   getter str = "abc"
+  #
+  #   def initialize(@i)
+  #   end
+  #
+  #   foo_buffer = LibC.malloc(24)
+  #   foo = pre_initialize(foo)
+  #   foo.i                  # => 0
+  #   foo.str                # => "abc"
+  #   (foo || "").is_a?(Foo) # => true
+  #
+  #   foo.initialize(123_i64)
+  #   foo.i # => 123
+  # end
+  # ```
+  #
+  # See also: `Reference.unsafe_construct`.
+  @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
+  @[Primitive(:pre_initialize)]
+  def self.pre_initialize(address : Pointer)
+    # This ensures `.pre_initialize` is instantiated for every subclass,
+    # otherwise all calls will refer to the sole instantiation in
+    # `Reference.class`. Apparently this works even for primitives
+    {% @type %}
+  end
 end
 
 class Class

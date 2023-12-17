@@ -2032,15 +2032,19 @@ module Crystal
         end
       end
 
-      memset type_ptr, int8(0), struct_type.size
-      run_instance_vars_initializers(type, type, type_ptr)
+      pre_initialize_aggregate(type, struct_type, type_ptr)
+    end
+
+    def pre_initialize_aggregate(type, struct_type, ptr)
+      memset ptr, int8(0), struct_type.size
+      run_instance_vars_initializers(type, type, ptr)
 
       unless type.struct?
-        type_id_ptr = aggregate_index(struct_type, type_ptr, 0)
+        type_id_ptr = aggregate_index(struct_type, ptr, 0)
         store type_id(type), type_id_ptr
       end
 
-      @last = type_ptr
+      @last = ptr
     end
 
     def allocate_tuple(type, &)

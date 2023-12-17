@@ -17,6 +17,49 @@
 # The instance's memory is automatically freed (garbage-collected) when
 # the instance is no longer referred by any other entity in the program.
 class Reference
+  # Constructs an object in-place at the given *address*, forwarding *args* and
+  # *opts* to `#initialize`. Returns that object.
+  #
+  # This method can be used to decouple object allocation from initialization.
+  # For example, the instance data might come from a custom allocator, or it
+  # might reside on the stack using a type like `ReferenceStorage`.
+  #
+  # *address* must point to a suitably aligned buffer of at least
+  # `instance_sizeof(self)` bytes.
+  #
+  # WARNING: This method is unsafe, as it assumes the caller is responsible for
+  # managing the memory at the given *address* manually.
+  #
+  # ```
+  # class Foo
+  #   getter i : Int64
+  #   getter str = "abc"
+  #
+  #   def initialize(@i)
+  #   end
+  #
+  #   def finalize
+  #     puts "bye"
+  #   end
+  # end
+  #
+  # foo_buffer = uninitialized ReferenceStorage(Foo)
+  # foo = Foo.unsafe_construct(pointerof(foo_buffer), 123_i64)
+  # begin
+  #   foo # => #<Foo:0x... @i=123, @str="abc">
+  # ensure
+  #   foo.finalize if foo.responds_to?(:finalize) # prints "bye"
+  # end
+  # ```
+  #
+  # See also: `Reference.pre_initialize`.
+  @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
+  def self.unsafe_construct(address : Pointer, *args, **opts) : self
+    obj = pre_initialize(address)
+    obj.initialize(*args, **opts)
+    obj
+  end
+
   # Returns `true` if this reference is the same as *other*. Invokes `same?`.
   def ==(other : self)
     same?(other)
