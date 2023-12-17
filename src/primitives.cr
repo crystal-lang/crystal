@@ -92,7 +92,7 @@ class Reference
       # otherwise all calls will refer to the sole instantiation in
       # `Reference.class`. This is necessary when the receiver is a virtual
       # metaclass type. Apparently this works even for primitives
-      {% @type %}
+      \{% @type %}
     end
   {% else %}
     # Primitives cannot have a body until 1.2.0 (#11147)
