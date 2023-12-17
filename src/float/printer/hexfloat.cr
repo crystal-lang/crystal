@@ -220,36 +220,97 @@ module Float::Printer::Hexfloat(F, U)
 
   # sign and special values are handled in `Float::Printer.check_finite_float`
   @[AlwaysInline]
-  def self.to_s(io : IO, num : F) : Nil
+  def self.to_s(io : IO, num : F, *, prefix : Bool = true, upcase : Bool = false, precision : Int? = nil, alternative : Bool = false) : Nil
     u = num.unsafe_as(U)
     exponent = ((u >> (F::MANT_DIGITS - 1)) & (F::MAX_EXP * 2 - 1)).to_i
     mantissa = u & ~(U::MAX << (F::MANT_DIGITS - 1))
 
     if exponent < 1
       exponent += 1
-      io << "0x0"
     else
-      io << "0x1"
+      mantissa |= U.new!(1) << (F::MANT_DIGITS - 1)
     end
 
-    if mantissa != 0
-      io << '.'
+    if precision
+      trailing_zeros = {(precision * 4 + 1 - F::MANT_DIGITS) // 4, 0}.max
+      precision -= trailing_zeros
+
+      one_bit = mantissa.bits_set?(U.new!(1) << (F::MANT_DIGITS - 4 * precision - 1))
+      half_bit = mantissa.bits_set?(U.new!(1) << (F::MANT_DIGITS - 4 * precision - 2))
+      trailing_nonzero = (mantissa & ~(U::MAX << (F::MANT_DIGITS - 4 * precision - 2))) != 0
+      if half_bit && (one_bit || trailing_nonzero)
+        mantissa &+= U.new!(1) << (F::MANT_DIGITS - 4 * precision - 2)
+      end
+    else
+      trailing_zeros = 0
+    end
+
+    io << (upcase ? "0X" : "0x") if prefix
+    io << (mantissa >> (F::MANT_DIGITS - 1))
+    mantissa &= ~(U::MAX << (F::MANT_DIGITS - 1))
+
+    io << '.' if (precision || mantissa) != 0 || alternative
+
+    if precision
+      precision.times do
+        digit = mantissa >> (F::MANT_DIGITS - 5)
+        digit.to_s(io, base: 16, upcase: upcase)
+        mantissa <<= 4
+        mantissa &= ~(U::MAX << (F::MANT_DIGITS - 1))
+      end
+    else
       while mantissa != 0
         digit = mantissa >> (F::MANT_DIGITS - 5)
-        digit.to_s(io, base: 16)
+        digit.to_s(io, base: 16, upcase: upcase)
         mantissa <<= 4
         mantissa &= ~(U::MAX << (F::MANT_DIGITS - 1))
       end
     end
 
+    trailing_zeros.times { io << '0' }
+
     if num == 0
-      io << "p+0"
+      io << (upcase ? "P+0" : "p+0")
     else
       exponent -= F::MAX_EXP - 1
 
-      io << 'p'
+      io << (upcase ? 'P' : 'p')
       io << (exponent >= 0 ? '+' : '-')
       io << exponent.abs
     end
+  end
+
+  def self.to_s_size(num : F, *, precision : Int? = nil, alternative : Bool = false)
+    u = num.unsafe_as(U)
+    exponent = ((u >> (F::MANT_DIGITS - 1)) & (F::MAX_EXP * 2 - 1)).to_i
+    mantissa = u & ~(U::MAX << (F::MANT_DIGITS - 1))
+
+    if exponent < 1
+      exponent += 1
+    end
+
+    size = 6 # 0x0p+0 (integral part cannot be greater than 2)
+
+    if precision
+      size += 1 if precision != 0 || alternative # .
+      size += precision
+    else
+      size += 1 if mantissa != 0 || alternative # .
+      while mantissa != 0
+        size += 1
+        mantissa <<= 4
+        mantissa &= ~(U::MAX << (F::MANT_DIGITS - 1))
+      end
+    end
+
+    if num != 0
+      exponent = (exponent - F::MAX_EXP - 1).abs
+      while exponent >= 10
+        exponent //= 10
+        size += 1
+      end
+    end
+
+    size
   end
 end

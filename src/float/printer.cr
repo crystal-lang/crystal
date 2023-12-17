@@ -90,17 +90,17 @@ module Float::Printer
 
   # Writes *v*'s hexadecimal-significand representation to the given *io*.
   #
-  # Used by `Float::Primitive#to_hexfloat`.
-  def hexfloat(v : Float64, io : IO) : Nil
+  # Used by `Float::Primitive#to_hexfloat` and `String::Formatter#float_hex`.
+  def hexfloat(v : Float64, io : IO, **opts) : Nil
     check_finite_float(v, io) do
-      Hexfloat(Float64, UInt64).to_s(io, v)
+      Hexfloat(Float64, UInt64).to_s(io, v, **opts)
     end
   end
 
   # :ditto:
-  def hexfloat(v : Float32, io : IO) : Nil
+  def hexfloat(v : Float32, io : IO, **opts) : Nil
     check_finite_float(v, io) do
-      Hexfloat(Float32, UInt32).to_s(io, v)
+      Hexfloat(Float32, UInt32).to_s(io, v, **opts)
     end
   end
 
