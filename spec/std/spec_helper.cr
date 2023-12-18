@@ -113,6 +113,7 @@ def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = 
     status = 0
     {% if flag?(:interpreted) %}
       compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
+      puts ENV["PWD"]
       status = Process.run "#{compiler} i #{source_file}", args: runtime_args, output: output, error: error
     {% else %}
       status = Process.run executable_file, args: runtime_args, output: output, error: error
