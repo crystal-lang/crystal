@@ -164,21 +164,21 @@ jobs:
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0 -Dynamic
 
-  x86_64-windows-llvm:
+  x86_64-windows-llvm-libs:
     runs-on: windows-2022
     steps:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
 
       - name: Cache LLVM
-        id: cache-llvm
+        id: cache-llvm-libs
         uses: actions/cache@v3
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
 
       - name: Download LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
         run: |
           iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.CI_LLVM_VERSION }}/llvm-${{ env.CI_LLVM_VERSION }}.src.tar.xz -OutFile llvm.tar.xz
           (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "D820E63BC3A6F4F833EC69A1EF49A2E81992E90BC23989F98946914B061AB6C7"
@@ -187,7 +187,7 @@ jobs:
           mv llvm-* llvm-src
 
       - name: Download LLVM's CMake files
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
         run: |
           iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.CI_LLVM_VERSION }}/cmake-${{ env.CI_LLVM_VERSION }}.src.tar.xz -OutFile cmake.tar.xz
           (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "B6D83C91F12757030D8361DEDC5DD84357B3EDB8DA406B5D0850DF8B6F7798B1"
@@ -196,7 +196,7 @@ jobs:
           mv cmake-* cmake
 
       - name: Build LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
         run: |
           mkdir llvm-build
           cd llvm-build
@@ -204,8 +204,34 @@ jobs:
           cmake --build . --config Release
           cmake "-DCMAKE_INSTALL_PREFIX=$(pwd)\..\llvm" -P cmake_install.cmake
 
+  x86_64-windows-llvm-dlls:
+    runs-on: windows-2022
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm-dlls
+        uses: actions/cache@v3
+        with:
+          path: |
+            libs/llvm_VERSION
+            libs/llvm-dynamic.lib
+            dlls/LLVM-C.dll
+          key: llvm-dlls-${{ env.CI_LLVM_VERSION }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
+      - name: Build LLVM
+        if: steps.cache-llvm-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild X86,AArch64 -Dynamic
+
   x86_64-windows:
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: false
@@ -258,7 +284,7 @@ jobs:
 
   x86_64-windows-release:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm]
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
