@@ -73,7 +73,7 @@ class Reference
   #   end
   #
   #   foo_buffer = LibC.malloc(24)
-  #   foo = pre_initialize(foo)
+  #   foo = pre_initialize(foo_buffer)
   #   foo.i                  # => 0
   #   foo.str                # => "abc"
   #   (foo || "").is_a?(Foo) # => true
