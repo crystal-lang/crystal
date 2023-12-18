@@ -45,6 +45,10 @@ LLVMOperandBundleRef LLVMExtCreateOperandBundle(const char *Tag, size_t TagLen,
                                    makeArrayRef(unwrap(Args), NumArgs)));
 }
 
+void LLVMExtDisposeOperandBundle(LLVMOperandBundleRef Bundle) {
+  delete unwrap(Bundle);
+}
+
 LLVMValueRef
 LLVMExtBuildCallWithOperandBundles(LLVMBuilderRef B, LLVMTypeRef Ty,
                                    LLVMValueRef Fn, LLVMValueRef *Args,

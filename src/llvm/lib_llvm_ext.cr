@@ -19,6 +19,8 @@ lib LibLLVMExt
                                                          args : LibLLVM::ValueRef*,
                                                          num_args : UInt) : LibLLVM::OperandBundleRef
 
+  fun dispose_operand_bundle = LLVMExtDisposeOperandBundle(bundle : LibLLVM::OperandBundleRef)
+
   fun build_call_with_operand_bundles = LLVMExtBuildCallWithOperandBundles(LibLLVM::BuilderRef, LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
                                                                            args : LibLLVM::ValueRef*, num_args : UInt,
                                                                            bundles : LibLLVM::OperandBundleRef*, num_bundles : UInt,
