@@ -541,7 +541,11 @@ module Crystal
       when "@def"
         @last = @def || NilLiteral.new
       when "@caller"
-        @last = @call || NilLiteral.new
+        @last = if call = @call
+                  ArrayLiteral.map [call], &.itself
+                else
+                  NilLiteral.new
+                end
       else
         node.raise "unknown macro instance var: '#{node.name}'"
       end
