@@ -1,19 +1,39 @@
 {% begin %}
-lib LibLLVM
-  LLVM_CONFIG = {{ env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify }}
-end
-{% end %}
+  {% if flag?(:win32) && flag?(:preview_dll) %}
+    {% config = nil %}
+    {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+      {% config ||= read_file?("#{dir.id}/llvm_VERSION") %}
+    {% end %}
 
-{% begin %}
-  {% unless flag?(:win32) %}
-    @[Link("stdc++")]
+    {% unless config %}
+      {% raise "Cannot determine LLVM configuration; ensure the file `llvm_VERSION` exists under `CRYSTAL_LIBRARY_PATH`" %}
+    {% end %}
+
+    {% lines = config.lines.map(&.chomp) %}
+    {% llvm_version = lines[0] %}
+    {% llvm_targets = lines[1] %}
+    {% llvm_ldflags = lines[2] %}
+
+    @[Link("llvm")]
+    lib LibLLVM
+    end
+  {% else %}
+    {% llvm_config = env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify %}
+    {% llvm_version = `#{llvm_config.id} --version`.stringify %}
+    {% llvm_targets = env("LLVM_TARGETS") || `#{llvm_config.id} --targets-built`.stringify %}
+    {% llvm_ldflags = "`#{llvm_config.id} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`" %}
+
+    {% unless flag?(:win32) %}
+      @[Link("stdc++")]
+      lib LibLLVM
+      end
+    {% end %}
   {% end %}
-  @[Link(ldflags: {{"`#{LibLLVM::LLVM_CONFIG} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`"}})]
+
+  @[Link(ldflags: {{ llvm_ldflags }})]
   lib LibLLVM
-    VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify.gsub(/git/, "")}}
-    BUILT_TARGETS = {{ (
-                         env("LLVM_TARGETS") || `#{LibLLVM::LLVM_CONFIG} --targets-built`
-                       ).strip.downcase.split(' ').map(&.id.symbolize) }}
+    VERSION = {{ llvm_version.strip.gsub(/git/, "") }}
+    BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
   end
 {% end %}
 
