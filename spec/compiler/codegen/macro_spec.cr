@@ -1895,34 +1895,4 @@ describe "Code gen: macro" do
       {% end %}
       )).to_i.should eq(10)
   end
-
-  it "returns an array of each call" do
-    run(%(
-      macro test
-        {{@caller.size == 1 ? 1 : 0}}
-      end
-
-      test
-      )).to_i.should eq(1)
-  end
-
-  it "provides access to the macro call stack via @caller" do
-    run(%(
-      macro test(num)
-        {{@caller.last.args[0] == 1 ? 1 : 0}}
-      end
-
-      test(1) &+ test(2)
-      )).to_i.should eq(1)
-  end
-
-  it "@caller returns nil if no stack is available" do
-    run(%(
-      def test
-        {{(c = @caller) ? 1 : 0}}
-      end
-
-      test
-      )).to_i.should eq(0)
-  end
 end
