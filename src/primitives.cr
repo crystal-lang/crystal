@@ -72,15 +72,20 @@ class Reference
   #   def initialize(@i)
   #   end
   #
-  #   foo_buffer = LibC.malloc(24)
-  #   foo = pre_initialize(foo_buffer)
-  #   foo.i                  # => 0
-  #   foo.str                # => "abc"
-  #   (foo || "").is_a?(Foo) # => true
+  #   def self.alloc_with_libc(i : Int64)
+  #     foo_buffer = LibC.malloc(instance_sizeof(Foo))
+  #     foo = Foo.pre_initialize(foo_buffer)
+  #     foo.i                  # => 0
+  #     foo.str                # => "abc"
+  #     (foo || "").is_a?(Foo) # => true
   #
-  #   foo.initialize(123_i64)
-  #   foo.i # => 123
+  #     foo.initialize(i) # okay
+  #     foo
+  #   end
   # end
+  #
+  # foo = Foo.alloc_with_libc(123_i64)
+  # foo.i # => 123
   # ```
   #
   # See also: `Reference.unsafe_construct`.
