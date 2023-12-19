@@ -81,7 +81,7 @@ require "./regex/match_data"
 #
 # Many programming languages and tools implement their own regular expression
 # language, but Crystal uses [PCRE2](http://www.pcre.org/), a popular C library, with
-# [JIT complication](http://www.pcre.org/current/doc/html/pcre2jit.html) enabled
+# [JIT compilation](http://www.pcre.org/current/doc/html/pcre2jit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
 # alternation - but the feature set of PCRE2 extends far beyond these, and we
@@ -403,7 +403,7 @@ class Regex
       str.each_byte do |byte|
         {% begin %}
           case byte.unsafe_chr
-          when {{*SPECIAL_CHARACTERS}}
+          when {{SPECIAL_CHARACTERS.splat}}
             result << '\\'
             result.write_byte byte
           else
@@ -580,6 +580,21 @@ class Regex
   @[Deprecated("Use the overload with `Regex::MatchOptions` instead.")]
   def match(str, pos, _options) : MatchData?
     match(str, pos, options: _options)
+  end
+
+  # Matches a regular expression against *str*. This starts at the character
+  # index *pos* if given, otherwise at the start of *str*. Returns a `Regex::MatchData`
+  # if *str* matched, otherwise raises `Regex::Error`. `$~` will contain the same value
+  # if matched.
+  #
+  # ```
+  # /(.)(.)(.)/.match!("abc")[2]   # => "b"
+  # /(.)(.)/.match!("abc", 1)[2]   # => "c"
+  # /(.)(タ)/.match!("クリスタル", 3)[2] # raises Exception
+  # ```
+  def match!(str : String, pos : Int32 = 0, *, options : Regex::MatchOptions = :none) : MatchData
+    byte_index = str.char_index_to_byte_index(pos) || raise Error.new "Match not found"
+    $~ = match_at_byte_index(str, byte_index, options) || raise Error.new "Match not found"
   end
 
   # Match at byte index. Matches a regular expression against `String`

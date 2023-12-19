@@ -358,8 +358,11 @@ module Crystal
         args = node.args.map { |arg| accept arg }
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
+        # normalize needed for param unpacking
+        block = node.block.try { |b| @program.normalize(b) }
+
         begin
-          @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
+          @last = receiver.interpret(node.name, args, named_args, block, self, node.name_location)
         rescue ex : MacroRaiseException
           # Re-raise to avoid the logic in the other rescue blocks and to retain the original location
           raise ex
@@ -415,7 +418,7 @@ module Crystal
     end
 
     def resolve?(node : Path)
-      if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
+      if (single_name = node.single_name?) && (match = @free_vars.try &.[single_name]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
@@ -508,12 +511,14 @@ module Crystal
     end
 
     def visit(node : Splat)
+      warnings.add_warning(node, "Deprecated use of splat operator. Use `#splat` instead")
       node.exp.accept self
       @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
+      warnings.add_warning(node, "Deprecated use of double splat operator. Use `#double_splat` instead")
       node.exp.accept self
       @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false

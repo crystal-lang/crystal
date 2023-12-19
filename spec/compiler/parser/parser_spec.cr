@@ -160,6 +160,34 @@ module Crystal
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
     it_parses "2**3**4", Call.new(2.int32, "**", Call.new(3.int32, "**", 4.int32))
 
+    it_parses %(foo%i), Call.new("foo".call, "%", "i".call)
+    it_parses %(foo%q), Call.new("foo".call, "%", "q".call)
+    it_parses %(foo%Q), Call.new("foo".call, "%", "Q".path)
+    it_parses %(foo%r), Call.new("foo".call, "%", "r".call)
+    it_parses %(foo%x), Call.new("foo".call, "%", "x".call)
+    it_parses %(foo%w), Call.new("foo".call, "%", "w".call)
+
+    it_parses %(foo %i), Call.new("foo".call, "%", "i".call)
+    it_parses %(foo %q), Call.new("foo".call, "%", "q".call)
+    it_parses %(foo %Q), Call.new("foo".call, "%", "Q".path)
+    it_parses %(foo %r), Call.new("foo".call, "%", "r".call)
+    it_parses %(foo %x), Call.new("foo".call, "%", "x".call)
+    it_parses %(foo %w), Call.new("foo".call, "%", "w".call)
+
+    it_parses %(foo %i()), "foo".call(([] of ASTNode).array_of(Path.global("Symbol")))
+    it_parses %(foo %q()), "foo".call("".string)
+    it_parses %(foo %Q()), "foo".call("".string)
+    it_parses %(foo %r()), "foo".call(regex(""))
+    it_parses %(foo %x()), "foo".call(Call.new(nil, "`", "".string))
+    it_parses %(foo %w()), "foo".call(([] of ASTNode).array_of(Path.global("String")))
+
+    it_parses %(foo % i()), Call.new("foo".call, "%", "i".call)
+    it_parses %(foo % q()), Call.new("foo".call, "%", "q".call)
+    it_parses %(foo % Q()), Call.new("foo".call, "%", Generic.new("Q".path, [] of ASTNode))
+    it_parses %(foo % r()), Call.new("foo".call, "%", "r".call)
+    it_parses %(foo % x()), Call.new("foo".call, "%", "x".call)
+    it_parses %(foo % w()), Call.new("foo".call, "%", "w".call)
+
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
     it_parses "+ 1", Call.new(1.int32, "+")
@@ -770,28 +798,68 @@ module Crystal
     assert_syntax_error "foo(&block) {}"
 
     it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
-      block: Block.new(["a".var, "__arg0".var, "__arg1".var],
+      block: Block.new(
+        ["a".var, "".var, "".var],
         Expressions.new([
-          Assign.new("b".var, Call.new("__arg0".var, "[]", 0.int32)),
-          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
-          Assign.new("d".var, Call.new("__arg1".var, "[]", 0.int32)),
-          Assign.new("e".var, Call.new("__arg1".var, "[]", 1.int32)),
-          "a".var, "b".var, "c".var, "d".var, "e".var,
-        ] of ASTNode)))
+          "a".var,
+          "b".var,
+          "c".var,
+          "d".var,
+          "e".var,
+        ] of ASTNode),
+        unpacks: {
+          1 => Expressions.new(["b".var, "c".var] of ASTNode),
+          2 => Expressions.new(["d".var, "e".var] of ASTNode),
+        },
+      ),
+    )
 
     it_parses "foo { |(_, c)| c }", Call.new(nil, "foo",
-      block: Block.new(["__arg0".var],
-        Expressions.new([
-          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
-          "c".var,
-        ] of ASTNode)))
+      block: Block.new(["".var],
+        "c".var,
+        unpacks: {0 => Expressions.new([Underscore.new, "c".var] of ASTNode)},
+      )
+    )
 
     it_parses "foo { |(_, c, )| c }", Call.new(nil, "foo",
-      block: Block.new(["__arg0".var],
-        Expressions.new([
-          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
-          "c".var,
-        ] of ASTNode)))
+      block: Block.new(["".var],
+        "c".var,
+        unpacks: {0 => Expressions.new([Underscore.new, "c".var] of ASTNode)},
+      )
+    )
+
+    it_parses "foo { |(a, (b, (c, d)))| }", Call.new(nil, "foo",
+      block: Block.new(
+        ["".var],
+        Nop.new,
+        unpacks: {
+          0 => Expressions.new([
+            "a".var,
+            Expressions.new([
+              "b".var,
+              Expressions.new([
+                "c".var,
+                "d".var,
+              ] of ASTNode),
+            ]),
+          ]),
+        },
+      ),
+    )
+
+    it_parses "foo { |(a, *b, c)| }", Call.new(nil, "foo",
+      block: Block.new(
+        ["".var],
+        Nop.new,
+        unpacks: {
+          0 => Expressions.new([
+            "a".var,
+            Splat.new("b".var),
+            "c".var,
+          ]),
+        },
+      ),
+    )
 
     assert_syntax_error "foo { |a b| }", "expecting ',' or '|', not b"
     assert_syntax_error "foo { |(a b)| }", "expecting ',' or ')', not b"
@@ -2019,13 +2087,14 @@ module Crystal
       end
       )
 
-    assert_syntax_error %(
+    assert_syntax_error <<-CRYSTAL, "invalid trailing comma in call", line: 2, column: 8
       if 1
         foo 1,
       end
-      ), "invalid trailing comma in call"
+      CRYSTAL
 
-    assert_syntax_error "foo 1,", "invalid trailing comma in call"
+    assert_syntax_error "foo 1,", "invalid trailing comma in call", line: 1, column: 6
+
     assert_syntax_error "def foo:String\nend", "a space is mandatory between ':' and return type"
     assert_syntax_error "def foo :String\nend", "a space is mandatory between ':' and return type"
     assert_syntax_error "def foo():String\nend", "a space is mandatory between ':' and return type"
@@ -2514,6 +2583,12 @@ module Crystal
         source_between(source, node.name_location, node.name_end_location).should eq("foo")
       end
 
+      it "sets correct location of call name in operator assignment" do
+        source = "@foo.bar += 1"
+        node = Parser.parse(source).as(OpAssign).target.as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq("bar")
+      end
+
       it "sets correct location of element in array literal" do
         source = "%i(foo bar)"
         elements = Parser.new(source).parse.as(ArrayLiteral).elements
@@ -2583,6 +2658,34 @@ module Crystal
 
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
+      end
+
+      it "sets correct location for fun def" do
+        source = "lib LibFoo; fun foo(x : Int32); end"
+        node = Parser.new(source).parse.as(LibDef).body
+
+        node_source(source, node).should eq("fun foo(x : Int32)")
+      end
+
+      it "sets correct location for fun def with return type" do
+        source = "lib LibFoo; fun foo(x : Int32) : Void; end"
+        node = Parser.new(source).parse.as(LibDef).body
+
+        node_source(source, node).should eq("fun foo(x : Int32) : Void")
+      end
+
+      it "sets correct location for fun def on multiple lines" do
+        source = "lib LibFoo\nfun foo(\n    x : Int32\n  )\nend"
+        node = Parser.new(source).parse.as(LibDef).body
+
+        node_source(source, node).should eq("fun foo(\n    x : Int32\n  )")
+      end
+
+      it "sets correct location for fun def with body" do
+        source = "fun foo(x : Int32) : Void\nend"
+        node = Parser.new(source).parse.as(FunDef)
+
+        node_source(source, node).should eq("fun foo(x : Int32) : Void\nend")
       end
     end
 
@@ -2661,6 +2764,18 @@ module Crystal
       source = "enum X; protected macro foo; end; end"
       node = Parser.parse(source).as(EnumDef).members.first
       node_source(source, node).should eq("protected macro foo; end")
+    end
+
+    it "sets correct location of global path in class def" do
+      source = "class ::Foo; end"
+      node = Parser.parse(source).as(ClassDef).name
+      node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets correct location of global path in annotation" do
+      source = "@[::Foo]"
+      node = Parser.parse(source).as(Annotation).path
+      node_source(source, node).should eq("::Foo")
     end
   end
 end

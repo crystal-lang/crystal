@@ -133,6 +133,33 @@ describe "Regex" do
     end
   end
 
+  describe "#match!" do
+    it "returns match data" do
+      md = /(?<bar>.)(?<foo>.)/.match!("Crystal")
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = /foo/.match!("foo")
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { /Crystal/.match!("foo") }
+      expect_raises(NilAssertionError) { $~ }
+    end
+
+    context "with options" do
+      it "Regex::Match options" do
+        expect_raises(Regex::Error, "Match not found") do
+          /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED)
+        end
+      end
+    end
+  end
+
   describe "#match_at_byte_index" do
     it "assigns captures" do
       matchdata = /foo/.match_at_byte_index("..foo", 1)
@@ -281,7 +308,7 @@ describe "Regex" do
       end
     end
 
-    it "doesn't crash with a large single line string" do
+    pending_wasm32 "doesn't crash with a large single line string" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}

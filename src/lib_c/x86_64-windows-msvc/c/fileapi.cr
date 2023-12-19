@@ -111,4 +111,5 @@ lib LibC
   ) : BOOL
   fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
                   lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
+  fun SetFileInformationByHandle(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 end

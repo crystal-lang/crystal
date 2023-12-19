@@ -11,6 +11,5 @@ lib LibC
 
   fun GetLastError : DWORD
   fun SetLastError(dwErrCode : DWORD)
-  fun RaiseException(dwExceptionCode : DWORD, dwExceptionFlags : DWORD, nNumberOfArguments : DWORD, lpArguments : ULONG_PTR*)
   fun AddVectoredExceptionHandler(first : DWORD, handler : PVECTORED_EXCEPTION_HANDLER) : Void*
 end

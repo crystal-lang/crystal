@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/number"
 require "spec/helpers/iterate"
 require "json"
 require "big"
@@ -36,22 +37,34 @@ describe "JSON serialization" do
       Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
     end
 
-    it "does UInt64.from_json" do
-      UInt64.from_json(UInt64::MAX.to_s).should eq(UInt64::MAX)
-    end
-
-    it "does UInt128.from_json" do
-      UInt128.from_json(UInt128::MAX.to_s).should eq(UInt128::MAX)
-    end
-
-    it "does Int128.from_json" do
-      Int128.from_json(Int128::MAX.to_s).should eq(Int128::MAX)
-    end
-
-    it "raises ParserException for overflow UInt64.from_json" do
-      expect_raises(JSON::ParseException, "Can't read UInt64 at line 0, column 0") do
-        UInt64.from_json("1#{UInt64::MAX}")
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it "does {{ int }}.from_json" do
+        {{ int }}.from_json("0").should(be_a({{ int }})).should eq(0)
+        {{ int }}.from_json("123").should(be_a({{ int }})).should eq(123)
+        {{ int }}.from_json({{ int }}::MIN.to_s).should(be_a({{ int }})).should eq({{ int }}::MIN)
+        {{ int }}.from_json({{ int }}::MAX.to_s).should(be_a({{ int }})).should eq({{ int }}::MAX)
       end
+
+      # NOTE: "Invalid" shows up only for `Int64`
+      it "raises if {{ int }}.from_json overflows" do
+        expect_raises(JSON::ParseException, /(Can't read|Invalid) {{ int }}/) do
+          {{ int }}.from_json(({{ int }}::MIN.to_big_i - 1).to_s)
+        end
+        expect_raises(JSON::ParseException, /(Can't read|Invalid) {{ int }}/) do
+          {{ int }}.from_json(({{ int }}::MAX.to_big_i + 1).to_s)
+        end
+      end
+    {% end %}
+
+    it "errors on non-base-10 ints" do
+      expect_raises(JSON::ParseException) { Int32.from_json "0b1" }
+      expect_raises(JSON::ParseException) { Int32.from_json "0o1" }
+      expect_raises(JSON::ParseException) { Int32.from_json "0x1" }
+      expect_raises(JSON::ParseException) { Int32.from_json "01" }
+    end
+
+    it "errors on underscores inside ints" do
+      expect_raises(JSON::ParseException) { Int32.from_json "1_2" }
     end
 
     it "does Array(Nil)#from_json" do
@@ -293,15 +306,17 @@ describe "JSON serialization" do
         JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
         JSONSpecEnum.from_json(%("two")).should eq(JSONSpecEnum::Two)
         JSONSpecEnum.from_json(%("ONE_HUNDRED")).should eq(JSONSpecEnum::OneHundred)
-        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "ONE-HUNDRED")) do
-          JSONSpecEnum.from_json(%("ONE-HUNDRED"))
-        end
+        JSONSpecEnum.from_json(%("ONE-HUNDRED")).should eq(JSONSpecEnum::OneHundred)
+
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: " one ")) do
           JSONSpecEnum.from_json(%(" one "))
         end
 
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "three")) do
           JSONSpecEnum.from_json(%("three"))
+        end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "three")) do
+          NamedTuple(foo: JSONSpecEnum).from_json(%({"foo": "three", "other": 1}))
         end
         expect_raises(JSON::ParseException, %(Expected String but was Int)) do
           JSONSpecEnum.from_json(%(1))
@@ -422,11 +437,11 @@ describe "JSON serialization" do
       Union(Bool, Array(Int32)).from_json(%(true)).should be_true
     end
 
-    {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64).map(&.id) %}
-        it "deserializes union with {{type}} (fast path)" do
-          Union({{type}}, Array(Int32)).from_json(%(#{ {{type}}::MAX })).should eq({{type}}::MAX)
-        end
-      {% end %}
+    {% for type in Int::Primitive.union_types %}
+      it "deserializes union with {{type}} (fast path)" do
+        Union({{type}}, Array(Int32)).from_json({{type}}::MAX.to_s).should eq({{type}}::MAX)
+      end
+    {% end %}
 
     it "deserializes union with Float32 (fast path)" do
       Union(Float32, Array(Int32)).from_json(%(1)).should eq(1)
@@ -570,6 +585,10 @@ describe "JSON serialization" do
 
     it "does for Array" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
+    end
+
+    it "does for StaticArray" do
+      StaticArray[1, 2, 3].to_json.should eq("[1,2,3]")
     end
 
     it "does for Deque" do

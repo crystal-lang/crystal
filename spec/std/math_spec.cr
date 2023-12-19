@@ -266,6 +266,16 @@ describe "Math" do
 
   # div rem
 
+  it "fma" do
+    x = Math.fma(0.1, 10.0, -1.0)
+    x.should be_close(5.551115123125783e-17, 1e-25)
+    x.should_not eq(0.0)
+
+    x = Math.fma(0.1_f32, 10.0_f32, -1.0_f32)
+    x.should be_close(1.4901161e-8_f32, 1e-16_f32)
+    x.should_not eq(0.0_f32)
+  end
+
   describe ".pw2ceil" do
     {% for int in %w(Int8 Int16 Int32 Int64 Int128) %}
       it {{ int }} do

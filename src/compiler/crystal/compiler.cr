@@ -39,7 +39,7 @@ module Crystal
     # If `true`, doesn't generate an executable but instead
     # creates a `.o` file and outputs a command line to link
     # it in the target machine.
-    property cross_compile = false
+    property? cross_compile = false
 
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
@@ -80,14 +80,35 @@ module Crystal
     # the source file to compile.
     property prelude = "prelude"
 
-    # If `true`, runs LLVM optimizations.
-    property? release = false
+    # Optimization mode
+    enum OptimizationMode
+      # [default] no optimization, fastest compilation, slowest runtime
+      O0 = 0
+
+      # low, compilation slower than O0, runtime faster than O0
+      O1 = 1
+
+      # middle, compilation slower than O1, runtime faster than O1
+      O2 = 2
+
+      # high, slowest compilation, fastest runtime
+      # enables with --release flag
+      O3 = 3
+
+      def suffix
+        ".#{to_s.downcase}"
+      end
+    end
+
+    # Sets the Optimization mode.
+    property optimization_mode = OptimizationMode::O0
 
     # Sets the code model. Check LLVM docs to learn about this.
     property mcmodel = LLVM::CodeModel::Default
 
     # If `true`, generates a single LLVM module. By default
     # one LLVM module is created for each type in a program.
+    # --release automatically enable this option
     property? single_module = false
 
     # A `ProgressTracker` object which tracks compilation progress.
@@ -144,18 +165,29 @@ module Crystal
     # Whether to link statically
     property? static = false
 
+    property dependency_printer : DependencyPrinter? = nil
+
     # Program that was created for the last compilation.
     property! program : Program
 
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
+    # If *combine_rpath* is true, add the compiler itself's RPATH to the
+    # generated executable via `CrystalLibraryPath.add_compiler_rpath`. This is
+    # used by the `run` / `eval` / `spec` commands as well as the macro `run`
+    # (via `Crystal::Program#macro_compile`), and never during cross-compiling.
+    #
     # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
-    def compile(source : Source | Array(Source), output_filename : String) : Result
+    def compile(source : Source | Array(Source), output_filename : String, *, combine_rpath : Bool = false) : Result
+      if combine_rpath
+        return CrystalLibraryPath.add_compiler_rpath { compile(source, output_filename, combine_rpath: false) }
+      end
+
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
@@ -189,6 +221,16 @@ module Crystal
       print_macro_run_stats(program)
 
       Result.new program, node
+    end
+
+    # Set maximum level of optimization.
+    def release!
+      @optimization_mode = OptimizationMode::O3
+      @single_module = true
+    end
+
+    def release?
+      @optimization_mode.o3? && @single_module
     end
 
     private def new_program(sources)
@@ -243,8 +285,8 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}|#{@mcmodel}"
-      bc_flags_filename = "#{output_dir}/bc_flags"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}"
+      bc_flags_filename = "#{output_dir}/bc_flags#{optimization_mode.suffix}"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
         bc_flags_changed = previous_bc_flags != current_bc_flags
@@ -255,7 +297,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none?
+        program.codegen node, debug: debug, single_module: @single_module || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -306,17 +348,17 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = output_filename + program.object_extension
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod if @release
+        optimize llvm_mod unless @optimization_mode.o0?
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
-        target_machine.emit_obj_to_file llvm_mod, object_name
+        target_machine.emit_obj_to_file llvm_mod, output_filename
       end
-
-      _, command, args = linker_command(program, [object_name], output_filename, nil)
+      object_names = [output_filename]
+      output_filename = output_filename.rchop(unit.object_extension)
+      _, command, args = linker_command(program, object_names, output_filename, nil)
       print_command(command, args)
     end
 
@@ -366,14 +408,29 @@ module Crystal
         @link_flags.try { |flags| link_args << flags }
 
         {% if flag?(:msvc) %}
-          if program.has_flag?("preview_dll") && !program.has_flag?("no_win32_delay_load")
-            # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
-            # it is harmless to skip this error because not all import libraries are always used, much
-            # less the individual DLLs they refer to
-            link_args << "/IGNORE:4199"
+          unless @cross_compile
+            extra_suffix = program.has_flag?("preview_dll") ? "-dynamic" : "-static"
+            search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
+            if not_found = search_result.not_found?
+              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+            end
 
-            Loader.search_dlls(Process.parse_arguments_windows(link_args.join(' '))).each do |dll|
-              link_args << "/DELAYLOAD:#{dll}"
+            link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
+
+            if program.has_flag?("preview_win32_delay_load")
+              # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
+              # it is harmless to skip this error because not all import libraries are always used, much
+              # less the individual DLLs they refer to
+              link_args << "/IGNORE:4199"
+
+              dlls = Set(String).new
+              search_result.library_paths.each do |library_path|
+                Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
+                  dlls << dll.downcase
+                end
+              end
+              dlls.delete "kernel32.dll"
+              dlls.each { |dll| link_args << "/DELAYLOAD:#{dll}" }
             end
           end
         {% end %}
@@ -555,7 +612,7 @@ module Crystal
     end
 
     getter(target_machine : LLVM::TargetMachine) do
-      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release, @mcmodel)
+      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @optimization_mode, @mcmodel)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
       stderr.print "llc: "
@@ -563,51 +620,64 @@ module Crystal
       exit 1
     end
 
-    protected def optimize(llvm_mod)
-      {% if LibLLVM::IS_LT_130 %}
-        optimize_with_old_pass_manager(llvm_mod)
-      {% else %}
-        optimize_with_new_pass_manager(llvm_mod)
-      {% end %}
-    end
-
-    private def optimize_with_old_pass_manager(llvm_mod)
-      fun_pass_manager = llvm_mod.new_function_pass_manager
-      pass_manager_builder.populate fun_pass_manager
-      fun_pass_manager.run llvm_mod
-      module_pass_manager.run llvm_mod
-    end
-
-    private def optimize_with_new_pass_manager(llvm_mod)
-      LLVM::PassBuilderOptions.new do |options|
-        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+    {% if LibLLVM::IS_LT_130 %}
+      protected def optimize(llvm_mod)
+        fun_pass_manager = llvm_mod.new_function_pass_manager
+        pass_manager_builder.populate fun_pass_manager
+        fun_pass_manager.run llvm_mod
+        module_pass_manager.run llvm_mod
       end
-    end
 
-    @module_pass_manager : LLVM::ModulePassManager?
+      @module_pass_manager : LLVM::ModulePassManager?
 
-    private def module_pass_manager
-      @module_pass_manager ||= begin
-        mod_pass_manager = LLVM::ModulePassManager.new
-        pass_manager_builder.populate mod_pass_manager
-        mod_pass_manager
+      private def module_pass_manager
+        @module_pass_manager ||= begin
+          mod_pass_manager = LLVM::ModulePassManager.new
+          pass_manager_builder.populate mod_pass_manager
+          mod_pass_manager
+        end
       end
-    end
 
-    @pass_manager_builder : LLVM::PassManagerBuilder?
+      @pass_manager_builder : LLVM::PassManagerBuilder?
 
-    private def pass_manager_builder
-      @pass_manager_builder ||= begin
-        registry = LLVM::PassRegistry.instance
-        registry.initialize_all
+      private def pass_manager_builder
+        @pass_manager_builder ||= begin
+          registry = LLVM::PassRegistry.instance
+          registry.initialize_all
 
-        builder = LLVM::PassManagerBuilder.new
-        builder.opt_level = 3
-        builder.size_level = 0
-        builder.use_inliner_with_threshold = 275
-        builder
+          builder = LLVM::PassManagerBuilder.new
+          case optimization_mode
+          in .o3?
+            builder.opt_level = 3
+            builder.use_inliner_with_threshold = 275
+          in .o2?
+            builder.opt_level = 2
+            builder.use_inliner_with_threshold = 275
+          in .o1?
+            builder.opt_level = 1
+            builder.use_inliner_with_threshold = 150
+          in .o0?
+            # default behaviour, no optimizations
+          end
+
+          builder.size_level = 0
+
+          builder
+        end
       end
-    end
+    {% else %}
+      protected def optimize(llvm_mod)
+        LLVM::PassBuilderOptions.new do |options|
+          mode = case @optimization_mode
+                 in .o3? then "default<O3>"
+                 in .o2? then "default<O2>"
+                 in .o1? then "default<O1>"
+                 in .o0? then "default<O0>"
+                 end
+          LLVM.run_passes(llvm_mod, mode, target_machine, options)
+        end
+      end
+    {% end %}
 
     private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
@@ -667,7 +737,7 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
-      @object_extension : String
+      getter object_extension : String
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
@@ -693,7 +763,8 @@ module Crystal
           @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
-        @object_extension = program.object_extension
+        @name = "#{@name}#{@compiler.optimization_mode.suffix}"
+        @object_extension = compiler.codegen_target.object_extension
       end
 
       def compile
@@ -710,8 +781,8 @@ module Crystal
         # in the cache directory.
         #
         # On a next compilation of the same project, and if the compile
-        # flags didn't change (a combination of the target triple, mcpu,
-        # release and link flags, amongst others), we check if the new
+        # flags didn't change (a combination of the target triple, mcpu
+        # and link flags, amongst others), we check if the new
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
@@ -755,7 +826,7 @@ module Crystal
         end
 
         if must_compile
-          compiler.optimize llvm_mod if compiler.release?
+          compiler.optimize llvm_mod unless compiler.optimization_mode.o0?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
           File.rename(temporary_object_name, object_name)
         else

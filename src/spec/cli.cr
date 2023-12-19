@@ -20,10 +20,15 @@ module Spec
   class_property? focus = false
 
   # :nodoc:
+  class_property? dry_run = false
+
+  # :nodoc:
+  class_property? list_tags = false
+
+  # :nodoc:
   def self.add_location(file, line)
     locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
+    locations.put_if_absent(File.expand_path(file)) { [] of Int32 } << line
   end
 
   # :nodoc:
@@ -84,6 +89,9 @@ module Spec
       opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
         Spec.add_tag tag
       end
+      opts.on("--list-tags", "lists all the tags used.") do
+        Spec.list_tags = true
+      end
       opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
         if mode.in?("default", "random")
           Spec.order = mode
@@ -111,6 +119,9 @@ module Spec
       end
       opts.on("--no-color", "Disable ANSI colored output") do
         Colorize.enabled = false
+      end
+      opts.on("--dry-run", "Pass all tests without execution") do
+        Spec.dry_run = true
       end
       opts.unknown_args do |args|
       end

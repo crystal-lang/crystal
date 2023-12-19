@@ -256,35 +256,28 @@ module Crystal
     end
 
     def transform(node : StringInterpolation)
-      # See if we can solve all the pieces to string literals.
-      # If that's the case, we can replace the entire interpolation
-      # with a single string literal.
-      pieces = node.expressions.dup
-      solve_string_interpolation_expressions(pieces)
-
-      if pieces.all?(StringLiteral)
-        string = pieces.join(&.as(StringLiteral).value)
-        string_literal = StringLiteral.new(string).at(node)
-        string_literal.type = @program.string
-        return string_literal
+      string = node.expressions.join do |exp|
+        if !(transformed_piece = solve_string_interpolation_expression(exp)).nil?
+          # Valid piece, continue joining
+          next transformed_piece
+        elsif expanded = node.expanded
+          # Invalid piece, transform expansion and exit early
+          return expanded.transform(self)
+        else
+          # No expansion, return self
+          return node
+        end
       end
-
-      if expanded = node.expanded
-        return expanded.transform(self)
-      end
-      node
+      string_literal = StringLiteral.new(string).at(node)
+      string_literal.type = @program.string
+      string_literal
     end
 
-    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
-      pieces.each_with_index do |piece, i|
-        replacement = solve_string_interpolation_expression(piece)
-        next unless replacement
-
-        pieces[i] = replacement
-      end
-    end
-
-    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
+    # Returns the solved piece for string interpolation, if it can find one.
+    # For example, this returns a String when given a StringLiteral.
+    private def solve_string_interpolation_expression(piece : ASTNode) : String | Char | Number::Primitive | Bool | Nil
+      # Check for ExpandableNode happens first in case any nodes below are
+      # updated to be ExpandableNodes themselves.
       if piece.is_a?(ExpandableNode)
         if expanded = piece.expanded
           return solve_string_interpolation_expression(expanded)
@@ -294,13 +287,13 @@ module Crystal
       case piece
       when Path
         if target_const = piece.target_const
-          return solve_string_interpolation_expression(target_const.value)
+          solve_string_interpolation_expression(target_const.value)
         end
-      when StringLiteral
-        return piece
+      when StringLiteral then piece.value
+      when CharLiteral   then piece.value
+      when NumberLiteral then piece.to_number
+      when BoolLiteral   then piece.value
       end
-
-      nil
     end
 
     def transform(node : ExpandableNode)
@@ -464,7 +457,9 @@ module Crystal
         return expanded.transform self
       end
 
-      @program.check_call_to_deprecated_method(node)
+      unless @current_def.try(&.annotation(@program.deprecated_annotation))
+        @program.check_call_to_deprecated_method(node)
+      end
 
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal

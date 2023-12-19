@@ -9,6 +9,11 @@ private def it_converts_to_s(num, str, *, file = __FILE__, line = __LINE__, **op
 end
 
 describe "BigInt" do
+  describe "#integer?" do
+    it { BigInt.zero.integer?.should be_true }
+    it { 12345.to_big_i.integer?.should be_true }
+  end
+
   it "creates with a value of zero" do
     BigInt.new.to_s.should eq("0")
   end
@@ -193,7 +198,7 @@ describe "BigInt" do
 
   it "raises if factorial of 2^64" do
     expect_raises ArgumentError do
-      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+      (LibGMP::UI::MAX.to_big_i + 1).factorial
     end
   end
 
@@ -276,6 +281,34 @@ describe "BigInt" do
     -5.to_big_i.remainder(3).should eq(-2)
     5.to_big_i.remainder(-3).should eq(2)
     -5.to_big_i.remainder(-3).should eq(-2)
+  end
+
+  it "#bit" do
+    x = 123.to_big_i
+    x.bit(-10.to_big_i ** 99).should eq(0)
+    x.bit(-(2.to_big_i ** 64)).should eq(0)
+    x.bit(-1).should eq(0)
+    x.bit(0).should eq(1)
+    x.bit(2).should eq(0)
+    x.bit(3).should eq(1)
+    x.bit(6).should eq(1)
+    x.bit(7).should eq(0)
+    x.bit(64).should eq(0)
+    x.bit(2.to_big_i ** 64).should eq(0)
+    x.bit(10.to_big_i ** 99).should eq(0)
+
+    x = ~(123.to_big_i)
+    x.bit(-10.to_big_i ** 99).should eq(0)
+    x.bit(-(2.to_big_i ** 64)).should eq(0)
+    x.bit(-1).should eq(0)
+    x.bit(0).should eq(0)
+    x.bit(2).should eq(1)
+    x.bit(3).should eq(0)
+    x.bit(6).should eq(0)
+    x.bit(7).should eq(1)
+    x.bit(64).should eq(1)
+    x.bit(2.to_big_i ** 64).should eq(1)
+    x.bit(10.to_big_i ** 99).should eq(1)
   end
 
   it "does bitwise and" do
@@ -498,98 +531,118 @@ describe "BigInt" do
     a.should eq(b)
   end
 
-  it "can be casted into other Number types" do
-    big = BigInt.new(1234567890)
-    big.to_i.should eq(1234567890)
-    big.to_i8!.should eq(-46)
-    big.to_i16!.should eq(722)
-    big.to_i32.should eq(1234567890)
-    big.to_i64.should eq(1234567890)
-    big.to_u.should eq(1234567890)
-    big.to_u8!.should eq(210)
-    big.to_u16!.should eq(722)
-    big.to_u32.should eq(1234567890)
-
-    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
-
-    u64 = big.to_u64
-    u64.should eq(1234567890)
-    u64.should be_a(UInt64)
-  end
-
-  context "conversion to 64-bit" do
-    it "above 64 bits" do
-      big = BigInt.new("9" * 20)
-      expect_raises(OverflowError) { big.to_i64 }
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(7766279631452241919) # 99999999999999999999 - 5*(2**64)
-      big.to_u64!.should eq(7766279631452241919)
-
-      big = BigInt.new("9" * 32)
-      expect_raises(OverflowError) { big.to_i64 }
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(-8814407033341083649)   # 99999999999999999999999999999999 - 5421010862428*(2**64)
-      big.to_u64!.should eq(9632337040368467967u64) # 99999999999999999999999999999999 - 5421010862427*(2**64)
-    end
-
-    it "between 63 and 64 bits" do
-      big = BigInt.new(i = 9999999999999999999u64)
-      expect_raises(OverflowError) { big.to_i64 }
-      big.to_u64.should eq(i)
-      big.to_i64!.should eq(-8446744073709551617) # 9999999999999999999 - 2**64
-      big.to_u64!.should eq(i)
-    end
-
-    it "between 32 and 63 bits" do
-      big = BigInt.new(i = 9999999999999)
-      big.to_i64.should eq(i)
-      big.to_u64.should eq(i)
-      big.to_i64!.should eq(i)
-      big.to_u64!.should eq(i)
-    end
-
-    it "negative under 32 bits" do
-      big = BigInt.new(i = -9999)
-      big.to_i64.should eq(i)
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(i)
-      big.to_u64!.should eq(18446744073709541617u64) # -9999 + 2**64
-    end
-
-    it "negative between 32 and 63 bits" do
-      big = BigInt.new(i = -9999999999999)
-      big.to_i64.should eq(i)
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(i)
-      big.to_u64!.should eq(18446734073709551617u64) # -9999999999999 + 2**64
-    end
-
-    it "negative between 63 and 64 bits" do
-      big = BigInt.new("-9999999999999999999")
-      expect_raises(OverflowError) { big.to_i64 }
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(8446744073709551617) # -9999999999999999999 + 2**64
-      big.to_u64!.should eq(8446744073709551617)
-    end
-
-    it "negative above 64 bits" do
-      big = BigInt.new("-" + "9" * 20)
-      expect_raises(OverflowError) { big.to_i64 }
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(-7766279631452241919)    # -9999999999999999999 + 5*(2**64)
-      big.to_u64!.should eq(10680464442257309697u64) # -9999999999999999999 + 6*(2**64)
-
-      big = BigInt.new("-" + "9" * 32)
-      expect_raises(OverflowError) { big.to_i64 }
-      expect_raises(OverflowError) { big.to_u64 }
-      big.to_i64!.should eq(8814407033341083649) # -99999999999999999999999999999999 + 5421010862428*(2**64)
-      big.to_u64!.should eq(8814407033341083649)
+  describe "#to_i" do
+    it "converts to Int32" do
+      BigInt.new(1234567890).to_i.should(be_a(Int32)).should eq(1234567890)
+      expect_raises(OverflowError) { BigInt.new(2147483648).to_i }
+      expect_raises(OverflowError) { BigInt.new(-2147483649).to_i }
     end
   end
 
-  it "can cast UInt64::MAX to UInt64 (#2264)" do
-    BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  describe "#to_i!" do
+    it "converts to Int32" do
+      BigInt.new(1234567890).to_i!.should(be_a(Int32)).should eq(1234567890)
+      BigInt.new(2147483648).to_i!.should eq(Int32::MIN)
+      BigInt.new(-2147483649).to_i!.should eq(Int32::MAX)
+    end
   end
+
+  describe "#to_u" do
+    it "converts to UInt32" do
+      BigInt.new(1234567890).to_u.should(be_a(UInt32)).should eq(1234567890_u32)
+      expect_raises(OverflowError) { BigInt.new(4294967296).to_u }
+      expect_raises(OverflowError) { BigInt.new(-1).to_u }
+    end
+  end
+
+  describe "#to_u!" do
+    it "converts to UInt32" do
+      BigInt.new(1234567890).to_u!.should(be_a(UInt32)).should eq(1234567890_u32)
+      BigInt.new(4294967296).to_u!.should eq(0_u32)
+      BigInt.new(-1).to_u!.should eq(UInt32::MAX)
+    end
+  end
+
+  {% for n in [8, 16, 32, 64, 128] %}
+    describe "#to_u{{n}}" do
+      it "converts to UInt{{n}}" do
+        (0..{{n - 1}}).each do |i|
+          (1.to_big_i << i).to_u{{n}}.should eq(UInt{{n}}.new(1) << i)
+        end
+
+        UInt{{n}}::MIN.to_big_i.to_u{{n}}.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_big_i.to_u{{n}}.should eq(UInt{{n}}::MAX)
+      end
+
+      it "raises OverflowError" do
+        expect_raises(OverflowError) { (1.to_big_i << {{n}}).to_u{{n}} }
+        expect_raises(OverflowError) { (-1.to_big_i).to_u{{n}} }
+        expect_raises(OverflowError) { (-1.to_big_i << {{n}}).to_u{{n}} }
+      end
+    end
+
+    describe "#to_i{{n}}" do
+      it "converts to Int{{n}}" do
+        (0..{{n - 2}}).each do |i|
+          (1.to_big_i << i).to_i{{n}}.should eq(Int{{n}}.new(1) << i)
+          (-1.to_big_i << i).to_i{{n}}.should eq(Int{{n}}.new(-1) << i)
+        end
+
+        Int{{n}}.zero.to_big_i.to_i{{n}}.should eq(Int{{n}}.zero)
+        Int{{n}}::MAX.to_big_i.to_i{{n}}.should eq(Int{{n}}::MAX)
+        Int{{n}}::MIN.to_big_i.to_i{{n}}.should eq(Int{{n}}::MIN)
+      end
+
+      it "raises OverflowError" do
+        expect_raises(OverflowError) { (Int{{n}}::MAX.to_big_i + 1).to_i{{n}} }
+        expect_raises(OverflowError) { (Int{{n}}::MIN.to_big_i - 1).to_i{{n}} }
+        expect_raises(OverflowError) { (1.to_big_i << {{n}}).to_i{{n}} }
+        expect_raises(OverflowError) { (-1.to_big_i << {{n}}).to_i{{n}} }
+      end
+    end
+
+    describe "#to_u{{n}}!" do
+      it "converts to UInt{{n}}" do
+        (0..{{n - 1}}).each do |i|
+          (1.to_big_i << i).to_u{{n}}!.should eq(UInt{{n}}.new(1) << i)
+        end
+
+        UInt{{n}}::MAX.to_big_i.to_u{{n}}!.should eq(UInt{{n}}::MAX)
+      end
+
+      it "converts modulo (2 ** {{n}})" do
+        (1.to_big_i << {{n}}).to_u{{n}}!.should eq(UInt{{n}}.new(0))
+        (-1.to_big_i).to_u{{n}}!.should eq(UInt{{n}}::MAX)
+        (-1.to_big_i << {{n}}).to_u{{n}}!.should eq(UInt{{n}}.new(0))
+        (123.to_big_i - (1.to_big_i << {{n}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
+        (123.to_big_i + (1.to_big_i << {{n}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
+        (123.to_big_i - (1.to_big_i << {{n + 2}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
+        (123.to_big_i + (1.to_big_i << {{n + 2}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
+      end
+    end
+
+    describe "#to_i{{n}}!" do
+      it "converts to Int{{n}}" do
+        (0..126).each do |i|
+          (1.to_big_i << i).to_i{{n}}!.should eq(Int{{n}}.new(1) << i)
+          (-1.to_big_i << i).to_i{{n}}!.should eq(Int{{n}}.new(-1) << i)
+        end
+
+        Int{{n}}::MAX.to_big_i.to_i{{n}}!.should eq(Int{{n}}::MAX)
+        Int{{n}}::MIN.to_big_i.to_i{{n}}!.should eq(Int{{n}}::MIN)
+      end
+
+      it "converts modulo (2 ** {{n}})" do
+        (1.to_big_i << {{n - 1}}).to_i{{n}}!.should eq(Int{{n}}::MIN)
+        (1.to_big_i << {{n}}).to_i{{n}}!.should eq(Int{{n}}.new(0))
+        (-1.to_big_i << {{n}}).to_i{{n}}!.should eq(Int{{n}}.new(0))
+        (123.to_big_i - (1.to_big_i << {{n}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
+        (123.to_big_i + (1.to_big_i << {{n}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
+        (123.to_big_i - (1.to_big_i << {{n + 2}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
+        (123.to_big_i + (1.to_big_i << {{n + 2}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
+      end
+    end
+  {% end %}
 
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))

@@ -5,21 +5,31 @@ private def br(n, d)
   BigRational.new(n, d)
 end
 
-private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE__)
-  (val < greater).should eq(true), file: file, line: line
-  (greater < val).should eq(false), file: file, line: line
-  (val <=> greater).should eq(-1), file: file, line: line
-  (greater <=> val).should eq(1), file: file, line: line
+private def test_greater(val, other, *, file = __FILE__, line = __LINE__)
+  val.should be > other, file: file, line: line
+  other.should_not be > val, file: file, line: line
+  (val <=> other).should_not(be_nil).should be > 0, file: file, line: line
+  (other <=> val).should_not(be_nil).should be < 0, file: file, line: line
+end
 
-  (val == equal).should eq(true), file: file, line: line
-  (equal == val).should eq(true), file: file, line: line
-  (val <=> equal).should eq(0), file: file, line: line
-  (equal <=> val).should eq(0), file: file, line: line
+private def test_equal(val, other, *, file = __FILE__, line = __LINE__)
+  (val == other).should be_true, file: file, line: line
+  (other == val).should be_true, file: file, line: line
+  (val <=> other).should eq(0), file: file, line: line
+  (other <=> val).should eq(0), file: file, line: line
+end
 
-  (val > less).should eq(true), file: file, line: line
-  (less > val).should eq(false), file: file, line: line
-  (val <=> less).should eq(1), file: file, line: line
-  (less <=> val).should eq(-1), file: file, line: line
+private def test_less(val, other, *, file = __FILE__, line = __LINE__)
+  val.should be < other, file: file, line: line
+  other.should_not be < val, file: file, line: line
+  (val <=> other).should_not(be_nil).should be < 0, file: file, line: line
+  (other <=> val).should_not(be_nil).should be > 0, file: file, line: line
+end
+
+private def test_comp(val, less, equal, greater, *, file = __FILE__, line = __LINE__)
+  test_greater(val, less, file: file, line: line)
+  test_equal(val, equal, file: file, line: line)
+  test_less(val, greater, file: file, line: line)
 end
 
 describe BigRational do
@@ -164,6 +174,11 @@ describe BigRational do
       test_comp(br(10, 2), 4.0_f64, 5.0_f64, 6.0_f64)
     end
 
+    it "BigFloat and Comparable" do
+      test_greater(1.to_big_r + 0.5.to_big_r ** (BigFloat.default_precision + 66), 1.to_big_f)
+      test_less(1.to_big_r - 0.5.to_big_r ** (BigFloat.default_precision + 66), 1.to_big_f)
+    end
+
     it "compares against NaNs" do
       (1.to_big_r <=> Float64::NAN).should be_nil
       (1.to_big_r <=> Float32::NAN).should be_nil
@@ -282,6 +297,109 @@ describe BigRational do
     br(211, 100).trunc.should eq(2)
     br(291, 100).trunc.should eq(2)
     br(-291, 100).trunc.should eq(-2)
+  end
+
+  describe "#round" do
+    describe "rounding modes" do
+      it "to_zero" do
+        br(-9, 6).round(:to_zero).should eq BigRational.new(-1)
+        br(-6, 6).round(:to_zero).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_zero).should eq BigRational.new(0)
+        br(-3, 6).round(:to_zero).should eq BigRational.new(0)
+        br(-1, 6).round(:to_zero).should eq BigRational.new(0)
+        br(0, 6).round(:to_zero).should eq BigRational.new(0)
+        br(1, 6).round(:to_zero).should eq BigRational.new(0)
+        br(3, 6).round(:to_zero).should eq BigRational.new(0)
+        br(5, 6).round(:to_zero).should eq BigRational.new(0)
+        br(6, 6).round(:to_zero).should eq BigRational.new(1)
+        br(9, 6).round(:to_zero).should eq BigRational.new(1)
+      end
+
+      it "to_positive" do
+        br(-9, 6).round(:to_positive).should eq BigRational.new(-1)
+        br(-6, 6).round(:to_positive).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_positive).should eq BigRational.new(0)
+        br(-3, 6).round(:to_positive).should eq BigRational.new(0)
+        br(-1, 6).round(:to_positive).should eq BigRational.new(0)
+        br(0, 6).round(:to_positive).should eq BigRational.new(0)
+        br(1, 6).round(:to_positive).should eq BigRational.new(1)
+        br(3, 6).round(:to_positive).should eq BigRational.new(1)
+        br(5, 6).round(:to_positive).should eq BigRational.new(1)
+        br(6, 6).round(:to_positive).should eq BigRational.new(1)
+        br(9, 6).round(:to_positive).should eq BigRational.new(2)
+      end
+
+      it "to_negative" do
+        br(-9, 6).round(:to_negative).should eq BigRational.new(-2)
+        br(-6, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-3, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-1, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(0, 6).round(:to_negative).should eq BigRational.new(0)
+        br(1, 6).round(:to_negative).should eq BigRational.new(0)
+        br(3, 6).round(:to_negative).should eq BigRational.new(0)
+        br(5, 6).round(:to_negative).should eq BigRational.new(0)
+        br(6, 6).round(:to_negative).should eq BigRational.new(1)
+        br(9, 6).round(:to_negative).should eq BigRational.new(1)
+      end
+
+      it "ties_even" do
+        br(-15, 6).round(:ties_even).should eq BigRational.new(-2)
+        br(-9, 6).round(:ties_even).should eq BigRational.new(-2)
+        br(-6, 6).round(:ties_even).should eq BigRational.new(-1)
+        br(-5, 6).round(:ties_even).should eq BigRational.new(-1)
+        br(-3, 6).round(:ties_even).should eq BigRational.new(0)
+        br(-1, 6).round(:ties_even).should eq BigRational.new(0)
+        br(0, 6).round(:ties_even).should eq BigRational.new(0)
+        br(1, 6).round(:ties_even).should eq BigRational.new(0)
+        br(3, 6).round(:ties_even).should eq BigRational.new(0)
+        br(5, 6).round(:ties_even).should eq BigRational.new(1)
+        br(6, 6).round(:ties_even).should eq BigRational.new(1)
+        br(9, 6).round(:ties_even).should eq BigRational.new(2)
+        br(15, 6).round(:ties_even).should eq BigRational.new(2)
+      end
+
+      it "ties_away" do
+        br(-15, 6).round(:ties_away).should eq BigRational.new(-3)
+        br(-9, 6).round(:ties_away).should eq BigRational.new(-2)
+        br(-6, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-5, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-3, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-1, 6).round(:ties_away).should eq BigRational.new(0)
+        br(0, 6).round(:ties_away).should eq BigRational.new(0)
+        br(1, 6).round(:ties_away).should eq BigRational.new(0)
+        br(3, 6).round(:ties_away).should eq BigRational.new(1)
+        br(5, 6).round(:ties_away).should eq BigRational.new(1)
+        br(6, 6).round(:ties_away).should eq BigRational.new(1)
+        br(9, 6).round(:ties_away).should eq BigRational.new(2)
+        br(15, 6).round(:ties_away).should eq BigRational.new(3)
+      end
+
+      it "default (=ties_even)" do
+        br(-15, 6).round.should eq BigRational.new(-2)
+        br(-9, 6).round.should eq BigRational.new(-2)
+        br(-6, 6).round.should eq BigRational.new(-1)
+        br(-5, 6).round.should eq BigRational.new(-1)
+        br(-3, 6).round.should eq BigRational.new(0)
+        br(-1, 6).round.should eq BigRational.new(0)
+        br(0, 6).round.should eq BigRational.new(0)
+        br(1, 6).round.should eq BigRational.new(0)
+        br(3, 6).round.should eq BigRational.new(0)
+        br(5, 6).round.should eq BigRational.new(1)
+        br(6, 6).round.should eq BigRational.new(1)
+        br(9, 6).round.should eq BigRational.new(2)
+        br(15, 6).round.should eq BigRational.new(2)
+      end
+    end
+  end
+
+  describe "#integer?" do
+    it { br(0, 1).integer?.should be_true }
+    it { br(1, 1).integer?.should be_true }
+    it { br(9, 3).integer?.should be_true }
+    it { br(-126, 7).integer?.should be_true }
+    it { br(5, 2).integer?.should be_false }
+    it { br(7, -3).integer?.should be_false }
   end
 
   it "#hash" do

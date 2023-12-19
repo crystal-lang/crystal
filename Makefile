@@ -18,6 +18,8 @@ all:
 ##   $ make std_spec
 ## Run compiler tests
 ##   $ make compiler_spec
+## Run generators (Unicode, SSL config, ...)
+##   $ make -B generate_data
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
@@ -137,6 +139,10 @@ llvm_ext: $(LLVM_EXT_OBJ)
 format: ## Format sources
 	./bin/crystal tool format$(if $(check), --check) src spec samples scripts
 
+.PHONY: generate_data
+generate_data: ## Run generator scripts for Unicode, SSL config, ...
+	$(MAKE) -B -f scripts/generate_data.mk
+
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(BINDIR)/"
@@ -176,6 +182,7 @@ install_docs: docs ## Install docs at DESTDIR
 
 	cp -av docs "$(DATADIR)/docs"
 	cp -av samples "$(DATADIR)/examples"
+	rm -rf "$(DATADIR)/examples/.gitignore"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR

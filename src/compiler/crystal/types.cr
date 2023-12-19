@@ -2628,11 +2628,7 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
       @entries.join(io, ", ") do |entry|
-        if Symbol.needs_quotes_for_named_argument?(entry.name)
-          entry.name.inspect(io)
-        else
-          io << entry.name
-        end
+        Symbol.quote_for_named_argument(io, entry.name)
         io << ": "
         entry_type = entry.type
         entry_type = entry_type.devirtualize unless codegen
@@ -2704,7 +2700,7 @@ module Crystal
     end
 
     delegate remove_typedef, pointer?, defs,
-      macros, reference_like?, parents, to: typedef
+      macros, reference_like?, parents, lookup_instance_var, to: typedef
 
     def remove_indirection
       self

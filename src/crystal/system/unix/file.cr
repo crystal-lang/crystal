@@ -119,7 +119,7 @@ module Crystal::System::File
     end
   end
 
-  def self.fchmod(path, fd, mode)
+  private def system_chmod(path, mode)
     if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
@@ -183,24 +183,24 @@ module Crystal::System::File
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
     timevals = uninitialized LibC::Timeval[2]
-    timevals[0] = to_timeval(atime)
-    timevals[1] = to_timeval(mtime)
+    timevals[0] = Crystal::System::Time.to_timeval(atime)
+    timevals[1] = Crystal::System::Time.to_timeval(mtime)
     ret = LibC.utimes(filename, timevals)
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
   end
 
-  def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
+  private def system_utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
     ret = {% if LibC.has_method?("futimens") %}
             timespecs = uninitialized LibC::Timespec[2]
-            timespecs[0] = to_timespec(atime)
-            timespecs[1] = to_timespec(mtime)
+            timespecs[0] = Crystal::System::Time.to_timespec(atime)
+            timespecs[1] = Crystal::System::Time.to_timespec(mtime)
             LibC.futimens(fd, timespecs)
           {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
-            timevals[0] = to_timeval(atime)
-            timevals[1] = to_timeval(mtime)
+            timevals[0] = Crystal::System::Time.to_timeval(atime)
+            timevals[1] = Crystal::System::Time.to_timeval(mtime)
             LibC.futimes(fd, timevals)
           {% else %}
             {% raise "Missing futimens & futimes" %}
@@ -209,20 +209,6 @@ module Crystal::System::File
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
-  end
-
-  private def self.to_timespec(time : ::Time)
-    t = uninitialized LibC::Timespec
-    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
-    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
-    t
-  end
-
-  private def self.to_timeval(time : ::Time)
-    t = uninitialized LibC::Timeval
-    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
-    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond // ::Time::NANOSECONDS_PER_MICROSECOND)
-    t
   end
 
   private def system_truncate(size) : Nil
@@ -253,7 +239,7 @@ module Crystal::System::File
         sleep 0.1
       end
     else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked")
+      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
     end
   end
 
@@ -265,7 +251,7 @@ module Crystal::System::File
       if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
         false
       else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno)
+        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
       end
     end
   end
@@ -283,7 +269,7 @@ module Crystal::System::File
       end
 
     if ret != 0
-      raise IO::Error.from_errno("Error syncing file")
+      raise IO::Error.from_errno("Error syncing file", target: self)
     end
   end
 end

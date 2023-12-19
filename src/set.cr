@@ -479,11 +479,30 @@ struct Set(T)
   def same?(other : Set) : Bool
     @hash.same?(other.@hash)
   end
+
+  # Rebuilds the set based on the current elements.
+  #
+  # When using mutable data types as elements, modifying an elements after it
+  # was inserted into the `Set` may lead to undefined behaviour. This method
+  # re-indexes the set using the current elements.
+  def rehash : Nil
+    @hash.rehash
+  end
 end
 
 module Enumerable
   # Returns a new `Set` with each unique element in the enumerable.
   def to_set : Set(T)
     Set.new(self)
+  end
+
+  # Returns a new `Set` with the unique results of running *block* against each
+  # element of the enumerable.
+  def to_set(&block : T -> U) : Set(U) forall U
+    set = Set(U).new
+    each do |elem|
+      set << yield elem
+    end
+    set
   end
 end

@@ -12,6 +12,10 @@ lib LibC
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
   FORMAT_MESSAGE_MAX_WIDTH_MASK  = 0x000000FF_u32
 
+  STD_ERROR_HANDLE = 0xFFFFFFF4_u32
+
+  fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
+                     lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
   fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
 
@@ -53,4 +57,14 @@ lib LibC
   fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
 
   fun GetBinaryTypeW(lpApplicationName : LPWSTR, lpBinaryType : DWORD*) : BOOL
+
+  struct FILE_BASIC_INFO
+    creationTime : LARGE_INTEGER
+    lastAccessTime : LARGE_INTEGER
+    lastWriteTime : LARGE_INTEGER
+    changeTime : LARGE_INTEGER
+    fileAttributes : DWORD
+  end
+
+  fun GetFileInformationByHandleEx(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 end

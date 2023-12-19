@@ -271,6 +271,24 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors if find macros but missing argument" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 0, expected 1)")
+      private macro foo(x)
+        1
+      end
+
+      foo
+      CRYSTAL
+  end
+
   describe "raise" do
     describe "inside macro" do
       describe "without node" do
@@ -1086,6 +1104,19 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
+      end
+
+      foo("")
+      CRYSTAL
+  end
+
   it "gets named arguments in double splat" do
     assert_type(<<-CRYSTAL) { named_tuple_of({"x": string, "y": bool}) }
       macro foo(**options)
@@ -1655,6 +1686,25 @@ describe "Semantic: macro" do
 
     method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
     method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
+  end
+
+  it "unpacks block parameters inside macros (#13742)" do
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      macro foo
+        {% [{1, 2}, {3, 4}].each { |(k, v)| k } %}
+      end
+
+      foo
+      foo
+      CRYSTAL
   end
 
   it "executes OpAssign (#9356)" do

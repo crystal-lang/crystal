@@ -183,6 +183,40 @@ describe IO do
       io.gets(chomp: false).should be_nil
     end
 
+    it "does gets with empty string (no peek)" do
+      io = SimpleIOMemory.new("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with empty string (with peek)" do
+      io = IO::Memory.new("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\n (no peek)" do
+      io = SimpleIOMemory.new("\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\n (with peek)" do
+      io = IO::Memory.new("\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\r\\n (no peek)" do
+      io = SimpleIOMemory.new("\r\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
+    it "does gets with \\r\\n (with peek)" do
+      io = IO::Memory.new("\r\n")
+      io.gets(chomp: true).should eq("")
+      io.gets(chomp: true).should be_nil
+    end
+
     it "does gets with big line" do
       big_line = "a" * 20_000
       io = SimpleIOMemory.new("#{big_line}\nworld\n")
@@ -244,6 +278,11 @@ describe IO do
       io.gets('w', 10_000).should eq("llo\nw")
       io.gets('z', 10_000).should eq("orld\n")
       io.gets('a', 3).should be_nil
+    end
+
+    it "doesn't underflow when limit is unsigned" do
+      io = IO::Memory.new("aїa")
+      io.gets('є', 2u32).should eq("aї")
     end
 
     it "raises if invoking gets with negative limit" do

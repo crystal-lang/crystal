@@ -50,7 +50,7 @@ struct StaticArray(T, N)
   # * `Number.static_array` is a convenient alternative for designating a
   #   specific numerical item type.
   macro [](*args)
-    %array = uninitialized StaticArray(typeof({{*args}}), {{args.size}})
+    %array = uninitialized StaticArray(typeof({{args.splat}}), {{args.size}})
     {% for arg, i in args %}
       %array.to_unsafe[{{i}}] = {{arg}}
     {% end %}

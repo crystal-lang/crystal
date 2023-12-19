@@ -167,11 +167,11 @@ struct Enum
 
   # Returns an unambiguous `String` representation of this enum member.
   # In the case of a single member value, this is the fully qualified name of
-  # the member (equvalent to `#to_s` with the enum name as prefix).
+  # the member (equivalent to `#to_s` with the enum name as prefix).
   # In the case of multiple members (for a flags enum), it's a call to `Enum.[]`
   # for recreating the same value.
   #
-  # If the value can't be represented fully by named members, the remainig value
+  # If the value can't be represented fully by named members, the remaining value
   # is appended.
   #
   # ```
@@ -247,7 +247,7 @@ struct Enum
     value.to_i32
   end
 
-  {% for name in %w(i8 i16 i32 i64 u8 u16 u32 u64 f32 f64) %}
+  {% for name in %w(i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64) %}
     {% prefix = name.starts_with?('i') ? "Int".id : (name.starts_with?('u') ? "UInt".id : "Float".id) %}
     {% type = "#{prefix}#{name[1..-1].id}".id %}
     # Returns the value of this enum member as a `{{type}}`
@@ -477,9 +477,10 @@ struct Enum
   # Returns the enum member that has the given name, or
   # raises `ArgumentError` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # the enum members names. Dashes (`-`) in *string* have the same meaning as an underscore (`_`).
+  # A member named "FortyTwo" or "FORTY_TWO"
   # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
-  # "FORTYTWO", "fortytwo".
+  # "Forty-Two", "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse("Red")    # => Color::Red
@@ -493,9 +494,10 @@ struct Enum
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # the enum members names. Dashes (`-`) in *string* have the same meaning as an underscore (`_`).
+  # A member named "FortyTwo", or "FORTY_TWO"
   # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
-  # "FORTYTWO", "fortytwo".
+  # "Forty-Two", "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse?("Red")    # => Color::Red
@@ -506,7 +508,7 @@ struct Enum
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
     {% begin %}
-      case string.camelcase.downcase
+      case string.gsub('-', '_').camelcase.downcase
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
       # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
