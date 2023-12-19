@@ -346,14 +346,19 @@ class Regex
       io << ')'
     end
 
-    # Prints the matched substring to *io*.
+    # Returns the matched substring.
     #
     # ```
     # "Crystal".match!(/yst/).to_s         # => "yst"
     # "Crystal".match!(/(y)(s)(?=t)/).to_s # => "ys"
     # ```
+    def to_s : String
+      self[0]
+    end
+
+    # Prints the matched substring to *io*.
     def to_s(io : IO) : Nil
-      io << self[0]
+      io << to_s
     end
 
     def pretty_print(pp) : Nil
