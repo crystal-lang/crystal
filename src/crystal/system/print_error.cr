@@ -4,7 +4,7 @@ module Crystal::System
   # IO to work (fibers, scheduler, event_loop).
   def self.print_error(message, *args)
     print_error(message, *args) do |bytes|
-      {% if flag?(:unix) %}
+      {% if flag?(:unix) || flag?(:wasm32) %}
         LibC.write 2, bytes, bytes.size
       {% elsif flag?(:win32) %}
         LibC._write 2, bytes, bytes.size
