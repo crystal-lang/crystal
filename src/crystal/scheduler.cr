@@ -135,8 +135,8 @@ class Crystal::Scheduler
   end
 
   private def fatal_resume_error(fiber, message)
-    Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
-    caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    Crystal::System.print_error "\nFATAL: %s: %s\n", message, fiber.to_s
+    caller.each { |line| Crystal::System.print_error "  from %s\n", line }
     exit 1
   end
 
@@ -259,7 +259,7 @@ class Crystal::Scheduler
       if env_workers && !env_workers.empty?
         workers = env_workers.to_i?
         if !workers || workers < 1
-          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: %s\n", env_workers
           exit 1
         end
 
