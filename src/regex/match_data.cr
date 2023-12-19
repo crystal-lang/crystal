@@ -336,10 +336,6 @@ class Regex
     end
 
     def inspect(io : IO) : Nil
-      to_s(io)
-    end
-
-    def to_s(io : IO) : Nil
       name_table = @regex.name_table
 
       io << "Regex::MatchData("
@@ -348,6 +344,16 @@ class Regex
         self[i]?.inspect(io)
       end
       io << ')'
+    end
+
+    # Prints the matched substring to *io*.
+    #
+    # ```
+    # "Crystal".match!(/yst/).to_s         # => "yst"
+    # "Crystal".match!(/(y)(s)(?=t)/).to_s # => "ys"
+    # ```
+    def to_s(io : IO) : Nil
+      io << self[0]
     end
 
     def pretty_print(pp) : Nil
