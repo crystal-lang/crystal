@@ -116,7 +116,7 @@ def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = 
       puts ENV["PWD"]
       puts `ls`
       puts "#{source_file}: #{File.exists?(source_file)}"
-      status = Process.run "#{compiler} i #{source_file}", args: runtime_args, output: output, error: error
+      status = Process.run "#{compiler} i #{source_file}", args: runtime_args, output: output, error: error, chdir: ENV["PWD"]
     {% else %}
       status = Process.run executable_file, args: runtime_args, output: output, error: error
     {% end %}
