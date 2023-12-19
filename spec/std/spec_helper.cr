@@ -112,7 +112,7 @@ def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = 
     output, error = IO::Memory.new, IO::Memory.new
     status = 0
     {% if flag?(:interpreted) %}
-      compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
+      compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "./bin/crystal"
       puts ENV["PWD"]
       puts `ls`
       puts "#{source_file}: #{File.exists?(source_file)}"
