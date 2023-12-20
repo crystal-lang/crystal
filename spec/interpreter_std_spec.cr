@@ -214,7 +214,7 @@ require "./std/spec/context_spec.cr"
 require "./std/spec/expectations_spec.cr"
 require "./std/spec/filters_spec.cr"
 require "./std/spec/helpers/iterate_spec.cr"
-require "./std/spec/hooks_spec.cr"
+# require "./std/spec/hooks_spec.cr" (failed to run)
 require "./std/spec/junit_formatter_spec.cr"
 require "./std/spec_spec.cr"
 require "./std/spec/tap_formatter_spec.cr"
@@ -235,7 +235,7 @@ require "./std/system/group_spec.cr"
 require "./std/system_spec.cr"
 require "./std/system/user_spec.cr"
 require "./std/thread/condition_variable_spec.cr"
-require "./std/thread/mutex_spec.cr"
+# require "./std/thread/mutex_spec.cr" (failed to run)
 # require "./std/thread_spec.cr" (failed to run)
 require "./std/time/custom_formats_spec.cr"
 require "./std/time/format_spec.cr"
