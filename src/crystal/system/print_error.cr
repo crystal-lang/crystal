@@ -13,7 +13,7 @@ module Crystal::System
   end
 
   # Minimal drop-in replacement for a C `printf` function. Yields successive
-  # `Bytes` to the block, which should do the actual printing.
+  # non-empty `Bytes` to the block, which should do the actual printing.
   #
   # *format* only supports the `%(l|ll)?[dpsux]` format specifiers; more should
   # be added only when we need them or an external library passes its own format
@@ -37,7 +37,9 @@ module Crystal::System
       while next_percent < finish && !(next_percent.value === '%')
         next_percent += 1
       end
-      yield Slice.new(ptr, next_percent - ptr)
+      unless next_percent == ptr
+        yield Slice.new(ptr, next_percent - ptr)
+      end
 
       fmt_ptr = next_percent + 1
       width = 0
