@@ -207,7 +207,7 @@ class File < IO::FileDescriptor
 
   # Returns whether the file given by *path* exists.
   #
-  # Symbolic links are dereferenced, posibly recursively. Returns `false` if a
+  # Symbolic links are dereferenced, possibly recursively. Returns `false` if a
   # symbolic link refers to a non-existent file.
   #
   # ```

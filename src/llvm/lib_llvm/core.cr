@@ -160,6 +160,11 @@ lib LibLLVM
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, vals : ValueRef*, count : UInt) : ValueRef
 
+  {% unless LibLLVM::IS_LT_180 %}
+    fun create_operand_bundle = LLVMCreateOperandBundle(tag : Char*, tag_len : SizeT, args : ValueRef*, num_args : UInt) : OperandBundleRef
+    fun dispose_operand_bundle = LLVMDisposeOperandBundle(bundle : OperandBundleRef)
+  {% end %}
+
   fun get_basic_block_name = LLVMGetBasicBlockName(bb : BasicBlockRef) : Char*
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
@@ -197,6 +202,9 @@ lib LibLLVM
   fun build_cond = LLVMBuildCondBr(BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef) : ValueRef
   fun build_switch = LLVMBuildSwitch(BuilderRef, v : ValueRef, else : BasicBlockRef, num_cases : UInt) : ValueRef
   fun build_invoke2 = LLVMBuildInvoke2(BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, then : BasicBlockRef, catch : BasicBlockRef, name : Char*) : ValueRef
+  {% unless LibLLVM::IS_LT_180 %}
+    fun build_invoke_with_operand_bundles = LLVMBuildInvokeWithOperandBundles(BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, then : BasicBlockRef, catch : BasicBlockRef, bundles : OperandBundleRef*, num_bundles : UInt, name : Char*) : ValueRef
+  {% end %}
   fun build_unreachable = LLVMBuildUnreachable(BuilderRef) : ValueRef
 
   fun build_landing_pad = LLVMBuildLandingPad(b : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt, name : Char*) : ValueRef
@@ -260,6 +268,9 @@ lib LibLLVM
 
   fun build_phi = LLVMBuildPhi(BuilderRef, ty : TypeRef, name : Char*) : ValueRef
   fun build_call2 = LLVMBuildCall2(BuilderRef, TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, name : Char*) : ValueRef
+  {% unless LibLLVM::IS_LT_180 %}
+    fun build_call_with_operand_bundles = LLVMBuildCallWithOperandBundles(BuilderRef, TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, bundles : OperandBundleRef*, num_bundles : UInt, name : Char*) : ValueRef
+  {% end %}
   fun build_select = LLVMBuildSelect(BuilderRef, if : ValueRef, then : ValueRef, else : ValueRef, name : Char*) : ValueRef
   fun build_va_arg = LLVMBuildVAArg(BuilderRef, list : ValueRef, ty : TypeRef, name : Char*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(BuilderRef, agg_val : ValueRef, index : UInt, name : Char*) : ValueRef

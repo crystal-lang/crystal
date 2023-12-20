@@ -290,7 +290,7 @@ class Crystal::Doc::Generator
   end
 
   def summary(context, string)
-    line = fetch_doc_lines(string).lines.first? || ""
+    line = fetch_doc_lines(string.strip).lines.first? || ""
 
     dot_index = line =~ /\.($|\s)/
     if dot_index

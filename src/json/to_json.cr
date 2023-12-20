@@ -98,6 +98,14 @@ class Array
   end
 end
 
+struct StaticArray
+  def to_json(json : JSON::Builder) : Nil
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
 class Deque
   def to_json(json : JSON::Builder) : Nil
     json.array do

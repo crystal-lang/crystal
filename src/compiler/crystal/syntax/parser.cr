@@ -4584,7 +4584,7 @@ module Crystal
       when Splat
         push_block_vars(node.exp)
       else
-        raise "BUG: unxpected block var: #{node} (#{node.class})"
+        raise "BUG: unexpected block var: #{node} (#{node.class})"
       end
     end
 
