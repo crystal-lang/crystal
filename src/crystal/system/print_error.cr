@@ -56,7 +56,7 @@ module Crystal::System
 
       case fmt_ptr.value
       when 's'
-        read_arg(Union(String, Pointer(UInt8))) do |arg|
+        read_arg(::Union(String, Pointer(UInt8))) do |arg|
           yield to_string_slice(arg)
         end
       when 'd'
