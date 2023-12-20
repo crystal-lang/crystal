@@ -522,6 +522,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     when @program.experimental_annotation
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
+    when @program.constructor_annotation
+      # ditto DeprecatedAnnotation
+      ConstructorAnnotation.from(ann)
     end
   end
 

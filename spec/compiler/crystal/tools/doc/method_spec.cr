@@ -264,4 +264,52 @@ describe Doc::Method do
       method.doc_copied_from.should be_nil
     end
   end
+
+  describe "#constructor?" do
+    it "returns false for instance methods" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."]
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo"
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.constructor?.should be_false
+    end
+
+    it "returns true if the class method name is 'new'" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."]
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "new"
+      doc_method = Doc::Method.new generator, doc_type, a_def, true
+      doc_method.constructor?.should be_true
+    end
+
+    context "with Constructor annotation" do
+      it "returns true if present" do
+        program = Program.new
+        generator = Doc::Generator.new program, ["."]
+        doc_type = Doc::Type.new generator, program
+
+        a_def = Def.new "some_method"
+        a_def.add_annotation(program.types["Constructor"].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new("Constructor")))
+
+        doc_method = Doc::Method.new generator, doc_type, a_def, true
+        doc_method.constructor?.should be_true
+      end
+
+      it "returns false if set to false" do
+        program = Program.new
+        generator = Doc::Generator.new program, ["."]
+        doc_type = Doc::Type.new generator, program
+
+        a_def = Def.new "some_method"
+        a_def.add_annotation(program.types["Constructor"].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new("Constructor"), [false.bool] of ASTNode))
+
+        doc_method = Doc::Method.new generator, doc_type, a_def, true
+        doc_method.constructor?.should be_false
+      end
+    end
+  end
 end
