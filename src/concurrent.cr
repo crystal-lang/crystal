@@ -59,10 +59,8 @@ end
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
-  if same_thread
-    fiber.@current_thread.set(Thread.current)
-  end
-  Crystal::Scheduler.enqueue fiber
+  {% if flag?(:preview_mt) %} fiber.set_current_thread if same_thread {% end %}
+  fiber.enqueue
   fiber
 end
 
