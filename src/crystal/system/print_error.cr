@@ -12,16 +12,18 @@ module Crystal::System
     end
   end
 
-  # Minimal drop-in replacement for a C `printf` function. Currently the only
-  # supported format specifiers are `%(l|ll)?[dpsux]`; more should be added only
-  # when we need them or an external library passes its own format string here.
-  # Since `print_error` may be called under low memory conditions or even with
-  # a corrupted heap, this implementation should be as low-level as possible,
-  # avoiding memory allocations wherever possible.
+  # Minimal drop-in replacement for a C `printf` function. Yields successive
+  # `Bytes` to the block, which should do the actual printing.
   #
-  # Yields successive `Bytes` to the block, which should do the actual printing.
+  # *format* only supports the `%(l|ll)?[dpsux]` format specifiers; more should
+  # be added only when we need them or an external library passes its own format
+  # string to here. *format* must also be null-terminated.
   #
-  # Note that C's `printf` is incompatible with Crystal's `sprintf`, because the
+  # Since this method may be called under low memory conditions or even with a
+  # corrupted heap, its implementation should be as low-level as possible,
+  # avoiding memory allocations.
+  #
+  # NOTE: C's `printf` is incompatible with Crystal's `sprintf`, because the
   # latter does not support argument width specifiers nor `%p`.
   def self.print_error(format, *args, &)
     ptr, format_len = to_unsafe_string(format)
