@@ -174,6 +174,7 @@ class Fiber
   end
 
   # Returns the current fiber.
+  @[Constructor(false)]
   def self.current : Fiber
     Crystal::Scheduler.current_fiber
   end

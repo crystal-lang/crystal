@@ -64,3 +64,23 @@ end
 # ```
 annotation Experimental
 end
+
+# This annotation allows overriding the constructor status a class method when generating the API documentation.
+#
+# ```
+# class Foo
+#   @[Constructor(false)]
+#   # Force this method to be displayed under "Class Methods" instead of "Constructors" even though its return type is `self`.
+#   def self.non_constructor : self
+#     new
+#   end
+#
+#   @[Constructor]
+#   # Force this method to be displayed under "Constructors" instead of "Class Methods" even though its return type is _not_ `self`.
+#   def self.constructor
+#     new
+#   end
+# end
+# ```
+annotation Constructor
+end

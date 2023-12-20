@@ -139,6 +139,10 @@ class Crystal::Doc::Method
     return false unless @class_method
     return true if name == "new"
 
+    if constructor_ann = @def.annotation(@generator.program.constructor_annotation)
+      return ConstructorAnnotation.from(constructor_ann).constructor?
+    end
+
     return_type = self.return_type
     if return_type.is_a?(Union)
       if return_type.types.size == 2
