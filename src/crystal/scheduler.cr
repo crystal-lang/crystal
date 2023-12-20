@@ -23,19 +23,20 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
-    thread = Thread.current
-    scheduler = thread.scheduler
-
     {% if flag?(:preview_mt) %}
-      th = fiber.@current_thread.lazy_get || scheduler.find_target_thread
+      th = fiber.@current_thread.lazy_get
 
-      if th == thread
-        scheduler.enqueue(fiber)
+      if th.nil?
+        th = Thread.current.scheduler.find_target_thread
+      end
+
+      if th == Thread.current
+        Thread.current.scheduler.enqueue(fiber)
       else
         th.scheduler.send_fiber(fiber)
       end
     {% else %}
-      scheduler.enqueue(fiber)
+      Thread.current.scheduler.enqueue(fiber)
     {% end %}
   end
 
@@ -59,10 +60,7 @@ class Crystal::Scheduler
   end
 
   def self.yield : Nil
-    # TODO: Fiber switching and libevent for wasm32
-    {% unless flag?(:wasm32) %}
-      Thread.current.scheduler.sleep(0.seconds)
-    {% end %}
+    Thread.current.scheduler.yield
   end
 
   def self.yield(fiber : Fiber) : Nil
@@ -171,7 +169,9 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        resume(runnable) unless runnable == @current
+        unless runnable == @current
+          runnable.resume
+        end
         break
       else
         @event_loop.run_once
@@ -186,6 +186,13 @@ class Crystal::Scheduler
   protected def sleep(time : Time::Span) : Nil
     @current.resume_event.add(time)
     reschedule
+  end
+
+  protected def yield : Nil
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      sleep(0.seconds)
+    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil
@@ -209,11 +216,10 @@ class Crystal::Scheduler
       fiber_channel = self.fiber_channel
       loop do
         @lock.lock
-
         if runnable = @runnables.shift?
           @runnables << Fiber.current
           @lock.unlock
-          resume(runnable)
+          runnable.resume
         else
           @sleeping = true
           @lock.unlock
@@ -223,7 +229,7 @@ class Crystal::Scheduler
           @sleeping = false
           @runnables << Fiber.current
           @lock.unlock
-          resume(fiber)
+          fiber.resume
         end
       end
     end
