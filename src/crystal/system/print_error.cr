@@ -54,48 +54,43 @@ module Crystal::System
 
       case fmt_ptr.value
       when 's'
-        if (arg = args[arg_index].as?(String | UInt8*)).nil?
-          yield "(???)".to_slice
-        else
+        read_arg(Union(String, Pointer(UInt8))) do |arg|
           yield to_string_slice(arg)
         end
-        arg_index += 1
       when 'd'
-        if (arg = args[arg_index].as?(Int::Primitive)).nil?
-          yield "(???)".to_slice
-        else
+        read_arg(Int::Primitive) do |arg|
           to_int_slice(arg, 10, true, width) { |bytes| yield bytes }
         end
-        arg_index += 1
       when 'u'
-        if (arg = args[arg_index].as?(Int::Primitive)).nil?
-          yield "(???)".to_slice
-        else
+        read_arg(Int::Primitive) do |arg|
           to_int_slice(arg, 10, false, width) { |bytes| yield bytes }
         end
-        arg_index += 1
       when 'x'
-        if (arg = args[arg_index].as?(Int::Primitive)).nil?
-          yield "(???)".to_slice
-        else
+        read_arg(Int::Primitive) do |arg|
           to_int_slice(arg, 16, false, width) { |bytes| yield bytes }
         end
-        arg_index += 1
       when 'p'
-        if (arg = args[arg_index].as?(Void*)).nil?
-          yield "(???)".to_slice
-        else
+        read_arg(Pointer(Void)) do |arg|
           # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms
           yield "0x".to_slice
           to_int_slice(arg.address, 16, false, 2) { |bytes| yield bytes }
         end
-        arg_index += 1
       else
         yield Slice.new(next_percent, fmt_ptr + 1 - next_percent)
       end
 
       ptr = fmt_ptr + 1
     end
+  end
+
+  private macro read_arg(type, &block)
+    {{ block.args[0] }} = args[arg_index].as?({{ type }})
+    if !{{ block.args[0] }}.nil?
+      {{ block.body }}
+    else
+      yield "(???)".to_slice
+    end
+    arg_index += 1
   end
 
   private def self.to_string_slice(str)
