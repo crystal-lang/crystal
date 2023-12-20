@@ -29,6 +29,8 @@ describe "Signal" do
         sleep 0.1
       end
       ran.should be_true
+    ensure
+      Signal::USR1.reset
     end
 
     it "ignores a signal" do
@@ -52,6 +54,8 @@ describe "Signal" do
       sleep 0.1
       ran_first.should be_true
       ran_second.should be_true
+    ensure
+      Signal::USR1.reset
     end
 
     it "CHLD.reset sets default Crystal child handler" do
