@@ -621,10 +621,10 @@ module Float::Printer::RyuPrintf
   # * https://github.com/ulfjack/ryu/pull/185/files
   # * https://github.com/microsoft/STL/blob/a8888806c6960f1687590ffd4244794c753aa819/stl/inc/charconv#L2324
   # * https://github.com/llvm/llvm-project/blob/701f64790520790f75b1f948a752472d421ddaa3/libcxx/src/include/to_chars_floating_point.h#L836
-  def self.d2gen_buffered_n(d : Float64, precision : UInt32, result : UInt8*)
+  def self.d2gen_buffered_n(d : Float64, precision : UInt32, result : UInt8*, alternative : Bool = false)
     if d == 0
       result[0] = '0'.ord.to_u8!
-      return 1
+      return {1, 0}
     end
 
     precision = precision.clamp(1_u32, 1000000_u32)
@@ -650,19 +650,21 @@ module Float::Printer::RyuPrintf
 
     # Write into the local buffer.
     if use_fixed_notation
-      effective_precision = {precision &- (sci_exp_x &+ 1), MAX_FIXED_PRECISION}.min
-      len = d2fixed_buffered_n(d, effective_precision, result)
+      effective_precision = precision &- 1 &- sci_exp_x
+      max_precision = MAX_FIXED_PRECISION
+      len = d2fixed_buffered_n(d, {effective_precision, max_precision}.min, result)
       significand_last = result + len
     else
-      effective_precision = {precision &- 1, MAX_SCI_PRECISION}.min
-      len = d2exp_buffered_n(d, effective_precision, result)
+      effective_precision = precision &- 1
+      max_precision = MAX_SCI_PRECISION
+      len = d2exp_buffered_n(d, {effective_precision, max_precision}.min, result)
       exponent_first = result + Slice.new(result, len).fast_index('e'.ord.to_u8!, 0).not_nil!
       significand_last = exponent_first
       exponent_last = result + len
     end
 
     # If we printed a decimal point followed by digits, perform zero-trimming.
-    if effective_precision > 0
+    if effective_precision > 0 && !alternative
       while significand_last[-1] === '0' # will stop at '.' or a nonzero digit
         significand_last -= 1
       end
@@ -677,7 +679,8 @@ module Float::Printer::RyuPrintf
       exponent_first.move_to(significand_last, exponent_last - exponent_first)
     end
 
-    (significand_last - result + (exponent_last - exponent_first)).to_i32!
+    extra_zeros = effective_precision > max_precision ? effective_precision &- max_precision : 0_u32
+    {(significand_last - result + (exponent_last - exponent_first)).to_i32!, extra_zeros.to_i32!}
   end
 
   def self.d2fixed(d : Float64, precision : Int)
@@ -695,8 +698,8 @@ module Float::Printer::RyuPrintf
   end
 
   def self.d2gen(d : Float64, precision : Int)
-    String.new(2000) do |buffer|
-      len = d2gen_buffered_n(d, precision.to_u32, buffer)
+    String.new(773) do |buffer|
+      len, _ = d2gen_buffered_n(d, precision.to_u32, buffer)
       {len, len}
     end
   end
