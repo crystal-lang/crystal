@@ -31,7 +31,7 @@ describe "Crystal::System" do
     end
 
     it "supports %s" do
-      print_error_to_s("%s,%s", "abc\0def", "ghi".to_unsafe).should eq("abc\0def,ghi")
+      print_error_to_s("%s,%s,%s", "abc\0def", "ghi".to_unsafe, Pointer(UInt8).null).should eq("abc\0def,ghi,(null)")
     end
 
     it "supports %l width" do

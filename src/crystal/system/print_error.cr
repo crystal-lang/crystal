@@ -26,7 +26,9 @@ module Crystal::System
   # NOTE: C's `printf` is incompatible with Crystal's `sprintf`, because the
   # latter does not support argument width specifiers nor `%p`.
   def self.print_error(format, *args, &)
-    ptr, format_len = to_unsafe_string(format)
+    format = to_string_slice(format)
+    format_len = format.size
+    ptr = format.to_unsafe
     finish = ptr + format_len
     arg_index = 0
 
@@ -55,28 +57,28 @@ module Crystal::System
         if (arg = args[arg_index].as?(String | UInt8*)).nil?
           yield "(???)".to_slice
         else
-          yield Slice.new(*to_unsafe_string(arg))
+          yield to_string_slice(arg)
         end
         arg_index += 1
       when 'd'
         if (arg = args[arg_index].as?(Int::Primitive)).nil?
           yield "(???)".to_slice
         else
-          to_unsafe_int(arg, 10, true, width) { |bytes| yield bytes }
+          to_int_slice(arg, 10, true, width) { |bytes| yield bytes }
         end
         arg_index += 1
       when 'u'
         if (arg = args[arg_index].as?(Int::Primitive)).nil?
           yield "(???)".to_slice
         else
-          to_unsafe_int(arg, 10, false, width) { |bytes| yield bytes }
+          to_int_slice(arg, 10, false, width) { |bytes| yield bytes }
         end
         arg_index += 1
       when 'x'
         if (arg = args[arg_index].as?(Int::Primitive)).nil?
           yield "(???)".to_slice
         else
-          to_unsafe_int(arg, 16, false, width) { |bytes| yield bytes }
+          to_int_slice(arg, 16, false, width) { |bytes| yield bytes }
         end
         arg_index += 1
       when 'p'
@@ -85,7 +87,7 @@ module Crystal::System
         else
           # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms
           yield "0x".to_slice
-          to_unsafe_int(arg.address, 16, false, 2) { |bytes| yield bytes }
+          to_int_slice(arg.address, 16, false, 2) { |bytes| yield bytes }
         end
         arg_index += 1
       else
@@ -96,17 +98,20 @@ module Crystal::System
     end
   end
 
-  private def self.to_unsafe_string(str)
+  private def self.to_string_slice(str)
     if str.is_a?(UInt8*)
-      {str, LibC.strlen(str)}
+      if str.null?
+        "(null)".to_slice
+      else
+        Slice.new(str, LibC.strlen(str))
+      end
     else
-      str = str.to_s
-      {str.to_unsafe, str.bytesize}
+      str.to_s.to_slice
     end
   end
 
   # simplified version of `Int#internal_to_s`
-  private def self.to_unsafe_int(num, base, signed, width, &)
+  private def self.to_int_slice(num, base, signed, width, &)
     if num == 0
       yield "0".to_slice
       return
