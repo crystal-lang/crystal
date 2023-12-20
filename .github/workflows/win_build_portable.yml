@@ -135,7 +135,7 @@ jobs:
           cp README.md crystal/
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
           path: crystal
