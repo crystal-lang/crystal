@@ -108,7 +108,7 @@ def compile_source(source, flags = %w(), file = __FILE__, &)
 end
 
 def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = __FILE__)
-  status, output, error =0, IO::Memory.new, IO::Memory.new
+  status, output, error = Process::Status.new(0), IO::Memory.new, IO::Memory.new
   {% if flag?(:interpreted) %}
       compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
       args = ["i", source_file, "--", *runtime_args]
