@@ -721,7 +721,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  @[Constructor]
+  # TODO: @[Constructor]
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
     file = new filename, mode, perm, encoding, invalid
     begin

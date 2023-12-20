@@ -106,7 +106,7 @@ class String
   #
   # Invalid values are encoded using the unicode replacement char with
   # codepoint `0xfffd`.
-  @[Constructor]
+  # TODO: @[Constructor]
   def self.from_utf16(pointer : Pointer(UInt16)) : {String, Pointer(UInt16)}
     bytesize = 0
     size = 0
