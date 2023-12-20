@@ -36,6 +36,23 @@ describe "Signal" do
       Process.signal Signal::USR2, Process.pid
     end
 
+    it "allows chaining of signals" do
+      ran_first = false
+      ran_second = false
+
+      Signal::USR1.trap { ran_first = true }
+      existing = Signal::USR1.trap_handler?
+
+      Signal::USR1.trap do |signal|
+        existing.try &.call(signal)
+        ran_second = true
+      end
+
+      Process.signal Signal::USR1, Process.pid
+      ran_first.should be_true
+      ran_second.should be_true
+    end
+
     it "CHLD.reset sets default Crystal child handler" do
       Signal::CHLD.reset
       child = Process.new("true", shell: true)

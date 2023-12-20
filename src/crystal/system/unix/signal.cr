@@ -30,6 +30,10 @@ module Crystal::System::Signal
     end
   end
 
+  def self.trap_handler?(signal)
+    @@mutex.synchronize { @@handlers[signal]? }
+  end
+
   def self.reset(signal) : Nil
     set(signal, LibC::SIG_DFL)
   end

@@ -3,6 +3,10 @@ module Crystal::System::Signal
     raise NotImplementedError.new("Crystal::System::Signal.trap")
   end
 
+  def self.trap_handler?(signal)
+    nil
+  end
+
   def self.reset(signal) : Nil
     raise NotImplementedError.new("Crystal::System::Signal.reset")
   end
