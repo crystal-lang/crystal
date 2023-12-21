@@ -1,7 +1,7 @@
 # a `ReferenceStorage(T)` provides the minimum storage for the instance data of
 # an object of type `T`. The compiler guarantees that
-# `sizeof(ReferenceStorage(T)) == instance_sizeof(T)` always holds, and that
-# `ReferenceStorage` has the same alignment as `T`'s instance data. This means
+# `sizeof(ReferenceStorage(T)) == instance_sizeof(T)` and
+# `alignof(ReferenceStorage(T)) == instance_alignof(T)` always hold, which means
 # `Pointer(ReferenceStorage(T))` and `T` are binary-compatible.
 #
 # `T` must be a non-union reference type.
