@@ -211,7 +211,7 @@ module Crystal
       tally = @used_def_locations[a_def.location]
       @tallies[a_def] = tally
 
-      check_def(previous) if previous && a_def.calls_previous_def? if tally == 0
+      check_def(previous) if previous && a_def.calls_previous_def? && tally == 0
     end
 
     private def interested_in(location)
