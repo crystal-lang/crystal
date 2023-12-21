@@ -48,7 +48,7 @@ end
 # `@[Link(dll: "gc.dll")]` will copy `gc.dll` to any built program. The DLL name
 # must use `.dll` as its file extension and cannot contain any directory
 # separators. The actual DLL is searched among `CRYSTAL_LIBRARY_PATH`, the
-# compiler itself's directory, and `PATH` in that order; a warning is printed if
+# compiler's own directory, and `PATH` in that order; a warning is printed if
 # the DLL isn't found, although it might still run correctly if the DLLs are
 # available in other DLL search paths on the system.
 #
