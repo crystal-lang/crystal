@@ -2292,6 +2292,8 @@ module Crystal
       case node.name
       when "allocate"
         visit_allocate node
+      when "pre_initialize"
+        visit_pre_initialize node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
@@ -2381,6 +2383,42 @@ module Crystal
             # If the type is not virtual then we know for sure that the type
             # can't be instantiated, and we can produce a compile-time error.
             node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+          end
+        end
+
+        node.type = instance_type
+      end
+    end
+
+    def visit_pre_initialize(node)
+      instance_type = scope.instance_type
+
+      case instance_type
+      when GenericClassType
+        node.raise "Can't pre-initialize instance of generic class #{instance_type} without specifying its type vars"
+      when UnionType
+        node.raise "Can't pre-initialize instance of a union type"
+      else
+        if instance_type.abstract?
+          if instance_type.virtual?
+            # This is the same as `.initialize`
+            base_type = instance_type.devirtualize
+
+            extra = Call.new(
+              nil,
+              "raise",
+              StringLiteral.new("Can't pre-initialize abstract class #{base_type}"),
+              global: true).at(node)
+            extra.accept self
+
+            # This `extra` will replace the Primitive node in CleanupTransformer later on.
+            node.extra = extra
+            node.type = @program.no_return
+            return
+          else
+            # If the type is not virtual then we know for sure that the type
+            # can't be instantiated, and we can produce a compile-time error.
+            node.raise "Can't pre-initialize abstract class #{instance_type}"
           end
         end
 
