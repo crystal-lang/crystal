@@ -1,4 +1,7 @@
 @[Link("pcre2-8")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "pcre2-8.dll")]
+{% end %}
 lib LibPCRE2
   alias Int = LibC::Int
 
