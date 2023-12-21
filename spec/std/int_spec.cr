@@ -376,6 +376,7 @@ describe "Int" do
       it_converts_to_s 62, "10", base: 62
       it_converts_to_s 97, "1z", base: 62
       it_converts_to_s 3843, "ZZ", base: 62
+      it_converts_to_s Int128::MIN, "-1#{"0" * 127}", base: 2
 
       it "raises on base 1" do
         expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }
