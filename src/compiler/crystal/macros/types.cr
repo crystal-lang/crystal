@@ -54,6 +54,8 @@ module Crystal
       @macro_types["PointerOf"] = NonGenericMacroType.new self, "PointerOf", unary_expression
       @macro_types["SizeOf"] = NonGenericMacroType.new self, "SizeOf", unary_expression
       @macro_types["InstanceSizeOf"] = NonGenericMacroType.new self, "InstanceSizeOf", unary_expression
+      @macro_types["AlignOf"] = NonGenericMacroType.new self, "AlignOf", unary_expression
+      @macro_types["InstanceAlignOf"] = NonGenericMacroType.new self, "InstanceAlignOf", unary_expression
       @macro_types["Out"] = NonGenericMacroType.new self, "Out", unary_expression
       @macro_types["Splat"] = NonGenericMacroType.new self, "Splat", unary_expression
       @macro_types["DoubleSplat"] = NonGenericMacroType.new self, "DoubleSplat", unary_expression

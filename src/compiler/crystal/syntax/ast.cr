@@ -1202,6 +1202,18 @@ module Crystal
     end
   end
 
+  class AlignOf < UnaryExpression
+    def clone_without_location
+      AlignOf.new(@exp.clone)
+    end
+  end
+
+  class InstanceAlignOf < UnaryExpression
+    def clone_without_location
+      InstanceAlignOf.new(@exp.clone)
+    end
+  end
+
   class Out < UnaryExpression
     def clone_without_location
       Out.new(@exp.clone)

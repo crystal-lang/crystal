@@ -3959,6 +3959,14 @@ module Crystal
       visit Call.new(nil, "instance_sizeof", node.exp)
     end
 
+    def visit(node : AlignOf)
+      visit Call.new(nil, "alignof", node.exp)
+    end
+
+    def visit(node : InstanceAlignOf)
+      visit Call.new(nil, "instance_alignof", node.exp)
+    end
+
     def visit(node : OffsetOf)
       visit Call.new(nil, "offsetof", [node.offsetof_type, node.offset])
     end
