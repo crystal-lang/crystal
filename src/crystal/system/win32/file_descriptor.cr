@@ -280,7 +280,8 @@ end
 
 private module ConsoleUtils
   # N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
-  private BUFFER_SIZE = 64
+  # NOTE: For very large buffers, `ReadConsoleW` may fail.
+  private BUFFER_SIZE = 10000
   @@utf8_buffer = Slice(UInt8).new(3 * BUFFER_SIZE)
 
   # `@@buffer` points to part of `@@utf8_buffer`.
