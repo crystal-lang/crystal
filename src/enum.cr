@@ -167,11 +167,11 @@ struct Enum
 
   # Returns an unambiguous `String` representation of this enum member.
   # In the case of a single member value, this is the fully qualified name of
-  # the member (equvalent to `#to_s` with the enum name as prefix).
+  # the member (equivalent to `#to_s` with the enum name as prefix).
   # In the case of multiple members (for a flags enum), it's a call to `Enum.[]`
   # for recreating the same value.
   #
-  # If the value can't be represented fully by named members, the remainig value
+  # If the value can't be represented fully by named members, the remaining value
   # is appended.
   #
   # ```

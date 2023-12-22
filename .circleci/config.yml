@@ -1,6 +1,10 @@
 version: 2.1
 
 parameters:
+  distribution-scripts-repo:
+    description: "Git url https://github.com/crystal-lang/distribution-scripts/"
+    type: string
+    default: "https://github.com/crystal-lang/distribution-scripts.git"
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
@@ -142,7 +146,7 @@ jobs:
     steps:
       # checkout specific distribution-scripts version to perform releases and nightly
       - run: |
-          git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
+          git clone << pipeline.parameters.distribution-scripts-repo >> ~/distribution-scripts
           cd ~/distribution-scripts
           git checkout << pipeline.parameters.distribution-scripts-version >>
       # persist relevant information for build process

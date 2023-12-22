@@ -315,8 +315,44 @@ class Crystal::Repl::Context
     0
   end
 
+  def inner_alignof_type(node : ASTNode) : Int32
+    inner_alignof_type(node.type?)
+  end
+
+  def inner_alignof_type(type : Type) : Int32
+    @program.align_of(type.sizeof_type).to_i32
+  end
+
+  def inner_alignof_type(type : Nil) : Int32
+    0
+  end
+
   def aligned_instance_sizeof_type(type : Type) : Int32
-    align(@program.instance_size_of(type.sizeof_type).to_i32)
+    align(inner_instance_sizeof_type(type))
+  end
+
+  def inner_instance_sizeof_type(node : ASTNode) : Int32
+    inner_instance_sizeof_type(node.type?)
+  end
+
+  def inner_instance_sizeof_type(type : Type) : Int32
+    @program.instance_size_of(type.sizeof_type).to_i32
+  end
+
+  def inner_instance_sizeof_type(type : Nil) : Int32
+    0
+  end
+
+  def inner_instance_alignof_type(node : ASTNode) : Int32
+    inner_instance_alignof_type(node.type?)
+  end
+
+  def inner_instance_alignof_type(type : Type) : Int32
+    @program.instance_align_of(type.sizeof_type).to_i32
+  end
+
+  def inner_instance_alignof_type(type : Nil) : Int32
+    0
   end
 
   def offset_of(type : Type, index : Int32) : Int32

@@ -1562,7 +1562,7 @@ module Crystal
 
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
-        wrote_newline = format_def_arg(wrote_newline, has_more) do
+        wrote_newline = format_def_arg(wrote_newline, has_more, true) do
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
@@ -1577,7 +1577,7 @@ module Crystal
       end
 
       if double_splat
-        wrote_newline = format_def_arg(wrote_newline, block_arg || yields) do
+        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, true) do
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -1645,13 +1645,13 @@ module Crystal
       end
     end
 
-    def format_def_arg(wrote_newline, has_more, &)
+    def format_def_arg(wrote_newline, has_more, write_trailing_comma = false, &)
       write_indent if wrote_newline
 
       yield
 
       # Write "," before skipping spaces to prevent inserting comment between argument and comma.
-      write "," if has_more
+      write "," if has_more || (write_trailing_comma && flag?("def_trailing_comma"))
 
       just_wrote_newline = skip_space
       if @token.type.newline?
@@ -3957,6 +3957,14 @@ module Crystal
 
     def visit(node : InstanceSizeOf)
       visit Call.new(nil, "instance_sizeof", node.exp)
+    end
+
+    def visit(node : AlignOf)
+      visit Call.new(nil, "alignof", node.exp)
+    end
+
+    def visit(node : InstanceAlignOf)
+      visit Call.new(nil, "instance_alignof", node.exp)
     end
 
     def visit(node : OffsetOf)

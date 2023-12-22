@@ -10,6 +10,8 @@ lib/** linguist-vendored
 
 # produced by scripts/generate_windows_zone_names.cr
 src/crystal/system/win32/zone_names.cr linguist-generated
+# produced by scripts/generate_html_entities.cr
+src/html/entities.cr linguist-generated
 # produced by scripts/generate_ssl_server_defaults.cr
 src/openssl/ssl/defaults.cr linguist-generated
 # produced by scripts/generate_grapheme_properties.cr

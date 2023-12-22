@@ -224,6 +224,34 @@ module Crystal
           assert_macro %({{ x.is_a?(ModuleDef) }}), "false", {x: ClassDef.new("Foo".path)}
         end
       end
+
+      describe "#doc" do
+        it "returns an empty string if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc }}", %(""), {x: Call.new(nil, "some_call")}
+        end
+
+        it "returns the call's docs if present (wants_doc = true)" do
+          assert_macro "{{ x.doc }}", %("Some docs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "returns a multiline comment" do
+          assert_macro "{{ x.doc }}", %("Some\\nmulti\\nline\\ndocs"), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+        end
+      end
+
+      describe "#doc_comment" do
+        it "returns an empty MacroId if there are no docs on the node (wants_doc = false)" do
+          assert_macro "{{ x.doc_comment }}", %(), {x: Call.new(nil, "some_call")}
+        end
+
+        it "returns the call's docs if present as a MacroId (wants_doc = true)" do
+          assert_macro "{{ x.doc_comment }}", %(Some docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some docs" }}
+        end
+
+        it "ensures each newline has a `#` prefix" do
+          assert_macro "{{ x.doc_comment }}", %(Some\n# multi\n# line\n# docs), {x: Call.new(nil, "some_call").tap { |c| c.doc = "Some\nmulti\nline\ndocs" }}
+        end
+      end
     end
 
     describe "number methods" do
@@ -1693,7 +1721,7 @@ module Crystal
 
           describe "with an invalid type argument" do
             it "should raise the proper exception" do
-              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do |program|
+              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a BoolLiteral, not NumberLiteral") do |program|
                 {x: TypeNode.new(program.string)}
               end
             end
@@ -2562,6 +2590,26 @@ module Crystal
       end
     end
 
+    describe Include do
+      foo = Include.new("Foo".path)
+      bar = Include.new(Generic.new("Bar".path, ["Int32".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), "Foo", {x: foo}
+        assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
+    describe Extend do
+      foo = Extend.new("Foo".path)
+      bar = Extend.new(Generic.new("Bar".path, ["Int32".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), "Foo", {x: foo}
+        assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
     describe "visibility modifier methods" do
       node = VisibilityModifier.new(Visibility::Protected, Def.new("some_def"))
 
@@ -3093,6 +3141,141 @@ module Crystal
           x: Annotation.new(Path.new("Foo"), [] of ASTNode),
           y: true.bool,
         }
+      end
+    end
+
+    describe ClassDef do
+      class_def = ClassDef.new(Path.new("Foo"), abstract: true, superclass: Path.new("Parent"))
+      struct_def = ClassDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, struct: true, body: CharLiteral.new('a'))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(class), {x: class_def}
+        assert_macro %({{x.kind}}), %(struct), {x: struct_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: class_def}
+        assert_macro %({{x.name}}), %(::Foo::Bar(A, B, *C, D)), {x: struct_def}
+
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: class_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar(A, B, *C, D)), {x: struct_def}
+
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: class_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: struct_def}
+
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to ClassDef#name must be a BoolLiteral, not NumberLiteral", {x: class_def}
+      end
+
+      it "executes superclass" do
+        assert_macro %({{x.superclass}}), %(Parent), {x: class_def}
+        assert_macro %({{x.superclass}}), %(Parent(*T)), {x: ClassDef.new(Path.new("Foo"), superclass: Generic.new(Path.new("Parent"), [Splat.new(Path.new("T"))] of ASTNode))}
+        assert_macro %({{x.superclass}}), %(), {x: struct_def}
+      end
+
+      it "executes type_vars" do
+        assert_macro %({{x.type_vars}}), %([] of ::NoReturn), {x: class_def}
+        assert_macro %({{x.type_vars}}), %([A, B, C, D]), {x: struct_def}
+      end
+
+      it "executes splat_index" do
+        assert_macro %({{x.splat_index}}), %(nil), {x: class_def}
+        assert_macro %({{x.splat_index}}), %(2), {x: struct_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: class_def}
+        assert_macro %({{x.body}}), %('a'), {x: struct_def}
+      end
+
+      it "executes abstract?" do
+        assert_macro %({{x.abstract?}}), %(true), {x: class_def}
+        assert_macro %({{x.abstract?}}), %(false), {x: struct_def}
+      end
+
+      it "executes struct?" do
+        assert_macro %({{x.struct?}}), %(false), {x: class_def}
+        assert_macro %({{x.struct?}}), %(true), {x: struct_def}
+      end
+    end
+
+    describe ModuleDef do
+      module_def1 = ModuleDef.new(Path.new("Foo"))
+      module_def2 = ModuleDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, body: CharLiteral.new('a'))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(module), {x: module_def1}
+        assert_macro %({{x.kind}}), %(module), {x: module_def2}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name}}), %(::Foo::Bar(A, B, *C, D)), {x: module_def2}
+
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar(A, B, *C, D)), {x: module_def2}
+
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: module_def1}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: module_def2}
+
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to ModuleDef#name must be a BoolLiteral, not NumberLiteral", {x: module_def1}
+      end
+
+      it "executes type_vars" do
+        assert_macro %({{x.type_vars}}), %([] of ::NoReturn), {x: module_def1}
+        assert_macro %({{x.type_vars}}), %([A, B, C, D]), {x: module_def2}
+      end
+
+      it "executes splat_index" do
+        assert_macro %({{x.splat_index}}), %(nil), {x: module_def1}
+        assert_macro %({{x.splat_index}}), %(2), {x: module_def2}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: module_def1}
+        assert_macro %({{x.body}}), %('a'), {x: module_def2}
+      end
+    end
+
+    describe EnumDef do
+      enum_def = EnumDef.new(Path.new("Foo", "Bar", global: true), [Path.new("X")] of ASTNode, Path.global("Int32"))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(enum), {x: enum_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(::Foo::Bar), {x: enum_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar), {x: enum_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: enum_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to EnumDef#name must be a BoolLiteral, not NumberLiteral", {x: enum_def}
+      end
+
+      it "executes base_type" do
+        assert_macro %({{x.base_type}}), %(::Int32), {x: enum_def}
+        assert_macro %({{x.base_type}}), %(), {x: EnumDef.new(Path.new("Baz"))}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(X), {x: enum_def}
+      end
+    end
+
+    describe AnnotationDef do
+      annotation_def = AnnotationDef.new(Path.new("Foo", "Bar", global: true))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(annotation), {x: annotation_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(::Foo::Bar), {x: annotation_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar), {x: annotation_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: annotation_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to AnnotationDef#name must be a BoolLiteral, not NumberLiteral", {x: annotation_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: annotation_def}
       end
     end
 

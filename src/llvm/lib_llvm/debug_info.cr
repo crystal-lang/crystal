@@ -12,16 +12,16 @@ lib LibLLVM
   {% if LibLLVM::IS_LT_110 %}
     fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(
       builder : DIBuilderRef, lang : LLVM::DwarfSourceLanguage, file_ref : MetadataRef, producer : Char*,
-      producer_len : SizeT, is_optimized : Int, flags : Char*, flags_len : SizeT, runtime_ver : UInt,
+      producer_len : SizeT, is_optimized : Bool, flags : Char*, flags_len : SizeT, runtime_ver : UInt,
       split_name : Char*, split_name_len : SizeT, kind : DWARFEmissionKind, dwo_id : UInt,
-      split_debug_inlining : Int, debug_info_for_profiling : Int
+      split_debug_inlining : Bool, debug_info_for_profiling : Bool
     ) : MetadataRef
   {% else %}
     fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(
       builder : DIBuilderRef, lang : LLVM::DwarfSourceLanguage, file_ref : MetadataRef, producer : Char*,
-      producer_len : SizeT, is_optimized : Int, flags : Char*, flags_len : SizeT, runtime_ver : UInt,
+      producer_len : SizeT, is_optimized : Bool, flags : Char*, flags_len : SizeT, runtime_ver : UInt,
       split_name : Char*, split_name_len : SizeT, kind : DWARFEmissionKind, dwo_id : UInt,
-      split_debug_inlining : Int, debug_info_for_profiling : Int, sys_root : Char*,
+      split_debug_inlining : Bool, debug_info_for_profiling : Bool, sys_root : Char*,
       sys_root_len : SizeT, sdk : Char*, sdk_len : SizeT
     ) : MetadataRef
   {% end %}
@@ -34,8 +34,8 @@ lib LibLLVM
   fun di_builder_create_function = LLVMDIBuilderCreateFunction(
     builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT,
     linkage_name : Char*, linkage_name_len : SizeT, file : MetadataRef, line_no : UInt,
-    ty : MetadataRef, is_local_to_unit : Int, is_definition : Int, scope_line : UInt,
-    flags : LLVM::DIFlags, is_optimized : Int
+    ty : MetadataRef, is_local_to_unit : Bool, is_definition : Bool, scope_line : UInt,
+    flags : LLVM::DIFlags, is_optimized : Bool
   ) : MetadataRef
 
   fun di_builder_create_lexical_block = LLVMDIBuilderCreateLexicalBlock(
@@ -43,6 +43,10 @@ lib LibLLVM
   ) : MetadataRef
   fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(
     builder : DIBuilderRef, scope : MetadataRef, file_scope : MetadataRef, discriminator : UInt
+  ) : MetadataRef
+
+  fun di_builder_create_debug_location = LLVMDIBuilderCreateDebugLocation(
+    ctx : ContextRef, line : UInt, column : UInt, scope : MetadataRef, inlined_at : MetadataRef
   ) : MetadataRef
 
   fun di_builder_get_or_create_type_array = LLVMDIBuilderGetOrCreateTypeArray(builder : DIBuilderRef, types : MetadataRef*, length : SizeT) : MetadataRef
@@ -53,7 +57,7 @@ lib LibLLVM
   ) : MetadataRef
   {% unless LibLLVM::IS_LT_90 %}
     fun di_builder_create_enumerator = LLVMDIBuilderCreateEnumerator(
-      builder : DIBuilderRef, name : Char*, name_len : SizeT, value : Int64, is_unsigned : Int
+      builder : DIBuilderRef, name : Char*, name_len : SizeT, value : Int64, is_unsigned : Bool
     ) : MetadataRef
   {% end %}
   fun di_builder_create_enumeration_type = LLVMDIBuilderCreateEnumerationType(
@@ -114,11 +118,11 @@ lib LibLLVM
 
   fun di_builder_create_auto_variable = LLVMDIBuilderCreateAutoVariable(
     builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
-    line_no : UInt, ty : MetadataRef, always_preserve : Int, flags : LLVM::DIFlags, align_in_bits : UInt32
+    line_no : UInt, ty : MetadataRef, always_preserve : Bool, flags : LLVM::DIFlags, align_in_bits : UInt32
   ) : MetadataRef
   fun di_builder_create_parameter_variable = LLVMDIBuilderCreateParameterVariable(
     builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, arg_no : UInt,
-    file : MetadataRef, line_no : UInt, ty : MetadataRef, always_preserve : Int, flags : LLVM::DIFlags
+    file : MetadataRef, line_no : UInt, ty : MetadataRef, always_preserve : Bool, flags : LLVM::DIFlags
   ) : MetadataRef
 
   fun set_subprogram = LLVMSetSubprogram(func : ValueRef, sp : MetadataRef)

@@ -139,27 +139,9 @@ llvm_ext: $(LLVM_EXT_OBJ)
 format: ## Format sources
 	./bin/crystal tool format$(if $(check), --check) src spec samples scripts
 
-generate_data: ## Run generator scripts for Unicode, SSL config, ... (usually with `-B`/`--always-make` flag)
-
-generate_data: spec/std/string/graphemes_break_spec.cr
-spec/std/string/graphemes_break_spec.cr: scripts/generate_grapheme_break_specs.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/string/grapheme/properties.cr
-src/string/grapheme/properties.cr: scripts/generate_grapheme_properties.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/openssl/ssl/defaults.cr
-src/openssl/ssl/defaults.cr: scripts/generate_ssl_server_defaults.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/unicode/data.cr
-src/unicode/data.cr: scripts/generate_unicode_data.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/crystal/system/win32/zone_names.cr
-src/crystal/system/win32/zone_names.cr: scripts/generate_windows_zone_names.cr
-	$(CRYSTAL) run $<
+.PHONY: generate_data
+generate_data: ## Run generator scripts for Unicode, SSL config, ...
+	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR

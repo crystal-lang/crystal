@@ -32,7 +32,7 @@ private def assert_format(input, output = input, strict = false, flags = nil, fi
     end
 
     # Check idempotency
-    result2 = Crystal.format(result)
+    result2 = Crystal.format(result, flags: flags)
     unless result == result2
       fail "Idempotency failed:\nBefore: #{result.inspect}\nAfter:  #{result2.inspect}", file: file, line: line
     end
@@ -886,6 +886,227 @@ describe Crystal::Formatter do
       CRYSTAL
   end
 
+  context "adds trailing comma to def multi-line normal, splat, and double splat parameters" do
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      macro foo(
+        a,
+        b
+      )
+      end
+      CRYSTAL
+      macro foo(
+        a,
+        b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      macro foo(
+        a,
+        *b
+      )
+      end
+      CRYSTAL
+      macro foo(
+        a,
+        *b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      fun foo(
+        a : Int32,
+        b : Int32
+      )
+      end
+      CRYSTAL
+      fun foo(
+        a : Int32,
+        b : Int32,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      fun foo(
+        a : Int32,
+        ...
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        b
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a : Int32,
+        b : Int32
+      )
+      end
+      CRYSTAL
+      def foo(
+        a : Int32,
+        b : Int32,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a : Int32,
+        b : Int32 = 1
+      )
+      end
+      CRYSTAL
+      def foo(
+        a : Int32,
+        b : Int32 = 1,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        b c
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        b c,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        @[Ann] b
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        @[Ann] b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        @[Ann]
+        b
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        @[Ann]
+        b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a, b
+      )
+      end
+      CRYSTAL
+      def foo(
+        a, b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a, b,
+        c, d
+      )
+      end
+      CRYSTAL
+      def foo(
+        a, b,
+        c, d,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a, # Foo
+        b # Bar
+      )
+      end
+      CRYSTAL
+      def foo(
+        a, # Foo
+        b, # Bar
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        *b
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        *b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        **b
+      )
+      end
+      CRYSTAL
+      def foo(
+        a,
+        **b,
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+        &block
+      )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(
+        a,
+      )
+      end
+      CRYSTAL
+  end
+
   assert_format "1   +   2", "1 + 2"
   assert_format "1   &+   2", "1 &+ 2"
   assert_format "1   >   2", "1 > 2"
@@ -1164,6 +1385,8 @@ describe Crystal::Formatter do
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
   assert_format "instance_sizeof( Int32 )", "instance_sizeof(Int32)"
+  assert_format "alignof( Int32 )", "alignof(Int32)"
+  assert_format "instance_alignof( Int32 )", "instance_alignof(Int32)"
   assert_format "offsetof( String, @length )", "offsetof(String, @length)"
   assert_format "pointerof( @a )", "pointerof(@a)"
 

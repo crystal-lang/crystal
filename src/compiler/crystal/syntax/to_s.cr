@@ -1257,6 +1257,20 @@ module Crystal
       false
     end
 
+    def visit(node : AlignOf)
+      @str << "alignof("
+      node.exp.accept(self)
+      @str << ')'
+      false
+    end
+
+    def visit(node : InstanceAlignOf)
+      @str << "instance_alignof("
+      node.exp.accept(self)
+      @str << ')'
+      false
+    end
+
     def visit(node : OffsetOf)
       @str << "offsetof("
       node.offsetof_type.accept(self)

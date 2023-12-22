@@ -31,9 +31,12 @@ module Crystal::System::Thread
     raise RuntimeError.from_errno("sched_yield") unless ret == 0
   end
 
-  {% if flag?(:openbsd) %}
-    # no thread local storage (TLS) for OpenBSD,
-    # we use pthread's specific storage (TSS) instead:
+  # no thread local storage (TLS) for OpenBSD,
+  # we use pthread's specific storage (TSS) instead
+  #
+  # Android appears to support TLS to some degree, but executables fail with
+  # an underaligned TLS segment, see https://github.com/crystal-lang/crystal/issues/13951
+  {% if flag?(:openbsd) || flag?(:android) %}
     @@current_key : LibC::PthreadKeyT
 
     @@current_key = begin

@@ -1189,6 +1189,10 @@ module Crystal
             check_type_declaration { parse_sizeof }
           when .instance_sizeof?
             check_type_declaration { parse_instance_sizeof }
+          when .alignof?
+            check_type_declaration { parse_alignof }
+          when .instance_alignof?
+            check_type_declaration { parse_instance_alignof }
           when .offsetof?
             check_type_declaration { parse_offsetof }
           when .typeof?
@@ -4111,7 +4115,7 @@ module Crystal
              .extend?, .class?, .struct?, .module?, .enum?, .while?, .until?, .return?,
              .next?, .break?, .lib?, .fun?, .alias?, .pointerof?, .sizeof?, .offsetof?,
              .instance_sizeof?, .typeof?, .private?, .protected?, .asm?, .out?,
-             .self?, Keyword::IN, .end?
+             .self?, Keyword::IN, .end?, .alignof?, .instance_alignof?
           true
         else
           false
@@ -4123,7 +4127,7 @@ module Crystal
              "extend", "class", "struct", "module", "enum", "while", "until", "return",
              "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
-             "self", "in", "end"
+             "self", "in", "end", "alignof", "instance_alignof"
           true
         else
           false
@@ -4584,7 +4588,7 @@ module Crystal
       when Splat
         push_block_vars(node.exp)
       else
-        raise "BUG: unxpected block var: #{node} (#{node.class})"
+        raise "BUG: unexpected block var: #{node} (#{node.class})"
       end
     end
 
@@ -4753,7 +4757,7 @@ module Crystal
           location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
-          raise "invalid trailing comma in call" if (@token.keyword?(:end) && !next_comes_colon_space?) || @token.type.eof?
+          raise "invalid trailing comma in call", location if (@token.keyword?(:end) && !next_comes_colon_space?) || @token.type.eof?
         else
           break
         end
@@ -5139,7 +5143,11 @@ module Crystal
           args << parse_type_splat { parse_type_arg }
         end
 
-        has_int = args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SizeOf) || arg.is_a?(InstanceSizeOf) || arg.is_a?(OffsetOf) }
+        has_int = args.any? do |arg|
+          arg.is_a?(NumberLiteral) || arg.is_a?(SizeOf) || arg.is_a?(InstanceSizeOf) ||
+            arg.is_a?(AlignOf) || arg.is_a?(InstanceAlignOf) || arg.is_a?(OffsetOf)
+        end
+
         if @token.type.op_minus_gt? && !has_int
           args = [parse_proc_type_output(args, args.first.location)] of ASTNode
         end
@@ -5221,6 +5229,10 @@ module Crystal
         parse_sizeof
       when .keyword?(:instance_sizeof)
         parse_instance_sizeof
+      when .keyword?(:alignof)
+        parse_alignof
+      when .keyword?(:instance_alignof)
+        parse_instance_alignof
       when .keyword?(:offsetof)
         parse_offsetof
       else
@@ -5873,6 +5885,14 @@ module Crystal
 
     def parse_instance_sizeof
       parse_sizeof InstanceSizeOf
+    end
+
+    def parse_alignof
+      parse_sizeof AlignOf
+    end
+
+    def parse_instance_alignof
+      parse_sizeof InstanceAlignOf
     end
 
     def parse_sizeof(klass)

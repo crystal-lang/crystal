@@ -11,18 +11,20 @@ module Crystal::System::FileDescriptor
   @system_blocking = true
 
   private def unbuffered_read(slice : Bytes)
-    if system_blocking?
+    handle = windows_handle
+    if ConsoleUtils.console?(handle)
+      ConsoleUtils.read(handle, slice)
+    elsif system_blocking?
       bytes_read = LibC._read(fd, slice, slice.size)
       if bytes_read == -1
         if Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for reading"
+          raise IO::Error.new "File not open for reading", target: self
         else
-          raise IO::Error.from_errno("Error reading file")
+          raise IO::Error.from_errno("Error reading file", target: self)
         end
       end
       bytes_read
     else
-      handle = windows_handle
       overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}
@@ -36,9 +38,9 @@ module Crystal::System::FileDescriptor
         bytes_written = LibC._write(fd, slice, slice.size)
         if bytes_written == -1
           if Errno.value == Errno::EBADF
-            raise IO::Error.new "File not open for writing"
+            raise IO::Error.new "File not open for writing", target: self
           else
-            raise IO::Error.from_errno("Error writing file")
+            raise IO::Error.from_errno("Error writing file", target: self)
           end
         end
       else
@@ -106,7 +108,7 @@ module Crystal::System::FileDescriptor
 
       if file_type == LibC::FILE_TYPE_UNKNOWN
         error = WinError.value
-        raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+        raise IO::Error.from_os_error("Unable to get info", error, target: self) unless error == WinError::ERROR_SUCCESS
       end
     end
 
@@ -129,13 +131,13 @@ module Crystal::System::FileDescriptor
     seek_value = LibC._lseeki64(fd, offset, whence)
 
     if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek", target: self
     end
   end
 
   private def system_pos
     pos = LibC._lseeki64(fd, 0, IO::Seek::Current)
-    raise IO::Error.from_errno "Unable to tell" if pos == -1
+    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
     pos
   end
 
@@ -165,7 +167,7 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file")
+        raise IO::Error.from_errno("Error closing file", target: self)
       end
     end
   end
@@ -204,7 +206,7 @@ module Crystal::System::FileDescriptor
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
       return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error
+      raise IO::Error.from_os_error "Error reading file", error, target: self
     end
 
     bytes_read.to_i64
@@ -273,6 +275,71 @@ module Crystal::System::FileDescriptor
       LibC.SetConsoleMode(windows_handle, new_mode)
     end
     ret
+  end
+end
+
+private module ConsoleUtils
+  # N UTF-16 code units correspond to no more than 3*N UTF-8 code units.
+  # NOTE: For very large buffers, `ReadConsoleW` may fail.
+  private BUFFER_SIZE = 10000
+  @@utf8_buffer = Slice(UInt8).new(3 * BUFFER_SIZE)
+
+  # `@@buffer` points to part of `@@utf8_buffer`.
+  # It represents data that has not been read yet.
+  @@buffer : Bytes = @@utf8_buffer[0, 0]
+
+  # Remaining UTF-16 code unit.
+  @@remaining_unit : UInt16?
+
+  # Determines if *handle* is a console.
+  def self.console?(handle : LibC::HANDLE) : Bool
+    LibC.GetConsoleMode(handle, out _) != 0
+  end
+
+  # Reads to *slice* from the console specified by *handle*,
+  # and return the actual number of bytes read.
+  def self.read(handle : LibC::HANDLE, slice : Bytes) : Int32
+    return 0 if slice.empty?
+    fill_buffer(handle) if @@buffer.empty?
+
+    bytes_read = {slice.size, @@buffer.size}.min
+    @@buffer[0, bytes_read].copy_to(slice)
+    @@buffer += bytes_read
+    bytes_read
+  end
+
+  private def self.fill_buffer(handle : LibC::HANDLE) : Nil
+    utf16_buffer = uninitialized UInt16[BUFFER_SIZE]
+    remaining_unit = @@remaining_unit
+    if remaining_unit
+      utf16_buffer[0] = remaining_unit
+      index = read_console(handle, utf16_buffer.to_slice + 1)
+    else
+      index = read_console(handle, utf16_buffer.to_slice) - 1
+    end
+
+    if index >= 0 && utf16_buffer[index] & 0xFC00 == 0xD800
+      @@remaining_unit = utf16_buffer[index]
+      index -= 1
+    else
+      @@remaining_unit = nil
+    end
+    return if index < 0
+
+    appender = @@utf8_buffer.to_unsafe.appender
+    String.each_utf16_char(utf16_buffer.to_slice[..index]) do |char|
+      char.each_byte do |byte|
+        appender << byte
+      end
+    end
+    @@buffer = @@utf8_buffer[0, appender.size]
+  end
+
+  private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+    if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
+      raise IO::Error.from_winerror("ReadConsoleW")
+    end
+    units_read.to_i32
   end
 end
 

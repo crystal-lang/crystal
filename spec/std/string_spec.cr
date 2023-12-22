@@ -2343,6 +2343,33 @@ describe "String" do
     "foo".matches?(/bar/).should eq(false)
   end
 
+  it "#matches_full?" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".matches_full?(/foo/).should be_true
+    "fooo".matches_full?(/foo/).should be_false
+    "ofoo".matches_full?(/foo/).should be_false
+    "pattern".matches_full?(/(\A)?pattern(\z)?/).should be_true
+    "_pattern_".matches_full?(/(\A)?pattern(\z)?/).should be_false
+  end
+
+  it "#match_full" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full(/foo/).not_nil![0].should eq "foo"
+    "fooo".match_full(/foo/).should be_nil
+    "ofoo".match_full(/foo/).should be_nil
+    "pattern".match_full(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    "_pattern_".match_full(/(\A)?pattern(\z)?/).should be_nil
+  end
+
+  it "#match_full!" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full!(/foo/).not_nil![0].should eq "foo"
+    expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
+    expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
+    "pattern".match_full!(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    expect_raises(Regex::Error) { "_pattern_".match_full!(/(\A)?pattern(\z)?/) }
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
@@ -2660,14 +2687,12 @@ describe "String" do
       end
     end
 
-    {% unless flag?(:wasm32) %}
-      it "allocates buffer of correct size (#3332)" do
-        String.new(255_u8) do |buffer|
-          LibGC.size(buffer).should be > 255
-          {255, 0}
-        end
+    pending_wasm32 "allocates buffer of correct size (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be > 255
+        {255, 0}
       end
-    {% end %}
+    end
 
     it "raises if returned bytesize is greater than capacity" do
       expect_raises ArgumentError, "Bytesize out of capacity bounds" do
