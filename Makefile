@@ -182,7 +182,6 @@ install_docs: docs ## Install docs at DESTDIR
 
 	cp -av docs "$(DATADIR)/docs"
 	cp -av samples "$(DATADIR)/examples"
-	rm -rf "$(DATADIR)/examples/.gitignore"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
