@@ -655,16 +655,27 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if enum_type.flags?
         unless enum_type.types.has_key?("None")
-          enum_type.add_constant("None", 0)
+          none_member = enum_type.add_constant("None", 0)
+
+          if node_location = node.location
+            none_member.add_location node_location
+          end
+
           define_enum_none_question_method(enum_type, node)
         end
 
         unless enum_type.types.has_key?("All")
           all_value = enum_type.base_type.kind.cast(0).as(Int::Primitive)
+
           enum_type.types.each_value do |member|
             all_value |= interpret_enum_value(member.as(Const).value, enum_type.base_type)
           end
-          enum_type.add_constant("All", all_value)
+
+          all_member = enum_type.add_constant("All", all_value)
+
+          if node_location = node.location
+            all_member.add_location node_location
+          end
         end
       end
 
