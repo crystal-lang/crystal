@@ -97,7 +97,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) || flag?(:win32) || compare_versions(VERSION, "8.3.0") >= 0 %}
+  {% if flag?(:preview_mt) || flag?(:win32) || compare_versions(VERSION, "8.2.0") >= 0 %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
