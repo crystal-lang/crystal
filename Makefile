@@ -230,6 +230,7 @@ man/%.gz: man/%
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
+	rm -rf man/*.gz
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
