@@ -127,6 +127,7 @@ samples: ## Build example programs
 docs: ## Generate standard library documentation
 	$(call check_llvm_config)
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
+	cp -av doc/* docs/
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
