@@ -1739,4 +1739,36 @@ describe "Semantic: macro" do
       {% end %}
       CRYSTAL
   end
+
+  describe "@caller" do
+    it "returns an array of each call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        macro test
+          {{@caller.size == 1 ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
+
+    it "provides access to the `Call` information" do
+      assert_type(<<-CRYSTAL) { tuple_of([int32, char] of Type) }
+        macro test(num)
+          {{@caller.first.args[0] == 1 ? 1 : 'f'}}
+        end
+
+        {test(1), test(2)}
+        CRYSTAL
+    end
+
+    it "returns nil if no stack is available" do
+      assert_type(<<-CRYSTAL) { char }
+        def test
+          {{(c = @caller) ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
+  end
 end

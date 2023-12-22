@@ -574,7 +574,11 @@ module Crystal
     end
 
     def align_of(type)
-      @layout.abi_alignment(type)
+      if type.void?
+        1_u32
+      else
+        @layout.abi_alignment(type)
+      end
     end
 
     def size_t
