@@ -22,7 +22,7 @@
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
 {% else %}
-  @[Link("gc")]
+  @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
 lib LibGC
