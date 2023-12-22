@@ -105,7 +105,7 @@ class Thread
   end
 
   # :nodoc:
-  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(main_fiber) }
+  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
 
   protected def start
     Thread.threads.push(self)

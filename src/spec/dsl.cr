@@ -210,18 +210,68 @@ module Spec
       next unless status == 0
 
       begin
-        log_setup
-        maybe_randomize
-        run_filters
-        root_context.run
+        if Spec.list_tags?
+          execute_list_tags
+        else
+          execute_examples
+        end
       rescue ex
         STDERR.print "Unhandled exception: "
         ex.inspect_with_backtrace(STDERR)
         STDERR.flush
         @@aborted = true
       ensure
-        finish_run
+        finish_run unless Spec.list_tags?
       end
+    end
+  end
+
+  # :nodoc:
+  def self.execute_examples
+    log_setup
+    maybe_randomize
+    run_filters
+    root_context.run
+  end
+
+  # :nodoc:
+  def self.execute_list_tags
+    run_filters
+    tag_counts = collect_tags(root_context)
+    print_list_tags(tag_counts)
+  end
+
+  private def self.collect_tags(context) : Hash(String, Int32)
+    tag_counts = Hash(String, Int32).new(0)
+    collect_tags(tag_counts, context, Set(String).new)
+    tag_counts
+  end
+
+  private def self.collect_tags(tag_counts, context : Context, tags)
+    if context.responds_to?(:tags) && (context_tags = context.tags)
+      tags += context_tags
+    end
+    context.children.each do |child|
+      collect_tags(tag_counts, child, tags)
+    end
+  end
+
+  private def self.collect_tags(tag_counts, example : Example, tags)
+    if example_tags = example.tags
+      tags += example_tags
+    end
+    if tags.empty?
+      tag_counts.update("untagged") { |count| count + 1 }
+    else
+      tags.tally(tag_counts)
+    end
+  end
+
+  private def self.print_list_tags(tag_counts : Hash(String, Int32)) : Nil
+    return if tag_counts.empty?
+    longest_name_size = tag_counts.keys.max_of(&.size)
+    tag_counts.to_a.sort_by! { |k, v| {-v, k} }.each do |tag_name, count|
+      puts "#{tag_name.rjust(longest_name_size)}: #{count}"
     end
   end
 

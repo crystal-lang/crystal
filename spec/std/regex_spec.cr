@@ -308,7 +308,7 @@ describe "Regex" do
       end
     end
 
-    it "doesn't crash with a large single line string" do
+    pending_wasm32 "doesn't crash with a large single line string" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}

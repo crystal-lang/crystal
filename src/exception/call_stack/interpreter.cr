@@ -27,7 +27,7 @@ struct Exception::CallStack
 
   def self.print_backtrace : Nil
     unwind.each do |frame|
-      Crystal::System.print_error frame.unsafe_as(String)
+      Crystal::System.print_error "%s\n", frame.unsafe_as(String)
     end
   end
 end

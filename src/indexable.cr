@@ -1483,7 +1483,7 @@ module Indexable(T)
       @copy = array.dup
       @indices = Array.new(@size, 0)
       @pool = @indices.map { |i| @copy[i] }
-      @stop = @size > @n
+      @stop = false
       @i = @size - 1
       @first = true
     end

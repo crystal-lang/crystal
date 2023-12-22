@@ -508,4 +508,14 @@ module Enumerable
   def to_set : Set(T)
     Set.new(self)
   end
+
+  # Returns a new `Set` with the unique results of running *block* against each
+  # element of the enumerable.
+  def to_set(&block : T -> U) : Set(U) forall U
+    set = Set(U).new
+    each do |elem|
+      set << yield elem
+    end
+    set
+  end
 end

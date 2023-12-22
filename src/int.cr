@@ -749,7 +749,7 @@ struct Int
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).
     chars = uninitialized UInt8[129]
-    ptr_end = chars.to_unsafe + 128
+    ptr_end = chars.to_unsafe + 129
     ptr = ptr_end
     num = self
 
