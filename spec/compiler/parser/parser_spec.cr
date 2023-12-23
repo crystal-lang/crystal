@@ -768,6 +768,8 @@ module Crystal
 
     it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
     it_parses "Foo(X, instance_sizeof(Int32))", Generic.new("Foo".path, ["X".path, InstanceSizeOf.new("Int32".path)] of ASTNode)
+    it_parses "Foo(X, alignof(Int32))", Generic.new("Foo".path, ["X".path, AlignOf.new("Int32".path)] of ASTNode)
+    it_parses "Foo(X, instance_alignof(Int32))", Generic.new("Foo".path, ["X".path, InstanceAlignOf.new("Int32".path)] of ASTNode)
     it_parses "Foo(X, offsetof(Foo, @a))", Generic.new("Foo".path, ["X".path, OffsetOf.new("Foo".path, "@a".instance_var)] of ASTNode)
 
     it_parses "Foo(\n)", Generic.new("Foo".path, [] of ASTNode)
@@ -1213,6 +1215,8 @@ module Crystal
 
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
+    it_parses "alignof(X)", AlignOf.new("X".path)
+    it_parses "instance_alignof(X)", InstanceAlignOf.new("X".path)
     it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
     it_parses "offsetof(X, 1)", OffsetOf.new("X".path, 1.int32)
     assert_syntax_error "offsetof(X, 1.0)", "expecting an integer offset, not '1.0'"
@@ -1254,6 +1258,8 @@ module Crystal
     # multiline pseudo methods (#8318)
     it_parses "sizeof(\n  Int32\n)", SizeOf.new(Path.new("Int32"))
     it_parses "instance_sizeof(\n  Int32\n)", InstanceSizeOf.new(Path.new("Int32"))
+    it_parses "alignof(\n  Int32\n)", AlignOf.new(Path.new("Int32"))
+    it_parses "instance_alignof(\n  Int32\n)", InstanceAlignOf.new(Path.new("Int32"))
     it_parses "typeof(\n  1\n)", TypeOf.new([1.int32] of ASTNode)
     it_parses "offsetof(\n  Foo,\n  @foo\n)", OffsetOf.new(Path.new("Foo"), InstanceVar.new("@foo"))
     it_parses "pointerof(\n  foo\n)", PointerOf.new("foo".call)

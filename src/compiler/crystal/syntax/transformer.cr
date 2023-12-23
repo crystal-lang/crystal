@@ -180,6 +180,16 @@ module Crystal
       node
     end
 
+    def transform(node : AlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : InstanceAlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : OffsetOf)
       node.offsetof_type = node.offsetof_type.transform(self)
       node.offset = node.offset.transform(self)

@@ -996,6 +996,23 @@ module Crystal
       node
     end
 
+    def transform(node : InstanceAlignOf)
+      exp_type = node.exp.type?
+
+      if exp_type
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
+          node.exp.raise "instance_alignof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
+        end
+      end
+
+      if expanded = node.expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
     def transform(node : TupleLiteral)
       super
 

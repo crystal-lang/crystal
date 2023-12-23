@@ -2627,6 +2627,30 @@ module Crystal
     end
 
     def visit(node : SizeOf)
+      visit_size_or_align_of(node) do |type|
+        @program.size_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : InstanceSizeOf)
+      visit_instance_size_or_align_of(node) do |type|
+        @program.instance_size_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : AlignOf)
+      visit_size_or_align_of(node) do |type|
+        @program.align_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : InstanceAlignOf)
+      visit_instance_size_or_align_of(node) do |type|
+        @program.instance_align_of(type.sizeof_type)
+      end
+    end
+
+    private def visit_size_or_align_of(node)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2634,15 +2658,15 @@ module Crystal
       type = node.exp.type?
 
       if type.is_a?(GenericType)
-        node.exp.raise "can't take sizeof uninstantiated generic type #{type}"
+        node.exp.raise "can't take #{sizeof_description(node)} of uninstantiated generic type #{type}"
       end
 
-      # Try to resolve the sizeof right now to a number literal
-      # (useful for sizeof inside as a generic type argument, but also
+      # Try to resolve the node right now to a number literal
+      # (useful for sizeof/alignof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && !node.exp.is_a?(TypeOf) &&
          !(type.module? || (type.abstract? && type.struct?))
-        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
+        expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2652,7 +2676,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf)
+    private def visit_instance_size_or_align_of(node)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2660,14 +2684,14 @@ module Crystal
       type = node.exp.type?
 
       if type.is_a?(GenericType)
-        node.exp.raise "can't take instance_sizeof uninstantiated generic type #{type}"
+        node.exp.raise "can't take #{sizeof_description(node)} of uninstantiated generic type #{type}"
       end
 
       # Try to resolve the instance_sizeof right now to a number literal
-      # (useful for sizeof inside as a generic type argument, but also
+      # (useful for instance_sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && type.devirtualize.class? && !type.metaclass? && !type.struct? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
+        expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2675,6 +2699,19 @@ module Crystal
       node.type = @program.int32
 
       false
+    end
+
+    private def sizeof_description(node)
+      case node
+      in SizeOf
+        "size"
+      in AlignOf
+        "alignment"
+      in InstanceSizeOf
+        "instance size"
+      in InstanceAlignOf
+        "instance alignment"
+      end
     end
 
     def visit(node : OffsetOf)

@@ -27,7 +27,8 @@ class Crystal::Scheduler
     scheduler = thread.scheduler
 
     {% if flag?(:preview_mt) %}
-      th = fiber.@current_thread.lazy_get || scheduler.find_target_thread
+      th = fiber.get_current_thread
+      th ||= fiber.set_current_thread(scheduler.find_target_thread)
 
       if th == thread
         scheduler.enqueue(fiber)
