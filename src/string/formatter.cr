@@ -430,8 +430,37 @@ struct String::Formatter(A)
 
     # Formats floats with `%g` or `%G`
     private def float_general(float, flags)
-      # TODO: implement using `Float::Printer::RyuPrintf`
-      float_fallback(float, flags)
+      # `d2gen_buffered_n` will always take care of trailing zeros and return
+      # the number of stripped digits
+      precision = flags.precision.try(&.to_u32) || 6_u32
+
+      printf_buf = uninitialized UInt8[773]
+      printf_size, trailing_zeros =
+        Float::Printer::RyuPrintf.d2gen_buffered_n(float.abs, precision, printf_buf.to_unsafe, flags.sharp)
+      printf_slice = printf_buf.to_slice[0, printf_size]
+      dot_index = printf_slice.index('.'.ord)
+      e_index = printf_slice.rindex('e'.ord)
+      sign = Math.copysign(1.0, float)
+
+      printf_slice[e_index] = 'E'.ord.to_u8! if e_index && flags.uppercase?
+
+      str_size = printf_size
+      str_size += 1 if sign < 0 || flags.plus || flags.space
+      str_size += (dot_index.nil? ? 1 : 0) + trailing_zeros if flags.sharp
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
+
+      # this preserves -0.0's sign correctly
+      write_plus_or_space(sign, flags)
+      @io << '-' if sign < 0
+
+      pad(str_size, flags) if flags.left_padding? && flags.padding_char == '0'
+      @io.write_string(printf_slice[0...e_index])
+      trailing_zeros.times { @io << '0' } if flags.sharp
+      @io << '.' if flags.sharp && dot_index.nil?
+      @io.write_string(printf_slice[e_index..]) if e_index
+
+      pad(str_size, flags) if flags.right_padding?
     end
 
     # Formats floats with `%a` or `%A`

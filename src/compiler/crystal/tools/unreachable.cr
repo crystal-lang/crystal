@@ -15,8 +15,8 @@ module Crystal
       unreachable.excludes.concat CrystalPath.default_paths.map { |path| ::Path[path].expand.to_posix.to_s }
       unreachable.excludes.concat config.excludes.map { |path| ::Path[path].expand.to_posix.to_s }
 
-      defs = unreachable.process(result)
-      defs.sort_by! do |a_def|
+      tallies = unreachable.process(result)
+      tallies.sort_by! do |a_def, _|
         location = a_def.location.not_nil!
         {
           location.filename.as(String),
@@ -25,15 +25,15 @@ module Crystal
         }
       end
 
-      UnreachablePresenter.new(defs, format: config.output_format).to_s(STDOUT)
+      UnreachablePresenter.new(tallies, format: config.output_format, print_tallies: config.tallies).to_s(STDOUT)
 
       if config.check
-        exit 1 unless defs.empty?
+        exit 1 if tallies.any?(&.[1].zero?)
       end
     end
   end
 
-  record UnreachablePresenter, defs : Array(Def), format : String? do
+  record UnreachablePresenter, tallies : Array({Def, Int32}), format : String?, print_tallies : Bool do
     include JSON::Serializable
 
     def to_s(io)
@@ -49,16 +49,19 @@ module Crystal
 
     def each(&)
       current_dir = Dir.current
-      defs.each do |a_def|
+      tallies.each do |a_def, count|
+        next unless print_tallies || count.zero?
+
         location = a_def.location.not_nil!
         filename = ::Path[location.filename.as(String)].relative_to(current_dir).to_s
         location = Location.new(filename, location.line_number, location.column_number)
-        yield a_def, location
+        yield a_def, location, count
       end
     end
 
     def to_text(io)
-      each do |a_def, location|
+      each do |a_def, location, count|
+        io << count << "\t" if print_tallies
         io << location << "\t"
         io << a_def.short_reference << "\t"
         io << a_def.length << " lines"
@@ -72,13 +75,14 @@ module Crystal
 
     def to_json(builder : JSON::Builder)
       builder.array do
-        each do |a_def, location|
+        each do |a_def, location, count|
           builder.object do
             builder.field "name", a_def.short_reference
             builder.field "location", location.to_s
             if lines = a_def.length
               builder.field "lines", lines
             end
+            builder.field "count", count if print_tallies
             if annotations = a_def.all_annotations
               builder.field "annotations", annotations.map(&.to_s)
             end
@@ -89,9 +93,14 @@ module Crystal
 
     def to_csv(io)
       CSV.build(io) do |builder|
-        builder.row %w[name file line column length annotations]
-        each do |a_def, location|
+        builder.row do |row|
+          row << "count" if print_tallies
+          row.concat %w[name file line column length annotations]
+        end
+
+        each do |a_def, location, count|
           builder.row do |row|
+            row << count if print_tallies
             row << a_def.short_reference
             row << location.filename
             row << location.line_number
@@ -111,8 +120,8 @@ module Crystal
   # Then it traverses all types and their defs and reports those that are not
   # in `@used_def_locations` (and match the filter).
   class UnreachableVisitor < Visitor
-    @used_def_locations = Set(Location).new
-    @defs : Set(Def) = Set(Def).new.compare_by_identity
+    @used_def_locations = Hash(Location, Int32).new(0)
+    @tallies : Hash(Def, Int32) = Hash(Def, Int32).new.compare_by_identity
     @visited : Set(ASTNode) = Set(ASTNode).new.compare_by_identity
 
     property includes = [] of String
@@ -130,14 +139,14 @@ module Crystal
       process_type(type.metaclass) if type.metaclass != type
     end
 
-    def process(result : Compiler::Result) : Array(Def)
-      @defs.clear
+    def process(result : Compiler::Result) : Array({Def, Int32})
+      @tallies.clear
 
       result.node.accept(self)
 
       process_type(result.program)
 
-      @defs.to_a
+      @tallies.to_a
     end
 
     def visit(node)
@@ -163,7 +172,7 @@ module Crystal
 
       node.target_defs.try &.each do |a_def|
         if (location = a_def.location)
-          @used_def_locations << location if interested_in(location)
+          @used_def_locations.update(location, &.+(1)) if interested_in(location)
         end
 
         if @visited.add?(a_def)
@@ -199,11 +208,10 @@ module Crystal
 
       check_def(previous) if previous && !a_def.calls_previous_def?
 
-      return if @used_def_locations.includes?(a_def.location)
+      tally = @used_def_locations[a_def.location]
+      @tallies[a_def] = tally
 
-      check_def(previous) if previous && a_def.calls_previous_def?
-
-      @defs << a_def
+      check_def(previous) if previous && a_def.calls_previous_def? && tally == 0
     end
 
     private def interested_in(location)

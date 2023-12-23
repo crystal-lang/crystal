@@ -349,7 +349,8 @@ class Crystal::Command
     includes : Array(String),
     excludes : Array(String),
     verbose : Bool,
-    check : Bool do
+    check : Bool,
+    tallies : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
       compiler.compile sources, output_filename, combine_rpath: combine_rpath
@@ -381,6 +382,7 @@ class Crystal::Command
     includes = [] of String
     verbose = false
     check = false
+    tallies = false
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -443,6 +445,10 @@ class Crystal::Command
       end
 
       if unreachable_command
+        opts.on("--tallies", "Print reachable methods and their call counts as well") do
+          tallies = true
+        end
+
         opts.on("--check", "Exits with error if there is any unreachable code") do |f|
           check = true
         end
@@ -613,7 +619,7 @@ class Crystal::Command
     combine_rpath = run && !no_codegen
     @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
       arguments, specified_output, hierarchy_exp, cursor_location, output_format.not_nil!,
-      combine_rpath, includes, excludes, verbose, check
+      combine_rpath, includes, excludes, verbose, check, tallies
   end
 
   private def gather_sources(filenames)

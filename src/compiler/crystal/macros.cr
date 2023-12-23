@@ -1452,11 +1452,43 @@ module Crystal::Macros
   end
 
   # A `sizeof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # sizeof({{ node.exp }})
+  # ```
   class SizeOf < UnaryExpression
   end
 
   # An `instance_sizeof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # instance_sizeof({{ node.exp }})
+  # ```
   class InstanceSizeOf < UnaryExpression
+  end
+
+  # A `alignof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # alignof({{ node.exp }})
+  # ```
+  class AlignOf < UnaryExpression
+  end
+
+  # An `instance_alignof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # instance_alignof({{ node.exp }})
+  # ```
+  class InstanceAlignOf < UnaryExpression
   end
 
   # An `out` expression.

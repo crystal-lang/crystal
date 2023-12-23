@@ -21,6 +21,15 @@ struct LLVM::Type
     end
   end
 
+  def alignment
+    # Asking the alignment of void crashes the program, we definitely don't want that
+    if void?
+      context.int64.const_int(1)
+    else
+      Value.new LibLLVM.align_of(self)
+    end
+  end
+
   def kind : LLVM::Type::Kind
     LibLLVM.get_type_kind(self)
   end

@@ -1430,6 +1430,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : AlignOf)
+    return false unless @wants_value
+
+    put_i32 inner_alignof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : InstanceAlignOf)
+    return false unless @wants_value
+
+    put_i32 inner_instance_alignof_type(node.exp), node: node
+
+    false
+  end
+
   def visit(node : TypeNode)
     return false unless @wants_value
 
@@ -3369,8 +3385,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions.instructions.size
   end
 
-  private delegate inner_sizeof_type, aligned_sizeof_type,
-    inner_instance_sizeof_type, aligned_instance_sizeof_type, to: @context
+  private delegate inner_sizeof_type, inner_alignof_type, aligned_sizeof_type,
+    inner_instance_sizeof_type, inner_instance_alignof_type, aligned_instance_sizeof_type,
+    to: @context
 
   private def ivar_offset(type : Type, name : String) : Int32
     if type.extern_union?

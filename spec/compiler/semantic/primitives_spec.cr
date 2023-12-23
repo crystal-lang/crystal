@@ -331,4 +331,66 @@ describe "Semantic: primitives" do
       end
     end
   end
+
+  describe "Reference.pre_initialize" do
+    def_reference_pre_initialize = <<-CRYSTAL
+      class Reference
+        @[Primitive(:pre_initialize)]
+        def self.pre_initialize(address : Pointer)
+          {% @type %}
+        end
+      end
+      CRYSTAL
+
+    it "types with reference type" do
+      assert_type(<<-CRYSTAL) { types["Foo"] }
+        #{def_reference_pre_initialize}
+
+        class Foo
+        end
+
+        x = 1
+        Foo.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "types with virtual reference type" do
+      assert_type(<<-CRYSTAL) { types["Foo"].virtual_type! }
+        #{def_reference_pre_initialize}
+
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        x = 1
+        Bar.as(Foo.class).pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "errors on uninstantiated generic type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize instance of generic class Foo(T) without specifying its type vars"
+        #{def_reference_pre_initialize}
+
+        class Foo(T)
+        end
+
+        x = 1
+        Foo.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+
+    it "errors on abstract type" do
+      assert_error <<-CRYSTAL, "Can't pre-initialize abstract class Foo"
+        #{def_reference_pre_initialize}
+
+        abstract class Foo
+        end
+
+        x = 1
+        Foo.pre_initialize(pointerof(x))
+        CRYSTAL
+    end
+  end
 end
