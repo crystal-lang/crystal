@@ -22,15 +22,13 @@ class Crystal::Repl
       when "exit"
         break
       when .presence
-        parser = new_parser(expression)
-        parser.warnings.report(STDOUT)
+        result = parse_and_interpret(expression)
+        result.warnings.report(STDOUT)
 
-        node = parser.parse
-        next unless node
+        next unless result.is_a?(EvalSuccess)
 
-        value = interpret(node)
         print " => "
-        puts SyntaxHighlighter::Colorize.highlight!(value.to_s)
+        puts SyntaxHighlighter::Colorize.highlight!(result.value.to_s)
       end
     rescue ex : EscapingException
       print "Unhandled exception: "
@@ -42,6 +40,19 @@ class Crystal::Repl
     rescue ex : Exception
       ex.inspect_with_backtrace(STDOUT)
     end
+  end
+
+  record EvalSuccess, value : Value, warnings : WarningCollection
+  record EvalParserError, warnings : WarningCollection
+
+  def parse_and_interpret(expression : String) : EvalSuccess | EvalParserError
+    parser = new_parser(expression)
+
+    node = parser.parse
+    return EvalParserError.new(warnings: parser.warnings) unless node
+
+    value = interpret(node)
+    return EvalSuccess.new(value: value, warnings: parser.warnings)
   end
 
   def run_file(filename, argv)
@@ -68,7 +79,7 @@ class Crystal::Repl
     interpret(exps)
   end
 
-  private def load_prelude
+  def load_prelude
     node = parse_prelude
 
     interpret_and_exit_on_error(node)
