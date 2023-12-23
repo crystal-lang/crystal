@@ -25,6 +25,9 @@
   @[Link("gc")]
 {% end %}
 
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "gc.dll")]
+{% end %}
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
