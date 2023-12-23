@@ -121,16 +121,16 @@ enum Signal : Int32
   #
   # ```
   # Signal::USR1.trap { }
-  # existing = Signal::USR1.trap_handler?
+  # prev_handler = Signal::USR1.trap_handler?
   #
   # Signal::USR1.trap do |signal|
-  #   existing.try &.call(signal)
+  #   prev_handler.try &.call(signal)
   #   # ...
   # end
   # ```
   def trap_handler?
     {% if @type.has_constant?("CHLD") %}
-      return Crystal::System::Signal.@@child_handler if self == CHLD
+      return Crystal::System::Signal.child_handler if self == CHLD
     {% end %}
     Crystal::System::Signal.trap_handler?(self)
   end
