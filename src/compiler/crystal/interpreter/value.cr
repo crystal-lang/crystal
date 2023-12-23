@@ -67,6 +67,15 @@ struct Crystal::Repl::Value
     end
   end
 
+  def runtime_type : Crystal::Type
+    if type.is_a?(Crystal::UnionType)
+      type_id = @pointer.as(Int32*).value
+      context.type_from_id(type_id)
+    else
+      type
+    end
+  end
+
   # Copies the contents of this value to another pointer.
   def copy_to(pointer : Pointer(UInt8))
     @pointer.copy_to(pointer, context.inner_sizeof_type(@type))
