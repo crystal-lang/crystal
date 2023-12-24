@@ -442,6 +442,8 @@ module Crystal::Macros
     # Returns a `MacroId` that contains the documentation comments attached to this node, or an empty `MacroId` if there are none.
     # Each line is prefixed with a `#` character to allow the output to be used directly within another node's documentation comment.
     #
+    # A common use case is combining this method with the `@caller` macro instance variable in order to allow [merging macro expansion and call comments](https://crystal-lang.org/reference/syntax_and_semantics/macros/index.html#merging-expansion-and-call-comments).
+    #
     # WARNING: The return value will be empty when executed outside of the `crystal docs` command.
     def doc_comment : MacroId
     end
