@@ -131,6 +131,16 @@ describe "Enumerable" do
     end
   end
 
+  describe "to_a" do
+    context "with a block" do
+      SpecEnumerable.new.to_a { |e| e*2 }.should eq [2, 4, 6]
+    end
+
+    context "without a block" do
+      SpecEnumerable.new.to_a.should eq [1, 2, 3]
+    end
+  end
+
   describe "#to_set" do
     context "without block" do
       it "creates a Set from the unique elements of the collection" do
