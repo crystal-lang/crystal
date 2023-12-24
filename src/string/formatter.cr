@@ -2,6 +2,13 @@ require "c/stdio"
 
 # :nodoc:
 struct String::Formatter(A)
+  # FIXME: wasm32 appears to run out of memory if we use Ryu Printf, which
+  # initializes very large lookup tables, so we fall back to `LibC.snprintf` for
+  # the floating-point format specifiers (#13918)
+  {% begin %}
+    HAS_RYU_PRINTF = {{ !flag?(:wasm32) }}
+  {% end %}
+
   private enum Mode
     None
 
@@ -15,15 +22,19 @@ struct String::Formatter(A)
     Named
   end
 
-  @format_buf = Pointer(UInt8).null
-  @temp_buf = Pointer(UInt8).null
+  {% unless HAS_RYU_PRINTF %}
+    @format_buf = Pointer(UInt8).null
+    @format_buf_len = 0
+
+    @temp_buf = Pointer(UInt8).null
+    @temp_buf_len = 0
+  {% end %}
+
   @arg_mode : Mode = :none
 
   def initialize(string, @args : A, @io : IO)
     @reader = Char::Reader.new(string)
     @arg_index = 0
-    @temp_buf_len = 0
-    @format_buf_len = 0
   end
 
   def format : Nil
@@ -118,13 +129,17 @@ struct String::Formatter(A)
           next
         else
           flags.width = val
-          flags.width_size = size
+          {% unless HAS_RYU_PRINTF %}
+            flags.width_size = size
+          {% end %}
           break
         end
       when '*'
         val = consume_dynamic_value
         flags.width = val
-        flags.width_size = val.to_s.size
+        {% unless HAS_RYU_PRINTF %}
+          flags.width_size = val.to_s.size
+        {% end %}
         break
       else
         break
@@ -141,16 +156,22 @@ struct String::Formatter(A)
       when '0'..'9'
         num, size = consume_number
         flags.precision = num
-        flags.precision_size = size
+        {% unless HAS_RYU_PRINTF %}
+          flags.precision_size = size
+        {% end %}
       when '*'
         val = consume_dynamic_value
         if val >= 0
           flags.precision = val
-          flags.precision_size = val.to_s.size
+          {% unless HAS_RYU_PRINTF %}
+            flags.precision_size = val.to_s.size
+          {% end %}
         end
       else
         flags.precision = 0
-        flags.precision_size = 1
+        {% unless HAS_RYU_PRINTF %}
+          flags.precision_size = 1
+        {% end %}
       end
     end
     flags
@@ -307,12 +328,7 @@ struct String::Formatter(A)
       elsif float.nan?
         float_special("nan", 1, flags)
       else
-        # FIXME: wasm32 appears to run out of memory if we use Ryu Printf, which
-        # initializes very large lookup tables, so we always fall back to
-        # `LibC.snprintf` (#13918)
-        {% if flag?(:wasm32) %}
-          float_fallback(float, flags)
-        {% else %}
+        {% if HAS_RYU_PRINTF %}
           case flags.type
           when 'f'
             float_fixed(float, flags)
@@ -325,6 +341,8 @@ struct String::Formatter(A)
           else
             raise "BUG: Unknown format type '#{flags.type}'"
           end
+        {% else %}
+          float_fallback(float, flags)
         {% end %}
       end
     else
@@ -346,7 +364,7 @@ struct String::Formatter(A)
     pad(str_size, flags) if flags.right_padding?
   end
 
-  {% unless flag?(:wasm32) %}
+  {% if HAS_RYU_PRINTF %}
     # Formats floats with `%f`
     private def float_fixed(float, flags)
       # the longest string possible is due to `Float64::MIN_SUBNORMAL`, which
@@ -485,50 +503,78 @@ struct String::Formatter(A)
 
       pad(str_size, flags) if flags.right_padding?
     end
-  {% end %}
+  {% else %}
+    # Delegate to `LibC.snprintf` for float formats if Ryu Printf is unavailable
+    private def float_fallback(float, flags)
+      format_buf = recreate_float_format_string(flags)
 
-  # Delegate to `LibC.snprintf` for float formats not yet ported to Crystal
-  private def float_fallback(float, flags)
-    format_buf = recreate_float_format_string(flags)
+      len = LibC.snprintf(nil, 0, format_buf, float) + 1
+      temp_buf = temp_buf(len)
+      LibC.snprintf(temp_buf, len, format_buf, float)
 
-    len = LibC.snprintf(nil, 0, format_buf, float) + 1
-    temp_buf = temp_buf(len)
-    LibC.snprintf(temp_buf, len, format_buf, float)
-
-    @io.write_string Slice.new(temp_buf, len - 1)
-  end
-
-  # Here we rebuild the original format string, like %f or %.2g and use snprintf
-  def recreate_float_format_string(flags)
-    capacity = 3 # percent + type + \0
-    capacity += flags.width_size
-    capacity += flags.precision_size + 1 # size + .
-    capacity += 1 if flags.sharp
-    capacity += 1 if flags.plus
-    capacity += 1 if flags.minus
-    capacity += 1 if flags.zero
-    capacity += 1 if flags.space
-
-    format_buf = format_buf(capacity)
-    original_format_buf = format_buf
-
-    io = IO::Memory.new(Bytes.new(format_buf, capacity))
-    io << '%'
-    io << '#' if flags.sharp
-    io << '+' if flags.plus
-    io << '-' if flags.minus
-    io << '0' if flags.zero
-    io << ' ' if flags.space
-    io << flags.width if flags.width > 0
-    if precision = flags.precision
-      io << '.'
-      io << precision if precision != 0
+      @io.write_string Slice.new(temp_buf, len - 1)
     end
-    io << flags.type
-    io.write_byte 0_u8
 
-    original_format_buf
-  end
+    # Here we rebuild the original format string, like %f or %.2g and use snprintf
+    private def recreate_float_format_string(flags)
+      capacity = 3 # percent + type + \0
+      capacity += flags.width_size
+      capacity += flags.precision_size + 1 # size + .
+      capacity += 1 if flags.sharp
+      capacity += 1 if flags.plus
+      capacity += 1 if flags.minus
+      capacity += 1 if flags.zero
+      capacity += 1 if flags.space
+
+      format_buf = format_buf(capacity)
+      original_format_buf = format_buf
+
+      io = IO::Memory.new(Bytes.new(format_buf, capacity))
+      io << '%'
+      io << '#' if flags.sharp
+      io << '+' if flags.plus
+      io << '-' if flags.minus
+      io << '0' if flags.zero
+      io << ' ' if flags.space
+      io << flags.width if flags.width > 0
+      if precision = flags.precision
+        io << '.'
+        io << precision if precision != 0
+      end
+      io << flags.type
+      io.write_byte 0_u8
+
+      original_format_buf
+    end
+
+    # We reuse a temporary buffer for snprintf
+    private def temp_buf(len)
+      temp_buf = @temp_buf
+      if temp_buf
+        if len > @temp_buf_len
+          @temp_buf_len = len
+          @temp_buf = temp_buf = temp_buf.realloc(len)
+        end
+        temp_buf
+      else
+        @temp_buf = Pointer(UInt8).malloc(len)
+      end
+    end
+
+    # We reuse a temporary buffer for the float format string
+    private def format_buf(len)
+      format_buf = @format_buf
+      if format_buf
+        if len > @format_buf_len
+          @format_buf_len = len
+          @format_buf = format_buf = format_buf.realloc(len)
+        end
+        format_buf
+      else
+        @format_buf = Pointer(UInt8).malloc(len)
+      end
+    end
+  {% end %} # HAS_RYU_PRINTF
 
   def pad(consumed, flags) : Nil
     padding_char = flags.padding_char
@@ -586,48 +632,23 @@ struct String::Formatter(A)
     @reader.next_char
   end
 
-  # We reuse a temporary buffer for snprintf
-  private def temp_buf(len)
-    temp_buf = @temp_buf
-    if temp_buf
-      if len > @temp_buf_len
-        @temp_buf_len = len
-        @temp_buf = temp_buf = temp_buf.realloc(len)
-      end
-      temp_buf
-    else
-      @temp_buf = Pointer(UInt8).malloc(len)
-    end
-  end
-
-  # We reuse a temporary buffer for the float format string
-  private def format_buf(len)
-    format_buf = @format_buf
-    if format_buf
-      if len > @format_buf_len
-        @format_buf_len = len
-        @format_buf = format_buf = format_buf.realloc(len)
-      end
-      format_buf
-    else
-      @format_buf = Pointer(UInt8).malloc(len)
-    end
-  end
-
   struct Flags
     property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, float : Bool, base : Int32
-    property width : Int32, width_size : Int32
-    property type : Char, precision : Int32?, precision_size : Int32
+    property width : Int32
+    property type : Char, precision : Int32?
     property index : Int32?
+
+    {% unless HAS_RYU_PRINTF %}
+      property width_size : Int32 = 0
+      property precision_size : Int32 = 0
+    {% end %}
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = @float = false
       @width = 0
-      @width_size = 0
       @base = 10
       @type = ' '
       @precision = nil
-      @precision_size = 0
     end
 
     def left_padding? : Bool
