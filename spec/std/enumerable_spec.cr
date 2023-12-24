@@ -140,7 +140,7 @@ describe "Enumerable" do
       SpecEnumerable.new.to_a.should eq [1, 2, 3]
     end
   end
-  
+
   describe "#to_set" do
     context "without block" do
       it "creates a Set from the unique elements of the collection" do
