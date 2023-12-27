@@ -2,6 +2,22 @@
 require "./spec_helper"
 require "../loader/spec_helper"
 
+private def ldflags
+  {% if flag?(:win32) %}
+    "/LIBPATH:#{SPEC_CRYSTAL_LOADER_LIB_PATH} sum.lib"
+  {% else %}
+    "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum"
+  {% end %}
+end
+
+private def ldflags_with_backtick
+  {% if flag?(:win32) %}
+    "/LIBPATH:#{SPEC_CRYSTAL_LOADER_LIB_PATH} `powershell.exe -C Write-Host -NoNewline sum.lib`"
+  {% else %}
+    "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -l`echo sum`"
+  {% end %}
+end
+
 describe Crystal::Repl::Interpreter do
   context "variadic calls" do
     before_all do
@@ -11,7 +27,7 @@ describe Crystal::Repl::Interpreter do
 
     it "promotes float" do
       interpret(<<-CRYSTAL).should eq 3.5
-        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum")]
+        @[Link(ldflags: #{ldflags.inspect})]
         lib LibSum
           fun sum_float(count : Int32, ...) : Float32
         end
@@ -22,7 +38,7 @@ describe Crystal::Repl::Interpreter do
 
     it "promotes int" do
       interpret(<<-CRYSTAL).should eq 5
-        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum")]
+        @[Link(ldflags: #{ldflags.inspect})]
         lib LibSum
           fun sum_int(count : Int32, ...) : Int32
         end
@@ -33,7 +49,7 @@ describe Crystal::Repl::Interpreter do
 
     it "promotes enum" do
       interpret(<<-CRYSTAL).should eq 5
-        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum")]
+        @[Link(ldflags: #{ldflags.inspect})]
         lib LibSum
           fun sum_int(count : Int32, ...) : Int32
         end
@@ -63,7 +79,7 @@ describe Crystal::Repl::Interpreter do
 
     it "expands ldflags" do
       interpret(<<-CRYSTAL).should eq 4
-        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -l`echo sum`")]
+        @[Link(ldflags: #{ldflags_with_backtick.inspect})]
         lib LibSum
           fun simple_sum_int(a : Int32, b : Int32) : Int32
         end
