@@ -48,6 +48,7 @@ class Crystal::Command
         implementations          show implementations for given call in location
         unreachable              show methods that are never called
         types                    show type of main variables
+        trace                    analyze trace logs
         --help, -h               show this help
     USAGE
 
@@ -199,6 +200,9 @@ class Crystal::Command
     when "unreachable".starts_with?(tool)
       options.shift
       unreachable
+    when "trace".starts_with?(tool)
+      options.shift
+      trace
     when "--help" == tool, "-h" == tool
       puts COMMANDS_USAGE
       exit
