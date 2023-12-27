@@ -100,6 +100,13 @@ class Thread
     Crystal::System::Thread.current_thread
   end
 
+  {% if flag?(:tracing) %}
+    # :nodoc:
+    def self.current? : Thread?
+      Crystal::System::Thread.current_thread?
+    end
+  {% end %}
+
   # Associates the Thread object to the running system thread.
   protected def self.current=(current : Thread) : Thread
     Crystal::System::Thread.current_thread = current
@@ -119,6 +126,13 @@ class Thread
 
   # :nodoc:
   getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
+
+  {% if flag?(:tracing) %}
+    # :nodoc:
+    def scheduler? : ::Crystal::Scheduler?
+      @scheduler
+    end
+  {% end %}
 
   protected def start
     Thread.threads.push(self)

@@ -1,6 +1,7 @@
 {% if flag?(:preview_mt) %}
   require "crystal/rw_lock"
 {% end %}
+require "crystal/tracing"
 
 # MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
 # The empty library is only available for POSIX compatibility. We don't need to link it.
@@ -113,7 +114,32 @@ lib LibGC
     $stackbottom = GC_stackbottom : Void*
   {% end %}
 
-  fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
+  alias OnHeapResizeProc = Word ->
+  fun set_on_heap_resize = GC_set_on_heap_resize(OnHeapResizeProc);
+  fun get_on_heap_resize = GC_get_on_heap_resize : OnHeapResizeProc
+
+  enum EventType
+    START # COLLECTION
+    MARK_START
+    MARK_END
+    RECLAIM_START
+    RECLAIM_END
+    END # COLLECTION
+    PRE_STOP_WORLD # STOPWORLD_BEGIN
+    POST_STOP_WORLD # STOPWORLD_END
+    PRE_START_WORLD # STARTWORLD_BEGIN
+    POST_START_WORLD # STARTWORLD_END
+    THREAD_SUSPENDED
+    THREAD_UNSUSPENDED
+  end
+
+  alias OnCollectionEventProc = EventType ->
+  fun set_on_collection_event = GC_set_on_collection_event(cb : OnCollectionEventProc)
+  fun get_on_collection_event = GC_get_on_collection_event() : OnCollectionEventProc
+
+  alias OnThreadEventProc = EventType, Void* ->
+  fun set_on_thread_event = GC_set_on_thread_event(cb : OnThreadEventProc)
+  fun get_on_thread_event = GC_get_on_thread_event() : OnThreadEventProc
 
   $gc_no = GC_gc_no : Word
   $bytes_found = GC_bytes_found : SignedWord
@@ -144,20 +170,28 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    LibGC.malloc(size)
+    Crystal.trace "gc", "malloc", "size=%ld", size do
+      LibGC.malloc(size)
+    end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    LibGC.malloc_atomic(size)
+    Crystal.trace "gc", "malloc", "size=%ld atomic=1", size do
+      LibGC.malloc_atomic(size)
+    end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
-    LibGC.realloc(ptr, size)
+    Crystal.trace "gc", "realloc", "size=%ld", size do
+      LibGC.realloc(ptr, size)
+    end
   end
 
   def self.init : Nil
+    # Crystal.trace "gc", "init"
+
     {% unless flag?(:win32) %}
       LibGC.set_handle_fork(1)
     {% end %}
@@ -166,6 +200,12 @@ module GC
     LibGC.set_start_callback ->do
       GC.lock_write
     end
+
+    {% if flag?(:tracing) %}
+      set_on_heap_resize_proc
+      set_on_collection_events_proc
+    {% end %}
+
     # By default the GC warns on big allocations/reallocations. This
     # is of limited use and pollutes program output with warnings.
     LibGC.set_warn_proc ->(msg, v) do
@@ -178,8 +218,43 @@ module GC
     end
   end
 
+  {% if flag?(:tracing) %}
+    @@on_heap_resize : LibGC::OnHeapResizeProc?
+    @@on_collection_event : LibGC::OnCollectionEventProc?
+    @@collect_start_s = 0_i64
+    @@collect_start_ns = 0_i32
+
+    private def self.set_on_heap_resize_proc : Nil
+      @@on_heap_resize = LibGC.get_on_heap_resize
+
+      LibGC.set_on_heap_resize(->(new_size : LibGC::Word) {
+        Crystal.trace "gc", "heap_resize", "size=%lld", UInt64.new(new_size)
+        @@on_heap_resize.try(&.call(new_size))
+      })
+    end
+
+    private def self.set_on_collection_events_proc : Nil
+      @@on_collection_event = LibGC.get_on_collection_event
+
+      LibGC.set_on_collection_event(->(event_type : LibGC::EventType) {
+        # Crystal.trace "gc", "on_collection_event", "type=%s", event_type.to_s
+        case event_type
+        when .start?
+          @@collect_start_s, @@collect_start_ns = Crystal::System::Time.monotonic
+        when .end?
+          end_s, end_ns = Crystal::System::Time.monotonic
+          duration = { end_s - @@collect_start_s, end_ns - @@collect_start_ns }
+          Crystal.trace_end 'd', duration, "gc", "collect"
+        end
+        @@on_collection_event.try(&.call(event_type))
+      })
+    end
+  {% end %}
+
   def self.collect
-    LibGC.collect
+    Crystal.trace "gc", "collect" do
+      LibGC.collect
+    end
   end
 
   def self.enable
@@ -195,7 +270,9 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    LibGC.free(pointer)
+    Crystal.trace "gc", "free" do
+      LibGC.free(pointer)
+    end
   end
 
   def self.add_finalizer(object : Reference) : Nil

@@ -55,6 +55,14 @@ module Crystal::System::Thread
       end
     end
 
+    {% if flag?(:tracing) %}
+      def self.current_thread? : ::Thread?
+        if ptr = LibC.pthread_getspecific(@@current_key)
+          ptr.as(::Thread)
+        end
+      end
+    {% end %}
+
     def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
       raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(ret)) unless ret == 0
@@ -63,6 +71,12 @@ module Crystal::System::Thread
   {% else %}
     @[ThreadLocal]
     class_property current_thread : ::Thread { ::Thread.new }
+
+    {% if flag?(:tracing) %}
+      def self.current_thread? : ::Thread?
+        @@current_thread
+      end
+    {% end %}
   {% end %}
 
   private def system_join : Exception?
