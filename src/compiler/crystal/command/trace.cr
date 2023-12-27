@@ -35,7 +35,7 @@ class Crystal::Command
     case command
     when "stats"
       if input == "-" || File.exists?(input)
-        Tracing::StatsGenerator.new(input, color: color).run
+        Tracing::StatsCommand.new(input, color: color).run
       else
         error "file '#{input}' does not exist"
       end

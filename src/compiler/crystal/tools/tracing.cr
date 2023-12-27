@@ -129,11 +129,20 @@ module Crystal
       end
     end
 
-    class StatsGenerator
+    class StatsCommand
       alias Action = Hash(String, Data)
       alias Section = Hash(String, Action)
 
-      def initialize(@path : String, @color : Bool)
+      @stdin : IO
+      @stdout : IO
+      @stderr : IO
+
+      def initialize(
+        @path : String,
+        @color = false,
+        @stdin = STDIN,
+        @stdout = STDOUT,
+        @stderr = STDERR)
       end
 
       def run
@@ -159,16 +168,16 @@ module Crystal
 
         stats.each do |section, actions|
           actions.each do |action, data|
-            Colorize.with.toggle(@color).yellow.surround(STDOUT) do
-              STDOUT << section << ':' << action
+            Colorize.with.toggle(@color).yellow.surround(@stdout) do
+              @stdout << section << ':' << action
             end
 
             data.each do |key, value|
-              STDOUT << ' ' << key << '='
-              value.to_s(STDOUT)
+              @stdout << ' ' << key << '='
+              value.to_s(@stdout)
             end
 
-            STDOUT << '\n'
+            @stdout << '\n'
           end
         end
       end
@@ -181,7 +190,7 @@ module Crystal
             if line =~ PARSE_TRACE_RE
               yield $1, $2, $3, $4, $5
             elsif @path != "-"
-              STDERR.print "WARN: invalid trace '#{line}'\n"
+              @stderr.print "WARN: invalid trace '#{line}'\n"
             end
           end
         end
@@ -189,7 +198,7 @@ module Crystal
 
       private def open_trace_file(&)
         if @path == "-"
-          yield STDIN
+          yield @stdin
         else
           File.open(@path, "r") { |file| yield file }
         end
