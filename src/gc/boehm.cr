@@ -115,7 +115,7 @@ lib LibGC
   {% end %}
 
   alias OnHeapResizeProc = Word ->
-  fun set_on_heap_resize = GC_set_on_heap_resize(OnHeapResizeProc);
+  fun set_on_heap_resize = GC_set_on_heap_resize(OnHeapResizeProc)
   fun get_on_heap_resize = GC_get_on_heap_resize : OnHeapResizeProc
 
   enum EventType
@@ -124,10 +124,10 @@ lib LibGC
     MARK_END
     RECLAIM_START
     RECLAIM_END
-    END # COLLECTION
-    PRE_STOP_WORLD # STOPWORLD_BEGIN
-    POST_STOP_WORLD # STOPWORLD_END
-    PRE_START_WORLD # STARTWORLD_BEGIN
+    END              # COLLECTION
+    PRE_STOP_WORLD   # STOPWORLD_BEGIN
+    POST_STOP_WORLD  # STOPWORLD_END
+    PRE_START_WORLD  # STARTWORLD_BEGIN
     POST_START_WORLD # STARTWORLD_END
     THREAD_SUSPENDED
     THREAD_UNSUSPENDED
@@ -135,11 +135,11 @@ lib LibGC
 
   alias OnCollectionEventProc = EventType ->
   fun set_on_collection_event = GC_set_on_collection_event(cb : OnCollectionEventProc)
-  fun get_on_collection_event = GC_get_on_collection_event() : OnCollectionEventProc
+  fun get_on_collection_event = GC_get_on_collection_event : OnCollectionEventProc
 
   alias OnThreadEventProc = EventType, Void* ->
   fun set_on_thread_event = GC_set_on_thread_event(cb : OnThreadEventProc)
-  fun get_on_thread_event = GC_get_on_thread_event() : OnThreadEventProc
+  fun get_on_thread_event = GC_get_on_thread_event : OnThreadEventProc
 
   $gc_no = GC_gc_no : Word
   $bytes_found = GC_bytes_found : SignedWord
@@ -243,7 +243,7 @@ module GC
           @@collect_start_s, @@collect_start_ns = Crystal::System::Time.monotonic
         when .end?
           end_s, end_ns = Crystal::System::Time.monotonic
-          duration = { end_s - @@collect_start_s, end_ns - @@collect_start_ns }
+          duration = {end_s - @@collect_start_s, end_ns - @@collect_start_ns}
           Crystal.trace_end 'd', duration, "gc", "collect"
         end
         @@on_collection_event.try(&.call(event_type))
