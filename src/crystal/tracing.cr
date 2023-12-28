@@ -30,21 +30,20 @@ module Crystal
 
     macro trace(section, action, format = "", *args, &block)
       \{% if block %}
-        %start = ::Crystal::System::Time.monotonic
+        %start = ::Time.monotonic
         %ret = \{{yield}}
-        %stop = ::Crystal::System::Time.monotonic
-        %duration = { %stop[0] - %start[0], %stop[1] - %start[1] }
-        ::Crystal.trace_end('d', %duration, \{{section}}, \{{action}}, \{{format}}, \{{args.splat}})
+        %stop = ::Time.monotonic
+        ::Crystal.trace_end('d', %stop - %start, \{{section}}, \{{action}}, \{{format}}, \{{args.splat}})
         %ret
       \{% else %}
-        %tick = ::Crystal::System::Time.monotonic
+        %tick = ::Time.monotonic
         ::Crystal.trace_end('t', %tick, \{{section}}, \{{action}}, \{{format}}, \{{args.splat}})
         nil
       \{% end %}
     end
 
     macro trace_end(t, tick_or_duration, section, action, format = "", *args)
-      %s, %ns = \{{tick_or_duration}}
+      # %s, %ns = \{{tick_or_duration}}
 
       # we may start to trace _before_ Thread.current and other objects have
       # been allocated, they're lazily allocated and since we trace GC.malloc we
@@ -53,17 +52,17 @@ module Crystal
       if %thread = Thread.current?
         if %scheduler = %thread.scheduler?
           %fiber = %scheduler.@current
-          ::Crystal.trace_log("\{{section.id}} \{{action.id}} \{{t.id}}=%d.%09d thread=%lx fiber=%lx [%s] \{{format.id}}\n",
-                              %s, %ns, %thread, %fiber.object_id, %fiber.name || "", \{{args.splat}})
+          ::Crystal.trace_log("\{{section.id}} \{{action.id}} \{{t.id}}=%.9f thread=%lx fiber=%lx [%s] \{{format.id}}\n",
+                              (\{{tick_or_duration}}).to_f, %thread, %fiber.object_id, %fiber.name || "", \{{args.splat}})
         else
           # fallback: no scheduler (or not started yet?) for the current thread
-          ::Crystal.trace_log("\{{section.id}} \{{action.id}} \{{t.id}}=%d.%09d thread=%lx \{{format.id}}\n",
-                              %s, %ns, %thread, \{{args.splat}})
+          ::Crystal.trace_log("\{{section.id}} \{{action.id}} \{{t.id}}=%.9f thread=%lx \{{format.id}}\n",
+                              (\{{tick_or_duration}}).to_f, %thread, \{{args.splat}})
         end
       else
         # fallback: no Thread object (yet)
-        ::Crystal.trace_log("\{{section.id}} \{{action.id}} \{{t.id}}=%d.%09d thread=%lx \{{format.id}}\n",
-                            %s, %ns, Crystal::System::Thread.current_handle, \{{args.splat}})
+        ::Crystal.trace_log("\{{section.id}} \{{action.id}} \{{t.id}}=%.9f thread=%lx \{{format.id}}\n",
+                            (\{{tick_or_duration}}).to_f, Crystal::System::Thread.current_handle, \{{args.splat}})
       end
     end
   {% else %}

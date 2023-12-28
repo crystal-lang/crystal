@@ -2,6 +2,7 @@ class Crystal::Command
   private def trace
     command = "stats"
     color = true
+    fast = false
 
     OptionParser.parse(@options) do |opts|
       opts.banner = <<-USAGE
@@ -20,6 +21,10 @@ class Crystal::Command
         command = "stats"
       end
 
+      opts.on("--fast", "Skip min/max/mean/stddev details for faster processing") do
+        fast = true
+      end
+
       opts.on("--no-color", "Disable colored output") do
         color = false
       end
@@ -35,7 +40,7 @@ class Crystal::Command
     case command
     when "stats"
       if input == "-" || File.exists?(input)
-        Tracing::StatsCommand.new(input, color: color).run
+        Tracing::StatsCommand.new(input, fast: fast, color: color).run
       else
         error "file '#{input}' does not exist"
       end

@@ -3,32 +3,34 @@ require "colorize"
 module Crystal
   module Tracing
     class Values(T)
-      delegate :size, :sum, :min, :max, to: @values
+      getter size : T = T.zero
+      getter sum : T = T.zero
+      getter min : T = T::MAX
+      getter max : T = T::MIN
+      @sum_square : T
 
       def initialize
-        @values = [] of T
+        @sum_square = T.zero
       end
 
       def <<(value)
-        @values << T.new(value)
+        v = T.new(value)
+        @size += 1
+        @sum += v
+        @min = v if v < @min
+        @max = v if v > @max
+        @sum_square += v ** 2
       end
 
       def average
-        if @values.empty?
-          T.new(0)
-        else
-          @values.sum / @values.size
-        end
+        size > 0 ? sum / size : T.zero
       end
 
-      def stddev(mean)
-        zero = T.new(0)
-
-        if @values.empty?
-          zero
+      def stddev
+        if size > 0
+          Math.sqrt((@sum_square / size) - (average ** 2))
         else
-          variance = @values.reduce(zero) { |a, e| a + ((e - mean) ** 2) } / @values.size
-          Math.sqrt(variance)
+          T.zero
         end
       end
 
@@ -44,9 +46,9 @@ module Crystal
         io << " max="
         humanize io, max
         io << " mean="
-        humanize io, mean = average
+        humanize io, average
         io << " ±"
-        humanize io, stddev(mean)
+        humanize io, stddev
         io << ']'
       end
     end
@@ -95,17 +97,154 @@ module Crystal
       end
     end
 
+    module Parser
+      def self.parse_event(line : String) : Event?
+        reader = Char::Reader.new(line)
+
+        section = parse_word
+        expect ' '
+
+        action = parse_word
+        expect ' '
+
+        t = parse_char('t', 'd')
+        expect '='
+        time = parse_float
+
+        Event.new(section, action, t, time, line)
+      end
+
+      def self.parse_variable(line : String, name : String) : Float64?
+        if pos = line.index(name)
+          reader = Char::Reader.new(line, pos + name.bytesize + 1)
+          expect '='
+          parse_float
+        end
+      end
+
+      # Tries to parse known words, so we can return static strings instead of
+      # dynamically allocating the same string over an over, then falls back to
+      # allocate a string.
+      private macro parse_word
+        pos = reader.pos
+        case
+          {% for word in %w[
+                           gc
+                           sched
+                           malloc
+                           realloc
+                           collect:mark
+                           collect:sweep
+                           collect
+                           heap_resize
+                           spawn
+                           enqueue
+                           resume
+                           reschedule
+                           sleep
+                           event_loop
+                           mt:sleeping
+                           mt:slept
+                         ] %}
+          when parse_word?({{word}})
+            {{word}}
+          {% end %}
+        else
+          loop do
+            %char = reader.current_char
+            return unless %char.ascii_letter? || {'-', '_', ':'}.includes?(%char)
+            break if reader.next_char == ' '
+          end
+          reader.string[pos...reader.pos]
+        end
+      end
+
+      private macro parse_word?(string)
+        %valid = true
+        {{string}}.each_char do |%char|
+          if reader.current_char == %char
+            reader.next_char
+          else
+            reader.pos = pos
+            %valid = false
+            break
+          end
+        end
+        %valid
+      end
+
+      # Parses a float directly using a stack allocated buffer instead of
+      # allocating a dynamic string.
+      private macro parse_float
+        %buf = uninitialized UInt8[128]
+        %i = -1
+        loop do
+          %char = reader.current_char
+          return unless %char.ascii_number? || %char == '.'
+          %buf[%i += 1] = %char.ord.to_u8!
+          break if reader.next_char == ' '
+        end
+        %buf[%i] = 0_u8
+        LibC.strtod(%buf, nil)
+      end
+
+      private macro parse_t
+        %char = reader.current_char
+        if {'t', 'd'}.includes?(%char)
+          reader.next_char
+          %char
+        else
+          return
+        end
+      end
+
+      private macro parse_char(*chars)
+        %char = reader.current_char
+        if {{chars}}.includes?(%char)
+          reader.next_char
+          %char
+        else
+          return
+        end
+      end
+
+      private macro expect(char)
+        if reader.current_char == {{char}}
+          reader.next_char
+        else
+          return
+        end
+      end
+    end
+
+    struct Event
+      getter section : String
+      getter action : String
+      getter t : Char
+      getter time : Float64
+      getter line : String
+
+      def initialize(@section, @action, @t, @time, @line)
+      end
+
+      def variable(name : String)
+        Parser.parse_variable(line, name)
+      end
+    end
+
     class Data
-      property events : Int64
+      property events : UInt64
+      property duration : Float64
       getter values : Hash(Symbol, Values(Float64))
 
       def initialize
-        @events = 0_i64
+        @events = 0_u64
+        @duration = 0_f64
         @values = {} of Symbol => Values(Float64)
       end
 
-      def duration
-        @duration ||= Durations.new
+      def durations
+        @durations ||= Durations.new
       end
 
       def sizes
@@ -115,8 +254,10 @@ module Crystal
       def each(&)
         yield :events, @events
 
-        if duration = @duration
-          yield :duration, duration
+        if durations = @durations
+          yield :durations, durations
+        elsif (duration = @duration) > 0
+          yield :duration, duration.round(9)
         end
 
         if sizes = @sizes
@@ -140,9 +281,11 @@ module Crystal
       def initialize(
         @path : String,
         @color = false,
+        @fast = false,
         @stdin = STDIN,
         @stdout = STDOUT,
-        @stderr = STDERR)
+        @stderr = STDERR
+      )
       end
 
       def run
@@ -152,15 +295,22 @@ module Crystal
           end
         end
 
-        each_event do |section, action, t, time, variables|
-          data = stats[section][action]
+        each_event do |event|
+          data = stats[event.section][event.action]
           data.events += 1
-          data.duration << time.to_f if t == "d"
 
-          if section == "gc"
-            if action == "malloc"
-              if variables =~ /\bsize=(\d+)\s*/
-                data.sizes << $1.to_i
+          if @fast
+            data.duration += event.time.to_f if event.t == 'd'
+          else
+            data.durations << event.time.to_f if event.t == 'd'
+          end
+
+          next if @fast
+
+          if event.section == "gc"
+            if event.action == "malloc"
+              if size = event.variable("size")
+                data.sizes << size.to_i
               end
             end
           end
@@ -182,20 +332,21 @@ module Crystal
         end
       end
 
-      PARSE_TRACE_RE = /^(\w+) ([-_:\w]+) ([td])=(\d+\.\d+)\s*(.+)$/
-
       private def each_event(&)
         open_trace_file do |input|
           while line = input.gets(chomp: true)
-            if line =~ PARSE_TRACE_RE
-              yield $1, $2, $3, $4, $5
+            if event = Parser.parse_event(line)
+              yield event
             elsif @path != "-"
-              @stderr.print "WARN: invalid trace '#{line}'\n"
+              @stderr.print "WARN: invalid trace '"
+              @stderr.print line
+              @stderr.print "'\n"
             end
           end
         end
       end
 
+      # TODO: support reading from gzip file
       private def open_trace_file(&)
         if @path == "-"
           yield @stdin

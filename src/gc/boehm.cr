@@ -170,21 +170,21 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "malloc", "size=%ld", size do
+    Crystal.trace "gc", "malloc", "size=%lu", size do
       LibGC.malloc(size)
     end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "malloc", "size=%ld atomic=1", size do
+    Crystal.trace "gc", "malloc", "size=%lu atomic=1", size do
       LibGC.malloc_atomic(size)
     end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "realloc", "size=%ld", size do
+    Crystal.trace "gc", "realloc", "size=%lu", size do
       LibGC.realloc(ptr, size)
     end
   end
@@ -221,14 +221,16 @@ module GC
   {% if flag?(:tracing) %}
     @@on_heap_resize : LibGC::OnHeapResizeProc?
     @@on_collection_event : LibGC::OnCollectionEventProc?
-    @@collect_start_s = 0_i64
-    @@collect_start_ns = 0_i32
+
+    @@collect_start = uninitialized Time::Span
+    @@mark_start = uninitialized Time::Span
+    @@sweep_start = uninitialized Time::Span
 
     private def self.set_on_heap_resize_proc : Nil
       @@on_heap_resize = LibGC.get_on_heap_resize
 
       LibGC.set_on_heap_resize(->(new_size : LibGC::Word) {
-        Crystal.trace "gc", "heap_resize", "size=%lld", UInt64.new(new_size)
+        Crystal.trace "gc", "heap_resize", "size=%llu", UInt64.new(new_size)
         @@on_heap_resize.try(&.call(new_size))
       })
     end
@@ -238,13 +240,23 @@ module GC
 
       LibGC.set_on_collection_event(->(event_type : LibGC::EventType) {
         # Crystal.trace "gc", "on_collection_event", "type=%s", event_type.to_s
+
         case event_type
         when .start?
-          @@collect_start_s, @@collect_start_ns = Crystal::System::Time.monotonic
+          @@collect_start = Time.monotonic
+        when .mark_start?
+          @@mark_start = Time.monotonic
+        when .reclaim_start?
+          @@sweep_start = Time.monotonic
         when .end?
-          end_s, end_ns = Crystal::System::Time.monotonic
-          duration = {end_s - @@collect_start_s, end_ns - @@collect_start_ns}
+          duration = ::Time.monotonic - @@collect_start
           Crystal.trace_end 'd', duration, "gc", "collect"
+        when .mark_end?
+          duration = ::Time.monotonic - @@mark_start
+          Crystal.trace_end 'd', duration, "gc", "collect:mark"
+        when .reclaim_end?
+          duration = ::Time.monotonic - @@sweep_start
+          Crystal.trace_end 'd', duration, "gc", "collect:sweep"
         end
         @@on_collection_event.try(&.call(event_type))
       })
