@@ -346,7 +346,6 @@ module Crystal
         end
       end
 
-      # TODO: support reading from gzip file
       private def open_trace_file(&)
         if @path == "-"
           yield @stdin

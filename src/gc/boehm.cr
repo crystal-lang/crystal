@@ -202,8 +202,10 @@ module GC
     end
 
     {% if flag?(:tracing) %}
-      set_on_heap_resize_proc
-      set_on_collection_events_proc
+      if ::Crystal::Tracing.enabled?("gc")
+        set_on_heap_resize_proc
+        set_on_collection_events_proc
+      end
     {% end %}
 
     # By default the GC warns on big allocations/reallocations. This
