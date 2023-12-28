@@ -404,7 +404,7 @@ class Crystal::Repl::Context
     # (MSVC doesn't seem to have this issue)
     args.delete("-lgc")
 
-    Crystal::Loader.parse(args).tap do |loader|
+    Crystal::Loader.parse(args, dll_search_paths: dll_search_paths).tap do |loader|
       if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
         STDERR.puts "Crystal::Loader loaded libraries:"
         loader.loaded_libraries.each do |path|
@@ -425,6 +425,27 @@ class Crystal::Repl::Context
       end
     end
   }
+
+  # Extra DLL search paths to mimic compiled code's DLL-copying behavior
+  # regarding `@[Link]` annotations. These directories should match the ones
+  # used in `Crystal::Program#each_dll_path`
+  private def dll_search_paths
+    {% if flag?(:msvc) %}
+      paths = CrystalLibraryPath.paths
+
+      if executable_path = Process.executable_path
+        paths << File.dirname(executable_path)
+      end
+
+      ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true) do |path|
+        paths << path
+      end
+
+      paths
+    {% else %}
+      nil
+    {% end %}
+  end
 
   def c_function(name : String)
     loader.find_symbol(name)
