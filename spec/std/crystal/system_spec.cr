@@ -42,5 +42,9 @@ describe "Crystal::System" do
       print_error_to_s("%lu,%lu,%llu,%llu", *values).should eq(values.join(','))
       print_error_to_s("%lx,%lx,%llx,%llx", *values).should eq(values.join(',', &.to_s(16)))
     end
+
+    it "can mix pointers and ints" do
+      print_error_to_s("%d,%p,%s", Pointer(UInt8).new(123), 0x456, "abc".to_unsafe.address).should eq("123,0x456,abc")
+    end
   end
 end
