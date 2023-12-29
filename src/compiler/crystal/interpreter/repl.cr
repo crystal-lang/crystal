@@ -25,7 +25,7 @@ class Crystal::Repl
         result = parse_and_interpret(expression)
         result.warnings.report(STDOUT)
 
-        next unless result.is_a?(EvalSuccess)
+        next unless result.value
 
         print " => "
         puts SyntaxHighlighter::Colorize.highlight!(result.value.to_s)
@@ -42,17 +42,16 @@ class Crystal::Repl
     end
   end
 
-  record EvalSuccess, value : Value, warnings : WarningCollection
-  record EvalParserError, warnings : WarningCollection
+  record EvalResult, value : Value?, warnings : WarningCollection
 
-  def parse_and_interpret(expression : String) : EvalSuccess | EvalParserError
+  def parse_and_interpret(expression : String) : EvalResult
     parser = new_parser(expression)
 
     node = parser.parse
-    return EvalParserError.new(warnings: parser.warnings) unless node
+    return EvalResult.new(value: nil, warnings: parser.warnings) unless node
 
     value = interpret(node)
-    return EvalSuccess.new(value: value, warnings: parser.warnings)
+    return EvalResult.new(value: value, warnings: parser.warnings)
   end
 
   def run_file(filename, argv)

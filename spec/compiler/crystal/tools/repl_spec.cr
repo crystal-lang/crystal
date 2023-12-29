@@ -1,9 +1,8 @@
 require "../../../spec_helper"
 
-private def success_value(result) : Crystal::Repl::Value
-  success_result = result.should be_a(Crystal::Repl::EvalSuccess)
-  success_result.warnings.infos.should be_empty
-  success_result.value
+private def success_value(result : Crystal::Repl::EvalResult) : Crystal::Repl::Value
+  result.warnings.infos.should be_empty
+  result.value.should_not be_nil
 end
 
 describe Crystal::Repl do
