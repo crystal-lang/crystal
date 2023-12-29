@@ -6,5 +6,4 @@ lib LibC
   fun strcmp(s1 : Char*, s2 : Char*) : Int
   fun strerror(errnum : Int) : Char*
   fun strlen(s : Char*) : SizeT
-  fun strstr(s1 : Char*, s2 : Char*) : Char*
 end

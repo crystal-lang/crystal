@@ -1,35 +1,47 @@
 module Crystal
   {% if flag?(:tracing) %}
+    # :nodoc:
     module Tracing
-      @@gc = false
-      @@sched = false
-
       def self.init
-        debug = Pointer(UInt8).null
+        @@gc = false
+        @@sched = false
 
         {% if flag?(:win32) %}
           buf = uninitialized UInt8[256]
           len = LibC.GetEnvironmentVariableW("CRYSTAL_DEBUG", buf, buf.size)
-          debug = buf.to_unsafe
+          debug = buf.to_slice(len) if len > 0
         {% else %}
-          debug = LibC.getenv("CRYSTAL_DEBUG")
+          if ptr = LibC.getenv("CRYSTAL_DEBUG")
+            len = LibC.strlen(ptr)
+            debug = Slice.new(ptr, len) if len > 0
+          end
         {% end %}
 
-        if debug
-          @@gc = !LibC.strstr(debug, "gc").null?
-          @@sched = !LibC.strstr(debug, "sched").null?
+        return unless debug
+
+        each_token(debug) do |token|
+          @@gc = true if token == "gc".to_slice
+          @@sched = true if token == "sched".to_slice
         end
       end
 
       def self.enabled?(section : String) : Bool
         case section
         when "gc"
-          @@gc
+          !!@@gc
         when "sched"
-          @@sched
+          !!@@sched
         else
           false
         end
+      end
+
+      private def self.each_token(bytes, delim = ',', &)
+        while e = bytes.index(delim.ord)
+          yield bytes[0, e]
+          bytes = bytes[(e + 1)..]
+        end
+        yield bytes[0..] unless bytes.size == 0
       end
 
       # Formats and prints a log message to STDERR. The generated message is
