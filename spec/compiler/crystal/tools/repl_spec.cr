@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_interpreter) %}
+
 require "../../../spec_helper"
 
 private def success_value(result : Crystal::Repl::EvalResult) : Crystal::Repl::Value
