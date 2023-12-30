@@ -430,7 +430,10 @@ module JSON
   # end
   # string # => %<{"name":"foo","values":[1,2,3]}>
   # ```
-  def self.build(indent = nil, &)
+  #
+  # Accepts an indent parameter which can either be an `Int` (number of spaces to indent)
+  # or a `String`, which will prefix each level with the string a corresponding amount of times.
+  def self.build(indent : String | Int | Nil = nil, &)
     String.build do |str|
       build(str, indent) do |json|
         yield json
@@ -439,7 +442,7 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil, &) : Nil
+  def self.build(io : IO, indent : String | Int | Nil = nil, &) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do
