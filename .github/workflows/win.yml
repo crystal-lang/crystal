@@ -252,7 +252,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal
           path: build
@@ -303,7 +303,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-release
           path: etc/win-ci/portable
@@ -329,7 +329,7 @@ jobs:
           iscc.exe crystal.iss
 
       - name: Upload Crystal installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-installer
           path: etc/win-ci/Output/crystal-setup.exe
