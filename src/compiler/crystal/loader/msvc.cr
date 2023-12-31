@@ -60,7 +60,7 @@ class Crystal::Loader
     result
   end
 
-  private def self.search_library(libname, search_paths, extra_suffix)
+  protected def self.search_library(libname, search_paths, extra_suffix)
     if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
       libname = File.expand_path(libname)
       library_path = library_filename(libname)
@@ -106,7 +106,7 @@ class Crystal::Loader
   end
 
   def self.library_filename(libname : String) : String
-    "#{libname}.lib"
+    "#{libname.rchop(".lib")}.lib"
   end
 
   def find_symbol?(name : String) : Handle?
@@ -149,8 +149,13 @@ class Crystal::Loader
     load_library?(libname) || raise LoadError.from_winerror "cannot find #{Loader.library_filename(libname)}"
   end
 
+  def load_library?(libname : String) : Bool
+    library_path = Loader.search_library(libname, @search_paths, "-dynamic")
+    !library_path.nil? && load_file?(library_path)
+  end
+
   private def open_library(path : String)
-    # TODO: respect Crystal::LIBRARY_RPATH (#13490)
+    # TODO: respect Crystal::LIBRARY_RPATH (#13490), or `@[Link(dll:)]`'s search order
     LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 
