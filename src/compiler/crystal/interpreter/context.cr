@@ -46,6 +46,9 @@ class Crystal::Repl::Context
 
   def initialize(@program : Program)
     @program.flags << "interpreted"
+    {% if flag?(:win32) %}
+      @program.flags << "preview_dll"
+    {% end %}
 
     @gc_references = [] of Void*
 
@@ -391,6 +394,8 @@ class Crystal::Repl::Context
   def type_from_id(id : Int32) : Type
     @id_to_type[id]
   end
+
+  getter? loader : Loader?
 
   getter(loader : Loader) {
     lib_flags = program.lib_flags
