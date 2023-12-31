@@ -27,6 +27,14 @@ private def dll_search_paths
   {% end %}
 end
 
+{% if flag?(:unix) %}
+  class Crystal::Loader
+    def self.new(search_paths : Array(String), *, dll_search_paths : Nil)
+      new(search_paths)
+    end
+  end
+{% end %}
+
 describe Crystal::FFI::CallInterface do
   before_all do
     FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
