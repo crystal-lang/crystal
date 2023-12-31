@@ -321,6 +321,10 @@ module Crystal
         {% if flag?(:darwin) %}
           run_dsymutil(output_filename) unless debug.none?
         {% end %}
+
+        {% if flag?(:windows) %}
+          copy_dlls(program, output_filename) if program.has_flag?("preview_dll")
+        {% end %}
       end
 
       CacheDir.instance.cleanup if @cleanup
@@ -342,6 +346,25 @@ module Crystal
 
       @progress_tracker.stage("dsymutil") do
         Process.run(dsymutil, ["--flat", filename])
+      end
+    end
+
+    private def copy_dlls(program, output_filename)
+      not_found = nil
+      output_directory = File.dirname(output_filename)
+
+      program.each_dll_path do |path, found|
+        if found
+          FileUtils.cp(path, output_directory)
+        else
+          not_found ||= [] of String
+          not_found << path
+        end
+      end
+
+      if not_found
+        stderr << "Warning: The following DLLs are required at run time, but Crystal is unable to locate them in CRYSTAL_LIBRARY_PATH, the compiler's directory, or PATH: "
+        not_found.sort!.join(stderr, ", ")
       end
     end
 

@@ -2055,16 +2055,30 @@ class Hash(K, V)
     pp.text "{...}" unless executed
   end
 
-  # Returns an array of tuples with key and values belonging to this Hash.
+  # Returns an `Array` of `Tuple(K, V)` with key and values belonging to this Hash.
   #
   # ```
   # h = {1 => 'a', 2 => 'b', 3 => 'c'}
   # h.to_a # => [{1, 'a'}, {2, 'b'}, {3, 'c'}]
   # ```
+  #
   # The order of the array follows the order the keys were inserted in the Hash.
   def to_a : Array({K, V})
+    to_a(&.itself)
+  end
+
+  # Returns an `Array` with the results of running *block* against tuples with key and values
+  # belonging to this Hash.
+  #
+  # ```
+  # h = {"first_name" => "foo", "last_name" => "bar"}
+  # h.to_a { |_k, v| v.capitalize } # => ["Foo", "Bar"]
+  # ```
+  #
+  # The order of the array follows the order the keys were inserted in the Hash.
+  def to_a(&block : {K, V} -> U) : Array(U) forall U
     to_a_impl do |entry|
-      {entry.key, entry.value}
+      yield ({entry.key, entry.value})
     end
   end
 

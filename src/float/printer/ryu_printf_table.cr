@@ -1,5 +1,4 @@
-# FIXME: this leads to an OOB on wasm32 (#13918)
-{% skip_file if flag?(:wasm32) %}
+{% skip_file unless String::Formatter::HAS_RYU_PRINTF %}
 
 module Float::Printer::RyuPrintf
   {% begin %}
