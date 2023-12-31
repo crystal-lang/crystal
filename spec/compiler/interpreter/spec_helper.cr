@@ -5,6 +5,7 @@ require "compiler/crystal/interpreter/*"
 def interpret(code, *, prelude = "primitives", file = __FILE__, line = __LINE__)
   if prelude == "primitives"
     context, value = interpret_with_context(code)
+    context.loader?.try &.close_all
     value.value
   else
     interpret_in_separate_process(code, prelude, file: file, line: line)
