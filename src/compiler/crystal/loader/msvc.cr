@@ -139,7 +139,7 @@ class Crystal::Loader
       return false unless handle
 
       @handles << handle
-      @loaded_libraries << dll
+      @loaded_libraries << (module_filename(handle) || dll)
     end
 
     true
@@ -162,6 +162,7 @@ class Crystal::Loader
   def load_current_program_handle
     if LibC.GetModuleHandleExW(0, nil, out hmodule) != 0
       @handles << hmodule
+      @loaded_libraries << (Process.executable_path || "current program handle")
     end
   end
 
@@ -170,6 +171,19 @@ class Crystal::Loader
       LibC.FreeLibrary(handle)
     end
     @handles.clear
+  end
+
+  private def module_filename(handle)
+    Crystal::System.retry_wstr_buffer do |buffer, small_buf|
+      len = LibC.GetModuleFileNameW(handle, buffer, buffer.size)
+      if 0 < len < buffer.size
+        break String.from_utf16(buffer[0, len])
+      elsif small_buf && len == buffer.size
+        next 32767 # big enough. 32767 is the maximum total path length of UNC path.
+      else
+        break nil
+      end
+    end
   end
 
   # Returns a list of directories used as the default search paths.

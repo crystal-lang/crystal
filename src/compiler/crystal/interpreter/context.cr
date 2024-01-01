@@ -410,13 +410,6 @@ class Crystal::Repl::Context
     args.delete("-lgc")
 
     Crystal::Loader.parse(args).tap do |loader|
-      if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
-        STDERR.puts "Crystal::Loader loaded libraries:"
-        loader.loaded_libraries.each do |path|
-          STDERR.puts "      #{path}"
-        end
-      end
-
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
       # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
@@ -426,7 +419,10 @@ class Crystal::Repl::Context
       loader.load_current_program_handle
 
       if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
-        STDERR.puts "      current program handle"
+        STDERR.puts "Crystal::Loader loaded libraries:"
+        loader.loaded_libraries.each do |path|
+          STDERR.puts "      #{path}"
+        end
       end
     end
   }
