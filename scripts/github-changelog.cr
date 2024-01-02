@@ -282,6 +282,11 @@ SECTION_TITLES = {
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
 
+puts "## [#{milestone}] (#{Time.local.to_s("%F")})"
+puts
+puts "[#{milestone}]: https://github.com/crystal-lang/crystal/releases/#{milestone}"
+puts
+
 SECTION_TITLES.each do |id, title|
   prs = sections[id]? || next
   puts "### #{title}"
