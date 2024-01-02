@@ -626,6 +626,7 @@ module Crystal
       it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2) { 3 }", Call.new("foo".call, name, args: [1.int32, 2.int32] of ASTNode, block: Block.new(body: 3.int32))
+      it_parses "foo.#{name} do end", Call.new("foo".call, name, block: Block.new)
     end
 
     ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
