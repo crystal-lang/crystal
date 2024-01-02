@@ -197,6 +197,10 @@ record PullRequest,
     labels.includes?("kind:bug")
   end
 
+  def chore?
+    labels.includes?("kind:chore")
+  end
+
   def refactor?
     labels.includes?("kind:refactor")
   end
@@ -223,6 +227,7 @@ record PullRequest,
     when docs?        then "docs"
     when specs?       then "specs"
     when fix?         then "fix"
+    when chore?       then "chore"
     when performance? then "performance"
     when refactor?    then "refactor"
     else                   nil
@@ -266,12 +271,13 @@ SECTION_TITLES = {
   "breaking"    => "Breaking changes",
   "feature"     => "Features",
   "fix"         => "Bugfixes",
+  "chore"       => "Chores",
   "performance" => "Performance",
   "refactor"    => "Refactor",
   "docs"        => "Documentation",
   "specs"       => "Specs",
   "infra"       => "Infrastructure",
-  ""            => "Chores",
+  ""            => "other",
 }
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
