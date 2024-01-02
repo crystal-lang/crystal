@@ -290,9 +290,6 @@ module Crystal
     assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
-    assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
-    assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
-    assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
 
     # #5895, #6042, #5997
     %w(
@@ -624,10 +621,11 @@ module Crystal
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
     end
 
-    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
+    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!=", "[]=", "!~"].each do |name|
       it_parses "foo.#{name}", Call.new("foo".call, name)
       it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
+      it_parses "foo.#{name}(1, 2) { 3 }", Call.new("foo".call, name, args: [1.int32, 2.int32] of ASTNode, block: Block.new(body: 3.int32))
     end
 
     ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
