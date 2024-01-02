@@ -19,6 +19,16 @@ describe Crystal::Repl do
   end
 
   describe "can return static and runtime type information for" do
+    it "Non Union" do
+      repl = Crystal::Repl.new
+      repl.prelude = "primitives"
+      repl.load_prelude
+
+      repl_value = success_value(repl.parse_and_interpret("1"))
+      repl_value.type.to_s.should eq("Int32")
+      repl_value.runtime_type.to_s.should eq("Int32")
+    end
+
     it "MixedUnionType" do
       repl = Crystal::Repl.new
       repl.prelude = "primitives"
