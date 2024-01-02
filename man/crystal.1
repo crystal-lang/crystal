@@ -393,6 +393,29 @@ Show type of main variables of file.
 Show methods that are never called. The output is a list of lines with columns
 separated by tab. The first column is the location of the def, the second column
 its reference name and the third column is the length in lines.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl D Ar FLAG, Fl -define= Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl f Ar FORMAT, Fl -format= Ar FORMAT
+Output format 'text' (default), 'json', or 'csv'.
+.It Fl -tallies
+Print reachable methods and their call counts as well.
+.It Fl -check
+Exit with error if there is any unreachable code.
+.It Fl i Ar PATH, Fl -include= Ar PATH
+Include path in output.
+.It Fl e Ar PATH, Fl -exclude= Ar PATH
+Exclude path in output (default:
+.Sy lib
+).
+.It Fl -error-trace
+Show full error trace.
+.It Fl -prelude
+Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.El
 .El
 .Pp
 .It
