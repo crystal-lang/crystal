@@ -110,6 +110,9 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if experimental?
+      io << "**[experimental]** "
+    end
     if deprecated?
       io << "**[deprecation]** "
     end
@@ -175,6 +178,10 @@ record PullRequest,
 
   def breaking?
     labels.includes?("kind:breaking")
+  end
+
+  def experimental?
+    labels.includes?("experimental")
   end
 
   def feature?
