@@ -130,7 +130,7 @@ Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM
 Passing --mcpu native will pass the host CPU name to tune performance for the host.
 .It Fl -mattr Ar CPU
 Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
-.It Fl -mcmodel default|kernel|small|medium|large
+.It Fl -mcmodel Ar default|kernel|small|medium|large
 Specifies a specific code model to generate code for. This will pass a --code-model flag to LLVM.
 .It Fl -no-color
 Disable colored output.
@@ -386,7 +386,7 @@ flag.
 .It Cm implementations
 Show implementations for a given call. Use
 .Fl -cursor
-to specify the cursor position. The format for the cursor position is file:line:column.
+ to specify the cursor position. The format for the cursor position is file:line:column.
 .It Cm types
 Show type of main variables of file.
 .It Cm unreachable
@@ -410,7 +410,7 @@ Show help. Option --help or -h can also be added to each command for command-spe
 Show version.
 .El
 .
-.Sh ENVIRONMENT VARIABLES
+.Sh ENVIRONMENT\ VARIABLES
 .Bl -tag -width "12345678" -compact
 .Pp
 .It
