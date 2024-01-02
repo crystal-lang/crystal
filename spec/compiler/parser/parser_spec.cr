@@ -294,6 +294,12 @@ module Crystal
     assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
     assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
 
+    # #10397
+    %w(<= >= == != []= ===).each do |operator|
+      it_parses "def #{operator}(other, file = 1); end", Def.new(operator, ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def #{operator}(*args, **opts); end", Def.new(operator, ["args".arg], splat_index: 0, double_splat: "opts".arg)
+    end
+
     # #5895, #6042, #5997
     %w(
       begin nil true false yield with abstract
