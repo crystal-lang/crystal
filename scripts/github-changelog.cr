@@ -168,7 +168,12 @@ record PullRequest,
     topics.reject! &.[0].==("multithreading")
 
     topics.sort_by! { |parts|
-      {parts[0] == "lang" ? 0 : 1, parts[0]}
+      topic_priority = case parts[0]
+                       when "tools" then 2
+                       when "lang"  then 1
+                       else              0
+                       end
+      {-topic_priority, parts[0]}
     }
   end
 
