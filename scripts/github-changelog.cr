@@ -152,7 +152,10 @@ record PullRequest,
   end
 
   def topic
-    topics[0]
+    topics.fetch(0) do
+      STDERR.puts "Missing topic for ##{number}"
+      nil
+    end
   end
 
   def topics
