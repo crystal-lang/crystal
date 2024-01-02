@@ -70,7 +70,7 @@
 
 - *(docs-generator)* Expose inherited macros in generated API docs ([#13810](https://github.com/crystal-lang/crystal/pull/13810), thanks @Blacksmoke16)
 - *(docs-generator)* Order macros below class methods in generated docs ([#14024](https://github.com/crystal-lang/crystal/pull/14024), thanks @Blacksmoke16)
-- *(formatter)* Do not remove trailing comma from multi-line macro/def parameters ([#14075](https://github.com/crystal-lang/crystal/pull/14075), thanks @Blacksmoke16)
+- *(formatter)* Do not remove trailing comma from multi-line macro/def parameters (not yet enabled) ([#14075](https://github.com/crystal-lang/crystal/pull/14075), thanks @Blacksmoke16)
 - *(unreachable)* Add `--check` flag to `crystal tool unreachable` ([#13930](https://github.com/crystal-lang/crystal/pull/13930), thanks @straight-shoota)
 - *(unreachable)* Add annotations to output of `crystal tool unreachable` ([#13927](https://github.com/crystal-lang/crystal/pull/13927), thanks @straight-shoota)
 - *(unreachable)* Print relative paths in `crystal tool unreachable` ([#13929](https://github.com/crystal-lang/crystal/pull/13929), thanks @straight-shoota)
