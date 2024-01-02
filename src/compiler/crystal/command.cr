@@ -627,6 +627,8 @@ class Crystal::Command
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end
+  rescue exc : IO::Error
+    error exc
   end
 
   private def setup_simple_compiler_options(compiler, opts)
