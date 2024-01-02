@@ -178,7 +178,7 @@ describe Crystal::Loader do
 
     it "respects -dynamic" do
       build_c_dynlib(compiler_datapath("loader", "foo.c"), lib_name: "foo-dynamic")
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: [SPEC_CRYSTAL_LOADER_LIB_PATH])
       loader.load_library?("foo").should be_true
     ensure
       loader.close_all if loader
@@ -186,7 +186,7 @@ describe Crystal::Loader do
 
     it "ignores -static" do
       build_c_dynlib(compiler_datapath("loader", "foo.c"), lib_name: "bar-static")
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: [SPEC_CRYSTAL_LOADER_LIB_PATH])
       loader.load_library?("bar").should be_false
     ensure
       loader.close_all if loader
