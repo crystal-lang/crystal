@@ -140,8 +140,14 @@ Don't do code generation, just parse the file.
 Specify filename of output.
 .It Fl -prelude
 Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.It Fl O Ar LEVEL
+Optimization mode: 0 (default), 1, 2, 3. See
+.Sy OPTIMIZATIONS
+for details.
 .It Fl -release
-Turn on optimizations for the generated code, which are disabled by default.
+Compile in release mode. Equivalent to
+.Fl O3
+.Fl -single-module
 .It Fl -error-trace
 Show full stack trace. Disabled by default, as the full trace usually makes error messages less readable and not always deliver relevant information.
 .It Fl s, -stats
@@ -152,6 +158,9 @@ Print statistics about the progress for the current build.
 Print statistics about the execution time.
 .It Fl -single-module
 Generate a single LLVM module.
+By default, one LLVM module is created for each type in a program.
+.Fl -release
+implies this option.
 .It Fl -threads Ar NUM
 Maximum number of threads to use for code generation. The default is 8 threads.
 .It Fl -target Ar TRIPLE
@@ -265,8 +274,14 @@ Generate the output without any symbolic debug symbols.
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -error-trace
 Show full error trace.
+.It Fl O Ar LEVEL
+Optimization mode: 0 (default), 1, 2, 3. See
+.Sy OPTIMIZATIONS
+for details.
 .It Fl -release
-Turn on optimizations for the generated code, which are disabled by default.
+Compile in release mode. Equivalent to
+.Fl O3
+.Fl -single-module
 .It Fl s, -stats
 Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 .It Fl p, -progress
@@ -326,8 +341,14 @@ Generate the output without any symbolic debug symbols.
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -error-trace
 Show full error trace.
+.It Fl O Ar LEVEL
+Optimization mode: 0 (default), 1, 2, 3. See
+.Sy OPTIMIZATIONS
+for details.
 .It Fl -release
-Turn on optimizations for the generated code, which are disabled by default.
+Compile in release mode. Equivalent to
+.Fl O3
+.Fl -single-module
 .It Fl s, -stats
 Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 .It Fl p, -progress
@@ -409,6 +430,28 @@ Show help. Option --help or -h can also be added to each command for command-spe
 .Pp
 Show version.
 .El
+.
+.Sh OPTIMIZATIONS
+.Bl -tag -width "12345678" -compact
+.Pp
+The optimization level specifies the codegen effort for producing optimal code.
+It's a trade-off between compilation performance (decreasing per optimization level) and runtime performance (increasing per optimization level).
+.Pp
+Production builds should usually have the highest optimization level.
+Best results are achieved with
+.Fl -release
+ which also implies
+.Fl -single-module
+.Pp
+.It
+.It Fl O0
+No optimization (default)
+.It Fl O1
+Low optimization
+.It Fl O2
+Middle optimization
+.It Fl O3
+High optimization
 .
 .Sh ENVIRONMENT\ VARIABLES
 .Bl -tag -width "12345678" -compact
