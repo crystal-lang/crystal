@@ -8,7 +8,6 @@
 
 #### lang
 
-- Add compile time string interpolation for char/num/bool constants ([#12671](https://github.com/crystal-lang/crystal/pull/12671), thanks @mattrberry)
 - **[breaking]** Support `alignof` and `instance_alignof` ([#14087](https://github.com/crystal-lang/crystal/pull/14087), thanks @HertzDevil)
 - *(annotations)* Support `dll` parameter in `@[Link]` ([#14131](https://github.com/crystal-lang/crystal/pull/14131), thanks @HertzDevil)
 - *(macros)* Expose macro `Call` context via new `@caller` macro ivar ([#14048](https://github.com/crystal-lang/crystal/pull/14048), thanks @Blacksmoke16)
@@ -96,6 +95,7 @@
 - *(numeric)* Avoid double rounding in `Float#format` for nonnegative `decimal_place` ([#14129](https://github.com/crystal-lang/crystal/pull/14129), thanks @HertzDevil)
 - *(runtime)* Avoid `@[ThreadLocal]` on Android ([#14025](https://github.com/crystal-lang/crystal/pull/14025), thanks @HertzDevil)
 - *(runtime)* Never use string interpolation in `Crystal::System.print_error` ([#14114](https://github.com/crystal-lang/crystal/pull/14114), thanks @HertzDevil)
+- *(runtime)* segfault with next boehm gc (after v8.2.4) ([#14130](https://github.com/crystal-lang/crystal/pull/14130), thanks @ysbaddaden)
 - *(specs)* Skip spec execution on error exit ([#13986](https://github.com/crystal-lang/crystal/pull/13986), thanks @straight-shoota)
 - *(system)* Fix `FileUtils.ln_sf` to override special file types ([#13896](https://github.com/crystal-lang/crystal/pull/13896), thanks @straight-shoota)
 - *(system)* Fix `Process.exists?` throwing errors on EPERM ([#13911](https://github.com/crystal-lang/crystal/pull/13911), thanks @refi64)
@@ -110,7 +110,9 @@
 
 - *(cli)* Remove unnecessary file check for CLI arguments ([#13853](https://github.com/crystal-lang/crystal/pull/13853), thanks @straight-shoota)
 - *(cli)* Check for invalid integers in compiler's CLI ([#13959](https://github.com/crystal-lang/crystal/pull/13959), thanks @HertzDevil)
+- *(cli)* Fix compiler error message for invalid source file ([#14157](https://github.com/crystal-lang/crystal/pull/14157), thanks @straight-shoota)
 - *(codegen)* Fix a typo in compiler source ([#14054](https://github.com/crystal-lang/crystal/pull/14054), thanks @kojix2)
+- *(codegen)* Fix codegen error when discarding `is_a?` or `responds_to?`'s result ([#14148](https://github.com/crystal-lang/crystal/pull/14148), thanks @HertzDevil)
 - *(interpreter)* Fix element alignment of `Tuple` and `NamedTuple` casts ([#14040](https://github.com/crystal-lang/crystal/pull/14040), thanks @HertzDevil)
 - *(interpreter)* `Crystal::Loader`: Skip second linker member on Windows if absent ([#14111](https://github.com/crystal-lang/crystal/pull/14111), thanks @HertzDevil)
 - *(parser)* Support `%r` and `%x` when not followed by delimiter start ([#13933](https://github.com/crystal-lang/crystal/pull/13933), thanks @HertzDevil)
@@ -201,6 +203,12 @@
 - *(text)* Add note about `Char::Reader`'s value semantics ([#14008](https://github.com/crystal-lang/crystal/pull/14008), thanks @HertzDevil)
 - *(text)* Fix documentation for `String#index!` ([#14038](https://github.com/crystal-lang/crystal/pull/14038), thanks @gettalong)
 
+#### compiler
+
+- *(cli)* Add optimization levels to manpage ([#14162](https://github.com/crystal-lang/crystal/pull/14162), thanks @straight-shoota)
+- *(cli)* Add `unreachable` options to manpage ([#14164](https://github.com/crystal-lang/crystal/pull/14164), thanks @straight-shoota)
+- *(cli)* Fix formatting in manpage ([#14163](https://github.com/crystal-lang/crystal/pull/14163), thanks @straight-shoota)
+
 ### Specs
 
 #### stdlib
@@ -230,6 +238,8 @@
 - Update shards 0.17.4 ([#14133](https://github.com/crystal-lang/crystal/pull/14133), thanks @straight-shoota)
 - Update distribution-scripts ([#14136](https://github.com/crystal-lang/crystal/pull/14136), thanks @straight-shoota)
 - Update GH Actions to v4 ([#14120](https://github.com/crystal-lang/crystal/pull/14120), thanks @renovate)
+- Embed logo image into repository and upgrade to SVG ([#14137](https://github.com/crystal-lang/crystal/pull/14137), thanks @straight-shoota)
+- Improvements for `github-changelog` script ([#14160](https://github.com/crystal-lang/crystal/pull/14160), thanks @straight-shoota)
 - Add `scripts/generate_llvm_version_info.cr` ([#14112](https://github.com/crystal-lang/crystal/pull/14112), thanks @HertzDevil)
 - Fix `make clean` to remove zipped manpages ([#14135](https://github.com/crystal-lang/crystal/pull/14135), thanks @straight-shoota)
 - Make `scripts/*.cr` all executable ([#13999](https://github.com/crystal-lang/crystal/pull/13999), thanks @HertzDevil)
@@ -237,6 +247,8 @@
 - Merge `samples/.gitignore` into `.gitignore` ([#14134](https://github.com/crystal-lang/crystal/pull/14134), thanks @straight-shoota)
 - *(ci)* Update GH Actions ([#13801](https://github.com/crystal-lang/crystal/pull/13801), thanks @renovate)
 - *(ci)* Update LLVM patch version to LLVM 17.0.6 ([#14080](https://github.com/crystal-lang/crystal/pull/14080), thanks @straight-shoota)
+- *(ci)* Configure Renovate Bot to add label `topic:infrastructure/ci` on PRs ([#14166](https://github.com/crystal-lang/crystal/pull/14166), thanks @straight-shoota)
+- *(ci)* Update GH Actions ([#14165](https://github.com/crystal-lang/crystal/pull/14165), thanks @renovate)
 - *(ci)* Distribute LLVM DLLs on Windows CI ([#14110](https://github.com/crystal-lang/crystal/pull/14110), thanks @HertzDevil)
 - *(ci)* Use `CMAKE_MSVC_RUNTIME_LIBRARY` flag in win.yml ([#13900](https://github.com/crystal-lang/crystal/pull/13900), thanks @HertzDevil)
 
