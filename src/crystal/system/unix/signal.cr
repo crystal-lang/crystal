@@ -149,7 +149,7 @@ module Crystal::System::Signal
     if is_stack_overflow
       Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
     else
-      Crystal::System.print_error "Invalid memory access (signal %d) at address %p\n", sig, addr
+      Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
     end
 
     Exception::CallStack.print_backtrace
