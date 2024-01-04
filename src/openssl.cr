@@ -90,7 +90,8 @@ module OpenSSL
           @code, message = fetch_error_details
           if @code == 0
             errno = {% if flag?(:win32?) %} WinError.wsa_value {% else %} Errno.value {% end %}
-            if {% if flag?(:win32) %} errno.error_success? {% else %} errno.none? {% end %}
+            success = {% if flag?(:win32) %} errno.error_success? {% else %} errno.none? {% end %}
+            if success
               message = "Unexpected EOF"
               @underlying_eof = true
             else
