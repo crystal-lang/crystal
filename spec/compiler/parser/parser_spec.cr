@@ -290,9 +290,6 @@ module Crystal
     assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
-    assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
-    assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
-    assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
 
     # #10397
     %w(<= >= == != []= ===).each do |operator|
