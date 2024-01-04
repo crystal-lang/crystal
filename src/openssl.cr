@@ -89,8 +89,8 @@ module OpenSSL
         when .syscall?
           @code, message = fetch_error_details
           if @code == 0
-            errno = Errno.value
-            if errno.none?
+            errno = {% if flag?(:win32?) %} WinError.wsa_value {% else %} Errno.value {% end %}
+            if {% if flag?(:win32) %} errno.error_success? {% else %} errno.none? {% end %}
               message = "Unexpected EOF"
               @underlying_eof = true
             else
