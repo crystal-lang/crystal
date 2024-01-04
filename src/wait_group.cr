@@ -43,25 +43,30 @@ class WaitGroup
 
   # Increments the counter by how many fibers we want to wait for.
   #
+  # This can also be used to decrement the counter, in which case the behavior
+  # is identical to `#done`.
+  #
   # Can be called at any time, allowing concurrent fibers to add more fibers to
   # wait for, but they must always do so before calling `#done` that would
   # decrement the counter, to make sure that the counter may never inadvertently
   # reach zero before all fibers are done.
   def add(n : Int32 = 1) : Nil
-    @counter.add(n)
-  end
-
-  # Decrements the counter by one. Must be called by concurrent fibers once they
-  # have finished processing. When the counter reaches zero, all waiting fibers
-  # will be resumed.
-  def done : Nil
-    return unless @counter.sub(1) == 1
+    new_value = @counter.add(n) + n
+    raise "Negative WaitGroup counter" if new_value < 0
+    return unless new_value == 0
 
     @lock.sync do
       @waiting.consume_each do |node|
         node.value.enqueue
       end
     end
+  end
+
+  # Decrements the counter by one. Must be called by concurrent fibers once they
+  # have finished processing. When the counter reaches zero, all waiting fibers
+  # will be resumed.
+  def done : Nil
+    add(-1)
   end
 
   # Suspends the current fiber until the counter reaches zero, at which point
