@@ -16,6 +16,7 @@ require "crystal/pointer_linked_list"
 # 5.times do
 #   spawn do
 #     do_something
+#   ensure
 #     wg.done # the fiber is done
 #   end
 # end
