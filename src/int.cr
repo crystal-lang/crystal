@@ -588,7 +588,6 @@ struct Int
   # 2
   # 1
   # ```
-
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
