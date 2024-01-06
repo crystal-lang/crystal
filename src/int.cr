@@ -574,6 +574,21 @@ struct Int
   end
 
   # Calls the given block with each integer value from self down to `to`.
+  #
+  # ```
+  # 3.downto(1) do |i|
+  #   puts i
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 3
+  # 2
+  # 1
+  # ```
+
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
