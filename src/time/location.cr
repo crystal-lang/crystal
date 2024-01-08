@@ -277,7 +277,7 @@ class Time::Location
   # `Location`, unless the time zone database has been updated in between.
   def self.load(name : String) : Location
     case name
-    when "", "UTC"
+    when "", "UTC","Etc/UTC"
       UTC
     when "Local"
       local
