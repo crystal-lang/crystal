@@ -4198,7 +4198,6 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    options = Regex::MatchOptions::None
     while match = separator.match_at_byte_index(self, match_offset, options: options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
@@ -4744,7 +4743,6 @@ class String
   def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : self
     byte_offset = 0
 
-    options = Regex::MatchOptions::None
     while match = pattern.match_at_byte_index(self, byte_offset, options: options)
       index = match.byte_begin(0)
       $~ = match
