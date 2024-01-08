@@ -236,7 +236,7 @@ class Time::Location
   #
   # *name* is understood to be a location name in the IANA Time
   # Zone database, such as `"America/New_York"`. As special cases,
-  # `"UTC"` and empty string (`""`) return `Location::UTC`, and
+  # `"UTC"` `"Etc/UTC"` and empty string (`""`) return `Location::UTC`, and
   # `"Local"` returns `Location.local`.
   #
   # The implementation uses a list of system-specific paths to look for a time
@@ -339,7 +339,7 @@ class Time::Location
   # The environment variable `ENV["TZ"]` is consulted for finding the time zone
   # to use.
   #
-  # * `"UTC"` and empty string (`""`) return `Location::UTC`
+  # * `"UTC"`, `"Etc/UTC"` and empty string (`""`) return `Location::UTC`
   # * Any other value (such as `"Europe/Berlin"`) is tried to be resolved using
   #   `Location.load`.
   # * If `ENV["TZ"]` is not set, the system's local time zone data will be used
