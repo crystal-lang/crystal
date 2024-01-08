@@ -2,10 +2,16 @@ require "fiber"
 require "crystal/spin_lock"
 require "crystal/pointer_linked_list"
 
-# Suspend execution until other fibers are done.
+# Suspend execution until a collection of fibers are finished.
+#
+# The wait group is a declarative counter of how many concurrent fibers have
+# been started. Each such fiber is expected to call `#done` to report that hey
+# are finished doing their work. Whenever the counter reaches zero the waiters
+# will be resumed.
 #
 # This is a simpler and more efficient alternative to using a `Channel(Nil)`
-# then looping a number of times until we received N messages.
+# then looping a number of times until we received N messages to resume
+# execution.
 #
 # Basic example:
 #
@@ -17,7 +23,7 @@ require "crystal/pointer_linked_list"
 #   spawn do
 #     do_something
 #   ensure
-#     wg.done # the fiber is done
+#     wg.done # the fiber has finished
 #   end
 # end
 #

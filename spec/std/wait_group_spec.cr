@@ -12,7 +12,7 @@ describe WaitGroup do
   end
 
   describe "done" do
-    it "can't decrement to negative value" do
+    it "can't decrement to a negative counter" do
       wg = WaitGroup.new
       wg.add(1)
       wg.done
@@ -20,7 +20,7 @@ describe WaitGroup do
     end
   end
 
-  it "waits until concurrent executions are done" do
+  it "waits until concurrent executions are finished" do
     wg1 = WaitGroup.new
     wg2 = WaitGroup.new
 
@@ -42,7 +42,7 @@ describe WaitGroup do
       16.times do
         select
         when exited.receive
-          raise "WaitGroup released group too soon"
+          fail "WaitGroup released group too soon"
         else
         end
         wg2.done
@@ -53,7 +53,7 @@ describe WaitGroup do
         when x = exited.receive
           x.should eq(true)
         when timeout(1.millisecond)
-          raise "Expected channel to receive value"
+          fail "Expected channel to receive value"
         end
       end
     end
