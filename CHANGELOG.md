@@ -86,7 +86,9 @@
 - *(concurrency)* Make `Process#wait` asynchronous on Windows ([#13908](https://github.com/crystal-lang/crystal/pull/13908), thanks @HertzDevil)
 - *(concurrency)* Fix math overflow after spawning `Int32::MAX + 1` fibers ([#14096](https://github.com/crystal-lang/crystal/pull/14096), thanks @ysbaddaden)
 - *(concurrency)* Fix `can't resume a running fiber` ([#14128](https://github.com/crystal-lang/crystal/pull/14128), thanks @ysbaddaden)
+- *(crypto)* Fix OpenSSL error handling for EOF (support for OpenSSL 3.2) ([#14169](https://github.com/crystal-lang/crystal/pull/14169), thanks @straight-shoota)
 - *(files)* Fix `Globber.constant_entry?` matching patterns ([#13955](https://github.com/crystal-lang/crystal/pull/13955), thanks @GeopJr)
+- *(files)* Fix `String::Buffer` and `IO::Memory` capacity to grow beyond 1GB ([#13989](https://github.com/crystal-lang/crystal/pull/13989), thanks @straight-shoota)
 - *(llvm)* Fix a typo ([#13914](https://github.com/crystal-lang/crystal/pull/13914), thanks @kojix2)
 - *(numeric)* Make `String#to_f(whitespace: false)` work with infinity and NaN ([#13875](https://github.com/crystal-lang/crystal/pull/13875), thanks @HertzDevil)
 - *(numeric)* Use `LibGMP::SI` and `UI` for size checks, not `Long` and `ULong` ([#13874](https://github.com/crystal-lang/crystal/pull/13874), thanks @HertzDevil)
@@ -104,6 +106,7 @@
 - *(system)* Windows: clear `Crystal::System::Process#@completion_key` after use ([#14068](https://github.com/crystal-lang/crystal/pull/14068), thanks @HertzDevil)
 - *(system)* Fix UTF-8 console input on Windows ([#13758](https://github.com/crystal-lang/crystal/pull/13758), thanks @erdian718)
 - *(text)* Fix invalid UTF-8 handling in `Char::Reader#previous_char` ([#14013](https://github.com/crystal-lang/crystal/pull/14013), thanks @HertzDevil)
+- *(text)* Fix `options` parameter for `String#split`, `#scan` ([#14183](https://github.com/crystal-lang/crystal/pull/14183), thanks @straight-shoota)
 - *(time)* Fix time span overflow on `Int#milliseconds` and `Int#microseconds` ([#14105](https://github.com/crystal-lang/crystal/pull/14105), thanks @bcardiff)
 
 #### compiler
@@ -231,6 +234,7 @@
 
 ### Infrastructure
 
+- Changelog for 1.11.0 ([#14158](https://github.com/crystal-lang/crystal/pull/14158), thanks @straight-shoota)
 - Update previous Crystal release - 1.10.0 ([#13878](https://github.com/crystal-lang/crystal/pull/13878), thanks @straight-shoota)
 - Allow to specify git fork of distribution-scripts in CI ([#13976](https://github.com/crystal-lang/crystal/pull/13976), thanks @miry)
 - Extract `generate_data` to separate Makefile ([#14015](https://github.com/crystal-lang/crystal/pull/14015), thanks @straight-shoota)
