@@ -348,7 +348,7 @@ class Time::Location
   #   `Location::UTC` is returned.
   def self.load_local : Location
     case tz = ENV["TZ"]?
-    when "", "UTC"
+    when "", "UTC", "Etc/UTC"
       return UTC
     when Nil
       if localtime = Crystal::System::Time.load_localtime
