@@ -278,11 +278,11 @@ class Time::Location
   def self.load(name : String) : Location
     case name
     when "", "UTC", "Etc/UTC"
-          # `UTC` is a special identifier, empty string represents a fallback mechanism.
-          # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
-          # But we map it to `Location::UTC` directly for convenience which allows it to work
-          # without a copy of the database.
-          UTC 
+      # `UTC` is a special identifier, empty string represents a fallback mechanism.
+      # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
+      # But we map it to `Location::UTC` directly for convenience which allows it to work
+      # without a copy of the database.
+      UTC
     when "Local"
       local
     when .includes?(".."), .starts_with?('/'), .starts_with?('\\')
