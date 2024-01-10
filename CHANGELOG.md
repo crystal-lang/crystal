@@ -6,13 +6,10 @@
 
 ### Bugfixes
 
-#### stdlib
-
-- *(runtime)* Revert "Add `ReferenceStorage` for manual allocation of references (#14106)" ([#14207](https://github.com/crystal-lang/crystal/pull/14207), thanks @straight-shoota)
-
 #### compiler
 
 - *(interpreter)* Remove pkg-config name for libgc as workaround for interpreter loader ([#14198](https://github.com/crystal-lang/crystal/pull/14198), thanks @straight-shoota)
+- *(semantic)* Revert "Add `ReferenceStorage` for manual allocation of references (#14106)" ([#14207](https://github.com/crystal-lang/crystal/pull/14207), thanks @straight-shoota)
 
 ### Infrastructure
 
