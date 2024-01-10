@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "../../support/env"
 
 private def declare_class_var(container : ClassVarContainer, name, var_type : Type, annotations = nil)
   var = MetaTypeVar.new(name)
@@ -3281,14 +3282,15 @@ module Crystal
 
     describe "env" do
       it "has key" do
-        ENV["FOO"] = "foo"
-        assert_macro %({{env("FOO")}}), %("foo")
-        ENV.delete "FOO"
+        with_env("FOO": "foo") do
+          assert_macro %({{env("FOO")}}), %("foo")
+        end
       end
 
       it "doesn't have key" do
-        ENV.delete "FOO"
-        assert_macro %({{env("FOO")}}), %(nil)
+        with_env("FOO": nil) do
+          assert_macro %({{env("FOO")}}), %(nil)
+        end
       end
     end
 
