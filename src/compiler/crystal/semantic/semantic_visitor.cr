@@ -522,6 +522,16 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     when @program.experimental_annotation
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
+    when @program.primitive_annotation
+      # there isn't a PrimitiveAnnotation type yet, so we validate right here
+      if ann.args.size != 1
+        ann.raise "expected Primitive annotation to have one argument"
+      end
+
+      arg = ann.args.first
+      unless arg.is_a?(SymbolLiteral)
+        arg.raise "expected Primitive argument to be a symbol literal"
+      end
     end
   end
 
