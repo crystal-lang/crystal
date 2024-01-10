@@ -1471,12 +1471,15 @@ module Crystal
 
     def codegen_type_filter(node, &)
       accept node.obj
-      obj_type = node.obj.type
 
-      type_id = type_id @last, obj_type
-      filtered_type = yield(obj_type).not_nil!
+      if @needs_value
+        obj_type = node.obj.type
 
-      @last = match_type_id obj_type, filtered_type, type_id
+        type_id = type_id @last, obj_type
+        filtered_type = yield(obj_type).not_nil!
+
+        @last = match_type_id obj_type, filtered_type, type_id
+      end
 
       false
     end

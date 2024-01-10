@@ -89,15 +89,14 @@ module OpenSSL
         when .syscall?
           @code, message = fetch_error_details
           if @code == 0
-            case return_code
-            when 0
+            errno = {% if flag?(:win32) %} WinError.wsa_value {% else %} Errno.value {% end %}
+            success = {% if flag?(:win32) %} errno.error_success? {% else %} errno.none? {% end %}
+            if success
               message = "Unexpected EOF"
               @underlying_eof = true
-            when -1
-              cause = RuntimeError.from_errno(func || "OpenSSL")
-              message = "I/O error"
             else
-              message = "Unknown error"
+              cause = RuntimeError.from_os_error(func || "OpenSSL", os_error: errno)
+              message = "I/O error"
             end
           end
         when .ssl?

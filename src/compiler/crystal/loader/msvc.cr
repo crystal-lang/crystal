@@ -60,7 +60,7 @@ class Crystal::Loader
     result
   end
 
-  private def self.search_library(libname, search_paths, extra_suffix)
+  protected def self.search_library(libname, search_paths, extra_suffix)
     if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
       libname = File.expand_path(libname)
       library_path = library_filename(libname)
@@ -106,7 +106,7 @@ class Crystal::Loader
   end
 
   def self.library_filename(libname : String) : String
-    "#{libname}.lib"
+    "#{libname.rchop(".lib")}.lib"
   end
 
   def find_symbol?(name : String) : Handle?
@@ -139,7 +139,7 @@ class Crystal::Loader
       return false unless handle
 
       @handles << handle
-      @loaded_libraries << dll
+      @loaded_libraries << (module_filename(handle) || dll)
     end
 
     true
@@ -149,14 +149,20 @@ class Crystal::Loader
     load_library?(libname) || raise LoadError.from_winerror "cannot find #{Loader.library_filename(libname)}"
   end
 
+  def load_library?(libname : String) : Bool
+    library_path = Loader.search_library(libname, @search_paths, "-dynamic")
+    !library_path.nil? && load_file?(library_path)
+  end
+
   private def open_library(path : String)
-    # TODO: respect Crystal::LIBRARY_RPATH (#13490)
+    # TODO: respect Crystal::LIBRARY_RPATH (#13490), or `@[Link(dll:)]`'s search order
     LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 
   def load_current_program_handle
     if LibC.GetModuleHandleExW(0, nil, out hmodule) != 0
       @handles << hmodule
+      @loaded_libraries << (Process.executable_path || "current program handle")
     end
   end
 
@@ -165,6 +171,19 @@ class Crystal::Loader
       LibC.FreeLibrary(handle)
     end
     @handles.clear
+  end
+
+  private def module_filename(handle)
+    Crystal::System.retry_wstr_buffer do |buffer, small_buf|
+      len = LibC.GetModuleFileNameW(handle, buffer, buffer.size)
+      if 0 < len < buffer.size
+        break String.from_utf16(buffer[0, len])
+      elsif small_buf && len == buffer.size
+        next 32767 # big enough. 32767 is the maximum total path length of UNC path.
+      else
+        break nil
+      end
+    end
   end
 
   # Returns a list of directories used as the default search paths.

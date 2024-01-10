@@ -127,6 +127,7 @@ samples: ## Build example programs
 docs: ## Generate standard library documentation
 	$(call check_llvm_config)
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
+	cp -av doc/ docs/
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
@@ -182,7 +183,6 @@ install_docs: docs ## Install docs at DESTDIR
 
 	cp -av docs "$(DATADIR)/docs"
 	cp -av samples "$(DATADIR)/examples"
-	rm -rf "$(DATADIR)/examples/.gitignore"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
@@ -230,6 +230,7 @@ man/%.gz: man/%
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
+	rm -rf man/*.gz
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files

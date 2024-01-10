@@ -45,6 +45,16 @@ describe "Codegen: is_a?" do
     run("1.is_a?(Object)").to_b.should be_true
   end
 
+  it "doesn't error if result is discarded (#14113)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo
+      end
+
+      (Foo.new || "").is_a?(Foo)
+      1
+      CRYSTAL
+  end
+
   it "evaluate method on filtered type" do
     run("a = 1; a = 'a'; if a.is_a?(Char); a.ord; else; 0; end").to_i.chr.should eq('a')
   end

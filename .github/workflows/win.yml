@@ -18,7 +18,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
           key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
+        uses: ilammy/setup-nasm@13cbeb366c45c4379d3478cdcbadd8295feb5028 # v1.5.1
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0
@@ -90,7 +90,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -159,7 +159,7 @@ jobs:
           key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
+        uses: ilammy/setup-nasm@13cbeb366c45c4379d3478cdcbadd8295feb5028 # v1.5.1
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0 -Dynamic
@@ -168,7 +168,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Cache LLVM
         id: cache-llvm-libs
@@ -212,7 +212,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -246,13 +246,13 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal
           path: build
@@ -303,7 +303,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-release
           path: etc/win-ci/portable
@@ -329,7 +329,7 @@ jobs:
           iscc.exe crystal.iss
 
       - name: Upload Crystal installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-installer
           path: etc/win-ci/Output/crystal-setup.exe

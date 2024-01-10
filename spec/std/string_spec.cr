@@ -1416,6 +1416,7 @@ describe "String" do
       it { "=".split(/\=/, 2).should eq(["", ""]) }
       it { "=".split(/\=/, 2, remove_empty: true).should eq([] of String) }
       it { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
+      it { "ba".split(/a/, options: :anchored).should eq ["ba"] }
 
       it "keeps groups" do
         s = "split on the word on okay?"
@@ -2321,6 +2322,10 @@ describe "String" do
 
     it "does with number and string" do
       "1ab4".scan(/\d+/).map(&.[0]).should eq(["1", "4"])
+    end
+
+    it "options parameter" do
+      "ba".scan(/a/, options: :anchored).map(&.[0]).should eq [] of String
     end
   end
 

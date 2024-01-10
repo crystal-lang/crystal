@@ -15,7 +15,7 @@ module Crystal::System::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
-  class_setter child_handler : Handler?
+  class_property child_handler : Handler?
   @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
@@ -28,6 +28,10 @@ module Crystal::System::Signal
       end
       @@handlers[signal] = handler
     end
+  end
+
+  def self.trap_handler?(signal)
+    @@mutex.synchronize { @@handlers[signal]? }
   end
 
   def self.reset(signal) : Nil

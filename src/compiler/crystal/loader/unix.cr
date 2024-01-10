@@ -120,6 +120,7 @@ class Crystal::Loader
   def load_current_program_handle
     if program_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
       @handles << program_handle
+      @loaded_libraries << (Process.executable_path || "current program handle")
     end
   end
 

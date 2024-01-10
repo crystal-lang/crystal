@@ -1997,9 +1997,18 @@ module Enumerable(T)
   # ```
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
-  def to_a
-    ary = [] of T
-    each { |e| ary << e }
+  def to_a : Array(T)
+    to_a(&.itself)
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the collection.
+  #
+  # ```
+  # (1..5).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : T -> U) : Array(U) forall U
+    ary = [] of U
+    each { |e| ary << yield e }
     ary
   end
 

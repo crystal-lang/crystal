@@ -5,6 +5,9 @@ require "c/stddef"
 {% end %}
 
 @[Link("iconv")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "libiconv.dll")]
+{% end %}
 lib LibIconv
   type IconvT = Void*
 

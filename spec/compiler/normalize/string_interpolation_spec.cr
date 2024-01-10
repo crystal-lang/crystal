@@ -52,43 +52,4 @@ describe "Normalize: string interpolation" do
     string = node.should be_a(StringLiteral)
     string.value.should eq("hello world")
   end
-
-  it "replaces char constant" do
-    result = semantic(%(
-      def String.interpolation(*args); ""; end
-
-      OBJ = 'l'
-
-      "hello wor\#{OBJ}d"
-    ))
-    node = result.node.as(Expressions).last
-    string = node.should be_a(StringLiteral)
-    string.value.should eq("hello world")
-  end
-
-  it "replaces number constant" do
-    result = semantic(%(
-      def String.interpolation(*args); ""; end
-
-      OBJ = 9_f32
-
-      "nine as a float: \#{OBJ}"
-    ))
-    node = result.node.as(Expressions).last
-    string = node.should be_a(StringLiteral)
-    string.value.should eq("nine as a float: 9.0")
-  end
-
-  it "replaces boolean constant" do
-    result = semantic(%(
-      def String.interpolation(*args); ""; end
-
-      OBJ = false
-
-      "boolean false: \#{OBJ}"
-    ))
-    node = result.node.as(Expressions).last
-    string = node.should be_a(StringLiteral)
-    string.value.should eq("boolean false: false")
-  end
 end

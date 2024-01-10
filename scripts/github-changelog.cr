@@ -110,10 +110,13 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if experimental?
+      io << "**[experimental]** "
+    end
     if deprecated?
       io << "**[deprecation]** "
     end
-    io << title.sub(/^#{type}: /i, "") << " ("
+    io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
     io << "[#" << number << "](" << permalink << ")"
     if author = self.author
       io << ", thanks @" << author
@@ -152,9 +155,26 @@ record PullRequest,
   end
 
   def topic
-    labels.find { |label|
-      label.starts_with?("topic:") && label != "topic:multithreading"
-    }.try(&.lchop("topic:").split(/:|\//))
+    topics.fetch(0) do
+      STDERR.puts "Missing topic for ##{number}"
+      nil
+    end
+  end
+
+  def topics
+    topics = labels.compact_map { |label|
+      label.lchop?("topic:").try(&.split(/:|\//))
+    }
+    topics.reject! &.[0].==("multithreading")
+
+    topics.sort_by! { |parts|
+      topic_priority = case parts[0]
+                       when "tools" then 2
+                       when "lang"  then 1
+                       else              0
+                       end
+      {-topic_priority, parts[0]}
+    }
   end
 
   def deprecated?
@@ -165,12 +185,20 @@ record PullRequest,
     labels.includes?("kind:breaking")
   end
 
+  def experimental?
+    labels.includes?("experimental")
+  end
+
   def feature?
     labels.includes?("kind:feature")
   end
 
   def fix?
     labels.includes?("kind:bug")
+  end
+
+  def chore?
+    labels.includes?("kind:chore")
   end
 
   def refactor?
@@ -196,9 +224,10 @@ record PullRequest,
   def type
     case
     when feature?     then "feature"
-    when fix?         then "fix"
     when docs?        then "docs"
     when specs?       then "specs"
+    when fix?         then "fix"
+    when chore?       then "chore"
     when performance? then "performance"
     when refactor?    then "refactor"
     else                   nil
@@ -242,15 +271,21 @@ SECTION_TITLES = {
   "breaking"    => "Breaking changes",
   "feature"     => "Features",
   "fix"         => "Bugfixes",
+  "chore"       => "Chores",
   "performance" => "Performance",
   "refactor"    => "Refactor",
   "docs"        => "Documentation",
   "specs"       => "Specs",
   "infra"       => "Infrastructure",
-  ""            => "Chores",
+  ""            => "other",
 }
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
+
+puts "## [#{milestone}] (#{Time.local.to_s("%F")})"
+puts
+puts "[#{milestone}]: https://github.com/crystal-lang/crystal/releases/#{milestone}"
+puts
 
 SECTION_TITLES.each do |id, title|
   prs = sections[id]? || next

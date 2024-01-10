@@ -20,7 +20,7 @@ struct Number
   def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
     number = self
     # TODO: Optimize implementation for Int
-    if decimal_places
+    if decimal_places && (decimal_places < 0 || !number.is_a?(Float))
       number = number.round(decimal_places)
     end
 
