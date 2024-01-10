@@ -3565,7 +3565,7 @@ module Crystal
     # there are no macro methods with required named parameters
 
     it "uses correct name for top-level macro methods" do
-      assert_macro_error %({{flag?}}), "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)"
+      assert_macro_error %({{flag?}}), "wrong number of arguments for macro '::flag?' (given 0, expected 1)"
     end
   end
 
