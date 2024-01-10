@@ -21,6 +21,12 @@
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
+{% elsif flag?(:interpreted) %}
+  # FIXME: We're not using the pkg-config name here because that would resolve the
+  # lib flags for libgc including `-lpthread` which the interpreter is not able
+  # to load on systems with modern libc where libpthread is only available as an
+  # (empty) static library.
+  @[Link("gc")]
 {% else %}
   @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
