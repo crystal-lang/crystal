@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.11.1] (2024-01-10)
+
+[1.11.1]: https://github.com/crystal-lang/crystal/releases/1.11.1
+
+### Bugfixes
+
+#### stdlib
+
+- *(runtime)* Revert "Add `ReferenceStorage` for manual allocation of references (#14106)" ([#14207](https://github.com/crystal-lang/crystal/pull/14207), thanks @straight-shoota)
+
+#### compiler
+
+- *(interpreter)* Remove pkg-config name for libgc as workaround for interpreter loader ([#14198](https://github.com/crystal-lang/crystal/pull/14198), thanks @straight-shoota)
+
+### Infrastructure
+
+- Bump VERSION to 1.11.1-dev ([#14197](https://github.com/crystal-lang/crystal/pull/14197), thanks @straight-shoota)
+
 ## [1.11.0] (2024-01-08)
 
 [1.11.0]: https://github.com/crystal-lang/crystal/releases/1.11.0
