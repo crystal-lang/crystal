@@ -262,6 +262,9 @@ array = parser.on_key! "data" do
   end
 end
 
+changelog = File.read("CHANGELOG.md")
+array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
+
 sections = array.group_by(&.section)
 
 SECTION_TITLES = {
