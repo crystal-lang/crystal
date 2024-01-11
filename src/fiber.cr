@@ -1,6 +1,5 @@
 require "crystal/system/thread_linked_list"
 require "./fiber/context"
-require "./fiber/stack_pool"
 
 # :nodoc:
 @[NoInline]
@@ -47,9 +46,6 @@ class Fiber
   # :nodoc:
   protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
 
-  # :nodoc:
-  class_getter stack_pool = StackPool.new
-
   @context : Context
   @stack : Void*
   @resume_event : Crystal::EventLoop::Event?
@@ -89,10 +85,9 @@ class Fiber
     @context = Context.new
     @stack, @stack_bottom =
       {% if flag?(:interpreted) %}
-        # For interpreted mode we don't need a new stack, the stack is held by the interpreter
         {Pointer(Void).null, Pointer(Void).null}
       {% else %}
-        Fiber.stack_pool.checkout
+        Crystal::Scheduler.stack_pool.checkout
       {% end %}
 
     fiber_main = ->(f : Fiber) { f.run }
@@ -153,14 +148,6 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
-    {% if flag?(:preview_mt) %}
-      Crystal::Scheduler.enqueue_free_stack @stack
-    {% elsif flag?(:interpreted) %}
-      # For interpreted mode we don't need a new stack, the stack is held by the interpreter
-    {% else %}
-      Fiber.stack_pool.release(@stack)
-    {% end %}
-
     # Remove the current fiber from the linked list
     Fiber.inactive(self)
 
@@ -170,6 +157,9 @@ class Fiber
     @timeout_select_action = nil
 
     @alive = false
+    {% unless flag?(:interpreted) %}
+      Crystal::Scheduler.stack_pool.release(@stack)
+    {% end %}
     Crystal::Scheduler.reschedule
   end
 

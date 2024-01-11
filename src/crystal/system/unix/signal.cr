@@ -15,7 +15,7 @@ module Crystal::System::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
-  class_setter child_handler : Handler?
+  class_property child_handler : Handler?
   @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
@@ -28,6 +28,10 @@ module Crystal::System::Signal
       end
       @@handlers[signal] = handler
     end
+  end
+
+  def self.trap_handler?(signal)
+    @@mutex.synchronize { @@handlers[signal]? }
   end
 
   def self.reset(signal) : Nil
@@ -149,7 +153,7 @@ module Crystal::System::Signal
     if is_stack_overflow
       Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
     else
-      Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+      Crystal::System.print_error "Invalid memory access (signal %d) at address %p\n", sig, addr
     end
 
     Exception::CallStack.print_backtrace

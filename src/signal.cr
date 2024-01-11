@@ -117,6 +117,24 @@ enum Signal : Int32
     Crystal::System::Signal.trap(self, handler)
   end
 
+  # Returns any existing handler for this signal
+  #
+  # ```
+  # Signal::USR1.trap { }
+  # prev_handler = Signal::USR1.trap_handler?
+  #
+  # Signal::USR1.trap do |signal|
+  #   prev_handler.try &.call(signal)
+  #   # ...
+  # end
+  # ```
+  def trap_handler?
+    {% if @type.has_constant?("CHLD") %}
+      return Crystal::System::Signal.child_handler if self == CHLD
+    {% end %}
+    Crystal::System::Signal.trap_handler?(self)
+  end
+
   # Resets the handler for this signal to the OS default.
   #
   # Note that trying to reset `CHLD` will actually set the default crystal

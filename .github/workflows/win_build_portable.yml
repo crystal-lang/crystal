@@ -19,12 +19,12 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.10.1"
+          crystal: "1.11.0"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
