@@ -1,10 +1,14 @@
 # Changelog
 
-## [1.11.1] (2024-01-10)
+## [1.11.1] (2024-01-11)
 
 [1.11.1]: https://github.com/crystal-lang/crystal/releases/1.11.1
 
 ### Bugfixes
+
+#### stdlib
+
+- *(crypto)* Revert "Fix OpenSSL error handling for EOF (support for OpenSSL 3.2) (#14169)" ([#14217](https://github.com/crystal-lang/crystal/pull/14217), thanks @straight-shoota)
 
 #### compiler
 
