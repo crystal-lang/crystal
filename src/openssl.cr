@@ -89,8 +89,14 @@ module OpenSSL
         when .syscall?
           @code, message = fetch_error_details
           {% if LibSSL.has_constant?(:SSL_R_UNEXPECTED_EOF_WHILE_READING) %}
-            cause = RuntimeError.from_errno(func || "OpenSSL")
-            message = "I/O error"
+            if @code == 0
+              # FIXME: this isn't a per the OpenSSL documentation for how to
+              #        detect EOF, but this fixes the EOF detection spec...
+              message = "Unexpected EOF while reading"
+              @underlying_eof = true
+            else
+              cause = RuntimeError.from_errno(func || "OpenSSL")
+            end
           {% else %}
             case return_code
             when 0
