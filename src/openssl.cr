@@ -110,9 +110,10 @@ module OpenSSL
             end
           {% end %}
         when .ssl?
-          @code, message = fetch_error_details
+          code, message = fetch_error_details
+          @code = code
           {% if LibSSL.has_constant?(:SSL_R_UNEXPECTED_EOF_WHILE_READING) %}
-            if @code == LibSSL::SSL_R_UNEXPECTED_EOF_WHILE_READING
+            if get_reason(code) == LibSSL::SSL_R_UNEXPECTED_EOF_WHILE_READING
               @underlying_eof = true
             end
           {% end %}
