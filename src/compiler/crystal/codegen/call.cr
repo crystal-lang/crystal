@@ -32,7 +32,11 @@ class Crystal::CodeGenVisitor
         codegen_call_with_block(node, block, owner, call_args)
       end
     else
-      codegen_call(node, node.target_def, owner, call_args)
+      if node.target_def.always_inline?
+        codegen_call_always_inline(node, node.target_def, owner, call_args)
+      else
+        codegen_call(node, node.target_def, owner, call_args)
+      end
     end
 
     false
@@ -608,5 +612,45 @@ class Crystal::CodeGenVisitor
 
   def sret?(abi_info)
     abi_info.return_type.attr == LLVM::Attribute::StructRet
+  end
+
+  # I dont know how it works, i just copy it from method `codegen_call_with_block`
+  def codegen_call_always_inline(node, target_def, self_type, call_args)
+    set_current_debug_location node if @debug.line_numbers?
+
+    with_cloned_context do |old_block_context|
+      context.vars = old_block_context.vars.dup
+      context.closure_parent_context = old_block_context
+
+      with_cloned_context do |old_context|
+        context.block_context = old_context
+        context.vars = LLVMVars.new
+        context.type = self_type
+        context.reset_closure
+
+        target_def = node.target_def
+
+        set_ensure_exception_handler(node)
+        set_ensure_exception_handler(target_def)
+
+        args_base_index = create_local_copy_of_block_self(self_type, call_args)
+
+        # Don't reset nilable vars here because we do it right before inlining the method body
+        alloca_vars target_def.vars, target_def, reset_nilable_vars: false
+
+        create_local_copy_of_block_args(target_def, self_type, call_args, args_base_index)
+
+        Phi.open(self, node) do |phi|
+          context.return_phi = phi
+
+          # Reset vars that are declared inside the def and are nilable
+          reset_nilable_vars(target_def)
+
+          request_value(target_def.body)
+
+          phi.add @last, target_def.body.type?, last: true
+        end
+      end
+    end
   end
 end

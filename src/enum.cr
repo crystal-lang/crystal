@@ -328,10 +328,12 @@ struct Enum
   # Color::Blue <=> Color::Red  # => 1
   # Color::Blue <=> Color::Blue # => 0
   # ```
+  @[AlwaysInline]
   def <=>(other : self)
     value <=> other.value
   end
 
+  @[AlwaysInline]
   def ==(other)
     false
   end
@@ -358,6 +360,7 @@ struct Enum
   # Color::Red == Color::Red  # => true
   # Color::Red == Color::Blue # => false
   # ```
+  @[AlwaysInline]
   def ==(other : self)
     value == other.value
   end

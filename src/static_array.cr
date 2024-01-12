@@ -135,6 +135,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.size # => 3
   # ```
+  @[AlwaysInline]
   def size : Int32
     N
   end
@@ -376,6 +377,7 @@ struct StaticArray(T, N)
   # ary = StaticArray(Int32, 3).new(42)
   # ary.to_unsafe[0] # => 42
   # ```
+  @[AlwaysInline]
   def to_unsafe : Pointer(T)
     pointerof(@buffer)
   end

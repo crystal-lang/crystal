@@ -140,16 +140,19 @@ struct Float32
   # Float32.new "20"                        # => 20.0
   # Float32.new "  20  ", whitespace: false # raises ArgumentError: Invalid Float32: "  20  "
   # ```
+  @[AlwaysInline]
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
     value.to_f32 whitespace: whitespace, strict: strict
   end
 
   # Returns a `Float32` by invoking `to_f32` on *value*.
+  @[AlwaysInline]
   def self.new(value)
     value.to_f32
   end
 
   # Returns a `Float32` by invoking `to_f32!` on *value*.
+  @[AlwaysInline]
   def self.new!(value) : self
     value.to_f32!
   end

@@ -163,6 +163,8 @@ lib LibIntrinsics
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
     fun arm_hint = "llvm.aarch64.hint"(hint : Int32)
   {% end %}
+
+  fun expect_i1 = "llvm.expect.i1"(val : Bool, exp : Bool) : Bool
 end
 
 module Intrinsics
@@ -190,62 +192,77 @@ module Intrinsics
     LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
   end
 
+  @[AlwaysInline]
   def self.read_cycle_counter
     LibIntrinsics.read_cycle_counter
   end
 
+  @[AlwaysInline]
   def self.bitreverse8(id) : UInt8
     LibIntrinsics.bitreverse8(id)
   end
 
+  @[AlwaysInline]
   def self.bitreverse16(id) : UInt16
     LibIntrinsics.bitreverse16(id)
   end
 
+  @[AlwaysInline]
   def self.bitreverse32(id) : UInt32
     LibIntrinsics.bitreverse32(id)
   end
 
+  @[AlwaysInline]
   def self.bitreverse64(id) : UInt64
     LibIntrinsics.bitreverse64(id)
   end
 
+  @[AlwaysInline]
   def self.bitreverse128(id) : UInt128
     LibIntrinsics.bitreverse128(id)
   end
 
+  @[AlwaysInline]
   def self.bswap16(id) : UInt16
     LibIntrinsics.bswap16(id)
   end
 
+  @[AlwaysInline]
   def self.bswap32(id) : UInt32
     LibIntrinsics.bswap32(id)
   end
 
+  @[AlwaysInline]
   def self.bswap64(id) : UInt64
     LibIntrinsics.bswap64(id)
   end
 
+  @[AlwaysInline]
   def self.bswap128(id) : UInt128
     LibIntrinsics.bswap128(id)
   end
 
+  @[AlwaysInline]
   def self.popcount8(src) : Int8
     LibIntrinsics.popcount8(src)
   end
 
+  @[AlwaysInline]
   def self.popcount16(src) : Int16
     LibIntrinsics.popcount16(src)
   end
 
+  @[AlwaysInline]
   def self.popcount32(src) : Int32
     LibIntrinsics.popcount32(src)
   end
 
+  @[AlwaysInline]
   def self.popcount64(src) : Int64
     LibIntrinsics.popcount64(src)
   end
 
+  @[AlwaysInline]
   def self.popcount128(src)
     LibIntrinsics.popcount128(src)
   end
@@ -290,42 +307,52 @@ module Intrinsics
     LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
   end
 
+  @[AlwaysInline]
   def self.fshl8(a, b, count) : UInt8
     LibIntrinsics.fshl8(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshl16(a, b, count) : UInt16
     LibIntrinsics.fshl16(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshl32(a, b, count) : UInt32
     LibIntrinsics.fshl32(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshl64(a, b, count) : UInt64
     LibIntrinsics.fshl64(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshl128(a, b, count) : UInt128
     LibIntrinsics.fshl128(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshr8(a, b, count) : UInt8
     LibIntrinsics.fshr8(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshr16(a, b, count) : UInt16
     LibIntrinsics.fshr16(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshr32(a, b, count) : UInt32
     LibIntrinsics.fshr32(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshr64(a, b, count) : UInt64
     LibIntrinsics.fshr64(a, b, count)
   end
 
+  @[AlwaysInline]
   def self.fshr128(a, b, count) : UInt128
     LibIntrinsics.fshr128(a, b, count)
   end
@@ -336,6 +363,14 @@ module Intrinsics
 
   macro va_end(ap)
     LibIntrinsics.va_end({{ap}})
+  end
+
+  macro likely(val)
+    LibIntrinsics.expect_i1((({{val}})), true)
+  end
+
+  macro unlikely(val)
+    LibIntrinsics.expect_i1((({{val}})), false)
   end
 end
 

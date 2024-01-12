@@ -3071,6 +3071,7 @@ class String
   #
   # "abcdef".compare("ABCDEF", case_insensitive: true) == 0 # => true
   # ```
+  @[AlwaysInline]
   def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -5264,8 +5265,9 @@ class String
   # "hello".size # => 5
   # "你好".size    # => 2
   # ```
+  @[AlwaysInline]
   def size : Int32
-    if @length > 0 || @bytesize == 0
+    if Intrinsics.likely(@length > 0 || @bytesize == 0)
       return @length
     end
 
@@ -5325,6 +5327,7 @@ class String
     result ? result.to_s : self
   end
 
+  @[AlwaysInline]
   protected def char_bytesize_at(byte_index)
     String.char_bytesize_at(to_unsafe + byte_index)
   end
@@ -5433,6 +5436,7 @@ class String
   #
   # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
   # obtain a `String` that is guaranteed to be valid UTF-8.
+  @[AlwaysInline]
   def to_slice : Bytes
     Slice.new(to_unsafe, bytesize, read_only: true)
   end
@@ -5441,6 +5445,7 @@ class String
   #
   # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
   # obtain a `String` that is guaranteed to be valid UTF-8.
+  @[AlwaysInline]
   def to_unsafe : UInt8*
     pointerof(@c)
   end

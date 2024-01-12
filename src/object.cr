@@ -10,6 +10,7 @@ class Object
   # By default this method is implemented as `!(self == other)`
   # so there's no need to override this unless there's a more efficient
   # way to do it.
+  @[AlwaysInline]
   def !=(other)
     !(self == other)
   end
@@ -46,6 +47,7 @@ class Object
   #
   # Object simply implements `===` by invoking `==`, but subclasses
   # (notably `Regex`) can override it to provide meaningful case-equality semantics.
+  @[AlwaysInline]
   def ===(other)
     self == other
   end
@@ -201,11 +203,13 @@ class Object
   # 10.in?(0, 1, 10)   # => true
   # 10.in?(:foo, :bar) # => false
   # ```
+  @[AlwaysInline]
   def in?(collection : Object) : Bool
     collection.includes?(self)
   end
 
   # :ditto:
+  @[AlwaysInline]
   def in?(*values : Object) : Bool
     in?(values)
   end
@@ -319,6 +323,7 @@ class Object
   # `as`, you can't specify some types in the type grammar using a short notation, so
   # specifying a static array must always be done as `StaticArray(T, N)`, a tuple
   # as `Tuple(...)` and so on, never as `UInt8[4]` or `{Int32, Int32}`.
+  @[AlwaysInline]
   def unsafe_as(type : T.class) forall T
     x = self
     pointerof(x).as(T*).value
@@ -1429,6 +1434,7 @@ class Object
     end
   end
 
+  @[AlwaysInline]
   protected def self.set_crystal_type_id(ptr)
     ptr.as(Pointer(typeof(crystal_instance_type_id))).value = crystal_instance_type_id
     ptr

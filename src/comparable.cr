@@ -21,6 +21,7 @@
 module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a negative number.
+  @[AlwaysInline]
   def <(other : T) : Bool
     cmp = self <=> other
     cmp ? cmp < 0 : false
@@ -28,6 +29,7 @@ module Comparable(T)
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value equal or less then `0`.
+  @[AlwaysInline]
   def <=(other : T)
     cmp = self <=> other
     cmp ? cmp <= 0 : false
@@ -52,6 +54,7 @@ module Comparable(T)
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value greater then `0`.
+  @[AlwaysInline]
   def >(other : T) : Bool
     cmp = self <=> other
     cmp ? cmp > 0 : false
@@ -59,6 +62,7 @@ module Comparable(T)
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value equal or greater than `0`.
+  @[AlwaysInline]
   def >=(other : T)
     cmp = self <=> other
     cmp ? cmp >= 0 : false

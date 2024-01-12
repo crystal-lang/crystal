@@ -86,6 +86,7 @@ struct Range(B, E)
   # Range.new(1, 10)                  # => 1..10
   # Range.new(1, 10, exclusive: true) # => 1...10
   # ```
+  @[AlwaysInline]
   def initialize(@begin : B, @end : E, @exclusive : Bool = false)
   end
 
@@ -124,7 +125,7 @@ struct Range(B, E)
       end
     {% else %}
       end_value = @end
-      while end_value.nil? || current < end_value
+      while Intrinsics.likely(end_value.nil? || current < end_value)
         {{ "yield current".id }}
         current = current.succ
       end
@@ -171,7 +172,7 @@ struct Range(B, E)
         {{ "yield current".id }}
       end
     {% else %}
-      while begin_value.nil? || begin_value < current
+      while Intrinsics.likely(begin_value.nil? || begin_value < current)
         current = current.pred
         {{ "yield current".id }}
       end
@@ -223,7 +224,7 @@ struct Range(B, E)
       end
     {% else %}
       end_value = @end
-      while end_value.nil? || current < end_value
+      while Intrinsics.likely(end_value.nil? || current < end_value)
         yield current
         by.times do
           current = current.succ
@@ -260,6 +261,7 @@ struct Range(B, E)
   # (1..10).excludes_end?  # => false
   # (1...10).excludes_end? # => true
   # ```
+  @[AlwaysInline]
   def excludes_end? : Bool
     @exclusive
   end
@@ -274,6 +276,7 @@ struct Range(B, E)
   # (1...10).includes?(9)  # => true
   # (1...10).includes?(10) # => false
   # ```
+  @[AlwaysInline]
   def includes?(value) : Bool
     begin_value = @begin
     end_value = @end
@@ -286,6 +289,7 @@ struct Range(B, E)
   end
 
   # Same as `includes?`.
+  @[AlwaysInline]
   def covers?(value)
     includes?(value)
   end
@@ -307,6 +311,7 @@ struct Range(B, E)
   # ```
   #
   # See also: `Object#===`.
+  @[AlwaysInline]
   def ===(value)
     includes?(value)
   end

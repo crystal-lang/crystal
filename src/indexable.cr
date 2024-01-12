@@ -571,9 +571,10 @@ module Indexable(T)
   # ```
   def each_index(& : Int32 ->) : Nil
     i = 0
-    while i < size
+    s = size
+    while Intrinsics.likely(i < s)
       yield i
-      i += 1
+      i &+= 1
     end
   end
 
@@ -623,9 +624,9 @@ module Indexable(T)
     i = start
     # `count` and size comparison must be done every iteration because
     # `self` can mutate in the block.
-    while i < Math.min(start + count, size)
+    while Intrinsics.likely(i < Math.min(start + count, size))
       yield i
-      i += 1
+      i &+= 1
     end
     self
   end
@@ -710,6 +711,7 @@ module Indexable(T)
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
   # ```
+  @[AlwaysInline]
   def empty? : Bool
     size == 0
   end
@@ -780,7 +782,7 @@ module Indexable(T)
     return nil if offset < 0
 
     offset.upto(size - 1) do |i|
-      if yield unsafe_fetch(i)
+      if yield(unsafe_fetch(i))
         return i
       end
     end
@@ -888,7 +890,7 @@ module Indexable(T)
     return nil if offset >= size
 
     offset.downto(0) do |i|
-      if yield unsafe_fetch(i)
+      if yield(unsafe_fetch(i))
         return i
       end
     end
@@ -940,13 +942,14 @@ module Indexable(T)
     indexes.map { |index| self[index] }
   end
 
+  @[AlwaysInline]
   private def check_index_out_of_bounds(index)
     check_index_out_of_bounds(index) { raise IndexError.new }
   end
 
   private def check_index_out_of_bounds(index, &)
-    index += size if index < 0
-    if 0 <= index < size
+    index &+= size if Intrinsics.unlikely(index < 0)
+    if Intrinsics.likely(0 <= index < size)
       index
     else
       yield
