@@ -146,7 +146,7 @@ class Fiber
            STDERR
          {% end %}
     if name = @name
-      io << "Unhandled exception in spawn(name: " <<  name << "): "
+      io << "Unhandled exception in spawn(name: " << name << "): "
     else
       io << "Unhandled exception in spawn: "
     end
