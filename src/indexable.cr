@@ -571,8 +571,7 @@ module Indexable(T)
   # ```
   def each_index(& : Int32 ->) : Nil
     i = 0
-    s = size
-    while Intrinsics.likely(i < s)
+    while Intrinsics.likely(i < size)
       yield i
       i &+= 1
     end
