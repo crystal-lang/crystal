@@ -73,7 +73,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) %} 1 {% else %} 8 {% end %}
+    property n_threads : Int32 = {% if flag?(:win32) %} 1 {% else %} 8 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -536,7 +536,36 @@ module Crystal
         return all_reused
       end
 
-      {% if !Crystal::System::Process.class.has_method?("fork") %}
+      {% if flag?(:preview_mt) %}
+        channel = Channel(CompilationUnit).new(@n_threads * 2)
+        mutex = Mutex.new
+        done = Channel(Nil).new(@n_threads)
+
+        @n_threads.times do
+          spawn do
+            while unit = channel.receive?
+              unit.compile
+
+              if wants_stats_or_progress && unit.reused_previous_compilation?
+                mutex.synchronize { all_reused << unit.name }
+              end
+            end
+
+            done.send(nil)
+          end
+        end
+
+        units.each do |unit|
+          # we generate the bitcode in the main thread because LLVM::Context
+          # must be unique per compilation unit, but we most likely share them
+          # across modules during compilation
+          unit.generate_bitcode
+          channel.send(unit)
+        end
+        channel.close
+
+        @n_threads.times { done.receive }
+      {% elsif !Crystal::System::Process.class.has_method?("fork") %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
@@ -587,9 +616,9 @@ module Crystal
           reused = wait_channel.receive
           all_reused.concat(reused)
         end
-
-        all_reused
       {% end %}
+
+      all_reused
     end
 
     private def print_macro_run_stats(program)
@@ -761,6 +790,7 @@ module Crystal
       getter llvm_mod
       getter? reused_previous_compilation = false
       getter object_extension : String
+      @memory_buffer : LLVM::MemoryBuffer?
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
@@ -788,6 +818,10 @@ module Crystal
 
         @name = "#{@name}#{@compiler.optimization_mode.suffix}"
         @object_extension = compiler.codegen_target.object_extension
+      end
+
+      def generate_bitcode
+        @memory_buffer ||= llvm_mod.write_bitcode_to_memory_buffer
       end
 
       def compile
@@ -822,7 +856,7 @@ module Crystal
         can_reuse_previous_compilation =
           compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
 
-        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
+        memory_buffer = generate_bitcode
 
         if can_reuse_previous_compilation
           memory_io = IO::Memory.new(memory_buffer.to_slice)
