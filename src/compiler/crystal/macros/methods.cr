@@ -300,7 +300,7 @@ module Crystal
 
     def interpret_run(node)
       if node.args.size == 0
-        node.wrong_number_of_arguments "top-level macro 'run'", 0, "1+"
+        node.wrong_number_of_arguments "macro '::run'", 0, "1+"
       end
 
       node.args.first.accept self
@@ -2841,7 +2841,7 @@ end
 
 private def full_macro_name(node, method, top_level)
   if top_level
-    "top-level macro '#{method}'"
+    "macro '::#{method}'"
   else
     "macro '#{node.class_desc}##{method}'"
   end
