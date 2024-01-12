@@ -556,10 +556,15 @@ module Crystal
         end
 
         units.each do |unit|
-          # we generate the bitcode in the main thread because LLVM::Context
-          # must be unique per compilation unit, but we most likely share them
-          # across modules during compilation
+          # We generate the bitcode in the main thread because LLVM::Context
+          # must be unique per compilation unit, but we share different contexts
+          # across many modules; trying to codegen in parallel would segfault.
+          #
+          # Luckily generating the bitcode is quick and once the bitcode is
+          # generated we don't need the LLVM contexts anymore, and we can
+          # parallelize the slow part: compiling the bitcode to an object.
           unit.generate_bitcode
+
           channel.send(unit)
         end
         channel.close
