@@ -1170,7 +1170,6 @@ module Crystal
       if body = node.body
         newline
         accept_with_indent body
-        newline
         append_indent
         @str << "end"
       end
