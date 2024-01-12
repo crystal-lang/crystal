@@ -2,6 +2,9 @@ module Crystal::System::Signal
   # Sets the handler for this signal to the passed function.
   # def self.trap(signal, handler) : Nil
 
+  # Returns any existing handler set on the signal
+  # def self.trap_handler?(signal)
+
   # Resets the handler for this signal to the OS default.
   # def self.reset(signal) : Nil
 

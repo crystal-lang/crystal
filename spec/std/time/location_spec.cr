@@ -67,9 +67,7 @@ class Time::Location
         with_zoneinfo do
           Location.load("UTC").should eq Location::UTC
           Location.load("").should eq Location::UTC
-
-          # Etc/UTC could be pointing to anything
-          Location.load("Etc/UTC").should_not eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
         end
       end
 

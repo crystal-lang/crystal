@@ -245,10 +245,6 @@ module Crystal
       llvm_type(type.remove_alias, wants_size)
     end
 
-    private def create_llvm_type(type : ReferenceStorageType, wants_size)
-      llvm_struct_type(type.reference_type, wants_size)
-    end
-
     private def create_llvm_type(type : NonGenericModuleType | GenericClassType, wants_size)
       # This can only be reached if the module or generic class don't have implementors
       @llvm_context.int1

@@ -18,10 +18,10 @@ module Spec
 
     # :nodoc:
     def run
-      Spec.root_context.check_nesting_spec(file, line) do
-        Spec.formatters.each(&.before_example(description))
+      Spec.cli.root_context.check_nesting_spec(file, line) do
+        Spec.cli.formatters.each(&.before_example(description))
 
-        if Spec.dry_run?
+        if Spec.cli.dry_run?
           @parent.report(:success, description, file, line)
           return
         end
@@ -51,12 +51,12 @@ module Spec
       @parent.report(:success, description, file, line, Time.monotonic - start)
     rescue ex : Spec::AssertionFailed
       @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
+      Spec.cli.abort! if Spec.cli.fail_fast?
     rescue ex : Spec::ExamplePending
       @parent.report(:pending, description, file, line, Time.monotonic - start)
     rescue ex
       @parent.report(:error, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
+      Spec.cli.abort! if Spec.cli.fail_fast?
     ensure
       @parent.run_after_each_hooks
     end
