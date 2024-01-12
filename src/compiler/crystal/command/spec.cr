@@ -24,7 +24,7 @@ class Crystal::Command
         puts opts
         puts
 
-        runtime_options = Spec.option_parser
+        runtime_options = Spec::CLI.new.option_parser
         runtime_options.banner = "Runtime options (passed to spec runner):"
         puts runtime_options
         exit
