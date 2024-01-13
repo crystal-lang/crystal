@@ -1,5 +1,73 @@
 # Changelog
 
+## [1.12.0] (2024-01-13)
+
+[1.12.0]: https://github.com/crystal-lang/crystal/releases/1.12.0
+
+### Features
+
+#### lang
+
+- Allow multiple parameters and blocks for operators ending in `=` ([#14159](https://github.com/crystal-lang/crystal/pull/14159), thanks @HertzDevil)
+
+#### stdlib
+
+- *(system)* Add `Signal::trap_handler?` ([#14126](https://github.com/crystal-lang/crystal/pull/14126), thanks @stakach)
+- *(time)* Add support for `Etc/UTC` time zone identifier without tzdb ([#14185](https://github.com/crystal-lang/crystal/pull/14185), thanks @femto)
+
+#### compiler
+
+- *(interpreter)* Support `@[Link]`'s DLL search order in the interpreter on Windows ([#14146](https://github.com/crystal-lang/crystal/pull/14146), thanks @HertzDevil)
+- *(semantic)* Change short_reference for top-level macros to `::foo` ([#14203](https://github.com/crystal-lang/crystal/pull/14203), thanks @femto)
+
+#### tools
+
+- *(formatter)* Add more whitespace around `ProcLiteral`s ([#14209](https://github.com/crystal-lang/crystal/pull/14209), thanks @HertzDevil)
+
+### Bugfixes
+
+#### lang
+
+- *(macros)* Remove extra newline in top-level `FunDef`'s string representation ([#14212](https://github.com/crystal-lang/crystal/pull/14212), thanks @HertzDevil)
+- *(macros)* Remove `T*` and `T[N]` macro interpolation behavior inside libs ([#14215](https://github.com/crystal-lang/crystal/pull/14215), thanks @HertzDevil)
+
+#### stdlib
+
+- *(concurrency)* Reserve stack space on non-main threads for crash recovery on Windows ([#14187](https://github.com/crystal-lang/crystal/pull/14187), thanks @HertzDevil)
+- *(runtime)* Always use `%p` for pointers in `Crystal::System.print_error` ([#14186](https://github.com/crystal-lang/crystal/pull/14186), thanks @HertzDevil)
+- *(runtime)* Always use `%p` for pointers in `Crystal::System.print_error` ([#14221](https://github.com/crystal-lang/crystal/pull/14221), thanks @HertzDevil)
+- *(serialization)* `XML::Reader`: Disallow attributes containing null bytes ([#14193](https://github.com/crystal-lang/crystal/pull/14193), thanks @HertzDevil)
+- *(serialization)* Always call `LibXML.xmlInitParser` when requiring XML libraries ([#14191](https://github.com/crystal-lang/crystal/pull/14191), thanks @HertzDevil)
+
+### Performance
+
+#### stdlib
+
+- *(concurrency)* Use per-scheduler stack pools (let's recycle) ([#14100](https://github.com/crystal-lang/crystal/pull/14100), thanks @ysbaddaden)
+
+### Refactor
+
+#### stdlib
+
+- *(specs)* **[deprecation]** Move most of spec runner's state into `Spec::CLI` ([#14170](https://github.com/crystal-lang/crystal/pull/14170), thanks @HertzDevil)
+
+### Documentation
+
+#### stdlib
+
+- *(numeric)* Enhance docs for `Int#downto` ([#14176](https://github.com/crystal-lang/crystal/pull/14176), thanks @jkthorne)
+
+### Specs
+
+#### stdlib
+
+- *(system)* Always preserve the environment for specs that modify `ENV` ([#14211](https://github.com/crystal-lang/crystal/pull/14211), thanks @HertzDevil)
+
+### Infrastructure
+
+- Update previous Crystal release 1.11.0 ([#14189](https://github.com/crystal-lang/crystal/pull/14189), thanks @straight-shoota)
+- *(ci)* Update previous Crystal release 1.11.1 ([#14224](https://github.com/crystal-lang/crystal/pull/14224), thanks @straight-shoota)
+
 ## [1.11.1] (2024-01-11)
 
 [1.11.1]: https://github.com/crystal-lang/crystal/releases/1.11.1
