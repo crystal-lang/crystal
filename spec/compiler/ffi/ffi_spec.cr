@@ -19,6 +19,22 @@ private record TestStruct,
   d : Float64,
   p : Pointer(Void)
 
+private def dll_search_paths
+  {% if flag?(:msvc) %}
+    [SPEC_CRYSTAL_LOADER_LIB_PATH]
+  {% else %}
+    nil
+  {% end %}
+end
+
+{% if flag?(:unix) %}
+  class Crystal::Loader
+    def self.new(search_paths : Array(String), *, dll_search_paths : Nil)
+      new(search_paths)
+    end
+  end
+{% end %}
+
 describe Crystal::FFI::CallInterface do
   before_all do
     FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
@@ -33,7 +49,7 @@ describe Crystal::FFI::CallInterface do
     it "simple call" do
       call_interface = Crystal::FFI::CallInterface.new Crystal::FFI::Type.sint64, [] of Crystal::FFI::Type
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("answer")
       return_value = 0_i64
@@ -48,7 +64,7 @@ describe Crystal::FFI::CallInterface do
         Crystal::FFI::Type.sint32, Crystal::FFI::Type.sint32, Crystal::FFI::Type.sint32,
       ] of Crystal::FFI::Type
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum")
 
@@ -71,7 +87,7 @@ describe Crystal::FFI::CallInterface do
         Crystal::FFI::Type.pointer,
       ] of Crystal::FFI::Type
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum_primitive_types")
 
@@ -109,7 +125,7 @@ describe Crystal::FFI::CallInterface do
       ]
       call_interface = Crystal::FFI::CallInterface.new Crystal::FFI::Type.struct(struct_fields), struct_fields
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("make_struct")
 
@@ -145,7 +161,7 @@ describe Crystal::FFI::CallInterface do
         ]),
       ] of Crystal::FFI::Type
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum_struct")
 
@@ -183,7 +199,7 @@ describe Crystal::FFI::CallInterface do
           ]),
         ] of Crystal::FFI::Type
 
-        loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+        loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
         loader.load_library "sum"
         function_pointer = loader.find_symbol("sum_array")
 
@@ -208,7 +224,7 @@ describe Crystal::FFI::CallInterface do
     it "basic" do
       call_interface = Crystal::FFI::CallInterface.variadic Crystal::FFI::Type.sint64, [Crystal::FFI::Type.sint32, Crystal::FFI::Type.sint32, Crystal::FFI::Type.sint32, Crystal::FFI::Type.sint32] of Crystal::FFI::Type, 1
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum_variadic")
 
@@ -224,7 +240,7 @@ describe Crystal::FFI::CallInterface do
     it "zero varargs" do
       call_interface = Crystal::FFI::CallInterface.variadic Crystal::FFI::Type.sint64, [Crystal::FFI::Type.sint32] of Crystal::FFI::Type, 1
 
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
+      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH], dll_search_paths: dll_search_paths)
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum_variadic")
 
