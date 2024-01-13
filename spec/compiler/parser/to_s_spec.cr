@@ -148,6 +148,25 @@ describe "ASTNode#to_s" do
   expect_to_s %(lib Foo\n  struct Foo\n    a : Void\n    b : Void\n  end\nend)
   expect_to_s %(lib Foo\n  union Foo\n    a : Int\n    b : Int32\n  end\nend)
   expect_to_s %(lib Foo\n  FOO = 0\nend)
+  expect_to_s <<-CRYSTAL, <<-CRYSTAL
+    lib Foo
+      A = Pointer(Void).new(0)
+      struct B
+        x : Void*
+        y : Int[1]
+      end
+      fun c(Void*) : Char[2]*
+    end
+    CRYSTAL
+    lib Foo
+      A = Pointer(Void).new(0)
+      struct B
+        x : ::Pointer(Void)
+        y : ::StaticArray(Int, 1)
+      end
+      fun c(::Pointer(Void)) : ::Pointer(::StaticArray(Char, 2))
+    end
+    CRYSTAL
   expect_to_s %(lib LibC\n  fun getch = "get.char"\nend)
   expect_to_s %(lib Foo::Bar\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
