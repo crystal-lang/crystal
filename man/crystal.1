@@ -367,7 +367,7 @@ Disable colored output.
 .Op --
 .Op arguments
 .Pp
-Run a tool. The available tools are: context, dependencies, format, hierarchy, implementations, and types.
+Run a tool. The available tools are: context, dependencies, flags, format, hierarchy, implementations, and types.
 .Pp
 Tools:
 .Bl -tag -offset indent
@@ -396,6 +396,8 @@ Show skipped and heads of filtered paths
 .El
 .It Cm expand
 Show macro expansion for given location.
+.It Cm flags
+Print all macro 'flag?' values
 .It Cm format
 Format project, directories and/or files with the coding style used in the standard library. You can use the
 .Fl -check
