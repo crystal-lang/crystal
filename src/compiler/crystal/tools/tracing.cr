@@ -2,6 +2,29 @@ require "colorize"
 
 module Crystal
   module Tracing
+    # List of known words used by trace calls, so we can return static strings
+    # instead of dynamically allocating the same few strings over an over. This
+    # dramatically improves performance when parsing large traces.
+    WORDS_DICTIONNARY = %w[
+      gc
+      malloc
+      realloc
+      collect:mark
+      collect:sweep
+      collect
+
+      sched
+      heap_resize
+      spawn
+      enqueue
+      resume
+      reschedule
+      sleep
+      event_loop
+      mt:sleeping
+      mt:slept
+    ]
+
     class Values(T)
       getter size : T = T.zero
       getter sum : T = T.zero
@@ -128,24 +151,7 @@ module Crystal
       private macro parse_word
         pos = reader.pos
         case
-          {% for word in %w[
-                           gc
-                           sched
-                           malloc
-                           realloc
-                           collect:mark
-                           collect:sweep
-                           collect
-                           heap_resize
-                           spawn
-                           enqueue
-                           resume
-                           reschedule
-                           sleep
-                           event_loop
-                           mt:sleeping
-                           mt:slept
-                         ] %}
+          {% for word in WORDS_DICTIONNARY %}
           when parse_word?({{word}})
             {{word}}
           {% end %}

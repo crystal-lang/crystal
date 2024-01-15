@@ -2,16 +2,22 @@ module Crystal
   {% if flag?(:tracing) %}
     # :nodoc:
     module Tracing
+      # Setups tracing, parsing the CRYSTAL_TRACE environment variable to enable
+      # the sections to trace (`gc` and/or `sched`).
+      #
+      # This should be the first thing called in main, maybe even before the GC
+      # itself is initialized. The function assumes neither the GC nor ENV nor
+      # anything is available.
       def self.init
         @@gc = false
         @@sched = false
 
         {% if flag?(:win32) %}
           buf = uninitialized UInt8[256]
-          len = LibC.GetEnvironmentVariableW("CRYSTAL_DEBUG", buf, buf.size)
+          len = LibC.GetEnvironmentVariableW("CRYSTAL_TRACE", buf, buf.size)
           debug = buf.to_slice(len) if len > 0
         {% else %}
-          if ptr = LibC.getenv("CRYSTAL_DEBUG")
+          if ptr = LibC.getenv("CRYSTAL_TRACE")
             len = LibC.strlen(ptr)
             debug = Slice.new(ptr, len) if len > 0
           end
@@ -50,11 +56,13 @@ module Crystal
       # Doesn't use `dprintf(2)` that may do multiple writes to fd, leading to
       # smashed log lines with multithreading, we prefer to use `snprintf(2)` with
       # a stack allocated buffer that has a maximum size of PIPE_BUF bytes minus
-      # one byte for the terminating null byte.
+      # one byte for the terminating null byte (targets such as linux have a
+      # pipe buf of 4096 but I chose a conservative number that should be large
+      # enough).
       #
-      # Eventually writes to STDERR in a single write operation that should be
-      # atomic since the buffer is smaller than of equal to PIPE_BUF, on POSIX
-      # platforms at least.
+      # Eventually writes to STDERR in a single write operation, this should be
+      # atomic since the buffer is smaller than of equal to PIPE_BUF (on POSIX
+      # platforms at least).
       #
       # Doesn't continue to write on partial writes (e.g. interrupted by a signal)
       # as the output could be smashed with a parallel write.
