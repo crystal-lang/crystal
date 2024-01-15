@@ -577,7 +577,7 @@ module Crystal
         end
       {% end %}
 
-      {% elsif !Crystal::System::Process.class.has_method?("fork") %}
+      {% if !Crystal::System::Process.class.has_method?("fork") %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
