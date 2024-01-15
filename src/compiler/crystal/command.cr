@@ -368,6 +368,7 @@ class Crystal::Command
                               allowed_formats = ["text", "json"])
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
+    compiler.no_codegen = no_codegen
     link_flags = [] of String
     filenames = [] of String
     has_stdin_filename = false
@@ -493,7 +494,6 @@ class Crystal::Command
       unless no_codegen
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
-          no_codegen = true
         end
         opts.on("-o ", "Output filename") do |an_output_filename|
           opt_output_filename = an_output_filename
@@ -597,7 +597,7 @@ class Crystal::Command
       output_filename = "#{::Path[first_filename].stem}#{output_extension}"
 
       # Check if we'll overwrite the main source file
-      if !no_codegen && !run && first_filename == File.expand_path(output_filename)
+      if !compiler.no_codegen? && !run && first_filename == File.expand_path(output_filename)
         error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
       end
     end
@@ -609,7 +609,7 @@ class Crystal::Command
 
     error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
 
-    if !no_codegen && !run && Dir.exists?(output_filename)
+    if !compiler.no_codegen? && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
@@ -617,7 +617,7 @@ class Crystal::Command
       emit_base_filename = ::Path[sources.first.filename].stem
     end
 
-    combine_rpath = run && !no_codegen
+    combine_rpath = run && !compiler.no_codegen?
     @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
       arguments, specified_output, hierarchy_exp, cursor_location, output_format.not_nil!,
       combine_rpath, includes, excludes, verbose, check, tallies
