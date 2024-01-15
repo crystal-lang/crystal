@@ -537,41 +537,46 @@ module Crystal
       end
 
       {% if flag?(:preview_mt) %}
-        channel = Channel(CompilationUnit).new(@n_threads * 2)
-        mutex = Mutex.new
-        done = Channel(Nil).new(@n_threads)
+        if LLVM.multithreaded?
+          channel = Channel(CompilationUnit).new(@n_threads * 2)
+          mutex = Mutex.new
+          done = Channel(Nil).new(@n_threads)
 
-        @n_threads.times do
-          spawn do
-            while unit = channel.receive?
-              unit.compile(isolate_context: true)
+          @n_threads.times do
+            spawn do
+              while unit = channel.receive?
+                unit.compile(isolate_context: true)
 
-              if wants_stats_or_progress && unit.reused_previous_compilation?
-                mutex.synchronize { all_reused << unit.name }
+                if wants_stats_or_progress && unit.reused_previous_compilation?
+                  mutex.synchronize { all_reused << unit.name }
+                end
               end
+            ensure
+              done.send(nil)
             end
-          ensure
-            done.send(nil)
           end
+
+          units.each do |unit|
+            # We generate the bitcode in the main thread because LLVM contexts
+            # must be unique per compilation unit, but we share different contexts
+            # across many modules (or rely on the global context); trying to
+            # codegen in parallel would segfault!
+            #
+            # Luckily generating the bitcode is quick and once the bitcode is
+            # generated we don't need the global LLVM contexts anymore but can
+            # parse the bitcode in an isolated context and we can parallelize the
+            # slowest part: the optimization pass & compiling the object file.
+            unit.generate_bitcode
+
+            channel.send(unit)
+          end
+          channel.close
+
+          @n_threads.times { done.receive }
+          return all_reused
         end
+      {% end %}
 
-        units.each do |unit|
-          # We generate the bitcode in the main thread because LLVM contexts
-          # must be unique per compilation unit, but we share different contexts
-          # across many modules (or rely on the global context); trying to
-          # codegen in parallel would segfault!
-          #
-          # Luckily generating the bitcode is quick and once the bitcode is
-          # generated we don't need the global LLVM contexts anymore but can
-          # parse the bitcode in an isolated context and we can parallelize the
-          # slowest part: the optimization pass & compiling the object file.
-          unit.generate_bitcode
-
-          channel.send(unit)
-        end
-        channel.close
-
-        @n_threads.times { done.receive }
       {% elsif !Crystal::System::Process.class.has_method?("fork") %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% elsif flag?(:preview_mt) %}
