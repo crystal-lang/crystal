@@ -1806,6 +1806,185 @@ module Crystal::Macros
     end
   end
 
+  # A lib definition.
+  #
+  # Every lib definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class LibDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `LibDef` this is always `lib`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # A struct or union definition inside a lib.
+  #
+  # Every type definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class CStructOrUnionDef < ASTNode
+    # Returns whether this node defines a C union.
+    def union? : BoolLiteral
+    end
+
+    # Returns the keyword used to define this type.
+    #
+    # For `CStructOrUnionDef` this is either `struct` or `union`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # A function declaration inside a lib, or a top-level C function definition.
+  #
+  # Every function `node` is equivalent to:
+  #
+  # ```
+  # fun {{ node.name }} {% if real_name = node.real_name %}= {{ real_name }}{% end %}(
+  #   {% for arg in node.args %} {{ arg }}, {% end %}
+  #   {% if node.variadic? %} ... {% end %}
+  # ) {% if return_type = node.return_type %}: {{ return_type }}{% end %}
+  # {% if node.has_body? %}
+  #   {{ body }}
+  # end
+  # {% end %}
+  # ```
+  class FunDef < ASTNode
+    # Returns the name of the function in Crystal.
+    def name : MacroId
+    end
+
+    # Returns the real C name of the function, if any.
+    def real_name : StringLiteral | Nop
+    end
+
+    # Returns the parameters of the function.
+    #
+    # This does not include the variadic parameter.
+    def args : ArrayLiteral(Arg)
+    end
+
+    # Returns whether the function is variadic.
+    def variadic? : BoolLiteral
+    end
+
+    # Returns the return type of the function, if specified.
+    def return_type : ASTNode | Nop
+    end
+
+    # Returns the body of the function, if any.
+    #
+    # Both top-level funs and lib funs may return a `Nop`. Instead, `#has_body?`
+    # can be used to distinguish between the two.
+    #
+    # ```
+    # macro body_class(x)
+    #   {{ (x.is_a?(LibDef) ? x.body : x).body.class_name }}
+    # end
+    #
+    # body_class(lib MyLib
+    #   fun foo
+    # end) # => "Nop"
+    #
+    # body_class(fun foo
+    # end) # => "Nop"
+    # ```
+    def body : ASTNode | Nop
+    end
+
+    # Returns whether this function has a body.
+    #
+    # Top-level funs have a body, whereas lib funs do not.
+    #
+    # ```
+    # macro has_body(x)
+    #   {{ (x.is_a?(LibDef) ? x.body : x).has_body? }}
+    # end
+    #
+    # has_body(lib MyLib
+    #   fun foo
+    # end) # => false
+    #
+    # has_body(fun foo
+    # end) # => true
+    # ```
+    def has_body? : BoolLiteral
+    end
+  end
+
+  # A typedef inside a lib.
+  #
+  # Every typedef `node` is equivalent to:
+  #
+  # ```
+  # type {{ node.name }} = {{ node.type }}
+  # ```
+  class TypeDef < ASTNode
+    # Returns the name of the typedef.
+    def name : Path
+    end
+
+    # Returns the name of the type this typedef is equivalent to.
+    def type : ASTNode
+    end
+  end
+
+  # An external variable declaration inside a lib.
+  #
+  # Every variable `node` is equivalent to:
+  #
+  # ```
+  # ${{ node.name }} {% if real_name = node.real_name %}= {{ real_name }}{% end %} : {{ node.type }}
+  # ```
+  class ExternalVar < ASTNode
+    # Returns the name of the variable in Crystal, without the preceding `$`.
+    def name : MacroId
+    end
+
+    # Returns the real C name of the variable, if any.
+    def real_name : StringLiteral | Nop
+    end
+
+    # Returns the name of the variable's type.
+    def type : ASTNode
+    end
+  end
+
   # A `while` expression
   class While < ASTNode
     # Returns this while's condition.
@@ -2033,27 +2212,6 @@ module Crystal::Macros
     def name : ASTNode
     end
   end
-
-  # class LibDef < ASTNode
-  # end
-
-  # class FunDef < ASTNode
-  # end
-
-  # class TypeDef < ASTNode
-  # end
-
-  # abstract class CStructOrUnionDef < ASTNode
-  # end
-
-  # class StructDef < CStructOrUnionDef
-  # end
-
-  # class UnionDef < CStructOrUnionDef
-  # end
-
-  # class ExternalVar < ASTNode
-  # end
 
   # class Alias < ASTNode
   # end
