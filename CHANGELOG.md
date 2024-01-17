@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.11.2] (2024-01-17)
+
+[1.11.2]: https://github.com/crystal-lang/crystal/releases/1.11.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(files)* Fix missing `cause` parameter from `IO::Error#initialize` ([#14242](https://github.com/crystal-lang/crystal/pull/14242), thanks @straight-shoota)
+
 ## [1.11.1] (2024-01-11)
 
 [1.11.1]: https://github.com/crystal-lang/crystal/releases/1.11.1
