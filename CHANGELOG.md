@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.11.2] (2024-01-17)
+## [1.11.2] (2024-01-18)
 
 [1.11.2]: https://github.com/crystal-lang/crystal/releases/1.11.2
 
@@ -9,6 +9,12 @@
 #### stdlib
 
 - *(files)* Fix missing `cause` parameter from `IO::Error#initialize` ([#14242](https://github.com/crystal-lang/crystal/pull/14242), thanks @straight-shoota)
+- *(runtime)* Always use `%p` for pointers in `Crystal::System.print_error` ([#14186](https://github.com/crystal-lang/crystal/pull/14186), thanks @HertzDevil)
+- *(runtime)* Fixup for always use `%p` for pointers in `Crystal::System.print_error` ([#14221](https://github.com/crystal-lang/crystal/pull/14221), thanks @HertzDevil)
+
+### Infrastructure
+
+- Changelog for 1.11.2 ([#14249](https://github.com/crystal-lang/crystal/pull/14249), thanks @straight-shoota)
 
 ## [1.11.1] (2024-01-11)
 
