@@ -272,7 +272,7 @@ describe "Semantic: restrictions augmenter" do
   it "augments typedef" do
     before = <<-CRYSTAL
       lib LibFoo
-        type X = Void*
+        type X = Int32
       end
       class Foo
         @x : LibFoo::X
@@ -284,7 +284,7 @@ describe "Semantic: restrictions augmenter" do
 
     after = <<-CRYSTAL
       lib LibFoo
-        type X = Void*
+        type X = Int32
       end
       class Foo
         @x : LibFoo::X

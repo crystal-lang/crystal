@@ -3658,8 +3658,8 @@ module Crystal
 
         end_location = token_end_location
 
-        if name.ends_with?('=')
-          if name != "[]=" && (params.size > 1 || found_splat || found_double_splat)
+        if Lexer.setter?(name)
+          if params.size > 1 || found_splat || found_double_splat
             raise "setter method '#{name}' cannot have more than one parameter"
           elsif found_block
             raise "setter method '#{name}' cannot have a block"

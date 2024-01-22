@@ -28,7 +28,6 @@ module Crystal
     def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
       @indent = 0
       @inside_macro = 0
-      @inside_lib = false
     end
 
     def visit_any(node)
@@ -847,25 +846,6 @@ module Crystal
     def visit(node : Generic)
       name = node.name
 
-      if @inside_lib && (name.is_a?(Path) && name.names.size == 1)
-        case name.names.first
-        when "Pointer"
-          node.type_vars.first.accept self
-          @str << '*'
-          return false
-        when "StaticArray"
-          if node.type_vars.size == 2
-            node.type_vars[0].accept self
-            @str << '['
-            node.type_vars[1].accept self
-            @str << ']'
-            return false
-          end
-        else
-          # Not a special type
-        end
-      end
-
       node.name.accept self
 
       printed_arg = false
@@ -1131,9 +1111,7 @@ module Crystal
       @str << "lib "
       node.name.accept self
       newline
-      @inside_lib = true
       accept_with_indent(node.body)
-      @inside_lib = false
       append_indent
       @str << "end"
       false
@@ -1170,7 +1148,6 @@ module Crystal
       if body = node.body
         newline
         accept_with_indent body
-        newline
         append_indent
         @str << "end"
       end

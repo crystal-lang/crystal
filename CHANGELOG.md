@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.11.2] (2024-01-18)
+
+[1.11.2]: https://github.com/crystal-lang/crystal/releases/1.11.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(files)* Fix missing `cause` parameter from `IO::Error#initialize` ([#14242](https://github.com/crystal-lang/crystal/pull/14242), thanks @straight-shoota)
+- *(runtime)* Always use `%p` for pointers in `Crystal::System.print_error` ([#14186](https://github.com/crystal-lang/crystal/pull/14186), thanks @HertzDevil)
+- *(runtime)* Fixup for always use `%p` for pointers in `Crystal::System.print_error` ([#14221](https://github.com/crystal-lang/crystal/pull/14221), thanks @HertzDevil)
+
+### Infrastructure
+
+- Changelog for 1.11.2 ([#14249](https://github.com/crystal-lang/crystal/pull/14249), thanks @straight-shoota)
+
+## [1.11.1] (2024-01-11)
+
+[1.11.1]: https://github.com/crystal-lang/crystal/releases/1.11.1
+
+### Bugfixes
+
+#### stdlib
+
+- *(crypto)* Revert "Fix OpenSSL error handling for EOF (support for OpenSSL 3.2) (#14169)" ([#14217](https://github.com/crystal-lang/crystal/pull/14217), thanks @straight-shoota)
+
+#### compiler
+
+- *(interpreter)* Remove pkg-config name for libgc as workaround for interpreter loader ([#14198](https://github.com/crystal-lang/crystal/pull/14198), thanks @straight-shoota)
+- *(semantic)* Revert "Add `ReferenceStorage` for manual allocation of references (#14106)" ([#14207](https://github.com/crystal-lang/crystal/pull/14207), thanks @straight-shoota)
+
+### Infrastructure
+
+- Changelog for 1.11.1 ([#14208](https://github.com/crystal-lang/crystal/pull/14208), thanks @straight-shoota)
+- Bump VERSION to 1.11.1-dev ([#14197](https://github.com/crystal-lang/crystal/pull/14197), thanks @straight-shoota)
+
 ## [1.11.0] (2024-01-08)
 
 [1.11.0]: https://github.com/crystal-lang/crystal/releases/1.11.0

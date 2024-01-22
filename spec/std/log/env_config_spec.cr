@@ -10,7 +10,7 @@ end
 describe "Log.setup_from_env" do
   after_all do
     # Setup logging in specs (again) since these specs perform Log.setup
-    Spec.log_setup
+    Spec.cli.log_setup
   end
 
   describe "backend" do
