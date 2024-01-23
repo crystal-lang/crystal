@@ -158,9 +158,8 @@ struct Crystal::System::Process
     end
   end
 
-  def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
+  def self.on_terminate(&@@interrupt_handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
-    @@interrupt_handler = handler
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       @@last_interrupt = case event_type
                          when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
