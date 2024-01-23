@@ -160,6 +160,7 @@ struct Crystal::System::Process
 
   def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
+    @@interrupt_handler = handler
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       @@last_interrupt = case event_type
                          when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
@@ -205,11 +206,7 @@ struct Crystal::System::Process
           non_nil_handler = handler # if handler is closured it will also have the Nil type
           int_type = @@last_interrupt
           spawn do
-            if non_nil_handler.arity == 0
-              non_nil_handler.as(Proc(Nil)).call
-            else
-              non_nil_handler.as(Proc(::Process::ExitReason, Nil)).call int_type
-            end
+            non_nil_handler.call int_type
           rescue ex
             ex.inspect_with_backtrace(STDERR)
             STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
