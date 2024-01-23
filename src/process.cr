@@ -55,11 +55,24 @@ class Process
   #
   # The handler is executed on a fresh fiber every time an interrupt occurs.
   #
+  # * On Unix-like systems, this traps `SIGINT`.
+  # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd> and
+  #   <kbd>Ctrl</kbd> + <kbd>Break</kbd> signals sent to a console application.
+  @[Deprecated("Use `#on_terminate` instead")]
+  def self.on_interrupt(&handler : ->) : Nil
+    Crystal::System::Process.on_interrupt(&handler)
+  end
+
+  # Installs *handler* as the new handler for interrupt requests. Removes any
+  # previously set interrupt handler.
+  #
+  # The handler is executed on a fresh fiber every time an interrupt occurs.
+  #
   # * On Unix-like systems, this traps `SIGINT`, `SIGHUP` and `SIGTERM`.
   # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd>,
   #   <kbd>Ctrl</kbd> + <kbd>Break</kbd>, terminal close, windows logoff
   #   and shutdown signals sent to a console application.
-  def self.on_interrupt(&handler) : Nil
+  def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
     Crystal::System::Process.on_interrupt(&handler)
   end
 

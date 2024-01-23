@@ -13,7 +13,7 @@ struct Crystal::System::Process
   @job_object : LibC::HANDLE
   @completion_key = IO::Overlapped::CompletionKey.new
 
-  @@interrupt_handler : Proc(::Process::ExitReason, Nil) | Proc(Nil)?
+  @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
@@ -151,7 +151,14 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler) : Nil
+  @[Deprecated("Use `#on_terminate` instead")]
+  def self.on_interrupt(&handler : ->) : Nil
+    on_terminate do |reason|
+      handler.call if reason.interrupted?
+    end
+  end
+
+  def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       @@last_interrupt = case event_type
