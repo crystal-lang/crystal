@@ -9,13 +9,13 @@ class Fiber
     property stack_top : Void*
 
     {% if flag?(:interpreted) %}
-      # In interpreted mode the interpreted fiber's will be backed by a real
+      # In interpreted mode, the interpreted fibers will be backed by a real
       # fiber run by the interpreter. The fiber context is thus fake.
       #
       # The `stack_top` property is actually a pointer to the real Fiber
       # running in the interpreter.
       #
-      # Th `resumable` proprety is also delegated to the real fiber. Only the
+      # The `resumable` property is also delegated to the real fiber. Only the
       # getter is defined (so we know the real state of the fiber); we don't
       # declare a setter because only the interpreter can manipulate it (in the
       # `makecontext` and `swapcontext` primitives).
