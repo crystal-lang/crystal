@@ -10,12 +10,12 @@ describe Fiber do
       done = true
     end
 
-    fiber.resumable?.should eq(true)
+    fiber.resumable?.should be_true
 
     until done
       Fiber.yield
     end
 
-    resumable.should eq(false)
+    resumable.should be_false
   end
 end
