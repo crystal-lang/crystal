@@ -63,8 +63,8 @@ class Process
     Crystal::System::Process.on_interrupt(&handler)
   end
 
-  # Installs *handler* as the new handler for interrupt requests. Removes any
-  # previously set interrupt handler.
+  # Installs *handler* as the new handler for termination requests. Removes any
+  # previously set termination handler.
   #
   # The handler is executed on a fresh fiber every time an interrupt occurs.
   #
