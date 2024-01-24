@@ -72,6 +72,26 @@ class Process
   # * On Windows, this captures <kbd>Ctrl</kbd> + <kbd>C</kbd>,
   #   <kbd>Ctrl</kbd> + <kbd>Break</kbd>, terminal close, windows logoff
   #   and shutdown signals sent to a console application.
+  # 
+  # ```
+  # wait_channel = Channel(Nil).new
+  #
+  # Process.on_terminate do |reason|
+  #   case reason
+  #   when .interrupted?
+  #     puts "terminating gracefully"
+  #     wait_channel.close
+  #   when .terminal_disconnected?
+  #     puts "reloading configuration"
+  #   when .session_ended?
+  #     puts "terminating forcefully"
+  #     Process.exit
+  #   end
+  # end
+  #
+  # wait_channel.receive
+  # puts "bye"
+  # ```
   def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
     Crystal::System::Process.on_terminate(&handler)
   end
