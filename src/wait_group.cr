@@ -50,8 +50,9 @@ class WaitGroup
 
   # Increments the counter by how many fibers we want to wait for.
   #
-  # This can also be used to decrement the counter, in which case the behavior
-  # is identical to `#done`.
+  # A negative value decrements the counter. When the counter reaches zero,
+  # all waiting fibers will be resumed.
+  # Raises `RuntimeError` if the counter reaches a negative value.
   #
   # Can be called at any time, allowing concurrent fibers to add more fibers to
   # wait for, but they must always do so before calling `#done` that would
@@ -59,7 +60,7 @@ class WaitGroup
   # reach zero before all fibers are done.
   def add(n : Int32 = 1) : Nil
     new_value = @counter.add(n) + n
-    raise "Negative WaitGroup counter" if new_value < 0
+    raise RuntimeError.new("Negative WaitGroup counter") if new_value < 0
     return unless new_value == 0
 
     @lock.sync do

@@ -7,7 +7,7 @@ describe WaitGroup do
       wg = WaitGroup.new
       wg.add(5)
       wg.add(-3)
-      expect_raises(Exception) { wg.add(-5) }
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.add(-5) }
     end
   end
 
@@ -16,7 +16,7 @@ describe WaitGroup do
       wg = WaitGroup.new
       wg.add(1)
       wg.done
-      expect_raises(Exception) { wg.done }
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.done }
     end
   end
 
