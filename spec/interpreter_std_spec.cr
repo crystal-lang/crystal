@@ -251,6 +251,7 @@ require "./std/uuid/json_spec.cr"
 require "./std/uuid_spec.cr"
 require "./std/uuid/yaml_spec.cr"
 # require "./std/va_list_spec.cr" (failed to run)
+require "./std/wait_group_spec.cr"
 require "./std/weak_ref_spec.cr"
 require "./std/winerror_spec.cr"
 require "./std/xml/builder_spec.cr"

@@ -82,23 +82,26 @@ describe WaitGroup do
     extra.get.should eq(32)
   end
 
-  it "stress add/done/wait" do
-    wg = WaitGroup.new
+  # the test takes far too much time for the interpreter to complete
+  {% unless flag?(:interpreted) %}
+    it "stress add/done/wait" do
+      wg = WaitGroup.new
 
-    1000.times do
-      counter = Atomic(Int32).new(0)
+      1000.times do
+        counter = Atomic(Int32).new(0)
 
-      2.times do
-        wg.add(1)
+        2.times do
+          wg.add(1)
 
-        spawn do
-          counter.add(1)
-          wg.done
+          spawn do
+            counter.add(1)
+            wg.done
+          end
         end
-      end
 
-      wg.wait
-      counter.get.should eq(2)
+        wg.wait
+        counter.get.should eq(2)
+      end
     end
-  end
+  {% end %}
 end
