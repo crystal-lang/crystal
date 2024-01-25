@@ -5,7 +5,7 @@ require "crystal/pointer_linked_list"
 # Suspend execution until a collection of fibers are finished.
 #
 # The wait group is a declarative counter of how many concurrent fibers have
-# been started. Each such fiber is expected to call `#done` to report that hey
+# been started. Each such fiber is expected to call `#done` to report that they
 # are finished doing their work. Whenever the counter reaches zero the waiters
 # will be resumed.
 #
