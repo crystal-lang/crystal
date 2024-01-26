@@ -47,6 +47,32 @@ describe "File" do
     end
   end
 
+  describe "blocking" do
+    it "opens regular file as blocking" do
+      with_tempfile("regular") do |path|
+        File.open(path, "w") do |file|
+          file.blocking.should be_true
+        end
+      end
+    end
+
+    {% if LibC.has_method?(:mkfifo) %}
+      it "opens character device/pipe file as non-blocking" do
+        path = File.tempname("chardev")
+        ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+        raise RuntimeError.from_errno("mkfifo") unless ret == 0
+
+        begin
+          File.open(path, "r") do |file|
+            file.blocking.should be_false
+          end
+        ensure
+          File.delete(path)
+        end
+      end
+    {% end %}
+  end
+
   it "reads entire file" do
     str = File.read datapath("test_file.txt")
     str.should eq("Hello World\n" * 20)

@@ -126,7 +126,7 @@ class File < IO::FileDescriptor
 
   # This constructor is provided for subclasses to be able to initialize an
   # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
+  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
     self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking)
   end
@@ -157,10 +157,19 @@ class File < IO::FileDescriptor
   #
   # Line endings are preserved on all platforms. The `b` mode flag has no
   # effect; it is provided only for POSIX compatibility.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+
+    if blocking.nil?
+      if type = File.info?(filename).try(&.type)
+        blocking = !(type.pipe? || type.socket? || type.character_device?)
+      else
+        blocking = true
+      end
+    end
+
+    fd = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
+    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid)
   end
 
   getter path : String
@@ -712,8 +721,8 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
-    new filename, mode, perm, encoding, invalid
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil) : self
+    new filename, mode, perm, encoding, invalid, blocking
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
@@ -721,8 +730,8 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
-    file = new filename, mode, perm, encoding, invalid
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = nil, &)
+    file = new filename, mode, perm, encoding, invalid, blocking
     begin
       yield file
     ensure
