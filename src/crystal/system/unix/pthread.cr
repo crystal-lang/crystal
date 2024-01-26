@@ -112,6 +112,22 @@ module Crystal::System::Thread
 
     address
   end
+
+  private def system_name=(name : String?)
+    return unless name
+
+    {% if flag?(:darwin) %}
+      LibC.pthread_setname_np(name)
+    {% elsif flag?(:netbsd) %}
+      LibC.pthread_setname_np(@system_handle, name, nil)
+    {% elsif LibC.has_method?(:pthread_setname_np) %}
+      LibC.pthread_setname_np(@system_handle, name)
+    {% elsif LibC.has_method?(:pthread_set_name_np) %}
+      LibC.pthread_set_name_np(@system_handle, name)
+    {% end %}
+
+    name
+  end
 end
 
 # In musl (alpine) the calls to unwind API segfaults

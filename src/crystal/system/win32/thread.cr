@@ -72,4 +72,9 @@ module Crystal::System::Thread
       low_limit
     {% end %}
   end
+
+  private def system_name=(name : String?)
+    LibC.SetThreadDescription(@system_handle, name.to_utf16) if name
+    name
+  end
 end

@@ -17,6 +17,8 @@ module Crystal::System::Thread
   # private def system_close
 
   # private def stack_address : Void*
+
+  # private def system_name=(String?) : String?
 end
 
 {% if flag?(:wasi) %}
@@ -49,12 +51,14 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
+  getter name : String?
+
   def self.unsafe_each(&)
     threads.unsafe_each { |thread| yield thread }
   end
 
   # Creates and starts a new system thread.
-  def initialize(&@func : ->)
+  def initialize(@name : String? = nil, &@func : ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
   end
@@ -111,6 +115,7 @@ class Thread
     Thread.threads.push(self)
     Thread.current = self
     @main_fiber = fiber = Fiber.new(stack_address, self)
+    self.system_name = @name
 
     begin
       @func.call
