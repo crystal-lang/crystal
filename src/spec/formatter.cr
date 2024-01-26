@@ -19,7 +19,8 @@ module Spec
     def finish(elapsed_time, aborted)
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
+    def prints_summary?
+      false
     end
   end
 
@@ -54,8 +55,8 @@ module Spec
       @io.puts
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec.cli.root_context.print_results(elapsed_time, aborted)
+    def prints_summary?
+      true
     end
   end
 
@@ -110,8 +111,8 @@ module Spec
       @io.puts Spec.color(@last_description, result.kind)
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec.cli.root_context.print_results(elapsed_time, aborted)
+    def prints_summary?
+      true
     end
   end
 
