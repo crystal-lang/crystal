@@ -636,7 +636,7 @@ module Enumerable(T)
     h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
-      h.put_if_absent(v, Array(T).new) << e
+      h.put_if_absent(v) { Array(T).new } << e
     end
     h
   end
