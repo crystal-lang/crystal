@@ -1353,6 +1353,7 @@ module Crystal
       if node.name == "self"
         @has_self = true
       end
+      false
     end
 
     def visit(node : ASTNode)
