@@ -140,11 +140,10 @@ module Crystal
           else
             @message = "no expansion found: #{node} may not be a macro"
           end
-          false
-        else
-          contains_target(node)
+          return false
         end
       end
+      contains_target(node)
     end
 
     def visit(node : MacroFor | MacroIf | MacroExpression)
@@ -152,11 +151,10 @@ module Crystal
         loc_end = node.end_location || loc_start
         if @target_location.between?(loc_start, loc_end) && node.expanded
           @found_nodes << node
-          false
-        else
-          contains_target(node)
+          return false
         end
       end
+      contains_target(node)
     end
 
     def visit(node)
