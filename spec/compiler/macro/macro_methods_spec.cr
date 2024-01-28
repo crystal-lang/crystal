@@ -2505,6 +2505,13 @@ module Crystal
       end
     end
 
+    describe Primitive do
+      it "executes name" do
+        assert_macro %({{x.name}}), %(:abc), {x: Primitive.new("abc")}
+        assert_macro %({{x.name}}), %(:"x.y.z"), {x: Primitive.new("x.y.z")}
+      end
+    end
+
     describe "macro methods" do
       it "executes name" do
         assert_macro %({{x.name}}), "some_macro", {x: Macro.new("some_macro")}

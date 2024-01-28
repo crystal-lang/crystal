@@ -1459,6 +1459,17 @@ module Crystal
     end
   end
 
+  class Primitive
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { SymbolLiteral.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
   class Macro
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method

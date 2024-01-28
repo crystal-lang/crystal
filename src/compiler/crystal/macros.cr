@@ -1407,6 +1407,27 @@ module Crystal::Macros
     end
   end
 
+  # A fictitious node representing the body of a `Def` marked with
+  # `@[Primitive]`.
+  class Primitive < ASTNode
+    # Returns the name of the primitive.
+    #
+    # This is identical to the argument to the associated `@[Primitive]`
+    # annotation.
+    #
+    # ```
+    # module Foo
+    #   @[Primitive(:abc)]
+    #   def foo
+    #   end
+    # end
+    #
+    # {{ Foo.methods.first.body.name }} # => :abc
+    # ```
+    def name : SymbolLiteral
+    end
+  end
+
   # A macro definition.
   class Macro < ASTNode
     # Returns the name of this macro.
