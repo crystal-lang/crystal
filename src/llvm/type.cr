@@ -173,7 +173,7 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false, *, intel_dialect = false)
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false, dialect : InlineAsmDialect = InlineAsmDialect::ATT)
     value =
       {% if LibLLVM::IS_LT_130 %}
         LibLLVM.get_inline_asm(
@@ -184,7 +184,7 @@ struct LLVM::Type
           constraints.size,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
-          (intel_dialect ? LibLLVM::InlineAsmDialect::Intel : LibLLVM::InlineAsmDialect::ATT)
+          dialect,
         )
       {% else %}
         LibLLVM.get_inline_asm(
@@ -195,7 +195,7 @@ struct LLVM::Type
           constraints.size,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
-          (intel_dialect ? LibLLVM::InlineAsmDialect::Intel : LibLLVM::InlineAsmDialect::ATT),
+          dialect,
           (can_throw ? 1 : 0)
         )
       {% end %}
