@@ -2351,6 +2351,17 @@ module Crystal
     end
   end
 
+  class TypeOf
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "args"
+        interpret_check_args { ArrayLiteral.map(@expressions, &.itself) }
+      else
+        super
+      end
+    end
+  end
+
   class Generic
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method

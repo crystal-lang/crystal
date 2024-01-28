@@ -2255,8 +2255,18 @@ module Crystal::Macros
     end
   end
 
-  # class TypeOf < ASTNode
-  # end
+  # A `typeof` expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # typeof({{ node.args.splat }})
+  # ```
+  class TypeOf < ASTNode
+    # Returns the arguments to this `typeof`.
+    def args : ArrayLiteral(ASTNode)
+    end
+  end
 
   # A macro expression,
   # surrounded by {{ ... }} (output = true)

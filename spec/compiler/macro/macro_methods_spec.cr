@@ -2763,6 +2763,12 @@ module Crystal
       end
     end
 
+    describe TypeOf do
+      it "executes args" do
+        assert_macro %({{x.args}}), "[1, 'a', Foo]", {x: TypeOf.new([1.int32, CharLiteral.new('a'), "Foo".path])}
+      end
+    end
+
     describe "case methods" do
       describe "when" do
         case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: false)
