@@ -226,6 +226,8 @@ module Crystal
         node.syntax_replacement = type
         node.bind_to type
       end
+
+      false
     end
 
     def visit(node : Generic)
@@ -353,6 +355,7 @@ module Crystal
 
     def visit(node : Self)
       node.type = the_self(node).instance_type
+      false
     end
 
     def visit(node : Var)
@@ -394,6 +397,7 @@ module Crystal
       else
         node.raise "read before assignment to local variable '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TypeDeclaration)
@@ -628,6 +632,8 @@ module Crystal
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to program.nil_var
       end
+
+      false
     end
 
     def visit(node : ReadInstanceVar)
@@ -1007,7 +1013,7 @@ module Crystal
     end
 
     def visit(node : Block)
-      return if node.visited?
+      return false if node.visited?
 
       node.visited = true
       node.context = current_non_block_context
@@ -1761,7 +1767,7 @@ module Crystal
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
-        return
+        return false
       end
 
       if needs_type_filters? && (var = get_expression_var(node.obj))
@@ -2060,7 +2066,7 @@ module Crystal
       unless node.has_breaks?
         if endless_while
           node.type = program.no_return
-          return
+          return false
         end
 
         filter_vars TypeFilters.not(cond_type_filters)
@@ -2325,6 +2331,8 @@ module Crystal
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
+
+      false
     end
 
     def visit_va_arg(node)
@@ -3042,31 +3050,38 @@ module Crystal
 
     def visit(node : Nop)
       node.type = @program.nil
+      false
     end
 
     def visit(node : NilLiteral)
       node.type = @program.nil
+      false
     end
 
     def visit(node : BoolLiteral)
       node.type = program.bool
+      false
     end
 
     def visit(node : NumberLiteral)
       node.type = program.type_from_literal_kind node.kind
+      false
     end
 
     def visit(node : CharLiteral)
       node.type = program.char
+      false
     end
 
     def visit(node : SymbolLiteral)
       node.type = program.symbol
       program.symbols.add node.value
+      false
     end
 
     def visit(node : StringLiteral)
       node.type = program.string
+      false
     end
 
     def visit(node : RegexLiteral)
