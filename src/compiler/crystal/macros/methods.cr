@@ -1549,6 +1549,19 @@ module Crystal
     end
   end
 
+  class Alias
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { @name }
+      when "type"
+        interpret_check_args { @value }
+      else
+        super
+      end
+    end
+  end
+
   class OffsetOf
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method

@@ -2611,6 +2611,18 @@ module Crystal
       end
     end
 
+    describe Alias do
+      node = Alias.new("Foo".path, Generic.new(Path.new(["Bar", "Baz"], global: true), ["T".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: node}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz(T)), {x: node}
+      end
+    end
+
     describe "visibility modifier methods" do
       node = VisibilityModifier.new(Visibility::Protected, Def.new("some_def"))
 

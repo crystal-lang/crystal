@@ -2213,8 +2213,22 @@ module Crystal::Macros
     end
   end
 
-  # class Alias < ASTNode
-  # end
+  # An `alias` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # alias {{ node.name }} = {{ node.type }}
+  # ```
+  class Alias < ASTNode
+    # Returns the name of the alias.
+    def name : Path
+    end
+
+    # Returns the name of the type this alias is equivalent to.
+    def type : ASTNode
+    end
+  end
 
   # A metaclass in a type expression: `T.class`
   class Metaclass < ASTNode
