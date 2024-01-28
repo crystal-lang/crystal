@@ -179,9 +179,9 @@ struct LLVM::Type
         LibLLVM.get_inline_asm(
           self,
           asm_string,
-          asm_string.size,
+          asm_string.bytesize,
           constraints,
-          constraints.size,
+          constraints.bytesize,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
           LibLLVM::InlineAsmDialect::ATT
@@ -190,9 +190,9 @@ struct LLVM::Type
         LibLLVM.get_inline_asm(
           self,
           asm_string,
-          asm_string.size,
+          asm_string.bytesize,
           constraints,
-          constraints.size,
+          constraints.bytesize,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
           LibLLVM::InlineAsmDialect::ATT,
