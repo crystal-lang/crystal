@@ -86,6 +86,7 @@ module Crystal
       end
 
       check_var_is_self(node)
+      false
     end
 
     def visit(node : UninitializedVar)
@@ -114,6 +115,7 @@ module Crystal
           # TODO: can this be reached?
         end
       end
+      false
     end
 
     def visit(node : Assign)
