@@ -1636,6 +1636,7 @@ module Crystal
             ivars[node.name] = node_in_callstack(node)
           end
         end
+        false
       end
 
       def visit(node : Var)
