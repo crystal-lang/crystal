@@ -173,7 +173,7 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, intel_dialect = false, can_throw = false)
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false, *, intel_dialect = false)
     value =
       {% if LibLLVM::IS_LT_130 %}
         LibLLVM.get_inline_asm(
