@@ -49,10 +49,12 @@ module Crystal
     end
 
     def visit(node : Nop)
+      false
     end
 
     def visit(node : BoolLiteral)
       @str << (node.value ? "true" : "false")
+      false
     end
 
     def visit(node : NumberLiteral)
@@ -62,6 +64,8 @@ module Crystal
         @str << '_'
         @str << node.kind.to_s
       end
+
+      false
     end
 
     def needs_suffix?(node : NumberLiteral)
@@ -83,10 +87,12 @@ module Crystal
 
     def visit(node : CharLiteral)
       node.value.inspect(@str)
+      false
     end
 
     def visit(node : SymbolLiteral)
       visit_symbol_literal_value node.value
+      false
     end
 
     def visit_symbol_literal_value(value : String)
@@ -100,6 +106,7 @@ module Crystal
 
     def visit(node : StringLiteral)
       node.value.inspect(@str)
+      false
     end
 
     def visit(node : StringInterpolation)
@@ -189,6 +196,7 @@ module Crystal
 
     def visit(node : NilLiteral)
       @str << "nil"
+      false
     end
 
     def visit(node : Expressions)
@@ -573,6 +581,7 @@ module Crystal
 
     def visit(node : Var)
       @str << node.name
+      false
     end
 
     def visit(node : ProcLiteral)
@@ -836,11 +845,13 @@ module Crystal
 
     def visit(node : Self)
       @str << "self"
+      false
     end
 
     def visit(node : Path)
       @str << "::" if node.global?
       node.names.join(@str, "::")
+      false
     end
 
     def visit(node : Generic)
@@ -907,6 +918,7 @@ module Crystal
 
     def visit(node : InstanceVar)
       @str << node.name
+      false
     end
 
     def visit(node : ReadInstanceVar)
@@ -918,6 +930,7 @@ module Crystal
 
     def visit(node : ClassVar)
       @str << node.name
+      false
     end
 
     def visit(node : Yield)
@@ -1105,6 +1118,7 @@ module Crystal
 
     def visit(node : Global)
       @str << node.name
+      false
     end
 
     def visit(node : LibDef)
@@ -1449,6 +1463,7 @@ module Crystal
 
     def visit(node : MagicConstant)
       @str << node.name
+      false
     end
 
     def visit(node : Asm)
