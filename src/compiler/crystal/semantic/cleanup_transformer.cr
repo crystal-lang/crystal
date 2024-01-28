@@ -635,10 +635,12 @@ module Crystal
         if @a_def.vars.try &.[node.name]?.try &.closured?
           @vars << node
         end
+        false
       end
 
       def visit(node : InstanceVar)
         @vars << node
+        false
       end
 
       def visit(node : ASTNode)
