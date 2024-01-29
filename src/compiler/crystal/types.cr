@@ -550,12 +550,12 @@ module Crystal
     def allows_instance_vars?
       case self
       when program.object, program.value, program.struct,
-           program.reference, program.class_type, program.reference_storage,
+           program.reference, program.class_type,
            program.number, program.int, program.float,
            program.tuple, program.named_tuple,
            program.pointer, program.static_array,
            program.union, program.enum, program.proc,
-           PrimitiveType
+           PrimitiveType, GenericReferenceStorageType
         false
       else
         true
@@ -2647,24 +2647,25 @@ module Crystal
     @struct = true
 
     def new_generic_instance(program, generic_type, type_vars)
-      t = type_vars["T"].type
+      type_param = self.type_vars.first
+      t = type_vars[type_param].type
 
       unless t.is_a?(TypeParameter) || (t.class? && !t.struct?)
-        raise TypeException.new "Can't instantiate ReferenceStorage(T) with T = #{t} (T must be a reference type)"
+        raise TypeException.new "Can't instantiate ReferenceStorage(#{type_param}) with #{type_param} = #{t} (#{type_param} must be a reference type)"
       end
 
-      ReferenceStorageType.new program, t
+      ReferenceStorageType.new program, t, self, type_param
     end
   end
 
   class ReferenceStorageType < GenericClassInstanceType
     getter reference_type : Type
 
-    def initialize(program, @reference_type)
+    def initialize(program, @reference_type, generic_type, type_param)
       t_var = Var.new("T", @reference_type)
       t_var.bind_to t_var
 
-      super(program, program.reference_storage, program.struct, {"T" => t_var} of String => ASTNode)
+      super(program, generic_type, program.value, {type_param => t_var} of String => ASTNode)
     end
   end
 
