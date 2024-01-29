@@ -1,4 +1,4 @@
-# a `ReferenceStorage(T)` provides the minimum storage for the instance data of
+# `ReferenceStorage(T)` provides the minimum storage for the instance data of
 # an object of type `T`. The compiler guarantees that
 # `sizeof(ReferenceStorage(T)) == instance_sizeof(T)` and
 # `alignof(ReferenceStorage(T)) == instance_alignof(T)` always hold, which means
