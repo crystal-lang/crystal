@@ -918,6 +918,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     external = External.new(node.name, external_args, node.body, node.real_name).at(node)
+    external.name_location = node.name_location
 
     call_convention = nil
     process_def_annotations(external, annotations) do |annotation_type, ann|
