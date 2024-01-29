@@ -234,7 +234,7 @@ class Crystal::Scheduler
           Thread.current.scheduler.enqueue worker_loop
           Thread.current
         else
-          Thread.new(name: "mt-#{i}") do
+          Thread.new(name: "CRYSTAL-MT-#{i}") do
             scheduler = Thread.current.scheduler
             pending.sub(1)
             scheduler.run_loop

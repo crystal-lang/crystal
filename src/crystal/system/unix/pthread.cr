@@ -115,9 +115,7 @@ module Crystal::System::Thread
 
   # Warning: must be called from the current thread itself, because Darwin
   # doesn't allow to set the name of any thread but the current one!
-  private def system_name=(name : String?)
-    return unless name
-
+  private def system_name=(name : String) : String
     {% if flag?(:darwin) %}
       LibC.pthread_setname_np(name)
     {% elsif flag?(:netbsd) %}
@@ -129,7 +127,6 @@ module Crystal::System::Thread
     {% else %}
       {% raise "No `Crystal::System::Thread#system_name` implementation available" %}
     {% end %}
-
     name
   end
 end
