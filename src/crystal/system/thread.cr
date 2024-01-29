@@ -137,9 +137,8 @@ class Thread
     end
   end
 
-  protected def name=(name : String)
-    @name = name
-    self.system_name = @name
+  protected def name=(@name : String)
+    self.system_name = name
   end
 
   # Holds the GC thread handler
