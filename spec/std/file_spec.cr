@@ -53,23 +53,52 @@ describe "File" do
         File.open(path, "w") do |file|
           file.blocking.should be_true
         end
+
+        File.open(path, "w", blocking: nil) do |file|
+          file.blocking.should be_true
+        end
       end
     end
 
-    {% if LibC.has_method?(:mkfifo) %}
-      it "opens character device/pipe file as non-blocking" do
-        path = File.tempname("chardev")
-        ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
-        raise RuntimeError.from_errno("mkfifo") unless ret == 0
+    {% if flag?(:unix) %}
+      if File.exists?("/dev/tty")
+        it "opens character device" do
+          File.open("/dev/tty", "r") do |file|
+            file.blocking.should be_true
+          end
 
-        begin
-          File.open(path, "r") do |file|
+          File.open("/dev/tty", "r", blocking: false) do |file|
             file.blocking.should be_false
           end
-        ensure
-          File.delete(path)
+
+          File.open("/dev/tty", "r", blocking: nil) do |file|
+            file.blocking.should be_false
+          end
         end
       end
+
+      {% if LibC.has_method?(:mkfifo) %}
+        it "opens fifo file as non-blocking" do
+          path = File.tempname("chardev")
+          ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+          raise RuntimeError.from_errno("mkfifo") unless ret == 0
+
+          # FIXME: open(2) will block when opening a fifo file until another
+          #        thread or process also opened the file; we should pass
+          #        O_NONBLOCK to the open(2) call itself, not afterwards
+          file = nil
+          Thread.new { file = File.new(path, "w", blocking: nil) }
+
+          begin
+            File.open(path, "r", blocking: false) do |file|
+              file.blocking.should be_false
+            end
+          ensure
+            File.delete(path)
+            file.try(&.close)
+          end
+        end
+      {% end %}
     {% end %}
   end
 
