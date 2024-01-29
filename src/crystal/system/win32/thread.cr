@@ -74,7 +74,9 @@ module Crystal::System::Thread
   end
 
   private def system_name=(name : String?)
-    LibC.SetThreadDescription(@system_handle, System.to_wstr(name)) if name
+    {% if LibC.has_method?(:SetThreadDescription) %}
+      LibC.SetThreadDescription(@system_handle, System.to_wstr(name)) if name
+    {% end %}
     name
   end
 end
