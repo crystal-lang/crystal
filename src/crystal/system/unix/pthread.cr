@@ -113,6 +113,8 @@ module Crystal::System::Thread
     address
   end
 
+  # Warning: must be called from the current thread itself, because Darwin
+  # doesn't allow to set the name of any thread but the current one!
   private def system_name=(name : String?)
     return unless name
 
@@ -124,6 +126,8 @@ module Crystal::System::Thread
       LibC.pthread_setname_np(@system_handle, name)
     {% elsif LibC.has_method?(:pthread_set_name_np) %}
       LibC.pthread_set_name_np(@system_handle, name)
+    {% else %}
+      {% raise "No `Crystal::System::Thread#system_name` implementation available" %}
     {% end %}
 
     name
