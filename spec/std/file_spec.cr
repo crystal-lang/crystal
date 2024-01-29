@@ -74,6 +74,8 @@ describe "File" do
           File.open("/dev/tty", "r", blocking: nil) do |file|
             file.blocking.should be_false
           end
+        rescue File::Error
+          # The TTY may not be available (e.g. Docker CI)
         end
       end
 
