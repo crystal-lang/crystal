@@ -5852,9 +5852,10 @@ module Crystal
       next_token_skip_space_or_newline
 
       value = parse_bare_proc_type
+      end_location = value.end_location
       skip_space
 
-      alias_node = Alias.new(name, value)
+      alias_node = Alias.new(name, value).at_end(end_location)
       alias_node.doc = doc
       alias_node
     end

@@ -2252,6 +2252,7 @@ module Crystal
       assert_end_location "class Foo; end"
       assert_end_location "struct Foo; end"
       assert_end_location "module Foo; end"
+      assert_end_location "alias Foo = Bar"
       assert_end_location "->{ }"
       assert_end_location "macro foo;end"
       assert_end_location "macro foo; 123; end"
