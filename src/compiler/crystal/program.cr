@@ -340,7 +340,7 @@ module Crystal
     private def define_crystal_constant(name, value, doc = nil) : Const
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
-      if doc
+      if doc && wants_doc?
         const.doc = doc
       end
       predefined_constants << const
