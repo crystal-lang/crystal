@@ -116,6 +116,7 @@ jobs:
   test_preview_mt:
     machine:
       image: ubuntu-2004:202201-02
+    resource_class: large
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
