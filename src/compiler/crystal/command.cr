@@ -58,7 +58,7 @@ class Crystal::Command
   @compiler : Compiler?
 
   def initialize(@options : Array(String))
-    @color = ENV["TERM"]? != "dumb"
+    @color = ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -399,6 +399,14 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
+
+        opts.on("--frame-pointers auto|always|non-leaf", "Control the preservation of frame pointers") do |value|
+          if frame_pointers = FramePointers.parse?(value)
+            compiler.frame_pointers = frame_pointers
+          else
+            error "Invalid value `#{value}` for frame-pointers"
+          end
+        end
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -735,7 +743,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
+    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV.has_key?("NO_COLOR")
     Crystal.error msg, @color, exit_code: exit_code
   end
 

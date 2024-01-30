@@ -1407,6 +1407,27 @@ module Crystal::Macros
     end
   end
 
+  # A fictitious node representing the body of a `Def` marked with
+  # `@[Primitive]`.
+  class Primitive < ASTNode
+    # Returns the name of the primitive.
+    #
+    # This is identical to the argument to the associated `@[Primitive]`
+    # annotation.
+    #
+    # ```
+    # module Foo
+    #   @[Primitive(:abc)]
+    #   def foo
+    #   end
+    # end
+    #
+    # {{ Foo.methods.first.body.name }} # => :abc
+    # ```
+    def name : SymbolLiteral
+    end
+  end
+
   # A macro definition.
   class Macro < ASTNode
     # Returns the name of this macro.
@@ -2213,8 +2234,22 @@ module Crystal::Macros
     end
   end
 
-  # class Alias < ASTNode
-  # end
+  # An `alias` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # alias {{ node.name }} = {{ node.type }}
+  # ```
+  class Alias < ASTNode
+    # Returns the name of the alias.
+    def name : Path
+    end
+
+    # Returns the name of the type this alias is equivalent to.
+    def type : ASTNode
+    end
+  end
 
   # A metaclass in a type expression: `T.class`
   class Metaclass < ASTNode
@@ -2255,8 +2290,18 @@ module Crystal::Macros
     end
   end
 
-  # class TypeOf < ASTNode
-  # end
+  # A `typeof` expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # typeof({{ node.args.splat }})
+  # ```
+  class TypeOf < ASTNode
+    # Returns the arguments to this `typeof`.
+    def args : ArrayLiteral(ASTNode)
+    end
+  end
 
   # A macro expression,
   # surrounded by {{ ... }} (output = true)

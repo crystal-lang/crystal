@@ -2505,6 +2505,13 @@ module Crystal
       end
     end
 
+    describe Primitive do
+      it "executes name" do
+        assert_macro %({{x.name}}), %(:abc), {x: Primitive.new("abc")}
+        assert_macro %({{x.name}}), %(:"x.y.z"), {x: Primitive.new("x.y.z")}
+      end
+    end
+
     describe "macro methods" do
       it "executes name" do
         assert_macro %({{x.name}}), "some_macro", {x: Macro.new("some_macro")}
@@ -2608,6 +2615,18 @@ module Crystal
       it "executes name" do
         assert_macro %({{x.name}}), "Foo", {x: foo}
         assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
+    describe Alias do
+      node = Alias.new("Foo".path, Generic.new(Path.new(["Bar", "Baz"], global: true), ["T".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: node}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz(T)), {x: node}
       end
     end
 
@@ -2760,6 +2779,12 @@ module Crystal
 
       it "executes to" do
         assert_macro %({{x.to}}), "Int32", {x: NilableCast.new("x".call, "Int32".path)}
+      end
+    end
+
+    describe TypeOf do
+      it "executes args" do
+        assert_macro %({{x.args}}), "[1, 'a', Foo]", {x: TypeOf.new([1.int32, CharLiteral.new('a'), "Foo".path])}
       end
     end
 

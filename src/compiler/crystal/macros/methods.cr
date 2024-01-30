@@ -1459,6 +1459,17 @@ module Crystal
     end
   end
 
+  class Primitive
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { SymbolLiteral.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
   class Macro
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
@@ -1543,6 +1554,19 @@ module Crystal
       case method
       when "name"
         interpret_check_args { @name }
+      else
+        super
+      end
+    end
+  end
+
+  class Alias
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { @name }
+      when "type"
+        interpret_check_args { @value }
       else
         super
       end
@@ -2345,6 +2369,17 @@ module Crystal
         interpret_check_args { obj }
       when "to"
         interpret_check_args { to }
+      else
+        super
+      end
+    end
+  end
+
+  class TypeOf
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "args"
+        interpret_check_args { ArrayLiteral.map(@expressions, &.itself) }
       else
         super
       end
