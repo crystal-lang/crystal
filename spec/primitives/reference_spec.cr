@@ -43,9 +43,7 @@ describe "Primitives: reference" do
     end
 
     it "works when address is on the stack" do
-      # suitably aligned, sufficient storage for type ID + i64 + ptr
-      # TODO: use `ReferenceStorage` instead
-      foo_buffer = uninitialized UInt64[3]
+      foo_buffer = uninitialized ReferenceStorage(Foo)
       foo = Foo.pre_initialize(pointerof(foo_buffer))
       pointerof(foo_buffer).as(typeof(Foo.crystal_instance_type_id)*).value.should eq(Foo.crystal_instance_type_id)
       foo.str.should eq("abc")

@@ -41,12 +41,38 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   @last_doc : String?
 
+  # special types recognized for `@[Primitive]`
+  private enum PrimitiveType
+    ReferenceStorageType
+  end
+
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
 
     scope, name, type = lookup_type_def(node)
 
     annotations = read_annotations
+
+    special_type = nil
+    process_annotations(annotations) do |annotation_type, ann|
+      case annotation_type
+      when @program.primitive_annotation
+        if ann.args.size != 1
+          ann.raise "expected Primitive annotation to have one argument"
+        end
+
+        arg = ann.args.first
+        unless arg.is_a?(SymbolLiteral)
+          arg.raise "expected Primitive argument to be a symbol literal"
+        end
+
+        value = arg.value
+        special_type = PrimitiveType.parse?(value)
+        unless special_type
+          arg.raise "BUG: Unknown primitive type #{value.inspect}"
+        end
+      end
+    end
 
     created_new_type = false
 
@@ -70,14 +96,34 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     else
       created_new_type = true
-      if type_vars = node.type_vars
-        type = GenericClassType.new @program, scope, name, nil, type_vars, false
-        type.splat_index = node.splat_index
-      else
-        type = NonGenericClassType.new @program, scope, name, nil, false
+      case special_type
+      in Nil
+        if type_vars = node.type_vars
+          type = GenericClassType.new @program, scope, name, nil, type_vars, false
+          type.splat_index = node.splat_index
+        else
+          type = NonGenericClassType.new @program, scope, name, nil, false
+        end
+        type.abstract = node.abstract?
+        type.struct = node.struct?
+      in .reference_storage_type?
+        type_vars = node.type_vars
+        case
+        when !node.struct?
+          node.raise "BUG: Expected ReferenceStorageType to be a struct type"
+        when node.abstract?
+          node.raise "BUG: Expected ReferenceStorageType to be a non-abstract type"
+        when !type_vars
+          node.raise "BUG: Expected ReferenceStorageType to be a generic type"
+        when type_vars.size != 1
+          node.raise "BUG: Expected ReferenceStorageType to have a single generic type parameter"
+        when node.splat_index
+          node.raise "BUG: Expected ReferenceStorageType to have no splat parameter"
+        end
+        type = GenericReferenceStorageType.new @program, scope, name, @program.value, type_vars
+        type.declare_instance_var("@type_id", @program.int32)
+        type.can_be_stored = false
       end
-      type.abstract = node.abstract?
-      type.struct = node.struct?
     end
 
     type.private = true if node.visibility.private?
@@ -132,6 +178,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if superclass.struct? && !superclass.abstract?
         node.raise "can't extend non-abstract struct #{superclass}"
+      end
+
+      if type.is_a?(GenericReferenceStorageType) && superclass != @program.value
+        node.raise "BUG: Expected reference_storage_type to inherit from Value"
       end
     end
 
@@ -375,7 +425,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     process_def_annotations(node, annotations) do |annotation_type, ann|
       if annotation_type == @program.primitive_annotation
-        process_primitive_annotation(node, ann)
+        process_def_primitive_annotation(node, ann)
       end
 
       node.add_annotation(annotation_type, ann)
@@ -460,7 +510,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  private def process_primitive_annotation(node, ann)
+  private def process_def_primitive_annotation(node, ann)
     if ann.args.size != 1
       ann.raise "expected Primitive annotation to have one argument"
     end
@@ -926,7 +976,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if annotation_type == @program.call_convention_annotation
         call_convention = parse_call_convention(ann, call_convention)
       elsif annotation_type == @program.primitive_annotation
-        process_primitive_annotation(external, ann)
+        process_def_primitive_annotation(external, ann)
       else
         ann.raise "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
       end
