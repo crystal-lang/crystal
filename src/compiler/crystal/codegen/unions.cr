@@ -108,23 +108,55 @@ module Crystal
       store type_id(@program.void), union_type_id(struct_type, union_pointer)
     end
 
-    def assign_distinct_union_types(target_pointer, target_type, value_type, value)
+    # this is needed if `union_type` and `value_type` have different alignments,
+    # i.e. their `#union_value`s do not have the same offsets
+    def store_union_in_union(union_type, union_pointer, value_type, value)
+      to_llvm_type = llvm_type(union_type)
+      from_llvm_type = llvm_type(value_type)
+
+      store type_id(value, value_type), union_type_id(to_llvm_type, union_pointer)
+      union_value_type = from_llvm_type.struct_element_types[1]
+      target_value_ptr = union_value(to_llvm_type, union_pointer)
+      union_value = load(union_value_type, union_value(from_llvm_type, value))
+      store union_value, pointer_cast(target_value_ptr, union_value_type)
+    end
+
+    def assign_distinct_union_types(to_pointer, to_type, from_type, from_pointer)
       # If we have:
-      # - target_pointer: Pointer(A | B | C)
-      # - target_type: A | B | C
-      # - value_type: A | B
-      # - value: Pointer(A | B)
+      # - to_pointer: Pointer(A | B | C)
+      # - to_type: A | B | C
+      # - from_type: A | B
+      # - from_pointer: Pointer(A | B)
       #
-      # Then we:
-      # - load the value, we get A | B
-      # - cast the target pointer to Pointer(A | B)
-      # - store the A | B from the first pointer into the casted target pointer
-      casted_target_pointer = cast_to_pointer target_pointer, value_type
-      store load(llvm_type(value_type), value), casted_target_pointer
+      # Then it might happen that from_type and to_type have the same alignment.
+      # In this case, the two pointers are interchangeable, so we can simply:
+      if align_of(to_type) == align_of(from_type)
+        # - load the value, we get A | B
+        # - cast the target pointer to Pointer(A | B)
+        # - store the A | B from the value pointer into the casted target pointer
+        casted_target_pointer = cast_to_pointer to_pointer, from_type
+        store load(llvm_type(from_type), from_pointer), casted_target_pointer
+      else
+        # Otherwise, the type ID and the value must be stored separately
+        store_union_in_union to_type, to_pointer, from_type, from_pointer
+      end
     end
 
     def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
-      cast_to_pointer value, to_type
+      to_llvm_type = llvm_type(to_type)
+      from_llvm_type = llvm_type(from_type)
+
+      # If from_type and to_type have the same alignment, we don't need a
+      # separate value; just cast the larger value pointer to the smaller one
+      if @llvm_typer.align_of(to_llvm_type) == @llvm_typer.align_of(from_llvm_type)
+        cast_to_pointer value, to_type
+      else
+        # This is the same as upcasting and we need that separate, newly aligned
+        # union value
+        target_pointer = alloca llvm_type(to_type)
+        store_union_in_union to_type, target_pointer, from_type, value
+        target_pointer
+      end
     end
 
     def upcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
