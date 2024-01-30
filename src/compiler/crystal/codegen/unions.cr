@@ -143,12 +143,9 @@ module Crystal
     end
 
     def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
-      to_llvm_type = llvm_type(to_type)
-      from_llvm_type = llvm_type(from_type)
-
       # If from_type and to_type have the same alignment, we don't need a
       # separate value; just cast the larger value pointer to the smaller one
-      if @llvm_typer.align_of(to_llvm_type) == @llvm_typer.align_of(from_llvm_type)
+      if align_of(to_type) == align_of(from_type)
         cast_to_pointer value, to_type
       else
         # This is the same as upcasting and we need that separate, newly aligned
