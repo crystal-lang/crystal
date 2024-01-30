@@ -1695,6 +1695,20 @@ describe Crystal::Formatter do
   assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f",\n          "g"))
   assert_format %(asm("a" ::: "a"\n        : "volatile",\n          "intel"))
 
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    asm(
+    # foo
+    "nop"
+    # bar
+    )
+    CRYSTAL
+    asm(
+      # foo
+      "nop"
+      # bar
+    )
+    CRYSTAL
+
   assert_format "1 # foo\n1234 # bar", "1    # foo\n1234 # bar"
   assert_format "1234 # foo\n1 # bar", "1234 # foo\n1    # bar"
   assert_format "1#foo", "1 # foo"

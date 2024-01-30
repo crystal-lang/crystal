@@ -4370,6 +4370,7 @@ module Crystal
       skip_space
 
       if @token.type.newline?
+        @indent += 2
         consume_newlines
         has_newlines = true
       end
@@ -4378,7 +4379,7 @@ module Crystal
       string = StringLiteral.new(node.text)
 
       if has_newlines
-        write_indent(@indent + 2, string)
+        write_indent(@indent, string)
       else
         indent(@column, string)
       end
@@ -4386,11 +4387,12 @@ module Crystal
       skip_space
 
       if @token.type.newline?
+        consume_newlines
         if node.outputs || node.inputs
-          consume_newlines
           column += 4
           write_indent(column)
         end
+        @wrote_newline = true
       end
 
       skip_space_or_newline
@@ -4457,7 +4459,9 @@ module Crystal
       skip_space_or_newline
 
       if has_newlines
-        write_line
+        @indent -= 2
+
+        write_line unless @wrote_newline
         write_indent
       end
 
