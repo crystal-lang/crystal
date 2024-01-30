@@ -118,7 +118,7 @@ module Crystal
       union_value_type = from_llvm_type.struct_element_types[1]
       target_value_ptr = union_value(to_llvm_type, union_pointer)
       union_value = load(union_value_type, union_value(from_llvm_type, value))
-      store union_value, pointer_cast(target_value_ptr, union_value_type)
+      store union_value, pointer_cast(target_value_ptr, union_value_type.pointer)
     end
 
     def assign_distinct_union_types(to_pointer, to_type, from_type, from_pointer)
