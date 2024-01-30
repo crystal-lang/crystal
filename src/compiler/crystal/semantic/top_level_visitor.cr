@@ -598,6 +598,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       typed_def_type = lookup_type(node.type_spec)
       typed_def_type = check_allowed_in_lib node.type_spec, typed_def_type
       current_type.types[node.name] = TypeDefType.new @program, current_type, node.name, typed_def_type
+      false
     end
   end
 

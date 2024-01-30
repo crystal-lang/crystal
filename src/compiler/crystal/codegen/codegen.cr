@@ -501,18 +501,22 @@ module Crystal
 
     def visit(node : Nop)
       @last = llvm_nil
+      false
     end
 
     def visit(node : NilLiteral)
       @last = llvm_nil
+      false
     end
 
     def visit(node : BoolLiteral)
       @last = int1(node.value ? 1 : 0)
+      false
     end
 
     def visit(node : CharLiteral)
       @last = int32(node.value.ord)
+      false
     end
 
     def visit(node : NumberLiteral)
@@ -542,14 +546,17 @@ module Crystal
       in .f64?
         @last = float64(node.value)
       end
+      false
     end
 
     def visit(node : StringLiteral)
       @last = build_string_constant(node.value, node.value)
+      false
     end
 
     def visit(node : SymbolLiteral)
       @last = int(@symbols[node.value])
+      false
     end
 
     def visit(node : TupleLiteral)
@@ -1092,7 +1099,7 @@ module Crystal
 
       request_value(value)
 
-      return if value.no_returns?
+      return false if value.no_returns?
 
       last = @last
 
@@ -1106,7 +1113,7 @@ module Crystal
               read_class_var_ptr(target)
             when Var
               # Can't assign void
-              return if target.type.void?
+              return false if target.type.void?
 
               # If assigning to a special variable in a method that yields,
               # assign to that variable too.
@@ -1284,6 +1291,7 @@ module Crystal
       else
         node.raise "BUG: missing context var: #{node.name}"
       end
+      false
     end
 
     def visit(node : Global)
@@ -1292,6 +1300,7 @@ module Crystal
 
     def visit(node : ClassVar)
       @last = read_class_var(node)
+      false
     end
 
     def visit(node : InstanceVar)
@@ -1403,7 +1412,7 @@ module Crystal
 
       unless filtered_type
         @last = upcast llvm_nil, resulting_type, @program.nil
-        return
+        return false
       end
 
       non_nilable_type = node.non_nilable_type
@@ -1664,6 +1673,7 @@ module Crystal
 
     def visit(node : Unreachable)
       builder.unreachable
+      false
     end
 
     def check_proc_is_not_closure(value, type)
@@ -2049,6 +2059,7 @@ module Crystal
     def unreachable(file = __FILE__, line = __LINE__)
       debug_codegen_log(file, line) { "Reached the unreachable!" }
       builder.unreachable
+      false
     end
 
     def allocate_aggregate(type)
