@@ -234,9 +234,9 @@ require "./std/system_error_spec.cr"
 require "./std/system/group_spec.cr"
 # require "./std/system_spec.cr" (failed to run)
 require "./std/system/user_spec.cr"
-require "./std/thread/condition_variable_spec.cr"
-require "./std/thread/mutex_spec.cr"
-# require "./std/thread_spec.cr" (failed to run)
+# require "./std/thread/condition_variable_spec.cr" (not supported)
+# require "./std/thread/mutex_spec.cr" (not supported)
+# require "./std/thread_spec.cr" (not supported)
 require "./std/time/custom_formats_spec.cr"
 require "./std/time/format_spec.cr"
 require "./std/time/location_spec.cr"
