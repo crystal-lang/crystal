@@ -275,10 +275,11 @@ module Crystal
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
     private def define_crystal_constants
       if build_commit = Crystal::Config.build_commit
-        define_crystal_string_constant "BUILD_COMMIT", build_commit
+        build_commit_const = define_crystal_string_constant "BUILD_COMMIT", build_commit
       else
-        define_crystal_nil_constant "BUILD_COMMIT"
-      end.doc = <<-MD
+        build_commit_const = define_crystal_nil_constant "BUILD_COMMIT"
+      end
+      build_commit_const.doc = <<-MD if wants_doc?
         The build commit identifier of the Crystal compiler.
         MD
 
