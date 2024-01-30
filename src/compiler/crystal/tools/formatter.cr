@@ -4420,7 +4420,8 @@ module Crystal
           write_token :OP_COLON
           part_index += 1
         end
-        skip_space_or_newline
+        skip_space
+        consume_newlines
 
         case part_index
         when 1
@@ -4483,7 +4484,12 @@ module Crystal
     end
 
     def visit_asm_parts(parts, colon_column, &) : Nil
-      write " "
+      if @wrote_newline
+        write_indent
+      else
+        write " "
+      end
+
       column = @column
 
       parts.each_with_index do |part, i|
