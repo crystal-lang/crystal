@@ -4392,7 +4392,6 @@ module Crystal
           column += 4
           write_indent(column)
         end
-        @wrote_newline = true
       end
 
       skip_space_or_newline
