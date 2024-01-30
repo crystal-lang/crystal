@@ -5732,6 +5732,7 @@ module Crystal
       with_isolated_var_scope(require_body) do
         next_token_skip_space_or_newline
 
+        name_location = @token.location
         name = if top_level
                  check_ident
                else
@@ -5835,6 +5836,7 @@ module Crystal
         end
 
         fun_def = FunDef.new name, params, return_type, varargs, body, real_name
+        fun_def.name_location = name_location
         fun_def.doc = doc
         fun_def.at(location).at_end(end_location)
       end
