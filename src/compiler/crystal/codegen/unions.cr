@@ -28,20 +28,19 @@ module Crystal
           @structs[llvm_name] = a_struct
         end
 
-        max_size = 0
+        max_size = 0_u64
+        max_alignment = pointer_size.to_u32!
+
         type.expand_union_types.each do |subtype|
           unless subtype.void?
-            size = size_of(llvm_type(subtype, wants_size: true))
-            max_size = size if size > max_size
+            llvm_type = llvm_type(subtype, wants_size: true)
+            max_size = {size_of(llvm_type), max_size}.max
+            max_alignment = {align_of(llvm_type), max_alignment}.max
           end
         end
 
-        max_size /= pointer_size.to_f
-        max_size = max_size.ceil.to_i
-
-        max_size = 1 if max_size == 0
-
-        llvm_value_type = size_t.array(max_size)
+        value_size = {(max_size + (max_alignment - 1)) // max_alignment, 1_u64}.max
+        llvm_value_type = @llvm_context.int(max_alignment * 8).array(value_size)
 
         [@llvm_context.int32, llvm_value_type]
       end
