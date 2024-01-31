@@ -1708,6 +1708,7 @@ describe Crystal::Formatter do
       # bar
     )
     CRYSTAL
+
   assert_format <<-CRYSTAL, <<-CRYSTAL
     asm(
       # the assembly template string, following the
