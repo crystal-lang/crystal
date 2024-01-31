@@ -41,6 +41,7 @@ class Crystal::Command
     Tool:
         context                  show context for given location
         expand                   show macro expansion for given location
+        flags                    print all macro `flag?` values
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         dependencies             show file dependency tree
@@ -177,6 +178,9 @@ class Crystal::Command
     when "format".starts_with?(tool)
       options.shift
       format
+    when "flags" == tool
+      options.shift
+      flags
     when "expand".starts_with?(tool)
       options.shift
       expand
