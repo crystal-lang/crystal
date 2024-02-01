@@ -113,12 +113,20 @@ module Crystal
     def store_union_in_union(union_type, union_pointer, value_type, value)
       to_llvm_type = llvm_type(union_type)
       from_llvm_type = llvm_type(value_type)
+      union_value_type = from_llvm_type.struct_element_types[1]
 
       store type_id(value, value_type), union_type_id(to_llvm_type, union_pointer)
-      union_value_type = from_llvm_type.struct_element_types[1]
-      target_value_ptr = union_value(to_llvm_type, union_pointer)
-      union_value = load(union_value_type, union_value(from_llvm_type, value))
-      store union_value, pointer_cast(target_value_ptr, union_value_type.pointer)
+
+      size = @llvm_typer.size_of(union_value_type)
+      size = @program.bits64? ? int64(size) : int32(size)
+      memcpy(
+        cast_to_void_pointer(union_value(to_llvm_type, union_pointer)),
+        cast_to_void_pointer(union_value(from_llvm_type, value)),
+        size,
+        align: @llvm_typer.align_of(to_llvm_type.struct_element_types[1]),
+        src_align: @llvm_typer.align_of(union_value_type),
+        volatile: int1(0),
+      )
     end
 
     def assign_distinct_union_types(to_pointer, to_type, from_type, from_pointer)
