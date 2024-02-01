@@ -1629,6 +1629,14 @@ describe Crystal::Formatter do
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
   assert_format "->{}"
 
+  # #13232
+  assert_format "->{}", "-> { }", flags: %w[proc_literal_whitespace]
+  assert_format "->(){}", "-> { }", flags: %w[proc_literal_whitespace]
+  assert_format "->{1}", "-> { 1 }", flags: %w[proc_literal_whitespace]
+  assert_format "->(x : Int32) {}", "->(x : Int32) { }", flags: %w[proc_literal_whitespace]
+  assert_format "-> : Int32 {}", "-> : Int32 { }", flags: %w[proc_literal_whitespace]
+  assert_format "->do\nend", "-> do\nend", flags: %w[proc_literal_whitespace]
+
   assert_format "-> : Int32 {}"
   assert_format "-> : Int32 | String { 1 }"
   assert_format "-> : Array(Int32) {}"

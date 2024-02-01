@@ -2252,6 +2252,7 @@ module Crystal
       assert_end_location "class Foo; end"
       assert_end_location "struct Foo; end"
       assert_end_location "module Foo; end"
+      assert_end_location "alias Foo = Bar"
       assert_end_location "->{ }"
       assert_end_location "macro foo;end"
       assert_end_location "macro foo; 123; end"
@@ -2503,6 +2504,24 @@ module Crystal
 
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
+      end
+
+      it "sets location of top-level fun name" do
+        parser = Parser.new("fun foo; end")
+        node = parser.parse.as(FunDef)
+
+        name_location = node.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(5)
+      end
+
+      it "sets location of lib fun name" do
+        parser = Parser.new("lib Foo; fun foo; end")
+        node = parser.parse.as(LibDef).body.as(FunDef)
+
+        name_location = node.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(14)
       end
 
       it "sets correct location of proc literal" do

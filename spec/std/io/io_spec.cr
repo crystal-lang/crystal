@@ -1013,4 +1013,14 @@ describe IO do
   typeof(STDIN.cooked!)
   typeof(STDIN.raw { })
   typeof(STDIN.raw!)
+
+  describe IO::Error do
+    describe ".new" do
+      it "accepts `cause` argument (#14241)" do
+        cause = Exception.new("cause")
+        error = IO::Error.new("foo", cause: cause)
+        error.cause.should be cause
+      end
+    end
+  end
 end

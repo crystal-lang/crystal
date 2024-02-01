@@ -636,11 +636,7 @@ module Enumerable(T)
     h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
-      if h.has_key?(v)
-        h[v].push(e)
-      else
-        h[v] = [e]
-      end
+      h.put_if_absent(v) { Array(T).new } << e
     end
     h
   end

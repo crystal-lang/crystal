@@ -25,7 +25,7 @@ jobs:
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
@@ -68,7 +68,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             libs/crypto.lib
@@ -97,7 +97,7 @@ jobs:
 
       - name: Cache libraries
         id: cache-dlls
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre-dynamic.lib
@@ -149,7 +149,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             libs/crypto-dynamic.lib
@@ -172,7 +172,7 @@ jobs:
 
       - name: Cache LLVM
         id: cache-llvm-libs
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
@@ -219,7 +219,7 @@ jobs:
 
       - name: Cache LLVM
         id: cache-llvm-dlls
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             libs/llvm_VERSION
@@ -258,7 +258,7 @@ jobs:
           path: build
 
       - name: Restore LLVM
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
@@ -309,7 +309,7 @@ jobs:
           path: etc/win-ci/portable
 
       - name: Restore LLVM
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc

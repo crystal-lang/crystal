@@ -3,7 +3,7 @@ require "c/sys/mman"
 module Crystal::System::Fiber
   def self.allocate_stack(stack_size) : Void*
     flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
-    {% if flag?(:openbsd) && !flag?(:"openbsd6.2") %}
+    {% if flag?(:openbsd) %}
       flags |= LibC::MAP_STACK
     {% end %}
 

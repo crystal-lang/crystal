@@ -49,4 +49,17 @@ describe Thread do
 
     thread.join
   end
+
+  it "names the thread" do
+    Thread.current.name.should be_nil
+    name = nil
+
+    thread = Thread.new(name: "some-name") do
+      name = Thread.current.name
+    end
+    thread.name.should eq("some-name")
+
+    thread.join
+    name.should eq("some-name")
+  end
 end

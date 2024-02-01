@@ -12,11 +12,22 @@ module Crystal::System::Thread
     @system_handle = GC.beginthreadex(
       security: Pointer(Void).null,
       stack_size: LibC::UInt.zero,
-      start_address: ->(data : Void*) { data.as(::Thread).start; LibC::UInt.zero },
+      start_address: ->Thread.thread_proc(Void*),
       arglist: self.as(Void*),
       initflag: LibC::UInt.zero,
       thrdaddr: Pointer(LibC::UInt).null,
     )
+  end
+
+  def self.thread_proc(data : Void*) : LibC::UInt
+    # ensure that even in the case of stack overflow there is enough reserved
+    # stack space for recovery (for the main thread this is done in
+    # `Exception::CallStack.setup_crash_handler`)
+    stack_size = Crystal::System::Fiber::RESERVED_STACK_SIZE
+    LibC.SetThreadStackGuarantee(pointerof(stack_size))
+
+    data.as(::Thread).start
+    LibC::UInt.zero
   end
 
   def self.current_handle : Handle
@@ -60,5 +71,12 @@ module Crystal::System::Thread
       low_limit = mbi.allocationBase
       low_limit
     {% end %}
+  end
+
+  private def system_name=(name : String) : String
+    {% if LibC.has_method?(:SetThreadDescription) %}
+      LibC.SetThreadDescription(@system_handle, System.to_wstr(name))
+    {% end %}
+    name
   end
 end

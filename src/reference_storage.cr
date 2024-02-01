@@ -1,4 +1,4 @@
-# a `ReferenceStorage(T)` provides the minimum storage for the instance data of
+# `ReferenceStorage(T)` provides the minimum storage for the instance data of
 # an object of type `T`. The compiler guarantees that
 # `sizeof(ReferenceStorage(T)) == instance_sizeof(T)` and
 # `alignof(ReferenceStorage(T)) == instance_alignof(T)` always hold, which means
@@ -13,7 +13,8 @@
 # WARNING: `ReferenceStorage` is unsuitable when instances of `T` require more
 # than `instance_sizeof(T)` bytes, such as `String` and `Log::Metadata`.
 @[Experimental("This type's API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
-struct ReferenceStorage(T)
+@[Primitive(:ReferenceStorageType)]
+struct ReferenceStorage(T) < Value
   private def initialize
   end
 
