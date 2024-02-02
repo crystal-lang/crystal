@@ -2253,11 +2253,11 @@ module Crystal
       res
     end
 
-    def memcpy(dest, src, len, align, volatile)
+    def memcpy(dest, src, len, align, volatile, *, src_align = align)
       res = call c_memcpy_fun, [dest, src, len, volatile]
 
       LibLLVM.set_instr_param_alignment(res, 1, align)
-      LibLLVM.set_instr_param_alignment(res, 2, align)
+      LibLLVM.set_instr_param_alignment(res, 2, src_align)
 
       res
     end
