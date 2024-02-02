@@ -1999,6 +1999,13 @@ describe Crystal::Formatter do
   assert_format "foo.[] = 1"
   assert_format "foo.[1, 2] = 3"
 
+  %w(<= == >= != []= ===).each do |operator|
+    assert_format "1.#{operator} { 3 }"
+    assert_format "1.#{operator}() { 3 }"
+    assert_format "1.#{operator}(2) { 3 }"
+    assert_format "1.#{operator} do\nend"
+  end
+
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
   assert_format "getter foo # comment\n\ndef foo\nend"
   assert_format "getter foo : Int32 # comment\n\ndef foo\nend"
