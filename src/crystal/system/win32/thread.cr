@@ -72,4 +72,11 @@ module Crystal::System::Thread
       low_limit
     {% end %}
   end
+
+  private def system_name=(name : String) : String
+    {% if LibC.has_method?(:SetThreadDescription) %}
+      LibC.SetThreadDescription(@system_handle, System.to_wstr(name))
+    {% end %}
+    name
+  end
 end

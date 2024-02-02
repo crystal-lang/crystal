@@ -72,6 +72,7 @@ require "./std/env_spec.cr"
 require "./std/errno_spec.cr"
 # require "./std/exception/call_stack_spec.cr" (failed to run)
 # require "./std/exception_spec.cr" (failed to run)
+require "./std/fiber_spec.cr"
 require "./std/file_spec.cr"
 require "./std/file/tempfile_spec.cr"
 require "./std/file_utils_spec.cr"
