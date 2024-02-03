@@ -16,8 +16,8 @@ enum Process::ExitReason
 
   # The process terminated abnormally.
   #
-  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::HUP`,
-  #   `Signal::KILL`, `Signal::QUIT`, and `Signal::TERM`.
+  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::KILL`,
+  #   and `Signal::QUIT`.
   # * On Windows, this corresponds to the `NTSTATUS` value
   #   `STATUS_FATAL_APP_EXIT`.
   Aborted
@@ -141,8 +141,12 @@ class Process::Status
         case Signal.from_value?(signal_code)
         when Nil
           ExitReason::Signal
-        when .abrt?, .hup?, .kill?, .quit?, .term?
+        when .abrt?, .kill?, .quit?
           ExitReason::Aborted
+        when .hup?
+          ExitReason::TerminalDisconnected
+        when .term?
+          ExitReason::SessionEnded
         when .int?
           ExitReason::Interrupted
         when .trap?
