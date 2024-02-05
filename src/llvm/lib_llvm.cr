@@ -35,7 +35,7 @@
 
   @[Link(ldflags: {{ llvm_ldflags }})]
   lib LibLLVM
-    VERSION = {{ llvm_version.strip.gsub(/git/, "") }}
+    VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/rc.*/, "") }}
     BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
   end
 {% end %}
