@@ -79,7 +79,9 @@ describe "File" do
         end
       end
 
-      {% if LibC.has_method?(:mkfifo) %}
+      {% if LibC.has_method?(:mkfifo) && !flag?(:interpreted) %}
+        # spec is disabled when interpreted because the interpreter doesn't
+        # support threads
         it "opens fifo file as non-blocking" do
           path = File.tempname("chardev")
           ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
