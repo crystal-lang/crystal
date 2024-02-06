@@ -1293,23 +1293,24 @@ class Object
   # wrapper.capitalize     # => "Hello"
   # ```
   macro delegate(*methods, to object)
-    {% for method in methods %}
-      {% if method.id.ends_with?('=') && method.id != "[]=" %}
-        def {{method.id}}(arg)
-          {{object.id}}.{{method.id}} arg
+    {% for method in methods.map(&.id) %}
+      {% if method == "[]=" %}
+        def {{method}}(*args, **options)
+          {{object.id}}.{{method}}(*args, **options)
+        end
+      {% elsif method.ends_with?('=') || method =~ /\A\W+\z/ %}
+        def {{method}}(arg)
+          {{object.id}}.{{method}} arg
         end
       {% else %}
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options)
+        def {{method}}(*args, **options)
+          {{object.id}}.{{method}}(*args, **options)
         end
-
-        {% if method.id != "[]=" %}
-          def {{method.id}}(*args, **options)
-            {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-              yield *yield_args
-            end
+        def {{method}}(*args, **options)
+          {{object.id}}.{{method}}(*args, **options) do |*yield_args|
+            yield *yield_args
           end
-        {% end %}
+        end
       {% end %}
     {% end %}
   end

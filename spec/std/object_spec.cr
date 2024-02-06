@@ -4,6 +4,7 @@ require "../support/finalize"
 private class StringWrapper
   delegate downcase, to: @string
   delegate upcase, capitalize, char_at, scan, to: @string
+  delegate :==, :!=, :=~, :!~, to: @string
 
   @string : String
 
@@ -192,6 +193,12 @@ describe Object do
         matches << match[0]
       end
       matches.should eq(["l", "l"])
+
+      (wrapper == "HellO").should be_true
+      (wrapper != "HellO").should be_false
+
+      (wrapper =~ /hello/i).should eq(0)
+      (wrapper !~ /hello/i).should be_false
     end
 
     it "delegates setter" do
