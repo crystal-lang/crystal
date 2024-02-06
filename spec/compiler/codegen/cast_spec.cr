@@ -77,6 +77,33 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
+  it "upcasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64
+      a.as(Int32 | Int64 | Int128)
+      CRYSTAL
+  end
+
+  it "downcasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64 || 3_i128
+      a.as(Int32 | Int64)
+      CRYSTAL
+  end
+
+  it "sidecasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64
+      a.as(Int32 | Int128)
+      CRYSTAL
+  end
+
   it "casts from virtual to single type" do
     run(%(
       require "prelude"

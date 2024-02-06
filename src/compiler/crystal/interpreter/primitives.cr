@@ -402,6 +402,9 @@ class Crystal::Repl::Compiler
     when "interpreter_fiber_swapcontext"
       accept_call_args(node)
       interpreter_fiber_swapcontext(node: node)
+    when "interpreter_fiber_resumable"
+      accept_call_args(node)
+      interpreter_fiber_resumable(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)

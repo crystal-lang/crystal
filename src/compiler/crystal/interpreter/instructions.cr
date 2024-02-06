@@ -1649,6 +1649,11 @@ require "./repl"
         pop_values: [current_context : Void*, new_context : Void*],
         code:       swapcontext(current_context, new_context),
       },
+      interpreter_fiber_resumable: {
+        pop_values: [context : Void*],
+        push:       true,
+        code:       fiber_resumable(context),
+      },
 
       {% if flag?(:bits64) %}
         interpreter_intrinsics_memcpy: {
