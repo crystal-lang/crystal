@@ -5,9 +5,9 @@ require "crystal/interpreter"
 class Fiber
   # :nodoc:
   def makecontext(stack_ptr, fiber_main) : Nil
-    # In interpreted mode the stack_top variable actually points to a fiber
+    # In interpreted mode the stack_top variable actually points to the actual
+    # fiber running on the interpreter
     @context.stack_top = Crystal::Interpreter.spawn(self, fiber_main.pointer)
-    @context.resumable = 1
   end
 
   # :nodoc:

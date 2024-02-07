@@ -4,11 +4,6 @@ lib LibLLVM
   # NOTE: the following C enums usually have different values from their C++
   # counterparts (e.g. `LLVMModuleFlagBehavior` v.s. `LLVM::Module::ModFlagBehavior`)
 
-  enum InlineAsmDialect
-    ATT
-    Intel
-  end
-
   enum ModuleFlagBehavior
     Warning = 1
   end
@@ -39,9 +34,9 @@ lib LibLLVM
   fun print_module_to_file = LLVMPrintModuleToFile(m : ModuleRef, filename : Char*, error_message : Char**) : Bool
   fun print_module_to_string = LLVMPrintModuleToString(m : ModuleRef) : Char*
   {% if !LibLLVM::IS_LT_130 %}
-    fun get_inline_asm = LLVMGetInlineAsm(ty : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : InlineAsmDialect, can_throw : Bool) : ValueRef
+    fun get_inline_asm = LLVMGetInlineAsm(ty : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : LLVM::InlineAsmDialect, can_throw : Bool) : ValueRef
   {% else %}
-    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : InlineAsmDialect) : ValueRef
+    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : LLVM::InlineAsmDialect) : ValueRef
   {% end %}
   fun get_module_context = LLVMGetModuleContext(m : ModuleRef) : ContextRef
 

@@ -16,7 +16,7 @@ if (-not $Dynamic) {
 Setup-Git -Path $BuildTree -Url https://github.com/llvm/llvm-project.git -Ref llvmorg-$Version
 
 Run-InDirectory $BuildTree\build {
-    $args = "-Thost=x64 -DLLVM_TARGETS_TO_BUILD=""$($TargetsToBuild -join ';')"" -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF"
+    $args = "-Thost=x64 -DLLVM_TARGETS_TO_BUILD=$($TargetsToBuild -join ';') -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF"
     if ($Dynamic) {
         $args = "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL $args"
     } else {

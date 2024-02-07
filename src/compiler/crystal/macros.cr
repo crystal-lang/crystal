@@ -1407,6 +1407,27 @@ module Crystal::Macros
     end
   end
 
+  # A fictitious node representing the body of a `Def` marked with
+  # `@[Primitive]`.
+  class Primitive < ASTNode
+    # Returns the name of the primitive.
+    #
+    # This is identical to the argument to the associated `@[Primitive]`
+    # annotation.
+    #
+    # ```
+    # module Foo
+    #   @[Primitive(:abc)]
+    #   def foo
+    #   end
+    # end
+    #
+    # {{ Foo.methods.first.body.name }} # => :abc
+    # ```
+    def name : SymbolLiteral
+    end
+  end
+
   # A macro definition.
   class Macro < ASTNode
     # Returns the name of this macro.
@@ -2213,8 +2234,22 @@ module Crystal::Macros
     end
   end
 
-  # class Alias < ASTNode
-  # end
+  # An `alias` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # alias {{ node.name }} = {{ node.type }}
+  # ```
+  class Alias < ASTNode
+    # Returns the name of the alias.
+    def name : Path
+    end
+
+    # Returns the name of the type this alias is equivalent to.
+    def type : ASTNode
+    end
+  end
 
   # A metaclass in a type expression: `T.class`
   class Metaclass < ASTNode
@@ -2255,8 +2290,18 @@ module Crystal::Macros
     end
   end
 
-  # class TypeOf < ASTNode
-  # end
+  # A `typeof` expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # typeof({{ node.args.splat }})
+  # ```
+  class TypeOf < ASTNode
+    # Returns the arguments to this `typeof`.
+    def args : ArrayLiteral(ASTNode)
+    end
+  end
 
   # A macro expression,
   # surrounded by {{ ... }} (output = true)
@@ -2330,6 +2375,75 @@ module Crystal::Macros
   # end
   # ```
   class MagicConstant < ASTNode
+  end
+
+  # An inline assembly expression.
+  #
+  # Every assembly `node` is equivalent to:
+  #
+  # ```
+  # asm(
+  #   {{ node.text }} :
+  #   {{ node.outputs.splat }} :
+  #   {{ node.inputs.splat }} :
+  #   {{ node.clobbers.splat }} :
+  #   {% if node.volatile? %} "volatile", {% end %}
+  #   {% if node.alignstack? %} "alignstack", {% end %}
+  #   {% if node.intel? %} "intel", {% end %}
+  #   {% if node.can_throw? %} "unwind", {% end %}
+  # )
+  # ```
+  class Asm < ASTNode
+    # Returns the template string for this assembly expression.
+    def text : StringLiteral
+    end
+
+    # Returns an array of output operands for this assembly expression.
+    def outputs : ArrayLiteral(AsmOperand)
+    end
+
+    # Returns an array of input operands for this assembly expression.
+    def inputs : ArrayLiteral(AsmOperand)
+    end
+
+    # Returns an array of clobbered register names for this assembly expression.
+    def clobbers : ArrayLiteral(StringLiteral)
+    end
+
+    # Returns whether the assembly expression contains side effects that are
+    # not listed in `#outputs`, `#inputs`, and `#clobbers`.
+    def volatile? : BoolLiteral
+    end
+
+    # Returns whether the assembly expression requires stack alignment code.
+    def alignstack? : BoolLiteral
+    end
+
+    # Returns `true` if the template string uses the Intel syntax, `false` if it
+    # uses the AT&T syntax.
+    def intel? : BoolLiteral
+    end
+
+    # Returns whether the assembly expression might unwind the stack.
+    def can_throw? : BoolLiteral
+    end
+  end
+
+  # An output or input operand for an `Asm` node.
+  #
+  # Every operand `node` is equivalent to:
+  #
+  # ```
+  # {{ node.constraint }}({{ node.exp }})
+  # ```
+  class AsmOperand < ASTNode
+    # Returns the constraint string of this operand.
+    def constraint : StringLiteral
+    end
+
+    # Returns the associated output or input argument of this operand.
+    def exp : ASTNode
+    end
   end
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
