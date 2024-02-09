@@ -113,18 +113,22 @@ module Crystal
     def store_union_in_union(union_type, union_pointer, value_type, value)
       to_llvm_type = llvm_type(union_type)
       from_llvm_type = llvm_type(value_type)
-      union_value_type = from_llvm_type.struct_element_types[1]
+      to_value_type = to_llvm_type.struct_element_types[1]
+      from_value_type = from_llvm_type.struct_element_types[1]
 
       store type_id(value, value_type), union_type_id(to_llvm_type, union_pointer)
 
-      size = @llvm_typer.size_of(union_value_type)
+      size = {
+        @llvm_typer.size_of(from_value_type),
+        @llvm_typer.size_of(to_value_type),
+      }.min
       size = @program.bits64? ? int64(size) : int32(size)
       memcpy(
         cast_to_void_pointer(union_value(to_llvm_type, union_pointer)),
         cast_to_void_pointer(union_value(from_llvm_type, value)),
         size,
-        align: @llvm_typer.align_of(to_llvm_type.struct_element_types[1]),
-        src_align: @llvm_typer.align_of(union_value_type),
+        align: @llvm_typer.align_of(to_value_type),
+        src_align: @llvm_typer.align_of(from_value_type),
         volatile: int1(0),
       )
     end
