@@ -107,6 +107,9 @@ class Mutex
       @mutex_fiber = nil
     end
 
+    {% if flag?(:aarch64) %}
+      Atomic::Ops.fence :sequentially_consistent, false
+    {% end %}
     @state.lazy_set(0)
 
     if @queue_count.get == 0
