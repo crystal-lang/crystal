@@ -309,6 +309,7 @@ abstract class JSON::Lexer
     number_end
   end
 
+  @[AlwaysInline]
   private def next_char
     @column_number += 1
     next_char_no_column_increment

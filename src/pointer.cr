@@ -40,15 +40,18 @@ struct Pointer(T)
       @start = @pointer
     end
 
+    @[AlwaysInline]
     def <<(value : T)
       @pointer.value = value
       @pointer += 1
     end
 
+    @[AlwaysInline]
     def size : Int64
       @pointer - @start
     end
 
+    @[AlwaysInline]
     def pointer
       @pointer
     end
@@ -65,6 +68,7 @@ struct Pointer(T)
   # b = Pointer(Int32).new(0)
   # b.null? # => true
   # ```
+  @[AlwaysInline]
   def null? : Bool
     address == 0
   end
@@ -79,6 +83,7 @@ struct Pointer(T)
   # ptr2 = ptr + 1
   # ptr2.address # => 1238
   # ```
+  @[AlwaysInline]
   def +(other : Int)
     self + other.to_i64
   end
@@ -93,6 +98,7 @@ struct Pointer(T)
   # ptr2 = ptr - 1
   # ptr2.address # => 1230
   # ```
+  @[AlwaysInline]
   def -(other : Int)
     # TODO: If throwing on overflow for integer conversion is implemented,
     # then (here and in `Pointer#-`) for a `UInt64` argument the call to
@@ -102,6 +108,7 @@ struct Pointer(T)
 
   # Returns `-1`, `0` or `1` depending on whether this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
+  @[AlwaysInline]
   def <=>(other : self)
     address <=> other.address
   end
@@ -115,6 +122,7 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
+  @[AlwaysInline]
   def [](offset)
     (self + offset).value
   end
@@ -128,6 +136,7 @@ struct Pointer(T)
   # ptr2 = ptr + 1
   # ptr2.value # => 42
   # ```
+  @[AlwaysInline]
   def []=(offset, value : T)
     (self + offset).value = value
   end
@@ -285,6 +294,7 @@ struct Pointer(T)
   # ptr2.memcmp(ptr1, 4) # => 10
   # ptr1.memcmp(ptr1, 4) # => 0
   # ```
+  @[AlwaysInline]
   def memcmp(other : Pointer(T), count : Int) : Int32
     LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
   end
@@ -299,6 +309,7 @@ struct Pointer(T)
   # ptr[2] # => 4
   # ptr[3] # => 3
   # ```
+  @[AlwaysInline]
   def swap(i, j)
     self[i], self[j] = self[j], self[i]
   end
@@ -408,6 +419,7 @@ struct Pointer(T)
   # ptr = Pointer(Int32).null
   # ptr.address # => 0
   # ```
+  @[AlwaysInline]
   def self.null
     new 0_u64
   end
@@ -486,6 +498,7 @@ struct Pointer(T)
   end
 
   # Returns a `Pointer::Appender` for this pointer.
+  @[AlwaysInline]
   def appender : Pointer::Appender
     Pointer::Appender.new(self)
   end
@@ -497,6 +510,7 @@ struct Pointer(T)
   # slice = ptr.to_slice(4)                # => Slice[10, 11, 12, 13]
   # slice.class                            # => Slice(Int32)
   # ```
+  @[AlwaysInline]
   def to_slice(size) : Slice(T)
     Slice.new(self, size)
   end
@@ -508,6 +522,7 @@ struct Pointer(T)
   # ptr.clear(3)
   # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
+  @[AlwaysInline]
   def clear(count = 1)
     Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), false)
   end
@@ -516,6 +531,7 @@ struct Pointer(T)
     self
   end
 
+  @[AlwaysInline]
   private def bytesize(count)
     {% if flag?(:bits64) %}
       count.to_u64 * sizeof(T)

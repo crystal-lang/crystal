@@ -151,6 +151,7 @@ struct Slice(T)
   # slice = Slice(UInt8).empty
   # slice.size # => 0
   # ```
+  @[AlwaysInline]
   def self.empty : self
     new(Pointer(T).null, 0)
   end
@@ -252,6 +253,7 @@ struct Slice(T)
   # slice[1, 3]  # => Slice[11, 12, 13]
   # slice[1, 33] # raises IndexError
   # ```
+  @[AlwaysInline]
   def [](start : Int, count : Int) : Slice(T)
     self[start, count]? || raise IndexError.new
   end
@@ -271,6 +273,7 @@ struct Slice(T)
   # slice[1..3]?  # => Slice[11, 12, 13]
   # slice[1..33]? # => nil
   # ```
+  @[AlwaysInline]
   def []?(range : Range)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]?
@@ -302,6 +305,7 @@ struct Slice(T)
   # slice[1..3]  # => Slice[11, 12, 13]
   # slice[1..33] # raises IndexError
   # ```
+  @[AlwaysInline]
   def [](range : Range) : Slice(T)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]
@@ -328,6 +332,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
+  @[AlwaysInline]
   def swap(index0 : Int, index1 : Int) : self
     check_writable
     super

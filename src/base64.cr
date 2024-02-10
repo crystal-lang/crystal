@@ -207,7 +207,7 @@ module Base64
     endcstr = cstr + size - size % 3 - 3
 
     # process bunch of full triples
-    while cstr < endcstr
+    while Intrinsics.likely(cstr < endcstr)
       n = cstr.as(UInt32*).value.byte_swap
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
@@ -252,27 +252,27 @@ module Base64
     bytes_begin = bytes
 
     # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
-    while (size > 0) && (sym = bytes[size - 1]) && sym.in?(NL, NR, PAD)
+    while (size > 0) && (sym = bytes[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1
     end
 
     # Process combinations of four characters until there aren't any left
     fin = bytes + size - 4
     while true
-      break if bytes > fin
+      break if Intrinsics.unlikely(bytes > fin)
 
       # Move the pointer by one byte until there is a valid base64 character
-      while bytes.value.in?(NL, NR)
+      while Intrinsics.unlikely(bytes.value == NL || bytes.value == NR)
         bytes += 1
       end
-      break if bytes > fin
+      break if Intrinsics.unlikely(bytes > fin)
 
       yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], bytes[3], chunk_pos: bytes - bytes_begin)
       bytes += 4
     end
 
     # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
-    while (bytes < fin + 4) && bytes.value.in?(NL, NR)
+    while (bytes < fin + 4) && (bytes.value == NL || bytes.value == NR)
       bytes += 1
     end
 
@@ -296,7 +296,7 @@ module Base64
     {% for byte, i in bytes %}
       %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
       %buffer = (%buffer << 6) + %decoded
-      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
+      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if Intrinsics.unlikely(%decoded == 255_u8)
     {% end %}
 
     # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8

@@ -171,6 +171,7 @@ struct Tuple
     {% end %}
   end
 
+  @[AlwaysInline]
   def unsafe_fetch(index : Int)
     self[index]
   end
@@ -191,6 +192,7 @@ struct Tuple
   # i = 3
   # tuple[i] # raises IndexError
   # ```
+  @[AlwaysInline]
   def [](index : Int)
     at(index)
   end
@@ -212,6 +214,7 @@ struct Tuple
   # i = 2
   # Foo[i] # raises IndexError
   # ```
+  @[AlwaysInline]
   def self.[](index : Int)
     self[index]? || raise IndexError.new
   end
@@ -234,6 +237,7 @@ struct Tuple
   # i = 3
   # tuple[i]? # => nil
   # ```
+  @[AlwaysInline]
   def []?(index : Int)
     at(index) { nil }
   end

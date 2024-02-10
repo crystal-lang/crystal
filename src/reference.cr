@@ -61,22 +61,26 @@ class Reference
   end
 
   # Returns `true` if this reference is the same as *other*. Invokes `same?`.
+  @[AlwaysInline]
   def ==(other : self)
     same?(other)
   end
 
   # Returns `false` (other can only be a `Value` here).
+  @[AlwaysInline]
   def ==(other)
     false
   end
 
   # Returns `true` if this reference is the same as *other*. This is only
   # `true` if this reference's `object_id` is the same as *other*'s.
+  @[AlwaysInline]
   def same?(other : Reference) : Bool
     object_id == other.object_id
   end
 
   # Returns `false`: a reference is never `nil`.
+  @[AlwaysInline]
   def same?(other : Nil)
     false
   end

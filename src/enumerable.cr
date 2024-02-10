@@ -50,7 +50,7 @@ module Enumerable(T)
   # ["ant", "bear", "cat"].all? { |word| word.size >= 4 } # => false
   # ```
   def all?(& : T ->) : Bool
-    each { |e| return false unless yield e }
+    each { |e| return false unless yield(e) }
     true
   end
 
@@ -85,7 +85,7 @@ module Enumerable(T)
   # ["ant", "bear", "cat"].any? { |word| word.size > 4 }  # => false
   # ```
   def any?(& : T ->) : Bool
-    each { |e| return true if yield e }
+    each { |e| return true if yield(e) }
     false
   end
 
@@ -507,7 +507,7 @@ module Enumerable(T)
     i = offset
     each do |elem|
       yield elem, i
-      i += 1
+      i &+= 1
     end
   end
 

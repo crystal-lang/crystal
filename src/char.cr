@@ -63,6 +63,7 @@ struct Char
   # 'b' - 'a' # => 1
   # 'c' - 'a' # => 2
   # ```
+  @[AlwaysInline]
   def -(other : Char) : Int32
     ord - other.ord
   end
@@ -93,6 +94,7 @@ struct Char
   # 'a' + 1 # => 'b'
   # 'a' + 2 # => 'c'
   # ```
+  @[AlwaysInline]
   def +(other : Int) : Char
     (ord + other).chr
   end
@@ -103,6 +105,7 @@ struct Char
   # 'c' - 1 # => 'b'
   # 'c' - 2 # => 'a'
   # ```
+  @[AlwaysInline]
   def -(other : Int) : Char
     (ord - other).chr
   end
@@ -118,6 +121,7 @@ struct Char
   # 'z' <=> 'z' # => 0
   # 'c' <=> 'a' # => 2
   # ```
+  @[AlwaysInline]
   def <=>(other : Char)
     self - other
   end
@@ -151,6 +155,7 @@ struct Char
 
   # Returns `true` if this char is an ASCII character
   # (codepoint is in (0..127))
+  @[AlwaysInline]
   def ascii? : Bool
     ord < 128
   end

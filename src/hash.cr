@@ -2146,6 +2146,7 @@ class Hash(K, V)
       new(0_u32, key, value)
     end
 
+    @[AlwaysInline]
     def deleted? : Bool
       @hash == 0_u32
     end

@@ -140,6 +140,7 @@ struct Int
     unsafe_div other
   end
 
+  @[AlwaysInline]
   private def check_div_argument(other)
     if other == 0
       raise DivisionByZeroError.new
@@ -207,10 +208,16 @@ struct Int
   #
   # -8000 >> 1 # => -4000
   # ```
+  @[AlwaysInline]
   def >>(count : Int)
-    if count < 0
-      self << count.abs
-    elsif count < sizeof(self) * 8
+    if Intrinsics.unlikely(count < 0)
+      count = count.abs
+      if Intrinsics.likely(count < sizeof(self) * 8)
+        self.unsafe_shl(count)
+      else
+        self.class.zero
+      end
+    elsif Intrinsics.likely(count < sizeof(self) * 8)
       self.unsafe_shr(count)
     else
       self.class.zero
@@ -228,22 +235,30 @@ struct Int
   # 8000 << 32 # => 0
   # 8000 << -1 # => 4000
   # ```
+  @[AlwaysInline]
   def <<(count : Int)
-    if count < 0
-      self >> count.abs
-    elsif count < sizeof(self) * 8
+    if Intrinsics.unlikely(count < 0)
+      count = count.abs
+      if Intrinsics.likely(count < sizeof(self) * 8)
+        self.unsafe_shr(count)
+      else
+        self.class.zero
+      end
+    elsif Intrinsics.likely(count < sizeof(self) * 8)
       self.unsafe_shl(count)
     else
       self.class.zero
     end
   end
 
+  @[AlwaysInline]
   def <=>(other : Int) : Int32
     # Override Number#<=> because when comparing
     # Int vs Int there's no way we can return `nil`
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
+  @[AlwaysInline]
   def abs : self
     self >= 0 ? self : -self
   end
@@ -346,6 +361,7 @@ struct Int
     to_f ** exponent
   end
 
+  @[AlwaysInline]
   def ===(char : Char)
     self === char.ord
   end
@@ -359,6 +375,7 @@ struct Int
   # 11.bit(3) # => 1
   # 11.bit(4) # => 0
   # ```
+  @[AlwaysInline]
   def bit(bit)
     self >> bit & 1
   end
@@ -415,6 +432,7 @@ struct Int
   # 0b1101.bits_set?(0b0111) # => false
   # 0b1101.bits_set?(0b1100) # => true
   # ```
+  @[AlwaysInline]
   def bits_set?(mask) : Bool
     (self & mask) == mask
   end
@@ -532,17 +550,19 @@ struct Int
     hasher.int(self)
   end
 
+  @[AlwaysInline]
   def succ : self
     self + 1
   end
 
+  @[AlwaysInline]
   def pred : self
     self - 1
   end
 
   def times(&block : self ->) : Nil
     i = self ^ self
-    while i < self
+    while Intrinsics.likely(i < self)
       yield i
       i &+= 1
     end
@@ -557,8 +577,8 @@ struct Int
     x = self
     while true
       yield x
-      return if x == to
-      x += 1
+      return if Intrinsics.unlikely(x == to)
+      x &+= 1
     end
   end
 
@@ -586,8 +606,8 @@ struct Int
     x = self
     while true
       yield x
-      return if x == to
-      x -= 1
+      return if Intrinsics.unlikely(x == to)
+      x &-= 1
     end
   end
 
@@ -986,6 +1006,7 @@ struct Int8
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : self
     -self
   end
@@ -1001,6 +1022,7 @@ struct Int8
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse8(self).to_i8!
   end
@@ -1013,15 +1035,18 @@ struct Int8
   # ```
   # 0x12_i8.byte_swap # => 0x12
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     self
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading8(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing8(self, false)
   end
@@ -1035,6 +1060,7 @@ struct Int8
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl8(self, self, n.to_i8!).to_i8!
   end
@@ -1048,6 +1074,7 @@ struct Int8
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr8(self, self, n.to_i8!).to_i8!
   end
@@ -1086,6 +1113,7 @@ struct Int16
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def - : Int16
     0_i16 - self
   end
@@ -1172,6 +1200,7 @@ struct Int16
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : self
     -self
   end
@@ -1187,6 +1216,7 @@ struct Int16
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse16(self).to_i16!
   end
@@ -1199,15 +1229,18 @@ struct Int16
   # ```
   # 0x1234_i16.byte_swap # => 0x3412
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap16(self).to_i16!
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading16(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
   end
@@ -1221,6 +1254,7 @@ struct Int16
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl16(self, self, n.to_i16!).to_i16!
   end
@@ -1234,6 +1268,7 @@ struct Int16
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr16(self, self, n.to_i16!).to_i16!
   end
@@ -1272,6 +1307,7 @@ struct Int32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def - : Int32
     0 - self
   end
@@ -1358,6 +1394,7 @@ struct Int32
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : self
     -self
   end
@@ -1373,6 +1410,7 @@ struct Int32
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse32(self).to_i32!
   end
@@ -1385,15 +1423,18 @@ struct Int32
   # ```
   # 0x12345678_i32.byte_swap # => 0x78563412
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap32(self).to_i32!
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading32(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing32(self, false)
   end
@@ -1407,6 +1448,7 @@ struct Int32
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl32(self, self, n.to_i32!).to_i32!
   end
@@ -1420,6 +1462,7 @@ struct Int32
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr32(self, self, n.to_i32!).to_i32!
   end
@@ -1458,6 +1501,7 @@ struct Int64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def - : Int64
     0_i64 - self
   end
@@ -1544,6 +1588,7 @@ struct Int64
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : self
     -self
   end
@@ -1559,6 +1604,7 @@ struct Int64
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse64(self).to_i64!
   end
@@ -1572,15 +1618,18 @@ struct Int64
   # 0x12345678_i64.byte_swap         # => 0x7856341200000000
   # 0x123456789ABCDEF0_i64.byte_swap # => -0xf21436587a9cbee
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap64(self).to_i64!
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading64(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
   end
@@ -1594,6 +1643,7 @@ struct Int64
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl64(self, self, n.to_i64!).to_i64!
   end
@@ -1607,6 +1657,7 @@ struct Int64
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr64(self, self, n.to_i64!).to_i64!
   end
@@ -1733,6 +1784,7 @@ struct Int128
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : self
     -self
   end
@@ -1748,6 +1800,7 @@ struct Int128
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse128(self).to_i128!
   end
@@ -1760,15 +1813,18 @@ struct Int128
   # ```
   # 0x123456789_i128.byte_swap # ＝> -0x7698badcff0000000000000000000000
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap128(self).to_i128!
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading128(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
   end
@@ -1782,6 +1838,7 @@ struct Int128
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl128(self, self, n.to_i128!).to_i128!
   end
@@ -1795,6 +1852,7 @@ struct Int128
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr128(self, self, n.to_i128!).to_i128!
   end
@@ -1833,6 +1891,7 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def &- : UInt8
     0_u8 &- self
   end
@@ -1923,6 +1982,7 @@ struct UInt8
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : Int8
     0_i8 - self
   end
@@ -1938,6 +1998,7 @@ struct UInt8
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse8(self)
   end
@@ -1950,15 +2011,18 @@ struct UInt8
   # ```
   # 0x12_u8.byte_swap # => 0x12
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     self
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading8(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing8(self, false)
   end
@@ -1972,6 +2036,7 @@ struct UInt8
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl8(self, self, n.to_u8!)
   end
@@ -1985,6 +2050,7 @@ struct UInt8
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr8(self, self, n.to_u8!)
   end
@@ -2023,6 +2089,7 @@ struct UInt16
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def &- : UInt16
     0_u16 &- self
   end
@@ -2113,6 +2180,7 @@ struct UInt16
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : Int16
     0_i16 - self
   end
@@ -2128,6 +2196,7 @@ struct UInt16
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse16(self)
   end
@@ -2140,15 +2209,18 @@ struct UInt16
   # ```
   # 0x1234_u16.byte_swap # => 0x3412
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap16(self)
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading16(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
   end
@@ -2162,6 +2234,7 @@ struct UInt16
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl16(self, self, n.to_u16!)
   end
@@ -2175,6 +2248,7 @@ struct UInt16
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr16(self, self, n.to_u16!)
   end
@@ -2213,6 +2287,7 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def &- : UInt32
     0_u32 &- self
   end
@@ -2303,6 +2378,7 @@ struct UInt32
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : Int32
     0_i32 - self
   end
@@ -2318,6 +2394,7 @@ struct UInt32
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse32(self)
   end
@@ -2330,15 +2407,18 @@ struct UInt32
   # ```
   # 0x12345678_u32.byte_swap # => 0x78563412
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap32(self)
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading32(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing32(self, false)
   end
@@ -2352,6 +2432,7 @@ struct UInt32
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl32(self, self, n.to_u32!)
   end
@@ -2365,6 +2446,7 @@ struct UInt32
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr32(self, self, n.to_u32!)
   end
@@ -2403,6 +2485,7 @@ struct UInt64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def &- : UInt64
     0_u64 &- self
   end
@@ -2417,6 +2500,7 @@ struct UInt64
   # 2_u16.to_signed # => 2_i16
   # 3_i64.to_signed # => 3_i64
   # ```
+  @[AlwaysInline]
   def to_signed : Int64
     to_i64
   end
@@ -2493,6 +2577,7 @@ struct UInt64
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : Int64
     0_i64 - self
   end
@@ -2508,6 +2593,7 @@ struct UInt64
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse64(self)
   end
@@ -2520,15 +2606,18 @@ struct UInt64
   # ```
   # 0x123456789ABCDEF0_u64.byte_swap # => 0xF0DEBC9A78563412
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap64(self)
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading64(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
   end
@@ -2542,6 +2631,7 @@ struct UInt64
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl64(self, self, n.to_u64!)
   end
@@ -2555,6 +2645,7 @@ struct UInt64
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr64(self, self, n.to_u64!)
   end
@@ -2594,6 +2685,7 @@ struct UInt128
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  @[AlwaysInline]
   def &-
     # TODO: use 0_u128 &- self
     UInt128.new(0) &- self
@@ -2685,6 +2777,7 @@ struct UInt128
   # 128_u8.neg_signed     # => -128_i8
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
+  @[AlwaysInline]
   def neg_signed : Int128
     Int128.new(0) - self
   end
@@ -2700,6 +2793,7 @@ struct UInt128
   # 0b01001011_u8.bit_reverse          # => 0b11010010
   # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
   # ```
+  @[AlwaysInline]
   def bit_reverse : self
     Intrinsics.bitreverse128(self)
   end
@@ -2712,15 +2806,18 @@ struct UInt128
   # ```
   # 0x123456789ABCDEF013579BDF2468ACE0_u128.byte_swap # ＝> 0xE0AC6824DF9B5713F0DEBC9A78563412
   # ```
+  @[AlwaysInline]
   def byte_swap : self
     Intrinsics.bswap128(self)
   end
 
   # Returns the number of leading `0`-bits.
+  @[AlwaysInline]
   def leading_zeros_count
     Intrinsics.countleading128(self, false)
   end
 
+  @[AlwaysInline]
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
   end
@@ -2734,6 +2831,7 @@ struct UInt128
   # 0b01001101_u8.rotate_left(11) # => 0b01101010
   # 0b01001101_u8.rotate_left(-1) # => 0b10100110
   # ```
+  @[AlwaysInline]
   def rotate_left(n : Int) : self
     Intrinsics.fshl128(self, self, n.to_u128!)
   end
@@ -2747,6 +2845,7 @@ struct UInt128
   # 0b01001101_u8.rotate_right(11) # => 0b10101001
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
+  @[AlwaysInline]
   def rotate_right(n : Int) : self
     Intrinsics.fshr128(self, self, n.to_u128!)
   end
