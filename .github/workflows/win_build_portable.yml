@@ -114,7 +114,9 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
+          # TODO: 1.11.2 still needs `-Dpreview_dll`, remove this flag once the base compiler is updated
+          make -f Makefile.win -B FLAGS=-Dpreview_dll ${{ inputs.release && 'release=1' || '' }}
+          cp dlls/* .build/
 
       - name: Download shards release
         uses: actions/checkout@v4
