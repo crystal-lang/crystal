@@ -127,7 +127,7 @@ struct Atomic(T)
         in .sequentially_consistent?
           raise "BUG: failure ordering shall be no stronger than success ordering"
         end
-      in .acquire_release?
+      in .sequentially_consistent?
         case failure_ordering
         in .relaxed?
           Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
