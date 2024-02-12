@@ -70,7 +70,7 @@ struct Atomic(T)
   end
 
   def compare_and_set(cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool}
-    {% if compare_versions(Crystal::LLVM_VERSION, "1.13.0") >= 0 %}
+    {% if compare_versions(Crystal::LLVM_VERSION, "13.0.0") >= 0 %}
       # LLVM since 13.0.0 accepts any combination of success & failure ordering
       case success_ordering
         {% for s_ordering in Ordering.constants %}
