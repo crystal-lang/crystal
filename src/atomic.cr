@@ -420,11 +420,18 @@ struct Atomic::Flag
   # Atomically tries to set the flag. Only succeeds and returns `true` if the
   # flag wasn't previously set; returns `false` otherwise.
   def test_and_set : Bool
-    Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1_u8, :sequentially_consistent, false) == 0_u8
+    ret = Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1_u8, :sequentially_consistent, false) == 0_u8
+    {% if flag?(:arm) %}
+      Atomic::Ops.fence(:sequentially_consistent, false) if ret
+    {% end %}
+    ret
   end
 
   # Atomically clears the flag.
   def clear : Nil
+    {% if flag?(:arm) %}
+      Atomic::Ops.fence(:sequentially_consistent, false)
+    {% end %}
     Atomic::Ops.store(pointerof(@value), 0_u8, :sequentially_consistent, true)
   end
 end
