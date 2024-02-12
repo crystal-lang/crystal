@@ -7,6 +7,37 @@ require "llvm/enums/atomic"
 # reference types or `Nil`, then only `#compare_and_set`, `#swap`, `#set`,
 # `#lazy_set`, `#get`, and `#lazy_get` are available.
 struct Atomic(T)
+  # Specifies how memory accesses, including non atomic, are to be reordered
+  # around atomics. Follows the C/C++ semantics:
+  # <https://en.cppreference.com/w/c/atomic/memory_order>.
+  #
+  # By default atomics use the sequentially consistent ordering, which has the
+  # strongest guarantees. If all you need is to increment a counter, a relaxed
+  # ordering may be enough. If you need to synchronize access to other memory
+  # (e.g. locks) you may try the acquire/release semantics that may be faster on
+  # some architectures (e.g. X86) but remember that an acquire must be paired
+  # with a release for the ordering to be guaranteed.
+  enum Ordering
+    Relaxed                = LLVM::AtomicOrdering::Monotonic
+    Acquire                = LLVM::AtomicOrdering::Acquire
+    Release                = LLVM::AtomicOrdering::Release
+    AcquireRelease         = LLVM::AtomicOrdering::AcquireRelease
+    SequentiallyConsistent = LLVM::AtomicOrdering::SequentiallyConsistent
+  end
+
+  # Adds an explicit memory barrier with the specified memory order guarantee.
+  #
+  # Atomics on weakly-ordered CPUs (e.g. ARM32) may not guarantee memory order
+  # of other memory accesses, and an explicit memory barrier is thus required.
+  #
+  # Notes:
+  # - X86 is strongly-ordered and trying to add a fence should be a NOOP;
+  # - AArch64 guarantees memory order and doesn't need explicit fences in
+  #   addition to the atomics (but may need barriers in other cases).
+  macro fence(ordering = :sequentially_consistent)
+    ::Atomic::Ops.fence({{ordering}}, false)
+  end
+
   # Creates an Atomic with the given initial value.
   def initialize(@value : T)
     {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
@@ -38,6 +69,79 @@ struct Atomic(T)
     Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
   end
 
+  def compare_and_set(cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool}
+    {% if compare_versions(Crystal::LLVM_VERSION, "1.13.0") >= 0 %}
+      # LLVM since 13.0.0 accepts any combination of success & failure ordering
+      case success_ordering
+        {% for s_ordering in Ordering.constants %}
+          in Ordering::{{s_ordering}}
+            case failure_ordering
+              {% for f_ordering in Ordering.constants %}
+                in Ordering::{{f_ordering}}
+                  Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T),
+                              {{ s_ordering.stringify == "Relaxed" ? :monotonic : s_ordering.underscore.symbolize }},
+                              {{ f_ordering.stringify == "Relaxed" ? :monotonic : f_ordering.underscore.symbolize }})
+              {% end %}
+            end
+        {% end %}
+      end
+    {% else %}
+      # LLVM until 12.0.0 only accepts some combinations of success & failure ordering
+      case success_ordering
+      in .relaxed?
+        if failure_ordering.relaxed?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :monotonic, :monotonic)
+        else
+          raise "BUG: failure ordering shall be no stronger than success ordering"
+        end
+      in .acquire?
+        case failure_ordering
+        in .relaxed?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :monotonic)
+        in .acquire?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :acquire)
+        in .release?
+          raise "BUG: failure ordering cannot include release semantics"
+        in .acquire_release?, .sequentially_consistent?
+          raise "BUG: failure ordering shall be no stronger than success ordering"
+        end
+      in .release?
+        case failure_ordering
+        in .relaxed?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :monotonic)
+        in .acquire?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :acquire)
+        in .release?
+          raise "BUG: failure ordering cannot include release semantics"
+        in .acquire_release?, .sequentially_consistent?
+          raise "BUG: failure ordering shall be no stronger than success ordering"
+        end
+      in .acquire_release?
+        case failure_ordering
+        in .relaxed?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :monotonic)
+        in .acquire?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :acquire)
+        in .release?, .acquire_release?
+          raise "BUG: failure ordering cannot include release semantics"
+        in .sequentially_consistent?
+          raise "BUG: failure ordering shall be no stronger than success ordering"
+        end
+      in .acquire_release?
+        case failure_ordering
+        in .relaxed?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
+        in .acquire?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :acquire)
+        in .release?, .acquire_release?
+          raise "BUG: failure ordering cannot include release semantics"
+        in .sequentially_consistent?
+          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
+        end
+      end
+    {% end %}
+  end
+
   # Performs `atomic_value &+= value`. Returns the old value.
   #
   # `T` cannot contain any reference types.
@@ -47,9 +151,9 @@ struct Atomic(T)
   # atomic.add(2) # => 1
   # atomic.get    # => 3
   # ```
-  def add(value : T) : T
+  def add(value : T, ordering : Ordering = :sequentially_consistent) : T
     check_reference_type
-    Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
+    atomicrmw(:add, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value &-= value`. Returns the old value.
@@ -61,9 +165,9 @@ struct Atomic(T)
   # atomic.sub(2) # => 9
   # atomic.get    # => 7
   # ```
-  def sub(value : T) : T
+  def sub(value : T, ordering : Ordering = :sequentially_consistent) : T
     check_reference_type
-    Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
+    atomicrmw(:sub, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value &= value`. Returns the old value.
@@ -75,9 +179,9 @@ struct Atomic(T)
   # atomic.and(3) # => 5
   # atomic.get    # => 1
   # ```
-  def and(value : T) : T
+  def and(value : T, ordering : Ordering = :sequentially_consistent) : T
     check_reference_type
-    Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
+    atomicrmw(:and, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value = ~(atomic_value & value)`. Returns the old value.
@@ -89,9 +193,9 @@ struct Atomic(T)
   # atomic.nand(3) # => 5
   # atomic.get     # => -2
   # ```
-  def nand(value : T) : T
+  def nand(value : T, ordering : Ordering = :sequentially_consistent) : T
     check_reference_type
-    Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
+    atomicrmw(:nand, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value |= value`. Returns the old value.
@@ -103,9 +207,9 @@ struct Atomic(T)
   # atomic.or(2) # => 5
   # atomic.get   # => 7
   # ```
-  def or(value : T) : T
+  def or(value : T, ordering : Ordering = :sequentially_consistent) : T
     check_reference_type
-    Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
+    atomicrmw(:or, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value ^= value`. Returns the old value.
@@ -117,9 +221,9 @@ struct Atomic(T)
   # atomic.xor(3) # => 5
   # atomic.get    # => 6
   # ```
-  def xor(value : T) : T
+  def xor(value : T, ordering : Ordering = :sequentially_consistent) : T
     check_reference_type
-    Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
+    atomicrmw(:xor, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value = {atomic_value, value}.max`. Returns the old value.
@@ -135,18 +239,18 @@ struct Atomic(T)
   # atomic.max(10) # => 5
   # atomic.get     # => 10
   # ```
-  def max(value : T)
+  def max(value : T, ordering : Ordering = :sequentially_consistent)
     check_reference_type
     {% if T < Enum %}
       if @value.value.is_a?(Int::Signed)
-        Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
+        atomicrmw(:max, pointerof(@value), value, ordering)
       else
-        Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
+        atomicrmw(:umax, pointerof(@value), value, ordering)
       end
     {% elsif T < Int::Signed %}
-      Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
+      atomicrmw(:max, pointerof(@value), value, ordering)
     {% else %}
-      Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
+      atomicrmw(:umax, pointerof(@value), value, ordering)
     {% end %}
   end
 
@@ -163,18 +267,18 @@ struct Atomic(T)
   # atomic.min(3) # => 5
   # atomic.get    # => 3
   # ```
-  def min(value : T)
+  def min(value : T, ordering : Ordering = :sequentially_consistent)
     check_reference_type
     {% if T < Enum %}
       if @value.value.is_a?(Int::Signed)
-        Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
+        atomicrmw(:min, pointerof(@value), value, ordering)
       else
-        Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)
+        atomicrmw(:umin, pointerof(@value), value, ordering)
       end
     {% elsif T < Int::Signed %}
-      Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
+      atomicrmw(:min, pointerof(@value), value, ordering)
     {% else %}
-      Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)
+      atomicrmw(:umin, pointerof(@value), value, ordering)
     {% end %}
   end
 
@@ -185,12 +289,12 @@ struct Atomic(T)
   # atomic.swap(10) # => 5
   # atomic.get      # => 10
   # ```
-  def swap(value : T)
+  def swap(value : T, ordering : Ordering = :sequentially_consistent)
     {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
-      address = Ops.atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), :sequentially_consistent, false)
+      address = atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), ordering)
       Pointer(T).new(address).as(T)
     {% else %}
-      Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
+      atomicrmw(:xchg, pointerof(@value), value, ordering)
     {% end %}
   end
 
@@ -201,8 +305,17 @@ struct Atomic(T)
   # atomic.set(10) # => 10
   # atomic.get     # => 10
   # ```
-  def set(value : T) : T
-    Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
+  def set(value : T, ordering : Ordering = :sequentially_consistent) : T
+    case ordering
+    in .relaxed?
+      Ops.store(pointerof(@value), value.as(T), :monotonic, true)
+    in .release?
+      Ops.store(pointerof(@value), value.as(T), :release, true)
+    in .sequentially_consistent?
+      Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
+    in .acquire?, .acquire_release?
+      raise "BUG: Atomic store cannot have acquire semantic"
+    end
     value
   end
 
@@ -213,15 +326,28 @@ struct Atomic(T)
   # atomic.lazy_set(10) # => 10
   # atomic.get          # => 10
   # ```
+  #
+  # NOTE: use with caution, this may break atomic guarantees.
   def lazy_set(@value : T) : T
   end
 
   # Atomically returns this atomic's value.
-  def get : T
-    Ops.load(pointerof(@value), :sequentially_consistent, true)
+  def get(ordering : Ordering = :sequentially_consistent) : T
+    case ordering
+    in .relaxed?
+      Ops.load(pointerof(@value), :monotonic, true)
+    in .acquire?
+      Ops.load(pointerof(@value), :acquire, true)
+    in .sequentially_consistent?
+      Ops.load(pointerof(@value), :sequentially_consistent, true)
+    in .release?, .acquire_release?
+      raise "BUG: Atomic load cannot have release semantic"
+    end
   end
 
   # **Non-atomically** returns this atomic's value.
+  #
+  # NOTE: use with caution, this may break atomic guarantees.
   def lazy_get
     @value
   end
@@ -230,6 +356,21 @@ struct Atomic(T)
     {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       {% raise "Cannot call `#{@type}##{@def.name}` as `#{T}` is a reference type" %}
     {% end %}
+  end
+
+  private macro atomicrmw(operation, pointer, value, ordering)
+    case ordering
+    in .relaxed?
+      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :monotonic, false)
+    in .acquire?
+      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :acquire, false)
+    in .release?
+      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :release, false)
+    in .acquire_release?
+      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :acquire_release, false)
+    in .sequentially_consistent?
+      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :sequentially_consistent, false)
+    end
   end
 
   # :nodoc:

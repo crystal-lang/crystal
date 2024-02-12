@@ -1165,8 +1165,14 @@ class Crystal::CodeGenVisitor
     call = check_atomic_call(call, target_def)
     ptr, cmp, new, success_ordering, failure_ordering = call_args
 
-    success_ordering = atomic_ordering_get_const(call.args[-2], success_ordering)
-    failure_ordering = atomic_ordering_get_const(call.args[-1], failure_ordering)
+    success_node = call.args[-2]
+    failure_node = call.args[-1]
+    success_ordering = atomic_ordering_get_const(success_node, success_ordering)
+    failure_ordering = atomic_ordering_get_const(failure_node, failure_ordering)
+
+    {% if LibLLVM::IS_LT_130 %}
+      validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
+    {% end %}
 
     value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_type = node.type.as(TupleInstanceType)
@@ -1192,8 +1198,13 @@ class Crystal::CodeGenVisitor
     call = check_atomic_call(call, target_def)
     ordering, _ = call_args
 
-    ordering = atomic_ordering_get_const(call.args[0], ordering)
+    ordering_node = call.args[0]
+    ordering = atomic_ordering_get_const(ordering_node, ordering)
     singlethread = bool_from_bool_literal(call.args[1])
+
+    ordering_node.raise "must be atomic" if ordering.not_atomic?
+    ordering_node.raise "cannot be unordered" if ordering.unordered?
+    ordering_node.raise "must have acquire, release, acquire_release or sequentially_consistent ordering" if ordering.monotonic?
 
     builder.fence(ordering, singlethread)
     llvm_nil
@@ -1287,6 +1298,42 @@ class Crystal::CodeGenVisitor
       node.raise "BUG: unknown atomic rwm bin op: #{node}"
     end
   end
+
+  {% if LibLLVM::IS_LT_130 %}
+    def validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
+      success_node.raise "must be atomic" if success_ordering.not_atomic?
+      failure_node.raise "must be atomic" if failure_ordering.not_atomic?
+
+      success_node.raise "cannot be unordered" if success_ordering.unordered?
+      failure_node.raise "cannot be unordered" if failure_ordering.unordered?
+
+      case success_ordering
+      when .monotonic?
+        unless failure_ordering.monotonic?
+          failure_node.raise "shall be no stronger than success ordering"
+        end
+      when .acquire?, .release?
+        case failure_ordering
+        when .release?
+          failure_node.raise "cannot include release semantics"
+        when .acquire_release?, .sequentially_consistent?
+          failure_node.raise "shall be no stronger than success ordering"
+        end
+      when .acquire_release?
+        case failure_ordering
+        when .release?, .acquire_release?
+          failure_node.raise "cannot include release semantics"
+        when .sequentially_consistent?
+          failure_node.raise "shall be no stronger than success ordering"
+        end
+      when .sequentially_consistent?
+        case failure_ordering
+        when .release?, .acquire_release?
+          failure_node.raise "cannot include release semantics"
+        end
+      end
+    end
+  {% end %}
 
   def bool_from_bool_literal(node)
     unless node.is_a?(BoolLiteral)
