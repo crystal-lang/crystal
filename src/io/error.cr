@@ -16,10 +16,10 @@ class IO
       "#{message} (#{target})"
     end
 
-    def initialize(message : String? = nil, *, target = nil)
+    def initialize(message : String? = nil, cause : Exception? = nil, *, target = nil)
       @target = target.try(&.to_s)
 
-      super message
+      super message, cause
     end
   end
 

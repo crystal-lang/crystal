@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  CI_LLVM_VERSION: "17.0.2"
+  CI_LLVM_VERSION: "18.1.0-rc1"
 
 jobs:
   x86_64-windows-libs:
@@ -18,14 +18,14 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
@@ -68,7 +68,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             libs/crypto.lib
@@ -77,7 +77,7 @@ jobs:
           key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
+        uses: ilammy/setup-nasm@13cbeb366c45c4379d3478cdcbadd8295feb5028 # v1.5.1
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0
@@ -90,14 +90,14 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
 
       - name: Cache libraries
         id: cache-dlls
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre-dynamic.lib
@@ -149,7 +149,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             libs/crypto-dynamic.lib
@@ -159,7 +159,7 @@ jobs:
           key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
       - name: Set up NASM
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
+        uses: ilammy/setup-nasm@13cbeb366c45c4379d3478cdcbadd8295feb5028 # v1.5.1
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.1.0 -Dynamic
@@ -168,39 +168,22 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Cache LLVM
         id: cache-llvm-libs
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
 
-      - name: Download LLVM
-        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.CI_LLVM_VERSION }}/llvm-${{ env.CI_LLVM_VERSION }}.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "D820E63BC3A6F4F833EC69A1EF49A2E81992E90BC23989F98946914B061AB6C7"
-          7z x llvm.tar.xz
-          7z x llvm.tar
-          mv llvm-* llvm-src
-
-      - name: Download LLVM's CMake files
-        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.CI_LLVM_VERSION }}/cmake-${{ env.CI_LLVM_VERSION }}.src.tar.xz -OutFile cmake.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "B6D83C91F12757030D8361DEDC5DD84357B3EDB8DA406B5D0850DF8B6F7798B1"
-          7z x cmake.tar.xz
-          7z x cmake.tar
-          mv cmake-* cmake
-
       - name: Build LLVM
         if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
         run: |
+          git clone --config core.autocrlf=false -b llvmorg-${{ env.CI_LLVM_VERSION }} --depth 1 https://github.com/llvm/llvm-project.git
           mkdir llvm-build
           cd llvm-build
-          cmake ..\llvm-src -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
+          cmake ..\llvm-project\llvm -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
           cmake --build . --config Release
           cmake "-DCMAKE_INSTALL_PREFIX=$(pwd)\..\llvm" -P cmake_install.cmake
 
@@ -212,14 +195,14 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
 
       - name: Cache LLVM
         id: cache-llvm-dlls
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             libs/llvm_VERSION
@@ -235,7 +218,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: false
-      llvm_version: "17.0.2"
+      llvm_version: "18.1.0-rc1"
 
   x86_64-windows-test:
     runs-on: windows-2022
@@ -246,19 +229,19 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal
           path: build
 
       - name: Restore LLVM
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
@@ -288,7 +271,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
-      llvm_version: "17.0.2"
+      llvm_version: "18.1.0-rc1"
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
@@ -303,13 +286,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-release
           path: etc/win-ci/portable
 
       - name: Restore LLVM
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
@@ -329,7 +312,7 @@ jobs:
           iscc.exe crystal.iss
 
       - name: Upload Crystal installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-installer
           path: etc/win-ci/Output/crystal-setup.exe

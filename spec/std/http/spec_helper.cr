@@ -46,6 +46,11 @@ def run_server(server, &)
     wait_for { server.listening? }
     wait_until_blocked f
 
+    {% if flag?(:preview_mt) %}
+      # avoids fiber synchronization issues in specs, like closing the server
+      # before we properly listen, ...
+      sleep 0.001
+    {% end %}
     yield server_done
   ensure
     server.close unless server.closed?

@@ -15,6 +15,9 @@
     {% llvm_ldflags = lines[2] %}
 
     @[Link("llvm")]
+    {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+      @[Link(dll: "LLVM-C.dll")]
+    {% end %}
     lib LibLLVM
     end
   {% else %}
@@ -32,7 +35,7 @@
 
   @[Link(ldflags: {{ llvm_ldflags }})]
   lib LibLLVM
-    VERSION = {{ llvm_version.strip.gsub(/git/, "") }}
+    VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/rc.*/, "") }}
     BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
   end
 {% end %}

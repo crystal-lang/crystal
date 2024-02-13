@@ -118,6 +118,7 @@ module Crystal
 
     def visit(node : MacroLiteral)
       @str << node.value
+      false
     end
 
     def visit(node : MacroVerbatim)
@@ -135,7 +136,8 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        return @last = var
+        @last = var
+        return false
       end
 
       # Try to consider the var as a top-level macro call.
@@ -150,7 +152,8 @@ module Crystal
       # and in this case the parser has no idea about this, so the only
       # solution is to do it now.
       if value = interpret_top_level_call?(Call.new(nil, node.name))
-        return @last = value
+        @last = value
+        return false
       end
 
       node.raise "undefined macro variable '#{node.name}'"
@@ -549,6 +552,7 @@ module Crystal
       else
         node.raise "unknown macro instance var: '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TupleLiteral)

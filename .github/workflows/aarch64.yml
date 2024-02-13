@@ -18,7 +18,7 @@ jobs:
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-aarch64-musl
           path: |
@@ -32,7 +32,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -49,7 +49,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -69,7 +69,7 @@ jobs:
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-aarch64-gnu
           path: |
@@ -83,7 +83,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -100,7 +100,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

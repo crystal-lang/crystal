@@ -2,6 +2,23 @@ require "spec"
 require "./spec_helper"
 
 describe "ENV" do
+  # Preserves the existing environment for each spec.
+  # To avoid potential circular definitions, this has to use the system methods
+  # directly, rather than `ENV` or `with_env`.
+  around_each do |example|
+    old_env = {} of String => String
+    Crystal::System::Env.each { |key, value| old_env[key] = value }
+
+    begin
+      example.run
+    ensure
+      keys = [] of String
+      Crystal::System::Env.each { |key| keys << key }
+      keys.each { |key| Crystal::System::Env.set(key, nil) }
+      old_env.each { |key, value| Crystal::System::Env.set(key, value) }
+    end
+  end
+
   it "gets non existent key raises" do
     expect_raises KeyError, "Missing ENV key: \"NON-EXISTENT\"" do
       ENV["NON-EXISTENT"]
@@ -16,8 +33,6 @@ describe "ENV" do
     (ENV["FOO"] = "1").should eq("1")
     ENV["FOO"].should eq("1")
     ENV["FOO"]?.should eq("1")
-  ensure
-    ENV.delete("FOO")
   end
 
   {% if flag?(:win32) %}
@@ -25,15 +40,11 @@ describe "ENV" do
       (ENV["FOO"] = "1").should eq("1")
       ENV["Foo"].should eq("1")
       ENV["foo"]?.should eq("1")
-    ensure
-      ENV.delete("FOO")
     end
   {% else %}
     it "sets and gets case-sensitive" do
       ENV["FOO"] = "1"
       ENV["foo"]?.should be_nil
-    ensure
-      ENV.delete("FOO")
     end
   {% end %}
 
@@ -47,16 +58,12 @@ describe "ENV" do
   it "sets to empty string" do
     (ENV["FOO_EMPTY"] = "").should eq ""
     ENV["FOO_EMPTY"]?.should eq ""
-  ensure
-    ENV.delete("FOO_EMPTY")
   end
 
   it "does has_key?" do
     ENV["FOO"] = "1"
     ENV.has_key?("NON_EXISTENT").should be_false
     ENV.has_key?("FOO").should be_true
-  ensure
-    ENV.delete("FOO")
   end
 
   it "deletes a key" do
@@ -70,9 +77,6 @@ describe "ENV" do
     %w(FOO BAR).each { |k| ENV.keys.should_not contain(k) }
     ENV["FOO"] = ENV["BAR"] = "1"
     %w(FOO BAR).each { |k| ENV.keys.should contain(k) }
-  ensure
-    ENV.delete("FOO")
-    ENV.delete("BAR")
   end
 
   it "does not have an empty key" do
@@ -86,9 +90,6 @@ describe "ENV" do
     ENV["FOO"] = "SOMEVALUE_1"
     ENV["BAR"] = "SOMEVALUE_2"
     [1, 2].each { |i| ENV.values.should contain("SOMEVALUE_#{i}") }
-  ensure
-    ENV.delete("FOO")
-    ENV.delete("BAR")
   end
 
   describe "[]=" do
@@ -115,16 +116,12 @@ describe "ENV" do
     it "fetches with one argument" do
       ENV["1"] = "2"
       ENV.fetch("1").should eq("2")
-    ensure
-      ENV.delete("1")
     end
 
     it "fetches with default value" do
       ENV["1"] = "2"
       ENV.fetch("1", "3").should eq("2")
       ENV.fetch("2", "3").should eq("3")
-    ensure
-      ENV.delete("1")
     end
 
     it "fetches with block" do
@@ -132,8 +129,6 @@ describe "ENV" do
       ENV.fetch("1") { |k| k + "block" }.should eq("2")
       ENV.fetch("2") { |k| k + "block" }.should eq("2block")
       ENV.fetch("3") { 4 }.should eq(4)
-    ensure
-      ENV.delete("1")
     end
 
     it "fetches and raises" do
@@ -141,8 +136,6 @@ describe "ENV" do
       expect_raises KeyError, "Missing ENV key: \"2\"" do
         ENV.fetch("2")
       end
-    ensure
-      ENV.delete("1")
     end
   end
 
@@ -162,16 +155,11 @@ describe "ENV" do
       "TEST_UNICODE_1" => "bar\u{d7ff}\u{10000}",
       "TEST_UNICODE_2" => "\u{1234}",
     })
-  ensure
-    ENV.delete("TEST_UNICODE_1")
-    ENV.delete("TEST_UNICODE_2")
   end
 
   it "#to_h" do
     ENV["FOO"] = "foo"
     ENV.to_h["FOO"].should eq "foo"
-  ensure
-    ENV.delete("FOO")
   end
 
   {% if flag?(:win32) %}

@@ -16,6 +16,12 @@ module Crystal
     Default     = LineNumbers
   end
 
+  enum FramePointers
+    Auto
+    Always
+    NonLeaf
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -44,6 +50,9 @@ module Crystal
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
     property flags = [] of String
+
+    # Controls generation of frame pointers.
+    property frame_pointers = FramePointers::Auto
 
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
@@ -297,7 +306,8 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @cross_compile || !@emit_targets.none?
+        program.codegen node, debug: debug, frame_pointers: frame_pointers,
+          single_module: @single_module || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -321,6 +331,10 @@ module Crystal
         {% if flag?(:darwin) %}
           run_dsymutil(output_filename) unless debug.none?
         {% end %}
+
+        {% if flag?(:windows) %}
+          copy_dlls(program, output_filename) if program.has_flag?("preview_dll")
+        {% end %}
       end
 
       CacheDir.instance.cleanup if @cleanup
@@ -342,6 +356,25 @@ module Crystal
 
       @progress_tracker.stage("dsymutil") do
         Process.run(dsymutil, ["--flat", filename])
+      end
+    end
+
+    private def copy_dlls(program, output_filename)
+      not_found = nil
+      output_directory = File.dirname(output_filename)
+
+      program.each_dll_path do |path, found|
+        if found
+          FileUtils.cp(path, output_directory)
+        else
+          not_found ||= [] of String
+          not_found << path
+        end
+      end
+
+      if not_found
+        stderr << "Warning: The following DLLs are required at run time, but Crystal is unable to locate them in CRYSTAL_LIBRARY_PATH, the compiler's directory, or PATH: "
+        not_found.sort!.join(stderr, ", ")
       end
     end
 

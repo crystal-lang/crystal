@@ -440,6 +440,11 @@ module LLVM
     LittleEndian = 1 << 28
   end
 
+  enum InlineAsmDialect
+    ATT
+    Intel
+  end
+
   struct Value
     enum Kind
       Argument

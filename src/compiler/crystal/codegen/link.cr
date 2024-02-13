@@ -5,8 +5,9 @@ module Crystal
     getter ldflags : String?
     getter framework : String?
     getter wasm_import_module : String?
+    getter dll : String?
 
-    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil, @wasm_import_module = nil)
+    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil, @wasm_import_module = nil, @dll = nil)
     end
 
     def static?
@@ -27,6 +28,7 @@ module Crystal
       lib_pkg_config = nil
       lib_framework = nil
       lib_wasm_import_module = nil
+      lib_dll = nil
       count = 0
 
       args.each do |arg|
@@ -76,12 +78,21 @@ module Crystal
         when "wasm_import_module"
           named_arg.raise "'wasm_import_module' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_wasm_import_module = value.value
+        when "dll"
+          named_arg.raise "'dll' link argument must be a String" unless value.is_a?(StringLiteral)
+          lib_dll = value.value
+          unless lib_dll.size >= 4 && lib_dll[-4..].compare(".dll", case_insensitive: true) == 0
+            named_arg.raise "'dll' link argument must use a '.dll' file extension"
+          end
+          if ::Path.separators(::Path::Kind::WINDOWS).any? { |separator| lib_dll.includes?(separator) }
+            named_arg.raise "'dll' link argument must not include directory separators"
+          end
         else
-          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', and 'wasm_import_module')"
+          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', 'wasm_import_module', and 'dll')"
         end
       end
 
-      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework, lib_wasm_import_module)
+      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework, lib_wasm_import_module, lib_dll)
     end
   end
 
@@ -219,6 +230,46 @@ module Crystal
       end
 
       flags.join(" ")
+    end
+
+    # Searches among CRYSTAL_LIBRARY_PATH, the compiler's directory, and PATH
+    # for every DLL specified in the used `@[Link]` annotations. Yields the
+    # absolute path and `true` if found, the base name and `false` if not found.
+    # The directories should match `Crystal::Repl::Context#dll_search_paths`
+    def each_dll_path(& : String, Bool ->)
+      executable_path = nil
+      compiler_origin = nil
+      paths = nil
+
+      link_annotations.each do |ann|
+        next unless dll = ann.dll
+
+        dll_path = CrystalLibraryPath.paths.each do |path|
+          full_path = File.join(path, dll)
+          break full_path if File.file?(full_path)
+        end
+
+        unless dll_path
+          executable_path ||= Process.executable_path
+          compiler_origin ||= File.dirname(executable_path) if executable_path
+
+          if compiler_origin
+            full_path = File.join(compiler_origin, dll)
+            dll_path = full_path if File.file?(full_path)
+          end
+        end
+
+        unless dll_path
+          paths ||= ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true)
+
+          dll_path = paths.try &.each do |path|
+            full_path = File.join(path, dll)
+            break full_path if File.file?(full_path)
+          end
+        end
+
+        yield dll_path || dll, !dll_path.nil?
+      end
     end
 
     PKG_CONFIG_PATH = Process.find_executable("pkg-config")

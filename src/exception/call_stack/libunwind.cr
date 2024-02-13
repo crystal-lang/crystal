@@ -102,7 +102,7 @@ struct Exception::CallStack
   end
 
   private def self.print_frame(repeated_frame)
-    Crystal::System.print_error "[0x%llx] ", repeated_frame.ip.address.to_u64
+    Crystal::System.print_error "[%p] ", repeated_frame.ip
     print_frame_location(repeated_frame)
     Crystal::System.print_error " (%d times)", repeated_frame.count + 1 unless repeated_frame.count == 0
     Crystal::System.print_error "\n"
