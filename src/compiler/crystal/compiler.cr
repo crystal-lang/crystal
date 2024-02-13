@@ -567,24 +567,25 @@ module Crystal
 
         workers.each do |pid, input, output|
           spawn do
+            overqueued = 0
+
             overqueue.times do
               if (index = indexes.add(1)) < units.size
                 input.puts index
+                overqueued += 1
               end
             end
 
             while (index = indexes.add(1)) < units.size
               input.puts index
 
-              if response = output.gets(chomp: true)
-                channel.send response
-              end
+              response = output.gets(chomp: true).not_nil!
+              channel.send response
             end
 
-            overqueue.times do
-              if response = output.gets(chomp: true)
-                channel.send response
-              end
+            overqueued.times do
+              response = output.gets(chomp: true).not_nil!
+              channel.send response
             end
 
             input << '\n'
