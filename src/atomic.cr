@@ -289,7 +289,7 @@ struct Atomic(T)
     in .sequentially_consistent?
       Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
     in .acquire?, .acquire_release?
-      raise "BUG: Atomic store cannot have acquire semantic"
+      raise ArgumentError.new("Atomic store cannot have acquire semantic")
     end
     value
   end
@@ -316,7 +316,7 @@ struct Atomic(T)
     in .sequentially_consistent?
       Ops.load(pointerof(@value), :sequentially_consistent, true)
     in .release?, .acquire_release?
-      raise "BUG: Atomic load cannot have release semantic"
+      raise ArgumentError.new("Atomic load cannot have release semantic")
     end
   end
 
