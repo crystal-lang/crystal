@@ -70,51 +70,33 @@ struct Atomic(T)
   end
 
   def compare_and_set(cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool}
-    {% if compare_versions(Crystal::LLVM_VERSION, "13.0.0") >= 0 %}
-      # LLVM since 13.0 accepts any combination of success & failure ordering
-      case success_ordering
-        {% for s_ordering in Ordering.constants %}
-          in Ordering::{{s_ordering}}
-            case failure_ordering
-              {% for f_ordering in Ordering.constants %}
-                in Ordering::{{f_ordering}}
-                  Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T),
-                              {{ s_ordering.stringify == "Relaxed" ? :monotonic : s_ordering.underscore.symbolize }},
-                              {{ f_ordering.stringify == "Relaxed" ? :monotonic : f_ordering.underscore.symbolize }})
-              {% end %}
-            end
-        {% end %}
+    case {success_ordering, failure_ordering}
+    when {.relaxed?, .relaxed?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :monotonic, :monotonic)
+    when {.acquire?, .relaxed?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :monotonic)
+    when {.acquire?, .acquire?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :acquire)
+    when {.release?, .relaxed?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :monotonic)
+    when {.release?, .acquire?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :acquire)
+    when {.acquire_release?, .relaxed?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :monotonic)
+    when {.acquire_release?, .acquire?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :acquire)
+    when {.sequentially_consistent?, .relaxed?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
+    when {.sequentially_consistent?, .acquire?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :acquire)
+    when {.sequentially_consistent?, .sequentially_consistent?}
+      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
+    else
+      if failure_ordering.release? || failure_ordering.acquire_release?
+        raise ArgumentError.new("Failure ordering cannot include release semantics")
       end
-    {% else %}
-      # LLVM up to 12.0 only accepts some combinations of success & failure ordering
-      case {success_ordering, failure_ordering}
-      when {.relaxed?, .relaxed?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :monotonic, :monotonic)
-      when {.acquire?, .relaxed?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :monotonic)
-      when {.acquire?, .acquire?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :acquire)
-      when {.release?, .relaxed?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :monotonic)
-      when {.release?, .acquire?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :acquire)
-      when {.acquire_release?, .relaxed?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :monotonic)
-      when {.acquire_release?, .acquire?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :acquire)
-      when {.sequentially_consistent?, .relaxed?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
-      when {.sequentially_consistent?, .acquire?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :acquire)
-      when {.sequentially_consistent?, .sequentially_consistent?}
-        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
-      else
-        if failure_ordering.release? || failure_ordering.acquire_release?
-          raise ArgumentError.new("Failure ordering cannot include release semantics")
-        end
-        raise ArgumentError.new("Failure ordering shall be no stronger than success ordering")
-      end
-    {% end %}
+      raise ArgumentError.new("Failure ordering shall be no stronger than success ordering")
+    end
   end
 
   # Performs `atomic_value &+= value`. Returns the old value.

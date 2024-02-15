@@ -1169,10 +1169,7 @@ class Crystal::CodeGenVisitor
     failure_node = call.args[-1]
     success_ordering = atomic_ordering_get_const(success_node, success_ordering)
     failure_ordering = atomic_ordering_get_const(failure_node, failure_ordering)
-
-    {% if LibLLVM::IS_LT_130 %}
-      validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
-    {% end %}
+    validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
 
     value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_type = node.type.as(TupleInstanceType)
@@ -1299,18 +1296,18 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  {% if LibLLVM::IS_LT_130 %}
-    def validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
-      success_node.raise "must be atomic" if success_ordering.not_atomic?
-      failure_node.raise "must be atomic" if failure_ordering.not_atomic?
+  def validate_atomic_cmpxchg_ordering(success_node, success_ordering, failure_node, failure_ordering)
+    success_node.raise "must be atomic" if success_ordering.not_atomic?
+    success_node.raise "cannot be unordered" if success_ordering.unordered?
 
-      success_node.raise "cannot be unordered" if success_ordering.unordered?
-      failure_node.raise "cannot be unordered" if failure_ordering.unordered?
+    failure_node.raise "must be atomic" if failure_ordering.not_atomic?
+    failure_node.raise "cannot be unordered" if failure_ordering.unordered?
+    failure_node.raise "cannot include release semantics" if failure_ordering.release? || failure_ordering.acquire_release?
 
+    {% if LibLLVM::IS_LT_130 %}
       failure_node.raise "shall be no stronger than success ordering" if failure_ordering > success_ordering
-      failure_node.raise "cannot include release semantics" if failure_ordering.release? || failure_ordering.acquire_release?
-    end
-  {% end %}
+    {% end %}
+  end
 
   def bool_from_bool_literal(node)
     unless node.is_a?(BoolLiteral)
