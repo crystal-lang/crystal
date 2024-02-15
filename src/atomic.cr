@@ -110,9 +110,9 @@ struct Atomic(T)
         Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
       else
         if failure_ordering.release? || failure_ordering.acquire_release?
-          raise ArgumentError.new("BUG: failure ordering cannot include release semantics")
+          raise ArgumentError.new("Failure ordering cannot include release semantics")
         end
-        raise ArgumentError.new("BUG: failure ordering shall be no stronger than success ordering")
+        raise ArgumentError.new("Failure ordering shall be no stronger than success ordering")
       end
     {% end %}
   end
