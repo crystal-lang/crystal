@@ -1307,31 +1307,8 @@ class Crystal::CodeGenVisitor
       success_node.raise "cannot be unordered" if success_ordering.unordered?
       failure_node.raise "cannot be unordered" if failure_ordering.unordered?
 
-      case success_ordering
-      when .monotonic?
-        unless failure_ordering.monotonic?
-          failure_node.raise "shall be no stronger than success ordering"
-        end
-      when .acquire?, .release?
-        case failure_ordering
-        when .release?
-          failure_node.raise "cannot include release semantics"
-        when .acquire_release?, .sequentially_consistent?
-          failure_node.raise "shall be no stronger than success ordering"
-        end
-      when .acquire_release?
-        case failure_ordering
-        when .release?, .acquire_release?
-          failure_node.raise "cannot include release semantics"
-        when .sequentially_consistent?
-          failure_node.raise "shall be no stronger than success ordering"
-        end
-      when .sequentially_consistent?
-        case failure_ordering
-        when .release?, .acquire_release?
-          failure_node.raise "cannot include release semantics"
-        end
-      end
+      failure_node.raise "shall be no stronger than success ordering" if failure_ordering > success_ordering
+      failure_node.raise "cannot include release semantics" if failure_ordering.release? || failure_ordering.acquire_release?
     end
   {% end %}
 
