@@ -71,7 +71,7 @@ struct Atomic(T)
 
   def compare_and_set(cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool}
     {% if compare_versions(Crystal::LLVM_VERSION, "13.0.0") >= 0 %}
-      # LLVM since 13.0.0 accepts any combination of success & failure ordering
+      # LLVM since 13.0 accepts any combination of success & failure ordering
       case success_ordering
         {% for s_ordering in Ordering.constants %}
           in Ordering::{{s_ordering}}
@@ -86,58 +86,33 @@ struct Atomic(T)
         {% end %}
       end
     {% else %}
-      # LLVM until 12.0.0 only accepts some combinations of success & failure ordering
-      case success_ordering
-      in .relaxed?
-        if failure_ordering.relaxed?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :monotonic, :monotonic)
-        else
-          raise "BUG: failure ordering shall be no stronger than success ordering"
+      # LLVM up to 12.0 only accepts some combinations of success & failure ordering
+      case {success_ordering, failure_ordering}
+      when {.relaxed?, .relaxed?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :monotonic, :monotonic)
+      when {.acquire?, .relaxed?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :monotonic)
+      when {.acquire?, .acquire?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :acquire)
+      when {.release?, .relaxed?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :monotonic)
+      when {.release?, .acquire?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :acquire)
+      when {.acquire_release?, .relaxed?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :monotonic)
+      when {.acquire_release?, .acquire?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :acquire)
+      when {.sequentially_consistent?, .relaxed?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
+      when {.sequentially_consistent?, .acquire?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :acquire)
+      when {.sequentially_consistent?, .sequentially_consistent?}
+        Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
+      else
+        if failure_ordering.release? || failure_ordering.acquire_release?
+          raise ArgumentError.new("BUG: failure ordering cannot include release semantics")
         end
-      in .acquire?
-        case failure_ordering
-        in .relaxed?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :monotonic)
-        in .acquire?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :acquire)
-        in .release?
-          raise "BUG: failure ordering cannot include release semantics"
-        in .acquire_release?, .sequentially_consistent?
-          raise "BUG: failure ordering shall be no stronger than success ordering"
-        end
-      in .release?
-        case failure_ordering
-        in .relaxed?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :monotonic)
-        in .acquire?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :acquire)
-        in .release?
-          raise "BUG: failure ordering cannot include release semantics"
-        in .acquire_release?, .sequentially_consistent?
-          raise "BUG: failure ordering shall be no stronger than success ordering"
-        end
-      in .acquire_release?
-        case failure_ordering
-        in .relaxed?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :monotonic)
-        in .acquire?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :acquire)
-        in .release?, .acquire_release?
-          raise "BUG: failure ordering cannot include release semantics"
-        in .sequentially_consistent?
-          raise "BUG: failure ordering shall be no stronger than success ordering"
-        end
-      in .sequentially_consistent?
-        case failure_ordering
-        in .relaxed?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
-        in .acquire?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :acquire)
-        in .release?, .acquire_release?
-          raise "BUG: failure ordering cannot include release semantics"
-        in .sequentially_consistent?
-          Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
-        end
+        raise ArgumentError.new("BUG: failure ordering shall be no stronger than success ordering")
       end
     {% end %}
   end
