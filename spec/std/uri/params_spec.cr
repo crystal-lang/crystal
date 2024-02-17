@@ -317,7 +317,7 @@ class URI
     end
 
     describe "#merge!" do
-      it "modifies the reciever" do
+      it "modifies the receiver" do
         params = Params.parse("foo=bar&foo=baz&qux=zoo")
         other_params = Params.parse("foo=buzz&foo=extra")
 
@@ -364,7 +364,7 @@ class URI
         params.merge(other_params, replace: false).to_s.should eq("foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo")
       end
 
-      it "does not modify the reciever" do
+      it "does not modify the receiver" do
         params = Params.parse("foo=bar&foo=baz&qux=zoo")
         other_params = Params.parse("foo=buzz&foo=extra")
 
