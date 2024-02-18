@@ -88,11 +88,6 @@ struct Float
     end
   end
 
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.float(self)
-  end
-
   # Writes this float to the given *io* in the given *format*.
   # See also: `IO#write_bytes`.
   def to_io(io : IO, format : IO::ByteFormat) : Nil

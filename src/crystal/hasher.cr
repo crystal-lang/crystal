@@ -216,11 +216,7 @@ struct Crystal::Hasher
     (value ? 1 : 0).hash(self)
   end
 
-  def int(value : Int)
-    permute(Hasher.reduce_num(value))
-  end
-
-  def float(value : Float)
+  def number(value : Number)
     permute(Hasher.reduce_num(value))
   end
 
