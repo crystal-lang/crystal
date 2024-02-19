@@ -325,7 +325,9 @@ describe "Crystal::Hasher" do
 
       (1..300).each do |i|
         Crystal::Hasher.reduce_num(2.to_big_f ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_f ** i)).should eq(&-(1_u64 << (i % 61)))
         Crystal::Hasher.reduce_num(0.5.to_big_f ** i).should eq(1_u64 << ((-i) % 61))
+        Crystal::Hasher.reduce_num(-(0.5.to_big_f ** i)).should eq(&-(1_u64 << ((-i) % 61)))
       end
     end
   end
