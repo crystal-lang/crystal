@@ -23,6 +23,10 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OperandBundleDef, LLVMOperandBundleRef)
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Support/CodeGen.h>
 #include <llvm/Support/FileSystem.h>
+
+#if !LLVM_VERSION_GE(10, 0)
+using CodeGenFileType = TargetMachine::CodeGenFileType;
+#endif
 #endif
 
 extern "C" {
@@ -106,10 +110,10 @@ static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
   CodeGenFileType ft;
   switch (codegen) {
     case LLVMAssemblyFile:
-      ft = CGFT_AssemblyFile;
+      ft = CodeGenFileType::CGFT_AssemblyFile;
       break;
     default:
-      ft = CGFT_ObjectFile;
+      ft = CodeGenFileType::CGFT_ObjectFile;
       break;
   }
   if (TM->addPassesToEmitFile(pass, OS, nullptr, ft)) {
