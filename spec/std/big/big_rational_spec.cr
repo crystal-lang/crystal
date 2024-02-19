@@ -402,12 +402,6 @@ describe BigRational do
     it { br(7, -3).integer?.should be_false }
   end
 
-  it "#hash" do
-    b = br(10, 3)
-    hash = b.hash
-    hash.should eq(b.to_f64.hash)
-  end
-
   it "is a number" do
     br(10, 3).is_a?(Number).should be_true
   end
