@@ -53,7 +53,9 @@ describe "Complex" do
       (a == b).should be_true
       (a == c).should be_false
 
-      (a == BigDecimal.new(53, 1)).should be_false
+      {% unless flag?(:wasm32) %}
+        (a == BigDecimal.new(53, 1)).should be_false
+      {% end %}
     end
 
     it "number == complex" do
@@ -63,7 +65,9 @@ describe "Complex" do
       (a == b).should be_true
       (a == c).should be_false
 
-      (BigDecimal.new(72, 1) == c).should be_false
+      {% unless flag?(:wasm32) %}
+        (BigDecimal.new(72, 1) == c).should be_false
+      {% end %}
     end
   end
 
