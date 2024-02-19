@@ -151,6 +151,52 @@ struct BigRational < Number
 
   Number.expand_div [BigInt, BigFloat, BigDecimal], BigRational
 
+  def //(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new((numerator * other.denominator) // (denominator * other.numerator))
+  end
+
+  def //(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator // (denominator * other))
+  end
+
+  def %(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new(
+      (numerator * other.denominator) % (denominator * other.numerator),
+      denominator * other.denominator,
+    )
+  end
+
+  def %(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator % (denominator * other), denominator)
+  end
+
+  def tdiv(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new((numerator * other.denominator).tdiv(denominator * other.numerator))
+  end
+
+  def tdiv(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator.tdiv(denominator * other))
+  end
+
+  def remainder(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new(
+      (numerator * other.denominator).remainder(denominator * other.numerator),
+      denominator * other.denominator,
+    )
+  end
+
+  def remainder(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator.remainder(denominator * other), denominator)
+  end
+
   def ceil : BigRational
     BigRational.new(-(-numerator // denominator))
   end
