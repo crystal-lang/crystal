@@ -330,5 +330,30 @@ describe "Crystal::Hasher" do
         Crystal::Hasher.reduce_num(-(0.5.to_big_f ** i)).should eq(&-(1_u64 << ((-i) % 61)))
       end
     end
+
+    it "reduces BigDecimal" do
+      Crystal::Hasher.reduce_num(0.to_big_d).should eq(0_u64)
+      Crystal::Hasher.reduce_num(1.to_big_d).should eq(1_u64)
+      Crystal::Hasher.reduce_num((-1).to_big_d).should eq(UInt64::MAX)
+
+      # small inverse powers of 10
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 1)).should eq(0x1CCCCCCCCCCCCCCC_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 2)).should eq(0x0FAE147AE147AE14_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 3)).should eq(0x0E5E353F7CED9168_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 4)).should eq(0x14A305532617C1BD_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 5)).should eq(0x05438088509BF9C6_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 6)).should eq(0x06ED2674080F98FA_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 7)).should eq(0x1A4AEA3ECD9B28E5_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 8)).should eq(0x12A1176CAE291DB0_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 9)).should eq(0x01DCE8BE116A82F8_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 10)).should eq(0x1362E41301BDD9E5_u64)
+
+      (1..300).each do |i|
+        Crystal::Hasher.reduce_num(2.to_big_d ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_d ** i)).should eq(&-(1_u64 << (i % 61)))
+        Crystal::Hasher.reduce_num(0.5.to_big_d ** i).should eq(1_u64 << ((-i) % 61))
+        Crystal::Hasher.reduce_num(-(0.5.to_big_d ** i)).should eq(&-(1_u64 << ((-i) % 61)))
+      end
+    end
   end
 end
