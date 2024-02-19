@@ -305,13 +305,14 @@ describe "Crystal::Hasher" do
       Crystal::Hasher.reduce_num(Float64::MAX).should eq(0x1F00_FFFF_FFFF_FFFF_u64)
     end
 
-    pending "reduces BigInt" do
+    it "reduces BigInt" do
       Crystal::Hasher.reduce_num(0.to_big_i).should eq(0_u64)
       Crystal::Hasher.reduce_num(1.to_big_i).should eq(1_u64)
       Crystal::Hasher.reduce_num((-1).to_big_i).should eq(UInt64::MAX)
 
       (1..300).each do |i|
         Crystal::Hasher.reduce_num(2.to_big_i ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_i ** i)).should eq(&-(1_u64 << (i % 61)))
       end
     end
 
