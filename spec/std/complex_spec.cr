@@ -1,6 +1,7 @@
 require "spec"
 require "complex"
 require "../support/number"
+require "big"
 
 # exact equality, including component signs
 private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
@@ -49,6 +50,8 @@ describe "Complex" do
       c = 4.2
       (a == b).should be_true
       (a == c).should be_false
+
+      (a == BigDecimal.new(53, 1)).should be_false
     end
 
     it "number == complex" do
@@ -57,6 +60,8 @@ describe "Complex" do
       c = Complex.new(7.2, 0)
       (a == b).should be_true
       (a == c).should be_false
+
+      (BigDecimal.new(72, 1) == c).should be_false
     end
   end
 
