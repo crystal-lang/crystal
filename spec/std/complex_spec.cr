@@ -1,7 +1,9 @@
 require "spec"
 require "complex"
 require "../support/number"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 
 # exact equality, including component signs
 private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
