@@ -988,7 +988,7 @@ struct Crystal::Hasher
   private HASH_MODULUS_INT_P = BigInt.new((1_u64 << HASH_BITS) - 1)
   private HASH_MODULUS_INT_N = -BigInt.new((1_u64 << HASH_BITS) - 1)
 
-  def int(value : BigInt)
+  def self.reduce_num(value : BigInt)
     # it should calculate `remainder(HASH_MODULUS)`
     if LibGMP::UI == UInt64
       v = LibGMP.tdiv_ui(value, HASH_MODULUS).to_i64
