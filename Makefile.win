@@ -71,7 +71,7 @@ LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
 DEPS = $(LLVM_EXT_OBJ)
-CXXFLAGS += $(if $(debug),/MTd /Od,/MT)
+CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
 
 prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
