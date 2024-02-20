@@ -106,7 +106,6 @@ end
           ],
         )
         if LibC.AdjustTokenPrivileges(adjust_token, 0, pointerof(new_privileges), 0, nil, nil) != 0
-          # ERROR_NOT_ALL_ASSIGNED means the privilege was not adjusted even though the return value is nonzero
           return true if WinError.value.error_success?
         end
       end
