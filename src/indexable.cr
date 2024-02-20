@@ -744,7 +744,7 @@ module Indexable(T)
     true
   end
 
-  # :inherited:
+  # :inherit:
   def first(&)
     size == 0 ? yield : unsafe_fetch(0)
   end
