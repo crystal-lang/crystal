@@ -333,7 +333,7 @@ module Crystal
         {% end %}
 
         {% if flag?(:windows) %}
-          copy_dlls(program, output_filename) if program.has_flag?("preview_dll")
+          copy_dlls(program, output_filename) unless static?
         {% end %}
       end
 
@@ -442,7 +442,7 @@ module Crystal
 
         {% if flag?(:msvc) %}
           unless @cross_compile
-            extra_suffix = program.has_flag?("preview_dll") ? "-dynamic" : "-static"
+            extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
               error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
