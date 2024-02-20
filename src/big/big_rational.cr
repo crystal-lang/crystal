@@ -416,7 +416,7 @@ struct Crystal::Hasher
   private HASH_MODULUS_RAT_P = BigRational.new((1_u64 << HASH_BITS) - 1)
   private HASH_MODULUS_RAT_N = -BigRational.new((1_u64 << HASH_BITS) - 1)
 
-  def float(value : BigRational)
+  def self.reduce_num(value : BigRational)
     rem = value
     if value >= HASH_MODULUS_RAT_P || value <= HASH_MODULUS_RAT_N
       num = value.numerator

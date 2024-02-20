@@ -527,11 +527,6 @@ struct Int
     !even?
   end
 
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.int(self)
-  end
-
   def succ : self
     self + 1
   end

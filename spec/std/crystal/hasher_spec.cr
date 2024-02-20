@@ -260,4 +260,72 @@ describe "Crystal::Hasher" do
       1_f32.hash.should eq(1.to_big_i.hash)
     end
   end
+
+  describe ".reduce_num" do
+    it "reduces primitive int" do
+      {% for int in Int::Primitive.union_types %}
+        Crystal::Hasher.reduce_num({{ int }}.new(0)).should eq(0_u64)
+        Crystal::Hasher.reduce_num({{ int }}.new(1)).should eq(1_u64)
+        Crystal::Hasher.reduce_num({{ int }}::MAX).should eq(UInt64.new!({{ int }}::MAX % 0x1FFF_FFFF_FFFF_FFFF_u64))
+      {% end %}
+
+      {% for int in Int::Signed.union_types %}
+        Crystal::Hasher.reduce_num({{ int }}.new(-1)).should eq(UInt64::MAX)
+        Crystal::Hasher.reduce_num({{ int }}::MIN).should eq(UInt64::MAX - UInt64.new!({{ int }}::MAX % 0x1FFF_FFFF_FFFF_FFFF_u64))
+      {% end %}
+    end
+
+    it "reduces primitive float" do
+      {% for float in Float::Primitive.union_types %}
+        Crystal::Hasher.reduce_num({{ float }}.new(0)).should eq(0_u64)
+        Crystal::Hasher.reduce_num({{ float }}.new(1)).should eq(1_u64)
+        Crystal::Hasher.reduce_num({{ float }}.new(-1)).should eq(UInt64::MAX)
+        Crystal::Hasher.reduce_num({{ float }}::INFINITY).should eq(Crystal::Hasher::HASH_INF_PLUS)
+        Crystal::Hasher.reduce_num(-{{ float }}::INFINITY).should eq(Crystal::Hasher::HASH_INF_MINUS)
+        Crystal::Hasher.reduce_num({{ float }}::NAN).should eq(Crystal::Hasher::HASH_NAN)
+
+        x = {{ float }}.new(2)
+        i = 1
+        until x.infinite?
+          Crystal::Hasher.reduce_num(x).should eq(1_u64 << (i % 61))
+          x *= 2
+          i += 1
+        end
+
+        x = {{ float }}.new(0.5)
+        i = 1
+        until x.zero?
+          Crystal::Hasher.reduce_num(x).should eq(1_u64 << ((-i) % 61))
+          x /= 2
+          i += 1
+        end
+      {% end %}
+
+      Crystal::Hasher.reduce_num(Float32::MAX).should eq(0x1FFF_F800_0000_003F_u64)
+      Crystal::Hasher.reduce_num(Float64::MAX).should eq(0x1F00_FFFF_FFFF_FFFF_u64)
+    end
+
+    pending "reduces BigInt" do
+      Crystal::Hasher.reduce_num(0.to_big_i).should eq(0_u64)
+      Crystal::Hasher.reduce_num(1.to_big_i).should eq(1_u64)
+      Crystal::Hasher.reduce_num((-1).to_big_i).should eq(UInt64::MAX)
+
+      (1..300).each do |i|
+        Crystal::Hasher.reduce_num(2.to_big_i ** i).should eq(1_u64 << (i % 61))
+      end
+    end
+
+    it "reduces BigFloat" do
+      Crystal::Hasher.reduce_num(0.to_big_f).should eq(0_u64)
+      Crystal::Hasher.reduce_num(1.to_big_f).should eq(1_u64)
+      Crystal::Hasher.reduce_num((-1).to_big_f).should eq(UInt64::MAX)
+      Crystal::Hasher.reduce_num(Float32::MAX.to_big_f).should eq(0x1FFF_F800_0000_003F_u64)
+      Crystal::Hasher.reduce_num(Float64::MAX.to_big_f).should eq(0x1F00_FFFF_FFFF_FFFF_u64)
+
+      (1..300).each do |i|
+        Crystal::Hasher.reduce_num(2.to_big_f ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(0.5.to_big_f ** i).should eq(1_u64 << ((-i) % 61))
+      end
+    end
+  end
 end
