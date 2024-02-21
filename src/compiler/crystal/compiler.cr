@@ -365,7 +365,8 @@ module Crystal
 
       program.each_dll_path do |path, found|
         if found
-          FileUtils.cp(path, output_directory)
+          dest = File.join(output_directory, File.basename(path))
+          File.copy(path, dest) unless File.exists?(dest)
         else
           not_found ||= [] of String
           not_found << path
