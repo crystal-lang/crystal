@@ -218,10 +218,74 @@ describe BigRational do
   end
 
   it "#//" do
-    (br(10, 7) // br(3, 7)).should eq(br(9, 3))
-    expect_raises(DivisionByZeroError) { br(10, 7) / br(0, 10) }
-    (br(10, 7) // 3).should eq(0)
-    (1 // br(10, 7)).should eq(0)
+    (br(18, 7) // br(4, 5)).should eq(br(3, 1))
+    (br(-18, 7) // br(4, 5)).should eq(br(-4, 1))
+    (br(18, 7) // br(-4, 5)).should eq(br(-4, 1))
+    (br(-18, 7) // br(-4, 5)).should eq(br(3, 1))
+
+    (br(18, 5) // 2).should eq(br(1, 1))
+    (br(-18, 5) // 2).should eq(br(-2, 1))
+    (br(18, 5) // -2).should eq(br(-2, 1))
+    (br(-18, 5) // -2).should eq(br(1, 1))
+    (br(18, 5) // 2.to_big_i).should eq(br(1, 1))
+
+    expect_raises(DivisionByZeroError) { br(18, 7) // br(0, 1) }
+    expect_raises(DivisionByZeroError) { br(18, 7) // 0 }
+
+    (8 // br(10, 7)).should eq(5)
+    (-8 // br(10, 7)).should eq(-6)
+    (8 // br(-10, 7)).should eq(-6)
+    (-8 // br(-10, 7)).should eq(5)
+
+    expect_raises(DivisionByZeroError) { 8 // br(0, 7) }
+  end
+
+  it "#%" do
+    (br(18, 7) % br(4, 5)).should eq(br(6, 35))
+    (br(-18, 7) % br(4, 5)).should eq(br(22, 35))
+    (br(18, 7) % br(-4, 5)).should eq(br(-22, 35))
+    (br(-18, 7) % br(-4, 5)).should eq(br(-6, 35))
+
+    (br(18, 5) % 2).should eq(br(8, 5))
+    (br(-18, 5) % 2).should eq(br(2, 5))
+    (br(18, 5) % -2).should eq(br(-2, 5))
+    (br(-18, 5) % -2).should eq(br(-8, 5))
+    (br(18, 5) % 2.to_big_i).should eq(br(8, 5))
+
+    expect_raises(DivisionByZeroError) { br(18, 7) % br(0, 1) }
+    expect_raises(DivisionByZeroError) { br(18, 7) % 0 }
+  end
+
+  it "#tdiv" do
+    br(18, 7).tdiv(br(4, 5)).should eq(br(3, 1))
+    br(-18, 7).tdiv(br(4, 5)).should eq(br(-3, 1))
+    br(18, 7).tdiv(br(-4, 5)).should eq(br(-3, 1))
+    br(-18, 7).tdiv(br(-4, 5)).should eq(br(3, 1))
+
+    br(18, 5).tdiv(2).should eq(br(1, 1))
+    br(-18, 5).tdiv(2).should eq(br(-1, 1))
+    br(18, 5).tdiv(-2).should eq(br(-1, 1))
+    br(-18, 5).tdiv(-2).should eq(br(1, 1))
+    br(18, 5).tdiv(2.to_big_i).should eq(br(1, 1))
+
+    expect_raises(DivisionByZeroError) { br(18, 7).tdiv(br(0, 1)) }
+    expect_raises(DivisionByZeroError) { br(18, 7).tdiv(0) }
+  end
+
+  it "#remainder" do
+    br(18, 7).remainder(br(4, 5)).should eq(br(6, 35))
+    br(-18, 7).remainder(br(4, 5)).should eq(br(-6, 35))
+    br(18, 7).remainder(br(-4, 5)).should eq(br(6, 35))
+    br(-18, 7).remainder(br(-4, 5)).should eq(br(-6, 35))
+
+    br(18, 5).remainder(2).should eq(br(8, 5))
+    br(-18, 5).remainder(2).should eq(br(-8, 5))
+    br(18, 5).remainder(-2).should eq(br(8, 5))
+    br(-18, 5).remainder(-2).should eq(br(-8, 5))
+    br(18, 5).remainder(2.to_big_i).should eq(br(8, 5))
+
+    expect_raises(DivisionByZeroError) { br(18, 7).remainder(br(0, 1)) }
+    expect_raises(DivisionByZeroError) { br(18, 7).remainder(0) }
   end
 
   it "#- (negation)" do
