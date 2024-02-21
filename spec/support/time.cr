@@ -56,8 +56,7 @@ end
 
     TokenPrivileges = 3
 
-    SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001_u32
-    SE_PRIVILEGE_ENABLED            = 0x00000002_u32
+    SE_PRIVILEGE_ENABLED = 0x00000002_u32
 
     fun OpenProcessToken(processHandle : HANDLE, desiredAccess : DWORD, tokenHandle : HANDLE*) : BOOL
     fun GetTokenInformation(tokenHandle : HANDLE, tokenInformationClass : Int, tokenInformation : Void*, tokenInformationLength : DWORD, returnLength : DWORD*) : BOOL
@@ -78,19 +77,25 @@ end
         raise RuntimeError.from_winerror("LookupPrivilegeValueW")
       end
 
+      # if the process token already has the privilege, and the privilege is already enabled,
+      # we don't need to do anything else
       if LibC.OpenProcessToken(LibC.GetCurrentProcess, LibC::TOKEN_QUERY, out token) != 0
         begin
           LibC.GetTokenInformation(token, LibC::TokenPrivileges, nil, 0, out len)
           buf = Pointer(UInt8).malloc(len).as(LibC::TOKEN_PRIVILEGES*)
           LibC.GetTokenInformation(token, LibC::TokenPrivileges, buf, len, out _)
           privileges = Slice.new(pointerof(buf.value.@privileges).as(LibC::LUID_AND_ATTRIBUTES*), buf.value.privilegeCount)
-          return true if privileges.any? { |pr| pr.luid == time_zone_luid && pr.attributes & (LibC::SE_PRIVILEGE_ENABLED_BY_DEFAULT | LibC::SE_PRIVILEGE_ENABLED) != 0 }
+          # if the process token doesn't have the privilege, there is no way
+          # `AdjustTokenPrivileges` could grant or enable it
+          privilege = privileges.find(&.luid.== time_zone_luid)
+          return false unless privilege
+          return true if privilege.attributes.bits_set?(LibC::SE_PRIVILEGE_ENABLED)
         ensure
           LibC.CloseHandle(token)
         end
       end
 
-      if LibC.OpenProcessToken(LibC.GetCurrentProcess, LibC::TOKEN_ADJUST_PRIVILEGES | LibC::TOKEN_QUERY, out adjust_token) != 0
+      if LibC.OpenProcessToken(LibC.GetCurrentProcess, LibC::TOKEN_ADJUST_PRIVILEGES, out adjust_token) != 0
         new_privileges = LibC::TOKEN_PRIVILEGES.new(
           privilegeCount: 1,
           privileges: StaticArray[
@@ -101,7 +106,7 @@ end
           ],
         )
         if LibC.AdjustTokenPrivileges(adjust_token, 0, pointerof(new_privileges), 0, nil, nil) != 0
-          return true
+          return true if WinError.value.error_success?
         end
       end
 
