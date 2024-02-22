@@ -348,7 +348,7 @@ describe "Crystal::Hasher" do
       Crystal::Hasher.reduce_num(BigDecimal.new(1, 9)).should eq(0x01DCE8BE116A82F8_u64)
       Crystal::Hasher.reduce_num(BigDecimal.new(1, 10)).should eq(0x1362E41301BDD9E5_u64)
 
-      # p^(a-1) === 1 (mod p)
+      # a^(p-1) === 1 (mod p)
       Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFE_u64)).should eq(1_u64)
       Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFD_u64)).should eq(10_u64)
       Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFC_u64)).should eq(100_u64)
