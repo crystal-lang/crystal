@@ -15,12 +15,14 @@ module Crystal::System::FileDescriptor
     if ConsoleUtils.console?(handle)
       ConsoleUtils.read(handle, slice)
     elsif system_blocking?
-      bytes_read = LibC._read(fd, slice, slice.size)
-      if bytes_read == -1
-        if Errno.value == Errno::EBADF
+      if LibC.ReadFile(handle, slice, slice.size, out bytes_read, nil) == 0
+        case error = WinError.value
+        when .error_access_denied?
           raise IO::Error.new "File not open for reading", target: self
+        when .error_broken_pipe?
+          return 0_u32
         else
-          raise IO::Error.from_errno("Error reading file", target: self)
+          raise IO::Error.from_os_error("Error reading file", error, target: self)
         end
       end
       bytes_read
@@ -33,18 +35,20 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_write(slice : Bytes)
+    handle = windows_handle
     until slice.empty?
       if system_blocking?
-        bytes_written = LibC._write(fd, slice, slice.size)
-        if bytes_written == -1
-          if Errno.value == Errno::EBADF
+        if LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil) == 0
+          case error = WinError.value
+          when .error_access_denied?
             raise IO::Error.new "File not open for writing", target: self
+          when .error_broken_pipe?
+            return 0_u32
           else
-            raise IO::Error.from_errno("Error writing file", target: self)
+            raise IO::Error.from_os_error("Error writing file", error, target: self)
           end
         end
       else
-        handle = windows_handle
         bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
           ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
           {ret, byte_count}
@@ -128,16 +132,15 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = LibC._lseeki64(fd, offset, whence)
-
-    if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek", target: self
+    if LibC.SetFilePointerEx(windows_handle, offset, nil, whence) == 0
+      raise IO::Error.from_winerror("Unable to seek", target: self)
     end
   end
 
   private def system_pos
-    pos = LibC._lseeki64(fd, 0, IO::Seek::Current)
-    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
+    if LibC.SetFilePointerEx(windows_handle, 0, out pos, IO::Seek::Current) == 0
+      raise IO::Error.from_winerror("Unable to tell", target: self)
+    end
     pos
   end
 

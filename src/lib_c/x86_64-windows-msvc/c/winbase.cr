@@ -12,7 +12,8 @@ lib LibC
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
   FORMAT_MESSAGE_MAX_WIDTH_MASK  = 0x000000FF_u32
 
-  STD_ERROR_HANDLE = 0xFFFFFFF4_u32
+  STD_OUTPUT_HANDLE = 0xFFFFFFF5_u32
+  STD_ERROR_HANDLE  = 0xFFFFFFF4_u32
 
   fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
