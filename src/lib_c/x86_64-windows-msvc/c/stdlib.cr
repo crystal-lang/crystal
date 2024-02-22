@@ -16,4 +16,7 @@ lib LibC
   fun realloc(ptr : Void*, size : SizeT) : Void*
   fun strtof(nptr : Char*, endptr : Char**) : Float
   fun strtod(nptr : Char*, endptr : Char**) : Double
+
+  alias InvalidParameterHandler = WCHAR*, WCHAR*, WCHAR*, UInt, UIntPtrT ->
+  fun _set_invalid_parameter_handler(pNew : InvalidParameterHandler) : InvalidParameterHandler
 end
