@@ -112,7 +112,7 @@ module Crystal
     def self.default_rpath : String
       # do not call `CrystalPath.expand_paths`, as `$ORIGIN` inside this env
       # variable is always expanded at run time
-      ENV.fetch("CRYSTAL_LIBRARY_RPATH", "")
+      ENV.fetch("CRYSTAL_LIBRARY_RPATH", {{ env("CRYSTAL_CONFIG_LIBRARY_RPATH") || "" }})
     end
 
     # Adds the compiler itself's RPATH to the environment for the duration of
