@@ -27,8 +27,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    private DEFAULT_LINKER = ENV["CC"]? || "cc"
-    private MSVC_LINKER    = ENV["CC"]? || "cl.exe"
+    private DEFAULT_LINKER = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cc" }}
+    private MSVC_LINKER    = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cl.exe" }}
 
     # A source to the compiler: its filename and source code.
     record Source,
