@@ -285,9 +285,6 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
 
-  # TODO: improve this
-  def_hash to_f64
-
   # Returns the `Float64` representing this rational.
   def to_f : Float64
     to_f64
@@ -459,18 +456,13 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  private HASH_MODULUS_RAT_P = BigRational.new((1_u64 << HASH_BITS) - 1)
-  private HASH_MODULUS_RAT_N = -BigRational.new((1_u64 << HASH_BITS) - 1)
-
   def self.reduce_num(value : BigRational)
-    rem = value
-    if value >= HASH_MODULUS_RAT_P || value <= HASH_MODULUS_RAT_N
-      num = value.numerator
-      denom = value.denominator
-      div = num.tdiv(denom)
-      floor = div.tdiv(HASH_MODULUS)
-      rem -= floor * HASH_MODULUS
+    inverse = BigInt.new do |mpz|
+      if LibGMP.invert(mpz, value.denominator, HASH_MODULUS_INT_P) == 0
+        # inverse doesn't exist, i.e. denominator is a multiple of HASH_MODULUS
+        return value >= 0 ? HASH_INF_PLUS : HASH_INF_MINUS
+      end
     end
-    rem.to_big_f.hash
+    UInt64.mulmod(reduce_num(value.numerator.abs), inverse.to_u64!, HASH_MODULUS) &* value.sign
   end
 end

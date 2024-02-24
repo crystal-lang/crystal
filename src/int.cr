@@ -193,6 +193,32 @@ struct Int
     {% end %}
   end
 
+  # :nodoc:
+  #
+  # Computes (x * y) % z, but without intermediate overflows.
+  # Precondition: `0 <= x < z && y >= 0`
+  def self.mulmod(x, y, z)
+    result = zero
+    while y > 0
+      if y.bits_set?(1)
+        # result = (result + x) % z
+        if result >= z &- x
+          result &-= z &- x
+        else
+          result &+= x
+        end
+      end
+      # x = (x + x) % z
+      if x >= z &- x
+        x &-= z &- x
+      else
+        x = x.unsafe_shl(1)
+      end
+      y = y.unsafe_shr(1)
+    end
+    result
+  end
+
   # Returns the result of shifting this number's bits *count* positions to the right.
   # Also known as arithmetic right shift.
   #

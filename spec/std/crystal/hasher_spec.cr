@@ -305,13 +305,14 @@ describe "Crystal::Hasher" do
       Crystal::Hasher.reduce_num(Float64::MAX).should eq(0x1F00_FFFF_FFFF_FFFF_u64)
     end
 
-    pending "reduces BigInt" do
+    it "reduces BigInt" do
       Crystal::Hasher.reduce_num(0.to_big_i).should eq(0_u64)
       Crystal::Hasher.reduce_num(1.to_big_i).should eq(1_u64)
       Crystal::Hasher.reduce_num((-1).to_big_i).should eq(UInt64::MAX)
 
       (1..300).each do |i|
         Crystal::Hasher.reduce_num(2.to_big_i ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_i ** i)).should eq(&-(1_u64 << (i % 61)))
       end
     end
 
@@ -324,8 +325,88 @@ describe "Crystal::Hasher" do
 
       (1..300).each do |i|
         Crystal::Hasher.reduce_num(2.to_big_f ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_f ** i)).should eq(&-(1_u64 << (i % 61)))
         Crystal::Hasher.reduce_num(0.5.to_big_f ** i).should eq(1_u64 << ((-i) % 61))
+        Crystal::Hasher.reduce_num(-(0.5.to_big_f ** i)).should eq(&-(1_u64 << ((-i) % 61)))
       end
+    end
+
+    it "reduces BigDecimal" do
+      Crystal::Hasher.reduce_num(0.to_big_d).should eq(0_u64)
+      Crystal::Hasher.reduce_num(1.to_big_d).should eq(1_u64)
+      Crystal::Hasher.reduce_num((-1).to_big_d).should eq(UInt64::MAX)
+
+      # small inverse powers of 10
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 1)).should eq(0x1CCCCCCCCCCCCCCC_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 2)).should eq(0x0FAE147AE147AE14_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 3)).should eq(0x0E5E353F7CED9168_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 4)).should eq(0x14A305532617C1BD_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 5)).should eq(0x05438088509BF9C6_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 6)).should eq(0x06ED2674080F98FA_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 7)).should eq(0x1A4AEA3ECD9B28E5_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 8)).should eq(0x12A1176CAE291DB0_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 9)).should eq(0x01DCE8BE116A82F8_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 10)).should eq(0x1362E41301BDD9E5_u64)
+
+      # a^(p-1) === 1 (mod p)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFE_u64)).should eq(1_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFD_u64)).should eq(10_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFC_u64)).should eq(100_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFB_u64)).should eq(1000_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFFA_u64)).should eq(10000_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFF9_u64)).should eq(100000_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFF8_u64)).should eq(1000000_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFF7_u64)).should eq(10000000_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFF6_u64)).should eq(100000000_u64)
+      Crystal::Hasher.reduce_num(BigDecimal.new(1, 0x1FFFFFFFFFFFFFF5_u64)).should eq(1000000000_u64)
+
+      (1..300).each do |i|
+        Crystal::Hasher.reduce_num(2.to_big_d ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_d ** i)).should eq(&-(1_u64 << (i % 61)))
+        Crystal::Hasher.reduce_num(0.5.to_big_d ** i).should eq(1_u64 << ((-i) % 61))
+        Crystal::Hasher.reduce_num(-(0.5.to_big_d ** i)).should eq(&-(1_u64 << ((-i) % 61)))
+      end
+    end
+
+    it "reduces BigRational" do
+      Crystal::Hasher.reduce_num(0.to_big_r).should eq(0_u64)
+      Crystal::Hasher.reduce_num(1.to_big_r).should eq(1_u64)
+      Crystal::Hasher.reduce_num((-1).to_big_r).should eq(UInt64::MAX)
+
+      # inverses of small integers
+      Crystal::Hasher.reduce_num(BigRational.new(1, 2)).should eq(0x1000000000000000_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 3)).should eq(0x1555555555555555_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 4)).should eq(0x0800000000000000_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 5)).should eq(0x1999999999999999_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 6)).should eq(0x1AAAAAAAAAAAAAAA_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 7)).should eq(0x1B6DB6DB6DB6DB6D_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 8)).should eq(0x0400000000000000_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 9)).should eq(0x1C71C71C71C71C71_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 10)).should eq(0x1CCCCCCCCCCCCCCC_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 11)).should eq(0x1D1745D1745D1745_u64)
+
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1000000000000000_u64)).should eq(2_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1555555555555555_u64)).should eq(3_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x0800000000000000_u64)).should eq(4_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1999999999999999_u64)).should eq(5_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1AAAAAAAAAAAAAAA_u64)).should eq(6_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1B6DB6DB6DB6DB6D_u64)).should eq(7_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x0400000000000000_u64)).should eq(8_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1C71C71C71C71C71_u64)).should eq(9_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1CCCCCCCCCCCCCCC_u64)).should eq(10_u64)
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1D1745D1745D1745_u64)).should eq(11_u64)
+
+      (1..300).each do |i|
+        Crystal::Hasher.reduce_num(2.to_big_r ** i).should eq(1_u64 << (i % 61))
+        Crystal::Hasher.reduce_num(-(2.to_big_r ** i)).should eq(&-(1_u64 << (i % 61)))
+        Crystal::Hasher.reduce_num(0.5.to_big_r ** i).should eq(1_u64 << ((-i) % 61))
+        Crystal::Hasher.reduce_num(-(0.5.to_big_r ** i)).should eq(&-(1_u64 << ((-i) % 61)))
+      end
+
+      Crystal::Hasher.reduce_num(BigRational.new(1, 0x1FFF_FFFF_FFFF_FFFF_u64)).should eq(Crystal::Hasher::HASH_INF_PLUS)
+      Crystal::Hasher.reduce_num(BigRational.new(-1, 0x1FFF_FFFF_FFFF_FFFF_u64)).should eq(Crystal::Hasher::HASH_INF_MINUS)
+      Crystal::Hasher.reduce_num(BigRational.new(2, 0x1FFF_FFFF_FFFF_FFFF_u64)).should eq(Crystal::Hasher::HASH_INF_PLUS)
+      Crystal::Hasher.reduce_num(BigRational.new(-2, 0x1FFF_FFFF_FFFF_FFFF_u64)).should eq(Crystal::Hasher::HASH_INF_MINUS)
     end
   end
 end
