@@ -201,19 +201,12 @@ module Crystal::System::FileDescriptor
     {r, w}
   end
 
-  def self.pread(fd, buffer, offset)
-    handle = windows_handle!(fd)
-
-    overlapped = LibC::OVERLAPPED.new
-    overlapped.union.offset.offset = LibC::DWORD.new(offset)
-    overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
-    if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
-      error = WinError.value
-      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error, target: self
-    end
-
-    bytes_read.to_i64
+  def self.pread(file, buffer, offset)
+    handle = windows_handle!(file.fd)
+    file.overlapped_operation(handle, offset, "ReadFile", file.read_timeout, writing: false) do |overlapped|
+      ret = LibC.ReadFile(handle, buffer, buffer.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i64
   end
 
   def self.from_stdio(fd)

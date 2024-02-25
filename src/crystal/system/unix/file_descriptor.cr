@@ -167,8 +167,8 @@ module Crystal::System::FileDescriptor
     {r, w}
   end
 
-  def self.pread(fd, buffer, offset)
-    bytes_read = LibC.pread(fd, buffer, buffer.size, offset).to_i64
+  def self.pread(file, buffer, offset)
+    bytes_read = LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
 
     if bytes_read == -1
       raise IO::Error.from_errno "Error reading file"
