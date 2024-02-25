@@ -482,41 +482,71 @@ module Crystal::System::File
   end
 
   private def flock(exclusive, retry)
-    flags = LibC::LOCKFILE_FAIL_IMMEDIATELY
+    flags = 0_u32
+    flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY unless retry && !system_blocking?
     flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
 
     handle = windows_handle
-    if retry
+    if retry && system_blocking?
       until lock_file(handle, flags)
         sleep 0.1
       end
     else
-      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
+      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked", target: self)
     end
   end
 
   private def lock_file(handle, flags)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # lock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 != LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      true
-    else
-      winerror = WinError.value
-      if winerror == WinError::ERROR_LOCK_VIOLATION
-        false
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        case error = WinError.value
+        when .error_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .error_lock_violation?
+          # synchronous failure
+          operation.synchronous = true
+          return false
+        else
+          raise IO::Error.from_os_error("LockFileEx", error, target: self)
+        end
       else
-        raise IO::Error.from_os_error("LockFileEx", winerror, target: self)
+        operation.synchronous = true
+        return true
       end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("LockFileEx", error, target: self)
+      end
+
+      true
     end
   end
 
   private def unlock_file(handle)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # unlock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 == LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      raise IO::Error.from_winerror("UnLockFileEx")
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        error = WinError.value
+        unless error.error_io_pending?
+          raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+        end
+      else
+        operation.synchronous = true
+        return
+      end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+      end
     end
   end
 
