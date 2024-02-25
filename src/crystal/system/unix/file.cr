@@ -3,10 +3,10 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking _blocking)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking)
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
-    fd, errno = open(filename, open_flag(mode), perm)
+    fd, errno = open(filename, open_flag(mode), perm, blocking)
 
     unless errno.none?
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
