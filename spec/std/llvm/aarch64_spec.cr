@@ -133,7 +133,7 @@ class LLVM::ABI
           info.return_type.should eq(ArgType.direct(str, cast: ctx.int64.array(2)))
         end
 
-        test "does with structs between 64 and 128 bits" do |abi, ctx|
+        test "does with structs larger than 128 bits" do |abi, ctx|
           str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
           arg_types = [str]
           return_type = str
@@ -141,7 +141,7 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, nil))
+          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
           info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
         end
 
