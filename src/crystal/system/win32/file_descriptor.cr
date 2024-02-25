@@ -20,17 +20,18 @@ module Crystal::System::FileDescriptor
         when .error_access_denied?
           raise IO::Error.new "File not open for reading", target: self
         when .error_broken_pipe?
-          return 0_u32
+          return 0
         else
           raise IO::Error.from_os_error("Error reading file", error, target: self)
         end
       end
-      bytes_read
+      bytes_read.to_i32
     else
-      overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
+      seekable = LibC.SetFilePointerEx(handle, 0, out offset, IO::Seek::Current) != 0
+      overlapped_operation(handle, seekable ? offset : nil, "ReadFile", read_timeout, writing: false) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}
-      end
+      end.to_i32
     end
   end
 
@@ -49,7 +50,8 @@ module Crystal::System::FileDescriptor
           end
         end
       else
-        bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
+        seekable = LibC.SetFilePointerEx(handle, 0, out offset, IO::Seek::Current) != 0
+        bytes_written = overlapped_operation(handle, seekable ? offset : nil, "WriteFile", write_timeout, writing: true) do |overlapped|
           ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
           {ret, byte_count}
         end

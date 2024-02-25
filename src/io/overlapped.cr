@@ -202,9 +202,14 @@ module IO::Overlapped
     Crystal::Scheduler.event_loop.dequeue(timeout_event)
   end
 
-  def overlapped_operation(handle, method, timeout, *, writing = false, &)
+  protected def overlapped_operation(handle, offset, method, timeout, *, writing = false, &) : UInt32
     OverlappedOperation.run(handle) do |operation|
-      result, value = yield operation.start
+      overlapped = operation.start
+      if offset
+        overlapped.value.union.offset.offset = LibC::DWORD.new(offset)
+        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
+      end
+      result, value = yield overlapped
 
       if result == 0
         case error = WinError.value
@@ -221,12 +226,13 @@ module IO::Overlapped
         end
       else
         operation.synchronous = true
+        LibC.SetFilePointerEx(handle, value, nil, IO::Seek::Current) if offset
         return value
       end
 
       schedule_overlapped(timeout)
 
-      operation.result(handle) do |error|
+      byte_count = operation.result(handle) do |error|
         case error
         when .error_io_incomplete?
           raise IO::TimeoutError.new("#{method} timed out")
@@ -237,6 +243,11 @@ module IO::Overlapped
           return 0_u32
         end
       end
+
+      # the file pointer might have been changed while the operation was in
+      # progress, so we can't use `IO::Seek::Current` here
+      LibC.SetFilePointerEx(handle, offset + byte_count, nil, IO::Seek::Set) if offset
+      byte_count
     end
   end
 
