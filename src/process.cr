@@ -257,9 +257,16 @@ class Process
 
   private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
     case stdio
-    when IO::FileDescriptor
-      stdio
-    when IO
+    in IO
+      if stdio.is_a?(IO::FileDescriptor)
+        # on Windows, only async pipes can be passed to child processes, async
+        # files will report an error and those require a separate pipe
+        # (https://github.com/crystal-lang/crystal/pull/13362#issuecomment-1519082712)
+        if {{ !flag?(:win32) }} || stdio.blocking || stdio.info.type.pipe?
+          return stdio
+        end
+      end
+
       if dst_io == STDIN
         fork_io, process_io = IO.pipe(read_blocking: true)
 
@@ -275,7 +282,7 @@ class Process
       end
 
       fork_io
-    when Redirect::Pipe
+    in Redirect::Pipe
       case dst_io
       when STDIN
         fork_io, @input = IO.pipe(read_blocking: true)
@@ -288,16 +295,14 @@ class Process
       end
 
       fork_io
-    when Redirect::Inherit
+    in Redirect::Inherit
       dst_io
-    when Redirect::Close
+    in Redirect::Close
       if dst_io == STDIN
         File.open(File::NULL, "r")
       else
         File.open(File::NULL, "w")
       end
-    else
-      raise "BUG: Impossible type in stdio #{stdio.class}"
     end
   end
 
