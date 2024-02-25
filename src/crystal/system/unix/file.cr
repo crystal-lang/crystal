@@ -15,7 +15,7 @@ module Crystal::System::File
     fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking _blocking) : {LibC::Int, Errno}
     filename.check_no_null_byte
     flags |= LibC::O_CLOEXEC
 
