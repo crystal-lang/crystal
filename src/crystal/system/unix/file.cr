@@ -3,7 +3,7 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking _blocking)
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
 
     fd, errno = open(filename, open_flag(mode), perm)

@@ -9,7 +9,7 @@ require "c/ntifs"
 require "c/winioctl"
 
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : LibC::Int
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -19,7 +19,7 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    fd, errno = open(filename, open_flag(mode), ::File::Permissions.new(perm))
+    fd, errno = open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
     unless errno.none?
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
     end
@@ -27,8 +27,8 @@ module Crystal::System::File
     fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    access, disposition, attributes = self.posix_to_open_opts flags, perm
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking : Bool) : {LibC::Int, Errno}
+    access, disposition, attributes = self.posix_to_open_opts flags, perm, blocking
 
     handle = LibC.CreateFileW(
       System.to_wstr(filename),
@@ -56,7 +56,7 @@ module Crystal::System::File
     {fd, Errno::NONE}
   end
 
-  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
+  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
@@ -86,7 +86,7 @@ module Crystal::System::File
       disposition = LibC::OPEN_EXISTING
     end
 
-    attributes = LibC::FILE_ATTRIBUTE_NORMAL
+    attributes = 0
     unless perm.owner_write?
       attributes |= LibC::FILE_ATTRIBUTE_READONLY
     end
@@ -104,6 +104,10 @@ module Crystal::System::File
       attributes |= LibC::FILE_FLAG_SEQUENTIAL_SCAN
     elsif flags.bits_set? LibC::O_RANDOM
       attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
+    end
+
+    unless blocking
+      attributes |= LibC::FILE_FLAG_OVERLAPPED
     end
 
     {access, disposition, attributes}
