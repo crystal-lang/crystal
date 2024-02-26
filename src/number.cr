@@ -39,6 +39,11 @@ struct Number
     new(1)
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.number(self)
+  end
+
   # Returns `self`.
   def +
     self

@@ -95,7 +95,7 @@ end
   require "exception/lib_unwind"
 
   {% begin %}
-    @[Link({{ flag?(:preview_dll) ? "vcruntime" : "libvcruntime" }})]
+    @[Link({{ flag?(:static) ? "libvcruntime" : "vcruntime" }})]
   {% end %}
   lib LibC
     fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
