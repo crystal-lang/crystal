@@ -77,6 +77,68 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
+  it "upcasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64
+      a.as(Int32 | Int64 | Int128)
+      CRYSTAL
+  end
+
+  it "downcasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64 || 3_i128
+      a.as(Int32 | Int64)
+      CRYSTAL
+  end
+
+  it "sidecasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64
+      a.as(Int32 | Int128)
+      CRYSTAL
+  end
+
+  it "doesn't corrupt stack when downcasting union to union with different alignment (#14285)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      struct Time2
+        def initialize(@seconds : Int64)
+          @nanoseconds = uninitialized UInt32[3]
+        end
+
+        def <(other : Time2) : Bool
+          @seconds < other.@seconds
+        end
+      end
+
+      class Constraints::Range
+        def initialize(@min : Int128 | Time2 | Nil)
+        end
+      end
+
+      def validate(value : Time2, constraint) : Bool
+        min = constraint.@min
+        if min.is_a?(Time2?)
+          if min
+            if value < min
+              return false
+            end
+          end
+        end
+        true
+      end
+
+      value = Time2.new(123)
+      constraint = Constraints::Range.new(Time2.new(45))
+      validate(value, constraint)
+      CRYSTAL
+  end
+
   it "casts from virtual to single type" do
     run(%(
       require "prelude"

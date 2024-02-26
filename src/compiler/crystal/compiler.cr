@@ -16,6 +16,12 @@ module Crystal
     Default     = LineNumbers
   end
 
+  enum FramePointers
+    Auto
+    Always
+    NonLeaf
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -44,6 +50,9 @@ module Crystal
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
     property flags = [] of String
+
+    # Controls generation of frame pointers.
+    property frame_pointers = FramePointers::Auto
 
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
@@ -297,7 +306,8 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @cross_compile || !@emit_targets.none?
+        program.codegen node, debug: debug, frame_pointers: frame_pointers,
+          single_module: @single_module || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -323,7 +333,7 @@ module Crystal
         {% end %}
 
         {% if flag?(:windows) %}
-          copy_dlls(program, output_filename) if program.has_flag?("preview_dll")
+          copy_dlls(program, output_filename) unless static?
         {% end %}
       end
 
@@ -355,7 +365,8 @@ module Crystal
 
       program.each_dll_path do |path, found|
         if found
-          FileUtils.cp(path, output_directory)
+          dest = File.join(output_directory, File.basename(path))
+          File.copy(path, dest) unless File.exists?(dest)
         else
           not_found ||= [] of String
           not_found << path
@@ -432,7 +443,7 @@ module Crystal
 
         {% if flag?(:msvc) %}
           unless @cross_compile
-            extra_suffix = program.has_flag?("preview_dll") ? "-dynamic" : "-static"
+            extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
               error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
