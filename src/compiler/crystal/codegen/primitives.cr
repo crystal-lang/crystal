@@ -1305,6 +1305,10 @@ class Crystal::CodeGenVisitor
     failure_node.raise "cannot include release semantics" if failure_ordering.release? || failure_ordering.acquire_release?
 
     {% if LibLLVM::IS_LT_130 %}
+      # Atomic(T) macros enforce this rule to provide a consistent public API
+      # regardless of which LLVM version crystal was compiled with. The compiler,
+      # however, only needs to make sure that the codegen is correct for the LLVM
+      # version
       failure_node.raise "shall be no stronger than success ordering" if failure_ordering > success_ordering
     {% end %}
   end
