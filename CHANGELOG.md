@@ -87,10 +87,6 @@ _Feature freeze: 2024-03-26_
 
 - *(codegen)* Drop pinning Dwarf version 2 for android ([#14243](https://github.com/crystal-lang/crystal/pull/14243), thanks @straight-shoota)
 
-#### other
-
-- Change some line endings from CRLF to LF ([#14299](https://github.com/crystal-lang/crystal/pull/14299), thanks @HertzDevil)
-
 ### Performance
 
 #### stdlib
@@ -123,16 +119,13 @@ _Feature freeze: 2024-03-26_
 
 #### stdlib
 
+- Fix spelling in `spec/std/uri/params_spec.cr` ([#14302](https://github.com/crystal-lang/crystal/pull/14302), thanks @jbampton)
 - *(system)* Always preserve the environment for specs that modify `ENV` ([#14211](https://github.com/crystal-lang/crystal/pull/14211), thanks @HertzDevil)
 - *(system)* Ensure Windows time zone specs request `SeTimeZonePrivilege` properly ([#14297](https://github.com/crystal-lang/crystal/pull/14297), thanks @HertzDevil)
 
 #### compiler
 
 - *(interpreter)* Fix: don't run thread specs with the interpreter ([#14287](https://github.com/crystal-lang/crystal/pull/14287), thanks @ysbaddaden)
-
-#### other
-
-- Fix spelling in `spec/std/uri/params_spec.cr` ([#14302](https://github.com/crystal-lang/crystal/pull/14302), thanks @jbampton)
 
 ### Infrastructure
 
@@ -144,6 +137,7 @@ _Feature freeze: 2024-03-26_
 - Mention RFC process in contribution instructions ([#14291](https://github.com/crystal-lang/crystal/pull/14291), thanks @straight-shoota)
 - Drop Nikola sponsor mention from Readme ([#14290](https://github.com/crystal-lang/crystal/pull/14290), thanks @straight-shoota)
 - Enhance changelog script to pull milestone info from GitHub ([#14230](https://github.com/crystal-lang/crystal/pull/14230), thanks @straight-shoota)
+- Change some line endings from CRLF to LF ([#14299](https://github.com/crystal-lang/crystal/pull/14299), thanks @HertzDevil)
 - *(ci)* Update previous Crystal release 1.11.0 ([#14189](https://github.com/crystal-lang/crystal/pull/14189), thanks @straight-shoota)
 - *(ci)* Update previous Crystal release 1.11.1 ([#14224](https://github.com/crystal-lang/crystal/pull/14224), thanks @straight-shoota)
 - *(ci)* Update GH Actions ([#14246](https://github.com/crystal-lang/crystal/pull/14246), thanks @renovate)
