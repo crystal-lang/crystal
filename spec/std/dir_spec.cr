@@ -3,25 +3,9 @@ require "../support/env"
 
 private def unset_tempdir(&)
   {% if flag?(:windows) %}
-    old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
-    begin
-      ENV.delete("TMP")
-      ENV.delete("TEMP")
-      ENV.delete("USERPROFILE")
-
-      yield
-    ensure
-      ENV["TMP"], ENV["TEMP"], ENV["USERPROFILE"] = old_tempdirs
-    end
+    with_env("TMP": nil, "TEMP": nil, "USERPROFILE": nil) { yield }
   {% else %}
-    begin
-      old_tempdir = ENV["TMPDIR"]?
-      ENV.delete("TMPDIR")
-
-      yield
-    ensure
-      ENV["TMPDIR"] = old_tempdir
-    end
+    with_env("TMPDIR": nil) { yield }
   {% end %}
 end
 
@@ -143,7 +127,7 @@ describe "Dir" do
 
     context "path exists" do
       it "fails when path is a file" do
-        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}'") do
           Dir.mkdir_p(datapath("test_file.txt"))
         end
       end

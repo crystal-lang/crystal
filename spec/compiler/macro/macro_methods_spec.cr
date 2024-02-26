@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "../../support/env"
 
 private def declare_class_var(container : ClassVarContainer, name, var_type : Type, annotations = nil)
   var = MetaTypeVar.new(name)
@@ -2504,6 +2505,13 @@ module Crystal
       end
     end
 
+    describe Primitive do
+      it "executes name" do
+        assert_macro %({{x.name}}), %(:abc), {x: Primitive.new("abc")}
+        assert_macro %({{x.name}}), %(:"x.y.z"), {x: Primitive.new("x.y.z")}
+      end
+    end
+
     describe "macro methods" do
       it "executes name" do
         assert_macro %({{x.name}}), "some_macro", {x: Macro.new("some_macro")}
@@ -2607,6 +2615,18 @@ module Crystal
       it "executes name" do
         assert_macro %({{x.name}}), "Foo", {x: foo}
         assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
+    describe Alias do
+      node = Alias.new("Foo".path, Generic.new(Path.new(["Bar", "Baz"], global: true), ["T".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: node}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz(T)), {x: node}
       end
     end
 
@@ -2759,6 +2779,12 @@ module Crystal
 
       it "executes to" do
         assert_macro %({{x.to}}), "Int32", {x: NilableCast.new("x".call, "Int32".path)}
+      end
+    end
+
+    describe TypeOf do
+      it "executes args" do
+        assert_macro %({{x.args}}), "[1, 'a', Foo]", {x: TypeOf.new([1.int32, CharLiteral.new('a'), "Foo".path])}
       end
     end
 
@@ -3279,16 +3305,207 @@ module Crystal
       end
     end
 
+    describe LibDef do
+      lib_def = LibDef.new(Path.new("Foo", "Bar", global: true), FunDef.new("foo"))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(lib), {x: lib_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(::Foo::Bar), {x: lib_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar), {x: lib_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: lib_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to LibDef#name must be a BoolLiteral, not NumberLiteral", {x: lib_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(fun foo), {x: lib_def}
+      end
+    end
+
+    describe CStructOrUnionDef do
+      c_struct_def = CStructOrUnionDef.new("Foo", TypeDeclaration.new("x".var, "Int".path))
+      c_union_def = CStructOrUnionDef.new("Bar", Include.new("Foo".path), union: true)
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(struct), {x: c_struct_def}
+        assert_macro %({{x.kind}}), %(union), {x: c_union_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: c_struct_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: c_struct_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: c_struct_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to CStructOrUnionDef#name must be a BoolLiteral, not NumberLiteral", {x: c_struct_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(x : Int), {x: c_struct_def}
+        assert_macro %({{x.body}}), %(include Foo), {x: c_union_def}
+      end
+
+      it "executes union?" do
+        assert_macro %({{x.union?}}), %(false), {x: c_struct_def}
+        assert_macro %({{x.union?}}), %(true), {x: c_union_def}
+      end
+    end
+
+    describe FunDef do
+      lib_fun = FunDef.new("foo")
+      top_level_fun = FunDef.new("bar", [Arg.new("x", restriction: "Int32".path), Arg.new("", restriction: "Char".path)], "Void".path, true, 1.int32, "y.z")
+      top_level_fun2 = FunDef.new("baz", body: Nop.new)
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(foo), {x: lib_fun}
+        assert_macro %({{x.name}}), %(bar), {x: top_level_fun}
+      end
+
+      it "executes real_name" do
+        assert_macro %({{x.real_name}}), %(), {x: lib_fun}
+        assert_macro %({{x.real_name}}), %("y.z"), {x: top_level_fun}
+      end
+
+      it "executes args" do
+        assert_macro %({{x.args}}), %([]), {x: lib_fun}
+        assert_macro %({{x.args}}), %([x : Int32,  : Char]), {x: top_level_fun}
+      end
+
+      it "executes variadic?" do
+        assert_macro %({{x.variadic?}}), %(false), {x: lib_fun}
+        assert_macro %({{x.variadic?}}), %(true), {x: top_level_fun}
+      end
+
+      it "executes return_type" do
+        assert_macro %({{x.return_type}}), %(), {x: lib_fun}
+        assert_macro %({{x.return_type}}), %(Void), {x: top_level_fun}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: lib_fun}
+        assert_macro %({{x.body}}), %(1), {x: top_level_fun}
+        assert_macro %({{x.body}}), %(), {x: top_level_fun2}
+      end
+
+      it "executes has_body?" do
+        assert_macro %({{x.has_body?}}), %(false), {x: lib_fun}
+        assert_macro %({{x.has_body?}}), %(true), {x: top_level_fun}
+        assert_macro %({{x.has_body?}}), %(true), {x: top_level_fun2}
+      end
+    end
+
+    describe TypeDef do
+      type_def = TypeDef.new("Foo", Path.new("Bar", "Baz", global: true))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: type_def}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz), {x: type_def}
+      end
+    end
+
+    describe ExternalVar do
+      external_var1 = ExternalVar.new("foo", Path.new("Bar", "Baz"))
+      external_var2 = ExternalVar.new("X", Generic.new(Path.global("Pointer"), ["Char".path] of ASTNode), real_name: "y.z")
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(foo), {x: external_var1}
+        assert_macro %({{x.name}}), %(X), {x: external_var2}
+      end
+
+      it "executes real_name" do
+        assert_macro %({{x.real_name}}), %(), {x: external_var1}
+        assert_macro %({{x.real_name}}), %("y.z"), {x: external_var2}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(Bar::Baz), {x: external_var1}
+        assert_macro %({{x.type}}), %(::Pointer(Char)), {x: external_var2}
+      end
+    end
+
+    describe Asm do
+      asm1 = Asm.new("nop")
+      asm2 = Asm.new(
+        text: "foo",
+        outputs: [AsmOperand.new("=r", "x".var), AsmOperand.new("=r", "y".var)],
+        inputs: [AsmOperand.new("i", 1.int32), AsmOperand.new("r", 2.int32)],
+        clobbers: %w(rax memory),
+        volatile: true,
+        alignstack: true,
+        intel: true,
+        can_throw: true,
+      )
+
+      it "executes text" do
+        assert_macro %({{x.text}}), %("nop"), {x: asm1}
+        assert_macro %({{x.text}}), %("foo"), {x: asm2}
+      end
+
+      it "executes outputs" do
+        assert_macro %({{x.outputs}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.outputs}}), %(["=r"(x), "=r"(y)]), {x: asm2}
+      end
+
+      it "executes inputs" do
+        assert_macro %({{x.inputs}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.inputs}}), %(["i"(1), "r"(2)]), {x: asm2}
+      end
+
+      it "executes clobbers" do
+        assert_macro %({{x.clobbers}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.clobbers}}), %(["rax", "memory"]), {x: asm2}
+      end
+
+      it "executes volatile?" do
+        assert_macro %({{x.volatile?}}), %(false), {x: asm1}
+        assert_macro %({{x.volatile?}}), %(true), {x: asm2}
+      end
+
+      it "executes alignstack?" do
+        assert_macro %({{x.alignstack?}}), %(false), {x: asm1}
+        assert_macro %({{x.alignstack?}}), %(true), {x: asm2}
+      end
+
+      it "executes intel?" do
+        assert_macro %({{x.intel?}}), %(false), {x: asm1}
+        assert_macro %({{x.intel?}}), %(true), {x: asm2}
+      end
+
+      it "executes can_throw?" do
+        assert_macro %({{x.can_throw?}}), %(false), {x: asm1}
+        assert_macro %({{x.can_throw?}}), %(true), {x: asm2}
+      end
+    end
+
+    describe AsmOperand do
+      asm_operand1 = AsmOperand.new("=r", "x".var)
+      asm_operand2 = AsmOperand.new("i", 1.int32)
+
+      it "executes constraint" do
+        assert_macro %({{x.constraint}}), %("=r"), {x: asm_operand1}
+        assert_macro %({{x.constraint}}), %("i"), {x: asm_operand2}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), %(x), {x: asm_operand1}
+        assert_macro %({{x.exp}}), %(1), {x: asm_operand2}
+      end
+    end
+
     describe "env" do
       it "has key" do
-        ENV["FOO"] = "foo"
-        assert_macro %({{env("FOO")}}), %("foo")
-        ENV.delete "FOO"
+        with_env("FOO": "foo") do
+          assert_macro %({{env("FOO")}}), %("foo")
+        end
       end
 
       it "doesn't have key" do
-        ENV.delete "FOO"
-        assert_macro %({{env("FOO")}}), %(nil)
+        with_env("FOO": nil) do
+          assert_macro %({{env("FOO")}}), %(nil)
+        end
       end
     end
 
@@ -3565,7 +3782,7 @@ module Crystal
     # there are no macro methods with required named parameters
 
     it "uses correct name for top-level macro methods" do
-      assert_macro_error %({{flag?}}), "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)"
+      assert_macro_error %({{flag?}}), "wrong number of arguments for macro '::flag?' (given 0, expected 1)"
     end
   end
 

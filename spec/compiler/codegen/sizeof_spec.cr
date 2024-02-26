@@ -279,6 +279,16 @@ describe "Code gen: sizeof" do
         alignof(Foo)
         CRYSTAL
     end
+
+    it "gets alignof union" do
+      run("alignof(Int32 | Int8)").to_i.should eq(8)
+      run("alignof(Int32 | Int64)").to_i.should eq(8)
+    end
+
+    it "alignof mixed union is not less than alignof its variant types" do
+      # NOTE: `alignof(Int128) == 16` is not guaranteed
+      run("alignof(Int32 | Int128) >= alignof(Int128)").to_b.should be_true
+    end
   end
 
   describe "instance_alignof" do

@@ -11,6 +11,8 @@ class Crystal::CodeGenVisitor
             else
               raise "BUG: unhandled primitive in codegen visit: #{node.name}"
             end
+
+    false
   end
 
   def codegen_primitive(call, node, target_def, call_args)

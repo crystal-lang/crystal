@@ -46,9 +46,6 @@ class Crystal::Repl::Context
 
   def initialize(@program : Program)
     @program.flags << "interpreted"
-    {% if flag?(:win32) %}
-      @program.flags << "preview_dll"
-    {% end %}
 
     @gc_references = [] of Void*
 
@@ -409,7 +406,7 @@ class Crystal::Repl::Context
     # (MSVC doesn't seem to have this issue)
     args.delete("-lgc")
 
-    Crystal::Loader.parse(args).tap do |loader|
+    Crystal::Loader.parse(args, dll_search_paths: dll_search_paths).tap do |loader|
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
       # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
@@ -426,6 +423,27 @@ class Crystal::Repl::Context
       end
     end
   }
+
+  # Extra DLL search paths to mimic compiled code's DLL-copying behavior
+  # regarding `@[Link]` annotations. These directories should match the ones
+  # used in `Crystal::Program#each_dll_path`
+  private def dll_search_paths
+    {% if flag?(:msvc) %}
+      paths = CrystalLibraryPath.paths
+
+      if executable_path = Process.executable_path
+        paths << File.dirname(executable_path)
+      end
+
+      ENV["PATH"]?.try &.split(Process::PATH_DELIMITER, remove_empty: true) do |path|
+        paths << path
+      end
+
+      paths
+    {% else %}
+      nil
+    {% end %}
+  end
 
   def c_function(name : String)
     loader.find_symbol(name)

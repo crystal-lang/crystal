@@ -1407,6 +1407,27 @@ module Crystal::Macros
     end
   end
 
+  # A fictitious node representing the body of a `Def` marked with
+  # `@[Primitive]`.
+  class Primitive < ASTNode
+    # Returns the name of the primitive.
+    #
+    # This is identical to the argument to the associated `@[Primitive]`
+    # annotation.
+    #
+    # ```
+    # module Foo
+    #   @[Primitive(:abc)]
+    #   def foo
+    #   end
+    # end
+    #
+    # {{ Foo.methods.first.body.name }} # => :abc
+    # ```
+    def name : SymbolLiteral
+    end
+  end
+
   # A macro definition.
   class Macro < ASTNode
     # Returns the name of this macro.
@@ -1806,6 +1827,185 @@ module Crystal::Macros
     end
   end
 
+  # A lib definition.
+  #
+  # Every lib definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class LibDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `LibDef` this is always `lib`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # A struct or union definition inside a lib.
+  #
+  # Every type definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class CStructOrUnionDef < ASTNode
+    # Returns whether this node defines a C union.
+    def union? : BoolLiteral
+    end
+
+    # Returns the keyword used to define this type.
+    #
+    # For `CStructOrUnionDef` this is either `struct` or `union`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # A function declaration inside a lib, or a top-level C function definition.
+  #
+  # Every function `node` is equivalent to:
+  #
+  # ```
+  # fun {{ node.name }} {% if real_name = node.real_name %}= {{ real_name }}{% end %}(
+  #   {% for arg in node.args %} {{ arg }}, {% end %}
+  #   {% if node.variadic? %} ... {% end %}
+  # ) {% if return_type = node.return_type %}: {{ return_type }}{% end %}
+  # {% if node.has_body? %}
+  #   {{ body }}
+  # end
+  # {% end %}
+  # ```
+  class FunDef < ASTNode
+    # Returns the name of the function in Crystal.
+    def name : MacroId
+    end
+
+    # Returns the real C name of the function, if any.
+    def real_name : StringLiteral | Nop
+    end
+
+    # Returns the parameters of the function.
+    #
+    # This does not include the variadic parameter.
+    def args : ArrayLiteral(Arg)
+    end
+
+    # Returns whether the function is variadic.
+    def variadic? : BoolLiteral
+    end
+
+    # Returns the return type of the function, if specified.
+    def return_type : ASTNode | Nop
+    end
+
+    # Returns the body of the function, if any.
+    #
+    # Both top-level funs and lib funs may return a `Nop`. Instead, `#has_body?`
+    # can be used to distinguish between the two.
+    #
+    # ```
+    # macro body_class(x)
+    #   {{ (x.is_a?(LibDef) ? x.body : x).body.class_name }}
+    # end
+    #
+    # body_class(lib MyLib
+    #   fun foo
+    # end) # => "Nop"
+    #
+    # body_class(fun foo
+    # end) # => "Nop"
+    # ```
+    def body : ASTNode | Nop
+    end
+
+    # Returns whether this function has a body.
+    #
+    # Top-level funs have a body, whereas lib funs do not.
+    #
+    # ```
+    # macro has_body(x)
+    #   {{ (x.is_a?(LibDef) ? x.body : x).has_body? }}
+    # end
+    #
+    # has_body(lib MyLib
+    #   fun foo
+    # end) # => false
+    #
+    # has_body(fun foo
+    # end) # => true
+    # ```
+    def has_body? : BoolLiteral
+    end
+  end
+
+  # A typedef inside a lib.
+  #
+  # Every typedef `node` is equivalent to:
+  #
+  # ```
+  # type {{ node.name }} = {{ node.type }}
+  # ```
+  class TypeDef < ASTNode
+    # Returns the name of the typedef.
+    def name : Path
+    end
+
+    # Returns the name of the type this typedef is equivalent to.
+    def type : ASTNode
+    end
+  end
+
+  # An external variable declaration inside a lib.
+  #
+  # Every variable `node` is equivalent to:
+  #
+  # ```
+  # ${{ node.name }} {% if real_name = node.real_name %}= {{ real_name }}{% end %} : {{ node.type }}
+  # ```
+  class ExternalVar < ASTNode
+    # Returns the name of the variable in Crystal, without the preceding `$`.
+    def name : MacroId
+    end
+
+    # Returns the real C name of the variable, if any.
+    def real_name : StringLiteral | Nop
+    end
+
+    # Returns the name of the variable's type.
+    def type : ASTNode
+    end
+  end
+
   # A `while` expression
   class While < ASTNode
     # Returns this while's condition.
@@ -2034,29 +2234,22 @@ module Crystal::Macros
     end
   end
 
-  # class LibDef < ASTNode
-  # end
+  # An `alias` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # alias {{ node.name }} = {{ node.type }}
+  # ```
+  class Alias < ASTNode
+    # Returns the name of the alias.
+    def name : Path
+    end
 
-  # class FunDef < ASTNode
-  # end
-
-  # class TypeDef < ASTNode
-  # end
-
-  # abstract class CStructOrUnionDef < ASTNode
-  # end
-
-  # class StructDef < CStructOrUnionDef
-  # end
-
-  # class UnionDef < CStructOrUnionDef
-  # end
-
-  # class ExternalVar < ASTNode
-  # end
-
-  # class Alias < ASTNode
-  # end
+    # Returns the name of the type this alias is equivalent to.
+    def type : ASTNode
+    end
+  end
 
   # A metaclass in a type expression: `T.class`
   class Metaclass < ASTNode
@@ -2097,8 +2290,18 @@ module Crystal::Macros
     end
   end
 
-  # class TypeOf < ASTNode
-  # end
+  # A `typeof` expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # typeof({{ node.args.splat }})
+  # ```
+  class TypeOf < ASTNode
+    # Returns the arguments to this `typeof`.
+    def args : ArrayLiteral(ASTNode)
+    end
+  end
 
   # A macro expression,
   # surrounded by {{ ... }} (output = true)
@@ -2172,6 +2375,75 @@ module Crystal::Macros
   # end
   # ```
   class MagicConstant < ASTNode
+  end
+
+  # An inline assembly expression.
+  #
+  # Every assembly `node` is equivalent to:
+  #
+  # ```
+  # asm(
+  #   {{ node.text }} :
+  #   {{ node.outputs.splat }} :
+  #   {{ node.inputs.splat }} :
+  #   {{ node.clobbers.splat }} :
+  #   {% if node.volatile? %} "volatile", {% end %}
+  #   {% if node.alignstack? %} "alignstack", {% end %}
+  #   {% if node.intel? %} "intel", {% end %}
+  #   {% if node.can_throw? %} "unwind", {% end %}
+  # )
+  # ```
+  class Asm < ASTNode
+    # Returns the template string for this assembly expression.
+    def text : StringLiteral
+    end
+
+    # Returns an array of output operands for this assembly expression.
+    def outputs : ArrayLiteral(AsmOperand)
+    end
+
+    # Returns an array of input operands for this assembly expression.
+    def inputs : ArrayLiteral(AsmOperand)
+    end
+
+    # Returns an array of clobbered register names for this assembly expression.
+    def clobbers : ArrayLiteral(StringLiteral)
+    end
+
+    # Returns whether the assembly expression contains side effects that are
+    # not listed in `#outputs`, `#inputs`, and `#clobbers`.
+    def volatile? : BoolLiteral
+    end
+
+    # Returns whether the assembly expression requires stack alignment code.
+    def alignstack? : BoolLiteral
+    end
+
+    # Returns `true` if the template string uses the Intel syntax, `false` if it
+    # uses the AT&T syntax.
+    def intel? : BoolLiteral
+    end
+
+    # Returns whether the assembly expression might unwind the stack.
+    def can_throw? : BoolLiteral
+    end
+  end
+
+  # An output or input operand for an `Asm` node.
+  #
+  # Every operand `node` is equivalent to:
+  #
+  # ```
+  # {{ node.constraint }}({{ node.exp }})
+  # ```
+  class AsmOperand < ASTNode
+    # Returns the constraint string of this operand.
+    def constraint : StringLiteral
+    end
+
+    # Returns the associated output or input argument of this operand.
+    def exp : ASTNode
+    end
   end
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
