@@ -4370,6 +4370,7 @@ module Crystal
       skip_space
 
       if @token.type.newline?
+        @indent += 2
         consume_newlines
         has_newlines = true
       end
@@ -4378,7 +4379,7 @@ module Crystal
       string = StringLiteral.new(node.text)
 
       if has_newlines
-        write_indent(@indent + 2, string)
+        write_indent(@indent, string)
       else
         indent(@column, string)
       end
@@ -4386,8 +4387,8 @@ module Crystal
       skip_space
 
       if @token.type.newline?
+        consume_newlines
         if node.outputs || node.inputs
-          consume_newlines
           column += 4
           write_indent(column)
         end
@@ -4419,7 +4420,8 @@ module Crystal
           write_token :OP_COLON
           part_index += 1
         end
-        skip_space_or_newline
+        skip_space
+        consume_newlines
 
         case part_index
         when 1
@@ -4457,7 +4459,9 @@ module Crystal
       skip_space_or_newline
 
       if has_newlines
-        write_line
+        @indent -= 2
+
+        write_line unless @wrote_newline
         write_indent
       end
 
@@ -4480,7 +4484,12 @@ module Crystal
     end
 
     def visit_asm_parts(parts, colon_column, &) : Nil
-      write " "
+      if @wrote_newline
+        write_indent
+      else
+        write " "
+      end
+
       column = @column
 
       parts.each_with_index do |part, i|

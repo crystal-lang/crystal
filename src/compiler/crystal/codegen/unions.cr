@@ -28,20 +28,19 @@ module Crystal
           @structs[llvm_name] = a_struct
         end
 
-        max_size = 0
+        max_size = 0_u64
+        max_alignment = pointer_size.to_u32!
+
         type.expand_union_types.each do |subtype|
           unless subtype.void?
-            size = size_of(llvm_type(subtype, wants_size: true))
-            max_size = size if size > max_size
+            llvm_type = llvm_type(subtype, wants_size: true)
+            max_size = {size_of(llvm_type), max_size}.max
+            max_alignment = {align_of(llvm_type), max_alignment}.max
           end
         end
 
-        max_size /= pointer_size.to_f
-        max_size = max_size.ceil.to_i
-
-        max_size = 1 if max_size == 0
-
-        llvm_value_type = size_t.array(max_size)
+        value_size = {(max_size + (max_alignment - 1)) // max_alignment, 1_u64}.max
+        llvm_value_type = @llvm_context.int(max_alignment * 8).array(value_size)
 
         [@llvm_context.int32, llvm_value_type]
       end
@@ -109,23 +108,64 @@ module Crystal
       store type_id(@program.void), union_type_id(struct_type, union_pointer)
     end
 
-    def assign_distinct_union_types(target_pointer, target_type, value_type, value)
+    # this is needed if `union_type` and `value_type` have different alignments,
+    # i.e. their `#union_value`s do not have the same offsets
+    def store_union_in_union(union_type, union_pointer, value_type, value)
+      to_llvm_type = llvm_type(union_type)
+      from_llvm_type = llvm_type(value_type)
+      to_value_type = to_llvm_type.struct_element_types[1]
+      from_value_type = from_llvm_type.struct_element_types[1]
+
+      store type_id(value, value_type), union_type_id(to_llvm_type, union_pointer)
+
+      size = {
+        @llvm_typer.size_of(from_value_type),
+        @llvm_typer.size_of(to_value_type),
+      }.min
+      size = @program.bits64? ? int64(size) : int32(size)
+      memcpy(
+        cast_to_void_pointer(union_value(to_llvm_type, union_pointer)),
+        cast_to_void_pointer(union_value(from_llvm_type, value)),
+        size,
+        align: @llvm_typer.align_of(to_value_type),
+        src_align: @llvm_typer.align_of(from_value_type),
+        volatile: int1(0),
+      )
+    end
+
+    def assign_distinct_union_types(to_pointer, to_type, from_type, from_pointer)
       # If we have:
-      # - target_pointer: Pointer(A | B | C)
-      # - target_type: A | B | C
-      # - value_type: A | B
-      # - value: Pointer(A | B)
+      # - to_pointer: Pointer(A | B | C)
+      # - to_type: A | B | C
+      # - from_type: A | B
+      # - from_pointer: Pointer(A | B)
       #
-      # Then we:
-      # - load the value, we get A | B
-      # - cast the target pointer to Pointer(A | B)
-      # - store the A | B from the first pointer into the casted target pointer
-      casted_target_pointer = cast_to_pointer target_pointer, value_type
-      store load(llvm_type(value_type), value), casted_target_pointer
+      # Then it might happen that from_type and to_type have the same alignment.
+      # In this case, the two pointers are interchangeable, so we can simply:
+      if align_of(to_type) == align_of(from_type)
+        # - load the value, we get A | B
+        # - cast the target pointer to Pointer(A | B)
+        # - store the A | B from the value pointer into the casted target pointer
+        casted_target_pointer = cast_to_pointer to_pointer, from_type
+        store load(llvm_type(from_type), from_pointer), casted_target_pointer
+      else
+        # Otherwise, the type ID and the value must be stored separately
+        store_union_in_union to_type, to_pointer, from_type, from_pointer
+      end
     end
 
     def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
-      cast_to_pointer value, to_type
+      # If from_type and to_type have the same alignment, we don't need a
+      # separate value; just cast the larger value pointer to the smaller one
+      if align_of(to_type) == align_of(from_type)
+        cast_to_pointer value, to_type
+      else
+        # This is the same as upcasting and we need that separate, newly aligned
+        # union value
+        target_pointer = alloca llvm_type(to_type)
+        store_union_in_union to_type, target_pointer, from_type, value
+        target_pointer
+      end
     end
 
     def upcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)

@@ -1,5 +1,5 @@
 {% if flag?(:win32) %}
-  @[Link({{ flag?(:preview_dll) ? "ucrt" : "libucrt" }})]
+  @[Link({{ flag?(:static) ? "libucrt" : "ucrt" }})]
 {% end %}
 lib LibC
   alias Char = UInt8

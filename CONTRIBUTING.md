@@ -15,6 +15,10 @@ there's no more room for discussion. We'll anyway close the issue after some day
 
 If something is missing from the language it might be that it's not yet implemented or that it was purposely left out. If in doubt, just ask.
 
+Substantial changes go through an [RFC process](https://github.com/crystal-lang/rfcs).
+
+The best place to start an open discussion about potential changes is the [Crystal forum](https://forum.crystal-lang.org/c/crystal-contrib/6).
+
 ### What's needed right now
 
 You can find a list of tasks that we consider suitable for a first time contribution at

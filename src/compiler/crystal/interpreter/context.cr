@@ -46,9 +46,6 @@ class Crystal::Repl::Context
 
   def initialize(@program : Program)
     @program.flags << "interpreted"
-    {% if flag?(:win32) %}
-      @program.flags << "preview_dll"
-    {% end %}
 
     @gc_references = [] of Void*
 
