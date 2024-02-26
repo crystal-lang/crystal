@@ -34,12 +34,11 @@ base_branch=$(git rev-parse --abbrev-ref HEAD)
 branch="changelog/$VERSION"
 current_changelog="CHANGELOG.$VERSION.md"
 
+echo "Generating $current_changelog..."
+scripts/github-changelog.cr $VERSION > $current_changelog
+
 echo "Switching to branch $branch"
 git switch $branch 2>/dev/null || git switch -c $branch;
-
-echo "Generating $current_changelog..."
-
-scripts/github-changelog.cr $VERSION > $current_changelog
 
 if grep -E "^## \[$VERSION\]" CHANGELOG.md; then
   echo "Replacing section in CHANGELOG"
