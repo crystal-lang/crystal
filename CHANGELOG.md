@@ -130,7 +130,6 @@ _Feature freeze: 2024-03-26_
 ### Infrastructure
 
 - *(cli)* Respect `--static` on Windows ([#14292](https://github.com/crystal-lang/crystal/pull/14292), thanks @HertzDevil)
-
 - Changelog for 1.12.0 ([#14232](https://github.com/crystal-lang/crystal/pull/14232), thanks @straight-shoota)
 - Remove filtering of already mentioned PRs ([#14229](https://github.com/crystal-lang/crystal/pull/14229), thanks @straight-shoota)
 - Update previous Crystal release - 1.11.2 ([#14251](https://github.com/crystal-lang/crystal/pull/14251), thanks @straight-shoota)
