@@ -144,6 +144,30 @@ class LLVM::ABI
           info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
           info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
         end
+
+        test "does with packed struct containing unaligned fields (#9873)" do |abi, ctx|
+          str = ctx.struct([ctx.int8, ctx.int16], packed: true)
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+
+        test "does with packed struct not containing unaligned fields" do |abi, ctx|
+          str = ctx.struct([ctx.int16, ctx.int8], packed: true)
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+        end
       end
     {% end %}
   end
