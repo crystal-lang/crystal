@@ -1,10 +1,16 @@
 # Changelog
 
-## [1.12.0] (2024-02-26)
+## [1.12.0] (2024-04-09)
+
+_Feature freeze: 2024-03-26_
 
 [1.12.0]: https://github.com/crystal-lang/crystal/releases/1.12.0
 
 ### Features
+
+#### lang
+
+- Allow multiple parameters and blocks for operators ending in `=` ([#14159](https://github.com/crystal-lang/crystal/pull/14159), thanks @HertzDevil)
 
 #### stdlib
 
@@ -19,27 +25,42 @@
 - *(numeric)* Add `BigRational#%`, `#tdiv`, `#remainder` ([#14306](https://github.com/crystal-lang/crystal/pull/14306), thanks @HertzDevil)
 - *(runtime)* **[experimental]** Add `ReferenceStorage` for manual allocation of references ([#14270](https://github.com/crystal-lang/crystal/pull/14270), thanks @HertzDevil)
 - *(runtime)* Add MSVC invalid parameter handler ([#14313](https://github.com/crystal-lang/crystal/pull/14313), thanks @HertzDevil)
+- *(system)* improve Process#on_interrupt ([#13694](https://github.com/crystal-lang/crystal/pull/13694), thanks @stakach)
+- *(system)* Add `Signal::trap_handler?` ([#14126](https://github.com/crystal-lang/crystal/pull/14126), thanks @stakach)
 - *(system)* Thread: set name ([#14257](https://github.com/crystal-lang/crystal/pull/14257), thanks @ysbaddaden)
+- *(time)* Add support for `Etc/UTC` time zone identifier without tzdb ([#14185](https://github.com/crystal-lang/crystal/pull/14185), thanks @femto)
 
 #### compiler
 
 - *(cli)* Respect `NO_COLOR` in the compiler ([#14260](https://github.com/crystal-lang/crystal/pull/14260), thanks @HertzDevil)
 - *(codegen)* Add `--frame-pointers` to control preservation of frame pointers ([#13860](https://github.com/crystal-lang/crystal/pull/13860), thanks @refi64)
+- *(interpreter)* Support `@[Link]`'s DLL search order in the interpreter on Windows ([#14146](https://github.com/crystal-lang/crystal/pull/14146), thanks @HertzDevil)
 - *(parser)* Allow calling `#[]=` with a block using method syntax ([#14161](https://github.com/crystal-lang/crystal/pull/14161), thanks @HertzDevil)
+- *(semantic)* Change short_reference for top-level macros to `::foo` ([#14203](https://github.com/crystal-lang/crystal/pull/14203), thanks @femto)
 
 #### tools
 
 - Add `crystal tool flags` ([#14234](https://github.com/crystal-lang/crystal/pull/14234), thanks @straight-shoota)
+- *(formatter)* Add more whitespace around `ProcLiteral`s ([#14209](https://github.com/crystal-lang/crystal/pull/14209), thanks @HertzDevil)
 
 ### Bugfixes
 
+#### lang
+
+- *(macros)* Remove extra newline in top-level `FunDef`'s string representation ([#14212](https://github.com/crystal-lang/crystal/pull/14212), thanks @HertzDevil)
+- *(macros)* Remove `T*` and `T[N]` macro interpolation behavior inside libs ([#14215](https://github.com/crystal-lang/crystal/pull/14215), thanks @HertzDevil)
+
 #### stdlib
 
+- *(concurrency)* Reserve stack space on non-main threads for crash recovery on Windows ([#14187](https://github.com/crystal-lang/crystal/pull/14187), thanks @HertzDevil)
 - *(concurrency)* Add memory barrier to `Mutex#unlock` on aarch64 ([#14272](https://github.com/crystal-lang/crystal/pull/14272), thanks @jgaskins)
 - *(files)* Make `FileUtils.mv` work across filesystems on Windows ([#14320](https://github.com/crystal-lang/crystal/pull/14320), thanks @HertzDevil)
+- *(llvm)* Fix System V ABI for packed structs with misaligned fields ([#14324](https://github.com/crystal-lang/crystal/pull/14324), thanks @HertzDevil)
 - *(llvm)* Use correct string size for `LLVM::Type#inline_asm` ([#14265](https://github.com/crystal-lang/crystal/pull/14265), thanks @HertzDevil)
 - *(numeric)* Make equality between `Complex` and other numbers exact ([#14309](https://github.com/crystal-lang/crystal/pull/14309), thanks @HertzDevil)
 - *(numeric)* Fix `#hash` for the `Big*` number types ([#14308](https://github.com/crystal-lang/crystal/pull/14308), thanks @HertzDevil)
+- *(serialization)* `XML::Reader`: Disallow attributes containing null bytes ([#14193](https://github.com/crystal-lang/crystal/pull/14193), thanks @HertzDevil)
+- *(serialization)* Always call `LibXML.xmlInitParser` when requiring XML libraries ([#14191](https://github.com/crystal-lang/crystal/pull/14191), thanks @HertzDevil)
 
 #### compiler
 
@@ -75,6 +96,7 @@
 #### stdlib
 
 - *(collection)* Optimize hash lookup in `Enumerable#group_by` ([#14235](https://github.com/crystal-lang/crystal/pull/14235), thanks @straight-shoota)
+- *(concurrency)* Use per-scheduler stack pools (let's recycle) ([#14100](https://github.com/crystal-lang/crystal/pull/14100), thanks @ysbaddaden)
 
 ### Refactor
 
@@ -82,6 +104,7 @@
 
 - *(files)* Replace some Microsoft C runtime funs with Win32 equivalents ([#14316](https://github.com/crystal-lang/crystal/pull/14316), thanks @HertzDevil)
 - *(numeric)* Add `Crystal::Hasher.reduce_num` and `#number` ([#14304](https://github.com/crystal-lang/crystal/pull/14304), thanks @HertzDevil)
+- *(specs)* **[deprecation]** Move most of spec runner's state into `Spec::CLI` ([#14170](https://github.com/crystal-lang/crystal/pull/14170), thanks @HertzDevil)
 
 #### compiler
 
@@ -92,6 +115,7 @@
 #### stdlib
 
 - *(collection)* Fix docs `:inherit:` pragma for `Indexable#first` ([#14296](https://github.com/crystal-lang/crystal/pull/14296), thanks @lachlan)
+- *(numeric)* Enhance docs for `Int#downto` ([#14176](https://github.com/crystal-lang/crystal/pull/14176), thanks @jkthorne)
 - *(runtime)* Document builtin constants ([#14276](https://github.com/crystal-lang/crystal/pull/14276), thanks @straight-shoota)
 - *(text)* Fix `Colorize.enabled?`'s documentation ([#14258](https://github.com/crystal-lang/crystal/pull/14258), thanks @HertzDevil)
 
@@ -99,6 +123,7 @@
 
 #### stdlib
 
+- *(system)* Always preserve the environment for specs that modify `ENV` ([#14211](https://github.com/crystal-lang/crystal/pull/14211), thanks @HertzDevil)
 - *(system)* Ensure Windows time zone specs request `SeTimeZonePrivilege` properly ([#14297](https://github.com/crystal-lang/crystal/pull/14297), thanks @HertzDevil)
 
 #### compiler
@@ -113,11 +138,14 @@
 
 - *(cli)* Respect `--static` on Windows ([#14292](https://github.com/crystal-lang/crystal/pull/14292), thanks @HertzDevil)
 
+- Changelog for 1.12.0 ([#14232](https://github.com/crystal-lang/crystal/pull/14232), thanks @straight-shoota)
 - Remove filtering of already mentioned PRs ([#14229](https://github.com/crystal-lang/crystal/pull/14229), thanks @straight-shoota)
 - Update previous Crystal release - 1.11.2 ([#14251](https://github.com/crystal-lang/crystal/pull/14251), thanks @straight-shoota)
 - Mention RFC process in contribution instructions ([#14291](https://github.com/crystal-lang/crystal/pull/14291), thanks @straight-shoota)
 - Drop Nikola sponsor mention from Readme ([#14290](https://github.com/crystal-lang/crystal/pull/14290), thanks @straight-shoota)
 - Enhance changelog script to pull milestone info from GitHub ([#14230](https://github.com/crystal-lang/crystal/pull/14230), thanks @straight-shoota)
+- *(ci)* Update previous Crystal release 1.11.0 ([#14189](https://github.com/crystal-lang/crystal/pull/14189), thanks @straight-shoota)
+- *(ci)* Update previous Crystal release 1.11.1 ([#14224](https://github.com/crystal-lang/crystal/pull/14224), thanks @straight-shoota)
 - *(ci)* Update GH Actions ([#14246](https://github.com/crystal-lang/crystal/pull/14246), thanks @renovate)
 - *(ci)* Upgrade `resource_class` for `test_preview_mt` ([#14274](https://github.com/crystal-lang/crystal/pull/14274), thanks @straight-shoota)
 - *(ci)* Upgrade from old machine images approaching EOL ([#14275](https://github.com/crystal-lang/crystal/pull/14275), thanks @straight-shoota)
