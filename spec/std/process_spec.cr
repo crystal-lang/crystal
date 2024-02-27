@@ -348,6 +348,14 @@ describe Process do
     end
   end
 
+  describe ".on_terminate" do
+    it "compiles" do
+      typeof(Process.on_terminate { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
   {% unless flag?(:win32) %}
     describe "#signal(Signal::KILL)" do
       it "kills a process" do
