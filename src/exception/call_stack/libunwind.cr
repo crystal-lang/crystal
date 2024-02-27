@@ -150,6 +150,9 @@ struct Exception::CallStack
     end
   end
 
+  # variant of `.decode_frame` that returns the C strings directly instead of
+  # wrapping them in `String.new`, since the SIGSEGV handler cannot allocate
+  # memory via the GC
   protected def self.unsafe_decode_frame(ip)
     original_ip = ip
     while LibC.dladdr(ip, out info) != 0

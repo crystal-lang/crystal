@@ -135,6 +135,9 @@ module Crystal::System::Signal
   @@segfault_handler = LibC::SigactionHandlerT.new { |sig, info, data|
     # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
 
+    # This handler must not allocate memory via the GC! Expanding the heap or
+    # triggering a GC cycle here could geenrate another SEGV
+
     # Determine if the SEGV was inside or 'near' the top of the stack
     # to check for potential stack overflow. 'Near' is a small
     # amount larger than a typical stack frame, 4096 bytes here.
