@@ -200,6 +200,16 @@ begin
     HasWinSDKAt(HKEY_CURRENT_USER, Win10SDK32);
 end;
 
+function HasVCRedist: Boolean;
+var
+  regValue: Cardinal;
+begin
+  result := False;
+  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64', 'Installed', regValue) then
+    if regValue <> 0 then
+      result := True;
+end;
+
 { Adopted from https://stackoverflow.com/a/46609047 }
 procedure EnvAddPath(Path: string; IsSystem: Boolean);
 var
