@@ -9,7 +9,7 @@ require "./lib_crypto"
     {% if flag?(:win32) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
-      {% for dir in Crystal::LIBRARY_PATH.split(Process::HOST_PATH_DELIMITER) %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
         {% unless ssl_version %}
           {% config_path = "#{dir.id}\\openssl_VERSION" %}
           {% if config_version = read_file?(config_path) %}

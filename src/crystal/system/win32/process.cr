@@ -7,6 +7,12 @@ require "process/shell"
 require "crystal/atomic_semaphore"
 
 struct Crystal::System::Process
+  {% if host_flag?(:windows) %}
+    HOST_PATH_DELIMITER = ';'
+  {% else %}
+    HOST_PATH_DELIMITER = ':'
+  {% end %}
+
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE

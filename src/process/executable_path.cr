@@ -9,14 +9,6 @@ class Process
     PATH_DELIMITER = ':'
   {% end %}
 
-  {% if host_flag?(:windows) %}
-    # :nodoc:
-    HOST_PATH_DELIMITER = ';'
-  {% else %}
-    # :nodoc:
-    HOST_PATH_DELIMITER = ':'
-  {% end %}
-
   # :nodoc:
   INITIAL_PATH = ENV["PATH"]?
 
