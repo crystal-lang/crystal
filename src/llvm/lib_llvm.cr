@@ -1,7 +1,7 @@
 {% begin %}
   {% if flag?(:win32) && !flag?(:static) %}
     {% config = nil %}
-    {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+    {% for dir in Crystal::LIBRARY_PATH.split(Process::HOST_PATH_DELIMITER) %}
       {% config ||= read_file?("#{dir.id}/llvm_VERSION") %}
     {% end %}
 
