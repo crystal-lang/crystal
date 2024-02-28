@@ -136,7 +136,7 @@ module Crystal::System::Signal
     # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
 
     # This handler must not allocate memory via the GC! Expanding the heap or
-    # triggering a GC cycle here could geenrate another SEGV
+    # triggering a GC cycle here could generate another SEGV
 
     # Determine if the SEGV was inside or 'near' the top of the stack
     # to check for potential stack overflow. 'Near' is a small
