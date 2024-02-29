@@ -200,12 +200,12 @@ begin
     HasWinSDKAt(HKEY_CURRENT_USER, Win10SDK32);
 end;
 
-function IsDeveloperModeEnabled: Boolean;
+function HasVCRedist: Boolean;
 var
   regValue: Cardinal;
 begin
   result := False;
-  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock', 'AllowDevelopmentWithoutDevLicense', regValue) then
+  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64', 'Installed', regValue) then
     if regValue <> 0 then
       result := True;
 end;
@@ -276,14 +276,8 @@ end;
 procedure InitializeWizard;
 var
   updatingPage: TOutputMsgWizardPage;
-
-  warningsPage: TOutputMsgMemoWizardPage;
-  isMsvcFound: Boolean;
-  isWinSdkFound: Boolean;
-  message: String;
 begin
   if GetUninstallString() <> '' then
-  begin
     updatingPage := CreateOutputMsgPage(
       wpSelectTasks,
       'Pre-Install Checks',
@@ -291,41 +285,6 @@ begin
       'Setup has detected a previous installation of Crystal; it will be uninstalled before the new version is installed. ' +
       'This ensures that requiring Crystal files will not pick up any leftover files from the previous version.'#13#13 +
       'To use multiple Crystal installations side-by-side, the portable packages for the extra versions must be downloaded manually.');
-  end;
-
-  isMsvcFound := HasMSVC;
-  isWinSdkFound := HasWinSDK;
-  message := '';
-
-  if not isMsvcFound then
-    message := message +
-      '{\b WARNING:} Setup was unable to detect a copy of the Build Tools for Visual Studio 2017 or newer on this machine. ' +
-      'The MSVC build tools are required to link Crystal programs into Windows executables. \line\line ';
-
-  if not isWinSdkFound then
-    message := message +
-      '{\b WARNING:} Setup was unable to detect a copy of the Windows 10 / 11 SDK on this machine. ' +
-      'The Crystal runtime relies on the Win32 libraries to interface with the Windows system. \line\line ';
-
-  if not isMsvcFound or not isWinSdkFound then
-    message := message +
-      'Please install the missing components using one of the following options: \line\line ' +
-      '\emspace\bullet\emspace https://aka.ms/vs/17/release/vs_BuildTools.exe for the build tools alone \line ' +
-      '\emspace\bullet\emspace https://visualstudio.microsoft.com/downloads/ for the build tools + Visual Studio 2022 \line\line ' +
-      'The {\b Desktop development with C++} workload should be selected. \line\line ';
-
-  if not IsDeveloperModeEnabled() then
-    message := message +
-      '{\b WARNING:} Developer Mode is not enabled on this machine. Please refer to ' +
-      'https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development ' +
-      'for instructions on how to enable Developer Mode. \line\line ';
-  
-  if message <> '' then
-    warningsPage := CreateOutputMsgMemoPage(wpInfoAfter,
-      'Post-Install Checks',
-      'Some components are missing and must be manually installed.',
-      'Information',
-      '{\rtf1 ' + message + '}');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -335,18 +294,78 @@ var
 begin
   case CurStep of
   ssInstall:
-  begin
-    uninstallString := GetUninstallString();
-    if uninstallString <> '' then
-      if not Exec(RemoveQuotes(uninstallString), '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_HIDE, ewWaitUntilTerminated, exitCode) then
-      begin
-        SuppressibleMsgBox('Failed to remove the previous Crystal installation. Setup will now exit.', mbCriticalError, MB_OK, IDOK);
-        Abort;
-      end;
-  end;
+    begin
+      uninstallString := GetUninstallString();
+      if uninstallString <> '' then
+        if not Exec(RemoveQuotes(uninstallString), '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_HIDE, ewWaitUntilTerminated, exitCode) then
+        begin
+          SuppressibleMsgBox('Failed to remove the previous Crystal installation. Setup will now exit.', mbCriticalError, MB_OK, IDOK);
+          Abort;
+        end;
+    end;
   ssPostInstall:
-    if WizardIsTaskSelected('addtopath') then
-      EnvAddPath(ExpandConstant('{app}'), IsAdminInstallMode());
+    begin
+      if (not HasVCRedist) and (IDYES = SuppressibleTaskDialogMsgBox(
+        'Install Visual C++ Redistributable',
+        'Setup is unable to detect a copy of the Visual C++ 2015 Redistributable (x64) or newer on this machine. ' +
+          'The runtime libraries are needed by dynamically linked executables, including the compiler itself. ' +
+          'If you select "Agree", the installer will proceed to download: '#13#10#13#10 +
+          'https://aka.ms/vs/17/release/vc_redist.x64.exe'#13#10#13#10 +
+          'and then run:'#13#10#13#10 +
+          'VC_redist.x64.exe /passive /norestart'#13#10#13#10 +
+          'Would you like to install the Visual C++ Redistributable now?',
+        mbInformation, MB_YESNO, ['Agree', 'Decline'], IDYES, IDYES)) then
+      begin
+        DownloadTemporaryFile('https://aka.ms/vs/17/release/vc_redist.x64.exe', 'VC_redist.x64.exe', '', nil);
+        if not Exec(ExpandConstant('{tmp}\VC_redist.x64.exe'), '/passive /norestart', '', SW_SHOW, ewWaitUntilTerminated, exitCode) then
+          SuppressibleMsgBox('Failed to install the Visual C++ Redistributable.', mbError, MB_OK, IDOK);
+      end;
+
+      if (not HasMSVC) and (IDYES = SuppressibleTaskDialogMsgBox(
+        'Install MSVC Build Tools',
+        'Setup is unable to detect a copy of the Build Tools for Visual Studio 2017 or newer on this machine. ' +
+          'The MSVC Build Tools are required to link Crystal programs into Windows executables. ' +
+          'If you select "Agree", the installer will proceed to download: '#13#10#13#10 +
+          'https://aka.ms/vs/17/release/vs_BuildTools.exe'#13#10#13#10 +
+          'and then run:'#13#10#13#10 +
+          'vs_BuildTools.exe --passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64'#13#10#13#10 +
+          'Would you like to install the MSVC Build Tools now? ' +
+          'Note that you may modify your installation later using the Visual Studio Installer.',
+        mbInformation, MB_YESNO, ['Agree', 'Decline'], IDYES, IDYES)) then
+      begin
+        DownloadTemporaryFile('https://aka.ms/vs/17/release/vs_BuildTools.exe', 'vs_BuildTools.exe', '', nil);
+        if not Exec(
+          ExpandConstant('{tmp}\vs_BuildTools.exe'),
+          '--passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+          '', SW_SHOW, ewWaitUntilTerminated, exitCode
+        ) then
+          SuppressibleMsgBox('Failed to install the Build Tools for Visual Studio.', mbError, MB_OK, IDOK);
+      end;
+
+      if (not HasWinSDK) and (IDYES = SuppressibleTaskDialogMsgBox(
+        'Install Windows SDK',
+        'Setup is unable to detect a copy of the Windows 10 SDK or newer on this machine. ' +
+          'The Crystal runtime and standard library rely on the Win32 libraries to interface with the Windows system. ' +
+          'If you select "Agree", the installer will proceed to download: '#13#10#13#10 +
+          'https://aka.ms/vs/17/release/vs_BuildTools.exe'#13#10#13#10 +
+          'and then run:'#13#10#13#10 +
+          'vs_BuildTools.exe --passive --norestart --wait --add Microsoft.VisualStudio.Component.Windows11SDK.22621'#13#10#13#10 +
+          'Would you like to install the Windows SDK now? ' +
+          'Note that you may modify your installation later using the Visual Studio Installer.',
+        mbInformation, MB_YESNO, ['Agree', 'Decline'], IDYES, IDYES)) then
+      begin
+        DownloadTemporaryFile('https://aka.ms/vs/17/release/vs_BuildTools.exe', 'vs_BuildTools.exe', '', nil);
+        if not Exec(
+          ExpandConstant('{tmp}\vs_BuildTools.exe'),
+          '--passive --norestart --wait --add Microsoft.VisualStudio.Component.Windows11SDK.22621',
+          '', SW_SHOW, ewWaitUntilTerminated, exitCode
+        ) then
+          SuppressibleMsgBox('Failed to install the Windows SDK.', mbError, MB_OK, IDOK);
+      end;
+
+      if WizardIsTaskSelected('addtopath') then
+        EnvAddPath(ExpandConstant('{app}'), IsAdminInstallMode());
+    end;
   end;
 end;
 
