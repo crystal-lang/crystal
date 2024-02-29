@@ -21,8 +21,28 @@ private class Bar < Base
   end
 end
 
+private struct Inner
+end
+
+private class Outer
+  @x = Inner.new
+end
+
 describe "Primitives: reference" do
+  describe ".allocate" do
+    it "doesn't fail on complex ivar initializer if value is discarded (#14325)" do
+      Outer.allocate
+      1
+    end
+  end
+
   describe ".pre_initialize" do
+    it "doesn't fail on complex ivar initializer if value is discarded (#14325)" do
+      bar_buffer = GC.malloc(instance_sizeof(Outer))
+      Outer.pre_initialize(bar_buffer)
+      1
+    end
+
     it "zeroes the instance data" do
       bar_buffer = GC.malloc(instance_sizeof(Bar))
       Slice.new(bar_buffer.as(UInt8*), instance_sizeof(Bar)).fill(0xFF)
