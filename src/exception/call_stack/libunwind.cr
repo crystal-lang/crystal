@@ -120,7 +120,7 @@ struct Exception::CallStack
       end
     {% end %}
 
-    if frame = decode_frame(repeated_frame.ip)
+    if frame = unsafe_decode_frame(repeated_frame.ip)
       offset, sname, fname = frame
       Crystal::System.print_error "%s +%lld in %s", sname, offset.to_i64, fname
     else
@@ -147,6 +147,25 @@ struct Exception::CallStack
         file = String.new(info.dli_fname)
       end
       {offset, symbol, file}
+    end
+  end
+
+  # variant of `.decode_frame` that returns the C strings directly instead of
+  # wrapping them in `String.new`, since the SIGSEGV handler cannot allocate
+  # memory via the GC
+  protected def self.unsafe_decode_frame(ip)
+    original_ip = ip
+    while LibC.dladdr(ip, out info) != 0
+      offset = original_ip - info.dli_saddr
+      if offset == 0
+        ip -= 1
+        next
+      end
+
+      return if info.dli_sname.null? && info.dli_fname.null?
+      symbol = info.dli_sname || "??".to_unsafe
+      file = info.dli_fname || "??".to_unsafe
+      return {offset, symbol, file}
     end
   end
 end
