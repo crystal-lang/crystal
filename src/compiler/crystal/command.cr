@@ -540,6 +540,12 @@ class Crystal::Command
       end
 
       unless no_codegen
+        opts.on("--single-module", "Generate a single LLVM module") do
+          compiler.single_module = true
+        end
+        opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
+          compiler.n_threads = n_threads.to_i? || raise Error.new("Invalid thread count: #{n_threads}")
+        end
         unless run
           opts.on("--target TRIPLE", "Target triple") do |triple|
             compiler.codegen_target = Codegen::Target.new(triple)
