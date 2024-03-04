@@ -2813,6 +2813,13 @@ module Crystal
       next_token.tap { @wants_symbol = true }
     end
 
+    def wants_def_or_macro_name(& : ->)
+      @wants_def_or_macro_name = true
+      yield
+    ensure
+      @wants_def_or_macro_name = false
+    end
+
     def current_char
       @reader.current_char
     end

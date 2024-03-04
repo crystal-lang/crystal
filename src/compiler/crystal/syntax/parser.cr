@@ -682,9 +682,9 @@ module Crystal
 
           @wants_regex = false
 
-          @wants_def_or_macro_name = true
-          next_token_skip_space_or_newline
-          @wants_def_or_macro_name = false
+          wants_def_or_macro_name do
+            next_token_skip_space_or_newline
+          end
 
           if @token.type.instance_var?
             ivar_name = @token.value.to_s
@@ -6204,10 +6204,10 @@ module Crystal
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      next_token_skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      wants_def_or_macro_name do
+        next_token_skip_space_or_newline
+        check DefOrMacroCheck1
+      end
       @token.to_s
     end
 
