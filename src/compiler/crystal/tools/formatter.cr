@@ -2639,38 +2639,7 @@ module Crystal
             return false
           end
 
-          write " " if needs_space && !passed_backslash_newline
-          write node.name
-
-          # This is the case of a-1 and a+1
-          if @token.type.number?
-            @lexer.current_pos = @token.start + 1
-          end
-
-          slash_is_regex!
-
-          next_token
-          passed_backslash_newline = @token.passed_backslash_newline
-          found_comment = skip_space
-
-          if found_comment || @token.type.newline?
-            if @inside_call_or_assign == 0
-              next_indent = @indent + 2
-            else
-              next_indent = column == 0 ? 2 : column
-            end
-            indent(next_indent) do
-              skip_space_write_line
-              skip_space_or_newline
-            end
-            write_indent(next_indent, node.args.last)
-          else
-            write " " if needs_space && !passed_backslash_newline
-            inside_call_or_assign do
-              accept node.args.last
-            end
-          end
-
+          format_operator_call(node, column, needs_space, passed_backslash_newline)
           return false
         end
 
@@ -3280,6 +3249,42 @@ module Crystal
       end
 
       skip_space_or_newline
+    end
+
+    def format_operator_call(node, column, needs_space, passed_backslash_newline)
+      write " " if needs_space && !passed_backslash_newline
+      write node.name
+
+      # This is the case of `a-1` and `a+1`
+      if @token.type.number?
+        @lexer.current_pos = @token.start + 1
+      end
+
+      slash_is_regex!
+
+      next_token
+      passed_backslash_newline = @token.passed_backslash_newline
+      found_comment = skip_space
+
+      if found_comment || @token.type.newline?
+        if @inside_call_or_assign == 0
+          next_indent = @indent + 2
+        else
+          next_indent = column == 0 ? 2 : column
+        end
+        indent(next_indent) do
+          skip_space_write_line
+          skip_space_or_newline
+        end
+        write_indent(next_indent, node.args.last)
+      else
+        write " " if needs_space && !passed_backslash_newline
+        inside_call_or_assign do
+          accept node.args.last
+        end
+      end
+
+      return false
     end
 
     def remove_to_skip(node, to_skip)
