@@ -9,14 +9,7 @@ private def exit_code_command(code)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
   {% else %}
-    case code
-    when 0
-      {"true", [] of String}
-    when 1
-      {"false", [] of String}
-    else
       {"/bin/sh", {"-c", "exit #{code}"}}
-    end
   {% end %}
 end
 
