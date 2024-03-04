@@ -2568,76 +2568,7 @@ module Crystal
         end
 
         unless @token.type.op_period?
-          # It's an operator
-          if @token.type.op_lsquare?
-            write "["
-            next_token_skip_space
-
-            args = node.args
-
-            if node.name == "[]="
-              last_arg = args.pop
-            end
-
-            has_newlines, found_comment, _ = format_args args, true, node.named_args
-            if @token.type.op_comma? || @token.type.newline?
-              if has_newlines
-                write ","
-                found_comment = next_token_skip_space
-                write_line unless found_comment
-                write_indent
-                skip_space_or_newline
-              else
-                next_token_skip_space_or_newline
-              end
-            else
-              found_comment = skip_space_or_newline
-              write_indent if found_comment
-            end
-
-            # foo[&.bar]
-            if (block = node.block) && @token.type.op_amp?
-              has_args = !node.args.empty? || node.named_args
-              write "," if has_args
-              format_block(block, has_args)
-            end
-
-            write_token :OP_RSQUARE
-
-            if node.name == "[]?"
-              skip_space
-
-              # This might not be present in the case of `x[y] ||= z`
-              if @token.type.op_question?
-                write "?"
-                next_token
-              end
-            end
-
-            if last_arg
-              skip_space_or_newline
-
-              write " ="
-              next_token_skip_space
-              accept_assign_value_after_equals last_arg
-            end
-
-            return false
-          elsif @token.type.op_lsquare_rsquare?
-            write "[]"
-            next_token
-
-            if node.name == "[]="
-              skip_space_or_newline
-              write_token " ", :OP_EQ, " "
-              skip_space_or_newline
-              inside_call_or_assign do
-                accept node.args.last
-              end
-            end
-
-            return false
-          end
+          return if format_square_brackets_call(node)
 
           format_operator_call(node, column, needs_space, passed_backslash_newline)
           return false
@@ -3249,6 +3180,80 @@ module Crystal
       end
 
       skip_space_or_newline
+    end
+
+    def format_square_brackets_call(node)
+      return false unless node.name.starts_with?("[")
+
+      if @token.type.op_lsquare?
+        write "["
+        next_token_skip_space
+
+        args = node.args
+
+        if node.name == "[]="
+          last_arg = args.pop
+        end
+
+        has_newlines, found_comment, _ = format_args args, true, node.named_args
+        if @token.type.op_comma? || @token.type.newline?
+          if has_newlines
+            write ","
+            found_comment = next_token_skip_space
+            write_line unless found_comment
+            write_indent
+            skip_space_or_newline
+          else
+            next_token_skip_space_or_newline
+          end
+        else
+          found_comment = skip_space_or_newline
+          write_indent if found_comment
+        end
+
+        # foo[&.bar]
+        if (block = node.block) && @token.type.op_amp?
+          has_args = !node.args.empty? || node.named_args
+          write "," if has_args
+          format_block(block, has_args)
+        end
+
+        write_token :OP_RSQUARE
+
+        if node.name == "[]?"
+          skip_space
+
+          # This might not be present in the case of `x[y] ||= z`
+          if @token.type.op_question?
+            write "?"
+            next_token
+          end
+        end
+
+        if last_arg
+          skip_space_or_newline
+
+          write " ="
+          next_token_skip_space
+          accept_assign_value_after_equals last_arg
+        end
+      elsif @token.type.op_lsquare_rsquare?
+        write "[]"
+        next_token
+
+        if node.name == "[]="
+          skip_space_or_newline
+          write_token " ", :OP_EQ, " "
+          skip_space_or_newline
+          inside_call_or_assign do
+            accept node.args.last
+          end
+        end
+      else
+        raise "unreachable"
+      end
+
+      true
     end
 
     def format_operator_call(node, column, needs_space, passed_backslash_newline)
