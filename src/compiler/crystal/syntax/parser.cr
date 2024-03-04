@@ -627,7 +627,7 @@ module Crystal
     def parse_prefix
       name_location = @token.location
       case token_type = @token.type
-      when .op_bang?, .op_plus?, .op_minus?, .op_tilde?, .op_amp_plus?, .op_amp_minus?
+      when .unary_operator?
         location = @token.location
         next_token_skip_space_or_newline
         check_void_expression_keyword

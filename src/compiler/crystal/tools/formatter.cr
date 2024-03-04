@@ -2541,13 +2541,14 @@ module Crystal
       write_token :OP_COLON_COLON if node.global?
 
       if obj
-        {Token::Kind::OP_BANG, Token::Kind::OP_PLUS, Token::Kind::OP_MINUS, Token::Kind::OP_TILDE, Token::Kind::OP_AMP_PLUS, Token::Kind::OP_AMP_MINUS}.each do |op|
-          if node.name == op.to_s && @token.type == op && node.args.empty?
-            write op
-            next_token_skip_space_or_newline
-            accept obj
-            return false
-          end
+        # This handles unary operators written in prefix notation.
+        # The relevant distinction is that the call has a receiver and the
+        # current token is not that object but a unary operator.
+        if @token.type.unary_operator? && node.name == @token.type.to_s && node.args.empty?
+          write @token.type
+          next_token_skip_space_or_newline
+          accept obj
+          return false
         end
 
         accept obj
