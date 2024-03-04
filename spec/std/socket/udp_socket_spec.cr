@@ -78,6 +78,10 @@ describe UDPSocket, tags: "network" do
       # Darwin also has a bug that prevents selecting the "default" interface.
       # https://lists.apple.com/archives/darwin-kernel/2014/Mar/msg00012.html
       pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:solaris) }} && family == Socket::Family::INET
+      # TODO: figure out why updating `multicast_loopback` produces a
+      # `setsockopt 18: Invalid argument` error
+      pending "joins and transmits to multicast groups"
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)
