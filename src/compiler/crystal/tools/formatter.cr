@@ -2637,17 +2637,17 @@ module Crystal
             end
 
             return false
-          else
-            write " " if needs_space && !passed_backslash_newline
-            write node.name
-
-            # This is the case of a-1 and a+1
-            if @token.type.number?
-              @lexer.current_pos = @token.start + 1
-            end
-
-            slash_is_regex!
           end
+
+          write " " if needs_space && !passed_backslash_newline
+          write node.name
+
+          # This is the case of a-1 and a+1
+          if @token.type.number?
+            @lexer.current_pos = @token.start + 1
+          end
+
+          slash_is_regex!
 
           next_token
           passed_backslash_newline = @token.passed_backslash_newline
