@@ -69,6 +69,22 @@ struct Atomic(T)
     Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
   end
 
+  # Compares this atomic's value with *cmp* using explicit memory orderings:
+  #
+  # * if they are equal, sets the value to *new*, and returns `{old_value, true}`
+  # * if they are not equal the value remains the same, and returns `{old_value, false}`
+  #
+  # Reference types are compared by `#same?`, not `#==`.
+  #
+  # ```
+  # atomic = Atomic.new(0_u32)
+  #
+  # value = atomic.get(:acquire)
+  # loop do
+  #   value, success = atomic.compare_and_set(value, value &+ 1, :acquire_release, :acquire)
+  #   break if success
+  # end
+  # ```
   def compare_and_set(cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool}
     case {success_ordering, failure_ordering}
     when {.relaxed?, .relaxed?}
