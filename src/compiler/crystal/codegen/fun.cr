@@ -103,8 +103,8 @@ class Crystal::CodeGenVisitor
 
         if @frame_pointers.always?
           context.fun.add_attribute "frame-pointer", value: "all"
-        elsif @program.has_flag?("darwin")
-          # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
+        elsif @program.has_flag?("darwin") || @program.has_flag?("solaris")
+          # Disable frame pointer elimination, as it causes issues during stack unwind
           context.fun.add_target_dependent_attribute "frame-pointer", "all"
         elsif @frame_pointers.non_leaf?
           context.fun.add_attribute "frame-pointer", value: "non-leaf"
