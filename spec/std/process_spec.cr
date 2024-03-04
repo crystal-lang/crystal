@@ -9,7 +9,7 @@ private def exit_code_command(code)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
   {% else %}
-      {"/bin/sh", {"-c", "exit #{code}"}}
+    {"/bin/sh", {"-c", "exit #{code}"}}
   {% end %}
 end
 
@@ -463,13 +463,13 @@ describe Process do
           begin
             Process.chroot(".")
             puts "FAIL"
-          rescue ex
-            puts ex.inspect
+          rescue ex : RuntimeError
+            puts ex.os_error
           end
         CRYSTAL
 
         status.success?.should be_true
-        output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+        output.should eq("EPERM\n")
       end
     {% end %}
   end
