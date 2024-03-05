@@ -664,6 +664,12 @@ class Crystal::Command
     opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
       compiler.optimization_mode = Compiler::OptimizationMode.from_value?(level.to_i) || raise Error.new("Unknown optimization mode #{level}")
     end
+    opts.on("--single-module", "Generate a single LLVM module") do
+      compiler.single_module = true
+    end
+    opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
+      compiler.n_threads = n_threads.to_i? || raise Error.new("Invalid thread count: #{n_threads}")
+    end
     opts.on("-s", "--stats", "Enable statistics output") do
       compiler.progress_tracker.stats = true
     end
