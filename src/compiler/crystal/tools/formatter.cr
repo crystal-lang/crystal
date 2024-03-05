@@ -2590,42 +2590,7 @@ module Crystal
         skip_space_or_newline
       end
 
-      # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
-      if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
-        write "["
-        next_token_skip_space_or_newline
-        format_call_args(node, base_indent)
-        skip_space_or_newline
-        write_token :OP_RSQUARE
-        write_token :OP_QUESTION if node.name == "[]?"
-        return false
-      end
-
-      # This is for foo.[bar] = baz
-      if node.name == "[]=" && @token.type.op_lsquare?
-        write "["
-        next_token_skip_space_or_newline
-        args = node.args
-        last_arg = args.pop
-        format_call_args(node, base_indent)
-        skip_space_or_newline
-        write_token :OP_RSQUARE
-        skip_space_or_newline
-        write " ="
-        next_token_skip_space
-        accept_assign_value_after_equals last_arg
-        return false
-      end
-
-      # This is for foo.[] = bar
-      if node.name == "[]=" && @token.type.op_lsquare_rsquare?
-        write_token :OP_LSQUARE_RSQUARE
-        next_token_skip_space_or_newline
-        write " ="
-        next_token_skip_space
-        accept_assign_value_after_equals node.args.last
-        return false
-      end
+      return if format_square_brackets_call2(node, base_indent)
 
       assignment = Lexer.setter?(node.name)
 
@@ -3254,6 +3219,47 @@ module Crystal
       end
 
       true
+    end
+
+    def format_square_brackets_call2(node, base_indent)
+      # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
+      if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
+        write "["
+        next_token_skip_space_or_newline
+        format_call_args(node, base_indent)
+        skip_space_or_newline
+        write_token :OP_RSQUARE
+        write_token :OP_QUESTION if node.name == "[]?"
+        return true
+      end
+
+      # This is for foo.[bar] = baz
+      if node.name == "[]=" && @token.type.op_lsquare?
+        write "["
+        next_token_skip_space_or_newline
+        args = node.args
+        last_arg = args.pop
+        format_call_args(node, base_indent)
+        skip_space_or_newline
+        write_token :OP_RSQUARE
+        skip_space_or_newline
+        write " ="
+        next_token_skip_space
+        accept_assign_value_after_equals last_arg
+        return true
+      end
+
+      # This is for foo.[] = bar
+      if node.name == "[]=" && @token.type.op_lsquare_rsquare?
+        write_token :OP_LSQUARE_RSQUARE
+        next_token_skip_space_or_newline
+        write " ="
+        next_token_skip_space
+        accept_assign_value_after_equals node.args.last
+        return true
+      end
+
+      false
     end
 
     def format_operator_call(node, column, needs_space, passed_backslash_newline)
