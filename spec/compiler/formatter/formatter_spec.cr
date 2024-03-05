@@ -1151,6 +1151,12 @@ describe Crystal::Formatter do
   assert_format "foo[] =1", "foo[] = 1"
   assert_format "foo[ 1 , 2 ]   =3", "foo[1, 2] = 3"
 
+  assert_format "foo.[]"
+  assert_format "foo.[ 1 , 2 ]", "foo.[1, 2]"
+  assert_format "foo.[ 1,  2 ]?", "foo.[1, 2]?"
+  assert_format "foo.[] =1", "foo.[] = 1"
+  assert_format "foo.[ 1 , 2 ]   =3", "foo.[1, 2] = 3"
+
   assert_format "1  ||  2", "1 || 2"
   assert_format "a  ||  b", "a || b"
   assert_format "1  &&  2", "1 && 2"

@@ -2691,6 +2691,7 @@ module Crystal
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false, base_indent)
+        skip_space_or_newline
         write_token :OP_RSQUARE
         write_token :OP_QUESTION if node.name == "[]?"
         return false
@@ -2703,6 +2704,7 @@ module Crystal
         args = node.args
         last_arg = args.pop
         format_call_args(node, true, base_indent)
+        skip_space_or_newline
         write_token :OP_RSQUARE
         skip_space_or_newline
         write " ="
