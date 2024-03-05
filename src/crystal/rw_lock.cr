@@ -1,5 +1,5 @@
 # :nodoc:
-class Crystal::RWLock
+struct Crystal::RWLock
   private UNLOCKED = 0
   private LOCKED   = 1
 
