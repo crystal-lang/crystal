@@ -2774,7 +2774,7 @@ module Crystal
       @inside_call_or_assign += 1
 
       unless args.empty?
-        has_newlines, found_comment, needed_indent = format_args_simple(args, needed_indent, do_consume_newlines)
+        has_newlines, found_comment, needed_indent = format_positional_args(args, needed_indent, do_consume_newlines)
       end
 
       if named_args
@@ -2791,7 +2791,7 @@ module Crystal
       {has_newlines, found_comment, needed_indent}
     end
 
-    def format_args_simple(args, needed_indent, do_consume_newlines)
+    def format_positional_args(args, needed_indent, do_consume_newlines)
       has_newlines = false
       found_comment = false
 
