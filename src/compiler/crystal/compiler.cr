@@ -535,10 +535,13 @@ module Crystal
 
       wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
 
-      # If threads is 1 and no stats/progress is needed we can avoid
-      # fork/spawn/channels altogether. This is particularly useful for
-      # CI because there forking eventually leads to "out of memory" errors.
-      if @n_threads == 1
+      # Don't start more processes than compilation units
+      n_threads = @n_threads.clamp(1..units.size)
+
+      # If threads is 1 we can avoid fork/spawn/channels altogether. This is
+      # particularly useful for CI because there forking eventually leads to
+      # "out of memory" errors.
+      if n_threads == 1
         units.each do |unit|
           unit.compile
           all_reused << unit.name if wants_stats_or_progress && unit.reused_previous_compilation?
@@ -551,7 +554,7 @@ module Crystal
       {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
       {% else %}
-        workers = fork_workers do |input, output|
+        workers = fork_workers(n_threads) do |input, output|
           while i = input.gets(chomp: true).presence
             unit = units[i.to_i]
             unit.compile
@@ -562,8 +565,8 @@ module Crystal
 
         overqueue = 1
         indexes = Atomic(Int32).new(0)
-        channel = Channel(String).new(@n_threads)
-        completed = Channel(Nil).new(@n_threads)
+        channel = Channel(String).new(n_threads)
+        completed = Channel(Nil).new(n_threads)
 
         workers.each do |pid, input, output|
           spawn do
@@ -598,7 +601,7 @@ module Crystal
         end
 
         spawn do
-          @n_threads.times { completed.receive }
+          n_threads.times { completed.receive }
           channel.close
         end
 
@@ -614,10 +617,10 @@ module Crystal
       {% end %}
     end
 
-    private def fork_workers
+    private def fork_workers(n_threads)
       workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
 
-      @n_threads.times do
+      n_threads.times do
         iread, iwrite = IO.pipe
         oread, owrite = IO.pipe
 
