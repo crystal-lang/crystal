@@ -236,41 +236,22 @@ module Crystal::System::FileDescriptor
 
   @[AlwaysInline]
   def self.tcgetattr(fd)
-    {% if flag?(:solaris) %}
-      termio = uninitialized LibC::Termio
-      ret = LibC.ioctl(fd, LibC::TCGETA, pointerof(termio))
-      raise IO::Error.from_errno("ioctl") if ret != 0
-      termio
+    termios = uninitialized LibC::Termios
+    {% if LibC.has_method?(:tcgetattr) %}
+      ret = LibC.tcgetattr(fd, pointerof(termios))
+      raise IO::Error.from_errno("tcgetattr") if ret == -1
     {% else %}
-      termios = uninitialized LibC::Termios
-      ret = {% if flag?(:android) && !LibC.has_method?(:tcgetattr) %}
-              LibC.ioctl(fd, LibC::TCGETS, pointerof(termios))
-            {% else %}
-              LibC.tcgetattr(fd, pointerof(termios))
-            {% end %}
-      raise IO::Error.from_errno("tcgetattr") if ret != 0
-      termios
+      ret = LibC.ioctl(fd, LibC::TCGETS, pointerof(termios))
+      raise IO::Error.from_errno("ioctl") if ret == -1
     {% end %}
+    termios
   end
 
   @[AlwaysInline]
   def self.tcsetattr(fd, optional_actions, termios_p)
-    {% if flag?(:solaris) %}
-      optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
-      cmd = case optional_actions
-            when LibC::TCSANOW
-              LibC::TCSETA
-            when LibC::TCSADRAIN
-              LibC::TCSETAW
-            when LibC::TCSAFLUSH
-              LibC::TCSETAF
-            else
-              Errno.value = Errno::EINVAL
-              return LibC::Int.new(-1)
-            end
-
-      LibC.ioctl(fd, cmd, termios_p)
-    {% elsif flag?(:android) && !LibC.has_method?(:tcsetattr) %}
+    {% if LibC.has_method?(:tcsetattr) %}
+      LibC.tcsetattr(fd, optional_actions, termios_p)
+    {% else %}
       optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
       cmd = case optional_actions
             when LibC::TCSANOW
@@ -285,8 +266,6 @@ module Crystal::System::FileDescriptor
             end
 
       LibC.ioctl(fd, cmd, termios_p)
-    {% else %}
-      LibC.tcsetattr(fd, optional_actions, termios_p)
     {% end %}
   end
 

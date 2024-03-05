@@ -115,11 +115,6 @@ lib LibC
   TCSADRAIN = 0x540F
   TCSAFLUSH = 0x5410
 
-  TCGETA  = 0x5401
-  TCSETA  = 0x5402
-  TCSETAW = 0x5403
-  TCSETAF = 0x5404
-
   TCIFLUSH  = 0
   TCIOFLUSH = 2
   TCOFLUSH  = 1
@@ -133,12 +128,14 @@ lib LibC
   alias SpeedT = UInt
   alias TcflagT = UInt
 
-  struct Termio
-    c_iflag : UShort
-    c_oflag : UShort
-    c_cflag : UShort
-    c_lflag : UShort
-    c_line : Char
-    c_cc : UChar[8]
+  struct Termios
+    c_iflag : TcflagT
+    c_oflag : TcflagT
+    c_cflag : TcflagT
+    c_lflag : TcflagT
+    c_cc : CcT[19]
   end
+
+  fun tcgetattr(x0 : Int, x1 : Termios*) : Int
+  fun tcsetattr(x0 : Int, x1 : Int, x2 : Termios*) : Int
 end
