@@ -2594,7 +2594,7 @@ module Crystal
       if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
-        format_call_args(node, false, base_indent)
+        format_call_args(node, base_indent)
         skip_space_or_newline
         write_token :OP_RSQUARE
         write_token :OP_QUESTION if node.name == "[]?"
@@ -2607,7 +2607,7 @@ module Crystal
         next_token_skip_space_or_newline
         args = node.args
         last_arg = args.pop
-        format_call_args(node, true, base_indent)
+        format_call_args(node, base_indent)
         skip_space_or_newline
         write_token :OP_RSQUARE
         skip_space_or_newline
@@ -2646,7 +2646,7 @@ module Crystal
           write "=("
           slash_is_regex!
           next_token
-          format_call_args(node, true, base_indent)
+          format_call_args(node, base_indent)
           skip_space_or_newline
           write_token :OP_RPAREN
         else
@@ -2702,7 +2702,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment, _ = format_call_args(node, true, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, base_indent)
         found_comment ||= skip_space
         if @token.type.newline?
           ends_with_newline = true
@@ -2711,7 +2711,7 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment, _ = format_call_args(node, false, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, base_indent)
       end
 
       if block = node.block
@@ -2764,11 +2764,11 @@ module Crystal
       false
     end
 
-    def format_call_args(node : ASTNode, has_parentheses, base_indent)
-      indent(base_indent) { format_args node.args, has_parentheses, node.named_args, node.block_arg }
+    def format_call_args(node : ASTNode, base_indent)
+      indent(base_indent) { format_args node.args, node.named_args, node.block_arg }
     end
 
-    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
+    def format_args(args : Array, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
       has_newlines = false
       found_comment = false
       @inside_call_or_assign += 1
@@ -2866,7 +2866,7 @@ module Crystal
         end
       end
 
-      format_args named_args, false, needed_indent: named_args_column, do_consume_newlines: true
+      format_args named_args, needed_indent: named_args_column, do_consume_newlines: true
     end
 
     def format_block_arg(block_arg, needed_indent)
@@ -2927,7 +2927,7 @@ module Crystal
     def format_parenthesized_args(args, named_args = nil)
       write "("
       next_token_skip_space
-      has_newlines, found_comment, _ = format_args args, true, named_args: named_args
+      has_newlines, found_comment, _ = format_args args, named_args: named_args
       skip_space
       ends_with_newline = false
       if @token.type.newline?
@@ -3195,7 +3195,7 @@ module Crystal
           last_arg = args.pop
         end
 
-        has_newlines, found_comment, _ = format_args args, true, node.named_args
+        has_newlines, found_comment, _ = format_args args, node.named_args
         if @token.type.op_comma? || @token.type.newline?
           if has_newlines
             write ","
@@ -3712,7 +3712,7 @@ module Crystal
         # The tuple depth is 2 in both cases but only 1 leading curly brace is
         # present on the first return.
         if exp.is_a?(TupleLiteral) && opening_curly_brace_count < leading_tuple_depth(exp)
-          format_args(exp.elements, has_parentheses)
+          format_args(exp.elements)
           skip_space if has_parentheses
         else
           indent(@indent, exp)
@@ -3760,7 +3760,7 @@ module Crystal
       else
         write " " unless node.exps.empty?
         skip_space
-        format_args node.exps, false
+        format_args node.exps
       end
 
       false
