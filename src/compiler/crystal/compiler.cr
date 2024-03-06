@@ -82,7 +82,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) %} 1 {% else %} 8 {% end %}
+    property n_threads : Int32 = {% if flag?(:win32) %} 1 {% else %} 8 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -547,6 +547,47 @@ module Crystal
         return all_reused
       end
 
+      {% if flag?(:preview_mt) %}
+        if LLVM.multithreaded?
+          channel = Channel(CompilationUnit).new(@n_threads * 2)
+          mutex = Mutex.new
+          done = Channel(Nil).new(@n_threads)
+
+          @n_threads.times do
+            spawn do
+              while unit = channel.receive?
+                unit.compile(isolate_context: true)
+
+                if wants_stats_or_progress && unit.reused_previous_compilation?
+                  mutex.synchronize { all_reused << unit.name }
+                end
+              end
+            ensure
+              done.send(nil)
+            end
+          end
+
+          units.each do |unit|
+            # We generate the bitcode in the main thread because LLVM contexts
+            # must be unique per compilation unit, but we share different contexts
+            # across many modules (or rely on the global context); trying to
+            # codegen in parallel would segfault!
+            #
+            # Luckily generating the bitcode is quick and once the bitcode is
+            # generated we don't need the global LLVM contexts anymore but can
+            # parse the bitcode in an isolated context and we can parallelize the
+            # slowest part: the optimization pass & compiling the object file.
+            unit.generate_bitcode
+
+            channel.send(unit)
+          end
+          channel.close
+
+          @n_threads.times { done.receive }
+          return all_reused
+        end
+      {% end %}
+
       {% if !Crystal::System::Process.class.has_method?("fork") %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% elsif flag?(:preview_mt) %}
@@ -598,9 +639,9 @@ module Crystal
           reused = wait_channel.receive
           all_reused.concat(reused)
         end
-
-        all_reused
       {% end %}
+
+      all_reused
     end
 
     private def print_macro_run_stats(program)
@@ -645,7 +686,7 @@ module Crystal
       end
     end
 
-    getter(target_machine : LLVM::TargetMachine) do
+    def create_target_machine
       @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @optimization_mode, @mcmodel)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
@@ -653,6 +694,8 @@ module Crystal
       stderr.puts ex.message
       exit 1
     end
+
+    getter(target_machine : LLVM::TargetMachine) { create_target_machine }
 
     {% if LibLLVM::IS_LT_130 %}
       protected def optimize(llvm_mod)
@@ -772,6 +815,9 @@ module Crystal
       getter llvm_mod
       getter? reused_previous_compilation = false
       getter object_extension : String
+      @memory_buffer : LLVM::MemoryBuffer?
+      @object_name : String?
+      @bc_name : String?
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
@@ -801,39 +847,45 @@ module Crystal
         @object_extension = compiler.codegen_target.object_extension
       end
 
-      def compile
-        compile_to_object
+      def generate_bitcode
+        @memory_buffer ||= llvm_mod.write_bitcode_to_memory_buffer
       end
 
-      private def compile_to_object
-        bc_name = self.bc_name
-        object_name = self.object_name
-        temporary_object_name = self.temporary_object_name
+      # To compile a file we first generate a `.bc` file and then
+      # create an object file from it. These `.bc` files are stored
+      # in the cache directory.
+      #
+      # On a next compilation of the same project, and if the compile
+      # flags didn't change (a combination of the target triple, mcpu
+      # and link flags, amongst others), we check if the new
+      # `.bc` file is exactly the same as the old one. In that case
+      # the `.o` file will also be the same, so we simply reuse the
+      # old one. Generating an `.o` file is what takes most time.
+      #
+      # However, instead of directly generating the final `.o` file
+      # from the `.bc` file, we generate it to a temporary name (`.o.tmp`)
+      # and then we rename that file to `.o`. We do this because the compiler
+      # could be interrupted while the `.o` file is being generated, leading
+      # to a corrupted file that later would cause compilation issues.
+      # Moving a file is an atomic operation so no corrupted `.o` file should
+      # be generated.
+      def compile(isolate_context = false)
+        if must_compile?
+          isolate_module_context if isolate_context
+          update_bitcode_cache
+          compile_to_object
+        else
+          @reused_previous_compilation = true
+        end
+        dump_llvm_ir
+      end
 
-        # To compile a file we first generate a `.bc` file and then
-        # create an object file from it. These `.bc` files are stored
-        # in the cache directory.
-        #
-        # On a next compilation of the same project, and if the compile
-        # flags didn't change (a combination of the target triple, mcpu
-        # and link flags, amongst others), we check if the new
-        # `.bc` file is exactly the same as the old one. In that case
-        # the `.o` file will also be the same, so we simply reuse the
-        # old one. Generating an `.o` file is what takes most time.
-        #
-        # However, instead of directly generating the final `.o` file
-        # from the `.bc` file, we generate it to a temporary name (`.o.tmp`)
-        # and then we rename that file to `.o`. We do this because the compiler
-        # could be interrupted while the `.o` file is being generated, leading
-        # to a corrupted file that later would cause compilation issues.
-        # Moving a file is an atomic operation so no corrupted `.o` file should
-        # be generated.
-
+      private def must_compile?
         must_compile = true
+        memory_buffer = generate_bitcode
+
         can_reuse_previous_compilation =
           compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
-
-        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
         if can_reuse_previous_compilation
           memory_io = IO::Memory.new(memory_buffer.to_slice)
@@ -842,32 +894,41 @@ module Crystal
           # If the user cancelled a previous compilation
           # it might be that the .o file is empty
           if !changed && File.size(object_name) > 0
-            must_compile = false
             memory_buffer.dispose
             memory_buffer = nil
+            must_compile = false
           else
             # We need to compile, so we'll write the memory buffer to file
           end
         end
 
-        # If there's a memory buffer, it means we must create a .o from it
-        if memory_buffer
+        must_compile
+      end
+
+      # Parse the previously generated bitcode into the LLVM module using an
+      # dedicated context, so we can safely optimize & compile the module in
+      # multiple threads (llvm contexts can't be shared across threads).
+      private def isolate_module_context
+        if buffer = @memory_buffer
+          @llvm_mod = LLVM::Module.parse(buffer, LLVM::Context.new)
+        end
+      end
+
+      private def update_bitcode_cache
+        if memory_buffer = @memory_buffer
           # Delete existing .o file. It cannot be used anymore.
           File.delete?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
         end
+      end
 
-        if must_compile
-          compiler.optimize llvm_mod unless compiler.optimization_mode.o0?
-          compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-          File.rename(temporary_object_name, object_name)
-        else
-          @reused_previous_compilation = true
-        end
-
-        dump_llvm_ir
+      private def compile_to_object
+        temporary_object_name = self.temporary_object_name
+        compiler.optimize llvm_mod unless compiler.optimization_mode.o0?
+        compiler.create_target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+        File.rename(temporary_object_name, object_name)
       end
 
       private def dump_llvm_ir
@@ -890,7 +951,7 @@ module Crystal
       end
 
       def object_name
-        Crystal.relative_filename("#{@output_dir}/#{object_filename}")
+        @object_name ||= Crystal.relative_filename("#{@output_dir}/#{object_filename}")
       end
 
       def object_filename
@@ -902,7 +963,7 @@ module Crystal
       end
 
       def bc_name
-        "#{@output_dir}/#{@name}.bc"
+        @bc_name ||= "#{@output_dir}/#{@name}.bc"
       end
 
       def bc_name_new

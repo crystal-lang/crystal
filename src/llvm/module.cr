@@ -6,6 +6,12 @@ class LLVM::Module
 
   getter context : Context
 
+  def self.parse(memory_buffer : MemoryBuffer, context : Context) : self
+    LibLLVM.parse_bitcode_in_context2(context, memory_buffer, out module_ref)
+    raise "BUG: failed to parse LLVM bitcode from memory buffer" unless module_ref
+    new(module_ref, context)
+  end
+
   def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
     @owned = false
   end
