@@ -22,9 +22,12 @@ module Crystal::System::Signal
     @@mutex.synchronize do
       unless @@handlers[signal]?
         @@sigset << signal
-        LibC.signal(signal.value, ->(value : Int32) {
+        action = LibC::Sigaction.new
+        action.sa_sigaction = LibC::SigactionHandlerT.new do |value, _, _|
           writer.write_bytes(value) unless writer.closed?
-        })
+        end
+        LibC.sigemptyset(pointerof(action.@sa_mask))
+        LibC.sigaction(signal, pointerof(action), nil)
       end
       @@handlers[signal] = handler
     end

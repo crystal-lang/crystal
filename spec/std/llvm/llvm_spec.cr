@@ -30,6 +30,8 @@ describe LLVM do
       triple.should match(/-dragonfly/)
     {% elsif flag?(:netbsd) %}
       triple.should match(/-netbsd/)
+    {% elsif flag?(:solaris) %}
+      triple.should match(/-solaris$/)
     {% elsif flag?(:wasi) %}
       triple.should match(/-wasi/)
     {% else %}
