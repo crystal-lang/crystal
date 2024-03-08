@@ -23,6 +23,11 @@ module Crystal::System::Signal
       unless @@handlers[signal]?
         @@sigset << signal
         action = LibC::Sigaction.new
+
+        # restart some interrupted syscalls (read, write, accept, ...) instead
+        # of returning EINTR:
+        action.sa_flags = LibC::SA_RESTART
+
         action.sa_sigaction = LibC::SigactionHandlerT.new do |value, _, _|
           writer.write_bytes(value) unless writer.closed?
         end
