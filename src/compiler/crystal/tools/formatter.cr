@@ -1464,9 +1464,9 @@ module Crystal
         write_token :OP_PERIOD
       end
 
-      @lexer.wants_def_or_macro_name = true
-      skip_space_or_newline
-      @lexer.wants_def_or_macro_name = false
+      @lexer.wants_def_or_macro_name do
+        skip_space_or_newline
+      end
 
       write node.name
 
@@ -2671,10 +2671,11 @@ module Crystal
           return false
         end
 
-        @lexer.wants_def_or_macro_name = true
-        next_token
-        @lexer.wants_def_or_macro_name = false
+        @lexer.wants_def_or_macro_name do
+          next_token
+        end
         skip_space
+
         if (@token.type.newline?) || @wrote_newline
           base_indent = @indent + 2
           indent(base_indent) { consume_newlines }
@@ -3106,9 +3107,9 @@ module Crystal
         write_token :OP_AMP
         skip_space_or_newline
         write "."
-        @lexer.wants_def_or_macro_name = true
-        next_token_skip_space_or_newline
-        @lexer.wants_def_or_macro_name = false
+        @lexer.wants_def_or_macro_name do
+          next_token_skip_space_or_newline
+        end
 
         body = node.body
         case body
