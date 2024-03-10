@@ -2982,8 +2982,6 @@ module Crystal
     end
 
     def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
-      skip_space
-
       if has_parentheses
         if @token.type.op_comma?
           next_token

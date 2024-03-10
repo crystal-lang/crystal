@@ -2893,6 +2893,14 @@ describe Crystal::Formatter do
     end
   end
 
+  # #14256
+  assert_format <<-CRYSTAL
+    foo bar # comment
+
+    # doc
+    def baz; end
+    CRYSTAL
+
   # CVE-2021-42574
   describe "Unicode bi-directional control characters" do
     ['\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
