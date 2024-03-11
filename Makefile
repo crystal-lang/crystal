@@ -62,7 +62,6 @@ LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version 2> /dev/null))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
-DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
@@ -80,6 +79,7 @@ else
   colorize = $(shell printf >&2 "\033[33m$1\033[0m\n")
 endif
 
+DEPS = $(LLVM_EXT_OBJ)
 ifneq ($(LLVM_VERSION),)
   ifeq ($(shell test $(firstword $(subst ., ,$(LLVM_VERSION))) -ge 18; echo $$?),0)
     DEPS =

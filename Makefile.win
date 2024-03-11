@@ -70,7 +70,6 @@ LLVM_CONFIG ?=
 LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
-DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
 
@@ -82,6 +81,7 @@ DATADIR ?= $(prefix)
 
 colorize = $1
 
+DEPS = $(LLVM_EXT_OBJ)
 ifneq ($(LLVM_VERSION),)
   ifeq ($(shell if $(firstword $(subst ., ,$(LLVM_VERSION))) GEQ 18 echo 0),0)
     DEPS =
