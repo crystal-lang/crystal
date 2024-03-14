@@ -1104,6 +1104,19 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "finds type for global path shared with free var" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module T
+      end
+
+      def foo(x : T) forall T
+        {{ ::T.module? ? 1 : 'a' }}
+      end
+
+      foo("")
+      CRYSTAL
+  end
+
   it "gets named arguments in double splat" do
     assert_type(<<-CRYSTAL) { named_tuple_of({"x": string, "y": bool}) }
       macro foo(**options)
@@ -1725,5 +1738,37 @@ describe "Semantic: macro" do
         { {{a}}, {{b}} }
       {% end %}
       CRYSTAL
+  end
+
+  describe "@caller" do
+    it "returns an array of each call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        macro test
+          {{@caller.size == 1 ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
+
+    it "provides access to the `Call` information" do
+      assert_type(<<-CRYSTAL) { tuple_of([int32, char] of Type) }
+        macro test(num)
+          {{@caller.first.args[0] == 1 ? 1 : 'f'}}
+        end
+
+        {test(1), test(2)}
+        CRYSTAL
+    end
+
+    it "returns nil if no stack is available" do
+      assert_type(<<-CRYSTAL) { char }
+        def test
+          {{(c = @caller) ? 1 : 'f'}}
+        end
+
+        test
+        CRYSTAL
+    end
   end
 end

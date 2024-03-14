@@ -34,9 +34,9 @@
 # * https://github.com/microsoft/STL/tree/main/tests/std/tests/P0067R5_charconv
 
 require "spec"
-require "./spec_helper"
+require "../spec_helper"
 require "spec/helpers/string"
-require "../support/number"
+require "../../support/number"
 
 # Tests that `v.to_s` is the same as the *v* literal is written in the source
 # code, except possibly omitting the `_f32` suffix for `Float32` literals.
@@ -63,8 +63,8 @@ describe "Float32#to_s" do
     it_converts_to_s 0xFFC0_0000_u32.unsafe_as(Float32), "NaN"
     it_converts_to_s Float32::MIN_POSITIVE, "1.1754944e-38"
     it_converts_to_s Float32::MAX, "3.4028235e+38"
-    it_converts_to_s hexfloat("0x1.ffffffp-127_f32"), "1.1754942e-38" # largest denormal
-    it_converts_to_s 1.0e-45_f32                                      # smallest denormal
+    it_converts_to_s Float32::MIN_POSITIVE.prev_float, "1.1754942e-38" # largest subnormal
+    it_converts_to_s Float32::MIN_SUBNORMAL, "1.0e-45"
   end
 
   context "Ryu f2s_test.cc BoundaryRoundEven" do
@@ -347,8 +347,8 @@ describe "Float64#to_s" do
     it_converts_to_s 0xFFF8_0000_0000_0000_u64.unsafe_as(Float64), "NaN"
     it_converts_to_s Float64::MIN_POSITIVE, "2.2250738585072014e-308"
     it_converts_to_s Float64::MAX, "1.7976931348623157e+308"
-    it_converts_to_s hexfloat("0x1.fffffffffffffp-1023"), "2.225073858507201e-308" # largest denormal
-    it_converts_to_s 5.0e-324                                                      # smallest denormal
+    it_converts_to_s Float64::MIN_POSITIVE.prev_float, "2.225073858507201e-308" # largest subnormal
+    it_converts_to_s Float64::MIN_SUBNORMAL, "5.0e-324"
   end
 
   context "Ryu d2s_test.cc LotsOfTrailingZeros" do

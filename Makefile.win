@@ -35,7 +35,7 @@ static ?=       ## Enable static linking
 target ?=       ## Cross-compilation target
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
-order ?=        ## Enable order for spec execution (values: "default" | "random" | seed number)
+order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
@@ -70,8 +70,7 @@ LLVM_CONFIG ?=
 LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
-DEPS = $(LLVM_EXT_OBJ)
-CXXFLAGS += $(if $(debug),/MTd /Od,/MT)
+CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
 
 prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
@@ -81,6 +80,13 @@ SRCDIR ?= $(prefix)\src
 DATADIR ?= $(prefix)
 
 colorize = $1
+
+DEPS = $(LLVM_EXT_OBJ)
+ifneq ($(LLVM_VERSION),)
+  ifeq ($(shell if $(firstword $(subst ., ,$(LLVM_VERSION))) GEQ 18 echo 0),0)
+    DEPS =
+  endif
+endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
@@ -141,27 +147,9 @@ llvm_ext: $(LLVM_EXT_OBJ)
 format: ## Format sources
 	.\bin\crystal tool format$(if $(check), --check) src spec samples scripts
 
-generate_data: ## Run generator scripts for Unicode, SSL config, ... (usually with `-B`/`--always-make` flag)
-
-generate_data: spec\std\string\graphemes_break_spec.cr
-spec\std\string\graphemes_break_spec.cr: scripts\generate_grapheme_break_specs.cr
-	$(CRYSTAL) run $<
-
-generate_data: src\string\grapheme\properties.cr
-src\string\grapheme\properties.cr: scripts\generate_grapheme_properties.cr
-	$(CRYSTAL) run $<
-
-generate_data: src\openssl\ssl\defaults.cr
-src\openssl\ssl\defaults.cr: scripts\generate_ssl_server_defaults.cr
-	$(CRYSTAL) run $<
-
-generate_data: src\unicode\data.cr
-src\unicode\data.cr: scripts\generate_unicode_data.cr
-	$(CRYSTAL) run $<
-
-generate_data: src\crystal\system\win32\zone_names.cr
-src\crystal\system\win32\zone_names.cr: scripts\generate_windows_zone_names.cr
-	$(CRYSTAL) run $<
+.PHONY: generate_data
+generate_data: ## Run generator scripts for Unicode, SSL config, ...
+	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
 install: $(O)\crystal.exe ## Install the compiler at prefix
@@ -189,7 +177,6 @@ install_docs: docs ## Install docs at prefix
 	$(call MKDIR,"$(DATADIR)")
 	$(call INSTALLDIR,docs,"$(DATADIR)\docs")
 	$(call INSTALLDIR,samples,"$(DATADIR)\examples")
-	$(call RM,"$(DATADIR)\examples\.gitignore")
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from prefix
@@ -217,7 +204,7 @@ $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
 
-$(O)\interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)\interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@$(call MKDIR, "$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr

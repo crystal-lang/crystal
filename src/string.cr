@@ -3416,9 +3416,19 @@ class String
     self.match(search, offset, options: options).try &.begin
   end
 
-  # :ditto:
+  # Returns the index of the _first_ occurrence of *search* in the string. If *offset* is present,
+  # it defines the position to start the search.
   #
   # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  #
+  # ```
+  # "Hello, World".index!('o')    # => 4
+  # "Hello, World".index!('Z')    # raises Enumerable::NotFoundError
+  # "Hello, World".index!("o", 5) # => 8
+  # "Hello, World".index!("H", 2) # raises Enumerable::NotFoundError
+  # "Hello, World".index!(/[ ]+/) # => 6
+  # "Hello, World".index!(/\d+/)  # raises Enumerable::NotFoundError
+  # ```
   def index!(search, offset = 0) : Int32
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
@@ -4188,7 +4198,6 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    options = Regex::MatchOptions::None
     while match = separator.match_at_byte_index(self, match_offset, options: options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
@@ -4687,12 +4696,53 @@ class String
     regex.matches? self, pos, options: options
   end
 
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  #
+  # ```
+  # "foo".match_full(/foo/)  # => Regex::MatchData("foo")
+  # $~                       # => Regex::MatchData("foo")
+  # "fooo".match_full(/foo/) # => nil
+  # $~                       # raises Exception
+  # ```
+  def match_full(regex : Regex) : Regex::MatchData?
+    match(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  # Raises `Regex::Error` if there are no matches.
+  #
+  # ```
+  # "foo".match_full!(/foo/)  # => Regex::MatchData("foo")
+  # $~                        # => Regex::MatchData("foo")
+  # "fooo".match_full!(/foo/) # Regex::Error
+  # $~                        # raises Exception
+  # ```
+  def match_full!(regex : Regex) : Regex::MatchData?
+    match!(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
+  # Returns `true` if the regular expression *regex* matches this string entirely.
+  #
+  # ```
+  # "foo".matches_full?(/foo/)  # => true
+  # "fooo".matches_full?(/foo/) # => false
+  #
+  # # `$~` is not set even if last match succeeds.
+  # $~ # raises Exception
+  # ```
+  def matches_full?(regex : Regex) : Bool
+    matches?(regex, options: Regex::MatchOptions::ANCHORED | Regex::MatchOptions::ENDANCHORED)
+  end
+
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
   def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : self
     byte_offset = 0
 
-    options = Regex::MatchOptions::None
     while match = pattern.match_at_byte_index(self, byte_offset, options: options)
       index = match.byte_begin(0)
       $~ = match

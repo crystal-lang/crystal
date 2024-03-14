@@ -22,9 +22,9 @@ describe "Regex::MatchData" do
   end
 
   it "#to_s" do
-    matchdata(/f(o)(x)/, "the fox").to_s.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
-    matchdata(/f(?<lettero>o)(?<letterx>x)/, "the fox").to_s.should eq(%(Regex::MatchData("fox" lettero:"o" letterx:"x")))
-    matchdata(/fox/, "the fox").to_s.should eq(%(Regex::MatchData("fox")))
+    matchdata(/f(o)(x)/, "the fox").to_s.should eq("fox")
+    matchdata(/f(?<lettero>o)(?<letterx>x)/, "the fox").to_s.should eq("fox")
+    matchdata(/fox/, "the fox").to_s.should eq("fox")
   end
 
   it "#pretty_print" do

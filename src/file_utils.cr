@@ -317,7 +317,7 @@ module FileUtils
   # ```
   def mv(src_path : Path | String, dest_path : Path | String) : Nil
     if error = Crystal::System::File.rename(src_path.to_s, dest_path.to_s)
-      raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
+      raise error unless error.os_error.in?(Errno::EXDEV, Errno::EPERM, WinError::ERROR_NOT_SAME_DEVICE)
       cp_r(src_path, dest_path)
       rm_r(src_path)
     end

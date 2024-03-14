@@ -192,7 +192,7 @@ class IO::Delimited < IO
     slice.copy_from(peek[0, index])
     slice += index
 
-    # Copy the rest of the peek buffer into delimted buffer
+    # Copy the rest of the peek buffer into delimited buffer
     @delimiter_buffer.copy_from(rest)
     @active_delimiter_buffer = @delimiter_buffer[0, rest.size]
 

@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1]
+        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2]
         flags: [""]
         include:
           # libffi is only available starting from the 1.2.2 build images
@@ -130,7 +130,7 @@ jobs:
         run: echo $GITHUB_SHA > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -100,6 +100,9 @@ module LLVM
     when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"
+    when .starts_with?("x86_64-pc-solaris")
+      # remove API version
+      "x86_64-pc-solaris"
     else
       triple
     end

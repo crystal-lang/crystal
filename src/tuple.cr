@@ -539,10 +539,28 @@ struct Tuple
     to_s
   end
 
-  def to_a
+  # Returns an `Array` with all the elements in the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}.to_a # => [1, 2, 3, 4, 5]
+  # ```
+  def to_a : Array(Union(*T))
+    {% if compare_versions(Crystal::VERSION, "1.1.0") < 0 %}
+      to_a(&.itself.as(Union(*T)))
+    {% else %}
+      to_a(&.itself)
+    {% end %}
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : Union(*T) -> _)
     Array(Union(*T)).build(size) do |buffer|
       {% for i in 0...T.size %}
-        buffer[{{i}}] = self[{{i}}]
+        buffer[{{i}}] = yield self[{{i}}]
       {% end %}
       size
     end

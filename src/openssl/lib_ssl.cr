@@ -9,7 +9,7 @@ require "./lib_crypto"
     {% if flag?(:win32) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
-      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
         {% unless ssl_version %}
           {% config_path = "#{dir.id}\\openssl_VERSION" %}
           {% if config_version = read_file?(config_path) %}
@@ -42,6 +42,11 @@ require "./lib_crypto"
   @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+{% end %}
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
+  @[Link(dll: "libssl-3-x64.dll")]
+  @[Link(dll: "libcrypto-3-x64.dll")]
 {% end %}
 lib LibSSL
   alias Int = LibC::Int

@@ -5,12 +5,16 @@ require "./html_parser_options"
 require "./save_options"
 
 @[Link("xml2", pkg_config: "libxml-2.0")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "libxml2.dll")]
+{% end %}
 lib LibXML
   alias Int = LibC::Int
 
+  fun xmlInitParser
+
   # TODO: check if other platforms also support per-thread globals
   {% if flag?(:win32) %}
-    fun xmlInitParser
     fun __xmlIndentTreeOutput : Int*
     fun __xmlTreeIndentString : UInt8**
   {% else %}
@@ -321,9 +325,7 @@ lib LibXML
   fun xmlValidateNameValue(value : UInt8*) : Int
 end
 
-{% if flag?(:win32) %}
-  LibXML.xmlInitParser
-{% end %}
+LibXML.xmlInitParser
 
 LibXML.xmlGcMemSetup(
   ->GC.free,

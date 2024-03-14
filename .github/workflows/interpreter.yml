@@ -13,7 +13,7 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.10.1-build
+      image: crystallang/crystal:1.11.2-build
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.10.1-build
+      image: crystallang/crystal:1.11.2-build
     name: Build interpreter
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
         run: make interpreter=1 release=1
 
       - name: Upload compiler artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-interpreter
           path: |
@@ -43,7 +43,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.10.1-build
+      image: crystallang/crystal:1.11.2-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-interpreter
           path: .build/

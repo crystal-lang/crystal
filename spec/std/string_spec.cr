@@ -1416,6 +1416,7 @@ describe "String" do
       it { "=".split(/\=/, 2).should eq(["", ""]) }
       it { "=".split(/\=/, 2, remove_empty: true).should eq([] of String) }
       it { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
+      it { "ba".split(/a/, options: :anchored).should eq ["ba"] }
 
       it "keeps groups" do
         s = "split on the word on okay?"
@@ -2322,6 +2323,10 @@ describe "String" do
     it "does with number and string" do
       "1ab4".scan(/\d+/).map(&.[0]).should eq(["1", "4"])
     end
+
+    it "options parameter" do
+      "ba".scan(/a/, options: :anchored).map(&.[0]).should eq [] of String
+    end
   end
 
   it "has match" do
@@ -2341,6 +2346,33 @@ describe "String" do
   it "matches, but returns Bool" do
     "foo".matches?(/foo/).should eq(true)
     "foo".matches?(/bar/).should eq(false)
+  end
+
+  it "#matches_full?" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".matches_full?(/foo/).should be_true
+    "fooo".matches_full?(/foo/).should be_false
+    "ofoo".matches_full?(/foo/).should be_false
+    "pattern".matches_full?(/(\A)?pattern(\z)?/).should be_true
+    "_pattern_".matches_full?(/(\A)?pattern(\z)?/).should be_false
+  end
+
+  it "#match_full" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full(/foo/).not_nil![0].should eq "foo"
+    "fooo".match_full(/foo/).should be_nil
+    "ofoo".match_full(/foo/).should be_nil
+    "pattern".match_full(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    "_pattern_".match_full(/(\A)?pattern(\z)?/).should be_nil
+  end
+
+  it "#match_full!" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full!(/foo/).not_nil![0].should eq "foo"
+    expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
+    expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
+    "pattern".match_full!(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    expect_raises(Regex::Error) { "_pattern_".match_full!(/(\A)?pattern(\z)?/) }
   end
 
   it "has size (same as size)" do
@@ -2660,14 +2692,12 @@ describe "String" do
       end
     end
 
-    {% unless flag?(:wasm32) %}
-      it "allocates buffer of correct size (#3332)" do
-        String.new(255_u8) do |buffer|
-          LibGC.size(buffer).should be > 255
-          {255, 0}
-        end
+    pending_wasm32 "allocates buffer of correct size (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be > 255
+        {255, 0}
       end
-    {% end %}
+    end
 
     it "raises if returned bytesize is greater than capacity" do
       expect_raises ArgumentError, "Bytesize out of capacity bounds" do
@@ -2755,7 +2785,7 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) || flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
@@ -2808,7 +2838,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:freebsd) || flag?(:dragonfly) %}
+      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")

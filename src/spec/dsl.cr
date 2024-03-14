@@ -3,6 +3,10 @@ require "option_parser"
 
 module Spec
   # :nodoc:
+  # The default spec runner.
+  class_getter cli = CLI.new
+
+  # :nodoc:
   enum InfoKind
     Comment
     Focus
@@ -61,14 +65,6 @@ module Spec
   class NestingSpecError < SpecError
   end
 
-  @@aborted = false
-
-  # :nodoc:
-  def self.abort!
-    @@aborted = true
-    finish_run
-  end
-
   # :nodoc:
   def self.to_human(span : Time::Span)
     total_milliseconds = span.total_milliseconds
@@ -92,17 +88,6 @@ module Spec
 
   record SplitFilter, remainder : Int32, quotient : Int32
 
-  @@split_filter : SplitFilter? = nil
-
-  def self.add_split_filter(filter)
-    if filter
-      r, m = filter.split('%').map &.to_i
-      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
-    else
-      @@split_filter = nil
-    end
-  end
-
   # Instructs the spec runner to execute the given block
   # before each spec in the spec suite.
   #
@@ -118,7 +103,7 @@ module Spec
   #
   # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
-    root_context.before_each(&block)
+    @@cli.root_context.before_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -136,7 +121,7 @@ module Spec
   #
   # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
-    root_context.after_each(&block)
+    @@cli.root_context.after_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -154,7 +139,7 @@ module Spec
   #
   # will print, just before the spec suite starts, 1 and then 2.
   def self.before_suite(&block)
-    root_context.before_all(&block)
+    @@cli.root_context.before_all(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -172,7 +157,7 @@ module Spec
   #
   # will print, just after the spec suite ends, 2 and then 1.
   def self.after_suite(&block)
-    root_context.after_all(&block)
+    @@cli.root_context.after_all(&block)
   end
 
   # Instructs the spec runner to execute the given block when each spec in the
@@ -196,74 +181,157 @@ module Spec
   # it { }
   # ```
   def self.around_each(&block : Example::Procsy ->)
-    root_context.around_each(&block)
+    @@cli.root_context.around_each(&block)
   end
 
-  @@start_time : Time::Span? = nil
-
   # :nodoc:
-  def self.run
-    @@start_time = Time.monotonic
+  class CLI
+    @aborted = false
 
-    at_exit do
+    def abort!
+      @aborted = true
+      finish_run
+    end
+
+    @split_filter : SplitFilter? = nil
+
+    def add_split_filter(filter)
+      if filter
+        r, _, m = filter.partition('%')
+        @split_filter = SplitFilter.new(remainder: r.to_i, quotient: m.to_i)
+      else
+        @split_filter = nil
+      end
+    end
+
+    @start_time : Time::Span? = nil
+
+    def run
+      @start_time = Time.monotonic
+
+      at_exit do |status|
+        # Do not run specs if the process is exiting on an error
+        next unless status == 0
+
+        begin
+          if list_tags?
+            execute_list_tags
+          else
+            execute_examples
+          end
+        rescue ex
+          STDERR.print "Unhandled exception: "
+          ex.inspect_with_backtrace(STDERR)
+          STDERR.flush
+          @aborted = true
+        ensure
+          finish_run unless list_tags?
+        end
+      end
+    end
+
+    def execute_examples
       log_setup
       maybe_randomize
       run_filters
       root_context.run
-    rescue ex
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
-      @@aborted = true
-    ensure
-      finish_run
     end
-  end
 
-  # :nodoc:
-  #
-  # Workaround for #8914
-  private macro defined?(t)
-    {% if t.resolve? %}
-      {{ yield }}
-    {% end %}
-  end
+    def execute_list_tags
+      run_filters
+      tag_counts = collect_tags(root_context)
+      print_list_tags(tag_counts)
+    end
 
-  # :nodoc:
-  def self.log_setup
-  end
+    private def collect_tags(context) : Hash(String, Int32)
+      tag_counts = Hash(String, Int32).new(0)
+      collect_tags(tag_counts, context, Set(String).new)
+      tag_counts
+    end
 
-  # :nodoc:
-  macro finished
+    private def collect_tags(tag_counts, context : Context, tags)
+      if context.responds_to?(:tags) && (context_tags = context.tags)
+        tags += context_tags
+      end
+      context.children.each do |child|
+        collect_tags(tag_counts, child, tags)
+      end
+    end
+
+    private def collect_tags(tag_counts, example : Example, tags)
+      if example_tags = example.tags
+        tags += example_tags
+      end
+      if tags.empty?
+        tag_counts.update("untagged") { |count| count + 1 }
+      else
+        tags.tally(tag_counts)
+      end
+    end
+
+    private def print_list_tags(tag_counts : Hash(String, Int32)) : Nil
+      return if tag_counts.empty?
+      longest_name_size = tag_counts.keys.max_of(&.size)
+      tag_counts.to_a.sort_by! { |k, v| {-v, k} }.each do |tag_name, count|
+        puts "#{tag_name.rjust(longest_name_size)}: #{count}"
+      end
+    end
+
     # :nodoc:
     #
-    # Initialized the log module for the specs.
-    # If the "log" module is required it is configured to emit no entries by default.
-    def self.log_setup
-      defined?(::Log) do
-        if Log.responds_to?(:setup)
-          Log.setup_from_env(default_level: :none)
+    # Workaround for #8914
+    private macro defined?(t)
+      {% if t.resolve? %}
+        {{ yield }}
+      {% end %}
+    end
+
+    # :nodoc:
+    def log_setup
+    end
+
+    # :nodoc:
+    macro finished
+      # :nodoc:
+      #
+      # Initialized the log module for the specs.
+      # If the "log" module is required it is configured to emit no entries by default.
+      def log_setup
+        defined?(::Log) do
+          if Log.responds_to?(:setup)
+            Log.setup_from_env(default_level: :none)
+          end
         end
       end
     end
-  end
 
-  def self.finish_run
-    elapsed_time = Time.monotonic - @@start_time.not_nil!
-    root_context.finish(elapsed_time, @@aborted)
-    exit 1 if !root_context.succeeded || @@aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
-  end
+    def finish_run
+      elapsed_time = Time.monotonic - @start_time.not_nil!
+      root_context.finish(elapsed_time, @aborted)
+      exit 1 if !root_context.succeeded || @aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
+    end
 
-  # :nodoc:
-  def self.maybe_randomize
-    if randomizer = @@randomizer
-      root_context.randomize(randomizer)
+    # :nodoc:
+    def maybe_randomize
+      if randomizer = @randomizer
+        root_context.randomize(randomizer)
+      end
+    end
+
+    # :nodoc:
+    def run_filters
+      root_context.run_filters(@pattern, @line, @locations, @split_filter, @focus, @tags, @anti_tags)
     end
   end
 
-  # :nodoc:
-  def self.run_filters
-    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus, @@tags, @@anti_tags)
+  @[Deprecated("This is an internal API.")]
+  def self.finish_run
+    @@cli.finish_run
+  end
+
+  @[Deprecated("This is an internal API.")]
+  def self.add_split_filter(filter)
+    @@cli.add_split_filter(filter)
   end
 end
 

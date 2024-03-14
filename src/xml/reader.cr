@@ -119,6 +119,7 @@ class XML::Reader
 
   # Moves to the `XML::Reader::Type::ATTRIBUTE` with the specified name.
   def move_to_attribute(name : String) : Bool
+    check_no_null_byte(name)
     LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
 
@@ -131,6 +132,7 @@ class XML::Reader
   # Gets the attribute content for the *attribute* given by name.
   # Returns `nil` if attribute is not found.
   def []?(attribute : String) : String?
+    check_no_null_byte(attribute)
     value = LibXML.xmlTextReaderGetAttribute(@reader, attribute)
     String.new(value) if value
   end
@@ -198,6 +200,12 @@ class XML::Reader
   private def collect_errors(&)
     Error.collect(@errors) { yield }.tap do
       Error.add_errors(@errors)
+    end
+  end
+
+  private def check_no_null_byte(attribute)
+    if attribute.byte_index(0)
+      raise XML::Error.new("Invalid attribute name: #{attribute.inspect} (contains null character)", 0)
     end
   end
 end

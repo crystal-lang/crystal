@@ -17,6 +17,8 @@ module Crystal::System::Thread
   # private def system_close
 
   # private def stack_address : Void*
+
+  # private def system_name=(String) : String
 end
 
 {% if flag?(:wasi) %}
@@ -49,12 +51,14 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
+  getter name : String?
+
   def self.unsafe_each(&)
     threads.unsafe_each { |thread| yield thread }
   end
 
   # Creates and starts a new system thread.
-  def initialize(&@func : ->)
+  def initialize(@name : String? = nil, &@func : ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
   end
@@ -104,13 +108,23 @@ class Thread
     Crystal::System::Thread.yield_current
   end
 
+  # Changes the name of the current thread.
+  def self.name=(name : String) : String
+    thread = Thread.current
+    thread.name = name
+  end
+
   # :nodoc:
-  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(main_fiber) }
+  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
 
   protected def start
     Thread.threads.push(self)
     Thread.current = self
     @main_fiber = fiber = Fiber.new(stack_address, self)
+
+    if name = @name
+      self.system_name = name
+    end
 
     begin
       @func.call
@@ -121,6 +135,10 @@ class Thread
       Fiber.inactive(fiber)
       detach { system_close }
     end
+  end
+
+  protected def name=(@name : String)
+    self.system_name = name
   end
 
   # Holds the GC thread handler

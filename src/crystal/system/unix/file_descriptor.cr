@@ -15,7 +15,7 @@ module Crystal::System::FileDescriptor
     evented_read(slice, "Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for reading"
+          raise IO::Error.new "File not open for reading", target: self
         end
       end
     end
@@ -25,7 +25,7 @@ module Crystal::System::FileDescriptor
     evented_write(slice, "Error writing file") do |slice|
       LibC.write(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing"
+          raise IO::Error.new "File not open for writing", target: self
         end
       end
     end
@@ -90,13 +90,13 @@ module Crystal::System::FileDescriptor
     seek_value = LibC.lseek(fd, offset, whence)
 
     if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek", target: self
     end
   end
 
   private def system_pos
     pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
-    raise IO::Error.from_errno "Unable to tell" if pos == -1
+    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
     pos
   end
 
@@ -147,7 +147,7 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file")
+        raise IO::Error.from_errno("Error closing file", target: self)
       end
     end
   end
@@ -211,7 +211,7 @@ module Crystal::System::FileDescriptor
   private def system_raw(enable : Bool, & : ->)
     system_console_mode do |mode|
       if enable
-        FileDescriptor.cfmakeraw(pointerof(mode))
+        mode = FileDescriptor.cfmakeraw(mode)
       else
         mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
         mode.c_oflag |= LibC::OPOST
@@ -237,18 +237,21 @@ module Crystal::System::FileDescriptor
   @[AlwaysInline]
   def self.tcgetattr(fd)
     termios = uninitialized LibC::Termios
-    ret = {% if flag?(:android) && !LibC.has_method?(:tcgetattr) %}
-            LibC.ioctl(fd, LibC::TCGETS, pointerof(termios))
-          {% else %}
-            LibC.tcgetattr(fd, pointerof(termios))
-          {% end %}
-    raise IO::Error.from_errno("tcgetattr") if ret != 0
+    {% if LibC.has_method?(:tcgetattr) %}
+      ret = LibC.tcgetattr(fd, pointerof(termios))
+      raise IO::Error.from_errno("tcgetattr") if ret == -1
+    {% else %}
+      ret = LibC.ioctl(fd, LibC::TCGETS, pointerof(termios))
+      raise IO::Error.from_errno("ioctl") if ret == -1
+    {% end %}
     termios
   end
 
   @[AlwaysInline]
   def self.tcsetattr(fd, optional_actions, termios_p)
-    {% if flag?(:android) && !LibC.has_method?(:tcsetattr) %}
+    {% if LibC.has_method?(:tcsetattr) %}
+      LibC.tcsetattr(fd, optional_actions, termios_p)
+    {% else %}
       optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
       cmd = case optional_actions
             when LibC::TCSANOW
@@ -263,23 +266,22 @@ module Crystal::System::FileDescriptor
             end
 
       LibC.ioctl(fd, cmd, termios_p)
-    {% else %}
-      LibC.tcsetattr(fd, optional_actions, termios_p)
     {% end %}
   end
 
   @[AlwaysInline]
-  def self.cfmakeraw(termios_p)
-    {% if flag?(:android) && !LibC.has_method?(:cfmakeraw) %}
-      s.value.c_iflag &= ~(LibC::IGNBRK | LibC::BRKINT | LibC::PARMRK | LibC::ISTRIP | LibC::INLCR | LibC::IGNCR | LibC::ICRNL | LibC::IXON)
-      s.value.c_oflag &= ~LibC::OPOST
-      s.value.c_lflag &= ~(LibC::ECHO | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN)
-      s.value.c_cflag &= ~(LibC::CSIZE | LibC::PARENB)
-      s.value.c_cflag |= LibC::CS8
-      s.value.c_cc[LibC::VMIN] = 1
-      s.value.c_cc[LibC::VTIME] = 0
+  def self.cfmakeraw(termios)
+    {% if LibC.has_method?(:cfmakeraw) %}
+      LibC.cfmakeraw(pointerof(termios))
     {% else %}
-      LibC.cfmakeraw(termios_p)
+      termios.c_iflag &= ~(LibC::IGNBRK | LibC::BRKINT | LibC::PARMRK | LibC::ISTRIP | LibC::INLCR | LibC::IGNCR | LibC::ICRNL | LibC::IXON)
+      termios.c_oflag &= ~LibC::OPOST
+      termios.c_lflag &= ~(LibC::ECHO | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN)
+      termios.c_cflag &= ~(LibC::CSIZE | LibC::PARENB)
+      termios.c_cflag |= LibC::CS8
+      termios.c_cc[LibC::VMIN] = 1
+      termios.c_cc[LibC::VTIME] = 0
     {% end %}
+    termios
   end
 end

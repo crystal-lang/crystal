@@ -45,7 +45,7 @@ private def traverse_eh_table(leb, start, ip, actions, &)
 
   lp_start_encoding = leb.read_uint8 # @LPStart encoding
   if lp_start_encoding != 0xff_u8
-    Crystal::System.print_error "Unexpected encoding for LPStart: #{lp_start_encoding}\n"
+    Crystal::System.print_error "Unexpected encoding for LPStart: 0x%x\n", lp_start_encoding
     LibC.exit 1
   end
 
@@ -55,7 +55,7 @@ private def traverse_eh_table(leb, start, ip, actions, &)
 
   cs_encoding = leb.read_uint8 # CS Encoding (1: uleb128, 3: uint32)
   if cs_encoding != 1 && cs_encoding != 3
-    Crystal::System.print_error "Unexpected CS encoding: #{cs_encoding}\n"
+    Crystal::System.print_error "Unexpected CS encoding: 0x%x\n", cs_encoding
     LibC.exit 1
   end
 
@@ -95,7 +95,7 @@ end
   require "exception/lib_unwind"
 
   {% begin %}
-    @[Link({{ flag?(:preview_dll) ? "vcruntime" : "libvcruntime" }})]
+    @[Link({{ flag?(:static) ? "libvcruntime" : "vcruntime" }})]
   {% end %}
   lib LibC
     fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
@@ -218,7 +218,7 @@ end
 
 {% if flag?(:wasm32) %}
   def raise(exception : Exception) : NoReturn
-    Crystal::System.print_error "EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}"
+    Crystal::System.print_error "EXITING: Attempting to raise:\n%s\n", exception.inspect_with_backtrace
     LibIntrinsics.debugtrap
     LibC.exit(1)
   end

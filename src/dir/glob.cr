@@ -223,7 +223,7 @@ class Dir
 
     private def self.constant_entry?(file)
       file.each_char do |char|
-        return false if char.in?('*', '?')
+        return false if char.in?('*', '?', '[', '\\')
       end
 
       true

@@ -586,8 +586,19 @@ module Crystal
             return check_ident_or_keyword(:abstract, start)
           end
         when 'l'
-          if char_sequence?('i', 'a', 's')
-            return check_ident_or_keyword(:alias, start)
+          if next_char == 'i'
+            case next_char
+            when 'a'
+              if next_char == 's'
+                return check_ident_or_keyword(:alias, start)
+              end
+            when 'g'
+              if char_sequence?('n', 'o', 'f')
+                return check_ident_or_keyword(:alignof, start)
+              end
+            else
+              # scan_ident
+            end
           end
         when 's'
           case peek_next_char
@@ -719,8 +730,19 @@ module Crystal
                 return check_ident_or_keyword(:include, start)
               end
             when 's'
-              if char_sequence?('t', 'a', 'n', 'c', 'e', '_', 's', 'i', 'z', 'e', 'o', 'f')
-                return check_ident_or_keyword(:instance_sizeof, start)
+              if char_sequence?('t', 'a', 'n', 'c', 'e', '_')
+                case next_char
+                when 's'
+                  if char_sequence?('i', 'z', 'e', 'o', 'f')
+                    return check_ident_or_keyword(:instance_sizeof, start)
+                  end
+                when 'a'
+                  if char_sequence?('l', 'i', 'g', 'n', 'o', 'f')
+                    return check_ident_or_keyword(:instance_alignof, start)
+                  end
+                else
+                  # scan_ident
+                end
               end
             else
               # scan_ident
@@ -2789,6 +2811,13 @@ module Crystal
     def next_token_never_a_symbol
       @wants_symbol = false
       next_token.tap { @wants_symbol = true }
+    end
+
+    def wants_def_or_macro_name(& : ->)
+      @wants_def_or_macro_name = true
+      yield
+    ensure
+      @wants_def_or_macro_name = false
     end
 
     def current_char

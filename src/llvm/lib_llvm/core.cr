@@ -4,11 +4,6 @@ lib LibLLVM
   # NOTE: the following C enums usually have different values from their C++
   # counterparts (e.g. `LLVMModuleFlagBehavior` v.s. `LLVM::Module::ModFlagBehavior`)
 
-  enum InlineAsmDialect
-    ATT
-    Intel
-  end
-
   enum ModuleFlagBehavior
     Warning = 1
   end
@@ -25,6 +20,7 @@ lib LibLLVM
   fun get_enum_attribute_kind_for_name = LLVMGetEnumAttributeKindForName(name : Char*, s_len : SizeT) : UInt
   fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind : UInt
   fun create_enum_attribute = LLVMCreateEnumAttribute(c : ContextRef, kind_id : UInt, val : UInt64) : AttributeRef
+  fun create_string_attribute = LLVMCreateStringAttribute(c : ContextRef, k : Char*, k_length : UInt, v : Char*, v_length : UInt) : AttributeRef
   {% unless LibLLVM::IS_LT_120 %}
     fun create_type_attribute = LLVMCreateTypeAttribute(c : ContextRef, kind_id : UInt, type_ref : TypeRef) : AttributeRef
   {% end %}
@@ -38,9 +34,9 @@ lib LibLLVM
   fun print_module_to_file = LLVMPrintModuleToFile(m : ModuleRef, filename : Char*, error_message : Char**) : Bool
   fun print_module_to_string = LLVMPrintModuleToString(m : ModuleRef) : Char*
   {% if !LibLLVM::IS_LT_130 %}
-    fun get_inline_asm = LLVMGetInlineAsm(ty : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : InlineAsmDialect, can_throw : Bool) : ValueRef
+    fun get_inline_asm = LLVMGetInlineAsm(ty : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : LLVM::InlineAsmDialect, can_throw : Bool) : ValueRef
   {% else %}
-    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : InlineAsmDialect) : ValueRef
+    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : Char*, asm_string_size : SizeT, constraints : Char*, constraints_size : SizeT, has_side_effects : Bool, is_align_stack : Bool, dialect : LLVM::InlineAsmDialect) : ValueRef
   {% end %}
   fun get_module_context = LLVMGetModuleContext(m : ModuleRef) : ContextRef
 
@@ -120,6 +116,7 @@ lib LibLLVM
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt, packed : Bool) : ValueRef
   fun const_array = LLVMConstArray(element_ty : TypeRef, constant_vals : ValueRef*, length : UInt) : ValueRef
 
+  fun align_of = LLVMAlignOf(ty : TypeRef) : ValueRef
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
 
   fun get_global_parent = LLVMGetGlobalParent(global : ValueRef) : ModuleRef
@@ -160,6 +157,11 @@ lib LibLLVM
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, vals : ValueRef*, count : UInt) : ValueRef
 
+  {% unless LibLLVM::IS_LT_180 %}
+    fun create_operand_bundle = LLVMCreateOperandBundle(tag : Char*, tag_len : SizeT, args : ValueRef*, num_args : UInt) : OperandBundleRef
+    fun dispose_operand_bundle = LLVMDisposeOperandBundle(bundle : OperandBundleRef)
+  {% end %}
+
   fun get_basic_block_name = LLVMGetBasicBlockName(bb : BasicBlockRef) : Char*
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
@@ -197,6 +199,9 @@ lib LibLLVM
   fun build_cond = LLVMBuildCondBr(BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef) : ValueRef
   fun build_switch = LLVMBuildSwitch(BuilderRef, v : ValueRef, else : BasicBlockRef, num_cases : UInt) : ValueRef
   fun build_invoke2 = LLVMBuildInvoke2(BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, then : BasicBlockRef, catch : BasicBlockRef, name : Char*) : ValueRef
+  {% unless LibLLVM::IS_LT_180 %}
+    fun build_invoke_with_operand_bundles = LLVMBuildInvokeWithOperandBundles(BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, then : BasicBlockRef, catch : BasicBlockRef, bundles : OperandBundleRef*, num_bundles : UInt, name : Char*) : ValueRef
+  {% end %}
   fun build_unreachable = LLVMBuildUnreachable(BuilderRef) : ValueRef
 
   fun build_landing_pad = LLVMBuildLandingPad(b : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt, name : Char*) : ValueRef
@@ -260,6 +265,9 @@ lib LibLLVM
 
   fun build_phi = LLVMBuildPhi(BuilderRef, ty : TypeRef, name : Char*) : ValueRef
   fun build_call2 = LLVMBuildCall2(BuilderRef, TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, name : Char*) : ValueRef
+  {% unless LibLLVM::IS_LT_180 %}
+    fun build_call_with_operand_bundles = LLVMBuildCallWithOperandBundles(BuilderRef, TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt, bundles : OperandBundleRef*, num_bundles : UInt, name : Char*) : ValueRef
+  {% end %}
   fun build_select = LLVMBuildSelect(BuilderRef, if : ValueRef, then : ValueRef, else : ValueRef, name : Char*) : ValueRef
   fun build_va_arg = LLVMBuildVAArg(BuilderRef, list : ValueRef, ty : TypeRef, name : Char*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(BuilderRef, agg_val : ValueRef, index : UInt, name : Char*) : ValueRef

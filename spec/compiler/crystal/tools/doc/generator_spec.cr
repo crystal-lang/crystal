@@ -163,6 +163,17 @@ describe Doc::Generator do
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.formatted_summary.should eq %(<p>Some Method</p>)
     end
+
+    it "should exclude whitespace before the summary line" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."]
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo"
+      a_def.doc = " \n\nSome Method\n\nMore Data"
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.formatted_summary.should eq %(<p>Some Method</p>)
+    end
   end
 
   describe "#formatted_doc" do

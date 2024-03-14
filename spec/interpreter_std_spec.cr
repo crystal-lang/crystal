@@ -72,13 +72,15 @@ require "./std/env_spec.cr"
 require "./std/errno_spec.cr"
 # require "./std/exception/call_stack_spec.cr" (failed to run)
 # require "./std/exception_spec.cr" (failed to run)
+require "./std/fiber_spec.cr"
 require "./std/file_spec.cr"
 require "./std/file/tempfile_spec.cr"
 require "./std/file_utils_spec.cr"
 require "./std/float_printer/diy_fp_spec.cr"
 require "./std/float_printer/grisu3_spec.cr"
+require "./std/float_printer/hexfloat_spec.cr"
 require "./std/float_printer/ieee_spec.cr"
-require "./std/float_printer_spec.cr"
+require "./std/float_printer/shortest_spec.cr"
 require "./std/float_spec.cr"
 require "./std/gc_spec.cr"
 require "./std/hash_spec.cr"
@@ -233,9 +235,9 @@ require "./std/system_error_spec.cr"
 require "./std/system/group_spec.cr"
 # require "./std/system_spec.cr" (failed to run)
 require "./std/system/user_spec.cr"
-require "./std/thread/condition_variable_spec.cr"
-require "./std/thread/mutex_spec.cr"
-# require "./std/thread_spec.cr" (failed to run)
+# require "./std/thread/condition_variable_spec.cr" (interpreter must support threads)
+# require "./std/thread/mutex_spec.cr" (interpreter must support threads)
+# require "./std/thread_spec.cr" (interpreter must support threads)
 require "./std/time/custom_formats_spec.cr"
 require "./std/time/format_spec.cr"
 require "./std/time/location_spec.cr"

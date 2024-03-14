@@ -239,7 +239,7 @@ module Crystal::System::File
         sleep 0.1
       end
     else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked")
+      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
     end
   end
 
@@ -251,7 +251,7 @@ module Crystal::System::File
       if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
         false
       else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno)
+        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
       end
     end
   end
@@ -269,7 +269,7 @@ module Crystal::System::File
       end
 
     if ret != 0
-      raise IO::Error.from_errno("Error syncing file")
+      raise IO::Error.from_errno("Error syncing file", target: self)
     end
   end
 end

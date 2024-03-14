@@ -2,6 +2,7 @@ require "crystal/system/event_loop"
 require "crystal/system/print_error"
 require "./fiber_channel"
 require "fiber"
+require "fiber/stack_pool"
 require "crystal/system/thread"
 
 # :nodoc:
@@ -13,6 +14,11 @@ require "crystal/system/thread"
 # protected and must never be called directly.
 class Crystal::Scheduler
   @event_loop = Crystal::EventLoop.create
+  @stack_pool = Fiber::StackPool.new
+
+  def self.stack_pool : Fiber::StackPool
+    Thread.current.scheduler.@stack_pool
+  end
 
   def self.event_loop
     Thread.current.scheduler.@event_loop
@@ -23,20 +29,20 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
+    thread = Thread.current
+    scheduler = thread.scheduler
+
     {% if flag?(:preview_mt) %}
-      th = fiber.@current_thread.lazy_get
+      th = fiber.get_current_thread
+      th ||= fiber.set_current_thread(scheduler.find_target_thread)
 
-      if th.nil?
-        th = Thread.current.scheduler.find_target_thread
-      end
-
-      if th == Thread.current
-        Thread.current.scheduler.enqueue(fiber)
+      if th == thread
+        scheduler.enqueue(fiber)
       else
         th.scheduler.send_fiber(fiber)
       end
     {% else %}
-      Thread.current.scheduler.enqueue(fiber)
+      scheduler.enqueue(fiber)
     {% end %}
   end
 
@@ -51,6 +57,7 @@ class Crystal::Scheduler
   end
 
   def self.resume(fiber : Fiber) : Nil
+    validate_running_thread(fiber)
     Thread.current.scheduler.resume(fiber)
   end
 
@@ -59,28 +66,41 @@ class Crystal::Scheduler
   end
 
   def self.yield : Nil
-    Thread.current.scheduler.yield
+    # TODO: Fiber switching and libevent for wasm32
+    {% unless flag?(:wasm32) %}
+      Thread.current.scheduler.sleep(0.seconds)
+    {% end %}
   end
 
   def self.yield(fiber : Fiber) : Nil
+    validate_running_thread(fiber)
     Thread.current.scheduler.yield(fiber)
   end
 
-  {% if flag?(:preview_mt) %}
-    def self.enqueue_free_stack(stack : Void*) : Nil
-      Thread.current.scheduler.enqueue_free_stack(stack)
-    end
-  {% end %}
+  private def self.validate_running_thread(fiber : Fiber) : Nil
+    {% if flag?(:preview_mt) %}
+      if th = fiber.get_current_thread
+        unless th == Thread.current
+          raise "BUG: tried to manually resume #{fiber} on #{Thread.current} instead of #{th}"
+        end
+      else
+        fiber.set_current_thread
+      end
+    {% end %}
+  end
 
   {% if flag?(:preview_mt) %}
     private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
-    @free_stacks = Deque(Void*).new
   {% end %}
+
+  @main : Fiber
   @lock = Crystal::SpinLock.new
   @sleeping = false
 
   # :nodoc:
-  def initialize(@main : Fiber)
+  def initialize(thread : Thread)
+    @main = thread.main_fiber
+    {% if flag?(:preview_mt) %} @main.set_current_thread(thread) {% end %}
     @current = @main
     @runnables = Deque(Fiber).new
   end
@@ -95,8 +115,8 @@ class Crystal::Scheduler
 
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
+
     {% if flag?(:preview_mt) %}
-      set_current_thread(fiber)
       GC.lock_read
     {% elsif flag?(:interpreted) %}
       # No need to change the stack bottom!
@@ -105,14 +125,6 @@ class Crystal::Scheduler
     {% end %}
 
     current, @current = @current, fiber
-
-    {% if flag?(:interpreted) %}
-      # TODO: ideally we could set this in the interpreter if the
-      # @context had a pointer back to the fiber.
-      # I also wonder why this isn't done always like that instead of in asm.
-      current.@context.resumable = 1
-    {% end %}
-
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -130,55 +142,26 @@ class Crystal::Scheduler
     end
   end
 
-  private def set_current_thread(fiber)
-    fiber.@current_thread.set(Thread.current)
-  end
-
   private def fatal_resume_error(fiber, message)
-    Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
-    caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    Crystal::System.print_error "\nFATAL: %s: %s\n", message, fiber.to_s
+    caller.each { |line| Crystal::System.print_error "  from %s\n", line }
     exit 1
   end
-
-  {% if flag?(:preview_mt) %}
-    protected def enqueue_free_stack(stack)
-      @free_stacks.push stack
-    end
-
-    private def release_free_stacks
-      while stack = @free_stacks.shift?
-        Fiber.stack_pool.release stack
-      end
-    end
-  {% end %}
 
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        unless runnable == @current
-          runnable.resume
-        end
+        resume(runnable) unless runnable == @current
         break
       else
         @event_loop.run_once
       end
     end
-
-    {% if flag?(:preview_mt) %}
-      release_free_stacks
-    {% end %}
   end
 
   protected def sleep(time : Time::Span) : Nil
     @current.resume_event.add(time)
     reschedule
-  end
-
-  protected def yield : Nil
-    # TODO: Fiber switching and libevent for wasm32
-    {% unless flag?(:wasm32) %}
-      sleep(0.seconds)
-    {% end %}
   end
 
   protected def yield(fiber : Fiber) : Nil
@@ -191,7 +174,7 @@ class Crystal::Scheduler
 
     protected def find_target_thread
       if workers = @@workers
-        @rr_target += 1
+        @rr_target &+= 1
         workers[@rr_target % workers.size]
       else
         Thread.current
@@ -199,13 +182,16 @@ class Crystal::Scheduler
     end
 
     def run_loop
+      spawn_stack_pool_collector
+
       fiber_channel = self.fiber_channel
       loop do
         @lock.lock
+
         if runnable = @runnables.shift?
           @runnables << Fiber.current
           @lock.unlock
-          runnable.resume
+          resume(runnable)
         else
           @sleeping = true
           @lock.unlock
@@ -215,7 +201,7 @@ class Crystal::Scheduler
           @sleeping = false
           @runnables << Fiber.current
           @lock.unlock
-          fiber.resume
+          resume(fiber)
         end
       end
     end
@@ -230,16 +216,17 @@ class Crystal::Scheduler
       @lock.unlock
     end
 
-    def self.init_workers
+    def self.init : Nil
       count = worker_count
       pending = Atomic(Int32).new(count - 1)
       @@workers = Array(Thread).new(count) do |i|
         if i == 0
           worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
+          worker_loop.set_current_thread
           Thread.current.scheduler.enqueue worker_loop
           Thread.current
         else
-          Thread.new do
+          Thread.new(name: "CRYSTAL-MT-#{i}") do
             scheduler = Thread.current.scheduler
             pending.sub(1)
             scheduler.run_loop
@@ -259,7 +246,7 @@ class Crystal::Scheduler
       if env_workers && !env_workers.empty?
         workers = env_workers.to_i?
         if !workers || workers < 1
-          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: %s\n", env_workers
           exit 1
         end
 
@@ -271,5 +258,18 @@ class Crystal::Scheduler
         4
       end
     end
+  {% else %}
+    def self.init : Nil
+      {% unless flag?(:interpreted) %}
+        Thread.current.scheduler.spawn_stack_pool_collector
+      {% end %}
+    end
   {% end %}
+
+  # Background loop to cleanup unused fiber stacks.
+  def spawn_stack_pool_collector
+    fiber = Fiber.new(name: "Stack pool collector", &->@stack_pool.collect_loop)
+    {% if flag?(:preview_mt) %} fiber.set_current_thread {% end %}
+    enqueue(fiber)
+  end
 end

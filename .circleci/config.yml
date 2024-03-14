@@ -1,14 +1,18 @@
 version: 2.1
 
 parameters:
+  distribution-scripts-repo:
+    description: "Git url https://github.com/crystal-lang/distribution-scripts/"
+    type: string
+    default: "https://github.com/crystal-lang/distribution-scripts.git"
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "e15cbd3b6b3e1bac1b16905f1b1a15ba6ae4e554"
+    default: "535aedb8b09d77caaa1583700f371cd04343b7e8"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.10.1/crystal-1.10.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.11.2/crystal-1.11.2-1"
 
 defaults:
   environment: &env
@@ -35,7 +39,7 @@ defaults:
 jobs:
   test_linux:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -66,7 +70,7 @@ jobs:
 
   test_alpine:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -111,7 +115,8 @@ jobs:
 
   test_preview_mt:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
+    resource_class: large
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -142,7 +147,7 @@ jobs:
     steps:
       # checkout specific distribution-scripts version to perform releases and nightly
       - run: |
-          git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
+          git clone << pipeline.parameters.distribution-scripts-repo >> ~/distribution-scripts
           cd ~/distribution-scripts
           git checkout << pipeline.parameters.distribution-scripts-version >>
       # persist relevant information for build process
@@ -259,7 +264,7 @@ jobs:
 
   dist_linux:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -342,7 +347,7 @@ jobs:
 
   dist_docker:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -358,7 +363,7 @@ jobs:
 
   publish_docker:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -413,7 +418,7 @@ jobs:
 
   dist_docs:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -459,7 +464,7 @@ jobs:
 
   test_dist_linux_on_docker:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux

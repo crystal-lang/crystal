@@ -29,19 +29,20 @@ module Crystal::System::LibraryArchive
       # magic number
       return unless @ar.read_string(8) == "!<arch>\n"
 
-      # first linker member
-      return unless read_member { |filename, _| return unless filename == "/" }
-
-      # second linker member
-      return unless read_member { |filename, _| return unless filename == "/" }
-
-      # longnames member (optional)
-      return if @ar.pos == file_size
-      return unless read_member { |filename, io| handle_standard_member(io) unless filename == "//" }
-
-      # standard members
+      # first linker member's filename is `/`
+      # second linker member's filename is also `/` (apparently not all linkers generate this?)
+      # longnames member's filename is `//` (optional)
+      # the rest are standard members
+      first = true
       until @ar.pos == file_size
-        return unless read_member { |_, io| handle_standard_member(io) }
+        read_member do |filename, io|
+          if first
+            first = false
+            return unless filename == "/"
+          elsif !filename.in?("/", "//")
+            handle_standard_member(io)
+          end
+        end
       end
     end
 
@@ -54,13 +55,11 @@ module Crystal::System::LibraryArchive
       size = @ar.read_string(10).rstrip(' ').to_u32
 
       # end of header
-      return false unless @ar.read_string(2) == "`\n"
+      return unless @ar.read_string(2) == "`\n"
 
       new_pos = @ar.pos + size + (size.odd? ? 1 : 0)
       yield filename, IO::Sized.new(@ar, read_size: size)
       @ar.seek(new_pos)
-
-      true
     end
 
     private def handle_standard_member(io)

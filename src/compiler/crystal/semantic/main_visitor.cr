@@ -226,6 +226,8 @@ module Crystal
         node.syntax_replacement = type
         node.bind_to type
       end
+
+      false
     end
 
     def visit(node : Generic)
@@ -353,6 +355,7 @@ module Crystal
 
     def visit(node : Self)
       node.type = the_self(node).instance_type
+      false
     end
 
     def visit(node : Var)
@@ -394,6 +397,7 @@ module Crystal
       else
         node.raise "read before assignment to local variable '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TypeDeclaration)
@@ -628,6 +632,8 @@ module Crystal
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to program.nil_var
       end
+
+      false
     end
 
     def visit(node : ReadInstanceVar)
@@ -1007,7 +1013,7 @@ module Crystal
     end
 
     def visit(node : Block)
-      return if node.visited?
+      return false if node.visited?
 
       node.visited = true
       node.context = current_non_block_context
@@ -1630,6 +1636,7 @@ module Crystal
             ivars[node.name] = node_in_callstack(node)
           end
         end
+        false
       end
 
       def visit(node : Var)
@@ -1761,7 +1768,7 @@ module Crystal
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
-        return
+        return false
       end
 
       if needs_type_filters? && (var = get_expression_var(node.obj))
@@ -2060,7 +2067,7 @@ module Crystal
       unless node.has_breaks?
         if endless_while
           node.type = program.no_return
-          return
+          return false
         end
 
         filter_vars TypeFilters.not(cond_type_filters)
@@ -2292,6 +2299,8 @@ module Crystal
       case node.name
       when "allocate"
         visit_allocate node
+      when "pre_initialize"
+        visit_pre_initialize node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
@@ -2323,6 +2332,8 @@ module Crystal
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
+
+      false
     end
 
     def visit_va_arg(node)
@@ -2381,6 +2392,42 @@ module Crystal
             # If the type is not virtual then we know for sure that the type
             # can't be instantiated, and we can produce a compile-time error.
             node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+          end
+        end
+
+        node.type = instance_type
+      end
+    end
+
+    def visit_pre_initialize(node)
+      instance_type = scope.instance_type
+
+      case instance_type
+      when GenericClassType
+        node.raise "Can't pre-initialize instance of generic class #{instance_type} without specifying its type vars"
+      when UnionType
+        node.raise "Can't pre-initialize instance of a union type"
+      else
+        if instance_type.abstract?
+          if instance_type.virtual?
+            # This is the same as `.initialize`
+            base_type = instance_type.devirtualize
+
+            extra = Call.new(
+              nil,
+              "raise",
+              StringLiteral.new("Can't pre-initialize abstract class #{base_type}"),
+              global: true).at(node)
+            extra.accept self
+
+            # This `extra` will replace the Primitive node in CleanupTransformer later on.
+            node.extra = extra
+            node.type = @program.no_return
+            return
+          else
+            # If the type is not virtual then we know for sure that the type
+            # can't be instantiated, and we can produce a compile-time error.
+            node.raise "Can't pre-initialize abstract class #{instance_type}"
           end
         end
 
@@ -2589,6 +2636,30 @@ module Crystal
     end
 
     def visit(node : SizeOf)
+      visit_size_or_align_of(node) do |type|
+        @program.size_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : InstanceSizeOf)
+      visit_instance_size_or_align_of(node) do |type|
+        @program.instance_size_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : AlignOf)
+      visit_size_or_align_of(node) do |type|
+        @program.align_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : InstanceAlignOf)
+      visit_instance_size_or_align_of(node) do |type|
+        @program.instance_align_of(type.sizeof_type)
+      end
+    end
+
+    private def visit_size_or_align_of(node)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2596,15 +2667,15 @@ module Crystal
       type = node.exp.type?
 
       if type.is_a?(GenericType)
-        node.exp.raise "can't take sizeof uninstantiated generic type #{type}"
+        node.exp.raise "can't take #{sizeof_description(node)} of uninstantiated generic type #{type}"
       end
 
-      # Try to resolve the sizeof right now to a number literal
-      # (useful for sizeof inside as a generic type argument, but also
+      # Try to resolve the node right now to a number literal
+      # (useful for sizeof/alignof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && !node.exp.is_a?(TypeOf) &&
          !(type.module? || (type.abstract? && type.struct?))
-        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
+        expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2614,7 +2685,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf)
+    private def visit_instance_size_or_align_of(node)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2622,14 +2693,14 @@ module Crystal
       type = node.exp.type?
 
       if type.is_a?(GenericType)
-        node.exp.raise "can't take instance_sizeof uninstantiated generic type #{type}"
+        node.exp.raise "can't take #{sizeof_description(node)} of uninstantiated generic type #{type}"
       end
 
       # Try to resolve the instance_sizeof right now to a number literal
-      # (useful for sizeof inside as a generic type argument, but also
+      # (useful for instance_sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && type.devirtualize.class? && !type.metaclass? && !type.struct? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
+        expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2637,6 +2708,19 @@ module Crystal
       node.type = @program.int32
 
       false
+    end
+
+    private def sizeof_description(node)
+      case node
+      in SizeOf
+        "size"
+      in AlignOf
+        "alignment"
+      in InstanceSizeOf
+        "instance size"
+      in InstanceAlignOf
+        "instance alignment"
+      end
     end
 
     def visit(node : OffsetOf)
@@ -2967,31 +3051,38 @@ module Crystal
 
     def visit(node : Nop)
       node.type = @program.nil
+      false
     end
 
     def visit(node : NilLiteral)
       node.type = @program.nil
+      false
     end
 
     def visit(node : BoolLiteral)
       node.type = program.bool
+      false
     end
 
     def visit(node : NumberLiteral)
       node.type = program.type_from_literal_kind node.kind
+      false
     end
 
     def visit(node : CharLiteral)
       node.type = program.char
+      false
     end
 
     def visit(node : SymbolLiteral)
       node.type = program.symbol
       program.symbols.add node.value
+      false
     end
 
     def visit(node : StringLiteral)
       node.type = program.string
+      false
     end
 
     def visit(node : RegexLiteral)

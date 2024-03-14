@@ -131,6 +131,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "to_a" do
+    context "with a block" do
+      SpecEnumerable.new.to_a { |e| e*2 }.should eq [2, 4, 6]
+    end
+
+    context "without a block" do
+      SpecEnumerable.new.to_a.should eq [1, 2, 3]
+    end
+  end
+
+  describe "#to_set" do
+    context "without block" do
+      it "creates a Set from the unique elements of the collection" do
+        {1, 1, 2, 3}.to_set.should eq Set{1, 2, 3}
+      end
+    end
+
+    context "with block" do
+      it "creates a Set from running the block against the collection's elements" do
+        {1, 2, 3, 4, 5}.to_set { |i| i // 2 }.should eq Set{0, 1, 2}
+      end
+    end
+  end
+
   describe "chunk" do
     it "works" do
       [1].chunk { true }.to_a.should eq [{true, [1]}]

@@ -50,10 +50,10 @@ describe Crystal::SyntaxHighlighter::HTML do
       def if else elsif end class module include
       extend while until do yield return unless next break
       begin lib fun type struct union enum macro out require
-      case when select then of rescue ensure is_a? alias sizeof
+      case when select then of rescue ensure is_a? alias sizeof alignof
       as as? typeof for in with self super private asm
       nil? abstract pointerof
-      protected uninitialized instance_sizeof offsetof
+      protected uninitialized instance_sizeof instance_alignof offsetof
       annotation verbatim
     ).each do |kw|
       it_highlights kw, %(<span class="k">#{kw}</span>)

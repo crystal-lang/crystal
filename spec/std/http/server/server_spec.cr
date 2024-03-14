@@ -45,12 +45,9 @@ describe HTTP::Server do
     server = HTTP::Server.new { }
     server.bind_unused_port
 
-    spawn do
+    run_server(server) do
       server.close
-      sleep 0.001
     end
-
-    server.listen
   end
 
   it "closes the server" do

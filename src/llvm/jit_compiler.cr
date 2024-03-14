@@ -15,7 +15,7 @@ class LLVM::JITCompiler
     # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270
     # for background info
     target_machine = LibLLVM.get_execution_engine_target_machine(@unwrap)
-    LibLLVMExt.target_machine_enable_global_isel(target_machine, false)
+    {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.set_target_machine_global_isel(target_machine, 0)
 
     @finalized = false
   end

@@ -58,15 +58,16 @@ module Crystal::System::File
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
     access = if flags.bits_set? LibC::O_WRONLY
-               LibC::GENERIC_WRITE
+               LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
-               LibC::GENERIC_READ | LibC::GENERIC_WRITE
+               LibC::FILE_GENERIC_READ | LibC::FILE_GENERIC_WRITE
              else
-               LibC::GENERIC_READ
+               LibC::FILE_GENERIC_READ
              end
 
     if flags.bits_set? LibC::O_APPEND
       access |= LibC::FILE_APPEND_DATA
+      access &= ~LibC::FILE_WRITE_DATA
     end
 
     if flags.bits_set? LibC::O_TRUNC
@@ -277,10 +278,10 @@ module Crystal::System::File
     # all reparse point directories should be deleted like a directory, not just
     # symbolic links, so we don't care about the reparse tag here
     is_reparse_dir = attributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
-    result = is_reparse_dir ? LibC._wrmdir(win_path) : LibC._wunlink(win_path)
-    return true if result == 0
+    result = is_reparse_dir ? LibC.RemoveDirectoryW(win_path) : LibC.DeleteFileW(win_path)
+    return true if result != 0
     LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
-    raise ::File::Error.from_errno("Error deleting file", file: path)
+    raise ::File::Error.from_winerror("Error deleting file", file: path)
   end
 
   private REALPATH_SYMLINK_LIMIT = 100
@@ -451,8 +452,16 @@ module Crystal::System::File
   end
 
   private def system_truncate(size : Int) : Nil
-    if LibC._chsize_s(fd, size) != 0
-      raise ::File::Error.from_errno("Error truncating file", file: path)
+    handle = windows_handle
+    if LibC.SetFilePointerEx(handle, size.to_i64, out old_pos, IO::Seek::Set) == 0
+      raise ::File::Error.from_winerror("Error truncating file", file: path)
+    end
+    begin
+      if LibC.SetEndOfFile(handle) == 0
+        raise ::File::Error.from_winerror("Error truncating file", file: path)
+      end
+    ensure
+      LibC.SetFilePointerEx(handle, old_pos, nil, IO::Seek::Set)
     end
   end
 
@@ -493,7 +502,7 @@ module Crystal::System::File
       if winerror == WinError::ERROR_LOCK_VIOLATION
         false
       else
-        raise IO::Error.from_os_error("LockFileEx", winerror)
+        raise IO::Error.from_os_error("LockFileEx", winerror, target: self)
       end
     end
   end
@@ -508,8 +517,8 @@ module Crystal::System::File
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    if LibC._commit(fd) != 0
-      raise IO::Error.from_errno("Error syncing file")
+    if LibC.FlushFileBuffers(windows_handle) == 0
+      raise IO::Error.from_winerror("Error syncing file", target: self)
     end
   end
 end

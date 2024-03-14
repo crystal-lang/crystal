@@ -47,6 +47,65 @@ describe "File" do
     end
   end
 
+  describe "blocking" do
+    it "opens regular file as blocking" do
+      with_tempfile("regular") do |path|
+        File.open(path, "w") do |file|
+          file.blocking.should be_true
+        end
+
+        File.open(path, "w", blocking: nil) do |file|
+          file.blocking.should be_true
+        end
+      end
+    end
+
+    {% if flag?(:unix) %}
+      if File.exists?("/dev/tty")
+        it "opens character device" do
+          File.open("/dev/tty", "r") do |file|
+            file.blocking.should be_true
+          end
+
+          File.open("/dev/tty", "r", blocking: false) do |file|
+            file.blocking.should be_false
+          end
+
+          File.open("/dev/tty", "r", blocking: nil) do |file|
+            file.blocking.should be_false
+          end
+        rescue File::Error
+          # The TTY may not be available (e.g. Docker CI)
+        end
+      end
+
+      {% if LibC.has_method?(:mkfifo) && !flag?(:interpreted) %}
+        # spec is disabled when interpreted because the interpreter doesn't
+        # support threads
+        it "opens fifo file as non-blocking" do
+          path = File.tempname("chardev")
+          ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+          raise RuntimeError.from_errno("mkfifo") unless ret == 0
+
+          # FIXME: open(2) will block when opening a fifo file until another
+          #        thread or process also opened the file; we should pass
+          #        O_NONBLOCK to the open(2) call itself, not afterwards
+          file = nil
+          Thread.new { file = File.new(path, "w", blocking: nil) }
+
+          begin
+            File.open(path, "r", blocking: false) do |file|
+              file.blocking.should be_false
+            end
+          ensure
+            File.delete(path)
+            file.try(&.close)
+          end
+        end
+      {% end %}
+    {% end %}
+  end
+
   it "reads entire file" do
     str = File.read datapath("test_file.txt")
     str.should eq("Hello World\n" * 20)
@@ -941,7 +1000,7 @@ describe "File" do
             pending! "Spec cannot run as superuser"
           end
         {% end %}
-        expect_raises(File::AccessDeniedError) { File.read(path) }
+        expect_raises(File::AccessDeniedError, "Error opening file with mode 'r': '#{path.inspect_unquoted}'") { File.read(path) }
       end
     end
   {% end %}
@@ -958,7 +1017,7 @@ describe "File" do
           pending! "Spec cannot run as superuser"
         end
       {% end %}
-      expect_raises(File::AccessDeniedError) { File.write(path, "foo") }
+      expect_raises(File::AccessDeniedError, "Error opening file with mode 'w': '#{path.inspect_unquoted}'") { File.write(path, "foo") }
     end
   end
 

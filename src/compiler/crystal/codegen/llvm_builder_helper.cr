@@ -128,7 +128,11 @@ module Crystal
         funclet = LLVM::OperandBundleDef.null
       end
 
-      builder.call(func.type, func.func, args, bundle: funclet, name: name)
+      begin
+        builder.call(func.type, func.func, args, bundle: funclet, name: name)
+      ensure
+        funclet.dispose
+      end
     end
 
     def invoke(func : LLVMTypedFunction, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
@@ -138,7 +142,11 @@ module Crystal
         funclet = LLVM::OperandBundleDef.null
       end
 
-      builder.invoke(func.type, func.func, args, a_then, a_catch, bundle: funclet, name: name)
+      begin
+        builder.invoke(func.type, func.func, args, a_then, a_catch, bundle: funclet, name: name)
+      ensure
+        funclet.dispose
+      end
     end
 
     delegate ptr2int, int2ptr, and, or, not, bit_cast,
@@ -226,6 +234,14 @@ module Crystal
 
     def llvm_struct_size(type)
       llvm_struct_type(type).size
+    end
+
+    def llvm_alignment(type)
+      llvm_type(type).alignment
+    end
+
+    def llvm_struct_alignment(type)
+      llvm_struct_type(type).alignment
     end
   end
 end
