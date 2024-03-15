@@ -23,6 +23,41 @@ class Socket < IO
   getter type : Type
   getter protocol : Protocol
 
+  @read_timeout : Time::Span?
+  @write_timeout : Time::Span?
+
+  # Returns the time to wait when reading before raising an `IO::TimeoutError`.
+  def read_timeout : Time::Span?
+    @read_timeout
+  end
+
+  # Sets the time to wait when reading before raising an `IO::TimeoutError`.
+  def read_timeout=(timeout : Time::Span?) : ::Time::Span?
+    @read_timeout = timeout
+  end
+
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
+  def read_timeout=(read_timeout : Number) : Number
+    self.read_timeout = read_timeout.seconds
+    read_timeout
+  end
+
+  # Returns the time to wait when writing before raising an `IO::TimeoutError`.
+  def write_timeout : Time::Span?
+    @write_timeout
+  end
+
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
+  def write_timeout=(timeout : Time::Span?) : ::Time::Span?
+    @write_timeout = timeout
+  end
+
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
+  def write_timeout=(write_timeout : Number) : Number
+    self.write_timeout = write_timeout.seconds
+    write_timeout
+  end
+
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
   def self.tcp(family : Family, blocking = false) : self
