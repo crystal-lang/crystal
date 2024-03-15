@@ -31,8 +31,7 @@ class JSON::Lexer::IOBased < JSON::Lexer
       case char
       when '\\'
         # If we find an escape character, go to the slow method
-        @column_number -= pos
-        return consume_string_with_buffer
+        return consume_string_at_escape_char(peek, pos)
       when '"'
         @column_number += 1
         @io.skip(pos + 1)
@@ -54,6 +53,13 @@ class JSON::Lexer::IOBased < JSON::Lexer
       else
         String.new(peek.to_unsafe, pos)
       end
+  end
+
+  private def consume_string_at_escape_char(peek, pos)
+    consume_string_with_buffer do
+      @buffer.write peek[0, pos]
+      @io.skip(pos)
+    end
   end
 
   private def number_start
