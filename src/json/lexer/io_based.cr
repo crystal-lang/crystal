@@ -23,7 +23,6 @@ class JSON::Lexer::IOBased < JSON::Lexer
       if pos >= peek.size
         # We don't have enough data in the peek buffer to create a string:
         # default to the slow method
-        @column_number -= pos
         return consume_string_with_buffer
       end
 
@@ -31,6 +30,7 @@ class JSON::Lexer::IOBased < JSON::Lexer
       case char
       when '\\'
         # If we find an escape character, go to the slow method
+        @column_number += pos
         return consume_string_at_escape_char(peek, pos)
       when '"'
         break
@@ -39,11 +39,11 @@ class JSON::Lexer::IOBased < JSON::Lexer
           unexpected_char
         else
           pos += 1
-          @column_number += 1
         end
       end
     end
 
+    @column_number += pos
     @token.string_value =
       if @expects_object_key
         @string_pool.get(peek.to_unsafe, pos)
