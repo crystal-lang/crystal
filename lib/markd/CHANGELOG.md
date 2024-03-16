@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Refactor Options and change to a class #[36](https://github.com/icyleaf/markd/pull/36) thanks @[straight-shoota](https://github.com/straight-shoota).
-- Add `lang` parameter to to `HTMLRenderer#code_block_body` #[38](https://github.com/icyleaf/markd/pull/38) thanks @[straight-shoota](https://github.com/straight-shoota).
+- Add `lang` parameter to `HTMLRenderer#code_block_body` #[38](https://github.com/icyleaf/markd/pull/38) thanks @[straight-shoota](https://github.com/straight-shoota).
 
 ## [0.4.0] (2021-03-23)
 
@@ -60,12 +60,12 @@ No changelog.
 
 ## [0.1.2] (2019-08-26)
 
-- Use Crystal v0.31.0 as default complier.
+- Use Crystal v0.31.0 as default compiler.
 
 ## [0.1.1] (2017-12-26)
 
 - Minor refactoring and improving speed. thanks @[straight-shoota](https://github.com/straight-shoota).
-- Use Crystal v0.24.1 as default complier.
+- Use Crystal v0.24.1 as default compiler.
 
 ## 0.1.0 (2017-09-22)
 

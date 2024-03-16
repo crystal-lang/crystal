@@ -5476,7 +5476,7 @@ foo
 ## Entity and numeric character references
 
 All valid HTML entity references and numeric character
-references, except those occuring in code blocks and code spans,
+references, except those occurring in code blocks and code spans,
 are recognized as such and treated as equivalent to the
 corresponding Unicode characters.  Conforming CommonMark parsers
 need not store information about whether a particular character
