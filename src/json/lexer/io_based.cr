@@ -33,9 +33,6 @@ class JSON::Lexer::IOBased < JSON::Lexer
         # If we find an escape character, go to the slow method
         return consume_string_at_escape_char(peek, pos)
       when '"'
-        @column_number += 1
-        @io.skip(pos + 1)
-        @current_char = @io.read_byte.try(&.chr) || '\0'
         break
       else
         if 0 <= current_char.ord < 32
@@ -53,6 +50,9 @@ class JSON::Lexer::IOBased < JSON::Lexer
       else
         String.new(peek.to_unsafe, pos)
       end
+
+    @io.skip(pos + 1)
+    next_char
   end
 
   private def consume_string_at_escape_char(peek, pos)
