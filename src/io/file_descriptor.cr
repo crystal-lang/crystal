@@ -18,6 +18,24 @@ class IO::FileDescriptor < IO
   # will then fail.
   property? close_on_finalize : Bool
 
+  # The time to wait when reading before raising an `IO::TimeoutError`.
+  property read_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
+  def read_timeout=(read_timeout : Number) : Number
+    self.read_timeout = read_timeout.seconds
+    read_timeout
+  end
+
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
+  property write_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
+  def write_timeout=(write_timeout : Number) : Number
+    self.write_timeout = write_timeout.seconds
+    write_timeout
+  end
+
   def initialize(fd, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
