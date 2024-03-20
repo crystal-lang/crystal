@@ -20,17 +20,17 @@ module Crystal::System::FileDescriptor
         when .error_access_denied?
           raise IO::Error.new "File not open for reading", target: self
         when .error_broken_pipe?
-          return 0_u32
+          return 0_i32
         else
           raise IO::Error.from_os_error("Error reading file", error, target: self)
         end
       end
-      bytes_read
+      bytes_read.to_i32
     else
       overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}
-      end
+      end.to_i32
     end
   end
 

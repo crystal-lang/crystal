@@ -24,7 +24,7 @@ class File::PReader < IO
 
     @pos += bytes_read
 
-    bytes_read
+    bytes_read.to_i32
   end
 
   def unbuffered_write(slice : Bytes) : NoReturn
