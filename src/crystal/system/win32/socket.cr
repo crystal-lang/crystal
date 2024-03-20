@@ -445,7 +445,7 @@ module Crystal::System::Socket
     false
   end
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
     bytes_read = overlapped_read(fd, "WSARecv", connreset_is_error: false) do |overlapped|
@@ -457,7 +457,7 @@ module Crystal::System::Socket
     bytes_read.to_i32
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     wsabuf = wsa_buffer(slice)
 
     bytes = overlapped_write(fd, "WSASend") do |overlapped|

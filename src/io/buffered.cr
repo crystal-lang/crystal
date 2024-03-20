@@ -17,7 +17,7 @@ module IO::Buffered
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
-  abstract def unbuffered_read(slice : Bytes)
+  abstract def unbuffered_read(slice : Bytes) : Int32
 
   # Writes *slice* entirely into the wrapped `IO`.
   abstract def unbuffered_write(slice : Bytes)

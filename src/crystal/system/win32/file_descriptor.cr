@@ -10,7 +10,7 @@ module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
   @system_blocking = true
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     handle = windows_handle
     if ConsoleUtils.console?(handle)
       ConsoleUtils.read(handle, slice)
@@ -34,7 +34,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     handle = windows_handle
     until slice.empty?
       if system_blocking?

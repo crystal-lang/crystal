@@ -248,11 +248,11 @@ class HTTP::Server
         @closed = false
       end
 
-      private def unbuffered_read(slice : Bytes)
+      private def unbuffered_read(slice : Bytes) : Int32
         raise "Can't read from HTTP::Server::Response"
       end
 
-      private def unbuffered_write(slice : Bytes)
+      private def unbuffered_write(slice : Bytes) : Nil
         return if slice.empty?
 
         unless response.wrote_headers?
