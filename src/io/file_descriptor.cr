@@ -22,6 +22,7 @@ class IO::FileDescriptor < IO
   property read_timeout : Time::Span?
 
   # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#read_timeout=(Time::Span?)` instead.")]
   def read_timeout=(read_timeout : Number) : Number
     self.read_timeout = read_timeout.seconds
     read_timeout
@@ -31,6 +32,7 @@ class IO::FileDescriptor < IO
   property write_timeout : Time::Span?
 
   # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#write_timeout=(Time::Span?)` instead.")]
   def write_timeout=(write_timeout : Number) : Number
     self.write_timeout = write_timeout.seconds
     write_timeout
