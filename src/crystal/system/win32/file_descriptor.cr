@@ -42,16 +42,7 @@ module Crystal::System::FileDescriptor
     handle = windows_handle
     until slice.empty?
       if system_blocking?
-        if LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil) == 0
-          case error = WinError.value
-          when .error_access_denied?
-            raise IO::Error.new "File not open for writing", target: self
-          when .error_broken_pipe?
-            return 0_u32
-          else
-            raise IO::Error.from_os_error("Error writing file", error, target: self)
-          end
-        end
+        bytes_written = unbuffered_write_blocking(handle, slice)
       else
         bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
           ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
@@ -61,6 +52,20 @@ module Crystal::System::FileDescriptor
 
       slice += bytes_written
     end
+  end
+
+  private def unbuffered_write_blocking(handle, slice)
+    if LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil) == 0
+      case error = WinError.value
+      when .error_access_denied?
+        raise IO::Error.new "File not open for writing", target: self
+      when .error_broken_pipe?
+        return 0_u32
+      else
+        raise IO::Error.from_os_error("Error writing file", error, target: self)
+      end
+    end
+    bytes_written
   end
 
   private def system_blocking?
