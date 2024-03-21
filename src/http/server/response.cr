@@ -313,15 +313,15 @@ class HTTP::Server
         end
       end
 
-      private def unbuffered_close
+      private def unbuffered_close : Nil
         @closed = true
       end
 
-      private def unbuffered_rewind
+      private def unbuffered_rewind : Nil
         raise "Can't rewind to HTTP::Server::Response"
       end
 
-      private def unbuffered_flush
+      private def unbuffered_flush : Nil
         @io.flush
       rescue ex : IO::Error
         unbuffered_close

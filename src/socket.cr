@@ -425,11 +425,11 @@ class Socket < IO
     system_tty?
   end
 
-  private def unbuffered_rewind
+  private def unbuffered_rewind : Nil
     raise Socket::Error.new("Can't rewind")
   end
 
-  private def unbuffered_close
+  private def unbuffered_close : Nil
     return if @closed
 
     @closed = true
@@ -437,7 +437,7 @@ class Socket < IO
     system_close
   end
 
-  private def unbuffered_flush
+  private def unbuffered_flush : Nil
     # Nothing
   end
 end
