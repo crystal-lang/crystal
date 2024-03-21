@@ -17,18 +17,28 @@ module IO::Buffered
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
-  abstract def unbuffered_read(slice : Bytes) : Int32
+  #
+  # TODO: Add return type restriction `Int32`
+  abstract def unbuffered_read(slice : Bytes)
 
   # Writes *slice* entirely into the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_write(slice : Bytes)
 
   # Flushes the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_flush
 
   # Closes the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_close
 
   # Rewinds the wrapped `IO`.
+  #
+  # TODO: Add return type restriction `Nil`
   abstract def unbuffered_rewind
 
   # Return the buffer size used
