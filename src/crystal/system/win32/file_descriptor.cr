@@ -15,23 +15,27 @@ module Crystal::System::FileDescriptor
     if ConsoleUtils.console?(handle)
       ConsoleUtils.read(handle, slice)
     elsif system_blocking?
-      if LibC.ReadFile(handle, slice, slice.size, out bytes_read, nil) == 0
-        case error = WinError.value
-        when .error_access_denied?
-          raise IO::Error.new "File not open for reading", target: self
-        when .error_broken_pipe?
-          return 0_u32
-        else
-          raise IO::Error.from_os_error("Error reading file", error, target: self)
-        end
-      end
-      bytes_read
+      unbuffered_read_blocking(handle, slice)
     else
       overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}
       end
     end
+  end
+
+  private def unbuffered_read_blocking(handle, slice)
+    if LibC.ReadFile(handle, slice, slice.size, out bytes_read, nil) == 0
+      case error = WinError.value
+      when .error_access_denied?
+        raise IO::Error.new "File not open for reading", target: self
+      when .error_broken_pipe?
+        return 0_u32
+      else
+        raise IO::Error.from_os_error("Error reading file", error, target: self)
+      end
+    end
+    bytes_read
   end
 
   private def unbuffered_write(slice : Bytes)
