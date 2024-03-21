@@ -25,17 +25,17 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_read_blocking(handle, slice)
-    if LibC.ReadFile(handle, slice, slice.size, out bytes_read, nil) == 0
-      case error = WinError.value
-      when .error_access_denied?
-        raise IO::Error.new "File not open for reading", target: self
-      when .error_broken_pipe?
-        return 0_u32
-      else
-        raise IO::Error.from_os_error("Error reading file", error, target: self)
-      end
+    ret = LibC.ReadFile(handle, slice, slice.size, out bytes_read, nil)
+    return bytes_read unless ret.zero?
+
+    case error = WinError.value
+    when .error_access_denied?
+      raise IO::Error.new "File not open for reading", target: self
+    when .error_broken_pipe?
+      return 0_u32
+    else
+      raise IO::Error.from_os_error("Error reading file", error, target: self)
     end
-    bytes_read
   end
 
   private def unbuffered_write(slice : Bytes)
@@ -55,17 +55,17 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_write_blocking(handle, slice)
-    if LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil) == 0
-      case error = WinError.value
-      when .error_access_denied?
-        raise IO::Error.new "File not open for writing", target: self
-      when .error_broken_pipe?
-        return 0_u32
-      else
-        raise IO::Error.from_os_error("Error writing file", error, target: self)
-      end
+    ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil)
+    return bytes_written unless ret.zero?
+
+    case error = WinError.value
+    when .error_access_denied?
+      raise IO::Error.new "File not open for writing", target: self
+    when .error_broken_pipe?
+      return 0_u32
+    else
+      raise IO::Error.from_os_error("Error writing file", error, target: self)
     end
-    bytes_written
   end
 
   private def system_blocking?
