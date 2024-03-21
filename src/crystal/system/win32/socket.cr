@@ -299,7 +299,7 @@ module Crystal::System::Socket
       {ret, bytes_received}
     end
 
-    {bytes_read.to_i32, sockaddr, addrlen}
+    {bytes_read.to_i32, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
   private def system_close_read
