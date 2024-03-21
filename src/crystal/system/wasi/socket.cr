@@ -15,7 +15,7 @@ module Crystal::System::Socket
   private def initialize_handle(fd)
   end
 
-  private def system_connect(addr, timeout = nil, &)
+  private def system_connect(addr, timeout = nil)
     raise NotImplementedError.new "Crystal::System::Socket#system_connect"
   end
 

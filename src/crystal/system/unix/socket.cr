@@ -22,7 +22,7 @@ module Crystal::System::Socket
     {% end %}
   end
 
-  private def system_connect(addr, timeout = nil, &)
+  private def system_connect(addr, timeout = nil)
     timeout = timeout.seconds unless timeout.is_a? ::Time::Span | Nil
     loop do
       if LibC.connect(fd, addr, addr.size) == 0
@@ -33,10 +33,10 @@ module Crystal::System::Socket
         return
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(timeout: timeout) do
-          return yield IO::TimeoutError.new("connect timed out")
+          return IO::TimeoutError.new("connect timed out")
         end
       else
-        return yield ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_errno("connect")
       end
     end
   end
