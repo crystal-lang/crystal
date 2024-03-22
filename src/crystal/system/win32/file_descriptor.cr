@@ -7,7 +7,10 @@ require "io/overlapped"
 module Crystal::System::FileDescriptor
   include IO::Overlapped
 
-  @volatile_fd : Atomic(LibC::Int)
+  # Platform-specific type to represent a file descriptor handle to the operating
+  # system.
+  alias Handle = ::LibC::Int
+
   @system_blocking = true
 
   private def unbuffered_read(slice : Bytes)

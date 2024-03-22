@@ -5,9 +5,10 @@ class IO::FileDescriptor < IO
   include Crystal::System::FileDescriptor
   include IO::Buffered
 
-  # The raw file-descriptor. It is defined to be an `Int`, but its size is
-  # platform-specific.
-  def fd : Int
+  @volatile_fd : Atomic(Handle)
+
+  # Returns the raw file-descriptor handle. Its type is platform-specific.
+  def fd : Handle
     @volatile_fd.get
   end
 
