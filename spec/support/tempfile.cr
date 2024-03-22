@@ -1,4 +1,5 @@
 require "file_utils"
+require "./interpreted"
 {% if flag?(:msvc) %}
   require "crystal/system/win32/visual_studio"
 {% end %}
