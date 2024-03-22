@@ -1,9 +1,10 @@
 {% skip_file if flag?(:wasm32) %}
 
-require "spec"
+require "./spec_helper"
 require "signal"
 
-describe "Signal" do
+# interpreted code never receives signals (#12241)
+pending_interpreted describe: "Signal" do
   typeof(Signal::ABRT.reset)
   typeof(Signal::ABRT.ignore)
   typeof(Signal::ABRT.trap { 1 })
