@@ -255,11 +255,10 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, sockaddr, addrlen = system_receive(Slice.new(buffer, max_message_size))
-      address = Address.from(sockaddr, addrlen)
+      bytes_read, address = system_receive(Slice.new(buffer, max_message_size))
       {bytes_read, 0}
     end
-    {message, address.not_nil!}
+    {message, address.as(Address)}
   end
 
   # Receives a binary message from the previously bound address.
@@ -274,8 +273,7 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    bytes_read, sockaddr, addrlen = system_receive(message)
-    {bytes_read, Address.from(sockaddr, addrlen)}
+    system_receive(message)
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`

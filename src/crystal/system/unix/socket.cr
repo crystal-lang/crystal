@@ -105,7 +105,7 @@ module Crystal::System::Socket
       LibC.recvfrom(fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
     end
 
-    {bytes_read, sockaddr, addrlen}
+    {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
   private def system_close_read
