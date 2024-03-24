@@ -262,11 +262,11 @@ class IO::FileDescriptor < IO
     pp.text inspect
   end
 
-  private def unbuffered_rewind
+  private def unbuffered_rewind : Nil
     self.pos = 0
   end
 
-  private def unbuffered_close
+  private def unbuffered_close : Nil
     return if @closed
 
     # Set before the @closed state so the pending
@@ -276,7 +276,7 @@ class IO::FileDescriptor < IO
     system_close
   end
 
-  private def unbuffered_flush
+  private def unbuffered_flush : Nil
     # Nothing
   end
 end

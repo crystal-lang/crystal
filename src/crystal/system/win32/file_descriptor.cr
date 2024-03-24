@@ -10,7 +10,7 @@ module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
   @system_blocking = true
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     handle = windows_handle
     if ConsoleUtils.console?(handle)
       ConsoleUtils.read(handle, slice)
@@ -20,21 +20,21 @@ module Crystal::System::FileDescriptor
         when .error_access_denied?
           raise IO::Error.new "File not open for reading", target: self
         when .error_broken_pipe?
-          return 0_u32
+          return 0_i32
         else
           raise IO::Error.from_os_error("Error reading file", error, target: self)
         end
       end
-      bytes_read
+      bytes_read.to_i32
     else
       overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}
-      end
+      end.to_i32
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     handle = windows_handle
     until slice.empty?
       if system_blocking?
