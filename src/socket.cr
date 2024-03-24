@@ -91,7 +91,7 @@ class Socket < IO
   # ```
   def connect(host : String, port : Int, connect_timeout = nil) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      connect(addrinfo, timeout: connect_timeout) { |error| error }
+      connect(addrinfo, timeout: connect_timeout)
     end
   end
 
@@ -110,7 +110,8 @@ class Socket < IO
   # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
-    system_connect(addr, timeout) { |error| yield error }
+    result = system_connect(addr, timeout)
+    yield result if result.is_a?(Exception)
   end
 
   # Binds the socket to a local address.

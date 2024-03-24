@@ -94,20 +94,20 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_connect(addr, timeout = nil, &)
+  private def system_connect(addr, timeout = nil)
     if type.stream?
-      system_connect_stream(addr, timeout) { |error| yield error }
+      system_connect_stream(addr, timeout)
     else
-      system_connect_connectionless(addr, timeout) { |error| yield error }
+      system_connect_connectionless(addr, timeout)
     end
   end
 
-  private def system_connect_stream(addr, timeout, &)
+  private def system_connect_stream(addr, timeout)
     address = LibC::SockaddrIn6.new
     address.sin6_family = family
     address.sin6_port = 0
     unless LibC.bind(fd, pointerof(address).as(LibC::Sockaddr*), sizeof(LibC::SockaddrIn6)) == 0
-      return yield ::Socket::BindError.from_wsa_error("Could not bind to '*'")
+      return ::Socket::BindError.from_wsa_error("Could not bind to '*'")
     end
 
     error = overlapped_connect(fd, "ConnectEx") do |overlapped|
@@ -116,7 +116,7 @@ module Crystal::System::Socket
     end
 
     if error
-      return yield error
+      return error
     end
 
     # from https://learn.microsoft.com/en-us/windows/win32/winsock/sol-socket-socket-options:
@@ -128,7 +128,7 @@ module Crystal::System::Socket
     # > functions are to be used on the connected socket.
     optname = LibC::SO_UPDATE_CONNECT_CONTEXT
     if LibC.setsockopt(fd, LibC::SOL_SOCKET, optname, nil, 0) == LibC::SOCKET_ERROR
-      return yield ::Socket::Error.from_wsa_error("setsockopt #{optname}")
+      return ::Socket::Error.from_wsa_error("setsockopt #{optname}")
     end
   end
 
@@ -166,10 +166,10 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_connect_connectionless(addr, timeout, &)
+  private def system_connect_connectionless(addr, timeout)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
-      yield ::Socket::Error.from_wsa_error("connect")
+      ::Socket::Error.from_wsa_error("connect")
     end
   end
 
