@@ -54,7 +54,8 @@ private def newline
   {% end %}
 end
 
-describe Process do
+# interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
+pending_interpreted describe: Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
