@@ -39,7 +39,8 @@ describe WaitGroup do
       wg = WaitGroup.new(1)
       spawn do
         block_until_pending_waiter(wg)
-        wg.add(-2)
+        wg.done
+        wg.done
       rescue RuntimeError
       end
       expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.wait }
