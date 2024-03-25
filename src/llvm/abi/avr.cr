@@ -4,7 +4,7 @@ class LLVM::ABI::AVR < LLVM::ABI
   def initialize(target_machine : TargetMachine)
     super target_machine
     @rsize = 8 # values above 8 bytes are returned by memory
-    @rmin = 8 # 18 registers for call arguments (R25..R8)
+    @rmin = 8  # 18 registers for call arguments (R25..R8)
   end
 
   def align(type : Type) : Int32
