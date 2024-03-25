@@ -56,13 +56,13 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_write_blocking(handle, slice)
     ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil)
-    return bytes_written unless ret.zero?
+    return bytes_written.to_i32 unless ret.zero?
 
     case error = WinError.value
     when .error_access_denied?
       raise IO::Error.new "File not open for writing", target: self
     when .error_broken_pipe?
-      return 0_u32
+      return 0_i32
     else
       raise IO::Error.from_os_error("Error writing file", error, target: self)
     end
