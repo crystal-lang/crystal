@@ -15,7 +15,7 @@ module Crystal::System::Socket
   private def initialize_handle(fd)
   end
 
-  private def system_connect(addr, timeout = nil, &)
+  private def system_connect(addr, timeout = nil)
     raise NotImplementedError.new "Crystal::System::Socket#system_connect"
   end
 
@@ -161,13 +161,13 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading socket") do
       LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     evented_write(slice, "Error writing to socket") do |slice|
       LibC.send(fd, slice, slice.size, 0)
     end

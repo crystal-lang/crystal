@@ -91,7 +91,7 @@ class Socket < IO
   # ```
   def connect(host : String, port : Int, connect_timeout = nil) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      connect(addrinfo, timeout: connect_timeout) { |error| error }
+      connect(addrinfo, timeout: connect_timeout)
     end
   end
 
@@ -110,7 +110,8 @@ class Socket < IO
   # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
-    system_connect(addr, timeout) { |error| yield error }
+    result = system_connect(addr, timeout)
+    yield result if result.is_a?(Exception)
   end
 
   # Binds the socket to a local address.
@@ -255,11 +256,10 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, sockaddr, addrlen = system_receive(Slice.new(buffer, max_message_size))
-      address = Address.from(sockaddr, addrlen)
+      bytes_read, address = system_receive(Slice.new(buffer, max_message_size))
       {bytes_read, 0}
     end
-    {message, address.not_nil!}
+    {message, address.as(Address)}
   end
 
   # Receives a binary message from the previously bound address.
@@ -274,8 +274,7 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    bytes_read, sockaddr, addrlen = system_receive(message)
-    {bytes_read, Address.from(sockaddr, addrlen)}
+    system_receive(message)
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`
@@ -425,11 +424,11 @@ class Socket < IO
     system_tty?
   end
 
-  private def unbuffered_rewind
+  private def unbuffered_rewind : Nil
     raise Socket::Error.new("Can't rewind")
   end
 
-  private def unbuffered_close
+  private def unbuffered_close : Nil
     return if @closed
 
     @closed = true
@@ -437,7 +436,7 @@ class Socket < IO
     system_close
   end
 
-  private def unbuffered_flush
+  private def unbuffered_flush : Nil
     # Nothing
   end
 end

@@ -22,7 +22,7 @@ module Crystal::System::Socket
     {% end %}
   end
 
-  private def system_connect(addr, timeout = nil, &)
+  private def system_connect(addr, timeout = nil)
     timeout = timeout.seconds unless timeout.is_a? ::Time::Span | Nil
     loop do
       if LibC.connect(fd, addr, addr.size) == 0
@@ -33,10 +33,10 @@ module Crystal::System::Socket
         return
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(timeout: timeout) do
-          return yield IO::TimeoutError.new("connect timed out")
+          return IO::TimeoutError.new("connect timed out")
         end
       else
-        return yield ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_errno("connect")
       end
     end
   end
@@ -105,7 +105,7 @@ module Crystal::System::Socket
       LibC.recvfrom(fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
     end
 
-    {bytes_read, sockaddr, addrlen}
+    {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
   private def system_close_read
@@ -250,13 +250,13 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading socket") do
       LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     evented_write(slice, "Error writing to socket") do |slice|
       LibC.send(fd, slice, slice.size, 0)
     end
