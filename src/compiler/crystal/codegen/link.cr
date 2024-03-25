@@ -1,3 +1,8 @@
+{% if flag?(:msvc) %}
+  require "crystal/system/win32/visual_studio"
+  require "crystal/system/win32/windows_sdk"
+{% end %}
+
 module Crystal
   struct LinkAnnotation
     getter lib : String?
@@ -232,6 +237,10 @@ module Crystal
       flags.join(" ")
     end
 
+    # Searches among CRYSTAL_LIBRARY_PATH, the compiler's directory, and PATH
+    # for every DLL specified in the used `@[Link]` annotations. Yields the
+    # absolute path and `true` if found, the base name and `false` if not found.
+    # The directories should match `Crystal::Repl::Context#dll_search_paths`
     def each_dll_path(& : String, Bool ->)
       executable_path = nil
       compiler_origin = nil
@@ -266,6 +275,43 @@ module Crystal
 
         yield dll_path || dll, !dll_path.nil?
       end
+    end
+
+    # Detects the current MSVC linker and the relevant linker flags that
+    # recreate the MSVC developer prompt's standard library paths. If both MSVC
+    # and the Windows SDK are available, the linker will be an absolute path and
+    # the linker flags will contain the `/LIBPATH`s for the system libraries.
+    #
+    # Has no effect if the host compiler is not using MSVC.
+    def msvc_compiler_and_flags : {String, Array(String)}
+      linker = Compiler::MSVC_LINKER
+      link_args = [] of String
+
+      {% if flag?(:msvc) %}
+        if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
+          if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
+            host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
+            target_bits = has_flag?("aarch64") ? "arm64" : has_flag?("bits64") ? "x64" : "x86"
+
+            # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
+            # that is normally expected on the MSVC developer command prompt
+            link_args << "/LIBPATH:#{msvc_path.join("atlmfc", "lib", target_bits)}"
+            link_args << "/LIBPATH:#{msvc_path.join("lib", target_bits)}"
+            link_args << "/LIBPATH:#{win_sdk_libpath.join("ucrt", target_bits)}"
+            link_args << "/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}"
+
+            # use exact path for compiler instead of relying on `PATH`, unless
+            # explicitly overridden by `%CC%`
+            # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
+            unless ENV.has_key?("CC")
+              target_bits = target_bits.sub("arm", "ARM")
+              linker = msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s
+            end
+          end
+        end
+      {% end %}
+
+      {linker, link_args}
     end
 
     PKG_CONFIG_PATH = Process.find_executable("pkg-config")

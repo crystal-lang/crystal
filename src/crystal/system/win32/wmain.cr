@@ -4,7 +4,7 @@ require "c/stdlib"
 
 {% begin %}
   # we have both `main` and `wmain`, so we must choose an unambiguous entry point
-  @[Link({{ flag?(:preview_dll) ? "msvcrt" : "libcmt" }}, ldflags: "/ENTRY:wmainCRTStartup")]
+  @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }}, ldflags: "/ENTRY:wmainCRTStartup")]
 {% end %}
 lib LibCrystalMain
 end

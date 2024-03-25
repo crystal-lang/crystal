@@ -14,6 +14,7 @@ class Crystal::Loader
   class LoadError < Exception
     property args : Array(String)?
     property search_paths : Array(String)?
+    property dll_search_paths : Array(String)?
 
     def message
       String.build do |io|
@@ -26,28 +27,26 @@ class Crystal::Loader
           io << "\nSearch path: "
           search_paths.join(io, Process::PATH_DELIMITER)
         end
+        if dll_search_paths = @dll_search_paths
+          io << "\nDLL search path: "
+          dll_search_paths.join(io, Process::PATH_DELIMITER)
+        end
       end
     end
   end
 
-  def self.new(search_paths : Array(String), libnames : Array(String), file_paths : Array(String)) : self
-    loader = new(search_paths)
-
+  def load_all(libnames : Array(String), file_paths : Array(String))
     file_paths.each do |path|
-      loader.load_file(::Path[path].expand)
+      load_file(::Path[path].expand)
     end
     libnames.each do |libname|
-      loader.load_library(libname)
+      load_library(libname)
     end
-    loader
   end
 
   getter search_paths : Array(String)
   getter loaded_libraries = [] of String
-
-  def initialize(@search_paths : Array(String))
-    @handles = [] of Handle
-  end
+  @handles = [] of Handle
 
   # def self.library_filename(libname : String) : String
   #   raise NotImplementedError.new("library_filename")

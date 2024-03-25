@@ -449,9 +449,9 @@ describe IO do
       str.read_fully?(slice).should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD,
+    # pipe(2) returns bidirectional file descriptors on FreeBSD and Solaris,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -574,9 +574,9 @@ describe IO do
       io.read_byte.should be_nil
     end
 
-    # pipe(2) returns bidirectional file descriptors on FreeBSD,
+    # pipe(2) returns bidirectional file descriptors on FreeBSD and Solaris,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
@@ -973,11 +973,11 @@ describe IO do
 
         schedule_timeout ch
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
         wait_until_blocked f
 
         read.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
       end
     end
 
@@ -996,11 +996,11 @@ describe IO do
 
         schedule_timeout ch
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
         wait_until_blocked f
 
         write.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
       end
     end
   end
@@ -1013,4 +1013,14 @@ describe IO do
   typeof(STDIN.cooked!)
   typeof(STDIN.raw { })
   typeof(STDIN.raw!)
+
+  describe IO::Error do
+    describe ".new" do
+      it "accepts `cause` argument (#14241)" do
+        cause = Exception.new("cause")
+        error = IO::Error.new("foo", cause: cause)
+        error.cause.should be cause
+      end
+    end
+  end
 end

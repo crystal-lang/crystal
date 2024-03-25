@@ -101,9 +101,13 @@ class Crystal::CodeGenVisitor
           context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.has_flag?("aarch64") ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
         {% end %}
 
-        if @program.has_flag?("darwin")
-          # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
+        if @frame_pointers.always?
+          context.fun.add_attribute "frame-pointer", value: "all"
+        elsif @program.has_flag?("darwin") || @program.has_flag?("solaris")
+          # Disable frame pointer elimination, as it causes issues during stack unwind
           context.fun.add_target_dependent_attribute "frame-pointer", "all"
+        elsif @frame_pointers.non_leaf?
+          context.fun.add_attribute "frame-pointer", value: "non-leaf"
         end
 
         new_entry_block
@@ -531,11 +535,14 @@ class Crystal::CodeGenVisitor
         value = pointer2
       end
     else
+      abi_info = target_def.abi_info? ? abi_info(target_def) : nil
+      sret = abi_info && sret?(abi_info)
+
       # If it's an extern struct on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
       if target_def.c_calling_convention? && arg.type.extern? && !context.fun.attributes(index + 1).by_val?
         # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
-        if target_def.abi_info? && abi_info(target_def).arg_types[index].kind.indirect?
+        if abi_info.try &.arg_types[index - (sret ? 1 : 0)].kind.indirect?
           value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(value, var_type)
         else

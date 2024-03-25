@@ -1151,6 +1151,12 @@ describe Crystal::Formatter do
   assert_format "foo[] =1", "foo[] = 1"
   assert_format "foo[ 1 , 2 ]   =3", "foo[1, 2] = 3"
 
+  assert_format "foo.[]"
+  assert_format "foo.[ 1 , 2 ]", "foo.[1, 2]"
+  assert_format "foo.[ 1,  2 ]?", "foo.[1, 2]?"
+  assert_format "foo.[] =1", "foo.[] = 1"
+  assert_format "foo.[ 1 , 2 ]   =3", "foo.[1, 2] = 3"
+
   assert_format "1  ||  2", "1 || 2"
   assert_format "a  ||  b", "a || b"
   assert_format "1  &&  2", "1 && 2"
@@ -1629,6 +1635,14 @@ describe Crystal::Formatter do
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
   assert_format "->{}"
 
+  # #13232
+  assert_format "->{}", "-> { }", flags: %w[proc_literal_whitespace]
+  assert_format "->(){}", "-> { }", flags: %w[proc_literal_whitespace]
+  assert_format "->{1}", "-> { 1 }", flags: %w[proc_literal_whitespace]
+  assert_format "->(x : Int32) {}", "->(x : Int32) { }", flags: %w[proc_literal_whitespace]
+  assert_format "-> : Int32 {}", "-> : Int32 { }", flags: %w[proc_literal_whitespace]
+  assert_format "->do\nend", "-> do\nend", flags: %w[proc_literal_whitespace]
+
   assert_format "-> : Int32 {}"
   assert_format "-> : Int32 | String { 1 }"
   assert_format "-> : Array(Int32) {}"
@@ -1686,6 +1700,44 @@ describe Crystal::Formatter do
   assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f"))
   assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f",\n          "g"))
   assert_format %(asm("a" ::: "a"\n        : "volatile",\n          "intel"))
+
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    asm(
+    # foo
+    "nop"
+    # bar
+    )
+    CRYSTAL
+    asm(
+      # foo
+      "nop"
+      # bar
+    )
+    CRYSTAL
+
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    asm(
+      # the assembly template string, following the
+      # syntax for LLVM's integrated assembler
+      "nop" :               # output operands
+    "=r"(foo), "=r"(bar) : # input operands
+    "r"(1), "r"(baz) :     # names of clobbered registers
+    "eax", "memory" :      # optional flags, corresponding to the LLVM IR
+      # sideeffect / alignstack / inteldialect / unwind attributes
+    "volatile", "alignstack", "intel", "unwind"
+    )
+    CRYSTAL
+    asm(
+      # the assembly template string, following the
+      # syntax for LLVM's integrated assembler
+      "nop" :                # output operands
+      "=r"(foo), "=r"(bar) : # input operands
+      "r"(1), "r"(baz) :     # names of clobbered registers
+      "eax", "memory" :      # optional flags, corresponding to the LLVM IR
+      # sideeffect / alignstack / inteldialect / unwind attributes
+      "volatile", "alignstack", "intel", "unwind"
+    )
+    CRYSTAL
 
   assert_format "1 # foo\n1234 # bar", "1    # foo\n1234 # bar"
   assert_format "1234 # foo\n1 # bar", "1234 # foo\n1    # bar"
@@ -1952,6 +2004,13 @@ describe Crystal::Formatter do
   assert_format "foo.[1]"
   assert_format "foo.[] = 1"
   assert_format "foo.[1, 2] = 3"
+
+  %w(<= == >= != []= ===).each do |operator|
+    assert_format "1.#{operator} { 3 }"
+    assert_format "1.#{operator}() { 3 }"
+    assert_format "1.#{operator}(2) { 3 }"
+    assert_format "1.#{operator} do\nend"
+  end
 
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
   assert_format "getter foo # comment\n\ndef foo\nend"
@@ -2833,6 +2892,14 @@ describe Crystal::Formatter do
         CRYSTAL
     end
   end
+
+  # #14256
+  assert_format <<-CRYSTAL
+    foo bar # comment
+
+    # doc
+    def baz; end
+    CRYSTAL
 
   # CVE-2021-42574
   describe "Unicode bi-directional control characters" do

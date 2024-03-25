@@ -2,6 +2,7 @@ require "crystal/system/event_loop"
 require "crystal/system/print_error"
 require "./fiber_channel"
 require "fiber"
+require "fiber/stack_pool"
 require "crystal/system/thread"
 
 # :nodoc:
@@ -13,6 +14,11 @@ require "crystal/system/thread"
 # protected and must never be called directly.
 class Crystal::Scheduler
   @event_loop = Crystal::EventLoop.create
+  @stack_pool = Fiber::StackPool.new
+
+  def self.stack_pool : Fiber::StackPool
+    Thread.current.scheduler.@stack_pool
+  end
 
   def self.event_loop
     Thread.current.scheduler.@event_loop
@@ -84,14 +90,7 @@ class Crystal::Scheduler
   end
 
   {% if flag?(:preview_mt) %}
-    def self.enqueue_free_stack(stack : Void*) : Nil
-      Thread.current.scheduler.enqueue_free_stack(stack)
-    end
-  {% end %}
-
-  {% if flag?(:preview_mt) %}
     private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
-    @free_stacks = Deque(Void*).new
   {% end %}
 
   @main : Fiber
@@ -126,14 +125,6 @@ class Crystal::Scheduler
     {% end %}
 
     current, @current = @current, fiber
-
-    {% if flag?(:interpreted) %}
-      # TODO: ideally we could set this in the interpreter if the
-      # @context had a pointer back to the fiber.
-      # I also wonder why this isn't done always like that instead of in asm.
-      current.@context.resumable = 1
-    {% end %}
-
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -157,18 +148,6 @@ class Crystal::Scheduler
     exit 1
   end
 
-  {% if flag?(:preview_mt) %}
-    protected def enqueue_free_stack(stack)
-      @free_stacks.push stack
-    end
-
-    private def release_free_stacks
-      while stack = @free_stacks.shift?
-        Fiber.stack_pool.release stack
-      end
-    end
-  {% end %}
-
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
@@ -178,10 +157,6 @@ class Crystal::Scheduler
         @event_loop.run_once
       end
     end
-
-    {% if flag?(:preview_mt) %}
-      release_free_stacks
-    {% end %}
   end
 
   protected def sleep(time : Time::Span) : Nil
@@ -207,6 +182,8 @@ class Crystal::Scheduler
     end
 
     def run_loop
+      spawn_stack_pool_collector
+
       fiber_channel = self.fiber_channel
       loop do
         @lock.lock
@@ -239,7 +216,7 @@ class Crystal::Scheduler
       @lock.unlock
     end
 
-    def self.init_workers
+    def self.init : Nil
       count = worker_count
       pending = Atomic(Int32).new(count - 1)
       @@workers = Array(Thread).new(count) do |i|
@@ -249,7 +226,7 @@ class Crystal::Scheduler
           Thread.current.scheduler.enqueue worker_loop
           Thread.current
         else
-          Thread.new do
+          Thread.new(name: "CRYSTAL-MT-#{i}") do
             scheduler = Thread.current.scheduler
             pending.sub(1)
             scheduler.run_loop
@@ -281,5 +258,18 @@ class Crystal::Scheduler
         4
       end
     end
+  {% else %}
+    def self.init : Nil
+      {% unless flag?(:interpreted) %}
+        Thread.current.scheduler.spawn_stack_pool_collector
+      {% end %}
+    end
   {% end %}
+
+  # Background loop to cleanup unused fiber stacks.
+  def spawn_stack_pool_collector
+    fiber = Fiber.new(name: "Stack pool collector", &->@stack_pool.collect_loop)
+    {% if flag?(:preview_mt) %} fiber.set_current_thread {% end %}
+    enqueue(fiber)
+  end
 end

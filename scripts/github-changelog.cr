@@ -31,6 +31,10 @@ def query_prs(api_token, repository, milestone)
       repository(owner: $owner, name: $repository) {
         milestones(query: $milestone, first: 1) {
           nodes {
+            closedAt
+            description
+            dueOn
+            title
             pullRequests(first: 300) {
               nodes {
                 number
@@ -81,6 +85,28 @@ module LabelNameConverter
   end
 end
 
+record Milestone,
+  closed_at : Time?,
+  description : String,
+  due_on : Time?,
+  title : String,
+  pull_requests : Array(PullRequest) do
+  include JSON::Serializable
+
+  @[JSON::Field(key: "dueOn")]
+  @due_on : Time?
+
+  @[JSON::Field(key: "closedAt")]
+  @closed_at : Time?
+
+  @[JSON::Field(key: "pullRequests", root: "nodes")]
+  @pull_requests : Array(PullRequest)
+
+  def release_date
+    closed_at || due_on
+  end
+end
+
 record PullRequest,
   number : Int32,
   title : String,
@@ -110,10 +136,13 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if experimental?
+      io << "**[experimental]** "
+    end
     if deprecated?
       io << "**[deprecation]** "
     end
-    io << title.sub(/^#{type}: /i, "") << " ("
+    io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
     io << "[#" << number << "](" << permalink << ")"
     if author = self.author
       io << ", thanks @" << author
@@ -152,9 +181,26 @@ record PullRequest,
   end
 
   def topic
-    labels.find { |label|
-      label.starts_with?("topic:") && label != "topic:multithreading"
-    }.try(&.lchop("topic:").split(/:|\//))
+    topics.fetch(0) do
+      STDERR.puts "Missing topic for ##{number}"
+      nil
+    end
+  end
+
+  def topics
+    topics = labels.compact_map { |label|
+      label.lchop?("topic:").try(&.split(/:|\//))
+    }
+    topics.reject! &.[0].==("multithreading")
+
+    topics.sort_by! { |parts|
+      topic_priority = case parts[0]
+                       when "tools" then 2
+                       when "lang"  then 1
+                       else              0
+                       end
+      {-topic_priority, parts[0]}
+    }
   end
 
   def deprecated?
@@ -165,12 +211,20 @@ record PullRequest,
     labels.includes?("kind:breaking")
   end
 
+  def experimental?
+    labels.includes?("experimental")
+  end
+
   def feature?
     labels.includes?("kind:feature")
   end
 
   def fix?
     labels.includes?("kind:bug")
+  end
+
+  def chore?
+    labels.includes?("kind:chore")
   end
 
   def refactor?
@@ -196,9 +250,10 @@ record PullRequest,
   def type
     case
     when feature?     then "feature"
-    when fix?         then "fix"
     when docs?        then "docs"
     when specs?       then "specs"
+    when fix?         then "fix"
+    when chore?       then "chore"
     when performance? then "performance"
     when refactor?    then "refactor"
     else                   nil
@@ -216,41 +271,45 @@ end
 
 response = query_prs(api_token, repository, milestone)
 parser = JSON::PullParser.new(response.body)
-array = parser.on_key! "data" do
+milestone = parser.on_key! "data" do
   parser.on_key! "repository" do
     parser.on_key! "milestones" do
       parser.on_key! "nodes" do
         parser.read_begin_array
-        a = parser.on_key! "pullRequests" do
-          parser.on_key! "nodes" do
-            Array(PullRequest).new(parser)
-          end
-        end
+        milestone = Milestone.new(parser)
         parser.read_end_array
-        a
+        milestone
       end
     end
   end
 end
 
-changelog = File.read("CHANGELOG.md")
-array.select! { |pr| pr.merged_at && !changelog.index(pr.permalink) }
-
-sections = array.group_by(&.section)
+sections = milestone.pull_requests.group_by(&.section)
 
 SECTION_TITLES = {
   "breaking"    => "Breaking changes",
   "feature"     => "Features",
   "fix"         => "Bugfixes",
+  "chore"       => "Chores",
   "performance" => "Performance",
   "refactor"    => "Refactor",
   "docs"        => "Documentation",
   "specs"       => "Specs",
   "infra"       => "Infrastructure",
-  ""            => "Chores",
+  ""            => "other",
 }
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
+
+puts "## [#{milestone.title}] (#{milestone.release_date.try(&.to_s("%F")) || "unreleased"})"
+if description = milestone.description.presence
+  puts
+  print "_", description
+  puts "_"
+end
+puts
+puts "[#{milestone.title}]: https://github.com/crystal-lang/crystal/releases/#{milestone.title}"
+puts
 
 SECTION_TITLES.each do |id, title|
   prs = sections[id]? || next

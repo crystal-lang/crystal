@@ -28,6 +28,13 @@ struct LLVM::Function
     end
   end
 
+  def add_attribute(attribute : String, index = AttributeIndex::FunctionIndex, *, value : String)
+    context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
+    attribute_ref = LibLLVM.create_string_attribute(context, attribute, attribute.bytesize,
+      value, value.bytesize)
+    LibLLVM.add_attribute_at_index(self, index, attribute_ref)
+  end
+
   def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex, *, value)
     return if attribute.value == 0
 

@@ -19,12 +19,12 @@ private class BufferedWrapper < IO
     io
   end
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     @called_unbuffered_read = true
     @io.read(slice)
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     @io.write(slice)
   end
 

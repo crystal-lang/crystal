@@ -290,9 +290,13 @@ module Crystal
     assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
-    assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
-    assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
-    assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
+
+    # #10397
+    %w(<= >= == != []= ===).each do |operator|
+      it_parses "def #{operator}(other, file = 1); end", Def.new(operator, ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def #{operator}(*args, **opts); end", Def.new(operator, ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def #{operator}(*args, **opts, &); end", Def.new(operator, ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+    end
 
     # #5895, #6042, #5997
     %w(
@@ -624,10 +628,12 @@ module Crystal
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
     end
 
-    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
+    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!=", "[]=", "!~"].each do |name|
       it_parses "foo.#{name}", Call.new("foo".call, name)
       it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
+      it_parses "foo.#{name}(1, 2) { 3 }", Call.new("foo".call, name, args: [1.int32, 2.int32] of ASTNode, block: Block.new(body: 3.int32))
+      it_parses "foo.#{name} do end", Call.new("foo".call, name, block: Block.new)
     end
 
     ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
@@ -2246,6 +2252,7 @@ module Crystal
       assert_end_location "class Foo; end"
       assert_end_location "struct Foo; end"
       assert_end_location "module Foo; end"
+      assert_end_location "alias Foo = Bar"
       assert_end_location "->{ }"
       assert_end_location "macro foo;end"
       assert_end_location "macro foo; 123; end"
@@ -2497,6 +2504,24 @@ module Crystal
 
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
+      end
+
+      it "sets location of top-level fun name" do
+        parser = Parser.new("fun foo; end")
+        node = parser.parse.as(FunDef)
+
+        name_location = node.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(5)
+      end
+
+      it "sets location of lib fun name" do
+        parser = Parser.new("lib Foo; fun foo; end")
+        node = parser.parse.as(LibDef).body.as(FunDef)
+
+        name_location = node.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(14)
       end
 
       it "sets correct location of proc literal" do

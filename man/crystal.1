@@ -117,6 +117,8 @@ Generate the output without any symbolic debug symbols.
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -emit Op asm|llvm-bc|llvm-ir|obj
 Comma separated list of types of output for the compiler to emit. You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
+.It Fl -frame-pointers Op auto|always|non-leaf
+Control the preservation of frame pointers. The default value, --frame-pointers=auto, will preserve frame pointers on debug builds and try to omit them on release builds (certain platforms require them to stay enabled). --frame-pointers=always will always preserve them, and non-leaf will only force their preservation on non-leaf functions.
 .It Fl f Ar text|json, Fl -format Ar text|json
 Format of output. Defaults to text. The json format can be used to get a more parser-friendly output.
 .It Fl -error-trace
@@ -130,7 +132,7 @@ Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM
 Passing --mcpu native will pass the host CPU name to tune performance for the host.
 .It Fl -mattr Ar CPU
 Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
-.It Fl -mcmodel default|kernel|small|medium|large
+.It Fl -mcmodel Ar default|kernel|small|medium|large
 Specifies a specific code model to generate code for. This will pass a --code-model flag to LLVM.
 .It Fl -no-color
 Disable colored output.
@@ -367,7 +369,7 @@ Disable colored output.
 .Op --
 .Op arguments
 .Pp
-Run a tool. The available tools are: context, dependencies, format, hierarchy, implementations, and types.
+Run a tool. The available tools are: context, dependencies, flags, format, hierarchy, implementations, and types.
 .Pp
 Tools:
 .Bl -tag -offset indent
@@ -396,6 +398,8 @@ Show skipped and heads of filtered paths
 .El
 .It Cm expand
 Show macro expansion for given location.
+.It Cm flags
+Print all macro 'flag?' values
 .It Cm format
 Format project, directories and/or files with the coding style used in the standard library. You can use the
 .Fl -check
@@ -407,7 +411,7 @@ flag.
 .It Cm implementations
 Show implementations for a given call. Use
 .Fl -cursor
-to specify the cursor position. The format for the cursor position is file:line:column.
+ to specify the cursor position. The format for the cursor position is file:line:column.
 .It Cm types
 Show type of main variables of file.
 .It Cm unreachable
@@ -493,7 +497,7 @@ Middle optimization
 .It Fl O3
 High optimization
 .
-.Sh ENVIRONMENT VARIABLES
+.Sh ENVIRONMENT\ VARIABLES
 .Bl -tag -width "12345678" -compact
 .Pp
 .It

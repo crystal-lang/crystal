@@ -37,7 +37,7 @@ struct Complex
 
   # :ditto:
   def ==(other : Number)
-    self == other.to_c
+    @real == other && @imag.zero?
   end
 
   # :ditto:
@@ -307,7 +307,7 @@ struct Number
   end
 
   def ==(other : Complex)
-    to_c == other
+    other == self
   end
 
   def cis : Complex

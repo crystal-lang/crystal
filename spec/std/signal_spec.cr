@@ -1,9 +1,10 @@
 {% skip_file if flag?(:wasm32) %}
 
-require "spec"
+require "./spec_helper"
 require "signal"
 
-describe "Signal" do
+# interpreted code never receives signals (#12241)
+pending_interpreted describe: "Signal" do
   typeof(Signal::ABRT.reset)
   typeof(Signal::ABRT.ignore)
   typeof(Signal::ABRT.trap { 1 })
@@ -29,11 +30,33 @@ describe "Signal" do
         sleep 0.1
       end
       ran.should be_true
+    ensure
+      Signal::USR1.reset
     end
 
     it "ignores a signal" do
       Signal::USR2.ignore
       Process.signal Signal::USR2, Process.pid
+    end
+
+    it "allows chaining of signals" do
+      ran_first = false
+      ran_second = false
+
+      Signal::USR1.trap { ran_first = true }
+      existing = Signal::USR1.trap_handler?
+
+      Signal::USR1.trap do |signal|
+        existing.try &.call(signal)
+        ran_second = true
+      end
+
+      Process.signal Signal::USR1, Process.pid
+      sleep 0.1
+      ran_first.should be_true
+      ran_second.should be_true
+    ensure
+      Signal::USR1.reset
     end
 
     it "CHLD.reset sets default Crystal child handler" do

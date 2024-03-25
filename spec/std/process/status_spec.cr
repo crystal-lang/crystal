@@ -149,10 +149,16 @@ describe Process::Status do
 
       it "returns Aborted" do
         Process::Status.new(Signal::ABRT.value).exit_reason.aborted?.should be_true
-        Process::Status.new(Signal::HUP.value).exit_reason.aborted?.should be_true
         Process::Status.new(Signal::KILL.value).exit_reason.aborted?.should be_true
         Process::Status.new(Signal::QUIT.value).exit_reason.aborted?.should be_true
-        Process::Status.new(Signal::TERM.value).exit_reason.aborted?.should be_true
+      end
+
+      it "returns TerminalDisconnected" do
+        Process::Status.new(Signal::HUP.value).exit_reason.terminal_disconnected?.should be_true
+      end
+
+      it "returns SessionEnded" do
+        Process::Status.new(Signal::TERM.value).exit_reason.session_ended?.should be_true
       end
 
       it "returns Interrupted" do

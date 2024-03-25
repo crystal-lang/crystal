@@ -11,9 +11,10 @@ require "./save_options"
 lib LibXML
   alias Int = LibC::Int
 
+  fun xmlInitParser
+
   # TODO: check if other platforms also support per-thread globals
   {% if flag?(:win32) %}
-    fun xmlInitParser
     fun __xmlIndentTreeOutput : Int*
     fun __xmlTreeIndentString : UInt8**
   {% else %}
@@ -324,9 +325,7 @@ lib LibXML
   fun xmlValidateNameValue(value : UInt8*) : Int
 end
 
-{% if flag?(:win32) %}
-  LibXML.xmlInitParser
-{% end %}
+LibXML.xmlInitParser
 
 LibXML.xmlGcMemSetup(
   ->GC.free,

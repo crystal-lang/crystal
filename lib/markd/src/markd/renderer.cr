@@ -50,7 +50,7 @@ module Markd
     end
 
     def render(document : Node)
-      Utils.timer("renderering", @options.time) do
+      Utils.timer("rendering", @options.time) do
         walker = document.walker
         while event = walker.next
           node, entering = event

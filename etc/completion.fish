@@ -1,5 +1,5 @@
 set -l crystal_commands init build clear_cache docs env eval i interactive play run spec tool help version
-set -l tool_subcommands context expand format hierarchy implementations types
+set -l tool_subcommands context expand flags format hierarchy implementations types
 
 complete -c crystal -s h -l help -d "Show help" -x
 
@@ -172,6 +172,8 @@ complete -c crystal -n "__fish_seen_subcommand_from expand" -s s -l stats -d "En
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s p -l progress -d "Enable progress output"
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s t -l time -d "Enable execution time output"
 complete -c crystal -n "__fish_seen_subcommand_from expand" -l stdin-filename -d "Source file name to be read from STDIN"
+
+complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "flags" -d "print all macro 'flag?' values" -x
 
 complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "format" -d "format project, directories and/or files" -x
 complete -c crystal -n "__fish_seen_subcommand_from format" -l check -d "Checks that formatting code produces no changes"
