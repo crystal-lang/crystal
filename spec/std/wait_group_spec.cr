@@ -19,7 +19,7 @@ describe WaitGroup do
     it "resumes waiters when reaching negative counter" do
       wg = WaitGroup.new(1)
       spawn do
-        block_until_pending_waiter
+        block_until_pending_waiter(wg)
         wg.add(-2)
       rescue RuntimeError
       end
@@ -38,7 +38,7 @@ describe WaitGroup do
     it "resumes waiters when reaching negative counter" do
       wg = WaitGroup.new(1)
       spawn do
-        block_until_pending_waiter
+        block_until_pending_waiter(wg)
         wg.add(-2)
       rescue RuntimeError
       end
