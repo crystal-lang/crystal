@@ -588,8 +588,12 @@ module Crystal
     def size_t
       if @program.bits64?
         @llvm_context.int64
-      else
+      elsif @program.bits32?
         @llvm_context.int32
+      elsif @program.bits16?
+        @llvm_context.int16
+      else
+        raise "BUG: only 64, 32 and 16-bit sizes are supported"
       end
     end
 
