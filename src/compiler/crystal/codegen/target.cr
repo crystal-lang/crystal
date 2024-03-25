@@ -51,10 +51,14 @@ class Crystal::Codegen::Target
 
   def pointer_bit_width
     case @architecture
-    when "x86_64", "aarch64"
+    when "aarch64", "x86_64"
       64
-    else
+    when "arm", "i386", "wasm32"
       32
+    when "avr"
+      16
+    else
+      raise "BUG: unknown Target#pointer_bit_width for #{@architecture} target architecture"
     end
   end
 
@@ -64,6 +68,8 @@ class Crystal::Codegen::Target
       64
     when "arm", "i386", "wasm32"
       32
+    when "avr"
+      16
     else
       raise "BUG: unknown Target#size_bit_width for #{@architecture} target architecture"
     end
@@ -181,6 +187,10 @@ class Crystal::Codegen::Target
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
+  def avr?
+    @architecture == "avr"
+  end
+
   def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
                         code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
@@ -197,6 +207,8 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "avr"
+      LLVM.init_avr
     when "wasm32"
       LLVM.init_webassembly
     else
