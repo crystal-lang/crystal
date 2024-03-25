@@ -13,6 +13,11 @@ lib LibLLVM
   fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
   fun initialize_arm_asm_printer = LLVMInitializeARMAsmPrinter
   fun initialize_arm_asm_parser = LLVMInitializeARMAsmParser
+  fun initialize_avr_target_info = LLVMInitializeAVRTargetInfo
+  fun initialize_avr_target = LLVMInitializeAVRTarget
+  fun initialize_avr_target_mc = LLVMInitializeAVRTargetMC
+  fun initialize_avr_asm_printer = LLVMInitializeAVRAsmPrinter
+  fun initialize_avr_asm_parser = LLVMInitializeAVRAsmParser
   fun initialize_webassembly_target_info = LLVMInitializeWebAssemblyTargetInfo
   fun initialize_webassembly_target = LLVMInitializeWebAssemblyTarget
   fun initialize_webassembly_target_mc = LLVMInitializeWebAssemblyTargetMC
@@ -31,4 +36,5 @@ lib LibLLVM
   fun abi_size_of_type = LLVMABISizeOfType(td : TargetDataRef, ty : TypeRef) : ULongLong
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt
   fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_ty : TypeRef, element : UInt) : ULongLong
+  fun copy_string_rep_of_target_data = LLVMCopyStringRepOfTargetData(td : TargetDataRef) : Char*
 end

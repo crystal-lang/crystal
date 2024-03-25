@@ -53,6 +53,8 @@ class LLVM::TargetMachine
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
+    when /avr/
+      ABI::AVR.new(self)
     when /wasm32/
       ABI::Wasm32.new(self)
     else
