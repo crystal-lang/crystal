@@ -83,12 +83,12 @@ class WaitGroup
   #
   # Can be called from different fibers.
   def wait : Nil
-    case @counter.get <=> 0
-    when -1
+    case @counter.get
+    when .negative?
       raise RuntimeError.new("Negative WaitGroup counter")
-    when 0
+    when .zero?
       return
-    when 1
+    when .positive?
       waiting = Waiting.new(Fiber.current)
 
       @lock.sync do
