@@ -9,7 +9,9 @@ require "termios"
 module Crystal::System::FileDescriptor
   include IO::Evented
 
-  @volatile_fd : Atomic(Int32)
+  # Platform-specific type to represent a file descriptor handle to the operating
+  # system.
+  alias Handle = Int32
 
   private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading file") do
