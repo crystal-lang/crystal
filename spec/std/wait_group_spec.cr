@@ -1,22 +1,73 @@
 require "spec"
 require "wait_group"
 
+private def block_until_pending_waiter(wg)
+  while wg.@waiting.empty?
+    Fiber.yield
+  end
+end
+
 describe WaitGroup do
-  describe "add" do
+  describe "#add" do
     it "can't decrement to a negative counter" do
       wg = WaitGroup.new
       wg.add(5)
       wg.add(-3)
       expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.add(-5) }
     end
+
+    it "resumes waiters when reaching negative counter" do
+      wg = WaitGroup.new(1)
+      spawn do
+        block_until_pending_waiter
+        wg.add(-2)
+      rescue RuntimeError
+      end
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.wait }
+    end
   end
 
-  describe "done" do
+  describe "#done" do
     it "can't decrement to a negative counter" do
       wg = WaitGroup.new
       wg.add(1)
       wg.done
       expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.done }
+    end
+
+    it "resumes waiters when reaching negative counter" do
+      wg = WaitGroup.new(1)
+      spawn do
+        block_until_pending_waiter
+        wg.add(-2)
+      rescue RuntimeError
+      end
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.wait }
+    end
+  end
+
+  describe "#wait" do
+    it "immediately returns when counter is zero" do
+      channel = Channel(Nil).new(1)
+
+      spawn do
+        wg = WaitGroup.new(0)
+        wg.wait
+        channel.send(nil)
+      end
+
+      select
+      when channel.receive
+        # success
+      when timeout(1.second)
+        fail "expected #wait to not block the fiber"
+      end
+    end
+
+    it "immediately raises when counter is negative" do
+      wg = WaitGroup.new(0)
+      expect_raises(RuntimeError) { wg.done }
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.wait }
     end
   end
 
