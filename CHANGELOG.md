@@ -85,7 +85,6 @@ _Feature freeze: 2024-03-26_
 - *(codegen)* Don't copy DLL to output directory if file already exists ([#14315](https://github.com/crystal-lang/crystal/pull/14315), thanks @HertzDevil)
 - *(codegen)* Fix `Proc#call` that takes and returns large extern structs by value ([#14323](https://github.com/crystal-lang/crystal/pull/14323), thanks @HertzDevil)
 - *(codegen)* Never discard ivar initializer inside `.allocate` and `.pre_initialize` ([#14337](https://github.com/crystal-lang/crystal/pull/14337), thanks @HertzDevil)
-- *(interpreter)* Ensure all constants only have one initializer in the interpreter ([#14381](https://github.com/crystal-lang/crystal/pull/14381), thanks @HertzDevil)
 - *(interpreter)* fix fiber's resumable property ([#14252](https://github.com/crystal-lang/crystal/pull/14252), thanks @ysbaddaden)
 - *(parser)* Fix name locations of `FunDef` and `External` nodes ([#14267](https://github.com/crystal-lang/crystal/pull/14267), thanks @HertzDevil)
 - *(parser)* Fix end locations of `Alias` nodes ([#14271](https://github.com/crystal-lang/crystal/pull/14271), thanks @HertzDevil)
@@ -94,6 +93,7 @@ _Feature freeze: 2024-03-26_
 
 - *(formatter)* Fix format for `asm` with comments ([#14278](https://github.com/crystal-lang/crystal/pull/14278), thanks @straight-shoota)
 - *(formatter)* Fix formatter for white space in `a.[b]` syntax ([#14346](https://github.com/crystal-lang/crystal/pull/14346), thanks @straight-shoota)
+- *(formatter)* Fix formatter on call without parentheses followed by doc comment ([#14354](https://github.com/crystal-lang/crystal/pull/14354), thanks @straight-shoota)
 
 #### other
 
@@ -128,12 +128,11 @@ _Feature freeze: 2024-03-26_
 
 #### stdlib
 
-- *(files)* Add type restrictions to `#unbuffered_*` implementations ([#14382](https://github.com/crystal-lang/crystal/pull/14382), thanks @straight-shoota)
 - *(files)* Replace some Microsoft C runtime funs with Win32 equivalents ([#14316](https://github.com/crystal-lang/crystal/pull/14316), thanks @HertzDevil)
-- *(networking)* Refactor `Socket#system_receive` to return `Address` ([#14384](https://github.com/crystal-lang/crystal/pull/14384), thanks @straight-shoota)
-- *(networking)* Refactor `#system_connect` without yield ([#14383](https://github.com/crystal-lang/crystal/pull/14383), thanks @straight-shoota)
+- *(files)* Move timeout properties to `Socket` and `IO::FileDescriptor` ([#14367](https://github.com/crystal-lang/crystal/pull/14367), thanks @straight-shoota)
 - *(numeric)* Add `Crystal::Hasher.reduce_num` and `#number` ([#14304](https://github.com/crystal-lang/crystal/pull/14304), thanks @HertzDevil)
 - *(specs)* **[deprecation]** Move most of spec runner's state into `Spec::CLI` ([#14170](https://github.com/crystal-lang/crystal/pull/14170), thanks @HertzDevil)
+- *(specs)* Add `Spec::Formatter#should_print_summary?` ([#14397](https://github.com/crystal-lang/crystal/pull/14397), thanks @HertzDevil)
 
 #### compiler
 
@@ -157,12 +156,10 @@ _Feature freeze: 2024-03-26_
 - Fix spelling in `spec/std/uri/params_spec.cr` ([#14302](https://github.com/crystal-lang/crystal/pull/14302), thanks @jbampton)
 - *(system)* Always preserve the environment for specs that modify `ENV` ([#14211](https://github.com/crystal-lang/crystal/pull/14211), thanks @HertzDevil)
 - *(system)* Ensure Windows time zone specs request `SeTimeZonePrivilege` properly ([#14297](https://github.com/crystal-lang/crystal/pull/14297), thanks @HertzDevil)
-- *(time)* Fix requires for `time/time_spec.cr` and `time/format_spec.cr` ([#14385](https://github.com/crystal-lang/crystal/pull/14385), thanks @HertzDevil)
 
 #### compiler
 
 - Remove the prelude from some compiler specs ([#14336](https://github.com/crystal-lang/crystal/pull/14336), thanks @HertzDevil)
-- *(interpreter)* Add `pending_interpreted` ([#14386](https://github.com/crystal-lang/crystal/pull/14386), thanks @HertzDevil)
 - *(interpreter)* Fix: don't run thread specs with the interpreter ([#14287](https://github.com/crystal-lang/crystal/pull/14287), thanks @ysbaddaden)
 - *(semantic)* Enable `@[Primitive(:va_arg)]` semantic spec on Windows ([#14338](https://github.com/crystal-lang/crystal/pull/14338), thanks @HertzDevil)
 
@@ -170,17 +167,20 @@ _Feature freeze: 2024-03-26_
 
 - Changelog for 1.12.0 ([#14232](https://github.com/crystal-lang/crystal/pull/14232), thanks @straight-shoota)
 - Remove filtering of already mentioned PRs ([#14229](https://github.com/crystal-lang/crystal/pull/14229), thanks @straight-shoota)
-- Update previous Crystal release - 1.11.2 ([#14251](https://github.com/crystal-lang/crystal/pull/14251), thanks @straight-shoota)
 - Mention RFC process in contribution instructions ([#14291](https://github.com/crystal-lang/crystal/pull/14291), thanks @straight-shoota)
 - Drop Nikola sponsor mention from Readme ([#14290](https://github.com/crystal-lang/crystal/pull/14290), thanks @straight-shoota)
 - Enhance changelog script to pull milestone info from GitHub ([#14230](https://github.com/crystal-lang/crystal/pull/14230), thanks @straight-shoota)
+- Add `shard.yml` ([#14365](https://github.com/crystal-lang/crystal/pull/14365), thanks @straight-shoota)
 - Change some line endings from CRLF to LF ([#14299](https://github.com/crystal-lang/crystal/pull/14299), thanks @HertzDevil)
 - Install system dependencies in the Windows GUI installer ([#14328](https://github.com/crystal-lang/crystal/pull/14328), thanks @HertzDevil)
+- Skip building `llvm_ext.cc` on LLVM 18 or above ([#14357](https://github.com/crystal-lang/crystal/pull/14357), thanks @HertzDevil)
 - *(ci)* Update previous Crystal release 1.11.0 ([#14189](https://github.com/crystal-lang/crystal/pull/14189), thanks @straight-shoota)
 - *(ci)* Update previous Crystal release 1.11.1 ([#14224](https://github.com/crystal-lang/crystal/pull/14224), thanks @straight-shoota)
+- *(ci)* Update previous Crystal release - 1.11.2 ([#14251](https://github.com/crystal-lang/crystal/pull/14251), thanks @straight-shoota)
 - *(ci)* Update GH Actions ([#14246](https://github.com/crystal-lang/crystal/pull/14246), thanks @renovate)
 - *(ci)* Upgrade `resource_class` for `test_preview_mt` ([#14274](https://github.com/crystal-lang/crystal/pull/14274), thanks @straight-shoota)
 - *(ci)* Upgrade from old machine images approaching EOL ([#14275](https://github.com/crystal-lang/crystal/pull/14275), thanks @straight-shoota)
+- *(ci)* Update Windows library versions ([#14355](https://github.com/crystal-lang/crystal/pull/14355), thanks @HertzDevil)
 - *(ci)* Support LLVM 18.1 ([#14277](https://github.com/crystal-lang/crystal/pull/14277), thanks @HertzDevil)
 
 ## [1.11.2] (2024-01-18)
