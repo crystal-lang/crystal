@@ -38,6 +38,7 @@ _Feature freeze: 2024-03-26_
 - *(cli)* Respect `--static` on Windows ([#14292](https://github.com/crystal-lang/crystal/pull/14292), thanks @HertzDevil)
 - *(cli)* Allow `--single-module` and `--threads` for `eval` and `spec` ([#14341](https://github.com/crystal-lang/crystal/pull/14341), thanks @HertzDevil)
 - *(codegen)* Add `--frame-pointers` to control preservation of frame pointers ([#13860](https://github.com/crystal-lang/crystal/pull/13860), thanks @refi64)
+- *(codegen)* x86-64 Solaris / illumos support ([#14343](https://github.com/crystal-lang/crystal/pull/14343), thanks @HertzDevil)
 - *(interpreter)* Support `@[Link]`'s DLL search order in the interpreter on Windows ([#14146](https://github.com/crystal-lang/crystal/pull/14146), thanks @HertzDevil)
 - *(parser)* Allow calling `#[]=` with a block using method syntax ([#14161](https://github.com/crystal-lang/crystal/pull/14161), thanks @HertzDevil)
 - *(semantic)* Change short_reference for top-level macros to `::foo` ([#14203](https://github.com/crystal-lang/crystal/pull/14203), thanks @femto)
@@ -46,10 +47,6 @@ _Feature freeze: 2024-03-26_
 
 - Add `crystal tool flags` ([#14234](https://github.com/crystal-lang/crystal/pull/14234), thanks @straight-shoota)
 - *(formatter)* Add more whitespace around `ProcLiteral`s ([#14209](https://github.com/crystal-lang/crystal/pull/14209), thanks @HertzDevil)
-
-#### other
-
-- x86-64 Solaris / illumos support ([#14343](https://github.com/crystal-lang/crystal/pull/14343), thanks @HertzDevil)
 
 ### Bugfixes
 
@@ -74,6 +71,7 @@ _Feature freeze: 2024-03-26_
 - *(runtime)* `Crystal::RWLock` should be a struct ([#14345](https://github.com/crystal-lang/crystal/pull/14345), thanks @ysbaddaden)
 - *(serialization)* `XML::Reader`: Disallow attributes containing null bytes ([#14193](https://github.com/crystal-lang/crystal/pull/14193), thanks @HertzDevil)
 - *(serialization)* Always call `LibXML.xmlInitParser` when requiring XML libraries ([#14191](https://github.com/crystal-lang/crystal/pull/14191), thanks @HertzDevil)
+- *(system)* Fix macro `Crystal::LIBRARY_PATH.split` when cross-compiling ([#14330](https://github.com/crystal-lang/crystal/pull/14330), thanks @HertzDevil)
 - *(system)* Add `SA_RESTART` flag to sigaction syscall ([#14351](https://github.com/crystal-lang/crystal/pull/14351), thanks @ysbaddaden)
 
 #### compiler
@@ -95,10 +93,6 @@ _Feature freeze: 2024-03-26_
 - *(formatter)* Fix formatter for white space in `a.[b]` syntax ([#14346](https://github.com/crystal-lang/crystal/pull/14346), thanks @straight-shoota)
 - *(formatter)* Fix formatter on call without parentheses followed by doc comment ([#14354](https://github.com/crystal-lang/crystal/pull/14354), thanks @straight-shoota)
 
-#### other
-
-- Fix macro `Crystal::LIBRARY_PATH.split` when cross-compiling ([#14330](https://github.com/crystal-lang/crystal/pull/14330), thanks @HertzDevil)
-
 ### Chores
 
 #### stdlib
@@ -108,10 +102,6 @@ _Feature freeze: 2024-03-26_
 #### compiler
 
 - *(codegen)* Drop pinning Dwarf version 2 for android ([#14243](https://github.com/crystal-lang/crystal/pull/14243), thanks @straight-shoota)
-
-#### other
-
-- Update copyright year in NOTICE.md ([#14329](https://github.com/crystal-lang/crystal/pull/14329), thanks @HertzDevil)
 
 ### Performance
 
@@ -172,6 +162,7 @@ _Feature freeze: 2024-03-26_
 - Enhance changelog script to pull milestone info from GitHub ([#14230](https://github.com/crystal-lang/crystal/pull/14230), thanks @straight-shoota)
 - Add `shard.yml` ([#14365](https://github.com/crystal-lang/crystal/pull/14365), thanks @straight-shoota)
 - Change some line endings from CRLF to LF ([#14299](https://github.com/crystal-lang/crystal/pull/14299), thanks @HertzDevil)
+- Update copyright year in NOTICE.md ([#14329](https://github.com/crystal-lang/crystal/pull/14329), thanks @HertzDevil)
 - Install system dependencies in the Windows GUI installer ([#14328](https://github.com/crystal-lang/crystal/pull/14328), thanks @HertzDevil)
 - Skip building `llvm_ext.cc` on LLVM 18 or above ([#14357](https://github.com/crystal-lang/crystal/pull/14357), thanks @HertzDevil)
 - *(ci)* Update previous Crystal release 1.11.0 ([#14189](https://github.com/crystal-lang/crystal/pull/14189), thanks @straight-shoota)
