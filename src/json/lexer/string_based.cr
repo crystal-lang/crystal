@@ -1,8 +1,9 @@
 # :nodoc:
 class JSON::Lexer::StringBased < JSON::Lexer
-  def initialize(string)
+  def initialize(string : String)
     super()
-    @reader = Char::Reader.new(string)
+    @string = string
+    @pos = 0
     @number_start = 0
   end
 
@@ -33,7 +34,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
     if @expects_object_key
       start_pos += 1
       end_pos = current_pos - 1
-      @token.string_value = @string_pool.get(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
+      @token.string_value = @string_pool.get(@string.to_unsafe + start_pos, end_pos - start_pos)
     else
       @token.string_value = string_range(start_pos + 1, current_pos - 1)
     end
@@ -47,27 +48,30 @@ class JSON::Lexer::StringBased < JSON::Lexer
   end
 
   private def current_pos
-    @reader.pos
+    @pos
   end
 
   def string_range(start_pos, end_pos) : String
-    @reader.string.byte_slice(start_pos, end_pos - start_pos)
+    @string.byte_slice(start_pos, end_pos - start_pos)
   end
 
   def slice_range(start_pos, end_pos) : Bytes
-    @reader.string.to_slice[start_pos, end_pos - start_pos]
+    @string.to_slice[start_pos, end_pos - start_pos]
   end
 
   private def next_char_no_column_increment
-    char = @reader.next_char
-    if char == '\0' && @reader.pos != @reader.string.bytesize
+    @pos += 1
+
+    char = current_char
+    if char == '\0' && @pos != @string.bytesize
       unexpected_char
     end
+
     char
   end
 
   private def current_char
-    @reader.current_char
+    @string.to_unsafe[@pos].chr
   end
 
   private def number_start
