@@ -565,6 +565,32 @@ module Crystal
     it_parses "x[{1}]", Call.new("x".call, "[]", TupleLiteral.new([1.int32] of ASTNode))
     it_parses "x[+ 1]", Call.new("x".call, "[]", Call.new(1.int32, "+"))
 
+    it_parses "x[] {}", Call.new("x".call, "[]", block: Block.new)
+    it_parses "x[] do\nend", Call.new("x".call, "[]", block: Block.new)
+
+    it_parses "x[1] { |x| }", Call.new("x".call, "[]", args: [1.int32] of ASTNode, block: Block.new(["x".var]))
+    it_parses "x[1]? { |x| }", Call.new("x".call, "[]?", args: [1.int32] of ASTNode, block: Block.new(["x".var]))
+
+    it_parses "x[a: 1, b: 2] { }", Call.new("x".call, "[]", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], block: Block.new)
+    it_parses "x[a: 1, b: 2]? { }", Call.new("x".call, "[]?", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], block: Block.new)
+
+    it_parses "foo x[] { } do\nend", Call.new(nil, "foo", args: [Call.new("x".call, "[]", block: Block.new)] of ASTNode, block: Block.new)
+    it_parses "foo x[1]? { } do\nend", Call.new(nil, "foo", args: [Call.new("x".call, "[]?", args: [1.int32] of ASTNode, block: Block.new)] of ASTNode, block: Block.new)
+
+    it_parses "foo x[] do\nend", Call.new(nil, "foo", args: [Call.new("x".call, "[]")] of ASTNode, block: Block.new)
+    it_parses "foo.x[] do\nend", Call.new(Call.new("foo".call, "x"), "[]", block: Block.new)
+
+    it_parses "foo x[1]? do\nend", Call.new(nil, "foo", args: [Call.new("x".call, "[]?", args: [1.int32] of ASTNode)] of ASTNode, block: Block.new)
+    it_parses "foo.x[1]? do\nend", Call.new(Call.new("foo".call, "x"), "[]?", args: [1.int32] of ASTNode, block: Block.new)
+
+    it_parses "Foo[Bar[1] { }, baz[2]? do\n\nend, boo[]] { }",
+      Call.new("Foo".path, "[]",
+        args: [
+          Call.new("Bar".path, "[]", args: [1.int32] of ASTNode, block: Block.new),
+          Call.new("baz".call, "[]?", args: [2.int32] of ASTNode, block: Block.new),
+          Call.new("boo".call, "[]"),
+        ] of ASTNode, block: Block.new)
+
     it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
     it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
     it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
