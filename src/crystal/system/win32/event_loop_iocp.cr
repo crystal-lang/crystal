@@ -42,7 +42,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     # timeout for waiting on the completion port.
     # OPTIMIZE: Implement @queue as a priority queue in order to avoid this
     # explicit search for the lowest value and dequeue more efficient.
-    next_event = @queue.min_by(&.wake_at)
+    next_event = @queue.min_by?(&.wake_at)
 
     unless next_event
       Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"
