@@ -2216,35 +2216,31 @@ module Crystal
     # and __crystal_* functions are invoked instead.
 
     def call_c_malloc(size)
-      size = trunc(size, llvm_context.int32) unless @program.bits64?
-      call c_malloc_fun, size
+      call c_malloc_fun, trunc_to_size_t(size)
     end
 
     def c_malloc_fun
       malloc_fun = @c_malloc_fun = fetch_typed_fun(@main_mod, "malloc") do
-        size = @program.bits64? ? @main_llvm_context.int64 : @main_llvm_context.int32
-        LLVM::Type.function([size], @main_llvm_context.void_pointer)
+        LLVM::Type.function([size_t], @main_llvm_context.void_pointer)
       end
 
       check_main_fun "malloc", malloc_fun
     end
 
     def call_c_realloc(buffer, size)
-      size = trunc(size, llvm_context.int32) unless @program.bits64?
-      call c_realloc_fun, [buffer, size]
+      call c_realloc_fun, [buffer, trunc_to_size_t(size)]
     end
 
     def c_realloc_fun
       realloc_fun = @c_realloc_fun = fetch_typed_fun(@main_mod, "realloc") do
-        size = @program.bits64? ? @main_llvm_context.int64 : @main_llvm_context.int32
-        LLVM::Type.function([@main_llvm_context.void_pointer, size], @main_llvm_context.void_pointer)
+        LLVM::Type.function([@main_llvm_context.void_pointer, size_t], @main_llvm_context.void_pointer)
       end
 
       check_main_fun "realloc", realloc_fun
     end
 
     def memset(pointer, value, size)
-      len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
+      len_arg = trunc_to_size_t(size)
 
       pointer = cast_to_void_pointer pointer
       res = call c_memset_fun, [pointer, value, len_arg, int1(0)]
@@ -2278,28 +2274,26 @@ module Crystal
 
     private def c_memset_fun
       name = {% if LibLLVM::IS_LT_150 %}
-               @program.bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+               "llvm.memset.p0i8.i#{@program.bits}"
              {% else %}
-               @program.bits64? ? "llvm.memset.p0.i64" : "llvm.memset.p0.i32"
+               "llvm.memset.p0.i#{@program.bits}"
              {% end %}
 
       fetch_typed_fun(@llvm_mod, name) do
-        len_type = @program.bits64? ? @llvm_context.int64 : @llvm_context.int32
-        arg_types = [@llvm_context.void_pointer, @llvm_context.int8, len_type, @llvm_context.int1]
+        arg_types = [@llvm_context.void_pointer, @llvm_context.int8, size_t, @llvm_context.int1]
         LLVM::Type.function(arg_types, @llvm_context.void)
       end
     end
 
     private def c_memcpy_fun
       name = {% if LibLLVM::IS_LT_150 %}
-               @program.bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+               "llvm.memcpy.p0i8.p0i8.i#{@program.bits}"
              {% else %}
-               @program.bits64? ? "llvm.memcpy.p0.p0.i64" : "llvm.memcpy.p0.p0.i32"
+               "llvm.memcpy.p0.p0.i#{@program.bits}"
              {% end %}
 
       fetch_typed_fun(@llvm_mod, name) do
-        len_type = @program.bits64? ? @llvm_context.int64 : @llvm_context.int32
-        arg_types = [@llvm_context.void_pointer, @llvm_context.void_pointer, len_type, @llvm_context.int1]
+        arg_types = [@llvm_context.void_pointer, @llvm_context.void_pointer, size_t, @llvm_context.int1]
         LLVM::Type.function(arg_types, @llvm_context.void)
       end
     end

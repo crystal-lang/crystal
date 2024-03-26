@@ -122,11 +122,10 @@ module Crystal
         @llvm_typer.size_of(from_value_type),
         @llvm_typer.size_of(to_value_type),
       }.min
-      size = @program.bits64? ? int64(size) : int32(size)
       memcpy(
         cast_to_void_pointer(union_value(to_llvm_type, union_pointer)),
         cast_to_void_pointer(union_value(from_llvm_type, value)),
-        size,
+        size_t(size),
         align: @llvm_typer.align_of(to_value_type),
         src_align: @llvm_typer.align_of(from_value_type),
         volatile: int1(0),

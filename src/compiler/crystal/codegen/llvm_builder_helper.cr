@@ -34,6 +34,42 @@ module Crystal
       llvm_type(type).const_int(n)
     end
 
+    def size_t(n, program = @program)
+      if program.bits64?
+        int64(n)
+      elsif program.bits32?
+        int32(n)
+      elsif program.bits16?
+        int16(n)
+      else
+        raise "BUG: only 64, 32 and 16-bit sizes are supported"
+      end
+    end
+
+    def size_t
+      if @program.bits64?
+        llvm_context.int64
+      elsif @program.bits32?
+        llvm_context.int32
+      elsif @program.bits16?
+        llvm_context.int16
+      else
+        raise "BUG: only 64, 32 or 16-bit sizes are supported"
+      end
+    end
+
+    def trunc_to_size_t(size)
+      if @program.bits64?
+        size
+      elsif @program.bits32?
+        trunc(size, llvm_context.int32)
+      elsif @program.bits16?
+        trunc(size, llvm_context.int16)
+      else
+        raise "BUG: only 64, 32 or 16-bit sizes are supported"
+      end
+    end
+
     def float32(value)
       llvm_context.float.const_float(value)
     end

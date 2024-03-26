@@ -25,6 +25,18 @@ class Crystal::Program
     codegen_target.pointer_bit_width == 64
   end
 
+  def bits32?
+    codegen_target.pointer_bit_width == 32
+  end
+
+  def bits16?
+    codegen_target.pointer_bit_width == 16
+  end
+
+  def bits
+    codegen_target.pointer_bit_width
+  end
+
   private def flags_for_target(target)
     flags = Set(String).new
 

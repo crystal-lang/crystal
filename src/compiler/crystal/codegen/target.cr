@@ -53,6 +53,8 @@ class Crystal::Codegen::Target
     case @architecture
     when "x86_64", "aarch64"
       64
+    when "avr"
+      16
     else
       32
     end
@@ -186,6 +188,8 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "avr"
+      LLVM.init_avr
     when "wasm32"
       LLVM.init_webassembly
     else
