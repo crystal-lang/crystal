@@ -2,10 +2,13 @@ require "llvm/enums/atomic"
 
 # A value that may be updated atomically.
 #
-# If `T` is a non-union primitive integer type or enum type, all operations are
-# supported. If `T` is a reference type, or a union type containing only
-# reference types or `Nil`, then only `#compare_and_set`, `#swap`, `#set`,
-# `#lazy_set`, `#get`, and `#lazy_get` are available.
+# * If `T` is a reference type, or a union type containing only
+#   reference types or `Nil`, then only `#compare_and_set`, `#swap`, `#set`,
+#   `#lazy_set`, `#get`, and `#lazy_get` are available.
+# * If `T` is a pointer type, then the above methods plus `#max` and `#min` are
+#   available.
+# * If `T` is a non-union primitive integer type or enum type, then all
+#   operations are supported.
 struct Atomic(T)
   # Specifies how memory accesses, including non atomic, are to be reordered
   # around atomics. Follows the C/C++ semantics:
@@ -42,10 +45,12 @@ struct Atomic(T)
   def initialize(@value : T)
     {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
       # Support integer types, enum types, or char (because it's represented as an integer)
+    {% elsif T < Pointer %}
+      # Support pointer types
     {% elsif T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       # Support reference types, or union types with only nil or reference types
     {% else %}
-      {% raise "Can only create Atomic with primitive integer types, reference types or nilable reference types, not #{T}" %}
+      {% raise "Can only create Atomic with primitive integer types, pointer types, reference types or nilable reference types, not #{T}" %}
     {% end %}
   end
 
@@ -117,7 +122,7 @@ struct Atomic(T)
 
   # Performs `atomic_value &+= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(1)
@@ -125,13 +130,14 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def add(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
     atomicrmw(:add, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value &-= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(9)
@@ -139,13 +145,14 @@ struct Atomic(T)
   # atomic.get    # => 7
   # ```
   def sub(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
     atomicrmw(:sub, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value &= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -153,13 +160,14 @@ struct Atomic(T)
   # atomic.get    # => 1
   # ```
   def and(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
     atomicrmw(:and, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value = ~(atomic_value & value)`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -167,13 +175,14 @@ struct Atomic(T)
   # atomic.get     # => -2
   # ```
   def nand(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
     atomicrmw(:nand, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value |= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -181,13 +190,14 @@ struct Atomic(T)
   # atomic.get   # => 7
   # ```
   def or(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
     atomicrmw(:or, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value ^= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -195,6 +205,7 @@ struct Atomic(T)
   # atomic.get    # => 6
   # ```
   def xor(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
     atomicrmw(:xor, pointerof(@value), value, ordering)
   end
@@ -220,6 +231,8 @@ struct Atomic(T)
       else
         atomicrmw(:umax, pointerof(@value), value, ordering)
       end
+    {% elsif T < Pointer %}
+      T.new(atomicrmw(:umax, pointerof(@value).as(typeof(@value.address)*), value.address, ordering))
     {% elsif T < Int::Signed %}
       atomicrmw(:max, pointerof(@value), value, ordering)
     {% else %}
@@ -248,6 +261,8 @@ struct Atomic(T)
       else
         atomicrmw(:umin, pointerof(@value), value, ordering)
       end
+    {% elsif T < Pointer %}
+      T.new(atomicrmw(:umin, pointerof(@value).as(typeof(@value.address)*), value.address, ordering))
     {% elsif T < Int::Signed %}
       atomicrmw(:min, pointerof(@value), value, ordering)
     {% else %}
@@ -323,6 +338,12 @@ struct Atomic(T)
   # NOTE: use with caution, this may break atomic guarantees.
   def lazy_get
     @value
+  end
+
+  private macro check_pointer_type
+    {% if T < Pointer %}
+      {% raise "Cannot call `#{@type}##{@def.name}` as `#{T}` is a pointer type" %}
+    {% end %}
   end
 
   private macro check_reference_type
