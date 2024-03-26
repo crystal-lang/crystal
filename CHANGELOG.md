@@ -130,9 +130,9 @@ _Feature freeze: 2024-03-26_
 
 - *(files)* Replace some Microsoft C runtime funs with Win32 equivalents ([#14316](https://github.com/crystal-lang/crystal/pull/14316), thanks @HertzDevil)
 - *(files)* Move timeout properties to `Socket` and `IO::FileDescriptor` ([#14367](https://github.com/crystal-lang/crystal/pull/14367), thanks @straight-shoota)
+- *(networking)* Refactor `HTTP::Client` timeout ivars to `Time::Span` ([#14371](https://github.com/crystal-lang/crystal/pull/14371), thanks @straight-shoota)
 - *(numeric)* Add `Crystal::Hasher.reduce_num` and `#number` ([#14304](https://github.com/crystal-lang/crystal/pull/14304), thanks @HertzDevil)
 - *(specs)* **[deprecation]** Move most of spec runner's state into `Spec::CLI` ([#14170](https://github.com/crystal-lang/crystal/pull/14170), thanks @HertzDevil)
-- *(specs)* Add `Spec::Formatter#should_print_summary?` ([#14397](https://github.com/crystal-lang/crystal/pull/14397), thanks @HertzDevil)
 
 #### compiler
 
