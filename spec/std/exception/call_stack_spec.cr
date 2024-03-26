@@ -64,10 +64,12 @@ describe "Backtrace" do
     error.to_s.should contain("Invalid memory access")
   end
 
-  {% unless flag?(:win32) %}
-    # In windows, the current working directory of the process cannot be
-    # removed. So we probably don't need to test that.
-    # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/rmdir-wrmdir?view=msvc-170#remarks
+  # Do not test this on platforms that cannot remove the current working
+  # directory of the process:
+  #
+  # Solaris: https://man.freebsd.org/cgi/man.cgi?query=rmdir&sektion=2&manpath=SunOS+5.10
+  # Windows: https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/rmdir-wrmdir?view=msvc-170#remarks
+  {% unless flag?(:win32) || flag?(:solaris) %}
     it "print exception with non-existing PWD", tags: %w[slow] do
       source_file = datapath("blank_test_file.txt")
       compile_file(source_file) do |executable_file|

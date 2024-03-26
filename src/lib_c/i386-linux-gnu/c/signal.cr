@@ -49,6 +49,7 @@ lib LibC
   end
 
   SA_ONSTACK = 0x08000000
+  SA_RESTART = 0x10000000
   SA_SIGINFO = 0x00000004
 
   struct SiginfoT

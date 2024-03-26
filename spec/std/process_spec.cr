@@ -9,14 +9,7 @@ private def exit_code_command(code)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
   {% else %}
-    case code
-    when 0
-      {"true", [] of String}
-    when 1
-      {"false", [] of String}
-    else
-      {"/bin/sh", {"-c", "exit #{code}"}}
-    end
+    {"/bin/sh", {"-c", "exit #{code}"}}
   {% end %}
 end
 
@@ -61,7 +54,8 @@ private def newline
   {% end %}
 end
 
-describe Process do
+# interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
+pending_interpreted describe: Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -348,6 +342,14 @@ describe Process do
     end
   end
 
+  describe ".on_terminate" do
+    it "compiles" do
+      typeof(Process.on_terminate { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
   {% unless flag?(:win32) %}
     describe "#signal(Signal::KILL)" do
       it "kills a process" do
@@ -462,13 +464,13 @@ describe Process do
           begin
             Process.chroot(".")
             puts "FAIL"
-          rescue ex
-            puts ex.inspect
+          rescue ex : RuntimeError
+            puts ex.os_error
           end
         CRYSTAL
 
         status.success?.should be_true
-        output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+        output.should eq("EPERM\n")
       end
     {% end %}
   end

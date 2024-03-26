@@ -59,6 +59,7 @@ module Markd
     property fence_length = 0
     property fence_offset = 0
     property? last_line_blank = false
+    property? last_line_checked = false
 
     property! parent : Node?
     property! first_child : Node?

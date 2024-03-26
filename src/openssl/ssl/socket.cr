@@ -198,7 +198,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     raise IO::Error.new("Can't rewind OpenSSL::SSL::Socket::Client")
   end
 

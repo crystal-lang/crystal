@@ -17,7 +17,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v25
+      - uses: cachix/install-nix-action@v26
         with:
           install_url: https://releases.nixos.org/nix/nix-2.9.2/install
           extra_nix_config: |

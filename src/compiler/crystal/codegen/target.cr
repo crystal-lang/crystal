@@ -70,6 +70,8 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .solaris?
+      "solaris"
     when .android?
       "android"
     else
@@ -128,6 +130,10 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def solaris?
+    @environment.starts_with?("solaris")
+  end
+
   def wasi?
     @environment.starts_with?("wasi")
   end
@@ -137,7 +143,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux? || wasi?
+    macos? || bsd? || linux? || wasi? || solaris?
   end
 
   def gnu?

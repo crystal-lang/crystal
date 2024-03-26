@@ -16,8 +16,8 @@ enum Process::ExitReason
 
   # The process terminated abnormally.
   #
-  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::HUP`,
-  #   `Signal::KILL`, `Signal::QUIT`, and `Signal::TERM`.
+  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::KILL`,
+  #   and `Signal::QUIT`.
   # * On Windows, this corresponds to the `NTSTATUS` value
   #   `STATUS_FATAL_APP_EXIT`.
   Aborted
@@ -79,6 +79,18 @@ enum Process::ExitReason
   # A `Process::Status` that maps to `Unknown` may map to a different value if
   # new enum members are added to `ExitReason`.
   Unknown
+
+  # The process exited due to the user closing the terminal window or ending an ssh session.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::HUP`.
+  # * On Windows, this corresponds to the `CTRL_CLOSE_EVENT` message.
+  TerminalDisconnected
+
+  # The process exited due to the user logging off or shutting down the OS.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::TERM`.
+  # * On Windows, this corresponds to the `CTRL_LOGOFF_EVENT` and `CTRL_SHUTDOWN_EVENT` messages.
+  SessionEnded
 end
 
 # The status of a terminated process. Returned by `Process#wait`.
@@ -129,8 +141,12 @@ class Process::Status
         case Signal.from_value?(signal_code)
         when Nil
           ExitReason::Signal
-        when .abrt?, .hup?, .kill?, .quit?, .term?
+        when .abrt?, .kill?, .quit?
           ExitReason::Aborted
+        when .hup?
+          ExitReason::TerminalDisconnected
+        when .term?
+          ExitReason::SessionEnded
         when .int?
           ExitReason::Interrupted
         when .trap?

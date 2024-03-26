@@ -406,6 +406,13 @@ class Crystal::Repl::Context
     # (MSVC doesn't seem to have this issue)
     args.delete("-lgc")
 
+    # recreate the MSVC developer prompt environment, similar to how compiled
+    # code does it in `Compiler#linker_command`
+    if program.has_flag?("msvc")
+      _, link_args = program.msvc_compiler_and_flags
+      args.concat(link_args)
+    end
+
     Crystal::Loader.parse(args, dll_search_paths: dll_search_paths).tap do |loader|
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
