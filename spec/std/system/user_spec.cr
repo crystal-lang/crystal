@@ -9,6 +9,14 @@ INVALID_USER_NAME = "this_user_does_not_exist"
 INVALID_USER_ID   = {% if flag?(:android) %}"8888"{% else %}"1234567"{% end %}
 
 describe System::User do
+  describe ".current" do
+    user = System::User.current
+
+    user.should be_a(System::User)
+    user.username.should eq(USER_NAME)
+    user.id.should eq(USER_ID)
+  end
+
   describe ".find_by(*, name)" do
     it "returns a user by name" do
       user = System::User.find_by(name: USER_NAME)
