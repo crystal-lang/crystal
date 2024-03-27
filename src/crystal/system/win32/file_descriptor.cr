@@ -62,6 +62,10 @@ module Crystal::System::FileDescriptor
     end
   end
 
+  private def system_write_at(bytes : Bytes, offset)
+    raise NotImplementedError.new("FileDescriptor#system_write_at")
+  end
+
   private def system_blocking?
     @system_blocking
   end
