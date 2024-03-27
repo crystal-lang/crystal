@@ -563,12 +563,6 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  {% if flag?(:win32) %}
-    Crystal::System::Process.start_interrupt_loop
-  {% else %}
-    Crystal::System::Signal.setup_default_handlers
-  {% end %}
-
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -579,4 +573,10 @@ end
   Exception::CallStack.setup_crash_handler
 
   Crystal::Scheduler.init
+
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
+  {% end %}
 {% end %}

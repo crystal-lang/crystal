@@ -223,7 +223,7 @@ describe "Semantic: primitives" do
       )
   end
 
-  pending_win32 "types va_arg primitive" do
+  it "types va_arg primitive" do
     assert_type(%(
       struct VaList
         @[Primitive(:va_arg)]

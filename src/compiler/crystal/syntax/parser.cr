@@ -627,7 +627,7 @@ module Crystal
     def parse_prefix
       name_location = @token.location
       case token_type = @token.type
-      when .op_bang?, .op_plus?, .op_minus?, .op_tilde?, .op_amp_plus?, .op_amp_minus?
+      when .unary_operator?
         location = @token.location
         next_token_skip_space_or_newline
         check_void_expression_keyword
@@ -682,9 +682,9 @@ module Crystal
 
           @wants_regex = false
 
-          @wants_def_or_macro_name = true
-          next_token_skip_space_or_newline
-          @wants_def_or_macro_name = false
+          wants_def_or_macro_name do
+            next_token_skip_space_or_newline
+          end
 
           if @token.type.instance_var?
             ivar_name = @token.value.to_s
@@ -788,12 +788,6 @@ module Crystal
             end
 
             block = parse_block(block, stop_on_do: @stop_on_do)
-            if block || block_arg
-              if name == "[]="
-                raise "setter method '[]=' cannot be called with a block"
-              end
-            end
-
             atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
             atomic.has_parentheses = has_parentheses
             atomic.name_location = name_location
@@ -5732,6 +5726,7 @@ module Crystal
       with_isolated_var_scope(require_body) do
         next_token_skip_space_or_newline
 
+        name_location = @token.location
         name = if top_level
                  check_ident
                else
@@ -5835,6 +5830,7 @@ module Crystal
         end
 
         fun_def = FunDef.new name, params, return_type, varargs, body, real_name
+        fun_def.name_location = name_location
         fun_def.doc = doc
         fun_def.at(location).at_end(end_location)
       end
@@ -5852,9 +5848,10 @@ module Crystal
       next_token_skip_space_or_newline
 
       value = parse_bare_proc_type
+      end_location = value.end_location
       skip_space
 
-      alias_node = Alias.new(name, value)
+      alias_node = Alias.new(name, value).at_end(end_location)
       alias_node.doc = doc
       alias_node
     end
@@ -6207,10 +6204,10 @@ module Crystal
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      next_token_skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      wants_def_or_macro_name do
+        next_token_skip_space_or_newline
+        check DefOrMacroCheck1
+      end
       @token.to_s
     end
 

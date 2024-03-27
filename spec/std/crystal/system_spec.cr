@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 private def print_error_to_s(format, *args)
   io = IO::Memory.new
@@ -26,7 +26,8 @@ describe "Crystal::System" do
       print_error_to_s("%x,%x,%x,%x,%x", 0, 0x1234, UInt32::MAX, Int32::MIN, UInt64::MAX).should eq("0,1234,ffffffff,80000000,ffffffff")
     end
 
-    it "supports %p" do
+    # TODO: investigate why this prints `(???)`
+    pending_interpreted "supports %p" do
       print_error_to_s("%p,%p,%p", Pointer(Void).new(0x0), Pointer(Void).new(0x1234), Pointer(Void).new(UInt64::MAX)).should eq("0x0,0x1234,0xffffffffffffffff")
     end
 
@@ -34,7 +35,8 @@ describe "Crystal::System" do
       print_error_to_s("%s,%s,%s", "abc\0def", "ghi".to_unsafe, Pointer(UInt8).null).should eq("abc\0def,ghi,(null)")
     end
 
-    it "supports %l width" do
+    # BUG: missing downcast_distinct from Tuple(Int64 | UInt64, Int64 | UInt64, Int64 | UInt64, Int64 | UInt64) to Tuple(Int64, Int64, Int64, Int64)
+    pending_interpreted "supports %l width" do
       values = {LibC::Long::MIN, LibC::Long::MAX, LibC::LongLong::MIN, LibC::LongLong::MAX}
       print_error_to_s("%ld,%ld,%lld,%lld", *values).should eq(values.join(','))
 

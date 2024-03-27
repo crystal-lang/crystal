@@ -1459,6 +1459,17 @@ module Crystal
     end
   end
 
+  class Primitive
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { SymbolLiteral.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
   class Macro
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
@@ -1549,6 +1560,19 @@ module Crystal
     end
   end
 
+  class Alias
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { @name }
+      when "type"
+        interpret_check_args { @value }
+      else
+        super
+      end
+    end
+  end
+
   class OffsetOf
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
@@ -1623,6 +1647,62 @@ module Crystal
       case method
       when "path"
         interpret_check_args { StringLiteral.new(@string) }
+      else
+        super
+      end
+    end
+  end
+
+  class Asm
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "text"
+        interpret_check_args { StringLiteral.new(@text) }
+      when "outputs"
+        interpret_check_args do
+          if outputs = @outputs
+            ArrayLiteral.map(outputs, &.itself)
+          else
+            empty_no_return_array
+          end
+        end
+      when "inputs"
+        interpret_check_args do
+          if inputs = @inputs
+            ArrayLiteral.map(inputs, &.itself)
+          else
+            empty_no_return_array
+          end
+        end
+      when "clobbers"
+        interpret_check_args do
+          if clobbers = @clobbers
+            ArrayLiteral.map(clobbers) { |clobber| StringLiteral.new(clobber) }
+          else
+            empty_no_return_array
+          end
+        end
+      when "volatile?"
+        interpret_check_args { BoolLiteral.new(@volatile) }
+      when "alignstack?"
+        interpret_check_args { BoolLiteral.new(@alignstack) }
+      when "intel?"
+        interpret_check_args { BoolLiteral.new(@intel) }
+      when "can_throw?"
+        interpret_check_args { BoolLiteral.new(@can_throw) }
+      else
+        super
+      end
+    end
+  end
+
+  class AsmOperand
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "constraint"
+        interpret_check_args { StringLiteral.new(@constraint) }
+      when "exp"
+        interpret_check_args { @exp }
       else
         super
       end
@@ -2345,6 +2425,17 @@ module Crystal
         interpret_check_args { obj }
       when "to"
         interpret_check_args { to }
+      else
+        super
+      end
+    end
+  end
+
+  class TypeOf
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "args"
+        interpret_check_args { ArrayLiteral.map(@expressions, &.itself) }
       else
         super
       end

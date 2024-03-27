@@ -9,7 +9,7 @@ require "./lib_crypto"
     {% if flag?(:win32) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
-      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
         {% unless ssl_version %}
           {% config_path = "#{dir.id}\\openssl_VERSION" %}
           {% if config_version = read_file?(config_path) %}
@@ -283,6 +283,11 @@ lib LibSSL
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
     fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
+  {% end %}
+
+  # SSL reason codes
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    SSL_R_UNEXPECTED_EOF_WHILE_READING = 294
   {% end %}
 end
 

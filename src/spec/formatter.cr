@@ -19,7 +19,7 @@ module Spec
     def finish(elapsed_time, aborted)
     end
 
-    def prints_summary?
+    def should_print_summary?
       false
     end
   end
@@ -55,7 +55,7 @@ module Spec
       @io.puts
     end
 
-    def prints_summary?
+    def should_print_summary?
       true
     end
   end
@@ -111,7 +111,7 @@ module Spec
       @io.puts Spec.color(@last_description, result.kind)
     end
 
-    def prints_summary?
+    def should_print_summary?
       true
     end
   end

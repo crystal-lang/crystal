@@ -59,7 +59,8 @@ module Crystal
 
     def visit(node : Call)
       if expanded = node.expanded
-        return expanded.accept self
+        expanded.accept self
+        return false
       end
 
       node.obj.try &.accept self

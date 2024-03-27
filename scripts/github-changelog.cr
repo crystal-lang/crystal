@@ -31,6 +31,10 @@ def query_prs(api_token, repository, milestone)
       repository(owner: $owner, name: $repository) {
         milestones(query: $milestone, first: 1) {
           nodes {
+            closedAt
+            description
+            dueOn
+            title
             pullRequests(first: 300) {
               nodes {
                 number
@@ -78,6 +82,28 @@ module LabelNameConverter
     pull.on_key! "name" do
       String.new(pull)
     end
+  end
+end
+
+record Milestone,
+  closed_at : Time?,
+  description : String,
+  due_on : Time?,
+  title : String,
+  pull_requests : Array(PullRequest) do
+  include JSON::Serializable
+
+  @[JSON::Field(key: "dueOn")]
+  @due_on : Time?
+
+  @[JSON::Field(key: "closedAt")]
+  @closed_at : Time?
+
+  @[JSON::Field(key: "pullRequests", root: "nodes")]
+  @pull_requests : Array(PullRequest)
+
+  def release_date
+    closed_at || due_on
   end
 end
 
@@ -245,24 +271,20 @@ end
 
 response = query_prs(api_token, repository, milestone)
 parser = JSON::PullParser.new(response.body)
-array = parser.on_key! "data" do
+milestone = parser.on_key! "data" do
   parser.on_key! "repository" do
     parser.on_key! "milestones" do
       parser.on_key! "nodes" do
         parser.read_begin_array
-        a = parser.on_key! "pullRequests" do
-          parser.on_key! "nodes" do
-            Array(PullRequest).new(parser)
-          end
-        end
+        milestone = Milestone.new(parser)
         parser.read_end_array
-        a
+        milestone
       end
     end
   end
 end
 
-sections = array.group_by(&.section)
+sections = milestone.pull_requests.group_by(&.section)
 
 SECTION_TITLES = {
   "breaking"    => "Breaking changes",
@@ -279,9 +301,14 @@ SECTION_TITLES = {
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
 
-puts "## [#{milestone}] (#{Time.local.to_s("%F")})"
+puts "## [#{milestone.title}] (#{milestone.release_date.try(&.to_s("%F")) || "unreleased"})"
+if description = milestone.description.presence
+  puts
+  print "_", description
+  puts "_"
+end
 puts
-puts "[#{milestone}]: https://github.com/crystal-lang/crystal/releases/#{milestone}"
+puts "[#{milestone.title}]: https://github.com/crystal-lang/crystal/releases/#{milestone.title}"
 puts
 
 SECTION_TITLES.each do |id, title|

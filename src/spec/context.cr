@@ -173,7 +173,9 @@ module Spec
 
     def finish(elapsed_time, aborted = false)
       cli.formatters.each(&.finish(elapsed_time, aborted))
-      cli.formatters.each { |formatter| print_summary(elapsed_time, aborted) if formatter.prints_summary? }
+      if cli.formatters.any?(&.should_print_summary?)
+        print_summary(elapsed_time, aborted)
+      end
     end
 
     def print_summary(elapsed_time, aborted = false)

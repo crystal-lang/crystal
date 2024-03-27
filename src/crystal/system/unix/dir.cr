@@ -14,11 +14,17 @@ module Crystal::System::Dir
     if entry = LibC.readdir(dir)
       name = String.new(entry.value.d_name.to_unsafe)
 
-      dir = case entry.value.d_type
-            when LibC::DT_DIR                   then true
-            when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
-            else                                     false
-            end
+      dir =
+        {% if flag?(:solaris) %}
+          # `d_type` is a Linux / BSD extension
+          nil
+        {% else %}
+          case entry.value.d_type
+          when LibC::DT_DIR                   then true
+          when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
+          else                                     false
+          end
+        {% end %}
 
       # TODO: support `st_flags & UF_HIDDEN` on BSD-like systems: https://man.freebsd.org/cgi/man.cgi?query=stat&sektion=2
       # TODO: support hidden file attributes on macOS / HFS+: https://stackoverflow.com/a/15236292

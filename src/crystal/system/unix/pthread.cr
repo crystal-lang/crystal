@@ -80,7 +80,7 @@ module Crystal::System::Thread
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
       address = LibC.pthread_get_stackaddr_np(@system_handle) - LibC.pthread_get_stacksize_np(@system_handle)
-    {% elsif flag?(:bsd) && !flag?(:openbsd) %}
+    {% elsif (flag?(:bsd) && !flag?(:openbsd)) || flag?(:solaris) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
         LibC.pthread_attr_destroy(pointerof(attr))
@@ -108,9 +108,28 @@ module Crystal::System::Thread
         else
           stack.ss_sp - stack.ss_size
         end
+    {% else %}
+      {% raise "No `Crystal::System::Thread#stack_address` implementation available" %}
     {% end %}
 
     address
+  end
+
+  # Warning: must be called from the current thread itself, because Darwin
+  # doesn't allow to set the name of any thread but the current one!
+  private def system_name=(name : String) : String
+    {% if flag?(:darwin) %}
+      LibC.pthread_setname_np(name)
+    {% elsif flag?(:netbsd) %}
+      LibC.pthread_setname_np(@system_handle, name, nil)
+    {% elsif LibC.has_method?(:pthread_setname_np) %}
+      LibC.pthread_setname_np(@system_handle, name)
+    {% elsif LibC.has_method?(:pthread_set_name_np) %}
+      LibC.pthread_set_name_np(@system_handle, name)
+    {% else %}
+      {% raise "No `Crystal::System::Thread#system_name` implementation available" %}
+    {% end %}
+    name
   end
 end
 
