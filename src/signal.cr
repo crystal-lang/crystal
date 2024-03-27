@@ -96,7 +96,7 @@ enum Signal : Int32
   #
   # After executing this, whenever the current process receives the
   # corresponding signal, the passed function will be called (instead of the OS
-  # default). The handler will run in a signal-safe fiber thought the event
+  # default). The handler will run in a signal-safe fiber throughout the event
   # loop; there is no limit to what functions can be called, unlike raw signals
   # that run on the sigaltstack.
   #
