@@ -2755,6 +2755,10 @@ module Crystal::Macros
     def resolve? : TypeNode
     end
 
+    # Returns `true` if `self` is private and `false` otherwise.
+    def private? : BoolLiteral
+    end
+
     # Returns `true` if *other* is an ancestor of `self`.
     def <(other : TypeNode) : BoolLiteral
     end

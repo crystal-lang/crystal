@@ -1943,6 +1943,8 @@ module Crystal
         interpret_check_args { self }
       when "resolve?"
         interpret_check_args { self }
+      when "private?"
+        interpret_check_args { BoolLiteral.new(type.private?) }
       else
         super
       end
