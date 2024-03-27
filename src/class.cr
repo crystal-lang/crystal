@@ -95,7 +95,15 @@ class Class
   end
 
   def ===(other)
-    other.is_a?(self)
+    # This branch handles `Int32.class === 1` case.
+    # In this case, `@type` is `Class` and `other.is_a?(self)` means `other.is_a?(Object)`
+    # because type of `self` is an instance type of the scope type and the instance type of `Class` is `Object`.
+    # See https://github.com/crystal-lang/crystal/issues/10736.
+    {% if @type == Class %}
+      other.is_a?(Class)
+    {% else %}
+      other.is_a?(self)
+    {% end %}
   end
 
   # Returns the name of this class.
