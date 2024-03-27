@@ -2758,6 +2758,10 @@ module Crystal
       if error = @reader.error
         ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
+      if current_char.in?(UNICODE_BIDI_CONTROL_CHARACTERS)
+        loc = Location.new(@filename, @line_number, @column_number)
+        @warnings.add_warning_at(loc, "Unescaped Unicode bi-directional control character: #{current_char.dump}")
+      end
       char
     end
 
