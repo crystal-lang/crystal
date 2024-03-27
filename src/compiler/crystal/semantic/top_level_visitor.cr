@@ -1275,7 +1275,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def lookup_type_def_name_creating_modules(path : Path)
     base_type = path.global? ? program : current_type
-    target_type = base_type.lookup_path(path).as?(Type).try &.remove_alias_if_simple
+    target_type = base_type.lookup_path(path, lookup_in_namespace: false).as?(Type).try &.remove_alias_if_simple
 
     unless target_type
       next_type = base_type
