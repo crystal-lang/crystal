@@ -3,6 +3,10 @@ require "openssl"
 
 # A class which can be used to encrypt and decrypt data using a specified cipher.
 #
+# NOTE: The ciphers available to an application are determined by the linked version of the system SSL library.
+#       A comprehensive list of ciphers can be found in the
+#       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#CIPHER-STRINGS).
+#
 # ```
 # require "random/secure"
 #
