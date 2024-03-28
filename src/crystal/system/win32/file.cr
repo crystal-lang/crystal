@@ -9,7 +9,7 @@ require "c/ntifs"
 require "c/winioctl"
 
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : LibC::Int
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -19,7 +19,7 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    fd, errno = open(filename, open_flag(mode), ::File::Permissions.new(perm))
+    fd, errno = open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
     unless errno.none?
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
     end
@@ -27,8 +27,8 @@ module Crystal::System::File
     fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
-    access, disposition, attributes = self.posix_to_open_opts flags, perm
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking : Bool) : {LibC::Int, Errno}
+    access, disposition, attributes = self.posix_to_open_opts flags, perm, blocking
 
     handle = LibC.CreateFileW(
       System.to_wstr(filename),
@@ -56,7 +56,7 @@ module Crystal::System::File
     {fd, Errno::NONE}
   end
 
-  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
+  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
@@ -86,7 +86,7 @@ module Crystal::System::File
       disposition = LibC::OPEN_EXISTING
     end
 
-    attributes = LibC::FILE_ATTRIBUTE_NORMAL
+    attributes = 0
     unless perm.owner_write?
       attributes |= LibC::FILE_ATTRIBUTE_READONLY
     end
@@ -104,6 +104,10 @@ module Crystal::System::File
       attributes |= LibC::FILE_FLAG_SEQUENTIAL_SCAN
     elsif flags.bits_set? LibC::O_RANDOM
       attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
+    end
+
+    unless blocking
+      attributes |= LibC::FILE_FLAG_OVERLAPPED
     end
 
     {access, disposition, attributes}
@@ -478,41 +482,71 @@ module Crystal::System::File
   end
 
   private def flock(exclusive, retry)
-    flags = LibC::LOCKFILE_FAIL_IMMEDIATELY
+    flags = 0_u32
+    flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY unless retry && !system_blocking?
     flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
 
     handle = windows_handle
-    if retry
+    if retry && system_blocking?
       until lock_file(handle, flags)
         sleep 0.1
       end
     else
-      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
+      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked", target: self)
     end
   end
 
   private def lock_file(handle, flags)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # lock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 != LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      true
-    else
-      winerror = WinError.value
-      if winerror == WinError::ERROR_LOCK_VIOLATION
-        false
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        case error = WinError.value
+        when .error_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .error_lock_violation?
+          # synchronous failure
+          operation.synchronous = true
+          return false
+        else
+          raise IO::Error.from_os_error("LockFileEx", error, target: self)
+        end
       else
-        raise IO::Error.from_os_error("LockFileEx", winerror, target: self)
+        operation.synchronous = true
+        return true
       end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("LockFileEx", error, target: self)
+      end
+
+      true
     end
   end
 
   private def unlock_file(handle)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # unlock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 == LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      raise IO::Error.from_winerror("UnLockFileEx")
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        error = WinError.value
+        unless error.error_io_pending?
+          raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+        end
+      else
+        operation.synchronous = true
+        return
+      end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+      end
     end
   end
 
