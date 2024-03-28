@@ -84,6 +84,18 @@ describe WaitGroup do
       expect_raises(RuntimeError) { wg.done }
       expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.wait }
     end
+
+    it "raises when counter is positive after wake up" do
+      wg = WaitGroup.new(1)
+      waiter = Fiber.current
+
+      spawn do
+        block_until_pending_waiter(wg)
+        waiter.enqueue
+      end
+
+      expect_raises(RuntimeError, "Positive WaitGroup counter (early wake up?)") { wg.wait }
+    end
   end
 
   it "waits until concurrent executions are finished" do

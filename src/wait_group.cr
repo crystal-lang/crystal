@@ -109,7 +109,8 @@ class WaitGroup
 
     Crystal::Scheduler.reschedule
 
-    done?
+    return if done?
+    raise RuntimeError.new("Positive WaitGroup counter (early wake up?)")
   end
 
   private def done?
