@@ -22,8 +22,8 @@ lib LibXML
     $xmlTreeIndentString : UInt8*
   {% end %}
 
-  type Dtd = Void*
-  type Dict = Void*
+  alias Dtd = Void*
+  alias Dict = Void*
 
   struct NS
     next : NS*
@@ -89,9 +89,9 @@ lib LibXML
     node_tab : Node**
   end
 
-  type InputBuffer = Void*
-  type XMLTextReader = Void*
-  type XMLTextReaderLocator = Void*
+  alias InputBuffer = Void*
+  alias XMLTextReader = Void*
+  alias XMLTextReaderLocator = Void*
 
   enum ParserSeverity
     VALIDITY_WARNING = 1
@@ -159,7 +159,7 @@ lib LibXML
   alias OutputWriteCallback = (Void*, UInt8*, Int) -> Int
   alias OutputCloseCallback = (Void*) -> Int
 
-  type SaveCtxPtr = Void*
+  alias SaveCtxPtr = Void*
 
   fun xmlSaveToIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoding : UInt8*, options : XML::SaveOptions) : SaveCtxPtr
   fun xmlSaveTree(ctx : SaveCtxPtr, node : Node*) : LibC::Long
@@ -176,7 +176,7 @@ lib LibXML
     error : Int
   end
 
-  type TextWriter = Void*
+  alias TextWriter = Void*
 
   fun xmlNewTextWriter(out : OutputBuffer*) : TextWriter
   fun xmlTextWriterStartDocument(TextWriter, version : UInt8*, encoding : UInt8*, standalone : UInt8*) : Int
