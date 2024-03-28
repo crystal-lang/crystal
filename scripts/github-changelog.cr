@@ -143,11 +143,21 @@ record PullRequest,
       io << "**[deprecation]** "
     end
     io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
-    io << "[#" << number << "](" << permalink << ")"
+    link_ref(io)
     if author = self.author
       io << ", thanks @" << author
     end
     io << ")"
+  end
+
+  def link_ref(io)
+    io << "[#" << number << "]"
+  end
+
+  def print_ref_label(io)
+    link_ref(io)
+    io << ": " << permalink
+    io.puts
   end
 
   def <=>(other : self)
@@ -334,6 +344,9 @@ SECTION_TITLES.each do |id, title|
     topic_prs.each do |pr|
       puts "- #{pr}"
     end
+    puts
+
+    topic_prs.each(&.print_ref_label(STDOUT))
     puts
   end
 end
