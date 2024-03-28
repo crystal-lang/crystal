@@ -163,15 +163,17 @@ _Feature freeze: 2024-03-26_
 #### compiler
 
 - Remove the prelude from some compiler specs ([#14336](https://github.com/crystal-lang/crystal/pull/14336), thanks @HertzDevil)
-- *(interpreter)* Remove `spec/interpreter_std_spec.cr` ([#14399](https://github.com/crystal-lang/crystal/pull/14399), thanks @HertzDevil)
 - *(interpreter)* Fix: don't run thread specs with the interpreter ([#14287](https://github.com/crystal-lang/crystal/pull/14287), thanks @ysbaddaden)
 - *(interpreter)* Add `pending_interpreted` ([#14386](https://github.com/crystal-lang/crystal/pull/14386), thanks @HertzDevil)
+- *(interpreter)* Remove `spec/interpreter_std_spec.cr` ([#14399](https://github.com/crystal-lang/crystal/pull/14399), thanks @HertzDevil)
 - *(semantic)* Enable `@[Primitive(:va_arg)]` semantic spec on Windows ([#14338](https://github.com/crystal-lang/crystal/pull/14338), thanks @HertzDevil)
 
 ### Infrastructure
 
 - Changelog for 1.12.0 ([#14232](https://github.com/crystal-lang/crystal/pull/14232), thanks @straight-shoota)
 - Fix `Milestone` JSON bindings in `github-changelog` helper ([#14404](https://github.com/crystal-lang/crystal/pull/14404), thanks @straight-shoota)
+- Make repository configurable for reusable `github-changelog` ([#14407](https://github.com/crystal-lang/crystal/pull/14407), thanks @straight-shoota)
+- Use link refs for PR links in changelog ([#14406](https://github.com/crystal-lang/crystal/pull/14406), thanks @straight-shoota)
 - Remove filtering of already mentioned PRs ([#14229](https://github.com/crystal-lang/crystal/pull/14229), thanks @straight-shoota)
 - Mention RFC process in contribution instructions ([#14291](https://github.com/crystal-lang/crystal/pull/14291), thanks @straight-shoota)
 - Drop Nikola sponsor mention from Readme ([#14290](https://github.com/crystal-lang/crystal/pull/14290), thanks @straight-shoota)
