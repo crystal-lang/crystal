@@ -19,11 +19,20 @@ require "http/client"
 require "json"
 
 abort "Missing GITHUB_TOKEN env variable" unless ENV["GITHUB_TOKEN"]?
-abort "Missing <milestone> argument" unless ARGV.first?
-
 api_token = ENV["GITHUB_TOKEN"]
-repository = "crystal-lang/crystal"
-milestone = ARGV.first
+
+case ARGV.size
+when 0
+  abort "Missing <milestone> argument"
+when 1
+  repository = "crystal-lang/crystal"
+  milestone = ARGV.first
+when 2
+  repository = ARGV[0]
+  milestone = ARGV[1]
+else
+  abort "Too many arguments. Usage:\n  #{PROGRAM_NAME} [<GH repo ref>] <milestone>"
+end
 
 def query_prs(api_token, repository, milestone)
   query = <<-GRAPHQL
@@ -308,7 +317,7 @@ if description = milestone.description.presence
   puts "_"
 end
 puts
-puts "[#{milestone.title}]: https://github.com/crystal-lang/crystal/releases/#{milestone.title}"
+puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
 puts
 
 SECTION_TITLES.each do |id, title|
