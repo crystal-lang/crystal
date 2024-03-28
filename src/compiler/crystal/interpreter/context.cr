@@ -75,7 +75,7 @@ class Crystal::Repl::Context
     end
 
     # This is a stack pool, for checkout_stack.
-    @stack_pool = [] of UInt8*
+    @stack_pool = Fiber::StackPool.new(protect: false)
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
@@ -106,16 +106,12 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    if @stack_pool.empty?
-      stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
-    else
-      stack = @stack_pool.pop
-    end
+    stack, _ = @stack_pool.checkout
 
     begin
-      yield stack
+      yield stack.as(UInt8*)
     ensure
-      @stack_pool.push(stack)
+      @stack_pool.release(stack)
     end
   end
 
