@@ -59,8 +59,18 @@ class WaitGroup
   # decrement the counter, to make sure that the counter may never inadvertently
   # reach zero before all fibers are done.
   def add(n : Int32 = 1) : Nil
-    new_value = @counter.add(n) + n
-    return if new_value > 0
+    counter = @counter.get(:acquire)
+    new_counter = uninitialized Int32
+
+    loop do
+      raise RuntimeError.new("Negative WaitGroup counter") if counter < 0
+
+      new_counter = counter + n
+      counter, success = @counter.compare_and_set(counter, new_counter, :acquire_release, :acquire)
+      break if success
+    end
+
+    return if new_counter > 0
 
     @lock.sync do
       @waiting.consume_each do |node|
@@ -68,7 +78,7 @@ class WaitGroup
       end
     end
 
-    raise RuntimeError.new("Negative WaitGroup counter") if new_value < 0
+    raise RuntimeError.new("Negative WaitGroup counter") if new_counter < 0
   end
 
   # Decrements the counter by one. Must be called by concurrent fibers once they
@@ -83,26 +93,28 @@ class WaitGroup
   #
   # Can be called from different fibers.
   def wait : Nil
-    case @counter.get
-    when .negative?
-      raise RuntimeError.new("Negative WaitGroup counter")
-    when .zero?
-      return
-    when .positive?
-      waiting = Waiting.new(Fiber.current)
+    return if done?
 
-      @lock.sync do
-        # must check again to avoid a race condition where #done may have
-        # decremented the counter to zero between the above check and #wait
-        # acquiring the lock; we'd push the current fiber to the wait list that
-        # would never be resumed (oops)
-        return if @counter.get == 0
+    waiting = Waiting.new(Fiber.current)
 
-        @waiting.push(pointerof(waiting))
-      end
+    @lock.sync do
+      # must check again to avoid a race condition where #done may have
+      # decremented the counter to zero between the above check and #wait
+      # acquiring the lock; we'd push the current fiber to the wait list that
+      # would never be resumed (oops)
+      return if done?
 
-      Crystal::Scheduler.reschedule
-      raise RuntimeError.new("Negative WaitGroup counter") if @counter.get < 0
+      @waiting.push(pointerof(waiting))
     end
+
+    Crystal::Scheduler.reschedule
+
+    done?
+  end
+
+  private def done?
+    counter = @counter.get(:acquire)
+    raise RuntimeError.new("Negative WaitGroup counter") if counter < 0
+    counter == 0
   end
 end

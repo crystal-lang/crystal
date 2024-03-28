@@ -7,6 +7,10 @@ private def block_until_pending_waiter(wg)
   end
 end
 
+private def forge_counter(wg, value)
+  wg.@counter.set(value)
+end
+
 describe WaitGroup do
   describe "#add" do
     it "can't decrement to a negative counter" do
@@ -25,6 +29,16 @@ describe WaitGroup do
       end
       expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.wait }
     end
+
+    it "can't increment after reaching negative counter" do
+      wg = WaitGroup.new
+      forge_counter(wg, -1)
+
+      # check twice, to make sure the waitgroup counter wasn't incremented back
+      # to a positive value!
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.add(5) }
+      expect_raises(RuntimeError, "Negative WaitGroup counter") { wg.add(3) }
+    end
   end
 
   describe "#done" do
@@ -39,7 +53,7 @@ describe WaitGroup do
       wg = WaitGroup.new(1)
       spawn do
         block_until_pending_waiter(wg)
-        wg.done
+        forge_counter(wg, 0)
         wg.done
       rescue RuntimeError
       end
