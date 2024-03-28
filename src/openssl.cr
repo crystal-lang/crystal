@@ -8,7 +8,7 @@ require "./openssl/error"
 #
 # WARNING: This module should not be used without first reading the [Security considerations](#security-considerations).
 #
-# To can create secure sockets, use either `OpenSSL::SSL::Socket::Client` for client applications, or
+# To create secure sockets, use either `OpenSSL::SSL::Socket::Client` for client applications, or
 # `OpenSSL::SSL::Socket::Server` for servers.  These classes use a default context, but you can provide
 # your own by supplying an `OpenSSL::SSL::Context`.  For more control, consider subclassing `OpenSSL::SSL::Socket`.
 #
