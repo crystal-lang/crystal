@@ -80,4 +80,10 @@ struct Crystal::PointerLinkedList(T)
       node = _next
     end
   end
+
+  # Iterates the list before clearing it.
+  def consume_each(&) : Nil
+    each { |node| yield node }
+    @head = Pointer(T).null
+  end
 end
