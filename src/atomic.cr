@@ -264,8 +264,8 @@ struct Atomic(T)
   # ```
   def swap(value : T, ordering : Ordering = :sequentially_consistent)
     {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
-      address = atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), ordering)
-      Pointer(T).new(address).as(T)
+      address = atomicrmw(:xchg, pointerof(@value).as(typeof(@value.object_id)*), value.object_id, ordering)
+      Pointer(Void).new(address).as(T)
     {% else %}
       atomicrmw(:xchg, pointerof(@value), value, ordering)
     {% end %}
