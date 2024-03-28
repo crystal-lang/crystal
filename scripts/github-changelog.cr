@@ -87,7 +87,7 @@ end
 
 record Milestone,
   closed_at : Time?,
-  description : String,
+  description : String?,
   due_on : Time?,
   title : String,
   pull_requests : Array(PullRequest) do
