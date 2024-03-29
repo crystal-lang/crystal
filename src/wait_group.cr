@@ -60,16 +60,15 @@ class WaitGroup
   # reach zero before all fibers are done.
   def add(n : Int32 = 1) : Nil
     counter = @counter.get(:acquire)
-    new_counter = uninitialized Int32
 
     loop do
       raise RuntimeError.new("Negative WaitGroup counter") if counter < 0
 
-      new_counter = counter + n
-      counter, success = @counter.compare_and_set(counter, new_counter, :acquire_release, :acquire)
+      counter, success = @counter.compare_and_set(counter, counter + n, :acquire_release, :acquire)
       break if success
     end
 
+    new_counter = counter + n
     return if new_counter > 0
 
     @lock.sync do
