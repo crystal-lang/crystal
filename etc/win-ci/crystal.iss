@@ -80,6 +80,7 @@ Source: "portable\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion; Componen
 Source: "portable\shards.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: shards
 
 Source: "portable\crystal.pdb"; DestDir: "{app}"; Flags: ignoreversion; Components: pdb
+Source: "portable\shards.pdb"; DestDir: "{app}"; Flags: ignoreversion; Components: pdb and shards
 
 Source: "portable\examples\*"; DestDir: "{app}\examples"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: samples
 
