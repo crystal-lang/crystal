@@ -148,7 +148,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_tty?
-    LibC._isatty(fd) != 0
+    LibC.GetFileType(windows_handle) == LibC::FILE_TYPE_CHAR
   end
 
   private def system_reopen(other : IO::FileDescriptor)
