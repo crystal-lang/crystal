@@ -325,8 +325,6 @@ describe "Code gen: pointer" do
 
   it "does pointerof class variable with class" do
     run(%(
-      require "prelude"
-
       class Bar
         def initialize(@x : Int32)
         end
@@ -373,8 +371,6 @@ describe "Code gen: pointer" do
 
   it "can assign nil to void pointer" do
     codegen(%(
-      require "prelude"
-
       ptr = Pointer(Void).malloc(1_u64)
       ptr.value = ptr.value
       ))
@@ -408,8 +404,6 @@ describe "Code gen: pointer" do
 
   it "uses correct llvm module for typedef metaclass (#2877)" do
     run(%(
-      require "prelude"
-
       lib LibFoo
         type Foo = Void*
         type Bar = Void*
@@ -438,10 +432,26 @@ describe "Code gen: pointer" do
       ))
   end
 
+  it "passes arguments correctly for typedef metaclass (#8544)" do
+    run <<-CRYSTAL
+      lib LibFoo
+        type Foo = Void*
+      end
+
+      class Class
+        def foo(x)
+          x
+        end
+      end
+
+      x = 1
+      LibFoo::Foo.foo(x)
+      Pointer(Void).foo(x)
+      CRYSTAL
+  end
+
   it "generates correct code for Pointer.malloc(0) (#2905)" do
     run(%(
-      require "prelude"
-
       class Foo
         def initialize(@value : Int32)
         end

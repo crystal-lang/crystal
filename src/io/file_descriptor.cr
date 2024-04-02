@@ -5,13 +5,41 @@ class IO::FileDescriptor < IO
   include Crystal::System::FileDescriptor
   include IO::Buffered
 
-  # The raw file-descriptor. It is defined to be an `Int`, but its size is
-  # platform-specific.
-  def fd : Int
+  @volatile_fd : Atomic(Handle)
+
+  # Returns the raw file-descriptor handle. Its type is platform-specific.
+  def fd : Handle
     @volatile_fd.get
   end
 
-  def initialize(fd, blocking = nil)
+  # Whether or not to close the file descriptor when this object is finalized.
+  # Disabling this is useful in order to create an IO wrapper over a file
+  # descriptor returned from a C API that keeps ownership of the descriptor. Do
+  # note that, if the fd is closed by its owner at any point, any IO operations
+  # will then fail.
+  property? close_on_finalize : Bool
+
+  # The time to wait when reading before raising an `IO::TimeoutError`.
+  property read_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#read_timeout=(Time::Span?)` instead.")]
+  def read_timeout=(read_timeout : Number) : Number
+    self.read_timeout = read_timeout.seconds
+    read_timeout
+  end
+
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
+  property write_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#write_timeout=(Time::Span?)` instead.")]
+  def write_timeout=(write_timeout : Number) : Number
+    self.write_timeout = write_timeout.seconds
+    write_timeout
+  end
+
+  def initialize(fd, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
 
@@ -25,9 +53,7 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{flag?(:win32)}}
-      self.blocking = false
-    end
+    system_blocking_init(blocking)
   end
 
   # :nodoc:
@@ -51,17 +77,33 @@ class IO::FileDescriptor < IO
     self.system_close_on_exec = value
   end
 
-  {% unless flag?(:win32) %}
-    def self.fcntl(fd, cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
+  def self.fcntl(fd, cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
-    def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
-    end
-  {% end %}
+  def fcntl(cmd, arg = 0)
+    Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+  end
 
-  def info
+  # Returns a `File::Info` object for this file descriptor, or raises
+  # `IO::Error` in case of an error.
+  #
+  # Certain fields like the file size may not be updated until an explicit
+  # flush.
+  #
+  # ```
+  # File.write("testfile", "abc")
+  #
+  # file = File.new("testfile", "a")
+  # file.info.size # => 3
+  # file << "defgh"
+  # file.info.size # => 3
+  # file.flush
+  # file.info.size # => 8
+  # ```
+  #
+  # Use `File.info` if the file is not open and a path to the file is available.
+  def info : File::Info
     system_info
   end
 
@@ -93,7 +135,7 @@ class IO::FileDescriptor < IO
 
   # Same as `seek` but yields to the block after seeking and eventually seeks
   # back to the original position when the block returns.
-  def seek(offset, whence : Seek = Seek::Set)
+  def seek(offset, whence : Seek = Seek::Set, &)
     original_pos = tell
     begin
       seek(offset, whence)
@@ -113,10 +155,10 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos : Int64
+  protected def unbuffered_pos : Int64
     check_open
 
-    system_pos - @in_buffer_rem.size
+    system_pos
   end
 
   # Sets the current position (in bytes) in this `IO`.
@@ -150,9 +192,8 @@ class IO::FileDescriptor < IO
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-  # TODO: always use non-blocking locks, yield fiber until resource becomes available
 
-  def flock_shared(blocking = true)
+  def flock_shared(blocking = true, &)
     flock_shared blocking
     begin
       yield
@@ -167,7 +208,7 @@ class IO::FileDescriptor < IO
     system_flock_shared(blocking)
   end
 
-  def flock_exclusive(blocking = true)
+  def flock_exclusive(blocking = true, &)
     flock_exclusive blocking
     begin
       yield
@@ -188,7 +229,7 @@ class IO::FileDescriptor < IO
   end
 
   def finalize
-    return if closed?
+    return if closed? || !close_on_finalize?
 
     close rescue nil
   end
@@ -222,11 +263,11 @@ class IO::FileDescriptor < IO
     pp.text inspect
   end
 
-  private def unbuffered_rewind
+  private def unbuffered_rewind : Nil
     self.pos = 0
   end
 
-  private def unbuffered_close
+  private def unbuffered_close : Nil
     return if @closed
 
     # Set before the @closed state so the pending
@@ -236,7 +277,7 @@ class IO::FileDescriptor < IO
     system_close
   end
 
-  private def unbuffered_flush
+  private def unbuffered_flush : Nil
     # Nothing
   end
 end

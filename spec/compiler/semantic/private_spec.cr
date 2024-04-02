@@ -269,7 +269,7 @@ describe "Semantic: private" do
       end
 
       Foo.new(10).foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "can use class var initializer in private type" do
@@ -283,7 +283,7 @@ describe "Semantic: private" do
       end
 
       Foo.x
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "can use instance var initializer in private type" do
@@ -297,7 +297,7 @@ describe "Semantic: private" do
       end
 
       Foo.new.x
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "finds private class in macro expansion" do
@@ -315,79 +315,67 @@ describe "Semantic: private" do
       end
 
       foo
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
-  it "doesn't find private class from outside namespace" do
-    assert_error %(
-      class Foo
-        private class Bar
+  {% for kind, decl in {
+                         "class"    => %(class Bar; end),
+                         "module"   => %(module Bar; end),
+                         "enum"     => %(enum Bar; A; end),
+                         "alias"    => %(alias Bar = Int32),
+                         "lib"      => %(lib Bar; end),
+                         "constant" => %(Bar = 1),
+                       } %}
+    it "doesn't find private {{ kind.id }} from outside namespace" do
+      assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
+        module Foo
+          private {{ decl.id }}
         end
-      end
 
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+        Foo::Bar
+        CRYSTAL
+    end
+  {% end %}
 
-  it "doesn't find private module from outside namespace" do
-    assert_error %(
-      class Foo
-        private module Bar
-        end
-      end
+  {% for kind, decl in {
+                         "class"    => %(class Foo::Bar; end),
+                         "module"   => %(module Foo::Bar; end),
+                         "enum"     => %(enum Foo::Bar; A; end),
+                         "alias"    => %(alias Foo::Bar = Int32),
+                         "lib"      => %(lib Foo::Bar; end),
+                         "constant" => %(Foo::Bar = 1),
+                       } %}
+    it "doesn't find private {{ kind.id }} from outside namespace, long name (#8831)" do
+      assert_error <<-CRYSTAL, "private constant Foo::Bar referenced"
+        private {{ decl.id }}
 
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+        Foo::Bar
+        CRYSTAL
+    end
 
-  it "doesn't find private enum from outside namespace" do
-    assert_error %(
-      class Foo
-        private enum Bar
-          A
-        end
-      end
+    it "doesn't define incorrect type in top-level namespace (#13511)" do
+      assert_error <<-CRYSTAL, "undefined constant Bar"
+        private {{ decl.id }}
 
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+        Bar
+        CRYSTAL
+    end
+  {% end %}
 
-  it "doesn't find private alias from outside namespace" do
-    assert_error %(
-      class Foo
-        private alias Bar = Int32
-      end
-
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
-
-  it "doesn't find private lib from outside namespace" do
-    assert_error %(
-      class Foo
-        private lib LibBar
-        end
-      end
-
-      Foo::LibBar
-      ),
-      "private constant Foo::LibBar referenced"
-  end
-
-  it "doesn't find private constant from outside namespace" do
-    assert_error %(
-      class Foo
-        private Bar = 1
-      end
-
-      Foo::Bar
-      ),
-      "private constant Foo::Bar referenced"
-  end
+  {% for kind, decl in {
+                         "class"    => %(class ::Foo; end),
+                         "module"   => %(module ::Foo; end),
+                         "enum"     => %(enum ::Foo; A; end),
+                         "alias"    => %(alias ::Foo = Int32),
+                         "lib"      => %(lib ::Foo; end),
+                         "constant" => %(::Foo = 1),
+                       } %}
+    it "doesn't define private {{ kind.id }} with global type name" do
+      assert_error <<-CRYSTAL, "can't declare private type in the global namespace"
+        private {{ decl.id }}
+        CRYSTAL
+    end
+  {% end %}
 
   it "finds private type from inside namespace" do
     assert_type(%(
@@ -461,8 +449,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced",
-      inject_primitives: false
+      "private constant Foo::Bar referenced"
   end
 
   it "doesn't find private module defined through macro (#8715)" do
@@ -478,8 +465,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced",
-      inject_primitives: false
+      "private constant Foo::Bar referenced"
   end
 
   it "doesn't find private macro defined through macro (#8715)" do
@@ -495,8 +481,7 @@ describe "Semantic: private" do
 
       Foo.bar
       ),
-      "private macro 'bar' called for Foo",
-      inject_primitives: false
+      "private macro 'bar' called for Foo"
   end
 
   it "doesn't find private thing defined through recursive macro (#8715)" do
@@ -516,12 +501,11 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced",
-      inject_primitives: false
+      "private constant Foo::Bar referenced"
   end
 
   it "doesn't inherit visibility from class node in macro hook (#8794)" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module M1
         macro included
           include M2
@@ -563,6 +547,6 @@ describe "Semantic: private" do
       end
 
       Foo.new(1)
-      ), inject_primitives: false)
+      CRYSTAL
   end
 end

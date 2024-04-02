@@ -197,6 +197,7 @@ struct Char
   # 'ç'.lowercase? # => true
   # 'G'.lowercase? # => false
   # '.'.lowercase? # => false
+  # 'ǲ'.lowercase? # => false
   # ```
   def lowercase? : Bool
     ascii? ? ascii_lowercase? : Unicode.lowercase?(self)
@@ -221,9 +222,22 @@ struct Char
   # 'Á'.uppercase? # => true
   # 'c'.uppercase? # => false
   # '.'.uppercase? # => false
+  # 'ǲ'.uppercase? # => false
   # ```
   def uppercase? : Bool
     ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
+  end
+
+  # Returns `true` if this char is a titlecase character, i.e. a ligature
+  # consisting of an uppercase letter followed by lowercase characters.
+  #
+  # ```
+  # 'ǲ'.titlecase? # => true
+  # 'H'.titlecase? # => false
+  # 'c'.titlecase? # => false
+  # ```
+  def titlecase? : Bool
+    !ascii? && Unicode.titlecase?(self)
   end
 
   # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
@@ -238,6 +252,9 @@ struct Char
   end
 
   # Returns `true` if this char is a letter.
+  #
+  # All codepoints in the Unicode General Category `L` (Letter) are considered
+  # a letter.
   #
   # ```
   # 'c'.letter? # => true
@@ -390,15 +407,33 @@ struct Char
   # characters, like 'İ', than when downcased result in multiple
   # characters (in this case: 'I' and the dot mark).
   #
-  # For a more correct method see the method that receives a block.
+  # For more correct behavior see the overload that receives a block.
   #
   # ```
   # 'Z'.downcase # => 'z'
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase(options = Unicode::CaseOptions::None) : Char
-    Unicode.downcase(self, options)
+  #
+  # If `options.fold?` is true, then returns the case-folded equivalent instead.
+  # Note that this will return `self` if a multiple-character case folding
+  # exists, even if a separate single-character transformation is also defined
+  # in Unicode.
+  #
+  # ```
+  # 'Z'.downcase(Unicode::CaseOptions::Fold) # => 'z'
+  # 'x'.downcase(Unicode::CaseOptions::Fold) # => 'x'
+  # 'ς'.downcase(Unicode::CaseOptions::Fold) # => 'σ'
+  # 'ꭰ'.downcase(Unicode::CaseOptions::Fold) # => 'Ꭰ'
+  # 'ẞ'.downcase(Unicode::CaseOptions::Fold) # => 'ẞ' # not U+00DF 'ß'
+  # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) # => "ᾈ" # not U+1F80 'ᾀ'
+  # ```
+  def downcase(options : Unicode::CaseOptions = :none) : Char
+    if options.fold?
+      Unicode.foldcase(self, options)
+    else
+      Unicode.downcase(self, options)
+    end
   end
 
   # Yields each char for the downcase equivalent of this char.
@@ -406,8 +441,19 @@ struct Char
   # This method takes into account the possibility that an downcase
   # version of a char might result in multiple chars, like for
   # 'İ', which results in 'i' and a dot mark.
-  def downcase(options = Unicode::CaseOptions::None)
-    Unicode.downcase(self, options) { |char| yield char }
+  #
+  # ```
+  # 'Z'.downcase { |v| puts v }                             # prints 'z'
+  # 'ς'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 'σ'
+  # 'ẞ'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 's', 's'
+  # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 'ἀ', 'ι'
+  # ```
+  def downcase(options : Unicode::CaseOptions = :none, &)
+    if options.fold?
+      Unicode.foldcase(self, options) { |char| yield char }
+    else
+      Unicode.downcase(self, options) { |char| yield char }
+    end
   end
 
   # Returns the upcase equivalent of this char.
@@ -417,14 +463,14 @@ struct Char
   # characters, like 'ﬄ', than when upcased result in multiple
   # characters (in this case: 'F', 'F', 'L').
   #
-  # For a more correct method see the method that receives a block.
+  # For more correct behavior see the overload that receives a block.
   #
   # ```
   # 'z'.upcase # => 'Z'
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase(options = Unicode::CaseOptions::None) : Char
+  def upcase(options : Unicode::CaseOptions = :none) : Char
     Unicode.upcase(self, options)
   end
 
@@ -438,8 +484,51 @@ struct Char
   # 'z'.upcase { |v| puts v } # prints 'Z'
   # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'L'
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options : Unicode::CaseOptions = :none, &)
     Unicode.upcase(self, options) { |char| yield char }
+  end
+
+  # Returns the titlecase equivalent of this char.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may return a different character where only
+  # the first letter is uppercase and the rest lowercase.
+  #
+  # Note that this only works for characters whose titlecase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'ﬄ', than when titlecased result in multiple
+  # characters (in this case: 'F', 'f', 'l').
+  #
+  # For more correct behavior see the overload that receives a block.
+  #
+  # ```
+  # 'z'.titlecase # => 'Z'
+  # 'X'.titlecase # => 'X'
+  # '.'.titlecase # => '.'
+  # 'Ǳ'.titlecase # => 'ǲ'
+  # 'ǳ'.titlecase # => 'ǲ'
+  # ```
+  def titlecase(options : Unicode::CaseOptions = :none) : Char
+    Unicode.titlecase(self, options)
+  end
+
+  # Yields each char for the titlecase equivalent of this char.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may yield a different character sequence
+  # where only the first letter is uppercase and the rest lowercase.
+  #
+  # This method takes into account the possibility that a titlecase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'f' and 'l'.
+  #
+  # ```
+  # 'z'.titlecase { |v| puts v } # prints 'Z'
+  # 'Ǳ'.titlecase { |v| puts v } # prints 'ǲ'
+  # 'ﬄ'.titlecase { |v| puts v } # prints 'F', 'f', 'l'
+  # ```
+  def titlecase(options : Unicode::CaseOptions = :none, &)
+    Unicode.titlecase(self, options) { |char| yield char }
   end
 
   # See `Object#hash(hasher)`
@@ -447,29 +536,70 @@ struct Char
     hasher.char(self)
   end
 
-  # Returns a Char that is one codepoint bigger than this char's codepoint.
+  # Returns the successor codepoint after this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'a'.succ # => 'b'
   # 'あ'.succ # => 'ぃ'
   # ```
   #
-  # This method allows creating a `Range` of chars.
+  # This does not always return `codepoint + 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uD7FF'.succ # => '\uE000'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::MAX`.
+  #
+  # * `#pred` returns the predecessor codepoint.
   def succ : Char
-    (ord + 1).chr
+    case self
+    when '\uD7FF'
+      '\uE000'
+    when MAX
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord + 1).unsafe_chr
+    end
   end
 
-  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  # Returns the predecessor codepoint before this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
+  #
+  # This does not always return `codepoint - 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uE000'.pred # => '\uD7FF'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::ZERO`.
+  #
+  # * `#succ` returns the successor codepoint.
   def pred : Char
-    (ord - 1).chr
+    case self
+    when '\uE000'
+      '\uD7FF'
+    when ZERO
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord - 1).unsafe_chr
+    end
   end
 
   # Returns `true` if this char is an ASCII control character.
+  #
+  # This includes the *C0 control codes* (`U+0000` through `U+001F`) and the
+  # *Delete* character (`U+007F`).
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -481,7 +611,7 @@ struct Char
   # end
   # ```
   def ascii_control? : Bool
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    ord < 0x20 || ord == 0x7F
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -489,69 +619,89 @@ struct Char
     ascii? ? ascii_control? : Unicode.control?(self)
   end
 
-  # Returns `true` if this is char is a mark character according to unicode.
+  # Returns `true` if this char is a mark character according to unicode.
   def mark? : Bool
     Unicode.mark?(self)
   end
 
-  # Returns this char as a string that contains a char literal.
+  # Returns `true` if this char is a printable character.
+  #
+  # There is no universal definition of printable characters in Unicode.
+  # For the purpose of this method, all characters with a visible glyph and the
+  # ASCII whitespace (` `) are considered printable.
+  #
+  # This means characters which are `control?` or `whitespace?` (except for ` `)
+  # are non-printable.
+  def printable?
+    !control? && (!whitespace? || self == ' ')
+  end
+
+  # Returns a representation of `self` as a Crystal char literal, wrapped in single
+  # quotes.
+  #
+  # Non-printable characters (see `#printable?`) are escaped.
   #
   # ```
   # 'a'.inspect      # => "'a'"
   # '\t'.inspect     # => "'\\t'"
   # 'あ'.inspect      # => "'あ'"
-  # '\u0012'.inspect # => "'\\u{12}'"
+  # '\u0012'.inspect # => "'\\u0012'"
+  # '😀'.inspect      # => "'\u{1F600}'"
   # ```
+  #
+  # See `#unicode_escape` for the format used to escape characters without a
+  # special escape sequence.
+  #
+  # * `#dump` additionally escapes all non-ASCII characters.
   def inspect : String
     dump_or_inspect do |io|
-      if ascii_control?
-        io << "\\u{"
-        ord.to_s(io, 16)
-        io << '}'
-      else
+      if printable?
         to_s(io)
+      else
+        unicode_escape(io)
       end
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#inspect`.
+  # :ditto:
   def inspect(io : IO) : Nil
     io << inspect
   end
 
-  # Returns this char as a string that contains a char literal as written in Crystal,
-  # with characters with a codepoint greater than `0x79` written as `\u{...}`.
+  # Returns a representation of `self` as an ASCII-compatible Crystal char literal,
+  # wrapped in single quotes.
+  #
+  # Non-printable characters (see `#printable?`) and non-ASCII characters
+  # (codepoints larger `U+007F`) are escaped.
   #
   # ```
   # 'a'.dump      # => "'a'"
   # '\t'.dump     # => "'\\t'"
-  # 'あ'.dump      # => "'\\u{3042}'"
-  # '\u0012'.dump # => "'\\u{12}'"
+  # 'あ'.dump      # => "'\\u3042'"
+  # '\u0012'.dump # => "'\\u0012'"
+  # '😀'.dump      # => "'\\u{1F600}'"
   # ```
+  #
+  # See `#unicode_escape` for the format used to escape characters without a
+  # special escape sequence.
+  #
+  # * `#inspect` only escapes non-printable characters.
   def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
-        io << "\\u{"
-        ord.to_s(io, 16)
-        io << '}'
+        unicode_escape(io)
       else
         to_s(io)
       end
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#dump`.
+  # :ditto:
   def dump(io)
-    io << '\''
     io << dump
-    io << '\''
   end
 
-  private def dump_or_inspect
+  private def dump_or_inspect(&)
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
@@ -563,6 +713,7 @@ struct Char
     when '\r' then "'\\r'"
     when '\t' then "'\\t'"
     when '\v' then "'\\v'"
+    when '\0' then "'\\0'"
     else
       String.build do |io|
         io << '\''
@@ -570,6 +721,37 @@ struct Char
         io << '\''
       end
     end
+  end
+
+  # Returns the Unicode escape sequence representing this character.
+  #
+  # The codepoints are expressed as hexadecimal digits with uppercase letters.
+  # Unicode escapes always use the four digit style for codepoints `U+FFFF`
+  # and lower, adding leading zeros when necessary. Higher codepoints have their
+  # digits wrapped in curly braces and no leading zeros.
+  #
+  # ```
+  # 'a'.unicode_escape      # => "\\u0061"
+  # '\t'.unicode_escape     # => "\\u0009"
+  # 'あ'.unicode_escape      # => "\\u3042"
+  # '\u0012'.unicode_escape # => "\\u0012"
+  # '😀'.unicode_escape      # => "\\u{1F600}"
+  # ```
+  def unicode_escape : String
+    String.build do |io|
+      unicode_escape(io)
+    end
+  end
+
+  # :ditto:
+  def unicode_escape(io : IO) : Nil
+    io << "\\u"
+    io << '{' if ord > 0xFFFF
+    io << '0' if ord < 0x1000
+    io << '0' if ord < 0x0100
+    io << '0' if ord < 0x0010
+    ord.to_s(io, 16, upcase: true)
+    io << '}' if ord > 0xFFFF
   end
 
   # Returns the integer value of this char if it's an ASCII char denoting a digit
@@ -626,7 +808,7 @@ struct Char
     to_i?(base)
   end
 
-  {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
+  {% for type in %w(i8 i16 i64 i128 u8 u16 u32 u64 u128) %}
     # See also: `to_i`.
     def to_{{type.id}}(base : Int = 10)
       to_i(base).to_{{type.id}}
@@ -708,7 +890,7 @@ struct Char
   # 129
   # 130
   # ```
-  def each_byte : Nil
+  def each_byte(&) : Nil
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
     c = ord
@@ -779,10 +961,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 

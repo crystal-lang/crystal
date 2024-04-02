@@ -39,6 +39,18 @@ class Array
   end
 end
 
+module Iterator(T)
+  # Converts the content of an iterator to YAML.
+  # The conversion is done in a lazy way.
+  # In contrast to `Iterator#to_json` this operation requires memory for the
+  # for the complete YAML document
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    yaml.sequence(reference: self) do
+      each &.to_yaml(yaml)
+    end
+  end
+end
+
 struct Tuple
   def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.sequence do
@@ -245,7 +257,7 @@ module Time::EpochMillisConverter
 end
 
 # Converter to be used with `YAML::Serializable`
-# to serialize the `Array(T)` elements with the custom converter.
+# to serialize the elements of an `Array(T)` with the custom converter.
 #
 # ```
 # require "yaml"
@@ -259,15 +271,49 @@ end
 #
 # timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))
 # timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
-# timestamp.to_yaml # => ---\nvalues:\n- 1459859781\n- 1567628762\n
+# timestamp.to_yaml # => "---\nvalues:\n- 1459859781\n- 1567628762\n"
 # ```
+#
+# `YAML::ArrayConverter.new` should be used if the nested converter is also an
+# instance instead of a type.
+#
+# ```
+# require "yaml"
+#
+# class Timestamp
+#   include YAML::Serializable
+#
+#   @[YAML::Field(converter: YAML::ArrayConverter.new(Time::Format.new("%b %-d, %Y")))]
+#   property values : Array(Time)
+# end
+#
+# timestamp = Timestamp.from_yaml(%({"values":["Apr 5, 2016","Sep 4, 2019"]}))
+# timestamp.values  # => [2016-04-05 00:00:00 UTC, 2019-09-04 00:00:00 UTC]
+# timestamp.to_yaml # => "---\nvalues:\n- Apr 5, 2016\n- Sep 4, 2019\n"
+# ```
+#
+# This implies that `YAML::ArrayConverter(T)` and
+# `YAML::ArrayConverter(T.class).new(T)` perform the same serializations.
 module YAML::ArrayConverter(Converter)
-  def self.to_yaml(values : Array, yaml : YAML::Nodes::Builder)
-    yaml.sequence(reference: self) do
-      values.each do |value|
-        Converter.to_yaml(value, yaml)
+  private struct WithInstance(T)
+    def initialize(@converter : T)
+    end
+
+    def to_yaml(values : Array, yaml : YAML::Nodes::Builder)
+      yaml.sequence(reference: self) do
+        values.each do |value|
+          @converter.to_yaml(value, yaml)
+        end
       end
     end
+  end
+
+  def self.new(converter : Converter)
+    WithInstance.new(converter)
+  end
+
+  def self.to_yaml(values : Array, yaml : YAML::Nodes::Builder)
+    WithInstance.new(Converter).to_yaml(values, yaml)
   end
 end
 

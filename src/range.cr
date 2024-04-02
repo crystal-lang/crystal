@@ -108,11 +108,7 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each : Nil
-    {% if B == Nil %}
-      {% raise "Can't each beginless range" %}
-    {% end %}
-
+  def each(&) : Nil
     current = @begin
     if current.nil?
       raise ArgumentError.new("Can't each beginless range")
@@ -142,10 +138,6 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
-    {% if B == Nil %}
-      {% raise "Can't each beginless range" %}
-    {% end %}
-
     if @begin.nil?
       raise ArgumentError.new("Can't each beginless range")
     end
@@ -160,11 +152,7 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each : Nil
-    {% if E == Nil %}
-      {% raise "Can't reverse_each endless range" %}
-    {% end %}
-
+  def reverse_each(&) : Nil
     end_value = @end
     if end_value.nil?
       raise ArgumentError.new("Can't reverse_each endless range")
@@ -196,10 +184,6 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
-    {% if E == Nil %}
-      {% raise "Can't reverse_each endless range" %}
-    {% end %}
-
     if @end.nil?
       raise ArgumentError.new("Can't reverse_each endless range")
     end
@@ -327,14 +311,12 @@ struct Range(B, E)
     includes?(value)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
     @end.try &.inspect(io)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end
@@ -364,11 +346,7 @@ struct Range(B, E)
   # the method simply calls `random.rand(self)`.
   #
   # Raises `ArgumentError` if `self` is an open range.
-  def sample(random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
+  def sample(random : Random = Random::DEFAULT)
     {% if B < Int && E < Int %}
       random.rand(self)
     {% elsif B < Float && E < Float %}
@@ -387,22 +365,91 @@ struct Range(B, E)
     {% end %}
   end
 
-  # :nodoc:
+  # :inherit:
+  #
+  # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
+  # once. Thus, *random* will be left in a different state compared to the
+  # implementation in `Enumerable`.
   def sample(n : Int, random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
     end
 
-    return super unless n == 1
+    if n < 0
+      raise ArgumentError.new "Can't sample negative number of elements"
+    end
 
-    if empty?
-      [] of B
+    # For a range of integers we can do much better
+    {% if B < Int && E < Int %}
+      min = self.begin
+      max = self.end
+
+      if exclusive? ? max <= min : max < min
+        raise ArgumentError.new "Invalid range for rand: #{self}"
+      end
+
+      max -= 1 if exclusive?
+
+      available = max - min + 1
+
+      # When a big chunk of elements is going to be needed, it's
+      # faster to just traverse the entire range than hitting
+      # a lot of duplicates because or random.
+      if n >= available // 4
+        return super
+      end
+
+      possible = Math.min(n, available)
+
+      # If we must return all values in the range...
+      if possible == available
+        result = Array(B).new(possible) { |i| min + i }
+        result.shuffle!(random)
+        return result
+      end
+
+      range_sample(n, random)
+    {% elsif B < Float && E < Float %}
+      min = self.begin
+      max = self.end
+
+      if exclusive? ? max <= min : max < min
+        raise ArgumentError.new "Invalid range for rand: #{self}"
+      end
+
+      if min == max
+        return [min]
+      end
+
+      range_sample(n, random)
+    {% else %}
+      case n
+      when 0
+        [] of B
+      when 1
+        [sample(random)]
+      else
+        super
+      end
+    {% end %}
+  end
+
+  private def range_sample(n, random)
+    if n <= 16
+      # For a small requested amount doing a linear lookup is faster
+      result = Array(B).new(n)
+      until result.size == n
+        value = sample(random)
+        result << value unless result.includes?(value)
+      end
+      result
     else
-      [sample(random)]
+      # Otherwise using a Set is faster
+      result = Set(B).new(n)
+      until result.size == n
+        result << sample(random)
+      end
+      result.to_a
     end
   end
 
@@ -411,7 +458,6 @@ struct Range(B, E)
     Range.new(@begin.clone, @end.clone, @exclusive)
   end
 
-  # :nodoc:
   def map(&block : B -> U) forall U
     b = self.begin
     e = self.end
@@ -427,12 +473,16 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
+  # Returns the number of values in this range.
+  #
+  # If both the beginning and the end of this range are `Int`s, runs in constant
+  # time instead of linear.
+  #
+  # ```
+  # (3..8).size  # => 6
+  # (3...8).size # => 5
+  # ```
   def size
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't calculate size of an open range" %}
-    {% end %}
-
     b = self.begin
     e = self.end
 
@@ -498,7 +548,7 @@ struct Range(B, E)
       begin_value = @range.begin
 
       return stop if !begin_value.nil? && @current <= begin_value
-      return @current = @current.pred
+      @current = @current.pred
     end
   end
 

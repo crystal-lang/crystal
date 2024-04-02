@@ -86,6 +86,7 @@ module Crystal
       end
 
       check_var_is_self(node)
+      false
     end
 
     def visit(node : UninitializedVar)
@@ -114,6 +115,7 @@ module Crystal
           # TODO: can this be reached?
         end
       end
+      false
     end
 
     def visit(node : Assign)
@@ -419,7 +421,7 @@ module Crystal
         info.add_annotations(annotations) if annotations
         vars[name] = info
       else
-        info.type = Type.merge!([info.type, type])
+        info.type = Type.merge!(info.type, type)
         info.outside_def = true if @outside_def
         info.add_annotations(annotations) if annotations
         vars[name] = info
@@ -555,7 +557,7 @@ module Crystal
     end
 
     def guess_type(node : RegexLiteral)
-      program.types["Regex"]
+      program.regex
     end
 
     def guess_type(node : TupleLiteral)
@@ -601,6 +603,32 @@ module Crystal
       end
     end
 
+    def guess_type(node : ProcLiteral)
+      output = node.def.return_type
+      return nil unless output
+
+      types = nil
+
+      node.def.args.each do |input|
+        restriction = input.restriction
+        return nil unless restriction
+
+        input_type = lookup_type?(restriction)
+        return nil unless input_type
+
+        types ||= [] of Type
+        types << input_type.virtual_type
+      end
+
+      output_type = lookup_type?(output)
+      return nil unless output_type
+
+      types ||= [] of Type
+      types << output_type.virtual_type
+
+      program.proc_of(types)
+    end
+
     def guess_type(node : Call)
       if expanded = node.expanded
         return guess_type(expanded)
@@ -616,7 +644,7 @@ module Crystal
         type = lookup_type?(obj)
         if type
           # See if the "new" method has a return type annotation, and use it if so
-          return_type = guess_type_from_method(type, node)
+          return_type = guess_type_from_class_method(type, node)
           return return_type if return_type
 
           # Otherwise, infer it to be T
@@ -631,7 +659,7 @@ module Crystal
            current_type.is_a?(GenericClassInstanceType)
          )
         # See if the "new" method has a return type annotation
-        return_type = guess_type_from_method(current_type, node)
+        return_type = guess_type_from_class_method(current_type, node)
         return return_type if return_type
 
         # Otherwise, infer it to the current type
@@ -641,7 +669,7 @@ module Crystal
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
       if obj.is_a?(Generic) &&
          (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
-         (node.name == "malloc" || node.name == "null")
+         node.name.in?("malloc", "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
       end
@@ -711,33 +739,39 @@ module Crystal
     # Guess type from T.method, where T is a Path and
     # method solves to a method with a type annotation
     # (use the type annotation)
-    def guess_type_call_with_type_annotation(node)
+    def guess_type_call_with_type_annotation(node : Call)
       obj = node.obj
       return nil unless obj
-      return nil unless obj.is_a?(Path) || obj.is_a?(Generic)
 
-      obj_type = lookup_type_no_check?(obj)
+      if obj.is_a?(Path) || obj.is_a?(Generic)
+        obj_type = lookup_type_no_check?(obj)
+        return nil unless obj_type
+
+        return guess_type_from_class_method(obj_type, node)
+      end
+
+      obj_type = guess_type(obj)
       return nil unless obj_type
 
       guess_type_from_method(obj_type, node)
     end
 
-    def guess_type_from_method(obj_type, node : Call)
+    def guess_type_from_class_method(obj_type, node : Call)
       @dont_find_root_generic_type_parameters += 1 if obj_type != current_type
 
-      type = guess_type_from_method_impl(obj_type, node)
+      type = guess_type_from_class_method_impl(obj_type, node)
 
       @dont_find_root_generic_type_parameters -= 1 if obj_type != current_type
 
       type
     end
 
-    def guess_type_from_method_impl(obj_type, node : Call)
+    def guess_type_from_class_method_impl(obj_type, node : Call)
       metaclass = obj_type.devirtualize.metaclass
 
       defs = metaclass.lookup_defs(node.name)
       defs = defs.select do |a_def|
-        a_def_has_block = !!a_def.yields
+        a_def_has_block = !!a_def.block_arity
         call_has_block = !!(node.block || node.block_arg)
         next unless a_def_has_block == call_has_block
 
@@ -781,7 +815,6 @@ module Crystal
 
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
-      type = nil
       old_type_override = @type_override
       @type_override = obj_type
 
@@ -794,6 +827,54 @@ module Crystal
       @methods_being_checked.pop
 
       type
+    end
+
+    def guess_type_from_method(obj_type, node : Call)
+      @dont_find_root_generic_type_parameters += 1 if obj_type != current_type
+
+      type = guess_type_from_method_impl(obj_type, node)
+
+      @dont_find_root_generic_type_parameters -= 1 if obj_type != current_type
+
+      type
+    end
+
+    def guess_type_from_method_impl(obj_type, node : Call)
+      return nil if node.block || node.block_arg
+
+      arg_types = node.args.map do |arg|
+        guessed_arg_type = guess_type(arg)
+        return unless guessed_arg_type
+
+        guessed_arg_type
+      end
+
+      named_args_types = node.named_args.try(&.map do |named_arg|
+        guessed_arg_type = guess_type(named_arg.value)
+        return unless guessed_arg_type
+
+        NamedArgumentType.new(named_arg.name, guessed_arg_type)
+      end)
+
+      signature = CallSignature.new(
+        name: node.name,
+        arg_types: arg_types,
+        named_args: named_args_types,
+        block: nil,
+      )
+      matches = obj_type.lookup_matches(signature).matches
+      return nil unless matches
+
+      return_types = matches.compact_map do |match|
+        return_type = match.def.return_type
+        next unless return_type
+
+        lookup_type?(return_type, match.context.defining_type, match.context.instantiated_type.instance_type)
+      end
+
+      return nil if return_types.empty?
+
+      Type.merge(return_types)
     end
 
     def guess_type(node : Cast)
@@ -884,7 +965,7 @@ module Crystal
     def guess_type(node : BinaryOp)
       left_type = guess_type(node.left)
       right_type = guess_type(node.right)
-      guess_from_two(left_type, right_type)
+      guess_from_two(left_type, right_type, is_or: node.is_a?(Or))
     end
 
     def guess_type(node : If)
@@ -998,6 +1079,14 @@ module Crystal
       @program.int32
     end
 
+    def guess_type(node : AlignOf)
+      @program.int32
+    end
+
+    def guess_type(node : InstanceAlignOf)
+      @program.int32
+    end
+
     def guess_type(node : OffsetOf)
       @program.int32
     end
@@ -1006,7 +1095,9 @@ module Crystal
       @program.nil
     end
 
-    def guess_from_two(type1, type2)
+    def guess_from_two(type1, type2, is_or = false)
+      type1 = TruthyFilter.instance.apply(type1) if type1 && is_or
+
       if type1
         if type2
           Type.merge!(type1, type2)
@@ -1034,7 +1125,7 @@ module Crystal
       @found_self = true if node.name == "self"
     end
 
-    def lookup_type?(node, root = nil)
+    def lookup_type?(node, root = nil, self_type = nil)
       find_root_generic_type_parameters =
         @dont_find_root_generic_type_parameters == 0
 
@@ -1076,6 +1167,7 @@ module Crystal
 
       type = root.lookup_type?(
         node,
+        self_type: self_type || root.instance_type,
         allow_typeof: false,
         find_root_generic_type_parameters: find_root_generic_type_parameters
       )
@@ -1193,7 +1285,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf | SizeOf | OffsetOf | TypeOf | PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | InstanceAlignOf | AlignOf | OffsetOf | TypeOf | PointerOf)
       false
     end
 
@@ -1263,6 +1355,7 @@ module Crystal
       if node.name == "self"
         @has_self = true
       end
+      false
     end
 
     def visit(node : ASTNode)

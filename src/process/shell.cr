@@ -103,14 +103,32 @@ class Process
     quote_windows({arg})
   end
 
-  # Split a *line* string into the array of tokens in the same way the POSIX shell.
+  # Splits the given *line* into individual command-line arguments in a
+  # platform-specific manner, unquoting tokens if necessary.
+  #
+  # Equivalent to `parse_arguments_posix` on Unix-like systems. Equivalent to
+  # `parse_arguments_windows` on Windows.
+  def self.parse_arguments(line : String) : Array(String)
+    {% if flag?(:unix) %}
+      parse_arguments_posix(line)
+    {% elsif flag?(:win32) %}
+      parse_arguments_windows(line)
+    {% else %}
+      raise NotImplementedError.new("Process.parse_arguments")
+    {% end %}
+  end
+
+  # Splits the given *line* into individual command-line arguments according to
+  # POSIX shell rules, unquoting tokens if necessary.
+  #
+  # Raises `ArgumentError` if a quotation mark is unclosed.
   #
   # ```
-  # Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]) # => ["foo bar", "\\hello/", "Fizz Buzz"]
+  # Process.parse_arguments_posix(%q["foo bar" '\hello/' Fizz\ Buzz]) # => ["foo bar", "\\hello/", "Fizz Buzz"]
   # ```
   #
   # See https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_03
-  def self.parse_arguments(line : String) : Array(String)
+  def self.parse_arguments_posix(line : String) : Array(String)
     tokens = [] of String
 
     reader = Char::Reader.new(line)
@@ -156,6 +174,67 @@ class Process
       tokens << token
     end
 
+    tokens
+  end
+
+  # Splits the given *line* into individual command-line arguments according to
+  # Microsoft's standard C runtime, unquoting tokens if necessary.
+  #
+  # Raises `ArgumentError` if a quotation mark is unclosed. Leading spaces in
+  # *line* are ignored. Otherwise, this method is equivalent to
+  # [`CommandLineToArgvW`](https://docs.microsoft.com/en-gb/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw)
+  # for some unspecified program name.
+  #
+  # NOTE: This does **not** take strings that are passed to the CMD shell or
+  # used in a batch script.
+  #
+  # ```
+  # Process.parse_arguments_windows(%q[foo"bar \\\"hello\\" Fizz\Buzz]) # => ["foobar \\\"hello\\", "Fizz\\Buzz"]
+  # ```
+  def self.parse_arguments_windows(line : String) : Array(String)
+    tokens = [] of String
+    reader = Char::Reader.new(line)
+    quote = false
+
+    while true
+      # skip whitespace
+      while reader.current_char.in?(' ', '\t')
+        reader.next_char
+      end
+      break unless reader.has_next?
+
+      token = String.build do |str|
+        while true
+          backslash_count = 0
+          while reader.current_char == '\\'
+            backslash_count += 1
+            reader.next_char
+          end
+
+          if reader.current_char == '"'
+            (backslash_count // 2).times { str << '\\' }
+            if backslash_count.odd?
+              str << '"'
+            else
+              quote = !quote
+            end
+          else
+            backslash_count.times { str << '\\' }
+            break unless reader.has_next?
+            # `current_char` is neither '\\' nor '"'
+            char = reader.current_char
+            break if char.in?(' ', '\t') && !quote
+            str << char
+          end
+
+          reader.next_char
+        end
+      end
+
+      tokens << token
+    end
+
+    raise ArgumentError.new("Unmatched quote") if quote
     tokens
   end
 end

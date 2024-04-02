@@ -154,7 +154,7 @@ class JSON::PullParser
   # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the array.
   #
   # If the array is empty, it does not yield.
-  def read_array
+  def read_array(&)
     read_begin_array
     until kind.end_array?
       yield
@@ -185,7 +185,7 @@ class JSON::PullParser
   # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the object.
   #
   # If the object is empty, it does not yield.
-  def read_object
+  def read_object(&)
     read_begin_object
     until kind.end_object?
       key_location = location
@@ -224,7 +224,7 @@ class JSON::PullParser
     when .float?
       float_value.tap { read_next }
     else
-      raise "expecting int or float but was #{@kind}"
+      raise "Expecting int or float but was #{@kind}"
     end
   end
 
@@ -332,22 +332,31 @@ class JSON::PullParser
   end
 
   # Reads an array or a null value, and returns it.
-  def read_array_or_null
+  def read_array_or_null(&)
     read_null_or { read_array { yield } }
   end
 
   # Reads an object or a null value, and returns it.
-  def read_object_or_null
+  def read_object_or_null(&)
     read_null_or { read_object { |key| yield key } }
   end
 
   # Reads a null value and returns it, or executes the given block if the value is not null.
-  def read_null_or
+  def read_null_or(&)
+    unless read_null?
+      yield
+    end
+  end
+
+  # Reads the current token if its value is null.
+  #
+  # Returns `true` if the token was read.
+  def read_null? : Bool
     if @kind.null?
       read_next
-      nil
+      true
     else
-      yield
+      false
     end
   end
 
@@ -409,26 +418,26 @@ class JSON::PullParser
     read_bool if kind.bool?
   end
 
-  {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
-    # Reads an {{type}} value and returns it.
-    #
-    # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.
-    def read?(klass : {{type}}.class)
-      {{type}}.new(int_value).tap { read_next } if kind.int?
-    rescue JSON::ParseException | OverflowError
-      nil
-    end
-  {% end %}
+  {% begin %}
+    # types that don't fit into `Int64` (integer type for `JSON::Any`)'s range
+    {% large_ints = [UInt64, Int128, UInt128] %}
 
-  # Reads an `Int64` value and returns it.
-  #
-  # If the value is not an integer or does not fin in an `Int64` variable, it returns `nil`.
-  def read?(klass : UInt64.class) : UInt64?
-    # UInt64 is a special case due to exceeding bounds of @int_value
-    UInt64.new(raw_value).tap { read_next } if kind.int?
-  rescue JSON::ParseException | ArgumentError
-    nil
-  end
+    {% for int in Int::Primitive.union_types %}
+      {% is_large_int = large_ints.includes?(int) %}
+
+      # Reads an `{{int}}` value and returns it.
+      #
+      # If the value is not an integer or does not fit in an `{{int}}`, it
+      # returns `nil`.
+      def read?(klass : {{int}}.class) : {{int}}?
+        if kind.int?
+          {{int}}.new({{ is_large_int ? "raw_value".id : "int_value".id }}).tap { read_next }
+        end
+      rescue JSON::ParseException | {{ is_large_int ? ArgumentError : OverflowError }}
+        nil
+      end
+    {% end %}
+  {% end %}
 
   # Reads an `Float32` value and returns it.
   #

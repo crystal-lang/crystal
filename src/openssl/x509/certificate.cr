@@ -28,6 +28,19 @@ module OpenSSL::X509
       @cert
     end
 
+    # Attempts to decode an ASN.1/DER-encoded certificate from *bytes*.
+    #
+    # Returns the decoded certificate and the remaining bytes on success.
+    # Returns `nil` and *bytes* unchanged on failure.
+    def self.from_der?(bytes : Bytes) : {self?, Bytes}
+      ptr = bytes.to_unsafe
+      if x509 = LibCrypto.d2i_X509(nil, pointerof(ptr), bytes.size)
+        {new(x509), bytes[ptr - bytes.to_unsafe..]}
+      else
+        {nil, bytes}
+      end
+    end
+
     def subject : X509::Name
       subject = LibCrypto.x509_get_subject_name(@cert)
       raise Error.new("X509_get_subject_name") if subject.null?
@@ -62,7 +75,7 @@ module OpenSSL::X509
 
     # Returns the name of the signature algorithm.
     def signature_algorithm : String
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+      {% if LibCrypto.has_method?(:obj_find_sigid_algs) %}
         sigid = LibCrypto.x509_get_signature_nid(@cert)
         result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
         raise "Could not determine certificate signature algorithm" if result == 0
@@ -78,6 +91,7 @@ module OpenSSL::X509
     # Returns the digest of the certificate using *algorithm_name*
     #
     # ```
+    # cert = OpenSSL::X509::Certificate.new
     # cert.digest("SHA1").hexstring   # => "6f608752059150c9b3450a9fe0a0716b4f3fa0ca"
     # cert.digest("SHA256").hexstring # => "51d80c865cc717f181cd949f0b23b5e1e82c93e01db53f0836443ec908b83748"
     # ```
@@ -86,7 +100,7 @@ module OpenSSL::X509
       raise ArgumentError.new "Could not find digest for #{algorithm_name.inspect}" if algo_type.null?
       hash = Bytes.new(64) # EVP_MAX_MD_SIZE for SHA512
       result = LibCrypto.x509_digest(@cert, algo_type, hash, out size)
-      raise "Could not generate certificate hash" unless result == 1
+      raise Error.new "Could not generate certificate hash" unless result == 1
 
       hash[0, size]
     end

@@ -108,7 +108,7 @@ describe "Semantic: new" do
       end
 
       Foo.new { 1 }.r
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "evaluates initialize default value at the instance scope (6) (#731)" do
@@ -129,7 +129,7 @@ describe "Semantic: new" do
       end
 
       Foo(Int32).new { 1 }.r
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if using self call in default argument (1)" do

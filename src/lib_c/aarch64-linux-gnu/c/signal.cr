@@ -49,6 +49,7 @@ lib LibC
   end
 
   SA_ONSTACK = 0x08000000
+  SA_RESTART = 0x10000000
   SA_SIGINFO = 0x00000004
 
   struct SiginfoT
@@ -57,7 +58,7 @@ lib LibC
     si_code : Int
     __pad0 : Int
     si_addr : Void*               # Assuming the sigfault form of siginfo_t
-    __pad1 : StaticArray(Int, 20) # __SI_PAD_SIZE (28) - sizeof(void*) (8) = 20
+    __pad1 : StaticArray(Int, 26) # __SI_PAD_SIZE (28) - sizeof(void*) / sizeof(int) = 26
   end
 
   alias SigactionHandlerT = (Int, SiginfoT*, Void*) ->
@@ -66,7 +67,7 @@ lib LibC
     sa_sigaction : SigactionHandlerT
     sa_mask : SigsetT
     sa_flags : Int
-    sa_restorer : Void*
+    sa_restorer : ->
   end
 
   struct StackT

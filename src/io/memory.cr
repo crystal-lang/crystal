@@ -90,11 +90,7 @@ class IO::Memory < IO
 
     return if count == 0
 
-    new_bytesize = @pos + count
-    if new_bytesize > @capacity
-      check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
+    increase_capacity_by(count)
 
     slice.copy_to(@buffer + @pos, count)
 
@@ -112,11 +108,7 @@ class IO::Memory < IO
     check_writeable
     check_open
 
-    new_bytesize = @pos + 1
-    if new_bytesize > @capacity
-      check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
-    end
+    increase_capacity_by(1)
 
     (@buffer + @pos).value = byte
 
@@ -169,7 +161,6 @@ class IO::Memory < IO
     string
   end
 
-  # :nodoc:
   def read_byte : UInt8?
     check_open
 
@@ -184,7 +175,6 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def peek : Bytes
     check_open
 
@@ -203,27 +193,37 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def skip_to_end : Nil
     check_open
 
     @pos = @bytesize
   end
 
-  # :nodoc:
+  # :inherit:
   def gets_to_end : String
     return super if @encoding
 
     check_open
 
-    pos = Math.min(@pos, @bytesize)
-
-    if pos == @bytesize
+    if @pos >= @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos).tap do
-        @pos = @bytesize
-      end
+      str = String.new(@buffer + @pos, @bytesize - @pos)
+      @pos = @bytesize
+      str
+    end
+  end
+
+  # :inherit:
+  def getb_to_end : Bytes
+    check_open
+
+    if @pos >= @bytesize
+      Bytes[]
+    else
+      bytes = Slice.new(@buffer + @pos, @bytesize - @pos).dup
+      @pos = @bytesize
+      bytes
     end
   end
 
@@ -396,7 +396,15 @@ class IO::Memory < IO
   # io.to_s # => "123"
   # ```
   def to_s : String
-    String.new @buffer, @bytesize
+    if encoding = @encoding
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.new to_slice, encoding: encoding.name, invalid: encoding.invalid
+      {% end %}
+    else
+      String.new @buffer, @bytesize
+    end
   end
 
   # Returns the underlying bytes.
@@ -413,7 +421,21 @@ class IO::Memory < IO
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io : IO) : Nil
-    io.write(to_slice)
+    if io == self
+      # When appending to itself, we need to pull the resize up before taking
+      # pointer to the buffer. It would become invalid when a resize happens during `#write`.
+      new_bytesize = bytesize * 2
+      resize_to_capacity(new_bytesize) if @capacity < new_bytesize
+    end
+    if encoding = @encoding
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.encode(to_slice, encoding.name, io.encoding, io, io.@encoding.try(&.invalid))
+      {% end %}
+    else
+      io.write(to_slice)
+    end
   end
 
   private def check_writeable
@@ -428,8 +450,30 @@ class IO::Memory < IO
     end
   end
 
+  private def increase_capacity_by(count)
+    raise IO::EOFError.new if count >= Int32::MAX - bytesize
+
+    new_bytesize = @pos + count
+    return if new_bytesize <= @capacity
+
+    check_resizeable
+
+    new_capacity = calculate_new_capacity(new_bytesize)
+    resize_to_capacity(new_capacity)
+  end
+
+  private def calculate_new_capacity(new_bytesize : Int32)
+    # If the new bytesize is bigger than 1 << 30, the next power of two would
+    # be 1 << 31, which is out of range for Int32.
+    # So we limit the capacity to Int32::MAX in order to be able to use the
+    # range (1 << 30) < new_bytesize < Int32::MAX
+    return Int32::MAX if new_bytesize > 1 << 30
+
+    Math.pw2ceil(new_bytesize)
+  end
+
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end

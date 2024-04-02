@@ -4,16 +4,23 @@ require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
 
-{% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
-  @[Link("xml2", pkg_config: "libxml-2.0")]
-{% else %}
-  @[Link("xml2")]
+@[Link("xml2", pkg_config: "libxml-2.0")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "libxml2.dll")]
 {% end %}
 lib LibXML
   alias Int = LibC::Int
 
-  $xmlIndentTreeOutput : Int
-  $xmlTreeIndentString : UInt8*
+  fun xmlInitParser
+
+  # TODO: check if other platforms also support per-thread globals
+  {% if flag?(:win32) %}
+    fun __xmlIndentTreeOutput : Int*
+    fun __xmlTreeIndentString : UInt8**
+  {% else %}
+    $xmlIndentTreeOutput : Int
+    $xmlTreeIndentString : UInt8*
+  {% end %}
 
   type Dtd = Void*
   type Dict = Void*
@@ -318,10 +325,17 @@ lib LibXML
   fun xmlValidateNameValue(value : UInt8*) : Int
 end
 
+LibXML.xmlInitParser
+
 LibXML.xmlGcMemSetup(
   ->GC.free,
   ->GC.malloc(LibC::SizeT),
-  ->GC.malloc(LibC::SizeT),
+  # TODO(interpreted): remove this condition
+  {% if flag?(:interpreted) %}
+    ->GC.malloc(LibC::SizeT)
+  {% else %}
+    ->GC.malloc_atomic(LibC::SizeT)
+  {% end %},
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
     len = LibC.strlen(str) + 1

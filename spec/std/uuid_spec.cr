@@ -1,11 +1,23 @@
 require "spec"
 require "uuid"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "UUID" do
   describe "#==" do
-    UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
-    UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    it "matches identical UUIDs" do
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    end
+  end
+
+  describe "#<=>" do
+    it "correctly compares two UUIDs" do
+      uuid_1 = UUID.new("00330000-0000-0000-0000-000000000000")
+      uuid_2 = UUID.new("00000011-0000-0000-5500-000099000000")
+      (uuid_1 <=> uuid_2).should be > 0
+      (uuid_2 <=> uuid_1).should be < 0
+      (uuid_1 <=> uuid_1).should eq 0
+    end
   end
 
   describe "random initialize" do
@@ -93,6 +105,23 @@ describe "UUID" do
     end
   end
 
+  describe "parsing strings" do
+    it "returns a properly parsed UUID" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12b").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+    end
+
+    it "returns nil if it has the wrong number of characters" do
+      UUID.parse?("nope").should eq nil
+    end
+
+    it "returns nil if it has incorrect characters" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12?").should eq nil
+      UUID.parse?("lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+      UUID.parse?("lol!wut?asdfforktypoomglolwtfbbq").should eq nil
+      UUID.parse?("urn:uuid:lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+    end
+  end
+
   it "initializes from UUID" do
     uuid = UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
     uuid = UUID.new(uuid, version: UUID::Version::V2, variant: UUID::Variant::Microsoft)
@@ -133,9 +162,29 @@ describe "UUID" do
     expect_raises(ArgumentError) { UUID.new "xyz:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892" }
   end
 
+  describe "v1" do
+    it "returns true if UUID is v1, false otherwise" do
+      uuid = UUID.v1
+      uuid.v1?.should eq(true)
+      uuid = UUID.v1(node_id: StaticArray(UInt8, 6).new { |i| (i*10).to_u8 })
+      uuid.to_s[24..36].should eq("000a141e2832")
+    end
+  end
+
+  describe "v2" do
+    it "returns true if UUID is v2, false otherwise" do
+      uuid = UUID.v2(UUID::Domain::Person, 42)
+      uuid.v2?.should eq(true)
+      uuid = UUID.v2(UUID::Domain::Person, 42, node_id: StaticArray(UInt8, 6).new { |i| (i*10).to_u8 })
+      uuid.to_s[24..36].should eq("000a141e2832")
+    end
+  end
+
   describe "v4?" do
     it "returns true if UUID is v4, false otherwise" do
       uuid = UUID.random
+      uuid.v4?.should eq(true)
+      uuid = UUID.v4
       uuid.v4?.should eq(true)
       uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
       uuid.v4?.should eq(false)
@@ -146,8 +195,78 @@ describe "UUID" do
     it "returns true if UUID is v4, raises otherwise" do
       uuid = UUID.random
       uuid.v4!.should eq(true)
+      uuid = UUID.v4
+      uuid.v4!.should eq(true)
       uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
       expect_raises(UUID::Error) { uuid.v4! }
+    end
+  end
+
+  describe "v3" do
+    it "generates DNS based names correctly" do
+      data = "crystal-lang.org"
+      expected = "60a4b7b5-3333-3f1e-a2cd-30d8a2d0b83b"
+      UUID.v3(data, UUID::Namespace::DNS).to_s.should eq(expected)
+      UUID.v3_dns(data).to_s.should eq(expected)
+      UUID.v3_dns(data).v3?.should eq(true)
+    end
+
+    it "generates URL based names correctly" do
+      data = "https://crystal-lang.org"
+      expected = "c25c7b79-5f5f-3844-98a4-2548f5d0e7f9"
+      UUID.v3(data, UUID::Namespace::URL).to_s.should eq(expected)
+      UUID.v3_url(data).to_s.should eq(expected)
+      UUID.v3_url(data).v3?.should eq(true)
+    end
+
+    it "generates OID based names correctly" do
+      data = "1.3.6.1.4.1.343"
+      expected = "77bc1dc3-0a9f-3e7e-bfa5-3f611a660c80"
+      UUID.v3(data, UUID::Namespace::OID).to_s.should eq(expected)
+      UUID.v3_oid(data).to_s.should eq(expected)
+      UUID.v3_oid(data).v3?.should eq(true)
+    end
+
+    it "generates X500 based names correctly" do
+      data = "cn=John Doe, ou=People, o=example, c=com"
+      expected = "fcab1a4c-fc81-3ebc-9874-9a8b931911d3"
+      UUID.v3(data, UUID::Namespace::X500).to_s.should eq(expected)
+      UUID.v3_x500(data).to_s.should eq(expected)
+      UUID.v3_x500(data).v3?.should eq(true)
+    end
+  end
+
+  describe "v5" do
+    it "generates DNS based names correctly" do
+      data = "crystal-lang.org"
+      expected = "11caf27c-b803-5e62-9c4b-15332b04047e"
+      UUID.v5(data, UUID::Namespace::DNS).to_s.should eq(expected)
+      UUID.v5_dns(data).to_s.should eq(expected)
+      UUID.v5_dns(data).v5?.should eq(true)
+    end
+
+    it "generates URL based names correctly" do
+      data = "https://crystal-lang.org"
+      expected = "29fec3f0-9ad0-5e8a-a42e-214ff695f50e"
+      UUID.v5(data, UUID::Namespace::URL).to_s.should eq(expected)
+      UUID.v5_url(data).to_s.should eq(expected)
+      UUID.v5_url(data).v5?.should eq(true)
+    end
+
+    it "generates OID based names correctly" do
+      data = "1.3.6.1.4.1.343"
+      expected = "6aab0456-7392-582a-b92a-ba5a7096945d"
+      UUID.v5(data, UUID::Namespace::OID).to_s.should eq(expected)
+      UUID.v5_oid(data).to_s.should eq(expected)
+      UUID.v5_oid(data).v5?.should eq(true)
+    end
+
+    it "generates X500 based names correctly" do
+      data = "cn=John Doe, ou=People, o=example, c=com"
+      expected = "bc10b2d9-f370-5c65-9561-5e3f6d9b236d"
+      UUID.v5(data, UUID::Namespace::X500).to_s.should eq(expected)
+      UUID.v5_x500(data).to_s.should eq(expected)
+      UUID.v5_x500(data).v5?.should eq(true)
     end
   end
 end

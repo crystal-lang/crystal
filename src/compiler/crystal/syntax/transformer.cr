@@ -180,6 +180,16 @@ module Crystal
       node
     end
 
+    def transform(node : AlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
+    def transform(node : InstanceAlignOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : OffsetOf)
       node.offsetof_type = node.offsetof_type.transform(self)
       node.offset = node.offset.transform(self)
@@ -598,7 +608,7 @@ module Crystal
     end
 
     def transform_many(exps)
-      exps.map! { |exp| exp.transform(self) } if exps
+      exps.map!(&.transform(self)) if exps
     end
   end
 end

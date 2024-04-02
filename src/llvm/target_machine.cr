@@ -9,12 +9,7 @@ class LLVM::TargetMachine
 
   def data_layout : LLVM::TargetData
     @layout ||= begin
-      layout = {% if LibLLVM::IS_38 %}
-                 LibLLVM.get_target_machine_data(self)
-               {% else %}
-                 # LLVM >= 3.9
-                 LibLLVM.create_target_data_layout(self)
-               {% end %}
+      layout = LibLLVM.create_target_data_layout(self)
       layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
     end
   end
@@ -33,7 +28,8 @@ class LLVM::TargetMachine
   end
 
   def enable_global_isel=(enable : Bool)
-    LibLLVMExt.target_machine_enable_global_isel(self, enable)
+    {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.set_target_machine_global_isel(self, enable ? 1 : 0)
+    enable
   end
 
   private def emit_to_file(llvm_mod, filename, type)
@@ -57,6 +53,8 @@ class LLVM::TargetMachine
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
+    when /wasm32/
+      ABI::Wasm32.new(self)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end

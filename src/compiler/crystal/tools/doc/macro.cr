@@ -43,7 +43,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    '#' + URI.encode(id)
+    '#' + URI.encode_path(id)
   end
 
   def prefix
@@ -107,14 +107,11 @@ class Crystal::Doc::Macro
   def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
-        if Symbol.needs_quotes_for_named_argument? name
-          if html.none?
-            name.inspect io
-          else
-            HTML.escape name.inspect, io
-          end
-        else
+        name = Symbol.quote_for_named_argument(name)
+        if html.none?
           io << name
+        else
+          HTML.escape name, io
         end
       else
         io << "_"
@@ -129,7 +126,7 @@ class Crystal::Doc::Macro
     if default_value = arg.default_value
       io << " = "
       if html.highlight?
-        io << Highlighter.highlight(default_value.to_s)
+        io << SyntaxHighlighter::HTML.highlight!(default_value.to_s)
       else
         io << default_value
       end
@@ -148,13 +145,13 @@ class Crystal::Doc::Macro
     builder.object do
       builder.field "html_id", id
       builder.field "name", name
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
-      builder.field "args", args
-      builder.field "args_string", args_to_s
-      builder.field "args_html", args_to_html
-      builder.field "location", location
+      builder.field "args", args unless args.empty?
+      builder.field "args_string", args_to_s unless args.empty?
+      builder.field "args_html", args_to_html unless args.empty?
+      builder.field "location", location unless location.nil?
       builder.field "def", self.macro
     end
   end

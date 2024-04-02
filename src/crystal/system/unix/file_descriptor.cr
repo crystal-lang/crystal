@@ -1,27 +1,33 @@
 require "c/fcntl"
 require "io/evented"
+require "termios"
+{% if flag?(:android) && LibC::ANDROID_API < 28 %}
+  require "c/sys/ioctl"
+{% end %}
 
 # :nodoc:
 module Crystal::System::FileDescriptor
   include IO::Evented
 
-  @volatile_fd : Atomic(Int32)
+  # Platform-specific type to represent a file descriptor handle to the operating
+  # system.
+  alias Handle = Int32
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for reading"
+          raise IO::Error.new "File not open for reading", target: self
         end
       end
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     evented_write(slice, "Error writing file") do |slice|
       LibC.write(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing"
+          raise IO::Error.new "File not open for writing", target: self
         end
       end
     end
@@ -41,6 +47,10 @@ module Crystal::System::FileDescriptor
       new_flags |= LibC::O_NONBLOCK
     end
     fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+  end
+
+  private def system_blocking_init(value)
+    self.system_blocking = false unless value
   end
 
   private def system_close_on_exec?
@@ -63,25 +73,32 @@ module Crystal::System::FileDescriptor
     r
   end
 
-  private def system_info
-    if LibC.fstat(fd, out stat) != 0
+  def self.system_info(fd)
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
+
+    if ret != 0
       raise IO::Error.from_errno("Unable to get info")
     end
 
-    FileInfo.new(stat)
+    ::File::Info.new(stat)
+  end
+
+  private def system_info
+    FileDescriptor.system_info fd
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
     seek_value = LibC.lseek(fd, offset, whence)
 
     if seek_value == -1
-      raise IO::Error.from_errno "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek", target: self
     end
   end
 
   private def system_pos
     pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
-    raise IO::Error.from_errno "Unable to tell" if pos == -1
+    raise IO::Error.from_errno("Unable to tell", target: self) if pos == -1
     pos
   end
 
@@ -132,7 +149,7 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file")
+        raise IO::Error.from_errno("Error closing file", target: self)
       end
     end
   end
@@ -180,5 +197,93 @@ module Crystal::System::FileDescriptor
     io.close_on_exec = true
     io.sync = true
     io
+  end
+
+  private def system_echo(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
+      mode.c_lflag = enable ? (mode.c_lflag | flags) : (mode.c_lflag & ~flags)
+      if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  private def system_raw(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      if enable
+        mode = FileDescriptor.cfmakeraw(mode)
+      else
+        mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
+        mode.c_oflag |= LibC::OPOST
+        mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
+      end
+      if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  @[AlwaysInline]
+  private def system_console_mode(&)
+    before = FileDescriptor.tcgetattr(fd)
+    begin
+      yield before
+    ensure
+      FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
+    end
+  end
+
+  @[AlwaysInline]
+  def self.tcgetattr(fd)
+    termios = uninitialized LibC::Termios
+    {% if LibC.has_method?(:tcgetattr) %}
+      ret = LibC.tcgetattr(fd, pointerof(termios))
+      raise IO::Error.from_errno("tcgetattr") if ret == -1
+    {% else %}
+      ret = LibC.ioctl(fd, LibC::TCGETS, pointerof(termios))
+      raise IO::Error.from_errno("ioctl") if ret == -1
+    {% end %}
+    termios
+  end
+
+  @[AlwaysInline]
+  def self.tcsetattr(fd, optional_actions, termios_p)
+    {% if LibC.has_method?(:tcsetattr) %}
+      LibC.tcsetattr(fd, optional_actions, termios_p)
+    {% else %}
+      optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
+      cmd = case optional_actions
+            when LibC::TCSANOW
+              LibC::TCSETS
+            when LibC::TCSADRAIN
+              LibC::TCSETSW
+            when LibC::TCSAFLUSH
+              LibC::TCSETSF
+            else
+              Errno.value = Errno::EINVAL
+              return LibC::Int.new(-1)
+            end
+
+      LibC.ioctl(fd, cmd, termios_p)
+    {% end %}
+  end
+
+  @[AlwaysInline]
+  def self.cfmakeraw(termios)
+    {% if LibC.has_method?(:cfmakeraw) %}
+      LibC.cfmakeraw(pointerof(termios))
+    {% else %}
+      termios.c_iflag &= ~(LibC::IGNBRK | LibC::BRKINT | LibC::PARMRK | LibC::ISTRIP | LibC::INLCR | LibC::IGNCR | LibC::ICRNL | LibC::IXON)
+      termios.c_oflag &= ~LibC::OPOST
+      termios.c_lflag &= ~(LibC::ECHO | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN)
+      termios.c_cflag &= ~(LibC::CSIZE | LibC::PARENB)
+      termios.c_cflag |= LibC::CS8
+      termios.c_cc[LibC::VMIN] = 1
+      termios.c_cc[LibC::VTIME] = 0
+    {% end %}
+    termios
   end
 end

@@ -1,3 +1,17 @@
+require "process/executable_path" # Process::PATH_DELIMITER
+
+module Crystal
+  {% unless Crystal.has_constant?("LIBRARY_RPATH") %}
+    LIBRARY_RPATH = {{ env("CRYSTAL_LIBRARY_RPATH") || "" }}
+  {% end %}
+end
+
+{% if flag?(:unix) && !flag?(:darwin) %}
+  {% unless Crystal::LIBRARY_RPATH.empty? %}
+    # TODO: is there a better way to quote this?
+    @[Link(ldflags: {{ "'-Wl,-rpath,#{Crystal::LIBRARY_RPATH.id}'" }})]
+  {% end %}
+{% end %}
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
@@ -42,11 +56,16 @@ module Crystal
         1
       end
 
-    status = Crystal::AtExitHandlers.run status, ex
+    exit(status, ex)
+  end
 
-    if ex
+  # :nodoc:
+  def self.exit(status : Int32, exception : Exception?) : Int32
+    status = Crystal::AtExitHandlers.run status, exception
+
+    if exception
       STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
+      exception.inspect_with_backtrace(STDERR)
     end
 
     ignore_stdio_errors { STDOUT.flush }
@@ -56,7 +75,7 @@ module Crystal
   end
 
   # :nodoc:
-  def self.ignore_stdio_errors
+  def self.ignore_stdio_errors(&)
     yield
   rescue IO::Error
   end
@@ -115,6 +134,18 @@ end
 # Invokes `Crystal.main`.
 #
 # Can be redefined. See `Crystal.main` for examples.
+#
+# On Windows the actual entry point is `wmain`, but there is no need to redefine
+# that. See the file required below for details.
 fun main(argc : Int32, argv : UInt8**) : Int32
   Crystal.main(argc, argv)
 end
+
+{% if flag?(:win32) %}
+  require "./system/win32/wmain"
+  require "./system/win32/delay_load"
+{% end %}
+
+{% if flag?(:wasi) %}
+  require "./system/wasi/main"
+{% end %}

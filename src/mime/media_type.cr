@@ -354,7 +354,7 @@ module MIME
       MediaType.new mediatype, params
     end
 
-    private def self.parse_parameter_value(reader)
+    private def self.parse_parameter_value(reader, &)
       reader = consume_whitespace(reader)
 
       # Quoted value.
@@ -447,8 +447,8 @@ module MIME
     end
 
     private def self.decode_rfc2231(encoded : String)
-      encoding, split1, rest = encoded.partition('\'')
-      lang, split2, value = rest.partition('\'')
+      encoding, _, rest = encoded.partition('\'')
+      _lang, _, value = rest.partition('\'')
 
       return if encoding.empty? || value.empty?
 
@@ -494,16 +494,16 @@ module MIME
 
     # :nodoc:
     def self.quote_string(string, io) : Nil
-      string.each_byte do |byte|
-        case byte
-        when '"'.ord, '\\'.ord
+      string.each_char do |char|
+        case char
+        when '"', '\\'
           io << '\\'
-        when 0x00..0x1F, 0x7F
-          raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+        when '\u{00}'..'\u{1F}', '\u{7F}'
+          raise ArgumentError.new("String contained invalid character #{char.inspect}")
         else
           # leave the byte as is
         end
-        io.write_byte byte
+        io << char
       end
     end
   end

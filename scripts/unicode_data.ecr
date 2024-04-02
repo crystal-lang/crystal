@@ -7,45 +7,33 @@
 module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
-  @@upcase_ranges : Array({Int32, Int32, Int32})?
-
-  private def self.upcase_ranges
-    @@upcase_ranges ||= begin
-      data = Array({Int32, Int32, Int32}).new(<%= upcase_ranges.size %>)
-      <%- upcase_ranges.each do |range| -%>
-        put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
-      <%- end -%>
-      data
-    end
+  private class_getter upcase_ranges : Array({Int32, Int32, Int32}) do
+    data = Array({Int32, Int32, Int32}).new(<%= upcase_ranges.size %>)
+    <%- upcase_ranges.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
+    <%- end -%>
+    data
   end
 
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
-  @@downcase_ranges : Array({Int32, Int32, Int32})?
-
-  private def self.downcase_ranges
-    @@downcase_ranges ||= begin
-      data = Array({Int32, Int32, Int32}).new(<%= downcase_ranges.size %>)
-      <%- downcase_ranges.each do |range| -%>
-        put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
-      <%- end -%>
-      data
-    end
+  private class_getter downcase_ranges : Array({Int32, Int32, Int32}) do
+    data = Array({Int32, Int32, Int32}).new(<%= downcase_ranges.size %>)
+    <%- downcase_ranges.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
+    <%- end -%>
+    data
   end
 
   # Other case conversions run in an alternated range
   # of uppercase/lowercase transformations
   # Here we store {from, to}
-  @@alternate_ranges : Array({Int32, Int32})?
-
-  private def self.alternate_ranges
-    @@alternate_ranges ||= begin
-      data = Array({Int32, Int32}).new(<%= alternate_ranges.size %>)
-      <%- alternate_ranges.each do |range| -%>
-        put(data, <%= range.low %>, <%= range.high %>)
-      <%- end -%>
-      data
-    end
+  private class_getter alternate_ranges : Array({Int32, Int32}) do
+    data = Array({Int32, Int32}).new(<%= alternate_ranges.size %>)
+    <%- alternate_ranges.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>)
+    <%- end -%>
+    data
   end
 
   # We store categories as consecutive strides {from, to, stride}
@@ -58,83 +46,187 @@ module Unicode
   # The values are: 1..10, 11, 13, 15
 
   <%- all_strides.each do |category, strides| -%>
-    @@category_<%= category %> : Array({Int32, Int32, Int32})?
-
-    private def self.category_<%= category %>
-      @@category_<%= category %> ||= begin
-        data = Array({Int32, Int32, Int32}).new(<%= strides.size %>)
-        <%- strides.each do |stride| -%>
-          put(data, <%= stride.low %>, <%= stride.high %>, <%= stride.stride %>)
-        <%- end -%>
-        data
-      end
+    private class_getter category_<%= category %> : Array({Int32, Int32, Int32}) do
+      data = Array({Int32, Int32, Int32}).new(<%= strides.size %>)
+      <%- strides.each do |stride| -%>
+        put(data, <%= stride.low %>, <%= stride.high %>, <%= stride.stride %>)
+      <%- end -%>
+      data
     end
   <%- end %>
 
   # Most casefold conversions map a range to another range.
   # Here we store: {from, to, delta}
-  @@casefold_ranges : Array({Int32, Int32, Int32})?
-
-  private def self.casefold_ranges
-    @@casefold_ranges ||= begin
-      data = Array({Int32, Int32, Int32}).new(<%= casefold_ranges.size %>)
-      <%- casefold_ranges.each do |range| -%>
-        put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
-      <%- end -%>
-      data
-    end
+  private class_getter casefold_ranges : Array({Int32, Int32, Int32}) do
+    data = Array({Int32, Int32, Int32}).new(<%= casefold_ranges.size %>)
+    <%- casefold_ranges.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
+    <%- end -%>
+    data
   end
 
   # Special downcase transformation that involve mapping a codepoint
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
-  @@special_cases_downcase : Hash(Int32, {Int32, Int32, Int32})?
-
-  private def self.special_cases_downcase
-    @@special_cases_downcase ||= begin
-      data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_downcase.size %>)
-      <%- special_cases_downcase.each do |a_case| -%>
-        put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
-      <%- end %>
-      data
-    end
+  private class_getter special_cases_downcase : Hash(Int32, {Int32, Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_downcase.size %>)
+    <%- special_cases_downcase.each do |a_case| -%>
+      put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+    <%- end %>
+    data
   end
 
   # Special upcase transformation that involve mapping a codepoint
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
-  @@special_cases_upcase : Hash(Int32, {Int32, Int32, Int32})?
+  private class_getter special_cases_upcase : Hash(Int32, {Int32, Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_upcase.size %>)
+    <%- special_cases_upcase.each do |a_case| -%>
+      put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+    <%- end %>
+    data
+  end
 
-  private def self.special_cases_upcase
-    @@special_cases_upcase ||= begin
-      data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_upcase.size %>)
-      <%- special_cases_upcase.each do |a_case| -%>
-        put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
-      <%- end %>
-      data
-    end
+  # Titlecase transformation that differs from the uppercase transformation.
+  # The maximum transformation is always 3 codepoints, so we store them all as 3
+  # codepoints and 0 means end.
+  private class_getter special_cases_titlecase : Hash(Int32, {Int32, Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_titlecase.size %>)
+    <%- special_cases_titlecase.each do |a_case| -%>
+      put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+    <%- end %>
+    data
   end
 
   # Fold case transformation that involve mapping a codepoint
-  # to multiple codepoints. The maximum transformation is always 4
-  # codepoints, so we store them all as 4 codepoints and 0 means end.
-  @@fold_cases : Hash(Int32, {Int32, Int32, Int32, Int32})?
-  private def self.fold_cases
-    @@fold_cases ||= begin
-      data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_casefold.size %>)
-      <%- special_cases_casefold.each do |a_case| -%>
-        put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
-      <%- end -%>
-      data
-    end
+  # to multiple codepoints. The maximum transformation is always 3
+  # codepoints, so we store them all as 3 codepoints and 0 means end.
+  private class_getter fold_cases : Hash(Int32, {Int32, Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_casefold.size %>)
+    <%- special_cases_casefold.each do |a_case| -%>
+      put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+    <%- end -%>
+    data
+  end
+
+  # Canonical combining classes. Only non-zero entries are stored. Unicode
+  # guarantees that all class values are within `0..254`.
+  # Here we store: {from, to, class}
+  private class_getter canonical_combining_classes : Array({Int32, Int32, UInt8}) do
+    data = Array({Int32, Int32, UInt8}).new(<%= canonical_combining_classes.size %>)
+    <%- canonical_combining_classes.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, <%= range.ccc %>_u8)
+    <%- end -%>
+    data
+  end
+
+  # Canonical decomposition mappings, excluding Hangul syllables. The maximum
+  # transformation is always 2 codepoints, so we store them all as 2 codepoints
+  # and 0 means end.
+  private class_getter canonical_decompositions : Hash(Int32, {Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32}).new(initial_capacity: <%= canonical_decompositions.size %>)
+    <%- canonical_decompositions.each do |decomp| -%>
+      put(data, <%= decomp.join(", ") %>)
+    <%- end -%>
+    data
+  end
+
+  # Codepoints for compatibility decomposition mappings.
+  private class_getter compatibility_decomposition_data : Array(Int32) do
+    data = Array(Int32).new(<%= compatibility_decomposition_data.size %>)
+    <%- compatibility_decomposition_data.each do |codepoint| -%>
+      put(data, <%= codepoint %>)
+    <%- end -%>
+    data
+  end
+
+  # Compatibility decomposition mappings, represented as subsequences of
+  # `compatibility_decomposition_data`. The maximum transformation is 18
+  # codepoints.
+  # Here we store: codepoint => {index, count}
+  private class_getter compatibility_decompositions : Hash(Int32, {Int32, Int32}) do
+    data = Hash(Int32, {Int32, Int32}).new(initial_capacity: <%= compatibility_decompositions.size %>)
+    <%- compatibility_decompositions.each do |codepoint, index, count| -%>
+      put(data, <%= codepoint %>, <%= index %>, <%= count %>)
+    <%- end -%>
+    data
+  end
+
+  # Reverse mapping of the canonical decompositions, excluding the full
+  # composition exclusions.
+  # Here we store: (first << 21 | second) => codepoint
+  private class_getter canonical_compositions : Hash(Int64, Int32) do
+    data = Hash(Int64, Int32).new(initial_capacity: <%= canonical_compositions.size %>)
+    <%- canonical_compositions.each do |first_second, codepoint| -%>
+      put(data, <%= first_second %>_i64, <%= codepoint %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form C (yes if absent in this table).
+  # Here we store: {low, high, result (no or maybe)}
+  private class_getter nfc_quick_check : Array({Int32, Int32, QuickCheckResult}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFC] -%>
+    data = Array({Int32, Int32, QuickCheckResult}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, QuickCheckResult::<%= range.result %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form KC (yes if absent in this table).
+  # Here we store: {low, high, result (no or maybe)}
+  private class_getter nfkc_quick_check : Array({Int32, Int32, QuickCheckResult}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFKC] -%>
+    data = Array({Int32, Int32, QuickCheckResult}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, QuickCheckResult::<%= range.result %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form D (yes if absent in this table). There are no "maybe" values;
+  # codepoints contained here may not appear under NFD.
+  # Here we store: {low, high}
+  private class_getter nfd_quick_check : Array({Int32, Int32}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFD] -%>
+    data = Array({Int32, Int32}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form KD (yes if absent in this table). There are no "maybe" values;
+  # codepoints contained here may not appear under NFKD.
+  # Here we store: {low, high}
+  private class_getter nfkd_quick_check : Array({Int32, Int32}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFKD] -%>
+    data = Array({Int32, Int32}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>)
+    <%- end -%>
+    data
   end
 
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
   # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
+  private def self.put(array : Array, value) : Nil
+    array << value
+  end
+
   private def self.put(array : Array, *values) : Nil
     array << values
+  end
+
+  private def self.put(hash : Hash, key, value) : Nil
+    hash[key] = value
   end
 
   private def self.put(hash : Hash, key, *values) : Nil

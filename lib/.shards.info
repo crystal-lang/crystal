@@ -1,0 +1,9 @@
+---
+version: 1.0
+shards:
+  markd:
+    git: https://github.com/icyleaf/markd.git
+    version: 0.5.0
+  reply:
+    git: https://github.com/i3oris/reply.git
+    version: 0.3.1+git.commit.90a7eb5a76048884d5d56bf6b9369f1e67fdbcd7

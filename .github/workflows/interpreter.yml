@@ -1,0 +1,64 @@
+name: Interpreter Test
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  test-interpreter_spec:
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.11.2-build
+    name: "Test Interpreter"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test interpreter_spec
+        run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
+
+  build-interpreter:
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.11.2-build
+    name: Build interpreter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build compiler
+        run: make interpreter=1 release=1
+
+      - name: Upload compiler artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: crystal-interpreter
+          path: |
+            .build/crystal
+
+  test-interpreter-std_spec:
+    needs: build-interpreter
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.11.2-build
+    strategy:
+      matrix:
+        part: [0, 1, 2, 3]
+    name: "Test std_spec with interpreter (${{ matrix.part }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download compiler artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-interpreter
+          path: .build/
+
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+
+      - name: Run std_spec with interpreter
+        run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml

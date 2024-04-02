@@ -25,13 +25,35 @@ module Crystal::System::Socket
 
   # private def system_close_write
 
-  # private def system_reuse_port?
+  # private def system_send_buffer_size : Int
+
+  # private def system_send_buffer_size=(val : Int)
+
+  # private def system_recv_buffer_size : Int
+
+  # private def system_recv_buffer_size=(val : Int)
+
+  # private def system_reuse_address? : Bool
+
+  # private def system_reuse_address=(val : Bool)
+
+  # private def system_reuse_port? : Bool
 
   # private def system_reuse_port=(val : Bool)
+
+  # private def system_broadcast? : Bool
+
+  # private def system_broadcast=(val : Bool)
+
+  # private def system_keepalive? : Bool
+
+  # private def system_keepalive=(val : Bool)
 
   # private def system_linger
 
   # private def system_linger=(val)
+
+  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
 
   # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
 
@@ -49,9 +71,9 @@ module Crystal::System::Socket
 
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # private def unbuffered_read(slice : Bytes)
+  # private def unbuffered_read(slice : Bytes) : Int32
 
-  # private def unbuffered_write(slice : Bytes)
+  # private def unbuffered_write(slice : Bytes) : Nil
 
   # private def system_close
 
@@ -76,7 +98,9 @@ module Crystal::System::Socket
   # private def system_tcp_keepalive_count=(val : Int)
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/socket"
+{% elsif flag?(:unix) %}
   require "./unix/socket"
 {% elsif flag?(:win32) %}
   require "./win32/socket"

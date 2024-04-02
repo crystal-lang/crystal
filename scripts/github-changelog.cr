@@ -25,23 +25,29 @@ api_token = ENV["GITHUB_TOKEN"]
 repository = "crystal-lang/crystal"
 milestone = ARGV.first
 
-query = <<-GRAPHQL
-  query($milestone: String, $owner: String!, $repository: String!) {
-    repository(owner: $owner, name: $repository) {
-      milestones(query: $milestone, first: 1) {
-        nodes {
-          pullRequests(first: 300) {
-            nodes {
-              number
-              title
-              mergedAt
-              permalink
-              author {
-                login
-              }
-              labels(first: 10) {
-                nodes {
-                  name
+def query_prs(api_token, repository, milestone)
+  query = <<-GRAPHQL
+    query($milestone: String, $owner: String!, $repository: String!) {
+      repository(owner: $owner, name: $repository) {
+        milestones(query: $milestone, first: 1) {
+          nodes {
+            closedAt
+            description
+            dueOn
+            title
+            pullRequests(first: 300) {
+              nodes {
+                number
+                title
+                mergedAt
+                permalink
+                author {
+                  login
+                }
+                labels(first: 10) {
+                  nodes {
+                    name
+                  }
                 }
               }
             }
@@ -49,22 +55,27 @@ query = <<-GRAPHQL
         }
       }
     }
-  }
-  GRAPHQL
+    GRAPHQL
 
-owner, _, name = repository.partition("/")
-variables = {
-  owner:      owner,
-  repository: name,
-  milestone:  milestone,
-}
-
-response = HTTP::Client.post("https://api.github.com/graphql",
-  body: {query: query, variables: variables}.to_json,
-  headers: HTTP::Headers{
-    "Authorization" => "bearer #{api_token}",
+  owner, _, name = repository.partition("/")
+  variables = {
+    owner:      owner,
+    repository: name,
+    milestone:  milestone,
   }
-)
+
+  response = HTTP::Client.post("https://api.github.com/graphql",
+    body: {query: query, variables: variables}.to_json,
+    headers: HTTP::Headers{
+      "Authorization" => "bearer #{api_token}",
+    }
+  )
+  unless response.success?
+    abort "GitHub API response: #{response.status}\n#{response.body}"
+  end
+
+  response
+end
 
 module LabelNameConverter
   def self.from_json(pull : JSON::PullParser)
@@ -74,15 +85,40 @@ module LabelNameConverter
   end
 end
 
+record Milestone,
+  closed_at : Time?,
+  description : String,
+  due_on : Time?,
+  title : String,
+  pull_requests : Array(PullRequest) do
+  include JSON::Serializable
+
+  @[JSON::Field(key: "dueOn")]
+  @due_on : Time?
+
+  @[JSON::Field(key: "closedAt")]
+  @closed_at : Time?
+
+  @[JSON::Field(key: "pullRequests", root: "nodes")]
+  @pull_requests : Array(PullRequest)
+
+  def release_date
+    closed_at || due_on
+  end
+end
+
 record PullRequest,
   number : Int32,
   title : String,
-  mergedAt : Time?,
+  merged_at : Time?,
   permalink : String,
   author : String?,
   labels : Array(String) do
   include JSON::Serializable
   include Comparable(self)
+
+  @[JSON::Field(key: "mergedAt")]
+  @merged_at : Time?
 
   @[JSON::Field(root: "login")]
   @author : String?
@@ -91,16 +127,22 @@ record PullRequest,
   @labels : Array(String)
 
   def to_s(io : IO)
-    if labels.includes?("breaking-change")
-      io << "**(breaking-change)** "
+    if topic = self.sub_topic
+      io << "*(" << sub_topic << ")* "
     end
     if labels.includes?("security")
-      io << "**(security)** "
+      io << "**[security]** "
     end
-    if labels.includes?("performance")
-      io << "**(performance)** "
+    if labels.includes?("breaking-change")
+      io << "**[breaking]** "
     end
-    io << title << " ("
+    if experimental?
+      io << "**[experimental]** "
+    end
+    if deprecated?
+      io << "**[deprecation]** "
+    end
+    io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
     io << "[#" << number << "](" << permalink << ")"
     if author = self.author
       io << ", thanks @" << author
@@ -114,76 +156,184 @@ record PullRequest,
 
   def sort_tuple
     {
-      labels.includes?("security") ? 0 : 1,
-      labels.includes?("breaking-change") ? 0 : 1,
-      labels.includes?("kind:bug") ? 0 : 1,
-      mergedAt || Time.unix(0),
+      type || "",
+      topic || [] of String,
+      deprecated? ? 0 : 1,
+      merged_at || Time.unix(0),
     }
+  end
+
+  def infra_sort_tuple
+    {
+      topic || [] of String,
+      type || "",
+      deprecated? ? 0 : 1,
+      merged_at || Time.unix(0),
+    }
+  end
+
+  def primary_topic
+    topic.try(&.[0]?) || "other"
+  end
+
+  def sub_topic
+    topic.try(&.[1..].join(":").presence)
+  end
+
+  def topic
+    topics.fetch(0) do
+      STDERR.puts "Missing topic for ##{number}"
+      nil
+    end
+  end
+
+  def topics
+    topics = labels.compact_map { |label|
+      label.lchop?("topic:").try(&.split(/:|\//))
+    }
+    topics.reject! &.[0].==("multithreading")
+
+    topics.sort_by! { |parts|
+      topic_priority = case parts[0]
+                       when "tools" then 2
+                       when "lang"  then 1
+                       else              0
+                       end
+      {-topic_priority, parts[0]}
+    }
+  end
+
+  def deprecated?
+    labels.includes?("deprecation")
+  end
+
+  def breaking?
+    labels.includes?("kind:breaking")
+  end
+
+  def experimental?
+    labels.includes?("experimental")
+  end
+
+  def feature?
+    labels.includes?("kind:feature")
+  end
+
+  def fix?
+    labels.includes?("kind:bug")
+  end
+
+  def chore?
+    labels.includes?("kind:chore")
+  end
+
+  def refactor?
+    labels.includes?("kind:refactor")
+  end
+
+  def docs?
+    labels.includes?("kind:docs")
+  end
+
+  def specs?
+    labels.includes?("kind:specs")
+  end
+
+  def performance?
+    labels.includes?("performance")
+  end
+
+  def infra?
+    labels.any?(&.starts_with?("topic:infrastructure"))
+  end
+
+  def type
+    case
+    when feature?     then "feature"
+    when docs?        then "docs"
+    when specs?       then "specs"
+    when fix?         then "fix"
+    when chore?       then "chore"
+    when performance? then "performance"
+    when refactor?    then "refactor"
+    else                   nil
+    end
+  end
+
+  def section
+    case
+    when breaking? then "breaking"
+    when infra?    then "infra"
+    else                type || ""
+    end
   end
 end
 
+response = query_prs(api_token, repository, milestone)
 parser = JSON::PullParser.new(response.body)
-array = parser.on_key! "data" do
+milestone = parser.on_key! "data" do
   parser.on_key! "repository" do
     parser.on_key! "milestones" do
       parser.on_key! "nodes" do
         parser.read_begin_array
-        a = parser.on_key! "pullRequests" do
-          parser.on_key! "nodes" do
-            Array(PullRequest).new(parser)
-          end
-        end
+        milestone = Milestone.new(parser)
         parser.read_end_array
-        a
+        milestone
       end
     end
   end
 end
 
-changelog = File.read("CHANGELOG.md")
-array.select! { |pr| pr.mergedAt && !changelog.index(pr.permalink) }
-sections = array.group_by { |pr|
-  pr.labels.each do |label|
-    case label
-    when .starts_with?("topic:lang")
-      break "Language"
-    when .starts_with?("topic:compiler")
-      break "Compiler"
-    when .starts_with?("topic:tools")
-      break "Tools"
-    when .starts_with?("topic:stdlib")
-      if label == "topic:stdlib"
-        break "Standard Library"
-      else
-        break "Standard Library: #{label.lchop("topic:stdlib:").titleize}"
-      end
-    else
-      next
-    end
-  end || "Other"
+sections = milestone.pull_requests.group_by(&.section)
+
+SECTION_TITLES = {
+  "breaking"    => "Breaking changes",
+  "feature"     => "Features",
+  "fix"         => "Bugfixes",
+  "chore"       => "Chores",
+  "performance" => "Performance",
+  "refactor"    => "Refactor",
+  "docs"        => "Documentation",
+  "specs"       => "Specs",
+  "infra"       => "Infrastructure",
+  ""            => "other",
 }
 
-titles = sections.keys.sort!
-last_title1 = nil
+TOPIC_ORDER = %w[lang stdlib compiler tools other]
 
-titles.each do |title|
-  prs = sections[title]
-  title1, _, title2 = title.partition(": ")
-  if title2.presence
-    if title1 != last_title1
-      puts "## #{title1}"
+puts "## [#{milestone.title}] (#{milestone.release_date.try(&.to_s("%F")) || "unreleased"})"
+if description = milestone.description.presence
+  puts
+  print "_", description
+  puts "_"
+end
+puts
+puts "[#{milestone.title}]: https://github.com/crystal-lang/crystal/releases/#{milestone.title}"
+puts
+
+SECTION_TITLES.each do |id, title|
+  prs = sections[id]? || next
+  puts "### #{title}"
+  puts
+
+  topics = prs.group_by(&.primary_topic)
+
+  topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
+
+  topic_titles.each do |topic_title|
+    topic_prs = topics[topic_title]? || next
+
+    if id == "infra"
+      topic_prs.sort_by!(&.infra_sort_tuple)
+    else
+      topic_prs.sort!
+      puts "#### #{topic_title}"
       puts
     end
-    puts "### #{title2}"
-  else
-    puts "## #{title1}"
-  end
-  last_title1 = title1
 
-  puts
-  prs.sort!
-  prs.each do |pr|
-    puts "- #{pr}"
+    topic_prs.each do |pr|
+      puts "- #{pr}"
+    end
+    puts
   end
-  puts
 end

@@ -10,4 +10,12 @@ describe "GC" do
       GC.enable
     end
   end
+
+  it ".stats" do
+    GC.stats.should be_a(GC::Stats)
+  end
+
+  it ".prof_stats" do
+    GC.prof_stats.should be_a(GC::ProfStats)
+  end
 end

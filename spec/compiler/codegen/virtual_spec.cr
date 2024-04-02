@@ -293,8 +293,6 @@ describe "Code gen: virtual type" do
 
   it "doesn't lookup in Value+ when virtual type is Object+" do
     run(%(
-      require "prelude"
-
       class Object
         def foo
           !nil?
@@ -651,6 +649,8 @@ describe "Code gen: virtual type" do
 
   it "codegens new for virtual class with one type" do
     run(%(
+      require "prelude"
+
       abstract class Foo
       end
 
@@ -668,6 +668,8 @@ describe "Code gen: virtual type" do
 
   it "codegens new for virtual class with two types" do
     run(%(
+      require "prelude"
+
       abstract class Foo
       end
 
@@ -688,6 +690,28 @@ describe "Code gen: virtual type" do
       p.value = Baz
       p.value.new.foo
       )).to_i.should eq(456)
+  end
+
+  it "codegens new for new on virtual abstract class (#3835)" do
+    run(%(
+      require "prelude"
+
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          123
+        end
+      end
+
+      begin
+        (Foo || Bar).new
+        ""
+      rescue ex
+        ex.message.not_nil!
+      end
+      )).to_string.should eq("Can't instantiate abstract class Foo")
   end
 
   it "casts metaclass union type to virtual metaclass type (#6298)" do

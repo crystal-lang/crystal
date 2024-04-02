@@ -33,11 +33,11 @@ module Spec::Methods
   #
   # it_iterates "Array#each_with_index", [{1, 0}, {2, 1}, {3, 2}], (1..3).each_with_index, tuple: true
   # ```
-  macro it_iterates(description, expected, method, *, infinite = false, tuple = false)
-    it {{ "#{description} yielding" }} do
+  macro it_iterates(description, expected, method, *, infinite = false, tuple = false, file = __FILE__, line = __LINE__)
+    it {{ "#{description} yielding" }}, file: {{ file }}, line: {{ line }} do
       assert_iterates_yielding {{ expected }}, {{ method }}, infinite: {{ infinite }}, tuple: {{ tuple }}
     end
-    it {{ "#{description} iterator" }} do
+    it {{ "#{description} iterator" }}, file: {{ file }}, line: {{ line }} do
       assert_iterates_iterator {{ expected }}, {{ method }}, infinite: {{ infinite }}
     end
   end
@@ -81,7 +81,7 @@ module Spec::Methods
         # Compare the actual value directly. Since there are less
         # then expected values, the expectation will fail and raise.
         %ary.should eq({{ expected }})
-        raise "unreachable"
+        raise "Unreachable"
       end
       %ary << %v
     end

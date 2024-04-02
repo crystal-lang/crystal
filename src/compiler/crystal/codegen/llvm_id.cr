@@ -40,6 +40,10 @@ module Crystal
       type_id(type.typedef)
     end
 
+    def type_id(type : VirtualType | VirtualMetaclassType)
+      raise "BUG: called type_id for #{type} (#{type.class})"
+    end
+
     def type_id(type)
       min_max = @ids[type]?
       if min_max

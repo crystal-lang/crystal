@@ -1,6 +1,8 @@
 require "./openssl/lib_ssl"
 require "./openssl/error"
 
+# NOTE: To use `OpenSSL`, you must explicitly import it with `require "openssl"`
+#
 # ## OpenSSL Integration
 #
 # - TLS sockets need a context, potentially with keys (required for servers) and configuration.
@@ -70,7 +72,7 @@ module OpenSSL
     alias Options = LibSSL::Options
     alias VerifyMode = LibSSL::VerifyMode
     alias ErrorType = LibSSL::SSLError
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+    {% if LibCrypto.has_constant?(:X509VerifyFlags) %}
       alias X509VerifyFlags = LibCrypto::X509VerifyFlags
     {% end %}
 
@@ -86,10 +88,19 @@ module OpenSSL
           message = "Raised erroneously"
         when .syscall?
           @code, message = fetch_error_details
-          if @code == 0
+          {% if LibSSL.has_constant?(:SSL_R_UNEXPECTED_EOF_WHILE_READING) %}
+            if @code == 0
+              # FIXME: this isn't a per the OpenSSL documentation for how to
+              #        detect EOF, but this fixes the EOF detection spec...
+              message = "Unexpected EOF while reading"
+              @underlying_eof = true
+            else
+              cause = RuntimeError.from_errno(func || "OpenSSL")
+            end
+          {% else %}
             case return_code
             when 0
-              message = "Unexpected EOF"
+              message = "Unexpected EOF while reading"
               @underlying_eof = true
             when -1
               cause = RuntimeError.from_errno(func || "OpenSSL")
@@ -97,9 +108,15 @@ module OpenSSL
             else
               message = "Unknown error"
             end
-          end
+          {% end %}
         when .ssl?
-          @code, message = fetch_error_details
+          code, message = fetch_error_details
+          @code = code
+          {% if LibSSL.has_constant?(:SSL_R_UNEXPECTED_EOF_WHILE_READING) %}
+            if get_reason(code) == LibSSL::SSL_R_UNEXPECTED_EOF_WHILE_READING
+              @underlying_eof = true
+            end
+          {% end %}
         else
           message = @error.to_s
         end

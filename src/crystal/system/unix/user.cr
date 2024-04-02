@@ -2,11 +2,13 @@ require "c/pwd"
 require "../unix"
 
 module Crystal::System::User
-  private GETPW_R_SIZE_MAX = 1024 * 16
+  GETPW_R_SIZE_MAX = 1024 * 16
 
   private def from_struct(pwd)
-    user = String.new(pwd.pw_gecos).partition(',')[0]
-    new(String.new(pwd.pw_name), pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
+    username = String.new(pwd.pw_name)
+    # `pw_gecos` is not part of POSIX and bionic for example always leaves it null
+    user = pwd.pw_gecos ? String.new(pwd.pw_gecos).partition(',')[0] : username
+    new(username, pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
   private def from_username?(username : String)

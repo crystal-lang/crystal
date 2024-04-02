@@ -49,7 +49,7 @@ require "c/errno"
 # An `IO` can be set an encoding with the `#set_encoding` method. When this is
 # set, all string operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
 # `printf`) will write in the given encoding, and read from the given encoding.
-# Byte operations (`read`, `write`, `read_byte`, `write_byte`) never do
+# Byte operations (`read`, `write`, `read_byte`, `write_byte`, `getb_to_end`) never do
 # encoding/decoding operations.
 #
 # If an encoding is not set, the default one is UTF-8.
@@ -58,6 +58,9 @@ require "c/errno"
 # avoided, as string operations might need to read extra bytes in order to get characters
 # in the given encoding.
 abstract class IO
+  # Default size used for generic stream buffers.
+  DEFAULT_BUFFER_SIZE = 32768
+
   # Argument to a `seek` operation.
   enum Seek
     # Seeks to an absolute location
@@ -149,7 +152,7 @@ abstract class IO
   #   reader.gets # => "world"
   # end
   # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
+  def self.pipe(read_blocking = false, write_blocking = false, &)
     r, w = IO.pipe(read_blocking, write_blocking)
     begin
       yield r, w
@@ -430,6 +433,8 @@ abstract class IO
   # io.read_string(6) # raises IO::EOFError
   # ```
   def read_string(bytesize : Int) : String
+    return "" if bytesize == 0
+
     String.new(bytesize) do |ptr|
       if decoder = decoder()
         read = decoder.read_utf8(self, Slice.new(ptr, bytesize))
@@ -446,7 +451,7 @@ abstract class IO
   # Peeks into this IO, if possible.
   #
   # It returns:
-  # - `nil` if this IO isn't peekable
+  # - `nil` if this IO isn't peekable at this moment or at all
   # - an empty slice if it is, but EOF was reached
   # - a non-empty slice if some data can be peeked
   #
@@ -546,6 +551,7 @@ abstract class IO
   # ```
   # io = IO::Memory.new "hello world"
   # io.gets_to_end # => "hello world"
+  # io.gets_to_end # => ""
   # ```
   def gets_to_end : String
     String.build do |str|
@@ -557,12 +563,22 @@ abstract class IO
           decoder.write(str)
         end
       else
-        buffer = uninitialized UInt8[4096]
-        while (read_bytes = read(buffer.to_slice)) > 0
-          str.write buffer.to_slice[0, read_bytes]
-        end
+        IO.copy(self, str)
       end
     end
+  end
+
+  # Reads the rest of this `IO` data as a writable `Bytes`.
+  #
+  # ```
+  # io = IO::Memory.new Bytes[0, 1, 3, 6, 10, 15]
+  # io.getb_to_end # => Bytes[0, 1, 3, 6, 10, 15]
+  # io.getb_to_end # => Bytes[]
+  # ```
+  def getb_to_end : Bytes
+    io = IO::Memory.new
+    IO.copy(self, io)
+    io.to_slice
   end
 
   # Reads a line from this `IO`. A line is terminated by the `\n` character.
@@ -699,7 +715,15 @@ abstract class IO
           peek = self.peek
         end
 
-        if !peek || peek.empty?
+        unless peek
+          # If for some reason this IO became unpeekable,
+          # default to the slow method. One example where this can
+          # happen is `IO::Delimited`.
+          gets_slow(delimiter, limit, chomp, buffer)
+          break
+        end
+
+        if peek.empty?
           if buffer.bytesize == 0
             return nil
           else
@@ -724,17 +748,23 @@ abstract class IO
   end
 
   private def gets_slow(delimiter : Char, limit, chomp)
+    buffer = String::Builder.new
+    bytes_read = gets_slow(delimiter, limit, chomp, buffer)
+    buffer.to_s if bytes_read
+  end
+
+  private def gets_slow(delimiter : Char, limit, chomp, buffer : String::Builder) : Bool
+    bytes_read = false
     chomp_rn = delimiter == '\n' && chomp
 
-    buffer = String::Builder.new
-    total = 0
     while true
       info = read_char_with_bytesize
       unless info
-        return buffer.empty? ? nil : buffer.to_s
+        break
       end
 
       char, char_bytesize = info
+      bytes_read = true
 
       # Consider the case of \r\n when the delimiter is \n and chomp = true
       if chomp_rn && char == '\r'
@@ -750,11 +780,16 @@ abstract class IO
         end
 
         buffer << '\r'
-        total += char_bytesize
-        break if total >= limit
+
+        break if char_bytesize >= limit
+        limit -= char_bytesize
 
         buffer << char2
-        total += char_bytesize2
+
+        break if char_bytesize2 >= limit
+        limit -= char_bytesize2
+
+        next
       elsif char == delimiter
         buffer << char unless chomp
         break
@@ -762,10 +797,11 @@ abstract class IO
         buffer << char
       end
 
-      total += char_bytesize
-      break if total >= limit
+      break if char_bytesize >= limit
+      limit -= char_bytesize
     end
-    buffer.to_s
+
+    bytes_read
   end
 
   # Reads until *delimiter* is found or the end of the `IO` is reached.
@@ -785,7 +821,7 @@ abstract class IO
 
     # One byte: use gets(Char)
     if delimiter.bytesize == 1
-      return gets(delimiter.unsafe_byte_at(0).unsafe_chr, chomp: chomp)
+      return gets(delimiter.to_unsafe[0].unsafe_chr, chomp: chomp)
     end
 
     # One char: use gets(Char)
@@ -831,9 +867,9 @@ abstract class IO
   # io.skip(1) # raises IO::EOFError
   # ```
   def skip(bytes_count : Int) : Nil
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     while bytes_count > 0
-      read_count = read(buffer.to_slice[0, Math.min(bytes_count, 4096)])
+      read_count = read(buffer.to_slice[0, Math.min(bytes_count, buffer.size)])
       raise IO::EOFError.new if read_count == 0
 
       bytes_count -= read_count
@@ -843,7 +879,7 @@ abstract class IO
   # Reads and discards bytes from `self` until there
   # are no more bytes.
   def skip_to_end : Nil
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     while read(buffer.to_slice) > 0
     end
   end
@@ -956,7 +992,7 @@ abstract class IO
   # あ
   # め
   # ```
-  def each_char : Nil
+  def each_char(&) : Nil
     while char = read_char
       yield char
     end
@@ -991,7 +1027,7 @@ abstract class IO
   # 129
   # 130
   # ```
-  def each_byte : Nil
+  def each_byte(&) : Nil
     while byte = read_byte
       yield byte
     end
@@ -1135,7 +1171,7 @@ abstract class IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst) : Int64
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     count = 0_i64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
@@ -1159,7 +1195,7 @@ abstract class IO
 
     limit = limit.to_i64
 
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]

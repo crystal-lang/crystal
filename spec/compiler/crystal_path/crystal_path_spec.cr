@@ -4,9 +4,9 @@ require "spec/helpers/iterate"
 
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
-    crystal_path = Crystal::CrystalPath.new([path])
     results = results.map { |result| ::Path[__DIR__, result].normalize.to_s }
     Dir.cd(__DIR__) do
+      crystal_path = Crystal::CrystalPath.new([path])
       matches = crystal_path.find search, relative_to: relative_to
       matches.should eq(results), file: file, line: line
     end
@@ -15,8 +15,8 @@ end
 
 private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, expected_relative_to = nil, file = __FILE__, line = __LINE__)
   it "doesn't finds #{search.inspect}", file, line do
-    crystal_path = Crystal::CrystalPath.new([path])
     Dir.cd(__DIR__) do
+      crystal_path = Crystal::CrystalPath.new([path])
       error = expect_raises Crystal::CrystalPath::NotFoundError do
         crystal_path.find search, relative_to: relative_to
       end
@@ -68,6 +68,9 @@ describe Crystal::CrystalPath do
   assert_finds "../test_folder", relative_to: "test_files/test_folder/file_three.cr", results: [
     "test_files/test_folder/test_folder.cr",
   ]
+  assert_finds "foo.cr", results: [
+    "foo.cr/foo.cr",
+  ]
 
   # For `require "foo"`:
   # 1. foo.cr (to find something in the standard library)
@@ -111,9 +114,31 @@ describe Crystal::CrystalPath do
     it "foo.cr" do
       assert_iterates_yielding [
         "x/foo.cr",
-        "x/foo.cr/foo.cr.cr",
-        "x/foo.cr/src/foo.cr.cr",
+        "x/foo.cr/foo.cr",
+        "x/foo.cr/src/foo.cr",
       ], path.each_file_expansion("foo.cr", "x")
+    end
+
+    it "foo.cr/bar" do
+      assert_iterates_yielding [
+        "x/foo.cr/bar.cr",
+        "x/foo.cr/src/bar.cr",
+        "x/foo.cr/src/foo.cr/bar.cr",
+        "x/foo.cr/bar/bar.cr",
+        "x/foo.cr/src/bar/bar.cr",
+        "x/foo.cr/src/foo.cr/bar/bar.cr",
+      ], path.each_file_expansion("foo.cr/bar", "x")
+    end
+
+    it "foo.cr/bar.cr" do
+      assert_iterates_yielding [
+        "x/foo.cr/bar.cr",
+        "x/foo.cr/src/bar.cr",
+        "x/foo.cr/src/foo.cr/bar.cr",
+        "x/foo.cr/bar.cr/bar.cr",
+        "x/foo.cr/src/bar.cr/bar.cr",
+        "x/foo.cr/src/foo.cr/bar.cr/bar.cr",
+      ], path.each_file_expansion("foo.cr/bar.cr", "x")
     end
 
     it "foo" do
@@ -134,7 +159,7 @@ describe Crystal::CrystalPath do
     it "./foo.cr" do
       assert_iterates_yielding [
         "x/./foo.cr",
-        "x/./foo.cr/foo.cr.cr",
+        "x/./foo.cr/foo.cr",
       ], path.each_file_expansion("./foo.cr", "x")
     end
 

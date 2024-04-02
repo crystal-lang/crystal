@@ -5,6 +5,8 @@
 
 # A handler that configures an `HTTP::Server::Response` to compress the response
 # output, either using gzip or deflate, depending on the `Accept-Encoding` request header.
+#
+# NOTE: To use `CompressHandler`, you must explicitly import it with `require "http"`
 class HTTP::CompressHandler
   include HTTP::Handler
 

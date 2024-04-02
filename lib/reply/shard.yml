@@ -1,0 +1,14 @@
+name: reply
+version: 0.3.1
+description: "Shard to create a REPL interface"
+
+authors:
+  - I3oris <boris31.resch@gmail.com>
+
+crystal: 1.5.0
+
+license: MIT
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba

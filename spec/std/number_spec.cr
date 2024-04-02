@@ -42,6 +42,7 @@ describe "Number" do
     it "preserves type" do
       123.significant(2).should eq(120)
       123.significant(2).should be_a(Int32)
+      0.significant(1).should be_a(Int32)
     end
   end
 
@@ -305,45 +306,45 @@ describe "Number" do
   end
 
   describe "#round_even" do
-    -2.5.round_even.should eq -2.0
-    -1.5.round_even.should eq -2.0
-    -1.0.round_even.should eq -1.0
-    -0.9.round_even.should eq -1.0
-    -0.5.round_even.should eq -0.0
-    -0.1.round_even.should eq 0.0
-    0.0.round_even.should eq 0.0
-    0.1.round_even.should eq 0.0
-    0.5.round_even.should eq 0.0
-    0.9.round_even.should eq 1.0
-    1.0.round_even.should eq 1.0
-    1.5.round_even.should eq 2.0
-    2.5.round_even.should eq 2.0
+    it { -2.5.round_even.should eq -2.0 }
+    it { -1.5.round_even.should eq -2.0 }
+    it { -1.0.round_even.should eq -1.0 }
+    it { -0.9.round_even.should eq -1.0 }
+    it { -0.5.round_even.should eq -0.0 }
+    it { -0.1.round_even.should eq 0.0 }
+    it { 0.0.round_even.should eq 0.0 }
+    it { 0.1.round_even.should eq 0.0 }
+    it { 0.5.round_even.should eq 0.0 }
+    it { 0.9.round_even.should eq 1.0 }
+    it { 1.0.round_even.should eq 1.0 }
+    it { 1.5.round_even.should eq 2.0 }
+    it { 2.5.round_even.should eq 2.0 }
 
-    1.round_even.should eq 1
-    1.round_even.should be_a(Int32)
-    1_u8.round_even.should be_a(UInt8)
-    1_f32.round_even.should be_a(Float32)
+    it { 1.round_even.should eq 1 }
+    it { 1.round_even.should be_a(Int32) }
+    it { 1_u8.round_even.should be_a(UInt8) }
+    it { 1_f32.round_even.should be_a(Float32) }
   end
 
   describe "#round_away" do
-    -2.5.round_away.should eq -3.0
-    -1.5.round_away.should eq -2.0
-    -1.0.round_away.should eq -1.0
-    -0.9.round_away.should eq -1.0
-    -0.5.round_away.should eq -1.0
-    -0.1.round_away.should eq 0.0
-    0.0.round_away.should eq 0.0
-    0.1.round_away.should eq 0.0
-    0.5.round_away.should eq 1.0
-    0.9.round_away.should eq 1.0
-    1.0.round_away.should eq 1.0
-    1.5.round_away.should eq 2.0
-    2.5.round_away.should eq 3.0
+    it { -2.5.round_away.should eq -3.0 }
+    it { -1.5.round_away.should eq -2.0 }
+    it { -1.0.round_away.should eq -1.0 }
+    it { -0.9.round_away.should eq -1.0 }
+    it { -0.5.round_away.should eq -1.0 }
+    it { -0.1.round_away.should eq 0.0 }
+    it { 0.0.round_away.should eq 0.0 }
+    it { 0.1.round_away.should eq 0.0 }
+    it { 0.5.round_away.should eq 1.0 }
+    it { 0.9.round_away.should eq 1.0 }
+    it { 1.0.round_away.should eq 1.0 }
+    it { 1.5.round_away.should eq 2.0 }
+    it { 2.5.round_away.should eq 3.0 }
 
-    1.round_away.should eq 1
-    1.round_away.should be_a(Int32)
-    1_u8.round_away.should be_a(UInt8)
-    1_f32.round_away.should be_a(Float32)
+    it { 1.round_away.should eq 1 }
+    it { 1.round_away.should be_a(Int32) }
+    it { 1_u8.round_away.should be_a(UInt8) }
+    it { 1_f32.round_away.should be_a(Float32) }
   end
 
   it "gives the absolute value" do
@@ -573,15 +574,15 @@ describe "Number" do
     describe "whole range" do
       it { (UInt8::MIN..UInt8::MAX).each.count { true }.should eq(256) }
       it_iterates "UInt8 upwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8), (UInt8::MIN..UInt8::MAX).step(by: 1)
-      it_iterates "UInt8 downwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8).reverse, (UInt8::MAX..UInt8::MIN).step(by: -1)
+      it_iterates "UInt8 downwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8).reverse!, (UInt8::MAX..UInt8::MIN).step(by: -1)
 
       it { (Int8::MIN..Int8::MAX).each.count { true }.should eq(256) }
       it_iterates "Int8 upwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8), (Int8::MIN..Int8::MAX).step(by: 1)
-      it_iterates "Int8 downwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8).reverse, (Int8::MAX..Int8::MIN).step(by: -1)
+      it_iterates "Int8 downwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8).reverse!, (Int8::MAX..Int8::MIN).step(by: -1)
 
       it { (Int16::MIN..Int16::MAX).each.count { true }.should eq(65536) }
       it_iterates "Int16 upwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16), (Int16::MIN..Int16::MAX).step(by: 1)
-      it_iterates "Int16 downwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16).reverse, (Int16::MAX..Int16::MIN).step(by: -1)
+      it_iterates "Int16 downwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16).reverse!, (Int16::MAX..Int16::MIN).step(by: -1)
     end
 
     it_iterates "towards limit [max-4, max-2, max]", [Int32::MAX - 4, Int32::MAX - 2, Int32::MAX], (Int32::MAX - 4).step(to: Int32::MAX, by: 2)
