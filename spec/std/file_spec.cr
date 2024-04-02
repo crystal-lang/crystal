@@ -217,6 +217,17 @@ describe "File" do
     it "gives false when a component of the path is a file" do
       File.readable?(datapath("dir", "test_file.txt", "")).should be_false
     end
+
+    # win32 doesn't have a way to make files unreadable via chmod
+    {% unless flag?(:win32) %}
+      it "gives false when the file has no read permissions" do
+        with_tempfile("unreadable.txt") do |path|
+          File.write(path, "")
+          File.chmod(path, 0o222)
+          File.readable?(path).should be_false
+        end
+      end
+    {% end %}
   end
 
   describe "writable?" do
@@ -230,6 +241,14 @@ describe "File" do
 
     it "gives false when a component of the path is a file" do
       File.writable?(datapath("dir", "test_file.txt", "")).should be_false
+    end
+
+    it "gives false when the file has no write permissions" do
+      with_tempfile("readonly.txt") do |path|
+        File.write(path, "")
+        File.chmod(path, 0o444)
+        File.writable?(path).should be_false
+      end
     end
   end
 
