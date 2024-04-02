@@ -34,9 +34,9 @@ else
   abort "Too many arguments. Usage:\n  #{PROGRAM_NAME} [<GH repo ref>] <milestone>"
 end
 
-def query_prs(api_token, repository, milestone)
+def query_prs(api_token, repository, milestone : String, cursor : String?)
   query = <<-GRAPHQL
-    query($milestone: String, $owner: String!, $repository: String!) {
+    query($milestone: String, $owner: String!, $repository: String!, $cursor: String) {
       repository(owner: $owner, name: $repository) {
         milestones(query: $milestone, first: 1) {
           nodes {
@@ -44,7 +44,7 @@ def query_prs(api_token, repository, milestone)
             description
             dueOn
             title
-            pullRequests(first: 300) {
+            pullRequests(first: 100, after: $cursor) {
               nodes {
                 number
                 title
@@ -59,6 +59,10 @@ def query_prs(api_token, repository, milestone)
                   }
                 }
               }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
             }
           }
         }
@@ -71,6 +75,7 @@ def query_prs(api_token, repository, milestone)
     owner:      owner,
     repository: name,
     milestone:  milestone,
+    cursor:     cursor,
   }
 
   response = HTTP::Client.post("https://api.github.com/graphql",
@@ -288,20 +293,44 @@ record PullRequest,
   end
 end
 
-response = query_prs(api_token, repository, milestone)
-parser = JSON::PullParser.new(response.body)
-milestone = parser.on_key! "data" do
-  parser.on_key! "repository" do
-    parser.on_key! "milestones" do
-      parser.on_key! "nodes" do
-        parser.read_begin_array
-        milestone = Milestone.new(parser)
-        parser.read_end_array
-        milestone
+def query_milestone(api_token, repository, number)
+  cursor = nil
+  milestone = nil
+
+  while true
+    response = query_prs(api_token, repository, number, cursor)
+
+    parser = JSON::PullParser.new(response.body)
+    m = parser.on_key! "data" do
+      parser.on_key! "repository" do
+        parser.on_key! "milestones" do
+          parser.on_key! "nodes" do
+            parser.read_begin_array
+            Milestone.new(parser)
+          ensure
+            parser.read_end_array
+          end
+        end
       end
     end
+
+    if milestone
+      milestone.pull_requests.concat m.pull_requests
+    else
+      milestone = m
+    end
+
+    json = JSON.parse(response.body)
+    page_info = json.dig("data", "repository", "milestones", "nodes", 0, "pullRequests", "pageInfo")
+    break unless page_info["hasNextPage"].as_bool
+
+    cursor = page_info["endCursor"].as_s
   end
+
+  milestone
 end
+
+milestone = query_milestone(api_token, repository, milestone)
 
 sections = milestone.pull_requests.group_by(&.section)
 
