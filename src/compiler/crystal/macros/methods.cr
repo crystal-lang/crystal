@@ -1949,7 +1949,7 @@ module Crystal
         interpret_check_args { BoolLiteral.new(!type.private?) }
       when "visibility"
         interpret_check_args do
-          if type.private? 
+          if type.private?
             SymbolLiteral.new("private")
           else
             SymbolLiteral.new("public")
