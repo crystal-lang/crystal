@@ -491,7 +491,16 @@ def pp(**objects)
   pp(objects) unless objects.empty?
 end
 
-# Registers the given `Proc` for execution when the program exits.
+# Registers the given `Proc` for execution when the program exits regularly.
+#
+# A regular exit happens when either
+# * the main fiber reaches the end of the program,
+# * the main fiber rescues an unhandled exception, or
+# * `::exit` is called.
+#
+# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process 
+# termination (see `Process.on_terminate` for handling that).
+#
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
 # ```
