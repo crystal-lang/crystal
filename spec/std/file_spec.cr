@@ -224,6 +224,7 @@ describe "File" do
         with_tempfile("unreadable.txt") do |path|
           File.write(path, "")
           File.chmod(path, 0o222)
+          p File.info(path).permissions
           File.readable?(path).should be_false
         end
       end
@@ -247,6 +248,7 @@ describe "File" do
       with_tempfile("readonly.txt") do |path|
         File.write(path, "")
         File.chmod(path, 0o444)
+        p File.info(path).permissions
         File.writable?(path).should be_false
       end
     end
