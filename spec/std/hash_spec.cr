@@ -271,6 +271,17 @@ describe "Hash" do
       h[3000].should eq(3000 + 42)
     end
 
+    it "doesn't create a duplicate key, if key does not exist and default block adds the given key (#14416)" do
+      h = Hash(String, Int32).new do |h, new_key|
+        h[new_key] = 1
+        new_key.size
+      end
+
+      h.update("new key") { |v| v * 6 }
+      h.size.should eq(1)
+      h["new key"].should eq(7 * 6)
+    end
+
     it "inserts a new entry using the default value as input, if key does not exist" do
       h = Hash(String, Int32).new(2)
 
