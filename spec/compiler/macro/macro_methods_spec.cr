@@ -2337,6 +2337,63 @@ module Crystal
           {x: TypeNode.new(program.int32)}
         end
       end
+
+      describe "executes private?" do
+        it false do
+          assert_macro("{{x.private?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.private?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "public?" do
+        it false do
+          assert_macro("{{x.public?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.public?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "visibility" do
+        it :public do
+          assert_macro("{{x.visibility}}", ":public") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it :private do
+          assert_macro("{{x.visibility}}", ":private") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
     end
 
     describe "type declaration methods" do
