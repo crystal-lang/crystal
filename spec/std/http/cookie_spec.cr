@@ -40,6 +40,12 @@ module HTTP
         end
       end
 
+      it "raises if partitioned but not secure" do
+        expect_raises ArgumentError, "Cookie is partitioned but is not secure." do
+          HTTP::Cookie.new "foo", "bar", partitioned: true, secure: false
+        end
+      end
+
       it "raises on invalid value" do
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
@@ -312,6 +318,15 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; HttpOnly")
       end
 
+      it "parses Partitioned" do
+        cookie = parse_set_cookie("key=value; Secure; Partitioned")
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.secure.should be_true
+        cookie.partitioned?.should be_true
+        cookie.to_set_cookie_header.should eq("key=value; Secure; Partitioned")
+      end
+
       describe "SameSite" do
         context "Lax" do
           it "parses samesite" do
@@ -402,7 +417,7 @@ module HTTP
       end
 
       it "parses full" do
-        cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT; SameSite=Strict")
+        cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT; SameSite=Strict; Partitioned")
         time = Time.utc(1994, 11, 6, 8, 49, 37)
 
         cookie.name.should eq "key"
@@ -413,6 +428,7 @@ module HTTP
         cookie.secure.should be_true
         cookie.expires.should eq time
         cookie.samesite.should eq HTTP::Cookie::SameSite::Strict
+        cookie.partitioned?.should be_true
       end
 
       it "parse domain as IP" do

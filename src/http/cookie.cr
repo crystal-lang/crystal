@@ -27,6 +27,7 @@ module HTTP
     property extension : String?
     property max_age : Time::Span?
     getter creation_time : Time
+    property? partitioned : Bool
 
     @secure : Bool?
 
@@ -41,7 +42,8 @@ module HTTP
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool? = nil, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil,
-                   @max_age : Time::Span? = nil, @creation_time = Time.utc)
+                   @max_age : Time::Span? = nil, @creation_time = Time.utc,
+                   @partitioned : Bool = false)
       validate_name(name)
       @name = name
       validate_value(value)
@@ -120,6 +122,7 @@ module HTTP
         header << "; HttpOnly" if @http_only
         header << "; SameSite=#{samesite}" if samesite
         header << "; #{@extension}" if @extension
+        header << "; Partitioned" if @partitioned
       end
     end
 
@@ -169,6 +172,7 @@ module HTTP
     def validate! : self
       raise ArgumentError.new "Invalid cookie name. Has '__Secure-' prefix, but is not secure." unless self.valid_secure_prefix?
       raise ArgumentError.new "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." unless self.valid_host_prefix?
+      raise ArgumentError.new "Cookie is partitioned but is not secure." if @partitioned && !@secure
 
       self
     end
@@ -217,11 +221,12 @@ module HTTP
         HttpOnlyAV     = /(?<http_only>HttpOnly)/i
         SameSiteAV     = /SameSite=(?<samesite>\w+)/i
         SecureAV       = /(?<secure>Secure)/i
+        PartitionedAV  = /(?<partitioned>Partitioned)/i
         PathAV         = /Path=(?<path>#{PathValue})/i
         DomainAV       = /Domain=\.?(?<domain>#{DomainValue})/i
         MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
         ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
-        CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{ExtensionAV})/
+        CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{PartitionedAV}|#{ExtensionAV})/
       end
 
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
@@ -261,6 +266,7 @@ module HTTP
           samesite: match["samesite"]?.try { |v| SameSite.parse? v },
           extension: match["extension"]?,
           max_age: max_age,
+          partitioned: match["partitioned"]? != nil,
         )
       end
 
