@@ -43,7 +43,7 @@ git switch $branch 2>/dev/null || git switch -c $branch;
 if grep --silent -E "^## \[$VERSION\]" CHANGELOG.md; then
   echo "Replacing section in CHANGELOG"
 
-  sed -iE "/^## \[$VERSION\]/,/^## /{
+  sed -i -E "/^## \[$VERSION\]/,/^## /{
     /^## \[$VERSION\]/s/.*/cat $current_changelog/e; /^## /!d
   }" CHANGELOG.md
 
@@ -53,7 +53,7 @@ if grep --silent -E "^## \[$VERSION\]" CHANGELOG.md; then
 else
   echo "Adding new section to CHANGELOG"
 
-  sed -iE "2r $current_changelog" CHANGELOG.md
+  sed -i -E "2r $current_changelog" CHANGELOG.md
 
   git add CHANGELOG.md
   git commit -m "Add changelog for $VERSION"
