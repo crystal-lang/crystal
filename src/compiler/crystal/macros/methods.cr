@@ -1950,9 +1950,9 @@ module Crystal
       when "visibility"
         interpret_check_args do
           if type.private? 
-            SymbolLiteral.new(:private)
+            SymbolLiteral.new("private")
           else
-            SymbolLiteral.new(:public)
+            SymbolLiteral.new("public")
           end
         end
       else
