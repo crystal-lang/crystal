@@ -293,8 +293,6 @@ describe "Code gen: virtual type" do
 
   it "doesn't lookup in Value+ when virtual type is Object+" do
     run(%(
-      require "prelude"
-
       class Object
         def foo
           !nil?

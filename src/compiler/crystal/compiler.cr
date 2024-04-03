@@ -4,8 +4,6 @@ require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
-  require "crystal/system/win32/visual_studio"
-  require "crystal/system/win32/windows_sdk"
 {% end %}
 
 module Crystal
@@ -27,8 +25,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    private DEFAULT_LINKER = ENV["CC"]? || "cc"
-    private MSVC_LINKER    = ENV["CC"]? || "cl.exe"
+    DEFAULT_LINKER = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cc" }}
+    MSVC_LINKER    = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cl.exe" }}
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -409,32 +407,9 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        linker = MSVC_LINKER
-        link_args = [] of String
-
-        # if the compiler and the target both have the `msvc` flag, we are not
-        # cross-compiling and therefore we should attempt detecting MSVC's
-        # standard paths
-        {% if flag?(:msvc) %}
-          if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
-            if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-              host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
-              target_bits = program.has_flag?("aarch64") ? "arm64" : program.has_flag?("bits64") ? "x64" : "x86"
-
-              # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
-              # that is normally expected on the MSVC developer command prompt
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("atlmfc", "lib", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("lib", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("ucrt", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
-
-              # use exact path for compiler instead of relying on `PATH`
-              # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
-              target_bits = target_bits.sub("arm", "ARM")
-              linker = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
-            end
-          end
-        {% end %}
+        linker, link_args = program.msvc_compiler_and_flags
+        linker = Process.quote_windows(linker)
+        link_args.map! { |arg| Process.quote_windows(arg) }
 
         link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
         link_args << "/INCREMENTAL:NO /STACK:0x800000"
@@ -536,10 +511,13 @@ module Crystal
 
       wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
 
-      # If threads is 1 and no stats/progress is needed we can avoid
-      # fork/spawn/channels altogether. This is particularly useful for
-      # CI because there forking eventually leads to "out of memory" errors.
-      if @n_threads == 1
+      # Don't start more processes than compilation units
+      n_threads = @n_threads.clamp(1..units.size)
+
+      # If threads is 1 we can avoid fork/spawn/channels altogether. This is
+      # particularly useful for CI because there forking eventually leads to
+      # "out of memory" errors.
+      if n_threads == 1
         units.each do |unit|
           unit.compile
           all_reused << unit.name if wants_stats_or_progress && unit.reused_previous_compilation?
@@ -547,60 +525,102 @@ module Crystal
         return all_reused
       end
 
-      {% if !Crystal::System::Process.class.has_method?("fork") %}
+      {% if !LibC.has_method?("fork") %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
       {% else %}
-        jobs_count = 0
-        wait_channel = Channel(Array(String)).new(@n_threads)
-
-        units.each_slice(Math.max(units.size // @n_threads, 1)) do |slice|
-          jobs_count += 1
-          spawn do
-            # For stats output we want to count how many previous
-            # .o files were reused, mainly to detect performance regressions.
-            # Because we fork, we must communicate using a pipe.
-            reused = [] of String
-            if wants_stats_or_progress
-              pr, pw = IO.pipe
-              spawn do
-                pr.each_line do |line|
-                  unit = JSON.parse(line)
-                  reused << unit["name"].as_s if unit["reused"].as_bool
-                  @progress_tracker.stage_progress += 1
-                end
-              end
-            end
-
-            codegen_process = Crystal::System::Process.fork do
-              pipe_w = pw
-              slice.each do |unit|
-                unit.compile
-                if pipe_w
-                  unit_json = {name: unit.name, reused: unit.reused_previous_compilation?}.to_json
-                  pipe_w.puts unit_json
-                end
-              end
-            end
-            Process.new(codegen_process).wait
-
-            if pipe_w = pw
-              pipe_w.close
-              Fiber.yield
-            end
-
-            wait_channel.send reused
+        workers = fork_workers(n_threads) do |input, output|
+          while i = input.gets(chomp: true).presence
+            unit = units[i.to_i]
+            unit.compile
+            result = {name: unit.name, reused: unit.reused_previous_compilation?}
+            output.puts result.to_json
           end
         end
 
-        jobs_count.times do
-          reused = wait_channel.receive
-          all_reused.concat(reused)
+        overqueue = 1
+        indexes = Atomic(Int32).new(0)
+        channel = Channel(String).new(n_threads)
+        completed = Channel(Nil).new(n_threads)
+
+        workers.each do |pid, input, output|
+          spawn do
+            overqueued = 0
+
+            overqueue.times do
+              if (index = indexes.add(1)) < units.size
+                input.puts index
+                overqueued += 1
+              end
+            end
+
+            while (index = indexes.add(1)) < units.size
+              input.puts index
+
+              response = output.gets(chomp: true).not_nil!
+              channel.send response
+            end
+
+            overqueued.times do
+              response = output.gets(chomp: true).not_nil!
+              channel.send response
+            end
+
+            input << '\n'
+            input.close
+            output.close
+
+            Process.new(pid).wait
+            completed.send(nil)
+          end
+        end
+
+        spawn do
+          n_threads.times { completed.receive }
+          channel.close
+        end
+
+        while response = channel.receive?
+          next unless wants_stats_or_progress
+
+          result = JSON.parse(response)
+          all_reused << result["name"].as_s if result["reused"].as_bool
+          @progress_tracker.stage_progress += 1
         end
 
         all_reused
       {% end %}
+    end
+
+    private def fork_workers(n_threads)
+      workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
+
+      n_threads.times do
+        iread, iwrite = IO.pipe
+        oread, owrite = IO.pipe
+
+        iwrite.flush_on_newline = true
+        owrite.flush_on_newline = true
+
+        pid = Crystal::System::Process.fork do
+          iwrite.close
+          oread.close
+
+          yield iread, owrite
+
+          iread.close
+          owrite.close
+          exit 0
+        end
+
+        iread.close
+        owrite.close
+
+        workers << {pid, iwrite, oread}
+      end
+
+      workers
     end
 
     private def print_macro_run_stats(program)

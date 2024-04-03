@@ -97,23 +97,39 @@ describe Atomic do
       atomic.compare_and_set([1], arr2).should eq({arr1, false})
       atomic.get.should be(arr1)
     end
+
+    it "explicit ordering" do
+      atomic = Atomic.new(1)
+
+      atomic.compare_and_set(2, 3, :acquire, :relaxed).should eq({1, false})
+      atomic.get.should eq(1)
+
+      atomic.compare_and_set(1, 3, :acquire_release, :relaxed).should eq({1, true})
+      atomic.get.should eq(3)
+    end
   end
 
   it "#adds" do
     atomic = Atomic.new(1)
     atomic.add(2).should eq(1)
     atomic.get.should eq(3)
+    atomic.add(1, :relaxed).should eq(3)
+    atomic.get.should eq(4)
   end
 
   it "#sub" do
     atomic = Atomic.new(1)
     atomic.sub(2).should eq(1)
     atomic.get.should eq(-1)
+    atomic.sub(1, :relaxed).should eq(-1)
+    atomic.get.should eq(-2)
   end
 
   it "#and" do
     atomic = Atomic.new(5)
     atomic.and(3).should eq(5)
+    atomic.get.should eq(1)
+    atomic.and(7, :relaxed).should eq(1)
     atomic.get.should eq(1)
   end
 
@@ -121,25 +137,31 @@ describe Atomic do
     atomic = Atomic.new(5)
     atomic.nand(3).should eq(5)
     atomic.get.should eq(-2)
+    atomic.nand(7, :relaxed).should eq(-2)
+    atomic.get.should eq(-7)
   end
 
   it "#or" do
     atomic = Atomic.new(5)
     atomic.or(2).should eq(5)
     atomic.get.should eq(7)
+    atomic.or(8, :relaxed).should eq(7)
+    atomic.get.should eq(15)
   end
 
   it "#xor" do
     atomic = Atomic.new(5)
     atomic.xor(3).should eq(5)
     atomic.get.should eq(6)
+    atomic.xor(5, :relaxed).should eq(6)
+    atomic.get.should eq(3)
   end
 
   it "#max with signed" do
     atomic = Atomic.new(5)
     atomic.max(2).should eq(5)
     atomic.get.should eq(5)
-    atomic.max(10).should eq(5)
+    atomic.max(10, :relaxed).should eq(5)
     atomic.get.should eq(10)
   end
 
@@ -147,7 +169,7 @@ describe Atomic do
     atomic = Atomic.new(5_u32)
     atomic.max(2_u32).should eq(5_u32)
     atomic.get.should eq(5_u32)
-    atomic.max(UInt32::MAX).should eq(5_u32)
+    atomic.max(UInt32::MAX, :relaxed).should eq(5_u32)
     atomic.get.should eq(UInt32::MAX)
   end
 
@@ -165,7 +187,7 @@ describe Atomic do
     atomic = Atomic.new(5)
     atomic.min(10).should eq(5)
     atomic.get.should eq(5)
-    atomic.min(2).should eq(5)
+    atomic.min(2, :relaxed).should eq(5)
     atomic.get.should eq(2)
   end
 
@@ -173,7 +195,7 @@ describe Atomic do
     atomic = Atomic.new(UInt32::MAX)
     atomic.min(10_u32).should eq(UInt32::MAX)
     atomic.get.should eq(10_u32)
-    atomic.min(15_u32).should eq(10_u32)
+    atomic.min(15_u32, :relaxed).should eq(10_u32)
     atomic.get.should eq(10_u32)
   end
 
@@ -187,20 +209,28 @@ describe Atomic do
     atomic.get.should eq(AtomicEnum::Minus)
   end
 
-  it "#set" do
-    atomic = Atomic.new(1)
-    atomic.set(2).should eq(2)
-    atomic.get.should eq(2)
-  end
+  describe "#set" do
+    it "with integer" do
+      atomic = Atomic.new(1)
+      atomic.set(2).should eq(2)
+      atomic.get.should eq(2)
+    end
 
-  it "#set with nil (#4062)" do
-    atomic = Atomic(String?).new(nil)
+    it "with nil (#4062)" do
+      atomic = Atomic(String?).new(nil)
 
-    atomic.set("foo")
-    atomic.get.should eq("foo")
+      atomic.set("foo")
+      atomic.get.should eq("foo")
 
-    atomic.set(nil)
-    atomic.get.should eq(nil)
+      atomic.set(nil)
+      atomic.get.should eq(nil)
+    end
+
+    it "explicit ordering" do
+      atomic = Atomic.new(1)
+      atomic.set(0, :release).should eq(0)
+      atomic.get(:acquire).should eq(0)
+    end
   end
 
   it "#lazy_set" do
@@ -242,6 +272,12 @@ describe Atomic do
 
       atomic.swap(arr1).should be(arr2)
       atomic.get.should be(arr1)
+    end
+
+    it "explicit ordering" do
+      atomic = Atomic.new(1)
+      atomic.swap(2, :acquire).should eq(1)
+      atomic.get.should eq(2)
     end
   end
 end

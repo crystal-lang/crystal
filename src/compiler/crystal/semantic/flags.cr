@@ -47,6 +47,7 @@ class Crystal::Program
     flags.add "netbsd" if target.netbsd?
     flags.add "openbsd" if target.openbsd?
     flags.add "dragonfly" if target.dragonfly?
+    flags.add "solaris" if target.solaris?
     flags.add "android" if target.android?
 
     flags.add "bsd" if target.bsd?

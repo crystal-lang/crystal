@@ -332,6 +332,7 @@ module Crystal
       visit_call node
     end
 
+    # Related: `Token::Kind#unary_operator?`
     UNARY_OPERATORS = {"+", "-", "~", "&+", "&-"}
 
     def visit_call(node, ignore_obj = false)

@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:linux) %}
+{% skip_file unless flag?(:linux) && !flag?(:interpreted) %}
 
 require "spec"
 require "syscall"

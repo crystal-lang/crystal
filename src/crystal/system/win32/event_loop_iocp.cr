@@ -10,6 +10,7 @@ end
 
 # :nodoc:
 class Crystal::Iocp::EventLoop < Crystal::EventLoop
+  # This is a list of resume and timeout events managed outside of IOCP.
   @queue = Deque(Crystal::Iocp::Event).new
 
   # Returns the base IO Completion Port
@@ -34,37 +35,62 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     iocp
   end
 
-  # Runs the event loop.
+  # Runs the event loop and enqueues the fiber for the next upcoming event or
+  # completion.
   def run_once : Nil
-    next_event = @queue.min_by(&.wake_at)
+    # Pull the next upcoming event from the event queue. This determines the
+    # timeout for waiting on the completion port.
+    # OPTIMIZE: Implement @queue as a priority queue in order to avoid this
+    # explicit search for the lowest value and dequeue more efficient.
+    next_event = @queue.min_by?(&.wake_at)
 
-    if next_event
-      now = Time.monotonic
-
-      if next_event.wake_at > now
-        sleep_time = next_event.wake_at - now
-        timed_out = IO::Overlapped.wait_queued_completions(sleep_time.total_milliseconds) do |fiber|
-          Crystal::Scheduler.enqueue fiber
-        end
-
-        return unless timed_out
-      end
-
-      dequeue next_event
-
-      fiber = next_event.fiber
-
-      unless fiber.dead?
-        if next_event.timeout? && (select_action = fiber.timeout_select_action)
-          fiber.timeout_select_action = nil
-          select_action.time_expired(fiber)
-        else
-          Crystal::Scheduler.enqueue fiber
-        end
-      end
-    else
+    unless next_event
       Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"
       ::exit
+    end
+
+    now = Time.monotonic
+
+    if next_event.wake_at > now
+      wait_time = next_event.wake_at - now
+      # There is no event ready to wake. So we wait for completions with a
+      # timeout for the next event wake time.
+
+      timed_out = IO::Overlapped.wait_queued_completions(wait_time.total_milliseconds) do |fiber|
+        # This block may run multiple times. Every single fiber gets enqueued.
+        Crystal::Scheduler.enqueue fiber
+      end
+
+      # If the wait for completion timed out we've reached the wake time and
+      # continue with waking `next_event`.
+      return unless timed_out
+    end
+
+    # next_event gets activated because its wake time is passed, either from the
+    # start or because completion wait has timed out.
+
+    dequeue next_event
+
+    fiber = next_event.fiber
+
+    # If the waiting fiber was already shut down in the mean time, we can just
+    # abandon here. There's no need to go for the next event because the scheduler
+    # will just try again.
+    # OPTIMIZE: It might still be worth considering to start over from the top
+    # or call recursively, in order to ensure at least one fiber get enqueued.
+    # This would avoid the scheduler needing to looking at runnable again just
+    # to notice it's still empty. The lock involved there should typically be
+    # uncontested though, so it's probably not a big deal.
+    return if fiber.dead?
+
+    # A timeout event needs special handling because it does not necessarily
+    # means to resume the fiber directly, in case a different select branch
+    # was already activated.
+    if next_event.timeout? && (select_action = fiber.timeout_select_action)
+      fiber.timeout_select_action = nil
+      select_action.time_expired(fiber)
+    else
+      Crystal::Scheduler.enqueue fiber
     end
   end
 

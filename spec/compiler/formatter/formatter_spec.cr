@@ -1151,6 +1151,12 @@ describe Crystal::Formatter do
   assert_format "foo[] =1", "foo[] = 1"
   assert_format "foo[ 1 , 2 ]   =3", "foo[1, 2] = 3"
 
+  assert_format "foo.[]"
+  assert_format "foo.[ 1 , 2 ]", "foo.[1, 2]"
+  assert_format "foo.[ 1,  2 ]?", "foo.[1, 2]?"
+  assert_format "foo.[] =1", "foo.[] = 1"
+  assert_format "foo.[ 1 , 2 ]   =3", "foo.[1, 2] = 3"
+
   assert_format "1  ||  2", "1 || 2"
   assert_format "a  ||  b", "a || b"
   assert_format "1  &&  2", "1 && 2"
@@ -2886,6 +2892,14 @@ describe Crystal::Formatter do
         CRYSTAL
     end
   end
+
+  # #14256
+  assert_format <<-CRYSTAL
+    foo bar # comment
+
+    # doc
+    def baz; end
+    CRYSTAL
 
   # CVE-2021-42574
   describe "Unicode bi-directional control characters" do

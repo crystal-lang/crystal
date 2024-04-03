@@ -46,6 +46,10 @@ struct Crystal::System::Process
   # previously set interrupt handler.
   # def self.on_interrupt(&handler : ->)
 
+  # Installs *handler* as the new handler for termination signals. Removes any
+  # previously set handler.
+  # def self.on_terminate(&handler : ::Process::ExitReason ->)
+
   # Ignores all interrupt requests. Removes any custom interrupt handler set
   # def self.ignore_interrupts!
 
