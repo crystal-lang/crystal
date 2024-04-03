@@ -498,7 +498,7 @@ end
 # * the main fiber rescues an unhandled exception, or
 # * `::exit` is called.
 #
-# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process 
+# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process
 # termination (see `Process.on_terminate` for handling that).
 #
 # If multiple handlers are registered, they are executed in reverse order of registration.
