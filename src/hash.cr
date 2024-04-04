@@ -419,56 +419,6 @@ class Hash(K, V)
     end
   end
 
-  # Inserts a key-value pair. Assumes that the given key doesn't exist.
-  private def insert_new(key, value)
-    # Unless otherwise noted, this body should be identical to `#upsert`
-
-    if @entries.null?
-      @indices_size_pow2 = 3
-      @entries = malloc_entries(4)
-    end
-
-    hash = key_hash(key)
-
-    if @indices.null?
-      # don't call `#update_linear_scan` here
-
-      if !entries_full?
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-
-      resize
-
-      if @indices.null?
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-    end
-
-    index = fit_in_indices(hash)
-
-    while true
-      entry_index = get_index(index)
-
-      if entry_index == -1
-        if entries_full?
-          resize
-          index = fit_in_indices(hash)
-          next
-        end
-
-        set_index(index, entries_size)
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-
-      # don't call `#get_entry` and `#entry_matches?` here
-
-      index = next_index(index)
-    end
-  end
-
   # Tries to update a key-value-hash triplet by doing a linear scan.
   # Returns an old `Entry` if it was updated, otherwise `nil`.
   private def update_linear_scan(key, value, hash) : Entry(K, V)?
@@ -1126,7 +1076,7 @@ class Hash(K, V)
       entry.value
     else
       value = yield key
-      insert_new(key, value)
+      upsert(key, value)
       value
     end
   end
@@ -1163,8 +1113,6 @@ class Hash(K, V)
       entry.value
     elsif block = @block
       default_value = block.call(self, key)
-
-      # NOTE: can't use `#insert_new` as `block` might add arbitrary keys
       upsert(key, yield default_value)
       default_value
     else
