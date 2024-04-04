@@ -56,6 +56,10 @@ class Crystal::Program
 
     flags.add "bsd" if target.bsd?
 
+    if target.avr? && (cpu = target_machine.cpu.presence)
+      flags.add cpu
+    end
+
     flags
   end
 end
