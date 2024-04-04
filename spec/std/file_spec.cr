@@ -228,6 +228,15 @@ describe "File" do
           File.readable?(path).should be_false
         end
       end
+
+      it "gives false when the file has no permissions" do
+        with_tempfile("unaccessible.txt") do |path|
+          File.write(path, "")
+          File.chmod(path, 0o000)
+          p File.info(path).permissions
+          File.readable?(path).should be_false
+        end
+      end
     {% end %}
   end
 
