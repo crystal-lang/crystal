@@ -232,7 +232,7 @@ struct Atomic(T)
         atomicrmw(:umax, pointerof(@value), value, ordering)
       end
     {% elsif T < Pointer %}
-      T.new(atomicrmw(:umax, pointerof(@value).as(typeof(@value.address)*), value.address, ordering))
+      T.new(atomicrmw(:umax, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new!(value.address), ordering))
     {% elsif T < Int::Signed %}
       atomicrmw(:max, pointerof(@value), value, ordering)
     {% else %}
@@ -262,7 +262,7 @@ struct Atomic(T)
         atomicrmw(:umin, pointerof(@value), value, ordering)
       end
     {% elsif T < Pointer %}
-      T.new(atomicrmw(:umin, pointerof(@value).as(typeof(@value.address)*), value.address, ordering))
+      T.new(atomicrmw(:umin, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new!(value.address), ordering))
     {% elsif T < Int::Signed %}
       atomicrmw(:min, pointerof(@value), value, ordering)
     {% else %}
@@ -279,7 +279,7 @@ struct Atomic(T)
   # ```
   def swap(value : T, ordering : Ordering = :sequentially_consistent)
     {% if T < Pointer %}
-      T.new(atomicrmw(:xchg, pointerof(@value).as(typeof(@value.address)*), value.address, ordering))
+      T.new(atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new!(value.address), ordering))
     {% elsif T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       address = atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), ordering)
       Pointer(T).new(address).as(T)
