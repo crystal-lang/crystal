@@ -1163,7 +1163,9 @@ class Hash(K, V)
       entry.value
     elsif block = @block
       default_value = block.call(self, key)
-      insert_new(key, yield default_value)
+
+      # NOTE: can't use `#insert_new` as `block` might add arbitrary keys
+      upsert(key, yield default_value)
       default_value
     else
       raise KeyError.new "Missing hash key: #{key.inspect}"

@@ -9,9 +9,11 @@ require "termios"
 module Crystal::System::FileDescriptor
   include IO::Evented
 
-  @volatile_fd : Atomic(Int32)
+  # Platform-specific type to represent a file descriptor handle to the operating
+  # system.
+  alias Handle = Int32
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
@@ -21,7 +23,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     evented_write(slice, "Error writing file") do |slice|
       LibC.write(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF

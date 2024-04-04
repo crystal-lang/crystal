@@ -126,25 +126,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: crystal-lang/shards
-          ref: v0.17.4
+          ref: v0.18.0
           path: shards
-
-      - name: Download molinillo release
-        uses: actions/checkout@v4
-        with:
-          repository: crystal-lang/crystal-molinillo
-          ref: v0.2.0
-          path: shards/lib/molinillo
 
       - name: Build shards release
         working-directory: ./shards
-        run: ../bin/crystal.bat build ${{ inputs.release && '--release' || '' }} src/shards.cr
+        run: make -f Makefile.win ${{ inputs.release && 'release=1' || '' }}
 
       - name: Gather Crystal binaries
         run: |
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
-          cp shards/shards.exe crystal/
+          cp shards/bin/shards.exe crystal/
           cp libs/* crystal/lib/
           cp dlls/* crystal/
           cp README.md crystal/

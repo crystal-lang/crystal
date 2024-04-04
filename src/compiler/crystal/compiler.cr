@@ -4,8 +4,6 @@ require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
-  require "crystal/system/win32/visual_studio"
-  require "crystal/system/win32/windows_sdk"
 {% end %}
 
 module Crystal
@@ -27,8 +25,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    private DEFAULT_LINKER = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cc" }}
-    private MSVC_LINKER    = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cl.exe" }}
+    DEFAULT_LINKER = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cc" }}
+    MSVC_LINKER    = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cl.exe" }}
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -409,32 +407,9 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        linker = MSVC_LINKER
-        link_args = [] of String
-
-        # if the compiler and the target both have the `msvc` flag, we are not
-        # cross-compiling and therefore we should attempt detecting MSVC's
-        # standard paths
-        {% if flag?(:msvc) %}
-          if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
-            if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-              host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
-              target_bits = program.has_flag?("aarch64") ? "arm64" : program.has_flag?("bits64") ? "x64" : "x86"
-
-              # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
-              # that is normally expected on the MSVC developer command prompt
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("atlmfc", "lib", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("lib", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("ucrt", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
-
-              # use exact path for compiler instead of relying on `PATH`
-              # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
-              target_bits = target_bits.sub("arm", "ARM")
-              linker = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
-            end
-          end
-        {% end %}
+        linker, link_args = program.msvc_compiler_and_flags
+        linker = Process.quote_windows(linker)
+        link_args.map! { |arg| Process.quote_windows(arg) }
 
         link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
         link_args << "/INCREMENTAL:NO /STACK:0x800000"

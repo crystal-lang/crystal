@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 {% if flag?(:musl) %}
   # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
@@ -8,7 +8,8 @@ require "spec"
   {% skip_file %}
 {% end %}
 
-describe Thread do
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread do
   it "allows passing an argumentless fun to execute" do
     a = 0
     thread = Thread.new { a = 1; 10 }

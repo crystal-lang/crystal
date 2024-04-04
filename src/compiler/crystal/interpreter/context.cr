@@ -75,7 +75,7 @@ class Crystal::Repl::Context
     end
 
     # This is a stack pool, for checkout_stack.
-    @stack_pool = [] of UInt8*
+    @stack_pool = Fiber::StackPool.new(protect: false)
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
@@ -106,16 +106,12 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    if @stack_pool.empty?
-      stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
-    else
-      stack = @stack_pool.pop
-    end
+    stack, _ = @stack_pool.checkout
 
     begin
-      yield stack
+      yield stack.as(UInt8*)
     ensure
-      @stack_pool.push(stack)
+      @stack_pool.release(stack)
     end
   end
 
@@ -405,6 +401,13 @@ class Crystal::Repl::Context
     # with the compiler's own GC.
     # (MSVC doesn't seem to have this issue)
     args.delete("-lgc")
+
+    # recreate the MSVC developer prompt environment, similar to how compiled
+    # code does it in `Compiler#linker_command`
+    if program.has_flag?("msvc")
+      _, link_args = program.msvc_compiler_and_flags
+      args.concat(link_args)
+    end
 
     Crystal::Loader.parse(args, dll_search_paths: dll_search_paths).tap do |loader|
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:

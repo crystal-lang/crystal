@@ -75,7 +75,7 @@ describe HTTP::Server do
     sleep 0.1
     server.close
 
-    ch.receive.end?.should be_true
+    ch.receive.should eq SpecChannelStatus::End
   end
 
   it "reuses the TCP port (SO_REUSEPORT)" do

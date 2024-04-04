@@ -268,6 +268,12 @@ lib LibCrypto
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
 
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    ERR_SYSTEM_FLAG = Int32::MAX.to_u32 + 1
+    ERR_SYSTEM_MASK = Int32::MAX.to_u32
+    ERR_REASON_MASK = 0x7FFFFF
+  {% end %}
+
   struct MD5Context
     a : UInt
     b : UInt

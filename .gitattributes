@@ -18,8 +18,6 @@ src/openssl/ssl/defaults.cr linguist-generated
 src/string/grapheme/properties.cr linguist-generated
 # produced by scripts/generate_unicode_data.cr
 src/unicode/data.cr linguist-generated
-# produced by spec/generate_interpreter_spec.sh
-spec/interpreter_std_spec.cr linguist-generated
 # produced by scripts/generate_grapheme_break_specs.cr
 spec/std/string/grapheme_break_spec.cr linguist-generated
 # produced by spec/generate_wasm32_spec.sh

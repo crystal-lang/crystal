@@ -33,7 +33,7 @@ module Reply
       history.verify(ENTRIES, index: 3)
     end
 
-    it "submit dupplicate entry" do
+    it "submit duplicate entry" do
       history = SpecHelper.history(with: ENTRIES)
 
       history.verify(ENTRIES, index: 3)
