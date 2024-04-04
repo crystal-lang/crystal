@@ -65,7 +65,7 @@ struct String::Formatter(A)
     end
   end
 
-  private def consume_substitution
+  private def consume_substitution : Nil
     key = consume_substitution_key '}'
     # note: "`@io << (arg_at(key))` has no type" without this `arg` variable
     arg = arg_at(key)
