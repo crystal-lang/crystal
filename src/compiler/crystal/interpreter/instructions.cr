@@ -278,6 +278,7 @@ require "./repl"
       u128_to_f32: {
         pop_values: [value : UInt128],
         push:       true,
+        overflow:   true,
         code:       value.to_f32,
       },
       u128_to_f64: {
