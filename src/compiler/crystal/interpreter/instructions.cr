@@ -286,6 +286,11 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      u128_to_f32_bang: {
+        pop_values: [value : UInt128],
+        push:       true,
+        code:       value.to_f32!,
+      },
       f32_to_f64: {
         pop_values: [value : Float32],
         push:       true,
