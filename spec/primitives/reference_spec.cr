@@ -38,7 +38,7 @@ describe "Primitives: reference" do
   end
 
   # TODO: implement in the interpreter
-  pending_interpreted ".pre_initialize" do
+  pending_interpreted describe: ".pre_initialize" do
     it "doesn't fail on complex ivar initializer if value is discarded (#14325)" do
       bar_buffer = GC.malloc(instance_sizeof(Outer))
       Outer.pre_initialize(bar_buffer)
@@ -89,7 +89,7 @@ describe "Primitives: reference" do
     end
   end
 
-  pending_interpreted ".unsafe_construct" do
+  pending_interpreted describe: ".unsafe_construct" do
     it "constructs an object in-place" do
       foo_buffer = GC.malloc(instance_sizeof(Foo))
       foo = Foo.unsafe_construct(foo_buffer, 123_i64)
