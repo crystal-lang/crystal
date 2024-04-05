@@ -97,6 +97,7 @@ _Feature freeze: 2024-03-26_
 #### stdlib
 
 - *(collection)* Fix `Hash#update` when default block also adds given key ([#14417], thanks @HertzDevil)
+- *(collection)* Fix `Hash#put_if_absent` putting duplicate keys ([#14427], thanks @HertzDevil)
 - *(concurrency)* Reserve stack space on non-main threads for crash recovery on Windows ([#14187], thanks @HertzDevil)
 - *(concurrency)* Add memory barrier to `Mutex#unlock` on aarch64 ([#14272], thanks @jgaskins)
 - *(concurrency)* init schedulers before we spawn fibers ([#14339], thanks @ysbaddaden)
@@ -114,8 +115,10 @@ _Feature freeze: 2024-03-26_
 - *(serialization)* Always call `LibXML.xmlInitParser` when requiring XML libraries ([#14191], thanks @HertzDevil)
 - *(system)* Fix macro `Crystal::LIBRARY_PATH.split` when cross-compiling ([#14330], thanks @HertzDevil)
 - *(system)* Add `SA_RESTART` flag to sigaction syscall ([#14351], thanks @ysbaddaden)
+- *(text)* Add `Nil` return type restriction to `String::Formatter#consume_substitution` ([#14430], thanks @straight-shoota)
 
 [#14417]: https://github.com/crystal-lang/crystal/pull/14417
+[#14427]: https://github.com/crystal-lang/crystal/pull/14427
 [#14187]: https://github.com/crystal-lang/crystal/pull/14187
 [#14272]: https://github.com/crystal-lang/crystal/pull/14272
 [#14339]: https://github.com/crystal-lang/crystal/pull/14339
@@ -133,6 +136,7 @@ _Feature freeze: 2024-03-26_
 [#14191]: https://github.com/crystal-lang/crystal/pull/14191
 [#14330]: https://github.com/crystal-lang/crystal/pull/14330
 [#14351]: https://github.com/crystal-lang/crystal/pull/14351
+[#14430]: https://github.com/crystal-lang/crystal/pull/14430
 
 #### compiler
 
@@ -245,16 +249,20 @@ _Feature freeze: 2024-03-26_
 #### stdlib
 
 - *(collection)* Fix docs `:inherit:` pragma for `Indexable#first` ([#14296], thanks @lachlan)
+- *(collection)* Fix `Hash.new(initial_capacity, &block)` doc to use relevant example ([#14429], thanks @lachlan)
 - *(crypto)* Improve OpenSSL module documentation ([#14410], thanks @summer-alice)
 - *(numeric)* Enhance docs for `Int#downto` ([#14176], thanks @jkthorne)
 - *(runtime)* Document builtin constants ([#14276], thanks @straight-shoota)
+- *(runtime)* Fix `Pointer#+(offset: Int64)` doc parameter name typo ([#14428], thanks @lachlan)
 - *(system)* Fix typo in Signal docs ([#14400], thanks @joshrickard)
 - *(text)* Fix `Colorize.enabled?`'s documentation ([#14258], thanks @HertzDevil)
 
 [#14296]: https://github.com/crystal-lang/crystal/pull/14296
+[#14429]: https://github.com/crystal-lang/crystal/pull/14429
 [#14410]: https://github.com/crystal-lang/crystal/pull/14410
 [#14176]: https://github.com/crystal-lang/crystal/pull/14176
 [#14276]: https://github.com/crystal-lang/crystal/pull/14276
+[#14428]: https://github.com/crystal-lang/crystal/pull/14428
 [#14400]: https://github.com/crystal-lang/crystal/pull/14400
 [#14258]: https://github.com/crystal-lang/crystal/pull/14258
 
@@ -263,15 +271,19 @@ _Feature freeze: 2024-03-26_
 #### stdlib
 
 - Fix spelling in `spec/std/uri/params_spec.cr` ([#14302], thanks @jbampton)
+- *(files)* Move some `IO::FileDescriptor` specs to the correct file ([#14431], thanks @HertzDevil)
 - *(files)* Refactor expectations with `SpecChannelStatus` to be explicit ([#14378], thanks @straight-shoota)
 - *(system)* Always preserve the environment for specs that modify `ENV` ([#14211], thanks @HertzDevil)
 - *(system)* Ensure Windows time zone specs request `SeTimeZonePrivilege` properly ([#14297], thanks @HertzDevil)
+- *(text)* Add single source of UTF-8 test sequences for specs ([#14433], thanks @HertzDevil)
 - *(time)* Fix requires for `time/time_spec.cr` and `time/format_spec.cr` ([#14385], thanks @HertzDevil)
 
 [#14302]: https://github.com/crystal-lang/crystal/pull/14302
+[#14431]: https://github.com/crystal-lang/crystal/pull/14431
 [#14378]: https://github.com/crystal-lang/crystal/pull/14378
 [#14211]: https://github.com/crystal-lang/crystal/pull/14211
 [#14297]: https://github.com/crystal-lang/crystal/pull/14297
+[#14433]: https://github.com/crystal-lang/crystal/pull/14433
 [#14385]: https://github.com/crystal-lang/crystal/pull/14385
 
 #### compiler
