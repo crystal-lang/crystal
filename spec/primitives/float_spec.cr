@@ -1,10 +1,12 @@
 require "spec"
 require "../support/number"
+require "../support/interpreted"
 
 describe "Primitives: Float" do
+  # TODO: NaN comparisons are not supported in interpreted code yet (#13909)
   {% for op in %w(== != < <= > >=) %}
     {% unequal = (op == "!=") %}
-    describe {{ "##{op.id}" }} do
+    pending_interpreted {{ "##{op.id}" }} do
       {% for float in BUILTIN_FLOAT_TYPES %}
         {% for float2 in BUILTIN_FLOAT_TYPES %}
           it {{ "returns #{unequal} for #{float}::NAN #{op.id} #{float2}::NAN" }} do
