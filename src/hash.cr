@@ -266,14 +266,21 @@ class Hash(K, V)
   # Creates a new empty `Hash` with a *block* that handles missing keys.
   #
   # ```
-  # inventory = Hash(String, Int32).new(0)
-  # inventory["socks"] = 3
-  # inventory["pickles"] # => 0
+  # hash = Hash(String, String).new do |hash, key|
+  #   "some default value"
+  # end
+  #
+  # hash.size           # => 0
+  # hash["foo"] = "bar" # => "bar"
+  # hash.size           # => 1
+  # hash["baz"]         # => "some default value"
+  # hash.size           # => 1
+  # hash                # => {"foo" => "bar"}
   # ```
   #
   # WARNING: When the default block is invoked on a missing key, its return
   # value is *not* implicitly stored into the hash under that key. If you want
-  # that behaviour, you need to put it explicitly:
+  # that behaviour, you need to store it explicitly:
   #
   # ```
   # hash = Hash(String, Int32).new do |hash, key|
