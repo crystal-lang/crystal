@@ -738,7 +738,7 @@ class Crystal::Repl::Compiler
     in {.u16?, .i32?}   then zero_extend(6, node: node)
     in {.u16?, .i64?}   then zero_extend(6, node: node)
     in {.u16?, .i128?}  then zero_extend(14, node: node)
-    in {.u16?, .u8?}    then nop
+    in {.u16?, .u8?}    then checked ? (zero_extend(6, node: node); u64_to_u8(node: node)) : nop
     in {.u16?, .u16?}   then nop
     in {.u16?, .u32?}   then zero_extend(6, node: node)
     in {.u16?, .u64?}   then zero_extend(6, node: node)
