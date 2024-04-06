@@ -1358,7 +1358,7 @@ class Crystal::Repl::Compiler
     LessThan
     Unordered
 
-    def self.from_method?(op : String) : self
+    def self.from_method?(op : String)
       case op
       when "==" then Equal
       when "!=" then LessThan | GreaterThan | Unordered
