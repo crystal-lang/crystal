@@ -1,4 +1,6 @@
+require "c_types"
+
 lib LibC
-  alias IntPtrT = Int64
-  alias UIntPtrT = UInt64
+  alias IntPtrT = CTypes::IntPtrT
+  alias UIntPtrT = CTypes::UIntPtrT
 end
