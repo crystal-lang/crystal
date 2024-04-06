@@ -1,6 +1,35 @@
 require "spec"
 require "spec/helpers/iterate"
 
+module SomeInterface; end
+
+private record One do
+  include SomeInterface
+end
+
+private record Two do
+  include SomeInterface
+end
+
+private struct InterfaceIndexable(T, S)
+  include Indexable(T)
+
+  @values = [One.new, Two.new]
+
+  def size : Int32
+    S
+  end
+
+  def unsafe_fetch(index : Int) : T
+    case index
+    when 0 then @values[0]
+    when 1 then @values[1]
+    else
+      raise ""
+    end
+  end
+end
+
 private class SafeIndexable
   include Indexable(Int32)
 
@@ -816,6 +845,12 @@ describe Indexable do
     describe "n > size (#14088)" do
       it_iterates "#each_repeated_combination", [[1, 1, 1], [1, 1, 2], [1, 2, 2], [2, 2, 2]], SafeIndexable.new(2, 1).each_repeated_combination(3)
       it_iterates "#each_repeated_combination", [[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 2, 2], [1, 2, 2, 2], [2, 2, 2, 2]], SafeIndexable.new(2, 1).each_repeated_combination(4)
+    end
+  end
+
+  describe "#to_a" do
+    it "without a block of an interface type" do
+      InterfaceIndexable(SomeInterface, 2).new.to_a.should eq [One.new, Two.new]
     end
   end
 end
