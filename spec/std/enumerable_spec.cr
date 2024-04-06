@@ -1479,6 +1479,10 @@ describe "Enumerable" do
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
         )
       end
+
+      it "tallies an interface type" do
+        InterfaceEnumerable.new.tally.should eq({One.new => 1, Two.new => 1})
+      end
     end
   end
 

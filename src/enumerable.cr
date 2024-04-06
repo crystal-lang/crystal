@@ -1970,7 +1970,7 @@ module Enumerable(T)
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    tally_by(&.itself)
+    tally_by(Hash(T, Int32).new, &.itself)
   end
 
   # Tallies the collection. Accepts a *hash* to count occurrences.
