@@ -141,24 +141,32 @@ _Feature freeze: 2024-03-26_
 #### compiler
 
 - *(cli)* `build --no-codegen` output file name error ([#14239], thanks @apainintheneck)
+- *(codegen)* Use separate names for constant and class variable internals ([#14445], thanks @HertzDevil)
 - *(codegen)* Do not handle inline assembly with `"intel"` flag as AT&T syntax ([#14264], thanks @HertzDevil)
 - *(codegen)* **[breaking]** Respect alignments above `alignof(Void*)` inside union values ([#14279], thanks @HertzDevil)
 - *(codegen)* Fix stack corruption in union-to-union casts ([#14289], thanks @HertzDevil)
 - *(codegen)* Don't copy DLL to output directory if file already exists ([#14315], thanks @HertzDevil)
 - *(codegen)* Fix `Proc#call` that takes and returns large extern structs by value ([#14323], thanks @HertzDevil)
 - *(codegen)* Never discard ivar initializer inside `.allocate` and `.pre_initialize` ([#14337], thanks @HertzDevil)
+- *(interpreter)* Handle NaN comparisons in the interpreter ([#14441], thanks @HertzDevil)
+- *(interpreter)* Check `UInt16#to_u8` for overflow in the interpreter ([#14436], thanks @HertzDevil)
+- *(interpreter)* Fix interpreter internal overflow for `UInt128#to_f32` and `#to_f32!` ([#14437], thanks @HertzDevil)
 - *(interpreter)* fix fiber's resumable property ([#14252], thanks @ysbaddaden)
 - *(interpreter)* Ensure all constants only have one initializer in the interpreter ([#14381], thanks @HertzDevil)
 - *(parser)* Fix name locations of `FunDef` and `External` nodes ([#14267], thanks @HertzDevil)
 - *(parser)* Fix end locations of `Alias` nodes ([#14271], thanks @HertzDevil)
 
 [#14239]: https://github.com/crystal-lang/crystal/pull/14239
+[#14445]: https://github.com/crystal-lang/crystal/pull/14445
 [#14264]: https://github.com/crystal-lang/crystal/pull/14264
 [#14279]: https://github.com/crystal-lang/crystal/pull/14279
 [#14289]: https://github.com/crystal-lang/crystal/pull/14289
 [#14315]: https://github.com/crystal-lang/crystal/pull/14315
 [#14323]: https://github.com/crystal-lang/crystal/pull/14323
 [#14337]: https://github.com/crystal-lang/crystal/pull/14337
+[#14441]: https://github.com/crystal-lang/crystal/pull/14441
+[#14436]: https://github.com/crystal-lang/crystal/pull/14436
+[#14437]: https://github.com/crystal-lang/crystal/pull/14437
 [#14252]: https://github.com/crystal-lang/crystal/pull/14252
 [#14381]: https://github.com/crystal-lang/crystal/pull/14381
 [#14267]: https://github.com/crystal-lang/crystal/pull/14267
@@ -166,10 +174,12 @@ _Feature freeze: 2024-03-26_
 
 #### tools
 
+- *(formatter)* Do not remove the whitespace in `foo ()` when formatting ([#14439], thanks @HertzDevil)
 - *(formatter)* Fix format for `asm` with comments ([#14278], thanks @straight-shoota)
 - *(formatter)* Fix formatter for white space in `a.[b]` syntax ([#14346], thanks @straight-shoota)
 - *(formatter)* Fix formatter on call without parentheses followed by doc comment ([#14354], thanks @straight-shoota)
 
+[#14439]: https://github.com/crystal-lang/crystal/pull/14439
 [#14278]: https://github.com/crystal-lang/crystal/pull/14278
 [#14346]: https://github.com/crystal-lang/crystal/pull/14346
 [#14354]: https://github.com/crystal-lang/crystal/pull/14354
@@ -271,16 +281,16 @@ _Feature freeze: 2024-03-26_
 #### stdlib
 
 - Fix spelling in `spec/std/uri/params_spec.cr` ([#14302], thanks @jbampton)
-- *(files)* Move some `IO::FileDescriptor` specs to the correct file ([#14431], thanks @HertzDevil)
 - *(files)* Refactor expectations with `SpecChannelStatus` to be explicit ([#14378], thanks @straight-shoota)
+- *(files)* Move some `IO::FileDescriptor` specs to the correct file ([#14431], thanks @HertzDevil)
 - *(system)* Always preserve the environment for specs that modify `ENV` ([#14211], thanks @HertzDevil)
 - *(system)* Ensure Windows time zone specs request `SeTimeZonePrivilege` properly ([#14297], thanks @HertzDevil)
 - *(text)* Add single source of UTF-8 test sequences for specs ([#14433], thanks @HertzDevil)
 - *(time)* Fix requires for `time/time_spec.cr` and `time/format_spec.cr` ([#14385], thanks @HertzDevil)
 
 [#14302]: https://github.com/crystal-lang/crystal/pull/14302
-[#14431]: https://github.com/crystal-lang/crystal/pull/14431
 [#14378]: https://github.com/crystal-lang/crystal/pull/14378
+[#14431]: https://github.com/crystal-lang/crystal/pull/14431
 [#14211]: https://github.com/crystal-lang/crystal/pull/14211
 [#14297]: https://github.com/crystal-lang/crystal/pull/14297
 [#14433]: https://github.com/crystal-lang/crystal/pull/14433
@@ -313,6 +323,7 @@ _Feature freeze: 2024-03-26_
 - Make repository configurable for reusable `github-changelog` ([#14407], thanks @straight-shoota)
 - Use link refs for PR links in changelog ([#14406], thanks @straight-shoota)
 - Implement pagination for GitHub API in `github-changelog` helper ([#14412], thanks @straight-shoota)
+- Add `scripts/update-changelog.sh` ([#14231], thanks @straight-shoota)
 - Change some line endings from CRLF to LF ([#14299], thanks @HertzDevil)
 - Update copyright year in NOTICE.md ([#14329], thanks @HertzDevil)
 - Install system dependencies in the Windows GUI installer ([#14328], thanks @HertzDevil)
@@ -340,6 +351,7 @@ _Feature freeze: 2024-03-26_
 [#14407]: https://github.com/crystal-lang/crystal/pull/14407
 [#14406]: https://github.com/crystal-lang/crystal/pull/14406
 [#14412]: https://github.com/crystal-lang/crystal/pull/14412
+[#14231]: https://github.com/crystal-lang/crystal/pull/14231
 [#14299]: https://github.com/crystal-lang/crystal/pull/14299
 [#14329]: https://github.com/crystal-lang/crystal/pull/14329
 [#14328]: https://github.com/crystal-lang/crystal/pull/14328
