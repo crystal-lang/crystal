@@ -11,14 +11,12 @@ private record Two do
   include SomeInterface
 end
 
-private struct InterfaceEnumerable(T)
-  include Enumerable(T)
-
-  @values = [One.new, Two.new]
+private struct InterfaceEnumerable
+  include Enumerable(SomeInterface)
 
   def each(&)
-    yield @values[0]
-    yield @values[1]
+    yield One.new
+    yield Two.new
   end
 end
 
@@ -162,7 +160,7 @@ describe "Enumerable" do
     end
 
     it "without a block of an interface type" do
-      InterfaceEnumerable(SomeInterface).new.to_a.should eq [One.new, Two.new]
+      InterfaceEnumerable.new.to_a.should eq [One.new, Two.new]
     end
   end
 

@@ -11,19 +11,17 @@ private record Two do
   include SomeInterface
 end
 
-private struct InterfaceIndexable(T, S)
-  include Indexable(T)
+private struct InterfaceIndexable
+  include Indexable(SomeInterface)
 
-  @values = [One.new, Two.new]
-
-  def size : Int32
-    S
+  def size
+    2
   end
 
-  def unsafe_fetch(index : Int) : T
+  def unsafe_fetch(index : Int) : SomeInterface
     case index
-    when 0 then @values[0]
-    when 1 then @values[1]
+    when 0 then One.new
+    when 1 then Two.new
     else
       raise ""
     end
@@ -850,7 +848,7 @@ describe Indexable do
 
   describe "#to_a" do
     it "without a block of an interface type" do
-      InterfaceIndexable(SomeInterface, 2).new.to_a.should eq [One.new, Two.new]
+      InterfaceIndexable.new.to_a.should eq [One.new, Two.new]
     end
   end
 end
