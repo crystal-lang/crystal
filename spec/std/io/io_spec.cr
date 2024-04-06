@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "../../support/channel"
+require "../../support/string"
 require "spec/helpers/iterate"
 
 require "socket"
@@ -338,29 +339,13 @@ describe IO do
       io.read_char.should eq('界')
       io.read_char.should be_nil
 
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70, 0x00, 0x00]).read_char }
+      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        SimpleIOMemory.new(Bytes{{ bytes }}).read_char.should eq({{ char }})
+      {% end %}
 
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8, 0x00, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81, 0x00, 0x00, 0x00]).read_char }
-
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf, 0x00]).read_char }
-
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x80, 0x80, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x8f, 0xbf, 0xbf]).read_char }
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes{{ bytes }}).read_char }
+      {% end %}
     end
 
     it "reads byte" do
