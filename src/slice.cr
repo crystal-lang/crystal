@@ -272,7 +272,7 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
+    start, count = Indexable.range_to_index_and_count(range, size) || return nil
     self[start, count]?
   end
 
