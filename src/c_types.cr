@@ -129,8 +129,9 @@ module CTypes
 
   # The C `size_t` type.
   #
-  # Guaranteed to have at least 16 bits. Equivalent to `UInt32` on 32-bit
-  # targets, `UInt64` on 64-bit targets.
+  # Large enough to hold the value of `sizeof` for any type. Guaranteed to have
+  # at least 16 bits. Equivalent to `UInt32` on 32-bit targets, `UInt64` on
+  # 64-bit targets.
   {% if flag?(:bits32) %}
     alias SizeT = UInt32
   {% elsif flag?(:bits64) %}
