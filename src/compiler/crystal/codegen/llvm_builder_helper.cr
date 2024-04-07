@@ -44,10 +44,8 @@ module Crystal
         value
       when .positive?
         builder.trunc(value, size_t)
-      when .negative?
-        builder.zext(value, size_t)
       else
-        raise "unreachable"
+        builder.zext(value, size_t)
       end
     end
 
