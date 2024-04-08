@@ -3334,8 +3334,8 @@ class String
   # ```
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
-      return to_slice.fast_index(search.ord.to_u8, offset)
+    if single_byte_optimizable?
+      return search.ascii? ? to_slice.fast_index(search.ord.to_u8, offset) : nil
     end
 
     offset += size if offset < 0
@@ -3445,8 +3445,8 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
-      return to_slice.rindex(search.ord.to_u8, offset)
+    if single_byte_optimizable?
+      return search.ascii? ? to_slice.rindex(search.ord.to_u8, offset) : nil
     end
 
     offset += size if offset < 0
