@@ -264,6 +264,7 @@ _Feature freeze: 2024-03-26_
 - *(numeric)* Enhance docs for `Int#downto` ([#14176], thanks @jkthorne)
 - *(runtime)* Document builtin constants ([#14276], thanks @straight-shoota)
 - *(runtime)* Fix `Pointer#+(offset: Int64)` doc parameter name typo ([#14428], thanks @lachlan)
+- *(runtime)* Improve documentation for `at_exit` handler conditions ([#14426], thanks @straight-shoota)
 - *(system)* Fix typo in Signal docs ([#14400], thanks @joshrickard)
 - *(text)* Fix `Colorize.enabled?`'s documentation ([#14258], thanks @HertzDevil)
 
@@ -273,6 +274,7 @@ _Feature freeze: 2024-03-26_
 [#14176]: https://github.com/crystal-lang/crystal/pull/14176
 [#14276]: https://github.com/crystal-lang/crystal/pull/14276
 [#14428]: https://github.com/crystal-lang/crystal/pull/14428
+[#14426]: https://github.com/crystal-lang/crystal/pull/14426
 [#14400]: https://github.com/crystal-lang/crystal/pull/14400
 [#14258]: https://github.com/crystal-lang/crystal/pull/14258
 
