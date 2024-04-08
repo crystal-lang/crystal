@@ -2536,7 +2536,7 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    raise IndexError.new unless byte_index
+    raise IndexError.new unless byte_index && byte_index < bytesize
 
     width = char_bytesize_at(byte_index)
     replacement_width = replacement.bytesize

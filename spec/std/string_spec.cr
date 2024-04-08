@@ -1694,6 +1694,18 @@ describe "String" do
       "あいうえお".sub(2, "けくこ").should eq("あいけくこえお")
     end
 
+    it "raises if index is out of bounds" do
+      expect_raises(IndexError) { "hello".sub(5, 'x') }
+      expect_raises(IndexError) { "hello".sub(6, "") }
+      expect_raises(IndexError) { "hello".sub(-6, 'x') }
+      expect_raises(IndexError) { "hello".sub(-7, "") }
+
+      expect_raises(IndexError) { "あいうえお".sub(5, 'x') }
+      expect_raises(IndexError) { "あいうえお".sub(6, "") }
+      expect_raises(IndexError) { "あいうえお".sub(-6, 'x') }
+      expect_raises(IndexError) { "あいうえお".sub(-7, "") }
+    end
+
     it "subs range with char" do
       "hello".sub(1..2, 'a').should eq("halo")
     end
