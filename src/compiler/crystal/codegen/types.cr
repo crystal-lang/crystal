@@ -185,7 +185,7 @@ module Crystal
     property? no_init_flag = false
 
     def initialized_llvm_name
-      "#{llvm_name}:init"
+      "#{llvm_name}:const_init"
     end
 
     # Returns `true` if this constant's value is a simple literal, like
