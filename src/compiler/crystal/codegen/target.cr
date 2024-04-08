@@ -75,19 +75,6 @@ class Crystal::Codegen::Target
     end
   end
 
-  def alignment_byte_width
-    case @architecture
-    when "aarch64", "x86_64"
-      8
-    when "arm", "i386", "wasm32"
-      4
-    when "avr"
-      1
-    else
-      raise "BUG: unknown Target#alignment_byte_width for #{@architecture} target architecture"
-    end
-  end
-
   def os_name
     case self
     when .macos?

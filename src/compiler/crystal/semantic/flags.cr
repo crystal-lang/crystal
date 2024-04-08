@@ -29,10 +29,6 @@ class Crystal::Program
     codegen_target.size_bit_width
   end
 
-  def alignment_byte_width
-    codegen_target.alignment_byte_width
-  end
-
   private def flags_for_target(target)
     flags = Set(String).new
 
