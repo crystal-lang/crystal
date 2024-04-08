@@ -266,14 +266,21 @@ class Hash(K, V)
   # Creates a new empty `Hash` with a *block* that handles missing keys.
   #
   # ```
-  # inventory = Hash(String, Int32).new(0)
-  # inventory["socks"] = 3
-  # inventory["pickles"] # => 0
+  # hash = Hash(String, String).new do |hash, key|
+  #   "some default value"
+  # end
+  #
+  # hash.size           # => 0
+  # hash["foo"] = "bar" # => "bar"
+  # hash.size           # => 1
+  # hash["baz"]         # => "some default value"
+  # hash.size           # => 1
+  # hash                # => {"foo" => "bar"}
   # ```
   #
   # WARNING: When the default block is invoked on a missing key, its return
   # value is *not* implicitly stored into the hash under that key. If you want
-  # that behaviour, you need to put it explicitly:
+  # that behaviour, you need to store it explicitly:
   #
   # ```
   # hash = Hash(String, Int32).new do |hash, key|
@@ -416,56 +423,6 @@ class Hash(K, V)
         # Otherwise we have to keep looking...
         index = next_index(index)
       end
-    end
-  end
-
-  # Inserts a key-value pair. Assumes that the given key doesn't exist.
-  private def insert_new(key, value)
-    # Unless otherwise noted, this body should be identical to `#upsert`
-
-    if @entries.null?
-      @indices_size_pow2 = 3
-      @entries = malloc_entries(4)
-    end
-
-    hash = key_hash(key)
-
-    if @indices.null?
-      # don't call `#update_linear_scan` here
-
-      if !entries_full?
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-
-      resize
-
-      if @indices.null?
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-    end
-
-    index = fit_in_indices(hash)
-
-    while true
-      entry_index = get_index(index)
-
-      if entry_index == -1
-        if entries_full?
-          resize
-          index = fit_in_indices(hash)
-          next
-        end
-
-        set_index(index, entries_size)
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-
-      # don't call `#get_entry` and `#entry_matches?` here
-
-      index = next_index(index)
     end
   end
 
@@ -1126,7 +1083,7 @@ class Hash(K, V)
       entry.value
     else
       value = yield key
-      insert_new(key, value)
+      upsert(key, value)
       value
     end
   end
@@ -1163,7 +1120,7 @@ class Hash(K, V)
       entry.value
     elsif block = @block
       default_value = block.call(self, key)
-      insert_new(key, yield default_value)
+      upsert(key, yield default_value)
       default_value
     else
       raise KeyError.new "Missing hash key: #{key.inspect}"

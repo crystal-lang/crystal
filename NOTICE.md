@@ -1,6 +1,6 @@
 # Crystal Programming Language
 
-Copyright 2012-2023 Manas Technology Solutions.
+Copyright 2012-2024 Manas Technology Solutions.
 
 This product includes software developed at Manas Technology Solutions (<https://manas.tech/>).
 

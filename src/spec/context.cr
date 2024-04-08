@@ -178,10 +178,12 @@ module Spec
 
     def finish(elapsed_time, aborted = false)
       Spec.cli.formatters.each(&.finish(elapsed_time, aborted))
-      Spec.cli.formatters.each(&.print_results(elapsed_time, aborted))
+      if Spec.cli.formatters.any?(&.should_print_summary?)
+        print_summary(elapsed_time, aborted)
+      end
     end
 
-    def print_results(elapsed_time, aborted = false)
+    def print_summary(elapsed_time, aborted = false)
       pendings = results_for(:pending)
       unless pendings.empty?
         puts

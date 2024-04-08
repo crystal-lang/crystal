@@ -1,4 +1,5 @@
 require "file_utils"
+require "./interpreted"
 {% if flag?(:msvc) %}
   require "crystal/system/win32/visual_studio"
 {% end %}
@@ -47,6 +48,9 @@ def with_temp_executable(name, file = __FILE__, &)
 end
 
 def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
+  # can't use backtick in interpreted code (#12241)
+  pending_interpreted! "Unable to compile C code in interpreted code"
+
   obj_ext = {{ flag?(:msvc) ? ".obj" : ".o" }}
   with_tempfile("#{filename}.c", "#{filename}#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)

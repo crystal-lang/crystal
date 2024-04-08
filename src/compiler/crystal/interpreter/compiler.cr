@@ -3367,6 +3367,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions.instructions << value
   end
 
+  private def append(value : Enum)
+    append(value.value)
+  end
+
   # Many times we need to jump or branch to an instruction for which we don't
   # know the offset/index yet.
   # In those cases we generate a jump to zero, but remember where that "zero"

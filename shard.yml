@@ -1,0 +1,23 @@
+name: crystal
+version: 1.12.0-dev
+
+authors:
+- Crystal Core Team <crystal@manas.tech>
+
+description: |
+  The Crystal standard library and compiler.
+
+crystal: ">= 1.0"
+
+dependencies:
+  markd:
+    github: icyleaf/markd
+  reply:
+    github: I3oris/reply
+    commit: 90a7eb5a76048884d5d56bf6b9369f1e67fdbcd7
+
+license: Apache-2.0
+
+repository: https://github.com/crystal-lang/crystal
+homepage: https://crystal-lang.org/
+documentation: https://crystal-lang.org/docs
