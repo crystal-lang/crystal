@@ -815,7 +815,7 @@ class Crystal::Repl::Compiler
     in {.u128?, .u32?}  then checked ? u128_to_u32(node: node) : pop(8, node: node)
     in {.u128?, .u64?}  then checked ? u128_to_u64(node: node) : pop(8, node: node)
     in {.u128?, .u128?} then nop
-    in {.u128?, .f32?}  then u128_to_f32(node: node)
+    in {.u128?, .f32?}  then checked ? u128_to_f32(node: node) : u128_to_f32_bang(node: node)
     in {.u128?, .f64?}  then u128_to_f64(node: node)
     in {.f32?, .i8?}    then f32_to_f64(node: node); checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
     in {.f32?, .i16?}   then f32_to_f64(node: node); checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
