@@ -1257,7 +1257,7 @@ class Crystal::CodeGenVisitor
     when CharType
       inst.alignment = 4
     else
-      inst.alignment = @program.bits64? ? 8 : 4
+      inst.alignment = @program.alignment_byte_width
     end
   end
 
