@@ -141,48 +141,48 @@ _Feature freeze: 2024-03-26_
 #### compiler
 
 - *(cli)* `build --no-codegen` output file name error ([#14239], thanks @apainintheneck)
-- *(codegen)* Use separate names for constant and class variable internals ([#14445], thanks @HertzDevil)
 - *(codegen)* Do not handle inline assembly with `"intel"` flag as AT&T syntax ([#14264], thanks @HertzDevil)
 - *(codegen)* **[breaking]** Respect alignments above `alignof(Void*)` inside union values ([#14279], thanks @HertzDevil)
 - *(codegen)* Fix stack corruption in union-to-union casts ([#14289], thanks @HertzDevil)
 - *(codegen)* Don't copy DLL to output directory if file already exists ([#14315], thanks @HertzDevil)
 - *(codegen)* Fix `Proc#call` that takes and returns large extern structs by value ([#14323], thanks @HertzDevil)
 - *(codegen)* Never discard ivar initializer inside `.allocate` and `.pre_initialize` ([#14337], thanks @HertzDevil)
+- *(codegen)* Use separate names for constant and class variable internals ([#14445], thanks @HertzDevil)
+- *(interpreter)* fix fiber's resumable property ([#14252], thanks @ysbaddaden)
+- *(interpreter)* Ensure all constants only have one initializer in the interpreter ([#14381], thanks @HertzDevil)
 - *(interpreter)* Handle NaN comparisons in the interpreter ([#14441], thanks @HertzDevil)
 - *(interpreter)* Check `UInt16#to_u8` for overflow in the interpreter ([#14436], thanks @HertzDevil)
 - *(interpreter)* Fix interpreter internal overflow for `UInt128#to_f32` and `#to_f32!` ([#14437], thanks @HertzDevil)
-- *(interpreter)* fix fiber's resumable property ([#14252], thanks @ysbaddaden)
-- *(interpreter)* Ensure all constants only have one initializer in the interpreter ([#14381], thanks @HertzDevil)
 - *(parser)* Fix name locations of `FunDef` and `External` nodes ([#14267], thanks @HertzDevil)
 - *(parser)* Fix end locations of `Alias` nodes ([#14271], thanks @HertzDevil)
 
 [#14239]: https://github.com/crystal-lang/crystal/pull/14239
-[#14445]: https://github.com/crystal-lang/crystal/pull/14445
 [#14264]: https://github.com/crystal-lang/crystal/pull/14264
 [#14279]: https://github.com/crystal-lang/crystal/pull/14279
 [#14289]: https://github.com/crystal-lang/crystal/pull/14289
 [#14315]: https://github.com/crystal-lang/crystal/pull/14315
 [#14323]: https://github.com/crystal-lang/crystal/pull/14323
 [#14337]: https://github.com/crystal-lang/crystal/pull/14337
+[#14445]: https://github.com/crystal-lang/crystal/pull/14445
+[#14252]: https://github.com/crystal-lang/crystal/pull/14252
+[#14381]: https://github.com/crystal-lang/crystal/pull/14381
 [#14441]: https://github.com/crystal-lang/crystal/pull/14441
 [#14436]: https://github.com/crystal-lang/crystal/pull/14436
 [#14437]: https://github.com/crystal-lang/crystal/pull/14437
-[#14252]: https://github.com/crystal-lang/crystal/pull/14252
-[#14381]: https://github.com/crystal-lang/crystal/pull/14381
 [#14267]: https://github.com/crystal-lang/crystal/pull/14267
 [#14271]: https://github.com/crystal-lang/crystal/pull/14271
 
 #### tools
 
-- *(formatter)* Do not remove the whitespace in `foo ()` when formatting ([#14439], thanks @HertzDevil)
 - *(formatter)* Fix format for `asm` with comments ([#14278], thanks @straight-shoota)
 - *(formatter)* Fix formatter for white space in `a.[b]` syntax ([#14346], thanks @straight-shoota)
 - *(formatter)* Fix formatter on call without parentheses followed by doc comment ([#14354], thanks @straight-shoota)
+- *(formatter)* Do not remove the whitespace in `foo ()` when formatting ([#14439], thanks @HertzDevil)
 
-[#14439]: https://github.com/crystal-lang/crystal/pull/14439
 [#14278]: https://github.com/crystal-lang/crystal/pull/14278
 [#14346]: https://github.com/crystal-lang/crystal/pull/14346
 [#14354]: https://github.com/crystal-lang/crystal/pull/14354
+[#14439]: https://github.com/crystal-lang/crystal/pull/14439
 
 ### Chores
 
