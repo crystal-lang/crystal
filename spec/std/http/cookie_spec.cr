@@ -132,8 +132,8 @@ module HTTP
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
         invalid_values = {
-          '"', ',', ';', '\\',   # invalid printable ascii characters
-          ' ', '\r', '\t', '\n', # non-printable ascii characters
+          '"', ',', ';', '\\', # invalid printable ascii characters
+          '\r', '\t', '\n',    # non-printable ascii characters
         }.map { |c| "foo#{c}bar" }
 
         invalid_values.each do |invalid_value|
@@ -235,12 +235,6 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value")
       end
 
-      it "parse_set_cookie with space" do
-        cookie = parse_set_cookie("key=value; path=/test")
-        parse_set_cookie("key=value;path=/test").should eq cookie
-        parse_set_cookie("key=value;  \t\npath=/test").should eq cookie
-      end
-
       it "parses key=" do
         cookie = parse_first_cookie("key=")
         cookie.name.should eq("key")
@@ -285,9 +279,54 @@ module HTTP
         first.value.should eq("bar")
         second.value.should eq("baz")
       end
+
+      it "parses cookie with spaces in value" do
+        parse_first_cookie(%[key=some value]).value.should eq "some value"
+        parse_first_cookie(%[key="some value"]).value.should eq "some value"
+      end
+
+      it "strips spaces around value only when it's unquoted" do
+        parse_first_cookie(%[key= some value  ]).value.should eq "some value"
+        parse_first_cookie(%[key=" some value  "]).value.should eq " some value  "
+      end
     end
 
     describe "parse_set_cookie" do
+      it "with space" do
+        cookie = parse_set_cookie("key=value; path=/test")
+        parse_set_cookie("key=value;path=/test").should eq cookie
+        parse_set_cookie("key=value;  \t\npath=/test").should eq cookie
+      end
+
+      it "parses cookie with spaces in value" do
+        parse_set_cookie(%[key=some value]).value.should eq "some value"
+        parse_set_cookie(%[key="some value"]).value.should eq "some value"
+      end
+
+      it "removes leading and trailing whitespaces" do
+        cookie = parse_set_cookie(%[key= \tvalue \t;  \t\npath=/test])
+        cookie.name.should eq "key"
+        cookie.value.should eq "value"
+        cookie.path.should eq "/test"
+
+        cookie = parse_set_cookie(%[  key\t  =value \n;path=/test])
+        cookie.name.should eq "key"
+        cookie.value.should eq "value"
+        cookie.path.should eq "/test"
+      end
+
+      it "strips spaces around value only when it's unquoted" do
+        cookie = parse_set_cookie(%[key= value ;  \tpath=/test])
+        cookie.name.should eq "key"
+        cookie.value.should eq "value"
+        cookie.path.should eq "/test"
+
+        cookie = parse_set_cookie(%[key=" value  ";  \tpath=/test])
+        cookie.name.should eq "key"
+        cookie.value.should eq " value  "
+        cookie.path.should eq "/test"
+      end
+
       it "parses path" do
         cookie = parse_set_cookie("key=value; path=/test")
         cookie.name.should eq("key")
