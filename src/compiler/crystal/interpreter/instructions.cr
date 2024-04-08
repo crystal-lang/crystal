@@ -951,14 +951,16 @@ require "./repl"
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },
       cmp_f32: {
+        operands:   [predicate : Compiler::FloatPredicate],
         pop_values: [a : Float32, b : Float32],
         push:       true,
-        code:       a == b ? 0 : (a < b ? -1 : 1),
+        code:       predicate.compare(a, b),
       },
       cmp_f64: {
+        operands:   [predicate : Compiler::FloatPredicate],
         pop_values: [a : Float64, b : Float64],
         push:       true,
-        code:       a == b ? 0 : (a < b ? -1 : 1),
+        code:       predicate.compare(a, b),
       },
       cmp_eq: {
         pop_values: [cmp : Int32],
