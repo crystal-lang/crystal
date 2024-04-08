@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../support/string"
 require "spec/helpers/iterate"
 require "spec/helpers/string"
 
@@ -2946,65 +2947,13 @@ describe "String" do
       "hello".valid_encoding?.should be_true
       "hello\u{80}\u{7FF}\u{800}\u{FFFF}\u{10000}\u{10FFFF}".valid_encoding?.should be_true
 
-      # non-starters
-      String.new(Bytes[0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0x8F]).valid_encoding?.should be_false
-      String.new(Bytes[0x90]).valid_encoding?.should be_false
-      String.new(Bytes[0x9F]).valid_encoding?.should be_false
-      String.new(Bytes[0xA0]).valid_encoding?.should be_false
-      String.new(Bytes[0xAF]).valid_encoding?.should be_false
+      {% for bytes in VALID_UTF8_BYTE_SEQUENCES %}
+        String.new(Bytes{{ bytes }}).valid_encoding?.should be_true
+      {% end %}
 
-      # incomplete, 2-byte
-      String.new(Bytes[0xC2]).valid_encoding?.should be_false
-      String.new(Bytes[0xC2, 0x00]).valid_encoding?.should be_false
-      String.new(Bytes[0xC2, 0xC2]).valid_encoding?.should be_false
-
-      # overlong, 2-byte
-      String.new(Bytes[0xC0, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xC1, 0xBF]).valid_encoding?.should be_false
-      String.new(Bytes[0xC2, 0x80]).valid_encoding?.should be_true
-
-      # incomplete, 3-byte
-      String.new(Bytes[0xE1]).valid_encoding?.should be_false
-      String.new(Bytes[0xE1, 0x00]).valid_encoding?.should be_false
-      String.new(Bytes[0xE1, 0xC2]).valid_encoding?.should be_false
-      String.new(Bytes[0xE1, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xE1, 0x80, 0x00]).valid_encoding?.should be_false
-      String.new(Bytes[0xE1, 0x80, 0xC2]).valid_encoding?.should be_false
-
-      # overlong, 3-byte
-      String.new(Bytes[0xE0, 0x80, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xE0, 0x9F, 0xBF]).valid_encoding?.should be_false
-      String.new(Bytes[0xE0, 0xA0, 0x80]).valid_encoding?.should be_true
-
-      # surrogate pairs
-      String.new(Bytes[0xED, 0x9F, 0xBF]).valid_encoding?.should be_true
-      String.new(Bytes[0xED, 0xA0, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xED, 0xBF, 0xBF]).valid_encoding?.should be_false
-      String.new(Bytes[0xEE, 0x80, 0x80]).valid_encoding?.should be_true
-
-      # incomplete, 4-byte
-      String.new(Bytes[0xF1]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x00]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0xC2]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x80, 0x00]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x80, 0xC2]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x80, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x80, 0x80, 0x00]).valid_encoding?.should be_false
-      String.new(Bytes[0xF1, 0x80, 0x80, 0xC2]).valid_encoding?.should be_false
-
-      # overlong, 4-byte
-      String.new(Bytes[0xF0, 0x80, 0x80, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xF0, 0x8F, 0xBF, 0xBF]).valid_encoding?.should be_false
-      String.new(Bytes[0xF0, 0x90, 0x80, 0x80]).valid_encoding?.should be_true
-
-      # upper boundary, 4-byte
-      String.new(Bytes[0xF4, 0x8F, 0xBF, 0xBF]).valid_encoding?.should be_true
-      String.new(Bytes[0xF4, 0x90, 0x80, 0x80]).valid_encoding?.should be_false
-      String.new(Bytes[0xF5]).valid_encoding?.should be_false
-      String.new(Bytes[0xF8]).valid_encoding?.should be_false
-      String.new(Bytes[0xFF]).valid_encoding?.should be_false
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        String.new(Bytes{{ bytes }}).valid_encoding?.should be_false
+      {% end %}
     end
 
     it "scrubs" do
@@ -3114,44 +3063,13 @@ end
 class String
   describe String do
     it ".char_bytesize_at" do
-      String.char_bytesize_at(Bytes[0x00, 0].to_unsafe).should eq 1
-      String.char_bytesize_at(Bytes[0x7F, 0].to_unsafe).should eq 1
-      String.char_bytesize_at(Bytes[0x80, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xBF, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xC2, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xC3, 0].to_unsafe).should eq 1 # malformed
+      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        String.char_bytesize_at(Bytes[{{ bytes.splat }}, 0].to_unsafe).should eq({{ bytes.size }})
+      {% end %}
 
-      String.char_bytesize_at(Bytes[0xC2, 0x7F, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xC2, 0x80, 0].to_unsafe).should eq 2
-      String.char_bytesize_at(Bytes[0xDF, 0xBF, 0].to_unsafe).should eq 2
-      String.char_bytesize_at(Bytes[0xDF, 0xC0, 0].to_unsafe).should eq 1 # malformed
-
-      String.char_bytesize_at(Bytes[0xE0, 0xA0, 0x7F, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xE0, 0x9F, 0x8F, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xE0, 0xA0, 0x80, 0].to_unsafe).should eq 3
-      String.char_bytesize_at(Bytes[0xED, 0x9F, 0xBF, 0].to_unsafe).should eq 3
-      String.char_bytesize_at(Bytes[0xED, 0x9F, 0xC0, 0].to_unsafe).should eq 1 # surrogate
-      String.char_bytesize_at(Bytes[0xED, 0xBF, 0xBF, 0].to_unsafe).should eq 1 # surrogate
-      String.char_bytesize_at(Bytes[0xEE, 0x80, 0x80, 0].to_unsafe).should eq 3
-      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xBD, 0].to_unsafe).should eq 3
-      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xBF, 0].to_unsafe).should eq 3
-      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xC0, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xEF, 0xC0, 0xBF, 0].to_unsafe).should eq 1 # malformed
-
-      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x80, 0x7F, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x7F, 0x80, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xF0, 0x8F, 0x80, 0x80, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x80, 0x80, 0].to_unsafe).should eq 4
-      String.char_bytesize_at(Bytes[0xF0, 0x9F, 0xBF, 0xBF, 0].to_unsafe).should eq 4
-      String.char_bytesize_at(Bytes[0xF3, 0x90, 0x80, 0x80, 0].to_unsafe).should eq 4
-      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBD, 0xBF, 0].to_unsafe).should eq 4
-      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBF, 0xBF, 0].to_unsafe).should eq 4
-      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBF, 0xC0, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xC0, 0xBF, 0].to_unsafe).should eq 1 # malformed
-      String.char_bytesize_at(Bytes[0xF4, 0x90, 0xBF, 0xBF, 0].to_unsafe).should eq 1 # malformed
-
-      String.char_bytesize_at(Bytes[0xF5, 0].to_unsafe).should eq 1 # out of codepoint range
-      String.char_bytesize_at(Bytes[0xFF, 0].to_unsafe).should eq 1 # out of codepoint range
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        String.char_bytesize_at(Bytes[{{ bytes.splat }}, 0].to_unsafe).should eq 1
+      {% end %}
     end
   end
 end

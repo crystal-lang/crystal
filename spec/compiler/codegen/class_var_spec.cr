@@ -564,6 +564,19 @@ describe "Codegen: class var" do
     mod.to_s.should_not contain("x:init")
   end
 
+  it "doesn't error if class var shares name with const (#7865)" do
+    run(<<-CRYSTAL).to_string.should eq("asdfgh")
+      require "prelude"
+
+      class Pattern
+        @@A = "asdf"
+        A = "\#{@@A}gh"
+      end
+
+      Pattern::A
+      CRYSTAL
+  end
+
   it "catch infinite loop in class var initializer" do
     run(%(
       require "prelude"

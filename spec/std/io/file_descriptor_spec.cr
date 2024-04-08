@@ -78,4 +78,22 @@ describe IO::FileDescriptor do
       p.puts "123"
     end
   end
+
+  it "reopens" do
+    File.open(datapath("test_file.txt")) do |file1|
+      File.open(datapath("test_file.ini")) do |file2|
+        file2.reopen(file1)
+        file2.gets.should eq("Hello World")
+      end
+    end
+  end
+
+  typeof(STDIN.noecho { })
+  typeof(STDIN.noecho!)
+  typeof(STDIN.echo { })
+  typeof(STDIN.echo!)
+  typeof(STDIN.cooked { })
+  typeof(STDIN.cooked!)
+  typeof(STDIN.raw { })
+  typeof(STDIN.raw!)
 end
