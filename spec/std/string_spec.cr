@@ -995,6 +995,7 @@ describe "String" do
     describe "by regex" do
       it { "string 12345".index(/\d+/).should eq(7) }
       it { "12345".index(/\d/).should eq(0) }
+      it { "Hello\xFF".index(/l/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
       it { "Hello, world!".index(/\d/).should be_nil }
       it { "abcdef".index(/[def]/).should eq(3) }
       it { "日本語日本語".index(/本語/).should eq(1) }
@@ -1002,6 +1003,7 @@ describe "String" do
       describe "with offset" do
         it { "abcDef".index(/[A-Z]/).should eq(3) }
         it { "foobarbaz".index(/ba/, -5).should eq(6) }
+        it { "Hello\xFF".index(/l/, 3, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
         it { "Foo".index(/[A-Z]/, 1).should be_nil }
         it { "foo".index(/o/, 2).should eq(2) }
         it { "foo".index(//, 3).should eq(3) }
@@ -1065,6 +1067,7 @@ describe "String" do
     describe "by regex" do
       it { "string 12345".index!(/\d+/).should eq(7) }
       it { "12345".index!(/\d/).should eq(0) }
+      it { "Hello\xFF".index!(/l/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
       it do
         expect_raises(Enumerable::NotFoundError) do
           "Hello, world!".index!(/\d/)
@@ -1074,6 +1077,7 @@ describe "String" do
       describe "with offset" do
         it { "abcDef".index!(/[A-Z]/).should eq(3) }
         it { "foobarbaz".index!(/ba/, -5).should eq(6) }
+        it { "Hello\xFF".index!(/l/, 3, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
         it do
           expect_raises(Enumerable::NotFoundError) do
             "Foo".index!(/[A-Z]/, 1)
@@ -1142,6 +1146,7 @@ describe "String" do
 
     describe "by regex" do
       it { "bbbb".rindex(/b/).should eq(3) }
+      it { "\xFFbbb".rindex(/b/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
       it { "a43b53".rindex(/\d+/).should eq(4) }
       it { "bbbb".rindex(/\d/).should be_nil }
 
@@ -1153,6 +1158,7 @@ describe "String" do
 
       describe "with offset" do
         it { "bbbb".rindex(/b/, 2).should eq(2) }
+        it { "\xFFbbb".rindex(/b/, 2, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
         it { "abbbb".rindex(/b/, 0).should be_nil }
         it { "abbbb".rindex(/a/, 0).should eq(0) }
         it { "bbbb".rindex(/b/, -2).should eq(2) }
@@ -1209,6 +1215,7 @@ describe "String" do
 
     describe "by regex" do
       it { "bbbb".rindex!(/b/).should eq(3) }
+      it { "\xFFbbb".rindex!(/b/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
       it { "a43b53".rindex!(/\d+/).should eq(4) }
       it do
         expect_raises(Enumerable::NotFoundError) do
@@ -1218,6 +1225,7 @@ describe "String" do
 
       describe "with offset" do
         it { "bbbb".rindex!(/b/, 2).should eq(2) }
+        it { "\xFFbbb".rindex!(/b/, 2, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
         it do
           expect_raises(Enumerable::NotFoundError) do
             "abbbb".rindex!(/b/, 0)
