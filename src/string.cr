@@ -3454,7 +3454,7 @@ class String
       # sequences and we can immediately reject any non-ASCII codepoint.
       return unless search.ascii?
       
-      return to_slice.fast_rindex(search.ord.to_u8, offset)
+      return to_slice.rindex(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
