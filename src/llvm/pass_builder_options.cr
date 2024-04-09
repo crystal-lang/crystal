@@ -31,14 +31,14 @@ class LLVM::PassBuilderOptions
   end
 
   def set_loop_unrolling(enabled : Bool)
-    LibLLVM.pass_builder_options_set_loop_unrolling(self, enabled ? 1 : 0)
+    LibLLVM.pass_builder_options_set_loop_unrolling(self, enabled)
   end
 
   def set_loop_vectorization(enabled : Bool)
-    LibLLVM.pass_builder_options_set_loop_vectorization(self, enabled ? 1 : 0)
+    LibLLVM.pass_builder_options_set_loop_vectorization(self, enabled)
   end
 
   def set_slp_vectorization(enabled : Bool)
-    LibLLVM.pass_builder_options_set_slp_vectorization(self, enabled ? 1 : 0)
+    LibLLVM.pass_builder_options_set_slp_vectorization(self, enabled)
   end
 end

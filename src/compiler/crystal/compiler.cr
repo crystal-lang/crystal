@@ -747,14 +747,8 @@ module Crystal
       protected def optimize(llvm_mod)
         LLVM::PassBuilderOptions.new do |options|
           case @optimization_mode
-          in .o3?
-            passes = "default<O3>"
-          in .o2?
-            passes = "default<O2>"
-          in .o1?
-            passes = "default<O1>"
-          in .o0?
-            passes = "default<O0>"
+          in .o0?, .o1?, .o2?, .o3?
+            passes = "default<#{@optimization_mode}>"
           in .os?
             {% if LibLLVM::IS_LT_170 %}
               passes = "default<O2>"
