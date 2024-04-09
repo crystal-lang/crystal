@@ -194,7 +194,7 @@ class Crystal::Codegen::Target
 
     opt_level = case optimization_mode
                 in .o3? then LLVM::CodeGenOptLevel::Aggressive
-                in .o2? then LLVM::CodeGenOptLevel::Default
+                in .o2?, .os?, .oz? then LLVM::CodeGenOptLevel::Default
                 in .o1? then LLVM::CodeGenOptLevel::Less
                 in .o0? then LLVM::CodeGenOptLevel::None
                 end

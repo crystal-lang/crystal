@@ -25,4 +25,20 @@ class LLVM::PassBuilderOptions
 
     LibLLVM.dispose_pass_builder_options(self)
   end
+
+  def set_inliner_threshold(threshold : Int)
+    LibLLVM.pass_builder_options_set_inliner_threshold(self, threshold)
+  end
+
+  def set_loop_unrolling(enabled : Bool)
+    LibLLVM.pass_builder_options_set_loop_unrolling(self, enabled ? 1 : 0)
+  end
+
+  def set_loop_vectorization(enabled : Bool)
+    LibLLVM.pass_builder_options_set_loop_vectorization(self, enabled ? 1 : 0)
+  end
+
+  def set_slp_vectorization(enabled : Bool)
+    LibLLVM.pass_builder_options_set_slp_vectorization(self, enabled ? 1 : 0)
+  end
 end

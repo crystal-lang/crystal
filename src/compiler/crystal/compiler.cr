@@ -102,8 +102,26 @@ module Crystal
       # enables with --release flag
       O3 = 3
 
+      # optimize for size, enables most O2 optimizations but aims for smaller
+      # code size
+      Os = 4
+
+      # optimize aggressively for size rather than speed
+      Oz = 5
+
       def suffix
         ".#{to_s.downcase}"
+      end
+
+      def self.from_level?(level : String) : self?
+        case level
+        when "0" then O0
+        when "1" then O1
+        when "2" then O2
+        when "3" then O3
+        when "s" then Os
+        when "z" then Oz
+        end
       end
     end
 
@@ -712,6 +730,12 @@ module Crystal
             builder.use_inliner_with_threshold = 150
           in .o0?
             # default behaviour, no optimizations
+          in .os?
+            builder.opt_level = 2
+            builder.use_inliner_with_threshold = 50
+          in .os?
+            builder.opt_level = 2
+            builder.use_inliner_with_threshold = 5
           end
 
           builder.size_level = 0
@@ -722,13 +746,33 @@ module Crystal
     {% else %}
       protected def optimize(llvm_mod)
         LLVM::PassBuilderOptions.new do |options|
-          mode = case @optimization_mode
-                 in .o3? then "default<O3>"
-                 in .o2? then "default<O2>"
-                 in .o1? then "default<O1>"
-                 in .o0? then "default<O0>"
-                 end
-          LLVM.run_passes(llvm_mod, mode, target_machine, options)
+          case @optimization_mode
+          in .o3?
+            passes = "default<O3>"
+          in .o2?
+            passes = "default<O2>"
+          in .o1?
+            passes = "default<O1>"
+          in .o0?
+            passes = "default<O0>"
+          in .os?
+            {% if LibLLVM::IS_LT_170 %}
+              passes = "default<O2>"
+              options.set_inliner_threshold(50)
+            {% else %}
+              passes = "default<Os>"
+            {% end %}
+          in .oz?
+            {% if LibLLVM::IS_LT_170 %}
+              passes = "default<O2>"
+              options.set_inliner_threshold(5)
+              options.set_loop_vectorization(false)
+              options.set_slp_vectorization(false) # NOTE: clang keeps SLP vectorization enabled
+            {% else %}
+              passes = "default<Oz>"
+            {% end %}
+          end
+          LLVM.run_passes(llvm_mod, passes, target_machine, options)
         end
       end
     {% end %}
