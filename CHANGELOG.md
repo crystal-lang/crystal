@@ -29,7 +29,7 @@ _Feature freeze: 2024-03-26_
 - *(numeric)* Add `BigRational#%`, `#tdiv`, `#remainder` ([#14306], thanks @HertzDevil)
 - *(runtime)* **[experimental]** Add `ReferenceStorage` for manual allocation of references ([#14270], thanks @HertzDevil)
 - *(runtime)* Add MSVC invalid parameter handler ([#14313], thanks @HertzDevil)
-- *(system)* Add `Signal::trap_handler?` ([#14126], thanks @stakach)
+- *(system)* Add `Signal#trap_handler?` ([#14126], thanks @stakach)
 - *(system)* Thread: set name ([#14257], thanks @ysbaddaden)
 - *(system)* Add `Process.on_terminate` ([#13694], thanks @stakach)
 - *(time)* Add support for `Etc/UTC` time zone identifier without tzdb ([#14185], thanks @femto)
@@ -326,6 +326,7 @@ _Feature freeze: 2024-03-26_
 - Use link refs for PR links in changelog ([#14406], thanks @straight-shoota)
 - Implement pagination for GitHub API in `github-changelog` helper ([#14412], thanks @straight-shoota)
 - Add `scripts/update-changelog.sh` ([#14231], thanks @straight-shoota)
+- Update distribution-scripts ([#14457], thanks @straight-shoota)
 - Change some line endings from CRLF to LF ([#14299], thanks @HertzDevil)
 - Update copyright year in NOTICE.md ([#14329], thanks @HertzDevil)
 - Install system dependencies in the Windows GUI installer ([#14328], thanks @HertzDevil)
@@ -354,6 +355,7 @@ _Feature freeze: 2024-03-26_
 [#14406]: https://github.com/crystal-lang/crystal/pull/14406
 [#14412]: https://github.com/crystal-lang/crystal/pull/14412
 [#14231]: https://github.com/crystal-lang/crystal/pull/14231
+[#14457]: https://github.com/crystal-lang/crystal/pull/14457
 [#14299]: https://github.com/crystal-lang/crystal/pull/14299
 [#14329]: https://github.com/crystal-lang/crystal/pull/14329
 [#14328]: https://github.com/crystal-lang/crystal/pull/14328
