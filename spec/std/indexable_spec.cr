@@ -1,27 +1,27 @@
 require "spec"
 require "spec/helpers/iterate"
 
-module SomeInterface; end
+module OtherInterface; end
 
-private record One do
-  include SomeInterface
+private record Three do
+  include OtherInterface
 end
 
-private record Two do
-  include SomeInterface
+private record Four do
+  include OtherInterface
 end
 
 private struct InterfaceIndexable
-  include Indexable(SomeInterface)
+  include Indexable(OtherInterface)
 
   def size
     2
   end
 
-  def unsafe_fetch(index : Int) : SomeInterface
+  def unsafe_fetch(index : Int) : OtherInterface
     case index
-    when 0 then One.new
-    when 1 then Two.new
+    when 0 then Three.new
+    when 1 then Four.new
     else
       raise ""
     end
@@ -848,7 +848,7 @@ describe Indexable do
 
   describe "#to_a" do
     it "without a block of an interface type" do
-      InterfaceIndexable.new.to_a.should eq [One.new, Two.new]
+      InterfaceIndexable.new.to_a.should eq [Three.new, Four.new]
     end
   end
 end
