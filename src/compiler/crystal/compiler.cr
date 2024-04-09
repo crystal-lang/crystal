@@ -104,10 +104,10 @@ module Crystal
 
       # optimize for size, enables most O2 optimizations but aims for smaller
       # code size
-      Os = 4
+      Os
 
       # optimize aggressively for size rather than speed
-      Oz = 5
+      Oz
 
       def suffix
         ".#{to_s.downcase}"
