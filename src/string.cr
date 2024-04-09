@@ -3450,7 +3450,11 @@ class String
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if single_byte_optimizable?
-      return search.ascii? ? to_slice.rindex(search.ord.to_u8, offset) : nil
+      # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
+      # sequences and we can immediately reject any non-ASCII codepoint.
+      return unless search.ascii?
+      
+      return to_slice.fast_rindex(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
