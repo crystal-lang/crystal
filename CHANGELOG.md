@@ -2,8 +2,6 @@
 
 ## [1.12.0] (2024-04-09)
 
-_Feature freeze: 2024-03-26_
-
 [1.12.0]: https://github.com/crystal-lang/crystal/releases/1.12.0
 
 ### Features
