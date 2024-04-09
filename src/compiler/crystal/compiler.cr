@@ -733,7 +733,7 @@ module Crystal
           in .os?
             builder.opt_level = 2
             builder.use_inliner_with_threshold = 50
-          in .os?
+          in .oz?
             builder.opt_level = 2
             builder.use_inliner_with_threshold = 5
           end
