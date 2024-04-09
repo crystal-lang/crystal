@@ -664,7 +664,7 @@ class Crystal::Command
     opts.on("--release", "Compile in release mode (-O3 --single-module)") do
       compiler.release!
     end
-    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
+    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
       if mode = Compiler::OptimizationMode.from_level?(level)
         compiler.optimization_mode = mode
       else
