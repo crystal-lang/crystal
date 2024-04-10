@@ -3031,6 +3031,7 @@ module Crystal
         ends_with_newline = true
         next_token
       end
+      skip_space_or_newline
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
