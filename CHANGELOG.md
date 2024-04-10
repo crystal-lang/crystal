@@ -8,7 +8,7 @@
 
 #### tools
 
-- *(formatter)* Fix formatter with whitespace before closing parenthesis ([#14471], thanks @straight-shoota)
+- *(formatter)* **[regression]** Fix formatter with whitespace before closing parenthesis ([#14471], thanks @straight-shoota)
 
 [#14471]: https://github.com/crystal-lang/crystal/pull/14471
 
