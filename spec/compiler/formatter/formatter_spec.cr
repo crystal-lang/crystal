@@ -437,6 +437,21 @@ describe Crystal::Formatter do
   ); end
   CRYSTAL
 
+  assert_format <<-CRYSTAL, <<-CRYSTAL
+    module M
+      @[MyAnn(
+        1
+
+      )]
+    end
+    CRYSTAL
+    module M
+      @[MyAnn(
+        1
+      )]
+    end
+    CRYSTAL
+
   assert_format "loop do\n  1\nrescue\n  2\nend"
   assert_format "loop do\n  1\n  loop do\n    2\n  rescue\n    3\n  end\n  4\nend"
 
