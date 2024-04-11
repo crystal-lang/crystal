@@ -10,6 +10,10 @@ class Log
     @initial_level = level
   end
 
+  def finalize : Nil
+    Log.builder.@logs.delete(@source)
+  end
+
   # :nodoc:
   def changed_level : Severity?
     @level
