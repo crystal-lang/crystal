@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.12.1] (2024-04-11)
+
+[1.12.1]: https://github.com/crystal-lang/crystal/releases/1.12.1
+
+### Bugfixes
+
+#### tools
+
+- *(formatter)* **[regression]** Fix formatter with whitespace before closing parenthesis ([#14471], thanks @straight-shoota)
+
+[#14471]: https://github.com/crystal-lang/crystal/pull/14471
+
+### Infrastructure
+
+- Changelog for 1.12.1 ([#14472], thanks @straight-shoota)
+
+[#14472]: https://github.com/crystal-lang/crystal/pull/14472
+
 ## [1.12.0] (2024-04-09)
 
 [1.12.0]: https://github.com/crystal-lang/crystal/releases/1.12.0
