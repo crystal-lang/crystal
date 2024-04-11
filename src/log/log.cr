@@ -11,7 +11,8 @@ class Log
   end
 
   def finalize : Nil
-    Log.builder.@logs.delete(@source)
+    # NOTE: workaround for https://github.com/crystal-lang/crystal/pull/14473
+    Log.builder.cleanup_collected_log(self)
   end
 
   # :nodoc:

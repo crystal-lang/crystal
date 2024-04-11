@@ -157,4 +157,10 @@ class Log::Builder
     end
     false
   end
+
+  # NOTE: workaround for https://github.com/crystal-lang/crystal/pull/14473
+  protected def cleanup_collected_log(log : Log) : Nil
+    ref = @logs.fetch(log.source) { return }
+    @logs.delete(log.source) if ref.value.nil? || ref.value == self
+  end
 end
