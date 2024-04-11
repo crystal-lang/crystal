@@ -80,7 +80,7 @@ module Crystal::System::Thread
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
       address = LibC.pthread_get_stackaddr_np(@system_handle) - LibC.pthread_get_stacksize_np(@system_handle)
-    {% elsif flag?(:bsd) && !flag?(:openbsd) %}
+    {% elsif (flag?(:bsd) && !flag?(:openbsd)) || flag?(:solaris) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
         LibC.pthread_attr_destroy(pointerof(attr))
@@ -108,6 +108,8 @@ module Crystal::System::Thread
         else
           stack.ss_sp - stack.ss_size
         end
+    {% else %}
+      {% raise "No `Crystal::System::Thread#stack_address` implementation available" %}
     {% end %}
 
     address

@@ -5,8 +5,20 @@ class Fiber
   class StackPool
     STACK_SIZE = 8 * 1024 * 1024
 
-    def initialize
+    # If *protect* is true, guards all top pages (pages with the lowest address
+    # values) in the allocated stacks; accessing them triggers an error
+    # condition, allowing stack overflows on non-main fibers to be detected.
+    #
+    # Interpreter stacks grow upwards (pushing values increases the stack
+    # pointer value) rather than downwards, so *protect* must be false.
+    def initialize(@protect : Bool = true)
       @deque = Deque(Void*).new
+    end
+
+    def finalize
+      @deque.each do |stack|
+        Crystal::System::Fiber.free_stack(stack, STACK_SIZE)
+      end
     end
 
     # Removes and frees at most *count* stacks from the top of the pool,
@@ -30,7 +42,7 @@ class Fiber
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout : {Void*, Void*}
-      stack = @deque.pop? || Crystal::System::Fiber.allocate_stack(STACK_SIZE)
+      stack = @deque.pop? || Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
       {stack, stack + STACK_SIZE}
     end
 

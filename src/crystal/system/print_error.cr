@@ -7,7 +7,7 @@ module Crystal::System
       {% if flag?(:unix) || flag?(:wasm32) %}
         LibC.write 2, bytes, bytes.size
       {% elsif flag?(:win32) %}
-        LibC._write 2, bytes, bytes.size
+        LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), bytes, bytes.size, out _, nil)
       {% end %}
     end
   end

@@ -95,13 +95,13 @@ describe UNIXServer do
           ch.send(:end)
         end
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
 
         # wait for the server to call accept
         wait_until_blocked f
 
         server.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
 
         exception.should be_a(IO::Error)
         exception.try(&.message).should eq("Closed stream")
@@ -136,13 +136,13 @@ describe UNIXServer do
           ch.send :end
         end
 
-        ch.receive.begin?.should be_true
+        ch.receive.should eq SpecChannelStatus::Begin
 
         # wait for the server to call accept
         wait_until_blocked f
 
         server.close
-        ch.receive.end?.should be_true
+        ch.receive.should eq SpecChannelStatus::End
 
         ret.should be_nil
       end

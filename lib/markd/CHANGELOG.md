@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - GFM support
 
+## [0.5.0] (2022-06-14)
+
+- Support CommonMark 0.29 #[50](https://github.com/icyleaf/markd/pull/50) thanks @[HertzDevil](https://github.com/HertzDevil).
+- Fix typos #[47](https://github.com/icyleaf/markd/pull/47) #[49](https://github.com/icyleaf/markd/pull/49) thanks @[kianmeng](https://github.com/kianmeng), @[jsoref](https://github.com/jsoref).
+
 ## [0.4.2] (2021-10-19)
 
 ### Added
@@ -60,23 +65,24 @@ No changelog.
 
 ## [0.1.2] (2019-08-26)
 
-- Use Crystal v0.31.0 as default complier.
+- Use Crystal v0.31.0 as default compiler.
 
 ## [0.1.1] (2017-12-26)
 
 - Minor refactoring and improving speed. thanks @[straight-shoota](https://github.com/straight-shoota).
-- Use Crystal v0.24.1 as default complier.
+- Use Crystal v0.24.1 as default compiler.
 
 ## 0.1.0 (2017-09-22)
 
 - [initial implementation](https://github.com/icyleaf/markd/milestone/1?closed=1)
 
-[Unreleased]: https://github.com/icyleaf/markd/compare/v0.4.2...HEAD
-[0.4.2]: https://github.com/icyleaf/halite/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/icyleaf/halite/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/icyleaf/halite/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/icyleaf/halite/compare/v0.2.1...v0.3.0
-[0.2.1]: https://github.com/icyleaf/halite/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/icyleaf/halite/compare/v0.1.2...v0.2.0
-[0.1.2]: https://github.com/icyleaf/halite/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/icyleaf/halite/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/icyleaf/markd/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/icyleaf/markd/compare/v0.4.2...v0.5.0
+[0.4.2]: https://github.com/icyleaf/markd/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/icyleaf/markd/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/icyleaf/markd/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/icyleaf/markd/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/icyleaf/markd/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/icyleaf/markd/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/icyleaf/markd/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/icyleaf/markd/compare/v0.1.0...v0.1.1

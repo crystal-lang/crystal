@@ -1,7 +1,7 @@
 require "primitives"
 
 {% if flag?(:win32) %}
-  @[Link({{ flag?(:preview_dll) ? "msvcrt" : "libcmt" }})] # For `mainCRTStartup`
+  @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }})] # For `mainCRTStartup`
 {% end %}
 lib LibCrystalMain
   @[Raises]

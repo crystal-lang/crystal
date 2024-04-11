@@ -1517,7 +1517,7 @@ module Crystal
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
-        if @program.has_flag?("win32") && @program.has_flag?("preview_dll")
+        if @program.has_flag?("win32") && !@program.has_flag?("static")
           var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
         end
         var.thread_local = thread_local
@@ -2126,7 +2126,7 @@ module Crystal
           context.vars = LLVMVars.new
           alloca_vars init.meta_vars
 
-          accept init.value
+          request_value(init.value)
 
           ivar_ptr = instance_var_ptr real_type, init.name, type_ptr
           assign ivar_ptr, ivar.type, init.value.type, @last

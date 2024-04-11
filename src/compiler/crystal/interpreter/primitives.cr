@@ -738,7 +738,7 @@ class Crystal::Repl::Compiler
     in {.u16?, .i32?}   then zero_extend(6, node: node)
     in {.u16?, .i64?}   then zero_extend(6, node: node)
     in {.u16?, .i128?}  then zero_extend(14, node: node)
-    in {.u16?, .u8?}    then nop
+    in {.u16?, .u8?}    then checked ? (zero_extend(6, node: node); u64_to_u8(node: node)) : nop
     in {.u16?, .u16?}   then nop
     in {.u16?, .u32?}   then zero_extend(6, node: node)
     in {.u16?, .u64?}   then zero_extend(6, node: node)
@@ -815,7 +815,7 @@ class Crystal::Repl::Compiler
     in {.u128?, .u32?}  then checked ? u128_to_u32(node: node) : pop(8, node: node)
     in {.u128?, .u64?}  then checked ? u128_to_u64(node: node) : pop(8, node: node)
     in {.u128?, .u128?} then nop
-    in {.u128?, .f32?}  then u128_to_f32(node: node)
+    in {.u128?, .f32?}  then checked ? u128_to_f32(node: node) : u128_to_f32_bang(node: node)
     in {.u128?, .f64?}  then u128_to_f64(node: node)
     in {.f32?, .i8?}    then f32_to_f64(node: node); checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
     in {.f32?, .i16?}   then f32_to_f64(node: node); checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
@@ -1325,16 +1325,17 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_cmp_float(node : ASTNode, kind : NumberKind, op : String)
-    case kind
-    when .f32? then cmp_f32(node: node)
-    when .f64? then cmp_f64(node: node)
-    else
-      node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+    if predicate = FloatPredicate.from_method?(op)
+      case kind
+      when .f32? then return cmp_f32(predicate, node: node)
+      when .f64? then return cmp_f64(predicate, node: node)
+      end
     end
 
-    primitive_binary_op_cmp_op(node, op)
+    node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
   end
 
+  # TODO: should integer comparisons also use `FloatPredicate`?
   private def primitive_binary_op_cmp_op(node : ASTNode, op : String)
     case op
     when "==" then cmp_eq(node: node)
@@ -1345,6 +1346,34 @@ class Crystal::Repl::Compiler
     when ">=" then cmp_ge(node: node)
     else
       node.raise "BUG: missing handling of binary #{op}"
+    end
+  end
+
+  # interpreter-exclusive flags for `cmp_f32` and `cmp_f64`
+  # currently compatible with `LLVM::RealPredicate`
+  @[Flags]
+  enum FloatPredicate : UInt8
+    Equal
+    GreaterThan
+    LessThan
+    Unordered
+
+    def self.from_method?(op : String)
+      case op
+      when "==" then Equal
+      when "!=" then LessThan | GreaterThan | Unordered
+      when "<"  then LessThan
+      when "<=" then LessThan | Equal
+      when ">"  then GreaterThan
+      when ">=" then GreaterThan | Equal
+      end
+    end
+
+    def compare(x, y) : Bool
+      (equal? && x == y) ||
+        (greater_than? && x > y) ||
+        (less_than? && x < y) ||
+        (unordered? && (x.nan? || y.nan?))
     end
   end
 

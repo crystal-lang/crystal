@@ -741,8 +741,6 @@ describe "Semantic: instance var" do
 
   it "infers type from tuple literal" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize
           @x = {1, "foo"}
@@ -759,8 +757,6 @@ describe "Semantic: instance var" do
 
   it "infers type from named tuple literal" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize
           @x = {x: 1, y: "foo"}

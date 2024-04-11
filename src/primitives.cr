@@ -282,7 +282,7 @@ struct Pointer(T)
   end
 
   # Returns a new pointer whose address is this pointer's address
-  # incremented by `other * sizeof(T)`.
+  # incremented by `offset * sizeof(T)`.
   #
   # ```
   # ptr = Pointer(Int32).new(1234)
