@@ -1970,7 +1970,7 @@ module Enumerable(T)
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    tally_by(&.itself)
+    tally_by(Hash(T, Int32).new, &.itself)
   end
 
   # Tallies the collection. Accepts a *hash* to count occurrences.
@@ -1994,7 +1994,9 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a : Array(T)
-    to_a(&.itself)
+    ary = [] of T
+    each { |e| ary << e }
+    ary
   end
 
   # Returns an `Array` with the results of running *block* against each element of the collection.
