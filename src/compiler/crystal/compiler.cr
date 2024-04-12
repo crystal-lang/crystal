@@ -718,6 +718,8 @@ module Crystal
           registry.initialize_all
 
           builder = LLVM::PassManagerBuilder.new
+          builder.size_level = 0
+
           case optimization_mode
           in .o3?
             builder.opt_level = 3
@@ -732,13 +734,13 @@ module Crystal
             # default behaviour, no optimizations
           in .os?
             builder.opt_level = 2
+            builder.size_level = 1
             builder.use_inliner_with_threshold = 50
           in .oz?
             builder.opt_level = 2
+            builder.size_level = 2
             builder.use_inliner_with_threshold = 5
           end
-
-          builder.size_level = 0
 
           builder
         end
