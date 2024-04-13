@@ -45,6 +45,7 @@ lib LibC
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
   SA_ONSTACK = 0x0001
+  SA_RESTART = 0x0002
   SA_SIGINFO = 0x0040
 
   struct SiginfoT

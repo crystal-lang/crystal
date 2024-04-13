@@ -491,7 +491,16 @@ def pp(**objects)
   pp(objects) unless objects.empty?
 end
 
-# Registers the given `Proc` for execution when the program exits.
+# Registers the given `Proc` for execution when the program exits regularly.
+#
+# A regular exit happens when either
+# * the main fiber reaches the end of the program,
+# * the main fiber rescues an unhandled exception, or
+# * `::exit` is called.
+#
+# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process
+# termination (see `Process.on_terminate` for handling that).
+#
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
 # ```
@@ -563,12 +572,6 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  {% if flag?(:win32) %}
-    Crystal::System::Process.start_interrupt_loop
-  {% else %}
-    Crystal::System::Signal.setup_default_handlers
-  {% end %}
-
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -579,4 +582,10 @@ end
   Exception::CallStack.setup_crash_handler
 
   Crystal::Scheduler.init
+
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
+  {% end %}
 {% end %}

@@ -693,6 +693,17 @@ module Indexable(T)
     end
   end
 
+  # Returns an `Array` with all the elements in the collection.
+  #
+  # ```
+  # {1, 2, 3}.to_a # => [1, 2, 3]
+  # ```
+  def to_a : Array(T)
+    ary = Array(T).new(size)
+    each { |e| ary << e }
+    ary
+  end
+
   # Returns an `Array` with the results of running *block* against each element of the collection.
   #
   # ```
@@ -744,7 +755,7 @@ module Indexable(T)
     true
   end
 
-  # :inherited:
+  # :inherit:
   def first(&)
     size == 0 ? yield : unsafe_fetch(0)
   end

@@ -352,6 +352,7 @@ describe "Regex::MatchData" do
         md[1..]?.should eq(["a", "b"])
         md[..]?.should eq(["ab", "a", "b"])
         md[4..]?.should be_nil
+        md[-4..]?.should be_nil
       end
 
       it "can use start and count" do

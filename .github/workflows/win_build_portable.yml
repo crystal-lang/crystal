@@ -24,7 +24,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.11.2"
+          crystal: "1.12.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -114,31 +114,30 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
+          # TODO: the 1.11.2 compiler only understands `-Dpreview_dll`; remove this once the
+          # base compiler is updated
+          make -f Makefile.win -B FLAGS=-Dpreview_dll ${{ inputs.release && 'release=1' || '' }}
+          # TODO: 1.11.2 comes with LLVM 17's DLL and copies it to the output directory, but a
+          # dynamically linked compiler requires LLVM 18, so we must overwrite it; remove this
+          # line once the base compiler is updated
+          cp dlls/LLVM-C.dll .build/
 
       - name: Download shards release
         uses: actions/checkout@v4
         with:
           repository: crystal-lang/shards
-          ref: v0.17.4
+          ref: v0.18.0
           path: shards
-
-      - name: Download molinillo release
-        uses: actions/checkout@v4
-        with:
-          repository: crystal-lang/crystal-molinillo
-          ref: v0.2.0
-          path: shards/lib/molinillo
 
       - name: Build shards release
         working-directory: ./shards
-        run: ../bin/crystal.bat build ${{ inputs.release && '--release' || '' }} src/shards.cr
+        run: make -f Makefile.win ${{ inputs.release && 'release=1' || '' }}
 
       - name: Gather Crystal binaries
         run: |
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
-          cp shards/shards.exe crystal/
+          cp shards/bin/shards.exe crystal/
           cp libs/* crystal/lib/
           cp dlls/* crystal/
           cp README.md crystal/

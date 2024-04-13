@@ -762,7 +762,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # particularly when outside of a method.
     if is_self && !scope.is_a?(Program) && !scope.passed_as_self?
       put_type scope, node: node
-      return
+      return false
     end
 
     local_var = lookup_local_var_or_closured_var(node.name)
@@ -1687,7 +1687,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if node.upcast?
       upcast node.obj, obj_type, node.non_nilable_type
       upcast node.obj, node.non_nilable_type, node.type
-      return
+      return false
     end
 
     # Check if obj is a `to_type`
@@ -3158,6 +3158,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% end %}
 
     call compiled_def, node: node
+    false
   end
 
   def visit(node : ASTNode)
@@ -3364,6 +3365,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(value : UInt8)
     @instructions.instructions << value
+  end
+
+  private def append(value : Enum)
+    append(value.value)
   end
 
   # Many times we need to jump or branch to an instruction for which we don't

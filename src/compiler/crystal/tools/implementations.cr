@@ -114,6 +114,7 @@ module Crystal
           @locations << target_def.location.not_nil!
         end
       end
+      false
     end
 
     def visit(node : Path)
@@ -123,6 +124,7 @@ module Crystal
       target.try &.locations.try &.each do |loc|
         @locations << loc
       end
+      false
     end
 
     def visit(node)

@@ -126,7 +126,7 @@ describe TCPServer, tags: "network" do
     end
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:solaris) %}
     pending "settings"
   {% else %}
     it "settings" do

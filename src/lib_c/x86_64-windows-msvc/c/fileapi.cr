@@ -71,9 +71,16 @@ lib LibC
   fun CreateFileW(lpFileName : LPWSTR, dwDesiredAccess : DWORD, dwShareMode : DWORD,
                   lpSecurityAttributes : SECURITY_ATTRIBUTES*, dwCreationDisposition : DWORD,
                   dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
+  fun DeleteFileW(lpFileName : LPWSTR) : BOOL
 
   fun ReadFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToRead : DWORD, lpNumberOfBytesRead : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
   fun WriteFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToWrite : DWORD, lpNumberOfBytesWritten : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
+  fun SetFilePointerEx(hFile : HANDLE, liDistanceToMove : LARGE_INTEGER, lpNewFilePointer : LARGE_INTEGER*, dwMoveMethod : DWORD) : BOOL
+  fun SetEndOfFile(hFile : HANDLE) : BOOL
+  fun FlushFileBuffers(hFile : HANDLE) : BOOL
+
+  fun CreateDirectoryW(lpPathName : LPWSTR, lpSecurityAttributes : SECURITY_ATTRIBUTES*) : BOOL
+  fun RemoveDirectoryW(lpPathName : LPWSTR) : BOOL
 
   MAX_PATH = 260
 

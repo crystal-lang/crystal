@@ -325,8 +325,6 @@ describe "Code gen: pointer" do
 
   it "does pointerof class variable with class" do
     run(%(
-      require "prelude"
-
       class Bar
         def initialize(@x : Int32)
         end
@@ -406,8 +404,6 @@ describe "Code gen: pointer" do
 
   it "uses correct llvm module for typedef metaclass (#2877)" do
     run(%(
-      require "prelude"
-
       lib LibFoo
         type Foo = Void*
         type Bar = Void*
@@ -456,8 +452,6 @@ describe "Code gen: pointer" do
 
   it "generates correct code for Pointer.malloc(0) (#2905)" do
     run(%(
-      require "prelude"
-
       class Foo
         def initialize(@value : Int32)
         end

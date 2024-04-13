@@ -137,4 +137,11 @@ describe "Primitives: Int" do
       expect_raises(OverflowError) { Float32::MAX.to_u128.succ.to_f32 } # Float32::MAX == 2 ** 128 - 2 ** 104
     end
   end
+
+  describe "#to_f!" do
+    it "doesn't raise on overflow for UInt128#to_f32" do
+      UInt128::MAX.to_f32!.should eq(Float32::INFINITY)
+      Float32::MAX.to_u128.succ.to_f32!.should eq(Float32::MAX)
+    end
+  end
 end

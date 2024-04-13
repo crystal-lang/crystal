@@ -249,6 +249,13 @@ module Crystal
         end
       end
 
+      # Returns true if the operator can be used in prefix notation.
+      #
+      # Related: `ToSVisitor::UNARY_OPERATORS`
+      def unary_operator?
+        self.in?(OP_BANG, OP_PLUS, OP_MINUS, OP_TILDE, OP_AMP_PLUS, OP_AMP_MINUS)
+      end
+
       def magic?
         magic_dir? || magic_end_line? || magic_file? || magic_line?
       end

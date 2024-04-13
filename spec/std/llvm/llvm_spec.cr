@@ -1,4 +1,11 @@
 require "spec"
+
+{% if flag?(:interpreted) && !flag?(:win32) %}
+  # TODO: figure out how to link against libstdc++ in interpreted code (#14398)
+  pending LLVM
+  {% skip_file %}
+{% end %}
+
 require "llvm"
 
 describe LLVM do
@@ -30,6 +37,8 @@ describe LLVM do
       triple.should match(/-dragonfly/)
     {% elsif flag?(:netbsd) %}
       triple.should match(/-netbsd/)
+    {% elsif flag?(:solaris) %}
+      triple.should match(/-solaris$/)
     {% elsif flag?(:wasi) %}
       triple.should match(/-wasi/)
     {% else %}

@@ -278,12 +278,18 @@ require "./repl"
       u128_to_f32: {
         pop_values: [value : UInt128],
         push:       true,
+        overflow:   true,
         code:       value.to_f32,
       },
       u128_to_f64: {
         pop_values: [value : UInt128],
         push:       true,
         code:       value.to_f64,
+      },
+      u128_to_f32_bang: {
+        pop_values: [value : UInt128],
+        push:       true,
+        code:       value.to_f32!,
       },
       f32_to_f64: {
         pop_values: [value : Float32],
@@ -951,14 +957,16 @@ require "./repl"
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },
       cmp_f32: {
+        operands:   [predicate : Compiler::FloatPredicate],
         pop_values: [a : Float32, b : Float32],
         push:       true,
-        code:       a == b ? 0 : (a < b ? -1 : 1),
+        code:       predicate.compare(a, b),
       },
       cmp_f64: {
+        operands:   [predicate : Compiler::FloatPredicate],
         pop_values: [a : Float64, b : Float64],
         push:       true,
-        code:       a == b ? 0 : (a < b ? -1 : 1),
+        code:       predicate.compare(a, b),
       },
       cmp_eq: {
         pop_values: [cmp : Int32],
@@ -1648,6 +1656,11 @@ require "./repl"
       interpreter_fiber_swapcontext: {
         pop_values: [current_context : Void*, new_context : Void*],
         code:       swapcontext(current_context, new_context),
+      },
+      interpreter_fiber_resumable: {
+        pop_values: [context : Void*],
+        push:       true,
+        code:       fiber_resumable(context),
       },
 
       {% if flag?(:bits64) %}

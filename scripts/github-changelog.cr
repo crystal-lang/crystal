@@ -19,19 +19,32 @@ require "http/client"
 require "json"
 
 abort "Missing GITHUB_TOKEN env variable" unless ENV["GITHUB_TOKEN"]?
-abort "Missing <milestone> argument" unless ARGV.first?
-
 api_token = ENV["GITHUB_TOKEN"]
-repository = "crystal-lang/crystal"
-milestone = ARGV.first
 
-def query_prs(api_token, repository, milestone)
+case ARGV.size
+when 0
+  abort "Missing <milestone> argument"
+when 1
+  repository = "crystal-lang/crystal"
+  milestone = ARGV.first
+when 2
+  repository = ARGV[0]
+  milestone = ARGV[1]
+else
+  abort "Too many arguments. Usage:\n  #{PROGRAM_NAME} [<GH repo ref>] <milestone>"
+end
+
+def query_prs(api_token, repository, milestone : String, cursor : String?)
   query = <<-GRAPHQL
-    query($milestone: String, $owner: String!, $repository: String!) {
+    query($milestone: String, $owner: String!, $repository: String!, $cursor: String) {
       repository(owner: $owner, name: $repository) {
         milestones(query: $milestone, first: 1) {
           nodes {
-            pullRequests(first: 300) {
+            closedAt
+            description
+            dueOn
+            title
+            pullRequests(first: 100, after: $cursor) {
               nodes {
                 number
                 title
@@ -46,6 +59,10 @@ def query_prs(api_token, repository, milestone)
                   }
                 }
               }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
             }
           }
         }
@@ -58,6 +75,7 @@ def query_prs(api_token, repository, milestone)
     owner:      owner,
     repository: name,
     milestone:  milestone,
+    cursor:     cursor,
   }
 
   response = HTTP::Client.post("https://api.github.com/graphql",
@@ -78,6 +96,28 @@ module LabelNameConverter
     pull.on_key! "name" do
       String.new(pull)
     end
+  end
+end
+
+record Milestone,
+  closed_at : Time?,
+  description : String?,
+  due_on : Time?,
+  title : String,
+  pull_requests : Array(PullRequest) do
+  include JSON::Serializable
+
+  @[JSON::Field(key: "dueOn")]
+  @due_on : Time?
+
+  @[JSON::Field(key: "closedAt")]
+  @closed_at : Time?
+
+  @[JSON::Field(key: "pullRequests", root: "nodes")]
+  @pull_requests : Array(PullRequest)
+
+  def release_date
+    closed_at || due_on
   end
 end
 
@@ -117,11 +157,21 @@ record PullRequest,
       io << "**[deprecation]** "
     end
     io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
-    io << "[#" << number << "](" << permalink << ")"
+    link_ref(io)
     if author = self.author
       io << ", thanks @" << author
     end
     io << ")"
+  end
+
+  def link_ref(io)
+    io << "[#" << number << "]"
+  end
+
+  def print_ref_label(io)
+    link_ref(io)
+    io << ": " << permalink
+    io.puts
   end
 
   def <=>(other : self)
@@ -243,26 +293,46 @@ record PullRequest,
   end
 end
 
-response = query_prs(api_token, repository, milestone)
-parser = JSON::PullParser.new(response.body)
-array = parser.on_key! "data" do
-  parser.on_key! "repository" do
-    parser.on_key! "milestones" do
-      parser.on_key! "nodes" do
-        parser.read_begin_array
-        a = parser.on_key! "pullRequests" do
+def query_milestone(api_token, repository, number)
+  cursor = nil
+  milestone = nil
+
+  while true
+    response = query_prs(api_token, repository, number, cursor)
+
+    parser = JSON::PullParser.new(response.body)
+    m = parser.on_key! "data" do
+      parser.on_key! "repository" do
+        parser.on_key! "milestones" do
           parser.on_key! "nodes" do
-            Array(PullRequest).new(parser)
+            parser.read_begin_array
+            Milestone.new(parser)
+          ensure
+            parser.read_end_array
           end
         end
-        parser.read_end_array
-        a
       end
     end
+
+    if milestone
+      milestone.pull_requests.concat m.pull_requests
+    else
+      milestone = m
+    end
+
+    json = JSON.parse(response.body)
+    page_info = json.dig("data", "repository", "milestones", "nodes", 0, "pullRequests", "pageInfo")
+    break unless page_info["hasNextPage"].as_bool
+
+    cursor = page_info["endCursor"].as_s
   end
+
+  milestone
 end
 
-sections = array.group_by(&.section)
+milestone = query_milestone(api_token, repository, milestone)
+
+sections = milestone.pull_requests.group_by(&.section)
 
 SECTION_TITLES = {
   "breaking"    => "Breaking changes",
@@ -279,9 +349,14 @@ SECTION_TITLES = {
 
 TOPIC_ORDER = %w[lang stdlib compiler tools other]
 
-puts "## [#{milestone}] (#{Time.local.to_s("%F")})"
+puts "## [#{milestone.title}] (#{milestone.release_date.try(&.to_s("%F")) || "unreleased"})"
+if description = milestone.description.presence
+  puts
+  print "_", description
+  puts "_"
+end
 puts
-puts "[#{milestone}]: https://github.com/crystal-lang/crystal/releases/#{milestone}"
+puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
 puts
 
 SECTION_TITLES.each do |id, title|
@@ -307,6 +382,9 @@ SECTION_TITLES.each do |id, title|
     topic_prs.each do |pr|
       puts "- #{pr}"
     end
+    puts
+
+    topic_prs.each(&.print_ref_label(STDOUT))
     puts
   end
 end

@@ -2618,6 +2618,18 @@ module Crystal
       end
     end
 
+    describe Alias do
+      node = Alias.new("Foo".path, Generic.new(Path.new(["Bar", "Baz"], global: true), ["T".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: node}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz(T)), {x: node}
+      end
+    end
+
     describe "visibility modifier methods" do
       node = VisibilityModifier.new(Visibility::Protected, Def.new("some_def"))
 
@@ -3411,6 +3423,75 @@ module Crystal
       it "executes type" do
         assert_macro %({{x.type}}), %(Bar::Baz), {x: external_var1}
         assert_macro %({{x.type}}), %(::Pointer(Char)), {x: external_var2}
+      end
+    end
+
+    describe Asm do
+      asm1 = Asm.new("nop")
+      asm2 = Asm.new(
+        text: "foo",
+        outputs: [AsmOperand.new("=r", "x".var), AsmOperand.new("=r", "y".var)],
+        inputs: [AsmOperand.new("i", 1.int32), AsmOperand.new("r", 2.int32)],
+        clobbers: %w(rax memory),
+        volatile: true,
+        alignstack: true,
+        intel: true,
+        can_throw: true,
+      )
+
+      it "executes text" do
+        assert_macro %({{x.text}}), %("nop"), {x: asm1}
+        assert_macro %({{x.text}}), %("foo"), {x: asm2}
+      end
+
+      it "executes outputs" do
+        assert_macro %({{x.outputs}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.outputs}}), %(["=r"(x), "=r"(y)]), {x: asm2}
+      end
+
+      it "executes inputs" do
+        assert_macro %({{x.inputs}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.inputs}}), %(["i"(1), "r"(2)]), {x: asm2}
+      end
+
+      it "executes clobbers" do
+        assert_macro %({{x.clobbers}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.clobbers}}), %(["rax", "memory"]), {x: asm2}
+      end
+
+      it "executes volatile?" do
+        assert_macro %({{x.volatile?}}), %(false), {x: asm1}
+        assert_macro %({{x.volatile?}}), %(true), {x: asm2}
+      end
+
+      it "executes alignstack?" do
+        assert_macro %({{x.alignstack?}}), %(false), {x: asm1}
+        assert_macro %({{x.alignstack?}}), %(true), {x: asm2}
+      end
+
+      it "executes intel?" do
+        assert_macro %({{x.intel?}}), %(false), {x: asm1}
+        assert_macro %({{x.intel?}}), %(true), {x: asm2}
+      end
+
+      it "executes can_throw?" do
+        assert_macro %({{x.can_throw?}}), %(false), {x: asm1}
+        assert_macro %({{x.can_throw?}}), %(true), {x: asm2}
+      end
+    end
+
+    describe AsmOperand do
+      asm_operand1 = AsmOperand.new("=r", "x".var)
+      asm_operand2 = AsmOperand.new("i", 1.int32)
+
+      it "executes constraint" do
+        assert_macro %({{x.constraint}}), %("=r"), {x: asm_operand1}
+        assert_macro %({{x.constraint}}), %("i"), {x: asm_operand2}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), %(x), {x: asm_operand1}
+        assert_macro %({{x.exp}}), %(1), {x: asm_operand2}
       end
     end
 

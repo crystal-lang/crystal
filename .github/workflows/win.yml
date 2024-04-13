@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  CI_LLVM_VERSION: "17.0.2"
+  CI_LLVM_VERSION: "18.1.1"
 
 jobs:
   x86_64-windows-libs:
@@ -40,13 +40,13 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.2 -AtomicOpsVersion 7.8.0
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.6 -AtomicOpsVersion 7.8.2
       - name: Build libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45
       - name: Build libpcre2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.42
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv
@@ -55,7 +55,7 @@ jobs:
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3
       - name: Build zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.2.13
+        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1
       - name: Build mpir
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir
@@ -64,7 +64,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5
       - name: Build libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.11.3
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.12.5
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -121,13 +121,13 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Build libgc
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.4 -AtomicOpsVersion 7.8.0 -Dynamic
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.6 -AtomicOpsVersion 7.8.2 -Dynamic
       - name: Build libpcre
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45 -Dynamic
       - name: Build libpcre2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.42 -Dynamic
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Dynamic
@@ -136,7 +136,7 @@ jobs:
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3 -Dynamic
       - name: Build zlib
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.2.13 -Dynamic
+        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1 -Dynamic
       - name: Build mpir
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir -Dynamic
@@ -145,7 +145,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5 -Dynamic
       - name: Build libxml2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.11.3 -Dynamic
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.12.5 -Dynamic
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
@@ -177,30 +177,13 @@ jobs:
           path: llvm
           key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
 
-      - name: Download LLVM
-        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.CI_LLVM_VERSION }}/llvm-${{ env.CI_LLVM_VERSION }}.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "D820E63BC3A6F4F833EC69A1EF49A2E81992E90BC23989F98946914B061AB6C7"
-          7z x llvm.tar.xz
-          7z x llvm.tar
-          mv llvm-* llvm-src
-
-      - name: Download LLVM's CMake files
-        if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.CI_LLVM_VERSION }}/cmake-${{ env.CI_LLVM_VERSION }}.src.tar.xz -OutFile cmake.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\cmake.tar.xz).hash -eq "B6D83C91F12757030D8361DEDC5DD84357B3EDB8DA406B5D0850DF8B6F7798B1"
-          7z x cmake.tar.xz
-          7z x cmake.tar
-          mv cmake-* cmake
-
       - name: Build LLVM
         if: steps.cache-llvm-libs.outputs.cache-hit != 'true'
         run: |
+          git clone --config core.autocrlf=false -b llvmorg-${{ env.CI_LLVM_VERSION }} --depth 1 https://github.com/llvm/llvm-project.git
           mkdir llvm-build
           cd llvm-build
-          cmake ..\llvm-src -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
+          cmake ..\llvm-project\llvm -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
           cmake --build . --config Release
           cmake "-DCMAKE_INSTALL_PREFIX=$(pwd)\..\llvm" -P cmake_install.cmake
 
@@ -235,7 +218,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: false
-      llvm_version: "17.0.2"
+      llvm_version: "18.1.1"
 
   x86_64-windows-test:
     runs-on: windows-2022
@@ -288,7 +271,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
-      llvm_version: "17.0.2"
+      llvm_version: "18.1.1"
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
