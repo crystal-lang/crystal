@@ -149,6 +149,10 @@ class File
     # File.write("foo", "foo")
     # File::Info.readable?("foo") # => true
     # ```
+    #
+    # This method returns the readable property as reported by the file system
+    # which provides no indication of whether `File.read` would be a valid
+    # operation because it applies to all file types, including directories.
     def self.readable?(path : Path | String) : Bool
       Crystal::System::File.readable?(path.to_s)
     end
@@ -159,6 +163,9 @@ class File
     # File.write("foo", "foo")
     # File::Info.writable?("foo") # => true
     # ```
+    # This method returns the readable property as reported by the file system
+    # which provides no indication of whether `File.write` would be a valid
+    # operation because it applies to all file types, including directories.
     def self.writable?(path : Path | String) : Bool
       Crystal::System::File.writable?(path.to_s)
     end
@@ -169,6 +176,12 @@ class File
     # File.write("foo", "foo")
     # File::Info.executable?("foo") # => false
     # ```
+    # ```
+    # This method returns the readable property as reported by the file system
+    # which provides no indication of whether `Process.execute` would be a valid
+    # operation because it applies to all file types, including directories
+    # (which typically *are* executable to signal it's allowed to list their
+    # contents).
     def self.executable?(path : Path | String) : Bool
       Crystal::System::File.executable?(path.to_s)
     end
