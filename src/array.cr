@@ -1045,6 +1045,64 @@ class Array(T)
     self
   end
 
+  # Inserts all of the elements from *other* before the element at *index*.
+  #
+  # This method shifts the element currently at *index* (if any) and any
+  # subsequent elements to the right, increasing their indices. If the value
+  # of *index* is negative, counting starts from the end of the array.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
+  #
+  # ```
+  # fruits = ["Apple"]
+  # newFruits = ["Dragonfruit", "Elderberry"]
+  #
+  # fruits.insert_all(1, newFruits)             # => ["Apple", "Dragonfruit", "Elderberry"]
+  # fruits.insert_all(-3, ["Banana", "Cherry"]) # => ["Apple", "Banana", "Cherry", "Dragonfruit", "Elderberry"]
+  #
+  # fruits.insert_all(6, ["invalid"])  # raises IndexError
+  # fruits.insert_all(-7, ["indices"]) # raises IndexError
+  # ```
+  def insert_all(index : Int, other : Enumerable(T) | Iterable(T)) : self
+    other_size = other.size
+
+    return self if other_size == 0
+
+    normalized_index = index < 0 ? index + @size + 1 : index
+
+    unless 0 <= normalized_index <= @size
+      raise IndexError.new "insertion index of #{index} should be between (0..#{@size}) or (-#{@size + 1}..-1)"
+    end
+
+    resize_if_cant_insert(other_size)
+    (@buffer + normalized_index).move_to(@buffer + normalized_index + other_size, @size - normalized_index)
+
+    insert_elements_at(other, normalized_index)
+
+    @size += other_size
+
+    self
+  end
+
+  private def insert_elements(other : Array | Slice | StaticArray, index : Int) : Nil
+    (@buffer + index).copy_from(other.to_unsafe, other.size)
+  end
+
+  private def insert_elements(other : Deque, index : Int) : Nil
+    ptr = @buffer + index
+    Deque.half_slices(other) do |slice|
+      ptr.copy_from(slice.to_unsafe, slice.size)
+      ptr += slice.size
+    end
+  end
+
+  private def insert_elements_at(other, index : Int) : Nil
+    appender = (@buffer + index).appender
+    other.each do |elem|
+      appender << elem
+    end
+  end
+
   def inspect(io : IO) : Nil
     to_s io
   end
