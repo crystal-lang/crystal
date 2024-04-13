@@ -142,5 +142,35 @@ class File
     def symlink?
       type.symlink?
     end
+
+    # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
+    #
+    # ```
+    # File.write("foo", "foo")
+    # File::Info.readable?("foo") # => true
+    # ```
+    def self.readable?(path : Path | String) : Bool
+      Crystal::System::File.readable?(path.to_s)
+    end
+
+    # Returns `true` if *path* is writable by the real user id of this process else returns `false`.
+    #
+    # ```
+    # File.write("foo", "foo")
+    # File::Info.writable?("foo") # => true
+    # ```
+    def self.writable?(path : Path | String) : Bool
+      Crystal::System::File.writable?(path.to_s)
+    end
+
+    # Returns `true` if *path* is executable by the real user id of this process else returns `false`.
+    #
+    # ```
+    # File.write("foo", "foo")
+    # File::Info.executable?("foo") # => false
+    # ```
+    def self.executable?(path : Path | String) : Bool
+      Crystal::System::File.executable?(path.to_s)
+    end
   end
 end
