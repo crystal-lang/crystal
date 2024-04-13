@@ -745,30 +745,11 @@ class Array(T)
 
     resize_if_cant_insert(other_size)
 
-    concat_indexable(other)
+    insert_elements_at(other, @size)
 
     @size += other_size
 
     self
-  end
-
-  private def concat_indexable(other : Array | Slice | StaticArray)
-    (@buffer + @size).copy_from(other.to_unsafe, other.size)
-  end
-
-  private def concat_indexable(other : Deque)
-    ptr = @buffer + @size
-    Deque.half_slices(other) do |slice|
-      ptr.copy_from(slice.to_unsafe, slice.size)
-      ptr += slice.size
-    end
-  end
-
-  private def concat_indexable(other)
-    appender = (@buffer + @size).appender
-    other.each do |elem|
-      appender << elem
-    end
   end
 
   # :ditto:
