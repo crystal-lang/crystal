@@ -50,9 +50,6 @@ module Crystal::System::File
       return {-1, Errno.value}
     end
 
-    # Only binary mode is supported
-    LibC._setmode fd, LibC::O_BINARY
-
     {fd, Errno::NONE}
   end
 
