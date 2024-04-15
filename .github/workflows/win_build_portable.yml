@@ -138,6 +138,7 @@ jobs:
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
           cp shards/bin/shards.exe crystal/
+          cp shards/bin/shards.pdb crystal/
           cp libs/* crystal/lib/
           cp dlls/* crystal/
           cp README.md crystal/
