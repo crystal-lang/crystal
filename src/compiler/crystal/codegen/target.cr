@@ -58,6 +58,17 @@ class Crystal::Codegen::Target
     end
   end
 
+  def size_bit_width
+    case @architecture
+    when "aarch64", "x86_64"
+      64
+    when "arm", "i386", "wasm32"
+      32
+    else
+      raise "BUG: unknown Target#size_bit_width for #{@architecture} target architecture"
+    end
+  end
+
   def os_name
     case self
     when .macos?
