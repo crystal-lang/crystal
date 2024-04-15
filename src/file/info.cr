@@ -163,6 +163,7 @@ class File
     # File.write("foo", "foo")
     # File::Info.writable?("foo") # => true
     # ```
+    #
     # This method returns the readable property as reported by the file system
     # which provides no indication of whether `File.write` would be a valid
     # operation because it applies to all file types, including directories.
@@ -176,7 +177,7 @@ class File
     # File.write("foo", "foo")
     # File::Info.executable?("foo") # => false
     # ```
-    # ```
+    #
     # This method returns the readable property as reported by the file system
     # which provides no indication of whether `Process.execute` would be a valid
     # operation because it applies to all file types, including directories
