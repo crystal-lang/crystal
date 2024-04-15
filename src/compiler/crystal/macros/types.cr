@@ -101,6 +101,7 @@ module Crystal
       @macro_types["Self"] = NonGenericMacroType.new self, "Self", ast_node
       @macro_types["Underscore"] = NonGenericMacroType.new self, "Underscore", ast_node
       @macro_types["Select"] = NonGenericMacroType.new self, "Select", ast_node
+      @macro_types["SelectWhen"] = NonGenericMacroType.new self, "SelectWhen", ast_node
       @macro_types["Asm"] = NonGenericMacroType.new self, "Asm", ast_node
       @macro_types["AsmOperand"] = NonGenericMacroType.new self, "AsmOperand", ast_node
       @macro_types["MagicConstant"] = NonGenericMacroType.new self, "MagicConstant", ast_node

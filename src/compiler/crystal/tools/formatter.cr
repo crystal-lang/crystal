@@ -4354,6 +4354,11 @@ module Crystal
       false
     end
 
+    def visit(node : Select::When)
+      # Handled in visit(node : Select)
+      false
+    end
+
     def visit(node : Rescue)
       # Handled in visit(node : ExceptionHandler)
       false

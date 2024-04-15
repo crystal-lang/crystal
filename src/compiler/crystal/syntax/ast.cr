@@ -1360,7 +1360,28 @@ module Crystal
   end
 
   class Select < ASTNode
-    record When, condition : ASTNode, body : ASTNode
+    class When < ASTNode
+      property condition : ASTNode
+      property body : ASTNode
+
+      def initialize(@condition, @body)
+      end
+
+      def self.class_desc
+        "SelectWhen"
+      end
+
+      def accept_children(visitor)
+        @condition.accept visitor
+        @body.accept visitor
+      end
+
+      def clone_without_location
+        When.new(@condition.clone, @body.clone)
+      end
+
+      def_equals_and_hash @condition, @body
+    end
 
     property whens : Array(When)
     property else : ASTNode?
@@ -1369,10 +1390,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @whens.each do |select_when|
-        select_when.condition.accept visitor
-        select_when.body.accept visitor
-      end
+      @whens.each &.accept visitor
       @else.try &.accept visitor
     end
 

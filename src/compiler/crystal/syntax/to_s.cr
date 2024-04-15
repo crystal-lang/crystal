@@ -1354,12 +1354,7 @@ module Crystal
     def visit(node : Select)
       @str << "select"
       newline
-      node.whens.each do |a_when|
-        @str << "when "
-        a_when.condition.accept self
-        newline
-        accept_with_indent a_when.body
-      end
+      node.whens.each &.accept self
       if a_else = node.else
         @str << "else"
         newline
@@ -1367,6 +1362,14 @@ module Crystal
       end
       @str << "end"
       newline
+      false
+    end
+
+    def visit(node : Select::When)
+      @str << "when "
+      node.condition.accept self
+      newline
+      accept_with_indent node.body
       false
     end
 
