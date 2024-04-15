@@ -1497,6 +1497,19 @@ module Crystal
     end
   end
 
+  class MacroExpression
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "exp"
+        interpret_check_args { @exp }
+      when "output?"
+        interpret_check_args { BoolLiteral.new(@output) }
+      else
+        super
+      end
+    end
+  end
+
   class MacroIf
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
@@ -1521,6 +1534,36 @@ module Crystal
         interpret_check_args { @exp }
       when "body"
         interpret_check_args { @body }
+      else
+        super
+      end
+    end
+  end
+
+  class MacroLiteral
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "value"
+        interpret_check_args { MacroId.new(@value) }
+      else
+        super
+      end
+    end
+  end
+
+  class MacroVar
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "name"
+        interpret_check_args { MacroId.new(@name) }
+      when "exps"
+        interpret_check_args do
+          if exps = @exps
+            ArrayLiteral.map(exps, &.itself)
+          else
+            empty_no_return_array
+          end
+        end
       else
         super
       end
