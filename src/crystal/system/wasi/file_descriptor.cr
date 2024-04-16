@@ -2,10 +2,6 @@ require "../unix/file_descriptor"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  STDIN_HANDLE  = 0
-  STDOUT_HANDLE = 1
-  STDERR_HANDLE = 2
-
   def self.from_stdio(fd)
     # TODO: WASI doesn't offer a way to detect if a 'fd' is a TTY.
     IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true))
