@@ -1065,11 +1065,11 @@ class Array(T)
     self
   end
 
-  private def insert_elements(other : Array | Slice | StaticArray, index : Int) : Nil
+  private def insert_elements_at(other : Array | Slice | StaticArray, index : Int) : Nil
     (@buffer + index).copy_from(other.to_unsafe, other.size)
   end
 
-  private def insert_elements(other : Deque, index : Int) : Nil
+  private def insert_elements_at(other : Deque, index : Int) : Nil
     ptr = @buffer + index
     Deque.half_slices(other) do |slice|
       ptr.copy_from(slice.to_unsafe, slice.size)
