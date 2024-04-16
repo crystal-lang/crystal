@@ -3433,6 +3433,11 @@ class String
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
 
+  # :ditto:
+  def index!(search : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    index(search, offset, options: options) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the _last_ appearance of *search* in the string,
   # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
