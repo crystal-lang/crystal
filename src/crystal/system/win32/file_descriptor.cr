@@ -9,7 +9,8 @@ module Crystal::System::FileDescriptor
 
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
-  # NOTE: this should really be `LibC::HANDLE`
+  # NOTE: this should really be `LibC::HANDLE`, here it is an integer type of
+  # the same size so that `IO::FileDescriptor#fd` continues to return an `Int`
   alias Handle = ::LibC::UIntPtrT
 
   STDIN_HANDLE  = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE).address
