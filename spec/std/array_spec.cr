@@ -937,12 +937,6 @@ describe "Array" do
       end
     end
 
-    it "inserts enumerables" do
-      a = [1, 2, 999, 1000]
-      a.insert_all(2, 3...999)
-      a.should eq((1..1000).to_a)
-    end
-
     it "inserts indexable" do
       a = [1, 9, 10]
       a.insert_all(1, Slice.new(3, 8))

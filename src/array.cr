@@ -1044,21 +1044,23 @@ class Array(T)
   # fruits.insert_all(6, ["invalid"])  # raises IndexError
   # fruits.insert_all(-7, ["indices"]) # raises IndexError
   # ```
-  def insert_all(index : Int, other : Enumerable(T) | Iterable(T)) : self
+  def insert_all(index : Int, other : Indexable) : self
     other_size = other.size
 
     return self if other_size == 0
 
-    normalized_index = index < 0 ? index + @size + 1 : index
+    if index < 0
+      index += size + 1
+    end
 
-    unless 0 <= normalized_index <= @size
-      raise IndexError.new "insertion index of #{index} should be between (0..#{@size}) or (-#{@size + 1}..-1)"
+    unless 0 <= index <= size
+      raise IndexError.new
     end
 
     resize_if_cant_insert(other_size)
-    (@buffer + normalized_index).move_to(@buffer + normalized_index + other_size, @size - normalized_index)
+    (@buffer + index).move_to(@buffer + index + other_size, @size - index)
 
-    insert_elements_at(other, normalized_index)
+    insert_elements_at(other, index)
 
     @size += other_size
 
