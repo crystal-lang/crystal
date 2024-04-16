@@ -272,7 +272,7 @@ module Crystal::System::FileDescriptor
              when 0 then LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
              when 1 then LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE)
              when 2 then LibC.GetStdHandle(LibC::STD_ERROR_HANDLE)
-             else LibC::INVALID_HANDLE_VALUE
+             else        LibC::INVALID_HANDLE_VALUE
              end
 
     console_handle = false
