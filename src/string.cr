@@ -3338,7 +3338,7 @@ class String
       # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
       # sequences and we can immediately reject any non-ASCII codepoint.
       return unless search.ascii?
-      
+
       return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
@@ -3453,7 +3453,7 @@ class String
       # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
       # sequences and we can immediately reject any non-ASCII codepoint.
       return unless search.ascii?
-      
+
       return to_slice.rindex(search.ord.to_u8, offset)
     end
 
