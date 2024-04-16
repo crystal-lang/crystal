@@ -19,18 +19,18 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    handle = open(filename, open_flag(mode), ::File::Permissions.new(perm))
+    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm))
     if handle == LibC::INVALID_HANDLE_VALUE
-      raise ::File::Error.from_winerror("Error opening file with mode '#{mode}'", file: filename)
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
     end
 
     handle.address
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : LibC::HANDLE
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::HANDLE, WinError}
     access, disposition, attributes = self.posix_to_open_opts flags, perm
 
-    LibC.CreateFileW(
+    handle = LibC.CreateFileW(
       System.to_wstr(filename),
       access,
       LibC::DEFAULT_SHARE_MODE, # UNIX semantics
@@ -39,6 +39,8 @@ module Crystal::System::File
       attributes,
       LibC::HANDLE.null
     )
+
+    {handle, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
   end
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
