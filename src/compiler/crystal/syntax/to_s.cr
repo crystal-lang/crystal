@@ -1356,7 +1356,7 @@ module Crystal
       newline
       node.whens.each do |a_when|
         @str << "when "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         newline
         accept_with_indent a_when.body
       end
