@@ -17,7 +17,8 @@ module Regex::PCRE2
     version = self.version
     dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
     space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")
-    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i}
+    # PCRE2 versions can contain -RC{N} which would make `.to_i` fail unless strict is set to false
+    {version.byte_slice(0, dot).to_i, version.byte_slice(dot + 1, space - dot - 1).to_i(strict: false)}
   end
 
   # :nodoc:
