@@ -282,7 +282,7 @@ struct Pointer(T)
   end
 
   # Returns a new pointer whose address is this pointer's address
-  # incremented by `other * sizeof(T)`.
+  # incremented by `offset * sizeof(T)`.
   #
   # ```
   # ptr = Pointer(Int32).new(1234)
@@ -406,7 +406,8 @@ end
     struct {{int.id}}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
-      # chars (`0..0xd7ff` and `0xe000..0x10ffff`).
+      # chars (`0..0xd7ff` and `0xe000..0x10ffff`). In case of overflow
+      # a wrapping is performed.
       #
       # You should never use this method unless `chr` turns out to
       # be a bottleneck.
@@ -414,7 +415,7 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[::Primitive(:convert)]
+      @[::Primitive(:unchecked_convert)]
       def unsafe_chr : Char
       end
 

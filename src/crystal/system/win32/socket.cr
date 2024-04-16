@@ -442,7 +442,7 @@ module Crystal::System::Socket
   end
 
   private def system_tty?
-    false
+    LibC.GetFileType(LibC::HANDLE.new(fd)) == LibC::FILE_TYPE_CHAR
   end
 
   private def unbuffered_read(slice : Bytes) : Int32

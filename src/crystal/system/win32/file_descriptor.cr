@@ -151,7 +151,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_tty?
-    LibC._isatty(fd) != 0
+    LibC.GetFileType(windows_handle) == LibC::FILE_TYPE_CHAR
   end
 
   private def system_reopen(other : IO::FileDescriptor)
@@ -178,6 +178,93 @@ module Crystal::System::FileDescriptor
       else
         raise IO::Error.from_errno("Error closing file", target: self)
       end
+    end
+  end
+
+  private def system_flock_shared(blocking : Bool) : Nil
+    flock(false, blocking)
+  end
+
+  private def system_flock_exclusive(blocking : Bool) : Nil
+    flock(true, blocking)
+  end
+
+  private def system_flock_unlock : Nil
+    unlock_file(windows_handle)
+  end
+
+  private def flock(exclusive, retry)
+    flags = 0_u32
+    flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY unless retry && !system_blocking?
+    flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
+
+    handle = windows_handle
+    if retry && system_blocking?
+      until lock_file(handle, flags)
+        sleep 0.1
+      end
+    else
+      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked", target: self)
+    end
+  end
+
+  private def lock_file(handle, flags)
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        case error = WinError.value
+        when .error_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .error_lock_violation?
+          # synchronous failure
+          operation.synchronous = true
+          return false
+        else
+          raise IO::Error.from_os_error("LockFileEx", error, target: self)
+        end
+      else
+        operation.synchronous = true
+        return true
+      end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("LockFileEx", error, target: self)
+      end
+
+      true
+    end
+  end
+
+  private def unlock_file(handle)
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        error = WinError.value
+        unless error.error_io_pending?
+          raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+        end
+      else
+        operation.synchronous = true
+        return
+      end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+      end
+    end
+  end
+
+  private def system_fsync(flush_metadata = true) : Nil
+    if LibC.FlushFileBuffers(windows_handle) == 0
+      raise IO::Error.from_winerror("Error syncing file", target: self)
     end
   end
 
@@ -216,7 +303,6 @@ module Crystal::System::FileDescriptor
     console_handle = false
     handle = windows_handle(fd)
     if handle != LibC::INVALID_HANDLE_VALUE
-      LibC._setmode fd, LibC::O_BINARY
       # TODO: use `out old_mode` after implementing interpreter out closured var
       old_mode = uninitialized LibC::DWORD
       if LibC.GetConsoleMode(handle, pointerof(old_mode)) != 0

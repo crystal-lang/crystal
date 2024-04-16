@@ -2774,8 +2774,13 @@ module Crystal
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
          expressions.keyword.paren? && expressions.expressions.size == 1
-        skip_space
-        node.args[0] = expressions.expressions[0]
+        # ...except do not transform `foo ()` into `foo()`, as the former is
+        # actually semantically equivalent to `foo(nil)`
+        arg = expressions.expressions[0]
+        unless arg.is_a?(Nop)
+          skip_space
+          node.args[0] = arg
+        end
       end
 
       if @token.type.op_lparen?
@@ -3026,6 +3031,7 @@ module Crystal
         ends_with_newline = true
         next_token
       end
+      skip_space_or_newline
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
