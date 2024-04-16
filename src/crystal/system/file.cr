@@ -68,7 +68,7 @@ module Crystal::System::File
       handle, errno = open(path, mode, perm)
 
       if error_is_none?(errno)
-        return {handle.address, path}
+        return {handle, path}
       elsif error_is_file_exists?(errno)
         # retry
         next

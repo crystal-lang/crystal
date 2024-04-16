@@ -20,14 +20,14 @@ module Crystal::System::File
     end
 
     handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm))
-    if handle == LibC::INVALID_HANDLE_VALUE
+    unless error.error_success?
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
     end
 
-    handle.address
+    handle
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::HANDLE, WinError}
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {FileDescriptor::Handle, WinError}
     access, disposition, attributes = self.posix_to_open_opts flags, perm
 
     handle = LibC.CreateFileW(
@@ -40,7 +40,7 @@ module Crystal::System::File
       LibC::HANDLE.null
     )
 
-    {handle, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
+    {handle.address, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
   end
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
