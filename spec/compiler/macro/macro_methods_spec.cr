@@ -2547,17 +2547,13 @@ module Crystal
     end
 
     describe MacroExpression do
-      foo = MacroExpression.new(NilLiteral.new, output: false)
-      bar = MacroExpression.new(1.int32, output: true)
-
       it "executes exp" do
-        assert_macro %({{x.exp}}), "nil", {x: foo}
-        assert_macro %({{x.exp}}), "1", {x: bar}
+        assert_macro %({{x.exp}}), "nil", {x: MacroExpression.new(NilLiteral.new)}
       end
 
       it "executes output?" do
-        assert_macro %({{x.output?}}), "false", {x: foo}
-        assert_macro %({{x.output?}}), "true", {x: bar}
+        assert_macro %({{x.output?}}), "false", {x: MacroExpression.new(NilLiteral.new, output: false)}
+        assert_macro %({{x.output?}}), "true", {x: MacroExpression.new(1.int32, output: true)}
       end
     end
 
@@ -2590,27 +2586,20 @@ module Crystal
     end
 
     describe MacroLiteral do
-      foo = MacroLiteral.new("foo(1)")
-      bar = MacroLiteral.new("")
-
       it "executes value" do
-        assert_macro %({{x.value}}), "foo(1)", {x: foo}
-        assert_macro %({{x.value}}), "", {x: bar}
+        assert_macro %({{x.value}}), "foo(1)", {x: MacroLiteral.new("foo(1)")}
+        assert_macro %({{x.value}}), "", {x: MacroLiteral.new("")}
       end
     end
 
     describe MacroVar do
-      foo = MacroVar.new("foo")
-      bar = MacroVar.new("bar", [Var.new("x"), 1.int32] of ASTNode)
-
       it "executes name" do
-        assert_macro %({{x.name}}), "foo", {x: foo}
-        assert_macro %({{x.name}}), "bar", {x: bar}
+        assert_macro %({{x.name}}), "foo", {x: MacroVar.new("foo")}
       end
 
-      it "executes exps" do
-        assert_macro %({{x.exps}}), "[] of ::NoReturn", {x: foo}
-        assert_macro %({{x.exps}}), "[x, 1]", {x: bar}
+      it "executes expressions" do
+        assert_macro %({{x.expressions}}), "[] of ::NoReturn", {x: MacroVar.new("foo")}
+        assert_macro %({{x.expressions}}), "[x, 1]", {x: MacroVar.new("bar", [Var.new("x"), 1.int32] of ASTNode)}
       end
     end
 

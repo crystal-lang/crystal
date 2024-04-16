@@ -1556,7 +1556,7 @@ module Crystal
       case method
       when "name"
         interpret_check_args { MacroId.new(@name) }
-      when "exps"
+      when "expressions"
         interpret_check_args do
           if exps = @exps
             ArrayLiteral.map(exps, &.itself)
