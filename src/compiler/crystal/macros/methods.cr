@@ -2388,7 +2388,11 @@ module Crystal
     end
 
     def to_macro_id
-      @names.join "::"
+      String.build do |io|
+        io << "::" if global?
+
+        @names.join(io, "::")
+      end
     end
   end
 

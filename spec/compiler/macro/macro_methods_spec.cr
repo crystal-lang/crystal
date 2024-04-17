@@ -121,6 +121,14 @@ module Crystal
         it "expands macro with id call on number" do
           assert_macro "{{x.id}}", %(1), {x: 1.int32}
         end
+
+        it "expands macro with id call on path" do
+          assert_macro "{{x.id}}", %(Foo), {x: Path.new("Foo")}
+        end
+
+        it "expands macro with id call on global path" do
+          assert_macro "{{x.id}}", %(::Foo), {x: Path.new("Foo", global: true)}
+        end
       end
 
       it "executes == on numbers (true)" do
