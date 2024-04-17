@@ -3692,9 +3692,10 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CRYSTAL
+        assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
           CRYSTAL
+          "Error opening file with mode 'r'"
       end
     end
 
@@ -3706,9 +3707,10 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CRYSTAL
+        assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
           CRYSTAL
+          "Error opening file with mode 'r'"
       end
     end
   end
