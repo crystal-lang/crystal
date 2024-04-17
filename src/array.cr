@@ -1031,6 +1031,8 @@ class Array(T)
   # This method shifts the element currently at *index* (if any) and any
   # subsequent elements to the right, increasing their indices. If the value
   # of *index* is negative, counting starts from the end of the array.
+  # For example, `-1` indicates insertion after the last element, `-2` before
+  # the last element.
   #
   # Raises `IndexError` if the *index* is out of bounds.
   #
