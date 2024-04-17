@@ -31,6 +31,17 @@ private def normalize_permissions(permissions, *, directory)
   {% end %}
 end
 
+# TODO: Find a better way to execute specs involving file permissions when
+# running as a privileged user. Compiling a program and running a separate
+# process would be a lot of overhead.
+private def pending_if_superuser!
+  {% if flag?(:unix) %}
+    if LibC.getuid == 0
+      pending! "Spec cannot run as superuser"
+    end
+  {% end %}
+end
+
 describe "File" do
   it "gets path" do
     path = datapath("test_file.txt")
@@ -224,7 +235,7 @@ describe "File" do
         with_tempfile("unreadable.txt") do |path|
           File.write(path, "")
           File.chmod(path, 0o222)
-          p File.info(path).permissions
+          pending_if_superuser!
           File.readable?(path).should be_false
         end
       end
@@ -233,7 +244,7 @@ describe "File" do
         with_tempfile("unaccessible.txt") do |path|
           File.write(path, "")
           File.chmod(path, 0o000)
-          p File.info(path).permissions
+          pending_if_superuser!
           File.readable?(path).should be_false
         end
       end
@@ -257,7 +268,7 @@ describe "File" do
       with_tempfile("readonly.txt") do |path|
         File.write(path, "")
         File.chmod(path, 0o444)
-        p File.info(path).permissions
+        pending_if_superuser!
         File.writable?(path).should be_false
       end
     end
@@ -1021,14 +1032,7 @@ describe "File" do
       with_tempfile("file.txt") do |path|
         File.touch(path)
         File.chmod(path, File::Permissions::None)
-        {% if flag?(:unix) %}
-          # TODO: Find a better way to execute this spec when running as privileged
-          # user. Compiling a program and running a separate process would be a
-          # lot of overhead.
-          if LibC.getuid == 0
-            pending! "Spec cannot run as superuser"
-          end
-        {% end %}
+        pending_if_superuser!
         expect_raises(File::AccessDeniedError, "Error opening file with mode 'r': '#{path.inspect_unquoted}'") { File.read(path) }
       end
     end
@@ -1038,14 +1042,7 @@ describe "File" do
     with_tempfile("file.txt") do |path|
       File.touch(path)
       File.chmod(path, File::Permissions::None)
-      {% if flag?(:unix) %}
-        # TODO: Find a better way to execute this spec when running as privileged
-        # user. Compiling a program and running a separate process would be a
-        # lot of overhead.
-        if LibC.getuid == 0
-          pending! "Spec cannot run as superuser"
-        end
-      {% end %}
+      pending_if_superuser!
       expect_raises(File::AccessDeniedError, "Error opening file with mode 'w': '#{path.inspect_unquoted}'") { File.write(path, "foo") }
     end
   end
