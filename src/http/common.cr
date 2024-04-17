@@ -241,17 +241,18 @@ module HTTP
     referer
     user-agent
   )
+    .map { |header| {header.to_slice, header} }
+    .to_h
 
   # :nodoc:
   def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
-    if slice.size < 20
-      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
-      return name if name && name.to_slice == slice
+    if slice.size < 20 && (name = COMMON_HEADERS[slice]?)
+      name
+    else
+      String.new(slice)
     end
-
-    String.new(slice)
   end
 
   # :nodoc:
