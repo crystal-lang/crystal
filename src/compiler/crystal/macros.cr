@@ -2380,7 +2380,7 @@ module Crystal::Macros
   # Every variable `node` is equivalent to:
   #
   # ```
-  # {{ "%#{name}".id }}{% if exps = node.exps %}{{ "{#{exps.splat}}".id }}{% end %}
+  # {{ "%#{name}".id }}{% if expressions = node.expressions %}{{ "{#{expressions.splat}}".id }}{% end %}
   # ```
   class MacroVar < ASTNode
     # Returns the name of the fresh variable.
@@ -2388,7 +2388,7 @@ module Crystal::Macros
     end
 
     # Returns the associated indices of the fresh variable.
-    def exps : ArrayLiteral
+    def expressions : ArrayLiteral
     end
   end
 
