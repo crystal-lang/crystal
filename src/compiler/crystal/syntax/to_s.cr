@@ -443,26 +443,24 @@ module Crystal
 
     private def visit_args(node, exclude_last = false)
       printed_arg = false
-      drop_parens_for_proc_notation do
-        node.args.each_with_index do |arg, i|
-          break if exclude_last && i == node.args.size - 1
+      node.args.each_with_index do |arg, i|
+        break if exclude_last && i == node.args.size - 1
 
+        @str << ", " if printed_arg
+        drop_parens_for_proc_notation(arg, &.accept(self))
+        printed_arg = true
+      end
+      if named_args = node.named_args
+        named_args.each do |named_arg|
           @str << ", " if printed_arg
-          arg.accept self
+          drop_parens_for_proc_notation(named_arg, &.accept(self))
           printed_arg = true
         end
-        if named_args = node.named_args
-          named_args.each do |named_arg|
-            @str << ", " if printed_arg
-            named_arg.accept self
-            printed_arg = true
-          end
-        end
-        if block_arg = node.block_arg
-          @str << ", " if printed_arg
-          @str << '&'
-          block_arg.accept self
-        end
+      end
+      if block_arg = node.block_arg
+        @str << ", " if printed_arg
+        @str << '&'
+        drop_parens_for_proc_notation(block_arg, &.accept(self))
       end
     end
 
@@ -641,27 +639,25 @@ module Crystal
       if node.args.size > 0 || node.block_arity || node.double_splat
         @str << '('
         printed_arg = false
-        drop_parens_for_proc_notation do
-          node.args.each_with_index do |arg, i|
-            @str << ", " if printed_arg
-            @current_arg_type = :splat if node.splat_index == i
-            arg.accept self
-            printed_arg = true
-          end
-          if double_splat = node.double_splat
-            @current_arg_type = :double_splat
-            @str << ", " if printed_arg
-            double_splat.accept self
-            printed_arg = true
-          end
-          if block_arg = node.block_arg
-            @current_arg_type = :block_arg
-            @str << ", " if printed_arg
-            block_arg.accept self
-          elsif node.block_arity
-            @str << ", " if printed_arg
-            @str << '&'
-          end
+        node.args.each_with_index do |arg, i|
+          @str << ", " if printed_arg
+          @current_arg_type = :splat if node.splat_index == i
+          drop_parens_for_proc_notation(arg, &.accept(self))
+          printed_arg = true
+        end
+        if double_splat = node.double_splat
+          @current_arg_type = :double_splat
+          @str << ", " if printed_arg
+          drop_parens_for_proc_notation(double_splat, &.accept(self))
+          printed_arg = true
+        end
+        if block_arg = node.block_arg
+          @current_arg_type = :block_arg
+          @str << ", " if printed_arg
+          drop_parens_for_proc_notation(block_arg, &.accept(self))
+        elsif node.block_arity
+          @str << ", " if printed_arg
+          @str << '&'
         end
         @str << ')'
       end
@@ -1163,16 +1159,16 @@ module Crystal
       end
       if node.args.size > 0
         @str << '('
-        drop_parens_for_proc_notation do
-          node.args.join(@str, ", ") do |arg|
-            if arg_name = arg.name.presence
-              @str << arg_name << " : "
-            end
+        node.args.join(@str, ", ") do |arg|
+          if arg_name = arg.name.presence
+            @str << arg_name << " : "
+          end
+          drop_parens_for_proc_notation(arg) do
             arg.restriction.not_nil!.accept self
           end
-          if node.varargs?
-            @str << ", ..."
-          end
+        end
+        if node.varargs?
+          @str << ", ..."
         end
         @str << ')'
       elsif node.varargs?
@@ -1605,6 +1601,22 @@ module Crystal
       ensure
         @drop_parens_for_proc_notation = old_drop_parens_for_proc_notation
       end
+    end
+
+    def drop_parens_for_proc_notation(node : ASTNode, &)
+      outermost_type_is_proc_notation =
+        case node
+        when Arg
+          # def / fun parameters
+          node.restriction.is_a?(ProcNotation)
+        when TypeDeclaration
+          # call arguments
+          node.declared_type.is_a?(ProcNotation)
+        else
+          false
+        end
+
+      drop_parens_for_proc_notation(outermost_type_is_proc_notation) { yield node }
     end
 
     def to_s : String

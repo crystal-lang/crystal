@@ -120,6 +120,16 @@ describe "ASTNode#to_s" do
   expect_to_s "foo[x : (T -> U) -> V, W] = 1"
   expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) -> V, W) : ((T -> U) -> V)\nend"
 
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) | V)\nend"
+  expect_to_s "lib LibFoo\n  fun foo(x : Foo((T -> U)))\nend"
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U).class)\nend"
+  expect_to_s "def foo(x : (T -> U) | V)\nend"
+  expect_to_s "def foo(x : Foo((T -> U)))\nend"
+  expect_to_s "def foo(x : (T -> U).class)\nend"
+  expect_to_s "foo(x : (T -> U) | V)"
+  expect_to_s "foo(x : Foo((T -> U)))"
+  expect_to_s "foo(x : (T -> U).class)"
+
   expect_to_s "macro foo(@[Foo] id)\nend"
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(@[Foo] **args)\nend"
