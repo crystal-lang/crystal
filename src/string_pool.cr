@@ -86,6 +86,23 @@ class StringPool
     get slice.to_unsafe, slice.size
   end
 
+  # Returns a `String` with the contents of the given *slice*, or `nil` if no
+  # such string exists in the pool.
+  #
+  # ```
+  # require "string_pool"
+  #
+  # pool = StringPool.new
+  # bytes = "abc".to_slice
+  # pool.get?(bytes) # => nil
+  # pool.empty?      # => true
+  # pool.get(bytes)  # => "abc"
+  # pool.empty?      # => false
+  # ```
+  def get?(slice : Bytes) : String?
+    get? slice.to_unsafe, slice.size
+  end
+
   # Returns a `String` with the contents given by the pointer *str* of size *len*.
   #
   # If a string with those contents was already present in the pool, that one is returned.
@@ -103,9 +120,24 @@ class StringPool
     get(hash, str, len)
   end
 
-  private def get(hash : UInt64, str : UInt8*, len)
-    rehash if @size >= @capacity // 4 * 3
+  # Returns a `String` with the contents given by the pointer *str* of size
+  # *len*, or `nil` if no such string exists in the pool.
+  #
+  # ```
+  # require "string_pool"
+  #
+  # pool = StringPool.new
+  # pool.get?("hey".to_unsafe, 3) # => nil
+  # pool.empty?                   # => true
+  # pool.get("hey".to_unsafe, 3)  # => "hey"
+  # pool.empty?                   # => false
+  # ```
+  def get?(str : UInt8*, len) : String?
+    hash = hash(str, len)
+    get?(hash, str, len)
+  end
 
+  private def get(hash : UInt64, str : UInt8*, len, &)
     mask = (@capacity - 1).to_u64
     index = hash & mask
     next_probe_offset = 1_u64
@@ -119,11 +151,22 @@ class StringPool
       next_probe_offset += 1_u64
     end
 
-    @size += 1
-    entry = String.new(str, len)
-    @hashes[index] = hash
-    @values[index] = entry
-    entry
+    yield index
+  end
+
+  private def get(hash : UInt64, str : UInt8*, len)
+    get(hash, str, len) do |index|
+      rehash if @size >= @capacity // 4 * 3
+      @size += 1
+      entry = String.new(str, len)
+      @hashes[index] = hash
+      @values[index] = entry
+      entry
+    end
+  end
+
+  private def get?(hash : UInt64, str : UInt8*, len)
+    get(hash, str, len) { nil }
   end
 
   private def put_on_rehash(hash : UInt64, entry : String)
@@ -157,6 +200,23 @@ class StringPool
     get(str.buffer, str.bytesize)
   end
 
+  # Returns a `String` with the contents of the given `IO::Memory`, or `nil` if
+  # no such string exists in the pool.
+  #
+  # ```
+  # require "string_pool"
+  #
+  # pool = StringPool.new
+  # io = IO::Memory.new "crystal"
+  # pool.get?(io) # => nil
+  # pool.empty?   # => true
+  # pool.get(io)  # => "crystal"
+  # pool.empty?   # => false
+  # ```
+  def get?(str : IO::Memory) : String?
+    get?(str.buffer, str.bytesize)
+  end
+
   # Returns a `String` with the contents of the given string.
   #
   # If a string with those contents was already present in the pool, that one is returned.
@@ -173,6 +233,23 @@ class StringPool
   # ```
   def get(str : String) : String
     get(str.to_unsafe, str.bytesize)
+  end
+
+  # Returns a `String` with the contents of the given string, or `nil` if no
+  # such string exists in the pool.
+  #
+  # ```
+  # require "string_pool"
+  #
+  # pool = StringPool.new
+  # string = "crystal"
+  # pool.get?(string) # => nil
+  # pool.empty?       # => true
+  # pool.get(string)  # => "crystal"
+  # pool.empty?       # => false
+  # ```
+  def get?(str : String) : String?
+    get?(str.to_unsafe, str.bytesize)
   end
 
   # Rebuilds the hash based on the current hash values for each key,
