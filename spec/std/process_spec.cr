@@ -3,19 +3,13 @@
 require "spec"
 require "process"
 require "./spec_helper"
+require "../support/env"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
   {% else %}
-    case code
-    when 0
-      {"true", [] of String}
-    when 1
-      {"false", [] of String}
-    else
-      {"/bin/sh", {"-c", "exit #{code}"}}
-    end
+    {"/bin/sh", {"-c", "exit #{code}"}}
   {% end %}
 end
 
@@ -60,7 +54,8 @@ private def newline
   {% end %}
 end
 
-describe Process do
+# interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
+pending_interpreted describe: Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -267,75 +262,67 @@ describe Process do
       end
 
       it "deletes existing environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should_not match /(*ANYCRLF)^FOO=/m
         end
-        value.should_not match /(*ANYCRLF)^FOO=/m
-      ensure
-        ENV.delete("FOO")
       end
 
       {% if flag?(:win32) %}
         it "deletes existing environment variable case-insensitive" do
-          ENV["FOO"] = "bar"
-          value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
-            proc.output.gets_to_end
+          with_env("FOO": "bar") do
+            value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
+              proc.output.gets_to_end
+            end
+            value.should_not match /(*ANYCRLF)^FOO=/mi
           end
-          value.should_not match /(*ANYCRLF)^FOO=/mi
-        ensure
-          ENV.delete("FOO")
         end
       {% end %}
 
       it "preserves existing environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should match /(*ANYCRLF)^FOO=bar$/m
         end
-        value.should match /(*ANYCRLF)^FOO=bar$/m
-      ensure
-        ENV.delete("FOO")
       end
 
       it "preserves and sets an environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should match /(*ANYCRLF)^FOO=bar$/m
+          value.should match /(*ANYCRLF)^FOO2=bar2$/m
         end
-        value.should match /(*ANYCRLF)^FOO=bar$/m
-        value.should match /(*ANYCRLF)^FOO2=bar2$/m
-      ensure
-        ENV.delete("FOO")
       end
 
       it "overrides existing environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should match /(*ANYCRLF)^FOO=different$/m
         end
-        value.should match /(*ANYCRLF)^FOO=different$/m
-      ensure
-        ENV.delete("FOO")
       end
 
       {% if flag?(:win32) %}
         it "overrides existing environment variable case-insensitive" do
-          ENV["FOO"] = "bar"
-          value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
-            proc.output.gets_to_end
+          with_env("FOO": "bar") do
+            value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
+              proc.output.gets_to_end
+            end
+            value.should_not match /(*ANYCRLF)^FOO=/m
+            value.should match /(*ANYCRLF)^fOo=different$/m
           end
-          value.should_not match /(*ANYCRLF)^FOO=/m
-          value.should match /(*ANYCRLF)^fOo=different$/m
-        ensure
-          ENV.delete("FOO")
         end
       {% end %}
     end
 
-    # TODO: this spec gives "WaitForSingleObject: The handle is invalid."
-    # is this because standard streams on windows aren't async?
-    pending_win32 "can link processes together" do
+    it "can link processes together" do
       buffer = IO::Memory.new
       Process.run(*stdin_to_stdout_command) do |cat|
         Process.run(*stdin_to_stdout_command, input: cat.output, output: buffer) do
@@ -350,6 +337,14 @@ describe Process do
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
+  describe ".on_terminate" do
+    it "compiles" do
+      typeof(Process.on_terminate { })
       typeof(Process.ignore_interrupts!)
       typeof(Process.restore_interrupts!)
     end
@@ -469,13 +464,13 @@ describe Process do
           begin
             Process.chroot(".")
             puts "FAIL"
-          rescue ex
-            puts ex.inspect
+          rescue ex : RuntimeError
+            puts ex.os_error
           end
         CRYSTAL
 
         status.success?.should be_true
-        output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+        output.should eq("EPERM\n")
       end
     {% end %}
   end

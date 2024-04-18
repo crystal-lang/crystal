@@ -59,10 +59,9 @@ EXPORTS_BUILD := \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
-LLVM_VERSION := $(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --version 2> /dev/null))
+LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version 2> /dev/null))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
-DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
@@ -78,6 +77,13 @@ ifeq ($(or $(TERM),$(TERM),dumb),dumb)
   colorize = $(shell printf >&2 "$1")
 else
   colorize = $(shell printf >&2 "\033[33m$1\033[0m\n")
+endif
+
+DEPS = $(LLVM_EXT_OBJ)
+ifneq ($(LLVM_VERSION),)
+  ifeq ($(shell test $(firstword $(subst ., ,$(LLVM_VERSION))) -ge 18; echo $$?),0)
+    DEPS =
+  endif
 endif
 
 check_llvm_config = $(eval \
@@ -127,6 +133,7 @@ samples: ## Build example programs
 docs: ## Generate standard library documentation
 	$(call check_llvm_config)
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
+	cp -av doc/ docs/
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
@@ -139,27 +146,9 @@ llvm_ext: $(LLVM_EXT_OBJ)
 format: ## Format sources
 	./bin/crystal tool format$(if $(check), --check) src spec samples scripts
 
-generate_data: ## Run generator scripts for Unicode, SSL config, ... (usually with `-B`/`--always-make` flag)
-
-generate_data: spec/std/string/graphemes_break_spec.cr
-spec/std/string/graphemes_break_spec.cr: scripts/generate_grapheme_break_specs.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/string/grapheme/properties.cr
-src/string/grapheme/properties.cr: scripts/generate_grapheme_properties.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/openssl/ssl/defaults.cr
-src/openssl/ssl/defaults.cr: scripts/generate_ssl_server_defaults.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/unicode/data.cr
-src/unicode/data.cr: scripts/generate_unicode_data.cr
-	$(CRYSTAL) run $<
-
-generate_data: src/crystal/system/win32/zone_names.cr
-src/crystal/system/win32/zone_names.cr: scripts/generate_windows_zone_names.cr
-	$(CRYSTAL) run $<
+.PHONY: generate_data
+generate_data: ## Run generator scripts for Unicode, SSL config, ...
+	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
@@ -200,7 +189,6 @@ install_docs: docs ## Install docs at DESTDIR
 
 	cp -av docs "$(DATADIR)/docs"
 	cp -av samples "$(DATADIR)/examples"
-	rm -rf "$(DATADIR)/examples/.gitignore"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
@@ -226,7 +214,7 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
@@ -248,6 +236,7 @@ man/%.gz: man/%
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
+	rm -rf man/*.gz
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files

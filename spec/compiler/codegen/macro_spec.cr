@@ -554,13 +554,12 @@ describe "Code gen: macro" do
 
   it "can iterate union types" do
     run(%(
-      require "prelude"
       class Foo
         def initialize
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join('-')
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort.join("-") }}
         end
       end
       Foo.new.foo
@@ -613,10 +612,9 @@ describe "Code gen: macro" do
 
   it "can access type variables of a generic type" do
     run(%(
-      require "prelude"
       class Foo(T, K)
         def self.foo : String
-          {{ @type.type_vars.map(&.stringify) }}.join('-')
+          {{ @type.type_vars.map(&.stringify).join("-") }}
         end
       end
       Foo.foo
@@ -697,8 +695,6 @@ describe "Code gen: macro" do
 
   it "executes subclasses" do
     run(%(
-      require "prelude"
-
       class Foo
       end
 
@@ -711,15 +707,12 @@ describe "Code gen: macro" do
       class Qux < Baz
       end
 
-      names = {{ Foo.subclasses.map &.name }}
-      names.join('-')
+      {{ Foo.subclasses.map(&.name).join("-") }}
       )).to_string.should eq("Bar-Baz")
   end
 
   it "executes all_subclasses" do
     run(%(
-      require "prelude"
-
       class Foo
       end
 
@@ -729,8 +722,7 @@ describe "Code gen: macro" do
       class Baz < Bar
       end
 
-      names = {{ Foo.all_subclasses.map &.name }}
-      names.join('-')
+      {{ Foo.all_subclasses.map(&.name).join("-") }}
       )).to_string.should eq("Bar-Baz")
   end
 
@@ -813,8 +805,6 @@ describe "Code gen: macro" do
 
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
     run(%(
-      require "prelude"
-
       class Object
         def class_name : String
           {{@type.name.stringify}}

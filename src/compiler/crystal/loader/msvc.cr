@@ -5,9 +5,9 @@ require "crystal/system/win32/library_archive"
 # `link.exe`, using the Win32 DLL API.
 #
 # * Only dynamic libraries can be loaded. Static libraries and object files
-#   are unsupported. in particular, `LibC.printf` and `LibC.snprintf`are inline
-#   functions in `legacy-stdio_definitions.lib` since VS2015, so they are never
-#   found by the loader.
+#   are unsupported. For example, `LibC.printf` and `LibC.snprintf` are inline
+#   functions in `legacy_stdio_definitions.lib` since VS2015, so they are never
+#   found by the loader (this is why stdlib no longer uses those functions).
 # * Unlike the Unix counterpart, symbols in the current module do not clash with
 #   the ones in DLLs or their corresponding import libraries.
 
@@ -18,16 +18,28 @@ class Crystal::Loader
     include SystemError
   end
 
+  getter dll_search_paths : Array(String)?
+
+  def initialize(@search_paths : Array(String), @dll_search_paths : Array(String)? = nil)
+  end
+
   # Parses linker arguments in the style of `link.exe`.
-  def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
+  #
+  # The directories in *dll_search_paths* are tried before Windows' search order
+  # when looking for DLLs corresponding to an import library. The compiler uses
+  # this to mimic `@[Link]`'s DLL-copying behavior for compiled code.
+  def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths, dll_search_paths : Array(String)? = nil) : self
     search_paths, libnames = parse_args(args, search_paths)
     file_paths = [] of String
 
     begin
-      self.new(search_paths, libnames, file_paths)
+      loader = new(search_paths, dll_search_paths)
+      loader.load_all(libnames, file_paths)
+      loader
     rescue exc : LoadError
       exc.args = args
       exc.search_paths = search_paths
+      exc.dll_search_paths = dll_search_paths
       raise exc
     end
   end
@@ -60,7 +72,7 @@ class Crystal::Loader
     result
   end
 
-  private def self.search_library(libname, search_paths, extra_suffix)
+  protected def self.search_library(libname, search_paths, extra_suffix)
     if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
       libname = File.expand_path(libname)
       library_path = library_filename(libname)
@@ -106,7 +118,7 @@ class Crystal::Loader
   end
 
   def self.library_filename(libname : String) : String
-    "#{libname}.lib"
+    "#{libname.rchop(".lib")}.lib"
   end
 
   def find_symbol?(name : String) : Handle?
@@ -127,19 +139,24 @@ class Crystal::Loader
     # files, whose base names may not match the library's. Thus it is necessary
     # to extract this information from the library archive itself.
     System::LibraryArchive.imported_dlls(path).each do |dll|
-      # always consider the `.dll` in the same directory as the `.lib` first,
-      # regardless of the search order
-      first_path = File.join(File.dirname(path), dll)
-      dll = first_path if File.file?(first_path)
+      dll_full_path = @dll_search_paths.try &.each do |search_path|
+        full_path = File.join(search_path, dll)
+        break full_path if File.file?(full_path)
+      end
+      dll = dll_full_path || dll
 
       # TODO: `dll` is an unqualified name, e.g. `SHELL32.dll`, so the default
-      # DLL search order is used; consider getting rid of the cwd
+      # DLL search order is used if *dll_full_path* is nil; consider getting rid
+      # of the current working directory altogether
       # (https://docs.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order)
+      #
+      # Note that the compiler's directory and PATH are effectively searched
+      # twice when coming from the interpreter
       handle = open_library(dll)
       return false unless handle
 
       @handles << handle
-      @loaded_libraries << dll
+      @loaded_libraries << (module_filename(handle) || dll)
     end
 
     true
@@ -149,14 +166,20 @@ class Crystal::Loader
     load_library?(libname) || raise LoadError.from_winerror "cannot find #{Loader.library_filename(libname)}"
   end
 
+  def load_library?(libname : String) : Bool
+    library_path = Loader.search_library(libname, @search_paths, "-dynamic")
+    !library_path.nil? && load_file?(library_path)
+  end
+
   private def open_library(path : String)
-    # TODO: respect Crystal::LIBRARY_RPATH (#13490)
+    # TODO: respect Crystal::LIBRARY_RPATH (#13490), or `@[Link(dll:)]`'s search order
     LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 
   def load_current_program_handle
     if LibC.GetModuleHandleExW(0, nil, out hmodule) != 0
       @handles << hmodule
+      @loaded_libraries << (Process.executable_path || "current program handle")
     end
   end
 
@@ -165,6 +188,19 @@ class Crystal::Loader
       LibC.FreeLibrary(handle)
     end
     @handles.clear
+  end
+
+  private def module_filename(handle)
+    Crystal::System.retry_wstr_buffer do |buffer, small_buf|
+      len = LibC.GetModuleFileNameW(handle, buffer, buffer.size)
+      if 0 < len < buffer.size
+        break String.from_utf16(buffer[0, len])
+      elsif small_buf && len == buffer.size
+        next 32767 # big enough. 32767 is the maximum total path length of UNC path.
+      else
+        break nil
+      end
+    end
   end
 
   # Returns a list of directories used as the default search paths.

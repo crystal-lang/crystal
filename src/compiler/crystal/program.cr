@@ -118,7 +118,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.host_target
+    getter codegen_target = Config.host_target
 
     getter predefined_constants = Array(Const).new
 
@@ -275,37 +275,85 @@ module Crystal
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
     private def define_crystal_constants
       if build_commit = Crystal::Config.build_commit
-        define_crystal_string_constant "BUILD_COMMIT", build_commit
+        build_commit_const = define_crystal_string_constant "BUILD_COMMIT", build_commit
       else
-        define_crystal_nil_constant "BUILD_COMMIT"
+        build_commit_const = define_crystal_nil_constant "BUILD_COMMIT"
       end
+      build_commit_const.doc = <<-MD if wants_doc?
+        The build commit identifier of the Crystal compiler.
+        MD
 
-      define_crystal_string_constant "BUILD_DATE", Crystal::Config.date
-      define_crystal_string_constant "CACHE_DIR", CacheDir.instance.dir
-      define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path
-      define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
-      define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
-      define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path
-      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath
-      define_crystal_string_constant "VERSION", Crystal::Config.version
-      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
+      define_crystal_string_constant "BUILD_DATE", Crystal::Config.date, <<-MD
+        The build date of the Crystal compiler.
+        MD
+      define_crystal_string_constant "CACHE_DIR", CacheDir.instance.dir, <<-MD
+        The cache directory configured for the Crystal compiler.
+
+        The value is defined by the environment variable `CRYSTAL_CACHE_DIR` and
+        defaults to the user's configured cache directory.
+        MD
+      define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path, <<-MD
+        The default Crystal path configured in the compiler. This value is baked
+        into the compiler and usually points to the accompanying version of the
+        standard library.
+        MD
+      define_crystal_string_constant "DESCRIPTION", Crystal::Config.description, <<-MD
+        Full version information of the Crystal compiler. Equivalent to `crystal --version`.
+        MD
+      define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path, <<-MD
+        Colon-separated paths where the compiler searches for required source files.
+
+        The value is defined by the environment variable `CRYSTAL_PATH`
+        and defaults to `DEFAULT_PATH`.
+        MD
+      define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path, <<-MD
+        Colon-separated paths where the compiler searches for (binary) libraries.
+
+        The value is defined by the environment variables `CRYSTAL_LIBRARY_PATH`.
+        MD
+      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath, <<-MD
+        Colon-separated paths where the loader searches for dynamic libraries at runtime.
+
+        The value is defined by the environment variables `CRYSTAL_LIBRARY_RPATH`.
+        MD
+      define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
+        The version of the Crystal compiler.
+        MD
+      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version, <<-MD
+        The version of LLVM used by the Crystal compiler.
+        MD
+      define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
+        The LLVM target triple of the host system (the machine that the compiler runs on).
+        MD
+      define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
+        The LLVM target triple of the target system (the machine that the compiler builds for).
+        MD
     end
 
-    private def define_crystal_string_constant(name, value)
-      define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string))
+    private def define_crystal_string_constant(name, value, doc = nil)
+      define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string)), doc
     end
 
-    private def define_crystal_nil_constant(name)
-      define_crystal_constant name, NilLiteral.new.tap(&.set_type(self.nil))
+    private def define_crystal_nil_constant(name, doc = nil)
+      define_crystal_constant name, NilLiteral.new.tap(&.set_type(self.nil)), doc
     end
 
-    private def define_crystal_constant(name, value)
+    private def define_crystal_constant(name, value, doc = nil) : Const
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
+      if doc && wants_doc?
+        const.doc = doc
+      end
       predefined_constants << const
+      const
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
+
+    def codegen_target=(@codegen_target : Codegen::Target) : Codegen::Target
+      crystal.types["TARGET_TRIPLE"].as(Const).value.as(StringLiteral).value = codegen_target.to_s
+      @codegen_target
+    end
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)

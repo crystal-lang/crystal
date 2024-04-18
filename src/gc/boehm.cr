@@ -21,11 +21,24 @@
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
-{% else %}
+{% elsif flag?(:interpreted) %}
+  # FIXME: We're not using the pkg-config name here because that would resolve the
+  # lib flags for libgc including `-lpthread` which the interpreter is not able
+  # to load on systems with modern libc where libpthread is only available as an
+  # (empty) static library.
   @[Link("gc")]
+{% else %}
+  @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "gc.dll")]
+{% end %}
 lib LibGC
+  {% unless flag?(:win32) %}
+    VERSION = {{ `pkg-config bdw-gc --silence-errors --modversion || printf "0.0.0"`.chomp.stringify }}
+  {% end %}
+
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
   {% if flag?(:win32) && flag?(:bits64) %}
@@ -93,7 +106,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) || flag?(:win32) %}
+  {% if flag?(:preview_mt) || flag?(:win32) || compare_versions(VERSION, "8.2.0") >= 0 %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
@@ -262,10 +275,8 @@ module GC
     end
 
     # :nodoc:
-    def self.pthread_join(thread : LibC::PthreadT) : Void*
-      ret = LibGC.pthread_join(thread, out value)
-      raise RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
-      value
+    def self.pthread_join(thread : LibC::PthreadT)
+      LibGC.pthread_join(thread, nil)
     end
 
     # :nodoc:
@@ -276,10 +287,11 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    {% if flag?(:preview_mt) || flag?(:win32) %}
+    {% if LibGC.has_method?(:get_my_stackbottom) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
     {% else %}
+      # support for legacy gc releases
       {Pointer(Void).null, LibGC.stackbottom}
     {% end %}
   end
@@ -291,10 +303,11 @@ module GC
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
     end
-  {% elsif flag?(:win32) %}
+  {% elsif LibGC.has_method?(:set_stackbottom) %}
     # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
-    # Windows when pushing all threads' stacks; instead `GC_set_stackbottom`
-    # must be used to associate the new bottom with the running thread
+    # Windows when pushing all threads' stacks; it also started crashing on
+    # Linux with libgc after v8.2.4; instead `GC_set_stackbottom` must be used
+    # to associate the new bottom with the running thread
     def self.set_stackbottom(stack_bottom : Void*)
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
@@ -302,6 +315,7 @@ module GC
       LibGC.set_stackbottom(nil, pointerof(sb))
     end
   {% else %}
+    # support for legacy gc releases
     def self.set_stackbottom(stack_bottom : Void*)
       LibGC.stackbottom = stack_bottom
     end

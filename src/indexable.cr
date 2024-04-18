@@ -704,6 +704,17 @@ module Indexable(T)
     ary
   end
 
+  # Returns an `Array` with the results of running *block* against each element of the collection.
+  #
+  # ```
+  # {1, 2, 3}.to_a { |i| i * 2 } # => [2, 4, 6]
+  # ```
+  def to_a(& : T -> U) : Array(U) forall U
+    ary = Array(U).new(size)
+    each { |e| ary << yield e }
+    ary
+  end
+
   # Returns `true` if `self` is empty, `false` otherwise.
   #
   # ```
@@ -744,7 +755,7 @@ module Indexable(T)
     true
   end
 
-  # :inherited:
+  # :inherit:
   def first(&)
     size == 0 ? yield : unsafe_fetch(0)
   end
@@ -1483,7 +1494,7 @@ module Indexable(T)
       @copy = array.dup
       @indices = Array.new(@size, 0)
       @pool = @indices.map { |i| @copy[i] }
-      @stop = @size > @n
+      @stop = false
       @i = @size - 1
       @first = true
     end

@@ -39,6 +39,11 @@ struct Number
     new(1)
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.number(self)
+  end
+
   # Returns `self`.
   def +
     self
@@ -341,6 +346,22 @@ struct Number
     in .ties_even?
       round_even
     end
+  end
+
+  # Returns `true` if `self` is an integer.
+  #
+  # Non-integer types may return `true` as long as `self` denotes a finite value
+  # without any fractional parts.
+  #
+  # ```
+  # 1.integer?       # => true
+  # 1.0.integer?     # => true
+  # 1.2.integer?     # => false
+  # (1 / 0).integer? # => false
+  # (0 / 0).integer? # => false
+  # ```
+  def integer? : Bool
+    self % 1 == 0
   end
 
   # Returns `true` if `self` is equal to zero.

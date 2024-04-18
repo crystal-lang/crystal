@@ -181,7 +181,7 @@ require "./std/named_tuple_spec.cr"
 # require "./std/openssl/x509/certificate_spec.cr" (failed linking)
 # require "./std/openssl/x509/name_spec.cr" (failed linking)
 require "./std/option_parser_spec.cr"
-# require "./std/path_spec.cr" (failed to run)
+require "./std/path_spec.cr"
 require "./std/pointer_spec.cr"
 require "./std/pp_spec.cr"
 require "./std/pretty_print_spec.cr"
@@ -196,7 +196,7 @@ require "./std/random/secure_spec.cr"
 # require "./std/range_spec.cr" (failed linking)
 require "./std/record_spec.cr"
 # require "./std/reference_spec.cr" (failed to run)
-# require "./std/regex_spec.cr" (failed to run)
+require "./std/regex_spec.cr"
 require "./std/semantic_version_spec.cr"
 require "./std/set_spec.cr"
 require "./std/signal_spec.cr"

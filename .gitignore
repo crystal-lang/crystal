@@ -2,6 +2,7 @@
 
 # Build artifacts
 /.build/
+/samples/.build/
 /docs/
 /src/llvm/ext/llvm_ext.o
 /src/llvm/ext/llvm_ext.obj

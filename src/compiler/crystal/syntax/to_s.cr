@@ -28,7 +28,6 @@ module Crystal
     def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
       @indent = 0
       @inside_macro = 0
-      @inside_lib = false
     end
 
     def visit_any(node)
@@ -50,10 +49,12 @@ module Crystal
     end
 
     def visit(node : Nop)
+      false
     end
 
     def visit(node : BoolLiteral)
       @str << (node.value ? "true" : "false")
+      false
     end
 
     def visit(node : NumberLiteral)
@@ -63,6 +64,8 @@ module Crystal
         @str << '_'
         @str << node.kind.to_s
       end
+
+      false
     end
 
     def needs_suffix?(node : NumberLiteral)
@@ -84,10 +87,12 @@ module Crystal
 
     def visit(node : CharLiteral)
       node.value.inspect(@str)
+      false
     end
 
     def visit(node : SymbolLiteral)
       visit_symbol_literal_value node.value
+      false
     end
 
     def visit_symbol_literal_value(value : String)
@@ -101,6 +106,7 @@ module Crystal
 
     def visit(node : StringLiteral)
       node.value.inspect(@str)
+      false
     end
 
     def visit(node : StringInterpolation)
@@ -190,6 +196,7 @@ module Crystal
 
     def visit(node : NilLiteral)
       @str << "nil"
+      false
     end
 
     def visit(node : Expressions)
@@ -325,6 +332,7 @@ module Crystal
       visit_call node
     end
 
+    # Related: `Token::Kind#unary_operator?`
     UNARY_OPERATORS = {"+", "-", "~", "&+", "&-"}
 
     def visit_call(node, ignore_obj = false)
@@ -511,7 +519,13 @@ module Crystal
       when StringInterpolation
         visit_interpolation exp, &.inspect_unquoted.gsub('`', "\\`")
       else
-        raise "Bug: shouldn't happen"
+        # This branch can be reached after the literal expander has expanded
+        # `StringLiteral` nodes to a call to `::String.interpolation` which means
+        # `exp` is a `Call`.
+
+        @str << "\#{"
+        exp.accept(self)
+        @str << "}"
       end
       @str << '`'
       false
@@ -568,6 +582,7 @@ module Crystal
 
     def visit(node : Var)
       @str << node.name
+      false
     end
 
     def visit(node : ProcLiteral)
@@ -831,34 +846,17 @@ module Crystal
 
     def visit(node : Self)
       @str << "self"
+      false
     end
 
     def visit(node : Path)
       @str << "::" if node.global?
       node.names.join(@str, "::")
+      false
     end
 
     def visit(node : Generic)
       name = node.name
-
-      if @inside_lib && (name.is_a?(Path) && name.names.size == 1)
-        case name.names.first
-        when "Pointer"
-          node.type_vars.first.accept self
-          @str << '*'
-          return false
-        when "StaticArray"
-          if node.type_vars.size == 2
-            node.type_vars[0].accept self
-            @str << '['
-            node.type_vars[1].accept self
-            @str << ']'
-            return false
-          end
-        else
-          # Not a special type
-        end
-      end
 
       node.name.accept self
 
@@ -921,6 +919,7 @@ module Crystal
 
     def visit(node : InstanceVar)
       @str << node.name
+      false
     end
 
     def visit(node : ReadInstanceVar)
@@ -932,6 +931,7 @@ module Crystal
 
     def visit(node : ClassVar)
       @str << node.name
+      false
     end
 
     def visit(node : Yield)
@@ -1119,15 +1119,14 @@ module Crystal
 
     def visit(node : Global)
       @str << node.name
+      false
     end
 
     def visit(node : LibDef)
       @str << "lib "
       node.name.accept self
       newline
-      @inside_lib = true
       accept_with_indent(node.body)
-      @inside_lib = false
       append_indent
       @str << "end"
       false
@@ -1164,7 +1163,6 @@ module Crystal
       if body = node.body
         newline
         accept_with_indent body
-        newline
         append_indent
         @str << "end"
       end
@@ -1246,6 +1244,20 @@ module Crystal
 
     def visit(node : InstanceSizeOf)
       @str << "instance_sizeof("
+      node.exp.accept(self)
+      @str << ')'
+      false
+    end
+
+    def visit(node : AlignOf)
+      @str << "alignof("
+      node.exp.accept(self)
+      @str << ')'
+      false
+    end
+
+    def visit(node : InstanceAlignOf)
+      @str << "instance_alignof("
       node.exp.accept(self)
       @str << ')'
       false
@@ -1452,6 +1464,7 @@ module Crystal
 
     def visit(node : MagicConstant)
       @str << node.name
+      false
     end
 
     def visit(node : Asm)

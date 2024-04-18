@@ -9,6 +9,11 @@ private def it_converts_to_s(num, str, *, file = __FILE__, line = __LINE__, **op
 end
 
 describe "BigInt" do
+  describe "#integer?" do
+    it { BigInt.zero.integer?.should be_true }
+    it { 12345.to_big_i.integer?.should be_true }
+  end
+
   it "creates with a value of zero" do
     BigInt.new.to_s.should eq("0")
   end
@@ -193,7 +198,7 @@ describe "BigInt" do
 
   it "raises if factorial of 2^64" do
     expect_raises ArgumentError do
-      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+      (LibGMP::UI::MAX.to_big_i + 1).factorial
     end
   end
 
@@ -276,6 +281,34 @@ describe "BigInt" do
     -5.to_big_i.remainder(3).should eq(-2)
     5.to_big_i.remainder(-3).should eq(2)
     -5.to_big_i.remainder(-3).should eq(-2)
+  end
+
+  it "#bit" do
+    x = 123.to_big_i
+    x.bit(-10.to_big_i ** 99).should eq(0)
+    x.bit(-(2.to_big_i ** 64)).should eq(0)
+    x.bit(-1).should eq(0)
+    x.bit(0).should eq(1)
+    x.bit(2).should eq(0)
+    x.bit(3).should eq(1)
+    x.bit(6).should eq(1)
+    x.bit(7).should eq(0)
+    x.bit(64).should eq(0)
+    x.bit(2.to_big_i ** 64).should eq(0)
+    x.bit(10.to_big_i ** 99).should eq(0)
+
+    x = ~(123.to_big_i)
+    x.bit(-10.to_big_i ** 99).should eq(0)
+    x.bit(-(2.to_big_i ** 64)).should eq(0)
+    x.bit(-1).should eq(0)
+    x.bit(0).should eq(0)
+    x.bit(2).should eq(1)
+    x.bit(3).should eq(0)
+    x.bit(6).should eq(0)
+    x.bit(7).should eq(1)
+    x.bit(64).should eq(1)
+    x.bit(2.to_big_i ** 64).should eq(1)
+    x.bit(10.to_big_i ** 99).should eq(1)
   end
 
   it "does bitwise and" do

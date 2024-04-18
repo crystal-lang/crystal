@@ -126,7 +126,7 @@ class File < IO::FileDescriptor
 
   # This constructor is provided for subclasses to be able to initialize an
   # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
+  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
     self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking)
   end
@@ -157,10 +157,23 @@ class File < IO::FileDescriptor
   #
   # Line endings are preserved on all platforms. The `b` mode flag has no
   # effect; it is provided only for POSIX compatibility.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  #
+  # *blocking* is set to `true` by default because system event queues (e.g.
+  # epoll, kqueue) will always report the file descriptor of regular disk files
+  # as ready.
+  #
+  # *blocking* must be set to `false` on POSIX targets when the file to open
+  # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
+  # files depend on another process or thread to also be reading or writing, and
+  # system event queues will properly report readyness.
+  #
+  # *blocking* may also be set to `nil` in which case the blocking or
+  # non-blocking flag will be determined automatically, at the expense of an
+  # additional syscall.
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+    fd = Crystal::System::File.open(filename, mode, perm: perm)
+    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid)
   end
 
   getter path : String
@@ -207,7 +220,7 @@ class File < IO::FileDescriptor
 
   # Returns whether the file given by *path* exists.
   #
-  # Symbolic links are dereferenced, posibly recursively. Returns `false` if a
+  # Symbolic links are dereferenced, possibly recursively. Returns `false` if a
   # symbolic link refers to a non-existent file.
   #
   # ```
@@ -458,33 +471,44 @@ class File < IO::FileDescriptor
   #
   # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
   #
-  # * `*` matches an unlimited number of arbitrary characters excluding `/`.
+  # * `*` matches an unlimited number of arbitrary characters, excluding any directory separators.
   #   * `"*"` matches all regular files.
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
   # * `**` matches directories recursively if followed by `/`.
   #   If this path segment contains any other characters, it is the same as the usual `*`.
-  # * `?` matches any one character excluding `/`.
+  # * `?` matches one arbitrary character, excluding any directory separators.
   # * character sets:
-  #   * `[abc]` matches any one of these character.
+  #   * `[abc]` matches any one of these characters.
   #   * `[^abc]` matches any one character other than these.
   #   * `[a-z]` matches any one character in the range.
   # * `{a,b}` matches subpattern `a` or `b`.
   # * `\\` escapes the next character.
   #
-  # NOTE: Only `/` is recognized as path separator in both *pattern* and *path*.
+  # If *path* is a `Path`, all directory separators supported by *path* are
+  # recognized, according to the path's kind. If *path* is a `String`, only `/`
+  # is considered a directory separator.
+  #
+  # NOTE: Only `/` in *pattern* matches directory separators in *path*.
   def self.match?(pattern : String, path : Path | String) : Bool
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
+    if path.is_a?(Path)
+      separators = Path.separators(path.@kind)
+      path = path.to_s
+    else
+      separators = Path.separators(Path::Kind::POSIX)
+    end
+
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path.to_s)
+      return true if match_single_pattern(expanded_pattern, path, separators)
     end
     false
   end
 
-  private def self.match_single_pattern(pattern : String, path : String)
+  private def self.match_single_pattern(pattern : String, path : String, separators)
     # linear-time algorithm adapted from https://research.swtch.com/glob
     preader = Char::Reader.new(pattern)
     sreader = Char::Reader.new(path)
@@ -509,14 +533,14 @@ class File < IO::FileDescriptor
           preader.next_char
           next
         when {'?', false}
-          if snext && char != '/'
+          if snext && !char.in?(separators)
             preader.next_char
             sreader.next_char
             next
           end
         when {'*', false}
           double_star = preader.peek_next_char == '*'
-          if char == '/' && !double_star
+          if char.in?(separators) && !double_star
             preader.next_char
             next_spos = 0
             next
@@ -701,8 +725,8 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
-    new filename, mode, perm, encoding, invalid
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true) : self
+    new filename, mode, perm, encoding, invalid, blocking
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
@@ -710,8 +734,8 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
-    file = new filename, mode, perm, encoding, invalid
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true, &)
+    file = new filename, mode, perm, encoding, invalid, blocking
     begin
       yield file
     ensure
@@ -725,8 +749,8 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
-  def self.read(filename : Path | String, encoding = nil, invalid = nil) : String
-    open(filename, "r") do |file|
+  def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = true) : String
+    open(filename, "r", blocking: blocking) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
@@ -754,8 +778,8 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
-    open(filename, "r", encoding: encoding, invalid: invalid) do |file|
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true, &)
+    open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
       end
@@ -768,9 +792,9 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true) : Array(String)
+  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true) : Array(String)
     lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
+    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
       lines << line
     end
     lines
@@ -793,8 +817,8 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
-    open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = true)
+    open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content
       when Bytes
         file.sync = true

@@ -6,46 +6,11 @@ module IO::Evented
   @read_timed_out = false
   @write_timed_out = false
 
-  @read_timeout : Time::Span?
-  @write_timeout : Time::Span?
-
   @readers = Crystal::ThreadLocalValue(Deque(Fiber)).new
   @writers = Crystal::ThreadLocalValue(Deque(Fiber)).new
 
   @read_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
   @write_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
-
-  # Returns the time to wait when reading before raising an `IO::TimeoutError`.
-  def read_timeout : Time::Span?
-    @read_timeout
-  end
-
-  # Sets the time to wait when reading before raising an `IO::TimeoutError`.
-  def read_timeout=(timeout : Time::Span?) : ::Time::Span?
-    @read_timeout = timeout
-  end
-
-  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
-  def read_timeout=(read_timeout : Number) : Number
-    self.read_timeout = read_timeout.seconds
-    read_timeout
-  end
-
-  # Returns the time to wait when writing before raising an `IO::TimeoutError`.
-  def write_timeout : Time::Span?
-    @write_timeout
-  end
-
-  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
-  def write_timeout=(timeout : Time::Span?) : ::Time::Span?
-    @write_timeout = timeout
-  end
-
-  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
-  def write_timeout=(write_timeout : Number) : Number
-    self.write_timeout = write_timeout.seconds
-    write_timeout
-  end
 
   def evented_read(slice : Bytes, errno_msg : String, &) : Int32
     loop do
@@ -58,7 +23,7 @@ module IO::Evented
       if Errno.value == Errno::EAGAIN
         wait_readable
       else
-        raise IO::Error.from_errno(errno_msg)
+        raise IO::Error.from_errno(errno_msg, target: self)
       end
     end
   ensure
@@ -79,7 +44,7 @@ module IO::Evented
           if Errno.value == Errno::EAGAIN
             wait_writable
           else
-            raise IO::Error.from_errno(errno_msg)
+            raise IO::Error.from_errno(errno_msg, target: self)
           end
         end
       end

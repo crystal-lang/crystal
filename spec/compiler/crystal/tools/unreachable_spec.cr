@@ -11,34 +11,41 @@ def processed_unreachable_visitor(code)
   visitor.excludes << Path[Dir.current].to_posix.to_s
   visitor.includes << "."
 
-  process_result = visitor.process(result)
-
-  {visitor, process_result}
+  visitor.process(result)
 end
 
 private def assert_unreachable(code, file = __FILE__, line = __LINE__)
-  expected_locations = [] of Location
+  expected = Hash(String, Int32).new
 
   code.lines.each_with_index do |line, line_number_0|
-    if column_number = line.index('༓')
-      expected_locations << Location.new(".", line_number_0 + 1, column_number + 1)
+    if match = line.match(/༓(?:\[(\d+)\])?/)
+      location = Location.new(".", line_number_0 + 1, match.begin + 1)
+      expected[location.to_s] = (match[1]? || 0).to_i
     end
   end
 
-  code = code.gsub('༓', "")
+  code = code.gsub(/༓(?:\[(\d+)\])?/, "")
 
-  visitor, result = processed_unreachable_visitor(code)
+  tallies = processed_unreachable_visitor(code)
 
-  result_location = result.defs.try &.compact_map(&.location).sort_by! do |loc|
+  processed_results = [] of {Location, Int32}
+  tallies.each do |k, v|
+    location = k.location.not_nil!
+    next unless v.zero? || expected.has_key?(location.to_s)
+    processed_results << {location, v}
+  end
+
+  processed_results = processed_results.sort_by! do |loc, v|
     {loc.filename.as(String), loc.line_number, loc.column_number}
-  end.map(&.to_s)
+  end.map { |k, v| {k.to_s, v} }
 
-  result_location.should eq(expected_locations.map(&.to_s)), file: file, line: line
+  processed_results.should eq(expected.to_a), file: file, line: line
 end
 
 # References
 #
 #   ༓ marks the expected unreachable code to be found
+#   ༓[n] marks the expected code to be called n times
 #
 describe "unreachable" do
   it "finds top level methods" do
@@ -424,6 +431,25 @@ describe "unreachable" do
       {% begin %}
         bar
       {% end %}
+      CRYSTAL
+  end
+
+  it "tallies calls" do
+    assert_unreachable <<-CRYSTAL
+      ༓def foo
+        1
+      end
+
+      ༓[2]def bar
+        2
+      end
+
+      ༓[1]def baz
+        bar
+      end
+
+      bar
+      baz
       CRYSTAL
   end
 end

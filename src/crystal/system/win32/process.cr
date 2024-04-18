@@ -1,33 +1,90 @@
 require "c/processthreadsapi"
 require "c/handleapi"
+require "c/jobapi2"
 require "c/synchapi"
 require "c/tlhelp32"
 require "process/shell"
 require "crystal/atomic_semaphore"
 
 struct Crystal::System::Process
+  {% if host_flag?(:windows) %}
+    HOST_PATH_DELIMITER = ';'
+  {% else %}
+    HOST_PATH_DELIMITER = ':'
+  {% end %}
+
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
+  @job_object : LibC::HANDLE
+  @completion_key = IO::Overlapped::CompletionKey.new
 
-  @@interrupt_handler : Proc(Nil)?
+  @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
+  @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
     @thread_id = process_info.dwThreadId
     @process_handle = process_info.hProcess
+
+    @job_object = LibC.CreateJobObjectW(nil, nil)
+
+    # enable IOCP notifications
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
+      LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
+        completionKey: @completion_key.as(Void*),
+        completionPort: Crystal::Scheduler.event_loop.iocp,
+      ),
+    )
+
+    # but not for any child processes
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::ExtendedLimitInformation,
+      LibC::JOBOBJECT_EXTENDED_LIMIT_INFORMATION.new(
+        basicLimitInformation: LibC::JOBOBJECT_BASIC_LIMIT_INFORMATION.new(
+          limitFlags: LibC::JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK,
+        ),
+      ),
+    )
+
+    if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
+      raise RuntimeError.from_winerror("AssignProcessToJobObject")
+    end
+  end
+
+  private def config_job_object(kind, info)
+    if LibC.SetInformationJobObject(@job_object, kind, pointerof(info), sizeof(typeof(info))) == 0
+      raise RuntimeError.from_winerror("SetInformationJobObject")
+    end
   end
 
   def release
     return if @process_handle == LibC::HANDLE.null
     close_handle(@process_handle)
     @process_handle = LibC::HANDLE.null
+    close_handle(@job_object)
+    @job_object = LibC::HANDLE.null
   end
 
   def wait
+    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
+      raise RuntimeError.from_winerror("GetExitCodeProcess")
+    end
+    return exit_code unless exit_code == LibC::STILL_ACTIVE
+
+    # let `@job_object` do its job
+    # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
+    # stuck forever in that case?
+    # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
+    @completion_key.fiber = ::Fiber.current
+    Crystal::Scheduler.reschedule
+
+    # If the IOCP notification is delivered before the process fully exits,
+    # wait for it
     if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
@@ -38,7 +95,7 @@ struct Crystal::System::Process
     # waitpid returns, we wait 5 milliseconds to attempt to replicate this behaviour.
     sleep 5.milliseconds
 
-    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
+    if LibC.GetExitCodeProcess(@process_handle, pointerof(exit_code)) == 0
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
     if exit_code == LibC::STILL_ACTIVE
@@ -100,10 +157,26 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler : ->) : Nil
+  @[Deprecated("Use `#on_terminate` instead")]
+  def self.on_interrupt(&handler : ->) : Nil
+    on_terminate do |reason|
+      handler.call if reason.interrupted?
+    end
+  end
+
+  def self.on_terminate(&@@interrupt_handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
-      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
+      @@last_interrupt = case event_type
+                         when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
+                           ::Process::ExitReason::Interrupted
+                         when LibC::CTRL_CLOSE_EVENT
+                           ::Process::ExitReason::TerminalDisconnected
+                         when LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT
+                           ::Process::ExitReason::SessionEnded
+                         else
+                           next 0
+                         end
       @@interrupt_count.signal
       1
     end
@@ -136,8 +209,9 @@ struct Crystal::System::Process
 
         if handler = @@interrupt_handler
           non_nil_handler = handler # if handler is closured it will also have the Nil type
+          int_type = @@last_interrupt
           spawn do
-            non_nil_handler.call
+            non_nil_handler.call int_type
           rescue ex
             ex.inspect_with_backtrace(STDERR)
             STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")

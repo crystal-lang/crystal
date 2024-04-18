@@ -21,6 +21,15 @@ struct LLVM::Type
     end
   end
 
+  def alignment
+    # Asking the alignment of void crashes the program, we definitely don't want that
+    if void?
+      context.int64.const_int(1)
+    else
+      Value.new LibLLVM.align_of(self)
+    end
+  end
+
   def kind : LLVM::Type::Kind
     LibLLVM.get_type_kind(self)
   end
@@ -149,7 +158,7 @@ struct LLVM::Type
   end
 
   def const_float(value : String) : Value
-    Value.new LibLLVM.const_real_of_string(self, value)
+    Value.new LibLLVM.const_real_of_string_and_size(self, value, value.bytesize)
   end
 
   def const_double(value : Float64) : Value
@@ -157,36 +166,36 @@ struct LLVM::Type
   end
 
   def const_double(string : String) : Value
-    Value.new LibLLVM.const_real_of_string(self, string)
+    Value.new LibLLVM.const_real_of_string_and_size(self, string, string.bytesize)
   end
 
   def const_array(values : Array(LLVM::Value)) : Value
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false)
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false, dialect : InlineAsmDialect = InlineAsmDialect::ATT)
     value =
       {% if LibLLVM::IS_LT_130 %}
         LibLLVM.get_inline_asm(
           self,
           asm_string,
-          asm_string.size,
+          asm_string.bytesize,
           constraints,
-          constraints.size,
+          constraints.bytesize,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
-          LibLLVM::InlineAsmDialect::ATT
+          dialect,
         )
       {% else %}
         LibLLVM.get_inline_asm(
           self,
           asm_string,
-          asm_string.size,
+          asm_string.bytesize,
           constraints,
-          constraints.size,
+          constraints.bytesize,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
-          LibLLVM::InlineAsmDialect::ATT,
+          dialect,
           (can_throw ? 1 : 0)
         )
       {% end %}

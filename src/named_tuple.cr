@@ -588,12 +588,25 @@ struct NamedTuple
   #
   # NOTE: `to_a` on an empty named tuple produces an `Array(Tuple(Symbol, NoReturn))`
   def to_a
+    to_a(&.itself)
+  end
+
+  # Returns an `Array` with the results of running *block* against tuples with key and values belonging
+  # to this `NamedTuple`.
+  #
+  # ```
+  # tuple = {first_name: "foo", last_name: "bar"}
+  # tuple.to_a(&.last.capitalize) # => ["Foo", "Bar"]
+  # ```
+  #
+  # NOTE: `to_a` on an empty named tuple produces an `Array(Tuple(Symbol, NoReturn))`
+  def to_a(&)
     {% if T.size == 0 %}
       [] of {Symbol, NoReturn}
     {% else %}
       [
         {% for key in T %}
-          { {{key.symbolize}}, self[{{key.symbolize}}] },
+          yield({ {{key.symbolize}}, self[{{key.symbolize}}] }),
         {% end %}
       ]
     {% end %}

@@ -1,67 +1,42 @@
 require "c/pthread"
 require "c/sched"
 
-class Thread
-  # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+module Crystal::System::Thread
+  alias Handle = LibC::PthreadT
 
-  @th : LibC::PthreadT
-  @exception : Exception?
-  @detached = Atomic(UInt8).new(0)
-  @main_fiber : Fiber?
-
-  # :nodoc:
-  property next : Thread?
-
-  # :nodoc:
-  property previous : Thread?
-
-  def self.unsafe_each(&)
-    threads.unsafe_each { |thread| yield thread }
+  def to_unsafe
+    @system_handle
   end
 
-  # Starts a new system thread.
-  def initialize(&@func : ->)
-    @th = uninitialized LibC::PthreadT
+  private def init_handle
+    # NOTE: the thread may start before `pthread_create` returns, so
+    # `@system_handle` must be set as soon as possible; we cannot use a separate
+    # handle and assign it to `@system_handle`, which would have been too late
+    ret = GC.pthread_create(
+      thread: pointerof(@system_handle),
+      attr: Pointer(LibC::PthreadAttrT).null,
+      start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
+      arg: self.as(Void*),
+    )
 
-    ret = GC.pthread_create(pointerof(@th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
-      (data.as(Thread)).start
-      Pointer(Void).null
-    }, self.as(Void*))
-
-    if ret != 0
-      raise RuntimeError.from_os_error("pthread_create", Errno.new(ret))
-    end
+    raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
   end
 
-  # Used once to initialize the thread object representing the main thread of
-  # the process (that already exists).
-  def initialize
-    @func = ->{}
-    @th = LibC.pthread_self
-    @main_fiber = Fiber.new(stack_address, self)
-
-    Thread.threads.push(self)
+  def self.current_handle : Handle
+    LibC.pthread_self
   end
 
-  private def detach(&)
-    if @detached.compare_and_set(0, 1).last
-      yield
-    end
+  def self.yield_current : Nil
+    ret = LibC.sched_yield
+    raise RuntimeError.from_errno("sched_yield") unless ret == 0
   end
 
-  # Suspends the current thread until this thread terminates.
-  def join : Nil
-    detach { GC.pthread_join(@th) }
-
-    if exception = @exception
-      raise exception
-    end
-  end
-
-  {% if flag?(:openbsd) %}
-    # no thread local storage (TLS) for OpenBSD,
-    # we use pthread's specific storage (TSS) instead:
+  # no thread local storage (TLS) for OpenBSD,
+  # we use pthread's specific storage (TSS) instead
+  #
+  # Android appears to support TLS to some degree, but executables fail with
+  # an underaligned TLS segment, see https://github.com/crystal-lang/crystal/issues/13951
+  {% if flag?(:openbsd) || flag?(:android) %}
     @@current_key : LibC::PthreadKeyT
 
     @@current_key = begin
@@ -70,68 +45,33 @@ class Thread
       current_key
     end
 
-    # Returns the Thread object associated to the running system thread.
-    def self.current : Thread
+    def self.current_thread : ::Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
-        ptr.as(Thread)
+        ptr.as(::Thread)
       else
-        # Thread#start sets @@current as soon it starts. Thus we know
-        # that if @@current is not set then we are in the main thread
-        self.current = new
+        # Thread#start sets `Thread.current` as soon it starts. Thus we know
+        # that if `Thread.current` is not set then we are in the main thread
+        self.current_thread = ::Thread.new
       end
     end
 
-    # Associates the Thread object to the running system thread.
-    protected def self.current=(thread : Thread) : Thread
+    def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
       raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(ret)) unless ret == 0
       thread
     end
   {% else %}
     @[ThreadLocal]
-    @@current : Thread?
-
-    # Returns the Thread object associated to the running system thread.
-    def self.current : Thread
-      # Thread#start sets @@current as soon it starts. Thus we know
-      # that if @@current is not set then we are in the main thread
-      @@current ||= new
-    end
-
-    # Associates the Thread object to the running system thread.
-    protected def self.current=(@@current : Thread) : Thread
-    end
+    class_property current_thread : ::Thread { ::Thread.new }
   {% end %}
 
-  def self.yield : Nil
-    ret = LibC.sched_yield
-    raise RuntimeError.from_errno("sched_yield") unless ret == 0
+  private def system_join : Exception?
+    ret = GC.pthread_join(@system_handle)
+    RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
   end
 
-  # Returns the Fiber representing the thread's main stack.
-  def main_fiber : Fiber
-    @main_fiber.not_nil!
-  end
-
-  # :nodoc:
-  def scheduler : Crystal::Scheduler
-    @scheduler ||= Crystal::Scheduler.new(main_fiber)
-  end
-
-  protected def start
-    Thread.threads.push(self)
-    Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address, self)
-
-    begin
-      @func.call
-    rescue ex
-      @exception = ex
-    ensure
-      Thread.threads.delete(self)
-      Fiber.inactive(fiber)
-      detach { GC.pthread_detach(@th) }
-    end
+  private def system_close
+    GC.pthread_detach(@system_handle)
   end
 
   private def stack_address : Void*
@@ -139,27 +79,27 @@ class Thread
 
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
-      address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
-    {% elsif flag?(:bsd) && !flag?(:openbsd) %}
+      address = LibC.pthread_get_stackaddr_np(@system_handle) - LibC.pthread_get_stacksize_np(@system_handle)
+    {% elsif (flag?(:bsd) && !flag?(:openbsd)) || flag?(:solaris) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
         LibC.pthread_attr_destroy(pointerof(attr))
         raise RuntimeError.from_os_error("pthread_attr_init", Errno.new(ret))
       end
 
-      if LibC.pthread_attr_get_np(@th, pointerof(attr)) == 0
+      if LibC.pthread_attr_get_np(@system_handle, pointerof(attr)) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:linux) %}
-      if LibC.pthread_getattr_np(@th, out attr) == 0
+      if LibC.pthread_getattr_np(@system_handle, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:openbsd) %}
-      ret = LibC.pthread_stackseg_np(@th, out stack)
+      ret = LibC.pthread_stackseg_np(@system_handle, out stack)
       raise RuntimeError.from_os_error("pthread_stackseg_np", Errno.new(ret)) unless ret == 0
 
       address =
@@ -168,14 +108,28 @@ class Thread
         else
           stack.ss_sp - stack.ss_size
         end
+    {% else %}
+      {% raise "No `Crystal::System::Thread#stack_address` implementation available" %}
     {% end %}
 
     address
   end
 
-  # :nodoc:
-  def to_unsafe
-    @th
+  # Warning: must be called from the current thread itself, because Darwin
+  # doesn't allow to set the name of any thread but the current one!
+  private def system_name=(name : String) : String
+    {% if flag?(:darwin) %}
+      LibC.pthread_setname_np(name)
+    {% elsif flag?(:netbsd) %}
+      LibC.pthread_setname_np(@system_handle, name, nil)
+    {% elsif LibC.has_method?(:pthread_setname_np) %}
+      LibC.pthread_setname_np(@system_handle, name)
+    {% elsif LibC.has_method?(:pthread_set_name_np) %}
+      LibC.pthread_set_name_np(@system_handle, name)
+    {% else %}
+      {% raise "No `Crystal::System::Thread#system_name` implementation available" %}
+    {% end %}
+    name
   end
 end
 

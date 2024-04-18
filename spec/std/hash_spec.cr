@@ -216,6 +216,12 @@ describe "Hash" do
       h.should eq({1 => v, 2 => ["2"]})
       h[1].should be(v)
     end
+
+    it "doesn't put duplicate keys (#14425)" do
+      h = {1 => 2}
+      h.put_if_absent(3) { h[3] = 4 }.should eq(4)
+      h.should eq({1 => 2, 3 => 4})
+    end
   end
 
   describe "update" do
@@ -269,6 +275,17 @@ describe "Hash" do
 
       h.update(3000) { |v| v + 42 }
       h[3000].should eq(3000 + 42)
+    end
+
+    it "doesn't create a duplicate key, if key does not exist and default block adds the given key (#14416)" do
+      h = Hash(String, Int32).new do |h, new_key|
+        h[new_key] = 1
+        new_key.size
+      end
+
+      h.update("new key") { |v| v * 6 }
+      h.size.should eq(1)
+      h["new key"].should eq(7 * 6)
     end
 
     it "inserts a new entry using the default value as input, if key does not exist" do

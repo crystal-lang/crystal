@@ -165,6 +165,7 @@ _crystal-tool() {
         "context:show context for given location"
         "dependencies:show tree of required source files"
         "expand:show macro expansion for given location"
+        "flags:print all macro 'flag?' values"
         "format:format project, directories and/or files"
         "hierarchy:show type hierarchy"
         "implementations:show implementations for given call in location"
@@ -209,6 +210,12 @@ _crystal-tool() {
             $format_args \
             $prelude_args \
             $cursor_args
+        ;;
+
+        (flags)
+          _arguments \
+            $programfile \
+            $help_args
         ;;
 
         (format)

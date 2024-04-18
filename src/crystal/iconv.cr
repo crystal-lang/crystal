@@ -1,4 +1,4 @@
-{% if flag?(:use_libiconv) || flag?(:win32) %}
+{% if flag?(:use_libiconv) || flag?(:win32) || (flag?(:android) && LibC::ANDROID_API < 28) %}
   require "./lib_iconv"
   private USE_LIBICONV = true
 {% else %}
@@ -22,7 +22,7 @@ struct Crystal::Iconv
     original_from, original_to = from, to
 
     @skip_invalid = invalid == :skip
-    {% unless flag?(:freebsd) || flag?(:musl) || flag?(:dragonfly) || flag?(:netbsd) %}
+    {% unless flag?(:freebsd) || flag?(:musl) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:solaris) %}
       if @skip_invalid
         from = "#{from}//IGNORE"
         to = "#{to}//IGNORE"

@@ -1,115 +1,63 @@
 require "c/processthreadsapi"
 require "c/synchapi"
 
-class Thread
-  # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+module Crystal::System::Thread
+  alias Handle = LibC::HANDLE
 
-  @th : LibC::HANDLE
-  @exception : Exception?
-  @detached = Atomic(UInt8).new(0)
-  @main_fiber : Fiber?
-
-  # :nodoc:
-  property next : Thread?
-
-  # :nodoc:
-  property previous : Thread?
-
-  def self.unsafe_each(&)
-    threads.unsafe_each { |thread| yield thread }
+  def to_unsafe
+    @system_handle
   end
 
-  # Starts a new system thread.
-  def initialize(&@func : ->)
-    @th = uninitialized LibC::HANDLE
-
-    @th = GC.beginthreadex(
+  private def init_handle
+    @system_handle = GC.beginthreadex(
       security: Pointer(Void).null,
       stack_size: LibC::UInt.zero,
-      start_address: ->(data : Void*) { data.as(Thread).start; LibC::UInt.zero },
+      start_address: ->Thread.thread_proc(Void*),
       arglist: self.as(Void*),
       initflag: LibC::UInt.zero,
-      thrdaddr: Pointer(LibC::UInt).null)
+      thrdaddr: Pointer(LibC::UInt).null,
+    )
   end
 
-  # Used once to initialize the thread object representing the main thread of
-  # the process (that already exists).
-  def initialize
+  def self.thread_proc(data : Void*) : LibC::UInt
+    # ensure that even in the case of stack overflow there is enough reserved
+    # stack space for recovery (for the main thread this is done in
+    # `Exception::CallStack.setup_crash_handler`)
+    stack_size = Crystal::System::Fiber::RESERVED_STACK_SIZE
+    LibC.SetThreadStackGuarantee(pointerof(stack_size))
+
+    data.as(::Thread).start
+    LibC::UInt.zero
+  end
+
+  def self.current_handle : Handle
     # `GetCurrentThread` returns a _constant_ and is only meaningful as an
     # argument to Win32 APIs; to uniquely identify it we must duplicate the handle
-    @th = uninitialized LibC::HANDLE
     cur_proc = LibC.GetCurrentProcess
-    LibC.DuplicateHandle(cur_proc, LibC.GetCurrentThread, cur_proc, pointerof(@th), 0, true, LibC::DUPLICATE_SAME_ACCESS)
-
-    @func = ->{}
-    @main_fiber = Fiber.new(stack_address, self)
-
-    Thread.threads.push(self)
-  end
-
-  private def detach(&)
-    if @detached.compare_and_set(0, 1).last
-      yield
+    if LibC.DuplicateHandle(cur_proc, LibC.GetCurrentThread, cur_proc, out handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+      raise RuntimeError.from_winerror("DuplicateHandle")
     end
+    handle
   end
 
-  # Suspends the current thread until this thread terminates.
-  def join : Nil
-    detach do
-      if LibC.WaitForSingleObject(@th, LibC::INFINITE) != LibC::WAIT_OBJECT_0
-        @exception ||= RuntimeError.from_winerror("WaitForSingleObject")
-      end
-      if LibC.CloseHandle(@th) == 0
-        @exception ||= RuntimeError.from_winerror("CloseHandle")
-      end
-    end
-
-    if exception = @exception
-      raise exception
-    end
-  end
-
-  @[ThreadLocal]
-  @@current : Thread?
-
-  # Returns the Thread object associated to the running system thread.
-  def self.current : Thread
-    @@current ||= new
-  end
-
-  # Associates the Thread object to the running system thread.
-  protected def self.current=(@@current : Thread) : Thread
-  end
-
-  def self.yield : Nil
+  def self.yield_current : Nil
     LibC.SwitchToThread
   end
 
-  # Returns the Fiber representing the thread's main stack.
-  def main_fiber : Fiber
-    @main_fiber.not_nil!
-  end
+  @[ThreadLocal]
+  class_property current_thread : ::Thread { ::Thread.new }
 
-  # :nodoc:
-  def scheduler : Crystal::Scheduler
-    @scheduler ||= Crystal::Scheduler.new(main_fiber)
-  end
-
-  protected def start
-    Thread.threads.push(self)
-    Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address, self)
-
-    begin
-      @func.call
-    rescue ex
-      @exception = ex
-    ensure
-      Thread.threads.delete(self)
-      Fiber.inactive(fiber)
-      detach { LibC.CloseHandle(@th) }
+  private def system_join : Exception?
+    if LibC.WaitForSingleObject(@system_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
+      return RuntimeError.from_winerror("WaitForSingleObject")
     end
+    if LibC.CloseHandle(@system_handle) == 0
+      return RuntimeError.from_winerror("CloseHandle")
+    end
+  end
+
+  private def system_close
+    LibC.CloseHandle(@system_handle)
   end
 
   private def stack_address : Void*
@@ -125,8 +73,10 @@ class Thread
     {% end %}
   end
 
-  # :nodoc:
-  def to_unsafe
-    @th
+  private def system_name=(name : String) : String
+    {% if LibC.has_method?(:SetThreadDescription) %}
+      LibC.SetThreadDescription(@system_handle, System.to_wstr(name))
+    {% end %}
+    name
   end
 end

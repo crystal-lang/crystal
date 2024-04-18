@@ -180,7 +180,20 @@ describe "BigFloat" do
   describe "#**" do
     it { ("1.34".to_big_f ** 2).should be_close("1.7956".to_big_f, 1e-12) }
     it { ("-0.05".to_big_f ** 10).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
-    it { (0.1234567890.to_big_f ** 3).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
+    it { ("0.1234567890".to_big_f ** 3).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
+
+    it { ("1.34".to_big_f ** 2.to_big_i).should be_close("1.7956".to_big_f, 1e-12) }
+    it { ("-0.05".to_big_f ** 10.to_big_i).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
+    it { ("0.1234567890".to_big_f ** 3.to_big_i).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
+
+    it { ("10".to_big_f ** -5).should be_close("0.00001".to_big_f, 1e-12) }
+    it { ("0.1".to_big_f ** -5).should be_close("100000".to_big_f, 1e-12) }
+
+    it { ("10".to_big_f ** (-5).to_big_i).should be_close("0.00001".to_big_f, 1e-12) }
+    it { ("0.1".to_big_f ** (-5).to_big_i).should be_close("100000".to_big_f, 1e-12) }
+    it { ("0".to_big_f ** 1.to_big_i).should eq(0.to_big_f) }
+    it { ("0".to_big_f ** 0.to_big_i).should eq(1.to_big_f) }
+    it { expect_raises(ArgumentError, "Cannot raise 0 to a negative power") { "0".to_big_f ** (-1).to_big_i } }
   end
 
   describe "#abs" do
@@ -514,6 +527,12 @@ describe "BigFloat" do
         end
       end
     end
+  end
+
+  describe "#integer?" do
+    it { BigFloat.zero.integer?.should be_true }
+    it { 1.to_big_f.integer?.should be_true }
+    it { 1.2.to_big_f.integer?.should be_false }
   end
 
   it "#hash" do

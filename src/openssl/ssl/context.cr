@@ -294,19 +294,31 @@ abstract class OpenSSL::SSL::Context
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
   end
 
-  # Specify a list of TLS ciphers to use or discard.
+  # Specify a list of TLS ciphers to use or discard for TLSv1.2 and below.
   #
-  # This affects only TLSv1.2 and below. See `#security_level=` for some
-  # sensible system configuration.
+  # See `#security_level=` for some sensible system configuration.
+  #
+  # This method does not impact TLSv1.3 ciphersuites. Use `#cipher_suites=`
+  # to configure those.
+  #
+  # NOTE: The ciphers available to an application are determined by the
+  #       linked version of the system SSL library. A comprehensive list
+  #       of ciphers can be found in the
+  #       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#CIPHER-STRINGS).
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
     ciphers
   end
 
-  # Specify a list of TLS cipher suites to use or discard.
+  # Specify a list of TLS ciphersuites to use or discard for TLSv1.3.
   #
   # See `#security_level=` for some sensible system configuration.
+  #
+  # NOTE: The ciphersuites available to an application are determined by the
+  #       linked version of the system SSL library. A comprehensive list
+  #       of ciphersuites can be found in the
+  #       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#TLS-v1.3-cipher-suites).
   def cipher_suites=(cipher_suites : String)
     {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)

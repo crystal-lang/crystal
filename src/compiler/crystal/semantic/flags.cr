@@ -25,6 +25,10 @@ class Crystal::Program
     codegen_target.pointer_bit_width == 64
   end
 
+  def size_bit_width
+    codegen_target.size_bit_width
+  end
+
   private def flags_for_target(target)
     flags = Set(String).new
 
@@ -47,6 +51,7 @@ class Crystal::Program
     flags.add "netbsd" if target.netbsd?
     flags.add "openbsd" if target.openbsd?
     flags.add "dragonfly" if target.dragonfly?
+    flags.add "solaris" if target.solaris?
     flags.add "android" if target.android?
 
     flags.add "bsd" if target.bsd?

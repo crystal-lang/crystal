@@ -1086,7 +1086,7 @@ class Object
     # end
     # ```
     macro {{macro_prefix}}property!(*names)
-      {{macro_prefix}}getter! \{{*names}}
+      {{macro_prefix}}getter! \{{names.splat}}
 
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
@@ -1293,22 +1293,43 @@ class Object
   # wrapper.capitalize     # => "Hello"
   # ```
   macro delegate(*methods, to object)
-    {% for method in methods %}
-      {% if method.id.ends_with?('=') && method.id != "[]=" %}
-        def {{method.id}}(arg)
-          {{object.id}}.{{method.id}} arg
-        end
-      {% else %}
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options)
-        end
+    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+      {% eq_operators = %w(<= >= == != []= ===) %}
+      {% for method in methods %}
+        {% if method.id.ends_with?('=') && !eq_operators.includes?(method.id.stringify) %}
+          def {{method.id}}(arg)
+            {{object.id}}.{{method.id}} arg
+          end
+        {% else %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options)
+          end
 
-        {% if method.id != "[]=" %}
           def {{method.id}}(*args, **options)
             {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
               yield *yield_args
             end
           end
+        {% end %}
+      {% end %}
+    {% else %}
+      {% for method in methods %}
+        {% if method.id.ends_with?('=') && method.id != "[]=" %}
+          def {{method.id}}(arg)
+            {{object.id}}.{{method.id}} arg
+          end
+        {% else %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options)
+          end
+
+          {% if method.id != "[]=" %}
+            def {{method.id}}(*args, **options)
+              {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+                yield *yield_args
+              end
+            end
+          {% end %}
         {% end %}
       {% end %}
     {% end %}
@@ -1377,8 +1398,8 @@ class Object
   # end
   # ```
   macro def_equals_and_hash(*fields)
-    def_equals {{*fields}}
-    def_hash {{*fields}}
+    def_equals {{fields.splat}}
+    def_hash {{fields.splat}}
   end
 
   # Forwards missing methods to *delegate*.

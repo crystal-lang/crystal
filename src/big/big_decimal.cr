@@ -459,6 +459,12 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
+  # :inherit:
+  def integer? : Bool
+    factor_powers_of_ten
+    scale == 0
+  end
+
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
     return self if zero?
 
@@ -747,10 +753,6 @@ struct BigDecimal < Number
     self
   end
 
-  def hash(hasher)
-    hasher.string(to_s)
-  end
-
   # Returns the *quotient* as absolutely negative if `self` and *other* have
   # different signs, otherwise returns the *quotient*.
   def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
@@ -871,5 +873,24 @@ class String
   # ```
   def to_big_d : BigDecimal
     BigDecimal.new(self)
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  def self.reduce_num(value : BigDecimal)
+    v = reduce_num(value.value.abs)
+
+    # v = UInt64.mulmod(v, 10_u64.powmod(-scale, HASH_MODULUS), HASH_MODULUS)
+    # TODO: consider #7516 or similar
+    scale = value.scale
+    x = 0x1ccc_cccc_cccc_cccc_u64 # 10^-1 (mod HASH_MODULUS)
+    while scale > 0
+      v = UInt64.mulmod(v, x, HASH_MODULUS) if scale.bits_set?(1)
+      scale = scale.unsafe_shr(1)
+      x = UInt64.mulmod(x, x, HASH_MODULUS)
+    end
+
+    v &* value.sign
   end
 end

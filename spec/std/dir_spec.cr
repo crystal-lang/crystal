@@ -3,25 +3,9 @@ require "../support/env"
 
 private def unset_tempdir(&)
   {% if flag?(:windows) %}
-    old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
-    begin
-      ENV.delete("TMP")
-      ENV.delete("TEMP")
-      ENV.delete("USERPROFILE")
-
-      yield
-    ensure
-      ENV["TMP"], ENV["TEMP"], ENV["USERPROFILE"] = old_tempdirs
-    end
+    with_env("TMP": nil, "TEMP": nil, "USERPROFILE": nil) { yield }
   {% else %}
-    begin
-      old_tempdir = ENV["TMPDIR"]?
-      ENV.delete("TMPDIR")
-
-      yield
-    ensure
-      ENV["TMPDIR"] = old_tempdir
-    end
+    with_env("TMPDIR": nil) { yield }
   {% end %}
 end
 
@@ -143,7 +127,7 @@ describe "Dir" do
 
     context "path exists" do
       it "fails when path is a file" do
-        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}'") do
           Dir.mkdir_p(datapath("test_file.txt"))
         end
       end
@@ -193,7 +177,7 @@ describe "Dir" do
 
   describe "glob" do
     it "tests glob with a single pattern" do
-      Dir["#{datapath}/dir/*.txt"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*.txt"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
@@ -201,7 +185,7 @@ describe "Dir" do
     end
 
     it "tests glob with multiple patterns" do
-      Dir["#{datapath}/dir/*.txt", "#{datapath}/dir/subdir/*.txt"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*.txt", "#{Path[datapath].to_posix}/dir/subdir/*.txt"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
@@ -211,7 +195,7 @@ describe "Dir" do
 
     it "tests glob with a single pattern with block" do
       result = [] of String
-      Dir.glob("#{datapath}/dir/*.txt") do |filename|
+      Dir.glob("#{Path[datapath].to_posix}/dir/*.txt") do |filename|
         result << filename
       end
       result.sort.should eq([
@@ -222,7 +206,7 @@ describe "Dir" do
     end
 
     it "tests a recursive glob" do
-      Dir["#{datapath}/dir/**/*.txt"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/**/*.txt"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
@@ -230,11 +214,11 @@ describe "Dir" do
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
 
-      Dir["#{datapath}/dir/**/subdir2/f2.txt"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/**/subdir2/f2.txt"].sort.should eq [
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
 
-      Dir["#{datapath}/dir/**/subdir2/*.txt"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/**/subdir2/*.txt"].sort.should eq [
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
     end
@@ -274,7 +258,7 @@ describe "Dir" do
     end
 
     it "tests a recursive glob with '?'" do
-      Dir["#{datapath}/dir/f?.tx?"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/f?.tx?"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "f3.txx"),
@@ -282,7 +266,7 @@ describe "Dir" do
     end
 
     it "tests a recursive glob with alternation" do
-      Dir["#{datapath}/{dir,dir/subdir}/*.txt"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/{dir,dir/subdir}/*.txt"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
@@ -291,7 +275,7 @@ describe "Dir" do
     end
 
     it "tests a glob with recursion inside alternation" do
-      Dir["#{datapath}/dir/{**/*.txt,**/*.txx}"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/{**/*.txt,**/*.txx}"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "f3.txx"),
@@ -302,15 +286,56 @@ describe "Dir" do
     end
 
     it "tests a recursive glob with nested alternations" do
-      Dir["#{datapath}/dir/{?1.*,{f,g}2.txt}"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/{?1.*,{f,g}2.txt}"].sort.should eq [
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
       ].sort
     end
 
+    it "tests with []" do
+      Dir["#{Path[datapath].to_posix}/dir/[a-z][0-9].txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ].sort
+    end
+
+    it "tests with {}" do
+      Dir["#{Path[datapath].to_posix}/dir/{f,g}{1,2,3}.tx{t,x}"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "f3.txx"),
+        datapath("dir", "g2.txt"),
+      ].sort
+    end
+
+    {% if flag?(:windows) %}
+      pending "tests with \\"
+    {% else %}
+      it "tests with \\" do
+        with_tempfile "glob-escape-pattern" do |path|
+          Dir.mkdir_p path
+          Dir.cd(path) do
+            File.touch "g1.txt"
+            File.touch %q(\g3)
+            File.touch %q(\g4*)
+
+            Dir[%q(\\g*)].sort.should eq [
+              "\\g3",
+              "\\g4*",
+            ].sort
+
+            Dir[%q(*g?\*)].sort.should eq [
+              "\\g4*",
+            ].sort
+          end
+        end
+      end
+    {% end %}
+
     it "tests with *" do
-      Dir["#{datapath}/dir/*"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*"].sort.should eq [
         datapath("dir", "dots"),
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
@@ -322,7 +347,7 @@ describe "Dir" do
     end
 
     it "tests with ** (same as *)" do
-      Dir["#{datapath}/dir/**"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/**"].sort.should eq [
         datapath("dir", "dots"),
         datapath("dir", "f1.txt"),
         datapath("dir", "f2.txt"),
@@ -334,7 +359,7 @@ describe "Dir" do
     end
 
     it "tests with */" do
-      Dir["#{datapath}/dir/*/"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*/"].sort.should eq [
         datapath("dir", "dots", ""),
         datapath("dir", "subdir", ""),
         datapath("dir", "subdir2", ""),
@@ -350,7 +375,7 @@ describe "Dir" do
     end
 
     it "tests with relative path" do
-      Dir["#{datapath}/dir/*/"].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*/"].sort.should eq [
         datapath("dir", "dots", ""),
         datapath("dir", "subdir", ""),
         datapath("dir", "subdir2", ""),
@@ -358,7 +383,7 @@ describe "Dir" do
     end
 
     it "tests with relative path (starts with .)" do
-      Dir["./#{datapath}/dir/*/"].sort.should eq [
+      Dir["./#{Path[datapath].to_posix}/dir/*/"].sort.should eq [
         File.join(".", "spec", "std", "data", "dir", "dots", ""),
         File.join(".", "spec", "std", "data", "dir", "subdir", ""),
         File.join(".", "spec", "std", "data", "dir", "subdir2", ""),
@@ -368,7 +393,7 @@ describe "Dir" do
     it "tests with relative path (starts with ..)" do
       Dir.cd(datapath) do
         base_path = Path["..", "data", "dir"]
-        Dir["#{base_path}/*/"].sort.should eq [
+        Dir["#{base_path.to_posix}/*/"].sort.should eq [
           base_path.join("dots", "").to_s,
           base_path.join("subdir", "").to_s,
           base_path.join("subdir2", "").to_s,
@@ -394,11 +419,11 @@ describe "Dir" do
         File.symlink(datapath("dir", "f1.txt"), link)
         File.symlink(datapath("dir", "nonexisting"), non_link)
 
-        Dir["#{path}/*_link.txt"].sort.should eq [
+        Dir["#{Path[path].to_posix}/*_link.txt"].sort.should eq [
           link.to_s,
           non_link.to_s,
         ].sort
-        Dir["#{path}/non_link.txt"].should eq [non_link.to_s]
+        Dir["#{Path[path].to_posix}/non_link.txt"].should eq [non_link.to_s]
       end
     end
 
@@ -414,8 +439,8 @@ describe "Dir" do
         File.write(non_link, "")
         File.symlink(target, link_dir)
 
-        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
-        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
+        Dir.glob("#{Path[path].to_posix}/glob/*/a.txt").sort.should eq [] of String
+        Dir.glob("#{Path[path].to_posix}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
           File.join(path, "glob", "dir", "a.txt"),
         ]
       end
@@ -435,13 +460,13 @@ describe "Dir" do
     end
 
     it "pattern ending with .." do
-      Dir["#{datapath}/dir/.."].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/.."].sort.should eq [
         datapath("dir", ".."),
       ].sort
     end
 
     it "pattern ending with */.." do
-      Dir["#{datapath}/dir/*/.."].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*/.."].sort.should eq [
         datapath("dir", "dots", ".."),
         datapath("dir", "subdir", ".."),
         datapath("dir", "subdir2", ".."),
@@ -449,13 +474,13 @@ describe "Dir" do
     end
 
     it "pattern ending with ." do
-      Dir["#{datapath}/dir/."].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/."].sort.should eq [
         datapath("dir", "."),
       ].sort
     end
 
     it "pattern ending with */." do
-      Dir["#{datapath}/dir/*/."].sort.should eq [
+      Dir["#{Path[datapath].to_posix}/dir/*/."].sort.should eq [
         datapath("dir", "dots", "."),
         datapath("dir", "subdir", "."),
         datapath("dir", "subdir2", "."),
@@ -464,12 +489,12 @@ describe "Dir" do
 
     context "match: :dot_files / match_hidden" do
       it "matches dot files" do
-        Dir.glob("#{datapath}/dir/dots/**/*", match: :dot_files).sort.should eq [
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match: :dot_files).sort.should eq [
           datapath("dir", "dots", ".dot.hidden"),
           datapath("dir", "dots", ".hidden"),
           datapath("dir", "dots", ".hidden", "f1.txt"),
         ].sort
-        Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: true).sort.should eq [
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match_hidden: true).sort.should eq [
           datapath("dir", "dots", ".dot.hidden"),
           datapath("dir", "dots", ".hidden"),
           datapath("dir", "dots", ".hidden", "f1.txt"),
@@ -477,13 +502,13 @@ describe "Dir" do
       end
 
       it "ignores hidden files" do
-        Dir.glob("#{datapath}/dir/dots/*", match: :none).should be_empty
-        Dir.glob("#{datapath}/dir/dots/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match_hidden: false).should be_empty
       end
 
       it "ignores hidden files recursively" do
-        Dir.glob("#{datapath}/dir/dots/**/*", match: :none).should be_empty
-        Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match_hidden: false).should be_empty
       end
     end
 
@@ -534,10 +559,10 @@ describe "Dir" do
           expected_hidden = (expected + [hidden_txt, hidden_dir, inside_hidden]).sort!
           expected_system_hidden = (expected_hidden + [system_hidden_txt, system_hidden_dir, inside_system_hidden]).sort!
 
-          Dir.glob("#{path}/**/*", match: :none).sort.should eq(expected)
-          Dir.glob("#{path}/**/*", match: :native_hidden).sort.should eq(expected_hidden)
-          Dir.glob("#{path}/**/*", match: :os_hidden).sort.should eq(expected)
-          Dir.glob("#{path}/**/*", match: File::MatchOptions[NativeHidden, OSHidden]).sort.should eq(expected_system_hidden)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: :none).sort.should eq(expected)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: :native_hidden).sort.should eq(expected_hidden)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: :os_hidden).sort.should eq(expected)
+          Dir.glob("#{Path[path].to_posix}/**/*", match: File::MatchOptions[NativeHidden, OSHidden]).sort.should eq(expected_system_hidden)
         end
       end
     {% end %}
@@ -550,8 +575,8 @@ describe "Dir" do
       ]
 
       it "posix path" do
-        Dir[Path.posix(datapath, "dir", "*.txt")].sort.should eq expected
-        Dir[[Path.posix(datapath, "dir", "*.txt")]].sort.should eq expected
+        Dir[Path.posix(Path[datapath].to_posix, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.posix(Path[datapath].to_posix, "dir", "*.txt")]].sort.should eq expected
       end
 
       it "windows path" do
@@ -606,7 +631,8 @@ describe "Dir" do
   end
 
   describe ".current" do
-    it "matches shell" do
+    # can't use backtick in interpreted code (#12241)
+    pending_interpreted "matches shell" do
       Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
     end
 

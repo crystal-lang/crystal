@@ -17,7 +17,7 @@ module Spec::Methods
   #
   # If `focus` is `true`, only this `describe`, and others marked with `focus: true`, will run.
   def describe(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    Spec.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
+    Spec.cli.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
   # Defines an example group that establishes a specific context,
@@ -46,7 +46,7 @@ module Spec::Methods
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
   def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
-    Spec.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
+    Spec.cli.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
   # Defines a pending test case.
@@ -72,7 +72,7 @@ module Spec::Methods
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
-    Spec.root_context.pending(description.to_s, file, line, end_line, focus, tags)
+    Spec.cli.root_context.pending(description.to_s, file, line, end_line, focus, tags)
   end
 
   # Fails an example.
@@ -124,10 +124,10 @@ module Spec::Methods
   # end
   # ```
   def before_each(&block)
-    if Spec.current_context.is_a?(RootContext)
+    if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `before_each` outside of a describe/context"
     end
-    Spec.current_context.before_each(&block)
+    Spec.cli.current_context.before_each(&block)
   end
 
   # Executes the given block after each spec in the current context runs.
@@ -154,10 +154,10 @@ module Spec::Methods
   # end
   # ```
   def after_each(&block)
-    if Spec.current_context.is_a?(RootContext)
+    if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `after_each` outside of a describe/context"
     end
-    Spec.current_context.after_each(&block)
+    Spec.cli.current_context.after_each(&block)
   end
 
   # Executes the given block before the first spec in the current context runs.
@@ -184,10 +184,10 @@ module Spec::Methods
   # end
   # ```
   def before_all(&block)
-    if Spec.current_context.is_a?(RootContext)
+    if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `before_all` outside of a describe/context"
     end
-    Spec.current_context.before_all(&block)
+    Spec.cli.current_context.before_all(&block)
   end
 
   # Executes the given block after the last spec in the current context runs.
@@ -214,10 +214,10 @@ module Spec::Methods
   # end
   # ```
   def after_all(&block)
-    if Spec.current_context.is_a?(RootContext)
+    if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `after_all` outside of a describe/context"
     end
-    Spec.current_context.after_all(&block)
+    Spec.cli.current_context.after_all(&block)
   end
 
   # Executes the given block when each spec in the current context runs.
@@ -252,10 +252,10 @@ module Spec::Methods
   # end
   # ```
   def around_each(&block : Example::Procsy ->)
-    if Spec.current_context.is_a?(RootContext)
+    if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `around_each` outside of a describe/context"
     end
-    Spec.current_context.around_each(&block)
+    Spec.cli.current_context.around_each(&block)
   end
 
   # Executes the given block when the current context runs.
@@ -297,10 +297,10 @@ module Spec::Methods
   # end
   # ```
   def around_all(&block : ExampleGroup::Procsy ->)
-    if Spec.current_context.is_a?(RootContext)
+    if Spec.cli.current_context.is_a?(RootContext)
       raise "Can't call `around_all` outside of a describe/context"
     end
-    Spec.current_context.around_all(&block)
+    Spec.cli.current_context.around_all(&block)
   end
 end
 

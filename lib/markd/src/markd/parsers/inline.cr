@@ -123,7 +123,11 @@ module Markd::Parser
       while text = match(Rule::TICKS)
         if text.bytesize == num_ticks
           child = Node.new(Node::Type::Code)
-          child.text = @text.byte_slice(after_open_ticks, (@pos - num_ticks) - after_open_ticks).strip.gsub(Rule::WHITESPACE, " ")
+          child_text = @text.byte_slice(after_open_ticks, (@pos - num_ticks) - after_open_ticks).gsub(Rule::LINE_ENDING, " ")
+          if child_text.bytesize >= 2 && child_text[0] == ' ' && child_text[-1] == ' ' && child_text.matches?(/[^ ]/)
+            child_text = child_text.byte_slice(1, child_text.bytesize - 2)
+          end
+          child.text = child_text
           node.append_child(child)
 
           return true
@@ -222,12 +226,12 @@ module Markd::Parser
         before_label = @pos
         label_size = link_label
         if label_size > 2
-          ref_label = normalize_refernence(@text.byte_slice(before_label, label_size + 1))
+          ref_label = normalize_reference(@text.byte_slice(before_label, label_size + 1))
         elsif !opener.bracket_after
           # Empty or missing second label means to use the first label as the reference.
           # The reference must not contain a bracket. If we know there's a bracket, we don't even bother checking it.
           byte_count = start_pos - opener.index
-          ref_label = byte_count > 0 ? normalize_refernence(@text.byte_slice(opener.index, byte_count)) : nil
+          ref_label = byte_count > 0 ? normalize_reference(@text.byte_slice(opener.index, byte_count)) : nil
         end
 
         if label_size == 0
@@ -246,7 +250,7 @@ module Markd::Parser
 
       if matched
         child = Node.new(is_image ? Node::Type::Image : Node::Type::Link)
-        child.data["destination"] = dest
+        child.data["destination"] = dest.not_nil!
         child.data["title"] = title || ""
 
         tmp = opener.node.next?
@@ -309,6 +313,7 @@ module Markd::Parser
           opener_found = false
           while opener && opener != delimiter && opener != openers_bottom[closer_char]
             odd_match = (closer.can_open || opener.can_close) &&
+                        closer.orig_delims % 3 != 0 &&
                         (opener.orig_delims + closer.orig_delims) % 3 == 0
             if opener.char == closer.char && opener.can_open && !odd_match
               opener_found = true
@@ -420,24 +425,29 @@ module Markd::Parser
 
     private def entity(node : Node)
       if char_at?(@pos) == '&'
-        pos = @pos + 1
-        loop do
-          char = char_at?(pos)
-          pos += 1
-          case char
-          when ';'
-            break
-          when Char::ZERO, nil
-            return false
-          else
-            nil
+        if char_at?(@pos + 1) == '#'
+          text = match(Rule::NUMERIC_HTML_ENTITY) || return false
+          text = text.byte_slice(1, text.bytesize - 2)
+        else
+          pos = @pos + 1
+          loop do
+            char = char_at?(pos)
+            pos += 1
+            case char
+            when ';'
+              break
+            when Char::ZERO, nil
+              return false
+            else
+              nil
+            end
           end
+          text = @text.byte_slice((@pos + 1), (pos - 1) - (@pos + 1))
+          @pos = pos
         end
-        text = @text.byte_slice((@pos + 1), (pos - 1) - (@pos + 1))
-        decoded_text = HTML.decode_entity text
 
+        decoded_text = HTML.decode_entity text
         node.append_child(text(decoded_text))
-        @pos = pos
         true
       else
         false
@@ -504,14 +514,14 @@ module Markd::Parser
     private def link_destination
       dest = if text = match(Rule::LINK_DESTINATION_BRACES)
                text[1..-2]
-             else
+             elsif char_at?(@pos) != '<'
                save_pos = @pos
                open_parens = 0
                while char = char_at?(@pos)
                  case char
                  when '\\'
                    @pos += 1
-                   @pos += 1 if char_at?(@pos)
+                   match(Rule::ESCAPABLE)
                  when '('
                    @pos += 1
                    open_parens += 1
@@ -530,7 +540,7 @@ module Markd::Parser
                @text.byte_slice(save_pos, @pos - save_pos)
              end
 
-      normalize_uri(Utils.decode_entities_string(dest))
+      normalize_uri(Utils.decode_entities_string(dest)) if dest
     end
 
     private def handle_delim(char : Char, node : Node)
@@ -655,16 +665,20 @@ module Markd::Parser
       # link url
       spnl
 
+      save_pos = @pos
       dest = link_destination
 
-      if dest.size == 0
+      if !dest || (dest.size == 0 && !(@pos == save_pos + 2 && @text.byte_slice(save_pos, 2) == "<>"))
         @pos = startpos
         return 0
       end
 
       before_title = @pos
       spnl
-      title = link_title
+      if @pos != before_title
+        title = link_title
+      end
+
       unless title
         title = ""
         @pos = before_title
@@ -686,7 +700,7 @@ module Markd::Parser
         return 0
       end
 
-      normal_label = normalize_refernence(raw_label)
+      normal_label = normalize_reference(raw_label)
       if normal_label.empty?
         @pos = startpos
         return 0
@@ -794,11 +808,11 @@ module Markd::Parser
 
     # Normalize reference label: collapse internal whitespace
     # to single space, remove leading/trailing whitespace, case fold.
-    def normalize_refernence(text : String)
+    def normalize_reference(text : String)
       text[1..-2].strip.downcase.gsub("\n", " ")
     end
 
-    private RESERVED_CHARS = ['&', '+', ',', '(', ')', '#', '*', '!', '#', '$', '/', ':', ';', '?', '@', '=']
+    private RESERVED_CHARS = ['&', '+', ',', '(', ')', '\'', '#', '*', '!', '#', '$', '/', ':', ';', '?', '@', '=']
 
     def normalize_uri(uri : String)
       String.build(capacity: uri.bytesize) do |io|

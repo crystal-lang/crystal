@@ -1,9 +1,9 @@
 require "c/sys/mman"
 
 module Crystal::System::Fiber
-  def self.allocate_stack(stack_size) : Void*
+  def self.allocate_stack(stack_size, protect) : Void*
     flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
-    {% if flag?(:openbsd) && !flag?(:"openbsd6.2") %}
+    {% if flag?(:openbsd) %}
       flags |= LibC::MAP_STACK
     {% end %}
 
@@ -14,7 +14,10 @@ module Crystal::System::Fiber
       LibC.madvise(pointer, stack_size, LibC::MADV_NOHUGEPAGE)
     {% end %}
 
-    LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
+    if protect
+      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
+    end
+
     pointer
   end
 

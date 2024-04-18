@@ -114,47 +114,83 @@ module HTML
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
   def self.unescape(string : String) : String
-    string.gsub(/&(?:([a-zA-Z0-9]{2,32};?)|\#([0-9]+);?|\#[xX]([0-9A-Fa-f]+);?)/) do |string, match|
-      if code = match[1]?
-        # Try to find the code
-        value = named_entity(code)
+    return string unless string.includes?('&')
 
-        unless value || code.ends_with?(';')
-          # If we can't find it and it doesn't end with ';',
-          # we need to find each prefix of it.
-          # We start from the largest prefix.
-          removed = 0
-          until code.empty?
-            code = code.rchop
-            removed += 1
-
-            value = named_entity(code)
-            if value
-              # If we find it, we need to append the part that
-              # isn't part of the matched code
-              value += string[-removed..-1]
-              break
-            end
-          end
-        end
-
-        # We either found the code or not,
-        # in which case we need to return the original string
-        value || string
-      elsif code = match[2]?
-        # Find by decimal code
-        decode_codepoint(code.to_i) || string
-      elsif code = match[3]?
-        # Find by hexadecimal code
-        decode_codepoint(code.to_i(16)) || string
-      else
-        string
-      end
+    String.build(string.bytesize) do |io|
+      unescape(string.to_slice, io)
     end
   end
 
-  private def self.named_entity(code)
-    HTML::SINGLE_CHAR_ENTITIES[code]? || HTML::DOUBLE_CHAR_ENTITIES[code]?
+  private def self.unescape(slice, io)
+    while bytesize = slice.index('&'.ord)
+      io.write(slice[0, bytesize])
+      slice += bytesize &+ 1
+
+      ptr = unescape_entity(slice.to_unsafe, io)
+      slice += ptr - slice.to_unsafe
+    end
+
+    io.write slice
+  end
+
+  private def self.unescape_entity(ptr, io)
+    if '#' === ptr.value
+      unescape_numbered_entity(ptr, io)
+    else
+      unescape_named_entity(ptr, io)
+    end
+  end
+
+  private def self.unescape_numbered_entity(ptr, io)
+    start_ptr = ptr
+
+    ptr += 1
+
+    hex = ptr.value.unsafe_chr.in?('x', 'X')
+    if hex
+      ptr += 1
+      base = 16
+    else
+      base = 10
+    end
+
+    x = 0_u32
+
+    # skip leading zeros
+    while ptr.value === '0'
+      ptr += 1
+    end
+    number_start_ptr = ptr
+
+    while digit = ptr.value.unsafe_chr.to_i?(base)
+      # The number of consumed digits is limited to the representation of
+      # Char::MAX_CODEPOINT which is below that of UInt32::MAX
+      x &*= base
+      x &+= digit
+
+      ptr += 1
+    end
+
+    if ptr - number_start_ptr > 8
+      # size exceeds maxlength, so it can't be a valid codepoint and might have
+      # overflow.
+      x = 0_u32
+    end
+
+    size = ptr - start_ptr - (hex ? 2 : 1)
+    unless size > 0 && (char = decode_codepoint(x))
+      # No characters matched or invalid codepoint
+      io << '&'
+      return start_ptr
+    end
+
+    char.to_s(io)
+
+    if ptr.value === ';'
+      ptr += 1
+    end
+
+    return ptr
   end
 
   # see https://html.spec.whatwg.org/multipage/parsing.html#numeric-character-reference-end-state
@@ -180,5 +216,49 @@ module HTML
         codepoint.unsafe_chr
       end
     end
+  end
+
+  private def self.unescape_named_entity(ptr, io)
+    # Consume the maximum number of characters possible, with the
+    # consumed characters matching one of the named references.
+    start_ptr = ptr
+
+    while ptr.value.unsafe_chr.ascii_alphanumeric?
+      ptr += 1
+    end
+
+    if ptr == start_ptr
+      io << '&'
+      return start_ptr
+    end
+
+    # The entity name cannot be longer than the longest name in the lookup tables.
+    entity_name = Slice.new(start_ptr, Math.min(ptr - start_ptr, MAX_ENTITY_NAME_SIZE))
+
+    # If we can't find an entity on the first try, we need to search each prefix
+    # of it, starting from the largest.
+    while entity_name.size >= 2
+      case
+      when x = SINGLE_CHAR_ENTITIES[entity_name]?
+        io << x
+      when x = DOUBLE_CHAR_ENTITIES[entity_name]?
+        io << x
+      else
+        entity_name = entity_name[0..-2]
+        next
+      end
+
+      ptr = start_ptr + entity_name.size
+      if ptr.value === ';'
+        ptr += 1
+      end
+
+      return ptr
+    end
+
+    # range -1 includes the leading '&'
+    start_ptr -= 1
+    io.write Slice.new(start_ptr, ptr - start_ptr)
+    ptr
   end
 end

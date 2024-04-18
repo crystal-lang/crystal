@@ -22,6 +22,7 @@
 # x86_64-linux-musl
 # x86_64-netbsd
 # x86_64-openbsd
+# x86_64-solaris
 # x86_64-windows-msvc
 # ```
 #
@@ -58,6 +59,7 @@ jobs:
           - x86_64-freebsd
           - x86_64-netbsd
           - x86_64-openbsd
+          - x86_64-solaris
 
     steps:
       - name: Download Crystal source

@@ -58,8 +58,33 @@ struct Crystal::System::Process
     raise RuntimeError.from_errno("kill") if ret < 0
   end
 
+  @[Deprecated("Use `#on_terminate` instead")]
   def self.on_interrupt(&handler : ->) : Nil
     ::Signal::INT.trap { |_signal| handler.call }
+  end
+
+  def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
+    sig_handler = Proc(::Signal, Nil).new do |signal|
+      int_type = case signal
+                 when .int?
+                   ::Process::ExitReason::Interrupted
+                 when .hup?
+                   ::Process::ExitReason::TerminalDisconnected
+                 when .term?
+                   ::Process::ExitReason::SessionEnded
+                 else
+                   ::Process::ExitReason::Interrupted
+                 end
+      handler.call int_type
+
+      # ignore prevents system defaults and clears registered interrupts
+      # hence we need to re-register
+      signal.ignore
+      Process.on_terminate &handler
+    end
+    ::Signal::INT.trap &sig_handler
+    ::Signal::HUP.trap &sig_handler
+    ::Signal::TERM.trap &sig_handler
   end
 
   def self.ignore_interrupts! : Nil
@@ -79,8 +104,14 @@ struct Crystal::System::Process
     if ret == 0
       true
     else
-      return false if Errno.value == Errno::ESRCH
-      raise RuntimeError.from_errno("kill")
+      case Errno.value
+      when Errno::EPERM
+        true
+      when Errno::ESRCH
+        false
+      else
+        raise RuntimeError.from_errno("kill")
+      end
     end
   end
 
@@ -205,16 +236,12 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["/bin/sh", "-c", command, "--"]
+      shell_args = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
-
-        {% if flag?(:freebsd) || flag?(:dragonfly) %}
-          shell_args << ""
-        {% end %}
 
         shell_args.concat(args)
       end

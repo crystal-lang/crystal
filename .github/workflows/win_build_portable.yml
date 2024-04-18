@@ -6,6 +6,9 @@ on:
       release:
         required: true
         type: boolean
+      llvm_version:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -16,18 +19,18 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.9.2"
+          crystal: "1.12.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
 
       - name: Restore libraries
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: |
             libs/pcre.lib
@@ -42,7 +45,7 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore OpenSSL
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: |
             libs/crypto.lib
@@ -51,7 +54,7 @@ jobs:
           key: win-openssl-libs-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore DLLs
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: |
             libs/pcre-dynamic.lib
@@ -75,7 +78,7 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore OpenSSL DLLs
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: |
             libs/crypto-dynamic.lib
@@ -85,10 +88,19 @@ jobs:
           key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore LLVM
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: llvm
-          key: llvm-libs-16.0.3-msvc
+          key: llvm-libs-${{ inputs.llvm_version }}-msvc
+          fail-on-cache-miss: true
+      - name: Restore LLVM DLLs
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            libs/llvm_VERSION
+            libs/llvm-dynamic.lib
+            dlls/LLVM-C.dll
+          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
@@ -108,31 +120,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: crystal-lang/shards
-          ref: v0.17.3
+          ref: v0.18.0
           path: shards
-
-      - name: Download molinillo release
-        uses: actions/checkout@v4
-        with:
-          repository: crystal-lang/crystal-molinillo
-          ref: v0.2.0
-          path: shards/lib/molinillo
 
       - name: Build shards release
         working-directory: ./shards
-        run: ../bin/crystal.bat build ${{ inputs.release && '--release' || '' }} src/shards.cr
+        run: make -f Makefile.win ${{ inputs.release && 'release=1' || '' }}
 
       - name: Gather Crystal binaries
         run: |
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
-          cp shards/shards.exe crystal/
+          cp shards/bin/shards.exe crystal/
+          cp shards/bin/shards.pdb crystal/
           cp libs/* crystal/lib/
           cp dlls/* crystal/
           cp README.md crystal/
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
           path: crystal

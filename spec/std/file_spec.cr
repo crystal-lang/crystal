@@ -8,6 +8,18 @@ private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, 
   end
 end
 
+private def assert_file_matches(pattern, path : String, *, file = __FILE__, line = __LINE__)
+  File.match?(pattern, path).should be_true, file: file, line: line
+  File.match?(pattern, Path.posix(path)).should be_true, file: file, line: line
+  File.match?(pattern, Path.posix(path).to_windows).should be_true, file: file, line: line
+end
+
+private def refute_file_matches(pattern, path : String, *, file = __FILE__, line = __LINE__)
+  File.match?(pattern, path).should be_false, file: file, line: line
+  File.match?(pattern, Path.posix(path)).should be_false, file: file, line: line
+  File.match?(pattern, Path.posix(path).to_windows).should be_false, file: file, line: line
+end
+
 private def normalize_permissions(permissions, *, directory)
   {% if flag?(:win32) %}
     normalized_permissions = 0o444
@@ -33,6 +45,64 @@ describe "File" do
         File.open(file)
       end
     end
+  end
+
+  describe "blocking" do
+    it "opens regular file as blocking" do
+      with_tempfile("regular") do |path|
+        File.open(path, "w") do |file|
+          file.blocking.should be_true
+        end
+
+        File.open(path, "w", blocking: nil) do |file|
+          file.blocking.should be_true
+        end
+      end
+    end
+
+    {% if flag?(:unix) %}
+      if File.exists?("/dev/tty")
+        it "opens character device" do
+          File.open("/dev/tty", "r") do |file|
+            file.blocking.should be_true
+          end
+
+          File.open("/dev/tty", "r", blocking: false) do |file|
+            file.blocking.should be_false
+          end
+
+          File.open("/dev/tty", "r", blocking: nil) do |file|
+            file.blocking.should be_false
+          end
+        rescue File::Error
+          # The TTY may not be available (e.g. Docker CI)
+        end
+      end
+
+      {% if LibC.has_method?(:mkfifo) %}
+        # interpreter doesn't support threads yet (#14287)
+        pending_interpreted "opens fifo file as non-blocking" do
+          path = File.tempname("chardev")
+          ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
+          raise RuntimeError.from_errno("mkfifo") unless ret == 0
+
+          # FIXME: open(2) will block when opening a fifo file until another
+          #        thread or process also opened the file; we should pass
+          #        O_NONBLOCK to the open(2) call itself, not afterwards
+          file = nil
+          Thread.new { file = File.new(path, "w", blocking: nil) }
+
+          begin
+            File.open(path, "r", blocking: false) do |file|
+              file.blocking.should be_false
+            end
+          ensure
+            File.delete(path)
+            file.try(&.close)
+          end
+        end
+      {% end %}
+    {% end %}
   end
 
   it "reads entire file" do
@@ -929,7 +999,7 @@ describe "File" do
             pending! "Spec cannot run as superuser"
           end
         {% end %}
-        expect_raises(File::AccessDeniedError) { File.read(path) }
+        expect_raises(File::AccessDeniedError, "Error opening file with mode 'r': '#{path.inspect_unquoted}'") { File.read(path) }
       end
     end
   {% end %}
@@ -946,7 +1016,7 @@ describe "File" do
           pending! "Spec cannot run as superuser"
         end
       {% end %}
-      expect_raises(File::AccessDeniedError) { File.write(path, "foo") }
+      expect_raises(File::AccessDeniedError, "Error opening file with mode 'w': '#{path.inspect_unquoted}'") { File.write(path, "foo") }
     end
   end
 
@@ -1449,73 +1519,89 @@ describe "File" do
 
   describe ".match?" do
     it "matches basics" do
-      File.match?("abc", Path["abc"]).should be_true
-      File.match?("abc", "abc").should be_true
-      File.match?("*", "abc").should be_true
-      File.match?("*c", "abc").should be_true
-      File.match?("a*", "a").should be_true
-      File.match?("a*", "abc").should be_true
-      File.match?("a*/b", "abc/b").should be_true
-      File.match?("*x", "xxx").should be_true
+      assert_file_matches "abc", "abc"
+      assert_file_matches "*", "abc"
+      assert_file_matches "*c", "abc"
+      assert_file_matches "a*", "a"
+      assert_file_matches "a*", "abc"
+      assert_file_matches "a*/b", "abc/b"
+      assert_file_matches "*x", "xxx"
     end
+
     it "matches multiple expansions" do
-      File.match?("a*b*c*d*e*/f", "axbxcxdxe/f").should be_true
-      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/f").should be_true
-      File.match?("a*b?c*x", "abxbbxdbxebxczzx").should be_true
-      File.match?("a*b?c*x", "abxbbxdbxebxczzy").should be_false
+      assert_file_matches "a*b*c*d*e*/f", "axbxcxdxe/f"
+      assert_file_matches "a*b*c*d*e*/f", "axbxcxdxexxx/f"
+      assert_file_matches "a*b?c*x", "abxbbxdbxebxczzx"
+      refute_file_matches "a*b?c*x", "abxbbxdbxebxczzy"
     end
+
     it "matches unicode characters" do
-      File.match?("a?b", "a☺b").should be_true
-      File.match?("a???b", "a☺b").should be_false
+      assert_file_matches "a?b", "a☺b"
+      refute_file_matches "a???b", "a☺b"
     end
-    it "* don't match /" do
-      File.match?("a*", "ab/c").should be_false
-      File.match?("a*/b", "a/c/b").should be_false
-      File.match?("a*b*c*d*e*/f", "axbxcxdxe/xxx/f").should be_false
-      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/fff").should be_false
+
+    it "* don't match path separator" do
+      refute_file_matches "a*", "ab/c"
+      refute_file_matches "a*/b", "a/c/b"
+      refute_file_matches "a*b*c*d*e*/f", "axbxcxdxe/xxx/f"
+      refute_file_matches "a*b*c*d*e*/f", "axbxcxdxexxx/fff"
     end
-    it "** matches /" do
-      File.match?("a**", "ab/c").should be_true
-      File.match?("a**/b", "a/c/b").should be_true
-      File.match?("a*b*c*d*e**/f", "axbxcxdxe/xxx/f").should be_true
-      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/f").should be_true
-      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/fff").should be_false
+
+    it "** matches path separator" do
+      assert_file_matches "a**", "ab/c"
+      assert_file_matches "a**/b", "a/c/b"
+      assert_file_matches "a*b*c*d*e**/f", "axbxcxdxe/xxx/f"
+      assert_file_matches "a*b*c*d*e**/f", "axbxcxdxexxx/f"
+      refute_file_matches "a*b*c*d*e**/f", "axbxcxdxexxx/fff"
     end
+
     it "classes" do
-      File.match?("ab[c]", "abc").should be_true
-      File.match?("ab[b-d]", "abc").should be_true
-      File.match?("ab[d-b]", "abc").should be_false
-      File.match?("ab[e-g]", "abc").should be_false
-      File.match?("ab[e-gc]", "abc").should be_true
-      File.match?("ab[^c]", "abc").should be_false
-      File.match?("ab[^b-d]", "abc").should be_false
-      File.match?("ab[^e-g]", "abc").should be_true
-      File.match?("a[^a]b", "a☺b").should be_true
-      File.match?("a[^a][^a][^a]b", "a☺b").should be_false
-      File.match?("[a-ζ]*", "α").should be_true
-      File.match?("*[a-ζ]", "A").should be_false
+      assert_file_matches "ab[c]", "abc"
+      assert_file_matches "ab[b-d]", "abc"
+      refute_file_matches "ab[d-b]", "abc"
+      refute_file_matches "ab[e-g]", "abc"
+      assert_file_matches "ab[e-gc]", "abc"
+      refute_file_matches "ab[^c]", "abc"
+      refute_file_matches "ab[^b-d]", "abc"
+      assert_file_matches "ab[^e-g]", "abc"
+      assert_file_matches "a[^a]b", "a☺b"
+      refute_file_matches "a[^a][^a][^a]b", "a☺b"
+      assert_file_matches "[a-ζ]*", "α"
+      refute_file_matches "*[a-ζ]", "A"
     end
+
     it "escape" do
+      # NOTE: `*` is forbidden in Windows paths
       File.match?("a\\*b", "a*b").should be_true
-      File.match?("a\\*b", "ab").should be_false
+      refute_file_matches "a\\*b", "ab"
       File.match?("a\\**b", "a*bb").should be_true
-      File.match?("a\\**b", "abb").should be_false
+      refute_file_matches "a\\**b", "abb"
       File.match?("a*\\*b", "ab*b").should be_true
-      File.match?("a*\\*b", "abb").should be_false
+      refute_file_matches "a*\\*b", "abb"
+
+      assert_file_matches "a\\[b\\]", "a[b]"
+      refute_file_matches "a\\[b\\]", "ab"
+      assert_file_matches "a\\[bb\\]", "a[bb]"
+      refute_file_matches "a\\[bb\\]", "abb"
+      assert_file_matches "a[b]\\[b\\]", "ab[b]"
+      refute_file_matches "a[b]\\[b\\]", "abb"
     end
+
     it "special chars" do
-      File.match?("a?b", "a/b").should be_false
-      File.match?("a*b", "a/b").should be_false
+      refute_file_matches "a?b", "a/b"
+      refute_file_matches "a*b", "a/b"
     end
+
     it "classes escapes" do
-      File.match?("[\\]a]", "]").should be_true
-      File.match?("[\\-]", "-").should be_true
-      File.match?("[x\\-]", "x").should be_true
-      File.match?("[x\\-]", "-").should be_true
-      File.match?("[x\\-]", "z").should be_false
-      File.match?("[\\-x]", "x").should be_true
-      File.match?("[\\-x]", "-").should be_true
-      File.match?("[\\-x]", "a").should be_false
+      assert_file_matches "[\\]a]", "]"
+      assert_file_matches "[\\-]", "-"
+      assert_file_matches "[x\\-]", "x"
+      assert_file_matches "[x\\-]", "-"
+      refute_file_matches "[x\\-]", "z"
+      assert_file_matches "[\\-x]", "x"
+      assert_file_matches "[\\-x]", "-"
+      refute_file_matches "[\\-x]", "a"
+
       expect_raises(File::BadPatternError, "empty character set") do
         File.match?("[]a]", "]")
       end
@@ -1547,18 +1633,19 @@ describe "File" do
         File.match?("a[", "a")
       end
     end
+
     it "alternates" do
-      File.match?("{abc,def}", "abc").should be_true
-      File.match?("ab{c,}", "abc").should be_true
-      File.match?("ab{c,}", "ab").should be_true
-      File.match?("ab{d,e}", "abc").should be_false
-      File.match?("ab{*,/cde}", "abcde").should be_true
-      File.match?("ab{*,/cde}", "ab/cde").should be_true
-      File.match?("ab{?,/}de", "abcde").should be_true
-      File.match?("ab{?,/}de", "ab/de").should be_true
-      File.match?("ab{{c,d}ef,}", "ab").should be_true
-      File.match?("ab{{c,d}ef,}", "abcef").should be_true
-      File.match?("ab{{c,d}ef,}", "abdef").should be_true
+      assert_file_matches "{abc,def}", "abc"
+      assert_file_matches "ab{c,}", "abc"
+      assert_file_matches "ab{c,}", "ab"
+      refute_file_matches "ab{d,e}", "abc"
+      assert_file_matches "ab{*,/cde}", "abcde"
+      assert_file_matches "ab{*,/cde}", "ab/cde"
+      assert_file_matches "ab{?,/}de", "abcde"
+      assert_file_matches "ab{?,/}de", "ab/de"
+      assert_file_matches "ab{{c,d}ef,}", "ab"
+      assert_file_matches "ab{{c,d}ef,}", "abcef"
+      assert_file_matches "ab{{c,d}ef,}", "abdef"
     end
   end
 

@@ -5,7 +5,7 @@
 # the actual library file to the load path. `Crystal::Loader` does not support
 # ld scripts yet. So we just skip that for now. The libm symbols are still
 # available in the interpreter.
-{% if (flag?(:linux) && !flag?(:musl) && !flag?(:interpreted)) || flag?(:bsd) %}
+{% if (flag?(:linux) && !flag?(:musl) && !flag?(:interpreted)) || flag?(:bsd) || flag?(:solaris) %}
   @[Link("m")]
 {% end %}
 
@@ -46,6 +46,12 @@ lib LibM
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_floor_f64)] {% end %}
   fun floor_f64 = "llvm.floor.f64"(value : Float64) : Float64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_fma_f32)] {% end %}
+  fun fma_f32 = "llvm.fma.f32"(value1 : Float32, value2 : Float32, value3 : Float32) : Float32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_fma_f64)] {% end %}
+  fun fma_f64 = "llvm.fma.f64"(value1 : Float64, value2 : Float64, value3 : Float64) : Float64
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_log_f32)] {% end %}
   fun log_f32 = "llvm.log.f32"(value : Float32) : Float32

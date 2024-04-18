@@ -95,6 +95,13 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # ```
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
+# The newline constant
+EOL = {% if flag?(:windows) %}
+        "\r\n"
+      {% else %}
+        "\n"
+      {% end %}
+
 # Repeatedly executes the block.
 #
 # ```
@@ -484,7 +491,16 @@ def pp(**objects)
   pp(objects) unless objects.empty?
 end
 
-# Registers the given `Proc` for execution when the program exits.
+# Registers the given `Proc` for execution when the program exits regularly.
+#
+# A regular exit happens when either
+# * the main fiber reaches the end of the program,
+# * the main fiber rescues an unhandled exception, or
+# * `::exit` is called.
+#
+# `Process.exit` does *not* trigger `at_exit` handlers, nor does external process
+# termination (see `Process.on_terminate` for handling that).
+#
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
 # ```
@@ -556,20 +572,6 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
-    end
-  end
-
-  {% if flag?(:win32) %}
-    Crystal::System::Process.start_interrupt_loop
-  {% else %}
-    Crystal::System::Signal.setup_default_handlers
-  {% end %}
-
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
   # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
@@ -579,7 +581,11 @@ end
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 
-  {% if flag?(:preview_mt) %}
-    Crystal::Scheduler.init_workers
+  Crystal::Scheduler.init
+
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
+    Crystal::System::Signal.setup_default_handlers
   {% end %}
 {% end %}

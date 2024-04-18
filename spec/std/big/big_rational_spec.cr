@@ -218,10 +218,74 @@ describe BigRational do
   end
 
   it "#//" do
-    (br(10, 7) // br(3, 7)).should eq(br(9, 3))
-    expect_raises(DivisionByZeroError) { br(10, 7) / br(0, 10) }
-    (br(10, 7) // 3).should eq(0)
-    (1 // br(10, 7)).should eq(0)
+    (br(18, 7) // br(4, 5)).should eq(br(3, 1))
+    (br(-18, 7) // br(4, 5)).should eq(br(-4, 1))
+    (br(18, 7) // br(-4, 5)).should eq(br(-4, 1))
+    (br(-18, 7) // br(-4, 5)).should eq(br(3, 1))
+
+    (br(18, 5) // 2).should eq(br(1, 1))
+    (br(-18, 5) // 2).should eq(br(-2, 1))
+    (br(18, 5) // -2).should eq(br(-2, 1))
+    (br(-18, 5) // -2).should eq(br(1, 1))
+    (br(18, 5) // 2.to_big_i).should eq(br(1, 1))
+
+    expect_raises(DivisionByZeroError) { br(18, 7) // br(0, 1) }
+    expect_raises(DivisionByZeroError) { br(18, 7) // 0 }
+
+    (8 // br(10, 7)).should eq(5)
+    (-8 // br(10, 7)).should eq(-6)
+    (8 // br(-10, 7)).should eq(-6)
+    (-8 // br(-10, 7)).should eq(5)
+
+    expect_raises(DivisionByZeroError) { 8 // br(0, 7) }
+  end
+
+  it "#%" do
+    (br(18, 7) % br(4, 5)).should eq(br(6, 35))
+    (br(-18, 7) % br(4, 5)).should eq(br(22, 35))
+    (br(18, 7) % br(-4, 5)).should eq(br(-22, 35))
+    (br(-18, 7) % br(-4, 5)).should eq(br(-6, 35))
+
+    (br(18, 5) % 2).should eq(br(8, 5))
+    (br(-18, 5) % 2).should eq(br(2, 5))
+    (br(18, 5) % -2).should eq(br(-2, 5))
+    (br(-18, 5) % -2).should eq(br(-8, 5))
+    (br(18, 5) % 2.to_big_i).should eq(br(8, 5))
+
+    expect_raises(DivisionByZeroError) { br(18, 7) % br(0, 1) }
+    expect_raises(DivisionByZeroError) { br(18, 7) % 0 }
+  end
+
+  it "#tdiv" do
+    br(18, 7).tdiv(br(4, 5)).should eq(br(3, 1))
+    br(-18, 7).tdiv(br(4, 5)).should eq(br(-3, 1))
+    br(18, 7).tdiv(br(-4, 5)).should eq(br(-3, 1))
+    br(-18, 7).tdiv(br(-4, 5)).should eq(br(3, 1))
+
+    br(18, 5).tdiv(2).should eq(br(1, 1))
+    br(-18, 5).tdiv(2).should eq(br(-1, 1))
+    br(18, 5).tdiv(-2).should eq(br(-1, 1))
+    br(-18, 5).tdiv(-2).should eq(br(1, 1))
+    br(18, 5).tdiv(2.to_big_i).should eq(br(1, 1))
+
+    expect_raises(DivisionByZeroError) { br(18, 7).tdiv(br(0, 1)) }
+    expect_raises(DivisionByZeroError) { br(18, 7).tdiv(0) }
+  end
+
+  it "#remainder" do
+    br(18, 7).remainder(br(4, 5)).should eq(br(6, 35))
+    br(-18, 7).remainder(br(4, 5)).should eq(br(-6, 35))
+    br(18, 7).remainder(br(-4, 5)).should eq(br(6, 35))
+    br(-18, 7).remainder(br(-4, 5)).should eq(br(-6, 35))
+
+    br(18, 5).remainder(2).should eq(br(8, 5))
+    br(-18, 5).remainder(2).should eq(br(-8, 5))
+    br(18, 5).remainder(-2).should eq(br(8, 5))
+    br(-18, 5).remainder(-2).should eq(br(-8, 5))
+    br(18, 5).remainder(2.to_big_i).should eq(br(8, 5))
+
+    expect_raises(DivisionByZeroError) { br(18, 7).remainder(br(0, 1)) }
+    expect_raises(DivisionByZeroError) { br(18, 7).remainder(0) }
   end
 
   it "#- (negation)" do
@@ -299,10 +363,107 @@ describe BigRational do
     br(-291, 100).trunc.should eq(-2)
   end
 
-  it "#hash" do
-    b = br(10, 3)
-    hash = b.hash
-    hash.should eq(b.to_f64.hash)
+  describe "#round" do
+    describe "rounding modes" do
+      it "to_zero" do
+        br(-9, 6).round(:to_zero).should eq BigRational.new(-1)
+        br(-6, 6).round(:to_zero).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_zero).should eq BigRational.new(0)
+        br(-3, 6).round(:to_zero).should eq BigRational.new(0)
+        br(-1, 6).round(:to_zero).should eq BigRational.new(0)
+        br(0, 6).round(:to_zero).should eq BigRational.new(0)
+        br(1, 6).round(:to_zero).should eq BigRational.new(0)
+        br(3, 6).round(:to_zero).should eq BigRational.new(0)
+        br(5, 6).round(:to_zero).should eq BigRational.new(0)
+        br(6, 6).round(:to_zero).should eq BigRational.new(1)
+        br(9, 6).round(:to_zero).should eq BigRational.new(1)
+      end
+
+      it "to_positive" do
+        br(-9, 6).round(:to_positive).should eq BigRational.new(-1)
+        br(-6, 6).round(:to_positive).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_positive).should eq BigRational.new(0)
+        br(-3, 6).round(:to_positive).should eq BigRational.new(0)
+        br(-1, 6).round(:to_positive).should eq BigRational.new(0)
+        br(0, 6).round(:to_positive).should eq BigRational.new(0)
+        br(1, 6).round(:to_positive).should eq BigRational.new(1)
+        br(3, 6).round(:to_positive).should eq BigRational.new(1)
+        br(5, 6).round(:to_positive).should eq BigRational.new(1)
+        br(6, 6).round(:to_positive).should eq BigRational.new(1)
+        br(9, 6).round(:to_positive).should eq BigRational.new(2)
+      end
+
+      it "to_negative" do
+        br(-9, 6).round(:to_negative).should eq BigRational.new(-2)
+        br(-6, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-5, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-3, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(-1, 6).round(:to_negative).should eq BigRational.new(-1)
+        br(0, 6).round(:to_negative).should eq BigRational.new(0)
+        br(1, 6).round(:to_negative).should eq BigRational.new(0)
+        br(3, 6).round(:to_negative).should eq BigRational.new(0)
+        br(5, 6).round(:to_negative).should eq BigRational.new(0)
+        br(6, 6).round(:to_negative).should eq BigRational.new(1)
+        br(9, 6).round(:to_negative).should eq BigRational.new(1)
+      end
+
+      it "ties_even" do
+        br(-15, 6).round(:ties_even).should eq BigRational.new(-2)
+        br(-9, 6).round(:ties_even).should eq BigRational.new(-2)
+        br(-6, 6).round(:ties_even).should eq BigRational.new(-1)
+        br(-5, 6).round(:ties_even).should eq BigRational.new(-1)
+        br(-3, 6).round(:ties_even).should eq BigRational.new(0)
+        br(-1, 6).round(:ties_even).should eq BigRational.new(0)
+        br(0, 6).round(:ties_even).should eq BigRational.new(0)
+        br(1, 6).round(:ties_even).should eq BigRational.new(0)
+        br(3, 6).round(:ties_even).should eq BigRational.new(0)
+        br(5, 6).round(:ties_even).should eq BigRational.new(1)
+        br(6, 6).round(:ties_even).should eq BigRational.new(1)
+        br(9, 6).round(:ties_even).should eq BigRational.new(2)
+        br(15, 6).round(:ties_even).should eq BigRational.new(2)
+      end
+
+      it "ties_away" do
+        br(-15, 6).round(:ties_away).should eq BigRational.new(-3)
+        br(-9, 6).round(:ties_away).should eq BigRational.new(-2)
+        br(-6, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-5, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-3, 6).round(:ties_away).should eq BigRational.new(-1)
+        br(-1, 6).round(:ties_away).should eq BigRational.new(0)
+        br(0, 6).round(:ties_away).should eq BigRational.new(0)
+        br(1, 6).round(:ties_away).should eq BigRational.new(0)
+        br(3, 6).round(:ties_away).should eq BigRational.new(1)
+        br(5, 6).round(:ties_away).should eq BigRational.new(1)
+        br(6, 6).round(:ties_away).should eq BigRational.new(1)
+        br(9, 6).round(:ties_away).should eq BigRational.new(2)
+        br(15, 6).round(:ties_away).should eq BigRational.new(3)
+      end
+
+      it "default (=ties_even)" do
+        br(-15, 6).round.should eq BigRational.new(-2)
+        br(-9, 6).round.should eq BigRational.new(-2)
+        br(-6, 6).round.should eq BigRational.new(-1)
+        br(-5, 6).round.should eq BigRational.new(-1)
+        br(-3, 6).round.should eq BigRational.new(0)
+        br(-1, 6).round.should eq BigRational.new(0)
+        br(0, 6).round.should eq BigRational.new(0)
+        br(1, 6).round.should eq BigRational.new(0)
+        br(3, 6).round.should eq BigRational.new(0)
+        br(5, 6).round.should eq BigRational.new(1)
+        br(6, 6).round.should eq BigRational.new(1)
+        br(9, 6).round.should eq BigRational.new(2)
+        br(15, 6).round.should eq BigRational.new(2)
+      end
+    end
+  end
+
+  describe "#integer?" do
+    it { br(0, 1).integer?.should be_true }
+    it { br(1, 1).integer?.should be_true }
+    it { br(9, 3).integer?.should be_true }
+    it { br(-126, 7).integer?.should be_true }
+    it { br(5, 2).integer?.should be_false }
+    it { br(7, -3).integer?.should be_false }
   end
 
   it "is a number" do

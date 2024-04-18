@@ -37,7 +37,7 @@ struct Slice(T)
     {% if @type.name != "Slice(T)" && T < Number %}
       {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
+      %ptr = Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
@@ -272,7 +272,7 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
+    start, count = Indexable.range_to_index_and_count(range, size) || return nil
     self[start, count]?
   end
 

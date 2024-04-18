@@ -68,6 +68,7 @@ module LLVM
     {% end %}
   end
 
+  @[Deprecated("This method has no effect")]
   def self.start_multithreaded : Bool
     if multithreaded?
       true
@@ -76,6 +77,7 @@ module LLVM
     end
   end
 
+  @[Deprecated("This method has no effect")]
   def self.stop_multithreaded
     if multithreaded?
       LibLLVM.stop_multithreaded
@@ -98,6 +100,9 @@ module LLVM
     when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"
+    when .starts_with?("x86_64-pc-solaris")
+      # remove API version
+      "x86_64-pc-solaris"
     else
       triple
     end

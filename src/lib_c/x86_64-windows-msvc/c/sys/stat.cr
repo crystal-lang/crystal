@@ -26,6 +26,7 @@ lib LibC
     st_ctime : Time64T
   end
 
+  # unused
   fun _wstat64(path : WCHAR*, buffer : Stat64*) : Int
   fun _fstat64(fd : Int, buffer : Stat64*) : Int
 end

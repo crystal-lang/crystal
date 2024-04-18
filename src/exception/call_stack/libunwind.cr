@@ -3,7 +3,7 @@ require "c/stdio"
 require "c/string"
 require "../lib_unwind"
 
-{% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) %}
+{% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) || flag?(:solaris) %}
   require "./dwarf"
 {% else %}
   require "./null"
@@ -102,7 +102,7 @@ struct Exception::CallStack
   end
 
   private def self.print_frame(repeated_frame)
-    Crystal::System.print_error "[0x%llx] ", repeated_frame.ip.address.to_u64
+    Crystal::System.print_error "[%p] ", repeated_frame.ip
     print_frame_location(repeated_frame)
     Crystal::System.print_error " (%d times)", repeated_frame.count + 1 unless repeated_frame.count == 0
     Crystal::System.print_error "\n"
@@ -110,17 +110,19 @@ struct Exception::CallStack
 
   private def self.print_frame_location(repeated_frame)
     {% if flag?(:debug) %}
-      if @@dwarf_loaded &&
-         (name = decode_function_name(repeated_frame.ip.address))
-        file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
-        if file && file != "??"
-          Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
-          return
+      if @@dwarf_loaded
+        pc = CallStack.decode_address(repeated_frame.ip)
+        if name = decode_function_name(pc)
+          file, line, column = Exception::CallStack.decode_line_number(pc)
+          if file && file != "??"
+            Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
+            return
+          end
         end
       end
     {% end %}
 
-    if frame = decode_frame(repeated_frame.ip)
+    if frame = unsafe_decode_frame(repeated_frame.ip)
       offset, sname, fname = frame
       Crystal::System.print_error "%s +%lld in %s", sname, offset.to_i64, fname
     else
@@ -147,6 +149,25 @@ struct Exception::CallStack
         file = String.new(info.dli_fname)
       end
       {offset, symbol, file}
+    end
+  end
+
+  # variant of `.decode_frame` that returns the C strings directly instead of
+  # wrapping them in `String.new`, since the SIGSEGV handler cannot allocate
+  # memory via the GC
+  protected def self.unsafe_decode_frame(ip)
+    original_ip = ip
+    while LibC.dladdr(ip, out info) != 0
+      offset = original_ip - info.dli_saddr
+      if offset == 0
+        ip -= 1
+        next
+      end
+
+      return if info.dli_sname.null? && info.dli_fname.null?
+      symbol = info.dli_sname || "??".to_unsafe
+      file = info.dli_fname || "??".to_unsafe
+      return {offset, symbol, file}
     end
   end
 end

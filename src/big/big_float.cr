@@ -40,29 +40,16 @@ struct BigFloat < Float
     LibGMP.mpf_set(self, num)
   end
 
-  def initialize(num : Int8 | Int16 | Int32)
-    LibGMP.mpf_init_set_si(out @mpf, num)
-  end
-
-  def initialize(num : UInt8 | UInt16 | UInt32)
-    LibGMP.mpf_init_set_ui(out @mpf, num)
-  end
-
-  def initialize(num : Int64)
-    if LibGMP::Long == Int64
-      LibGMP.mpf_init_set_si(out @mpf, num)
-    else
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set_z(self, num.to_big_i)
-    end
-  end
-
-  def initialize(num : UInt64)
-    if LibGMP::ULong == UInt64
-      LibGMP.mpf_init_set_ui(out @mpf, num)
-    else
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set_z(self, num.to_big_i)
+  def initialize(num : Int)
+    Int.primitive_si_ui_check(num) do |si, ui, big_i|
+      {
+        si:    LibGMP.mpf_init_set_si(out @mpf, {{ si }}),
+        ui:    LibGMP.mpf_init_set_ui(out @mpf, {{ ui }}),
+        big_i: begin
+          LibGMP.mpf_init(out @mpf)
+          LibGMP.mpf_set_z(self, {{ big_i }})
+        end,
+      }
     end
   end
 
@@ -90,9 +77,6 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  # TODO: improve this
-  def_hash to_f64
-
   def self.default_precision
     LibGMP.mpf_get_default_prec
   end
@@ -113,14 +97,18 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_d(self, other) unless other.nan?
   end
 
-  def <=>(other : Number)
-    if other.is_a?(Int8 | Int16 | Int32) || (LibGMP::Long == Int64 && other.is_a?(Int64))
-      LibGMP.mpf_cmp_si(self, other)
-    elsif other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
-      LibGMP.mpf_cmp_ui(self, other)
-    else
-      LibGMP.mpf_cmp(self, other.to_big_f)
+  def <=>(other : Int)
+    Int.primitive_si_ui_check(other) do |si, ui, big_i|
+      {
+        si:    LibGMP.mpf_cmp_si(self, {{ si }}),
+        ui:    LibGMP.mpf_cmp_ui(self, {{ ui }}),
+        big_i: self <=> {{ big_i }},
+      }
     end
+  end
+
+  def <=>(other : Number)
+    LibGMP.mpf_cmp(self, other.to_big_f)
   end
 
   def - : BigFloat
@@ -149,8 +137,49 @@ struct BigFloat < Float
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 
+  def **(other : BigInt) : BigFloat
+    is_zero = self.zero?
+    if is_zero
+      case other
+      when .>(0)
+        return self
+      when .<(0)
+        # there is no BigFloat::Infinity
+        raise ArgumentError.new "Cannot raise 0 to a negative power"
+      end
+    end
+
+    BigFloat.new do |result|
+      LibGMP.mpf_init_set_si(result, 1)
+      next if is_zero # define `0 ** 0 == 1`
+
+      # these are mutated and must be copies of `other` and `self`!
+      exponent = BigInt.new { |mpz| LibGMP.abs(mpz, other) } # `other.abs`
+      k = BigFloat.new { |mpf| LibGMP.mpf_set(mpf, self) }   # `self`
+
+      while exponent > 0
+        LibGMP.mpf_mul(result, result, k) if exponent.to_i!.odd? # `result *= k`
+        LibGMP.fdiv_q_2exp(exponent, exponent, 1)                # `exponent /= 2`
+        LibGMP.mpf_mul(k, k, k) if exponent > 0                  # `k *= k`
+      end
+
+      LibGMP.mpf_ui_div(result, 1, result) if other < 0 # `result = 1 / result`
+    end
+  end
+
   def **(other : Int) : BigFloat
-    BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
+    # there is no BigFloat::Infinity
+    if zero? && other < 0
+      raise ArgumentError.new "Cannot raise 0 to a negative power"
+    end
+
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_ui_div(mpf, 1, mpf) },
+        big_i:  self ** {{ big_i }},
+      }
+    end
   end
 
   def abs : BigFloat
@@ -381,7 +410,8 @@ struct BigFloat < Float
     end
   end
 
-  protected def integer?
+  # :inherit:
+  def integer? : Bool
     !LibGMP.mpf_integer_p(mpf).zero?
   end
 
@@ -467,8 +497,8 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  def float(value : BigFloat)
-    normalized_hash = float_normalize_wrap(value) do |value|
+  def self.reduce_num(value : BigFloat)
+    float_normalize_wrap(value) do |value|
       # more exact version of `Math.frexp`
       LibGMP.mpf_get_d_2exp(out exp, value)
       frac = BigFloat.new do |mpf|
@@ -480,6 +510,5 @@ struct Crystal::Hasher
       end
       float_normalize_reference(value, frac, exp)
     end
-    permute(normalized_hash)
   end
 end
