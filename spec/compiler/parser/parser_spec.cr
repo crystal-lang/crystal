@@ -1103,8 +1103,12 @@ module Crystal
     it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
     it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
+    it_parses "{% if 1\n  x\nend %}", MacroExpression.new(If.new(1.int32, "x".var), output: false)
+    it_parses "{% x if 1 %}", MacroExpression.new(If.new(1.int32, "x".var), output: false)
     it_parses "{% unless 1; 2; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, Nop.new), output: false)
     it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
+    it_parses "{% unless 1\n  x\nend %}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
+    it_parses "{% x unless 1 %}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
     assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
