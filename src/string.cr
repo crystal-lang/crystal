@@ -3412,9 +3412,9 @@ class String
 
     if search.bytesize <= 8
       search_bytesize = search.bytesize
-      return index_short(UInt64, char_index, pointer, end_pointer, search) { |pointer|
+      return index_short(UInt64, char_index, pointer, end_pointer, search) do |pointer|
         String.char_bytesize_at(pointer - search_bytesize)
-      }
+      end
     end
 
     head_pointer = pointer
@@ -3804,9 +3804,7 @@ class String
       return if pointer >= end_pointer
 
       # update a rolling hash of this text (haystack)
-      hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
-      pointer += 1
-      head_pointer += 1
+      update_hash 1
       offset += 1
     end
 
