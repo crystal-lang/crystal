@@ -108,8 +108,18 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x, @[Foo] **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
   expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
-  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
-  expect_to_s "def foo(& : (->))\nend"
+
+  # 14216
+  expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend", "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(& : ->)\nend"
+  expect_to_s "def foo(& : (->))\nend", "def foo(& : ->)\nend"
+  expect_to_s "def foo(x : (T -> U) -> V, *args : (T -> U) -> V, y : (T -> U) -> V, **opts : (T -> U) -> V, & : (T -> U) -> V) : ((T -> U) -> V)\nend"
+  expect_to_s "foo(x : (T -> U) -> V, W)"
+  expect_to_s "foo[x : (T -> U) -> V, W]"
+  expect_to_s "foo[x : (T -> U) -> V, W] = 1"
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) -> V, W) : ((T -> U) -> V)\nend"
+
   expect_to_s "macro foo(@[Foo] id)\nend"
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(@[Foo] **args)\nend"
