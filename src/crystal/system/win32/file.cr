@@ -167,23 +167,28 @@ module Crystal::System::File
     if follow_symlinks
       path = realpath?(path) || return false
     end
-    accessible?(path, 0)
+    accessible?(path, check_writable: false)
   end
 
   def self.readable?(path) : Bool
-    accessible?(path, 4)
+    accessible?(path, check_writable: false)
   end
 
   def self.writable?(path) : Bool
-    accessible?(path, 2)
+    accessible?(path, check_writable: true)
   end
 
   def self.executable?(path) : Bool
     LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
   end
 
-  private def self.accessible?(path, mode)
-    LibC._waccess_s(System.to_wstr(path), mode) == 0
+  private def self.accessible?(path, *, check_writable)
+    attributes = LibC.GetFileAttributesW(System.to_wstr(path))
+    return false if attributes == LibC::INVALID_FILE_ATTRIBUTES
+    return true if attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
+    return false if check_writable && attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+
+    true
   end
 
   def self.chown(path : String, uid : Int32, gid : Int32, follow_symlinks : Bool) : Nil

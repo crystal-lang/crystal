@@ -121,6 +121,14 @@ module Crystal
         it "expands macro with id call on number" do
           assert_macro "{{x.id}}", %(1), {x: 1.int32}
         end
+
+        it "expands macro with id call on path" do
+          assert_macro "{{x.id}}", %(Foo), {x: Path.new("Foo")}
+        end
+
+        it "expands macro with id call on global path" do
+          assert_macro "{{x.id}}", %(::Foo), {x: Path.new("Foo", global: true)}
+        end
       end
 
       it "executes == on numbers (true)" do
@@ -2546,6 +2554,17 @@ module Crystal
       end
     end
 
+    describe MacroExpression do
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "nil", {x: MacroExpression.new(NilLiteral.new)}
+      end
+
+      it "executes output?" do
+        assert_macro %({{x.output?}}), "false", {x: MacroExpression.new(NilLiteral.new, output: false)}
+        assert_macro %({{x.output?}}), "true", {x: MacroExpression.new(1.int32, output: true)}
+      end
+    end
+
     describe "macro if methods" do
       it "executes cond" do
         assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
@@ -2571,6 +2590,24 @@ module Crystal
 
       it "executes body" do
         assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+    end
+
+    describe MacroLiteral do
+      it "executes value" do
+        assert_macro %({{x.value}}), "foo(1)", {x: MacroLiteral.new("foo(1)")}
+        assert_macro %({{x.value}}), "", {x: MacroLiteral.new("")}
+      end
+    end
+
+    describe MacroVar do
+      it "executes name" do
+        assert_macro %({{x.name}}), "foo", {x: MacroVar.new("foo")}
+      end
+
+      it "executes expressions" do
+        assert_macro %({{x.expressions}}), "[] of ::NoReturn", {x: MacroVar.new("foo")}
+        assert_macro %({{x.expressions}}), "[x, 1]", {x: MacroVar.new("bar", [Var.new("x"), 1.int32] of ASTNode)}
       end
     end
 

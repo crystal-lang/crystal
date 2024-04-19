@@ -90,9 +90,14 @@ module Crystal
       @macro_types["Cast"] = NonGenericMacroType.new self, "Cast", ast_node
       @macro_types["NilableCast"] = NonGenericMacroType.new self, "NilableCast", ast_node
       @macro_types["MacroId"] = NonGenericMacroType.new self, "MacroId", ast_node
+      @macro_types["TypeNode"] = NonGenericMacroType.new self, "TypeNode", ast_node
+
+      @macro_types["MacroExpression"] = NonGenericMacroType.new self, "MacroExpression", ast_node
       @macro_types["MacroFor"] = NonGenericMacroType.new self, "MacroFor", ast_node
       @macro_types["MacroIf"] = NonGenericMacroType.new self, "MacroIf", ast_node
-      @macro_types["TypeNode"] = NonGenericMacroType.new self, "TypeNode", ast_node
+      @macro_types["MacroLiteral"] = NonGenericMacroType.new self, "MacroLiteral", ast_node
+      @macro_types["MacroVar"] = NonGenericMacroType.new self, "MacroVar", ast_node
+      @macro_types["MacroVerbatim"] = NonGenericMacroType.new self, "MacroVerbatim", unary_expression
 
       # bottom type
       @macro_types["NoReturn"] = @macro_no_return = NoReturnMacroType.new self
@@ -117,10 +122,6 @@ module Crystal
       @macro_types["ExternalVar"] = NonGenericMacroType.new self, "ExternalVar", ast_node
       @macro_types["Include"] = NonGenericMacroType.new self, "Include", ast_node
       @macro_types["TypeDef"] = NonGenericMacroType.new self, "TypeDef", ast_node
-      @macro_types["MacroExpression"] = NonGenericMacroType.new self, "MacroExpression", ast_node
-      @macro_types["MacroLiteral"] = NonGenericMacroType.new self, "MacroLiteral", ast_node
-      @macro_types["MacroVar"] = NonGenericMacroType.new self, "MacroVar", ast_node
-      @macro_types["MacroVerbatim"] = NonGenericMacroType.new self, "MacroVerbatim", unary_expression
     end
 
     # Returns the macro type for a given AST node. This association is done
