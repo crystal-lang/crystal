@@ -241,8 +241,7 @@ module HTTP
     referer
     user-agent
   )
-    .map { |header| {header.to_slice, header} }
-    .to_h
+    .to_h { |header| {header.to_slice, header} }
 
   # :nodoc:
   def self.header_name(slice : Bytes) : String
