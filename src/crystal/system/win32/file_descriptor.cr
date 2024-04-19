@@ -148,7 +148,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_tty?
-    LibC.GetFileType(windows_handle) == LibC::FILE_TYPE_CHAR
+    LibC.GetConsoleMode(windows_handle, out _) != 0
   end
 
   private def system_reopen(other : IO::FileDescriptor)
