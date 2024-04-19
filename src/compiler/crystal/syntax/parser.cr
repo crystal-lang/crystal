@@ -3441,11 +3441,13 @@ module Crystal
       @in_macro_expression = false
 
       if !@token.type.op_percent_rcurly? && check_end
+        @in_macro_expression = true
         if is_unless
           node = parse_unless_after_condition cond, location
         else
           node = parse_if_after_condition cond, location, true
         end
+        @in_macro_expression = false
         skip_space_or_newline
         check :OP_PERCENT_RCURLY
         return MacroExpression.new(node, output: false).at_end(token_end_location)
