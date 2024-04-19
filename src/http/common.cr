@@ -193,7 +193,6 @@ module HTTP
     {name, value}
   end
 
-  # Important! These have to be in lexicographic order.
   private COMMON_HEADERS = %w(
     Accept-Encoding
     Accept-Language
