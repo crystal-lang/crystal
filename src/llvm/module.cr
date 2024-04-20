@@ -84,7 +84,7 @@ class LLVM::Module
     self
   end
 
-  {% if LibLLVM.has_method?(:create_function_pass_manager_for_module) %}
+  {% if LibLLVM::IS_LT_170 %}
     def new_function_pass_manager
       FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
     end

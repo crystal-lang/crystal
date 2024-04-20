@@ -26,7 +26,7 @@ class LLVM::PassBuilderOptions
     LibLLVM.dispose_pass_builder_options(self)
   end
 
-  {% if LibLLVM.has_method?(:pass_builder_options_set_inliner_threshold) %}
+  {% unless LibLLVM::IS_LT_170 %}
     def set_inliner_threshold(threshold : Int)
       LibLLVM.pass_builder_options_set_inliner_threshold(self, threshold)
     end

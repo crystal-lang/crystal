@@ -8,34 +8,32 @@ struct LLVM::PassRegistry
   def initialize(@unwrap : LibLLVM::PassRegistryRef)
   end
 
-  Inits = %w(
-    initialize_core
-    initialize_transform_utils
-    initialize_scalar_opts
-    initialize_obj_c_arc_opts
-    initialize_vectorization
-    initialize_inst_combine
-    initialize_ipo
-    initialize_instrumentation
-    initialize_analysis
-    initialize_ipa
-    initialize_code_gen
-    initialize_target
-  )
+  {% begin %}
+    Inits = [
+      "initialize_core",
+      "initialize_transform_utils",
+      "initialize_scalar_opts",
+      {% unless LibLLVM::IS_LT_160 %} "initialize_obj_c_arc_opts", {% end %}
+      "initialize_vectorization",
+      "initialize_inst_combine",
+      "initialize_ipo",
+      {% unless LibLLVM::IS_LT_160 %} "initialize_instrumentation", {% end %}
+      "initialize_analysis",
+      "initialize_ipa",
+      "initialize_code_gen",
+      "initialize_target",
+    ]
+  {% end %}
 
   {% for name in Inits %}
-    {% if LibLLVM.has_method?(name) %}
-      def {{name.id}}
-        LibLLVM.{{name.id}} self
-      end
-    {% end %}
+    def {{name.id}}
+      LibLLVM.{{name.id}} self
+    end
   {% end %}
 
   def initialize_all
     {% for name in Inits %}
-      {% if LibLLVM.has_method?(name) %}
-        {{name.id}}
-      {% end %}
+      {{name.id}}
     {% end %}
   end
 

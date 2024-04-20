@@ -747,24 +747,20 @@ module Crystal
       end
     {% end %}
 
-    # LLVM 13 introduced PassBuilder to replace PassManager but it lacked
-    # support for size opt levels (Os, Oz) until LLVM 17 that also removed
-    # PassManager.
-    #
-    # We try to use PassBuilder whenever possible (LLVM 17+) and fallback to
-    # PassManager for the Os and Oz levels when needed (LLVM 13 - 16).
     protected def optimize(llvm_mod)
-      {% if LLVM.has_constant?(:PassBuilderOptions) %}
+      {% if LibLLVM::IS_LT_130 %}
+        optimize_with_pass_manager(llvm_mod)
+      {% else %}
         {% if LibLLVM::IS_LT_170 %}
+          # PassBuilder doesn't support Os and Oz before LLVM 17
           if @optimization_mode.os? || @optimization_mode.oz?
             return optimize_with_pass_manager(llvm_mod)
           end
         {% end %}
+
         LLVM::PassBuilderOptions.new do |options|
           LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
         end
-      {% else %}
-        optimize_with_pass_manager(llvm_mod)
       {% end %}
     end
 
