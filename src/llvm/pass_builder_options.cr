@@ -26,9 +26,11 @@ class LLVM::PassBuilderOptions
     LibLLVM.dispose_pass_builder_options(self)
   end
 
-  def set_inliner_threshold(threshold : Int)
-    LibLLVM.pass_builder_options_set_inliner_threshold(self, threshold)
-  end
+  {% if LibLLVM.has_method?(:pass_builder_options_set_inliner_threshold) %}
+    def set_inliner_threshold(threshold : Int)
+      LibLLVM.pass_builder_options_set_inliner_threshold(self, threshold)
+    end
+  {% end %}
 
   def set_loop_unrolling(enabled : Bool)
     LibLLVM.pass_builder_options_set_loop_unrolling(self, enabled)

@@ -84,12 +84,11 @@ class LLVM::Module
     self
   end
 
-  {% unless LibLLVM::IS_LT_130 %}
-    @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+  {% if LibLLVM.has_method?(:create_function_pass_manager_for_module) %}
+    def new_function_pass_manager
+      FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
+    end
   {% end %}
-  def new_function_pass_manager
-    FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
-  end
 
   def ==(other : self)
     @unwrap == other.@unwrap

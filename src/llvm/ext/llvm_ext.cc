@@ -90,26 +90,3 @@ void LLVMExtSetTargetMachineGlobalISel(LLVMTargetMachineRef T, LLVMBool Enable) 
 #endif
 
 } // extern "C"
-
-#if LLVM_VERSION_GE(13, 0) && !LLVM_VERSION_GE(17, 0)
-#include <llvm-c/Transforms/PassBuilder.h>
-#include "llvm/Passes/PassBuilder.h"
-
-namespace llvm {
-  class LLVMPassBuilderOptions {
-  public:
-    bool DebugLogging;
-    bool VerifyEach;
-    PipelineTuningOptions PTO;
-  };
-}
-
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMPassBuilderOptions, LLVMPassBuilderOptionsRef)
-
-extern "C" {
-  void LLVMPassBuilderOptionsSetInlinerThreshold(LLVMPassBuilderOptionsRef Options, int Threshold) {
-    unwrap(Options)->PTO.InlinerThreshold = Threshold;
-  }
-}
-#endif
-

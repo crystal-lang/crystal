@@ -1,6 +1,5 @@
-{% unless LibLLVM::IS_LT_130 %}
-  @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
-{% end %}
+{% skip_file unless LibLLVM::IS_LT_170 %}
+
 struct LLVM::PassRegistry
   def self.instance : self
     new LibLLVM.get_global_pass_registry
@@ -9,17 +8,34 @@ struct LLVM::PassRegistry
   def initialize(@unwrap : LibLLVM::PassRegistryRef)
   end
 
-  Inits = %w(core transform_utils scalar_opts obj_c_arc_opts vectorization inst_combine ipo instrumentation analysis ipa code_gen target)
+  Inits = %w(
+    initialize_core
+    initialize_transform_utils
+    initialize_scalar_opts
+    initialize_obj_c_arc_opts
+    initialize_vectorization
+    initialize_inst_combine
+    initialize_ipo
+    initialize_instrumentation
+    initialize_analysis
+    initialize_ipa
+    initialize_code_gen
+    initialize_target
+  )
 
   {% for name in Inits %}
-    def initialize_{{name.id}}
-      LibLLVM.initialize_{{name.id}} self
-    end
+    {% if LibLLVM.has_method?(name) %}
+      def {{name.id}}
+        LibLLVM.{{name.id}} self
+      end
+    {% end %}
   {% end %}
 
   def initialize_all
     {% for name in Inits %}
-      initialize_{{name.id}}
+      {% if LibLLVM.has_method?(name) %}
+        {{name.id}}
+      {% end %}
     {% end %}
   end
 

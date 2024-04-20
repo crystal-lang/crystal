@@ -692,8 +692,8 @@ module Crystal
       exit 1
     end
 
-    {% if LibLLVM::IS_LT_130 %}
-      protected def optimize(llvm_mod)
+    {% if LibLLVM::IS_LT_170 %}
+      private def optimize_with_pass_manager(llvm_mod)
         fun_pass_manager = llvm_mod.new_function_pass_manager
         pass_manager_builder.populate fun_pass_manager
         fun_pass_manager.run llvm_mod
@@ -745,33 +745,28 @@ module Crystal
           builder
         end
       end
-    {% else %}
-      protected def optimize(llvm_mod)
-        LLVM::PassBuilderOptions.new do |options|
-          case @optimization_mode
-          in .o0?, .o1?, .o2?, .o3?
-            passes = "default<#{@optimization_mode}>"
-          in .os?
-            {% if LibLLVM::IS_LT_170 %}
-              passes = "default<O2>"
-              options.set_inliner_threshold(50)
-            {% else %}
-              passes = "default<Os>"
-            {% end %}
-          in .oz?
-            {% if LibLLVM::IS_LT_170 %}
-              passes = "default<O2>"
-              options.set_inliner_threshold(5)
-              options.set_loop_vectorization(false)
-              options.set_slp_vectorization(false) # NOTE: clang keeps SLP vectorization enabled
-            {% else %}
-              passes = "default<Oz>"
-            {% end %}
-          end
-          LLVM.run_passes(llvm_mod, passes, target_machine, options)
-        end
-      end
     {% end %}
+
+    # LLVM 13 introduced PassBuilder to replace PassManager but it lacked
+    # support for size opt levels (Os, Oz) until LLVM 17 that also removed
+    # PassManager.
+    #
+    # We try to use PassBuilder whenever possible (LLVM 17+) and fallback to
+    # PassManager for the Os and Oz levels when needed (LLVM 13 - 16).
+    protected def optimize(llvm_mod)
+      {% if LLVM.has_constant?(:PassBuilderOptions) %}
+        {% if LibLLVM::IS_LT_170 %}
+          if @optimization_mode.os? || @optimization_mode.oz?
+            return optimize_with_pass_manager(llvm_mod)
+          end
+        {% end %}
+        LLVM::PassBuilderOptions.new do |options|
+          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+        end
+      {% else %}
+        optimize_with_pass_manager(llvm_mod)
+      {% end %}
+    end
 
     private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
