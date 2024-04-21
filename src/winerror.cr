@@ -116,7 +116,7 @@ enum WinError : UInt32
       when WSAEMFILE
         Errno::EMFILE
       else
-        Errno.new(err.value)
+        Errno.new(err.value.to_i32!)
       end
     else
       case err
