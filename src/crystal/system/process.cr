@@ -84,9 +84,9 @@ struct Crystal::System::Process
 end
 
 module Crystal::System
-  ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
-  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
+  ORIGINAL_STDIN  = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
 end
 
 {% if flag?(:wasi) %}

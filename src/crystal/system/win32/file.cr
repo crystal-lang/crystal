@@ -9,7 +9,7 @@ require "c/ntifs"
 require "c/winioctl"
 
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : FileDescriptor::Handle
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -19,15 +19,15 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    fd, errno = open(filename, open_flag(mode), ::File::Permissions.new(perm))
-    unless errno.none?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
+    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm))
+    unless error.error_success?
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
     end
 
-    fd
+    handle
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {FileDescriptor::Handle, WinError}
     access, disposition, attributes = self.posix_to_open_opts flags, perm
 
     handle = LibC.CreateFileW(
@@ -40,17 +40,7 @@ module Crystal::System::File
       LibC::HANDLE.null
     )
 
-    if handle == LibC::INVALID_HANDLE_VALUE
-      return {-1, WinError.value.to_errno}
-    end
-
-    fd = LibC._open_osfhandle handle, flags
-
-    if fd == -1
-      return {-1, Errno.value}
-    end
-
-    {fd, Errno::NONE}
+    {handle.address, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
   end
 
   private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)

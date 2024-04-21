@@ -3732,7 +3732,7 @@ module Crystal
         assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
           CRYSTAL
-          "No such file or directory"
+          "Error opening file with mode 'r'"
       end
     end
 
@@ -3747,7 +3747,7 @@ module Crystal
         assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
           CRYSTAL
-          "No such file or directory"
+          "Error opening file with mode 'r'"
       end
     end
   end
