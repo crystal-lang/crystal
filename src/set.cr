@@ -472,7 +472,7 @@ struct Set(T)
 
   # Returns `true` if the set is a superset of the *other* set.
   #
-  # The *other* must have the same or fewer elements than this set, and all of
+  # The *other* must have fewer elements than this set, and all of
   # elements in the *other* set must be present in this set.
   #
   # ```
