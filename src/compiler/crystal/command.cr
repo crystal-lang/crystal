@@ -525,7 +525,7 @@ class Crystal::Command
           if mode = Compiler::OptimizationMode.from_level?(level)
             compiler.optimization_mode = mode
           else
-            raise Error.new("Unknown optimization mode #{level}")
+            raise Error.new("Invalid optimization mode: O#{level}")
           end
         end
       end
@@ -668,7 +668,7 @@ class Crystal::Command
       if mode = Compiler::OptimizationMode.from_level?(level)
         compiler.optimization_mode = mode
       else
-        raise Error.new("Unknown optimization mode #{level}")
+        raise Error.new("Invalid optimization mode: O#{level}")
       end
     end
     opts.on("--single-module", "Generate a single LLVM module") do
