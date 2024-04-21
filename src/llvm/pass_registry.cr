@@ -9,19 +9,19 @@ struct LLVM::PassRegistry
   end
 
   {% begin %}
-    Inits = [
-      "initialize_core",
-      "initialize_transform_utils",
-      "initialize_scalar_opts",
-      {% unless LibLLVM::IS_LT_160 %} "initialize_obj_c_arc_opts", {% end %}
-      "initialize_vectorization",
-      "initialize_inst_combine",
-      "initialize_ipo",
-      {% unless LibLLVM::IS_LT_160 %} "initialize_instrumentation", {% end %}
-      "initialize_analysis",
-      "initialize_ipa",
-      "initialize_code_gen",
-      "initialize_target",
+    Inits = %w[
+      initialize_core
+      initialize_transform_utils
+      initialize_scalar_opts
+      {% if LibLLVM::IS_LT_160 %} initialize_obj_c_arc_opts {% end %}
+      initialize_vectorization
+      initialize_inst_combine
+      initialize_ipo
+      {% if LibLLVM::IS_LT_160 %} initialize_instrumentation {% end %}
+      initialize_analysis
+      initialize_ipa
+      initialize_code_gen
+      initialize_target
     ]
   {% end %}
 
