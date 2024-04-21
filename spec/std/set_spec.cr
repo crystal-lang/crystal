@@ -286,6 +286,10 @@ describe "Set" do
     Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end
 
+  it "does support giving a block to to_a"
+    Set{1, 2, 3}.to_a{|x| x + 1}.should eq([2, 3, 4])
+  end
+
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
     Set{"foo"}.to_s.should eq(%(Set{"foo"}))
