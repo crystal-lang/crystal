@@ -99,6 +99,7 @@ class Crystal::Codegen::Target
   def executable_extension
     case
     when windows? then ".exe"
+    when avr?     then ".elf"
     else               ""
     end
   end
@@ -209,6 +210,11 @@ class Crystal::Codegen::Target
       end
     when "avr"
       LLVM.init_avr
+
+      if cpu.blank?
+        # the ABI call convention, codegen and the linker need to known the CPU model
+        raise Target::Error.new("AVR targets must declare a CPU model, for example --mcpu=atmega328p")
+      end
     when "wasm32"
       LLVM.init_webassembly
     else
