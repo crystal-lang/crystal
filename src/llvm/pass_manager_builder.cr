@@ -1,5 +1,6 @@
-{% skip_file unless LibLLVM::IS_LT_170 %}
-
+{% unless LibLLVM::IS_LT_170 %}
+  @[Deprecated("The legacy pass manager was removed in LLVM 17. Use `LLVM::PassBuilderOptions` instead")]
+{% end %}
 class LLVM::PassManagerBuilder
   def initialize
     @unwrap = LibLLVM.pass_manager_builder_create
