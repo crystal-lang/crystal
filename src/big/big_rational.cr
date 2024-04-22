@@ -360,6 +360,13 @@ struct BigRational < Number
     to_s io
   end
 
+  # :ditto:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    denominator = self.denominator.format(separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    numerator = self.numerator.format(separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    io << numerator << '/' << denominator
+  end
+
   def clone
     self
   end
@@ -466,3 +473,4 @@ struct Crystal::Hasher
     UInt64.mulmod(reduce_num(value.numerator.abs), inverse.to_u64!, HASH_MODULUS) &* value.sign
   end
 end
+

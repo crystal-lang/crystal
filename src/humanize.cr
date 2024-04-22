@@ -50,11 +50,6 @@ struct Number
     elsif number.is_a?(Int)
       integer = number.abs.to_s
       decimals = ""
-    elsif number.to_s.includes?("/")
-      string = number.abs.to_s
-      numerator, divison, denominator = string.partition('/')
-      io << numerator.to_i.format + divison + denominator.to_i.format
-      return
     else
       # TODO: optimize for BigDecimal
       string = number.abs.to_s
