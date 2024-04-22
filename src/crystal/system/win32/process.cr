@@ -256,7 +256,7 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = FileDescriptor.windows_handle!(io.fd)
+    source_handle = io.windows_handle
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
