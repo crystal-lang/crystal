@@ -39,7 +39,7 @@ class IO::FileDescriptor < IO
     write_timeout
   end
 
-  def initialize(fd, blocking = nil, *, @close_on_finalize = true)
+  def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
 
@@ -57,7 +57,7 @@ class IO::FileDescriptor < IO
   end
 
   # :nodoc:
-  def self.from_stdio(fd) : self
+  def self.from_stdio(fd : Handle) : self
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 

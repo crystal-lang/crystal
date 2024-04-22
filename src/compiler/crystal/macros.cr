@@ -2303,15 +2303,33 @@ module Crystal::Macros
     end
   end
 
-  # A macro expression,
-  # surrounded by {{ ... }} (output = true)
-  # or by {% ... %} (output = false)
-  # class MacroExpression < ASTNode
-  # end
+  # A macro expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # {% if node.output? %}
+  #   \{{ {{ node.exp }} }}
+  # {% else %}
+  #   \{% {{ node.exp }} %}
+  # {% end %}
+  # ```
+  class MacroExpression < ASTNode
+    # Returns the expression inside this node.
+    def exp : ASTNode
+    end
 
-  # Free text that is part of a macro
-  # class MacroLiteral < ASTNode
-  # end
+    # Returns whether this node interpolates the expression's result.
+    def output? : BoolLiteral
+    end
+  end
+
+  # Free text that is part of a macro.
+  class MacroLiteral < ASTNode
+    # Returns the text of the literal.
+    def value : MacroId
+    end
+  end
 
   # An `if` inside a macro, e.g.
   #
@@ -2355,6 +2373,35 @@ module Crystal::Macros
     # The body of the `for` loop.
     def body : ASTNode
     end
+  end
+
+  # A macro fresh variable.
+  #
+  # Every variable `node` is equivalent to:
+  #
+  # ```
+  # {{ "%#{name}".id }}{% if expressions = node.expressions %}{{ "{#{expressions.splat}}".id }}{% end %}
+  # ```
+  class MacroVar < ASTNode
+    # Returns the name of the fresh variable.
+    def name : MacroId
+    end
+
+    # Returns the associated indices of the fresh variable.
+    def expressions : ArrayLiteral
+    end
+  end
+
+  # A verbatim expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # \{% verbatim do %}
+  #   {{ node.exp }}
+  # \{% end %}
+  # ```
+  class MacroVerbatim < UnaryExpression
   end
 
   # The `_` expression. May appear in code, such as an assignment target, and in

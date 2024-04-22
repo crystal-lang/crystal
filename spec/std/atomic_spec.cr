@@ -46,6 +46,16 @@ describe Atomic do
       atomic.get.should eq(AtomicEnumFlags::Three)
     end
 
+    it "with pointer" do
+      atomic = Atomic.new(Pointer(Void).null)
+
+      atomic.compare_and_set(Pointer(Void).new(1), Pointer(Void).new(3)).should eq({Pointer(Void).null, false})
+      atomic.get.should eq(Pointer(Void).null)
+
+      atomic.compare_and_set(Pointer(Void).null, Pointer(Void).new(3)).should eq({Pointer(Void).null, true})
+      atomic.get.should eq(Pointer(Void).new(3))
+    end
+
     it "with nilable reference" do
       atomic = Atomic(String?).new(nil)
       string = "hello"
@@ -183,6 +193,16 @@ describe Atomic do
     atomic.get.should eq(AtomicEnum::Three)
   end
 
+  it "#max with pointer type" do
+    atomic = Atomic.new(Pointer(Void).new(2))
+    atomic.max(Pointer(Void).new(1)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(2))
+    atomic.max(Pointer(Void).new(3)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(3))
+    atomic.max(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(3))
+    atomic.get.should eq(Pointer(Void).new(UInt64::MAX))
+  end
+
   it "#min with signed" do
     atomic = Atomic.new(5)
     atomic.min(10).should eq(5)
@@ -209,11 +229,27 @@ describe Atomic do
     atomic.get.should eq(AtomicEnum::Minus)
   end
 
+  it "#min with pointer type" do
+    atomic = Atomic.new(Pointer(Void).new(2))
+    atomic.min(Pointer(Void).new(3)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(2))
+    atomic.min(Pointer(Void).new(1)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(1))
+    atomic.min(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(1))
+    atomic.get.should eq(Pointer(Void).new(1))
+  end
+
   describe "#set" do
     it "with integer" do
       atomic = Atomic.new(1)
       atomic.set(2).should eq(2)
       atomic.get.should eq(2)
+    end
+
+    it "with pointer type" do
+      atomic = Atomic.new(Pointer(Void).new(1))
+      atomic.set(Pointer(Void).new(3)).should eq(Pointer(Void).new(3))
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with nil (#4062)" do
@@ -244,6 +280,12 @@ describe Atomic do
       atomic = Atomic.new(1)
       atomic.swap(2).should eq(1)
       atomic.get.should eq(2)
+    end
+
+    it "with pointer type" do
+      atomic = Atomic.new(Pointer(Void).new(1))
+      atomic.swap(Pointer(Void).new(3)).should eq(Pointer(Void).new(1))
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with reference type" do
