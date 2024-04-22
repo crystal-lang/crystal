@@ -1,7 +1,7 @@
 require "../abi"
 
 class LLVM::ABI::AVR < LLVM::ABI
-  AVRTINY = {
+  AVRTINY = StaticArray[
     "attiny4",
     "attiny5",
     "attiny9",
@@ -10,7 +10,7 @@ class LLVM::ABI::AVR < LLVM::ABI
     "attiny104",
     "attiny20",
     "attiny40",
-  }
+  ]
 
   def initialize(target_machine : TargetMachine, mcpu : String? = nil)
     super target_machine
