@@ -376,6 +376,8 @@ module Crystal
           break
         when .op_eq?
           slash_is_regex!
+          break unless can_be_assigned?(atomic)
+
           if atomic.is_a?(Call) && atomic.name == "[]"
             next_token_skip_space_or_newline
 
@@ -385,8 +387,6 @@ module Crystal
             atomic.args << arg
             atomic.end_location = arg.end_location
           else
-            break unless can_be_assigned?(atomic)
-
             if atomic.is_a?(Path) && (inside_def? || inside_fun? || @is_constant_assignment)
               raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
@@ -6185,7 +6185,7 @@ module Crystal
       when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
-        (node.obj.nil? && node.args.size == 0 && node.block.nil?) || node.name == "[]"
+        !node.has_parentheses? && ((node.obj.nil? && node.args.empty? && node.block.nil?) || node.name == "[]")
       else
         false
       end
