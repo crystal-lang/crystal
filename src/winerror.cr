@@ -100,116 +100,113 @@ enum WinError : UInt32
     err = self
     err = WinError.new(err.value & 0xFFFF) if err.value & 0xFFFF0000_u32 == 0x80070000_u32
 
-    if 10000 <= err.value < 12000
-      # Winsock error codes (10000-11999) are errno values.
-      case err
-      when WSAEINTR
-        Errno::EINTR
-      when WSAEBADF
-        Errno::EBADF
-      when WSAEACCES
-        Errno::EACCES
-      when WSAEFAULT
-        Errno::EFAULT
-      when WSAEINVAL
-        Errno::EINVAL
-      when WSAEMFILE
-        Errno::EMFILE
-      else
-        Errno.new(err.value.to_i32!)
-      end
+    case err
+    when ERROR_FILE_NOT_FOUND,
+          ERROR_PATH_NOT_FOUND,
+          ERROR_INVALID_DRIVE,
+          ERROR_NO_MORE_FILES,
+          ERROR_BAD_NETPATH,
+          ERROR_BAD_NET_NAME,
+          ERROR_BAD_PATHNAME,
+          ERROR_FILENAME_EXCED_RANGE
+      Errno::ENOENT
+    when ERROR_BAD_ENVIRONMENT
+      Errno::E2BIG
+    when ERROR_BAD_FORMAT,
+          ERROR_INVALID_STARTING_CODESEG,
+          ERROR_INVALID_STACKSEG,
+          ERROR_INVALID_MODULETYPE,
+          ERROR_INVALID_EXE_SIGNATURE,
+          ERROR_EXE_MARKED_INVALID,
+          ERROR_BAD_EXE_FORMAT,
+          ERROR_ITERATED_DATA_EXCEEDS_64k,
+          ERROR_INVALID_MINALLOCSIZE,
+          ERROR_DYNLINK_FROM_INVALID_RING,
+          ERROR_IOPL_NOT_ENABLED,
+          ERROR_INVALID_SEGDPL,
+          ERROR_AUTODATASEG_EXCEEDS_64k,
+          ERROR_RING2SEG_MUST_BE_MOVABLE,
+          ERROR_RELOC_CHAIN_XEEDS_SEGLIM,
+          ERROR_INFLOOP_IN_RELOC_CHAIN
+      Errno::ENOEXEC
+    when ERROR_INVALID_HANDLE,
+          ERROR_INVALID_TARGET_HANDLE,
+          ERROR_DIRECT_ACCESS_HANDLE
+      Errno::EBADF
+    when ERROR_WAIT_NO_CHILDREN,
+          ERROR_CHILD_NOT_COMPLETE
+      Errno::ECHILD
+    when ERROR_NO_PROC_SLOTS,
+          ERROR_MAX_THRDS_REACHED,
+          ERROR_NESTING_NOT_ALLOWED
+      Errno::EAGAIN
+    when ERROR_ARENA_TRASHED,
+          ERROR_NOT_ENOUGH_MEMORY,
+          ERROR_INVALID_BLOCK,
+          ERROR_NOT_ENOUGH_QUOTA
+      Errno::ENOMEM
+    when ERROR_ACCESS_DENIED,
+          ERROR_CURRENT_DIRECTORY,
+          ERROR_WRITE_PROTECT,
+          ERROR_BAD_UNIT,
+          ERROR_NOT_READY,
+          ERROR_BAD_COMMAND,
+          ERROR_CRC,
+          ERROR_BAD_LENGTH,
+          ERROR_SEEK,
+          ERROR_NOT_DOS_DISK,
+          ERROR_SECTOR_NOT_FOUND,
+          ERROR_OUT_OF_PAPER,
+          ERROR_WRITE_FAULT,
+          ERROR_READ_FAULT,
+          ERROR_GEN_FAILURE,
+          ERROR_SHARING_VIOLATION,
+          ERROR_LOCK_VIOLATION,
+          ERROR_WRONG_DISK,
+          ERROR_SHARING_BUFFER_EXCEEDED,
+          ERROR_NETWORK_ACCESS_DENIED,
+          ERROR_CANNOT_MAKE,
+          ERROR_FAIL_I24,
+          ERROR_DRIVE_LOCKED,
+          ERROR_SEEK_ON_DEVICE,
+          ERROR_NOT_LOCKED,
+          ERROR_LOCK_FAILED,
+          WinError.new(35)
+      Errno::EACCES
+    when ERROR_FILE_EXISTS,
+          ERROR_ALREADY_EXISTS
+      Errno::EEXIST
+    when ERROR_NOT_SAME_DEVICE
+      Errno::EXDEV
+    when ERROR_DIRECTORY
+      Errno::ENOTDIR
+    when ERROR_TOO_MANY_OPEN_FILES
+      Errno::EMFILE
+    when ERROR_DISK_FULL
+      Errno::ENOSPC
+    when ERROR_BROKEN_PIPE,
+          ERROR_NO_DATA
+      Errno::EPIPE
+    when ERROR_DIR_NOT_EMPTY
+      Errno::ENOTEMPTY
+    when ERROR_NO_UNICODE_TRANSLATION
+      Errno::EILSEQ
+    when WSAEINTR
+      Errno::EINTR
+    when WSAEBADF
+      Errno::EBADF
+    when WSAEACCES
+      Errno::EACCES
+    when WSAEFAULT
+      Errno::EFAULT
+    when WSAEINVAL
+      Errno::EINVAL
+    when WSAEMFILE
+      Errno::EMFILE
     else
-      case err
-      when ERROR_FILE_NOT_FOUND,
-           ERROR_PATH_NOT_FOUND,
-           ERROR_INVALID_DRIVE,
-           ERROR_NO_MORE_FILES,
-           ERROR_BAD_NETPATH,
-           ERROR_BAD_NET_NAME,
-           ERROR_BAD_PATHNAME,
-           ERROR_FILENAME_EXCED_RANGE
-        Errno::ENOENT
-      when ERROR_BAD_ENVIRONMENT
-        Errno::E2BIG
-      when ERROR_BAD_FORMAT,
-           ERROR_INVALID_STARTING_CODESEG,
-           ERROR_INVALID_STACKSEG,
-           ERROR_INVALID_MODULETYPE,
-           ERROR_INVALID_EXE_SIGNATURE,
-           ERROR_EXE_MARKED_INVALID,
-           ERROR_BAD_EXE_FORMAT,
-           ERROR_ITERATED_DATA_EXCEEDS_64k,
-           ERROR_INVALID_MINALLOCSIZE,
-           ERROR_DYNLINK_FROM_INVALID_RING,
-           ERROR_IOPL_NOT_ENABLED,
-           ERROR_INVALID_SEGDPL,
-           ERROR_AUTODATASEG_EXCEEDS_64k,
-           ERROR_RING2SEG_MUST_BE_MOVABLE,
-           ERROR_RELOC_CHAIN_XEEDS_SEGLIM,
-           ERROR_INFLOOP_IN_RELOC_CHAIN
-        Errno::ENOEXEC
-      when ERROR_INVALID_HANDLE,
-           ERROR_INVALID_TARGET_HANDLE,
-           ERROR_DIRECT_ACCESS_HANDLE
-        Errno::EBADF
-      when ERROR_WAIT_NO_CHILDREN,
-           ERROR_CHILD_NOT_COMPLETE
-        Errno::ECHILD
-      when ERROR_NO_PROC_SLOTS,
-           ERROR_MAX_THRDS_REACHED,
-           ERROR_NESTING_NOT_ALLOWED
-        Errno::EAGAIN
-      when ERROR_ARENA_TRASHED,
-           ERROR_NOT_ENOUGH_MEMORY,
-           ERROR_INVALID_BLOCK,
-           ERROR_NOT_ENOUGH_QUOTA
-        Errno::ENOMEM
-      when ERROR_ACCESS_DENIED,
-           ERROR_CURRENT_DIRECTORY,
-           ERROR_WRITE_PROTECT,
-           ERROR_BAD_UNIT,
-           ERROR_NOT_READY,
-           ERROR_BAD_COMMAND,
-           ERROR_CRC,
-           ERROR_BAD_LENGTH,
-           ERROR_SEEK,
-           ERROR_NOT_DOS_DISK,
-           ERROR_SECTOR_NOT_FOUND,
-           ERROR_OUT_OF_PAPER,
-           ERROR_WRITE_FAULT,
-           ERROR_READ_FAULT,
-           ERROR_GEN_FAILURE,
-           ERROR_SHARING_VIOLATION,
-           ERROR_LOCK_VIOLATION,
-           ERROR_WRONG_DISK,
-           ERROR_SHARING_BUFFER_EXCEEDED,
-           ERROR_NETWORK_ACCESS_DENIED,
-           ERROR_CANNOT_MAKE,
-           ERROR_FAIL_I24,
-           ERROR_DRIVE_LOCKED,
-           ERROR_SEEK_ON_DEVICE,
-           ERROR_NOT_LOCKED,
-           ERROR_LOCK_FAILED,
-           WinError.new(35)
-        Errno::EACCES
-      when ERROR_FILE_EXISTS,
-           ERROR_ALREADY_EXISTS
-        Errno::EEXIST
-      when ERROR_NOT_SAME_DEVICE
-        Errno::EXDEV
-      when ERROR_DIRECTORY
-        Errno::ENOTDIR
-      when ERROR_TOO_MANY_OPEN_FILES
-        Errno::EMFILE
-      when ERROR_DISK_FULL
-        Errno::ENOSPC
-      when ERROR_BROKEN_PIPE,
-           ERROR_NO_DATA
-        Errno::EPIPE
-      when ERROR_DIR_NOT_EMPTY
-        Errno::ENOTEMPTY
-      when ERROR_NO_UNICODE_TRANSLATION
-        Errno::EILSEQ
+      # Winsock error codes (10000-11999) are errno values.
+      if 10000 <= err.value < 12000
+        Errno.new(err.value.to_i32!)
       else
         Errno::EINVAL
       end
