@@ -274,4 +274,22 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
   expect_to_s "macro foo(x)\n  yield\nend"
+  expect_to_s <<-CRYSTAL
+    select
+    when foo
+      select
+      when bar
+        1
+      else
+        2
+      end
+    else
+      select
+      when baz
+        3
+      else
+        4
+      end
+    end
+    CRYSTAL
 end

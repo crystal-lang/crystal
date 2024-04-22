@@ -1373,18 +1373,20 @@ module Crystal
       @str << "select"
       newline
       node.whens.each do |a_when|
+        append_indent
         @str << "when "
         a_when.condition.accept self
         newline
         accept_with_indent a_when.body
       end
       if a_else = node.else
+        append_indent
         @str << "else"
         newline
         accept_with_indent a_else
       end
+      append_indent
       @str << "end"
-      newline
       false
     end
 
