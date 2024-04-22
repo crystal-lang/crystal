@@ -50,6 +50,9 @@ struct Number
     elsif number.is_a?(Int)
       integer = number.abs.to_s
       decimals = ""
+    elsif number.is_a?(BigRational)
+      io << number.numerator.format + "/" + number.denominator.format
+      return
     else
       # TODO: optimize for BigDecimal
       string = number.abs.to_s
