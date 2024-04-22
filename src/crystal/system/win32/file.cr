@@ -316,7 +316,7 @@ module Crystal::System::File
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
-    win_old_path = System.to_wstr(old_path)
+    win_old_path = System.to_wstr(old_path.gsub('/', '\\'))
     win_new_path = System.to_wstr(new_path)
     info = info?(old_path, true)
     flags = info.try(&.type.directory?) ? LibC::SYMBOLIC_LINK_FLAG_DIRECTORY : 0

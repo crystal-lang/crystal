@@ -350,6 +350,15 @@ describe "File" do
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
       end
     end
+
+    it "works if destination contains forward slashes (#14520)" do
+      with_tempfile("test_slash_dest.txt", "test_slash_link.txt") do |dest_path, link_path|
+        File.write(dest_path, "hello")
+        File.symlink("./test_slash_dest.txt", link_path)
+        File.same?(dest_path, link_path, follow_symlinks: true).should be_true
+        File.read(link_path).should eq("hello")
+      end
+    end
   end
 
   describe "symlink?" do
