@@ -287,7 +287,7 @@ describe "Set" do
   end
 
   it "does support giving a block to to_a" do
-    Set{1, 2, 3}.to_a{ |x| x + 1 }.should eq([2, 3, 4])
+    Set{1, 2, 3}.to_a { |x| x + 1 }.should eq([2, 3, 4])
   end
 
   it "does to_s" do
