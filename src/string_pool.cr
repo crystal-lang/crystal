@@ -98,6 +98,7 @@ class StringPool
   # pool.empty?      # => true
   # pool.get(bytes)  # => "abc"
   # pool.empty?      # => false
+  # pool.get?(bytes) # => "abc"
   # ```
   def get?(slice : Bytes) : String?
     get? slice.to_unsafe, slice.size
@@ -117,7 +118,14 @@ class StringPool
   # ```
   def get(str : UInt8*, len) : String
     hash = hash(str, len)
-    get(hash, str, len)
+    get(hash, str, len) do |index|
+      rehash if @size >= @capacity // 4 * 3
+      @size += 1
+      entry = String.new(str, len)
+      @hashes[index] = hash
+      @values[index] = entry
+      entry
+    end
   end
 
   # Returns a `String` with the contents given by the pointer *str* of size
@@ -131,10 +139,11 @@ class StringPool
   # pool.empty?                   # => true
   # pool.get("hey".to_unsafe, 3)  # => "hey"
   # pool.empty?                   # => false
+  # pool.get?("hey".to_unsafe, 3) # => "hey"
   # ```
   def get?(str : UInt8*, len) : String?
     hash = hash(str, len)
-    get?(hash, str, len)
+    get(hash, str, len) { nil }
   end
 
   private def get(hash : UInt64, str : UInt8*, len, &)
@@ -152,21 +161,6 @@ class StringPool
     end
 
     yield index
-  end
-
-  private def get(hash : UInt64, str : UInt8*, len)
-    get(hash, str, len) do |index|
-      rehash if @size >= @capacity // 4 * 3
-      @size += 1
-      entry = String.new(str, len)
-      @hashes[index] = hash
-      @values[index] = entry
-      entry
-    end
-  end
-
-  private def get?(hash : UInt64, str : UInt8*, len)
-    get(hash, str, len) { nil }
   end
 
   private def put_on_rehash(hash : UInt64, entry : String)
@@ -212,6 +206,7 @@ class StringPool
   # pool.empty?   # => true
   # pool.get(io)  # => "crystal"
   # pool.empty?   # => false
+  # pool.get?(io) # => "crystal"
   # ```
   def get?(str : IO::Memory) : String?
     get?(str.buffer, str.bytesize)
@@ -247,6 +242,7 @@ class StringPool
   # pool.empty?       # => true
   # pool.get(string)  # => "crystal"
   # pool.empty?       # => false
+  # pool.get?(string) # => "crystal"
   # ```
   def get?(str : String) : String?
     get?(str.to_unsafe, str.bytesize)
