@@ -362,9 +362,9 @@ struct BigRational < Number
 
   # :inherit:
   def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
-    self.denominator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    numerator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
     io << '/'
-    self.numerator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    denominator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
   end
 
   def clone
