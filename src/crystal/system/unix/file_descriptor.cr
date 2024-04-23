@@ -13,6 +13,10 @@ module Crystal::System::FileDescriptor
   # system.
   alias Handle = Int32
 
+  STDIN_HANDLE  = 0
+  STDOUT_HANDLE = 1
+  STDERR_HANDLE = 2
+
   private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|

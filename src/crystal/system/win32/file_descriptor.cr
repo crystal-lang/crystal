@@ -9,7 +9,13 @@ module Crystal::System::FileDescriptor
 
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
-  alias Handle = ::LibC::Int
+  # NOTE: this should really be `LibC::HANDLE`, here it is an integer type of
+  # the same size so that `IO::FileDescriptor#fd` continues to return an `Int`
+  alias Handle = ::LibC::UIntPtrT
+
+  STDIN_HANDLE  = LibC.GetStdHandle(LibC::STD_INPUT_HANDLE).address
+  STDOUT_HANDLE = LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE).address
+  STDERR_HANDLE = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
 
   @system_blocking = true
 
@@ -95,21 +101,12 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor.fcntl"
   end
 
-  private def windows_handle
-    FileDescriptor.windows_handle!(fd)
+  protected def windows_handle
+    FileDescriptor.windows_handle(fd)
   end
 
   def self.windows_handle(fd)
-    ret = LibC._get_osfhandle(fd)
-    return LibC::INVALID_HANDLE_VALUE if ret == -1 || ret == -2
-    LibC::HANDLE.new(ret)
-  end
-
-  def self.windows_handle!(fd)
-    ret = LibC._get_osfhandle(fd)
-    raise RuntimeError.from_errno("_get_osfhandle") if ret == -1
-    raise RuntimeError.new("_get_osfhandle returned -2") if ret == -2
-    LibC::HANDLE.new(ret)
+    LibC::HANDLE.new(fd)
   end
 
   def self.system_info(handle, file_type = nil)
@@ -155,10 +152,11 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    # Windows doesn't implement the CLOEXEC flag
-    if LibC._dup2(other.fd, self.fd) == -1
-      raise IO::Error.from_errno("Could not reopen file descriptor")
+    cur_proc = LibC.GetCurrentProcess
+    if LibC.DuplicateHandle(cur_proc, other.windows_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
+      raise IO::Error.from_winerror("Could not reopen file descriptor")
     end
+    @volatile_fd.set(new_handle.address)
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
@@ -171,13 +169,8 @@ module Crystal::System::FileDescriptor
   end
 
   def file_descriptor_close
-    if LibC._close(fd) != 0
-      case Errno.value
-      when Errno::EINTR
-        # ignore
-      else
-        raise IO::Error.from_errno("Error closing file", target: self)
-      end
+    if LibC.CloseHandle(windows_handle) == 0
+      raise IO::Error.from_winerror("Error closing file", target: self)
     end
   end
 
@@ -284,15 +277,15 @@ module Crystal::System::FileDescriptor
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
 
-    r = IO::FileDescriptor.new(LibC._open_osfhandle(r_pipe, 0), read_blocking)
-    w = IO::FileDescriptor.new(LibC._open_osfhandle(w_pipe, 0), write_blocking)
+    r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
+    w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
     w.sync = true
 
     {r, w}
   end
 
   def self.pread(file, buffer, offset)
-    handle = windows_handle!(file.fd)
+    handle = windows_handle(file.fd)
     file.overlapped_operation(handle, offset, "ReadFile", file.read_timeout, writing: false) do |overlapped|
       ret = LibC.ReadFile(handle, buffer, buffer.size, out byte_count, overlapped)
       {ret, byte_count}
@@ -300,8 +293,14 @@ module Crystal::System::FileDescriptor
   end
 
   def self.from_stdio(fd)
+    handle = case fd
+             when 0 then LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+             when 1 then LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE)
+             when 2 then LibC.GetStdHandle(LibC::STD_ERROR_HANDLE)
+             else        LibC::INVALID_HANDLE_VALUE
+             end
+
     console_handle = false
-    handle = windows_handle(fd)
     if handle != LibC::INVALID_HANDLE_VALUE
       # TODO: use `out old_mode` after implementing interpreter out closured var
       old_mode = uninitialized LibC::DWORD
@@ -315,7 +314,7 @@ module Crystal::System::FileDescriptor
       end
     end
 
-    io = IO::FileDescriptor.new(fd, blocking: true)
+    io = IO::FileDescriptor.new(handle.address, blocking: true)
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
     if console_handle

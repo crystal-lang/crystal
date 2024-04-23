@@ -31,6 +31,17 @@ private def normalize_permissions(permissions, *, directory)
   {% end %}
 end
 
+# TODO: Find a better way to execute specs involving file permissions when
+# running as a privileged user. Compiling a program and running a separate
+# process would be a lot of overhead.
+private def pending_if_superuser!
+  {% if flag?(:unix) %}
+    if LibC.getuid == 0
+      pending! "Spec cannot run as superuser"
+    end
+  {% end %}
+end
+
 describe "File" do
   it "gets path" do
     path = datapath("test_file.txt")
@@ -189,9 +200,24 @@ describe "File" do
     it "gives false when a component of the path is a file" do
       File.exists?(datapath("dir", "test_file.txt", "")).should be_false
     end
+
+    it "follows symlinks" do
+      with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
+        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+        File.exists?(good_path).should be_true
+        File.exists?(bad_path).should be_false
+      end
+    end
   end
 
   describe "executable?" do
+    it "gives true" do
+      crystal = Process.executable_path || pending! "Unable to locate compiler executable"
+      File.executable?(crystal).should be_true
+    end
+
     it "gives false" do
       File.executable?(datapath("test_file.txt")).should be_false
     end
@@ -202,6 +228,17 @@ describe "File" do
 
     it "gives false when a component of the path is a file" do
       File.executable?(datapath("dir", "test_file.txt", "")).should be_false
+    end
+
+    it "follows symlinks" do
+      with_tempfile("good_symlink_x.txt", "bad_symlink_x.txt") do |good_path, bad_path|
+        crystal = Process.executable_path || pending! "Unable to locate compiler executable"
+        File.symlink(File.expand_path(crystal), good_path)
+        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+        File.executable?(good_path).should be_true
+        File.executable?(bad_path).should be_false
+      end
     end
   end
 
@@ -217,6 +254,48 @@ describe "File" do
     it "gives false when a component of the path is a file" do
       File.readable?(datapath("dir", "test_file.txt", "")).should be_false
     end
+
+    # win32 doesn't have a way to make files unreadable via chmod
+    {% unless flag?(:win32) %}
+      it "gives false when the file has no read permissions" do
+        with_tempfile("unreadable.txt") do |path|
+          File.write(path, "")
+          File.chmod(path, 0o222)
+          pending_if_superuser!
+          File.readable?(path).should be_false
+        end
+      end
+
+      it "gives false when the file has no permissions" do
+        with_tempfile("unaccessible.txt") do |path|
+          File.write(path, "")
+          File.chmod(path, 0o000)
+          pending_if_superuser!
+          File.readable?(path).should be_false
+        end
+      end
+
+      it "follows symlinks" do
+        with_tempfile("good_symlink_r.txt", "bad_symlink_r.txt", "unreadable.txt") do |good_path, bad_path, unreadable|
+          File.write(unreadable, "")
+          File.chmod(unreadable, 0o222)
+          pending_if_superuser!
+
+          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+          File.symlink(File.expand_path(unreadable), bad_path)
+
+          File.readable?(good_path).should be_true
+          File.readable?(bad_path).should be_false
+        end
+      end
+    {% end %}
+
+    it "gives false when the symbolic link destination doesn't exist" do
+      with_tempfile("missing_symlink_r.txt") do |missing_path|
+        File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+        File.readable?(missing_path).should be_false
+      end
+    end
   end
 
   describe "writable?" do
@@ -230,6 +309,36 @@ describe "File" do
 
     it "gives false when a component of the path is a file" do
       File.writable?(datapath("dir", "test_file.txt", "")).should be_false
+    end
+
+    it "gives false when the file has no write permissions" do
+      with_tempfile("readonly.txt") do |path|
+        File.write(path, "")
+        File.chmod(path, 0o444)
+        pending_if_superuser!
+        File.writable?(path).should be_false
+      end
+    end
+
+    it "follows symlinks" do
+      with_tempfile("good_symlink_w.txt", "bad_symlink_w.txt", "readonly.txt") do |good_path, bad_path, readonly|
+        File.write(readonly, "")
+        File.chmod(readonly, 0o444)
+        pending_if_superuser!
+
+        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+        File.symlink(File.expand_path(readonly), bad_path)
+
+        File.writable?(good_path).should be_true
+        File.writable?(bad_path).should be_false
+      end
+    end
+
+    it "gives false when the symbolic link destination doesn't exist" do
+      with_tempfile("missing_symlink_w.txt") do |missing_path|
+        File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+        File.writable?(missing_path).should be_false
+      end
     end
   end
 
@@ -991,14 +1100,7 @@ describe "File" do
       with_tempfile("file.txt") do |path|
         File.touch(path)
         File.chmod(path, File::Permissions::None)
-        {% if flag?(:unix) %}
-          # TODO: Find a better way to execute this spec when running as privileged
-          # user. Compiling a program and running a separate process would be a
-          # lot of overhead.
-          if LibC.getuid == 0
-            pending! "Spec cannot run as superuser"
-          end
-        {% end %}
+        pending_if_superuser!
         expect_raises(File::AccessDeniedError, "Error opening file with mode 'r': '#{path.inspect_unquoted}'") { File.read(path) }
       end
     end
@@ -1008,14 +1110,7 @@ describe "File" do
     with_tempfile("file.txt") do |path|
       File.touch(path)
       File.chmod(path, File::Permissions::None)
-      {% if flag?(:unix) %}
-        # TODO: Find a better way to execute this spec when running as privileged
-        # user. Compiling a program and running a separate process would be a
-        # lot of overhead.
-        if LibC.getuid == 0
-          pending! "Spec cannot run as superuser"
-        end
-      {% end %}
+      pending_if_superuser!
       expect_raises(File::AccessDeniedError, "Error opening file with mode 'w': '#{path.inspect_unquoted}'") { File.write(path, "foo") }
     end
   end
