@@ -486,11 +486,11 @@ module Crystal::System::Socket
     ret = LibC.closesocket(handle)
 
     if ret != 0
-      case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
+      case err = WinError.wsa_value
+      when WinError::WSAEINTR, WinError::WSAEINPROGRESS
         # ignore
       else
-        return ::Socket::Error.from_wsa_error("Error closing socket")
+        raise ::Socket::Error.from_os_error("Error closing socket", err)
       end
     end
   end
