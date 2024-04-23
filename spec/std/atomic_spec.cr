@@ -16,6 +16,16 @@ end
 
 describe Atomic do
   describe "#compare_and_set" do
+    it "with bool" do
+      atomic = Atomic.new(true)
+
+      atomic.compare_and_set(false, true).should eq({true, false})
+      atomic.get.should eq(true)
+
+      atomic.compare_and_set(true, false).should eq({true, true})
+      atomic.get.should eq(false)
+    end
+
     it "with integer" do
       atomic = Atomic.new(1)
 
@@ -240,6 +250,12 @@ describe Atomic do
   end
 
   describe "#set" do
+    it "with bool" do
+      atomic = Atomic.new(false)
+      atomic.set(true).should eq(true)
+      atomic.get.should eq(true)
+    end
+
     it "with integer" do
       atomic = Atomic.new(1)
       atomic.set(2).should eq(2)
@@ -272,10 +288,20 @@ describe Atomic do
   it "#lazy_set" do
     atomic = Atomic.new(1)
     atomic.lazy_set(2).should eq(2)
-    atomic.get.should eq(2)
+    atomic.lazy_get.should eq(2)
+
+    bool = Atomic.new(true)
+    bool.lazy_set(false).should eq(false)
+    bool.lazy_get.should eq(false)
   end
 
   describe "#swap" do
+    it "with bool" do
+      atomic = Atomic.new(true)
+      atomic.swap(false).should eq(true)
+      atomic.get.should eq(false)
+    end
+
     it "with integer" do
       atomic = Atomic.new(1)
       atomic.swap(2).should eq(1)
