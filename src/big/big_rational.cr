@@ -360,11 +360,11 @@ struct BigRational < Number
     to_s io
   end
 
-  # :ditto:
+  # :inherit:
   def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
-    denominator = self.denominator.format(separator, delimiter, decimal_places, group: group, only_significant: only_significant)
-    numerator = self.numerator.format(separator, delimiter, decimal_places, group: group, only_significant: only_significant)
-    io << numerator << '/' << denominator
+    io << self.denominator.format(separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    io << '/'
+    io << self.numerator.format(separator, delimiter, decimal_places, group: group, only_significant: only_significant)
   end
 
   def clone
