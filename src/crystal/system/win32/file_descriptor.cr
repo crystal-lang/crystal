@@ -351,6 +351,7 @@ module Crystal::System::FileDescriptor
 
     begin
       system_console_mode(enable, on_mask, off_mask, old_mode)
+      yield
     ensure
       LibC.SetConsoleMode(windows_handle, old_mode)
     end
