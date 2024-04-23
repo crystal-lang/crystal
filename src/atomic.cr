@@ -422,7 +422,7 @@ struct Atomic(T)
     {% end %}
   end
 
-@[AlwaysInline]
+  @[AlwaysInline]
   private def cast_to(value)
     {% if T == Bool %}
       value ? 1_i8 : 0_i8
