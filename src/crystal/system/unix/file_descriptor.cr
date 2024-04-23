@@ -258,10 +258,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_echo(enable : Bool, mode = nil)
-    mode ||= FileDescriptor.tcgetattr(fd)
+    new_mode = mode || FileDescriptor.tcgetattr(fd)
     flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
-    mode.c_lflag = enable ? (mode.c_lflag | flags) : (mode.c_lflag & ~flags)
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+    new_mode.c_lflag = enable ? (new_mode.c_lflag | flags) : (new_mode.c_lflag & ~flags)
+    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -274,15 +274,15 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_raw(enable : Bool, mode = nil)
-    mode ||= FileDescriptor.tcgetattr(fd)
+    new_mode = mode || FileDescriptor.tcgetattr(fd)
     if enable
-      mode = FileDescriptor.cfmakeraw(mode)
+      new_mode = FileDescriptor.cfmakeraw(new_mode)
     else
-      mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
-      mode.c_oflag |= LibC::OPOST
-      mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
+      new_mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
+      new_mode.c_oflag |= LibC::OPOST
+      new_mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
     end
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
+    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
