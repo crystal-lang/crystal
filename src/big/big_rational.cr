@@ -473,4 +473,3 @@ struct Crystal::Hasher
     UInt64.mulmod(reduce_num(value.numerator.abs), inverse.to_u64!, HASH_MODULUS) &* value.sign
   end
 end
-
