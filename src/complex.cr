@@ -313,7 +313,7 @@ struct Number
   end
 
   # [Cis](https://en.wikipedia.org/wiki/Cis_(mathematics)) is a mathamatical notation represents cos x + i sin x.
-  # 
+  #
   # Returns a `Complex` object with the value returned from `Math.cos(self)` and `Math.sin(self)`, there `self` represents the angle in radians.
   def cis : Complex
     Complex.new(Math.cos(self), Math.sin(self))
