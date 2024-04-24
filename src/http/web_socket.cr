@@ -110,10 +110,10 @@ class HTTP::WebSocket
   # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
   #
   # # Open stream
-  # ws.stream do |io|
-  #   io.write "Hello, ".bytes # Sends "Hello, " to io
-  #   io.flush                 # Sends "Hello, " to the socket
-  #   io.write "world!".bytes  # Sends "world!" to io
+  # ws.stream(false) do |io|
+  #   io.write "Hello, ".encode("UTF-8") # Sends "Hello, " to io
+  #   io.flush                           # Sends "Hello, " to the socket
+  #   io.write "world!".encode("UTF-8")  # Sends "world!" to io
   # end
   # # Sends "world!" to the socket
   # ```
