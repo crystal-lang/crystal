@@ -98,22 +98,22 @@ class HTTP::WebSocket
   end
 
   # Stream data into io until the io is flushed and sent as a message.
-  # 
+  #
   # The method accepts a block with an `io` argument.
   # The io object can call on `write` or `flush` method.
   # The `write` method accepts `Bytes` (`Slice(UInt8)`); the `flush` method sends all the data in io and resets it.
   # The remaining data in it is sent as a message when the block is finished executing.
   # For further information, see the `HTTP::WebSocket::Protocol::StreamIO` class.
-  #  
+  #
   # ```
   # # Open websocket connection
   # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
-  # 
+  #
   # # Open stream
-  # ws.stream do |io| 
-  #  io.write "Hello, ".bytes # Sends "Hello, " to io
-  #  io.flush # Sends "Hello, " to the socket
-  #  io.write "world!".bytes # Sends "world!" to io
+  # ws.stream do |io|
+  #   io.write "Hello, ".bytes # Sends "Hello, " to io
+  #   io.flush                 # Sends "Hello, " to the socket
+  #   io.write "world!".bytes  # Sends "world!" to io
   # end
   # # Sends "world!" to the socket
   # ```
