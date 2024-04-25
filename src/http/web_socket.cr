@@ -97,7 +97,7 @@ class HTTP::WebSocket
     @ws.pong(message)
   end
 
-  # Stream data into io until the io is flushed and sent as a message.
+  # Streams data into io until the io is flushed and sent as a message.
   #
   # The method accepts a block with an `io` argument.
   # The io object can call on `write` or `flush` method.
