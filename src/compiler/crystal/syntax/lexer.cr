@@ -2372,10 +2372,9 @@ module Crystal
         filename_pos = current_pos
 
         while true
-          case current_char
-          when '"'
+          if '"' == current_char && peek_next_char == ','
             break
-          when '\0'
+          elsif current_char == '\0'
             raise "unexpected end of file in loc pragma"
           else
             next_char_no_column_increment
