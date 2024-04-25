@@ -481,7 +481,7 @@ class Hash(K, V)
         entry = get_entry(entry_index)
         if entry_matches?(entry, hash, key)
           # Mark this index slot as deleted
-          set_index(index, DELETED_INDEX)
+          delete_index(index)
           delete_entry_and_update_counts(entry_index)
           return entry
         end
@@ -791,6 +791,35 @@ class Hash(K, V)
     end
   end
 
+  # Marks `@indices` at `index` as deleted. Might also adjust subsequent index
+  # slots to ensure `DELETED_INDEX` never appears before the natural position of
+  # any used index, in case of previous hash collisions.
+  private def delete_index(index) : Nil
+    # https://en.wikipedia.org/w/index.php?title=Open_addressing&oldid=1188919190#Example_pseudocode
+    i = index
+    set_index(i, DELETED_INDEX)
+
+    j = i
+    while true
+      j = next_index(j)
+      entry_index = get_index(j)
+      break if unused_index?(entry_index)
+
+      entry = get_entry(entry_index)
+      k = fit_in_indices(entry.hash)
+
+      if i <= j
+        next if i < k && k <= j
+      else
+        next if k <= j || i < k
+      end
+
+      set_index(i, entry_index)
+      set_index(j, DELETED_INDEX)
+      i = j
+    end
+  end
+
   # Returns whether the given *index* is unused, i.e. it is empty or deleted.
   private def unused_index?(index : Int32) : Bool
     # all valid indices are non-negative, so this is more or less equivalent to
@@ -845,15 +874,13 @@ class Hash(K, V)
     @entries[index] = value
   end
 
-  # Returns the index into `@indices` for the *hash* of an existing entry in
+  # Returns the index into `@indices` for an existing *entry_index* into
   # `@entries`.
-  private def index_for_entry(hash)
-    index = fit_in_indices(hash)
-
-    while unused_index?(get_index(index))
+  private def index_for_entry_index(entry_index)
+    index = fit_in_indices(get_entry(entry_index).hash)
+    until get_index(index) == entry_index
       index = next_index(index)
     end
-
     index
   end
 
@@ -1619,7 +1646,7 @@ class Hash(K, V)
     else
       each_entry_with_index do |entry, index|
         if yield(entry.key, entry.value)
-          set_index(index_for_entry(entry.hash), DELETED_INDEX)
+          delete_index(index_for_entry_index(index))
           delete_entry_and_update_counts(index)
         end
       end
@@ -1910,7 +1937,7 @@ class Hash(K, V)
   def shift(&)
     first_entry = first_entry?
     if first_entry
-      set_index(index_for_entry(first_entry.hash), DELETED_INDEX) unless @indices.null?
+      delete_index(index_for_entry_index(@first)) unless @indices.null?
       delete_entry_and_update_counts(@first)
       {first_entry.key, first_entry.value}
     else
