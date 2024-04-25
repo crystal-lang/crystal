@@ -63,18 +63,18 @@ class Hash(K, V)
   #     that involves more memory allocated and worse performance.
   # - @indices:
   #     A buffer of indices into the @entries buffer.
-  #     An index might mean it's empty or deleted. We could use -2 and -1 for
-  #     this but because of an optimization we'll explain later we use 0 and 1,
-  #     and all other values represent indices which are 2 less than their
-  #     actual value (so value 4 means index 2).
+  #     An index might mean it's empty. We could use -1 for this but because
+  #     of an optimization we'll explain later we use 0, and all other values
+  #     represent indices which are 1 less than their actual value (so value
+  #     3 means index 2).
   #     When a key-value pair is inserted we first find the key's hash and
   #     then fit it (by modulo) into the indices buffer size. For example,
   #     assuming we are inserting a new key-value pair with key "hello",
   #     if the indices size is 128, the key is "hello" and its hash is
   #     987 then fitting it into 128 is (987 % 128) gives 91. Lets also
-  #     assume there are already 3 entries in @entries. We go ahead and add
+  #     assume there are already 3 entries in @entries. We go ahead an add
   #     a new entry at index 3, and at position 91 in @indices we store 3
-  #     (well, actually 5 because we store 2 more than the actual index
+  #     (well, actually 4 because we store 1 more than the actual index
   #     because 0 means empty, as explained above).
   #
   # Open addressing means that if, in the example above, we go and try to
@@ -82,7 +82,7 @@ class Hash(K, V)
   # in indices (let's say, 91 again), because it's occupied we will insert
   # it into the next non-empty slot. We try with 92. If it's empty we again
   # go and insert it intro `@entries` and store the index at 92 (continuing
-  # with the previous example we would store the value 5).
+  # with the previous example we would store the value 4).
   #
   # If we keep the size of @indices the same as @entries it means that in the worse
   # case @indices is full and when finding a match we have to traverse it all,
@@ -353,16 +353,6 @@ class Hash(K, V)
   # as Pointer(UInt16).
   private MAX_INDICES_BYTESIZE_2 = 65536
 
-  # Special value returned by `get_index` to indicate an empty index. Can be
-  # replaced with a used index by `#upsert`. Stops linear entry lookup in
-  # `@indices`.
-  private EMPTY_INDEX = -2
-
-  # Special value returned by `get_index` to indicate a deleted index. Can be
-  # replaced with a used index by `#upsert`. Allows linear entry lookup in
-  # `@indices` to continue, so that hash collisions do not break.
-  private DELETED_INDEX = -1
-
   # Inserts or updates a key-value pair.
   # Returns an `Entry` if it was updated, otherwise `nil`.
   private def upsert(key, value) : Entry(K, V)?
@@ -407,8 +397,8 @@ class Hash(K, V)
     while true
       entry_index = get_index(index)
 
-      # If the index entry is unused...
-      if unused_index?(entry_index)
+      # If the index entry is empty...
+      if entry_index == -1
         # If we reached the maximum in `@entries` it's time to resize
         if entries_full?
           resize
@@ -470,25 +460,22 @@ class Hash(K, V)
     while true
       entry_index = get_index(index)
 
-      # If we find an empty index slot, there are no more keys to search
-      if entry_index == EMPTY_INDEX
+      # If we find an empty index slot, there's no such key
+      if entry_index == -1
         return nil
       end
 
-      # Skip over deleted index slots
-      unless entry_index == DELETED_INDEX
-        # We found a non-empty slot, let's see if the key we have matches
-        entry = get_entry(entry_index)
-        if entry_matches?(entry, hash, key)
-          # Mark this index slot as deleted
-          delete_index(index)
-          delete_entry_and_update_counts(entry_index)
-          return entry
-        end
+      # We found a non-empty slot, let's see if the key we have matches
+      entry = get_entry(entry_index)
+      if entry_matches?(entry, hash, key)
+        # Mark this index slot as deleted
+        delete_index(index)
+        delete_entry_and_update_counts(entry_index)
+        return entry
+      else
+        # If it doesn't, check the next index...
+        index = next_index(index)
       end
-
-      # Nope, move on to the next slot
-      index = next_index(index)
     end
   end
 
@@ -531,23 +518,20 @@ class Hash(K, V)
     while true
       entry_index = get_index(index)
 
-      # If we find an empty index slot, there are no more keys to search
-      if entry_index == EMPTY_INDEX
+      # If we find an empty index slot, there's no such key
+      if entry_index == -1
         return nil
       end
 
-      # Skip over deleted index slots
-      unless entry_index == DELETED_INDEX
-        # We found a non-empty slot, let's see if the key we have matches
-        entry = get_entry(entry_index)
-        if entry_matches?(entry, hash, key)
-          # It does!
-          return entry, entry_index
-        end
+      # We found a non-empty slot, let's see if the key we have matches
+      entry = get_entry(entry_index)
+      if entry_matches?(entry, hash, key)
+        # It does!
+        return entry, entry_index
+      else
+        # Nope, move on to the next slot
+        index = next_index(index)
       end
-
-      # Nope, move on to the next slot
-      index = next_index(index)
     end
   end
 
@@ -637,10 +621,10 @@ class Hash(K, V)
       end
 
       if has_indices
-        # Then we try to find an empty or deleted index slot
+        # Then we try to find an empty index slot
         # (we should find one now that we have more space)
         index = fit_in_indices(entry_hash)
-        until unused_index?(get_index(index))
+        until get_index(index) == -1
           index = next_index(index)
         end
         set_index(index, new_entry_index)
@@ -757,7 +741,7 @@ class Hash(K, V)
   end
 
   # Gets from `@indices` at the given `index`.
-  # Returns `EMPTY_INDEX`, `DELETED_INDEX`, or an index in `@entries`.
+  # Returns the index in `@entries` or `-1` if the slot is empty.
   private def get_index(index : Int32) : Int32
     # Check what we have: UInt8, Int16 or UInt32 buckets
     value = case @indices_bytesize
@@ -769,16 +753,15 @@ class Hash(K, V)
               @indices.as(UInt32*)[index].to_i32!
             end
 
-    # Because we increment the value by two when we store the value
-    # here we have to subtract two
-    value &- 2
+    # Because we increment the value by one when we store the value
+    # here we have to subtract one
+    value - 1
   end
 
   # Sets `@indices` at `index` with the given value.
   private def set_index(index, value) : Nil
-    # We actually store 2 more than the value so that `EMPTY_INDEX` and
-    # `DELETED_INDEX` could fit.
-    value &+= 2
+    # We actually store 1 more than the value because 0 means empty.
+    value += 1
 
     # We also have to see what we have: UInt8, UInt16 or UInt32 buckets.
     case @indices_bytesize
@@ -791,19 +774,19 @@ class Hash(K, V)
     end
   end
 
-  # Marks `@indices` at `index` as deleted. Might also adjust subsequent index
-  # slots to ensure `DELETED_INDEX` never appears before the natural position of
+  # Marks `@indices` at `index` as empty. Might also adjust subsequent index
+  # slots to ensure empty indices never appear before the natural position of
   # any used index, in case of previous hash collisions.
   private def delete_index(index) : Nil
     # https://en.wikipedia.org/w/index.php?title=Open_addressing&oldid=1188919190#Example_pseudocode
     i = index
-    set_index(i, DELETED_INDEX)
+    set_index(i, -1)
 
     j = i
     while true
       j = next_index(j)
       entry_index = get_index(j)
-      break if unused_index?(entry_index)
+      break if entry_index == -1
 
       entry = get_entry(entry_index)
       k = fit_in_indices(entry.hash)
@@ -815,16 +798,9 @@ class Hash(K, V)
       end
 
       set_index(i, entry_index)
-      set_index(j, DELETED_INDEX)
+      set_index(j, -1)
       i = j
     end
-  end
-
-  # Returns whether the given *index* is unused, i.e. it is empty or deleted.
-  private def unused_index?(index : Int32) : Bool
-    # all valid indices are non-negative, so this is more or less equivalent to
-    # `index.in?(EMPTY_INDEX, DELETED_INDEX)`
-    index < 0
   end
 
   # Returns the capacity of `@indices`.
