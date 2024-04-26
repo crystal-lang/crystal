@@ -173,7 +173,7 @@ class Fiber
 
   # Returns the current fiber.
   def self.current : Fiber
-    Crystal::Scheduler.current_fiber
+    Thread.current.current_fiber
   end
 
   # The fiber's proc is currently running or didn't fully save its context. The
@@ -246,11 +246,11 @@ class Fiber
   # The current fiber will resume after a period of time.
   # The timeout can be cancelled with `cancel_timeout`
   def self.timeout(timeout : Time::Span?, select_action : Channel::TimeoutAction? = nil) : Nil
-    Crystal::Scheduler.current_fiber.timeout(timeout, select_action)
+    Fiber.current.timeout(timeout, select_action)
   end
 
   def self.cancel_timeout : Nil
-    Crystal::Scheduler.current_fiber.cancel_timeout
+    Fiber.current.cancel_timeout
   end
 
   # Yields to the scheduler and allows it to swap execution to other
