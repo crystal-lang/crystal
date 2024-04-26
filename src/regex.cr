@@ -263,6 +263,31 @@ class Regex
     ENDANCHORED = 0x8000_0000
 
     # Do not check the pattern for valid UTF encoding.
+    #
+    # This option is potentially dangerous and must only be used when the
+    # pattern is guaranteed to be valid (e.g. `String#valid_encoding?`).
+    # Failing to do so can lead to undefined behaviour in the regex library
+    # and may crash the entire process.
+    #
+    # NOTE: `String` is *supposed* to be valid UTF-8, but this is not guaranteed or
+    # enforced. Especially data originating from external sources should not be
+    # trusted.
+    #
+    # UTF validation is comparatively expensive, so skipping it can produce a
+    # significant performance improvement.
+    #
+    # ```
+    # pattern = "fo+"
+    # if pattern.valid_encoding?
+    #   regex = Regex.new(pattern, options: Regex::CompileOptions::NO_UTF_CHECK)
+    #   regex.match(foo)
+    # else
+    #   raise "Invalid UTF in regex pattern"
+    # end
+    # ```
+    #
+    # The standard library implicitly applies this option when it can be sure
+    # about the patterns's validity (e.g. on repeated matches in `String#gsub`).
     NO_UTF_CHECK = NO_UTF8_CHECK
 
     # Enable matching against subjects containing invalid UTF bytes.
@@ -310,6 +335,30 @@ class Regex
     NO_JIT
 
     # Do not check subject for valid UTF encoding.
+    #
+    # This option is potentially dangerous and must only be used when the
+    # subject is guaranteed to be valid (e.g. `String#valid_encoding?`).
+    # Failing to do so can lead to undefined behaviour in the regex library
+    # and may crash the entire process.
+    #
+    # NOTE: `String` is *supposed* to be valid UTF-8, but this is not guaranteed or
+    # enforced. Especially data originating from external sources should not be
+    # trusted.
+    #
+    # UTF validation is comparatively expensive, so skipping it can produce a
+    # significant performance improvement.
+    #
+    # ```
+    # subject = "foo"
+    # if subject.valid_encoding?
+    #   /foo/.match(subject, options: Regex::MatchOptions::NO_UTF_CHECK)
+    # else
+    #   raise "Invalid UTF in regex subject"
+    # end
+    # ```
+    #
+    # A good use case is when the same subject is matched multiple times, UTF
+    # validation only needs to happen once.
     #
     # This option has no effect if the pattern was compiled with
     # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
