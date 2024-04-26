@@ -126,7 +126,7 @@ class Crystal::Iocp::Event
 
   # Frees the event
   def free : Nil
-    Crystal::Scheduler.event_loop.dequeue(self)
+    Crystal::EventLoop.current.dequeue(self)
   end
 
   def delete
@@ -135,6 +135,6 @@ class Crystal::Iocp::Event
 
   def add(timeout : Time::Span?) : Nil
     @wake_at = timeout ? Time.monotonic + timeout : Time.monotonic
-    Crystal::Scheduler.event_loop.enqueue(self)
+    Crystal::EventLoop.current.enqueue(self)
   end
 end

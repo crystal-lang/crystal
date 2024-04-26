@@ -101,7 +101,7 @@ module IO::Evented
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
-    event = @read_event.get { Crystal::Scheduler.event_loop.create_fd_read_event(self) }
+    event = @read_event.get { Crystal::EventLoop.current.create_fd_read_event(self) }
     event.add timeout
   end
 
@@ -126,7 +126,7 @@ module IO::Evented
   end
 
   private def add_write_event(timeout = @write_timeout) : Nil
-    event = @write_event.get { Crystal::Scheduler.event_loop.create_fd_write_event(self) }
+    event = @write_event.get { Crystal::EventLoop.current.create_fd_write_event(self) }
     event.add timeout
   end
 
