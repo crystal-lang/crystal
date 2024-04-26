@@ -292,7 +292,7 @@ struct Atomic(T)
       address = atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), ordering)
       Pointer(T).new(address).as(T)
     {% elsif T == Bool %}
-      atomicrmw(:xchg, as_pointer, cast_to(value), ordering) == 1_u8
+      cast_from atomicrmw(:xchg, as_pointer, cast_to(value), ordering)
     {% else %}
       atomicrmw(:xchg, pointerof(@value), value, ordering)
     {% end %}
@@ -414,8 +414,8 @@ struct Atomic(T)
   private def as_pointer
     {% if T == Bool %}
       # assumes that a bool sizeof/alignof is 1 byte (and that a struct wrapping
-      # a single boolean ivar is has a sizeof/alignof of at least 1 byte, too)
-      # so we can safely cast the int1 representation of a bool as an int8.
+      # a single boolean ivar has a sizeof/alignof of at least 1 byte, too) so
+      # we can safely cast the int1 representation of a bool as an int8.
       pointerof(@value).as(Int8*)
     {% else %}
       pointerof(@value)
@@ -434,7 +434,7 @@ struct Atomic(T)
   @[AlwaysInline]
   private def cast_from(value : Tuple)
     {% if T == Bool %}
-      {value[0] == 1_i8, value[1]}
+      {value[0].unsafe_as(Bool), value[1]}
     {% else %}
       value
     {% end %}
@@ -443,7 +443,7 @@ struct Atomic(T)
   @[AlwaysInline]
   private def cast_from(value)
     {% if T == Bool %}
-      value == 1_i8
+      value.unsafe_as(Bool)
     {% else %}
       value
     {% end %}

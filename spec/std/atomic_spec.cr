@@ -14,6 +14,12 @@ enum AtomicEnumFlags
   Three
 end
 
+private struct AtomicBooleans
+  @one = Atomic(Bool).new(false)
+  @two = Atomic(Bool).new(false)
+  @three = Atomic(Bool).new(false)
+end
+
 describe Atomic do
   describe "#compare_and_set" do
     it "with bool" do
@@ -346,6 +352,43 @@ describe Atomic do
       atomic = Atomic.new(1)
       atomic.swap(2, :acquire).should eq(1)
       atomic.get.should eq(2)
+    end
+  end
+
+  describe "atomic bool" do
+    it "sizeof" do
+      sizeof(Atomic(Bool)).should eq(1)
+      sizeof(AtomicBooleans).should eq(3)
+    end
+
+    it "gets and sets" do
+      booleans = AtomicBooleans.new
+
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(false)
+      booleans.@three.get.should eq(false)
+
+      booleans.@two.set(true)
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(true)
+      booleans.@three.get.should eq(false)
+
+      booleans.@one.set(true)
+      booleans.@three.set(true)
+      booleans.@one.get.should eq(true)
+      booleans.@two.get.should eq(true)
+      booleans.@three.get.should eq(true)
+
+      booleans.@one.set(false)
+      booleans.@three.set(false)
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(true)
+      booleans.@three.get.should eq(false)
+
+      booleans.@two.set(false)
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(false)
+      booleans.@three.get.should eq(false)
     end
   end
 end
