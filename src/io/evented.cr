@@ -67,7 +67,7 @@ module IO::Evented
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
-      Crystal::Scheduler.enqueue reader
+      reader.enqueue
     end
   end
 
@@ -76,7 +76,7 @@ module IO::Evented
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
-      Crystal::Scheduler.enqueue writer
+      writer.enqueue
     end
   end
 
@@ -136,16 +136,9 @@ module IO::Evented
 
   def evented_close : Nil
     @read_event.consume_each &.free
-
     @write_event.consume_each &.free
-
-    @readers.consume_each do |readers|
-      Crystal::Scheduler.enqueue readers
-    end
-
-    @writers.consume_each do |writers|
-      Crystal::Scheduler.enqueue writers
-    end
+    @readers.consume_each &.enqueue
+    @writers.consume_each &.enqueue
   end
 
   private def resume_pending_readers

@@ -58,7 +58,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
 
       timed_out = IO::Overlapped.wait_queued_completions(wait_time.total_milliseconds) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
-        Crystal::Scheduler.enqueue fiber
+        fiber.enqueue
       end
 
       # If the wait for completion timed out we've reached the wake time and
@@ -90,7 +90,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
       fiber.timeout_select_action = nil
       select_action.time_expired(fiber)
     else
-      Crystal::Scheduler.enqueue fiber
+      fiber.enqueue
     end
   end
 
