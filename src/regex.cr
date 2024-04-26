@@ -194,6 +194,15 @@ require "./regex/match_data"
 #
 # PCRE2 supports other encodings, but Crystal strings are UTF-8 only, so Crystal
 # regular expressions are also UTF-8 only (by default).
+# Crystal strings are expected to contain only valid UTF-8 encodings, but that's
+# not guaranteed. There's a chance that a string *can* contain invalid bytes.
+# Especially data read from external sources must not be trusted to be valid encoding.
+# The regex engine demands valid UTF-8, so it checks the encoding for every
+# match. This can be unnecessary if the string is already validated (for example
+# via `String#valid_encoding?` or because it has already been used in a previous
+# regex match).
+# If that's the case, it's profitable to skip UTF-8 validation via `MatchOptions::NO_UTF_CHECK`
+# (or `CompileOptions::NO_UTF_CHECK` for the pattern).
 #
 # PCRE2 optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a `Regex` as a
