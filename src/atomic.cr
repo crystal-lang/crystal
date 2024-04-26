@@ -465,13 +465,13 @@ end
 # ```
 struct Atomic::Flag
   def initialize
-    @value = 0_u8
+    @value = Atomic(Bool).new(false)
   end
 
   # Atomically tries to set the flag. Only succeeds and returns `true` if the
   # flag wasn't previously set; returns `false` otherwise.
   def test_and_set : Bool
-    ret = Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1_u8, :sequentially_consistent, false) == 0_u8
+    ret = @value.swap(true, :sequentially_consistent) == false
     {% if flag?(:arm) %}
       Atomic::Ops.fence(:sequentially_consistent, false) if ret
     {% end %}
@@ -483,6 +483,6 @@ struct Atomic::Flag
     {% if flag?(:arm) %}
       Atomic::Ops.fence(:sequentially_consistent, false)
     {% end %}
-    Atomic::Ops.store(pointerof(@value), 0_u8, :sequentially_consistent, true)
+    @value.set(false, :sequentially_consistent)
   end
 end
