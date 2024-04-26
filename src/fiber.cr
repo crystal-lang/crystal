@@ -168,7 +168,7 @@ class Fiber
     {% unless flag?(:interpreted) %}
       Crystal::Scheduler.stack_pool.release(@stack)
     {% end %}
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
   end
 
   # Returns the current fiber.
@@ -283,6 +283,19 @@ class Fiber
   # ```
   def self.yield : Nil
     Crystal::Scheduler.yield
+  end
+
+  # Yields to the scheduler and tells it to swap execution to another waiting
+  # fibers. Unlike `Fiber.yield` the current fiber won't be automatically
+  # reenqueued and won't be resumed until it has been explicitely reenqueued.
+  #
+  # This is equivalent to `sleep` without a time.
+  #
+  # This method is particularly useful to stop the execution of the current
+  # fiber until something happens, for example an IO event, a message is ready
+  # in a channel, and so on.
+  def self.suspend : Nil
+    Crystal::Scheduler.reschedule
   end
 
   def to_s(io : IO) : Nil

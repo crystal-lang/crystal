@@ -79,7 +79,8 @@ class Mutex
 
         @queue.push Fiber.current
       end
-      Crystal::Scheduler.reschedule
+
+      Fiber.suspend
     end
 
     @mutex_fiber = Fiber.current unless @protection.unchecked?
