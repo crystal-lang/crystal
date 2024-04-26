@@ -90,7 +90,7 @@ module IO::Evented
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     if @read_timed_out
       @read_timed_out = false
@@ -115,7 +115,7 @@ module IO::Evented
     writers = @writers.get { Deque(Fiber).new }
     writers << Fiber.current
     add_write_event(timeout)
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     if @write_timed_out
       @write_timed_out = false

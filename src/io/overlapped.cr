@@ -162,7 +162,7 @@ module IO::Overlapped
     end
     Crystal::Scheduler.event_loop.enqueue(timeout_event)
 
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     Crystal::Scheduler.event_loop.dequeue(timeout_event)
   end
