@@ -291,10 +291,8 @@ struct Atomic(T)
     {% elsif T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       address = atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), ordering)
       Pointer(T).new(address).as(T)
-    {% elsif T == Bool %}
-      cast_from atomicrmw(:xchg, as_pointer, cast_to(value), ordering)
     {% else %}
-      atomicrmw(:xchg, pointerof(@value), value, ordering)
+      cast_from atomicrmw(:xchg, as_pointer, cast_to(value), ordering)
     {% end %}
   end
 
@@ -415,7 +413,8 @@ struct Atomic(T)
     {% if T == Bool %}
       # assumes that a bool sizeof/alignof is 1 byte (and that a struct wrapping
       # a single boolean ivar has a sizeof/alignof of at least 1 byte, too) so
-      # we can safely cast the int1 representation of a bool as an int8.
+      # there is enough padding, and we can safely cast the int1 representation
+      # of a bool as an int8
       pointerof(@value).as(Int8*)
     {% else %}
       pointerof(@value)
@@ -425,7 +424,7 @@ struct Atomic(T)
   @[AlwaysInline]
   private def cast_to(value)
     {% if T == Bool %}
-      value ? 1_i8 : 0_i8
+      value.unsafe_as(Int8)
     {% else %}
       value.as(T)
     {% end %}
