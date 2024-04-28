@@ -11,6 +11,11 @@ set -eu
 
 CRYSTAL_VERSION=$1
 
+# Write dev version for next minor release into src/VERSION
+minor_branch="${CRYSTAL_VERSION%.*}"
+next_minor="$((${minor_branch#*.} + 1))"
+echo "${CRYSTAL_VERSION%%.*}.${next_minor}.0-dev" > src/VERSION
+
 # Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
