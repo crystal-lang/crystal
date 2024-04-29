@@ -58,7 +58,7 @@ class Thread
   end
 
   # Creates and starts a new system thread.
-  def initialize(@name : String? = nil, &@func : ->)
+  def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
   end
@@ -66,7 +66,7 @@ class Thread
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
-    @func = ->{}
+    @func = ->(t : Thread) {}
     @system_handle = Crystal::System::Thread.current_handle
     @main_fiber = Fiber.new(stack_address, self)
 
@@ -127,7 +127,7 @@ class Thread
     end
 
     begin
-      @func.call
+      @func.call(self)
     rescue ex
       @exception = ex
     ensure

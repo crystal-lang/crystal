@@ -232,6 +232,12 @@ describe "ASTNode#to_s" do
   expect_to_s "1.+ do\nend"
   expect_to_s "1.[](2) do\nend"
   expect_to_s "1.[]="
+  expect_to_s "1[&.foo]"
+  expect_to_s "1[&.foo]?"
+  expect_to_s "1[&.foo] = 2"
+  expect_to_s "1[2, x: 3, &.foo]"
+  expect_to_s "1[2, x: 3, &.foo]?"
+  expect_to_s "1[2, x: 3, &.foo] = 4"
   expect_to_s "1.+(a: 2)"
   expect_to_s "1.+(&block)"
   expect_to_s "1.//(2, a: 3)"
@@ -274,4 +280,22 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
   expect_to_s "macro foo(x)\n  yield\nend"
+  expect_to_s <<-CRYSTAL
+    select
+    when foo
+      select
+      when bar
+        1
+      else
+        2
+      end
+    else
+      select
+      when baz
+        3
+      else
+        4
+      end
+    end
+    CRYSTAL
 end

@@ -164,25 +164,28 @@ module Crystal::System::File
   end
 
   def self.exists?(path, *, follow_symlinks = true)
-    if follow_symlinks
-      path = realpath?(path) || return false
-    end
-    accessible?(path, check_writable: false)
+    accessible?(path, check_writable: false, follow_symlinks: follow_symlinks)
   end
 
   def self.readable?(path) : Bool
-    accessible?(path, check_writable: false)
+    accessible?(path, check_writable: false, follow_symlinks: true)
   end
 
   def self.writable?(path) : Bool
-    accessible?(path, check_writable: true)
+    accessible?(path, check_writable: true, follow_symlinks: true)
   end
 
   def self.executable?(path) : Bool
+    # NOTE: this always follows symlinks:
+    # https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getbinarytypew#remarks
     LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
   end
 
-  private def self.accessible?(path, *, check_writable)
+  private def self.accessible?(path, *, check_writable, follow_symlinks)
+    if follow_symlinks
+      path = realpath?(path) || return false
+    end
+
     attributes = LibC.GetFileAttributesW(System.to_wstr(path))
     return false if attributes == LibC::INVALID_FILE_ATTRIBUTES
     return true if attributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)

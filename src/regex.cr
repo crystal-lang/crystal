@@ -194,6 +194,15 @@ require "./regex/match_data"
 #
 # PCRE2 supports other encodings, but Crystal strings are UTF-8 only, so Crystal
 # regular expressions are also UTF-8 only (by default).
+# Crystal strings are expected to contain only valid UTF-8 encodings, but that's
+# not guaranteed. There's a chance that a string *can* contain invalid bytes.
+# Especially data read from external sources must not be trusted to be valid encoding.
+# The regex engine demands valid UTF-8, so it checks the encoding for every
+# match. This can be unnecessary if the string is already validated (for example
+# via `String#valid_encoding?` or because it has already been used in a previous
+# regex match).
+# If that's the case, it's profitable to skip UTF-8 validation via `MatchOptions::NO_UTF_CHECK`
+# (or `CompileOptions::NO_UTF_CHECK` for the pattern).
 #
 # PCRE2 optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a `Regex` as a
@@ -263,6 +272,31 @@ class Regex
     ENDANCHORED = 0x8000_0000
 
     # Do not check the pattern for valid UTF encoding.
+    #
+    # This option is potentially dangerous and must only be used when the
+    # pattern is guaranteed to be valid (e.g. `String#valid_encoding?`).
+    # Failing to do so can lead to undefined behaviour in the regex library
+    # and may crash the entire process.
+    #
+    # NOTE: `String` is *supposed* to be valid UTF-8, but this is not guaranteed or
+    # enforced. Especially data originating from external sources should not be
+    # trusted.
+    #
+    # UTF validation is comparatively expensive, so skipping it can produce a
+    # significant performance improvement.
+    #
+    # ```
+    # pattern = "fo+"
+    # if pattern.valid_encoding?
+    #   regex = Regex.new(pattern, options: Regex::CompileOptions::NO_UTF_CHECK)
+    #   regex.match(foo)
+    # else
+    #   raise "Invalid UTF in regex pattern"
+    # end
+    # ```
+    #
+    # The standard library implicitly applies this option when it can be sure
+    # about the patterns's validity (e.g. on repeated matches in `String#gsub`).
     NO_UTF_CHECK = NO_UTF8_CHECK
 
     # Enable matching against subjects containing invalid UTF bytes.
@@ -310,6 +344,30 @@ class Regex
     NO_JIT
 
     # Do not check subject for valid UTF encoding.
+    #
+    # This option is potentially dangerous and must only be used when the
+    # subject is guaranteed to be valid (e.g. `String#valid_encoding?`).
+    # Failing to do so can lead to undefined behaviour in the regex library
+    # and may crash the entire process.
+    #
+    # NOTE: `String` is *supposed* to be valid UTF-8, but this is not guaranteed or
+    # enforced. Especially data originating from external sources should not be
+    # trusted.
+    #
+    # UTF validation is comparatively expensive, so skipping it can produce a
+    # significant performance improvement.
+    #
+    # ```
+    # subject = "foo"
+    # if subject.valid_encoding?
+    #   /foo/.match(subject, options: Regex::MatchOptions::NO_UTF_CHECK)
+    # else
+    #   raise "Invalid UTF in regex subject"
+    # end
+    # ```
+    #
+    # A good use case is when the same subject is matched multiple times, UTF
+    # validation only needs to happen once.
     #
     # This option has no effect if the pattern was compiled with
     # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.

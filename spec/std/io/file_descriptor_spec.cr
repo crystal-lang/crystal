@@ -22,6 +22,21 @@ describe IO::FileDescriptor do
     end
   end
 
+  describe "#tty?" do
+    it "returns false for null device" do
+      File.open(File::NULL) do |f|
+        f.tty?.should be_false
+      end
+    end
+
+    it "returns false for standard streams redirected to null device", tags: %w[slow] do
+      code = %q(print STDIN.tty?, ' ', STDERR.tty?)
+      compile_source(code) do |binpath|
+        `#{shell_command %(#{Process.quote(binpath)} < #{File::NULL} 2> #{File::NULL})}`.should eq("false false")
+      end
+    end
+  end
+
   it "closes on finalize" do
     pipes = [] of IO::FileDescriptor
     assert_finalizes("fd") do
