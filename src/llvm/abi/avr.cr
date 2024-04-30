@@ -16,7 +16,7 @@ class LLVM::ABI::AVR < LLVM::ABI
     super target_machine
 
     # "Reduced Tiny" core devices only have 16 General Purpose Registers
-    if mcpu && AVRTINY.includes?(mcpu)
+    if mcpu.in?(AVRTINY)
       @rsize = 4 # values above 4 bytes are returned by memory
       @rmin = 20 # 6 registers for call arguments (R25..R20)
     else
