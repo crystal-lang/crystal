@@ -1,8 +1,14 @@
 # :nodoc:
 module Crystal::System::FileDescriptor
+  # Enables input echoing if *enable* is true, disables it otherwise.
+  # private def system_echo(enable : Bool)
+
   # For the duration of the block, enables input echoing if *enable* is true,
   # disables it otherwise.
   # private def system_echo(enable : Bool, & : ->)
+
+  # Enables raw mode if *enable* is true, enables cooked mode otherwise.
+  # private def system_raw(enable : Bool)
 
   # For the duration of the block, enables raw mode if *enable* is true, enables
   # cooked mode otherwise.

@@ -13,6 +13,10 @@ module Crystal::System::FileDescriptor
   # system.
   alias Handle = Int32
 
+  STDIN_HANDLE  = 0
+  STDOUT_HANDLE = 1
+  STDERR_HANDLE = 2
+
   private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|
@@ -154,6 +158,60 @@ module Crystal::System::FileDescriptor
     end
   end
 
+  private def system_flock_shared(blocking)
+    flock LibC::FlockOp::SH, blocking
+  end
+
+  private def system_flock_exclusive(blocking)
+    flock LibC::FlockOp::EX, blocking
+  end
+
+  private def system_flock_unlock
+    flock LibC::FlockOp::UN
+  end
+
+  private def flock(op : LibC::FlockOp, retry : Bool) : Nil
+    op |= LibC::FlockOp::NB
+
+    if retry
+      until flock(op)
+        sleep 0.1
+      end
+    else
+      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
+    end
+  end
+
+  private def flock(op) : Bool
+    if 0 == LibC.flock(fd, op)
+      true
+    else
+      errno = Errno.value
+      if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
+        false
+      else
+        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
+      end
+    end
+  end
+
+  private def system_fsync(flush_metadata = true) : Nil
+    ret =
+      if flush_metadata
+        LibC.fsync(fd)
+      else
+        {% if flag?(:dragonfly) %}
+          LibC.fsync(fd)
+        {% else %}
+          LibC.fdatasync(fd)
+        {% end %}
+      end
+
+    if ret != 0
+      raise IO::Error.from_errno("Error syncing file", target: self)
+    end
+  end
+
   def self.pipe(read_blocking, write_blocking)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
     if LibC.pipe(pipe_fds) != 0
@@ -199,29 +257,39 @@ module Crystal::System::FileDescriptor
     io
   end
 
+  private def system_echo(enable : Bool, mode = nil)
+    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
+    new_mode.c_lflag = enable ? (new_mode.c_lflag | flags) : (new_mode.c_lflag & ~flags)
+    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+      raise IO::Error.from_errno("tcsetattr")
+    end
+  end
+
   private def system_echo(enable : Bool, & : ->)
     system_console_mode do |mode|
-      flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
-      mode.c_lflag = enable ? (mode.c_lflag | flags) : (mode.c_lflag & ~flags)
-      if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
-        raise IO::Error.from_errno("tcsetattr")
-      end
+      system_echo(enable, mode)
       yield
+    end
+  end
+
+  private def system_raw(enable : Bool, mode = nil)
+    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    if enable
+      new_mode = FileDescriptor.cfmakeraw(new_mode)
+    else
+      new_mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
+      new_mode.c_oflag |= LibC::OPOST
+      new_mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
+    end
+    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+      raise IO::Error.from_errno("tcsetattr")
     end
   end
 
   private def system_raw(enable : Bool, & : ->)
     system_console_mode do |mode|
-      if enable
-        mode = FileDescriptor.cfmakeraw(mode)
-      else
-        mode.c_iflag |= LibC::BRKINT | LibC::ISTRIP | LibC::ICRNL | LibC::IXON
-        mode.c_oflag |= LibC::OPOST
-        mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
-      end
-      if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(mode)) != 0
-        raise IO::Error.from_errno("tcsetattr")
-      end
+      system_raw(enable, mode)
       yield
     end
   end

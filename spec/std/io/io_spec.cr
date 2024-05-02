@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "../../support/channel"
+require "../../support/string"
 require "spec/helpers/iterate"
 
 require "socket"
@@ -143,15 +144,6 @@ describe IO do
     dst = SimpleIOMemory.new
     expect_raises(ArgumentError, "Negative limit") do
       IO.copy(src, dst, -10)
-    end
-  end
-
-  it "reopens" do
-    File.open(datapath("test_file.txt")) do |file1|
-      File.open(datapath("test_file.ini")) do |file2|
-        file2.reopen(file1)
-        file2.gets.should eq("Hello World")
-      end
     end
   end
 
@@ -338,29 +330,13 @@ describe IO do
       io.read_char.should eq('界')
       io.read_char.should be_nil
 
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70, 0x00, 0x00]).read_char }
+      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        SimpleIOMemory.new(Bytes{{ bytes }}).read_char.should eq({{ char }})
+      {% end %}
 
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8, 0x00, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81, 0x00, 0x00, 0x00]).read_char }
-
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf, 0x00]).read_char }
-
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf, 0x00, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf, 0x00]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x80, 0x80, 0x80]).read_char }
-      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x8f, 0xbf, 0xbf]).read_char }
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes{{ bytes }}).read_char }
+      {% end %}
     end
 
     it "reads byte" do
@@ -1004,15 +980,6 @@ describe IO do
       end
     end
   end
-
-  typeof(STDIN.noecho { })
-  typeof(STDIN.noecho!)
-  typeof(STDIN.echo { })
-  typeof(STDIN.echo!)
-  typeof(STDIN.cooked { })
-  typeof(STDIN.cooked!)
-  typeof(STDIN.raw { })
-  typeof(STDIN.raw!)
 
   describe IO::Error do
     describe ".new" do

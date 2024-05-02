@@ -2,10 +2,13 @@ require "llvm/enums/atomic"
 
 # A value that may be updated atomically.
 #
-# If `T` is a non-union primitive integer type or enum type, all operations are
-# supported. If `T` is a reference type, or a union type containing only
-# reference types or `Nil`, then only `#compare_and_set`, `#swap`, `#set`,
-# `#lazy_set`, `#get`, and `#lazy_get` are available.
+# * If `T` is a reference type, or a union type containing only
+#   reference types or `Nil`, then only `#compare_and_set`, `#swap`, `#set`,
+#   `#lazy_set`, `#get`, and `#lazy_get` are available.
+# * If `T` is a pointer type, then the above methods plus `#max` and `#min` are
+#   available.
+# * If `T` is a non-union primitive integer type or enum type, then all
+#   operations are supported.
 struct Atomic(T)
   # Specifies how memory accesses, including non atomic, are to be reordered
   # around atomics. Follows the C/C++ semantics:
@@ -40,12 +43,14 @@ struct Atomic(T)
 
   # Creates an Atomic with the given initial value.
   def initialize(@value : T)
-    {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
-      # Support integer types, enum types, or char (because it's represented as an integer)
+    {% if !T.union? && (T == Bool || T == Char || T < Int::Primitive || T < Enum) %}
+      # Support integer types, enum types, bool or char (because it's represented as an integer)
+    {% elsif T < Pointer %}
+      # Support pointer types
     {% elsif T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       # Support reference types, or union types with only nil or reference types
     {% else %}
-      {% raise "Can only create Atomic with primitive integer types, reference types or nilable reference types, not #{T}" %}
+      {% raise "Can only create Atomic with primitive integer types, pointer types, reference types or nilable reference types, not #{T}" %}
     {% end %}
   end
 
@@ -66,7 +71,7 @@ struct Atomic(T)
   # atomic.get                   # => 3
   # ```
   def compare_and_set(cmp : T, new : T) : {T, Bool}
-    Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
+    cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :sequentially_consistent, :sequentially_consistent)
   end
 
   # Compares this atomic's value with *cmp* using explicit memory orderings:
@@ -88,25 +93,25 @@ struct Atomic(T)
   def compare_and_set(cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool}
     case {success_ordering, failure_ordering}
     when {.relaxed?, .relaxed?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :monotonic, :monotonic)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :monotonic, :monotonic)
     when {.acquire?, .relaxed?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :monotonic)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :acquire, :monotonic)
     when {.acquire?, .acquire?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire, :acquire)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :acquire, :acquire)
     when {.release?, .relaxed?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :monotonic)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :release, :monotonic)
     when {.release?, .acquire?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :release, :acquire)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :release, :acquire)
     when {.acquire_release?, .relaxed?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :monotonic)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :acquire_release, :monotonic)
     when {.acquire_release?, .acquire?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :acquire_release, :acquire)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :acquire_release, :acquire)
     when {.sequentially_consistent?, .relaxed?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :monotonic)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :sequentially_consistent, :monotonic)
     when {.sequentially_consistent?, .acquire?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :acquire)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :sequentially_consistent, :acquire)
     when {.sequentially_consistent?, .sequentially_consistent?}
-      Ops.cmpxchg(pointerof(@value), cmp.as(T), new.as(T), :sequentially_consistent, :sequentially_consistent)
+      cast_from Ops.cmpxchg(as_pointer, cast_to(cmp), cast_to(new), :sequentially_consistent, :sequentially_consistent)
     else
       if failure_ordering.release? || failure_ordering.acquire_release?
         raise ArgumentError.new("Failure ordering cannot include release semantics")
@@ -117,7 +122,7 @@ struct Atomic(T)
 
   # Performs `atomic_value &+= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(1)
@@ -125,13 +130,15 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def add(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
+    check_bool_type
     atomicrmw(:add, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value &-= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(9)
@@ -139,13 +146,15 @@ struct Atomic(T)
   # atomic.get    # => 7
   # ```
   def sub(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
+    check_bool_type
     atomicrmw(:sub, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value &= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -153,13 +162,15 @@ struct Atomic(T)
   # atomic.get    # => 1
   # ```
   def and(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
+    check_bool_type
     atomicrmw(:and, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value = ~(atomic_value & value)`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -167,13 +178,15 @@ struct Atomic(T)
   # atomic.get     # => -2
   # ```
   def nand(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
+    check_bool_type
     atomicrmw(:nand, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value |= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -181,13 +194,15 @@ struct Atomic(T)
   # atomic.get   # => 7
   # ```
   def or(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
+    check_bool_type
     atomicrmw(:or, pointerof(@value), value, ordering)
   end
 
   # Performs `atomic_value ^= value`. Returns the old value.
   #
-  # `T` cannot contain any reference types.
+  # `T` cannot contain any pointer or reference types.
   #
   # ```
   # atomic = Atomic.new(5)
@@ -195,7 +210,9 @@ struct Atomic(T)
   # atomic.get    # => 6
   # ```
   def xor(value : T, ordering : Ordering = :sequentially_consistent) : T
+    check_pointer_type
     check_reference_type
+    check_bool_type
     atomicrmw(:xor, pointerof(@value), value, ordering)
   end
 
@@ -214,12 +231,15 @@ struct Atomic(T)
   # ```
   def max(value : T, ordering : Ordering = :sequentially_consistent)
     check_reference_type
+    check_bool_type
     {% if T < Enum %}
       if @value.value.is_a?(Int::Signed)
         atomicrmw(:max, pointerof(@value), value, ordering)
       else
         atomicrmw(:umax, pointerof(@value), value, ordering)
       end
+    {% elsif T < Pointer %}
+      T.new(atomicrmw(:umax, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new!(value.address), ordering))
     {% elsif T < Int::Signed %}
       atomicrmw(:max, pointerof(@value), value, ordering)
     {% else %}
@@ -242,12 +262,15 @@ struct Atomic(T)
   # ```
   def min(value : T, ordering : Ordering = :sequentially_consistent)
     check_reference_type
+    check_bool_type
     {% if T < Enum %}
       if @value.value.is_a?(Int::Signed)
         atomicrmw(:min, pointerof(@value), value, ordering)
       else
         atomicrmw(:umin, pointerof(@value), value, ordering)
       end
+    {% elsif T < Pointer %}
+      T.new(atomicrmw(:umin, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new!(value.address), ordering))
     {% elsif T < Int::Signed %}
       atomicrmw(:min, pointerof(@value), value, ordering)
     {% else %}
@@ -263,11 +286,13 @@ struct Atomic(T)
   # atomic.get      # => 10
   # ```
   def swap(value : T, ordering : Ordering = :sequentially_consistent)
-    {% if T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
+    {% if T < Pointer %}
+      T.new(atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new!(value.address), ordering))
+    {% elsif T.union_types.all? { |t| t == Nil || t < Reference } && T != Nil %}
       address = atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(Void*).address), ordering)
       Pointer(T).new(address).as(T)
     {% else %}
-      atomicrmw(:xchg, pointerof(@value), value, ordering)
+      cast_from atomicrmw(:xchg, as_pointer, cast_to(value), ordering)
     {% end %}
   end
 
@@ -281,11 +306,11 @@ struct Atomic(T)
   def set(value : T, ordering : Ordering = :sequentially_consistent) : T
     case ordering
     in .relaxed?
-      Ops.store(pointerof(@value), value.as(T), :monotonic, true)
+      Ops.store(as_pointer, cast_to(value), :monotonic, true)
     in .release?
-      Ops.store(pointerof(@value), value.as(T), :release, true)
+      Ops.store(as_pointer, cast_to(value), :release, true)
     in .sequentially_consistent?
-      Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
+      Ops.store(as_pointer, cast_to(value), :sequentially_consistent, true)
     in .acquire?, .acquire_release?
       raise ArgumentError.new("Atomic store cannot have acquire semantic")
     end
@@ -308,11 +333,11 @@ struct Atomic(T)
   def get(ordering : Ordering = :sequentially_consistent) : T
     case ordering
     in .relaxed?
-      Ops.load(pointerof(@value), :monotonic, true)
+      cast_from Ops.load(as_pointer, :monotonic, true)
     in .acquire?
-      Ops.load(pointerof(@value), :acquire, true)
+      cast_from Ops.load(as_pointer, :acquire, true)
     in .sequentially_consistent?
-      Ops.load(pointerof(@value), :sequentially_consistent, true)
+      cast_from Ops.load(as_pointer, :sequentially_consistent, true)
     in .release?, .acquire_release?
       raise ArgumentError.new("Atomic load cannot have release semantic")
     end
@@ -323,6 +348,18 @@ struct Atomic(T)
   # NOTE: use with caution, this may break atomic guarantees.
   def lazy_get
     @value
+  end
+
+  private macro check_bool_type
+    {% if T == Bool %}
+      {% raise "Cannot call `#{@type}##{@def.name}` for `#{T}` type" %}
+    {% end %}
+  end
+
+  private macro check_pointer_type
+    {% if T < Pointer %}
+      {% raise "Cannot call `#{@type}##{@def.name}` as `#{T}` is a pointer type" %}
+    {% end %}
   end
 
   private macro check_reference_type
@@ -370,6 +407,46 @@ struct Atomic(T)
     def self.store(ptr : T*, value : T, ordering : LLVM::AtomicOrdering, volatile : Bool) : Nil forall T
     end
   end
+
+  @[AlwaysInline]
+  private def as_pointer
+    {% if T == Bool %}
+      # assumes that a bool sizeof/alignof is 1 byte (and that a struct wrapping
+      # a single boolean ivar has a sizeof/alignof of at least 1 byte, too) so
+      # there is enough padding, and we can safely cast the int1 representation
+      # of a bool as an int8
+      pointerof(@value).as(Int8*)
+    {% else %}
+      pointerof(@value)
+    {% end %}
+  end
+
+  @[AlwaysInline]
+  private def cast_to(value)
+    {% if T == Bool %}
+      value.unsafe_as(Int8)
+    {% else %}
+      value.as(T)
+    {% end %}
+  end
+
+  @[AlwaysInline]
+  private def cast_from(value : Tuple)
+    {% if T == Bool %}
+      {value[0].unsafe_as(Bool), value[1]}
+    {% else %}
+      value
+    {% end %}
+  end
+
+  @[AlwaysInline]
+  private def cast_from(value)
+    {% if T == Bool %}
+      value.unsafe_as(Bool)
+    {% else %}
+      value
+    {% end %}
+  end
 end
 
 # An atomic flag, that can be set or not.
@@ -387,13 +464,13 @@ end
 # ```
 struct Atomic::Flag
   def initialize
-    @value = 0_u8
+    @value = Atomic(Bool).new(false)
   end
 
   # Atomically tries to set the flag. Only succeeds and returns `true` if the
   # flag wasn't previously set; returns `false` otherwise.
   def test_and_set : Bool
-    ret = Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1_u8, :sequentially_consistent, false) == 0_u8
+    ret = @value.swap(true, :sequentially_consistent) == false
     {% if flag?(:arm) %}
       Atomic::Ops.fence(:sequentially_consistent, false) if ret
     {% end %}
@@ -405,6 +482,6 @@ struct Atomic::Flag
     {% if flag?(:arm) %}
       Atomic::Ops.fence(:sequentially_consistent, false)
     {% end %}
-    Atomic::Ops.store(pointerof(@value), 0_u8, :sequentially_consistent, true)
+    @value.set(false, :sequentially_consistent)
   end
 end

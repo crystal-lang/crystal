@@ -24,7 +24,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.11.2"
+          crystal: "1.12.1"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -114,13 +114,7 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          # TODO: the 1.11.2 compiler only understands `-Dpreview_dll`; remove this once the
-          # base compiler is updated
-          make -f Makefile.win -B FLAGS=-Dpreview_dll ${{ inputs.release && 'release=1' || '' }}
-          # TODO: 1.11.2 comes with LLVM 17's DLL and copies it to the output directory, but a
-          # dynamically linked compiler requires LLVM 18, so we must overwrite it; remove this
-          # line once the base compiler is updated
-          cp dlls/LLVM-C.dll .build/
+          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
 
       - name: Download shards release
         uses: actions/checkout@v4
@@ -138,6 +132,7 @@ jobs:
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
           cp shards/bin/shards.exe crystal/
+          cp shards/bin/shards.pdb crystal/
           cp libs/* crystal/lib/
           cp dlls/* crystal/
           cp README.md crystal/

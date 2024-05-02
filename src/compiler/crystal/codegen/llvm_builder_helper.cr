@@ -30,6 +30,25 @@ module Crystal
       int32(n)
     end
 
+    def size_t
+      llvm_context.int(@program.size_bit_width)
+    end
+
+    def size_t(n)
+      size_t.const_int(n)
+    end
+
+    def size_t(value : LLVM::Value)
+      case value.type.int_width <=> @program.size_bit_width
+      when .zero?
+        value
+      when .positive?
+        builder.trunc(value, size_t)
+      else
+        builder.zext(value, size_t)
+      end
+    end
+
     def int(n, type)
       llvm_type(type).const_int(n)
     end

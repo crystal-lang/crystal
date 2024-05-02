@@ -2536,7 +2536,7 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    raise IndexError.new unless byte_index
+    raise IndexError.new unless byte_index && byte_index < bytesize
 
     width = char_bytesize_at(byte_index)
     replacement_width = replacement.bytesize
@@ -3334,7 +3334,11 @@ class String
   # ```
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
+    if single_byte_optimizable?
+      # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
+      # sequences and we can immediately reject any non-ASCII codepoint.
+      return unless search.ascii?
+
       return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
@@ -3433,6 +3437,11 @@ class String
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
 
+  # :ditto:
+  def index!(search : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    index(search, offset, options: options) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the _last_ appearance of *search* in the string,
   # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
@@ -3445,7 +3454,11 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
+    if single_byte_optimizable?
+      # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
+      # sequences and we can immediately reject any non-ASCII codepoint.
+      return unless search.ascii?
+
       return to_slice.rindex(search.ord.to_u8, offset)
     end
 
