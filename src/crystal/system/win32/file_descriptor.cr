@@ -36,7 +36,8 @@ module Crystal::System::FileDescriptor
       end
       bytes_read.to_i32
     else
-      overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
+      seekable = LibC.SetFilePointerEx(handle, 0, out offset, IO::Seek::Current) != 0
+      overlapped_operation(handle, seekable ? offset : nil, "ReadFile", read_timeout, writing: false) do |overlapped|
         ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
         {ret, byte_count}
       end.to_i32
@@ -58,7 +59,8 @@ module Crystal::System::FileDescriptor
           end
         end
       else
-        bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
+        seekable = LibC.SetFilePointerEx(handle, 0, out offset, IO::Seek::Current) != 0
+        bytes_written = overlapped_operation(handle, seekable ? offset : nil, "WriteFile", write_timeout, writing: true) do |overlapped|
           ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
           {ret, byte_count}
         end
@@ -80,6 +82,7 @@ module Crystal::System::FileDescriptor
 
   private def system_blocking_init(value)
     @system_blocking = value
+    Crystal::Scheduler.event_loop.create_completion_port(windows_handle) unless value
   end
 
   private def system_close_on_exec?
@@ -184,41 +187,71 @@ module Crystal::System::FileDescriptor
   end
 
   private def flock(exclusive, retry)
-    flags = LibC::LOCKFILE_FAIL_IMMEDIATELY
+    flags = 0_u32
+    flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY unless retry && !system_blocking?
     flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
 
     handle = windows_handle
-    if retry
+    if retry && system_blocking?
       until lock_file(handle, flags)
         sleep 0.1
       end
     else
-      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
+      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked", target: self)
     end
   end
 
   private def lock_file(handle, flags)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # lock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 != LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      true
-    else
-      winerror = WinError.value
-      if winerror == WinError::ERROR_LOCK_VIOLATION
-        false
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        case error = WinError.value
+        when .error_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .error_lock_violation?
+          # synchronous failure
+          operation.synchronous = true
+          return false
+        else
+          raise IO::Error.from_os_error("LockFileEx", error, target: self)
+        end
       else
-        raise IO::Error.from_os_error("LockFileEx", winerror, target: self)
+        operation.synchronous = true
+        return true
       end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("LockFileEx", error, target: self)
+      end
+
+      true
     end
   end
 
   private def unlock_file(handle)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # unlock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 == LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      raise IO::Error.from_winerror("UnLockFileEx")
+    IO::Overlapped::OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.start
+      result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, overlapped)
+
+      if result == 0
+        error = WinError.value
+        unless error.error_io_pending?
+          raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+        end
+      else
+        operation.synchronous = true
+        return
+      end
+
+      schedule_overlapped(nil)
+
+      operation.result(handle) do |error|
+        raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+      end
     end
   end
 
@@ -238,13 +271,11 @@ module Crystal::System::FileDescriptor
     w_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless write_blocking
     w_pipe = LibC.CreateNamedPipeA(pipe_name, w_pipe_flags, pipe_mode, 1, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nil)
     raise IO::Error.from_winerror("CreateNamedPipeA") if w_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::Scheduler.event_loop.create_completion_port(w_pipe) unless write_blocking
 
     r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
     r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::Scheduler.event_loop.create_completion_port(r_pipe) unless read_blocking
 
     r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
     w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
@@ -253,19 +284,12 @@ module Crystal::System::FileDescriptor
     {r, w}
   end
 
-  def self.pread(fd, buffer, offset)
-    handle = windows_handle(fd)
-
-    overlapped = LibC::OVERLAPPED.new
-    overlapped.union.offset.offset = LibC::DWORD.new(offset)
-    overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
-    if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
-      error = WinError.value
-      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error, target: self
-    end
-
-    bytes_read.to_i64
+  def self.pread(file, buffer, offset)
+    handle = windows_handle(file.fd)
+    file.overlapped_operation(handle, offset, "ReadFile", file.read_timeout, writing: false) do |overlapped|
+      ret = LibC.ReadFile(handle, buffer, buffer.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i64
   end
 
   def self.from_stdio(fd)
