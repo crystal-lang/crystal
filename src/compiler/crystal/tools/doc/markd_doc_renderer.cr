@@ -1,6 +1,7 @@
 require "sanitize"
 
 class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
+  SANITIZER = Sanitize::Policy::HTMLSanitizer.common
   @anchor_map = Hash(String, Int32).new(0)
 
   def initialize(@type : Crystal::Doc::Type, options)
@@ -178,7 +179,6 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
   end
 
   def sanitize(node : Markd::Node) : String
-    sanitizer = Sanitize::Policy::HTMLSanitizer.common
-    sanitizer.process(node.text)
+    SANITIZER.process(node.text)
   end
 end
