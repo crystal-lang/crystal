@@ -481,10 +481,13 @@ module Crystal
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
+      elsif program.has_flag? "avr"
+        link_flags = @link_flags || ""
+        link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
