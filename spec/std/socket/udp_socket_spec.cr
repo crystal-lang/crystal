@@ -61,9 +61,12 @@ describe UDPSocket, tags: "network" do
 
       client.send("laus deo semper")
 
-      bytes_read, client_addr = server.receive(buffer.to_slice[0, 4])
-      message = String.new(buffer.to_slice[0, bytes_read])
-      message.should eq("laus")
+      # WSA errors with WSAEMSGSIZE if the buffer is not large enough to receive the message
+      {% unless flag?(:win32) %}
+        bytes_read, client_addr = server.receive(buffer.to_slice[0, 4])
+        message = String.new(buffer.to_slice[0, bytes_read])
+        message.should eq("laus")
+      {% end %}
 
       client.close
       server.close
@@ -74,6 +77,10 @@ describe UDPSocket, tags: "network" do
       # However this is known to work on macOS Mojave with Darwin 18.2.0.
       # Darwin also has a bug that prevents selecting the "default" interface.
       # https://lists.apple.com/archives/darwin-kernel/2014/Mar/msg00012.html
+      pending "joins and transmits to multicast groups"
+    elsif {{ flag?(:solaris) }} && family == Socket::Family::INET
+      # TODO: figure out why updating `multicast_loopback` produces a
+      # `setsockopt 18: Invalid argument` error
       pending "joins and transmits to multicast groups"
     else
       it "joins and transmits to multicast groups" do
@@ -126,7 +133,16 @@ describe UDPSocket, tags: "network" do
                  raise "Unsupported IP address family: #{family}"
                end
 
-        udp.join_group(addr)
+        begin
+          udp.join_group(addr)
+        rescue e : Socket::Error
+          if e.os_error == Errno::ENODEV
+            pending!("Multicast device selection not available on this host")
+          else
+            raise e
+          end
+        end
+
         udp.multicast_loopback = true
         udp.multicast_loopback?.should eq(true)
 
@@ -147,12 +163,13 @@ describe UDPSocket, tags: "network" do
           sleep 100.milliseconds
           udp.close
         end
-        expect_raises(IO::Error, "Closed stream") { udp.receive }
+        expect_raises(IO::Error) { udp.receive }
+        udp.closed?.should be_true
       end
     end
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:win32) %}
     it "sends broadcast message" do
       port = unused_local_port
 

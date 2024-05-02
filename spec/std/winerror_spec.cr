@@ -38,7 +38,7 @@ describe WinError do
     {% if flag?(:win32) %}
       # Not testing for specific content because the result is locale-specific
       # and currently the message uses only default `LANGID`.
-      message.empty?.should be_false
+      message.should_not be_empty
     {% else %}
       message.should eq ""
     {% end %}

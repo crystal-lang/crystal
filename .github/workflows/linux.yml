@@ -2,19 +2,44 @@ name: Linux CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 env:
   TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
-  test_linux:
+  x86_64-gnu-test:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
+      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2, 1.12.1]
+        flags: [""]
+        include:
+          # libffi is only available starting from the 1.2.2 build images
+          - crystal_bootstrap_version: 1.0.0
+            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.1.1
+            flags: "FLAGS=-Dwithout_ffi USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.2.2
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.3.2
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.4.1
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.5.1
+            flags: "USE_PCRE1=true"
+          - crystal_bootstrap_version: 1.6.2
+            flags: "USE_PCRE1=true"
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -23,16 +48,16 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: bin/ci build
+        run: ${{ matrix.flags }} bin/ci build
 
-  test_alpine:
+  x86_64-musl-test:
     env:
       ARCH: x86_64-musl
       ARCH_CMD: linux64
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -43,14 +68,14 @@ jobs:
       - name: Test
         run: bin/ci build
 
-  test_preview_mt:
+  x86_64-gnu-test-preview_mt:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -71,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -90,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -105,7 +130,7 @@ jobs:
         run: echo $GITHUB_SHA > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

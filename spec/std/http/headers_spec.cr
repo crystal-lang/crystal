@@ -20,7 +20,7 @@ describe HTTP::Headers do
 
   it "raises an error if header value contains invalid character" do
     expect_raises ArgumentError do
-      headers = HTTP::Headers{"invalid-header" => "\r\nLocation: http://example.com"}
+      HTTP::Headers{"invalid-header" => "\r\nLocation: http://example.com"}
     end
   end
 
@@ -68,7 +68,7 @@ describe HTTP::Headers do
   it "deletes" do
     headers = HTTP::Headers{"Foo" => "bar"}
     headers.delete("foo").should eq("bar")
-    headers.empty?.should be_true
+    headers.should be_empty
   end
 
   describe "#==" do
@@ -148,6 +148,11 @@ describe HTTP::Headers do
   it "does to_s" do
     headers = HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}
     headers.to_s.should eq(%(HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}))
+  end
+
+  it "#serialize" do
+    headers = HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}
+    headers.serialize.should eq("Foo_quux: bar\r\nBaz-Quux: a\r\nBaz-Quux: b\r\n")
   end
 
   it "merges and return self" do

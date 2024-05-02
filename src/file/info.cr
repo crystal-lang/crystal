@@ -1,7 +1,9 @@
+require "crystal/system/file_info"
+
 class File
   # Represents the various behaviour-altering flags which can be set on files.
   # Not all flags will be supported on all platforms.
-  @[Flags]
+  @[::Flags]
   enum Flags : UInt8
     SetUser
     SetGroup
@@ -37,7 +39,7 @@ class File
   # On windows, only the `OwnerWrite` bit is effective. All file permissions
   # will either be `0o444` for read-only files or `0o666` for read-write files.
   # Directories are always mode `0o555` for read-only or `0o777`.
-  @[Flags]
+  @[::Flags]
   enum Permissions : Int16
     OtherExecute = 0o001
     OtherWrite   = 0o002
@@ -77,33 +79,51 @@ class File
 
   # A `File::Info` contains metadata regarding a file.
   # It is returned by `File.info`, `File#info` and `File.info?`.
-  abstract struct Info
+  struct Info
+    include Crystal::System::FileInfo
+
     # Size of the file, in bytes.
-    abstract def size : Int64
+    def size : Int64
+      system_size
+    end
 
     # The permissions of the file.
-    abstract def permissions : Permissions
+    def permissions : Permissions
+      system_permissions
+    end
 
     # The type of the file.
-    abstract def type : Type
+    def type : Type
+      system_type
+    end
 
     # The special flags this file has set.
-    abstract def flags : Flags
+    def flags : Flags
+      system_flags
+    end
 
     # The last time this file was modified.
-    abstract def modification_time : Time
+    def modification_time : Time
+      system_modification_time
+    end
 
     # The user ID that the file belongs to.
-    abstract def owner_id : String
+    def owner_id : String
+      system_owner_id
+    end
 
     # The group ID that the file belongs to.
-    abstract def group_id : String
+    def group_id : String
+      system_group_id
+    end
 
     # Returns true if this `Info` and *other* are of the same file.
     #
-    # On unix, this compares device and inode fields, and will compare equal for
-    # hard linked files.
-    abstract def same_file?(other : File::Info) : Bool
+    # On Unix-like systems, this compares device and inode fields, and will
+    # compare equal for hard linked files.
+    def same_file?(other : self) : Bool
+      system_same_file?(other)
+    end
 
     # Returns true if this `Info` represents a standard file. Shortcut for
     # `type.file?`.
@@ -124,5 +144,3 @@ class File
     end
   end
 end
-
-require "crystal/system/file_info"

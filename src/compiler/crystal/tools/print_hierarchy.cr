@@ -103,11 +103,110 @@ module Crystal
     end
 
     def type_size(type)
-      @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
+      return nil unless constant_type_size?(type)
+
+      if type.is_a?(GenericClassType)
+        # obtain a "generic instance" where all arguments are simply the unbound
+        # parameters themselves; if we are here, `LLVMTyper` should never be
+        # requesting the size of a `TypeParameter`
+        type_vars = type.type_vars.map { |type_var| type.type_parameter(type_var).as(TypeVar) }
+        type = type.instantiate(type_vars)
+      end
+
+      llvm_type =
+        case type
+        when PointerInstanceType, ProcInstanceType
+          @llvm_typer.llvm_type(type, wants_size: true)
+        when InstanceVarContainer
+          @llvm_typer.llvm_struct_type(type, wants_size: true)
+        else
+          @llvm_typer.llvm_type(type, wants_size: true)
+        end
+
+      @llvm_typer.size_of(llvm_type)
     end
 
-    def ivar_size(ivar)
-      @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
+    def ivar_size(ivar, extern)
+      return nil unless constant_ivar_size?(ivar.type)
+
+      llvm_type = if extern
+                    @llvm_typer.llvm_embedded_c_type(ivar.type, wants_size: true)
+                  else
+                    @llvm_typer.llvm_embedded_type(ivar.type, wants_size: true)
+                  end
+
+      @llvm_typer.size_of(llvm_type)
+    end
+
+    # Returns `true` if `type`'s size (`sizeof` for values, `instance_sizeof`
+    # for references) is a constant, in particular if it doesn't depend on
+    # `type`'s generic type parameters. `type` is never a generic instance.
+    def constant_type_size?(type)
+      case type
+      when GenericUnionType, StaticArrayType, TupleType, NamedTupleType
+        false
+      when PointerType, ProcType
+        true
+      when GenericClassType
+        type.all_instance_vars.each do |_, ivar|
+          return false unless ivar_type = ivar.type?
+          return false unless constant_ivar_size?(ivar_type)
+        end
+        true
+      else
+        true
+      end
+    end
+
+    # Returns `true` if `sizeof(type)` is a constant, in particular if it
+    # doesn't depend on `type`'s generic type parameters. Unlike
+    # `#constant_type_size?`, here `type` can be a generic instance, but not an
+    # uninstantiated generic.
+    def constant_ivar_size?(type)
+      return true unless type.unbound? || type.is_a?(GenericType)
+
+      case type
+      when GenericType
+        type_vars = type.type_vars.map { |type_var| type.type_parameter(type_var).as(TypeVar) }
+        constant_ivar_size?(type.instantiate(type_vars))
+      when TypeParameter
+        false
+      when MixedUnionType
+        type.union_types.all? { |t| constant_ivar_size?(t) }
+      when StaticArrayInstanceType
+        return false unless constant_ivar_size?(type.element_type)
+        case size_var = type.size
+        when NumberLiteral
+          true
+        when Var
+          return false unless size_var_type = size_var.type?
+          return false unless constant_ivar_size?(size_var_type)
+        else
+          false
+        end
+      when TupleInstanceType
+        type.tuple_types.all? { |t| constant_ivar_size?(t) }
+      when NamedTupleInstanceType
+        type.entries.all? { |entry| constant_ivar_size?(entry.type) }
+      when GenericModuleInstanceType
+        # TODO: verify
+        type.generic_type.each_instantiated_type do |instance|
+          instance.as(GenericModuleInstanceType).raw_including_types.try &.each do |including_type|
+            return false unless constant_ivar_size?(including_type)
+          end
+        end
+        true
+      when InstanceVarContainer
+        if type.struct?
+          type.all_instance_vars.each do |_, ivar|
+            return false unless ivar_type = ivar.type?
+            return false unless constant_ivar_size?(ivar_type)
+          end
+        end
+        true
+      else
+        true
+      end
     end
   end
 
@@ -149,10 +248,9 @@ module Crystal
       @io << "+" unless @indents.empty?
       @io << "- " << (type.struct? ? "struct" : "class") << " " << type
 
-      if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
-         !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
+      if type_size = type_size(type)
         with_color.light_gray.surround(@io) do
-          @io << " (" << type_size(type) << " bytes)"
+          @io << " (" << type_size << " bytes)"
         end
       end
       @io << '\n'
@@ -173,35 +271,22 @@ module Crystal
       # Nothing to do
     end
 
-    def print_instance_vars(type : GenericClassType, has_subtypes)
-      instance_vars = type.instance_vars
-      return if instance_vars.empty?
-
-      max_name_size = instance_vars.keys.max_of &.size
-
-      instance_vars.each do |name, var|
-        print_indent
-        @io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
-
-        with_color.light_gray.surround(@io) do
-          name.ljust(@io, max_name_size)
-          @io << " : " << var
-        end
-        @io << '\n'
-      end
-    end
-
     def print_instance_vars(type, has_subtypes)
       instance_vars = type.instance_vars
       return if instance_vars.empty?
 
       instance_vars = instance_vars.values
-      typed_instance_vars = instance_vars.select &.type?
+      instance_var_types = {} of MetaTypeVar => {Type, UInt64?}
+      instance_vars.each do |ivar|
+        if ivar_type = ivar.type?
+          instance_var_types[ivar] = {ivar_type, ivar_size(ivar, type.extern?)}
+        end
+      end
 
       max_name_size = instance_vars.max_of &.name.size
 
-      max_type_size = typed_instance_vars.max_of?(&.type.to_s.size) || 0
-      max_bytes_size = typed_instance_vars.max_of? { |var| ivar_size(var).to_s.size } || 0
+      max_type_size = instance_var_types.max_of? { |_, (type, _)| type.to_s.size } || 0
+      max_bytes_size = instance_var_types.max_of? { |_, (_, size)| size.try(&.to_s.size) || 0 } || 0
 
       instance_vars.each do |ivar|
         print_indent
@@ -210,12 +295,17 @@ module Crystal
         with_color.light_gray.surround(@io) do
           ivar.name.ljust(@io, max_name_size)
           @io << " : "
-          if ivar_type = ivar.type?
-            ivar_type.to_s.ljust(@io, max_type_size)
-            with_color.light_gray.surround(@io) do
-              @io << " ("
-              ivar_size(ivar).to_s.rjust(@io, max_bytes_size)
-              @io << " bytes)"
+          if entry = instance_var_types[ivar]?
+            ivar_type, size = entry
+            if size
+              ivar_type.to_s.ljust(@io, max_type_size)
+              with_color.light_gray.surround(@io) do
+                @io << " ("
+                size.to_s.rjust(@io, max_bytes_size)
+                @io << " bytes)"
+              end
+            else
+              @io << ivar_type
             end
           else
             @io << "MISSING".colorize.red.bright
@@ -239,7 +329,7 @@ module Crystal
       end
     end
 
-    def with_indent
+    def with_indent(&)
       @indents.push true
       yield
       @indents.pop
@@ -269,7 +359,7 @@ module Crystal
 
       @json.field "sub_types" do
         @json.array do
-          types.each_with_index do |type, index|
+          types.each do |type|
             if must_print? type
               @json.object do
                 print_type(type)
@@ -284,8 +374,7 @@ module Crystal
       @json.field "name", type.to_s
       @json.field "kind", type.struct? ? "struct" : "class"
 
-      if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
-         !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
+      if type_size = type_size(type)
         @json.field "size_in_bytes", type_size(type)
       end
     end
@@ -302,22 +391,6 @@ module Crystal
       # Nothing to do
     end
 
-    def print_instance_vars(type : GenericClassType, has_subtypes)
-      instance_vars = type.instance_vars
-      return if instance_vars.empty?
-
-      @json.field "instance_vars" do
-        @json.array do
-          instance_vars.each do |name, var|
-            @json.object do
-              @json.field "name", name.to_s
-              @json.field "type", var.to_s
-            end
-          end
-        end
-      end
-    end
-
     def print_instance_vars(type, has_subtypes)
       instance_vars = type.instance_vars
       return if instance_vars.empty?
@@ -330,7 +403,9 @@ module Crystal
               @json.object do
                 @json.field "name", instance_var.name.to_s
                 @json.field "type", ivar_type.to_s
-                @json.field "size_in_bytes", ivar_size(instance_var)
+                if ivar_size = ivar_size(instance_var, type.extern?)
+                  @json.field "size_in_bytes", ivar_size
+                end
               end
             end
           end

@@ -7,6 +7,7 @@ _crystal_commands() {
   commands=(
     "init:generate new crystal project"
     "build:build an executable"
+    "clear_cache:clear the compiler cache"
     "docs:generate documentation"
     "env:print Crystal environment information"
     "eval:eval code from args or standard input"
@@ -58,6 +59,11 @@ local -a release_args; release_args=(
 
 local -a cursor_args; cursor_args=(
   '(-c --cursor)'{-c,--cursor}'[cursor location with LOC as path/to/file.cr:line:column]:LOC'
+)
+
+local -a include_exclude_args; cursor_args=(
+  '(-i --include)'{-i,--include}'[Include path in output]' \
+  '(-i --exclude)'{-i,--exclude}'[Exclude path in output]'
 )
 
 local -a programfile; programfile='*:Crystal File:_files -g "*.cr(.)"'
@@ -157,7 +163,9 @@ _crystal-tool() {
 
       commands=(
         "context:show context for given location"
+        "dependencies:show tree of required source files"
         "expand:show macro expansion for given location"
+        "flags:print all macro 'flag?' values"
         "format:format project, directories and/or files"
         "hierarchy:show type hierarchy"
         "implementations:show implementations for given call in location"
@@ -182,6 +190,17 @@ _crystal-tool() {
             $cursor_args
         ;;
 
+        (dependencies)
+          _arguments \
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $exec_args \
+            '(-f --format)'{-f,--format}'[output format 'tree' (default), 'flat', 'dot', or 'mermaid']:' \
+            $prelude_args \
+            $include_exclude_args
+        ;;
+
         (expand)
           _arguments \
             $programfile \
@@ -191,6 +210,12 @@ _crystal-tool() {
             $format_args \
             $prelude_args \
             $cursor_args
+        ;;
+
+        (flags)
+          _arguments \
+            $programfile \
+            $help_args
         ;;
 
         (format)

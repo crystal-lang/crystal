@@ -35,11 +35,7 @@ class Exception
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
   def backtrace?
-    {% if flag?(:win32) %}
-      Array(String).new
-    {% else %}
-      @callstack.try &.printable_backtrace
-    {% end %}
+    @callstack.try &.printable_backtrace
   end
 
   def to_s(io : IO) : Nil
@@ -58,6 +54,7 @@ class Exception
 
   def inspect_with_backtrace(io : IO) : Nil
     io << message << " (" << self.class << ")\n"
+
     backtrace?.try &.each do |frame|
       io.print "  from "
       io.puts frame

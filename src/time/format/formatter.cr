@@ -211,7 +211,7 @@ struct Time::Format
     end
 
     def time_zone_gmt_or_rfc2822(**options) : Nil
-      if time.utc? || time.location.name == "UT" || time.location.name == "GMT"
+      if time.utc? || time.location.name.in?("UT", "GMT")
         time_zone_gmt
       else
         time_zone_rfc2822
@@ -255,30 +255,30 @@ struct Time::Format
     end
 
     def pad2(value, padding) : Nil
-      io.write_byte padding.ord.to_u8 if value < 10
+      io << padding if value < 10
       io << value
     end
 
     def pad3(value, padding) : Nil
-      io.write_byte padding.ord.to_u8 if value < 100
+      io << padding if value < 100
       pad2 value, padding
     end
 
     def pad4(value, padding) : Nil
-      io.write_byte padding.ord.to_u8 if value < 1000
+      io << padding if value < 1000
       pad3 value, padding
     end
 
     def pad6(value, padding) : Nil
-      io.write_byte padding.ord.to_u8 if value < 100000
-      io.write_byte padding.ord.to_u8 if value < 10000
+      io << padding if value < 100000
+      io << padding if value < 10000
       pad4 value, padding
     end
 
     def pad9(value, padding) : Nil
-      io.write_byte padding.ord.to_u8 if value < 100000000
-      io.write_byte padding.ord.to_u8 if value < 10000000
-      io.write_byte padding.ord.to_u8 if value < 1000000
+      io << padding if value < 100000000
+      io << padding if value < 10000000
+      io << padding if value < 1000000
       pad6 value, padding
     end
   end

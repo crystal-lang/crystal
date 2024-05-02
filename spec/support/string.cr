@@ -1,60 +1,125 @@
-# Builds a `String` through a UTF-16 `IO`.
-#
-# Similar to `String.build`, but the yielded `IO` is configured to use the
-# UTF-16 encoding, and the written contents are decoded back into a UTF-8
-# `String`. This method is mainly used by `assert_prints` to test the behaviour
-# of string-generating methods under different encodings.
-#
-# This method cannot be used on Windows systems, because IO encoding is not
-# supported yet.
-def string_build_via_utf16(& : IO -> _)
-  {% if flag?(:win32) %}
-    raise NotImplementedError.new("string_build_via_utf16")
-  {% else %}
-    io = IO::Memory.new
-    io.set_encoding(IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian ? "UTF-16LE" : "UTF-16BE")
-    yield io
-    byte_slice = io.to_slice
-    utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))
-    String.from_utf16(utf16_slice)
-  {% end %}
-end
+VALID_UTF8_BYTE_SEQUENCES = {
+  [0x00] => '\u{0000}',
+  [0x7F] => '\u{007F}',
 
-# Asserts that the given *call* and its `IO`-accepting variants produce the
-# given string *str*.
-#
-# Given a call of the form `foo.bar(*args, **opts)`, tests the following cases:
-#
-# * This call itself should return a `String` equal to *str*.
-# * `String.build { |io| foo.bar(io, *args, **opts) }` should be equal to *str*.
-# * `string_build_via_utf16 { |io| foo.bar(io, *args, **opts) }` should be equal
-#   to *str*; that is, the `IO` overload should not fail when the `IO` argument
-#   uses a non-default encoding. This case is skipped on Windows systems,
-#   because IO encoding is not supported yet.
-macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
-  %str = ({{ str }}).as(String)
-  %file = {{ file }}
-  %line = {{ line }}
+  [0xC2, 0x80] => '\u{0080}',
+  [0xC2, 0xBF] => '\u{00BF}',
+  [0xDF, 0x80] => '\u{07C0}',
+  [0xDF, 0xBF] => '\u{07FF}',
 
-  %result = {{ call }}
-  %result.should be_a(String), file: %file, line: %line
-  %result.should eq(%str), file: %file, line: %line
+  [0xE0, 0xA0, 0x80] => '\u{0800}',
+  [0xE0, 0xA0, 0xBF] => '\u{083F}',
+  [0xE0, 0xBF, 0x80] => '\u{0FC0}',
+  [0xE0, 0xBF, 0xBF] => '\u{0FFF}',
+  [0xE1, 0x80, 0x80] => '\u{1000}',
+  [0xE1, 0x80, 0xBF] => '\u{103F}',
+  [0xE1, 0x9F, 0x80] => '\u{17C0}',
+  [0xE1, 0x9F, 0xBF] => '\u{17FF}',
+  [0xE1, 0xA0, 0x80] => '\u{1800}',
+  [0xE1, 0xA0, 0xBF] => '\u{183F}',
+  [0xE1, 0xBF, 0x80] => '\u{1FC0}',
+  [0xE1, 0xBF, 0xBF] => '\u{1FFF}',
+  [0xED, 0x80, 0x80] => '\u{D000}',
+  [0xED, 0x80, 0xBF] => '\u{D03F}',
+  [0xED, 0x9F, 0x80] => '\u{D7C0}',
+  [0xED, 0x9F, 0xBF] => '\u{D7FF}',
+  [0xEF, 0x80, 0x80] => '\u{F000}',
+  [0xEF, 0x80, 0xBF] => '\u{F03F}',
+  [0xEF, 0x9F, 0x80] => '\u{F7C0}',
+  [0xEF, 0x9F, 0xBF] => '\u{F7FF}',
+  [0xEF, 0xA0, 0x80] => '\u{F800}',
+  [0xEF, 0xA0, 0xBF] => '\u{F83F}',
+  [0xEF, 0xBF, 0x80] => '\u{FFC0}',
+  [0xEF, 0xBF, 0xBF] => '\u{FFFF}',
 
-  String.build do |io|
-    {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
-      io,
-      {% for arg in call.args %} ({{ arg }}), {% end %}
-      {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: ({{ narg.value }}), {% end %} {% end %}
-    ) {{ call.block }}
-  end.should eq(%str), file: %file, line: %line
+  [0xF0, 0x90, 0x80, 0x80] => '\u{10000}',
+  [0xF0, 0x90, 0x80, 0xBF] => '\u{1003F}',
+  [0xF0, 0x90, 0xBF, 0x80] => '\u{10FC0}',
+  [0xF0, 0x90, 0xBF, 0xBF] => '\u{10FFF}',
+  [0xF0, 0xBF, 0x80, 0x80] => '\u{3F000}',
+  [0xF0, 0xBF, 0x80, 0xBF] => '\u{3F03F}',
+  [0xF0, 0xBF, 0xBF, 0x80] => '\u{3FFC0}',
+  [0xF0, 0xBF, 0xBF, 0xBF] => '\u{3FFFF}',
+  [0xF1, 0x80, 0x80, 0x80] => '\u{40000}',
+  [0xF1, 0x80, 0x80, 0xBF] => '\u{4003F}',
+  [0xF1, 0x80, 0xBF, 0x80] => '\u{40FC0}',
+  [0xF1, 0x80, 0xBF, 0xBF] => '\u{40FFF}',
+  [0xF1, 0x8F, 0x80, 0x80] => '\u{4F000}',
+  [0xF1, 0x8F, 0x80, 0xBF] => '\u{4F03F}',
+  [0xF1, 0x8F, 0xBF, 0x80] => '\u{4FFC0}',
+  [0xF1, 0x8F, 0xBF, 0xBF] => '\u{4FFFF}',
+  [0xF3, 0x90, 0x80, 0x80] => '\u{D0000}',
+  [0xF3, 0xBF, 0xBF, 0xBF] => '\u{FFFFF}',
+  [0xF4, 0x80, 0x80, 0x80] => '\u{100000}',
+  [0xF4, 0x80, 0x80, 0xBF] => '\u{10003F}',
+  [0xF4, 0x80, 0xBF, 0x80] => '\u{100FC0}',
+  [0xF4, 0x80, 0xBF, 0xBF] => '\u{100FFF}',
+  [0xF4, 0x8F, 0x80, 0x80] => '\u{10F000}',
+  [0xF4, 0x8F, 0xBF, 0xBF] => '\u{10FFFF}',
+}
 
-  {% unless flag?(:win32) %}
-    string_build_via_utf16 do |io|
-      {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
-        io,
-        {% for arg in call.args %} ({{ arg }}), {% end %}
-        {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: ({{ narg.value }}), {% end %} {% end %}
-      ) {{ call.block }}
-    end.should eq(%str), file: %file, line: %line
-  {% end %}
-end
+INVALID_UTF8_BYTE_SEQUENCES = [
+  # non-starters
+  [0x80],
+  [0x8F],
+  [0x90],
+  [0x9F],
+  [0xA0],
+  [0xAF],
+  [0xB0],
+  [0xBF],
+  [0xFE],
+  [0xFF],
+
+  # incomplete, 2-byte
+  [0xC2],
+  [0xC2, 0x00],
+  [0xC2, 0xC2],
+
+  # overlong, 2-byte
+  [0xC0, 0x80],
+  [0xC1, 0xBF],
+
+  # incomplete, 3-byte
+  [0xE1],
+  [0xE1, 0x00],
+  [0xE1, 0xC2],
+  [0xE1, 0x80],
+  [0xE1, 0x80, 0x00],
+  [0xE1, 0x80, 0xC2],
+
+  # overlong, 3-byte
+  [0xE0, 0x80, 0x80],
+  [0xE0, 0x9F, 0xBF],
+
+  # surrogate pairs
+  [0xED, 0xA0, 0x80],
+  [0xED, 0xBF, 0xBF],
+
+  # incomplete, 4-byte
+  [0xF1],
+  [0xF1, 0x00],
+  [0xF1, 0xC2],
+  [0xF1, 0x80],
+  [0xF1, 0x80, 0x00],
+  [0xF1, 0x80, 0xC2],
+  [0xF1, 0x80, 0x80],
+  [0xF1, 0x80, 0x80, 0x00],
+  [0xF1, 0x80, 0x80, 0xC2],
+
+  # overlong, 4-byte
+  [0xF0, 0x80, 0x80, 0x80],
+  [0xF0, 0x8F, 0xBF, 0xBF],
+
+  # upper boundary, 4-byte
+  [0xF4, 0x90, 0x80, 0x80],
+  [0xF5],
+
+  # 5-byte (obsolete)
+  [0xF8],
+  [0xF8, 0x80, 0x80, 0x80, 0x80],
+
+  # 6-byte (obsolete)
+  [0xFC],
+  [0xFC, 0x80, 0x80, 0x80, 0x80, 0x80],
+]

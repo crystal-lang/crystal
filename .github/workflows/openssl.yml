@@ -1,0 +1,58 @@
+name: OpenSSL CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  openssl3:
+    runs-on: ubuntu-latest
+    name: "OpenSSL 3.0"
+    container: crystallang/crystal:1.12.1-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Uninstall openssl 1.1
+        run: apk del openssl-dev
+      - name: Upgrade alpine-keys
+        run: apk upgrade alpine-keys
+      - name: Install openssl 3.0
+        run: apk add "openssl-dev=~3.0"
+      - name: Check LibSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec --order=random spec/std/openssl/
+  openssl111:
+    runs-on: ubuntu-latest
+    name: "OpenSSL 1.1.1"
+    container: crystallang/crystal:1.12.1-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Uninstall openssl
+        run: apk del openssl-dev
+      - name: Install openssl 1.1.1
+        run: apk add "openssl1.1-compat-dev=~1.1.1"
+      - name: Check LibSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec --order=random spec/std/openssl/
+  libressl34:
+    runs-on: ubuntu-latest
+    name: "LibreSSL 3.4"
+    container: crystallang/crystal:1.12.1-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Uninstall openssl
+        run: apk del openssl-dev openssl-libs-static
+      - name: Upgrade alpine-keys
+        run: apk upgrade alpine-keys
+      - name: Install libressl 3.4
+        run: apk add "libressl-dev=~3.4" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.15/community
+      - name: Check LibSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec --order=random spec/std/openssl/

@@ -36,14 +36,14 @@
 #   Returns the respective error message for *os_error*.
 #   By default it returns the result of `Errno#message` or `WinError#message`.
 #   This method can be overridden for customization of the error message based
-#   on *or_error*  and *opts*.
+#   on *os_error* and *opts*.
 module SystemError
   macro included
     extend ::SystemError::ClassMethods
   end
 
   # The original system error wrapped by this exception
-  getter os_error : Errno | WinError | Nil
+  getter os_error : Errno | WinError | WasiError | Nil
 
   # :nodoc:
   protected def os_error=(@os_error)
@@ -54,7 +54,7 @@ module SystemError
     #
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
-    def from_os_error(message : String?, os_error : Errno | WinError | Nil, **opts)
+    def from_os_error(message : String?, os_error : Errno | WinError | WasiError | Nil, **opts)
       message = self.build_message(message, **opts)
       message =
         if message
@@ -77,7 +77,7 @@ module SystemError
     end
 
     @[Deprecated("Use `.from_os_error` instead")]
-    def from_errno(message : String? = nil, errno : Errno = nil, **opts)
+    def from_errno(message : String? = nil, errno : Errno? = nil, **opts)
       from_os_error(message, errno, **opts)
     end
 
@@ -94,7 +94,7 @@ module SystemError
     # By default it returns the result of `Errno#message` or `WinError#message`.
     # This method can be overridden for customization of the error message based
     # on *or_error*  and *\*\*opts*.
-    protected def os_error_message(os_error : Errno | WinError | Nil, **opts) : String?
+    protected def os_error_message(os_error : Errno | WinError | WasiError | Nil, **opts) : String?
       os_error.try &.message
     end
 

@@ -1,6 +1,10 @@
 require "../spec_helper"
 
 class FakeRootContext < Spec::RootContext
+  def initialize
+    super(Spec::CLI.new)
+  end
+
   def description
     "root"
   end

@@ -67,7 +67,13 @@ class MainPoint < Point
   MAX_TAIL_ANGLE = Math::PI / 3
   TAIL_SPEED     = 0.05
 
+  enum Direction
+    Plus
+    Minus
+  end
+
   @tail_angle : Float64
+  @tail_direction : Direction
 
   def initialize(x, y, angle, speed, color_pattern)
     super
@@ -102,7 +108,7 @@ class MainPoint < Point
     points.make(@x, @y, Math::PI + @angle + @tail_angle, @speed, @color_pattern.child)
     points.make(@x, @y, Math::PI + @angle - @tail_angle, @speed, @color_pattern.child)
 
-    if @tail_direction == :plus
+    if @tail_direction.plus?
       @tail_angle += TAIL_SPEED
       if @tail_angle >= MAX_TAIL_ANGLE
         @tail_angle = MAX_TAIL_ANGLE
@@ -198,7 +204,7 @@ class RainbowColorPattern < ColorPattern
   end
 
   def interpolate(life)
-    raise "shouldn't reach here"
+    raise "Shouldn't reach here"
   end
 end
 
@@ -227,7 +233,7 @@ class Points
     end
   end
 
-  def each
+  def each(&)
     @points.each do |point|
       yield point unless point.dead?
     end
@@ -251,7 +257,7 @@ def parse_rectangles(filename)
 
   rects = [] of Rectangle
   lines = File.read(filename)
-  lines = lines.split('\n').map { |line| line.rstrip }
+  lines = lines.split('\n').map(&.rstrip)
   lines.each_with_index do |line, y|
     x = 0
     line.each_char do |c|
@@ -288,7 +294,7 @@ class Screen
     background_intensity = intensity(@background[offset])
     color_intensity = intensity(color)
 
-    if color_intensity >= background_intensity && @rects.any? { |rect| rect.contains?(point) }
+    if color_intensity >= background_intensity && @rects.any?(&.contains?(point))
       @background[offset] = color
     end
   end

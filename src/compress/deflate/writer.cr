@@ -32,7 +32,7 @@ class Compress::Deflate::Writer < IO
   # and closes it at its end.
   def self.open(io : IO, level : Int32 = Compress::Deflate::DEFAULT_COMPRESSION,
                 strategy : Compress::Deflate::Strategy = Compress::Deflate::Strategy::DEFAULT,
-                sync_close : Bool = false, dict : Bytes? = nil)
+                sync_close : Bool = false, dict : Bytes? = nil, &)
     writer = new(io, level: level, strategy: strategy, sync_close: sync_close, dict: dict)
     yield writer ensure writer.close
   end
@@ -81,7 +81,6 @@ class Compress::Deflate::Writer < IO
     @closed
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end

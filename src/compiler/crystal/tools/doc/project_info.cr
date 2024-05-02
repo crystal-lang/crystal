@@ -38,7 +38,7 @@ module Crystal::Doc
         if shard_name && !name?
           self.name = shard_name
         end
-        if shard_version && !version? && !ProjectInfo.git_dir?
+        if shard_version && !version?
           self.version = shard_version
         end
       end
@@ -52,10 +52,6 @@ module Crystal::Doc
 
       url = url_pattern % {refname: refname, path: location.filename, filename: File.basename(location.filename), line: location.line_number}
       url.presence
-    end
-
-    def self.git_dir?
-      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"])
     end
 
     VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
@@ -97,7 +93,7 @@ module Crystal::Doc
         path = path.rchop(".git")
         "https://github.com/#{path}/blob/%{refname}/%{path}#L%{line}"
       when "gitlab.com", "www.gitlab.com"
-        # Gitlab only resolves URLs with the canonical repo name without .git extension.
+        # GitLab only resolves URLs with the canonical repo name without .git extension.
         path = path.rchop(".git")
         "https://gitlab.com/#{path}/blob/%{refname}/%{path}#L%{line}"
       when "bitbucket.com", "www.bitbucket.com"
@@ -164,7 +160,7 @@ module Crystal::Doc
     end
 
     def self.read_shard_properties
-      return {nil, nil} unless File.readable?("shard.yml")
+      return {nil, nil} unless File.exists?("shard.yml")
 
       name = nil
       version = nil

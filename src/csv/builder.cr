@@ -53,7 +53,7 @@ class CSV::Builder
 
   # Yields a `CSV::Row` to append a row. A newline is appended
   # to `IO` after the block exits.
-  def row
+  def row(&)
     yield Row.new(self, @separator, @quote_char, @quoting)
     @io << '\n'
     @first_cell_in_row = true
@@ -74,7 +74,7 @@ class CSV::Builder
   end
 
   # :nodoc:
-  def cell
+  def cell(&)
     append_cell do
       yield @io
     end
@@ -84,19 +84,19 @@ class CSV::Builder
   def quote_cell(value : String)
     append_cell do
       @io << @quote_char
-      value.each_byte do |byte|
-        case byte
+      value.each_char do |char|
+        case char
         when @quote_char
           @io << @quote_char << @quote_char
         else
-          @io.write_byte byte
+          @io << char
         end
       end
       @io << @quote_char
     end
   end
 
-  private def append_cell
+  private def append_cell(&)
     @io << @separator unless @first_cell_in_row
     yield
     @first_cell_in_row = false

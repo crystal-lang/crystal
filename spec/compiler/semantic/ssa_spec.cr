@@ -19,7 +19,7 @@ describe "Semantic: ssa" do
         a = 'a'
       end
       a
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types a var inside an if with previous definition" do
@@ -31,7 +31,7 @@ describe "Semantic: ssa" do
         a = 'a'
       end
       a
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types a var inside an if without change in then" do
@@ -42,7 +42,7 @@ describe "Semantic: ssa" do
         a = 'a'
       end
       a
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types a var inside an if without change in else" do
@@ -53,7 +53,7 @@ describe "Semantic: ssa" do
       else
       end
       a
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types a var inside an if without definition in else" do
@@ -63,7 +63,7 @@ describe "Semantic: ssa" do
       else
       end
       a
-      )) { nilable char }
+      ), inject_primitives: true) { nilable char }
   end
 
   it "types a var inside an if without definition in then" do
@@ -73,7 +73,7 @@ describe "Semantic: ssa" do
         a = 'a'
       end
       a
-      )) { nilable char }
+      ), inject_primitives: true) { nilable char }
   end
 
   it "types a var with an if but without change" do
@@ -83,7 +83,7 @@ describe "Semantic: ssa" do
       else
       end
       a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types a var with an if with nested if" do
@@ -96,7 +96,7 @@ describe "Semantic: ssa" do
         a = 4
       end
       a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types a var that is re-assigned in a block" do
@@ -120,7 +120,7 @@ describe "Semantic: ssa" do
         a = 'a'
       end
       a
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types a var that is re-assigned in a while and used in condition" do
@@ -144,7 +144,7 @@ describe "Semantic: ssa" do
         a = 1
       end
       b
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types a var that is declared in a while" do
@@ -153,7 +153,7 @@ describe "Semantic: ssa" do
         a = 1
       end
       a
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "types a var that is re-assigned in a while condition" do
@@ -187,7 +187,7 @@ describe "Semantic: ssa" do
         a = x
       end
       a
-      )) { union_of(char, int32) }
+      ), inject_primitives: true) { union_of(char, int32) }
   end
 
   it "types a var after begin ensure as having last type" do
@@ -214,72 +214,6 @@ describe "Semantic: ssa" do
       )) { char }
   end
 
-  it "types a var after begin rescue as having all possible types and nil in begin if read (2)" do
-    assert_type(%(
-      begin
-        a = 2
-        a = 'a'
-      rescue
-      end
-      a
-      )) { union_of [int32, char, nil_type] of Type }
-  end
-
-  it "types a var after begin rescue as having all possible types in begin and rescue" do
-    assert_type(%(
-      a = 1.5
-      begin
-        a = 2
-        a = 'a'
-        a = "hello"
-      rescue ex
-        a = false
-      end
-      a
-      )) { union_of [float64, int32, char, string, bool] of Type }
-  end
-
-  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
-    assert_type(%(
-      b = 2
-      begin
-        a = 2
-        a = 'a'
-        a = "hello"
-      rescue ex
-        b = a
-      end
-      b
-      )) { union_of [int32, char, string, nil_type] of Type }
-  end
-
-  it "types a var after begin rescue with no-return in rescue" do
-    assert_type(%(
-      lib LibC
-        fun exit : NoReturn
-      end
-
-      begin
-        a = 2
-        a = 'a'
-        a = "hello"
-      rescue ex
-        LibC.exit
-      end
-      a
-      )) { string }
-  end
-
-  it "types a var after rescue as being nilable" do
-    assert_type(%(
-      begin
-      rescue
-        a = 1
-      end
-      a
-      )) { nilable int32 }
-  end
-
   it "doesn't change type to nilable inside if" do
     assert_type("
       def foo
@@ -297,7 +231,7 @@ describe "Semantic: ssa" do
       end
 
       x = bar
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with return in then" do
@@ -312,7 +246,7 @@ describe "Semantic: ssa" do
       end
 
       foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with return in then with assign" do
@@ -328,7 +262,7 @@ describe "Semantic: ssa" do
       end
 
       foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with return in else" do
@@ -343,7 +277,7 @@ describe "Semantic: ssa" do
       end
 
       foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with return in else with assign" do
@@ -359,7 +293,7 @@ describe "Semantic: ssa" do
       end
 
       foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with return in both branches" do
@@ -380,7 +314,7 @@ describe "Semantic: ssa" do
       end
 
       foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with unreachable in then" do
@@ -397,7 +331,7 @@ describe "Semantic: ssa" do
       end
 
       a
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with break in then" do
@@ -415,7 +349,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if with next in then" do
@@ -433,7 +367,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types while with break" do
@@ -449,7 +383,7 @@ describe "Semantic: ssa" do
       end
 
       a
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types while with break with new var" do
@@ -462,7 +396,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { nilable char }
+      ", inject_primitives: true) { nilable char }
   end
 
   it "types while with break doesn't infect initial vars" do
@@ -480,7 +414,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types a var that is declared in a while condition with break before re-assignment" do
@@ -490,7 +424,7 @@ describe "Semantic: ssa" do
         a = "hello"
       end
       a
-      )) { char }
+      ), inject_primitives: true) { char }
   end
 
   it "types a var that is declared in a while condition with break after re-assignment" do
@@ -500,7 +434,7 @@ describe "Semantic: ssa" do
         break if 1 == 1
       end
       a
-      )) { union_of(char, string) }
+      ), inject_primitives: true) { union_of(char, string) }
   end
 
   it "types while with next" do
@@ -517,7 +451,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types block with break" do
@@ -537,7 +471,7 @@ describe "Semantic: ssa" do
       end
 
       a
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types block with break doesn't infect initial vars" do
@@ -559,7 +493,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types block with next" do
@@ -581,7 +515,7 @@ describe "Semantic: ssa" do
       end
 
       b
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types if with restricted type in then" do
@@ -618,7 +552,7 @@ describe "Semantic: ssa" do
         d = a
       end
       d
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "types re-assign inside if (bug)" do
@@ -639,7 +573,7 @@ describe "Semantic: ssa" do
         a = index
       end
       a
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "types re-assign inside while (bug)" do
@@ -660,7 +594,7 @@ describe "Semantic: ssa" do
         a = index
       end
       a
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "preserves type filters after block (bug)" do
@@ -677,6 +611,32 @@ describe "Semantic: ssa" do
       else
         1
       end
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
+  end
+
+  it "errors if accessing variable declared inside typeof" do
+    assert_error %(
+      typeof(x = 1)
+      x
+      ),
+      "undefined local variable or method 'x'"
+  end
+
+  it "doesn't error if same variable is declared in multiple typeofs" do
+    assert_type(%(
+      typeof((x = uninitialized Int32; x))
+      typeof((x = uninitialized Char; x))
+      )) { char.metaclass }
+  end
+
+  it "doesn't error if same variable is used in multiple arguments of same typeof" do
+    assert_type(%(
+      def foo(x : String)
+        'a'
+      end
+
+      x = 1
+      typeof(x = "", x = foo(x))
+      )) { union_of(string, char).metaclass }
   end
 end

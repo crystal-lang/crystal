@@ -245,6 +245,10 @@ module Crystal
       llvm_type(type.remove_alias, wants_size)
     end
 
+    private def create_llvm_type(type : ReferenceStorageType, wants_size)
+      llvm_struct_type(type.reference_type, wants_size)
+    end
+
     private def create_llvm_type(type : NonGenericModuleType | GenericClassType, wants_size)
       # This can only be reached if the module or generic class don't have implementors
       @llvm_context.int1
@@ -327,6 +331,33 @@ module Crystal
           @structs[llvm_name] = a_struct
         end
 
+        # We are going to represent the union like this:
+        # 1. Find out what's the type with the largest alignment
+        # 2. Find out what's the type's size
+        # 3. Have the first member of the union be an array
+        #    of ints that match that alignment, up to that type's
+        #    size, followed by another member that is just bytes
+        #    to fill the rest of the union's size.
+        #
+        # So for example if we have this:
+        #
+        # struct Foo
+        #   x : Int8
+        #   y : Int32
+        # end
+        #
+        # union Bar
+        #   foo : Foo
+        #   padding : UInt8[24]
+        # end
+        #
+        # We have that for Bar, the largest alignment of its types
+        # is 4 (for Foo's Int32). Foo's size is 8 bytes (4 for x, 4 for y).
+        # Then for the first union member we'll have [2 x i32].
+        # The total size of the union is 24 bytes. We already filled
+        # 8 bytes so we still need 16 bytes.
+        # The resulting union is { [2 x i32], [16 x i8] }.
+
         max_size = 0
         max_align = 0
         max_align_type = nil
@@ -351,8 +382,10 @@ module Crystal
           end
         end
 
-        max_align_type = max_align_type.not_nil!
-        union_fill = [max_align_type] of LLVM::Type
+        filler = @llvm_context.int(max_align * 8)
+        filler_size = max_align_type_size // max_align
+
+        union_fill = [filler.array(filler_size)] of LLVM::Type
         if max_align_type_size < max_size
           union_fill << @llvm_context.int8.array(max_size - max_align_type_size)
         end
@@ -376,7 +409,7 @@ module Crystal
     end
 
     def llvm_embedded_c_type(type : ProcInstanceType, wants_size = false)
-      proc_type(type)
+      proc_type(type).pointer
     end
 
     def llvm_embedded_c_type(type, wants_size = false)
@@ -384,11 +417,11 @@ module Crystal
     end
 
     def llvm_c_type(type : ProcInstanceType)
-      proc_type(type)
+      proc_type(type).pointer
     end
 
     def llvm_c_type(type : NilableProcType)
-      proc_type(type.proc_type)
+      proc_type(type.proc_type).pointer
     end
 
     def llvm_c_type(type : TupleInstanceType)
@@ -429,15 +462,31 @@ module Crystal
       llvm_type(type)
     end
 
+    # Since LLVM 15, LLVM intrinsics must return unnamed structs, and instances
+    # of the named `Tuple` struct are no longer substitutable
+    # This happens when binding to intrinsics like `llvm.sadd.with.overflow.*`
+    # as lib funs directly
+    def llvm_intrinsic_return_type(type : TupleInstanceType)
+      @llvm_context.struct(type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type).as(LLVM::Type) })
+    end
+
+    def llvm_intrinsic_return_type(type : NamedTupleInstanceType)
+      @llvm_context.struct(type.entries.map { |entry| llvm_embedded_type(entry.type).as(LLVM::Type) })
+    end
+
+    def llvm_intrinsic_return_type(type : Type)
+      llvm_return_type(type)
+    end
+
     def closure_type(type : ProcInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type) }
       arg_types.insert(0, @llvm_context.void_pointer)
-      LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
+      LLVM::Type.function(arg_types, llvm_type(type.return_type))
     end
 
     def proc_type(type : ProcInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type).as(LLVM::Type) }
-      LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
+      LLVM::Type.function(arg_types, llvm_type(type.return_type))
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)
@@ -478,7 +527,11 @@ module Crystal
       when .double?
         @llvm_context.double
       when .pointer?
-        copy_type(type.element_type).pointer
+        {% if LibLLVM::IS_LT_150 %}
+          copy_type(type.element_type).pointer
+        {% else %}
+          @llvm_context.pointer
+        {% end %}
       when .array?
         copy_type(type.element_type).array(type.array_size)
       when .vector?
@@ -525,15 +578,15 @@ module Crystal
     end
 
     def align_of(type)
-      @layout.abi_alignment(type)
+      if type.void?
+        1_u32
+      else
+        @layout.abi_alignment(type)
+      end
     end
 
     def size_t
-      if @program.bits64?
-        @llvm_context.int64
-      else
-        @llvm_context.int32
-      end
+      @llvm_context.int(@program.size_bit_width)
     end
 
     @pointer_size : UInt64?

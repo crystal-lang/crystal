@@ -62,7 +62,7 @@ describe "Semantic: abstract def" do
       p.value = Bar.new
       p.value = Baz.new
       p.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if using abstract def on subclass that also defines it as abstract" do
@@ -94,12 +94,7 @@ describe "Semantic: abstract def" do
 
       Bar.new.foo(1 || 'a')
       ),
-      <<-MSG
-      Overloads are:
-       - Bar#foo(x : Int32)
-      Couldn't find overloads for these types:
-       - Bar#foo(x : Char)
-      MSG
+      "expected argument #1 to 'Bar#foo' to be Int32, not (Char | Int32)"
   end
 
   it "errors if using abstract def on non-abstract class" do
@@ -121,14 +116,14 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by subclass" do
-    exc = assert_error <<-CR,
+    exc = assert_error <<-CRYSTAL,
       abstract class Foo
         abstract def foo
       end
 
       class Bar < Foo
       end
-      CR
+      CRYSTAL
       "abstract `def Foo#foo()` must be implemented by Bar"
     exc.line_number.should eq 5
     exc.column_number.should eq 1
@@ -190,7 +185,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method is implemented by subclass" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo
       end
@@ -199,11 +194,11 @@ describe "Semantic: abstract def" do
         def foo
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if abstract method with args is implemented by subclass" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(x, y)
       end
@@ -212,11 +207,11 @@ describe "Semantic: abstract def" do
         def foo(x, y)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (restriction -> no restriction)" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(x, y : Int32)
       end
@@ -225,11 +220,11 @@ describe "Semantic: abstract def" do
         def foo(x, y)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (don't check subclasses)" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo
       end
@@ -241,7 +236,18 @@ describe "Semantic: abstract def" do
 
       class Baz < Bar
       end
-      )
+      CRYSTAL
+  end
+
+  it "errors if abstract method of private type is not implemented by subclass" do
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Bar"
+      private abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+      end
+      CRYSTAL
   end
 
   it "errors if abstract method is not implemented by subclass of subclass" do
@@ -260,7 +266,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method is implemented by subclass via module inclusion" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo
       end
@@ -273,7 +279,7 @@ describe "Semantic: abstract def" do
       class Bar < Foo
         include Moo
       end
-      )
+      CRYSTAL
   end
 
   it "errors if abstract method is not implemented by including class" do
@@ -290,7 +296,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method is implemented by including class" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       module Foo
         abstract def foo
       end
@@ -301,11 +307,23 @@ describe "Semantic: abstract def" do
         def foo
         end
       end
-      )
+      CRYSTAL
+  end
+
+  it "errors if abstract method of private type is not implemented by including class" do
+    assert_error <<-CRYSTAL, "abstract `def Foo#foo()` must be implemented by Bar"
+      private module Foo
+        abstract def foo
+      end
+
+      class Bar
+        include Foo
+      end
+      CRYSTAL
   end
 
   it "doesn't error if abstract method is not implemented by including module" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       module Foo
         abstract def foo
       end
@@ -313,7 +331,7 @@ describe "Semantic: abstract def" do
       module Bar
         include Foo
       end
-      )
+      CRYSTAL
   end
 
   it "errors if abstract method is not implemented by subclass (nested in module)" do
@@ -331,7 +349,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (with one default arg)" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(x)
       end
@@ -340,11 +358,11 @@ describe "Semantic: abstract def" do
         def foo(x, y = 1)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "doesn't error if implements with parent class" do
-    semantic %(
+    assert_no_errors %(
       class Parent; end
       class Child < Parent; end
 
@@ -359,8 +377,64 @@ describe "Semantic: abstract def" do
       )
   end
 
+  it "doesn't error if implements with generic parent class instance" do
+    assert_no_errors %(
+      class Parent(T); end
+      class Child(T) < Parent(T); end
+
+      abstract class Foo
+        abstract def foo(x : Child(Int32))
+      end
+
+      class Bar < Foo
+        def foo(x : Parent(Int32))
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with included module" do
+    assert_no_errors %(
+      module Moo
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      abstract class Foo
+        abstract def foo(x : Moo2)
+      end
+
+      class Bar < Foo
+        def foo(x : Moo)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with generic included module instance" do
+    assert_no_errors %(
+      module Moo(T)
+      end
+
+      module Moo2(T)
+        include Moo(T)
+      end
+
+      abstract class Foo
+        abstract def foo(x : Moo2(Int32))
+      end
+
+      class Bar < Foo
+        def foo(x : Moo(Int32))
+        end
+      end
+      )
+  end
+
   it "doesn't error if implements with parent module" do
-    semantic %(
+    assert_no_errors %(
       module Moo
       end
 
@@ -397,7 +471,7 @@ describe "Semantic: abstract def" do
   end
 
   it "finds implements in included module in disorder (#4052)" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       module B
         abstract def x
       end
@@ -412,11 +486,11 @@ describe "Semantic: abstract def" do
         include C
         include B
       end
-      )
+      CRYSTAL
   end
 
   it "errors if missing return type" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
       abstract class Foo
         abstract def foo : Int32
       end
@@ -426,12 +500,12 @@ describe "Semantic: abstract def" do
           1
         end
       end
-      CR
+      CRYSTAL
       "this method overrides Foo#foo() which has an explicit return type of Int32.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
   end
 
   it "errors if different return type" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
       abstract class Foo
         abstract def foo : Int32
       end
@@ -444,7 +518,7 @@ describe "Semantic: abstract def" do
           1
         end
       end
-      CR
+      CRYSTAL
       "this method must return Int32, which is the return type of the overridden method Foo#foo(), or a subtype of it, not Bar::Int32"
   end
 
@@ -472,7 +546,7 @@ describe "Semantic: abstract def" do
   end
 
   it "matches instantiated generic types" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo(T)
         abstract def foo(x : T)
       end
@@ -484,11 +558,11 @@ describe "Semantic: abstract def" do
         def foo(x : Int32)
         end
       end
-    ))
+      CRYSTAL
   end
 
   it "matches generic types" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo(T)
         abstract def foo(x : T)
       end
@@ -497,11 +571,11 @@ describe "Semantic: abstract def" do
         def foo(x : U)
         end
       end
-    ))
+      CRYSTAL
   end
 
   it "matches instantiated generic module" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module Foo(T)
         abstract def foo(x : T)
       end
@@ -512,11 +586,11 @@ describe "Semantic: abstract def" do
         def foo(x : Int32)
         end
       end
-      ))
+      CRYSTAL
   end
 
   it "matches generic module" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module Foo(T)
         abstract def foo(x : T)
       end
@@ -527,11 +601,11 @@ describe "Semantic: abstract def" do
         def foo(x : U)
         end
       end
-      ))
+      CRYSTAL
   end
 
   it "matches generic module (a bit more complex)" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       class Gen(T)
       end
 
@@ -545,11 +619,11 @@ describe "Semantic: abstract def" do
         def foo(x : Gen(Int32))
         end
       end
-      ))
+      CRYSTAL
   end
 
   it "matches generic return type" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo(T)
         abstract def foo : T
       end
@@ -559,11 +633,11 @@ describe "Semantic: abstract def" do
           1
         end
       end
-    ))
+      CRYSTAL
   end
 
   it "errors if missing a return type in subclass of generic subclass" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
         abstract class Foo(T)
           abstract def foo : T
         end
@@ -572,12 +646,12 @@ describe "Semantic: abstract def" do
           def foo
           end
         end
-      CR
+      CRYSTAL
       "this method overrides Foo(T)#foo() which has an explicit return type of T.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
   end
 
   it "errors if can't find parent return type" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
         abstract class Foo
           abstract def foo : Unknown
         end
@@ -586,12 +660,12 @@ describe "Semantic: abstract def" do
           def foo
           end
         end
-      CR
+      CRYSTAL
       "can't resolve return type Unknown"
   end
 
   it "errors if can't find child return type" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
         abstract class Foo
           abstract def foo : Int32
         end
@@ -600,31 +674,12 @@ describe "Semantic: abstract def" do
           def foo : Unknown
           end
         end
-      CR
+      CRYSTAL
       "can't resolve return type Unknown"
   end
 
-  it "doesn't crash when abstract method is implemented by supertype (#8031)" do
-    semantic(%(
-      module Base(T)
-        def size
-        end
-      end
-
-      module Child(T)
-        include Base(T)
-
-        abstract def size
-      end
-
-      class Foo
-        include Child(Int32)
-      end
-    ))
-  end
-
   it "implements through extend (considers original type for generic lookup) (#8096)" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module ICallable(T)
         abstract def call(foo : T)
       end
@@ -638,11 +693,11 @@ describe "Semantic: abstract def" do
         extend ICallable(Int32)
         extend Moo
       end
-    ))
+      CRYSTAL
   end
 
   it "implements through extend (considers original type for generic lookup) (2) (#8096)" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module ICallable(T)
         abstract def call(foo : T)
       end
@@ -654,11 +709,11 @@ describe "Semantic: abstract def" do
         def call(foo : Int32)
         end
       end
-    ))
+      CRYSTAL
   end
 
   it "can implement even if yield comes later in macro code" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module Moo
         abstract def each(& : Int32 -> _)
       end
@@ -674,11 +729,11 @@ describe "Semantic: abstract def" do
           {% end %}
         end
       end
-    ))
+      CRYSTAL
   end
 
   it "can implement by block signature even if yield comes later in macro code" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module Moo
         abstract def each(& : Int32 -> _)
       end
@@ -692,11 +747,23 @@ describe "Semantic: abstract def" do
           {% end %}
         end
       end
-    ))
+      CRYSTAL
+  end
+
+  it "error shows full signature of block parameter" do
+    assert_error(<<-CRYSTAL, "abstract `def Moo#each(& : (Int32 -> _))` must be implemented by Foo")
+      module Moo
+        abstract def each(& : Int32 -> _)
+      end
+
+      class Foo
+        include Moo
+      end
+      CRYSTAL
   end
 
   it "doesn't error if implementation have default value" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(x)
       end
@@ -705,7 +772,7 @@ describe "Semantic: abstract def" do
         def foo(x = 1)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "errors if implementation doesn't have default value" do
@@ -778,7 +845,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation matches keyword argument" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -787,7 +854,7 @@ describe "Semantic: abstract def" do
         def foo(*, x)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "errors if implementation doesn't match keyword argument type" do
@@ -805,7 +872,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation have keyword arguments in different order" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(*, x : Int32, y : String)
       end
@@ -814,7 +881,7 @@ describe "Semantic: abstract def" do
         def foo(*, y : String, x : Int32)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "errors if implementation has more keyword arguments" do
@@ -832,7 +899,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation has more keyword arguments with default values" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -841,7 +908,7 @@ describe "Semantic: abstract def" do
         def foo(*, x, y = 1)
         end
       end
-      )
+      CRYSTAL
   end
 
   it "errors if implementation doesn't have a splat" do
@@ -873,7 +940,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error with splat" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(*args)
       end
@@ -882,11 +949,11 @@ describe "Semantic: abstract def" do
         def foo(*args)
         end
       end
-    )
+      CRYSTAL
   end
 
   it "doesn't error with splat and args with default value" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(*args)
       end
@@ -895,11 +962,11 @@ describe "Semantic: abstract def" do
         def foo(a = 1, *args)
         end
       end
-    )
+      CRYSTAL
   end
 
   it "allows arguments to be collapsed into splat" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(a : Int32, b : String)
       end
@@ -908,7 +975,7 @@ describe "Semantic: abstract def" do
         def foo(*args : Int32 | String)
         end
       end
-    )
+      CRYSTAL
   end
 
   it "errors if keyword argument doesn't have the same default value" do
@@ -925,7 +992,7 @@ describe "Semantic: abstract def" do
   end
 
   it "allow double splat argument" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(**kargs)
       end
@@ -934,11 +1001,11 @@ describe "Semantic: abstract def" do
         def foo(**kargs)
         end
       end
-    )
+      CRYSTAL
   end
 
   it "allow double splat when abstract doesn't have it" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo
       end
@@ -947,7 +1014,7 @@ describe "Semantic: abstract def" do
         def foo(**kargs)
         end
       end
-    )
+      CRYSTAL
   end
 
   it "errors if implementation misses the double splat" do
@@ -977,7 +1044,7 @@ describe "Semantic: abstract def" do
   end
 
   it "allow splat instead of keyword argument" do
-    semantic %(
+    assert_no_errors <<-CRYSTAL
       abstract class Foo
         abstract def foo(*, foo)
       end
@@ -986,7 +1053,7 @@ describe "Semantic: abstract def" do
         def foo(**kargs)
         end
       end
-    )
+      CRYSTAL
   end
 
   it "extra keyword arguments must have compatible type to double splat" do
@@ -1032,5 +1099,75 @@ describe "Semantic: abstract def" do
       class Quux
       end
       )
+  end
+
+  describe "implementation is not inherited from supertype" do
+    it "nongeneric class" do
+      assert_error <<-CRYSTAL, "abstract `def Abstract#foo()` must be implemented by Concrete"
+        class Supertype
+          def foo; end
+        end
+
+        abstract class Abstract < Supertype
+          abstract def foo
+        end
+
+        class Concrete < Abstract
+        end
+        CRYSTAL
+    end
+
+    it "generic class" do
+      assert_error <<-CRYSTAL, "abstract `def Abstract(T)#foo()` must be implemented by Concrete"
+        class Supertype(T)
+          def foo; end
+        end
+
+        abstract class Abstract(T) < Supertype(T)
+          abstract def foo
+        end
+
+        class Concrete(T) < Abstract(T)
+        end
+        CRYSTAL
+    end
+
+    it "nongeneric module" do
+      assert_error <<-CRYSTAL, "abstract `def Abstract#size()` must be implemented by Concrete"
+        module Supertype
+          def size
+          end
+        end
+
+        module Abstract
+          include Supertype
+
+          abstract def size
+        end
+
+        class Concrete
+          include Abstract
+        end
+        CRYSTAL
+    end
+
+    it "generic module" do
+      assert_error <<-CRYSTAL, "abstract `def Abstract(T)#size()` must be implemented by Concrete(T)"
+        module Supertype(T)
+          def size
+          end
+        end
+
+        module Abstract(T)
+          include Supertype(T)
+
+          abstract def size
+        end
+
+        class Concrete(T)
+          include Abstract(T)
+        end
+        CRYSTAL
+    end
   end
 end

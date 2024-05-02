@@ -16,6 +16,33 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "codegens lib union (#7335)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      lib Foo
+        union Bar
+          a : Int32
+          b : Int16
+          c : Int8
+        end
+      end
+
+      x = Foo::Bar.new
+      CRYSTAL
+  end
+
+  it "codegens extern union (#7335)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      @[Extern(union: true)]
+      struct Foo
+        @a = uninitialized Int32
+        @b = uninitialized Int16
+        @c = uninitialized Int8
+      end
+
+      x = Foo.new
+      CRYSTAL
+  end
+
   it "inlines instance var access through getter in debug mode" do
     run(%(
       struct Bar
@@ -171,6 +198,12 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "doesn't emit debug info for unused variable declarations (#9882)" do
+    codegen(%(
+      x : Int32
+      ), debug: Crystal::Debug::All)
+  end
+
   it "stores and restores debug location after jumping to main (#6920)" do
     codegen(%(
       require "prelude"
@@ -220,5 +253,54 @@ describe "Code gen: debug" do
 
       LibFoo.foo = ->{ }
       ), debug: Crystal::Debug::All)
+  end
+
+  it "doesn't fail on constant read calls (#11416)" do
+    codegen(%(
+      require "prelude"
+
+      class Foo
+        def foo
+        end
+      end
+
+      def a_foo
+        Foo.new
+      end
+
+      THE_FOO.foo
+
+      THE_FOO = a_foo
+      ), debug: Crystal::Debug::All)
+  end
+
+  it "doesn't fail on splat expansions inside array-like literals" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def each
+          yield 1
+          yield 2
+          yield 3
+        end
+      end
+
+      class Bar
+        @bar = 0
+
+        def <<(value)
+          @bar = @bar &* 10 &+ value
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      x = Foo.new
+      y = Bar{*x}
+      y.bar
+      ), debug: Crystal::Debug::All).to_i.should eq(123)
   end
 end

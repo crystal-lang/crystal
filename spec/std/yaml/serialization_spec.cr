@@ -1,9 +1,8 @@
 require "../spec_helper"
+require "../../support/number"
 require "yaml"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/yaml"
-{% end %}
+require "big"
+require "big/yaml"
 
 enum YAMLSpecEnum
   Zero
@@ -17,6 +16,12 @@ enum YAMLSpecFlagEnum
   One
   Two
   OneHundred
+end
+
+private record FooPrivate, x : Int32 do
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    new(Int32.new(ctx, node))
+  end
 end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
@@ -49,14 +54,32 @@ describe "YAML serialization" do
       end
     end
 
-    it "does Int32#from_yaml" do
-      Int32.from_yaml("123").should eq(123)
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it "does {{ int }}.from_yaml" do
+        {{ int }}.from_yaml("0").should(be_a({{ int }})).should eq(0)
+        {{ int }}.from_yaml("123").should(be_a({{ int }})).should eq(123)
+        {{ int }}.from_yaml({{ int }}::MIN.to_s).should(be_a({{ int }})).should eq({{ int }}::MIN)
+        {{ int }}.from_yaml({{ int }}::MAX.to_s).should(be_a({{ int }})).should eq({{ int }}::MAX)
+      end
+
+      it "raises if {{ int }}.from_yaml overflows" do
+        expect_raises(YAML::ParseException, "Can't read {{ int }}") do
+          {{ int }}.from_yaml(({{ int }}::MIN.to_big_i - 1).to_s)
+        end
+        expect_raises(YAML::ParseException, "Can't read {{ int }}") do
+          {{ int }}.from_yaml(({{ int }}::MAX.to_big_i + 1).to_s)
+        end
+      end
+    {% end %}
+
+    it "does Int.from_yaml with prefixes" do
       Int32.from_yaml("0xabc").should eq(0xabc)
       Int32.from_yaml("0b10110").should eq(0b10110)
+      Int32.from_yaml("0777").should eq(0o777)
     end
 
-    it "does Int64#from_yaml" do
-      Int64.from_yaml("123456789123456789").should eq(123456789123456789)
+    it "does Int.from_yaml with underscores" do
+      Int32.from_yaml("1_2_34").should eq(1_2_34)
     end
 
     it "does String#from_yaml" do
@@ -68,7 +91,7 @@ describe "YAML serialization" do
     end
 
     it "can parse string that looks like a number" do
-      String.from_yaml(%(1.2)).should eq ("1.2")
+      String.from_yaml(%(1.2)).should eq("1.2")
     end
 
     it "does Path.from_yaml" do
@@ -146,53 +169,77 @@ describe "YAML serialization" do
       array[2].should eq({"foo" => 1, "bar" => 2})
     end
 
-    it "does Tuple#from_yaml" do
-      Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n").should eq({1, "foo", true})
+    it "does for tuple" do
+      tuple = Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n")
+      tuple.should eq({1, "foo", true})
+      typeof(tuple).should eq(Tuple(Int32, String, Bool))
+    end
+
+    it "does for tuple with file-private type" do
+      tuple = Tuple(FooPrivate).from_yaml %([1])
+      tuple.should eq({FooPrivate.new(1)})
+      typeof(tuple).should eq(Tuple(FooPrivate))
+    end
+
+    it "does for empty tuple" do
+      typeof(Tuple.new).from_yaml("[]").should eq(Tuple.new)
     end
 
     it "does for named tuple" do
       tuple = NamedTuple(x: Int32, y: String).from_yaml(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_yaml(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
     end
 
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello", "x": null}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with spaces in key (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_yaml %{{"a": 1, "xyz b-23": 2}}
       tuple.should eq({a: 1, "xyz b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz b-23": Int32))
     end
 
     it "does for named tuple with spaces in key and quote char (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_yaml %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
       tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32))
     end
 
-    pending_win32 "does for BigInt" do
+    it "does for named tuple with file-private type" do
+      tuple = NamedTuple(a: FooPrivate).from_yaml %({"a": 1})
+      tuple.should eq({a: FooPrivate.new(1)})
+      typeof(tuple).should eq(NamedTuple(a: FooPrivate))
+    end
+
+    it "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    pending_win32 "does for BigFloat" do
+    it "does for BigFloat" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    pending_win32 "does for BigDecimal" do
+    it "does for BigDecimal" do
       big = BigDecimal.from_yaml("1234.567891011121314")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.567891011121314"))
@@ -204,9 +251,8 @@ describe "YAML serialization" do
         YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
         YAMLSpecEnum.from_yaml(%("two")).should eq(YAMLSpecEnum::Two)
         YAMLSpecEnum.from_yaml(%("ONE_HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
-        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "ONE-HUNDRED")) do
-          YAMLSpecEnum.from_yaml(%("ONE-HUNDRED"))
-        end
+        YAMLSpecEnum.from_yaml(%("ONE-HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
+
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: " one ")) do
           YAMLSpecEnum.from_yaml(%(" one "))
         end
@@ -496,17 +542,17 @@ describe "YAML serialization" do
       {x: 1, y: "hello"}.to_yaml.should eq({:x => 1, :y => "hello"}.to_yaml)
     end
 
-    pending_win32 "does for BigInt" do
+    it "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       BigInt.from_yaml(big.to_yaml).should eq(big)
     end
 
-    pending_win32 "does for BigFloat" do
+    it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
     end
 
-    pending_win32 "does for BigDecimal" do
+    it "does for BigDecimal" do
       big = BigDecimal.new("1234.567891011121314")
       BigDecimal.from_yaml(big.to_yaml).should eq(big)
     end

@@ -143,14 +143,18 @@ class Class
     typeof(t, u)
   end
 
-  # Returns `true` if this class is `Nil`.
+  # Returns `true` if `nil` is an instance of this type.
   #
   # ```
-  # Int32.nilable? # => false
-  # Nil.nilable?   # => true
+  # Int32.nilable?            # => false
+  # Nil.nilable?              # => true
+  # (Int32 | String).nilable? # => false
+  # (Int32 | Nil).nilable?    # => true
+  # NoReturn.nilable?         # => false
+  # Value.nilable?            # => true
   # ```
   def nilable? : Bool
-    self == ::Nil
+    {{ @type >= Nil }}
   end
 
   def to_s(io : IO) : Nil

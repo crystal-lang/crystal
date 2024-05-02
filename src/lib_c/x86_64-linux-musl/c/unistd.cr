@@ -14,6 +14,7 @@ lib LibC
   fun access(x0 : Char*, x1 : Int) : Int
   fun chdir(x0 : Char*) : Int
   fun chown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
+  fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(x0 : Int) : Int
   fun dup2(x0 : Int, x1 : Int) : Int
   fun _exit(x0 : Int) : NoReturn
@@ -28,6 +29,8 @@ lib LibC
   fun getpgid(x0 : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getuid : UidT
+  fun setuid(uid : UidT) : Int
   fun isatty(x0 : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int

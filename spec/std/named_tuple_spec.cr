@@ -41,7 +41,7 @@ describe "NamedTuple" do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :baz => 2})
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => "foo"})
     end
   end
@@ -63,89 +63,177 @@ describe "NamedTuple" do
       {foo: Int32, bar: Int32}.from({:foo => 1, :baz => 2})
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    expect_raises(TypeCastError, /[Cc]ast from String to Int32 failed/) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
     end
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2} of String | Int32 | Symbol => Int32)
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
   end
 
   it "gets size" do
     {a: 1, b: 3}.size.should eq(2)
   end
 
-  it "does [] with runtime key" do
-    tup = {a: 1, b: 'a'}
+  describe "#[] with non-literal index" do
+    it "gets named tuple value with Symbol key" do
+      tup = {a: 1, b: 'a'}
 
-    key = :a
-    val = tup[key]
-    val.should eq(1)
-    typeof(val).should eq(Int32 | Char)
+      key = :a
+      val = tup[key]
+      val.should eq(1)
+      typeof(val).should eq(Int32 | Char)
 
-    key = :b
-    val = tup[key]
-    val.should eq('a')
-    typeof(val).should eq(Int32 | Char)
+      key = :b
+      val = tup[key]
+      val.should eq('a')
+      typeof(val).should eq(Int32 | Char)
+    end
 
-    expect_raises(KeyError) do
+    it "gets named tuple value with String key" do
+      tup = {a: 1, b: 'a'}
+
+      key = "a"
+      val = tup[key]
+      val.should eq(1)
+      typeof(val).should eq(Int32 | Char)
+
+      key = "b"
+      val = tup[key]
+      val.should eq('a')
+      typeof(val).should eq(Int32 | Char)
+    end
+
+    it "raises missing key" do
+      tup = {a: 1, b: 'a'}
       key = :c
-      tup[key]
+      expect_raises(KeyError) { tup[key] }
+      key = "d"
+      expect_raises(KeyError) { tup[key] }
     end
   end
 
-  it "does []? with runtime key" do
-    tup = {a: 1, b: 'a'}
+  describe "#[]? with non-literal index" do
+    it "gets named tuple value or nil with Symbol key" do
+      tup = {a: 1, b: 'a'}
 
-    key = :a
-    val = tup[key]?
-    val.should eq(1)
-    typeof(val).should eq(Int32 | Char | Nil)
+      key = :a
+      val = tup[key]?
+      val.should eq(1)
+      typeof(val).should eq(Int32 | Char | Nil)
 
-    key = :b
-    val = tup[key]?
-    val.should eq('a')
-    typeof(val).should eq(Int32 | Char | Nil)
+      key = :b
+      val = tup[key]?
+      val.should eq('a')
+      typeof(val).should eq(Int32 | Char | Nil)
 
-    key = :c
-    val = tup[key]?
-    val.should be_nil
-    typeof(val).should eq(Int32 | Char | Nil)
-  end
+      key = :c
+      val = tup[key]?
+      val.should be_nil
+      typeof(val).should eq(Int32 | Char | Nil)
+    end
 
-  it "does [] with string" do
-    tup = {a: 1, b: 'a'}
+    it "gets named tuple value or nil with String key" do
+      tup = {a: 1, b: 'a'}
 
-    key = "a"
-    val = tup[key]
-    val.should eq(1)
-    typeof(val).should eq(Int32 | Char)
+      key = "a"
+      val = tup[key]?
+      val.should eq(1)
+      typeof(val).should eq(Int32 | Char | Nil)
 
-    key = "b"
-    val = tup[key]
-    val.should eq('a')
-    typeof(val).should eq(Int32 | Char)
+      key = "b"
+      val = tup[key]?
+      val.should eq('a')
+      typeof(val).should eq(Int32 | Char | Nil)
 
-    expect_raises(KeyError) do
       key = "c"
-      tup[key]
+      val = tup[key]?
+      val.should be_nil
+      typeof(val).should eq(Int32 | Char | Nil)
     end
   end
 
-  it "does []? with string" do
-    tup = {a: 1, b: 'a'}
+  describe ".[] with non-literal index" do
+    it "gets named tuple metaclass value with Symbol key" do
+      tup = NamedTuple(a: Int32, b: Char)
 
-    key = "a"
-    val = tup[key]?
-    val.should eq(1)
-    typeof(val).should eq(Int32 | Char | Nil)
+      key = :a
+      val = tup[key]
+      val.should eq(Int32)
+      typeof(val).should eq(Union(Int32.class, Char.class))
 
-    key = "b"
-    val = tup[key]?
-    val.should eq('a')
-    typeof(val).should eq(Int32 | Char | Nil)
+      key = :b
+      val = tup[key]
+      val.should eq(Char)
+      typeof(val).should eq(Union(Int32.class, Char.class))
+    end
 
-    key = "c"
-    val = tup[key]?
-    val.should be_nil
-    typeof(val).should eq(Int32 | Char | Nil)
+    it "gets named tuple metaclass value with String key" do
+      tup = NamedTuple(a: Int32, b: Char)
+
+      key = "a"
+      val = tup[key]
+      val.should eq(Int32)
+      typeof(val).should eq(Union(Int32.class, Char.class))
+
+      key = "b"
+      val = tup[key]
+      val.should eq(Char)
+      typeof(val).should eq(Union(Int32.class, Char.class))
+    end
+
+    it "raises missing key" do
+      tup = NamedTuple(a: Int32, b: Char)
+      key = :c
+      expect_raises(KeyError) { tup[key] }
+      key = "d"
+      expect_raises(KeyError) { tup[key] }
+    end
+  end
+
+  describe ".[]? with non-literal index" do
+    it "gets named tuple metaclass value or nil with Symbol key" do
+      tup = NamedTuple(a: Int32, b: Char)
+
+      key = :a
+      val = tup[key]?
+      val.should eq(Int32)
+      typeof(val).should eq(Union(Int32.class, Char.class, Nil))
+
+      key = :b
+      val = tup[key]?
+      val.should eq(Char)
+      typeof(val).should eq(Union(Int32.class, Char.class, Nil))
+
+      key = :c
+      val = tup[key]?
+      val.should be_nil
+      typeof(val).should eq(Union(Int32.class, Char.class, Nil))
+    end
+
+    it "gets named tuple metaclass value or nil with String key" do
+      tup = NamedTuple(a: Int32, b: Char)
+
+      key = "a"
+      val = tup[key]?
+      val.should eq(Int32)
+      typeof(val).should eq(Union(Int32.class, Char.class, Nil))
+
+      key = "b"
+      val = tup[key]?
+      val.should eq(Char)
+      typeof(val).should eq(Union(Int32.class, Char.class, Nil))
+
+      key = "c"
+      val = tup[key]?
+      val.should be_nil
+      typeof(val).should eq(Union(Int32.class, Char.class, Nil))
+    end
   end
 
   describe "#dig?" do
@@ -373,6 +461,9 @@ describe "NamedTuple" do
 
     tup2 = {"foo bar": 1}
     tup2.clone.should eq(tup2)
+
+    tup3 = NamedTuple.new
+    tup3.clone.should eq(tup3)
   end
 
   it "does keys" do
@@ -394,6 +485,10 @@ describe "NamedTuple" do
     a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
     b = {two: "Two", three: true, "new one": "ok"}
     a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+  end
+
+  it "merges two empty named tuples" do
+    NamedTuple.new.merge(NamedTuple.new).should eq(NamedTuple.new)
   end
 
   it "does types" do

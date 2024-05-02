@@ -2,6 +2,8 @@ require "./common"
 
 module HTTP
   # Represents a cookie with all its attributes. Provides convenient access and modification of them.
+  #
+  # NOTE: To use `Cookie`, you must explicitly import it with `require "http/cookie"`
   class Cookie
     # Possible values for the `SameSite` cookie as described in the [Same-site Cookies Draft](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1).
     enum SameSite
@@ -20,21 +22,24 @@ module HTTP
     property path : String?
     property expires : Time?
     property domain : String?
-    property secure : Bool
     property http_only : Bool
     property samesite : SameSite?
     property extension : String?
     property max_age : Time::Span?
     getter creation_time : Time
 
+    @secure : Bool?
+
     def_equals_and_hash name, value, path, expires, domain, secure, http_only, samesite, extension
 
     # Creates a new `Cookie` instance.
     #
     # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    # Raises `ArgumentError` if *name* has a security prefix but the requirements are not met as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
+    # Alternatively, if *name* has a security prefix, and the related properties are `nil`, the prefix will automatically be applied to the cookie.
     def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
-                   @secure : Bool = false, @http_only : Bool = false,
+                   @secure : Bool? = nil, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil,
                    @max_age : Time::Span? = nil, @creation_time = Time.utc)
       validate_name(name)
@@ -42,6 +47,17 @@ module HTTP
       validate_value(value)
       @value = value
       raise IO::Error.new("Invalid max_age") if @max_age.try { |max_age| max_age < Time::Span.zero }
+
+      self.check_prefix
+      self.validate!
+    end
+
+    # Returns `true` if this cookie has the *Secure* flag.
+    def secure : Bool
+      !!@secure
+    end
+
+    def secure=(@secure : Bool) : Bool
     end
 
     # Sets the name of this cookie.
@@ -50,6 +66,8 @@ module HTTP
     def name=(name : String)
       validate_name(name)
       @name = name
+
+      self.check_prefix
     end
 
     private def validate_name(name)
@@ -57,8 +75,12 @@ module HTTP
       name.each_byte do |byte|
         # valid characters for cookie-name per https://tools.ietf.org/html/rfc6265#section-4.1.1
         # and https://tools.ietf.org/html/rfc2616#section-2.2
-        # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUWVXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
-        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x28 && byte != 0x29 && byte != 0x2c && byte != 0x2f && !(0x3a..0x40).includes?(byte) && !(0x5b..0x5d).includes?(byte) && byte != 0x7b && byte != 0x7d
+        # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
+        if !byte.in?(0x21...0x7f) ||                 # Non-printable ASCII character
+           byte.in?(0x22, 0x28, 0x29, 0x2c, 0x2f) || # '"', '(', ')', ',', '/'
+           byte.in?(0x3a..0x40) ||                   # ':', ';', '<', '=', '>', '?', '@'
+           byte.in?(0x5b..0x5d) ||                   # '[', '\\', ']'
+           byte.in?(0x7b, 0x7d)                      # '{', '}'
           raise IO::Error.new("Invalid cookie name")
         end
       end
@@ -76,7 +98,7 @@ module HTTP
       value.each_byte do |byte|
         # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
         # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
-        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x2c && byte != 0x3b && byte != 0x5c
+        if !byte.in?(0x21...0x7f) || byte.in?(0x22, 0x2c, 0x3b, 0x5c)
           raise IO::Error.new("Invalid cookie value")
         end
       end
@@ -102,7 +124,7 @@ module HTTP
     end
 
     def to_cookie_header : String
-      String.build do |io|
+      String.build(@name.bytesize + @value.bytesize + 1) do |io|
         to_cookie_header(io)
       end
     end
@@ -136,6 +158,40 @@ module HTTP
       end
     end
 
+    # Returns `false` if `#name` has a security prefix but the requirements are not met as per
+    # [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3),
+    # otherwise returns `true`.
+    def valid? : Bool
+      self.valid_secure_prefix? && self.valid_host_prefix?
+    end
+
+    # Raises `ArgumentError` if `self` is not `#valid?`.
+    def validate! : self
+      raise ArgumentError.new "Invalid cookie name. Has '__Secure-' prefix, but is not secure." unless self.valid_secure_prefix?
+      raise ArgumentError.new "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." unless self.valid_host_prefix?
+
+      self
+    end
+
+    private def valid_secure_prefix? : Bool
+      self.secure || !@name.starts_with?("__Secure-")
+    end
+
+    private def valid_host_prefix? : Bool
+      !@name.starts_with?("__Host-") || (self.secure && "/" == @path && @domain.nil?)
+    end
+
+    private def check_prefix : Nil
+      if @name.starts_with?("__Host-")
+        @path = "/" if @path.nil?
+        @secure = true if @secure.nil?
+      end
+
+      if @name.starts_with?("__Secure-")
+        @secure = true if @secure.nil?
+      end
+    end
+
     # :nodoc:
     module Parser
       module Regex
@@ -162,7 +218,7 @@ module HTTP
         SameSiteAV     = /SameSite=(?<samesite>\w+)/i
         SecureAV       = /(?<secure>Secure)/i
         PathAV         = /Path=(?<path>#{PathValue})/i
-        DomainAV       = /Domain=(?<domain>#{DomainValue})/i
+        DomainAV       = /Domain=\.?(?<domain>#{DomainValue})/i
         MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
         ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
         CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{ExtensionAV})/
@@ -171,7 +227,7 @@ module HTTP
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
       SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*$/
 
-      def parse_cookies(header)
+      def parse_cookies(header, &)
         header.scan(CookieString).each do |pair|
           value = pair["value"]
           if value.starts_with?('"')
@@ -219,6 +275,8 @@ module HTTP
 
   # Represents a collection of cookies as it can be present inside
   # a HTTP request or response.
+  #
+  # NOTE: To use `Cookies`, you must explicitly import it with `require "http/cookie"`
   class Cookies
     include Enumerable(Cookie)
 
@@ -228,7 +286,7 @@ module HTTP
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
     @[Deprecated("Use `.from_client_headers` or `.from_server_headers` instead.")]
     def self.from_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_headers(headers) }
+      new.tap(&.fill_from_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
@@ -244,7 +302,7 @@ module HTTP
     #
     # See `HTTP::Client::Response#cookies`.
     def self.from_client_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_client_headers(headers) }
+      new.tap(&.fill_from_client_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
@@ -261,7 +319,7 @@ module HTTP
     #
     # See `HTTP::Request#cookies`.
     def self.from_server_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_server_headers(headers) }
+      new.tap(&.fill_from_server_headers(headers))
     end
 
     # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.

@@ -116,11 +116,11 @@ module Crystal
       result.node.accept(self)
 
       if @found_nodes.empty?
-        return ExpandResult.new("failed", @message)
+        ExpandResult.new("failed", @message)
       else
         res = ExpandResult.new("ok", "#{@found_nodes.size} expansion#{@found_nodes.size > 1 ? "s" : ""} found")
         res.expansions = @found_nodes.map { |node| ExpandResult::Expansion.build(node) }
-        return res
+        res
       end
     end
 
@@ -144,6 +144,8 @@ module Crystal
         else
           contains_target(node)
         end
+      else
+        false
       end
     end
 
@@ -156,6 +158,8 @@ module Crystal
         else
           contains_target(node)
         end
+      else
+        false
       end
     end
 

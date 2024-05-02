@@ -38,61 +38,108 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("\t", "")
         end
-        # more extensive specs on #name=
       end
 
       it "raises on invalid value" do
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
         end
-        # more extensive specs on #value=
+      end
+
+      describe "with a security prefix" do
+        it "raises on invalid cookie with prefix" do
+          expect_raises ArgumentError, "Invalid cookie name. Has '__Secure-' prefix, but is not secure." do
+            HTTP::Cookie.new("__Secure-foo", "bar", secure: false)
+          end
+
+          expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
+            HTTP::Cookie.new("__Host-foo", "bar", domain: "foo")
+          end
+        end
+
+        it "automatically makes the cookie secure if it has the __Secure- prefix and no explicit *secure* value is provided" do
+          HTTP::Cookie.new("__Secure-foo", "bar").secure.should be_true
+        end
+
+        it "automatically configures the cookie if it has the __Host- prefix and no explicit values provided" do
+          cookie = HTTP::Cookie.new "__Host-foo", "bar"
+          cookie.secure.should be_true
+          cookie.domain.should be_nil
+          cookie.path.should eq "/"
+        end
       end
     end
 
     describe "#name=" do
       it "raises on invalid name" do
         cookie = HTTP::Cookie.new("x", "")
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = ""
+        invalid_names = [
+          '"', '(', ')', ',', '/',
+          ' ', '\r', '\t', '\n',
+          '{', '}',
+          (':'..'@').each,
+          ('['..']').each,
+        ].flat_map { |c| "a#{c}b" }
+
+        # name cannot be empty
+        invalid_names << ""
+
+        invalid_names.each do |invalid_name|
+          expect_raises IO::Error, "Invalid cookie name" do
+            cookie.name = invalid_name
+          end
         end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "\t"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "\r"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "a\nb"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "a\rb"
-        end
+      end
+
+      it "doesn't raise on invalid cookie with __Secure- prefix" do
+        cookie = HTTP::Cookie.new "x", "", secure: false
+
+        cookie.name = "__Secure-x"
+        cookie.name.should eq "__Secure-x"
+        cookie.secure.should be_false
+      end
+
+      it "doesn't raise on invalid cookie with __Host- prefix" do
+        cookie = HTTP::Cookie.new "x", "", path: "/foo"
+
+        cookie.name = "__Host-x"
+        cookie.name.should eq "__Host-x"
+        cookie.secure.should be_true
+        cookie.path.should eq "/foo"
+        cookie.valid?.should be_false
+      end
+
+      it "automatically configures the cookie __Secure- prefix and related properties are unset" do
+        cookie = HTTP::Cookie.new "x", ""
+
+        cookie.name = "__Secure-x"
+        cookie.name.should eq "__Secure-x"
+        cookie.secure.should be_true
+      end
+
+      it "automatically configures the cookie __Host- prefix and related unset properties" do
+        cookie = HTTP::Cookie.new "x", ""
+
+        cookie.name = "__Host-x"
+        cookie.name.should eq "__Host-x"
+        cookie.secure.should be_true
+        cookie.path.should eq "/"
+        cookie.domain.should be_nil
       end
     end
 
     describe "#value=" do
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = %(foo\rbar)
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = %(foo"bar)
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo;bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo\\bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo\\bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo,bar"
+        invalid_values = {
+          '"', ',', ';', '\\',   # invalid printable ascii characters
+          ' ', '\r', '\t', '\n', # non-printable ascii characters
+        }.map { |c| "foo#{c}bar" }
+
+        invalid_values.each do |invalid_value|
+          expect_raises IO::Error, "Invalid cookie value" do
+            cookie.value = invalid_value
+          end
         end
       end
     end
@@ -116,6 +163,66 @@ module HTTP
       end
 
       it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=" }
+    end
+
+    describe "#valid? & #validate!" do
+      it "raises on invalid cookie with __Secure- prefix" do
+        cookie = HTTP::Cookie.new "x", "", secure: false
+        cookie.name = "__Secure-x"
+
+        cookie.valid?.should be_false
+
+        expect_raises ArgumentError, "Invalid cookie name. Has '__Secure-' prefix, but is not secure." do
+          cookie.validate!
+        end
+
+        cookie.secure = true
+        cookie.valid?.should be_true
+      end
+
+      it "with a __Secure- prefix, but @secure is somehow `nil`" do
+        cookie = HTTP::Cookie.new "__Secure-x", ""
+
+        cookie.valid?.should be_true
+
+        pointerof(cookie.@secure).value = nil
+
+        cookie.valid?.should be_false
+      end
+
+      it "raises on invalid cookie with __Host- prefix" do
+        cookie = HTTP::Cookie.new "x", "", domain: "example.com", secure: false
+        cookie.name = "__Host-x"
+
+        cookie.valid?.should be_false
+
+        # Not secure
+        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
+          cookie.validate!
+        end
+
+        cookie.secure = true
+        cookie.valid?.should be_false
+
+        # Invalid path
+        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
+          cookie.validate!
+        end
+
+        cookie.path = "/"
+        cookie.valid?.should be_false
+
+        # Has domain
+        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
+          cookie.validate!
+        end
+
+        cookie.domain = nil
+
+        cookie.name = "__Host-x"
+        cookie.name.should eq "__Host-x"
+        cookie.valid?.should be_true
+      end
     end
   end
 
@@ -243,6 +350,14 @@ module HTTP
         cookie.value.should eq("value")
         cookie.domain.should eq("www.example.com")
         cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com")
+      end
+
+      it "leading dots in domain names are ignored" do
+        cookie = parse_set_cookie("key=value; domain=.example.com")
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.domain.should eq("example.com")
+        cookie.to_set_cookie_header.should eq("key=value; domain=example.com")
       end
 
       it "parses expires iis" do
@@ -500,8 +615,8 @@ module HTTP
         cookies << Cookie.new("x", "y")
 
         headers.get("Set-Cookie").size.should eq 2
-        headers.get("Set-Cookie").includes?("a=b").should be_true
-        headers.get("Set-Cookie").includes?("c=d").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
 
         cookies.add_response_headers(headers)
 
@@ -519,8 +634,8 @@ module HTTP
         cookies.add_response_headers(headers)
         headers.get?("Set-Cookie").should_not be_nil
 
-        headers.get("Set-Cookie").includes?("a=b").should be_true
-        headers.get("Set-Cookie").includes?("c=d").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
       end
 
       it "uses encode_www_form on Set-Cookie value" do
@@ -528,7 +643,7 @@ module HTTP
         cookies = Cookies.new
         cookies << Cookie.new("a", "b+c")
         cookies.add_response_headers(headers)
-        headers.get("Set-Cookie").includes?("a=b+c").should be_true
+        headers.get("Set-Cookie").should contain("a=b+c")
       end
 
       describe "when no cookies are set" do

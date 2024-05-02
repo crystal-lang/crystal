@@ -104,18 +104,15 @@ describe "Semantic: named tuples" do
       "can only use named arguments with NamedTuple"
   end
 
-  it "gives error when using named args on Tuple" do
-    assert_error %(
-      Tuple(x: Int32, y: Char)
-      ),
-      "can only use named arguments with NamedTuple"
-  end
-
-  it "gives error when not using named args with NamedTuple" do
+  it "gives error when using positional args with NamedTuple" do
     assert_error %(
       NamedTuple(Int32, Char)
       ),
       "can only instantiate NamedTuple with named arguments"
+  end
+
+  it "doesn't error if NamedTuple has no args" do
+    assert_type("NamedTuple()") { named_tuple_of({} of String => Type).metaclass }
   end
 
   it "gets type at compile time" do
@@ -168,7 +165,7 @@ describe "Semantic: named tuples" do
 
       foo({x: 1, y: 'a'})
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be NamedTuple(x: Int32, y: Int32), not NamedTuple(x: Int32, y: Char)"
   end
 
   it "doesn't match type restriction with instance" do
@@ -180,7 +177,7 @@ describe "Semantic: named tuples" do
 
       Foo({a: Int32}).foo({a: 1.1})
       ),
-      "no overload matches"
+      "expected argument #1 to 'Foo(NamedTuple(a: Int32)).foo' to be NamedTuple(a: Int32), not NamedTuple(a: Float64)"
   end
 
   it "matches in type restriction and gets free var" do
@@ -210,7 +207,7 @@ describe "Semantic: named tuples" do
       ptr = Pointer(typeof(tup1, tup2, tup3)).malloc(1_u64)
       ptr.value = tup3
       ptr.value
-      )) { union_of(named_tuple_of({"x": int32}), named_tuple_of({"x": int32, "y": string})) }
+      ), inject_primitives: true) { union_of(named_tuple_of({"x": int32}), named_tuple_of({"x": int32, "y": string})) }
   end
 
   it "allows tuple covariance" do
@@ -251,7 +248,7 @@ describe "Semantic: named tuples" do
       end
 
       foo
-      )) { named_tuple_of({"x": union_of(char, string), "y": nilable(int32)}) }
+      ), inject_primitives: true) { named_tuple_of({"x": union_of(char, string), "y": nilable(int32)}) }
   end
 
   it "accept named tuple in type restriction" do

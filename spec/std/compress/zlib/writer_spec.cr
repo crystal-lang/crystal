@@ -58,7 +58,7 @@ module Compress::Zlib
       io.to_slice.hexstring.should eq("789c")
 
       writer.flush
-      (io.to_slice.hexstring.size > 4).should be_true
+      io.to_slice.hexstring.size.should be > 4
 
       writer.print " is a test string !!!!\n"
       writer.close

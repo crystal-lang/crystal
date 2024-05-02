@@ -3,6 +3,10 @@ require "openssl"
 
 # A class which can be used to encrypt and decrypt data using a specified cipher.
 #
+# NOTE: The ciphers available to an application are determined by the linked version of the system SSL library.
+#       A comprehensive list of ciphers can be found in the
+#       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#CIPHER-STRINGS).
+#
 # ```
 # require "random/secure"
 #
@@ -70,7 +74,7 @@ class OpenSSL::Cipher
   end
 
   def iv=(iv)
-    raise ArgumentError.new "iv length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
+    raise ArgumentError.new "IV length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
     cipherinit iv: iv
     iv
   end
@@ -92,7 +96,7 @@ class OpenSSL::Cipher
     cipherinit
   end
 
-  # Add the data to be encypted or decrypted to this cipher's buffer.
+  # Add the data to be encrypted or decrypted to this cipher's buffer.
   def update(data)
     slice = data.to_slice
     buffer_length = slice.size + block_size

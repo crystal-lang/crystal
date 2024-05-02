@@ -33,23 +33,23 @@ module Crystal::System::Socket
         return
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(timeout: timeout) do
-          return yield IO::TimeoutError.new("connect timed out")
+          return IO::TimeoutError.new("connect timed out")
         end
       else
-        return yield ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_errno("connect")
       end
     end
   end
 
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
-  private def system_bind(addr, addrstr)
+  private def system_bind(addr, addrstr, &)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog)
+  private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
       yield ::Socket::Error.from_errno("Listen failed")
     end
@@ -105,7 +105,7 @@ module Crystal::System::Socket
       LibC.recvfrom(fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
     end
 
-    {bytes_read, sockaddr, addrlen}
+    {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
   private def system_close_read
@@ -120,13 +120,37 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_reuse_port?
+  private def system_send_buffer_size : Int
+    getsockopt LibC::SO_SNDBUF, 0
+  end
+
+  private def system_send_buffer_size=(val : Int)
+    setsockopt LibC::SO_SNDBUF, val
+  end
+
+  private def system_recv_buffer_size : Int
+    getsockopt LibC::SO_RCVBUF, 0
+  end
+
+  private def system_recv_buffer_size=(val : Int)
+    setsockopt LibC::SO_RCVBUF, val
+  end
+
+  private def system_reuse_address? : Bool
+    getsockopt_bool LibC::SO_REUSEADDR
+  end
+
+  private def system_reuse_address=(val : Bool)
+    setsockopt_bool LibC::SO_REUSEADDR, val
+  end
+
+  private def system_reuse_port? : Bool
     system_getsockopt(fd, LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
 
     if Errno.value == Errno::ENOPROTOOPT
-      return false
+      false
     else
       raise ::Socket::Error.from_errno("getsockopt")
     end
@@ -134,6 +158,22 @@ module Crystal::System::Socket
 
   private def system_reuse_port=(val : Bool)
     setsockopt_bool LibC::SO_REUSEPORT, val
+  end
+
+  private def system_broadcast? : Bool
+    getsockopt_bool LibC::SO_BROADCAST
+  end
+
+  private def system_broadcast=(val : Bool)
+    setsockopt_bool LibC::SO_BROADCAST, val
+  end
+
+  private def system_keepalive? : Bool
+    getsockopt_bool LibC::SO_KEEPALIVE
+  end
+
+  private def system_keepalive=(val : Bool)
+    setsockopt_bool LibC::SO_KEEPALIVE, val
   end
 
   private def system_linger
@@ -156,18 +196,23 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
+  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+    system_getsockopt(fd, optname, optval, level) { |value| return value }
+    raise ::Socket::Error.from_errno("getsockopt #{optname}")
+  end
+
   private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
 
     ret = LibC.setsockopt(fd, level, optname, pointerof(optval), optsize)
-    raise ::Socket::Error.from_errno("setsockopt") if ret == -1
+    raise ::Socket::Error.from_errno("setsockopt #{optname}") if ret == -1
     ret
   end
 
@@ -205,13 +250,13 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading socket") do
       LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     evented_write(slice, "Error writing to socket") do |slice|
       LibC.send(fd, slice, slice.size, 0)
     end

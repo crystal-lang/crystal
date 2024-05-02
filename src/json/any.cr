@@ -18,7 +18,7 @@
 # which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
+  alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
@@ -57,13 +57,23 @@ struct JSON::Any
   def initialize(@raw : Type)
   end
 
+  # :ditto:
+  def self.new(raw : Int)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_i64)
+  end
+
+  # :ditto:
+  def self.new(raw : Float)
+    # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11645
+    new(raw.to_f64)
+  end
+
   # Assumes the underlying value is an `Array` or `Hash` and returns its size.
   # Raises if the underlying value is not an `Array` or `Hash`.
   def size : Int
     case object = @raw
-    when Array
-      object.size
-    when Hash
+    when Array, Hash
       object.size
     else
       raise "Expected Array or Hash for #size, not #{object.class}"
@@ -186,28 +196,50 @@ struct JSON::Any
     as_i64 if @raw.is_a?(Int64)
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float64`.
   # Raises otherwise.
   def as_f : Float64
-    @raw.as(Float64)
+    case raw = @raw
+    when Int
+      raw.to_f
+    else
+      raw.as(Float64)
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float64`.
   # Returns `nil` otherwise.
   def as_f? : Float64?
-    @raw.as?(Float64)
+    case raw = @raw
+    when Int
+      raw.to_f
+    else
+      raw.as?(Float64)
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float32`.
   # Raises otherwise.
   def as_f32 : Float32
-    @raw.as(Float).to_f32
+    case raw = @raw
+    when Int
+      raw.to_f32
+    else
+      raw.as(Float).to_f32
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float32`.
   # Returns `nil` otherwise.
   def as_f32? : Float32?
-    as_f32 if @raw.is_a?(Float)
+    case raw = @raw
+    when Int
+      raw.to_f32
+    when Float
+      raw.to_f32
+    else
+      nil
+    end
   end
 
   # Checks that the underlying value is `String`, and returns its value.
@@ -224,34 +256,32 @@ struct JSON::Any
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
-  def as_a : Array(Any)
+  def as_a : Array(JSON::Any)
     @raw.as(Array)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
-  def as_a? : Array(Any)?
+  def as_a? : Array(JSON::Any)?
     as_a if @raw.is_a?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
-  def as_h : Hash(String, Any)
+  def as_h : Hash(String, JSON::Any)
     @raw.as(Hash)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
-  def as_h? : Hash(String, Any)?
+  def as_h? : Hash(String, JSON::Any)?
     as_h if @raw.is_a?(Hash)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
@@ -285,12 +315,12 @@ struct JSON::Any
 
   # Returns a new JSON::Any instance with the `raw` value `dup`ed.
   def dup
-    Any.new(raw.dup)
+    JSON::Any.new(raw.dup)
   end
 
   # Returns a new JSON::Any instance with the `raw` value `clone`ed.
   def clone
-    Any.new(raw.clone)
+    JSON::Any.new(raw.clone)
   end
 end
 

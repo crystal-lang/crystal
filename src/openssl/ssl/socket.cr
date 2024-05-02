@@ -12,10 +12,10 @@ abstract class OpenSSL::SSL::Socket < IO
             hostname.to_unsafe.as(Pointer(Void))
           )
 
-          {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+          {% if LibSSL.has_method?(:ssl_get0_param) %}
             param = LibSSL.ssl_get0_param(@ssl)
 
-            if ::Socket.ip?(hostname)
+            if ::Socket::IPAddress.valid?(hostname)
               unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
                 raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
               end
@@ -39,7 +39,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil, &)
       socket = new(io, context, sync_close, hostname)
 
       begin
@@ -78,7 +78,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false, &)
       socket = new(io, context, sync_close)
 
       begin
@@ -155,14 +155,16 @@ abstract class OpenSSL::SSL::Socket < IO
     @bio.io.flush
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-    # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
-    # negotiated.
-    def alpn_protocol
+  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
+  # negotiated.
+  def alpn_protocol
+    {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
       LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
       String.new(protocol, len) unless protocol.null?
-    end
-  {% end %}
+    {% else %}
+      raise NotImplementedError.new("LibSSL.ssl_get0_alpn_selected")
+    {% end %}
+  end
 
   def unbuffered_close : Nil
     return if @closed
@@ -196,7 +198,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     raise IO::Error.new("Can't rewind OpenSSL::SSL::Socket::Client")
   end
 
@@ -264,7 +266,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
-  # connection was esablished.
+  # connection was established.
   #
   # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
   # certificate, if present. A client will only send a certificate when
@@ -272,7 +274,13 @@ abstract class OpenSSL::SSL::Socket < IO
   # an anonymous cipher is used, no certificates are sent. That a certificate
   # is returned does not indicate information about the verification state.
   def peer_certificate : OpenSSL::X509::Certificate?
-    cert = LibSSL.ssl_get_peer_certificate(@ssl)
-    OpenSSL::X509::Certificate.new cert if cert
+    raw_cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    if raw_cert
+      begin
+        OpenSSL::X509::Certificate.new(raw_cert)
+      ensure
+        LibCrypto.x509_free(raw_cert)
+      end
+    end
   end
 end

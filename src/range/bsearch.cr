@@ -68,20 +68,20 @@
 {% end %}
 
 struct Range(B, E)
-  # By using binary search, returns the first value
-  # for which the passed block returns `true`.
+  # By using binary search, returns the first element
+  # for which the passed block returns a truthy value.
   #
-  # If the block returns `false`, the finding value exists
-  # behind. If the block returns `true`, the finding value
-  # is itself or exists in front.
+  # If the block returns a falsey value, the element to be found lies
+  # behind. If the block returns a truthy value, the element to be found
+  # is itself or lies in front.
+  #
+  # Returns `nil` if the block didn't return a truthy value for any element.
   #
   # ```
   # (0..10).bsearch { |x| x >= 5 }                       # => 5
   # (0..Float64::INFINITY).bsearch { |x| x ** 4 >= 256 } # => 4
   # ```
-  #
-  # Returns `nil` if the block didn't return `true` for any value.
-  def bsearch(&block : B | E -> Bool)
+  def bsearch(&block : B | E -> _)
     from = self.begin
     to = self.end
 

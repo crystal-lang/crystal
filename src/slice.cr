@@ -11,7 +11,7 @@ require "slice/sort"
 # will raise. For example the slice of bytes returned by
 # `String#to_slice` is read-only.
 struct Slice(T)
-  include Indexable(T)
+  include Indexable::Mutable(T)
   include Comparable(Slice)
 
   # Creates a new `Slice` with the given *args*. The type of the
@@ -29,14 +29,15 @@ struct Slice(T)
   # If `T` is a `Number` then this is equivalent to
   # `Number.slice` (numbers will be coerced to the type `T`)
   #
-  # See also: `Number.slice`.
+  # * `Number.slice` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
-      {{T}}.slice({{*args}}, read_only: {{read_only}})
+      {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
+      %ptr = Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
@@ -102,7 +103,7 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice # => Slice[10, 11, 12]
   # ```
-  def self.new(size : Int, *, read_only = false)
+  def self.new(size : Int, *, read_only = false, &)
     pointer = Pointer.malloc(size) { |i| yield i }
     new(pointer, size, read_only: read_only)
   end
@@ -169,25 +170,55 @@ struct Slice(T)
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
 
-  # Sets the given value at the given *index*.
-  #
-  # Negative indices can be used to start counting from the end of the slice.
-  # Raises `IndexError` if trying to set an element outside the slice's range.
+  # Returns a new slice that has `self`'s elements followed by *other*'s
+  # elements.
   #
   # ```
-  # slice = Slice.new(5) { |i| i + 10 }
-  # slice[0] = 20
-  # slice[-1] = 30
-  # slice # => Slice[20, 11, 12, 13, 30]
-  #
-  # slice[10] = 1 # raises IndexError
+  # Slice[1, 2] + Slice[3, 4, 5]          # => Slice[1, 2, 3, 4, 5]
+  # Slice[1, 2, 3] + Slice['a', 'b', 'c'] # => Slice[1, 2, 3, 'a', 'b', 'c']
   # ```
-  @[AlwaysInline]
-  def []=(index : Int, value : T)
-    check_writable
+  #
+  # See also: `Slice.join` to join multiple slices at once without creating
+  # intermediate results.
+  def +(other : Slice) : Slice
+    Slice.join({self, other})
+  end
 
-    index = check_index_out_of_bounds(index)
-    @pointer[index] = value
+  # Returns a new slice that has the elements from *slices* joined together.
+  #
+  # ```
+  # Slice.join([Slice[1, 2], Slice[3, 4, 5]])        # => Slice[1, 2, 3, 4, 5]
+  # Slice.join({Slice[1], Slice['a'], Slice["xyz"]}) # => Slice[1, 'a', "xyz"]
+  # ```
+  #
+  # See also: `#+(other : Slice)`.
+  def self.join(slices : Indexable(Slice)) : Slice
+    total_size = slices.sum(&.size)
+    buf = Pointer(typeof(Enumerable.element_type Enumerable.element_type slices)).malloc(total_size)
+
+    ptr = buf
+    slices.each do |slice|
+      slice.to_unsafe.copy_to(ptr, slice.size)
+      ptr += slice.size
+    end
+
+    Slice.new(buf, total_size)
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # This is an empty slice.
+  def self.additive_identity : self
+    self.new(0)
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  @[AlwaysInline]
+  def []=(index : Int, value : T) : T
+    check_writable
+    super
   end
 
   # Returns a new slice that starts at *start* elements from this slice's start,
@@ -241,7 +272,7 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
+    start, count = Indexable.range_to_index_and_count(range, size) || return nil
     self[start, count]?
   end
 
@@ -256,8 +287,6 @@ struct Slice(T)
   # ```
   # a = Slice["a", "b", "c", "d", "e"]
   # a[1..3] # => Slice["b", "c", "d"]
-  # # range.end > array.size
-  # a[3..7] # => Slice["d", "e"]
   # ```
   #
   # Negative indices count backward from the end of the slice (`-1` is the last
@@ -283,43 +312,91 @@ struct Slice(T)
     @pointer[index]
   end
 
-  # Reverses in-place all the elements of `self`.
+  @[AlwaysInline]
+  def unsafe_put(index : Int, value : T)
+    @pointer[index] = value
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def update(index : Int, & : T -> _) : T
+    check_writable
+    super { |elem| yield elem }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def swap(index0 : Int, index1 : Int) : self
+    check_writable
+    super
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
   def reverse! : self
     check_writable
-
-    return self if size <= 1
-
-    p = @pointer
-    q = @pointer + size - 1
-
-    while p < q
-      p.value, q.value = q.value, p.value
-      p += 1
-      q -= 1
-    end
-
-    self
+    super
   end
 
-  def shuffle!(random = Random::DEFAULT)
-    check_writable
-
-    @pointer.shuffle!(size, random)
-  end
-
-  # Invokes the given block for each element of `self`, replacing the element
-  # with the value returned by the block. Returns `self`.
+  # :inherit:
   #
-  # ```
-  # slice = Slice[1, 2, 3]
-  # slice.map! { |x| x * x }
-  # slice # => Slice[1, 4, 9]
-  # ```
-  def map!
+  # Raises if this slice is read-only.
+  def shuffle!(random : Random = Random::DEFAULT) : self
+    check_writable
+    super
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def rotate!(n : Int = 1) : self
     check_writable
 
-    @pointer.map!(size) { |e| yield e }
+    return self if size == 0
+    n %= size
+
+    if n == 0
+    elsif n == 1
+      tmp = self[0]
+      @pointer.move_from(@pointer + n, size - n)
+      self[-1] = tmp
+    elsif n == (size - 1)
+      tmp = self[-1]
+      (@pointer + size - n).move_from(@pointer, n)
+      self[0] = tmp
+    elsif n <= SMALL_SLICE_SIZE
+      tmp_buffer = uninitialized T[SMALL_SLICE_SIZE]
+      tmp_buffer.to_unsafe.copy_from(@pointer, n)
+      @pointer.move_from(@pointer + n, size - n)
+      (@pointer + size - n).copy_from(tmp_buffer.to_unsafe, n)
+    elsif size - n <= SMALL_SLICE_SIZE
+      tmp_buffer = uninitialized T[SMALL_SLICE_SIZE]
+      tmp_buffer.to_unsafe.copy_from(@pointer + n, size - n)
+      (@pointer + size - n).move_from(@pointer, n)
+      @pointer.copy_from(tmp_buffer.to_unsafe, size - n)
+    elsif n <= size // 2
+      tmp = self[...n].dup
+      @pointer.move_from(@pointer + n, size - n)
+      (@pointer + size - n).copy_from(tmp.to_unsafe, n)
+    else
+      tmp = self[n..].dup
+      (@pointer + size - n).move_from(@pointer, n)
+      @pointer.copy_from(tmp.to_unsafe, size - n)
+    end
     self
+  end
+
+  private SMALL_SLICE_SIZE = 16 # same as Array::SMALL_ARRAY_SIZE
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def map!(& : T -> _) : self
+    check_writable
+    super { |elem| yield elem }
   end
 
   # Returns a new slice where elements are mapped by the given block.
@@ -328,36 +405,29 @@ struct Slice(T)
   # slice = Slice[1, 2.5, "a"]
   # slice.map &.to_s # => Slice["1", "2.5", "a"]
   # ```
-  def map(*, read_only = false, &block : T -> U) forall U
+  def map(*, read_only = false, & : T -> _)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
   end
 
-  # Like `map!`, but the block gets passed both the element and its index.
+  # :inherit:
   #
-  # Accepts an optional *offset* parameter, which tells it to start counting
-  # from there.
-  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+  # Raises if this slice is read-only.
+  def map_with_index!(offset = 0, & : T, Int32 -> _) : self
     check_writable
-
-    @pointer.map_with_index!(size) { |e, i| yield e, offset + i }
-    self
+    super { |elem, i| yield elem, i }
   end
 
   # Like `map`, but the block gets passed both the element and its index.
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, *, read_only = false, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> _)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
-  # Replaces every element in `self` with the given *value*. Returns `self`.
+  # :inherit:
   #
-  # ```
-  # slice = Slice[1, 2, 3, 4]
-  # slice.fill(2) # => Slice[2, 2, 2, 2]
-  # slice         # => Slice[2, 2, 2, 2]
-  # ```
+  # Raises if this slice is read-only.
   def fill(value : T) : self
     check_writable
 
@@ -376,36 +446,56 @@ struct Slice(T)
     {% end %}
   end
 
-  # Yields each index of `self` to the given block and then assigns
-  # the block's value in that position. Returns `self`.
+  # :inherit:
   #
-  # Accepts an optional *offset* parameter, which tells the block to start
-  # counting from there.
-  #
-  # ```
-  # slice = Slice[2, 1, 1, 1]
-  # slice.fill { |i| i * i }            # => Slice[0, 1, 4, 9]
-  # slice                               # => Slice[0, 1, 4, 9]
-  # slice.fill(offset: 3) { |i| i * i } # => Slice[9, 16, 25, 36]
-  # slice                               # => Slice[9, 16, 25, 36]
-  # ```
-  def fill(*, offset : Int = 0, & : Int32 -> T) : self
-    check_writable
-
-    size.times do |i|
-      to_unsafe[i] = yield offset + i
-    end
+  # Raises if this slice is read-only.
+  def fill(value : T, start : Int, count : Int) : self
+    # since `#[]` requires exactly *count* elements but we allow fewer here, we
+    # must normalize the indices beforehand
+    start, count = normalize_start_and_count(start, count)
+    self[start, count].fill(value)
     self
   end
 
-  def copy_from(source : Pointer(T), count)
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(value : T, range : Range) : self
+    fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(*, offset : Int = 0, & : Int32 -> T) : self
+    check_writable
+    super { |i| yield i }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(start : Int, count : Int, & : Int32 -> T) : self
+    check_writable
+    super(start, count) { |i| yield i }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(range : Range, & : Int32 -> T) : self
+    check_writable
+    super(range) { |i| yield i }
+  end
+
+  def copy_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.copy_from(source, count)
   end
 
-  def copy_to(target : Pointer(T), count)
+  def copy_to(target : Pointer(T), count) : Nil
     check_size(count)
 
     @pointer.copy_to(target, count)
@@ -414,7 +504,7 @@ struct Slice(T)
   # Copies the contents of this slice into *target*.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred
-  # e.g. dest.size < self.size.
+  # e.g. `dest.size < self.size`.
   #
   # ```
   # src = Slice['a', 'a', 'a']
@@ -423,7 +513,7 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.copy_to src # raises IndexError
   # ```
-  def copy_to(target : self)
+  def copy_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -434,18 +524,18 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def copy_from(source : self)
+  def copy_from(source : self) : Nil
     source.copy_to(self)
   end
 
-  def move_from(source : Pointer(T), count)
+  def move_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.move_from(source, count)
   end
 
-  def move_to(target : Pointer(T), count)
+  def move_to(target : Pointer(T), count) : Nil
     @pointer.move_to(target, count)
   end
 
@@ -464,7 +554,7 @@ struct Slice(T)
   # ```
   #
   # See also: `Pointer#move_to`.
-  def move_to(target : self)
+  def move_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -476,7 +566,7 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def move_from(source : self)
+  def move_from(source : self) : Nil
     source.move_to(self)
   end
 
@@ -484,15 +574,62 @@ struct Slice(T)
     to_s(io)
   end
 
-  # Returns a hexstring representation of this slice, assuming it's
-  # a `Slice(UInt8)`.
+  # Returns a new `Slice` pointing at the same contents as `self`, but
+  # reinterpreted as elements of the given *type*.
+  #
+  # The returned slice never refers to more memory than `self`; if the last
+  # bytes of `self` do not fit into a `U`, they are excluded from the returned
+  # slice.
+  #
+  # WARNING: This method is **unsafe**: elements are reinterpreted using
+  # `#unsafe_as`, and the resulting slice may not be properly aligned.
+  # Additionally, the same elements may produce different results depending on
+  # the system endianness.
   #
   # ```
-  # slice = UInt8.slice(97, 62, 63, 8, 255)
-  # slice.hexstring # => "613e3f08ff"
+  # # assume little-endian system
+  # bytes = Bytes[0x01, 0x02, 0x03, 0x04, 0xFF, 0xFE]
+  # bytes.unsafe_slice_of(Int8)  # => Slice[1_i8, 2_i8, 3_i8, 4_i8, -1_i8, -2_i8]
+  # bytes.unsafe_slice_of(Int16) # => Slice[513_i16, 1027_i16, -257_i16]
+  # bytes.unsafe_slice_of(Int32) # => Slice[0x04030201]
+  # ```
+  def unsafe_slice_of(type : U.class) : Slice(U) forall U
+    Slice.new(to_unsafe.unsafe_as(Pointer(U)), bytesize // sizeof(U), read_only: @read_only)
+  end
+
+  # Returns a new `Bytes` pointing at the same contents as `self`.
+  #
+  # WARNING: This method is **unsafe**: the returned slice is writable if `self`
+  # is also writable, and modifications through the returned slice may violate
+  # the binary representations of Crystal objects. Additionally, the same
+  # elements may produce different results depending on the system endianness.
+  #
+  # ```
+  # # assume little-endian system
+  # ints = Slice[0x01020304, 0x05060708]
+  # bytes = ints.to_unsafe_bytes # => Bytes[0x04, 0x03, 0x02, 0x01, 0x08, 0x07, 0x06, 0x05]
+  # bytes[2] = 0xAD
+  # ints # => Slice[0x01AD0304, 0x05060708]
+  # ```
+  def to_unsafe_bytes : Bytes
+    unsafe_slice_of(UInt8)
+  end
+
+  # Returns a hexstring representation of this slice.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
+  #
+  # ```
+  # UInt8.slice(97, 62, 63, 8, 255).hexstring # => "613e3f08ff"
+  #
+  # # assume little-endian system
+  # Int16.slice(97, 62, 1000, -2).to_unsafe_bytes.hexstring # => "61003e00e803feff"
   # ```
   def hexstring : String
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexstring` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     str_size = size * 2
     String.new(str_size) do |buffer|
@@ -503,7 +640,9 @@ struct Slice(T)
 
   # :nodoc:
   def hexstring(buffer) : Nil
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexstring` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     offset = 0
     each do |v|
@@ -515,16 +654,26 @@ struct Slice(T)
     nil
   end
 
-  # Returns a hexdump of this slice, assuming it's a `Slice(UInt8)`.
+  # Returns a hexdump of this slice.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
+  #
   # This method is specially useful for debugging binary data and
   # incoming/outgoing data in protocols.
   #
   # ```
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexdump # => "00000000  61 3e 3f 08 ff                                    a>?..\n"
+  #
+  # # assume little-endian system
+  # slice = Int16.slice(97, 62, 1000, -2)
+  # slice.to_unsafe_bytes.hexdump # => "00000000  61 00 3e 00 e8 03 fe ff                           a.>.....\n"
   # ```
   def hexdump : String
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexdump` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     return "" if empty?
 
@@ -551,7 +700,11 @@ struct Slice(T)
     end
   end
 
-  # Writes a hexdump of this slice, assuming it's a `Slice(UInt8)`, to the given *io*.
+  # Writes a hexdump of this slice to the given *io*.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
+  #
   # This method is specially useful for debugging binary data and
   # incoming/outgoing data in protocols.
   #
@@ -568,7 +721,9 @@ struct Slice(T)
   # 00000000  61 3e 3f 08 ff                                    a>?..
   # ```
   def hexdump(io : IO)
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexdump` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     return 0 if empty?
 
@@ -729,32 +884,40 @@ struct Slice(T)
     @pointer
   end
 
-  # Returns a new slice with all elements sorted based on the return value of
-  # their comparison method `<=>`
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = Slice[3, 1, 2]
   # a.sort # => Slice[1, 2, 3]
   # a      # => Slice[3, 1, 2]
   # ```
-  def sort : Slice(T)
+  #
+  # See `#sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def sort : self
     dup.sort!
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort : Slice(T)
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.unstable_sort # => Slice[1, 2, 3]
+  # a               # => Slice[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def unstable_sort : self
     dup.unstable_sort!
   end
 
-  # Returns a new slice with all elements sorted based on the comparator in the
-  # given block.
-  #
-  # The block must implement a comparison between two elements *a* and *b*,
-  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using a stable sort algorithm.
   #
   # ```
   # a = Slice[3, 1, 2]
@@ -763,66 +926,136 @@ struct Slice(T)
   # b # => Slice[3, 2, 1]
   # a # => Slice[3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : Slice(T) forall U
+  #
+  # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.sort! &block
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort(&block : T, T -> U) : Slice(T) forall U
+  # ```
+  # a = Slice[3, 1, 2]
+  # b = a.unstable_sort { |a, b| b <=> a }
+  #
+  # b # => Slice[3, 2, 1]
+  # a # => Slice[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.unstable_sort!(&block)
   end
 
-  # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `<=>`
+  # Sorts all elements in `self` based on the return value of the comparison
+  # method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
-  # a = Slice[3, 1, 2]
-  # a.sort!
-  # a # => Slice[1, 2, 3]
+  # slice = Slice[3, 1, 2]
+  # slice.sort!
+  # slice # => Slice[1, 2, 3]
   # ```
-  def sort! : Slice(T)
+  #
+  # This sort operation modifies `self`. See `#sort` for a non-modifying option
+  # that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
+  # It is stable, which is typically a good default.
+  #
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is expendable, `#unstable_sort!` provides a performance
+  # advantage over stable sort.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def sort! : self
     Slice.merge_sort!(self)
 
     self
   end
 
-  # :ditto:
+  # Sorts all elements in `self` based on the return value of the comparison
+  # method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm..
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort! : Slice(T)
+  # ```
+  # slice = Slice[3, 1, 2]
+  # slice.unstable_sort!
+  # slice # => Slice[1, 2, 3]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#unstable_sort` for a non-modifying
+  # option that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*introsort*](https://en.wikipedia.org/wiki/Introsort).
+  # It does not guarantee stability between equally comparing elements.
+  # This offers higher performance but may be unexpected in some situations.
+  #
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is necessary, use  `#sort!` instead.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def unstable_sort! : self
     Slice.intro_sort!(to_unsafe, size)
 
     self
   end
 
-  # Modifies `self` by sorting all elements based on the comparator in the given
-  # block.
-  #
-  # The given block must implement a comparison between two elements
-  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Sorts all elements in `self` based on the comparator in the given block, using
+  # a stable sort algorithm.
   #
   # ```
-  # a = Slice[3, 1, 2]
-  # a.sort! { |a, b| b <=> a }
-  # a # => Slice[3, 2, 1]
+  # slice = Slice[3, 1, 2]
+  # # This is a reverse sort (forward sort would be `a <=> b`)
+  # slice.sort! { |a, b| b <=> a }
+  # slice # => Slice[3, 2, 1]
   # ```
-  def sort!(&block : T, T -> U) : Slice(T) forall U
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` outputs a negative value, `a == b` outputs `0`, and `a > b`
+  # outputs a positive value.
+  # The comparison operator (`Comparable#<=>`) can be used for this.
+  #
+  # The block's output type must be `<= Int32?`, but returning an actual `nil`
+  # value is an error.
+  #
+  # This sort operation modifies `self`. See `#sort(&block : T, T -> U)` for a
+  # non-modifying option that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
+  # It is stable, which is typically a good default.
+  #
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is expendable, `#unstable_sort!(&block : T, T -> U)` provides a
+  # performance advantage over stable sort.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -830,13 +1063,42 @@ struct Slice(T)
     self
   end
 
-  # :ditto:
+  # Sorts all elements in `self` based on the comparator in the given block,
+  # using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort!(&block : T, T -> U) : Slice(T) forall U
+  # ```
+  # slice = Slice[3, 1, 2]
+  # # This is a reverse sort (forward sort would be `a <=> b`)
+  # slice.unstable_sort! { |a, b| b <=> a }
+  # slice # => Slice[3, 2, 1]
+  # ```
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` outputs a negative value, `a == b` outputs `0`, and `a > b`
+  # outputs a positive value.
+  # The comparison operator (`Comparable#<=>`) can be used for this.
+  #
+  # The block's output type must be `<= Int32?`, but returning an actual `nil`
+  # value is an error.
+  #
+  # This sort operation modifies `self`. See `#unstable_sort(&block : T, T -> U)`
+  # for a non-modifying option that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*introsort*](https://en.wikipedia.org/wiki/Introsort).
+  # It does not guarantee stability between equally comparing elements.
+  # This offers higher performance but may be unexpected in some situations.
+  #
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is necessary, use  `#sort!(&block : T, T -> U)` instead.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)
@@ -844,9 +1106,9 @@ struct Slice(T)
     self
   end
 
-  # Returns a new array with all elements sorted. The given block is called for
-  # each element, then the comparison method `<=>` is called on the object
-  # returned from the block to determine sort order.
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `T#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = Slice["apple", "pear", "fig"]
@@ -854,15 +1116,34 @@ struct Slice(T)
   # b # => Slice["fig", "pear", "apple"]
   # a # => Slice["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Slice(T)
+  #
+  # If stability is expendable, `#unstable_sort_by(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `Indexable::Mutable#sort_by!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def sort_by(&block : T -> _) : self
     dup.sort_by! { |e| yield(e) }
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort_by(&block : T -> _) : Slice(T)
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # b = a.unstable_sort_by { |word| word.size }
+  # b # => Slice["fig", "pear", "apple"]
+  # a # => Slice["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is necessary, use `#sort_by(&block : T -> _)` instead.
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def unstable_sort_by(&block : T -> _) : self
     dup.unstable_sort_by! { |e| yield(e) }
   end
 
@@ -895,7 +1176,6 @@ struct Slice(T)
     self
   end
 
-  # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&

@@ -35,7 +35,7 @@ describe "Semantic: class" do
   end
 
   it "types generic of generic type" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         def set
           @coco = 2
@@ -383,6 +383,20 @@ describe "Semantic: class" do
       ") { char }
   end
 
+  it "type def does not reopen type from parent namespace (#11181)" do
+    assert_type <<-CR, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
+      class Foo::Bar
+      end
+
+      module Baz
+        class Foo::Bar
+        end
+      end
+
+      Baz::Foo::Bar
+      CR
+  end
+
   it "finds in global scope if includes module" do
     assert_type("
       class Baz
@@ -588,7 +602,7 @@ describe "Semantic: class" do
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
       ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
+      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
   end
 
   it "errors if using underscore in generic class" do
@@ -767,7 +781,7 @@ describe "Semantic: class" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows using self in class scope" do
@@ -821,7 +835,7 @@ describe "Semantic: class" do
       ptr.value = Bar
       bar = ptr.value.new(1)
       bar.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "says no overload matches for class new" do
@@ -833,7 +847,7 @@ describe "Semantic: class" do
 
       Foo.new 'a'
       ),
-      "no overload matches"
+      "expected argument #1 to 'Foo.new' to be Int32, not Char"
   end
 
   it "correctly types #680" do
@@ -1004,7 +1018,7 @@ describe "Semantic: class" do
       end
 
       a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't mix classes on definition (#2352)" do
@@ -1113,6 +1127,18 @@ describe "Semantic: class" do
       end
       ),
       "Moo is not a class, it's a module"
+  end
+
+  it "errors if inherits from metaclass" do
+    assert_error <<-CRYSTAL, "Foo.class is not a class, it's a metaclass"
+      class Foo
+      end
+
+      alias FooClass = Foo.class
+
+      class Bar < FooClass
+      end
+      CRYSTAL
   end
 
   it "can use short name for top-level type" do

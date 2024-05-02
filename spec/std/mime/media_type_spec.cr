@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "mime/media_type"
+require "spec/helpers/string"
 
 private def parse(string)
   type = MIME::MediaType.parse(string)
@@ -8,7 +9,7 @@ private def parse(string)
 end
 
 private def assert_format(string, format = string, file = __FILE__, line = __LINE__)
-  MIME::MediaType.parse(string).to_s.should eq(format), file: file, line: line
+  assert_prints MIME::MediaType.parse(string).to_s, format, file: file, line: line
 end
 
 describe MIME::MediaType do
@@ -219,12 +220,14 @@ describe MIME::MediaType do
       parse(%(form-data; foo= " foo ")).should eq({"form-data", {"foo" => " foo "}})
     end
 
-    pending_win32 "parses params with encoding" do
-      # From RFC 2231:
-      parse(%(application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A)).should eq({"application/x-stuff", {"title" => "This is ***fun***"}})
-      # attfnboth3
-      parse(%(attachment; filename*0*=ISO-8859-15''euro-sign%3d%a4; filename*=ISO-8859-1''currency-sign%3d%a4)).should eq({"attachment", {"filename" => "currency-sign=¤"}})
-    end
+    {% unless flag?(:without_iconv) %}
+      it "parses params with encoding" do
+        # From RFC 2231:
+        parse(%(application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A)).should eq({"application/x-stuff", {"title" => "This is ***fun***"}})
+        # attfnboth3
+        parse(%(attachment; filename*0*=ISO-8859-15''euro-sign%3d%a4; filename*=ISO-8859-1''currency-sign%3d%a4)).should eq({"attachment", {"filename" => "currency-sign=¤"}})
+      end
+    {% end %}
 
     it "sets default charset to utf-8 for text media types" do
       type = MIME::MediaType.parse("text/html")
