@@ -47,6 +47,7 @@ lib LibEvent2
   fun event_base_dispatch(eb : EventBase) : Int
   fun event_base_loop(eb : EventBase, flags : EventLoopFlags) : Int
   fun event_base_loopbreak(eb : EventBase) : Int
+  fun event_base_loopexit(EventBase, LibC::Timeval*) : LibC::Int
   fun event_set_log_callback(callback : (Int, UInt8*) -> Nil)
   fun event_enable_debug_mode
   fun event_reinit(eb : EventBase) : Int

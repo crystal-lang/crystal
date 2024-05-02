@@ -57,6 +57,7 @@ lib LibC
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
   fun SwitchToThread : BOOL
+  fun QueueUserAPC(pfnAPC : PAPCFUNC, hThread : HANDLE, dwData : ULONG_PTR) : DWORD
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end

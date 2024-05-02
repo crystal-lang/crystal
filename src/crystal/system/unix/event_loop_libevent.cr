@@ -18,9 +18,17 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     end
   {% end %}
 
+  def run(blocking : Bool) : Bool
+    event_base.loop(once: true, nonblock: !blocking)
+  end
+
   # Runs the event loop.
   def run_once : Nil
-    event_base.run_once
+    event_base.loop(once: true)
+  end
+
+  def interrupt : Nil
+    event_base.loop_exit
   end
 
   # Create a new resume event for a fiber.

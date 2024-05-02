@@ -7,8 +7,29 @@ abstract class Crystal::EventLoop
     Crystal::Scheduler.event_loop
   end
 
-  # Runs the event loop.
+  # Runs the loop.
+  #
+  # Set `blocking` to false to return immediately if there are no activable
+  # events. Set it to true to wait for activable events, which will block the
+  # current thread until then.
+  #
+  # Returns `true` on normal returns (e.g. has activated events, has pending
+  # events but blocking was false) and `false` when there are no registered
+  # events.
+  abstract def run(blocking : Bool) : Bool
+
+  # Runs the event loop. Blocks until at least one event is activated then
+  # returns. May return immediately if there are activable events.
   abstract def run_once : Nil
+
+  # Tells a blocking run loop to no longer wait for events to activate. It may
+  # for example enqueue a NOOP event with an immediate (or past) timeout. Having
+  # activated an event, the loop shall return, allowing the blocked thread to
+  # continue.
+  #
+  # Should be a NOOP when the loop isn't running or is running in a nonblocking
+  # mode.
+  abstract def interrupt : Nil
 
   # Create a new resume event for a fiber.
   abstract def create_resume_event(fiber : Fiber) : Event
