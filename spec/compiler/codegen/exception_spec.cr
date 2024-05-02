@@ -1362,4 +1362,29 @@ describe "Code gen: exception" do
       x
       )).to_i.should eq(1)
   end
+
+  it "handles rescuing union between module types" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex1 < Exception
+        include Foo
+      end
+
+      class Ex2 < Exception
+        include Bar
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo | Bar
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
 end
