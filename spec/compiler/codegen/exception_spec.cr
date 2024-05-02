@@ -1319,4 +1319,47 @@ describe "Code gen: exception" do
       end
     ))
   end
+
+  it "handles rescuing module type" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+
+      class Ex1 < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "handles rescuing union between module type and class type" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+
+      abstract class BaseError < Exception; end
+      class Ex2 < BaseError; end
+
+      class Ex1 < BaseError
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo | BaseError
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
 end
