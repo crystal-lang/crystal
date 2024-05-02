@@ -12,6 +12,12 @@ We're only listing the most relevant changes here that could have a relevant imp
 The [changelog](./CHANGELOG.md) contains more information about all changes in
 a specific release.
 
+## Crystal 1.12
+
+* `Int128` and `UInt128`'s alignment is now 16 bytes instead of 8 bytes for all
+  x86-64 targets, regardless of the compiler's LLVM version. This may affect the
+  layout of lib and extern structs in subtle ways.
+
 ## Crystal 1.9
 
 * The implementation of the comparison operator `#<=>` between `Big*` (`BigDecimal`,
