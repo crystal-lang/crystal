@@ -36,6 +36,8 @@ class Thread
   include Crystal::System::Thread
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
+  # and iterate each thread to mark its current stack (the current fiber may not
+  # be the main thread's fiber that the GC knows)
   protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
   @system_handle : Crystal::System::Thread::Handle
@@ -64,6 +66,9 @@ class Thread
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
+
+    # keep a reference to the thread object
+    Thread.threads.push(self)
   end
 
   # Used once to initialize the thread object representing the main thread of
@@ -121,7 +126,8 @@ class Thread
   getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
 
   protected def start
-    Thread.threads.push(self)
+    # note: until we set the current fiber, the GC will mark the thread's main
+    # stack (i.e. it's safe to allocate objects):
     Thread.current = self
     @current_fiber = @main_fiber = fiber = Fiber.new(stack_address, self)
 
@@ -134,9 +140,14 @@ class Thread
     rescue ex
       @exception = ex
     ensure
-      Thread.threads.delete(self)
-      Fiber.inactive(fiber)
+      # to shutdown the thread we first call any function that needs to access
+      # local or instance variables, then start cleaning up references (that
+      # may be the last reference, so the GC may collect them anytime):
       detach { system_close }
+      Fiber.inactive(fiber)
+
+      # eventually forget the thread reference (must be the last thing to do)
+      Thread.threads.delete(self)
     end
   end
 
