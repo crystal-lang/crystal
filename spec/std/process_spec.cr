@@ -235,8 +235,8 @@ pending_interpreted describe: Process do
     describe "does not execute batch files" do
       %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
         it ext do
-          with_tempfile "process_run.#{ext}" do |path|
-            File.write(path, "echo '#{ext}'")
+          with_tempfile "process_run#{ext}" do |path|
+            File.write(path, "echo '#{ext}'\n")
             expect_raises {{ flag?(:win32) ? File::BadExecutableError : File::AccessDeniedError }}, "Error executing process" do
               Process.run(path)
             end
