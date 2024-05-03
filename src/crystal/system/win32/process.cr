@@ -316,7 +316,7 @@ struct Crystal::System::Process
       # > Because of this, it’s possible to inject commands if someone can control the part of command arguments of the batch file.
       # https://flatt.tech/research/posts/batbadbut-you-cant-securely-execute-commands-on-windows/
       if command.byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
-        raise ::File::Error.from_winerror("Error executing process", winerror: WinError::ERROR_BAD_EXE_FORMAT, file: command)
+        raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
       end
 
       command_args = [command]
