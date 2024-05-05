@@ -744,7 +744,7 @@ class Channel(T)
 
     def time_expired(fiber : Fiber) : Nil
       if @select_context.try &.try_trigger
-        Crystal::Scheduler.enqueue fiber
+        fiber.enqueue
       end
     end
   end
