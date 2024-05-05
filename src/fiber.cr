@@ -285,15 +285,16 @@ class Fiber
     Crystal::Scheduler.yield
   end
 
-  # Yields to the scheduler and tells it to swap execution to another waiting
-  # fibers. Unlike `Fiber.yield` the current fiber won't be automatically
-  # reenqueued and won't be resumed until it has been explicitely reenqueued.
+  # Suspends execution of the current fiber indefinitely.
+  #
+  # Unlike `Fiber.yield` the current fiber is not automatically
+  # reenqueued and can only be resumed whith an explicit call to `#enqueue`.
   #
   # This is equivalent to `sleep` without a time.
   #
-  # This method is particularly useful to stop the execution of the current
-  # fiber until something happens, for example an IO event, a message is ready
-  # in a channel, and so on.
+  # This method is meant to be used in concurrency primitives. It's particularly 
+  # useful if the fiber needs to wait  for something to happen (for example an IO
+  # event, a message is ready in a channel, etc.) which triggers a re-enqueue.
   def self.suspend : Nil
     Crystal::Scheduler.reschedule
   end
