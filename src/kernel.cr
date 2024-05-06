@@ -562,7 +562,7 @@ end
         ->Crystal::System::SignalChildHandler.after_fork,
 
         # reinit event loop:
-        ->{ Crystal::Scheduler.event_loop.after_fork },
+        ->{ Crystal::EventLoop.current.after_fork },
 
         # more clean ups (may depend on event loop):
         ->Random::DEFAULT.new_seed,
