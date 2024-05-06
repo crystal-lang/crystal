@@ -24,7 +24,7 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   # Runs the event loop.
   def run_once : Nil
-    event_base.loop(once: true)
+    event_base.loop(once: true, nonblock: false)
   end
 
   def interrupt : Nil
