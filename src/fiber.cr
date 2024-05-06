@@ -292,7 +292,7 @@ class Fiber
   #
   # This is equivalent to `sleep` without a time.
   #
-  # This method is meant to be used in concurrency primitives. It's particularly 
+  # This method is meant to be used in concurrency primitives. It's particularly
   # useful if the fiber needs to wait  for something to happen (for example an IO
   # event, a message is ready in a channel, etc.) which triggers a re-enqueue.
   def self.suspend : Nil
