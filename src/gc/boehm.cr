@@ -298,10 +298,10 @@ module GC
 
   # :nodoc:
   {% if flag?(:preview_mt) %}
-    def self.set_stackbottom(thread_handle : Void*, stack_bottom : Void*)
+    def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
-      LibGC.set_stackbottom(thread_handle, pointerof(sb))
+      LibGC.set_stackbottom(thread.gc_thread_handler, pointerof(sb))
     end
   {% elsif LibGC.has_method?(:set_stackbottom) %}
     # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
@@ -373,9 +373,14 @@ module GC
       end
 
       {% if flag?(:preview_mt) %}
+        # update the thread stacks to their currently running fiber stacks, we
+        # only do it once _here_ instead of everytime we switch.
+        #
+        # A thread may not have a current fiber while starting, in which case we
+        # assume the GC knows about the thread and detected its stack.
         Thread.unsafe_each do |thread|
           if fiber = thread.current_fiber?
-            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+            GC.set_stackbottom(thread, fiber.@stack_bottom)
           end
         end
       {% end %}

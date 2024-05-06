@@ -140,14 +140,16 @@ class Thread
     rescue ex
       @exception = ex
     ensure
-      # to shutdown the thread we first call any function that needs to access
-      # local or instance variables, then start cleaning up references (that
-      # may be the last reference, so the GC may collect them anytime):
-      detach { system_close }
-      Fiber.inactive(fiber)
+      {% if flag?(:preview_mt) %}
+        # fix the thread stack now so we can start cleaning up references
+        GC.lock_read
+        GC.set_stackbottom(thread, fiber.@stack_bottom)
+        GC.unlock_read
+      {% end %}
 
-      # eventually forget the thread reference (must be the last thing to do)
       Thread.threads.delete(self)
+      Fiber.inactive(fiber)
+      detach { system_close }
     end
   end
 
