@@ -143,8 +143,10 @@ class Thread
       {% if flag?(:preview_mt) %}
         # fix the thread stack now so we can start cleaning up references
         GC.lock_read
-        GC.set_stackbottom(thread, fiber.@stack_bottom)
+        GC.set_stackbottom(self, fiber.@stack_bottom)
         GC.unlock_read
+      {% else %}
+        GC.set_stackbottom(fiber.@stack_bottom)
       {% end %}
 
       Thread.threads.delete(self)
