@@ -16,7 +16,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run_once")
   end
 
-  def interrupt : Bool
+  def interrupt : Nil
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.interrupt")
   end
 
