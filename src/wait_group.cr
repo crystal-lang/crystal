@@ -106,7 +106,7 @@ class WaitGroup
       @waiting.push(pointerof(waiting))
     end
 
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     return if done?
     raise RuntimeError.new("Positive WaitGroup counter (early wake up?)")
