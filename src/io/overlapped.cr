@@ -21,7 +21,7 @@ module IO::Overlapped
       error = WinError.value
       if timeout && error.wait_timeout?
         return true
-      elsif alertable && error.error_exe_marked_invalid?
+      elsif alertable && error.value == LibC::WAIT_IO_COMPLETION
         return true
       else
         raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
