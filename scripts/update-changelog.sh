@@ -40,6 +40,10 @@ scripts/github-changelog.cr $VERSION > $current_changelog
 echo "Switching to branch $branch"
 git switch $branch 2>/dev/null || git switch -c $branch;
 
+# Write release version into src/VERSION
+echo "${VERSION}" > src/VERSION
+git add src/VERSION
+
 if grep --silent -E "^## \[$VERSION\]" CHANGELOG.md; then
   echo "Replacing section in CHANGELOG"
 
