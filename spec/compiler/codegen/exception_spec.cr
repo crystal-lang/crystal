@@ -1412,4 +1412,49 @@ describe "Code gen: exception" do
       x
       )).to_i.should eq(2)
   end
+
+  it "rescues a valid union" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Foo, Bar)
+        x = 1
+      end
+      x
+      )).to_i.should eq(1)
+  end
+
+  it "does not rescue just any union" do
+    run(%(
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+      module Baz; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Bar, Baz)
+        x = 1
+      rescue
+        x = 2
+      end
+      x
+      )).to_i.should eq(2)
+  end
 end

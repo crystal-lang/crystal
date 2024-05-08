@@ -2771,13 +2771,26 @@ module Crystal
     end
 
     def visit(node : Rescue)
+      is_exception_type_callback = Proc(Crystal::Type, Bool).new do |type|
+        type.implements?(@program.exception) || type.module?
+      end
+
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.implements?(@program.exception) || instance_type.module?
+
+          is_exception_type = case instance_type
+                              when UnionType
+                                instance_type.union_types.all? &is_exception_type_callback
+                              else
+                                is_exception_type_callback.call instance_type
+                              end
+
+          unless is_exception_type
             type.raise "#{instance_type} is not a subclass of Exception"
           end
+
           instance_type
         end
       end
