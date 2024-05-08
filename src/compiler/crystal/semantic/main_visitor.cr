@@ -2770,11 +2770,17 @@ module Crystal
       false
     end
 
-    def visit(node : Rescue)
-      is_exception_type = Proc(Crystal::Type, Bool).new do |type|
-        type.implements?(@program.exception) || type.module?
+    private def allowed_type_in_rescue?(type : UnionType) : Bool
+      type.union_types.all? do |subtype|
+        allowed_type_in_rescue? subtype
       end
+    end
 
+    private def allowed_type_in_rescue?(type : Crystal::Type) : Bool
+      type.implements?(@program.exception) || type.module?
+    end
+
+    def visit(node : Rescue)
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
@@ -2782,11 +2788,11 @@ module Crystal
 
           case instance_type
           when UnionType
-            if !instance_type.union_types.all?(&is_exception_type)
+            unless self.allowed_type_in_rescue? instance_type
               type.raise "Not all union members of #{instance_type} are a module type or subclass of Exception"
             end
           else
-            unless is_exception_type.call instance_type
+            unless self.allowed_type_in_rescue? instance_type
               type.raise "#{instance_type} is not a module type or subclass of Exception"
             end
           end
