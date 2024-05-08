@@ -590,20 +590,54 @@ class Regex
     nil
   end
 
+  # Prints to *io* an unambiguous string representation of this regular expression object.
+  #
+  # Uses `#inspect_literal` if the literal representation with basic option flags
+  # is sufficient (i.e. no other options than `IGNORE_CASE`, `MULTILINE`, or `EXTENDED`).
+  # Otherwise the result is equivalent to `#inspect_extensive`.
+  def inspect(io : IO) : Nil
+    if (options & ~CompileOptions[IGNORE_CASE, MULTILINE, EXTENDED]).none?
+      inspect_literal(io)
+    else
+      inspect_extensive(io)
+    end
+  end
+
   # Convert to `String` in literal format. Returns the source as a `String` in
-  # Regex literal format, delimited in forward slashes (`/`), with any
-  # optional flags included.
+  # Regex literal format, delimited in forward slashes (`/`), with option flags
+  # included.
+  #
+  # Only `IGNORE_CASE`, `MULTILINE`, and `EXTENDED` options can be represented.
+  # Any other option value is ignored. Use `#inspect` instead for an unambiguous
+  # and correct representation.
   #
   # ```
-  # /ab+c/ix.inspect # => "/ab+c/ix"
+  # /ab+c/ix.inspect_literal                     # => "/ab+c/ix"
+  # Regex.new("ab+c", :anchored).inspect_literal # => "/ab+c/"
   # ```
-  def inspect(io : IO) : Nil
+  def inspect_literal(io : IO) : Nil
     io << '/'
     Regex.append_source(source, io)
     io << '/'
     io << 'i' if options.ignore_case?
     io << 'm' if options.multiline?
     io << 'x' if options.extended?
+  end
+
+  # Prints to *io* an extensive string representation of this regular expression object.
+  # The result is unambiguous and mirrors a Crystal expression to recreate an equivalent
+  # instance.
+  #
+  # ```
+  # /ab+c/ix.inspect_literal                     # => Regex.new("ab+c", Regex::Options[IGNORE_CASE, EXTENDED])
+  # Regex.new("ab+c", :anchored).inspect_literal # => Regex.new("ab+c", Regex::Options::ANCHORED)
+  # ```
+  def inspect_extensive(io : IO) : Nil
+    io << "Regex.new("
+    source.inspect(io)
+    io << ", "
+    options.inspect(io)
+    io << ")"
   end
 
   # Match at character index. Matches a regular expression against `String`
