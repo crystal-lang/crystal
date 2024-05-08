@@ -145,15 +145,15 @@ describe "Semantic: exception" do
   end
 
   it "errors if caught exception is not a subclass of Exception" do
-    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue ex : Int32; end", "Int32 is not a module type or subclass of Exception"
   end
 
   it "errors if caught exception is a union but not all types are valid" do
-    assert_error "begin; rescue ex : Union(Exception, String); end", "(Exception | String) is not a subclass of Exception"
+    assert_error "begin; rescue ex : Union(Exception, String); end", "Not all union members of (Exception | String) are a module type or subclass of Exception"
   end
 
   it "errors if caught exception is not a subclass of Exception without var" do
-    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue Int32; end", "Int32 is not a module type or subclass of Exception"
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
