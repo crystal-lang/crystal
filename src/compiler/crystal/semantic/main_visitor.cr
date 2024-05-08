@@ -2786,15 +2786,8 @@ module Crystal
           type.accept self
           instance_type = type.type.instance_type
 
-          case instance_type
-          when UnionType
-            unless self.allowed_type_in_rescue? instance_type
-              type.raise "Not all union members of #{instance_type} are a module type or subclass of Exception"
-            end
-          else
-            unless self.allowed_type_in_rescue? instance_type
-              type.raise "#{instance_type} is not a module type or subclass of Exception"
-            end
+          unless self.allowed_type_in_rescue? instance_type
+            type.raise "#{instance_type} cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
           end
 
           instance_type
