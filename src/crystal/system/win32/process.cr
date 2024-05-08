@@ -309,6 +309,16 @@ struct Crystal::System::Process
       end
       command
     else
+      # Disable implicit execution of batch files (https://github.com/crystal-lang/crystal/issues/14536)
+      #
+      # > `CreateProcessW()` implicitly spawns `cmd.exe` when executing batch files (`.bat`, `.cmd`, etc.), even if the application didn’t specify them in the command line.
+      # > The problem is that the `cmd.exe` has complicated parsing rules for the command arguments, and programming language runtimes fail to escape the command arguments properly.
+      # > Because of this, it’s possible to inject commands if someone can control the part of command arguments of the batch file.
+      # https://flatt.tech/research/posts/batbadbut-you-cant-securely-execute-commands-on-windows/
+      if command.byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
+        raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
+      end
+
       command_args = [command]
       command_args.concat(args) if args
       command_args
