@@ -67,8 +67,6 @@ let
     };
   }.${pkgs.stdenv.system});
 
-  pkgconfig = pkgs.pkg-config;
-
   llvm_suite = ({
     llvm_16 = {
       llvm = pkgs.llvm_16;
@@ -139,7 +137,7 @@ pkgs.stdenv.mkDerivation rec {
 
   buildInputs = tools ++ stdLibDeps ++ [
     latestCrystalBinary
-    pkgconfig
+    pkgs.pkg-config
     llvm_suite.llvm
     pkgs.libffi
   ];
