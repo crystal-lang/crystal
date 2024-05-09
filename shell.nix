@@ -67,7 +67,7 @@ let
     };
   }.${pkgs.stdenv.system});
 
-  pkgconfig = pkgs.pkgconfig;
+  pkgconfig = pkgs.pkg-config;
 
   llvm_suite = ({
     llvm_16 = {
