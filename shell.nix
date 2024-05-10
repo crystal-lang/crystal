@@ -23,9 +23,9 @@
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-23.05";
-    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
-    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
+    name = "nixpkgs-24.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/24.05.tar.gz";
+    sha256 = "1lr1h35prqkd1mkmzriwlpvxcb34kmhc9dnr48gkm8hh089hifmx";
   }) {
     inherit system;
   };
