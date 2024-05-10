@@ -11,7 +11,7 @@ require "crystal/at_exit_handlers"
 # The reason for this is to enable non-blocking reads for concurrency. Other fibers
 # can run while waiting on user input. The original file descriptor is
 # inherited from the parent process. Setting it to non-blocking mode would
-# reflect back which can cause problems.
+# reflect back, which can cause problems.
 #
 # On Windows, `STDIN` is always blocking.
 STDIN = IO::FileDescriptor.from_stdio(0)
