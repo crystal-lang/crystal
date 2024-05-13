@@ -482,7 +482,7 @@ struct Range(B, E)
   # (3..8).size  # => 6
   # (3...8).size # => 5
   # ```
-  def size
+  def size : Int32
     b = self.begin
     e = self.end
 
@@ -490,7 +490,7 @@ struct Range(B, E)
     if b.is_a?(Int) && e.is_a?(Int)
       e -= 1 if @exclusive
       n = e - b + 1
-      n < 0 ? 0 : n
+      n < 0 ? 0 : n.to_i32
     else
       if b.nil? || e.nil?
         raise ArgumentError.new("Can't calculate size of an open range")
