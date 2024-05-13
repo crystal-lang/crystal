@@ -10,7 +10,7 @@ abstract class Crystal::EventLoop
   # Runs the loop.
   #
   # Returns immediately if events are activable. Set `blocking` to false to
-  # return immediately if there are no activable events. Set it to true to wait
+  # return immediately if there are no activable events; set it to true to wait
   # for activable events, which will block the current thread until then.
   #
   # Returns `true` on normal returns (e.g. has activated events, has pending
@@ -25,6 +25,9 @@ abstract class Crystal::EventLoop
   #
   # Should be a NOOP when the loop isn't running or is running in a nonblocking
   # mode.
+  #
+  # NOTE: we assume that multiple threads won't run the event loop at the same
+  #       time in parallel, but this assumption may change in the future!
   abstract def interrupt : Nil
 
   # Create a new resume event for a fiber.
