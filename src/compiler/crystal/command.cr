@@ -521,9 +521,12 @@ class Crystal::Command
         opts.on("--release", "Compile in release mode (-O3 --single-module)") do
           compiler.release!
         end
-        opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
-          optimization_mode = level.to_i?.try { |v| Compiler::OptimizationMode.from_value?(v) }
-          compiler.optimization_mode = optimization_mode || raise Error.new("Invalid optimization mode: #{level}")
+        opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
+          if mode = Compiler::OptimizationMode.from_level?(level)
+            compiler.optimization_mode = mode
+          else
+            raise Error.new("Invalid optimization mode: O#{level}")
+          end
         end
       end
 
@@ -661,8 +664,12 @@ class Crystal::Command
     opts.on("--release", "Compile in release mode (-O3 --single-module)") do
       compiler.release!
     end
-    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
-      compiler.optimization_mode = Compiler::OptimizationMode.from_value?(level.to_i) || raise Error.new("Unknown optimization mode #{level}")
+    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
+      if mode = Compiler::OptimizationMode.from_level?(level)
+        compiler.optimization_mode = mode
+      else
+        raise Error.new("Invalid optimization mode: O#{level}")
+      end
     end
     opts.on("--single-module", "Generate a single LLVM module") do
       compiler.single_module = true

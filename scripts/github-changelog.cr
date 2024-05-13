@@ -150,6 +150,9 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if regression?
+      io << "**[regression]** "
+    end
     if experimental?
       io << "**[experimental]** "
     end
@@ -233,6 +236,10 @@ record PullRequest,
 
   def breaking?
     labels.includes?("kind:breaking")
+  end
+
+  def regression?
+    labels.includes?("kind:regression")
   end
 
   def experimental?

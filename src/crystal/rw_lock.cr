@@ -15,9 +15,6 @@ struct Crystal::RWLock
       @readers.add(1, :acquire)
 
       if @writer.get(:acquire) == UNLOCKED
-        {% if flag?(:arm) %}
-          Atomic.fence(:acquire)
-        {% end %}
         return
       end
 
@@ -26,9 +23,6 @@ struct Crystal::RWLock
   end
 
   def read_unlock : Nil
-    {% if flag?(:arm) %}
-      Atomic.fence(:release)
-    {% end %}
     @readers.sub(1, :release)
   end
 
@@ -40,16 +34,9 @@ struct Crystal::RWLock
     while @readers.get(:acquire) != 0
       Intrinsics.pause
     end
-
-    {% if flag?(:arm) %}
-      Atomic.fence(:acquire)
-    {% end %}
   end
 
   def write_unlock : Nil
-    {% if flag?(:arm) %}
-      Atomic.fence(:release)
-    {% end %}
     @writer.set(UNLOCKED, :release)
   end
 end

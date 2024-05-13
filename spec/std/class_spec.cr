@@ -27,6 +27,10 @@ describe Class do
     (Array === [1]).should be_true
     (Array(Int32) === [1]).should be_true
     (Array(Int32) === ['a']).should be_false
+    (Int32.class === 1).should be_false
+    (Int32.class === 1.5).should be_false
+    (Int32.class === Int32).should be_true
+    (Int32.class === Array).should be_true
   end
 
   it "casts, allowing the class to be passed in at runtime" do

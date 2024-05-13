@@ -26,7 +26,7 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   # Create a new resume event for a fiber.
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      Crystal::Scheduler.enqueue data.as(Fiber)
+      data.as(Fiber).enqueue
     end
   end
 
@@ -38,7 +38,7 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
         f.timeout_select_action = nil
         select_action.time_expired(f)
       else
-        Crystal::Scheduler.enqueue f
+        f.enqueue
       end
     end
   end

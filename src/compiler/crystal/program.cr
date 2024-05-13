@@ -279,7 +279,7 @@ module Crystal
       else
         build_commit_const = define_crystal_nil_constant "BUILD_COMMIT"
       end
-      build_commit_const.doc = <<-MD if wants_doc?
+      build_commit_const.doc = <<-MD
         The build commit identifier of the Crystal compiler.
         MD
 
@@ -341,9 +341,8 @@ module Crystal
     private def define_crystal_constant(name, value, doc = nil) : Const
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
-      if doc && wants_doc?
-        const.doc = doc
-      end
+      const.doc = doc
+
       predefined_constants << const
       const
     end

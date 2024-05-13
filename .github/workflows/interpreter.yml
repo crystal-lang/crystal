@@ -62,3 +62,24 @@ jobs:
 
       - name: Run std_spec with interpreter
         run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
+
+  test-interpreter-primitives_spec:
+    needs: build-interpreter
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.11.2-build
+    name: "Test primitives_spec with interpreter"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download compiler artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-interpreter
+          path: .build/
+
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+
+      - name: Run primitives_spec with interpreter
+        run: bin/crystal i spec/primitives_spec.cr -- --junit_output .junit/interpreter-primitives_spec.xml
