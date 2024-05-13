@@ -149,7 +149,7 @@ class Crystal::Scheduler
         resume(runnable) unless runnable == @thread.current_fiber
         break
       else
-        @event_loop.run_once
+        @event_loop.run(blocking: true)
       end
     end
   end

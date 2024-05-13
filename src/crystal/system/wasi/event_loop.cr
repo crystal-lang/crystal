@@ -7,13 +7,9 @@ end
 
 # :nodoc:
 class Crystal::Wasi::EventLoop < Crystal::EventLoop
+  # Runs the event loop.
   def run(blocking : Bool) : Bool
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
-  end
-
-  # Runs the event loop.
-  def run_once : Nil
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.run_once")
   end
 
   def interrupt : Nil

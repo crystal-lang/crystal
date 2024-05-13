@@ -39,10 +39,6 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     iocp
   end
 
-  def run_once : Nil
-    run(blocking: true)
-  end
-
   # Runs the event loop and enqueues the fiber for the next upcoming event or
   # completion.
   def run(blocking : Bool) : Bool
