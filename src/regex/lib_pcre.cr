@@ -1,4 +1,4 @@
-@[Link("pcre")]
+@[Link("pcre", pkg_config: "libpcre")]
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "pcre.dll")]
 {% end %}

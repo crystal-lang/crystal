@@ -385,12 +385,12 @@ struct Set(T)
   # Returns an `Array` with the results of running *block* against each element of the collection.
   #
   # ```
-  # Set{1, 2, 3, 4, 5}.to_a { |i| i // 2 } # => [0, 1, 2]
+  # Set{1, 2, 3, 4, 5}.to_a { |i| i // 2 } # => [0, 1, 1, 2, 2]
   # ```
   def to_a(& : T -> U) : Array(U) forall U
     array = Array(U).new(size)
     @hash.each_key do |key|
-      array << key
+      array << yield key
     end
     array
   end
@@ -472,7 +472,7 @@ struct Set(T)
 
   # Returns `true` if the set is a superset of the *other* set.
   #
-  # The *other* must have the same or fewer elements than this set, and all of
+  # The *other* must have fewer elements than this set, and all of
   # elements in the *other* set must be present in this set.
   #
   # ```

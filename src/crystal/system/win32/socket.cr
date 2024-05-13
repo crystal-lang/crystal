@@ -79,7 +79,7 @@ module Crystal::System::Socket
       raise ::Socket::Error.from_wsa_error("WSASocketW")
     end
 
-    Crystal::Scheduler.event_loop.create_completion_port LibC::HANDLE.new(socket)
+    Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
 
     socket
   end

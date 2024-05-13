@@ -72,39 +72,39 @@ let
   llvm_suite = ({
     llvm_16 = {
       llvm = pkgs.llvm_16;
-      extra = [ pkgs.lld_16 pkgs.lldb_16 ];
+      extra = [ pkgs.llvmPackages_16.bintools pkgs.lldb_16 ];
     };
     llvm_15 = {
       llvm = pkgs.llvm_15;
-      extra = [ pkgs.lld_15 pkgs.lldb_15 ];
+      extra = [ pkgs.llvmPackages_15.bintools pkgs.lldb_15 ];
     };
     llvm_14 = {
       llvm = pkgs.llvm_14;
-      extra = [ pkgs.lld_14 pkgs.lldb_14 ];
+      extra = [ pkgs.llvmPackages_14.bintools pkgs.lldb_14 ];
     };
     llvm_13 = {
       llvm = pkgs.llvm_13;
-      extra = [ pkgs.lld_13 pkgs.lldb_13 ];
+      extra = [ pkgs.llvmPackages_13.bintools pkgs.lldb_13 ];
     };
     llvm_12 = {
       llvm = pkgs.llvm_12;
-      extra = [ pkgs.lld_12 pkgs.lldb_12 ];
+      extra = [ pkgs.llvmPackages_12.bintools pkgs.lldb_12 ];
     };
     llvm_11 = {
       llvm = pkgs.llvm_11;
-      extra = [ pkgs.lld_11 pkgs.lldb_11 ];
+      extra = [ pkgs.llvmPackages_11.bintools pkgs.lldb_11 ];
     };
     llvm_10 = {
       llvm = pkgs.llvm_10;
-      extra = [ pkgs.lld_10 ]; # lldb marked as broken
+      extra = [ pkgs.llvmPackages_10.bintools ]; # lldb marked as broken
     };
     llvm_9 = {
       llvm = pkgs.llvm_9;
-      extra = [ pkgs.lld_9 ]; # lldb marked as broken
+      extra = [ pkgs.llvmPackages_9.bintools ]; # lldb marked as broken
     };
     llvm_8 = {
       llvm = pkgs.llvm_8;
-      extra = [ pkgs.lld_8 ]; # lldb marked as broken
+      extra = [ pkgs.llvmPackages_8.bintools ]; # lldb marked as broken
     };
   }."llvm_${toString llvm}");
 

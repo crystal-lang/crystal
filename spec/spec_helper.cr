@@ -124,10 +124,16 @@ def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __L
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_expand(from_nodes, flags: flags, file: file, line: line) do |to_nodes|
+    to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  end
+end
+
+def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  yield to_nodes, program
 end
 
 def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)

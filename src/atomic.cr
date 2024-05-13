@@ -20,6 +20,10 @@ struct Atomic(T)
   # (e.g. locks) you may try the acquire/release semantics that may be faster on
   # some architectures (e.g. X86) but remember that an acquire must be paired
   # with a release for the ordering to be guaranteed.
+  #
+  # The code generation always enforces the selected memory order, even on
+  # weak CPU architectures (e.g. ARM32), with the exception of the Relaxed
+  # memory order where only the operation itself is atomic.
   enum Ordering
     Relaxed                = LLVM::AtomicOrdering::Monotonic
     Acquire                = LLVM::AtomicOrdering::Acquire
@@ -29,14 +33,6 @@ struct Atomic(T)
   end
 
   # Adds an explicit memory barrier with the specified memory order guarantee.
-  #
-  # Atomics on weakly-ordered CPUs (e.g. ARM32) may not guarantee memory order
-  # of other memory accesses, and an explicit memory barrier is thus required.
-  #
-  # Notes:
-  # - X86 is strongly-ordered and trying to add a fence should be a NOOP;
-  # - AArch64 guarantees memory order and doesn't need explicit fences in
-  #   addition to the atomics (but may need barriers in other cases).
   macro fence(ordering = :sequentially_consistent)
     ::Atomic::Ops.fence({{ordering}}, false)
   end
@@ -470,18 +466,11 @@ struct Atomic::Flag
   # Atomically tries to set the flag. Only succeeds and returns `true` if the
   # flag wasn't previously set; returns `false` otherwise.
   def test_and_set : Bool
-    ret = @value.swap(true, :sequentially_consistent) == false
-    {% if flag?(:arm) %}
-      Atomic::Ops.fence(:sequentially_consistent, false) if ret
-    {% end %}
-    ret
+    @value.swap(true, :sequentially_consistent) == false
   end
 
   # Atomically clears the flag.
   def clear : Nil
-    {% if flag?(:arm) %}
-      Atomic::Ops.fence(:sequentially_consistent, false)
-    {% end %}
     @value.set(false, :sequentially_consistent)
   end
 end

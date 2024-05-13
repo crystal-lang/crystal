@@ -2,6 +2,11 @@ abstract class Crystal::EventLoop
   # Creates an event loop instance
   # def self.create : Crystal::EventLoop
 
+  @[AlwaysInline]
+  def self.current : self
+    Crystal::Scheduler.event_loop
+  end
+
   # Runs the event loop.
   abstract def run_once : Nil
 

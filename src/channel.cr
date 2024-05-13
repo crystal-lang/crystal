@@ -231,7 +231,7 @@ class Channel(T)
       @senders.push pointerof(sender)
       @lock.unlock
 
-      Crystal::Scheduler.reschedule
+      Fiber.suspend
 
       case sender.state
       in .delivered?
@@ -308,7 +308,7 @@ class Channel(T)
       @receivers.push pointerof(receiver)
       @lock.unlock
 
-      Crystal::Scheduler.reschedule
+      Fiber.suspend
 
       case receiver.state
       in .delivered?
@@ -473,7 +473,7 @@ class Channel(T)
     contexts = ops.map &.create_context_and_wait(shared_state)
 
     each_skip_duplicates(ops_locks, &.unlock)
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     contexts.each_with_index do |context, index|
       op = ops[index]
@@ -744,7 +744,7 @@ class Channel(T)
 
     def time_expired(fiber : Fiber) : Nil
       if @select_context.try &.try_trigger
-        Crystal::Scheduler.enqueue fiber
+        fiber.enqueue
       end
     end
   end

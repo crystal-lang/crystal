@@ -24,10 +24,6 @@ class Crystal::Scheduler
     Thread.current.scheduler.@event_loop
   end
 
-  def self.current_fiber : Fiber
-    Thread.current.scheduler.@current
-  end
-
   def self.enqueue(fiber : Fiber) : Nil
     thread = Thread.current
     scheduler = thread.scheduler
@@ -98,10 +94,9 @@ class Crystal::Scheduler
   @sleeping = false
 
   # :nodoc:
-  def initialize(thread : Thread)
+  def initialize(@thread : Thread)
     @main = thread.main_fiber
     {% if flag?(:preview_mt) %} @main.set_current_thread(thread) {% end %}
-    @current = @main
     @runnables = Deque(Fiber).new
   end
 
@@ -124,7 +119,7 @@ class Crystal::Scheduler
       GC.set_stackbottom(fiber.@stack_bottom)
     {% end %}
 
-    current, @current = @current, fiber
+    current, @thread.current_fiber = @thread.current_fiber, fiber
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -151,7 +146,7 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        resume(runnable) unless runnable == @current
+        resume(runnable) unless runnable == @thread.current_fiber
         break
       else
         @event_loop.run_once
@@ -160,12 +155,12 @@ class Crystal::Scheduler
   end
 
   protected def sleep(time : Time::Span) : Nil
-    @current.resume_event.add(time)
+    @thread.current_fiber.resume_event.add(time)
     reschedule
   end
 
   protected def yield(fiber : Fiber) : Nil
-    @current.resume_event.add(0.seconds)
+    @thread.current_fiber.resume_event.add(0.seconds)
     resume(fiber)
   end
 
