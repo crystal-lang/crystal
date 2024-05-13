@@ -63,7 +63,8 @@ SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_ou
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
 CRYSTAL_CONFIG_PATH := $$ORIGIN\src
-SOURCE_DATE_EPOCH := $(shell git show -s --format=%ct HEAD)
+CRYSTAL_VERSION ?= $(shell type src\VERSION)
+SOURCE_DATE_EPOCH ?= $(shell type src/SOURCE_DATE_EPOCH || git show -s --format=%ct HEAD)
 export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
 export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
 LLVM_CONFIG ?=
@@ -71,7 +72,6 @@ LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
 CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
-CRYSTAL_VERSION ?= $(shell type src\VERSION)
 
 prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
 BINDIR ?= $(prefix)
