@@ -5,6 +5,15 @@ require "crystal/at_exit_handlers"
 {% end %}
 
 # The standard input file descriptor. Contains data piped to the program.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDIN.fd` might not be `0`.
+# The reason for this is to enable non-blocking reads for concurrency. Other fibers
+# can run while waiting on user input. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back, which can cause problems.
+#
+# On Windows, `STDIN` is always blocking.
 STDIN = IO::FileDescriptor.from_stdio(0)
 
 # The standard output file descriptor.
@@ -22,6 +31,15 @@ STDIN = IO::FileDescriptor.from_stdio(0)
 #   This is convenient but slower than with `flush_on_newline` set to `false`.
 #   If you need a bit more performance and you don't care about near real-time
 #   output you can do `STDOUT.flush_on_newline = false`.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDOUT.fd` might not be `1`.
+# The reason for this is to enable non-blocking writes for concurrency. Other fibers
+# can run while waiting on IO. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back which can cause problems.
+#
+# On Windows, `STDOUT` is always blocking.
 STDOUT = IO::FileDescriptor.from_stdio(1)
 
 # The standard error file descriptor.
@@ -39,6 +57,15 @@ STDOUT = IO::FileDescriptor.from_stdio(1)
 #   This is convenient but slower than with `flush_on_newline` set to `false`.
 #   If you need a bit more performance and you don't care about near real-time
 #   output you can do `STDERR.flush_on_newline = false`.
+#
+# On Unix systems, if the file descriptor is a TTY, the runtime duplicates it.
+# So `STDERR.fd` might not be `2`.
+# The reason for this is to enable non-blocking writes for concurrency. Other fibers
+# can run while waiting on IO. The original file descriptor is
+# inherited from the parent process. Setting it to non-blocking mode would
+# reflect back which can cause problems.
+#
+# On Windows, `STDERR` is always blocking.
 STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
