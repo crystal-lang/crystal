@@ -669,10 +669,48 @@ describe "Range" do
   end
 
   describe "#size" do
-    it "optimizes for int range" do
-      (5..12).size.should eq(8)
-      (5...12).size.should eq(7)
-      (5..4).size.should eq(0)
+    describe "Int" do
+      describe "signed" do
+        it { (5..12).size.should eq(8) }
+        it { (5...12).size.should eq(7) }
+        it { (5..4).size.should eq(0) }
+        it { (0..0).size.should eq(1) }
+        it { (0...0).size.should eq(0) }
+        it { (1..1).size.should eq(1) }
+        it { (1...1).size.should eq(0) }
+
+        it { (-12..-5).size.should eq(8) }
+        it { (-12...-5).size.should eq(7) }
+        it { (-4..-5).size.should eq(0) }
+        it { (-1..-1).size.should eq(1) }
+        it { (-1...-1).size.should eq(0) }
+
+        it { (-3..3).size.should eq(7) }
+        it { (-3...3).size.should eq(6) }
+        it { (-3..0).size.should eq(4) }
+        it { (-3...0).size.should eq(3) }
+        it { (3..-3).size.should eq(0) }
+        it { (3...-3).size.should eq(0) }
+        it { (-128_i8..0_i8).size.should eq(129) }
+        it { (-128_i8...0_i8).size.should eq(128) }
+
+        it { (Int32::MAX..Int32::MAX).size.should eq(1) }
+        it { (Int32::MAX...Int32::MAX).size.should eq(0) }
+        it { (-Int32::MAX..-Int32::MAX).size.should eq(1) }
+        it { (-Int32::MAX...-Int32::MAX).size.should eq(0) }
+      end
+
+      describe "unsigned" do
+        it { (5_u8..12_u8).size.should eq(8) }
+        it { (5_u8...12_u8).size.should eq(7) }
+        it { (5_u8..4_u8).size.should eq(0) }
+        it { (0_u8..0_u8).size.should eq(1) }
+        it { (0_u8...0_u8).size.should eq(0) }
+        it { (1_u8..1_u8).size.should eq(1) }
+        it { (1_u8...1_u8).size.should eq(0) }
+        it { (UInt8::MAX..UInt8::MAX).size.should eq(1) }
+        it { (UInt8::MAX...UInt8::MAX).size.should eq(0) }
+      end
     end
 
     it "works for other types" do
