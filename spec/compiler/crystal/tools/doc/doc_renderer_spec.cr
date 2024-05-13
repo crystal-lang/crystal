@@ -383,23 +383,8 @@ describe Doc::MarkdDocRenderer do
       %(<pre><code class="language-crystal"><span class="c"># &lt;script&gt;alert(&quot;hello world&quot;)&lt;/script&gt;</span></code></pre>)
   end
 
-  describe "renders tables" do
-    it_renders nil, <<-INPUT, <<-HTML
-      <table>
-        <tr>
-          <th>column 1</th>
-          <th>column 2</th>
-        </tr>
-        <tr>
-          <td>data 1</td>
-          <td>data 2</td>
-        </tr>
-        <tr>
-          <td>data 3</td>
-          <td>data 4</td>
-        </tr>
-      </table>
-    INPUT
+  describe "still renders tables despite sanitization" do
+    table_mkdn = <<-HTML
       <table>
         <tr>
           <th>column 1</th>
@@ -415,5 +400,7 @@ describe Doc::MarkdDocRenderer do
         </tr>
       </table>
     HTML
+
+    it_renders nil, table_mkdn, table_mkdn
   end
 end
