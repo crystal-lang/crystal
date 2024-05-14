@@ -692,7 +692,7 @@ module Crystal
       case_whens = [] of When
 
       node.whens.each_with_index do |a_when, index|
-        condition = a_when.condition
+        condition = a_when.conds.first
         case condition
         when Call
           cloned_call = condition.clone

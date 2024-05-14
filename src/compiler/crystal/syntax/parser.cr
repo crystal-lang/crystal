@@ -2955,7 +2955,7 @@ module Crystal
       next_token_skip_space
       skip_statement_end
 
-      whens = [] of Select::When
+      whens = [] of When
 
       while true
         case @token.value
@@ -2978,7 +2978,7 @@ module Crystal
           body = parse_expressions
           skip_space_or_newline
 
-          whens << Select::When.new(condition, body)
+          whens << When.new(condition, body)
         when Keyword::ELSE
           if whens.size == 0
             unexpected_token "expecting when"
