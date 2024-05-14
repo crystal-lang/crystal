@@ -23,9 +23,9 @@
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-23.05";
-    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
-    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
+    name = "nixpkgs-23.11";
+    url = "https://github.com/NixOS/nixpkgs/archive/23.11.tar.gz";
+    sha256 = "1ndiv385w1qyb3b18vw13991fzb9wg4cl21wglk89grsfsnra41k";
   }) {
     inherit system;
   };
@@ -67,7 +67,7 @@ let
     };
   }.${pkgs.stdenv.system});
 
-  pkgconfig = pkgs.pkgconfig;
+  pkgconfig = pkgs.pkg-config;
 
   llvm_suite = ({
     llvm_16 = {
