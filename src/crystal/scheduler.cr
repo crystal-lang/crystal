@@ -25,7 +25,7 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
-    Crystal.trace "sched", "enqueue", "fiber=%lx", fiber.object_id do
+    Crystal.trace "sched", "enqueue", "fiber=%p [%s]", fiber.as(Void*), fiber.name || "?" do
       thread = Thread.current
       scheduler = thread.scheduler
 
@@ -61,7 +61,7 @@ class Crystal::Scheduler
   end
 
   def self.sleep(time : Time::Span) : Nil
-    Crystal.trace "sched", "sleep", "%.9f", time.to_f
+    Crystal.trace "sched", "sleep", "duration=%lld", time.total_nanoseconds.to_i64!
     Thread.current.scheduler.sleep(time)
   end
 
@@ -115,7 +115,7 @@ class Crystal::Scheduler
   end
 
   protected def resume(fiber : Fiber) : Nil
-    Crystal.trace "sched", "resume", "fiber=%lx", fiber.object_id
+    Crystal.trace "sched", "resume", "fiber=%p [%s]", fiber.as(Void*), fiber.name || "?"
     validate_resumable(fiber)
 
     {% if flag?(:preview_mt) %}

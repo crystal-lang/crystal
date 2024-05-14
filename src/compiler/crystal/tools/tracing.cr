@@ -1,29 +1,9 @@
 require "colorize"
+require "string_pool"
 
 module Crystal
   module Tracing
-    # List of known words used by trace calls, so we can return static strings
-    # instead of dynamically allocating the same few strings over an over. This
-    # dramatically improves performance when parsing large traces.
-    WORDS_DICTIONNARY = %w[
-      gc
-      malloc
-      realloc
-      collect:mark
-      collect:sweep
-      collect
-
-      sched
-      heap_resize
-      spawn
-      enqueue
-      resume
-      reschedule
-      sleep
-      event_loop
-      mt:sleeping
-      mt:slept
-    ]
+    WORDS_DICTIONNARY = StringPool.new
 
     class Values(T)
       getter size : T = T.zero
@@ -132,16 +112,16 @@ module Crystal
 
         t = parse_char('t', 'd')
         expect '='
-        time = parse_float
+        time = parse_integer / 1_000_000_000 # nanoseconds
 
         Event.new(section, action, t, time, line)
       end
 
-      def self.parse_variable(line : String, name : String) : Float64?
+      def self.parse_variable(line : String, name : String) : Int64?
         if pos = line.index(name)
           reader = Char::Reader.new(line, pos + name.bytesize + 1)
           expect '='
-          parse_float
+          parse_integer
         end
       end
 
@@ -150,48 +130,35 @@ module Crystal
       # allocate a string.
       private macro parse_word
         pos = reader.pos
-        case
-          {% for word in WORDS_DICTIONNARY %}
-          when parse_word?({{word}})
-            {{word}}
-          {% end %}
-        else
-          loop do
-            %char = reader.current_char
-            return unless %char.ascii_letter? || {'-', '_', ':'}.includes?(%char)
-            break if reader.next_char == ' '
-          end
-          reader.string[pos...reader.pos]
-        end
-      end
 
-      private macro parse_word?(string)
-        %valid = true
-        {{string}}.each_char do |%char|
-          if reader.current_char == %char
-            reader.next_char
-          else
-            reader.pos = pos
-            %valid = false
-            break
-          end
-        end
-        %valid
-      end
-
-      # Parses a float directly using a stack allocated buffer instead of
-      # allocating a dynamic string.
-      private macro parse_float
-        %buf = uninitialized UInt8[128]
-        %i = -1
         loop do
           %char = reader.current_char
-          return unless %char.ascii_number? || %char == '.'
-          %buf[%i += 1] = %char.ord.to_u8!
+          return unless %char.ascii_letter? || {'-', '_', ':'}.includes?(%char)
           break if reader.next_char == ' '
         end
-        %buf[%i] = 0_u8
-        LibC.strtod(%buf, nil)
+
+        WORDS_DICTIONNARY.get(reader.string.to_slice[pos...reader.pos])
+      end
+
+      # Parses an integer directly without allocating a dynamic string.
+      private macro parse_integer
+        %int = 0_i64
+        %neg = false
+
+        if reader.current_char == '-'
+          reader.next_char
+          %neg = true
+        elsif reader.current_char == '+'
+          reader.next_char
+        end
+
+        %char = reader.current_char
+        while %char.ascii_number?
+          %int = %int * 10_i64 + %char.to_i64
+          %char = reader.next_char
+        end
+
+        %neg ? -%int : %int
       end
 
       private macro parse_t
@@ -306,9 +273,9 @@ module Crystal
           data.events += 1
 
           if @fast
-            data.duration += event.time.to_f if event.t == 'd'
+            data.duration += event.time if event.t == 'd'
           else
-            data.durations << event.time.to_f if event.t == 'd'
+            data.durations << event.time if event.t == 'd'
           end
 
           next if @fast
@@ -316,7 +283,7 @@ module Crystal
           if event.section == "gc"
             if event.action == "malloc"
               if size = event.variable("size")
-                data.sizes << size.to_i
+                data.sizes << size.to_i32
               end
             end
           end
