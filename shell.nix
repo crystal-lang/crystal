@@ -68,8 +68,6 @@ let
     };
   }.${pkgs.stdenv.system});
 
-  pkgconfig = pkgs.pkgconfig;
-
   boehmgc = pkgs.boehmgc.override {
     enableLargeConfig = true;
   };
@@ -86,7 +84,7 @@ pkgs.stdenv.mkDerivation rec {
 
   buildInputs = tools ++ stdLibDeps ++ [
     latestCrystalBinary
-    pkgconfig
+    pkgs.pkg-config
     llvmPackages.libllvm
     pkgs.libffi
   ];
