@@ -220,8 +220,16 @@ abstract class JSON::Lexer
   private def consume_number
     number_start
 
+    # Integer values of up to 18 digits can be computed by doing math:
+    # no need to store a string value and later parse it.
+    # For larger numbers, or floats, we store the entire string and later parse it.
+    @token.int_value = nil
+    integer = 0_i64
+    negative = false
+
     if current_char == '-'
       append_number_char
+      negative = true
       next_char
     end
 
@@ -238,13 +246,19 @@ abstract class JSON::Lexer
         unexpected_char
       else
         @token.kind = :int
+        @token.int_value = 0
         number_end
       end
     when '1'..'9'
       append_number_char
+      digits = 1
+      integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'
         append_number_char
+        digits += 1
+        integer &*= 10
+        integer &+= char - '0'
         char = next_char
       end
 
@@ -255,7 +269,13 @@ abstract class JSON::Lexer
         consume_exponent
       else
         @token.kind = :int
-        number_end
+        # Int64::MAX is 9223372036854775807 which has 19 digits.
+        # With 18 digits we know the number we computed is the one we read.
+        if digits > 18
+          number_end
+        else
+          @token.int_value = negative ? -integer : integer
+        end
       end
     else
       unexpected_char
