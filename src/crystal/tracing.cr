@@ -31,6 +31,8 @@ module Crystal
   {% if flag?(:tracing) %}
     # :nodoc:
     module Tracing
+      @@gc = uninitialized Bool
+      @@sched = uninitialized Bool
       @@tick = uninitialized Time::Span
 
       @[AlwaysInline]
@@ -45,14 +47,15 @@ module Crystal
       # itself is initialized. The function assumes neither the GC nor ENV nor
       # anything is available.
       def self.init
-        @@gc = false
-        @@sched = false
+        @@gc = true
+        @@sched = true
         @@tick = Time.monotonic
 
         {% if flag?(:win32) %}
-          buf = uninitialized UInt8[256]
-          len = LibC.GetEnvironmentVariableW("CRYSTAL_TRACE", buf, buf.size)
-          debug = buf.to_slice(len) if len > 0
+          buf = uninitialized UInt16[256]
+          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE".chars %}{{chr.ord}}, {% end %} 0)
+          len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
+          debug = buf.to_slice[0...len] if len > 0
         {% else %}
           if ptr = LibC.getenv("CRYSTAL_TRACE")
             len = LibC.strlen(ptr)

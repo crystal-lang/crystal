@@ -47,6 +47,12 @@ module Crystal::System::Thread
   @[ThreadLocal]
   class_property current_thread : ::Thread { ::Thread.new }
 
+  {% if flag?(:tracing) %}
+    def self.current_thread? : ::Thread?
+      @@current_thread
+    end
+  {% end %}
+
   private def system_join : Exception?
     if LibC.WaitForSingleObject(@system_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       return RuntimeError.from_winerror("WaitForSingleObject")

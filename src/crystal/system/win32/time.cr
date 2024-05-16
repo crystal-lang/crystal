@@ -53,21 +53,23 @@ module Crystal::System::Time
     ((filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64).to_f64 / FILETIME_TICKS_PER_SECOND.to_f64
   end
 
-  @@performance_frequency : Int64 = begin
-    ret = LibC.QueryPerformanceFrequency(out frequency)
-    if ret == 0
-      raise RuntimeError.from_winerror("QueryPerformanceFrequency")
-    end
+  @@performance_frequency : Int64?
 
-    frequency
+  private def self.performance_frequency
+    @@performance_frequency ||= begin
+      if LibC.QueryPerformanceFrequency(out frequency) == 0
+        raise RuntimeError.from_winerror("QueryPerformanceFrequency")
+      end
+      frequency
+    end
   end
 
   def self.monotonic : {Int64, Int32}
     if LibC.QueryPerformanceCounter(out ticks) == 0
       raise RuntimeError.from_winerror("QueryPerformanceCounter")
     end
-
-    {ticks // @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
+    frequency = performance_frequency
+    {ticks // frequency, (ticks.remainder(frequency) * NANOSECONDS_PER_SECOND / frequency).to_i32}
   end
 
   def self.load_localtime : ::Time::Location?
