@@ -76,7 +76,7 @@ module Crystal
       end
     end
 
-    class Sizes < Values(UInt64)
+    class Sizes < Values(Int64)
       KILOBYTE = 1024
       MEGABYTE = 1024 * 1024
       GIGABYTE = 1024 * 1024 * 1024
@@ -105,7 +105,7 @@ module Crystal
         reader = Char::Reader.new(line)
         section = parse_word
         expect ' '
-        action = parse_word
+        operation = parse_word
         expect ' '
         expect 't'
         expect '='
@@ -114,12 +114,12 @@ module Crystal
         expect 'd'
         expect '='
         duration = parse_integer / 1_000_000_000 # nanoseconds
-        Event.new(section, action, time, duration, line)
+        Event.new(section, operation, time, duration, line)
       end
 
       def self.parse_variable(line : String, name : String) : Int64?
         if pos = line.index(name)
-          reader = Char::Reader.new(line, pos + name.bytesize + 1)
+          reader = Char::Reader.new(line, pos + name.bytesize)
           expect '='
           parse_integer
         end
@@ -192,12 +192,12 @@ module Crystal
 
     struct Event
       getter section : String
-      getter action : String
+      getter operation : String
       getter time : Float64
       @duration : Float64
       getter line : String
 
-      def initialize(@section, @action, @time, @duration, @line)
+      def initialize(@section, @operation, @time, @duration, @line)
       end
 
       def variable(name : String)
@@ -273,7 +273,7 @@ module Crystal
         end
 
         each_event do |event|
-          data = stats[event.section][event.action]
+          data = stats[event.section][event.operation]
           data.events += 1
 
           if duration = event.duration?
@@ -287,18 +287,18 @@ module Crystal
           next if @fast
 
           if event.section == "gc"
-            if event.action == "malloc"
+            if event.operation == "malloc"
               if size = event.variable("size")
-                data.sizes << size.to_i32
+                data.sizes << size
               end
             end
           end
         end
 
         stats.each do |section, actions|
-          actions.each do |action, data|
+          actions.each do |operation, data|
             Colorize.with.toggle(@color).yellow.surround(@stdout) do
-              @stdout << section << ':' << action
+              @stdout << section << ':' << operation
             end
 
             data.each do |key, value|
