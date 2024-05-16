@@ -103,18 +103,18 @@ module Crystal
     module Parser
       def self.parse_event(line : String) : Event?
         reader = Char::Reader.new(line)
-
         section = parse_word
         expect ' '
-
         action = parse_word
         expect ' '
-
-        t = parse_char('t', 'd')
+        expect 't'
         expect '='
         time = parse_integer / 1_000_000_000 # nanoseconds
-
-        Event.new(section, action, t, time, line)
+        expect ' '
+        expect 'd'
+        expect '='
+        duration = parse_integer / 1_000_000_000 # nanoseconds
+        Event.new(section, action, time, duration, line)
       end
 
       def self.parse_variable(line : String, name : String) : Int64?
@@ -193,15 +193,19 @@ module Crystal
     struct Event
       getter section : String
       getter action : String
-      getter t : Char
       getter time : Float64
+      @duration : Float64
       getter line : String
 
-      def initialize(@section, @action, @t, @time, @line)
+      def initialize(@section, @action, @time, @duration, @line)
       end
 
       def variable(name : String)
         Parser.parse_variable(line, name)
+      end
+
+      def duration?
+        @duration unless @duration.negative?
       end
     end
 
@@ -272,10 +276,12 @@ module Crystal
           data = stats[event.section][event.action]
           data.events += 1
 
-          if @fast
-            data.duration += event.time if event.t == 'd'
-          else
-            data.durations << event.time if event.t == 'd'
+          if duration = event.duration?
+            if @fast
+              data.duration += duration
+            else
+              data.durations << duration
+            end
           end
 
           next if @fast

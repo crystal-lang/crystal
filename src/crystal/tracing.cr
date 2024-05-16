@@ -107,35 +107,35 @@ module Crystal
       #
       # Doesn't continue to write on partial writes (e.g. interrupted by a signal)
       # as the output could be smashed with a parallel write.
-      def self.log(format : String, *args) : Nil
+      def self.log(fmt : String, *args) : Nil
         buf = StaticIO(512).new
-        Crystal::System.printf(format, *args) { |bytes| buf.write bytes }
+        Crystal::System.printf(fmt, *args) { |bytes| buf.write bytes }
         Crystal::System.print_error(buf.to_slice)
       end
     end
 
-    # The *format* argument only accepts a subset of printf modifiers (namely
+    # The *fmt* argument only accepts a subset of printf modifiers (namely
     # `spdux` plus the `l` and `ll` length modifiers).
     #
     # When *block* is present, measures how long the block takes then writes
     # the trace to the standard error. Otherwise immediately writes a trace to
     # the standard error.
     #
-    # Prepends *format* with the timing (current monotonic time or duration)
+    # Prepends *fmt* with the timing (current monotonic time or duration)
     # along with thread and scheduler information (when present).
     #
     # Does nothing when tracing is disabled for the section.
-    macro trace(section, action, format = "", *args, &block)
+    macro trace(section, action, fmt = "", *args, &block)
       if ::Crystal::Tracing.enabled?(\{{section}})
+        %tick = ::Time.monotonic
+        %time = %tick - ::Crystal::Tracing.tick
         \{% if block %}
-          %start = ::Time.monotonic
           %ret = \{{yield}}
-          %stop = ::Time.monotonic
-          ::Crystal.trace_end('d', %stop - %start, \{{section}}, \{{action}}, \{{format}}, \{{args.splat}})
+          %duration = ::Time.monotonic - %tick
+          ::Crystal.trace_end(%time, %duration, \{{section}}, \{{action}}, \{{fmt}}, \{{args.splat}})
           %ret
         \{% else %}
-          %tick = ::Time.monotonic
-          ::Crystal.trace_end('t', %tick - ::Crystal::Tracing.tick, \{{section}}, \{{action}}, \{{format}}, \{{args.splat}})
+          ::Crystal.trace_end(%time, nil, \{{section}}, \{{action}}, \{{fmt}}, \{{args.splat}})
           nil
         \{% end %}
       else
@@ -144,14 +144,16 @@ module Crystal
     end
 
     # :nodoc:
-    macro trace_end(t, tick_or_duration, section, action, format = "", *args)
+    macro trace_end(time, duration, section, action, fmt = "", *args)
+      %time = (\{{time}}).total_nanoseconds.to_i64!
+      %duration = (\{{duration}}).try(&.total_nanoseconds.to_i64!) || -1_i64
+
       {% if flag?(:wasm32) %}
         # WASM doesn't have threads (and fibers aren't implemented either)
-        ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} \{{t.id}}=%.9f \{{format.id}}\n",
-                               (\{{tick_or_duration}}).to_f, \{{args.splat}})
+        ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} t=%lld d=%lld \{{fmt.id}}\n",
+                               %time, %duration, \{{args.splat}})
       {% else %}
         {% thread_type = flag?(:linux) ? "0x%lx".id : "%p".id %}
-        # TODO: thread name (when present)
 
         # we may start to trace *before* Thread.current and other objects have
         # been allocated, they're lazily allocated and since we trace GC.malloc we
@@ -159,17 +161,17 @@ module Crystal
         # recursion): malloc -> trace -> malloc -> trace -> ...
         if %thread = Thread.current?
           if %fiber = %thread.current_fiber?
-            ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} \{{t.id}}=%lld thread={{thread_type}} [%s] fiber=%p [%s] \{{format.id}}\n",
-                                   (\{{tick_or_duration}}).total_nanoseconds.to_i64!, %thread.@system_handle, %thread.name || "?", %fiber.as(Void*), %fiber.name || "?", \{{args.splat}})
+            ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} t=%lld d=%lld thread={{thread_type}} [%s] fiber=%p [%s] \{{fmt.id}}\n",
+                                   %time, %duration, %thread.@system_handle, %thread.name || "?", %fiber.as(Void*), %fiber.name || "?", \{{args.splat}})
           else
             # fallback: no current fiber for the current thread (yet)
-            ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} \{{t.id}}=%lld thread={{thread_type}} [%s] \{{format.id}}\n",
-                                   (\{{tick_or_duration}}).total_nanoseconds.to_i64!, %thread.@system_handle, %thread.name || "?", \{{args.splat}})
+            ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} t=%lld d=%lld thread={{thread_type}} [%s] \{{fmt.id}}\n",
+                                   %time, %duration, %thread.@system_handle, %thread.name || "?", \{{args.splat}})
           end
         else
           # fallback: no Thread object (yet)
-          ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} \{{t.id}}=%lld thread={{thread_type}} [%s] \{{format.id}}\n",
-                                 (\{{tick_or_duration}}).total_nanoseconds.to_i64!, Crystal::System::Thread.current_handle, "?", \{{args.splat}})
+          ::Crystal::Tracing.log("\{{section.id}} \{{action.id}} t=%lld d=%lld thread={{thread_type}} [%s] \{{fmt.id}}\n",
+                                 %time, %duration, Crystal::System::Thread.current_handle, "?", \{{args.splat}})
         end
       {% end %}
     end
@@ -183,16 +185,16 @@ module Crystal
         false
       end
 
-      def self.log(format : String, *args)
+      def self.log(fmt : String, *args)
       end
     end
 
-    macro trace(section, action, format = "", *args, &block)
+    macro trace(section, action, fmt = "", *args, &block)
       \{{yield}}
     end
 
     # :nodoc:
-    macro trace_end(t, tick_or_duration, section, action, format = "", *args)
+    macro trace_end(t, tick_or_duration, section, action, fmt = "", *args)
     end
   {% end %}
 end

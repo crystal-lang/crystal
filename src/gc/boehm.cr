@@ -252,13 +252,13 @@ module GC
           @@sweep_start = Time.monotonic
         when .end?
           duration = ::Time.monotonic - @@collect_start
-          Crystal.trace_end 'd', duration, "gc", "collect"
+          Crystal.trace_end @@collect_start, duration, "gc", "collect"
         when .mark_end?
           duration = ::Time.monotonic - @@mark_start
-          Crystal.trace_end 'd', duration, "gc", "collect:mark"
+          Crystal.trace_end @@collect_start, duration, "gc", "collect:mark"
         when .reclaim_end?
           duration = ::Time.monotonic - @@sweep_start
-          Crystal.trace_end 'd', duration, "gc", "collect:sweep"
+          Crystal.trace_end @@collect_start, duration, "gc", "collect:sweep"
         end
         @@on_collection_event.try(&.call(event_type))
       })
