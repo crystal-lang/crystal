@@ -88,7 +88,6 @@ def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), fil
     status = Process.run(compiler, args, env: {
       "CRYSTAL_PATH"          => Crystal::PATH,
       "CRYSTAL_LIBRARY_PATH"  => Crystal::LIBRARY_PATH,
-      "CRYSTAL_LIBRARY_RPATH" => Crystal::LIBRARY_RPATH,
       "CRYSTAL_CACHE_DIR"     => Crystal::CACHE_DIR,
     }, output: output, error: output)
 

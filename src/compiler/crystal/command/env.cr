@@ -22,7 +22,6 @@ class Crystal::Command
       "CRYSTAL_PATH"          => CrystalPath.default_path,
       "CRYSTAL_VERSION"       => Config.version || "",
       "CRYSTAL_LIBRARY_PATH"  => CrystalLibraryPath.default_path,
-      "CRYSTAL_LIBRARY_RPATH" => CrystalLibraryPath.default_rpath,
       "CRYSTAL_OPTS"          => ENV.fetch("CRYSTAL_OPTS", ""),
     }
 
