@@ -1,39 +1,46 @@
 module Crystal
-  # IO-like object with a fixed size. Stops writing to the internal buffer
-  # when capacity is reached. Any further writes are skipped.
-  struct StaticIO(N)
-    getter size : Int32
-
-    def initialize
-      @buf = uninitialized UInt8[N]
-      @size = 0
-    end
-
-    def write(str : String) : Nil
-      write str.to_slice
-    end
-
-    def write(bytes : Bytes) : Nil
-      pos = @size
-      remaining = N - pos
-      return if remaining == 0
-
-      n = bytes.size.clamp(..remaining)
-      bytes.to_unsafe.copy_to(@buf.to_unsafe + pos, n)
-      @size = pos + n
-    end
-
-    def to_slice : Bytes
-      Bytes.new(@buf.to_unsafe, @size)
-    end
-  end
-
   {% if flag?(:tracing) %}
     # :nodoc:
     module Tracing
-      @@gc = uninitialized Bool
-      @@sched = uninitialized Bool
+      # IO-like object with a fixed capacity but dynamic size within the
+      # buffer's capacity (i.e. `0 <= size <= N`). Stops writing to the internal
+      # buffer when capacity is reached; further writes are skipped.
+      struct BufferIO(N)
+        getter size : Int32
+
+        def initialize
+          @buf = uninitialized UInt8[N]
+          @size = 0
+        end
+
+        def write(bytes : Bytes) : Nil
+          pos = @size
+          remaining = N - pos
+          return if remaining == 0
+
+          n = bytes.size.clamp(..remaining)
+          bytes.to_unsafe.copy_to(@buf.to_unsafe + pos, n)
+          @size = pos + n
+        end
+
+        def to_slice : Bytes
+          Bytes.new(@buf.to_unsafe, @size)
+        end
+      end
+
+      @[Flags]
+      enum Section
+        Gc
+        Sched
+      end
+
+      @@sections = uninitialized Section
       @@tick = uninitialized Time::Span
+
+      @[AlwaysInline]
+      def self.enabled?(section : Section) : Bool
+        @@sections.includes?(section)
+      end
 
       @[AlwaysInline]
       def self.tick : Time::Span
@@ -47,8 +54,7 @@ module Crystal
       # itself is initialized. The function assumes neither the GC nor ENV nor
       # anything is available and musn't allocate into the GC HEAP.
       def self.init
-        @@gc = true
-        @@sched = true
+        @@sections = Section::None
         @@tick = Time.monotonic
 
         {% if flag?(:win32) %}
@@ -66,22 +72,12 @@ module Crystal
         return unless debug
 
         each_token(debug) do |token|
-          if token == "gc".to_slice
-            @@gc = true
-          elsif token == "sched".to_slice
-            @@sched = true
+          case token
+          when "gc".to_slice
+            @@sections |= Section::Gc
+          when "sched".to_slice
+            @@sections |= Section::Sched
           end
-        end
-      end
-
-      def self.enabled?(section : String) : Bool
-        case section
-        when "gc"
-          @@gc == true
-        when "sched"
-          @@sched == true
-        else
-          false
         end
       end
 
@@ -101,7 +97,7 @@ module Crystal
       # Windows may not have the same guarantees but the buffering should limit
       # these from happening.
       def self.log(fmt : String, *args) : Nil
-        buf = StaticIO(512).new
+        buf = BufferIO(512).new
         Crystal::System.printf(fmt, *args) { |bytes| buf.write bytes }
         Crystal::System.print_error(buf.to_slice)
       end
@@ -172,7 +168,7 @@ module Crystal
     end
 
     # :nodoc:
-    macro trace_end(t, tick_or_duration, section, operation, fmt = "", *args)
+    macro trace_end(time, duration, section, operation, fmt = "", *args)
     end
   {% end %}
 end

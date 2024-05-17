@@ -5,24 +5,23 @@ require "crystal/tracing"
 
 module GC
   def self.init
-    # Crystal.trace "gc", "init"
   end
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "malloc", "size=%lu", size
+    Crystal.trace :gc, :malloc, "size=%lu", size
     LibC.malloc(size)
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "malloc", "size=%lu atomic=1", size
+    Crystal.trace :gc, :malloc, "size=%lu atomic=1", size
     LibC.malloc(size)
   end
 
   # :nodoc:
   def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "realloc", "size=%lu", size
+    Crystal.trace :gc, :realloc, "size=%lu", size
     LibC.realloc(pointer, size)
   end
 
@@ -36,7 +35,7 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    Crystal.trace "gc", "free"
+    Crystal.trace :gc, :free
     LibC.free(pointer)
   end
 

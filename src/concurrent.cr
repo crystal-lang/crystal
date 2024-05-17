@@ -60,7 +60,7 @@ end
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
-  Crystal.trace "sched", "spawn", "fiber=%p [%s]", fiber.as(Void*), fiber.name || "?"
+  Crystal.trace :sched, :spawn, "fiber=%p [%s]", fiber.as(Void*), fiber.name || "?"
   {% if flag?(:preview_mt) %} fiber.set_current_thread if same_thread {% end %}
   fiber.enqueue
   fiber

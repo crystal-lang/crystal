@@ -170,28 +170,26 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "malloc", "size=%lu", size do
+    Crystal.trace :gc, :malloc, "size=%lu", size do
       LibGC.malloc(size)
     end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "malloc", "size=%lu atomic=1", size do
+    Crystal.trace :gc, :malloc, "size=%lu atomic=1", size do
       LibGC.malloc_atomic(size)
     end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
-    Crystal.trace "gc", "realloc", "size=%lu", size do
+    Crystal.trace :gc, :realloc, "size=%lu", size do
       LibGC.realloc(ptr, size)
     end
   end
 
   def self.init : Nil
-    # Crystal.trace "gc", "init"
-
     {% unless flag?(:win32) %}
       LibGC.set_handle_fork(1)
     {% end %}
@@ -202,7 +200,7 @@ module GC
     end
 
     {% if flag?(:tracing) %}
-      if ::Crystal::Tracing.enabled?("gc")
+      if ::Crystal::Tracing.enabled?(:gc)
         set_on_heap_resize_proc
         set_on_collection_events_proc
       end
@@ -232,7 +230,7 @@ module GC
       @@on_heap_resize = LibGC.get_on_heap_resize
 
       LibGC.set_on_heap_resize(->(new_size : LibGC::Word) {
-        Crystal.trace "gc", "heap_resize", "size=%llu", UInt64.new(new_size)
+        Crystal.trace :gc, :heap_resize, "size=%llu", UInt64.new(new_size)
         @@on_heap_resize.try(&.call(new_size))
       })
     end
@@ -241,8 +239,6 @@ module GC
       @@on_collection_event = LibGC.get_on_collection_event
 
       LibGC.set_on_collection_event(->(event_type : LibGC::EventType) {
-        # Crystal.trace "gc", "on_collection_event", "type=%s", event_type.to_s
-
         case event_type
         when .start?
           @@collect_start = Time.monotonic
@@ -266,7 +262,7 @@ module GC
   {% end %}
 
   def self.collect
-    Crystal.trace "gc", "collect" do
+    Crystal.trace :gc, :collect do
       LibGC.collect
     end
   end
@@ -284,7 +280,7 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    Crystal.trace "gc", "free" do
+    Crystal.trace :gc, :free do
       LibGC.free(pointer)
     end
   end
