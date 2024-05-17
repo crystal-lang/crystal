@@ -19,11 +19,11 @@ describe Crystal::Tracing::StatsCommand do
 
     Crystal::Tracing::StatsCommand.new("-", stdin: stdin, stdout: stdout, stderr: stderr).run
     output = stdout.to_s
-    output.should contain("gc:malloc events=4 durations=")
-    output.should contain("gc:collect events=1 durations=")
-    output.should contain("gc:heap_resize events=1")
-    output.should contain("sched:spawn events=1")
-    output.should contain("sched:enqueue events=1 durations=")
+    output.should match(/^gc:malloc events=4 durations=\[.+?\] sizes=\[.+?\]$/m)
+    output.should match(/^gc:collect events=1 durations=\[.+?\]$/m)
+    output.should match(/^gc:heap_resize events=1$/m)
+    output.should match(/^sched:spawn events=1$/m)
+    output.should match(/^sched:enqueue events=1 durations=\[.+?\]$/m)
     stderr.to_s.should be_empty
   end
 
@@ -43,11 +43,11 @@ describe Crystal::Tracing::StatsCommand do
 
     Crystal::Tracing::StatsCommand.new("-", fast: true, stdin: stdin, stdout: stdout, stderr: stderr).run
     output = stdout.to_s
-    output.should contain("gc:malloc events=4 duration=")
-    output.should contain("gc:collect events=1 duration=")
-    output.should contain("gc:heap_resize events=1")
-    output.should contain("sched:spawn events=1")
-    output.should contain("sched:enqueue events=1 duration=")
+    output.should match(/^gc:malloc events=4 duration=[-e\d.]+$/m)
+    output.should match(/^gc:collect events=1 duration=[-e\d.]+$/m)
+    output.should match(/^gc:heap_resize events=1$/m)
+    output.should match(/^sched:spawn events=1$/m)
+    output.should match(/^sched:enqueue events=1 duration=[-e\d.]+$/m)
     stderr.to_s.should be_empty
   end
 
