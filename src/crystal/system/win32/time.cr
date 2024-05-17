@@ -57,19 +57,20 @@ module Crystal::System::Time
 
   private def self.performance_frequency
     @@performance_frequency ||= begin
-      if LibC.QueryPerformanceFrequency(out frequency) == 0
-        raise RuntimeError.from_winerror("QueryPerformanceFrequency")
-      end
+      LibC.QueryPerformanceFrequency(out frequency)
       frequency
     end
   end
 
   def self.monotonic : {Int64, Int32}
-    if LibC.QueryPerformanceCounter(out ticks) == 0
-      raise RuntimeError.from_winerror("QueryPerformanceCounter")
-    end
+    LibC.QueryPerformanceCounter(out ticks)
     frequency = performance_frequency
     {ticks // frequency, (ticks.remainder(frequency) * NANOSECONDS_PER_SECOND / frequency).to_i32}
+  end
+
+  def self.ticks : UInt64
+    LibC.QueryPerformanceCounter(out ticks)
+    ticks.to_u64! &* (NANOSECONDS_PER_SECOND // performance_frequency)
   end
 
   def self.load_localtime : ::Time::Location?

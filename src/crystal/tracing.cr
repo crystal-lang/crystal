@@ -34,8 +34,8 @@ module Crystal
         Sched
       end
 
-      @@sections = uninitialized Section
-      @@tick = uninitialized Time::Span
+      @@sections = Section::None
+      @@startup_tick = 0_u64
 
       @[AlwaysInline]
       def self.enabled?(section : Section) : Bool
@@ -43,8 +43,8 @@ module Crystal
       end
 
       @[AlwaysInline]
-      def self.tick : Time::Span
-        @@tick
+      def self.startup_tick : UInt64
+        @@startup_tick
       end
 
       # Setups tracing, parsing the `CRYSTAL_TRACE` environment variable to
@@ -55,7 +55,7 @@ module Crystal
       # anything is available and musn't allocate into the GC HEAP.
       def self.init
         @@sections = Section::None
-        @@tick = Time.monotonic
+        @@startup_tick = ::Crystal::System::Time.ticks
 
         {% if flag?(:win32) %}
           buf = uninitialized UInt16[256]
@@ -72,12 +72,14 @@ module Crystal
         return unless debug
 
         each_token(debug) do |token|
-          case token
-          when "gc".to_slice
-            @@sections |= Section::Gc
-          when "sched".to_slice
-            @@sections |= Section::Sched
-          end
+          \{% begin %}
+            case token
+            \{% for name in Section.constants %}
+              when \{{name.downcase.id.stringify}}.to_slice
+                @@sections |= Section::\{{name.id}}
+            \{% end %}
+            end
+          \{% end %}
         end
       end
 
@@ -105,11 +107,11 @@ module Crystal
 
     macro trace(section, operation, fmt = "", *args, &block)
       if ::Crystal::Tracing.enabled?(\{{section}})
-        %tick = ::Time.monotonic
-        %time = %tick - ::Crystal::Tracing.tick
+        %tick = ::Crystal::System::Time.ticks
+        %time = %tick - ::Crystal::Tracing.startup_tick
         \{% if block %}
           %ret = \{{yield}}
-          %duration = ::Time.monotonic - %tick
+          %duration = ::Crystal::System::Time.ticks - %tick
           ::Crystal.trace_end(%time, %duration, \{{section}}, \{{operation}}, \{{fmt}}, \{{args.splat}})
           %ret
         \{% else %}
@@ -123,13 +125,10 @@ module Crystal
 
     # :nodoc:
     macro trace_end(time, duration, section, operation, fmt = "", *args)
-      %time = (\{{time}}).total_nanoseconds.to_i64!
-      %duration = (\{{duration}}).try(&.total_nanoseconds.to_i64!) || -1_i64
-
       {% if flag?(:wasm32) %}
         # WASM doesn't have threads (and fibers aren't implemented either)
         ::Crystal::Tracing.log("\{{section.id}} \{{operation.id}} t=%lld d=%lld \{{fmt.id}}\n",
-                               %time, %duration, \{{args.splat}})
+                               \{{time}}, \{{duration}}, \{{args.splat}})
       {% else %}
         {% thread_type = flag?(:linux) ? "0x%lx".id : "%p".id %}
 
@@ -140,12 +139,12 @@ module Crystal
         if (%thread = Thread.current?) && (%fiber = %thread.current_fiber?)
           ::Crystal::Tracing.log(
             "\{{section.id}} \{{operation.id}} t=%lld d=%lld thread={{thread_type}} [%s] fiber=%p [%s] \{{fmt.id}}\n",
-            %time, %duration, %thread.@system_handle, %thread.name || "?", %fiber.as(Void*), %fiber.name || "?", \{{args.splat}})
+            \{{time}}, \{{duration}}, %thread.@system_handle, %thread.name || "?", %fiber.as(Void*), %fiber.name || "?", \{{args.splat}})
         else
           %thread_handle = %thread ? %thread.@system_handle : Crystal::System::Thread.current_handle
           ::Crystal::Tracing.log(
             "\{{section.id}} \{{operation.id}} t=%lld d=%lld thread={{thread_type}} [%s] \{{fmt.id}}\n",
-            %time, %duration, %thread_handle, %thread.try(&.name) || "?", \{{args.splat}})
+            \{{time}}, \{{duration}}, %thread_handle, %thread.try(&.name) || "?", \{{args.splat}})
         end
       {% end %}
     end
