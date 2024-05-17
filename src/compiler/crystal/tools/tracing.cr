@@ -38,7 +38,7 @@ module Crystal
       end
 
       def humanize(io, value)
-        io << value.round(9)
+        value.humanize(io)
       end
 
       def to_s(io : IO) : Nil
@@ -58,134 +58,101 @@ module Crystal
 
     class Durations < Values(Float64)
       def humanize(io, value)
-        value = value.abs
-
-        if value >= 1
-          io << value.round(2)
-          io << 's'
-        elsif value > 0.001
-          io << (value * 1_000).to_i64
-          io << "ms"
-        elsif value > 0.000_001
-          io << (value * 1_000_000).to_i64
-          io << "us"
-        else
-          io << (value * 1_000_000_000).to_i64
-          io << "ns"
-        end
+        value.humanize(io)
+        io << 's'
       end
     end
 
     class Sizes < Values(Int64)
-      KILOBYTE = 1024
-      MEGABYTE = 1024 * 1024
-      GIGABYTE = 1024 * 1024 * 1024
-
       def humanize(io, value)
-        value = value.abs.to_u64
-
-        if value >= GIGABYTE
-          io << (value // GIGABYTE)
-          io << "GB"
-        elsif value >= MEGABYTE
-          io << (value // MEGABYTE)
-          io << "MB"
-        elsif value >= KILOBYTE
-          io << (value // KILOBYTE)
-          io << "KB"
-        else
-          io << value
-          io << 'B'
-        end
+        value.humanize(io)
+        io << 'B'
       end
     end
 
-    module Parser
+    struct Parser
       def self.parse_event(line : String) : Event?
-        reader = Char::Reader.new(line)
-        section = parse_word
-        expect ' '
-        operation = parse_word
-        expect ' '
-        expect 't'
-        expect '='
-        time = parse_integer / 1_000_000_000 # nanoseconds
-        expect ' '
-        expect 'd'
-        expect '='
-        duration = parse_integer / 1_000_000_000 # nanoseconds
-        Event.new(section, operation, time, duration, line)
+        parser = new(Char::Reader.new(line))
+        parser.parse_event
       end
 
       def self.parse_variable(line : String, name : String) : Int64?
-        if pos = line.index(name)
-          reader = Char::Reader.new(line, pos + name.bytesize)
-          expect '='
-          parse_integer
-        end
+        return unless pos = line.index(name)
+        parser = new(Char::Reader.new(line, pos + name.bytesize))
+        return unless parser.expect '='
+        parser.parse_integer
+      end
+
+      def initialize(@reader : Char::Reader)
+      end
+
+      def parse_event : Event?
+        return unless section = parse_word
+        return unless expect ' '
+        return unless operation = parse_word
+        return unless expect ' '
+        return unless expect 't'
+        return unless expect '='
+        return unless time = parse_nanoseconds
+        return unless expect ' '
+        return unless expect 'd'
+        return unless expect '='
+        return unless duration = parse_nanoseconds
+        Event.new(section, operation, time, duration, @reader.string)
       end
 
       # Tries to parse known words, so we can return static strings instead of
-      # dynamically allocating the same string over an over, then falls back to
+      # dynamically allocating the same string over and over, then falls back to
       # allocate a string.
-      private macro parse_word
-        pos = reader.pos
+      protected def parse_word
+        pos = @reader.pos
 
         loop do
-          %char = reader.current_char
-          return unless %char.ascii_letter? || {'-', '_', ':'}.includes?(%char)
-          break if reader.next_char == ' '
+          char = @reader.current_char
+          return unless char.ascii_letter? || {'-', '_', ':'}.includes?(char)
+          break if @reader.next_char == ' '
         end
 
-        WORDS_DICTIONNARY.get(reader.string.to_slice[pos...reader.pos])
+        WORDS_DICTIONNARY.get(@reader.string.to_slice[pos...@reader.pos])
       end
 
       # Parses an integer directly without allocating a dynamic string.
-      private macro parse_integer
-        %int = 0_i64
-        %neg = false
+      protected def parse_integer
+        int = 0_i64
+        neg = false
 
-        if reader.current_char == '-'
-          reader.next_char
-          %neg = true
-        elsif reader.current_char == '+'
-          reader.next_char
+        if @reader.current_char == '-'
+          @reader.next_char
+          neg = true
+        elsif @reader.current_char == '+'
+          @reader.next_char
         end
 
-        %char = reader.current_char
-        while %char.ascii_number?
-          %int = %int * 10_i64 + %char.to_i64
-          %char = reader.next_char
+        char = @reader.current_char
+        while char.ascii_number?
+          int = int * 10_i64 + char.to_i64
+          char = @reader.next_char
         end
 
-        %neg ? -%int : %int
+        neg ? -int : int
       end
 
-      private macro parse_t
-        %char = reader.current_char
-        if {'t', 'd'}.includes?(%char)
-          reader.next_char
-          %char
-        else
-          return
-        end
+      protected def parse_nanoseconds : Float64
+        parse_integer.try(&.fdiv(Time::NANOSECONDS_PER_SECOND))
       end
 
-      private macro parse_char(*chars)
-        %char = reader.current_char
-        if {{chars}}.includes?(%char)
-          reader.next_char
-          %char
-        else
-          return
+      protected def parse_char(*chars)
+        char = @reader.current_char
+
+        if chars.includes?(char)
+          @reader.next_char
+          char
         end
       end
 
-      private macro expect(char)
-        if reader.current_char == {{char}}
-          reader.next_char
-        else
-          return
+      protected def expect(char)
+        if @reader.current_char == char
+          @reader.next_char
         end
       end
     end
