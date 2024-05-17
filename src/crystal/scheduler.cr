@@ -156,7 +156,7 @@ class Crystal::Scheduler
         resume(runnable) unless runnable == @thread.current_fiber
         break
       else
-        Crystal.trace :sched, "event_loop" do
+        Crystal.trace :sched, :event_loop do
           @event_loop.run_once
         end
       end

@@ -128,7 +128,7 @@ class Thread
   getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
 
   # :nodoc:
-  def scheduler? : ::Crystal::Scheduler?
+  def scheduler? : Crystal::Scheduler?
     @scheduler
   end
 
