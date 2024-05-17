@@ -2875,6 +2875,19 @@ module Crystal
       end
     end
 
+    describe Select do
+      it "executes whens" do
+        assert_macro %({{x.whens}}), "[when foo\n  1\n]", {x: Select.new([When.new("foo".call, 1.int32)])}
+        assert_macro %({{x.whens}}), "[when x = y\n  1\n, when bar\n]", {x: Select.new([When.new(Assign.new("x".var, "y".var), 1.int32), When.new("bar".call)])}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "", {x: Select.new([When.new("foo".call)])}
+        assert_macro %({{x.else}}), "1", {x: Select.new([When.new("foo".call)], 1.int32)}
+        assert_macro %({{x.else}}), "nil", {x: Select.new([When.new("foo".call)], NilLiteral.new)}
+      end
+    end
+
     describe "if methods" do
       if_node = If.new(1.int32, 2.int32, 3.int32)
 
