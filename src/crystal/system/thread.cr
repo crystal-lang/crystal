@@ -10,6 +10,8 @@ module Crystal::System::Thread
 
   # def self.current_thread : ::Thread
 
+  # def self.current_thread? : ::Thread?
+
   # def self.current_thread=(thread : ::Thread)
 
   # private def system_join : Exception?
@@ -100,12 +102,10 @@ class Thread
     Crystal::System::Thread.current_thread
   end
 
-  {% if flag?(:tracing) %}
-    # :nodoc:
-    def self.current? : Thread?
-      Crystal::System::Thread.current_thread?
-    end
-  {% end %}
+  # :nodoc:
+  def self.current? : Thread?
+    Crystal::System::Thread.current_thread?
+  end
 
   # Associates the Thread object to the running system thread.
   protected def self.current=(current : Thread) : Thread
@@ -127,12 +127,10 @@ class Thread
   # :nodoc:
   getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
 
-  {% if flag?(:tracing) %}
-    # :nodoc:
-    def scheduler? : ::Crystal::Scheduler?
-      @scheduler
-    end
-  {% end %}
+  # :nodoc:
+  def scheduler? : ::Crystal::Scheduler?
+    @scheduler
+  end
 
   protected def start
     Thread.threads.push(self)

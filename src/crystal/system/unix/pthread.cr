@@ -55,13 +55,11 @@ module Crystal::System::Thread
       end
     end
 
-    {% if flag?(:tracing) %}
-      def self.current_thread? : ::Thread?
-        if ptr = LibC.pthread_getspecific(@@current_key)
-          ptr.as(::Thread)
-        end
+    def self.current_thread? : ::Thread?
+      if ptr = LibC.pthread_getspecific(@@current_key)
+        ptr.as(::Thread)
       end
-    {% end %}
+    end
 
     def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
@@ -72,11 +70,9 @@ module Crystal::System::Thread
     @[ThreadLocal]
     class_property current_thread : ::Thread { ::Thread.new }
 
-    {% if flag?(:tracing) %}
-      def self.current_thread? : ::Thread?
-        @@current_thread
-      end
-    {% end %}
+    def self.current_thread? : ::Thread?
+      @@current_thread
+    end
   {% end %}
 
   private def system_join : Exception?
