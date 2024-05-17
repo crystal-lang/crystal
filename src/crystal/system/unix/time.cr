@@ -16,8 +16,8 @@ require "c/time"
 {% end %}
 
 module Crystal::System::Time
-  UNIX_EPOCH_IN_SECONDS = 62135596800_i64
-  NANOSECONDS_PER_SECOND = 1_000_000_000
+  UNIX_EPOCH_IN_SECONDS  = 62135596800_i64
+  NANOSECONDS_PER_SECOND =   1_000_000_000
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
     {% if LibC.has_method?("clock_gettime") %}
