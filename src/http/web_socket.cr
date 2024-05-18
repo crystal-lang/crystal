@@ -101,7 +101,7 @@ class HTTP::WebSocket
   #
   # The method accepts a block with an `io` argument.
   # The io object can call on `write` or `flush` method.
-  # The `write` method accepts `Bytes` (`Slice(UInt8)`); the `flush` method sends all the data in io and resets it.
+  # The `write` method accepts `Bytes` (`Slice(UInt8)`) and sends the data in chunks of *frame_size* bytes. The `flush` method sends all the data in io and resets it.
   # The remaining data in it is sent as a message when the block is finished executing.
   # For further information, see the `HTTP::WebSocket::Protocol::StreamIO` class.
   #
