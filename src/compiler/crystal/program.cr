@@ -311,11 +311,6 @@ module Crystal
 
         The value is defined by the environment variables `CRYSTAL_LIBRARY_PATH`.
         MD
-      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath, <<-MD
-        Colon-separated paths where the loader searches for dynamic libraries at runtime.
-
-        The value is defined by the environment variables `CRYSTAL_LIBRARY_RPATH`.
-        MD
       define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
         The version of the Crystal compiler.
         MD

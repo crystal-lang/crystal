@@ -1,17 +1,5 @@
 require "process/executable_path" # Process::PATH_DELIMITER
 
-module Crystal
-  {% unless Crystal.has_constant?("LIBRARY_RPATH") %}
-    LIBRARY_RPATH = {{ env("CRYSTAL_LIBRARY_RPATH") || "" }}
-  {% end %}
-end
-
-{% if flag?(:unix) && !flag?(:darwin) %}
-  {% unless Crystal::LIBRARY_RPATH.empty? %}
-    # TODO: is there a better way to quote this?
-    @[Link(ldflags: {{ "'-Wl,-rpath,#{Crystal::LIBRARY_RPATH.id}'" }})]
-  {% end %}
-{% end %}
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
@@ -143,7 +131,6 @@ end
 
 {% if flag?(:win32) %}
   require "./system/win32/wmain"
-  require "./system/win32/delay_load"
 {% end %}
 
 {% if flag?(:wasi) %}

@@ -198,21 +198,12 @@ module Crystal
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
-    # If *combine_rpath* is true, add the compiler itself's RPATH to the
-    # generated executable via `CrystalLibraryPath.add_compiler_rpath`. This is
-    # used by the `run` / `eval` / `spec` commands as well as the macro `run`
-    # (via `Crystal::Program#macro_compile`), and never during cross-compiling.
-    #
     # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
-    def compile(source : Source | Array(Source), output_filename : String, *, combine_rpath : Bool = false) : Result
-      if combine_rpath
-        return CrystalLibraryPath.add_compiler_rpath { compile(source, output_filename, combine_rpath: false) }
-      end
-
+    def compile(source : Source | Array(Source), output_filename : String) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
@@ -443,22 +434,6 @@ module Crystal
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
-
-            if program.has_flag?("preview_win32_delay_load")
-              # "LINK : warning LNK4199: /DELAYLOAD:foo.dll ignored; no imports found from foo.dll"
-              # it is harmless to skip this error because not all import libraries are always used, much
-              # less the individual DLLs they refer to
-              link_args << "/IGNORE:4199"
-
-              dlls = Set(String).new
-              search_result.library_paths.each do |library_path|
-                Crystal::System::LibraryArchive.imported_dlls(library_path).each do |dll|
-                  dlls << dll.downcase
-                end
-              end
-              dlls.delete "kernel32.dll"
-              dlls.each { |dll| link_args << "/DELAYLOAD:#{dll}" }
-            end
           end
         {% end %}
 
