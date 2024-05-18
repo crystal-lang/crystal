@@ -267,6 +267,15 @@ module Crystal
     assert_syntax_error "a.b(), c.d = 1"
     assert_syntax_error "a.b, c.d() = 1"
 
+    assert_syntax_error "a() = 1"
+    assert_syntax_error "a {} = 1"
+    assert_syntax_error "a.b() = 1"
+    assert_syntax_error "a.[]() = 1"
+    assert_syntax_error "a() += 1"
+    assert_syntax_error "a {} += 1"
+    assert_syntax_error "a.b() += 1"
+    assert_syntax_error "a.[]() += 1"
+
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
     it_parses "def foo ; 1 ; end", Def.new("foo", body: 1.int32)
@@ -1451,9 +1460,9 @@ module Crystal
 
     it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
-    it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
-    it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
-    it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([Select::When.new("foo".call, 2.int32)], 3.int32)
+    it_parses "select\nwhen foo\n2\nend", Select.new([When.new("foo".call, 2.int32)])
+    it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([When.new("foo".call, 2.int32), When.new("bar".call, 4.int32)])
+    it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([When.new("foo".call, 2.int32)], 3.int32)
 
     assert_syntax_error "select\nwhen 1\n2\nend", "invalid select when expression: must be an assignment or call"
 

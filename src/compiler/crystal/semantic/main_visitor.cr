@@ -2770,14 +2770,26 @@ module Crystal
       false
     end
 
+    private def allowed_type_in_rescue?(type : UnionType) : Bool
+      type.union_types.all? do |subtype|
+        allowed_type_in_rescue? subtype
+      end
+    end
+
+    private def allowed_type_in_rescue?(type : Crystal::Type) : Bool
+      type.implements?(@program.exception) || type.module?
+    end
+
     def visit(node : Rescue)
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.implements?(@program.exception)
-            type.raise "#{instance_type} is not a subclass of Exception"
+
+          unless self.allowed_type_in_rescue? instance_type
+            type.raise "#{instance_type} cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
           end
+
           instance_type
         end
       end

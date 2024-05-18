@@ -232,6 +232,19 @@ pending_interpreted describe: Process do
       output.should eq "`echo hi`\n"
     end
 
+    describe "does not execute batch files" do
+      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+        it ext do
+          with_tempfile "process_run#{ext}" do |path|
+            File.write(path, "echo '#{ext}'\n")
+            expect_raises {{ flag?(:win32) ? File::BadExecutableError : File::AccessDeniedError }}, "Error executing process" do
+              Process.run(path)
+            end
+          end
+        end
+      end
+    end
+
     describe "environ" do
       it "clears the environment" do
         value = Process.run(*print_env_command, clear_env: true) do |proc|

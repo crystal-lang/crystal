@@ -14,17 +14,11 @@ class Crystal::SpinLock
           Intrinsics.pause
         end
       end
-      {% if flag?(:arm) %}
-        Atomic.fence(:acquire)
-      {% end %}
     {% end %}
   end
 
   def unlock
     {% if flag?(:preview_mt) %}
-      {% if flag?(:arm) %}
-        Atomic.fence(:release)
-      {% end %}
       @m.set(UNLOCKED, :release)
     {% end %}
   end

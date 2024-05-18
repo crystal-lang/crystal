@@ -52,6 +52,22 @@ module LLVM
     {% end %}
   end
 
+  def self.init_avr : Nil
+    return if @@initialized_avr
+    @@initialized_avr = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
+      LibLLVM.initialize_avr_target_info
+      LibLLVM.initialize_avr_target
+      LibLLVM.initialize_avr_target_mc
+      LibLLVM.initialize_avr_asm_printer
+      LibLLVM.initialize_avr_asm_parser
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without AVR target"
+    {% end %}
+  end
+
   def self.init_webassembly : Nil
     return if @@initialized_webassembly
     @@initialized_webassembly = true

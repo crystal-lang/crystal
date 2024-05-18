@@ -145,7 +145,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_tty?
-    LibC.GetFileType(windows_handle) == LibC::FILE_TYPE_CHAR
+    LibC.GetConsoleMode(windows_handle, out _) != 0
   end
 
   private def system_reopen(other : IO::FileDescriptor)
@@ -238,13 +238,13 @@ module Crystal::System::FileDescriptor
     w_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless write_blocking
     w_pipe = LibC.CreateNamedPipeA(pipe_name, w_pipe_flags, pipe_mode, 1, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nil)
     raise IO::Error.from_winerror("CreateNamedPipeA") if w_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::Scheduler.event_loop.create_completion_port(w_pipe) unless write_blocking
+    Crystal::EventLoop.current.create_completion_port(w_pipe) unless write_blocking
 
     r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
     r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::Scheduler.event_loop.create_completion_port(r_pipe) unless read_blocking
+    Crystal::EventLoop.current.create_completion_port(r_pipe) unless read_blocking
 
     r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
     w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
@@ -301,12 +301,45 @@ module Crystal::System::FileDescriptor
     io
   end
 
+  private def system_echo(enable : Bool)
+    system_console_mode(enable, LibC::ENABLE_ECHO_INPUT, 0)
+  end
+
   private def system_echo(enable : Bool, & : ->)
     system_console_mode(enable, LibC::ENABLE_ECHO_INPUT, 0) { yield }
   end
 
+  private def system_raw(enable : Bool)
+    system_console_mode(enable, LibC::ENABLE_VIRTUAL_TERMINAL_INPUT, LibC::ENABLE_PROCESSED_INPUT | LibC::ENABLE_LINE_INPUT | LibC::ENABLE_ECHO_INPUT)
+  end
+
   private def system_raw(enable : Bool, & : ->)
     system_console_mode(enable, LibC::ENABLE_VIRTUAL_TERMINAL_INPUT, LibC::ENABLE_PROCESSED_INPUT | LibC::ENABLE_LINE_INPUT | LibC::ENABLE_ECHO_INPUT) { yield }
+  end
+
+  @[AlwaysInline]
+  private def system_console_mode(enable, on_mask, off_mask, old_mode = nil)
+    windows_handle = self.windows_handle
+    unless old_mode
+      if LibC.GetConsoleMode(windows_handle, out mode) == 0
+        raise IO::Error.from_winerror("GetConsoleMode")
+      end
+      old_mode = mode
+    end
+
+    old_on_bits = old_mode & on_mask
+    old_off_bits = old_mode & off_mask
+    if enable
+      return if old_on_bits == on_mask && old_off_bits == 0
+      new_mode = (old_mode | on_mask) & ~off_mask
+    else
+      return if old_on_bits == 0 && old_off_bits == off_mask
+      new_mode = (old_mode | off_mask) & ~on_mask
+    end
+
+    if LibC.SetConsoleMode(windows_handle, new_mode) == 0
+      raise IO::Error.from_winerror("SetConsoleMode")
+    end
   end
 
   @[AlwaysInline]
@@ -316,26 +349,12 @@ module Crystal::System::FileDescriptor
       raise IO::Error.from_winerror("GetConsoleMode")
     end
 
-    old_on_bits = old_mode & on_mask
-    old_off_bits = old_mode & off_mask
-    if enable
-      return yield if old_on_bits == on_mask && old_off_bits == 0
-      new_mode = (old_mode | on_mask) & ~off_mask
-    else
-      return yield if old_on_bits == 0 && old_off_bits == off_mask
-      new_mode = (old_mode | off_mask) & ~on_mask
+    begin
+      system_console_mode(enable, on_mask, off_mask, old_mode)
+      yield
+    ensure
+      LibC.SetConsoleMode(windows_handle, old_mode)
     end
-
-    if LibC.SetConsoleMode(windows_handle, new_mode) == 0
-      raise IO::Error.from_winerror("SetConsoleMode")
-    end
-
-    ret = yield
-    if LibC.GetConsoleMode(windows_handle, pointerof(old_mode)) != 0
-      new_mode = (old_mode & ~on_mask & ~off_mask) | old_on_bits | old_off_bits
-      LibC.SetConsoleMode(windows_handle, new_mode)
-    end
-    ret
   end
 end
 

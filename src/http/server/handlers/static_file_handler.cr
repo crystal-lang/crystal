@@ -86,7 +86,7 @@ class HTTP::StaticFileHandler
     context.response.headers["Accept-Ranges"] = "bytes"
 
     if @directory_listing && is_dir
-      context.response.content_type = "text/html"
+      context.response.content_type = "text/html; charset=utf-8"
       directory_listing(context.response, request_path, file_path)
     elsif is_file
       last_modified = file_info.modification_time

@@ -210,6 +210,9 @@ describe "ASTNode#to_s" do
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
   expect_to_s %(begin\n  ()\nend)
+  expect_to_s %(begin\n  (1)\nend)
+  expect_to_s %(begin\n  (@x = x).is_a?(Foo)\nend)
+  expect_to_s %(begin\n  (1)\n  2\nend)
   expect_to_s %(if 1\n  begin\n    2\n  end\nelse\n  begin\n    3\n  end\nend)
   expect_to_s %(foo do\n  begin\n    bar\n  end\nend)
   expect_to_s %q("\e\0\""), %q("\e\u0000\"")
@@ -232,6 +235,12 @@ describe "ASTNode#to_s" do
   expect_to_s "1.+ do\nend"
   expect_to_s "1.[](2) do\nend"
   expect_to_s "1.[]="
+  expect_to_s "1[&.foo]"
+  expect_to_s "1[&.foo]?"
+  expect_to_s "1[&.foo] = 2"
+  expect_to_s "1[2, x: 3, &.foo]"
+  expect_to_s "1[2, x: 3, &.foo]?"
+  expect_to_s "1[2, x: 3, &.foo] = 4"
   expect_to_s "1.+(a: 2)"
   expect_to_s "1.+(&block)"
   expect_to_s "1.//(2, a: 3)"
@@ -250,8 +259,10 @@ describe "ASTNode#to_s" do
   expect_to_s "offsetof(Foo, @bar)"
   expect_to_s "def foo(**options, &block)\nend"
   expect_to_s "macro foo\n  123\nend"
-  expect_to_s "if true\n(  1)\nend"
-  expect_to_s "begin\n(  1)\nrescue\nend"
+  expect_to_s "if true\n  (1)\nend"
+  expect_to_s "if true\n  (1)\n  2\nend"
+  expect_to_s "begin\n  (1)\nrescue\nend"
+  expect_to_s "begin\n  (1)\n  2\nrescue\nend"
   expect_to_s %[他.说("你好")]
   expect_to_s %[他.说 = "你好"]
   expect_to_s %[あ.い, う.え.お = 1, 2]
@@ -274,4 +285,22 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
   expect_to_s "macro foo(x)\n  yield\nend"
+  expect_to_s <<-CRYSTAL
+    select
+    when foo
+      select
+      when bar
+        1
+      else
+        2
+      end
+    else
+      select
+      when baz
+        3
+      else
+        4
+      end
+    end
+    CRYSTAL
 end

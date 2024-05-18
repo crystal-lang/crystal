@@ -79,7 +79,7 @@ module Crystal::System::Socket
       raise ::Socket::Error.from_wsa_error("WSASocketW")
     end
 
-    Crystal::Scheduler.event_loop.create_completion_port LibC::HANDLE.new(socket)
+    Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
 
     socket
   end
@@ -442,7 +442,7 @@ module Crystal::System::Socket
   end
 
   private def system_tty?
-    LibC.GetFileType(LibC::HANDLE.new(fd)) == LibC::FILE_TYPE_CHAR
+    LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
   end
 
   private def unbuffered_read(slice : Bytes) : Int32
@@ -486,11 +486,11 @@ module Crystal::System::Socket
     ret = LibC.closesocket(handle)
 
     if ret != 0
-      case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
+      case err = WinError.wsa_value
+      when WinError::WSAEINTR, WinError::WSAEINPROGRESS
         # ignore
       else
-        return ::Socket::Error.from_wsa_error("Error closing socket")
+        raise ::Socket::Error.from_os_error("Error closing socket", err)
       end
     end
   end

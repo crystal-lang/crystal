@@ -223,7 +223,7 @@ module Crystal
       else
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            append_indent
+            append_indent unless node.keyword.paren? && i == 0
             exp.accept self
             newline unless node.keyword.paren? && i == node.expressions.size - 1
           end
@@ -351,8 +351,23 @@ module Crystal
       node_obj = ignore_obj ? nil : node.obj
       block = node.block
 
+      short_block_call = nil
+      if block
+        # Check if this is foo &.bar
+        first_block_arg = block.args.first?
+        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
+          block_body = block.body
+          if block_body.is_a?(Call)
+            block_obj = block_body.obj
+            if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
+              short_block_call = block_body
+              block = nil
+            end
+          end
+        end
+      end
+
       need_parens = need_parens(node_obj)
-      call_args_need_parens = false
 
       @str << "::" if node.global?
       if node_obj.is_a?(ImplicitObj)
@@ -365,6 +380,13 @@ module Crystal
 
         @str << "["
         visit_args(node)
+
+        if short_block_call
+          @str << ", " if node.args.present? || node.named_args
+          @str << "&."
+          visit_call short_block_call, ignore_obj: true
+        end
+
         if node.name == "[]"
           @str << "]"
         else
@@ -375,12 +397,19 @@ module Crystal
 
         @str << "["
         visit_args(node, exclude_last: true)
+
+        if short_block_call
+          @str << ", " if node.args.size > 1 || node.named_args
+          @str << "&."
+          visit_call short_block_call, ignore_obj: true
+        end
+
         @str << "] = "
         node.args.last.accept self
-      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
+      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block && !short_block_call
         @str << node.name
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
+      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block && !short_block_call
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
@@ -399,39 +428,17 @@ module Crystal
           node.args.join(@str, ", ", &.accept self)
         else
           @str << node.name
+          in_parenthesis(node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args || short_block_call) do
+            visit_args(node)
 
-          call_args_need_parens = node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args
-
-          @str << '(' if call_args_need_parens
-          visit_args(node)
-        end
-      end
-
-      if block
-        # Check if this is foo &.bar
-        first_block_arg = block.args.first?
-        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
-          block_body = block.body
-          if block_body.is_a?(Call)
-            block_obj = block_body.obj
-            if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
-              if node.args.empty? && !node.named_args
-                unless call_args_need_parens
-                  @str << '('
-                  call_args_need_parens = true
-                end
-              else
-                @str << ", "
-              end
+            if short_block_call
+              @str << ", " if node.args.present? || node.named_args
               @str << "&."
-              visit_call block_body, ignore_obj: true
-              block = nil
+              visit_call short_block_call, ignore_obj: true
             end
           end
         end
       end
-
-      @str << ')' if call_args_need_parens
 
       if block
         @str << ' '
@@ -1373,18 +1380,20 @@ module Crystal
       @str << "select"
       newline
       node.whens.each do |a_when|
+        append_indent
         @str << "when "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         newline
         accept_with_indent a_when.body
       end
       if a_else = node.else
+        append_indent
         @str << "else"
         newline
         accept_with_indent a_else
       end
+      append_indent
       @str << "end"
-      newline
       false
     end
 
@@ -1563,7 +1572,7 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
-        append_indent if node.keyword.begin?
+        append_indent unless node.keyword.none?
         node.accept self
       end
       newline unless node.keyword.none?

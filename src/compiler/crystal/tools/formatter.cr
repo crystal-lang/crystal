@@ -2599,6 +2599,14 @@ module Crystal
               found_comment = skip_space_or_newline
               write_indent if found_comment
             end
+
+            # foo[&.bar]
+            if (block = node.block) && @token.type.op_amp?
+              has_args = !node.args.empty? || node.named_args
+              write "," if has_args
+              format_block(block, has_args)
+            end
+
             write_token :OP_RSQUARE
 
             if node.name == "[]?"
@@ -3879,7 +3887,7 @@ module Crystal
         write_keyword :when
         skip_space_or_newline(@indent + 2)
         write " "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         found_comment = skip_space(@indent + 2)
         if @token.type.op_semicolon? || @token.keyword?(:then)
           sep = @token.type.op_semicolon? ? "; " : " then "

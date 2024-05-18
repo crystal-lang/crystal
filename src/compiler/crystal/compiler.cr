@@ -102,8 +102,26 @@ module Crystal
       # enables with --release flag
       O3 = 3
 
+      # optimize for size, enables most O2 optimizations but aims for smaller
+      # code size
+      Os
+
+      # optimize aggressively for size rather than speed
+      Oz
+
       def suffix
         ".#{to_s.downcase}"
+      end
+
+      def self.from_level?(level : String) : self?
+        case level
+        when "0" then O0
+        when "1" then O1
+        when "2" then O2
+        when "3" then O3
+        when "s" then Os
+        when "z" then Oz
+        end
       end
     end
 
@@ -463,10 +481,13 @@ module Crystal
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
+      elsif program.has_flag? "avr"
+        link_flags = @link_flags || ""
+        link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
@@ -674,8 +695,8 @@ module Crystal
       exit 1
     end
 
-    {% if LibLLVM::IS_LT_130 %}
-      protected def optimize(llvm_mod)
+    {% if LibLLVM::IS_LT_170 %}
+      private def optimize_with_pass_manager(llvm_mod)
         fun_pass_manager = llvm_mod.new_function_pass_manager
         pass_manager_builder.populate fun_pass_manager
         fun_pass_manager.run llvm_mod
@@ -700,6 +721,8 @@ module Crystal
           registry.initialize_all
 
           builder = LLVM::PassManagerBuilder.new
+          builder.size_level = 0
+
           case optimization_mode
           in .o3?
             builder.opt_level = 3
@@ -712,26 +735,37 @@ module Crystal
             builder.use_inliner_with_threshold = 150
           in .o0?
             # default behaviour, no optimizations
+          in .os?
+            builder.opt_level = 2
+            builder.size_level = 1
+            builder.use_inliner_with_threshold = 50
+          in .oz?
+            builder.opt_level = 2
+            builder.size_level = 2
+            builder.use_inliner_with_threshold = 5
           end
-
-          builder.size_level = 0
 
           builder
         end
       end
-    {% else %}
-      protected def optimize(llvm_mod)
-        LLVM::PassBuilderOptions.new do |options|
-          mode = case @optimization_mode
-                 in .o3? then "default<O3>"
-                 in .o2? then "default<O2>"
-                 in .o1? then "default<O1>"
-                 in .o0? then "default<O0>"
-                 end
-          LLVM.run_passes(llvm_mod, mode, target_machine, options)
-        end
-      end
     {% end %}
+
+    protected def optimize(llvm_mod)
+      {% if LibLLVM::IS_LT_130 %}
+        optimize_with_pass_manager(llvm_mod)
+      {% else %}
+        {% if LibLLVM::IS_LT_170 %}
+          # PassBuilder doesn't support Os and Oz before LLVM 17
+          if @optimization_mode.os? || @optimization_mode.oz?
+            return optimize_with_pass_manager(llvm_mod)
+          end
+        {% end %}
+
+        LLVM::PassBuilderOptions.new do |options|
+          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+        end
+      {% end %}
+    end
 
     private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
