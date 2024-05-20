@@ -1577,7 +1577,7 @@ module Crystal::Macros
     end
   end
 
-  # A `when` or `in` inside a `case`.
+  # A `when` or `in` inside a `case` or `select`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -1612,8 +1612,30 @@ module Crystal::Macros
   end
 
   # A `select` expression.
-  # class Select < ASTNode
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # select
+  # {% for when_clause in node.whens %}
+  #   {{ when_clause }}
+  # {% end %}
+  # {% else_clause = node.else %}
+  # {% unless else_clause.is_a?(Nop) %}
+  #   else
+  #     {{ else_clause }}
+  # {% end %}
   # end
+  # ```
+  class Select < ASTNode
+    # Returns the `when`s of this `select`.
+    def whens : ArrayLiteral(When)
+    end
+
+    # Returns the `else` of this `select`.
+    def else : ASTNode
+    end
+  end
 
   # Node that represents an implicit object in:
   #

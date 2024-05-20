@@ -2252,6 +2252,19 @@ module Crystal
     end
   end
 
+  class Select
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "whens"
+        interpret_check_args { ArrayLiteral.map whens, &.itself }
+      when "else"
+        interpret_check_args { self.else || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
   class When
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
