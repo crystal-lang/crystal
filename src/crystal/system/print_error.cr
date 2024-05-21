@@ -56,26 +56,26 @@ module Crystal::System
 
       case fmt_ptr.value
       when 's'
-        read_arg(String | Pointer(UInt8)) do |arg|
+        read_arg(String, Int::Primitive, Pointer) do |arg|
           yield to_string_slice(arg)
         end
       when 'd'
-        read_arg(Int::Primitive) do |arg|
+        read_arg(Int::Primitive, Pointer) do |arg|
           to_int_slice(arg, 10, true, width) { |bytes| yield bytes }
         end
       when 'u'
-        read_arg(Int::Primitive) do |arg|
+        read_arg(Int::Primitive, Pointer) do |arg|
           to_int_slice(arg, 10, false, width) { |bytes| yield bytes }
         end
       when 'x'
-        read_arg(Int::Primitive) do |arg|
+        read_arg(Int::Primitive, Pointer) do |arg|
           to_int_slice(arg, 16, false, width) { |bytes| yield bytes }
         end
       when 'p'
-        read_arg(Pointer(Void)) do |arg|
+        read_arg(Int::Primitive, Pointer) do |arg|
           # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms
           yield "0x".to_slice
-          to_int_slice(arg.address, 16, false, 2) { |bytes| yield bytes }
+          to_int_slice(arg, 16, false, 2) { |bytes| yield bytes }
         end
       else
         yield Slice.new(next_percent, fmt_ptr + 1 - next_percent)
@@ -85,10 +85,12 @@ module Crystal::System
     end
   end
 
-  private macro read_arg(type, &block)
-    {{ block.args[0] }} = args[arg_index].as?({{ type }})
-    if !{{ block.args[0] }}.nil?
+  private macro read_arg(*types, &block)
+    case {{ block.args[0] }} = args[arg_index]
+    {% for t in types %}
+    when {{ t }}
       {{ block.body }}
+    {% end %}
     else
       yield "(???)".to_slice
     end
@@ -96,6 +98,10 @@ module Crystal::System
   end
 
   private def self.to_string_slice(str)
+    if str.is_a?(Int::Primitive)
+      str = Pointer(UInt8).new(str)
+    end
+
     if str.is_a?(UInt8*)
       if str.null?
         "(null)".to_slice
@@ -109,6 +115,10 @@ module Crystal::System
 
   # simplified version of `Int#internal_to_s`
   private def self.to_int_slice(num, base, signed, width, &)
+    if num.is_a?(Pointer)
+      num = num.address
+    end
+
     if num == 0
       yield "0".to_slice
       return
