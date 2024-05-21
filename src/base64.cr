@@ -60,7 +60,7 @@ module Base64
   # ```
   def encode(data, io : IO)
     count = 0
-    encode_with_new_lines(data.to_slice) do |byte|
+    encode_with_new_lines(data) do |byte|
       io << byte.unsafe_chr
       count += 1
     end
@@ -76,6 +76,31 @@ module Base64
       if inc >= LINE_SIZE
         yield NL
         inc = 0
+      end
+    end
+    if inc > 0
+      yield NL
+    end
+  end
+
+  private def encode_with_new_lines(io : IO, &)
+    inc = 0
+    # Base64 operates in 3-byte segments, so we use a buffer size that is a
+    # multiple of 3.
+    buffer = StaticArray(UInt8, 8193).new { 0u8 }
+    bytes = Bytes.new(buffer.to_unsafe, buffer.size)
+
+    loop do
+      bytes_read = io.read(bytes)
+      break if bytes_read == 0
+
+      to_base64(bytes[0, bytes_read], CHARS_STD, pad: bytes_read < bytes.bytesize) do |byte|
+        yield byte
+        inc += 1
+        if inc >= LINE_SIZE
+          yield NL
+          inc = 0
+        end
       end
     end
     if inc > 0
