@@ -47,4 +47,5 @@ lib LibC
   fun sysconf(name : Int) : Long
   fun unlink(name : Char*) : Int
   fun write(fd : Int, buf : Void*, n : SizeT) : SSizeT
+  fun pwrite(fd : Int, buf : Void*, n : SizeT, offset : OffT) : SSizeT
 end

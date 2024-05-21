@@ -904,6 +904,20 @@ describe "File" do
     end
   end
 
+  describe "write_at" do
+    pending_win32 "will flush before write_at" do
+      with_tempfile("write_at.txt") do |path|
+        File.open(path, "w") do |f|
+          f.sync = false
+          f.write "foobar".to_slice
+          f.write_at "bar".to_slice, 0
+          f.write "foo".to_slice
+        end
+        File.read(path).should eq "barbarfoo"
+      end
+    end
+  end
+
   it "does to_s and inspect" do
     File.open(datapath("test_file.txt")) do |file|
       file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
