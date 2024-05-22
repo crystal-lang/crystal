@@ -52,7 +52,7 @@ module Crystal::System::FileDescriptor
     handle = windows_handle
     until slice.empty?
       if system_blocking?
-        bytes_written = blocking_write(handle, slice)
+        bytes_written = write_blocking(handle, slice)
       else
         bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
           ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
@@ -64,7 +64,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def blocking_write(handle, slice)
+  private def write_blocking(handle, slice)
     ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil)
     if ret.zero?
       case error = WinError.value
