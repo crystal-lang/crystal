@@ -19,7 +19,7 @@ module Crystal::System::FileDescriptor
 
   @system_blocking = true
 
-  private def unbuffered_read(slice : Bytes) : Int32
+  private def system_read(slice : Bytes) : Int32
     handle = windows_handle
     if ConsoleUtils.console?(handle)
       ConsoleUtils.read(handle, slice)
@@ -48,19 +48,15 @@ module Crystal::System::FileDescriptor
     bytes_read.to_i32
   end
 
-  private def unbuffered_write(slice : Bytes) : Nil
+  private def system_write(slice : Bytes) : Int32
     handle = windows_handle
-    until slice.empty?
-      if system_blocking?
-        bytes_written = write_blocking(handle, slice)
-      else
-        bytes_written = overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
-          ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
-          {ret, byte_count}
-        end
-      end
-
-      slice += bytes_written
+    if system_blocking?
+      write_blocking(handle, slice).to_i32
+    else
+      overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
+        ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+        {ret, byte_count}
+      end.to_i32
     end
   end
 
