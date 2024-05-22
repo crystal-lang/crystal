@@ -88,7 +88,7 @@ module Base64
     # Base64 operates in 3-byte segments, so we use a buffer size that is a
     # multiple of 3.
     buffer = StaticArray(UInt8, 8193).new { 0u8 }
-    bytes = Bytes.new(buffer.to_unsafe, buffer.size)
+    bytes = buffer.to_slice
 
     loop do
       bytes_read = io.read(bytes)
