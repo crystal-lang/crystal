@@ -23,8 +23,7 @@ describe Digest::CRC32 do
   end
 
   it "calculates hash of #to_slice" do
-    buffer = StaticArray(UInt8, 1).new(1_u8)
-    Digest::CRC32.hexdigest(buffer).should eq("a505df1b")
+    Digest::CRC32.hexdigest("\x01").should eq("a505df1b")
   end
 
   it "can take a block" do

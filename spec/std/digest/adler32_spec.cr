@@ -23,8 +23,7 @@ describe Digest::Adler32 do
   end
 
   it "calculates hash of #to_slice" do
-    buffer = StaticArray(UInt8, 1).new(1_u8)
-    Digest::Adler32.hexdigest(buffer).should eq("00020002")
+    Digest::Adler32.hexdigest("\x01").should eq("00020002")
   end
 
   it "can take a block" do
