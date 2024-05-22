@@ -387,6 +387,7 @@ struct StaticArray(T, N)
   end
 
   # :ditto:
+  @[Deprecated("Use `#to_unsafe_slice` instead.")]
   def to_slice : Slice(T)
     to_unsafe_slice
   end
