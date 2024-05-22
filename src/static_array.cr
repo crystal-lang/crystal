@@ -362,12 +362,33 @@ struct StaticArray(T, N)
   #
   # ```
   # array = StaticArray(Int32, 3).new(2)
-  # slice = array.to_slice # => Slice[2, 2, 2]
+  # slice = array.to_unsafe_slice # => Slice[2, 2, 2]
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice : Slice(T)
+  #
+  # WARNING: The slice that this method returns points to stack memory. It
+  # becomes invalid when execution leaves the context where the `StaticArray` is
+  # stored. Use `Slice#dup` to duplicate the slice on the heap for safe access.
+  #
+  # ```
+  # def foo
+  #   # allocates on the stack
+  #   ary = StaticArray[1, 2, 3]
+  #   # create a slice pointing to stack
+  #   ary.to_unsafe_slice
+  #   # at the end of the method the stack pointer becomes invalid
+  # end
+  #
+  # foo # the stack pointer slice is now garbage
+  # ```
+  def to_unsafe_slice : Slice(T)
     Slice.new(to_unsafe, size)
+  end
+
+  # :ditto:
+  def to_slice : Slice(T)
+    to_unsafe_slice
   end
 
   # Returns a pointer to this static array's data.
