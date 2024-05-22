@@ -8,7 +8,7 @@ module IO::Overlapped
     property fiber : Fiber?
   end
 
-  def self.wait_queued_completions(timeout, &)
+  def self.wait_queued_completions(timeout, alertable = false, &)
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
 
     if timeout > UInt64::MAX
@@ -16,10 +16,12 @@ module IO::Overlapped
     else
       timeout = timeout.to_u64
     end
-    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.current.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, false)
+    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.current.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, alertable)
     if result == 0
       error = WinError.value
       if timeout && error.wait_timeout?
+        return true
+      elsif alertable && error.value == LibC::WAIT_IO_COMPLETION
         return true
       else
         raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)

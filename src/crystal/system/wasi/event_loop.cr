@@ -8,8 +8,12 @@ end
 # :nodoc:
 class Crystal::Wasi::EventLoop < Crystal::EventLoop
   # Runs the event loop.
-  def run_once : Nil
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.run_once")
+  def run(blocking : Bool) : Bool
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop.run")
+  end
+
+  def interrupt : Nil
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop.interrupt")
   end
 
   # Create a new resume event for a fiber.
