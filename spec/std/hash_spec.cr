@@ -1410,7 +1410,8 @@ describe "Hash" do
       h = {"a" => 1, "b" => 2}
       h.delete("a")
       h.rehash
-      h["b"].should eq 2
+      # We cannot test direct equivalence here because `Hash#==(Hash)` does not depend on `@first`
+      h.to_s.should eq %({"b" => 2})
     end
   end
 
