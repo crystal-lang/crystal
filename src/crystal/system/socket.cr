@@ -71,11 +71,19 @@ module Crystal::System::Socket
 
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # private def system_read(slice : Bytes) : Int32
+  private def system_read(slice : Bytes) : Int32
+    event_loop.read(self, slice)
+  end
 
-  # private def system_write(slice : Bytes) : Int32
+  private def system_write(slice : Bytes) : Int32
+    event_loop.write(self, slice)
+  end
 
   # private def system_close
+
+  private def event_loop : Crystal::EventLoop::Socket
+    Crystal::EventLoop.current
+  end
 
   # IPSocket:
 
