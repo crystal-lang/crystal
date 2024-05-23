@@ -51,6 +51,10 @@ class LLVM::Context
     Type.new LibLLVM.int_type_in_context(self, bits)
   end
 
+  def half : Type
+    Type.new LibLLVM.half_type_in_context(self)
+  end
+
   def float : Type
     Type.new LibLLVM.float_type_in_context(self)
   end
@@ -59,7 +63,17 @@ class LLVM::Context
     Type.new LibLLVM.double_type_in_context(self)
   end
 
-  def pointer : Type
+  def x86_fp80 : Type
+    Type.new LibLLVM.x86_fp80_type_in_context(self)
+  end
+
+  def fp128 : Type
+    Type.new LibLLVM.fp128_type_in_context(self)
+  end
+
+  def ppc_fp128 : Type
+    Type.new LibLLVM.ppc_fp128_type_in_context(self)
+  end
     {% if LibLLVM::IS_LT_150 %}
       {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
     {% else %}
