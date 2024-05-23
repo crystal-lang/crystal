@@ -74,18 +74,20 @@ class LLVM::Context
   def ppc_fp128 : Type
     Type.new LibLLVM.ppc_fp128_type_in_context(self)
   end
+
+  def pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
       {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
     {% else %}
-      Type.new LibLLVM.pointer_type_in_context(self, 0)
+      Type.new LibLLVM.pointer_type_in_context(self, address_space)
     {% end %}
   end
 
-  def void_pointer : Type
+  def void_pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
-      int8.pointer
+      int8.pointer(address_space)
     {% else %}
-      pointer
+      pointer(address_space)
     {% end %}
   end
 
