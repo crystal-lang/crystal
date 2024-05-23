@@ -75,4 +75,20 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
       end
     end
   end
+
+  def read(socket : ::Socket, slice : Bytes) : Int32
+    socket.evented_read("Error reading socket") do
+      LibC.recv(socket.fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  def write(socket : ::Socket, slice : Bytes) : Int32
+    socket.evented_write("Error writing to socket") do
+      LibC.send(socket.fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  def close(socket : ::Socket) : Nil
+    socket.evented_close
+  end
 end

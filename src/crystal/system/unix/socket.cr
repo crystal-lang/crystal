@@ -248,23 +248,11 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def system_read(slice : Bytes) : Int32
-    evented_read("Error reading socket") do
-      LibC.recv(fd, slice, slice.size, 0).to_i32
-    end
-  end
-
-  private def system_write(slice : Bytes) : Int32
-    evented_write("Error writing to socket") do
-      LibC.send(fd, slice, slice.size, 0)
-    end
-  end
-
   private def system_close
     # Perform libevent cleanup before LibC.close.
     # Using a file descriptor after it has been closed is never defined and can
     # always lead to undefined results. This is not specific to libevent.
-    evented_close
+    event_loop.close(self)
 
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
