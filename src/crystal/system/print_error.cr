@@ -3,16 +3,18 @@ module Crystal::System
   # This is useful for error messages from components that are required for
   # IO to work (fibers, scheduler, event_loop).
   def self.print_error(message, *args)
-    print_error(message, *args) do |bytes|
-      {% if flag?(:unix) || flag?(:wasm32) %}
-        LibC.write 2, bytes, bytes.size
-      {% elsif flag?(:win32) %}
-        LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), bytes, bytes.size, out _, nil)
-      {% end %}
-    end
+    printf(message, *args) { |bytes| print_error(bytes) }
   end
 
-  # Minimal drop-in replacement for a C `printf` function. Yields successive
+  def self.print_error(bytes : Bytes) : Nil
+    {% if flag?(:unix) || flag?(:wasm32) %}
+      LibC.write 2, bytes, bytes.size
+    {% elsif flag?(:win32) %}
+      LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), bytes, bytes.size, out _, nil)
+    {% end %}
+  end
+
+  # Minimal drop-in replacement for C `printf` function. Yields successive
   # non-empty `Bytes` to the block, which should do the actual printing.
   #
   # *format* only supports the `%(l|ll)?[dpsux]` format specifiers; more should
@@ -23,9 +25,9 @@ module Crystal::System
   # corrupted heap, its implementation should be as low-level as possible,
   # avoiding memory allocations.
   #
-  # NOTE: C's `printf` is incompatible with Crystal's `sprintf`, because the
-  # latter does not support argument width specifiers nor `%p`.
-  def self.print_error(format, *args, &)
+  # NOTE: Crystal's `printf` only supports a subset of C's `printf` format specifiers.
+  # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms.
+  def self.printf(format, *args, &)
     format = to_string_slice(format)
     format_len = format.size
     ptr = format.to_unsafe
@@ -73,7 +75,6 @@ module Crystal::System
         end
       when 'p'
         read_arg(Pointer(Void)) do |arg|
-          # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms
           yield "0x".to_slice
           to_int_slice(arg.address, 16, false, 2) { |bytes| yield bytes }
         end
