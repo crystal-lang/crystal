@@ -88,6 +88,44 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     end
   end
 
+  def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    loop do
+      if LibC.connect(socket.fd, address, address.size) == 0
+        return
+      end
+      case Errno.value
+      when Errno::EISCONN
+        return
+      when Errno::EINPROGRESS, Errno::EALREADY
+        socket.wait_writable(timeout: timeout) do
+          return IO::TimeoutError.new("connect timed out")
+        end
+      else
+        return ::Socket::ConnectError.from_errno("connect")
+      end
+    end
+  end
+
+  def accept(socket : ::Socket) : ::Socket::Handle?
+    loop do
+      client_fd = LibC.accept(socket.fd, nil, nil)
+      if client_fd == -1
+        if socket.closed?
+          return
+        elsif Errno.value == Errno::EAGAIN
+          socket.wait_readable(raise_if_closed: false) do
+            raise IO::TimeoutError.new("Accept timed out")
+          end
+          return if socket.closed?
+        else
+          raise ::Socket::Error.from_errno("accept")
+        end
+      else
+        return client_fd
+      end
+    end
+  end
+
   def close(socket : ::Socket) : Nil
     socket.evented_close
   end

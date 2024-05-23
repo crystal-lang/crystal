@@ -26,25 +26,6 @@ module Crystal::System::Socket
     {% end %}
   end
 
-  private def system_connect(addr, timeout = nil)
-    timeout = timeout.seconds unless timeout.is_a? ::Time::Span | Nil
-    loop do
-      if LibC.connect(fd, addr, addr.size) == 0
-        return
-      end
-      case Errno.value
-      when Errno::EISCONN
-        return
-      when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(timeout: timeout) do
-          return IO::TimeoutError.new("connect timed out")
-        end
-      else
-        return ::Socket::ConnectError.from_errno("connect")
-      end
-    end
-  end
-
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
   private def system_bind(addr, addrstr, &)
@@ -56,30 +37,6 @@ module Crystal::System::Socket
   private def system_listen(backlog, &)
     unless LibC.listen(fd, backlog) == 0
       yield ::Socket::Error.from_errno("Listen failed")
-    end
-  end
-
-  private def system_accept
-    loop do
-      client_fd = LibC.accept(fd, nil, nil)
-      if client_fd == -1
-        if closed?
-          return
-        elsif Errno.value == Errno::EAGAIN
-          wait_acceptable
-          return if closed?
-        else
-          raise ::Socket::Error.from_errno("accept")
-        end
-      else
-        return client_fd
-      end
-    end
-  end
-
-  private def wait_acceptable
-    wait_readable(raise_if_closed: false) do
-      raise IO::TimeoutError.new("Accept timed out")
     end
   end
 
