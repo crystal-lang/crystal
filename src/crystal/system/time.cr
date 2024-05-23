@@ -7,6 +7,10 @@ module Crystal::System::Time
   # nanoseconds}`.
   # def self.monotonic : {Int64, Int32}
 
+  # Returns the current time from the monotonic clock in nanoseconds.
+  # Doesn't raise nor allocates GC HEAP memory.
+  # def self.ticks : UInt64
+
   # Returns a list of paths where time zone data should be looked up.
   # def self.zone_sources : Enumerable(String)
 

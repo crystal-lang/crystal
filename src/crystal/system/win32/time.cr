@@ -66,7 +66,11 @@ module Crystal::System::Time
     LibC.QueryPerformanceCounter(out ticks)
     frequency = performance_frequency
     {ticks // frequency, (ticks.remainder(frequency) * NANOSECONDS_PER_SECOND / frequency).to_i32}
+  end
 
+  def self.ticks : UInt64
+    LibC.QueryPerformanceCounter(out ticks)
+    ticks.to_u64! &* (NANOSECONDS_PER_SECOND // performance_frequency)
   end
 
   def self.load_localtime : ::Time::Location?

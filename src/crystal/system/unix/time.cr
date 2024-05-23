@@ -46,6 +46,16 @@ module Crystal::System::Time
     {% end %}
   end
 
+  def self.ticks : UInt64
+    {% if flag?(:darwin) %}
+      info = mach_timebase_info
+      LibC.mach_absolute_time &* info.numer // info.denom
+    {% else %}
+      LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
+      tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
+    {% end %}
+  end
+
   def self.to_timespec(time : ::Time)
     t = uninitialized LibC::Timespec
     t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
