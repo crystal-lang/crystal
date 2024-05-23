@@ -12,9 +12,9 @@ module Crystal::System::Group
     groupname.check_no_null_byte
 
     grp = uninitialized LibC::Group
-    grp_pointer = pointerof(grp)
+    grp_pointer = Pointer(LibC::Group).null
     System.retry_with_buffer("getgrnam_r", GETGR_R_SIZE_MAX) do |buf|
-      LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
+      LibC.getgrnam_r(groupname, pointerof(grp), buf, buf.size, pointerof(grp_pointer))
     end
 
     from_struct(grp) if grp_pointer
@@ -25,9 +25,9 @@ module Crystal::System::Group
     return unless groupid
 
     grp = uninitialized LibC::Group
-    grp_pointer = pointerof(grp)
+    grp_pointer = Pointer(LibC::Group).null
     System.retry_with_buffer("getgrgid_r", GETGR_R_SIZE_MAX) do |buf|
-      LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
+      LibC.getgrgid_r(groupid, pointerof(grp), buf, buf.size, pointerof(grp_pointer))
     end
     from_struct(grp) if grp_pointer
   end
