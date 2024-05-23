@@ -148,6 +148,39 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
     Crystal::Iocp::Event.new(fiber, timeout: true)
   end
+
+  private def wsa_buffer(bytes)
+    wsabuf = LibC::WSABUF.new
+    wsabuf.len = bytes.size
+    wsabuf.buf = bytes.to_unsafe
+    wsabuf
+  end
+
+  def read(socket : ::Socket, slice : Bytes) : Int32
+    wsabuf = wsa_buffer(slice)
+
+    bytes_read = socket.wsa_overlapped_operation(socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+      flags = 0_u32
+      ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
+      {ret, bytes_received}
+    end
+
+    bytes_read.to_i32
+  end
+
+  def write(socket : ::Socket, slice : Bytes) : Int32
+    wsabuf = wsa_buffer(slice)
+
+    bytes = socket.wsa_overlapped_operation(socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+      ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      {ret, bytes_sent}
+    end
+
+    bytes.to_i32
+  end
+
+  def close(socket : ::Socket) : Nil
+  end
 end
 
 class Crystal::Iocp::Event
