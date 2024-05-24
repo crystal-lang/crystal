@@ -482,6 +482,9 @@ struct Range(B, E)
   # (3..8).size  # => 6
   # (3...8).size # => 5
   # ```
+  #
+  # Raises `OverflowError` if the difference is bigger than `Int32`.
+  # Raises `ArgumentError` if either `begin` or `end` are `nil`.
   def size : Int32
     b = self.begin
     e = self.end
