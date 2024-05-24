@@ -12,9 +12,9 @@ module IO::Evented
   @read_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
   @write_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
 
-  def evented_read(slice : Bytes, errno_msg : String, &) : Int32
+  def evented_read(errno_msg : String, &) : Int32
     loop do
-      bytes_read = yield slice
+      bytes_read = yield
       if bytes_read != -1
         # `to_i32` is acceptable because `Slice#size` is an Int32
         return bytes_read.to_i32
@@ -30,10 +30,10 @@ module IO::Evented
     resume_pending_readers
   end
 
-  def evented_write(slice : Bytes, errno_msg : String, &) : Int32
+  def evented_write(errno_msg : String, &) : Int32
     begin
       loop do
-        bytes_written = yield slice
+        bytes_written = yield
         if bytes_written != -1
           return bytes_written.to_i32
         end

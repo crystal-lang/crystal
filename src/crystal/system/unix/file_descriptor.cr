@@ -18,7 +18,7 @@ module Crystal::System::FileDescriptor
   STDERR_HANDLE = 2
 
   private def system_read(slice : Bytes) : Int32
-    evented_read(slice, "Error reading file") do
+    evented_read("Error reading file") do
       LibC.read(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for reading", target: self
@@ -28,7 +28,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_write(slice : Bytes) : Int32
-    evented_write(slice, "Error writing file") do |slice|
+    evented_write("Error writing file") do
       LibC.write(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing", target: self
