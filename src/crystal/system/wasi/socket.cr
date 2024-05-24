@@ -34,8 +34,8 @@ module Crystal::System::Socket
   end
 
   private def system_send(bytes : Bytes) : Int32
-    evented_send(bytes, "Error sending datagram") do |slice|
-      LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
+    evented_send("Error sending datagram") do
+      LibC.send(fd, bytes.to_unsafe.as(Void*), bytes.size, 0)
     end
   end
 

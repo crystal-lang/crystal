@@ -49,8 +49,8 @@ module IO::Evented
     end
   end
 
-  def evented_send(slice : Bytes, errno_msg : String, &) : Int32
-    bytes_written = yield slice
+  def evented_send(errno_msg : String, &) : Int32
+    bytes_written = yield
     raise Socket::Error.from_errno(errno_msg) if bytes_written == -1
     # `to_i32` is acceptable because `Slice#size` is an Int32
     bytes_written.to_i32
