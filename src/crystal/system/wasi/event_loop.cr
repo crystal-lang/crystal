@@ -48,6 +48,14 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
     end
   end
 
+  def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#receive_from"
+  end
+
+  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#send_to"
+  end
+
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span | ::Nil) : IO::Error?
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#connect"
   end

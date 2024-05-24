@@ -25,14 +25,6 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
   end
 
-  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    raise NotImplementedError.new "Crystal::System::Socket#system_send_to"
-  end
-
-  private def system_receive(bytes)
-    raise NotImplementedError.new "Crystal::System::Socket#system_receive"
-  end
-
   private def system_close_read
     if LibC.shutdown(fd, LibC::SHUT_RD) != 0
       raise ::Socket::Error.from_errno("shutdown read")
