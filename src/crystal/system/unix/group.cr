@@ -14,7 +14,7 @@ module Crystal::System::Group
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
     System.retry_with_buffer("getgrnam_r", GETGR_R_SIZE_MAX) do |buf|
-      LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer)).tap do |ret|
+      LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer)).tap do
         # It's not necessary to check success with `ret == 0` because `grp_pointer` will be NULL on failure
         return from_struct(grp) if grp_pointer
       end
@@ -28,7 +28,7 @@ module Crystal::System::Group
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
     System.retry_with_buffer("getgrgid_r", GETGR_R_SIZE_MAX) do |buf|
-      LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer)).tap do |ret|
+      LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer)).tap do
         # It's not necessary to check success with `ret == 0` because `grp_pointer` will be NULL on failure
         return from_struct(grp) if grp_pointer
       end
