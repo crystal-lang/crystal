@@ -256,7 +256,7 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, address = system_receive(Slice.new(buffer, max_message_size))
+      bytes_read, address = system_receive_from(Slice.new(buffer, max_message_size))
       {bytes_read, 0}
     end
     {message, address.as(Address)}
@@ -274,7 +274,7 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    system_receive(message)
+    system_receive_from(message)
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`

@@ -11,6 +11,8 @@ abstract class Crystal::EventLoop
     #
     # Returns the number of bytes read (up to `slice.size`).
     # Returns 0 when the socket is closed and no data available.
+    #
+    # Use `#send_to` for sending a message to a specific target address.
     abstract def read(socket : ::Socket, slice : Bytes) : Int32
 
     # Writes at least one byte from *slice* to the socket.
@@ -19,6 +21,8 @@ abstract class Crystal::EventLoop
     # continuing when ready. Otherwise returns immediately.
     #
     # Returns the number of bytes written (up to `slice.size`).
+    #
+    # Use `#receive_from` for capturing the source address of a message.
     abstract def write(socket : ::Socket, slice : Bytes) : Int32
 
     # Accepts an incoming TCP connection on the socket.
@@ -36,6 +40,25 @@ abstract class Crystal::EventLoop
     # Returns `IO::Error` in case of en error. The caller is responsible for
     # raising it as an exception if necessary.
     abstract def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+
+    # Sends at least one byte from *slice* to the socket with a target address
+    # *address*.
+    #
+    # Blocks the current fiber if the socket is not ready for writing,
+    # continuing when ready. Otherwise returns immediately.
+    #
+    # Returns the number of bytes sent (up to `slice.size`).
+    abstract def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
+
+    # Receives at least one byte from the socket into *slice*, capturing the
+    # source address.
+    #
+    # Blocks the current fiber if if no data is available for reading, continuing
+    # when available. Otherwise returns immediately.
+    #
+    # Returns a tuple containing the number of bytes received (up to `slice.size`)
+    # and the source address.
+    abstract def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
 
     # Closes the socket.
     abstract def close(socket : ::Socket) : Nil

@@ -21,9 +21,13 @@ module Crystal::System::Socket
     event_loop.accept(self)
   end
 
-  # private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
+  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
+    event_loop.send_to(self, bytes, addr)
+  end
 
-  # private def system_receive(bytes)
+  private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
+    event_loop.receive_from(self, bytes)
+  end
 
   # private def system_close_read
 
