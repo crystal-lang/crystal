@@ -179,6 +179,42 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     bytes.to_i32
   end
 
+  def send_to(socket : ::Socket, bytes : Bytes, addr : ::Socket::Address) : Int32
+    wsabuf = wsa_buffer(bytes)
+    bytes_written = socket.wsa_overlapped_operation(socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+      ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+      {ret, bytes_sent}
+    end
+    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
+
+    # to_i32 is fine because string/slice sizes are an Int32
+    bytes_written.to_i32
+  end
+
+  def receive(socket : ::Socket, slice : Bytes) : Int32
+    receive_from(socket, slice)[0]
+  end
+
+  def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
+    sockaddr = Pointer(LibC::SOCKADDR_STORAGE).malloc.as(LibC::Sockaddr*)
+    # initialize sockaddr with the initialized family of the socket
+    copy = sockaddr.value
+    copy.sa_family = socket.family
+    sockaddr.value = copy
+
+    addrlen = sizeof(LibC::SOCKADDR_STORAGE)
+
+    wsabuf = wsa_buffer(slice)
+
+    flags = 0_u32
+    bytes_read = socket.wsa_overlapped_operation(socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+      ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
+      {ret, bytes_received}
+    end
+
+    {bytes_read.to_i32, ::Socket::Address.from(sockaddr, addrlen)}
+  end
+
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
     socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)

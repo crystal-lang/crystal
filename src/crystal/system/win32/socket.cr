@@ -234,38 +234,6 @@ module Crystal::System::Socket
     wsabuf
   end
 
-  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    wsabuf = wsa_buffer(bytes)
-    bytes_written = overlapped_write(fd, "WSASendTo") do |overlapped|
-      ret = LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
-      {ret, bytes_sent}
-    end
-    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
-
-    # to_i32 is fine because string/slice sizes are an Int32
-    bytes_written.to_i32
-  end
-
-  private def system_receive(bytes)
-    sockaddr = Pointer(LibC::SOCKADDR_STORAGE).malloc.as(LibC::Sockaddr*)
-    # initialize sockaddr with the initialized family of the socket
-    copy = sockaddr.value
-    copy.sa_family = family
-    sockaddr.value = copy
-
-    addrlen = sizeof(LibC::SOCKADDR_STORAGE)
-
-    wsabuf = wsa_buffer(bytes)
-
-    flags = 0_u32
-    bytes_read = overlapped_read(fd, "WSARecvFrom") do |overlapped|
-      ret = LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
-      {ret, bytes_received}
-    end
-
-    {bytes_read.to_i32, ::Socket::Address.from(sockaddr, addrlen)}
-  end
-
   private def system_close_read
     if LibC.shutdown(fd, LibC::SH_RECEIVE) != 0
       raise ::Socket::Error.from_wsa_error("shutdown read")
