@@ -15,10 +15,6 @@ module Crystal::System::Socket
   private def initialize_handle(fd)
   end
 
-  private def system_connect(addr, timeout = nil)
-    raise NotImplementedError.new "Crystal::System::Socket#system_connect"
-  end
-
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
   private def system_bind(addr, addrstr, &)
@@ -27,10 +23,6 @@ module Crystal::System::Socket
 
   private def system_listen(backlog, &)
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
-  end
-
-  private def system_accept
-    (raise NotImplementedError.new "Crystal::System::Socket#system_accept").as(Int32)
   end
 
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)

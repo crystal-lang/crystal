@@ -48,6 +48,14 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
     end
   end
 
+  def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span | ::Nil) : IO::Error?
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#connect"
+  end
+
+  def accept(socket : ::Socket) : ::Socket::Handle?
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
+  end
+
   def close(socket : ::Socket) : Nil
     socket.evented_close
   end
