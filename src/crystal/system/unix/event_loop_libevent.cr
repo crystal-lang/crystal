@@ -88,6 +88,29 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     end
   end
 
+  def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
+    sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
+    # initialize sockaddr with the initialized family of the socket
+    copy = sockaddr.value
+    copy.sa_family = socket.family
+    sockaddr.value = copy
+
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
+
+    bytes_read = socket.evented_read("Error receiving datagram") do
+      LibC.recvfrom(socket.fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
+    end
+
+    {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
+  end
+
+  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
+    bytes_sent = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
+    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+    # to_i32 is fine because string/slice sizes are an Int32
+    bytes_sent.to_i32
+  end
+
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
     loop do
       if LibC.connect(socket.fd, address, address.size) == 0

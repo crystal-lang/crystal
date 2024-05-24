@@ -40,29 +40,6 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    bytes_sent = LibC.sendto(fd, bytes.to_unsafe.as(Void*), bytes.size, 0, addr, addr.size)
-    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
-    # to_i32 is fine because string/slice sizes are an Int32
-    bytes_sent.to_i32
-  end
-
-  private def system_receive(bytes)
-    sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
-    # initialize sockaddr with the initialized family of the socket
-    copy = sockaddr.value
-    copy.sa_family = family
-    sockaddr.value = copy
-
-    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
-
-    bytes_read = evented_read("Error receiving datagram") do
-      LibC.recvfrom(fd, bytes, bytes.size, 0, sockaddr, pointerof(addrlen))
-    end
-
-    {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
-  end
-
   private def system_close_read
     if LibC.shutdown(fd, LibC::SHUT_RD) != 0
       raise ::Socket::Error.from_errno("shutdown read")
