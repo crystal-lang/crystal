@@ -227,13 +227,6 @@ module Crystal::System::Socket
     end
   end
 
-  private def wsa_buffer(bytes)
-    wsabuf = LibC::WSABUF.new
-    wsabuf.len = bytes.size
-    wsabuf.buf = bytes.to_unsafe
-    wsabuf
-  end
-
   private def system_close_read
     if LibC.shutdown(fd, LibC::SH_RECEIVE) != 0
       raise ::Socket::Error.from_wsa_error("shutdown read")
@@ -376,18 +369,6 @@ module Crystal::System::Socket
 
   private def system_tty?
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
-  end
-
-  private def overlapped_write(socket, method, &)
-    wsa_overlapped_operation(socket, method, write_timeout) do |operation|
-      yield operation
-    end
-  end
-
-  private def overlapped_read(socket, method, *, connreset_is_error = true, &)
-    wsa_overlapped_operation(socket, method, read_timeout, connreset_is_error) do |operation|
-      yield operation
-    end
   end
 
   def system_close
