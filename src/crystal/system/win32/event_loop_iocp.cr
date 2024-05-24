@@ -179,6 +179,48 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     bytes.to_i32
   end
 
+  def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
+      # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
+      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
+    end
+  end
+
+  def accept(socket : ::Socket) : ::Socket::Handle?
+    socket.system_accept do |client_handle|
+      address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
+
+      # buffer_size is set to zero to only accept the connection and don't receive any data.
+      # That will be a different operation.
+      #
+      # > If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation.
+      # > Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data.
+      #
+      # TODO: Investigate benefits from receiving data here directly. It's hard to integrate into the event loop and socket API.
+      buffer_size = 0
+      output_buffer = Bytes.new(address_size * 2 + buffer_size)
+
+      success = socket.overlapped_accept(socket.fd, "AcceptEx") do |overlapped|
+        # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
+        received_bytes = uninitialized UInt32
+        Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
+          output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
+          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
+      end
+
+      if success
+        # AcceptEx does not automatically set the socket options on the accepted
+        # socket to match those of the listening socket, we need to ask for that
+        # explicitly with SO_UPDATE_ACCEPT_CONTEXT
+        socket.system_setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+
+        true
+      else
+        false
+      end
+    end
+  end
+
   def close(socket : ::Socket) : Nil
   end
 end
