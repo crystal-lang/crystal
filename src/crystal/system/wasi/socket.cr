@@ -161,13 +161,13 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def unbuffered_read(slice : Bytes) : Int32
+  private def system_read(slice : Bytes) : Int32
     evented_read(slice, "Error reading socket") do
       LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
-  private def unbuffered_write(slice : Bytes) : Nil
+  private def system_write(slice : Bytes) : Int32
     evented_write(slice, "Error writing to socket") do |slice|
       LibC.send(fd, slice, slice.size, 0)
     end
