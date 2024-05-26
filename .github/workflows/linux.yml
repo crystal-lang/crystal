@@ -107,6 +107,18 @@ jobs:
       - name: Check Format
         run: bin/ci format
 
+  run_ameba:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Crystal Ameba Linter
+        uses: crystal-ameba/github-action@v0.9.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   deploy_api_docs:
     if: github.repository_owner == 'crystal-lang' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
