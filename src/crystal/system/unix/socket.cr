@@ -9,6 +9,10 @@ module Crystal::System::Socket
   alias Handle = Int32
 
   private def create_handle(family, type, protocol, blocking) : Handle
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      # Forces opened sockets to be closed on `exec(2)`.
+      type = type.to_i | LibC::SOCK_CLOEXEC
+    {% end %}
     fd = LibC.socket(family, type, protocol)
     raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
     fd
