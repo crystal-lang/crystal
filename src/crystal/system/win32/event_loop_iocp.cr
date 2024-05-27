@@ -148,6 +148,27 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
     Crystal::Iocp::Event.new(fiber, timeout: true)
   end
+
+  def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    handle = file_descriptor.windows_handle
+    file_descriptor.overlapped_operation(handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+      ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i32
+  end
+
+  def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    handle = file_descriptor.windows_handle
+
+    file_descriptor.overlapped_operation(handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i32
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
+  end
 end
 
 class Crystal::Iocp::Event
