@@ -159,4 +159,9 @@ describe Socket, tags: "network" do
       end
     end
   end
+
+  it "closes on exec by default" do
+    socket = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
+    socket.close_on_exec?.should be_true
+  end
 end
