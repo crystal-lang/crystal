@@ -14,9 +14,17 @@ module Crystal::System::FileDescriptor
   # cooked mode otherwise.
   # private def system_raw(enable : Bool, & : ->)
 
-  # private def system_read(slice : Bool) : Int32
+  private def system_read(slice : Bytes) : Int32
+    event_loop.read(self, slice)
+  end
 
-  # private def system_write(slice : Bool) : Int32
+  private def system_write(slice : Bytes) : Int32
+    event_loop.write(self, slice)
+  end
+
+  private def event_loop : Crystal::EventLoop::FileDescriptor
+    Crystal::EventLoop.current
+  end
 end
 
 {% if flag?(:wasi) %}

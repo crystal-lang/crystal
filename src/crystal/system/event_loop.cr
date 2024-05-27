@@ -45,6 +45,14 @@ abstract class Crystal::EventLoop
   end
 end
 
+require "./event_loop/file_descriptor"
+
+abstract class Crystal::EventLoop
+  # The FileDescriptor interface is always needed, so we include it right in
+  # the main interface.
+  include FileDescriptor
+end
+
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
 {% elsif flag?(:unix) %}
