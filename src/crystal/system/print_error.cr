@@ -14,6 +14,22 @@ module Crystal::System
     {% end %}
   end
 
+  {% if flag?(:win32) %}
+    def self.print_error(bytes : Slice(UInt16)) : Nil
+      utf8 = uninitialized UInt8[256]
+      len = LibC.WideCharToMultiByte(LibC::CP_UTF8, 0, bytes, bytes.size, utf8, utf8.size, nil, nil)
+      print_error utf8.to_slice[0...len]
+    end
+  {% end %}
+
+  def self.print(handle : FileDescriptor::Handle, bytes : Bytes) : Nil
+    {% if flag?(:unix) || flag?(:wasm32) %}
+      LibC.write handle, bytes, bytes.size
+    {% elsif flag?(:win32) %}
+      LibC.WriteFile(Pointer(FileDescriptor::Handle).new(handle), bytes, bytes.size, out _, nil)
+    {% end %}
+  end
+
   # Minimal drop-in replacement for C `printf` function. Yields successive
   # non-empty `Bytes` to the block, which should do the actual printing.
   #
