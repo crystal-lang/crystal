@@ -2,13 +2,6 @@ require "c/ioapiset"
 require "crystal/system/print_error"
 
 # :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::Iocp::EventLoop.new
-  end
-end
-
-# :nodoc:
 class Crystal::Iocp::EventLoop < Crystal::EventLoop
   # This is a list of resume and timeout events managed outside of IOCP.
   @queue = Deque(Crystal::Iocp::Event).new
