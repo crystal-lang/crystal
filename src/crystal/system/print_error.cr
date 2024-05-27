@@ -109,7 +109,7 @@ module Crystal::System
   end
 
   # simplified version of `Int#internal_to_s`
-  private def self.to_int_slice(num, base, signed, width, &)
+  protected def self.to_int_slice(num, base, signed, width, &)
     if num == 0
       yield "0".to_slice
       return

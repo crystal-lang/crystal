@@ -23,6 +23,29 @@ module Crystal
           @size = pos + n
         end
 
+        def write(string : String) : Nil
+          write string.to_slice
+        end
+
+        def write(fiber : Fiber) : Nil
+          write fiber.as(Void*)
+          write ":"
+          write fiber.name || "?"
+        end
+
+        def write(ptr : Pointer) : Nil
+          write "0x"
+          Crystal::System.to_int_slice(ptr.address, 16, true, 2) { |bytes| write(bytes) }
+        end
+
+        def write(int : Int::Signed) : Nil
+          Crystal::System.to_int_slice(int, 10, true, 2) { |bytes| write(bytes) }
+        end
+
+        def write(uint : Int::Unsigned) : Nil
+          Crystal::System.to_int_slice(uint, 10, false, 2) { |bytes| write(bytes) }
+        end
+
         def to_slice : Bytes
           Bytes.new(@buf.to_unsafe, @size)
         end
@@ -91,62 +114,73 @@ module Crystal
         yield bytes[0..] unless bytes.size == 0
       end
 
-      # Formats and prints a log message to stderr. The generated message is
-      # limited to 512 bytes (PIPE_BUF) after which it will be truncated. Being
-      # below PIPE_BUF the message shall be written atomically to stderr,
-      # avoiding interleaved or smashed traces from multiple threads.
-      #
-      # Windows may not have the same guarantees but the buffering should limit
-      # these from happening.
-      def self.log(fmt : String, *args) : Nil
+      # :nodoc:
+      def self.log(section : String, operation : String, time : UInt64, **metadata)
         buf = BufferIO(512).new
-        Crystal::System.printf(fmt, *args) { |bytes| buf.write bytes }
-        Crystal::System.print_error(buf.to_slice)
+        buf.write section
+        buf.write "."
+        buf.write operation
+        buf.write " "
+        buf.write time
+
+        {% unless flag?(:wasm32) %}
+          # WASM doesn't have threads (and fibers aren't implemented either)
+          #
+          # We also start to trace *before* Thread.current and other objects have
+          # been allocated, they're lazily allocated and since we trace GC.malloc we
+          # must skip the objects until they're allocated (otherwise we hit infinite
+          # recursion): malloc -> trace -> malloc -> trace -> ...
+          thread = ::Thread.current?
+
+          buf.write " thread="
+          {% if flag?(:linux) %}
+            buf.write Pointer(Void).new(thread ? thread.@system_handle : System::Thread.current_handle)
+          {% else %}
+            buf.write thread ? thread.@system_handle : System::Thread.current_handle
+          {% end %}
+          buf.write ":"
+          buf.write thread.try(&.name) || "?"
+
+          if thread && (fiber = thread.current_fiber?)
+            buf.write " fiber="
+            buf.write fiber
+          end
+        {% end %}
+
+        metadata.each do |key, value|
+          buf.write " "
+          buf.write key.to_s
+          buf.write "="
+          buf.write value
+        end
+
+        buf.write "\n"
+        System.print_error(buf.to_slice)
       end
     end
 
-    macro trace(section, operation, fmt = "", *args, &block)
+    # Formats and prints a log message to stderr. The generated message is
+    # limited to 512 bytes (PIPE_BUF) after which it will be truncated. Being
+    # below PIPE_BUF the message shall be written atomically to stderr,
+    # avoiding interleaved or smashed traces from multiple threads.
+    #
+    # Windows may not have the same guarantees but the buffering should limit
+    # these from happening.
+    macro trace(section, operation, tick = nil, **metadata, &block)
       if ::Crystal::Tracing.enabled?(\{{section}})
-        %tick = ::Crystal::System::Time.ticks
-        %time = %tick - ::Crystal::Tracing.startup_tick
+        %tick = \{{tick}} || ::Crystal::System::Time.ticks
         \{% if block %}
           %ret = \{{yield}}
           %duration = ::Crystal::System::Time.ticks - %tick
-          ::Crystal.trace_end(%time, %duration, \{{section}}, \{{operation}}, \{{fmt}}, \{{args.splat}})
+          ::Crystal::Tracing.log(\{{section.id.stringify}}, \{{operation.id.stringify}}, %tick, duration: %duration, \{{metadata.double_splat}})
           %ret
         \{% else %}
-          ::Crystal.trace_end(%time, nil, \{{section}}, \{{operation}}, \{{fmt}}, \{{args.splat}})
+          ::Crystal::Tracing.log(\{{section.id.stringify}}, \{{operation.id.stringify}}, %tick, \{{metadata.double_splat}})
           nil
         \{% end %}
       else
         \{{yield}}
       end
-    end
-
-    # :nodoc:
-    macro trace_end(time, duration, section, operation, fmt = "", *args)
-      {% if flag?(:wasm32) %}
-        # WASM doesn't have threads (and fibers aren't implemented either)
-        ::Crystal::Tracing.log("\{{section.id}}.\{{operation.id}} %lld duration=%lld \{{fmt.id}}\n",
-                               \{{time}}, \{{duration}}, \{{args.splat}})
-      {% else %}
-        {% thread_type = flag?(:linux) ? "0x%lx".id : "%p".id %}
-
-        # we may start to trace *before* Thread.current and other objects have
-        # been allocated, they're lazily allocated and since we trace GC.malloc we
-        # must skip the objects until they're allocated (otherwise we hit infinite
-        # recursion): malloc -> trace -> malloc -> trace -> ...
-        if (%thread = Thread.current?) && (%fiber = %thread.current_fiber?)
-          ::Crystal::Tracing.log(
-            "\{{section.id}}.\{{operation.id}} %lld thread={{thread_type}}:%s fiber=%p:%s duration=%lld \{{fmt.id}}\n",
-            \{{time}}, %thread.@system_handle, %thread.name || "?", %fiber.as(Void*), %fiber.name || "?", \{{duration}}, \{{args.splat}})
-        else
-          %thread_handle = %thread ? %thread.@system_handle : Crystal::System::Thread.current_handle
-          ::Crystal::Tracing.log(
-            "\{{section.id}}.\{{operation.id}} %lld thread={{thread_type}}:%s duration=%lld \{{fmt.id}}\n",
-            \{{time}}, %thread_handle, %thread.try(&.name) || "?", \{{duration}}, \{{args.splat}})
-        end
-      {% end %}
     end
   {% else %}
     # :nodoc:
@@ -158,16 +192,12 @@ module Crystal
         false
       end
 
-      def self.log(fmt : String, *args)
+      def self.log(section : String, operation : String, time : UInt64, **metadata)
       end
     end
 
-    macro trace(section, operation, fmt = "", *args, &block)
+    macro trace(section, operation, **metadata, &block)
       \{{yield}}
-    end
-
-    # :nodoc:
-    macro trace_end(time, duration, section, operation, fmt = "", *args)
     end
   {% end %}
 end
