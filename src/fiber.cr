@@ -73,6 +73,8 @@ class Fiber
 
   # :nodoc:
   def self.unsafe_each(&)
+    # nothing to iterate when @@fibers is nil + don't lazily allocate in a
+    # method called from a GC collection callback!
     @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
