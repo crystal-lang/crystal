@@ -156,13 +156,13 @@ module Crystal::System::Socket
   end
 
   private def system_read(slice : Bytes) : Int32
-    evented_read(slice, "Error reading socket") do
+    evented_read("Error reading socket") do
       LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
   private def system_write(slice : Bytes) : Int32
-    evented_write(slice, "Error writing to socket") do |slice|
+    evented_write("Error writing to socket") do
       LibC.send(fd, slice, slice.size, 0)
     end
   end
