@@ -259,17 +259,6 @@ module Crystal::System::Socket
     wsabuf
   end
 
-  private def system_send(message : Bytes) : Int32
-    wsabuf = wsa_buffer(message)
-
-    bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
-      {ret, bytes_sent}
-    end
-
-    bytes.to_i32
-  end
-
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     wsabuf = wsa_buffer(bytes)
     bytes_written = overlapped_write(fd, "WSASendTo") do |overlapped|
