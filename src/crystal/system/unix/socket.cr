@@ -80,8 +80,8 @@ module Crystal::System::Socket
   end
 
   private def system_send(bytes : Bytes) : Int32
-    evented_send(bytes, "Error sending datagram") do |slice|
-      LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
+    evented_send("Error sending datagram") do
+      LibC.send(fd, bytes.to_unsafe.as(Void*), bytes.size, 0)
     end
   end
 
@@ -101,8 +101,8 @@ module Crystal::System::Socket
 
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
-    bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
-      LibC.recvfrom(fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
+    bytes_read = evented_read("Error receiving datagram") do
+      LibC.recvfrom(fd, bytes, bytes.size, 0, sockaddr, pointerof(addrlen))
     end
 
     {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
@@ -251,13 +251,13 @@ module Crystal::System::Socket
   end
 
   private def system_read(slice : Bytes) : Int32
-    evented_read(slice, "Error reading socket") do
+    evented_read("Error reading socket") do
       LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
   private def system_write(slice : Bytes) : Int32
-    evented_write(slice, "Error writing to socket") do |slice|
+    evented_write("Error writing to socket") do
       LibC.send(fd, slice, slice.size, 0)
     end
   end
