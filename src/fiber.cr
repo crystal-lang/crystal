@@ -73,7 +73,7 @@ class Fiber
 
   # :nodoc:
   def self.unsafe_each(&)
-    fibers.unsafe_each { |fiber| yield fiber }
+    @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
   # Creates a new `Fiber` instance.

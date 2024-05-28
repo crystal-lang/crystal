@@ -57,7 +57,7 @@ class Thread
   getter name : String?
 
   def self.unsafe_each(&)
-    threads.unsafe_each { |thread| yield thread }
+    @@threads.try(&.unsafe_each { |thread| yield thread })
   end
 
   # Creates and starts a new system thread.
