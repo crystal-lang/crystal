@@ -432,8 +432,7 @@ module Crystal::System::Socket
   end
 
   private def system_close_on_exec=(arg : Bool)
-    raise NotImplementedError.new
-    "Crystal::System::Socket#system_close_on_exec=" if arg
+    raise NotImplementedError.new "Crystal::System::Socket#system_close_on_exec=" if arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)
