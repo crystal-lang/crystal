@@ -54,7 +54,9 @@ class Thread
   getter name : String?
 
   def self.unsafe_each(&)
-    threads.unsafe_each { |thread| yield thread }
+    # nothing to iterate when @@threads is nil + don't lazily allocate in a
+    # method called from a GC collection callback!
+    @@threads.try(&.unsafe_each { |thread| yield thread })
   end
 
   # Creates and starts a new system thread.
