@@ -30,7 +30,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    file_descriptor.evented_read("Error reading file_descriptor") do
+    evented_read(file_descriptor, "Error reading file_descriptor") do
       LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for reading", target: file_descriptor
@@ -40,7 +40,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    file_descriptor.evented_write("Error writing file_descriptor") do
+    evented_write(file_descriptor, "Error writing file_descriptor") do
       LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing", target: file_descriptor
@@ -54,13 +54,13 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
-    socket.evented_read("Error reading socket") do
+    evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
     end
   end
 
   def write(socket : ::Socket, slice : Bytes) : Int32
-    socket.evented_write("Error writing to socket") do
+    evented_write(socket, "Error writing to socket") do
       LibC.send(socket.fd, slice, slice.size, 0)
     end
   end
@@ -83,6 +83,43 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def evented_read(target, errno_msg : String, &) : Int32
+    loop do
+      bytes_read = yield
+      if bytes_read != -1
+        # `to_i32` is acceptable because `Slice#size` is an Int32
+        return bytes_read.to_i32
+      end
+
+      if Errno.value == Errno::EAGAIN
+        target.wait_readable
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
+    end
+  ensure
+    target.evented_resume_pending_readers
+  end
+
+  def evented_write(target, errno_msg : String, &) : Int32
+    begin
+      loop do
+        bytes_written = yield
+        if bytes_written != -1
+          return bytes_written.to_i32
+        end
+
+        if Errno.value == Errno::EAGAIN
+          target.wait_writable
+        else
+          raise IO::Error.from_errno(errno_msg, target: target)
+        end
+      end
+    ensure
+      target.evented_resume_pending_writers
+    end
   end
 end
 
