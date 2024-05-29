@@ -15,8 +15,6 @@ module Crystal::System::Socket
 
   # private def system_accept
 
-  # private def system_send(bytes : Bytes) : Int32
-
   # private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
 
   # private def system_receive(bytes)

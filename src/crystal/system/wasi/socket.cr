@@ -33,12 +33,6 @@ module Crystal::System::Socket
     (raise NotImplementedError.new "Crystal::System::Socket#system_accept").as(Int32)
   end
 
-  private def system_send(bytes : Bytes) : Int32
-    evented_send("Error sending datagram") do
-      LibC.send(fd, bytes.to_unsafe.as(Void*), bytes.size, 0)
-    end
-  end
-
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     raise NotImplementedError.new "Crystal::System::Socket#system_send_to"
   end

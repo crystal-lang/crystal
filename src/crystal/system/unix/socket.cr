@@ -83,12 +83,6 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_send(bytes : Bytes) : Int32
-    evented_send("Error sending datagram") do
-      LibC.send(fd, bytes.to_unsafe.as(Void*), bytes.size, 0)
-    end
-  end
-
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     bytes_sent = LibC.sendto(fd, bytes.to_unsafe.as(Void*), bytes.size, 0, addr, addr.size)
     raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1

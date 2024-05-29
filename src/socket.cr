@@ -226,7 +226,7 @@ class Socket < IO
   # sock.send(Bytes[0])
   # ```
   def send(message) : Int32
-    system_send(message.to_slice)
+    system_write(message.to_slice)
   end
 
   # Sends a message to the specified remote address.
