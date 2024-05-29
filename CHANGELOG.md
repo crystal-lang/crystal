@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.2] (unreleased)
+
+[1.12.2]: https://github.com/crystal-lang/crystal/releases/1.12.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(runtime)* Don't allocate in `Fiber.unsafe_each` and `Thread.unsafe_each` ([#14635], thanks @ysbaddaden)
+
+[#14635]: https://github.com/crystal-lang/crystal/pull/14635
+
 ## [1.12.1] (2024-04-11)
 
 [1.12.1]: https://github.com/crystal-lang/crystal/releases/1.12.1
