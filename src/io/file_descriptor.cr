@@ -263,6 +263,16 @@ class IO::FileDescriptor < IO
     pp.text inspect
   end
 
+  private def unbuffered_read(slice : Bytes) : Int32
+    system_read(slice)
+  end
+
+  private def unbuffered_write(slice : Bytes) : Nil
+    until slice.empty?
+      slice += system_write(slice)
+    end
+  end
+
   private def unbuffered_rewind : Nil
     self.pos = 0
   end
