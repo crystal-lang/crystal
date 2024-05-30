@@ -15,8 +15,6 @@ module Crystal::System::Socket
 
   # private def system_accept
 
-  # private def system_send(bytes : Bytes) : Int32
-
   # private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
 
   # private def system_receive(bytes)
@@ -71,9 +69,9 @@ module Crystal::System::Socket
 
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # private def unbuffered_read(slice : Bytes) : Int32
+  # private def system_read(slice : Bytes) : Int32
 
-  # private def unbuffered_write(slice : Bytes) : Nil
+  # private def system_write(slice : Bytes) : Int32
 
   # private def system_close
 

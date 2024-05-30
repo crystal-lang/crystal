@@ -14,6 +14,8 @@ lib LibC
   alias HANDLE = Void*
   alias HMODULE = Void*
 
+  alias PAPCFUNC = ULONG_PTR ->
+
   INVALID_FILE_ATTRIBUTES      = DWORD.new!(-1)
   FILE_ATTRIBUTE_DIRECTORY     =  0x10
   FILE_ATTRIBUTE_HIDDEN        =   0x2

@@ -59,16 +59,21 @@ module Crystal::LibEvent
         Crystal::LibEvent::Event.new(event)
       end
 
-      def run_loop : Nil
-        LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
-      end
-
-      def run_once : Nil
-        LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
+      # NOTE: may return `true` even if no event has been triggered (e.g.
+      #       nonblocking), but `false` means that nothing was processed.
+      def loop(once : Bool, nonblock : Bool) : Bool
+        flags = LibEvent2::EventLoopFlags::None
+        flags |= LibEvent2::EventLoopFlags::Once if once
+        flags |= LibEvent2::EventLoopFlags::NonBlock if nonblock
+        LibEvent2.event_base_loop(@base, flags) == 0
       end
 
       def loop_break : Nil
         LibEvent2.event_base_loopbreak(@base)
+      end
+
+      def loop_exit : Nil
+        LibEvent2.event_base_loopexit(@base, nil)
       end
 
       def new_dns_base(init = true)

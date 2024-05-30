@@ -13,6 +13,10 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   # This is a list of resume and timeout events managed outside of IOCP.
   @queue = Deque(Crystal::Iocp::Event).new
 
+  @lock = Crystal::SpinLock.new
+  @interrupted = Atomic(Bool).new(false)
+  @blocked_thread = Atomic(Thread?).new(nil)
+
   # Returns the base IO Completion Port
   getter iocp : LibC::HANDLE do
     create_completion_port(LibC::INVALID_HANDLE_VALUE, nil)
@@ -37,33 +41,49 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
   # completion.
-  def run_once : Nil
+  def run(blocking : Bool) : Bool
     # Pull the next upcoming event from the event queue. This determines the
     # timeout for waiting on the completion port.
     # OPTIMIZE: Implement @queue as a priority queue in order to avoid this
     # explicit search for the lowest value and dequeue more efficient.
     next_event = @queue.min_by?(&.wake_at)
 
-    unless next_event
-      Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"
-      ::exit
-    end
+    # no registered events: nothing to wait for
+    return false unless next_event
 
     now = Time.monotonic
 
     if next_event.wake_at > now
-      wait_time = next_event.wake_at - now
-      # There is no event ready to wake. So we wait for completions with a
-      # timeout for the next event wake time.
+      # There is no event ready to wake. We wait for completions until the next
+      # event wake time, unless nonblocking or already interrupted (timeout
+      # immediately).
+      if blocking
+        @lock.sync do
+          if @interrupted.get(:acquire)
+            blocking = false
+          else
+            # memorize the blocked thread (so we can alert it)
+            @blocked_thread.set(Thread.current, :release)
+          end
+        end
+      end
 
-      timed_out = IO::Overlapped.wait_queued_completions(wait_time.total_milliseconds) do |fiber|
+      wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
+      timed_out = IO::Overlapped.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
         fiber.enqueue
       end
 
-      # If the wait for completion timed out we've reached the wake time and
-      # continue with waking `next_event`.
-      return unless timed_out
+      @blocked_thread.set(nil, :release)
+      @interrupted.set(false, :release)
+
+      # The wait for completion enqueued events.
+      return true unless timed_out
+
+      # Wait for completion timed out but it may have been interrupted or we ask
+      # for immediate timeout (nonblocking), so we check for the next event
+      # readyness again:
+      return false if next_event.wake_at > Time.monotonic
     end
 
     # next_event gets activated because its wake time is passed, either from the
@@ -81,7 +101,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     # This would avoid the scheduler needing to looking at runnable again just
     # to notice it's still empty. The lock involved there should typically be
     # uncontested though, so it's probably not a big deal.
-    return if fiber.dead?
+    return false if fiber.dead?
 
     # A timeout event needs special handling because it does not necessarily
     # means to resume the fiber directly, in case a different select branch
@@ -92,6 +112,22 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     else
       fiber.enqueue
     end
+
+    # We enqueued a fiber.
+    true
+  end
+
+  def interrupt : Nil
+    thread = nil
+
+    @lock.sync do
+      @interrupted.set(true)
+      thread = @blocked_thread.swap(nil, :acquire)
+    end
+    return unless thread
+
+    # alert the thread to interrupt GetQueuedCompletionStatusEx
+    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) {}, thread, LibC::ULONG_PTR.new(0))
   end
 
   def enqueue(event : Crystal::Iocp::Event)

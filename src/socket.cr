@@ -226,7 +226,7 @@ class Socket < IO
   # sock.send(Bytes[0])
   # ```
   def send(message) : Int32
-    system_send(message.to_slice)
+    system_write(message.to_slice)
   end
 
   # Sends a message to the specified remote address.
@@ -422,6 +422,16 @@ class Socket < IO
 
   def tty?
     system_tty?
+  end
+
+  private def unbuffered_read(slice : Bytes) : Int32
+    system_read(slice)
+  end
+
+  private def unbuffered_write(slice : Bytes) : Nil
+    until slice.empty?
+      slice += system_write(slice)
+    end
   end
 
   private def unbuffered_rewind : Nil

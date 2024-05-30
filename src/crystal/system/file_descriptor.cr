@@ -13,6 +13,10 @@ module Crystal::System::FileDescriptor
   # For the duration of the block, enables raw mode if *enable* is true, enables
   # cooked mode otherwise.
   # private def system_raw(enable : Bool, & : ->)
+
+  # private def system_read(slice : Bool) : Int32
+
+  # private def system_write(slice : Bool) : Int32
 end
 
 {% if flag?(:wasi) %}
