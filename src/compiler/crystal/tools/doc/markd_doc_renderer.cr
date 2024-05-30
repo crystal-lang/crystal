@@ -1,7 +1,14 @@
-require "sanitize"
+{% if !flag?(:without_libxml2) %}
+  require "sanitize"
+{% end %}
 
 class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
-  SANITIZER = Sanitize::Policy::HTMLSanitizer.common
+  {% if !flag?(:without_libxml2) %}
+    SANITIZER = Sanitize::Policy::HTMLSanitizer.common
+  {% else %}
+    SANITIZER = nil
+  {% end %}
+
   @anchor_map = Hash(String, Int32).new(0)
 
   def initialize(@type : Crystal::Doc::Type, options)
@@ -179,6 +186,10 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
   end
 
   def sanitize(node : Markd::Node) : String
-    SANITIZER.process(node.text)
+    {% if !flag?(:without_libxml2) %}
+      SANITIZER.process(node.text)
+    {% else %}
+      node.text
+    {% end %}
   end
 end
