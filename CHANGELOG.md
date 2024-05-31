@@ -1,6 +1,8 @@
 # Changelog
 
-## [1.12.2] (unreleased)
+## [1.12.2] (2024-05-31)
+
+_Patch release with a bug fix necessary for support of latest libgc_
 
 [1.12.2]: https://github.com/crystal-lang/crystal/releases/1.12.2
 
