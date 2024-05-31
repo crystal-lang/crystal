@@ -213,6 +213,10 @@ class Socket < IO
   end
 
   # Sends a message to a previously connected remote address.
+  # Returns the number of bytes sent.
+  # Does not guarantee that the entire message is sent. That's only the case
+  # when the return value is equivalent to `message.bytesize`.
+  # `#write` ensures the entire message is sent.
   #
   # ```
   # require "socket"
@@ -230,6 +234,10 @@ class Socket < IO
   end
 
   # Sends a message to the specified remote address.
+  # Returns the number of bytes sent.
+  # Does not guarantee that the entire message is sent. That's only the case
+  # when the return value is equivalent to `message.bytesize`.
+  # `#write` ensures the entire message is sent but it requires an established connection.
   #
   # ```
   # require "socket"
