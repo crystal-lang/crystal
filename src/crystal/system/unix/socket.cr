@@ -15,15 +15,15 @@ module Crystal::System::Socket
     {% end %}
     fd = LibC.socket(family, type, protocol)
     raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
+      # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
+      # support `SOCK_CLOEXEC` (e.g., Darwin).
+      fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
     fd
   end
 
   private def initialize_handle(fd)
-    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-      # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
-      # support `SOCK_CLOEXEC` (e.g., Darwin).
-      LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-    {% end %}
   end
 
   private def system_connect(addr, timeout = nil)
