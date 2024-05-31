@@ -288,6 +288,7 @@ module HTTP
       it "strips spaces around value only when it's unquoted" do
         parse_first_cookie(%[key= some value  ]).value.should eq "some value"
         parse_first_cookie(%[key=" some value  "]).value.should eq " some value  "
+        parse_first_cookie(%[key=  " some value  "  ]).value.should eq " some value  "
       end
     end
 
@@ -322,6 +323,11 @@ module HTTP
         cookie.path.should eq "/test"
 
         cookie = parse_set_cookie(%[key=" value  ";  \tpath=/test])
+        cookie.name.should eq "key"
+        cookie.value.should eq " value  "
+        cookie.path.should eq "/test"
+
+        cookie = parse_set_cookie(%[key=  " value  "\t ;  \tpath=/test])
         cookie.name.should eq "key"
         cookie.value.should eq " value  "
         cookie.path.should eq "/test"
