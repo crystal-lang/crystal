@@ -7,6 +7,13 @@ lib LibC
   VINTR     =        0
   VKILL     =        3
   VMIN      =        6
+  VSWTC     =        7
+  VREPRINT  =       12
+  VDISCARD  =       13
+  VWERASE   =       14
+  VLNEXT    =       15
+  VEOL2     =       16
+  VTIME     =        5
   VQUIT     =        1
   VSTART    =        8
   VSTOP     =        9
