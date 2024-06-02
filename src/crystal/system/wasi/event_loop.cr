@@ -35,6 +35,38 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
   def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_read_event")
   end
+
+  def read(socket : ::Socket, slice : Bytes) : Int32
+    socket.evented_read("Error reading socket") do
+      LibC.recv(socket.fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  def write(socket : ::Socket, slice : Bytes) : Int32
+    socket.evented_write("Error writing to socket") do
+      LibC.send(socket.fd, slice, slice.size, 0)
+    end
+  end
+
+  def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#receive_from"
+  end
+
+  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#send_to"
+  end
+
+  def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span | ::Nil) : IO::Error?
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#connect"
+  end
+
+  def accept(socket : ::Socket) : ::Socket::Handle?
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
+  end
+
+  def close(socket : ::Socket) : Nil
+    socket.evented_close
+  end
 end
 
 struct Crystal::Wasi::Event
