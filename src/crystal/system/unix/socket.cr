@@ -18,8 +18,8 @@ module Crystal::System::Socket
     {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
       # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
       # support `SOCK_CLOEXEC` (e.g., Darwin).
-      r = LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-      raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
+      ret = LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+      raise ::Socket::Error.from_errno("fcntl() failed") if ret == -1
     {% end %}
     fd
   end
