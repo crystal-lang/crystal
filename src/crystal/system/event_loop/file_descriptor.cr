@@ -12,7 +12,7 @@ abstract class Crystal::EventLoop
     # Writes at least one byte from *slice* to the file descriptor.
     #
     # Blocks the current fiber if the file descriptor isn't ready for writing,
-    # continuing when it is. Otherwise returns immediately.
+    # continuing when ready. Otherwise returns immediately.
     #
     # Returns the number of bytes written (up to `slice.size`).
     abstract def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
