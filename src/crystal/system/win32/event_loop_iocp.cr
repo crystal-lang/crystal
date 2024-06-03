@@ -179,10 +179,10 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     bytes.to_i32
   end
 
-  def send_to(socket : ::Socket, bytes : Bytes, addr : ::Socket::Address) : Int32
+  def send_to(socket : ::Socket, bytes : Bytes, address : ::Socket::Address) : Int32
     wsabuf = wsa_buffer(bytes)
     bytes_written = socket.wsa_overlapped_operation(socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
-      ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+      ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
     raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
