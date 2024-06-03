@@ -45,6 +45,15 @@ abstract class Crystal::EventLoop
   end
 end
 
+abstract class Crystal::EventLoop
+  # The socket module is empty by default and filled with abstract defs when
+  # crystal/system/socket.cr is required.
+  module Socket
+  end
+
+  include Socket
+end
+
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
 {% elsif flag?(:unix) %}

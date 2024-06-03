@@ -58,4 +58,5 @@ require "./syscall"
 {% unless flag?(:win32) %}
   require "./system/*"
 {% end %}
+require "./wait_group"
 require "./docs_pseudo_methods"
