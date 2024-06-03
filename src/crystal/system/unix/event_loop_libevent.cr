@@ -99,4 +99,81 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
   end
+
+  def read(socket : ::Socket, slice : Bytes) : Int32
+    socket.evented_read("Error reading socket") do
+      LibC.recv(socket.fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  def write(socket : ::Socket, slice : Bytes) : Int32
+    socket.evented_write("Error writing to socket") do
+      LibC.send(socket.fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
+    sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
+    # initialize sockaddr with the initialized family of the socket
+    copy = sockaddr.value
+    copy.sa_family = socket.family
+    sockaddr.value = copy
+
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
+
+    bytes_read = socket.evented_read("Error receiving datagram") do
+      LibC.recvfrom(socket.fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
+    end
+
+    {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
+  end
+
+  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
+    bytes_sent = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
+    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+    # to_i32 is fine because string/slice sizes are an Int32
+    bytes_sent.to_i32
+  end
+
+  def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    loop do
+      if LibC.connect(socket.fd, address, address.size) == 0
+        return
+      end
+      case Errno.value
+      when Errno::EISCONN
+        return
+      when Errno::EINPROGRESS, Errno::EALREADY
+        socket.wait_writable(timeout: timeout) do
+          return IO::TimeoutError.new("connect timed out")
+        end
+      else
+        return ::Socket::ConnectError.from_errno("connect")
+      end
+    end
+  end
+
+  def accept(socket : ::Socket) : ::Socket::Handle?
+    loop do
+      client_fd = LibC.accept(socket.fd, nil, nil)
+      if client_fd == -1
+        if socket.closed?
+          return
+        elsif Errno.value == Errno::EAGAIN
+          socket.wait_readable(raise_if_closed: false) do
+            raise IO::TimeoutError.new("Accept timed out")
+          end
+          return if socket.closed?
+        else
+          raise ::Socket::Error.from_errno("accept")
+        end
+      else
+        return client_fd
+      end
+    end
+  end
+
+  def close(socket : ::Socket) : Nil
+    socket.evented_close
+  end
 end

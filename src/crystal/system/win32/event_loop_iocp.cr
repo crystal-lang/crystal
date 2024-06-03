@@ -169,6 +169,117 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
   end
+
+  private def wsa_buffer(bytes)
+    wsabuf = LibC::WSABUF.new
+    wsabuf.len = bytes.size
+    wsabuf.buf = bytes.to_unsafe
+    wsabuf
+  end
+
+  def read(socket : ::Socket, slice : Bytes) : Int32
+    wsabuf = wsa_buffer(slice)
+
+    bytes_read = socket.wsa_overlapped_operation(socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+      flags = 0_u32
+      ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
+      {ret, bytes_received}
+    end
+
+    bytes_read.to_i32
+  end
+
+  def write(socket : ::Socket, slice : Bytes) : Int32
+    wsabuf = wsa_buffer(slice)
+
+    bytes = socket.wsa_overlapped_operation(socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+      ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
+      {ret, bytes_sent}
+    end
+
+    bytes.to_i32
+  end
+
+  def send_to(socket : ::Socket, bytes : Bytes, addr : ::Socket::Address) : Int32
+    wsabuf = wsa_buffer(bytes)
+    bytes_written = socket.wsa_overlapped_operation(socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+      ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+      {ret, bytes_sent}
+    end
+    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
+
+    # to_i32 is fine because string/slice sizes are an Int32
+    bytes_written.to_i32
+  end
+
+  def receive(socket : ::Socket, slice : Bytes) : Int32
+    receive_from(socket, slice)[0]
+  end
+
+  def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
+    sockaddr = Pointer(LibC::SOCKADDR_STORAGE).malloc.as(LibC::Sockaddr*)
+    # initialize sockaddr with the initialized family of the socket
+    copy = sockaddr.value
+    copy.sa_family = socket.family
+    sockaddr.value = copy
+
+    addrlen = sizeof(LibC::SOCKADDR_STORAGE)
+
+    wsabuf = wsa_buffer(slice)
+
+    flags = 0_u32
+    bytes_read = socket.wsa_overlapped_operation(socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+      ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
+      {ret, bytes_received}
+    end
+
+    {bytes_read.to_i32, ::Socket::Address.from(sockaddr, addrlen)}
+  end
+
+  def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
+      # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
+      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
+    end
+  end
+
+  def accept(socket : ::Socket) : ::Socket::Handle?
+    socket.system_accept do |client_handle|
+      address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
+
+      # buffer_size is set to zero to only accept the connection and don't receive any data.
+      # That will be a different operation.
+      #
+      # > If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation.
+      # > Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data.
+      #
+      # TODO: Investigate benefits from receiving data here directly. It's hard to integrate into the event loop and socket API.
+      buffer_size = 0
+      output_buffer = Bytes.new(address_size * 2 + buffer_size)
+
+      success = socket.overlapped_accept(socket.fd, "AcceptEx") do |overlapped|
+        # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
+        received_bytes = uninitialized UInt32
+        Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
+          output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
+          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
+      end
+
+      if success
+        # AcceptEx does not automatically set the socket options on the accepted
+        # socket to match those of the listening socket, we need to ask for that
+        # explicitly with SO_UPDATE_ACCEPT_CONTEXT
+        socket.system_setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+
+        true
+      else
+        false
+      end
+    end
+  end
+
+  def close(socket : ::Socket) : Nil
+  end
 end
 
 class Crystal::Iocp::Event

@@ -110,10 +110,7 @@ module Crystal::System::Socket
       return ::Socket::BindError.from_wsa_error("Could not bind to '*'")
     end
 
-    error = overlapped_connect(fd, "ConnectEx") do |overlapped|
-      # This is: LibC.ConnectEx(fd, addr, addr.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
-    end
+    error = event_loop.connect(self, addr, timeout)
 
     if error
       return error
@@ -132,7 +129,8 @@ module Crystal::System::Socket
     end
   end
 
-  private def overlapped_connect(socket, method, &)
+  # :nodoc:
+  def overlapped_connect(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
@@ -185,11 +183,11 @@ module Crystal::System::Socket
     end
   end
 
-  protected def system_accept : Handle?
+  def system_accept(& : Handle -> Bool) : Handle?
     client_socket = create_handle(family, type, protocol, blocking)
     initialize_handle(client_socket)
 
-    if system_accept(client_socket)
+    if yield client_socket
       client_socket
     else
       LibC.closesocket(client_socket)
@@ -198,30 +196,7 @@ module Crystal::System::Socket
     end
   end
 
-  protected def system_accept(client_socket : Handle) : Bool
-    address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
-    buffer_size = 0
-    output_buffer = Bytes.new(address_size * 2 + buffer_size)
-
-    success = overlapped_accept(fd, "AcceptEx") do |overlapped|
-      # This is: LibC.AcceptEx(fd, client_socket, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
-      received_bytes = uninitialized UInt32
-      Crystal::System::Socket.accept_ex.call(fd, client_socket,
-        output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-        address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
-    end
-
-    return false unless success
-
-    # AcceptEx does not automatically set the socket options on the accepted
-    # socket to match those of the listening socket, we need to ask for that
-    # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-    system_setsockopt client_socket, LibC::SO_UPDATE_ACCEPT_CONTEXT, fd
-
-    true
-  end
-
-  private def overlapped_accept(socket, method, &)
+  def overlapped_accept(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
@@ -250,56 +225,6 @@ module Crystal::System::Socket
 
       true
     end
-  end
-
-  private def wsa_buffer(bytes)
-    wsabuf = LibC::WSABUF.new
-    wsabuf.len = bytes.size
-    wsabuf.buf = bytes.to_unsafe
-    wsabuf
-  end
-
-  private def system_send(message : Bytes) : Int32
-    wsabuf = wsa_buffer(message)
-
-    bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
-      {ret, bytes_sent}
-    end
-
-    bytes.to_i32
-  end
-
-  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    wsabuf = wsa_buffer(bytes)
-    bytes_written = overlapped_write(fd, "WSASendTo") do |overlapped|
-      ret = LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
-      {ret, bytes_sent}
-    end
-    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
-
-    # to_i32 is fine because string/slice sizes are an Int32
-    bytes_written.to_i32
-  end
-
-  private def system_receive(bytes)
-    sockaddr = Pointer(LibC::SOCKADDR_STORAGE).malloc.as(LibC::Sockaddr*)
-    # initialize sockaddr with the initialized family of the socket
-    copy = sockaddr.value
-    copy.sa_family = family
-    sockaddr.value = copy
-
-    addrlen = sizeof(LibC::SOCKADDR_STORAGE)
-
-    wsabuf = wsa_buffer(bytes)
-
-    flags = 0_u32
-    bytes_read = overlapped_read(fd, "WSARecvFrom") do |overlapped|
-      ret = LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
-      {ret, bytes_received}
-    end
-
-    {bytes_read.to_i32, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
   private def system_close_read
@@ -403,7 +328,8 @@ module Crystal::System::Socket
     raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
   end
 
-  private def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  # :nodoc:
+  def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
@@ -443,41 +369,6 @@ module Crystal::System::Socket
 
   private def system_tty?
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
-  end
-
-  private def system_read(slice : Bytes) : Int32
-    wsabuf = wsa_buffer(slice)
-
-    bytes_read = overlapped_read(fd, "WSARecv", connreset_is_error: false) do |overlapped|
-      flags = 0_u32
-      ret = LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
-      {ret, bytes_received}
-    end
-
-    bytes_read.to_i32
-  end
-
-  private def system_write(slice : Bytes) : Int32
-    wsabuf = wsa_buffer(slice)
-
-    bytes = overlapped_write(fd, "WSASend") do |overlapped|
-      ret = LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
-      {ret, bytes_sent}
-    end
-
-    bytes.to_i32
-  end
-
-  private def overlapped_write(socket, method, &)
-    wsa_overlapped_operation(socket, method, write_timeout) do |operation|
-      yield operation
-    end
-  end
-
-  private def overlapped_read(socket, method, *, connreset_is_error = true, &)
-    wsa_overlapped_operation(socket, method, read_timeout, connreset_is_error) do |operation|
-      yield operation
-    end
   end
 
   def system_close

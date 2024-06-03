@@ -213,6 +213,10 @@ class Socket < IO
   end
 
   # Sends a message to a previously connected remote address.
+  # Returns the number of bytes sent.
+  # Does not guarantee that the entire message is sent. That's only the case
+  # when the return value is equivalent to `message.bytesize`.
+  # `#write` ensures the entire message is sent.
   #
   # ```
   # require "socket"
@@ -226,10 +230,14 @@ class Socket < IO
   # sock.send(Bytes[0])
   # ```
   def send(message) : Int32
-    system_send(message.to_slice)
+    system_write(message.to_slice)
   end
 
   # Sends a message to the specified remote address.
+  # Returns the number of bytes sent.
+  # Does not guarantee that the entire message is sent. That's only the case
+  # when the return value is equivalent to `message.bytesize`.
+  # `#write` ensures the entire message is sent but it requires an established connection.
   #
   # ```
   # require "socket"
@@ -256,7 +264,7 @@ class Socket < IO
   def receive(max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, address = system_receive(Slice.new(buffer, max_message_size))
+      bytes_read, address = system_receive_from(Slice.new(buffer, max_message_size))
       {bytes_read, 0}
     end
     {message, address.as(Address)}
@@ -274,7 +282,7 @@ class Socket < IO
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, Address}
-    system_receive(message)
+    system_receive_from(message)
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`
