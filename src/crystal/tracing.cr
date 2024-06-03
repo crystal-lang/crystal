@@ -84,7 +84,7 @@ module Crystal
       # This should be the first thing called in main, maybe even before the GC
       # itself is initialized. The function assumes neither the GC nor ENV nor
       # anything is available and musn't allocate into the GC HEAP.
-      def self.init
+      def self.init : Nil
         @@sections = Section::None
         @@startup_tick = System::Time.ticks
 
