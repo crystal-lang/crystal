@@ -56,6 +56,7 @@ File.open(DEFAULTS_FILE, "w") do |file|
       # available at #{guidelines.href}.
       #
       # See https://wiki.mozilla.org/Security/Server_Side_TLS for details.
+      @[Deprecated("Deprecated with no replacement. Prefer setting a security level, global system configuration, or build your own from #{url}")]
       CIPHERS_#{level.upcase} = "#{all_ciphers.join(":")}"
 
       # The list of secure ciphersuites on **#{level}** compatibility level as per Mozilla
@@ -68,6 +69,7 @@ File.open(DEFAULTS_FILE, "w") do |file|
       # available at #{guidelines.href}.
       #
       # See https://wiki.mozilla.org/Security/Server_Side_TLS for details.
+      @[Deprecated("Deprecated with no replacement. Prefer setting a security level, global system configuration, or build your own from #{url}")]
       CIPHER_SUITES_#{level.upcase} = "#{ciphersuites.join(":")}"
     CRYSTAL
   end
