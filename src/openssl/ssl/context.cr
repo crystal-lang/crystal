@@ -130,8 +130,6 @@ abstract class OpenSSL::SSL::Context
       {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_client"
       {% end %}
-
-      set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
     end
 
     # Returns a new TLS server context with only the given method set.
