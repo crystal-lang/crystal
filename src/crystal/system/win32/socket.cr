@@ -354,13 +354,11 @@ module Crystal::System::Socket
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
-    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+    false
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
-    arg
+    raise NotImplementedError.new "Crystal::System::Socket#system_close_on_exec=" if arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)
