@@ -35,15 +35,15 @@ module Crystal
 
         def write(ptr : Pointer) : Nil
           write "0x"
-          Crystal::System.to_int_slice(ptr.address, 16, true, 2) { |bytes| write(bytes) }
+          System.to_int_slice(ptr.address, 16, true, 2) { |bytes| write(bytes) }
         end
 
         def write(int : Int::Signed) : Nil
-          Crystal::System.to_int_slice(int, 10, true, 2) { |bytes| write(bytes) }
+          System.to_int_slice(int, 10, true, 2) { |bytes| write(bytes) }
         end
 
         def write(uint : Int::Unsigned) : Nil
-          Crystal::System.to_int_slice(uint, 10, false, 2) { |bytes| write(bytes) }
+          System.to_int_slice(uint, 10, false, 2) { |bytes| write(bytes) }
         end
 
         def to_slice : Bytes
