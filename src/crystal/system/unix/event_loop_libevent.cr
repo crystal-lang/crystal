@@ -128,9 +128,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
-  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
-    bytes_sent = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+  def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
+    bytes_sent = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, address, address.size)
+    raise ::Socket::Error.from_errno("Error sending datagram to #{address}") if bytes_sent == -1
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_sent.to_i32
   end

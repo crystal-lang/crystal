@@ -76,7 +76,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#receive_from"
   end
 
-  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
+  def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#send_to"
   end
 

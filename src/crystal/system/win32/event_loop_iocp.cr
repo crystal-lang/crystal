@@ -200,13 +200,13 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     bytes.to_i32
   end
 
-  def send_to(socket : ::Socket, bytes : Bytes, addr : ::Socket::Address) : Int32
-    wsabuf = wsa_buffer(bytes)
+  def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
+    wsabuf = wsa_buffer(slice)
     bytes_written = socket.wsa_overlapped_operation(socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
-      ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
+      ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
-    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{addr}") if bytes_written == -1
+    raise ::Socket::Error.from_wsa_error("Error sending datagram to #{address}") if bytes_written == -1
 
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_written.to_i32
