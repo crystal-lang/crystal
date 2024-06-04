@@ -15,6 +15,7 @@ module Crystal::System
   end
 
   {% if flag?(:win32) %}
+    # Helper to print wide char slices (UTF-16) from the Win32 API as multibyte (UTF-8).
     def self.print_error(bytes : Slice(UInt16)) : Nil
       utf8 = uninitialized UInt8[256]
       len = LibC.WideCharToMultiByte(LibC::CP_UTF8, 0, bytes, bytes.size, utf8, utf8.size, nil, nil)
