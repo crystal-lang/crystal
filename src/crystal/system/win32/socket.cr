@@ -148,7 +148,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      schedule_overlapped(read_timeout || 1.seconds)
+      IO::Overlapped.schedule_overlapped(read_timeout || 1.seconds)
 
       operation.wsa_result(socket) do |error|
         case error
@@ -212,7 +212,7 @@ module Crystal::System::Socket
         return true
       end
 
-      unless schedule_overlapped(read_timeout)
+      unless IO::Overlapped.schedule_overlapped(read_timeout)
         raise IO::TimeoutError.new("#{method} timed out")
       end
 
