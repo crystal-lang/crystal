@@ -1,5 +1,6 @@
 require "c/ioapiset"
 require "crystal/system/print_error"
+require "./iocp"
 
 # :nodoc:
 class Crystal::IOCP::EventLoop < Crystal::EventLoop

@@ -1,6 +1,6 @@
 require "c/mswsock"
 require "c/ioapiset"
-require "io/overlapped"
+require "crystal/system/win32/iocp"
 
 module Crystal::System::Socket
   include IO::Overlapped
