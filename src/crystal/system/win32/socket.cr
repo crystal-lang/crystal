@@ -129,7 +129,7 @@ module Crystal::System::Socket
 
   # :nodoc:
   def overlapped_connect(socket, method, &)
-    IO::Overlapped::OverlappedOperation.run(socket) do |operation|
+    IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -146,7 +146,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      IO::Overlapped.schedule_overlapped(read_timeout || 1.seconds)
+      IOCP.schedule_overlapped(read_timeout || 1.seconds)
 
       operation.wsa_result(socket) do |error|
         case error
@@ -195,7 +195,7 @@ module Crystal::System::Socket
   end
 
   def overlapped_accept(socket, method, &)
-    IO::Overlapped::OverlappedOperation.run(socket) do |operation|
+    IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -210,7 +210,7 @@ module Crystal::System::Socket
         return true
       end
 
-      unless IO::Overlapped.schedule_overlapped(read_timeout)
+      unless IOCP.schedule_overlapped(read_timeout)
         raise IO::TimeoutError.new("#{method} timed out")
       end
 

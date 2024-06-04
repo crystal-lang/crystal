@@ -2,7 +2,8 @@
 require "c/handleapi"
 require "crystal/system/thread_linked_list"
 
-module IO::Overlapped
+# :nodoc:
+module Crystal::IOCP
   # :nodoc:
   class CompletionKey
     property fiber : Fiber?

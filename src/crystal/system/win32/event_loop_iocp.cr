@@ -63,7 +63,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
       end
 
       wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
-      timed_out = IO::Overlapped.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
+      timed_out = IOCP.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
         fiber.enqueue
       end
@@ -145,7 +145,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     handle = file_descriptor.windows_handle
-    IO::Overlapped.overlapped_operation(file_descriptor, handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+    IOCP.overlapped_operation(file_descriptor, handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -154,7 +154,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     handle = file_descriptor.windows_handle
 
-    IO::Overlapped.overlapped_operation(file_descriptor, handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    IOCP.overlapped_operation(file_descriptor, handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -174,7 +174,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def read(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = IO::Overlapped.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+    bytes_read = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
       {ret, bytes_received}
@@ -186,7 +186,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def write(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes = IO::Overlapped.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+    bytes = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
       ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -196,7 +196,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     wsabuf = wsa_buffer(slice)
-    bytes_written = IO::Overlapped.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+    bytes_written = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
       ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -222,7 +222,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
     wsabuf = wsa_buffer(slice)
 
     flags = 0_u32
-    bytes_read = IO::Overlapped.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+    bytes_read = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
       ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
       {ret, bytes_received}
     end
