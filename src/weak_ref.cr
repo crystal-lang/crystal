@@ -9,6 +9,9 @@
 # p ref       # => #<WeakRef(String):0x7f83406eafa0 @target=Pointer(Void).null>
 # p ref.value # => nil
 # ```
+#
+# Note that the collection of objects is not deterministic, and depends on many subtle aspects. For instance,
+# if the example above is modified to print `ref.value` in the first print, then the collector will not collect it.
 class WeakRef(T)
   @target : Void*
 
