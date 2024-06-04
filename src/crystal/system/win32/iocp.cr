@@ -232,7 +232,7 @@ module IO::Overlapped
       operation.wsa_result(socket) do |error|
         case error
         when .wsa_io_incomplete?
-          raise TimeoutError.new("#{method} timed out")
+          raise IO::TimeoutError.new("#{method} timed out")
         when .wsaeconnreset?
           return 0_u32 unless connreset_is_error
         end

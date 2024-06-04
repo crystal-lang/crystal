@@ -3,8 +3,6 @@ require "c/ioapiset"
 require "crystal/system/win32/iocp"
 
 module Crystal::System::Socket
-  include IO::Overlapped
-
   alias Handle = LibC::SOCKET
 
   # Initialize WSA
@@ -131,7 +129,7 @@ module Crystal::System::Socket
 
   # :nodoc:
   def overlapped_connect(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
+    IO::Overlapped::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -197,7 +195,7 @@ module Crystal::System::Socket
   end
 
   def overlapped_accept(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
+    IO::Overlapped::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
