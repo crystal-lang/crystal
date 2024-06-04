@@ -58,18 +58,11 @@ module Crystal
       end
 
       @@sections = Section::None
-      @@startup_tick = 0_u64
-
       @@handle = uninitialized System::FileDescriptor::Handle
 
       @[AlwaysInline]
       def self.enabled?(section : Section) : Bool
         @@sections.includes?(section)
-      end
-
-      @[AlwaysInline]
-      def self.startup_tick : UInt64
-        @@startup_tick
       end
 
       # Setup tracing.
@@ -86,7 +79,6 @@ module Crystal
       # anything is available and musn't allocate into the GC HEAP.
       def self.init : Nil
         @@sections = Section::None
-        @@startup_tick = System::Time.ticks
 
         {% if flag?(:win32) %}
           buf = uninitialized UInt16[256]
