@@ -140,11 +140,9 @@ module IO::Overlapped
       when .started?
         handle = LibC::HANDLE.new(handle) if handle.is_a?(LibC::SOCKET)
 
-        # Microsoft documentation:
-        # The application must not free or reuse the OVERLAPPED structure
+        # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
+        # > The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        # (this does not apply to asynchronous operations that finished
-        # synchronously, as nothing would be queued to the IOCP)
         if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
