@@ -144,7 +144,7 @@ module Crystal::System::Socket
           return ::Socket::Error.from_os_error("ConnectEx", error)
         end
       else
-        operation.synchronous = true
+        operation.done!
         return nil
       end
 
@@ -208,7 +208,7 @@ module Crystal::System::Socket
           return false
         end
       else
-        operation.synchronous = true
+        operation.done!
         return true
       end
 
