@@ -76,6 +76,30 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     end
   end
 
+  def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    file_descriptor.evented_read("Error reading file_descriptor") do
+      LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for reading", target: file_descriptor
+        end
+      end
+    end
+  end
+
+  def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    file_descriptor.evented_write("Error writing file_descriptor") do
+      LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing", target: file_descriptor
+        end
+      end
+    end
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_close
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     socket.evented_read("Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
