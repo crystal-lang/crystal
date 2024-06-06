@@ -18,7 +18,7 @@ module Crystal::System::Socket
     raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
 
     {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-      ::Crystal::System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+      Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
     {% end %}
 
     fd
