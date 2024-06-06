@@ -322,7 +322,8 @@ abstract class OpenSSL::SSL::Context
   # Sets the current ciphers and ciphers suites to **modern** compatibility level as per Mozilla
   # recommendations. See `#security_level=` for some sensible system configuration.
   #
-  # Does nothing as per Crystal 1.13.
+  # WARNING: Does nothing as of Crystal 1.13.
+  # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
   @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
   def set_modern_ciphers
   end
@@ -330,7 +331,8 @@ abstract class OpenSSL::SSL::Context
   # Sets the current ciphers and ciphers suites to **intermediate** compatibility level as per Mozilla
   # recommendations. See `#security_level=` for some sensible system configuration.
   #
-  # Does nothing as per Crystal 1.13.
+  # WARNING: Does nothing as of Crystal 1.13.
+  # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
   @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
   def set_intermediate_ciphers
   end
@@ -338,7 +340,8 @@ abstract class OpenSSL::SSL::Context
   # Sets the current ciphers and ciphers suites to **old** compatibility level as per Mozilla
   # recommendations. See `#security_level=` for some sensible system configuration.
   #
-  # Does nothing as per Crystal 1.13.
+  # WARNING: Does nothing as of Crystal 1.13.
+  # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
   @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
   def set_old_ciphers
   end
