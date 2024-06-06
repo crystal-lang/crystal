@@ -1,6 +1,6 @@
 abstract class Crystal::EventLoop
   # Creates an event loop instance
-  def self.create : Crystal::EventLoop
+  def self.create : self
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
     {% elsif flag?(:unix) %}
