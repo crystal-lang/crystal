@@ -27,12 +27,12 @@ class String
       ord = char.ord
       if ord < 0x1_0000
         # One UInt16 is enough
-        appender << ord.to_u16
+        appender << ord.to_u16!
       else
         # Needs surrogate pair
-        ord -= 0x1_0000
-        appender << 0xd800_u16 + ((ord >> 10) & 0x3ff) # Keep top 10 bits
-        appender << 0xdc00_u16 + (ord & 0x3ff)         # Keep low 10 bits
+        ord &-= 0x1_0000
+        appender << 0xd800_u16 &+ ((ord >> 10) & 0x3ff) # Keep top 10 bits
+        appender << 0xdc00_u16 &+ (ord & 0x3ff)         # Keep low 10 bits
       end
     end
 
