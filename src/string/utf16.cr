@@ -22,25 +22,24 @@ class String
     # Allocate one extra character for trailing null
     slice = Slice(UInt16).new(u16_size + 1)
 
-    i = 0
+    appender = slice.to_unsafe.appender
     each_char do |char|
       ord = char.ord
       if ord < 0x1_0000
         # One UInt16 is enough
-        slice[i] = ord.to_u16
+        appender << ord.to_u16
       else
         # Needs surrogate pair
         ord -= 0x1_0000
-        slice[i] = 0xd800_u16 + ((ord >> 10) & 0x3ff) # Keep top 10 bits
-        i += 1
-        slice[i] = 0xdc00_u16 + (ord & 0x3ff) # Keep low 10 bits
+        appender << 0xd800_u16 + ((ord >> 10) & 0x3ff) # Keep top 10 bits
+        appender << 0xdc00_u16 + (ord & 0x3ff)         # Keep low 10 bits
       end
-      i += 1
     end
 
     # Append null byte
-    slice[i] = 0_u16
+    appender << 0_u16
 
+    # The trailing null is not part of the returned slice
     slice[0, u16_size]
   end
 
