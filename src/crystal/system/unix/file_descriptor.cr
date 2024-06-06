@@ -91,21 +91,16 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?("dup3") %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
+    {% if LibC.has_method?(:dup3) %}
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, fd, flags) == -1
         raise IO::Error.from_errno("Could not reopen file descriptor")
       end
     {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
       if LibC.dup2(other.fd, fd) == -1
         raise IO::Error.from_errno("Could not reopen file descriptor")
       end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
-      end
+      self.close_on_exec = other.close_on_exec?
     {% end %}
 
     # Mark the handle open, since we had to have dup'd a live handle.
@@ -194,14 +189,21 @@ module Crystal::System::FileDescriptor
 
   def self.pipe(read_blocking, write_blocking)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC.pipe(pipe_fds) != 0
-      raise IO::Error.from_errno("Could not create pipe")
-    end
+
+    {% if LibC.has_method?(:pipe2) %}
+      if LibC.pipe2(pipe_fds, LibC::O_CLOEXEC) != 0
+        raise IO::Error.from_errno("Could not create pipe")
+      end
+    {% else %}
+      if LibC.pipe(pipe_fds) != 0
+        raise IO::Error.from_errno("Could not create pipe")
+      end
+      fcntl(pipe_fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      fcntl(pipe_fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
 
     r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
     w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    r.close_on_exec = true
-    w.close_on_exec = true
     w.sync = true
 
     {r, w}
