@@ -15,10 +15,6 @@ module Crystal::System::Socket
   private def initialize_handle(fd)
   end
 
-  private def system_connect(addr, timeout = nil)
-    raise NotImplementedError.new "Crystal::System::Socket#system_connect"
-  end
-
   # Tries to bind the socket to a local address.
   # Yields an `Socket::BindError` if the binding failed.
   private def system_bind(addr, addrstr, &)
@@ -27,18 +23,6 @@ module Crystal::System::Socket
 
   private def system_listen(backlog, &)
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
-  end
-
-  private def system_accept
-    (raise NotImplementedError.new "Crystal::System::Socket#system_accept").as(Int32)
-  end
-
-  private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
-    raise NotImplementedError.new "Crystal::System::Socket#system_send_to"
-  end
-
-  private def system_receive(bytes)
-    raise NotImplementedError.new "Crystal::System::Socket#system_receive"
   end
 
   private def system_close_read
@@ -155,23 +139,11 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def system_read(slice : Bytes) : Int32
-    evented_read("Error reading socket") do
-      LibC.recv(fd, slice, slice.size, 0).to_i32
-    end
-  end
-
-  private def system_write(slice : Bytes) : Int32
-    evented_write("Error writing to socket") do
-      LibC.send(fd, slice, slice.size, 0)
-    end
-  end
-
   private def system_close
     # Perform libevent cleanup before LibC.close.
     # Using a file descriptor after it has been closed is never defined and can
     # always lead to undefined results. This is not specific to libevent.
-    evented_close
+    event_loop.close(self)
 
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
