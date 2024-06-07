@@ -179,6 +179,26 @@ module Crystal::System::Socket
     r
   end
 
+  def self.socketpair(type, protocol) : {Handle, Handle}
+    fds = uninitialized Handle[2]
+    socktype = type.value
+
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      socktype |= LibC::SOCK_CLOEXEC
+    {% end %}
+
+    if LibC.socketpair(::Socket::Family::UNIX, socktype, protocol, fds) != 0
+      raise ::Socket::Error.new("socketpair() failed")
+    end
+
+    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
+      fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
+
+    {fds[0], fds[1]}
+  end
+
   private def system_tty?
     LibC.isatty(fd) == 1
   end

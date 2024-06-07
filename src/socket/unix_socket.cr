@@ -68,27 +68,8 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    {% if flag?(:wasm32) || flag?(:win32) %}
-      raise NotImplementedError.new "UNIXSocket.pair"
-    {% else %}
-      fds = uninitialized Int32[2]
-
-      socktype = type.value
-      {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-        socktype |= LibC::SOCK_CLOEXEC
-      {% end %}
-
-      if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
-        raise Socket::Error.new("socketpair() failed")
-      end
-
-      {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-        Crystal::System::Socket.fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
-        Crystal::System::Socket.fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
-      {% end %}
-
-      {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
-    {% end %}
+    fds = Crystal::System::Socket.socketpair(type, protocol: 0)
+    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
   # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
