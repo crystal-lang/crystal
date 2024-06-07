@@ -152,7 +152,17 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
         {% if LibC.has_method?(:accept4) %}
           LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
         {% else %}
-          LibC.accept(socket.fd, nil, nil)
+          # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
+          # can't call `Crystal::System::Socket.lock_read` because the socket
+          # might be in blocking mode and accept would block until the socket
+          # receives a connection.
+          #
+          # we could lock when `socket.blocking?` is false, but another thread
+          # could change the socket back to blocking mode between the condition
+          # check and the `accept` call.
+          fd = LibC.accept(socket.fd, nil, nil)
+          Crystal::System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+          fd
         {% end %}
 
       if client_fd == -1
@@ -167,9 +177,6 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
           raise ::Socket::Error.from_errno("accept")
         end
       else
-        {% unless LibC.has_method?(:accept4) %}
-          Crystal::System::Socket.fcntl(client_fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-        {% end %}
         return client_fd
       end
     end
