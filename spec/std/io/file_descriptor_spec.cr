@@ -103,6 +103,65 @@ describe IO::FileDescriptor do
     end
   end
 
+  {% unless flag?(:win32) %}
+    describe "close_on_exec" do
+      it "sets close on exec on the reopened standard descriptors" do
+        unless STDIN.fd == Crystal::System::FileDescriptor::STDIN_HANDLE
+          STDIN.close_on_exec?.should be_true
+        end
+
+        unless STDOUT.fd == Crystal::System::FileDescriptor::STDOUT_HANDLE
+          STDOUT.close_on_exec?.should be_true
+        end
+
+        unless STDERR.fd == Crystal::System::FileDescriptor::STDERR_HANDLE
+          STDERR.close_on_exec?.should be_true
+        end
+      end
+
+      it "is enabled by default (open)" do
+        File.open(datapath("test_file.txt")) do |file|
+          file.close_on_exec?.should be_true
+        end
+      end
+
+      it "is enabled by default (pipe)" do
+        IO::FileDescriptor.pipe.each do |fd|
+          fd.close_on_exec?.should be_true
+          fd.close_on_exec?.should be_true
+        end
+      end
+
+      it "can be disabled and reenabled" do
+        File.open(datapath("test_file.txt")) do |file|
+          file.close_on_exec = false
+          file.close_on_exec?.should be_false
+
+          file.close_on_exec = true
+          file.close_on_exec?.should be_true
+        end
+      end
+
+      it "is copied on reopen" do
+        File.open(datapath("test_file.txt")) do |file1|
+          file1.close_on_exec = true
+
+          File.open(datapath("test_file.ini")) do |file2|
+            file2.reopen(file1)
+            file2.close_on_exec?.should be_true
+          end
+
+          file1.close_on_exec = false
+
+          File.open(datapath("test_file.ini")) do |file3|
+            file3.reopen(file1)
+            file3.close_on_exec?.should be_false
+          end
+        end
+      end
+    end
+  {% end %}
+
   typeof(STDIN.noecho { })
   typeof(STDIN.noecho!)
   typeof(STDIN.echo { })
