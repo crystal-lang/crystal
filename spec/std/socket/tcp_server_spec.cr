@@ -140,10 +140,8 @@ describe TCPServer, tags: "network" do
   describe "accept" do
     {% unless flag?(:win32) %}
       it "sets close on exec flag" do
-        port = unused_local_port
-
-        TCPServer.open("::", port) do |server|
-          TCPSocket.open("::", port) do |client|
+        TCPServer.open("localhost", 0) do |server|
+          TCPSocket.open("localhost", server.local_address.port) do |client|
             server.accept? do |sock|
               sock.close_on_exec?.should be_true
             end
