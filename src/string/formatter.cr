@@ -381,7 +381,7 @@ struct String::Formatter(A)
 
       printf_buf = uninitialized UInt8[1076]
       printf_size = Float::Printer::RyuPrintf.d2fixed_buffered_n(float, printf_precision, printf_buf.to_unsafe)
-      printf_slice = printf_buf.to_slice[0, printf_size]
+      printf_slice = printf_buf.to_unsafe_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       sign = Math.copysign(1.0, float)
 
@@ -420,7 +420,7 @@ struct String::Formatter(A)
 
       printf_buf = uninitialized UInt8[773]
       printf_size = Float::Printer::RyuPrintf.d2exp_buffered_n(float, printf_precision, printf_buf.to_unsafe)
-      printf_slice = printf_buf.to_slice[0, printf_size]
+      printf_slice = printf_buf.to_unsafe_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       e_index = printf_slice.rindex!('e'.ord)
       sign = Math.copysign(1.0, float)
@@ -455,7 +455,7 @@ struct String::Formatter(A)
       printf_buf = uninitialized UInt8[773]
       printf_size, trailing_zeros =
         Float::Printer::RyuPrintf.d2gen_buffered_n(float.abs, precision, printf_buf.to_unsafe, flags.sharp)
-      printf_slice = printf_buf.to_slice[0, printf_size]
+      printf_slice = printf_buf.to_unsafe_slice[0, printf_size]
       dot_index = printf_slice.index('.'.ord)
       e_index = printf_slice.rindex('e'.ord)
       sign = Math.copysign(1.0, float)

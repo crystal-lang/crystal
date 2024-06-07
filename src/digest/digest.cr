@@ -198,7 +198,7 @@ abstract class Digest
       raise "Digest#hexfinal(IO) can't handle digest_size over 64 bits"
     end
     sary = uninitialized StaticArray(UInt8, 128)
-    tmp = sary.to_slice[0, digest_size * 2]
+    tmp = sary.to_unsafe_slice[0, digest_size * 2]
     hexfinal tmp
     io << tmp
   end
@@ -222,8 +222,8 @@ abstract class Digest
   # Reads the io's data and updates the digest with it.
   def update(io : IO) : self
     buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
-    while (read_bytes = io.read(buffer.to_slice)) > 0
-      self << buffer.to_slice[0, read_bytes]
+    while (read_bytes = io.read(buffer.to_unsafe_slice)) > 0
+      self << buffer.to_unsafe_slice[0, read_bytes]
     end
     self
   end

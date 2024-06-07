@@ -2,7 +2,7 @@
 module Crystal::System
   def self.retry_with_buffer(function_name, max_buffer, &)
     initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf
+    buf = initial_buf.to_unsafe_slice
 
     while (ret = yield buf.to_slice) != 0
       case ret

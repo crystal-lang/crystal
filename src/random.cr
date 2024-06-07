@@ -333,7 +333,7 @@ module Random
 
   private def rand_type_from_bytes(t : T.class) forall T
     buffer = uninitialized UInt8[sizeof(T)]
-    random_bytes(buffer.to_slice)
+    random_bytes(buffer.to_unsafe_slice)
     buffer.unsafe_as(T)
   end
 

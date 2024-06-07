@@ -203,7 +203,7 @@ describe HTTP::WebSocket do
 
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
-      ws.send(sent_bytes.to_slice)
+      ws.send(sent_bytes.to_unsafe_slice)
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x02)
     end

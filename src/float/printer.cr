@@ -35,7 +35,7 @@ module Float::Printer
       end
 
       # remove trailing zeros
-      buffer = str.to_slice[ptr - str.to_unsafe..]
+      buffer = str.to_unsafe_slice[ptr - str.to_unsafe..]
       while buffer.size > 1 && buffer.unsafe_fetch(buffer.size - 1) === '0'
         buffer = buffer[..-2]
         decimal_exponent += 1

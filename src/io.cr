@@ -869,7 +869,7 @@ abstract class IO
   def skip(bytes_count : Int) : Nil
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     while bytes_count > 0
-      read_count = read(buffer.to_slice[0, Math.min(bytes_count, buffer.size)])
+      read_count = read(buffer.to_unsafe_slice[0, Math.min(bytes_count, buffer.size)])
       raise IO::EOFError.new if read_count == 0
 
       bytes_count -= read_count
@@ -880,7 +880,7 @@ abstract class IO
   # are no more bytes.
   def skip_to_end : Nil
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
-    while read(buffer.to_slice) > 0
+    while read(buffer.to_unsafe_slice) > 0
     end
   end
 
@@ -1173,8 +1173,8 @@ abstract class IO
   def self.copy(src, dst) : Int64
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     count = 0_i64
-    while (len = src.read(buffer.to_slice).to_i32) > 0
-      dst.write buffer.to_slice[0, len]
+    while (len = src.read(buffer.to_unsafe_slice).to_i32) > 0
+      dst.write buffer.to_unsafe_slice[0, len]
       count &+= len
     end
     count
@@ -1197,8 +1197,8 @@ abstract class IO
 
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     remaining = limit
-    while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
-      dst.write buffer.to_slice[0, len]
+    while (len = src.read(buffer.to_unsafe_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
+      dst.write buffer.to_unsafe_slice[0, len]
       remaining &-= len
     end
     limit - remaining
@@ -1218,8 +1218,8 @@ abstract class IO
     buf2 = uninitialized UInt8[1024]
 
     while true
-      read1 = stream1.read(buf1.to_slice)
-      read2 = stream2.read_fully?(buf2.to_slice[0, read1])
+      read1 = stream1.read(buf1.to_unsafe_slice)
+      read2 = stream2.read_fully?(buf2.to_unsafe_slice[0, read1])
       return false unless read2
 
       return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0

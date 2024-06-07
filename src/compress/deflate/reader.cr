@@ -77,7 +77,7 @@ class Compress::Deflate::Reader < IO
           # the compressed data (for example, if the compressed stream
           # is part of a zip/gzip file).
           @stream.next_in = @buf.to_unsafe
-          @stream.avail_in = @io.read(@buf.to_slice).to_u32
+          @stream.avail_in = @io.read(@buf.to_unsafe_slice).to_u32
         end
       end
 

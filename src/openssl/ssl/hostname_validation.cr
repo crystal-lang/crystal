@@ -49,14 +49,14 @@ module OpenSSL::SSL::HostnameValidation
           case data.size
           when 4
             if v4_fields = ::Socket::IPAddress.parse_v4_fields?(hostname)
-              return Result::MatchFound if v4_fields.to_slice == data
+              return Result::MatchFound if v4_fields.to_unsafe_slice == data
             end
           when 16
             if v6_fields = ::Socket::IPAddress.parse_v6_fields?(hostname)
               {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
                 v6_fields.map! &.byte_swap
               {% end %}
-              return Result::MatchFound if v6_fields.to_slice.to_unsafe_bytes == data
+              return Result::MatchFound if v6_fields.to_unsafe_slice.to_unsafe_bytes == data
             end
           else
             # not a length we expect

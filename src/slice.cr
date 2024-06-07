@@ -728,7 +728,7 @@ struct Slice(T)
     return 0 if empty?
 
     line = uninitialized UInt8[77]
-    line_slice = line.to_slice
+    line_slice = line.to_unsafe_slice
     count = 0
 
     pos = 0

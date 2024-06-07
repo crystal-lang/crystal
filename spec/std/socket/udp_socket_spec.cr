@@ -55,16 +55,16 @@ describe UDPSocket, tags: "network" do
 
       buffer = uninitialized UInt8[256]
 
-      bytes_read, client_addr = server.receive(buffer.to_slice)
-      message = String.new(buffer.to_slice[0, bytes_read])
+      bytes_read, client_addr = server.receive(buffer.to_unsafe_slice)
+      message = String.new(buffer.to_unsafe_slice[0, bytes_read])
       message.should eq("laus deo semper")
 
       client.send("laus deo semper")
 
       # WSA errors with WSAEMSGSIZE if the buffer is not large enough to receive the message
       {% unless flag?(:win32) %}
-        bytes_read, client_addr = server.receive(buffer.to_slice[0, 4])
-        message = String.new(buffer.to_slice[0, bytes_read])
+        bytes_read, client_addr = server.receive(buffer.to_unsafe_slice[0, 4])
+        message = String.new(buffer.to_unsafe_slice[0, bytes_read])
         message.should eq("laus")
       {% end %}
 

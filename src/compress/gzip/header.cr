@@ -26,7 +26,7 @@ class Compress::Gzip::Header
   def initialize(first_byte : UInt8, io : IO)
     header = uninitialized UInt8[10]
     header[0] = first_byte
-    io.read_fully(header.to_slice + 1)
+    io.read_fully(header.to_unsafe_slice + 1)
 
     if header[0] != ID1 || header[1] != ID2 || header[2] != DEFLATE
       raise Error.new("Invalid gzip header")
@@ -34,7 +34,7 @@ class Compress::Gzip::Header
 
     flg = Flg.new(header[3])
 
-    seconds = IO::ByteFormat::LittleEndian.decode(Int32, header.to_slice[4, 4])
+    seconds = IO::ByteFormat::LittleEndian.decode(Int32, header.to_unsafe_slice[4, 4])
     @modification_time = Time.unix(seconds).to_local
 
     xfl = header[8]

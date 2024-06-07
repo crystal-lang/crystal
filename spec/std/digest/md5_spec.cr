@@ -23,8 +23,7 @@ describe Digest::MD5 do
   end
 
   it "calculates hash of #to_slice" do
-    buffer = StaticArray(UInt8, 1).new(1_u8)
-    Digest::MD5.hexdigest(buffer).should eq("55a54008ad1ba589aa210d2629c1df41")
+    Digest::MD5.hexdigest("\x01").should eq("55a54008ad1ba589aa210d2629c1df41")
   end
 
   it "can take a block" do

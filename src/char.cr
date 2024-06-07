@@ -989,7 +989,7 @@ struct Char
         chars[i] = byte
         i += 1
       end
-      io.write_string chars.to_slice[0, i]
+      io.write_string chars.to_unsafe_slice[0, i]
     end
   end
 
