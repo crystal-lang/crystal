@@ -229,12 +229,11 @@ module Crystal::System::FileDescriptor
     ret = LibC.ttyname_r(fd, path, 256)
     return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
 
-    clone_fd = LibC.open(path, LibC::O_RDWR)
+    clone_fd = LibC.open(path, LibC::O_RDWR | LibC::O_CLOEXEC)
     return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
 
     # We don't buffer output for TTY devices to see their output right away
     io = IO::FileDescriptor.new(clone_fd)
-    io.close_on_exec = true
     io.sync = true
     io
   end
