@@ -828,7 +828,7 @@ module Crystal
           # functions that expect a null terminated UInt16*
           slice = Slice(UInt16).new(slice.to_unsafe, slice.size + 1)
           args = slice.to_a { |codepoint| NumberLiteral.new(codepoint).as(ASTNode) }
-          Call.new(Path.global("Slice(UInt16)"), "literal", args)
+          Call.new(Generic.new(Path.global("Slice"), [Path.global("UInt16")] of ASTNode), "literal", args)
         end
       when "tr"
         interpret_check_args do |first, second|
