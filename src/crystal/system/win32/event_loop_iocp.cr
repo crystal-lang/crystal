@@ -4,14 +4,14 @@ require "crystal/system/print_error"
 # :nodoc:
 abstract class Crystal::EventLoop
   def self.create
-    Crystal::Iocp::EventLoop.new
+    Crystal::IOCP::EventLoop.new
   end
 end
 
 # :nodoc:
-class Crystal::Iocp::EventLoop < Crystal::EventLoop
+class Crystal::IOCP::EventLoop < Crystal::EventLoop
   # This is a list of resume and timeout events managed outside of IOCP.
-  @queue = Deque(Crystal::Iocp::Event).new
+  @queue = Deque(Crystal::IOCP::Event).new
 
   @lock = Crystal::SpinLock.new
   @interrupted = Atomic(Bool).new(false)
@@ -130,23 +130,23 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) {}, thread, LibC::ULONG_PTR.new(0))
   end
 
-  def enqueue(event : Crystal::Iocp::Event)
+  def enqueue(event : Crystal::IOCP::Event)
     unless @queue.includes?(event)
       @queue << event
     end
   end
 
-  def dequeue(event : Crystal::Iocp::Event)
+  def dequeue(event : Crystal::IOCP::Event)
     @queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(fiber)
+    Crystal::IOCP::Event.new(fiber)
   end
 
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(fiber, timeout: true)
+    Crystal::IOCP::Event.new(fiber, timeout: true)
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
@@ -282,7 +282,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   end
 end
 
-class Crystal::Iocp::Event
+class Crystal::IOCP::Event
   include Crystal::EventLoop::Event
 
   getter fiber
