@@ -2146,11 +2146,23 @@ module Crystal
     end
 
     def calloc(type)
-      generic_malloc(type) { crystal_calloc_fun }
+      if crystal_calloc_fun
+        generic_malloc(type) { crystal_calloc_fun }
+      else
+        ptr = malloc(type)
+        memset ptr, int8(0), size_t(type.size)
+        ptr
+      end
     end
 
     def calloc_atomic(type)
-      generic_malloc(type) { crystal_calloc_atomic_fun }
+      if crystal_calloc_atomic_fun
+        generic_malloc(type) { crystal_calloc_atomic_fun }
+      else
+        ptr = malloc_atomic(type)
+        memset ptr, int8(0), size_t(type.size)
+        ptr
+      end
     end
 
     def generic_malloc(type, &)
@@ -2174,11 +2186,25 @@ module Crystal
     end
 
     def array_calloc(type, count)
-      generic_array_malloc(type, count) { crystal_calloc_fun }
+      if crystal_calloc_fun
+        generic_array_malloc(type, count) { crystal_calloc_fun }
+      else
+        size = builder.mul type.size, count
+        ptr = array_malloc(type, count)
+        memset ptr, int8(0), size_t(size)
+        ptr
+      end
     end
 
     def array_calloc_atomic(type, count)
-      generic_array_malloc(type, count) { crystal_calloc_atomic_fun }
+      if crystal_calloc_atomic_fun
+        generic_array_malloc(type, count) { crystal_calloc_atomic_fun }
+      else
+        size = builder.mul type.size, count
+        ptr = array_malloc_atomic(type, count)
+        memset ptr, int8(0), size_t(size)
+        ptr
+      end
     end
 
     def generic_array_malloc(type, count, &)
