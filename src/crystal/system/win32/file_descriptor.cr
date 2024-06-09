@@ -26,10 +26,7 @@ module Crystal::System::FileDescriptor
     elsif system_blocking?
       read_blocking(handle, slice)
     else
-      overlapped_operation(handle, "ReadFile", read_timeout) do |overlapped|
-        ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
-        {ret, byte_count}
-      end.to_i32
+      event_loop.read(self, slice)
     end
   end
 
@@ -53,10 +50,7 @@ module Crystal::System::FileDescriptor
     if system_blocking?
       write_blocking(handle, slice).to_i32
     else
-      overlapped_operation(handle, "WriteFile", write_timeout, writing: true) do |overlapped|
-        ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
-        {ret, byte_count}
-      end.to_i32
+      event_loop.write(self, slice)
     end
   end
 
@@ -75,7 +69,8 @@ module Crystal::System::FileDescriptor
     bytes_written
   end
 
-  private def system_blocking?
+  # :nodoc:
+  def system_blocking?
     @system_blocking
   end
 
@@ -167,7 +162,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
-    LibC.CancelIoEx(windows_handle, nil) unless system_blocking?
+    event_loop.close(self)
 
     file_descriptor_close
   end
