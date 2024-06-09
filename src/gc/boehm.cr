@@ -153,6 +153,18 @@ module GC
   end
 
   # :nodoc:
+  def self.calloc(size : LibC::SizeT) : Void*
+    LibGC.malloc(size)
+  end
+
+  # :nodoc:
+  def self.calloc_atomic(size : LibC::SizeT) : Void*
+    ptr = LibGC.malloc_atomic(size)
+    ptr.clear(size)
+    ptr
+  end
+
+  # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
     LibGC.realloc(ptr, size)
   end
