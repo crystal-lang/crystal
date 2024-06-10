@@ -41,7 +41,7 @@ module URI::Params::Serializable
       {% for ivar, idx in @type.instance_vars %}
         %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
 
-        if v = {{ivar.type}}.from_form_data(params, %name{idx})
+        unless (v = {{ivar.type}}.from_form_data(params, %name{idx})).nil?
           @{{ivar.name.id}} = v
         else
           {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}

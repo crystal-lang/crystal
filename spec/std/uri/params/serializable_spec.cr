@@ -49,7 +49,7 @@ describe URI::Params::Serializable do
   end
 
   it "with default values" do
-    SimpleTypeDefaults.from_form_data(URI::Params.parse("page=10&strict=true")).should eq SimpleTypeDefaults.new(10, true, 10)
+    SimpleTypeDefaults.from_form_data(URI::Params.parse("page=10&strict=off")).should eq SimpleTypeDefaults.new(10, false, 10)
   end
 
   it "with nilable values" do
