@@ -6,7 +6,7 @@ abstract class Crystal::EventLoop
     {% elsif flag?(:unix) %}
       Crystal::LibEvent::EventLoop.new
     {% elsif flag?(:win32) %}
-      Crystal::Iocp::EventLoop.new
+      Crystal::IOCP::EventLoop.new
     {% else %}
       {% raise "Event loop not supported" %}
     {% end %}
