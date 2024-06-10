@@ -10,6 +10,6 @@ module Crystal::System::Random
   def self.next_u : UInt8
     buf = uninitialized UInt8[1]
     random_bytes(buf.to_slice)
-    buf.unsafe_as(UInt8)
+    buf[0]
   end
 end
