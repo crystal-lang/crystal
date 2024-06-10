@@ -121,7 +121,7 @@ module Crystal::System::Time
     private LOCALTIME = "/etc/localtime"
 
     def self.load_localtime : ::Time::Location?
-      if ::File.file?(LOCALTIME) && ::File.readable?(LOCALTIME)
+      if ::File.file?(LOCALTIME) && ::File::Info.readable?(LOCALTIME)
         ::File.open(LOCALTIME) do |file|
           ::Time::Location.read_zoneinfo("Local", file)
         rescue ::Time::Location::InvalidTZDataError
