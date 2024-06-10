@@ -430,6 +430,7 @@ struct String::Formatter(A)
       str_size = printf_size + trailing_zeros
       str_size += 1 if sign < 0 || flags.plus || flags.space
       str_size += 1 if flags.sharp && dot_index.nil?
+      str_size += 1 if printf_slice.size - e_index < 4
 
       pad(str_size, flags) if flags.left_padding? && flags.padding_char != '0'
 
@@ -441,7 +442,9 @@ struct String::Formatter(A)
       @io.write_string(printf_slice[0, e_index])
       trailing_zeros.times { @io << '0' }
       @io << '.' if flags.sharp && dot_index.nil?
-      @io.write_string(printf_slice[e_index..])
+      @io.write_string(printf_slice[e_index, 2])
+      @io << '0' if printf_slice.size - e_index < 4
+      @io.write_string(printf_slice[(e_index + 2)..])
 
       pad(str_size, flags) if flags.right_padding?
     end
