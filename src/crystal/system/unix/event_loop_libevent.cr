@@ -1,13 +1,6 @@
 require "./event_libevent"
 
 # :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::LibEvent::EventLoop.new
-  end
-end
-
-# :nodoc:
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   private getter(event_base) { Crystal::LibEvent::Event::Base.new }
 

@@ -1,11 +1,4 @@
 # :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::Wasi::EventLoop.new
-  end
-end
-
-# :nodoc:
 class Crystal::Wasi::EventLoop < Crystal::EventLoop
   # Runs the event loop.
   def run(blocking : Bool) : Bool
