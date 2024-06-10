@@ -588,8 +588,8 @@ describe "::sprintf" do
           assert_sprintf "%g", 123.45, "123.45"
           assert_sprintf "%G", 123.45, "123.45"
 
-          assert_sprintf "%g", 1.2345e-5, "1.2345e-5"
-          assert_sprintf "%G", 1.2345e-5, "1.2345E-5"
+          assert_sprintf "%g", 1.2345e-5, "1.2345e-05"
+          assert_sprintf "%G", 1.2345e-5, "1.2345E-05"
 
           assert_sprintf "%g", 1.2345e+25, "1.2345e+25"
           assert_sprintf "%G", 1.2345e+25, "1.2345E+25"
@@ -650,29 +650,29 @@ describe "::sprintf" do
             assert_sprintf "%.5g", 1.23e-45, "1.23e-45"
             assert_sprintf "%.6g", 1.23e-45, "1.23e-45"
 
-            assert_sprintf "%.1000g", 1e-5, "1.0000000000000000818030539140313095458623138256371021270751953125e-5"
+            assert_sprintf "%.1000g", 1e-5, "1.0000000000000000818030539140313095458623138256371021270751953125e-05"
           end
 
           it "can be used with width" do
-            assert_sprintf "%10.1g", 123.45, "      1e+02"
-            assert_sprintf "%10.2g", 123.45, "    1.2e+02"
+            assert_sprintf "%10.1g", 123.45, "     1e+02"
+            assert_sprintf "%10.2g", 123.45, "   1.2e+02"
             assert_sprintf "%10.3g", 123.45, "       123"
             assert_sprintf "%10.4g", 123.45, "     123.5"
             assert_sprintf "%10.5g", 123.45, "    123.45"
-            assert_sprintf "%10.1g", -123.45, "     -1e+02"
-            assert_sprintf "%10.2g", -123.45, "   -1.2e+02"
+            assert_sprintf "%10.1g", -123.45, "    -1e+02"
+            assert_sprintf "%10.2g", -123.45, "  -1.2e+02"
             assert_sprintf "%10.3g", -123.45, "      -123"
             assert_sprintf "%10.4g", -123.45, "    -123.5"
             assert_sprintf "%10.5g", -123.45, "   -123.45"
             assert_sprintf "%10.5g", 0, "         0"
 
-            assert_sprintf "%-10.1g", 123.45, "1e+2      "
-            assert_sprintf "%-10.2g", 123.45, "1.2e+2    "
+            assert_sprintf "%-10.1g", 123.45, "1e+02     "
+            assert_sprintf "%-10.2g", 123.45, "1.2e+02   "
             assert_sprintf "%-10.3g", 123.45, "123       "
             assert_sprintf "%-10.4g", 123.45, "123.5     "
             assert_sprintf "%-10.5g", 123.45, "123.45    "
-            assert_sprintf "%-10.1g", -123.45, "-1e+2     "
-            assert_sprintf "%-10.2g", -123.45, "-1.2e+2   "
+            assert_sprintf "%-10.1g", -123.45, "-1e+02    "
+            assert_sprintf "%-10.2g", -123.45, "-1.2e+02  "
             assert_sprintf "%-10.3g", -123.45, "-123      "
             assert_sprintf "%-10.4g", -123.45, "-123.5    "
             assert_sprintf "%-10.5g", -123.45, "-123.45   "
@@ -705,13 +705,13 @@ describe "::sprintf" do
             assert_sprintf "%#.100g", 12345, "12345.#{"0" * 95}"
             assert_sprintf "%#.1000g", 12345, "12345.#{"0" * 995}"
 
-            assert_sprintf "%#.0g", 1e-5, "1.e-5"
-            assert_sprintf "%#.6g", 1e-5, "1.00000e-5"
-            assert_sprintf "%#.10g", 1e-5, "1.000000000e-5"
-            assert_sprintf "%#.100g", 1e-5, "1.0000000000000000818030539140313095458623138256371021270751953125#{"0" * 35}e-5"
-            assert_sprintf "%#.1000g", 1e-5, "1.0000000000000000818030539140313095458623138256371021270751953125#{"0" * 935}e-5"
+            assert_sprintf "%#.0g", 1e-5, "1.e-05"
+            assert_sprintf "%#.6g", 1e-5, "1.00000e-05"
+            assert_sprintf "%#.10g", 1e-5, "1.000000000e-05"
+            assert_sprintf "%#.100g", 1e-5, "1.0000000000000000818030539140313095458623138256371021270751953125#{"0" * 35}e-05"
+            assert_sprintf "%#.1000g", 1e-5, "1.0000000000000000818030539140313095458623138256371021270751953125#{"0" * 935}e-05"
 
-            assert_sprintf "%#15.0g", 12345, "          1.e+04"
+            assert_sprintf "%#15.0g", 12345, "         1.e+04"
             assert_sprintf "%#15.6g", 12345, "        12345.0"
             assert_sprintf "%#15.10g", 12345, "    12345.00000"
           end
@@ -774,8 +774,8 @@ describe "::sprintf" do
           end
 
           it "can be used with precision" do
-            assert_sprintf "%010.2g", 123.45, "00001.2e+2"
-            assert_sprintf "%010.2g", -123.45, "-0001.2e+2"
+            assert_sprintf "%010.2g", 123.45, "0001.2e+02"
+            assert_sprintf "%010.2g", -123.45, "-001.2e+02"
             assert_sprintf "%010.2g", 0.0, "0000000000"
           end
         end
