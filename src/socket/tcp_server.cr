@@ -28,7 +28,7 @@ class TCPServer < TCPSocket
   include Socket::Server
 
   # Creates a new `TCPServer`, waiting to be bound.
-  def self.new(family : Family = Family::INET)
+  def self.new(family : Family = Family::INET6)
     super(family)
   end
 
@@ -53,7 +53,7 @@ class TCPServer < TCPSocket
   end
 
   # Creates a TCPServer from an already configured raw file descriptor
-  def initialize(*, fd : Handle, family : Family = Family::INET)
+  def initialize(*, fd : Handle, family : Family = Family::INET6)
     super(fd: fd, family: family)
   end
 

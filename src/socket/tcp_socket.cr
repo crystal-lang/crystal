@@ -15,7 +15,7 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET, blocking = false)
+  def self.new(family : Family = Family::INET6, blocking = false)
     super(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
@@ -45,7 +45,7 @@ class TCPSocket < IPSocket
   end
 
   # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Handle, family : Family = Family::INET, blocking = false)
+  def initialize(*, fd : Handle, family : Family = Family::INET6, blocking = false)
     super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
 

@@ -13,7 +13,7 @@ require "./ip_socket"
 # incoming messages and sends outgoing messages on request.
 #
 # This implementation supports both IPv4 and IPv6 addresses. For IPv4 addresses you must use
-# `Socket::Family::INET` family (default) or `Socket::Family::INET6` for IPv6 # addresses.
+# `Socket::Family::INET` family or `Socket::Family::INET6` (default) for IPv6 addresses.
 #
 # NOTE: To use `UDPSocket`, you must explicitly import it with `require "socket"`
 #
@@ -53,7 +53,7 @@ require "./ip_socket"
 # end
 # ```
 class UDPSocket < IPSocket
-  def initialize(family : Family = Family::INET)
+  def initialize(family : Family = Family::INET6)
     super(family, Type::DGRAM, Protocol::UDP)
   end
 

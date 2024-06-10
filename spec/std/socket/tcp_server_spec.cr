@@ -37,6 +37,12 @@ describe TCPServer, tags: "network" do
         end
       end
 
+      it "can bind to ::1" do
+        server = TCPServer.new
+        server.bind("::1", 0)
+        server.local_address.address.should eq "::1"
+      end
+
       it "raises when port is negative" do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
