@@ -37,6 +37,19 @@ record Parent, child : Child do
   include URI::Params::Serializable
 end
 
+module MyConverter
+  def self.from_form_data(params : URI::Params, name : String)
+    params[name].to_i * 10
+  end
+end
+
+private record ConverterType, value : Int32 do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(converter: MyConverter)]
+  @value : Int32
+end
+
 describe URI::Params::Serializable do
   it "simple type" do
     SimpleType.from_form_data(URI::Params.parse("page=10&strict=true&per_page=5")).should eq SimpleType.new(10, true, 5)
@@ -58,6 +71,10 @@ describe URI::Params::Serializable do
 
   it "with nilable default" do
     SimpleTypeNilableDefault.from_form_data(URI::Params.parse("page=10&strict=true")).should eq SimpleTypeNilableDefault.new(10, true, 20)
+  end
+
+  it "with custom converter" do
+    ConverterType.from_form_data(URI::Params.parse("value=10")).should eq ConverterType.new(100)
   end
 
   describe "nested type" do
