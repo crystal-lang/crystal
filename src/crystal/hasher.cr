@@ -77,7 +77,7 @@ struct Crystal::Hasher
 
   HASH_NAN       =      0_u64
   HASH_INF_PLUS  = 314159_u64
-  HASH_INF_MINUS = (-314159_i64).unsafe_as(UInt64)
+  HASH_INF_MINUS = (-314159_i64).to_u64!
 
   @@seed = uninitialized UInt64[2]
   Crystal::System::Random.random_bytes(@@seed.to_slice.to_unsafe_bytes)
@@ -106,7 +106,7 @@ struct Crystal::Hasher
   end
 
   def self.reduce_num(value : Int8 | Int16 | Int32)
-    value.to_i64.unsafe_as(UInt64)
+    value.to_u64!
   end
 
   def self.reduce_num(value : UInt8 | UInt16 | UInt32)
@@ -118,7 +118,7 @@ struct Crystal::Hasher
   end
 
   def self.reduce_num(value : Int)
-    value.remainder(HASH_MODULUS).to_i64.unsafe_as(UInt64)
+    value.remainder(HASH_MODULUS).to_u64!
   end
 
   # This function is for reference implementation, and it is used for `BigFloat`.
@@ -157,7 +157,7 @@ struct Crystal::Hasher
     exp = exp >= 0 ? exp % HASH_BITS : HASH_BITS - 1 - ((-1 - exp) % HASH_BITS)
     x = ((x << exp) & HASH_MODULUS) | x >> (HASH_BITS - exp)
 
-    (x * (value < 0 ? -1 : 1)).to_i64.unsafe_as(UInt64)
+    (x * (value < 0 ? -1 : 1)).to_u64!
   end
 
   def self.reduce_num(value : Float32)
