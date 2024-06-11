@@ -745,30 +745,11 @@ class Array(T)
 
     resize_if_cant_insert(other_size)
 
-    concat_indexable(other)
+    insert_elements_at(other, @size)
 
     @size += other_size
 
     self
-  end
-
-  private def concat_indexable(other : Array | Slice | StaticArray)
-    (@buffer + @size).copy_from(other.to_unsafe, other.size)
-  end
-
-  private def concat_indexable(other : Deque)
-    ptr = @buffer + @size
-    Deque.half_slices(other) do |slice|
-      ptr.copy_from(slice.to_unsafe, slice.size)
-      ptr += slice.size
-    end
-  end
-
-  private def concat_indexable(other)
-    appender = (@buffer + @size).appender
-    other.each do |elem|
-      appender << elem
-    end
   end
 
   # :ditto:
@@ -1043,6 +1024,68 @@ class Array(T)
     @size += 1
 
     self
+  end
+
+  # Inserts all of the elements from *other* before the element at *index*.
+  #
+  # This method shifts the element currently at *index* (if any) and any
+  # subsequent elements to the right, increasing their indices. If the value
+  # of *index* is negative, counting starts from the end of the array.
+  # For example, `-1` indicates insertion after the last element, `-2` before
+  # the last element.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
+  #
+  # ```
+  # fruits = ["Apple"]
+  # newFruits = ["Dragonfruit", "Elderberry"]
+  #
+  # fruits.insert_all(1, newFruits)             # => ["Apple", "Dragonfruit", "Elderberry"]
+  # fruits.insert_all(-3, ["Banana", "Cherry"]) # => ["Apple", "Banana", "Cherry", "Dragonfruit", "Elderberry"]
+  #
+  # fruits.insert_all(6, ["invalid"])  # raises IndexError
+  # fruits.insert_all(-7, ["indices"]) # raises IndexError
+  # ```
+  def insert_all(index : Int, other : Indexable) : self
+    other_size = other.size
+
+    return self if other_size == 0
+
+    if index < 0
+      index += size + 1
+    end
+
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
+    resize_if_cant_insert(other_size)
+    (@buffer + index).move_to(@buffer + index + other_size, @size - index)
+
+    insert_elements_at(other, index)
+
+    @size += other_size
+
+    self
+  end
+
+  private def insert_elements_at(other : Array | Slice | StaticArray, index : Int) : Nil
+    (@buffer + index).copy_from(other.to_unsafe, other.size)
+  end
+
+  private def insert_elements_at(other : Deque, index : Int) : Nil
+    ptr = @buffer + index
+    Deque.half_slices(other) do |slice|
+      ptr.copy_from(slice.to_unsafe, slice.size)
+      ptr += slice.size
+    end
+  end
+
+  private def insert_elements_at(other, index : Int) : Nil
+    appender = (@buffer + index).appender
+    other.each do |elem|
+      appender << elem
+    end
   end
 
   def inspect(io : IO) : Nil
