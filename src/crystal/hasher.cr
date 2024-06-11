@@ -118,7 +118,7 @@ struct Crystal::Hasher
   end
 
   def self.reduce_num(value : Int)
-    # The result of `remainder(HASH_MODULUS)` is in the range `0...HASH_MODULUS`,
+    # The result of `remainder(HASH_MODULUS)` is a 64-bit integer,
     # and thus guaranteed to fit into `UInt64`
     value.remainder(HASH_MODULUS).to_u64!
   end
