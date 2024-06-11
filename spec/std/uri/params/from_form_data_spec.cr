@@ -83,12 +83,12 @@ describe ".from_form_data" do
 
   describe Union do
     it "valid" do
-      String?.from_form_data("John Doe").should eq "John Doe"
+      String?.from_form_data(URI::Params.parse("name=John Doe"), "name").should eq "John Doe"
     end
 
     it "invalid" do
       expect_raises ArgumentError do
-        (Int32 | Float64).from_form_data("foo")
+        (Int32 | Float64).from_form_data(URI::Params.parse("name=John Doe"), "name")
       end
     end
   end

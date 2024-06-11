@@ -1,5 +1,6 @@
 require "uri"
 
+require "./to_form_data"
 require "./from_form_data"
 
 struct URI::Params
@@ -53,6 +54,20 @@ struct URI::Params
             {% end %}
           end
         {% end %}
+      {% end %}
+    end
+
+    def to_form_data(*, space_to_plus : Bool = true) : String
+      URI::Params.build(space_to_plus: space_to_plus) do |form|
+        {% for ivar in @type.instance_vars %}
+          @{{ivar.name.id}}.to_form_data form, {{ivar.name.stringify}}
+        {% end %}
+      end
+    end
+
+    def to_form_data(builder : URI::Params::Builder, name : String)
+      {% for ivar in @type.instance_vars %}
+        @{{ivar.name.id}}.to_form_data builder, "#{name}[#{{{ivar.name.stringify}}}]"
       {% end %}
     end
   end
