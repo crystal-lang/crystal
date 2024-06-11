@@ -1,26 +1,26 @@
 require "uri"
 
-require "./to_form_data"
-require "./from_form_data"
+require "./to_www_form"
+require "./from_www_form"
 
 struct URI::Params
   annotation Field; end
 
   module Serializable
     macro included
-      def self.from_form_data(params : ::URI::Params)
-        new_from_form_data(params)
+      def self.from_www_form(params : ::URI::Params)
+        new_from_www_form(params)
       end
 
       # :nodoc:
       #
       # This is needed so that nested types can pass the name thru internally.
       # Has to be public so the generated code can call it, but should be considered an implementation detail.
-      def self.from_form_data(params : ::URI::Params, name : String)
-        new_from_form_data(params, name)
+      def self.from_www_form(params : ::URI::Params, name : String)
+        new_from_www_form(params, name)
       end
 
-      protected def self.new_from_form_data(params : ::URI::Params, name : String? = nil)
+      protected def self.new_from_www_form(params : ::URI::Params, name : String? = nil)
         instance = allocate
         instance.initialize(__uri_params: params, name: name)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
@@ -28,13 +28,13 @@ struct URI::Params
       end
 
       macro inherited
-        def self.from_form_data(params : ::URI::Params)
-          new_from_form_data(params)
+        def self.from_www_form(params : ::URI::Params)
+          new_from_www_form(params)
         end
 
         # :nodoc:
-        def self.from_form_data(params : ::URI::Params, name : String)
-          new_from_form_data(params, name)
+        def self.from_www_form(params : ::URI::Params, name : String)
+          new_from_www_form(params, name)
         end
       end
     end
@@ -44,7 +44,7 @@ struct URI::Params
       {% begin %}
         {% for ivar, idx in @type.instance_vars %}
           %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
-          %value{idx} = {{(ann = ivar.annotation(URI::Params::Field)) && (converter = ann["converter"]) ? converter : ivar.type}}.from_form_data params, %name{idx}
+          %value{idx} = {{(ann = ivar.annotation(URI::Params::Field)) && (converter = ann["converter"]) ? converter : ivar.type}}.from_www_form params, %name{idx}
 
           unless %value{idx}.nil?
             @{{ivar.name.id}} = %value{idx}
@@ -57,17 +57,17 @@ struct URI::Params
       {% end %}
     end
 
-    def to_form_data(*, space_to_plus : Bool = true) : String
+    def to_www_form(*, space_to_plus : Bool = true) : String
       URI::Params.build(space_to_plus: space_to_plus) do |form|
         {% for ivar in @type.instance_vars %}
-          @{{ivar.name.id}}.to_form_data form, {{ivar.name.stringify}}
+          @{{ivar.name.id}}.to_www_form form, {{ivar.name.stringify}}
         {% end %}
       end
     end
 
-    def to_form_data(builder : URI::Params::Builder, name : String)
+    def to_www_form(builder : URI::Params::Builder, name : String)
       {% for ivar in @type.instance_vars %}
-        @{{ivar.name.id}}.to_form_data builder, "#{name}[#{{{ivar.name.stringify}}}]"
+        @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
       {% end %}
     end
   end

@@ -38,7 +38,7 @@ record Parent, child : Child do
 end
 
 module MyConverter
-  def self.from_form_data(params : URI::Params, name : String)
+  def self.from_www_form(params : URI::Params, name : String)
     params[name].to_i * 10
   end
 end
@@ -51,69 +51,69 @@ private record ConverterType, value : Int32 do
 end
 
 describe URI::Params::Serializable do
-  describe ".from_form_data" do
+  describe ".from_www_form" do
     it "simple type" do
-      SimpleType.from_form_data(URI::Params.parse("page=10&strict=true&per_page=5")).should eq SimpleType.new(10, true, 5)
+      SimpleType.from_www_form(URI::Params.parse("page=10&strict=true&per_page=5")).should eq SimpleType.new(10, true, 5)
     end
 
     it "missing required property" do
       expect_raises URI::SerializableError, "Missing required property: 'page'." do
-        SimpleType.from_form_data(URI::Params.parse("strict=true&per_page=5"))
+        SimpleType.from_www_form(URI::Params.parse("strict=true&per_page=5"))
       end
     end
 
     it "with default values" do
-      SimpleTypeDefaults.from_form_data(URI::Params.parse("page=10&strict=off")).should eq SimpleTypeDefaults.new(10, false, 10)
+      SimpleTypeDefaults.from_www_form(URI::Params.parse("page=10&strict=off")).should eq SimpleTypeDefaults.new(10, false, 10)
     end
 
     it "with nilable values" do
-      SimpleTypeNilable.from_form_data(URI::Params.parse("page=10&strict=true")).should eq SimpleTypeNilable.new(10, true, nil)
+      SimpleTypeNilable.from_www_form(URI::Params.parse("page=10&strict=true")).should eq SimpleTypeNilable.new(10, true, nil)
     end
 
     it "with nilable default" do
-      SimpleTypeNilableDefault.from_form_data(URI::Params.parse("page=10&strict=true")).should eq SimpleTypeNilableDefault.new(10, true, 20)
+      SimpleTypeNilableDefault.from_www_form(URI::Params.parse("page=10&strict=true")).should eq SimpleTypeNilableDefault.new(10, true, 20)
     end
 
     it "with custom converter" do
-      ConverterType.from_form_data(URI::Params.parse("value=10")).should eq ConverterType.new(100)
+      ConverterType.from_www_form(URI::Params.parse("value=10")).should eq ConverterType.new(100)
     end
 
     describe "nested type" do
       it "happy path" do
-        Search.from_form_data(URI::Params.parse("offset=10&filter[status]=active&filter[total]=3.14"))
+        Search.from_www_form(URI::Params.parse("offset=10&filter[status]=active&filter[total]=3.14"))
           .should eq Search.new Filter.new("active", 3.14), offset: 10
       end
 
       it "missing nilable nested data" do
-        Search.from_form_data(URI::Params.parse("offset=10"))
+        Search.from_www_form(URI::Params.parse("offset=10"))
           .should eq Search.new Filter.new(nil, nil), offset: 10
       end
 
       it "missing required nested property" do
         expect_raises URI::SerializableError, "Missing required property: 'child[grand_child][name]'." do
-          Parent.from_form_data(URI::Params.parse("child[status]=active"))
+          Parent.from_www_form(URI::Params.parse("child[status]=active"))
         end
       end
 
       it "doubly nested" do
-        Parent.from_form_data(URI::Params.parse("child[status]=active&child[grand_child][name]=Fred"))
+        Parent.from_www_form(URI::Params.parse("child[status]=active&child[grand_child][name]=Fred"))
           .should eq Parent.new Child.new("active", GrandChild.new("Fred"))
       end
     end
   end
 
-  describe "#to_form_data" do
+  describe "#to_www_form" do
     it "simple type" do
-      SimpleType.new(10, true, 5).to_form_data.should eq "page=10&strict=true&per_page=5"
+      SimpleType.new(10, true, 5).to_www_form.should eq "page=10&strict=true&per_page=5"
     end
 
     it "nested type path" do
-      Search.new(Filter.new("active", 3.14), offset: 10).to_form_data
+      Search.new(Filter.new("active", 3.14), offset: 10).to_www_form
         .should eq "filter%5Bstatus%5D=active&filter%5Btotal%5D=3.14&limit=25&offset=10"
     end
 
     it "doubly nested" do
-      Parent.new(Child.new("active", GrandChild.new("Fred"))).to_form_data
+      Parent.new(Child.new("active", GrandChild.new("Fred"))).to_www_form
         .should eq "child%5Bstatus%5D=active&child%5Bgrand_child%5D%5Bname%5D=Fred"
     end
   end
