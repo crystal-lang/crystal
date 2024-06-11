@@ -14,6 +14,16 @@ private def shell_command(command)
 end
 
 describe IO::FileDescriptor do
+  describe "#initialize" do
+    it "handles closed file descriptor gracefully" do
+      a, b = IO.pipe
+      a.close
+      b.close
+
+      IO::FileDescriptor.new(a.fd)
+    end
+  end
+
   it "reopen STDIN with the right mode", tags: %w[slow] do
     code = %q(puts "#{STDIN.blocking} #{STDIN.info.type}")
     compile_source(code) do |binpath|
