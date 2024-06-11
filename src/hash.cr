@@ -631,6 +631,9 @@ class Hash(K, V)
       new_entry_index += 1
     end
 
+    # Reset offset to first non-deleted entry
+    @first = 0
+
     # We have to mark entries starting from the final new index
     # as deleted so the GC can collect them.
     entries_to_clear = entries_size - new_entry_index
