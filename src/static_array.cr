@@ -228,7 +228,7 @@ struct StaticArray(T, N)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.=
   def sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     ary = dup
@@ -251,7 +251,7 @@ struct StaticArray(T, N)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     ary = dup
@@ -273,7 +273,7 @@ struct StaticArray(T, N)
   # :inherit:
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     to_slice.sort!(&block)
@@ -283,7 +283,7 @@ struct StaticArray(T, N)
   # :inherit:
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     to_slice.unstable_sort!(&block)

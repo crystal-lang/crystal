@@ -932,7 +932,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     dup.sort! &block
@@ -954,7 +954,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1055,7 +1055,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -1098,7 +1098,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)
