@@ -47,6 +47,7 @@ class Crystal::Command
         dependencies             show file dependency tree
         implementations          show implementations for given call in location
         unreachable              show methods that are never called
+        documentation            show doc comments for a given location
         types                    show type of main variables
         --help, -h               show this help
     USAGE
@@ -193,6 +194,9 @@ class Crystal::Command
     when "implementations".starts_with?(tool)
       options.shift
       implementations
+    when "documentation".starts_with?(tool)
+      options.shift
+      documentation
     when "types".starts_with?(tool)
       options.shift
       types

@@ -23,6 +23,12 @@ class Crystal::Command
     end
   end
 
+  private def documentation
+    cursor_command("tool documentation", no_cleanup: true, wants_doc: true) do |location, config, result|
+      DocumentationVisitor.new(location).process(result)
+    end
+  end
+
   private def cursor_command(command, no_cleanup = false, wants_doc = false, &)
     config, result = compile_no_codegen command,
       cursor_command: true,
