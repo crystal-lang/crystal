@@ -54,8 +54,8 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def write_blocking(handle, slice)
-    ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil)
+  private def write_blocking(handle, slice, &)
+    ret, bytes_written = yield
     if ret.zero?
       case error = WinError.value
       when .error_access_denied?
@@ -67,6 +67,13 @@ module Crystal::System::FileDescriptor
       end
     end
     bytes_written
+  end
+
+  private def write_blocking(handle, slice)
+    write_blocking(handle, slice) do
+      ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil)
+      {ret, bytes_written}
+    end
   end
 
   # :nodoc:
