@@ -8,8 +8,8 @@ struct URI::Params
 
   module Serializable
     macro included
-      def self.from_www_form(params : ::URI::Params)
-        new_from_www_form(params)
+      def self.from_www_form(params : String)
+        new_from_www_form URI::Params.parse params
       end
 
       # :nodoc:
@@ -28,8 +28,8 @@ struct URI::Params
       end
 
       macro inherited
-        def self.from_www_form(params : ::URI::Params)
-          new_from_www_form(params)
+        def self.from_www_form(params : String)
+          new_from_www_form URI::Params.parse params
         end
 
         # :nodoc:
