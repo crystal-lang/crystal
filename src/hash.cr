@@ -468,6 +468,8 @@ class Hash(K, V)
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
       if entry_matches?(entry, hash, key)
+        # Mark this index slot as deleted
+        delete_index(index)
         delete_entry_and_update_counts(entry_index)
         return entry
       else
@@ -775,6 +777,35 @@ class Hash(K, V)
     end
   end
 
+  # Marks `@indices` at `index` as empty. Might also adjust subsequent index
+  # slots to ensure empty indices never appear before the natural position of
+  # any used index, in case of previous hash collisions.
+  private def delete_index(index) : Nil
+    # https://en.wikipedia.org/w/index.php?title=Open_addressing&oldid=1188919190#Example_pseudocode
+    i = index
+    set_index(i, -1)
+
+    j = i
+    while true
+      j = next_index(j)
+      entry_index = get_index(j)
+      break if entry_index == -1
+
+      entry = get_entry(entry_index)
+      k = fit_in_indices(entry.hash)
+
+      if i <= j
+        next if i < k && k <= j
+      else
+        next if k <= j || i < k
+      end
+
+      set_index(i, entry_index)
+      set_index(j, -1)
+      i = j
+    end
+  end
+
   # Returns the capacity of `@indices`.
   protected def indices_size
     1 << @indices_size_pow2
@@ -820,6 +851,16 @@ class Hash(K, V)
   # Sets the entry in `@entries` at `index`.
   private def set_entry(index, value) : Nil
     @entries[index] = value
+  end
+
+  # Returns the index into `@indices` for an existing *entry_index* into
+  # `@entries`.
+  private def index_for_entry_index(entry_index)
+    index = fit_in_indices(get_entry(entry_index).hash)
+    until get_index(index) == entry_index
+      index = next_index(index)
+    end
+    index
   end
 
   # Adds an entry at the end and also increments this hash's size.
@@ -1574,8 +1615,20 @@ class Hash(K, V)
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
   def reject!(& : K, V -> _)
-    each_entry_with_index do |entry, index|
-      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
+    # No indices allocated yet so we won't need `DELETED_INDEX` yet
+    if @indices.null?
+      each_entry_with_index do |entry, index|
+        if yield(entry.key, entry.value)
+          delete_entry_and_update_counts(index)
+        end
+      end
+    else
+      each_entry_with_index do |entry, index|
+        if yield(entry.key, entry.value)
+          delete_index(index_for_entry_index(index))
+          delete_entry_and_update_counts(index)
+        end
+      end
     end
     self
   end
@@ -1863,6 +1916,7 @@ class Hash(K, V)
   def shift(&)
     first_entry = first_entry?
     if first_entry
+      delete_index(index_for_entry_index(@first)) unless @indices.null?
       delete_entry_and_update_counts(@first)
       {first_entry.key, first_entry.value}
     else
