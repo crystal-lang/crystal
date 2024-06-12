@@ -30,7 +30,7 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
     # ```
-    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
+    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
       addrinfos = [] of Addrinfo
 
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
@@ -56,7 +56,7 @@ class Socket
     #
     # The iteration will be stopped once the block returns something that isn't
     # an `Exception` (e.g. a `Socket` or `nil`).
-    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil, &)
+    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil, &)
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
         loop do
           value = yield addrinfo.not_nil!
@@ -196,13 +196,13 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
-    def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::STREAM, Protocol::TCP)
     end
 
     # Resolves a domain for the TCP protocol with STREAM type, and yields each
     # possible `Addrinfo`. See `#resolve` for details.
-    def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil, &)
+    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil, &)
       resolve(domain, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
     end
 
@@ -215,13 +215,13 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
-    def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+    def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP)
     end
 
     # Resolves a domain for the UDP protocol with DGRAM type, and yields each
     # possible `Addrinfo`. See `#resolve` for details.
-    def self.udp(domain, service, family = Family::UNSPEC, timeout = nil, &)
+    def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil, &)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
     end
 
