@@ -3,18 +3,28 @@ module Crystal
   module Tracing
     @[Flags]
     enum Section
-      Gc
+      GC
       Sched
 
-      # Alternative to Enum#to_s that doesn't consider the enum has having the
-      # flags annotation so we can return static strings. This is used to
-      # translate `Section::Gc` as `"gc"` in `Crystal.trace` for example.
-      def id : String
+      def self.from_id(slice) : self
+        {% begin %}
+          case slice
+            {% for name in @type.constants %}
+              when {{name.underscore.stringify}}.to_slice
+                {{name}}
+            {% end %}
+          else
+            None
+          end
+        {% end %}
+      end
+
+      def to_id : String
         {% begin %}
           case self
-          {% for constant in @type.constants %}
-            when {{constant}}
-              {{constant.id.underscore.stringify}}
+          {% for name in @type.constants %}
+            when {{name}}
+              {{name.underscore.stringify}}
           {% end %}
           else
             "???"
@@ -152,25 +162,18 @@ module Crystal
         LibC._exit(1)
       end
 
-      private def self.parse_sections(bytes)
-        each_token(bytes) do |token|
-          \{% begin %}
-            case token
-            \{% for name in Section.constants %}
-              when \{{name.downcase.id.stringify}}.to_slice
-                @@sections |= Section::\{{name.id}}
-            \{% end %}
-            end
-          \{% end %}
+      private def self.parse_sections(slice)
+        each_token(slice) do |token|
+          @@sections |= Section.from_id(token)
         end
       end
 
-      private def self.each_token(bytes, delim = ',', &)
-        while e = bytes.index(delim.ord)
-          yield bytes[0, e]
-          bytes = bytes[(e + 1)..]
+      private def self.each_token(slice, delim = ',', &)
+        while e = slice.index(delim.ord)
+          yield slice[0, e]
+          slice = slice[(e + 1)..]
         end
-        yield bytes[0..] unless bytes.size == 0
+        yield slice[0..] unless slice.size == 0
       end
 
       # :nodoc:
@@ -233,7 +236,7 @@ module Crystal
           yield
         ensure
           duration = System::Time.ticks - time
-          Tracing.log(section.id, operation, time, **metadata, duration: duration)
+          Tracing.log(section.to_id, operation, time, **metadata, duration: duration)
         end
       else
         yield
@@ -242,7 +245,7 @@ module Crystal
 
     def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata) : Nil
       if Tracing.enabled?(section)
-        Tracing.log(section.id, operation, time || System::Time.ticks, **metadata)
+        Tracing.log(section.to_id, operation, time || System::Time.ticks, **metadata)
       end
     end
   {% else %}
