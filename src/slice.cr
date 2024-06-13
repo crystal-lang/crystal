@@ -932,7 +932,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
 
     dup.sort! &block
@@ -954,7 +954,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1055,7 +1055,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -1098,7 +1098,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U} (see Comparable#<=>)" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)
