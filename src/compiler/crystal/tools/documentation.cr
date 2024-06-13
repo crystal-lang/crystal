@@ -18,10 +18,8 @@ module Crystal
 
     def to_text(io : IO)
       io.puts message
-      documentations.try do |arr|
-        arr.each do |doc, loc|
-          io.puts "#{loc}\n#{doc}\n"
-        end
+      documentations.try &.each do |doc, loc|
+        io.puts "#{loc}\n#{doc}\n"
       end
     end
   end
