@@ -169,7 +169,7 @@ describe "documentation" do
     )
   end
 
-  it "find implementation from macro expansions" do
+  it "find documentation from macro expansions" do
     assert_documentation %(
       macro foo
         # ༓bar docs
@@ -237,7 +237,7 @@ describe "documentation" do
     end.should eq %({"status":"ok","message":"1 doc comment found","documentations":[["bar docs",".:5:9"]]})
   end
 
-  it "find implementation in class methods" do
+  it "find documentation of class methods" do
     assert_documentation %(
     # ༓Hello world
     def foo
@@ -253,7 +253,7 @@ describe "documentation" do
     Bar.bar)
   end
 
-  it "find implementation in generic class" do
+  it "find documentation of generic class" do
     assert_documentation %(
     class Foo
       # ༓Foo stuff
@@ -278,7 +278,7 @@ describe "documentation" do
     )
   end
 
-  it "find implementation in generic class methods" do
+  it "find documentation of generic class methods" do
     assert_documentation %(
     # ༓Hello world
     def foo
@@ -294,7 +294,7 @@ describe "documentation" do
     )
   end
 
-  it "find implementation inside a module class" do
+  it "find documentation inside a module class" do
     assert_documentation %(
     # ༓Hello world
     def foo
@@ -312,7 +312,7 @@ describe "documentation" do
     )
   end
 
-  it "find implementation inside contained class' class method" do
+  it "find documentation inside contained class' class method" do
     assert_documentation %(
     # ༓Hello world
     def foo
@@ -331,7 +331,7 @@ describe "documentation" do
     )
   end
 
-  it "find implementation inside contained file private method" do
+  it "find documentation inside contained file private method" do
     assert_documentation %(
     # ༓Hello world
     private def foo
@@ -345,7 +345,7 @@ describe "documentation" do
     )
   end
 
-  it "find implementation inside contained file private class' class method" do
+  it "find documentation inside contained file private class' class method" do
     assert_documentation %(
     # ༓Hello world
     private def foo
@@ -361,7 +361,7 @@ describe "documentation" do
     )
   end
 
-  it "find class implementation" do
+  it "find class documentation" do
     assert_documentation %(
     # ༓Foo docs
     class Foo
@@ -391,7 +391,7 @@ describe "documentation" do
     )
   end
 
-  it "find struct implementation" do
+  it "find struct documentation" do
     assert_documentation %(
     # ༓Foo docs
     struct Foo
@@ -401,7 +401,7 @@ describe "documentation" do
     )
   end
 
-  it "find module implementation" do
+  it "find module documentation" do
     assert_documentation %(
     # ༓Foo docs
     module Foo
@@ -411,7 +411,7 @@ describe "documentation" do
     )
   end
 
-  it "find enum implementation" do
+  it "find enum documentation" do
     assert_documentation %(
     # ༓Foo docs
     enum Foo
@@ -422,7 +422,7 @@ describe "documentation" do
     )
   end
 
-  it "find enum value implementation" do
+  it "find enum value documentation" do
     assert_documentation %(
     enum Foo
       # ༓Foo docs
@@ -433,7 +433,25 @@ describe "documentation" do
     )
   end
 
-  it "find alias implementation" do
+  it "find enum value documentation in case" do
+    assert_documentation %(
+    enum Foo
+      # ༓Foo docs
+      Foo
+
+      # Bar docs
+      Bar
+    end
+
+    a : Foo = Foo::Bar
+    case a
+    in Foo::F‸oo
+    in Foo::Bar
+    end
+    )
+  end
+
+  it "find alias documentation" do
     assert_documentation %(
     class Foo
     end
@@ -445,7 +463,7 @@ describe "documentation" do
     )
   end
 
-  it "find class defined by macro" do
+  it "find class documentation defined by macro" do
     assert_documentation %(
     macro foo
       # ༓foo docs
@@ -459,7 +477,7 @@ describe "documentation" do
     ), check_lines: false
   end
 
-  it "find class inside method" do
+  it "find class documentation inside method" do
     assert_documentation %(
     # ༓Foo docs
     class Foo
@@ -473,7 +491,7 @@ describe "documentation" do
     )
   end
 
-  it "find const implementation" do
+  it "find const documentation" do
     assert_documentation %(
     # ༓Foo docs
     Foo = 42
