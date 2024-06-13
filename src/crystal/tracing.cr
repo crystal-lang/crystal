@@ -6,10 +6,10 @@ module Crystal
       Gc
       Sched
 
-      # Override Enum#to_s to return static strings. Doesn't consider the enum
-      # has having the flags annotation, since we only need to translate
-      # `Section::Gc` as `"gc"` in `Crystal.trace`.
-      def to_s : String
+      # Alternative to Enum#to_s that doesn't consider the enum has having the
+      # flags annotation so we can return static strings. This is used to
+      # translate `Section::Gc` as `"gc"` in `Crystal.trace` for example.
+      def id : String
         {% begin %}
           case self
           {% for constant in @type.constants %}
@@ -231,7 +231,7 @@ module Crystal
         time ||= System::Time.ticks
         yield.tap do
           duration = System::Time.ticks - time
-          Tracing.log(section.to_s, operation, time, **metadata, duration: duration)
+          Tracing.log(section.id, operation, time, **metadata, duration: duration)
         end
       else
         yield
@@ -240,7 +240,7 @@ module Crystal
 
     def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata) : Nil
       if Tracing.enabled?(section)
-        Tracing.log(section.to_s, operation, time || System::Time.ticks, **metadata)
+        Tracing.log(section.id, operation, time || System::Time.ticks, **metadata)
       end
     end
   {% else %}
