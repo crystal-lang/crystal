@@ -81,11 +81,12 @@ module Crystal
 
     private def location_to_s(loc : Location)
       f = loc.filename
-      if f.is_a?(String)
+      case f
+      when String
         line = loc.line_number
         column = loc.column_number
         filename = f
-      elsif f.is_a?(VirtualFile)
+      when VirtualFile
         macro_location = f.macro.location.not_nil!
         filename = macro_location.filename.to_s
         line = macro_location.line_number + loc.line_number
