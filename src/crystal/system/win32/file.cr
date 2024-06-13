@@ -102,17 +102,7 @@ module Crystal::System::File
   end
 
   private def write_blocking(handle, slice)
-    if @system_append
-      write_blocking(handle, slice) do
-        overlapped = LibC::OVERLAPPED.new
-        overlapped.union.offset.offset = 0xFFFFFFFF_u32
-        overlapped.union.offset.offsetHigh = 0xFFFFFFFF_u32
-        ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, pointerof(overlapped))
-        {ret, bytes_written}
-      end
-    else
-      super
-    end
+    write_blocking(handle, slice, pos: @system_append ? UInt64::MAX : nil)
   end
 
   NOT_FOUND_ERRORS = {
