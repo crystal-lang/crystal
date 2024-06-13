@@ -14,28 +14,28 @@ module Crystal::System
     {% end %}
   end
 
-  {% if flag?(:win32) %}
-    # Print a UTF-16 slice as multibyte (UTF-8).
-    def self.print_error(bytes : Slice(UInt16)) : Nil
-      utf8 = uninitialized UInt8[512]
-      len = 0
+  # Print a UTF-16 slice as UTF-8 directly to stderr. Useful on Windows to print
+  # strings returned from the unicode variant of the Win32 API.
+  def self.print_error(bytes : Slice(UInt16)) : Nil
+    utf8 = uninitialized UInt8[512]
+    appender = utf8.to_unsafe.appender
 
-      String.each_utf16_char(bytes) do |char|
-        # avoid buffer overun and splitting an unicode char
-        if len > utf8.size - char.bytesize
-          print_error utf8.to_slice
-          len = 0
-        end
-
-        char.each_byte do |byte|
-          utf8.to_unsafe[len] = byte
-          len &+= 1
-        end
+    String.each_utf16_char(bytes) do |char|
+      if appender.size > utf8.size - char.bytesize
+        # buffer is full (char won't fit)
+        print_error utf8.to_slice[0...appender.size]
+        appender = utf8.to_unsafe.appender
       end
 
-      print_error utf8.to_slice[0...len] if len > 0
+      char.each_byte do |byte|
+        appender << byte
+      end
     end
-  {% end %}
+
+    if appender.size > 0
+      print_error utf8.to_slice[0...appender.size]
+    end
+  end
 
   def self.print(handle : FileDescriptor::Handle, bytes : Bytes) : Nil
     {% if flag?(:unix) || flag?(:wasm32) %}
