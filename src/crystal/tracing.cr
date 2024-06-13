@@ -229,7 +229,9 @@ module Crystal
     def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata, &)
       if Tracing.enabled?(section)
         time ||= System::Time.ticks
-        yield.tap do
+        begin
+          yield
+        ensure
           duration = System::Time.ticks - time
           Tracing.log(section.id, operation, time, **metadata, duration: duration)
         end
