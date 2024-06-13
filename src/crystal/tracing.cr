@@ -195,7 +195,6 @@ module Crystal
         end
 
         buf.write "\n"
-        # System.print_error(buf.to_slice)
         System.print(@@handle, buf.to_slice)
       end
     end
