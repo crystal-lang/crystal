@@ -79,11 +79,11 @@ module GC
     malloc(LibC::SizeT.new(size))
   end
 
-  # Allocates *size* bytes of pointer-free memory.
+  # Allocates and clears *size* bytes of pointer-free memory.
   #
   # The client promises that the resulting object will never contain any pointers.
   #
-  # The memory is not cleared. It will be automatically deallocated when unreferenced.
+  # The memory will be automatically deallocated when unreferenced.
   def self.malloc_atomic(size : Int) : Void*
     malloc_atomic(LibC::SizeT.new(size))
   end
