@@ -227,7 +227,7 @@ class Crystal::Doc::Generator
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
      "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
-     "LIBRARY_PATH", "LIBRARY_RPATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
+     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 

@@ -288,6 +288,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.readable?("foo") # => true
   # ```
+  @[Deprecated("Use `File::Info.readable?` instead")]
   def self.readable?(path : Path | String) : Bool
     Crystal::System::File.readable?(path.to_s)
   end
@@ -298,6 +299,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.writable?("foo") # => true
   # ```
+  @[Deprecated("Use `File::Info.writable?` instead")]
   def self.writable?(path : Path | String) : Bool
     Crystal::System::File.writable?(path.to_s)
   end
@@ -308,6 +310,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.executable?("foo") # => false
   # ```
+  @[Deprecated("Use `File::Info.executable?` instead")]
   def self.executable?(path : Path | String) : Bool
     Crystal::System::File.executable?(path.to_s)
   end

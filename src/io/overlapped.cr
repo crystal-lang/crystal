@@ -8,7 +8,7 @@ module IO::Overlapped
     property fiber : Fiber?
   end
 
-  def self.wait_queued_completions(timeout, &)
+  def self.wait_queued_completions(timeout, alertable = false, &)
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
 
     if timeout > UInt64::MAX
@@ -16,10 +16,12 @@ module IO::Overlapped
     else
       timeout = timeout.to_u64
     end
-    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.current.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, false)
+    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.current.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, alertable)
     if result == 0
       error = WinError.value
       if timeout && error.wait_timeout?
+        return true
+      elsif alertable && error.value == LibC::WAIT_IO_COMPLETION
         return true
       else
         raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
@@ -71,7 +73,6 @@ module IO::Overlapped
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
-    property? synchronous = false
 
     def self.run(handle, &)
       operation = OverlappedOperation.new
@@ -126,7 +127,7 @@ module IO::Overlapped
       case @state
       when .started?
         yield @fiber.not_nil!
-        @state = :done
+        done!
       when .cancelled?
         @@canceled.delete(self)
       else
@@ -139,26 +140,28 @@ module IO::Overlapped
       when .started?
         handle = LibC::HANDLE.new(handle) if handle.is_a?(LibC::SOCKET)
 
-        # Microsoft documentation:
-        # The application must not free or reuse the OVERLAPPED structure
+        # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
+        # > The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        # (this does not apply to asynchronous operations that finished
-        # synchronously, as nothing would be queued to the IOCP)
-        if !synchronous? && LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
       end
+    end
+
+    def done!
+      @state = :done
     end
   end
 
   # Returns `false` if the operation timed out.
   def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
     if timeout
-      timeout_event = Crystal::Iocp::Event.new(Fiber.current)
+      timeout_event = Crystal::IOCP::Event.new(Fiber.current)
       timeout_event.add(timeout)
     else
-      timeout_event = Crystal::Iocp::Event.new(Fiber.current, Time::Span::MAX)
+      timeout_event = Crystal::IOCP::Event.new(Fiber.current, Time::Span::MAX)
     end
     # memoize event loop to make sure that we still target the same instance
     # after wakeup (guaranteed by current MT model but let's be future proof)
@@ -188,7 +191,7 @@ module IO::Overlapped
           raise IO::Error.from_os_error(method, error, target: self)
         end
       else
-        operation.synchronous = true
+        operation.done!
         return value
       end
 
@@ -220,7 +223,7 @@ module IO::Overlapped
           raise IO::Error.from_os_error(method, error, target: self)
         end
       else
-        operation.synchronous = true
+        operation.done!
         return value
       end
 

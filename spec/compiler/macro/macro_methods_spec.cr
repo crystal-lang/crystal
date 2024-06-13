@@ -2345,6 +2345,63 @@ module Crystal
           {x: TypeNode.new(program.int32)}
         end
       end
+
+      describe "executes private?" do
+        it false do
+          assert_macro("{{x.private?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.private?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "public?" do
+        it false do
+          assert_macro("{{x.public?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.public?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "visibility" do
+        it :public do
+          assert_macro("{{x.visibility}}", ":public") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it :private do
+          assert_macro("{{x.visibility}}", ":private") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
     end
 
     describe "type declaration methods" do
@@ -2872,6 +2929,19 @@ module Crystal
         it "executes exhaustive?" do
           assert_macro %({{x.exhaustive?}}), "true", {x: case_node}
         end
+      end
+    end
+
+    describe Select do
+      it "executes whens" do
+        assert_macro %({{x.whens}}), "[when foo\n  1\n]", {x: Select.new([When.new("foo".call, 1.int32)])}
+        assert_macro %({{x.whens}}), "[when x = y\n  1\n, when bar\n]", {x: Select.new([When.new(Assign.new("x".var, "y".var), 1.int32), When.new("bar".call)])}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "", {x: Select.new([When.new("foo".call)])}
+        assert_macro %({{x.else}}), "1", {x: Select.new([When.new("foo".call)], 1.int32)}
+        assert_macro %({{x.else}}), "nil", {x: Select.new([When.new("foo".call)], NilLiteral.new)}
       end
     end
 

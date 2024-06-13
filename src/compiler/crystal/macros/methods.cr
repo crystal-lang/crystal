@@ -1986,6 +1986,18 @@ module Crystal
         interpret_check_args { self }
       when "resolve?"
         interpret_check_args { self }
+      when "private?"
+        interpret_check_args { BoolLiteral.new(type.private?) }
+      when "public?"
+        interpret_check_args { BoolLiteral.new(!type.private?) }
+      when "visibility"
+        interpret_check_args do
+          if type.private?
+            SymbolLiteral.new("private")
+          else
+            SymbolLiteral.new("public")
+          end
+        end
       else
         super
       end
@@ -2246,6 +2258,19 @@ module Crystal
         interpret_check_args { self.else || Nop.new }
       when "exhaustive?"
         interpret_check_args { BoolLiteral.new(@exhaustive) }
+      else
+        super
+      end
+    end
+  end
+
+  class Select
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "whens"
+        interpret_check_args { ArrayLiteral.map whens, &.itself }
+      when "else"
+        interpret_check_args { self.else || Nop.new }
       else
         super
       end
