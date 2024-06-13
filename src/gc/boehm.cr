@@ -262,7 +262,7 @@ module GC
   {% end %}
 
   def self.collect
-    Crystal.trace :gc, :collect do
+    Crystal.trace :gc, "collect" do
       LibGC.collect
     end
   end
@@ -280,7 +280,7 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    Crystal.trace :gc, :free do
+    Crystal.trace :gc, "free" do
       LibGC.free(pointer)
     end
   end
