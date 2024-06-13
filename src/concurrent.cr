@@ -60,7 +60,7 @@ end
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
-  Crystal.trace :sched, :spawn, fiber: fiber
+  Crystal.trace :sched, "spawn", fiber: fiber
   {% if flag?(:preview_mt) %} fiber.set_current_thread if same_thread {% end %}
   fiber.enqueue
   fiber

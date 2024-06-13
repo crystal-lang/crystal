@@ -170,21 +170,21 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    Crystal.trace :gc, :malloc, size: size do
+    Crystal.trace :gc, "malloc", size: size do
       LibGC.malloc(size)
     end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    Crystal.trace :gc, :malloc, size: size, atomic: 1 do
+    Crystal.trace :gc, "malloc", size: size, atomic: 1 do
       LibGC.malloc_atomic(size)
     end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
-    Crystal.trace :gc, :realloc, size: size do
+    Crystal.trace :gc, "realloc", size: size do
       LibGC.realloc(ptr, size)
     end
   end
@@ -230,7 +230,7 @@ module GC
       @@on_heap_resize = LibGC.get_on_heap_resize
 
       LibGC.set_on_heap_resize(->(new_size : LibGC::Word) {
-        Crystal.trace :gc, :heap_resize, size: new_size
+        Crystal.trace :gc, "heap_resize", size: new_size
         @@on_heap_resize.try(&.call(new_size))
       })
     end

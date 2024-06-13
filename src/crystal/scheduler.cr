@@ -25,7 +25,7 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
-    Crystal.trace :sched, :enqueue, fiber: fiber do
+    Crystal.trace :sched, "enqueue", fiber: fiber do
       thread = Thread.current
       scheduler = thread.scheduler
 
@@ -51,7 +51,7 @@ class Crystal::Scheduler
   end
 
   def self.reschedule : Nil
-    Crystal.trace :sched, :reschedule
+    Crystal.trace :sched, "reschedule"
     Thread.current.scheduler.reschedule
   end
 
@@ -61,12 +61,12 @@ class Crystal::Scheduler
   end
 
   def self.sleep(time : Time::Span) : Nil
-    Crystal.trace :sched, :sleep, for: time.total_nanoseconds.to_i64!
+    Crystal.trace :sched, "sleep", for: time.total_nanoseconds.to_i64!
     Thread.current.scheduler.sleep(time)
   end
 
   def self.yield : Nil
-    Crystal.trace :sched, :yield
+    Crystal.trace :sched, "yield"
 
     # TODO: Fiber switching and libevent for wasm32
     {% unless flag?(:wasm32) %}
@@ -115,7 +115,7 @@ class Crystal::Scheduler
   end
 
   protected def resume(fiber : Fiber) : Nil
-    Crystal.trace :sched, :resume, fiber: fiber
+    Crystal.trace :sched, "resume", fiber: fiber
     validate_resumable(fiber)
 
     {% if flag?(:preview_mt) %}

@@ -1,4 +1,29 @@
 module Crystal
+  # :nodoc:
+  module Tracing
+    @[Flags]
+    enum Section
+      Gc
+      Sched
+
+      # Override Enum#to_s to return static strings. Doesn't consider the enum
+      # has having the flags annotation, since we only need to translate
+      # `Section::Gc` as `"gc"` in `Crystal.trace`.
+      def to_s : String
+        {% begin %}
+          case self
+          {% for constant in @type.constants %}
+            when {{constant}}
+              {{constant.id.underscore.stringify}}
+          {% end %}
+          else
+            "???"
+          end
+        {% end %}
+      end
+    end
+  end
+
   {% if flag?(:tracing) %}
     # :nodoc:
     module Tracing
@@ -49,12 +74,6 @@ module Crystal
         def to_slice : Bytes
           Bytes.new(@buf.to_unsafe, @size)
         end
-      end
-
-      @[Flags]
-      enum Section
-        Gc
-        Sched
       end
 
       @@sections = Section::None
@@ -155,6 +174,14 @@ module Crystal
       end
 
       # :nodoc:
+      #
+      # Formats and prints a log message to stderr. The generated message is
+      # limited to 512 bytes (PIPE_BUF) after which it will be truncated. Being
+      # below PIPE_BUF the message shall be written atomically to stderr,
+      # avoiding interleaved or smashed traces from multiple threads.
+      #
+      # Windows may not have the same guarantees but the buffering should limit
+      # these from happening.
       def self.log(section : String, operation : String, time : UInt64, **metadata) : Nil
         buf = BufferIO(512).new
         buf.write section
@@ -199,27 +226,21 @@ module Crystal
       end
     end
 
-    # Formats and prints a log message to stderr. The generated message is
-    # limited to 512 bytes (PIPE_BUF) after which it will be truncated. Being
-    # below PIPE_BUF the message shall be written atomically to stderr,
-    # avoiding interleaved or smashed traces from multiple threads.
-    #
-    # Windows may not have the same guarantees but the buffering should limit
-    # these from happening.
-    macro trace(section, operation, tick = nil, **metadata, &block)
-      if ::Crystal::Tracing.enabled?(\{{section}})
-        %tick = \{{tick}} || ::Crystal::System::Time.ticks
-        \{% if block %}
-          %ret = \{{yield}}
-          %duration = ::Crystal::System::Time.ticks - %tick
-          ::Crystal::Tracing.log(\{{section.id.stringify}}, \{{operation.id.stringify}}, %tick, duration: %duration, \{{metadata.double_splat}})
-          %ret
-        \{% else %}
-          ::Crystal::Tracing.log(\{{section.id.stringify}}, \{{operation.id.stringify}}, %tick, \{{metadata.double_splat}})
-          nil
-        \{% end %}
+    def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata, &)
+      if Tracing.enabled?(section)
+        time ||= System::Time.ticks
+        yield.tap do
+          duration = System::Time.ticks - time
+          Tracing.log(section.to_s, operation, time, **metadata, duration: duration)
+        end
       else
-        \{{yield}}
+        yield
+      end
+    end
+
+    def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata) : Nil
+      if Tracing.enabled?(section)
+        Tracing.log(section.to_s, operation, time || System::Time.ticks, **metadata)
       end
     end
   {% else %}
@@ -236,8 +257,11 @@ module Crystal
       end
     end
 
-    macro trace(section, operation, **metadata, &block)
-      \{{yield}}
+    def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata, &)
+      yield
+    end
+
+    def self.trace(section : Tracing::Section, operation : String, time : UInt64? = nil, **metadata)
     end
   {% end %}
 end

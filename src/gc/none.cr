@@ -9,19 +9,19 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    Crystal.trace :gc, :malloc, size: size
+    Crystal.trace :gc, "malloc", size: size
     LibC.malloc(size)
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    Crystal.trace :gc, :malloc, size: size, atomic: 1
+    Crystal.trace :gc, "malloc", size: size, atomic: 1
     LibC.malloc(size)
   end
 
   # :nodoc:
   def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
-    Crystal.trace :gc, :realloc, size: size
+    Crystal.trace :gc, "realloc", size: size
     LibC.realloc(pointer, size)
   end
 
@@ -35,7 +35,7 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    Crystal.trace :gc, :free
+    Crystal.trace :gc, "free"
     LibC.free(pointer)
   end
 
