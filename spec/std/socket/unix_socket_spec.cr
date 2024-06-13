@@ -103,7 +103,7 @@ describe UNIXSocket do
         sizes.should contain(left.recv_buffer_size)
 
         left.close_on_exec?.should be_true
-        left.close_on_exec?.should be_true
+        right.close_on_exec?.should be_true
       end
     end
   {% end %}
