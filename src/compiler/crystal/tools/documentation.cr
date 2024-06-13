@@ -52,11 +52,9 @@ module Crystal
     def visit(node : Call)
       return contains_target(node) unless node.location && @target_location.between?(node.name_location, node.name_end_location)
 
-      if target_defs = node.target_defs
-        target_defs.each do |target_def|
-          if doc = target_def.doc
-            @documentations << {doc, target_def.location.not_nil!}
-          end
+      node.target_defs.try &.each do |target_def|
+        if doc = target_def.doc
+          @documentations << {doc, target_def.location.not_nil!}
         end
       end
       false
