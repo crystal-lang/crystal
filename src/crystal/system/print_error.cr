@@ -27,7 +27,7 @@ module Crystal::System
           len = 0
         end
 
-        char.each_byte do |byte]
+        char.each_byte do |byte|
           utf8.to_unsafe[len] = byte
           len &+= 1
         end
