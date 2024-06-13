@@ -29,10 +29,10 @@ module Crystal
   class DocumentationVisitor < Visitor
     include TypedDefProcessor
 
-    getter documentations : Array({String, String})
+    getter documentations : Array({String, Location})
 
     def initialize(@target_location : Location)
-      @documentations = [] of {String, String}
+      @documentations = [] of {String, Location}
     end
 
     def process(result : Compiler::Result)
@@ -44,7 +44,7 @@ module Crystal
         DocumentationResult.new("failed", "no doc comment or method call found")
       else
         res = DocumentationResult.new("ok", "#{@documentations.size} doc comment#{@documentations.size > 1 ? "s" : ""} found")
-        res.documentations = @documentations
+        res.documentations = @documentations.map { |doc, loc| {doc, location_to_s(loc)} }
         res
       end
     end
@@ -55,7 +55,7 @@ module Crystal
       if target_defs = node.target_defs
         target_defs.each do |target_def|
           if doc = target_def.doc
-            @documentations << {doc, target_def.location.not_nil!.to_s}
+            @documentations << {doc, target_def.location.not_nil!}
           end
         end
       end
@@ -68,7 +68,7 @@ module Crystal
       target = node.target_const || node.target_type
       target.try &.locations.try &.each do |loc|
         if doc = target.try(&.doc)
-          @documentations << {doc, loc.to_s}
+          @documentations << {doc, loc}
         end
       end
 
@@ -77,6 +77,24 @@ module Crystal
 
     def visit(node)
       contains_target(node)
+    end
+
+    private def location_to_s(loc : Location)
+      f = loc.filename
+      if f.is_a?(String)
+        line = loc.line_number
+        column = loc.column_number
+        filename = f
+      elsif f.is_a?(VirtualFile)
+        macro_location = f.macro.location.not_nil!
+        filename = macro_location.filename.to_s
+        line = macro_location.line_number + loc.line_number
+        column = loc.column_number
+      else
+        raise "not implemented"
+      end
+
+      "#{filename}:#{line}:#{column}"
     end
   end
 end
