@@ -163,7 +163,7 @@ module Base64
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
     from_base64(slice) { |byte| appender << byte }
-    Slice.new(buf, appender.size.to_i32)
+    appender.to_slice
   end
 
   # Writes the base64-decoded version of *data* to *io*.

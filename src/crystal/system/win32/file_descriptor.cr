@@ -423,7 +423,7 @@ private module ConsoleUtils
         appender << byte
       end
     end
-    @@buffer = @@utf8_buffer[0, appender.size]
+    @@buffer = appender.to_slice
   end
 
   private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
