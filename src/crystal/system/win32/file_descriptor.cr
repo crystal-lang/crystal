@@ -2,11 +2,9 @@ require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
 require "c/winnls"
-require "io/overlapped"
+require "crystal/system/win32/iocp"
 
 module Crystal::System::FileDescriptor
-  include IO::Overlapped
-
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
   # NOTE: this should really be `LibC::HANDLE`, here it is an integer type of
