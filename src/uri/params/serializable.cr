@@ -6,6 +6,57 @@ require "./from_www_form"
 struct URI::Params
   annotation Field; end
 
+  # The `URI::Params::Serializable` module automatically generates methods for `x-www-form-urlencoded` serialization when included.
+  #
+  # NOTE: To use this module, you must explicitly import it with `require "uri/params/serializable"`.
+  #
+  # ### Example
+  #
+  # ```
+  # require "uri/params/serializable"
+  #
+  # struct Applicant
+  #   include URI::Params::Serializable
+  #
+  #   getter first_name : String
+  #   getter last_name : String
+  #   getter qualities : Array(String)
+  # end
+  #
+  # applicant = Applicant.from_www_form "first_name=John&last_name=Doe&qualities=kind&qualities=smart"
+  # applicant.first_name  # => "John"
+  # applicant.last_name   # => "Doe"
+  # applicant.qualities   # => ["kind", "smart"]
+  # applicant.to_www_form # => "first_name=John&last_name=Doe&qualities=kind&qualities=smart"
+  # ```
+  #
+  # ### Usage
+  #
+  # Including `URI::Params::Serializable` will create `#to_www_form` and `self.from_www_form` methods on the current class.
+  # By default, these methods serialize into a www form encoded string containing the value of every instance variable, the keys being the instance variable name.
+  # Union types are also supported, including unions with nil.
+  # If multiple types in a union parse correctly, it is undefined which one will be chosen.
+  #
+  # To change how individual instance variables are parsed, the annotation `URI::Params::Field` can be placed on the instance variable.
+  # Annotating property, getter and setter macros is also allowed.
+  #
+  # `URI::Params::Field` properties:
+  # * **converter**: specify an alternate type for parsing. The converter must define `.from_www_form(params : URI::Params, name : String)`.
+  # An example use case would be customizing the format when parsing `Time` instances, or supporting a type not natively supported.
+  #
+  # Deserialization also respects default values of variables:
+  # ```
+  # require "uri/params/serializable"
+  #
+  # struct A
+  #   include URI::Params::Serializable
+  #
+  #   @a : Int32
+  #   @b : Float64 = 1.0
+  # end
+  #
+  # A.from_www_form("a=1") # => A(@a=1, @b=1.0)
+  # ```
   module Serializable
     macro included
       def self.from_www_form(params : String)
@@ -65,6 +116,7 @@ struct URI::Params
       end
     end
 
+    # :nodoc:
     def to_www_form(builder : URI::Params::Builder, name : String)
       {% for ivar in @type.instance_vars %}
         @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"

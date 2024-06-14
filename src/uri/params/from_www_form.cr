@@ -1,9 +1,11 @@
+# :nodoc:
 def Object.from_www_form(params : URI::Params, name : String)
   return unless value = params[name]?
 
   self.from_www_form value
 end
 
+# :nodoc:
 def Array.from_www_form(params : URI::Params, name : String)
   name = if params.has_key? name
            name
@@ -16,6 +18,7 @@ def Array.from_www_form(params : URI::Params, name : String)
   params.fetch_all(name).map { |item| T.from_www_form(item).as T }
 end
 
+# :nodoc:
 def Bool.from_www_form(value : String)
   case value
   when "true", "1", "yes", "on"  then true
@@ -23,22 +26,27 @@ def Bool.from_www_form(value : String)
   end
 end
 
+# :nodoc:
 def Number.from_www_form(value : String)
   new value, whitespace: false
 end
 
+# :nodoc:
 def String.from_www_form(value : String)
   value
 end
 
+# :nodoc:
 def Enum.from_www_form(value : String)
   parse value
 end
 
+# :nodoc:
 def Time.from_www_form(value : String)
   Time::Format::ISO_8601_DATE_TIME.parse value
 end
 
+# :nodoc:
 def Union.from_www_form(params : URI::Params, name : String)
   # Process non nilable types first as they are more likely to work.
   {% for type in T.sort_by { |t| t.nilable? ? 1 : 0 } %}
@@ -51,5 +59,6 @@ def Union.from_www_form(params : URI::Params, name : String)
   raise ArgumentError.new "Invalid #{self}: #{params[name]}"
 end
 
+# :nodoc:
 def Nil.from_www_form(value : String) : Nil
 end
