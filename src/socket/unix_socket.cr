@@ -68,7 +68,7 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    fds = Crystal::System::Socket.socketpair(type, protocol: 0)
+    fds = Crystal::System::Socket.socketpair(type, protocol: Protocol::IP)
     {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 

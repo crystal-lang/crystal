@@ -179,7 +179,7 @@ module Crystal::System::Socket
     r
   end
 
-  def self.socketpair(type, protocol) : {Handle, Handle}
+  def self.socketpair(type : ::Socket::Type, protocol ::Socket::Protocol) : {Handle, Handle}
     fds = uninitialized Handle[2]
     socktype = type.value
 
