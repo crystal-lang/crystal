@@ -9,21 +9,22 @@ module Crystal::System::Socket
   alias Handle = Int32
 
   private def create_handle(family, type, protocol, blocking) : Handle
+    socktype = type.value
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      # Forces opened sockets to be closed on `exec(2)`.
-      type = type.to_i | LibC::SOCK_CLOEXEC
+      socktype |= LibC::SOCK_CLOEXEC
     {% end %}
-    fd = LibC.socket(family, type, protocol)
+
+    fd = LibC.socket(family, socktype, protocol)
     raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+
+    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
+      Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
+
     fd
   end
 
   private def initialize_handle(fd)
-    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-      # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
-      # support `SOCK_CLOEXEC` (e.g., Darwin).
-      LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-    {% end %}
   end
 
   # Tries to bind the socket to a local address.
