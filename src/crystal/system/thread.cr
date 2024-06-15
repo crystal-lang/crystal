@@ -73,7 +73,7 @@ class Thread
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
-    @func = ->(t : Thread) {}
+    @func = ->(t : Thread) { }
     @system_handle = Crystal::System::Thread.current_handle
     @current_fiber = @main_fiber = Fiber.new(stack_address, self)
 

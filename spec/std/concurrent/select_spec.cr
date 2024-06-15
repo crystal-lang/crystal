@@ -243,7 +243,7 @@ describe "select" do
     it "types and exec when" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive
           w.check
@@ -256,7 +256,7 @@ describe "select" do
     it "raises if channel was closed" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         begin
           select
           when m = ch.receive
@@ -272,7 +272,7 @@ describe "select" do
     it "types and exec when if message was ready" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive
           w.check
@@ -286,7 +286,7 @@ describe "select" do
     it "exec else if no message was ready" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ nil }) do |w|
+      spawn_and_check(-> { nil }) do |w|
         select
         when m = ch.receive
         else
@@ -298,7 +298,7 @@ describe "select" do
     it "raises if channel was closed" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         begin
           select
           when m = ch.receive
@@ -316,7 +316,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive
           w.check
@@ -331,7 +331,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.send true }) do |w|
+      spawn_and_check(-> { ch2.send true }) do |w|
         select
         when m = ch.receive
         when m = ch2.receive
@@ -346,7 +346,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         begin
           select
           when m = ch.receive
@@ -362,7 +362,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
+      spawn_and_check(-> { ch2.close }) do |w|
         begin
           select
           when m = ch.receive
@@ -380,7 +380,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive
           w.check
@@ -396,7 +396,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.send true }) do |w|
+      spawn_and_check(-> { ch2.send true }) do |w|
         select
         when m = ch.receive
         when m = ch2.receive
@@ -412,7 +412,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ nil }) do |w|
+      spawn_and_check(-> { nil }) do |w|
         select
         when m = ch.receive
         when m = ch2.receive
@@ -426,7 +426,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         begin
           select
           when m = ch.receive
@@ -443,7 +443,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
+      spawn_and_check(-> { ch2.close }) do |w|
         begin
           select
           when m = ch.receive
@@ -461,7 +461,7 @@ describe "select" do
     it "types and exec when" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -474,7 +474,7 @@ describe "select" do
     it "types and exec when with nil if channel was closed" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -490,7 +490,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -505,7 +505,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.send true }) do |w|
+      spawn_and_check(-> { ch2.send true }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
@@ -520,7 +520,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -535,7 +535,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
+      spawn_and_check(-> { ch2.close }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
@@ -550,7 +550,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -565,7 +565,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
+      spawn_and_check(-> { ch2.close }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
@@ -581,7 +581,7 @@ describe "select" do
     it "types and exec when" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -595,7 +595,7 @@ describe "select" do
     it "exec else if no message was ready" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ nil }) do |w|
+      spawn_and_check(-> { nil }) do |w|
         select
         when m = ch.receive?
         else
@@ -607,7 +607,7 @@ describe "select" do
     it "types and exec when with nil if channel was closed" do
       ch = Channel(String).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -624,7 +624,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.send "foo" }) do |w|
+      spawn_and_check(-> { ch.send "foo" }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -640,7 +640,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.send true }) do |w|
+      spawn_and_check(-> { ch2.send true }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
@@ -656,7 +656,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -672,7 +672,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
+      spawn_and_check(-> { ch2.close }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
@@ -688,7 +688,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
+      spawn_and_check(-> { ch.close }) do |w|
         select
         when m = ch.receive?
           w.check
@@ -704,7 +704,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
+      spawn_and_check(-> { ch2.close }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
@@ -720,7 +720,7 @@ describe "select" do
       ch = Channel(String).new
       ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ nil }) do |w|
+      spawn_and_check(-> { nil }) do |w|
         select
         when m = ch.receive?
         when m = ch2.receive?
