@@ -568,7 +568,7 @@ describe Crystal::Formatter do
   assert_format "with foo yield bar"
 
   context "adds `&` to yielding methods that don't have a block parameter (#8764)" do
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo
         yield
       end
@@ -578,7 +578,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo()
         yield
       end
@@ -588,7 +588,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
       )
         yield
@@ -600,7 +600,7 @@ describe Crystal::Formatter do
       CRYSTAL
 
     # #13091
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo # bar
         yield
       end
@@ -610,7 +610,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(x)
         yield
       end
@@ -620,7 +620,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(x ,)
         yield
       end
@@ -630,7 +630,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(x,
       y)
         yield
@@ -642,7 +642,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(x,
       y,)
         yield
@@ -654,7 +654,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(x
       )
         yield
@@ -666,7 +666,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(x,
       )
         yield
@@ -678,7 +678,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
       x)
         yield
@@ -691,7 +691,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
       x, y)
         yield
@@ -704,7 +704,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
       x,
       y)
@@ -719,7 +719,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
       x,
       )
@@ -734,7 +734,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[method_signature_yield]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(a, **b)
         yield
       end
@@ -744,11 +744,11 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format "macro f\n  yield\n  {{ yield }}\nend", flags: %w[method_signature_yield]
+    assert_format "macro f\n  yield\n  {{ yield }}\nend"
   end
 
   context "adds trailing comma to def multi-line normal, splat, and double splat parameters" do
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       macro foo(
         a,
         b
@@ -762,7 +762,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       macro foo(
         a,
         *b
@@ -776,7 +776,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       fun foo(
         a : Int32,
         b : Int32
@@ -790,7 +790,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       fun foo(
         a : Int32,
         ...
@@ -798,7 +798,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a,
         b
@@ -812,7 +812,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a : Int32,
         b : Int32
@@ -826,7 +826,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a : Int32,
         b : Int32 = 1
@@ -840,7 +840,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a,
         b c
@@ -854,7 +854,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a,
         @[Ann] b
@@ -868,7 +868,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a,
         @[Ann]
@@ -884,7 +884,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a, b
       )
@@ -896,7 +896,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a, b,
         c, d
@@ -910,7 +910,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a, # Foo
         b # Bar
@@ -924,7 +924,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a,
         *b
@@ -938,7 +938,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL, <<-CRYSTAL
       def foo(
         a,
         **b
@@ -952,7 +952,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(
         a,
         &block
@@ -960,44 +960,44 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(
         a,
       )
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a)
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a, b)
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a, *args)
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a, *args, &block)
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a, **kwargs)
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a, **kwargs, &block)
       end
       CRYSTAL
 
-    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+    assert_format <<-CRYSTAL
       def foo(a, &block)
       end
       CRYSTAL
@@ -1532,12 +1532,12 @@ describe Crystal::Formatter do
   assert_format "->{ x }", "-> { x }"
 
   # #13232
-  assert_format "->{}", "-> { }", flags: %w[proc_literal_whitespace]
-  assert_format "->(){}", "-> { }", flags: %w[proc_literal_whitespace]
-  assert_format "->{1}", "-> { 1 }", flags: %w[proc_literal_whitespace]
-  assert_format "->(x : Int32) {}", "->(x : Int32) { }", flags: %w[proc_literal_whitespace]
-  assert_format "-> : Int32 {}", "-> : Int32 { }", flags: %w[proc_literal_whitespace]
-  assert_format "->do\nend", "-> do\nend", flags: %w[proc_literal_whitespace]
+  assert_format "->{}", "-> { }"
+  assert_format "->(){}", "-> { }"
+  assert_format "->{1}", "-> { 1 }"
+  assert_format "->(x : Int32) {}", "->(x : Int32) { }"
+  assert_format "-> : Int32 {}", "-> : Int32 { }"
+  assert_format "->do\nend", "-> do\nend"
 
   assert_format "-> : Int32 {}", "-> : Int32 { }"
   assert_format "-> : Int32 | String { 1 }"
