@@ -748,9 +748,11 @@ class Crystal::CodeGenVisitor
     type = node.type
 
     base_type = type.is_a?(VirtualType) ? type.base_type : type
+    struct_type = llvm_struct_type(base_type)
 
     ptr = call_args[target_def.owner.passed_as_self? ? 1 : 0]
-    pre_initialize_aggregate base_type, llvm_struct_type(base_type), ptr
+    memset ptr, int8(0), size_t(struct_type.size)
+    pre_initialize_aggregate base_type, struct_type, ptr
 
     @last = cast_to ptr, type
   end

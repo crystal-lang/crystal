@@ -8,12 +8,14 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    LibC.malloc(size)
+    ptr = LibC.malloc(size)
+    ptr.clear(size)
+    ptr
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    LibC.malloc(size)
+    malloc(size)
   end
 
   # :nodoc:

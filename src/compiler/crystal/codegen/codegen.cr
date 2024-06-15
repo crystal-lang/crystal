@@ -2066,6 +2066,7 @@ module Crystal
       struct_type = llvm_struct_type(type)
       if type.passed_by_value?
         type_ptr = alloca struct_type
+        memset type_ptr, int8(0), size_t(struct_type.size)
       else
         if type.is_a?(InstanceVarContainer) && !type.struct? &&
            type.all_instance_vars.each_value.any? &.type.has_inner_pointers?
@@ -2079,7 +2080,6 @@ module Crystal
     end
 
     def pre_initialize_aggregate(type, struct_type, ptr)
-      memset ptr, int8(0), size_t(struct_type.size)
       run_instance_vars_initializers(type, type, ptr)
 
       unless type.struct?
@@ -2149,6 +2149,7 @@ module Crystal
         pointer = call malloc_fun, size
       else
         pointer = call c_malloc_fun, size_t(size)
+        memset pointer, int8(0), size_t(size)
       end
 
       pointer_cast pointer, type.pointer
@@ -2169,9 +2170,9 @@ module Crystal
         pointer = call malloc_fun, size
       else
         pointer = call c_malloc_fun, size_t(size)
+        memset pointer, int8(0), size_t(size)
       end
 
-      memset pointer, int8(0), size_t(size)
       pointer_cast pointer, type.pointer
     end
 
