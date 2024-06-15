@@ -203,8 +203,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  x , y , )  \n  end", "def foo(x, y)\nend"
   assert_format "def   foo (  x , y ,\n)  \n  end", "def foo(x, y)\nend"
   assert_format "def   foo (  x ,\n y )  \n  end", "def foo(x,\n        y)\nend"
-  assert_format "def   foo (\nx ,\n y )  \n  end", "def foo(\n  x,\n  y\n)\nend"
-  assert_format "class Foo\ndef   foo (\nx ,\n y )  \n  end\nend", "class Foo\n  def foo(\n    x,\n    y\n  )\n  end\nend"
+  assert_format "def   foo (\nx ,\n y )  \n  end", "def foo(\n  x,\n  y,\n)\nend"
+  assert_format "class Foo\ndef   foo (\nx ,\n y )  \n  end\nend", "class Foo\n  def foo(\n    x,\n    y,\n  )\n  end\nend"
   assert_format "def   foo (  @x)  \n  end", "def foo(@x)\nend"
   assert_format "def   foo (  @x, @y)  \n  end", "def foo(@x, @y)\nend"
   assert_format "def   foo (  @@x)  \n  end", "def foo(@@x)\nend"
@@ -277,7 +277,7 @@ describe Crystal::Formatter do
   assert_format "def foo(@[AnnOne]   @[AnnTwo]   &block : Int32 ->  ); end", "def foo(@[AnnOne] @[AnnTwo] &block : Int32 ->); end"
   assert_format <<-CRYSTAL
   def foo(
-    @[MyAnn] bar
+    @[MyAnn] bar,
   ); end
   CRYSTAL
 
@@ -321,22 +321,14 @@ describe Crystal::Formatter do
   ); end
   CRYSTAL
   def foo(
-    @[MyAnn] bar
+    @[MyAnn] bar,
   ); end
   CRYSTAL
 
   assert_format <<-CRYSTAL
   def foo(
     @[MyAnn]
-    bar
-  ); end
-  CRYSTAL
-
-  assert_format <<-CRYSTAL
-  def foo(
-    @[MyAnn]
-    @[MyAnn]
-    bar
+    bar,
   ); end
   CRYSTAL
 
@@ -345,7 +337,15 @@ describe Crystal::Formatter do
     @[MyAnn]
     @[MyAnn]
     bar,
-    @[MyAnn] baz
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar,
+    @[MyAnn] baz,
   ); end
   CRYSTAL
 
@@ -355,7 +355,7 @@ describe Crystal::Formatter do
     @[MyAnn]
     bar,
 
-    @[MyAnn] baz
+    @[MyAnn] baz,
   ); end
   CRYSTAL
 
@@ -367,7 +367,7 @@ describe Crystal::Formatter do
   CRYSTAL
   def foo(
     @[MyAnn]
-    bar
+    bar,
   ); end
   CRYSTAL
 
@@ -379,7 +379,7 @@ describe Crystal::Formatter do
   CRYSTAL
   def foo(
     @[MyAnn]
-    bar
+    bar,
   ); end
   CRYSTAL
 
@@ -391,7 +391,7 @@ describe Crystal::Formatter do
     @[MyAnn] @[MyAnn] baz,
     @[MyAnn]
     @[MyAnn]
-    biz
+    biz,
   ); end
   CRYSTAL
 
@@ -405,7 +405,7 @@ describe Crystal::Formatter do
 
     @[MyAnn]
     @[MyAnn]
-    biz
+    biz,
   ); end
   CRYSTAL
 
@@ -433,7 +433,7 @@ describe Crystal::Formatter do
 
     @[MyAnn]
     @[MyAnn]
-    biz
+    biz,
   ); end
   CRYSTAL
 
@@ -846,7 +846,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(
-        x
+        x,
       )
         yield
       end
@@ -859,7 +859,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(
-        x, y
+        x, y,
       )
         yield
       end
@@ -874,7 +874,7 @@ describe Crystal::Formatter do
       CRYSTAL
       def foo(
         x,
-        y
+        y,
       )
         yield
       end
@@ -888,7 +888,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(
-        x
+        x,
       )
         yield
       end
@@ -1889,8 +1889,8 @@ describe Crystal::Formatter do
   assert_format "foo((1..3))"
   assert_format "foo ()"
   assert_format "foo ( )", "foo ()"
-  assert_format "def foo(\n\n#foo\nx,\n\n#bar\nz\n)\nend", "def foo(\n  # foo\n  x,\n\n  # bar\n  z\n)\nend"
-  assert_format "def foo(\nx, #foo\nz #bar\n)\nend", "def foo(\n  x, # foo\n  z  # bar\n)\nend"
+  assert_format "def foo(\n\n#foo\nx,\n\n#bar\nz\n)\nend", "def foo(\n  # foo\n  x,\n\n  # bar\n  z,\n)\nend"
+  assert_format "def foo(\nx, #foo\nz #bar\n)\nend", "def foo(\n  x, # foo\n  z, # bar\n)\nend"
   assert_format "a = 1;;; b = 2", "a = 1; b = 2"
   assert_format "a = 1\n;\nb = 2", "a = 1\nb = 2"
   assert_format "foo do\n  # bar\nend"
@@ -2233,11 +2233,11 @@ describe Crystal::Formatter do
   assert_format "def foo(a,\n        *b)\nend"
   assert_format "def foo(a, # comment\n        *b)\nend", "def foo(a, # comment\n        *b)\nend"
   assert_format "def foo(a,\n        **b)\nend"
-  assert_format "def foo(\n  **a\n)\n  1\nend"
+  assert_format "def foo(\n  **a,\n)\n  1\nend"
   assert_format "def foo(**a,)\n  1\nend", "def foo(**a)\n  1\nend"
-  assert_format "def foo(\n  **a # comment\n)\n  1\nend"
-  assert_format "def foo(\n  **a\n  # comment\n)\n  1\nend"
-  assert_format "def foo(\n  **a\n\n  # comment\n)\n  1\nend"
+  assert_format "def foo(\n  **a, # comment\n)\n  1\nend"
+  assert_format "def foo(\n  **a,\n  # comment\n)\n  1\nend"
+  assert_format "def foo(\n  **a,\n\n  # comment\n)\n  1\nend"
   assert_format "def foo(**b, # comment\n        &block)\nend"
   assert_format "def foo(a, **b, # comment\n        &block)\nend"
 
