@@ -141,7 +141,7 @@ module Crystal
         {% if flag?(:win32) %}
           handle = LibC.CreateFileW(filename, LibC::FILE_GENERIC_WRITE, LibC::DEFAULT_SHARE_MODE, nil, LibC::CREATE_ALWAYS, LibC::FILE_ATTRIBUTE_NORMAL, LibC::HANDLE.null)
           # not using LibC::INVALID_HANDLE_VALUE because it doesn't exist (yet)
-          return handle.address unless handle == LibC::HANDLE.new(-1)
+          return handle.address unless handle == LibC::HANDLE.new(-1.to_u64!)
 
           error = uninitialized UInt16[256]
           len = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, WinError.value, 0, error, error.size, nil)
