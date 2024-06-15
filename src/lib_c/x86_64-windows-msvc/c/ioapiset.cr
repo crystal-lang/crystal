@@ -3,14 +3,14 @@ lib LibC
     hFile : HANDLE,
     lpOverlapped : OVERLAPPED*,
     lpNumberOfBytesTransferred : DWORD*,
-    bWait : BOOL
+    bWait : BOOL,
   ) : BOOL
 
   fun CreateIoCompletionPort(
     fileHandle : HANDLE,
     existingCompletionPort : HANDLE,
     completionKey : ULong*,
-    numberOfConcurrentThreads : DWORD
+    numberOfConcurrentThreads : DWORD,
   ) : HANDLE
 
   fun GetQueuedCompletionStatusEx(
@@ -19,14 +19,14 @@ lib LibC
     ulCount : ULong,
     ulNumEntriesRemoved : ULong*,
     dwMilliseconds : DWORD,
-    fAlertable : BOOL
+    fAlertable : BOOL,
   ) : BOOL
   fun CancelIoEx(
     hFile : HANDLE,
-    lpOverlapped : OVERLAPPED*
+    lpOverlapped : OVERLAPPED*,
   ) : BOOL
   fun CancelIo(
-    hFile : HANDLE
+    hFile : HANDLE,
   ) : BOOL
 
   fun DeviceIoControl(
@@ -37,6 +37,6 @@ lib LibC
     lpOutBuffer : Void*,
     nOutBufferSize : DWORD,
     lpBytesReturned : DWORD*,
-    lpOverlapped : OVERLAPPED*
+    lpOverlapped : OVERLAPPED*,
   ) : BOOL
 end
