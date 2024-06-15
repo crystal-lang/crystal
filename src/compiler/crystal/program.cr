@@ -504,7 +504,7 @@ module Crystal
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
 
-    def run_requires(node : Require, filenames) : Nil
+    def run_requires(node : Require, filenames, &) : Nil
       dependency_printer = compiler.try(&.dependency_printer)
 
       filenames.each do |filename|
