@@ -845,6 +845,21 @@ struct Slice(T)
     {% end %}
   end
 
+  # Returns `true` if `self` and *other* point to the same memory, i.e. pointer
+  # and size are identical.
+  #
+  # ```
+  # slice = Slice[1, 2, 3]
+  # slice.same?(slice)           # => true
+  # slice == Slice[1, 2, 3]      # => false
+  # slice.same?(slice + 1)       # => false
+  # (slice + 1).same?(slice + 1) # => true
+  # slice.same?(slice[0, 2])     # => false
+  # ```
+  def same?(other : self) : Bool
+    to_unsafe == other.to_unsafe && size == other.size
+  end
+
   def to_slice : self
     self
   end
