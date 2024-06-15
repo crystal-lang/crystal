@@ -68,8 +68,9 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
-    fds = Crystal::System::Socket.socketpair(type, Protocol::IP)
-    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
+    Crystal::System::Socket
+      .socketpair(type, Protocol::IP)
+      .map { |fd| UNIXSocket.new(fd: fd, type: type) }
   end
 
   # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
