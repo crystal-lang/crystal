@@ -1476,7 +1476,7 @@ module Crystal
         # this formats `def foo # ...` to `def foo(&) # ...` for yielding
         # methods before consuming the comment line
         if node.block_arity && node.args.empty? && !node.block_arg && !node.double_splat
-          write "(&)" if flag?("method_signature_yield")
+          write "(&)"
         end
 
         skip_space consume_newline: false
@@ -1523,7 +1523,7 @@ module Crystal
     end
 
     def format_def_args(node : Def | Macro)
-      yields = node.is_a?(Def) && !node.block_arity.nil? && flag?("method_signature_yield")
+      yields = node.is_a?(Def) && !node.block_arity.nil?
       format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat, yields
     end
 
@@ -1681,7 +1681,7 @@ module Crystal
       elsif @token.type.op_rparen? && has_more && !just_wrote_newline
         # if we found a `)` and there are still more parameters to write, it
         # must have been a missing `&` for a def that yields
-        write " " if flag?("method_signature_yield")
+        write " "
       end
 
       just_wrote_newline
