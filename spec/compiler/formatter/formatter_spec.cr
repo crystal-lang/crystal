@@ -1522,14 +1522,14 @@ describe Crystal::Formatter do
   assert_format "foo = 1\n->foo.[](Int32)"
   assert_format "foo = 1\n->foo.[]=(Int32)"
 
-  assert_format "->{ x }"
-  assert_format "->{\nx\n}", "->{\n  x\n}"
-  assert_format "->do\nx\nend", "->do\n  x\nend"
-  assert_format "->( ){ x }", "->{ x }"
-  assert_format "->() do x end", "->do x end"
+  assert_format "-> { x }"
+  assert_format "->{\nx\n}", "-> {\n  x\n}"
+  assert_format "->do\nx\nend", "-> do\n  x\nend"
+  assert_format "->( ){ x }", "-> { x }"
+  assert_format "->() do x end", "-> do x end"
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
-  assert_format "->{}"
+  assert_format "-> { }"
 
   # #13232
   assert_format "->{}", "-> { }", flags: %w[proc_literal_whitespace]
@@ -1539,17 +1539,17 @@ describe Crystal::Formatter do
   assert_format "-> : Int32 {}", "-> : Int32 { }", flags: %w[proc_literal_whitespace]
   assert_format "->do\nend", "-> do\nend", flags: %w[proc_literal_whitespace]
 
-  assert_format "-> : Int32 {}"
+  assert_format "-> : Int32 { }"
   assert_format "-> : Int32 | String { 1 }"
-  assert_format "-> : Array(Int32) {}"
-  assert_format "-> : Int32? {}"
-  assert_format "-> : Int32* {}"
-  assert_format "-> : Int32[1] {}"
-  assert_format "-> : {Int32, String} {}"
+  assert_format "-> : Array(Int32) { }"
+  assert_format "-> : Int32? { }"
+  assert_format "-> : Int32* { }"
+  assert_format "-> : Int32[1] { }"
+  assert_format "-> : {Int32, String} { }"
   assert_format "-> : {Int32} { String }"
-  assert_format "-> : {x: Int32, y: String} {}"
+  assert_format "-> : {x: Int32, y: String} { }"
   assert_format "->\n:\nInt32\n{\n}", "-> : Int32 {\n}"
-  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 {}"
+  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 { }"
   assert_format "->: Int32 do\nx\nend", "-> : Int32 do\n  x\nend"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
@@ -1741,12 +1741,12 @@ describe Crystal::Formatter do
   assert_format "a = 1\n;\nb = 2", "a = 1\nb = 2"
   assert_format "foo do\n  # bar\nend"
   assert_format "abstract def foo\nabstract def bar"
-  assert_format "if 1\n  ->{ 1 }\nend"
+  assert_format "if 1\n  -> { 1 }\nend"
   assert_format "foo.bar do\n  baz\n    .b\nend"
   assert_format "coco.lala\nfoo\n  .bar"
   assert_format "foo.bar = \n1", "foo.bar =\n  1"
   assert_format "foo.bar += \n1", "foo.bar +=\n  1"
-  assert_format "->{}"
+  assert_format "-> { }"
   assert_format "foo &.[a] = 1"
   assert_format "[\n  # foo\n  1,\n\n  # bar\n  2,\n]"
   assert_format "[c.x]\n  .foo"
@@ -1754,11 +1754,11 @@ describe Crystal::Formatter do
   assert_format "bar = foo([\n  1,\n  2,\n  3,\n])"
   assert_format "foo({\n  1 => 2,\n  3 => 4,\n  5 => 6,\n})"
   assert_format "bar = foo({\n        1 => 2,\n        3 => 4,\n        5 => 6,\n      })", "bar = foo({\n  1 => 2,\n  3 => 4,\n  5 => 6,\n})"
-  assert_format "foo(->{\n  1 + 2\n})"
-  assert_format "bar = foo(->{\n  1 + 2\n})"
-  assert_format "foo(->do\n  1 + 2\nend)"
-  assert_format "bar = foo(->do\n  1 + 2\nend)"
-  assert_format "bar = foo(->{\n  1 + 2\n})"
+  assert_format "foo(-> {\n  1 + 2\n})"
+  assert_format "bar = foo(-> {\n  1 + 2\n})"
+  assert_format "foo(-> do\n  1 + 2\nend)"
+  assert_format "bar = foo(-> do\n  1 + 2\nend)"
+  assert_format "bar = foo(-> {\n  1 + 2\n})"
   assert_format "case 1\nwhen 2\n  3\n  # foo\nelse\n  4\n  # bar\nend"
   assert_format "1 #=> 2", "1 # => 2"
   assert_format "1 #=>2", "1 # => 2"
@@ -2138,7 +2138,7 @@ describe Crystal::Formatter do
 
   assert_format "alias X = ((Y, Z) ->)"
 
-  assert_format "def x(@y = ->(z) {})\nend"
+  assert_format "def x(@y = ->(z) { })\nend"
 
   assert_format "class X; annotation  FooAnnotation  ;  end ; end", "class X\n  annotation FooAnnotation; end\nend"
   assert_format "class X\n annotation  FooAnnotation  \n  end \n end", "class X\n  annotation FooAnnotation\n  end\nend"
@@ -2549,7 +2549,7 @@ describe Crystal::Formatter do
   assert_format "a &.!.!"
 
   assert_format <<-CRYSTAL
-    ->{
+    -> {
       # first comment
       puts "hi"
       # second comment

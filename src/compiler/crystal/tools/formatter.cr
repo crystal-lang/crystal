@@ -4272,7 +4272,7 @@ module Crystal
         skip_space_or_newline
       end
 
-      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace")
+      write " "
 
       is_do = false
       if @token.keyword?(:do)
@@ -4280,7 +4280,7 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop) && flag?("proc_literal_whitespace")
+        write " " if a_def.body.is_a?(Nop)
       end
       skip_space
 
