@@ -254,7 +254,7 @@ module Crystal
       program.compiler = self
       program.filename = sources.first.filename
       program.codegen_target = codegen_target
-      program.target_machine = target_machine
+      program.target_machine = create_target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
@@ -662,6 +662,10 @@ module Crystal
     end
 
     getter(target_machine : LLVM::TargetMachine) do
+      create_target_machine
+    end
+
+    def create_target_machine
       @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @optimization_mode, @mcmodel)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold

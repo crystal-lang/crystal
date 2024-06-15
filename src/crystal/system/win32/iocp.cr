@@ -2,7 +2,8 @@
 require "c/handleapi"
 require "crystal/system/thread_linked_list"
 
-module IO::Overlapped
+# :nodoc:
+module Crystal::IOCP
   # :nodoc:
   class CompletionKey
     property fiber : Fiber?
@@ -156,7 +157,7 @@ module IO::Overlapped
   end
 
   # Returns `false` if the operation timed out.
-  def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
+  def self.schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
     if timeout
       timeout_event = Crystal::IOCP::Event.new(Fiber.current)
       timeout_event.add(timeout)
@@ -173,7 +174,7 @@ module IO::Overlapped
     event_loop.dequeue(timeout_event)
   end
 
-  def overlapped_operation(handle, method, timeout, *, writing = false, &)
+  def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
     OverlappedOperation.run(handle) do |operation|
       result, value = yield operation.start
 
@@ -186,9 +187,9 @@ module IO::Overlapped
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: self
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: target
         else
-          raise IO::Error.from_os_error(method, error, target: self)
+          raise IO::Error.from_os_error(method, error, target: target)
         end
       else
         operation.done!
@@ -211,7 +212,7 @@ module IO::Overlapped
     end
   end
 
-  def wsa_overlapped_operation(socket, method, timeout, connreset_is_error = true, &)
+  def self.wsa_overlapped_operation(target, socket, method, timeout, connreset_is_error = true, &)
     OverlappedOperation.run(socket) do |operation|
       result, value = yield operation.start
 
@@ -220,7 +221,7 @@ module IO::Overlapped
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
         else
-          raise IO::Error.from_os_error(method, error, target: self)
+          raise IO::Error.from_os_error(method, error, target: target)
         end
       else
         operation.done!
@@ -232,7 +233,7 @@ module IO::Overlapped
       operation.wsa_result(socket) do |error|
         case error
         when .wsa_io_incomplete?
-          raise TimeoutError.new("#{method} timed out")
+          raise IO::TimeoutError.new("#{method} timed out")
         when .wsaeconnreset?
           return 0_u32 unless connreset_is_error
         end
