@@ -20,7 +20,8 @@ describe IO::FileDescriptor do
       a.close
       b.close
 
-      IO::FileDescriptor.new(a.fd)
+      fd = IO::FileDescriptor.new(a.fd)
+      fd.closed?.should be_true
     end
   end
 
