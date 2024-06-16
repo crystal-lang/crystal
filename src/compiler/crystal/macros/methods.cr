@@ -1986,6 +1986,18 @@ module Crystal
         interpret_check_args { self }
       when "resolve?"
         interpret_check_args { self }
+      when "private?"
+        interpret_check_args { BoolLiteral.new(type.private?) }
+      when "public?"
+        interpret_check_args { BoolLiteral.new(!type.private?) }
+      when "visibility"
+        interpret_check_args do
+          if type.private?
+            SymbolLiteral.new("private")
+          else
+            SymbolLiteral.new("public")
+          end
+        end
       else
         super
       end

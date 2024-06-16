@@ -873,6 +873,76 @@ describe "Array" do
     end
   end
 
+  describe "insert_all" do
+    it "inserts with index 0" do
+      a = [2, 3]
+      a.insert_all(0, [0, 1]).should be a
+      a.should eq([0, 1, 2, 3])
+    end
+
+    it "inserts with positive index" do
+      a = [1, 2, 5, 6]
+      a.insert_all(2, [3, 4]).should be a
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "inserts with index of #size" do
+      a = [1, 2, 3]
+      a.insert_all(a.size, [4, 5]).should be a
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "inserts with negative index" do
+      a = [1, 2, 3]
+      a.insert_all(-1, [4, 5]).should be a
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "inserts with negative index (2)" do
+      a = [1, 2, 5, 6]
+      a.insert_all(-3, [3, 4]).should be a
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "inserts when empty" do
+      a = [] of Int32
+      a.insert_all(0, [1, 2, 3]).should be a
+      a.should eq([1, 2, 3])
+    end
+
+    it "inserts when other is empty" do
+      a = [1, 2, 3]
+      a.insert_all(1, [] of Int32).should be a
+      a.should eq([1, 2, 3])
+    end
+
+    it "raises with index greater than size" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.insert_all(4, [4, 5])
+      end
+    end
+
+    it "raises with negative index greater than size" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.insert_all(-5, [4, 5])
+      end
+    end
+
+    it "inserts indexable" do
+      a = [1, 9, 10]
+      a.insert_all(1, Slice.new(3, 8)).should be a
+      a.should eq([1, 8, 8, 8, 9, 10])
+
+      a.insert_all(-6, StaticArray(Int32, 3).new { |i| i + 2 }).should be a
+      a.should eq([1, 2, 3, 4, 8, 8, 8, 9, 10])
+
+      a.insert_all(4, Deque{5, 6, 7}).should be a
+      a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9, 10])
+    end
+  end
+
   describe "inspect" do
     it { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
   end

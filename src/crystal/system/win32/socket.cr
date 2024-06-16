@@ -1,10 +1,8 @@
 require "c/mswsock"
 require "c/ioapiset"
-require "io/overlapped"
+require "crystal/system/win32/iocp"
 
 module Crystal::System::Socket
-  include IO::Overlapped
-
   alias Handle = LibC::SOCKET
 
   # Initialize WSA
@@ -131,7 +129,7 @@ module Crystal::System::Socket
 
   # :nodoc:
   def overlapped_connect(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
+    IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -148,7 +146,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      schedule_overlapped(read_timeout || 1.seconds)
+      IOCP.schedule_overlapped(read_timeout || 1.seconds)
 
       operation.wsa_result(socket) do |error|
         case error
@@ -197,7 +195,7 @@ module Crystal::System::Socket
   end
 
   def overlapped_accept(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
+    IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -212,7 +210,7 @@ module Crystal::System::Socket
         return true
       end
 
-      unless schedule_overlapped(read_timeout)
+      unless IOCP.schedule_overlapped(read_timeout)
         raise IO::TimeoutError.new("#{method} timed out")
       end
 

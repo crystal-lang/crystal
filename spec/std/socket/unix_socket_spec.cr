@@ -101,6 +101,9 @@ describe UNIXSocket do
 
         (left.recv_buffer_size = size).should eq(size)
         sizes.should contain(left.recv_buffer_size)
+
+        left.close_on_exec?.should be_true
+        right.close_on_exec?.should be_true
       end
     end
   {% end %}

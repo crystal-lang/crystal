@@ -1,13 +1,6 @@
 require "./event_libevent"
 
 # :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::LibEvent::EventLoop.new
-  end
-end
-
-# :nodoc:
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   private getter(event_base) { Crystal::LibEvent::Event::Base.new }
 
@@ -155,7 +148,13 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def accept(socket : ::Socket) : ::Socket::Handle?
     loop do
-      client_fd = LibC.accept(socket.fd, nil, nil)
+      client_fd =
+        {% if LibC.has_method?(:accept4) %}
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+        {% else %}
+          LibC.accept(socket.fd, nil, nil)
+        {% end %}
+
       if client_fd == -1
         if socket.closed?
           return
@@ -168,6 +167,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
           raise ::Socket::Error.from_errno("accept")
         end
       else
+        {% unless LibC.has_method?(:accept4) %}
+          Crystal::System::Socket.fcntl(client_fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        {% end %}
         return client_fd
       end
     end

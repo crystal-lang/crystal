@@ -92,14 +92,14 @@ class Time::Location
         path = File.join(source, name)
       end
 
-      return source if File.exists?(path) && File.file?(path) && File.readable?(path)
+      return source if File.exists?(path) && File.file?(path) && File::Info.readable?(path)
     end
   end
 
   # :nodoc:
   def self.find_android_tzdata_file(sources : Enumerable(String)) : String?
     sources.find do |path|
-      File.exists?(path) && File.file?(path) && File.readable?(path)
+      File.exists?(path) && File.file?(path) && File::Info.readable?(path)
     end
   end
 

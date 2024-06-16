@@ -2,11 +2,9 @@ require "c/io"
 require "c/consoleapi"
 require "c/consoleapi2"
 require "c/winnls"
-require "io/overlapped"
+require "crystal/system/win32/iocp"
 
 module Crystal::System::FileDescriptor
-  include IO::Overlapped
-
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
   # NOTE: this should really be `LibC::HANDLE`, here it is an integer type of
@@ -259,8 +257,8 @@ module Crystal::System::FileDescriptor
     handle = windows_handle(fd)
 
     overlapped = LibC::OVERLAPPED.new
-    overlapped.union.offset.offset = LibC::DWORD.new(offset)
-    overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
+    overlapped.union.offset.offset = LibC::DWORD.new!(offset)
+    overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
       return 0_i64 if error == WinError::ERROR_HANDLE_EOF
