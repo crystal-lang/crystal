@@ -101,8 +101,8 @@ module Indexable(T)
   # ary[-1]? # => 'c'
   # ary[-2]? # => 'b'
   #
-  # ary[3]?  # nil
-  # ary[-4]? # nil
+  # ary[3]?  # => nil
+  # ary[-4]? # => nil
   # ```
   @[AlwaysInline]
   def []?(index : Int)
