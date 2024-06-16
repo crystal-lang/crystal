@@ -43,19 +43,19 @@ class IO::FileDescriptor < IO
     @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
 
-    unless @closed
-      if blocking.nil?
-        blocking =
-          case system_info.type
-          when .pipe?, .socket?, .character_device?
-            false
-          else
-            true
-          end
-      end
+    return if @closed
 
-      system_blocking_init(blocking)
+    if blocking.nil?
+      blocking =
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          false
+        else
+          true
+        end
     end
+
+    system_blocking_init(blocking)
   end
 
   # :nodoc:
