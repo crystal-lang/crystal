@@ -41,6 +41,7 @@ class IO::FileDescriptor < IO
 
   def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
+    @closed = true
     @closed = system_closed?
 
     return if @closed
