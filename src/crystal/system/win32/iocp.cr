@@ -70,7 +70,7 @@ module Crystal::IOCP
     end
 
     @overlapped = LibC::OVERLAPPED.new
-    @fiber : Fiber? = nil
+    @fiber = Fiber.current
     @state : State = :initialized
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
@@ -92,7 +92,6 @@ module Crystal::IOCP
 
     def start
       raise Exception.new("Invalid state #{@state}") unless @state.initialized?
-      @fiber = Fiber.current
       @state = State::STARTED
       self
     end
@@ -131,7 +130,7 @@ module Crystal::IOCP
     protected def schedule(&)
       case @state
       when .started?
-        yield @fiber.not_nil!
+        yield @fiber
         done!
       when .cancelled?
         @@canceled.delete(self)
