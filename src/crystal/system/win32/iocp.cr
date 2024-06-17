@@ -94,12 +94,16 @@ module Crystal::IOCP
       raise Exception.new("Invalid state #{@state}") unless @state.initialized?
       @fiber = Fiber.current
       @state = State::STARTED
+      self
+    end
+
+    def to_unsafe
       pointerof(@overlapped)
     end
 
     def result(handle, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
-      result = LibC.GetOverlappedResult(handle, pointerof(@overlapped), out bytes, 0)
+      result = LibC.GetOverlappedResult(handle, self, out bytes, 0)
       if result.zero?
         error = WinError.value
         yield error
@@ -113,7 +117,7 @@ module Crystal::IOCP
     def wsa_result(socket, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
-      result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
+      result = LibC.WSAGetOverlappedResult(socket, self, out bytes, false, pointerof(flags))
       if result.zero?
         error = WinError.wsa_value
         yield error
@@ -144,7 +148,7 @@ module Crystal::IOCP
         # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
         # > The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        if LibC.CancelIoEx(handle, self) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
