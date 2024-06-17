@@ -63,7 +63,6 @@ module Crystal::IOCP
 
   class OverlappedOperation
     enum State
-      INITIALIZED
       STARTED
       DONE
       CANCELLED
@@ -71,7 +70,7 @@ module Crystal::IOCP
 
     @overlapped = LibC::OVERLAPPED.new
     @fiber = Fiber.current
-    @state : State = :initialized
+    @state : State = :started
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
@@ -88,12 +87,6 @@ module Crystal::IOCP
     def self.unbox(overlapped : LibC::OVERLAPPED*)
       start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
       Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
-    end
-
-    def start
-      raise Exception.new("Invalid state #{@state}") unless @state.initialized?
-      @state = State::STARTED
-      self
     end
 
     def to_unsafe
@@ -179,7 +172,7 @@ module Crystal::IOCP
 
   def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
     OverlappedOperation.run(handle) do |operation|
-      result, value = yield operation.start
+      result, value = yield operation
 
       if result == 0
         case error = WinError.value
@@ -217,7 +210,7 @@ module Crystal::IOCP
 
   def self.wsa_overlapped_operation(target, socket, method, timeout, connreset_is_error = true, &)
     OverlappedOperation.run(socket) do |operation|
-      result, value = yield operation.start
+      result, value = yield operation
 
       if result == LibC::SOCKET_ERROR
         case error = WinError.wsa_value
