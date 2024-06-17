@@ -40,7 +40,8 @@ module Crystal::IOCP
       # I/O operations, including socket ones, do not set this field
       case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
       when Nil
-        OverlappedOperation.schedule(entry.lpOverlapped) { |fiber| yield fiber }
+        operation = OverlappedOperation.unbox(entry.lpOverlapped)
+        operation.schedule { |fiber| yield fiber }
       else
         case entry.dwNumberOfBytesTransferred
         when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
@@ -84,10 +85,9 @@ module Crystal::IOCP
       end
     end
 
-    def self.schedule(overlapped : LibC::OVERLAPPED*, &)
+    def self.unbox(overlapped : LibC::OVERLAPPED*)
       start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
-      operation = Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
-      operation.schedule { |fiber| yield fiber }
+      Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
     end
 
     def start
