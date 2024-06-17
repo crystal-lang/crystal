@@ -105,7 +105,7 @@ module Crystal::IOCP
     end
 
     def wait_for_result(timeout, &)
-      IOCP.schedule_overlapped(timeout)
+      wait_for_completion(timeout)
 
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       result = LibC.GetOverlappedResult(@handle, pointerof(@overlapped), out bytes, 0)
@@ -120,7 +120,7 @@ module Crystal::IOCP
     end
 
     def wait_for_wsa_result(timeout, &)
-      IOCP.schedule_overlapped(timeout)
+      wait_for_completion(timeout)
 
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
@@ -163,24 +163,23 @@ module Crystal::IOCP
     def done!
       @state = :done
     end
-  end
 
-  # Returns `false` if the operation timed out.
-  def self.schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
-    if timeout
-      timeout_event = Crystal::IOCP::Event.new(Fiber.current)
-      timeout_event.add(timeout)
-    else
-      timeout_event = Crystal::IOCP::Event.new(Fiber.current, Time::Span::MAX)
+    private def wait_for_completion(timeout)
+      if timeout
+        timeout_event = Crystal::IOCP::Event.new(Fiber.current)
+        timeout_event.add(timeout)
+      else
+        timeout_event = Crystal::IOCP::Event.new(Fiber.current, Time::Span::MAX)
+      end
+      # memoize event loop to make sure that we still target the same instance
+      # after wakeup (guaranteed by current MT model but let's be future proof)
+      event_loop = Crystal::EventLoop.current
+      event_loop.enqueue(timeout_event)
+
+      Fiber.suspend
+
+      event_loop.dequeue(timeout_event)
     end
-    # memoize event loop to make sure that we still target the same instance
-    # after wakeup (guaranteed by current MT model but let's be future proof)
-    event_loop = Crystal::EventLoop.current
-    event_loop.enqueue(timeout_event)
-
-    Fiber.suspend
-
-    event_loop.dequeue(timeout_event)
   end
 
   def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
