@@ -104,7 +104,9 @@ module Crystal::IOCP
       pointerof(@overlapped)
     end
 
-    def result(&)
+    def wait_for_result(timeout, &)
+      IOCP.schedule_overlapped(timeout)
+
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       result = LibC.GetOverlappedResult(@handle, pointerof(@overlapped), out bytes, 0)
       if result.zero?
@@ -117,7 +119,9 @@ module Crystal::IOCP
       bytes
     end
 
-    def wsa_result(&)
+    def wait_for_wsa_result(timeout, &)
+      IOCP.schedule_overlapped(timeout)
+
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(LibC::SOCKET.new(@handle.address), pointerof(@overlapped), out bytes, false, pointerof(flags))
@@ -201,9 +205,7 @@ module Crystal::IOCP
         return value
       end
 
-      schedule_overlapped(timeout)
-
-      operation.result do |error|
+      operation.wait_for_result(timeout) do |error|
         case error
         when .error_io_incomplete?
           raise IO::TimeoutError.new("#{method} timed out")
@@ -233,9 +235,7 @@ module Crystal::IOCP
         return value
       end
 
-      schedule_overlapped(timeout)
-
-      operation.wsa_result do |error|
+      operation.wait_for_wsa_result(timeout) do |error|
         case error
         when .wsa_io_incomplete?
           raise IO::TimeoutError.new("#{method} timed out")
