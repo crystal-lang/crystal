@@ -11,7 +11,6 @@ describe Pointer::Appender do
     4.times do |i|
       appender << (i + 1) * 2
     end
-    appender.size.should eq 4
 
     data.should eq Slice[2, 4, 6, 8, 0]
   end
@@ -22,6 +21,7 @@ describe Pointer::Appender do
     appender.size.should eq 0
     4.times do |i|
       appender << 0
+      appender.size.should eq i + 1
     end
     appender.size.should eq 4
   end
