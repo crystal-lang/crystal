@@ -216,6 +216,8 @@ module Crystal::System::Socket
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
+        when .error_operation_aborted?
+          raise IO::TimeoutError.new("#{method} timed out")
         end
       end
 
