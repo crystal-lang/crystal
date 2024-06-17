@@ -138,8 +138,8 @@ module Crystal::IOCP
     protected def schedule(&)
       case @state
       when .started?
-        yield @fiber
         done!
+        yield @fiber
       when .cancelled?
         @@canceled.delete(self)
       else
@@ -161,24 +161,41 @@ module Crystal::IOCP
     end
 
     def done!
+      @fiber.cancel_timeout
       @state = :done
+    end
+
+    def cancel! : Bool
+      # Microsoft documentation:
+      # The application must not free or reuse the OVERLAPPED structure
+      # associated with the canceled I/O operations until they have completed
+      # (this does not apply to asynchronous operations that finished
+      # synchronously, as nothing would be queued to the IOCP)
+      ret = LibC.CancelIoEx(@handle, self)
+      if ret.zero?
+        case error = WinError.value
+        when .error_not_found?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise RuntimeError.from_os_error("CancelIOEx", os_error: error)
+        end
+      end
+      true
     end
 
     def wait_for_completion(timeout)
       if timeout
-        timeout_event = Crystal::IOCP::Event.new(Fiber.current)
-        timeout_event.add(timeout)
+        sleep timeout
       else
-        timeout_event = Crystal::IOCP::Event.new(Fiber.current, Time::Span::MAX)
+        Fiber.suspend
       end
-      # memoize event loop to make sure that we still target the same instance
-      # after wakeup (guaranteed by current MT model but let's be future proof)
-      event_loop = Crystal::EventLoop.current
-      event_loop.enqueue(timeout_event)
 
-      Fiber.suspend
-
-      event_loop.dequeue(timeout_event)
+      unless @state.done?
+        if cancel!
+          Fiber.suspend
+        end
+      end
     end
   end
 
