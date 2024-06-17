@@ -75,12 +75,19 @@ module Crystal::IOCP
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
 
+    def initialize(@handle : LibC::HANDLE)
+    end
+
+    def initialize(handle : LibC::SOCKET)
+      @handle = LibC::HANDLE.new(handle)
+    end
+
     def self.run(handle, &)
-      operation = OverlappedOperation.new
+      operation = OverlappedOperation.new(handle)
       begin
         yield operation
       ensure
-        operation.done(handle)
+        operation.done
       end
     end
 
@@ -97,9 +104,9 @@ module Crystal::IOCP
       pointerof(@overlapped)
     end
 
-    def result(handle, &)
+    def result(&)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
-      result = LibC.GetOverlappedResult(handle, pointerof(@overlapped), out bytes, 0)
+      result = LibC.GetOverlappedResult(@handle, pointerof(@overlapped), out bytes, 0)
       if result.zero?
         error = WinError.value
         yield error
@@ -110,10 +117,10 @@ module Crystal::IOCP
       bytes
     end
 
-    def wsa_result(socket, &)
+    def wsa_result(&)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
-      result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
+      result = LibC.WSAGetOverlappedResult(LibC::SOCKET.new(@handle.address), pointerof(@overlapped), out bytes, false, pointerof(flags))
       if result.zero?
         error = WinError.wsa_value
         yield error
@@ -136,15 +143,13 @@ module Crystal::IOCP
       end
     end
 
-    protected def done(handle)
+    protected def done
       case @state
       when .started?
-        handle = LibC::HANDLE.new(handle) if handle.is_a?(LibC::SOCKET)
-
         # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
         # > The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        if LibC.CancelIoEx(@handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
@@ -198,7 +203,7 @@ module Crystal::IOCP
 
       schedule_overlapped(timeout)
 
-      operation.result(handle) do |error|
+      operation.result do |error|
         case error
         when .error_io_incomplete?
           raise IO::TimeoutError.new("#{method} timed out")
@@ -230,7 +235,7 @@ module Crystal::IOCP
 
       schedule_overlapped(timeout)
 
-      operation.wsa_result(socket) do |error|
+      operation.wsa_result do |error|
         case error
         when .wsa_io_incomplete?
           raise IO::TimeoutError.new("#{method} timed out")

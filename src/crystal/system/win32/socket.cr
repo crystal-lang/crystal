@@ -148,7 +148,7 @@ module Crystal::System::Socket
 
       IOCP.schedule_overlapped(read_timeout || 1.seconds)
 
-      operation.wsa_result(socket) do |error|
+      operation.wsa_result do |error|
         case error
         when .wsa_io_incomplete?, .wsaeconnrefused?
           return ::Socket::ConnectError.from_os_error(method, error)
@@ -214,7 +214,7 @@ module Crystal::System::Socket
         raise IO::TimeoutError.new("#{method} timed out")
       end
 
-      operation.wsa_result(socket) do |error|
+      operation.wsa_result do |error|
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
