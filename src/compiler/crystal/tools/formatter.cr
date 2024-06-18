@@ -1651,7 +1651,7 @@ module Crystal
       yield
 
       # Write "," before skipping spaces to prevent inserting comment between argument and comma.
-      write "," if has_more || (write_trailing_comma && flag?("def_trailing_comma"))
+      write "," if has_more || (wrote_newline && @token.type.op_comma?) || (write_trailing_comma && flag?("def_trailing_comma"))
 
       just_wrote_newline = skip_space
       if @token.type.newline?

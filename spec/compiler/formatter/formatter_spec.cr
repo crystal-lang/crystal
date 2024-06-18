@@ -812,7 +812,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(x,
-              y)
+              y,)
         yield
       end
       CRYSTAL
@@ -888,7 +888,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(
-        x
+        x,
       )
         yield
       end
@@ -900,6 +900,39 @@ describe Crystal::Formatter do
       end
       CRYSTAL
   end
+
+  # Allows trailing commas, but doesn't enforce them
+  assert_format <<-CRYSTAL
+    def foo(
+      a,
+      b
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    def foo(
+      a,
+      b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    macro foo(
+      a,
+      *b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    macro foo(
+      a,
+      **b,
+    )
+    end
+    CRYSTAL
 
   context "adds trailing comma to def multi-line normal, splat, and double splat parameters" do
     assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
