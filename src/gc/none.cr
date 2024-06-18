@@ -160,8 +160,15 @@ module GC
 
   # :nodoc:
   class_property(sig_suspend : Int32) do
+    # follows bdwgc
     {% if flag?(:unix) %}
-      LibC::SIGUSR1
+      {% if flag?(:linux) %}
+        LibC::SIGPWR
+      {% elsif LibC.has_constant?(:SIGRTMIN) %}
+        LibC::SIGRTMIN + 6
+      {% else %}
+        LibC::SIGXFSZ
+      {% end %}
     {% else %}
       -1
     {% end %}
@@ -169,8 +176,13 @@ module GC
 
   # :nodoc:
   class_property(sig_resume : Int32) do
+    # follows bdwgc
     {% if flag?(:unix) %}
-      LibC::SIGUSR2
+      {% if LibC.has_constant?(:SIGRTMIN) %}
+        LibC::SIGRTMIN + 5
+      {% else %}
+        LibC::SIGXCPU
+      {% end %}
     {% else %}
       -1
     {% end %}
