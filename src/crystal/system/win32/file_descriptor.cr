@@ -90,8 +90,19 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new("Crystal::System::FileDescriptor#system_close_on_exec=") if close_on_exec
   end
 
-  private def system_closed?
-    false
+  private def system_closed? : Bool
+    file_type = LibC.GetFileType(windows_handle)
+
+    if file_type == LibC::FILE_TYPE_UNKNOWN
+      case error = WinError.value
+      when .error_invalid_handle?
+        return true
+      else
+        raise IO::Error.from_os_error("Unable to get info", error, target: self)
+      end
+    else
+      false
+    end
   end
 
   def self.fcntl(fd, cmd, arg = 0)
