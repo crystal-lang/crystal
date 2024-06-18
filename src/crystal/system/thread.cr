@@ -26,11 +26,11 @@ module Crystal::System::Thread
 
   # def self.init_suspend_resume : Nil
 
-  # def system_suspend : Nil
+  # private def system_suspend : Nil
 
-  # def system_wait_suspended : Nil
+  # private def system_wait_suspended : Nil
 
-  # def system_resume : Nil
+  # private def system_resume : Nil
 end
 
 {% if flag?(:wasi) %}

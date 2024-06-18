@@ -92,13 +92,13 @@ module Crystal::System::Thread
   def self.init_suspend_resume : Nil
   end
 
-  def system_suspend : Nil
+  private def system_suspend : Nil
     if LibC.SuspendThread(@system_handle) == -1
       Crystal::System.panic("SuspendThread()")
     end
   end
 
-  def system_wait_suspended : Nil
+  private def system_wait_suspended : Nil
     # context must be aligned on 16 bytes but we lack a mean to force the
     # alignment on the struct, so we overallocate then realign the pointer:
     #
@@ -113,7 +113,7 @@ module Crystal::System::Thread
     end
   end
 
-  def system_resume : Nil
+  private def system_resume : Nil
     if LibC.ResumeThread(@system_handle) == -1
       Crystal::System.panic("ResumeThread()")
     end
