@@ -4281,7 +4281,7 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if (a_def.body.is_a?(Nop) && flag?("proc_literal_whitespace")) || (@token.type.space? && a_def.body.is_a?(Nop))
+        write " " if a_def.body.is_a?(Nop) && (flag?("proc_literal_whitespace") || @token.type.space?)
       end
       skip_space
 
