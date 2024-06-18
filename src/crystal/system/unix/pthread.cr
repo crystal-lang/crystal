@@ -1,5 +1,6 @@
 require "c/pthread"
 require "c/sched"
+require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::PthreadT
@@ -166,18 +167,18 @@ module Crystal::System::Thread
     action.sa_flags = LibC::SA_SIGINFO
     action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
       # notify that the thread has been interrupted
-      Thread.current.@suspended.set(true)
+      Thread.current_thread.@suspended.set(true)
 
       # block all signals but sig_resume
       mask = LibC::SigsetT.new
       LibC.sigfillset(pointerof(mask))
-      LibC.sigdelset(pointerof(mask), sig_resume)
+      LibC.sigdelset(pointerof(mask), GC.sig_resume)
 
       # suspend the thread until it receives the sig_resume signal
       LibC.sigsuspend(pointerof(mask))
     end
     LibC.sigemptyset(pointerof(action.@sa_mask))
-    LibC.sigaction(sig_suspend, pointerof(action), nil)
+    LibC.sigaction(GC.sig_suspend, pointerof(action), nil)
   end
 
   private def self.install_sig_resume_signal_handler
@@ -187,26 +188,26 @@ module Crystal::System::Thread
       # do nothing (a handler is still required to receive the signal)
     end
     LibC.sigemptyset(pointerof(action.@sa_mask))
-    LibC.sigaction(sig_resume, pointerof(action), nil)
+    LibC.sigaction(GC.sig_resume, pointerof(action), nil)
   end
 
-  def system_suspend : Nil
+  private def system_suspend : Nil
     @suspended.set(false)
 
     if LibC.pthread_kill(@system_handle, GC.sig_suspend) == -1
-      Crystal::System.panic("pthread_kill()")
+      System.panic("pthread_kill()")
     end
   end
 
-  def system_wait_suspended : Nil
+  private def system_wait_suspended : Nil
     until @suspended.get
-      Thread.yield
+      Thread.yield_current
     end
   end
 
-  def system_resume : Nil
+  private def system_resume : Nil
     if LibC.pthread_kill(@system_handle, GC.sig_resume) == -1
-      Crystal::System.panic("pthread_kill()")
+      System.panic("pthread_kill()")
     end
   end
 end

@@ -1,5 +1,6 @@
 require "c/processthreadsapi"
 require "c/synchapi"
+require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::HANDLE
