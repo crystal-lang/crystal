@@ -153,6 +153,62 @@ module Crystal::System::Thread
     {% end %}
     name
   end
+
+  @suspended = Atomic(Bool).new(false)
+
+  def self.init_suspend_resume : Nil
+    install_sig_suspend_signal_handler
+    install_sig_resume_signal_handler
+  end
+
+  private def self.install_sig_suspend_signal_handler
+    action = LibC::Sigaction.new
+    action.sa_flags = LibC::SA_SIGINFO
+    action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
+      # notify that the thread has been interrupted
+      Thread.current.@suspended.set(true)
+
+      # block all signals but sig_resume
+      mask = LibC::SigsetT.new
+      LibC.sigfillset(pointerof(mask))
+      LibC.sigdelset(pointerof(mask), sig_resume)
+
+      # suspend the thread until it receives the sig_resume signal
+      LibC.sigsuspend(pointerof(mask))
+    end
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+    LibC.sigaction(sig_suspend, pointerof(action), nil)
+  end
+
+  private def self.install_sig_resume_signal_handler
+    action = LibC::Sigaction.new
+    action.sa_flags = 0
+    action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
+      # do nothing (a handler is still required to receive the signal)
+    end
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+    LibC.sigaction(sig_resume, pointerof(action), nil)
+  end
+
+  def system_suspend : Nil
+    @suspended.set(false)
+
+    if LibC.pthread_kill(@system_handle, GC.sig_suspend) == -1
+      Crystal::System.panic("pthread_kill()")
+    end
+  end
+
+  def system_wait_suspended : Nil
+    until @suspended.get
+      Thread.yield
+    end
+  end
+
+  def system_resume : Nil
+    if LibC.pthread_kill(@system_handle, GC.sig_resume) == -1
+      Crystal::System.panic("pthread_kill()")
+    end
+  end
 end
 
 # In musl (alpine) the calls to unwind API segfaults

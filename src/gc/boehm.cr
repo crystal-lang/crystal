@@ -161,6 +161,14 @@ lib LibGC
   alias WarnProc = LibC::Char*, Word ->
   fun set_warn_proc = GC_set_warn_proc(WarnProc)
   $warn_proc = GC_current_warn_proc : WarnProc
+
+  fun get_suspend_signal = GC_get_suspend_signal : Int
+  fun get_thr_restart_signal = GC_get_thr_restart_signal : Int
+  fun set_suspend_signal = GC_set_suspend_signal(Int) : Int
+  fun set_thr_restart_signal = GC_set_thr_restart_signal(Int) : Int
+
+  fun stop_world_external = GC_stop_world_external
+  fun start_world_external = GC_start_world_external
 end
 
 module GC
@@ -470,4 +478,34 @@ module GC
       GC.unlock_write
     end
   {% end %}
+
+  # :nodoc:
+  def sig_suspend : Int32
+    LibGC.get_suspend_signal
+  end
+
+  # :nodoc:
+  def sig_suspend=(value : Int32) : Int32
+    LibGC.set_suspend_signal(value)
+  end
+
+  # :nodoc:
+  def sig_resume : Int32
+    LibGC.get_thr_restart_signal
+  end
+
+  # :nodoc:
+  def sig_resume=(value : Int32) : Int32
+    LibGC.set_thr_restart_signal(value)
+  end
+
+  # :nodoc:
+  def self.stop_world : Nil
+    LibGC.stop_world_external
+  end
+
+  # :nodoc:
+  def self.start_world : Nil
+    LibGC.start_world_external
+  end
 end

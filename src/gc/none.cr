@@ -5,6 +5,7 @@ require "crystal/tracing"
 
 module GC
   def self.init
+    Crystal::System::Thread.init_suspend_resume
   end
 
   # :nodoc:
@@ -135,5 +136,74 @@ module GC
 
   # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
+  end
+
+  # Stop and start the world.
+  #
+  # This isn't a GC-safe stop-the-world implementation (it may allocate objects
+  # while stopping the world), but the guarantees are enough for the purpose of
+  # gc_none.
+  #
+  # Thread safety is guaranteed by the mutex in Crystal::PointerLinkedList:
+  # either a thread is starting and hasn't added itself to the list (it will
+  # block until it can acquire the lock), or is currently adding itself (the
+  # current thread will block until it can acquire the lock).
+  #
+  # In both cases there can't be a deadlock since we won't suspend another
+  # thread until it has successfuly added (or removed) itself to the linked
+  # list and released the lock, and the other thread won't progress until it
+  # can add (or remove) itself from the list.
+  #
+  # Finally, we lock the mutex and keep it locked until we resume the world,
+  # so any thread waiting on the mutex will only be resumed when the world is
+  # resumed.
+
+  # :nodoc:
+  class_property(sig_suspend : Int32) do
+    {% if flag?(:unix) %}
+      LibC::SIGUSR1
+    {% else %}
+      -1
+    {% end %}
+  end
+
+  # :nodoc:
+  class_property(sig_resume : Int32) do
+    {% if flag?(:unix) %}
+      LibC::SIGUSR2
+    {% else %}
+      -1
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.stop_world : Nil
+    current_thread = Thread.current
+
+    # grab the lock (and keep it until the world is restarted)
+    Thread.lock
+
+    # tell all threads to stop (async)
+    Thread.unsafe_each do |thread|
+      thread.suspend unless thread == current_thread
+    end
+
+    # wait for all threads to have stopped
+    Thread.unsafe_each do |thread|
+      thread.wait_suspended unless thread == current_thread
+    end
+  end
+
+  # :nodoc:
+  def self.start_world : Nil
+    current_thread = Thread.current
+
+    # tell all threads to resume
+    Thread.unsafe_each do |thread|
+      thread.resume unless thread == current_thread
+    end
+
+    # finally, we can release the lock
+    Thread.unlock
   end
 end

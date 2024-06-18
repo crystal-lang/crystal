@@ -87,4 +87,34 @@ module Crystal::System::Thread
     {% end %}
     name
   end
+
+  def self.init_suspend_resume : Nil
+  end
+
+  def system_suspend : Nil
+    if LibC.SuspendThread(@system_handle) == -1
+      Crystal::System.panic("SuspendThread()")
+    end
+  end
+
+  def system_wait_suspended : Nil
+    # context must be aligned on 16 bytes but we lack a mean to force the
+    # alignment on the struct, so we overallocate then realign the pointer:
+    #
+    # we only need to reserve UInt8[sizeof(LibC::CONTEXT) + 16] but that's
+    # invalid crystal
+    local = uninitialized LibC::CONTEXT[2]
+    thread_context = Pointer(LibC::CONTEXT).new(local.to_unsafe.address &+ 15_u64 & ~15_u64)
+    thread_context.value.contextFlags = LibC::CONTEXT_FULL
+
+    if LibC.GetThreadContext(@system_handle, thread_context) == -1
+      Crystal::System.panic("GetThreadContext()")
+    end
+  end
+
+  def system_resume : Nil
+    if LibC.ResumeThread(@system_handle) == -1
+      Crystal::System.panic("ResumeThread()")
+    end
+  end
 end

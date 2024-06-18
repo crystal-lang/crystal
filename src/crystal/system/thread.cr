@@ -23,6 +23,14 @@ module Crystal::System::Thread
   # private def stack_address : Void*
 
   # private def system_name=(String) : String
+
+  # def self.init_suspend_resume : Nil
+
+  # def system_suspend : Nil
+
+  # def system_wait_suspended : Nil
+
+  # def system_resume : Nil
 end
 
 {% if flag?(:wasi) %}
@@ -64,6 +72,14 @@ class Thread
     # nothing to iterate when @@threads is nil + don't lazily allocate in a
     # method called from a GC collection callback!
     @@threads.try(&.unsafe_each { |thread| yield thread })
+  end
+
+  def self.lock : Nil
+    threads.@mutex.lock
+  end
+
+  def self.unlock : Nil
+    threads.@mutex.unlock
   end
 
   # Creates and starts a new system thread.
@@ -168,6 +184,18 @@ class Thread
 
   # Holds the GC thread handler
   property gc_thread_handler : Void* = Pointer(Void).null
+
+  def suspend : Nil
+    system_suspend
+  end
+
+  def wait_suspended : Nil
+    system_wait_suspended
+  end
+
+  def resume : Nil
+    system_resume
+  end
 end
 
 require "./thread_linked_list"

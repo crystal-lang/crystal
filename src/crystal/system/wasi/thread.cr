@@ -38,4 +38,19 @@ module Crystal::System::Thread
     # TODO: Implement
     Pointer(Void).null
   end
+
+  def self.init_suspend_resume : Nil
+  end
+
+  def system_suspend : Nil
+    raise NotImplementedError.new("Crystal::System::Thread.system_suspend")
+  end
+
+  def system_wait_suspended : Nil
+    raise NotImplementedError.new("Crystal::System::Thread.system_wait_suspended")
+  end
+
+  def system_resume : Nil
+    raise NotImplementedError.new("Crystal::System::Thread.system_resume")
+  end
 end
