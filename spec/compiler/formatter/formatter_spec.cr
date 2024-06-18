@@ -1,8 +1,8 @@
 require "spec"
 require "../../../src/compiler/crystal/formatter"
 
-private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__)
-  it "formats #{input.inspect}", file, line do
+private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__, focus = false)
+  it "formats #{input.inspect}", file, line, focus: focus do
     output = "#{output}\n" unless strict
     result = Crystal.format(input, flags: flags)
     unless result == output
@@ -1726,6 +1726,13 @@ describe Crystal::Formatter do
   assert_format "-> : Int32 {}", "-> : Int32 { }", flags: %w[proc_literal_whitespace]
   assert_format "->do\nend", "-> do\nend", flags: %w[proc_literal_whitespace]
 
+  # Allows whitespace around proc literal, but doesn't enforce them
+  assert_format "-> { }"
+  assert_format "-> { 1 }"
+  assert_format "->(x : Int32) { }"
+  assert_format "-> : Int32 { }"
+  assert_format "-> do\nend"
+
   assert_format "-> : Int32 {}"
   assert_format "-> : Int32 | String { 1 }"
   assert_format "-> : Array(Int32) {}"
@@ -1736,7 +1743,7 @@ describe Crystal::Formatter do
   assert_format "-> : {Int32} { String }"
   assert_format "-> : {x: Int32, y: String} {}"
   assert_format "->\n:\nInt32\n{\n}", "-> : Int32 {\n}"
-  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 {}"
+  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 { }"
   assert_format "->: Int32 do\nx\nend", "-> : Int32 do\n  x\nend"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|

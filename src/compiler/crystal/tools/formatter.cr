@@ -4242,6 +4242,7 @@ module Crystal
 
     def visit(node : ProcLiteral)
       write_token :OP_MINUS_GT
+      whitespace_after_op_minus_gt = @token.type.space?
       skip_space_or_newline
 
       a_def = node.def
@@ -4272,7 +4273,7 @@ module Crystal
         skip_space_or_newline
       end
 
-      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace")
+      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace") || whitespace_after_op_minus_gt
 
       is_do = false
       if @token.keyword?(:do)
@@ -4280,7 +4281,7 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop) && flag?("proc_literal_whitespace")
+        write " " if (a_def.body.is_a?(Nop) && flag?("proc_literal_whitespace")) || (@token.type.space? && a_def.body.is_a?(Nop))
       end
       skip_space
 
