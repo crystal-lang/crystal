@@ -197,11 +197,11 @@ class Thread
     system_resume
   end
 
-  def stop_world : Nil
+  def self.stop_world : Nil
     GC.stop_world
   end
 
-  def start_world : Nil
+  def self.start_world : Nil
     GC.start_world
   end
 end

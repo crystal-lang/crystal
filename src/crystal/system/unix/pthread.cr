@@ -169,16 +169,16 @@ module Crystal::System::Thread
       # notify that the thread has been interrupted
       Thread.current_thread.@suspended.set(true)
 
-      # block all signals but sig_resume
+      # block all signals but SIG_RESUME
       mask = LibC::SigsetT.new
       LibC.sigfillset(pointerof(mask))
-      LibC.sigdelset(pointerof(mask), sig_resume)
+      LibC.sigdelset(pointerof(mask), SIG_RESUME)
 
-      # suspend the thread until it receives the sig_resume signal
+      # suspend the thread until it receives the SIG_RESUME signal
       LibC.sigsuspend(pointerof(mask))
     end
     LibC.sigemptyset(pointerof(action.@sa_mask))
-    LibC.sigaction(sig_suspend, pointerof(action), nil)
+    LibC.sigaction(SIG_SUSPEND, pointerof(action), nil)
   end
 
   private def self.install_sig_resume_signal_handler
@@ -188,13 +188,13 @@ module Crystal::System::Thread
       # do nothing (a handler is still required to receive the signal)
     end
     LibC.sigemptyset(pointerof(action.@sa_mask))
-    LibC.sigaction(sig_resume, pointerof(action), nil)
+    LibC.sigaction(SIG_RESUME, pointerof(action), nil)
   end
 
   private def system_suspend : Nil
     @suspended.set(false)
 
-    if LibC.pthread_kill(@system_handle, Thread.sig_suspend) == -1
+    if LibC.pthread_kill(@system_handle, SIG_SUSPEND) == -1
       System.panic("pthread_kill()")
     end
   end
@@ -206,13 +206,14 @@ module Crystal::System::Thread
   end
 
   private def system_resume : Nil
-    if LibC.pthread_kill(@system_handle, Thread.sig_resume) == -1
+    if LibC.pthread_kill(@system_handle, SIG_RESUME) == -1
       System.panic("pthread_kill()")
     end
   end
 
-  protected class_property(sig_suspend : Int32) do
-    # follows bdwgc
+  # the suspend/resume signals follow BDWGC
+
+  private SIG_SUSPEND =
     {% if flag?(:linux) %}
       LibC::SIGPWR
     {% elsif LibC.has_constant?(:SIGRTMIN) %}
@@ -220,16 +221,13 @@ module Crystal::System::Thread
     {% else %}
       LibC::SIGXFSZ
     {% end %}
-  end
 
-  protected class_property(sig_resume : Int32) do
-    # follows bdwgc
+  private SIG_RESUME =
     {% if LibC.has_constant?(:SIGRTMIN) %}
       LibC::SIGRTMIN + 5
     {% else %}
       LibC::SIGXCPU
     {% end %}
-  end
 end
 
 # In musl (alpine) the calls to unwind API segfaults
