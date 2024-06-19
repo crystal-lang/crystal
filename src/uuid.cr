@@ -473,7 +473,7 @@ struct UUID
   {% for v in %w(1 2 3 4 5 7) %}
     # Returns `true` if UUID is a V{{ v.id }}, `false` otherwise.
     def v{{ v.id }}?
-      variant.rfc4122? && version.v{{ v.id }}?
+      variant == Variant::RFC4122 && version == Version::V{{ v.id }}
     end
 
     # Returns `true` if UUID is a V{{ v.id }}, raises `Error` otherwise.
