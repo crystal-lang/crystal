@@ -1,10 +1,8 @@
 require "c/mswsock"
 require "c/ioapiset"
-require "io/overlapped"
+require "crystal/system/win32/iocp"
 
 module Crystal::System::Socket
-  include IO::Overlapped
-
   alias Handle = LibC::SOCKET
 
   # Initialize WSA
@@ -131,7 +129,7 @@ module Crystal::System::Socket
 
   # :nodoc:
   def overlapped_connect(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
+    IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -144,11 +142,11 @@ module Crystal::System::Socket
           return ::Socket::Error.from_os_error("ConnectEx", error)
         end
       else
-        operation.synchronous = true
+        operation.done!
         return nil
       end
 
-      schedule_overlapped(read_timeout || 1.seconds)
+      IOCP.schedule_overlapped(read_timeout || 1.seconds)
 
       operation.wsa_result(socket) do |error|
         case error
@@ -197,7 +195,7 @@ module Crystal::System::Socket
   end
 
   def overlapped_accept(socket, method, &)
-    OverlappedOperation.run(socket) do |operation|
+    IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
       if result == 0
@@ -208,11 +206,11 @@ module Crystal::System::Socket
           return false
         end
       else
-        operation.synchronous = true
+        operation.done!
         return true
       end
 
-      unless schedule_overlapped(read_timeout)
+      unless IOCP.schedule_overlapped(read_timeout)
         raise IO::TimeoutError.new("#{method} timed out")
       end
 
@@ -354,17 +352,19 @@ module Crystal::System::Socket
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
-    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+    false
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
-    arg
+    raise NotImplementedError.new "Crystal::System::Socket#system_close_on_exec=" if arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
+  end
+
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
   end
 
   private def system_tty?

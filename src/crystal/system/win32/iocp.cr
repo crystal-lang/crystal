@@ -2,7 +2,8 @@
 require "c/handleapi"
 require "crystal/system/thread_linked_list"
 
-module IO::Overlapped
+# :nodoc:
+module Crystal::IOCP
   # :nodoc:
   class CompletionKey
     property fiber : Fiber?
@@ -73,7 +74,6 @@ module IO::Overlapped
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
-    property? synchronous = false
 
     def self.run(handle, &)
       operation = OverlappedOperation.new
@@ -128,7 +128,7 @@ module IO::Overlapped
       case @state
       when .started?
         yield @fiber.not_nil!
-        @state = :done
+        done!
       when .cancelled?
         @@canceled.delete(self)
       else
@@ -141,26 +141,28 @@ module IO::Overlapped
       when .started?
         handle = LibC::HANDLE.new(handle) if handle.is_a?(LibC::SOCKET)
 
-        # Microsoft documentation:
-        # The application must not free or reuse the OVERLAPPED structure
+        # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
+        # > The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        # (this does not apply to asynchronous operations that finished
-        # synchronously, as nothing would be queued to the IOCP)
-        if !synchronous? && LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
       end
     end
+
+    def done!
+      @state = :done
+    end
   end
 
   # Returns `false` if the operation timed out.
-  def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
+  def self.schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
     if timeout
-      timeout_event = Crystal::Iocp::Event.new(Fiber.current)
+      timeout_event = Crystal::IOCP::Event.new(Fiber.current)
       timeout_event.add(timeout)
     else
-      timeout_event = Crystal::Iocp::Event.new(Fiber.current, Time::Span::MAX)
+      timeout_event = Crystal::IOCP::Event.new(Fiber.current, Time::Span::MAX)
     end
     # memoize event loop to make sure that we still target the same instance
     # after wakeup (guaranteed by current MT model but let's be future proof)
@@ -172,7 +174,7 @@ module IO::Overlapped
     event_loop.dequeue(timeout_event)
   end
 
-  def overlapped_operation(handle, method, timeout, *, writing = false, &)
+  def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
     OverlappedOperation.run(handle) do |operation|
       result, value = yield operation.start
 
@@ -185,12 +187,12 @@ module IO::Overlapped
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: self
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: target
         else
-          raise IO::Error.from_os_error(method, error, target: self)
+          raise IO::Error.from_os_error(method, error, target: target)
         end
       else
-        operation.synchronous = true
+        operation.done!
         return value
       end
 
@@ -210,7 +212,7 @@ module IO::Overlapped
     end
   end
 
-  def wsa_overlapped_operation(socket, method, timeout, connreset_is_error = true, &)
+  def self.wsa_overlapped_operation(target, socket, method, timeout, connreset_is_error = true, &)
     OverlappedOperation.run(socket) do |operation|
       result, value = yield operation.start
 
@@ -219,10 +221,10 @@ module IO::Overlapped
         when .wsa_io_pending?
           # the operation is running asynchronously; do nothing
         else
-          raise IO::Error.from_os_error(method, error, target: self)
+          raise IO::Error.from_os_error(method, error, target: target)
         end
       else
-        operation.synchronous = true
+        operation.done!
         return value
       end
 
@@ -231,7 +233,7 @@ module IO::Overlapped
       operation.wsa_result(socket) do |error|
         case error
         when .wsa_io_incomplete?
-          raise TimeoutError.new("#{method} timed out")
+          raise IO::TimeoutError.new("#{method} timed out")
         when .wsaeconnreset?
           return 0_u32 unless connreset_is_error
         end

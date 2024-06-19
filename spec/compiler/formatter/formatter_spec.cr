@@ -1120,6 +1120,41 @@ describe Crystal::Formatter do
       )
       end
       CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, b)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, *args)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, *args, &block)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, **kwargs)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, **kwargs, &block)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, &block)
+      end
+      CRYSTAL
   end
 
   assert_format "1   +   2", "1 + 2"

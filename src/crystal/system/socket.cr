@@ -79,6 +79,8 @@ module Crystal::System::Socket
 
   # def self.fcntl(fd, cmd, arg = 0)
 
+  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+
   private def system_read(slice : Bytes) : Int32
     event_loop.read(self, slice)
   end

@@ -57,6 +57,6 @@ def CrystalString_SummaryProvider(value, dict):
 
 
 def __lldb_init_module(debugger, dict):
-    debugger.HandleCommand('type synthetic add -l crystal_formatters.CrystalArraySyntheticProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand('type summary add -F crystal_formatters.CrystalString_SummaryProvider -x "^(String|\(String \| Nil\))(\s*\**)?$" -w Crystal')
-    debugger.HandleCommand('type category enable Crystal')
+    debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalArraySyntheticProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
+    debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalString_SummaryProvider -x "^(String|\(String \| Nil\))(\s*\**)?$" -w Crystal')
+    debugger.HandleCommand(r'type category enable Crystal')

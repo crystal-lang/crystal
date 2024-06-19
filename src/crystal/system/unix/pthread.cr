@@ -55,6 +55,12 @@ module Crystal::System::Thread
       end
     end
 
+    def self.current_thread? : ::Thread?
+      if ptr = LibC.pthread_getspecific(@@current_key)
+        ptr.as(::Thread)
+      end
+    end
+
     def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
       raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(ret)) unless ret == 0
@@ -63,7 +69,23 @@ module Crystal::System::Thread
   {% else %}
     @[ThreadLocal]
     class_property current_thread : ::Thread { ::Thread.new }
+
+    def self.current_thread? : ::Thread?
+      @@current_thread
+    end
   {% end %}
+
+  def self.sleep(time : ::Time::Span) : Nil
+    req = uninitialized LibC::Timespec
+    req.tv_sec = typeof(req.tv_sec).new(time.seconds)
+    req.tv_nsec = typeof(req.tv_nsec).new(time.nanoseconds)
+
+    loop do
+      return if LibC.nanosleep(pointerof(req), out rem) == 0
+      raise RuntimeError.from_errno("nanosleep() failed") unless Errno.value == Errno::EINTR
+      req = rem
+    end
+  end
 
   private def system_join : Exception?
     ret = GC.pthread_join(@system_handle)

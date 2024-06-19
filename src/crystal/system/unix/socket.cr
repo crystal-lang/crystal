@@ -9,21 +9,22 @@ module Crystal::System::Socket
   alias Handle = Int32
 
   private def create_handle(family, type, protocol, blocking) : Handle
+    socktype = type.value
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      # Forces opened sockets to be closed on `exec(2)`.
-      type = type.to_i | LibC::SOCK_CLOEXEC
+      socktype |= LibC::SOCK_CLOEXEC
     {% end %}
-    fd = LibC.socket(family, type, protocol)
+
+    fd = LibC.socket(family, socktype, protocol)
     raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+
+    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
+      Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
+
     fd
   end
 
   private def initialize_handle(fd)
-    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-      # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
-      # support `SOCK_CLOEXEC` (e.g., Darwin).
-      LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-    {% end %}
   end
 
   # Tries to bind the socket to a local address.
@@ -176,6 +177,26 @@ module Crystal::System::Socket
     r = LibC.fcntl fd, cmd, arg
     raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+    fds = uninitialized Handle[2]
+    socktype = type.value
+
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      socktype |= LibC::SOCK_CLOEXEC
+    {% end %}
+
+    if LibC.socketpair(::Socket::Family::UNIX, socktype, protocol, fds) != 0
+      raise ::Socket::Error.new("socketpair() failed")
+    end
+
+    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
+      fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
+
+    {fds[0], fds[1]}
   end
 
   private def system_tty?

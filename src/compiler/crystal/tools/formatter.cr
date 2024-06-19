@@ -1562,7 +1562,7 @@ module Crystal
 
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
-        wrote_newline = format_def_arg(wrote_newline, has_more, true) do
+        wrote_newline = format_def_arg(wrote_newline, has_more, found_first_newline && !has_more) do
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
@@ -1577,7 +1577,7 @@ module Crystal
       end
 
       if double_splat
-        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, true) do
+        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, found_first_newline) do
           write_token :OP_STAR_STAR
           skip_space_or_newline
 

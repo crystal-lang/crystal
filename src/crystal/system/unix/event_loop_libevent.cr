@@ -1,13 +1,6 @@
 require "./event_libevent"
 
 # :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::LibEvent::EventLoop.new
-  end
-end
-
-# :nodoc:
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   private getter(event_base) { Crystal::LibEvent::Event::Base.new }
 
@@ -76,6 +69,30 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     end
   end
 
+  def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    file_descriptor.evented_read("Error reading file_descriptor") do
+      LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for reading", target: file_descriptor
+        end
+      end
+    end
+  end
+
+  def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+    file_descriptor.evented_write("Error writing file_descriptor") do
+      LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing", target: file_descriptor
+        end
+      end
+    end
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    file_descriptor.evented_close
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     socket.evented_read("Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
@@ -104,9 +121,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     {bytes_read, ::Socket::Address.from(sockaddr, addrlen)}
   end
 
-  def send_to(socket : ::Socket, slice : Bytes, addr : ::Socket::Address) : Int32
-    bytes_sent = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+  def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
+    bytes_sent = LibC.sendto(socket.fd, slice.to_unsafe.as(Void*), slice.size, 0, address, address.size)
+    raise ::Socket::Error.from_errno("Error sending datagram to #{address}") if bytes_sent == -1
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_sent.to_i32
   end
@@ -131,7 +148,13 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def accept(socket : ::Socket) : ::Socket::Handle?
     loop do
-      client_fd = LibC.accept(socket.fd, nil, nil)
+      client_fd =
+        {% if LibC.has_method?(:accept4) %}
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+        {% else %}
+          LibC.accept(socket.fd, nil, nil)
+        {% end %}
+
       if client_fd == -1
         if socket.closed?
           return
@@ -144,6 +167,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
           raise ::Socket::Error.from_errno("accept")
         end
       else
+        {% unless LibC.has_method?(:accept4) %}
+          Crystal::System::Socket.fcntl(client_fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        {% end %}
         return client_fd
       end
     end
