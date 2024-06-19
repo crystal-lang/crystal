@@ -84,7 +84,7 @@ struct UUID
       # do nothing
     when Variant::NCS
       @bytes[8] = (@bytes[8] & 0x7f)
-    when Variant::RFC4122
+    when Variant::RFC4122, Variant::RFC9562
       @bytes[8] = (@bytes[8] & 0x3f) | 0x80
     when Variant::Microsoft
       @bytes[8] = (@bytes[8] & 0x1f) | 0xc0
@@ -403,6 +403,7 @@ struct UUID
     when 3 then Version::V3
     when 4 then Version::V4
     when 5 then Version::V5
+    when 7 then Version::V7
     else        Version::Unknown
     end
   end
