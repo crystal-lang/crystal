@@ -196,6 +196,14 @@ class Thread
   def resume : Nil
     system_resume
   end
+
+  def stop_world : Nil
+    GC.stop_world
+  end
+
+  def start_world : Nil
+    GC.start_world
+  end
 end
 
 require "./thread_linked_list"

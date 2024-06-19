@@ -172,13 +172,13 @@ module Crystal::System::Thread
       # block all signals but sig_resume
       mask = LibC::SigsetT.new
       LibC.sigfillset(pointerof(mask))
-      LibC.sigdelset(pointerof(mask), GC.sig_resume)
+      LibC.sigdelset(pointerof(mask), sig_resume)
 
       # suspend the thread until it receives the sig_resume signal
       LibC.sigsuspend(pointerof(mask))
     end
     LibC.sigemptyset(pointerof(action.@sa_mask))
-    LibC.sigaction(GC.sig_suspend, pointerof(action), nil)
+    LibC.sigaction(sig_suspend, pointerof(action), nil)
   end
 
   private def self.install_sig_resume_signal_handler
@@ -188,13 +188,13 @@ module Crystal::System::Thread
       # do nothing (a handler is still required to receive the signal)
     end
     LibC.sigemptyset(pointerof(action.@sa_mask))
-    LibC.sigaction(GC.sig_resume, pointerof(action), nil)
+    LibC.sigaction(sig_resume, pointerof(action), nil)
   end
 
   private def system_suspend : Nil
     @suspended.set(false)
 
-    if LibC.pthread_kill(@system_handle, GC.sig_suspend) == -1
+    if LibC.pthread_kill(@system_handle, Thread.sig_suspend) == -1
       System.panic("pthread_kill()")
     end
   end
@@ -206,9 +206,29 @@ module Crystal::System::Thread
   end
 
   private def system_resume : Nil
-    if LibC.pthread_kill(@system_handle, GC.sig_resume) == -1
+    if LibC.pthread_kill(@system_handle, Thread.sig_resume) == -1
       System.panic("pthread_kill()")
     end
+  end
+
+  protected class_property(sig_suspend : Int32) do
+    # follows bdwgc
+    {% if flag?(:linux) %}
+      LibC::SIGPWR
+    {% elsif LibC.has_constant?(:SIGRTMIN) %}
+      LibC::SIGRTMIN + 6
+    {% else %}
+      LibC::SIGXFSZ
+    {% end %}
+  end
+
+  protected class_property(sig_resume : Int32) do
+    # follows bdwgc
+    {% if LibC.has_constant?(:SIGRTMIN) %}
+      LibC::SIGRTMIN + 5
+    {% else %}
+      LibC::SIGXCPU
+    {% end %}
   end
 end
 

@@ -142,51 +142,23 @@ module GC
   #
   # This isn't a GC-safe stop-the-world implementation (it may allocate objects
   # while stopping the world), but the guarantees are enough for the purpose of
-  # gc_none.
+  # gc_none. It could be GC-safe if Thread::LinkedList(T) became a struct, and
+  # Thread::Mutex either became a struct or provide low level abstraction
+  # methods that directly interact with syscalls (without allocating).
   #
-  # Thread safety is guaranteed by the mutex in Crystal::PointerLinkedList:
-  # either a thread is starting and hasn't added itself to the list (it will
-  # block until it can acquire the lock), or is currently adding itself (the
-  # current thread will block until it can acquire the lock).
+  # Thread safety is guaranteed by the mutex in Thread::LinkedList: either a
+  # thread is starting and hasn't added itself to the list (it will block until
+  # it can acquire the lock), or is currently adding itself (the current thread
+  # will block until it can acquire the lock).
   #
   # In both cases there can't be a deadlock since we won't suspend another
-  # thread until it has successfuly added (or removed) itself to the linked
-  # list and released the lock, and the other thread won't progress until it
-  # can add (or remove) itself from the list.
+  # thread until it has successfuly added (or removed) itself to (from) the
+  # linked list and released the lock, and the other thread won't progress until
+  # it can add (or remove) itself from the list.
   #
-  # Finally, we lock the mutex and keep it locked until we resume the world,
-  # so any thread waiting on the mutex will only be resumed when the world is
+  # Finally, we lock the mutex and keep it locked until we resume the world, so
+  # any thread waiting on the mutex will only be resumed when the world is
   # resumed.
-
-  # :nodoc:
-  class_property(sig_suspend : Int32) do
-    # follows bdwgc
-    {% if flag?(:unix) %}
-      {% if flag?(:linux) %}
-        LibC::SIGPWR
-      {% elsif LibC.has_constant?(:SIGRTMIN) %}
-        LibC::SIGRTMIN + 6
-      {% else %}
-        LibC::SIGXFSZ
-      {% end %}
-    {% else %}
-      -1
-    {% end %}
-  end
-
-  # :nodoc:
-  class_property(sig_resume : Int32) do
-    # follows bdwgc
-    {% if flag?(:unix) %}
-      {% if LibC.has_constant?(:SIGRTMIN) %}
-        LibC::SIGRTMIN + 5
-      {% else %}
-        LibC::SIGXCPU
-      {% end %}
-    {% else %}
-      -1
-    {% end %}
-  end
 
   # :nodoc:
   def self.stop_world : Nil
