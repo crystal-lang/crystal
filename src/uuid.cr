@@ -23,6 +23,8 @@ struct UUID
     NCS
     # Reserved for RFC 4122 Specification (default).
     RFC4122
+    # Reserved for RFC 9562 Specification (default for v7).
+    RFC9562 = RFC4122
     # Reserved by Microsoft for backward compatibility.
     Microsoft
     # Reserved for future expansion.
@@ -43,6 +45,8 @@ struct UUID
     V4 = 4
     # SHA1 hash and namespace.
     V5 = 5
+    # Prefixed with a UNIX timestamp with millisecond precision, filled in with randomness.
+    V7 = 7
   end
 
   # A Domain represents a Version 2 domain (DCE security).
@@ -321,6 +325,30 @@ struct UUID
     end
   {% end %}
 
+  # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
+  # chronologically (with 1ms precision) by their raw or hexstring
+  # representation.
+  def self.v7(random r : Random = Random::Secure)
+    buffer = uninitialized UInt8[18]
+    value = buffer.to_slice
+
+    # Generate the first 48 bits of the UUID with the current timestamp. We
+    # allocated enough room for a 64-bit timestamp to accommodate the
+    # NetworkEndian.encode call here, but we only need 48 bits of it so we chop
+    # off the first 2 bytes.
+    IO::ByteFormat::NetworkEndian.encode Time.utc.to_unix_ms, value
+    value = value[2..]
+
+    # Fill in the rest with random bytes
+    r.random_bytes(value[6..])
+
+    # Set the version and variant. They are normally in bytes 6 and 8, respectively, but we have 2 superfluous bytes at the front of our buffer that are to be
+    value[6] = (value[6] & 0x3F) | 0x70
+    value[8] = (value[8] & 0x0F) | 0x80
+
+    new(value, variant: :rfc9562, version: :v7)
+  end
+
   # Generates an empty UUID.
   #
   # ```
@@ -442,10 +470,10 @@ struct UUID
   class Error < Exception
   end
 
-  {% for v in %w(1 2 3 4 5) %}
+  {% for v in %w(1 2 3 4 5 7) %}
     # Returns `true` if UUID is a V{{ v.id }}, `false` otherwise.
     def v{{ v.id }}?
-      variant == Variant::RFC4122 && version == Version::V{{ v.id }}
+      variant.rfc4122? && version.v{{ v.id }}?
     end
 
     # Returns `true` if UUID is a V{{ v.id }}, raises `Error` otherwise.
