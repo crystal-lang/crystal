@@ -130,7 +130,7 @@ module Crystal::System::Socket
   # :nodoc:
   def overlapped_connect(socket, method, &)
     IOCP::OverlappedOperation.run(socket) do |operation|
-      result = yield operation.start
+      result = yield operation
 
       if result == 0
         case error = WinError.wsa_value
@@ -196,7 +196,7 @@ module Crystal::System::Socket
 
   def overlapped_accept(socket, method, &)
     IOCP::OverlappedOperation.run(socket) do |operation|
-      result = yield operation.start
+      result = yield operation
 
       if result == 0
         case error = WinError.wsa_value

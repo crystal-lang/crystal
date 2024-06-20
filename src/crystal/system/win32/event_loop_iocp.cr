@@ -233,7 +233,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
     socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
+      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
     end
   end
 
@@ -256,7 +256,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
         received_bytes = uninitialized UInt32
         Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
           output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
+          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped.to_unsafe)
       end
 
       if success

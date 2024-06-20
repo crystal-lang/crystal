@@ -40,7 +40,8 @@ module Crystal::IOCP
       # I/O operations, including socket ones, do not set this field
       case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
       when Nil
-        OverlappedOperation.schedule(entry.lpOverlapped) { |fiber| yield fiber }
+        operation = OverlappedOperation.unbox(entry.lpOverlapped)
+        operation.schedule { |fiber| yield fiber }
       else
         case entry.dwNumberOfBytesTransferred
         when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
@@ -62,15 +63,14 @@ module Crystal::IOCP
 
   class OverlappedOperation
     enum State
-      INITIALIZED
       STARTED
       DONE
       CANCELLED
     end
 
     @overlapped = LibC::OVERLAPPED.new
-    @fiber : Fiber? = nil
-    @state : State = :initialized
+    @fiber = Fiber.current
+    @state : State = :started
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
@@ -84,22 +84,18 @@ module Crystal::IOCP
       end
     end
 
-    def self.schedule(overlapped : LibC::OVERLAPPED*, &)
+    def self.unbox(overlapped : LibC::OVERLAPPED*)
       start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
-      operation = Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
-      operation.schedule { |fiber| yield fiber }
+      Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
     end
 
-    def start
-      raise Exception.new("Invalid state #{@state}") unless @state.initialized?
-      @fiber = Fiber.current
-      @state = State::STARTED
+    def to_unsafe
       pointerof(@overlapped)
     end
 
     def result(handle, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
-      result = LibC.GetOverlappedResult(handle, pointerof(@overlapped), out bytes, 0)
+      result = LibC.GetOverlappedResult(handle, self, out bytes, 0)
       if result.zero?
         error = WinError.value
         yield error
@@ -113,7 +109,7 @@ module Crystal::IOCP
     def wsa_result(socket, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
-      result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
+      result = LibC.WSAGetOverlappedResult(socket, self, out bytes, false, pointerof(flags))
       if result.zero?
         error = WinError.wsa_value
         yield error
@@ -127,7 +123,7 @@ module Crystal::IOCP
     protected def schedule(&)
       case @state
       when .started?
-        yield @fiber.not_nil!
+        yield @fiber
         done!
       when .cancelled?
         @@canceled.delete(self)
@@ -144,7 +140,7 @@ module Crystal::IOCP
         # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
         # > The application must not free or reuse the OVERLAPPED structure
         # associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(handle, pointerof(@overlapped)) != 0
+        if LibC.CancelIoEx(handle, self) != 0
           @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
@@ -176,7 +172,7 @@ module Crystal::IOCP
 
   def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
     OverlappedOperation.run(handle) do |operation|
-      result, value = yield operation.start
+      result, value = yield operation
 
       if result == 0
         case error = WinError.value
@@ -214,7 +210,7 @@ module Crystal::IOCP
 
   def self.wsa_overlapped_operation(target, socket, method, timeout, connreset_is_error = true, &)
     OverlappedOperation.run(socket) do |operation|
-      result, value = yield operation.start
+      result, value = yield operation
 
       if result == LibC::SOCKET_ERROR
         case error = WinError.wsa_value
