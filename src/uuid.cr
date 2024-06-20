@@ -342,7 +342,7 @@ struct UUID
     # Fill in the rest with random bytes
     r.random_bytes(value[6..])
 
-    # Set the version and variant. They are normally in bytes 6 and 8, respectively, but we have 2 superfluous bytes at the front of our buffer that are to be
+    # Set the version and variant
     value[6] = (value[6] & 0x3F) | 0x70
     value[8] = (value[8] & 0x0F) | 0x80
 
