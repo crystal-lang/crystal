@@ -97,10 +97,12 @@ module Crystal::System::FileDescriptor
         raise IO::Error.from_errno("Could not reopen file descriptor")
       end
     {% else %}
-      if LibC.dup2(other.fd, fd) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
+      Process.lock_read do
+        if LibC.dup2(other.fd, fd) == -1
+          raise IO::Error.from_errno("Could not reopen file descriptor")
+        end
+        self.close_on_exec = other.close_on_exec?
       end
-      self.close_on_exec = other.close_on_exec?
     {% end %}
 
     # Mark the handle open, since we had to have dup'd a live handle.
@@ -195,11 +197,13 @@ module Crystal::System::FileDescriptor
         raise IO::Error.from_errno("Could not create pipe")
       end
     {% else %}
-      if LibC.pipe(pipe_fds) != 0
-        raise IO::Error.from_errno("Could not create pipe")
+      Process.lock_read do
+        if LibC.pipe(pipe_fds) != 0
+          raise IO::Error.from_errno("Could not create pipe")
+        end
+        fcntl(pipe_fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fcntl(pipe_fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
       end
-      fcntl(pipe_fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
-      fcntl(pipe_fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
     {% end %}
 
     r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
