@@ -212,7 +212,11 @@ require "crystal/system/time"
 # elapsed_time # => 20.milliseconds (approximately)
 # ```
 struct Time
-  class FloatingTimeConversionError < Exception
+  # Raised when an error occurs while performing a `Time` based operation.
+  class Error < Exception
+  end
+
+  class FloatingTimeConversionError < Time::Error
   end
 
   include Comparable(Time)
