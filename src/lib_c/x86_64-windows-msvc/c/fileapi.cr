@@ -107,14 +107,14 @@ lib LibC
     dwReserved : DWORD,
     nNumberOfBytesToLockLow : DWORD,
     nNumberOfBytesToLockHigh : DWORD,
-    lpOverlapped : OVERLAPPED*
+    lpOverlapped : OVERLAPPED*,
   ) : BOOL
   fun UnlockFileEx(
     hFile : HANDLE,
     dwReserved : DWORD,
     nNumberOfBytesToUnlockLow : DWORD,
     nNumberOfBytesToUnlockHigh : DWORD,
-    lpOverlapped : OVERLAPPED*
+    lpOverlapped : OVERLAPPED*,
   ) : BOOL
   fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
                   lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL

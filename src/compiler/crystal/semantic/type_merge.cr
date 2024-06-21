@@ -207,7 +207,7 @@ module Crystal
 
     def self.least_common_ancestor(
       type1 : MetaclassType | GenericClassInstanceMetaclassType,
-      type2 : MetaclassType | GenericClassInstanceMetaclassType
+      type2 : MetaclassType | GenericClassInstanceMetaclassType,
     )
       return nil unless unifiable_metaclass?(type1) && unifiable_metaclass?(type2)
 
@@ -225,7 +225,7 @@ module Crystal
 
     def self.least_common_ancestor(
       type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType,
-      type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType
+      type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType,
     )
       return type2 if type1.implements?(type2)
       return type1 if type2.implements?(type1)

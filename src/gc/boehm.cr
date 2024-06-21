@@ -195,7 +195,7 @@ module GC
     {% end %}
     LibGC.init
 
-    LibGC.set_start_callback ->do
+    LibGC.set_start_callback -> do
       GC.lock_write
     end
 
@@ -446,7 +446,7 @@ module GC
     @@curr_push_other_roots = block
     @@prev_push_other_roots = LibGC.get_push_other_roots
 
-    LibGC.set_push_other_roots ->do
+    LibGC.set_push_other_roots -> do
       @@curr_push_other_roots.try(&.call)
       @@prev_push_other_roots.try(&.call)
     end

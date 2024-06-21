@@ -3,7 +3,7 @@
 #
 # ```
 # # A proc without arguments
-# ->{ 1 } # Proc(Int32)
+# -> { 1 } # Proc(Int32)
 #
 # # A proc with one argument
 # ->(x : Int32) { x.to_s } # Proc(Int32, String)

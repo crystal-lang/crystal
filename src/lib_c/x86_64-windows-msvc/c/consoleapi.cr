@@ -19,7 +19,7 @@ lib LibC
     lpBuffer : Void*,
     nNumberOfCharsToRead : DWORD,
     lpNumberOfCharsRead : DWORD*,
-    pInputControl : Void*
+    pInputControl : Void*,
   ) : BOOL
 
   CTRL_C_EVENT        = 0

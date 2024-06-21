@@ -103,7 +103,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions : CompiledInstructions = CompiledInstructions.new,
     scope : Type? = nil,
     @def = nil,
-    @top_level = true
+    @top_level = true,
   )
     @scope = scope || @context.program
 
@@ -138,7 +138,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     context : Context,
     compiled_def : CompiledDef,
     top_level : Bool,
-    scope : Type = compiled_def.owner
+    scope : Type = compiled_def.owner,
   )
     new(
       context: context,

@@ -31,7 +31,7 @@ describe Benchmark::IPS::Job do
 end
 
 private def create_entry
-  Benchmark::IPS::Entry.new("label", ->{ 1 + 1 })
+  Benchmark::IPS::Entry.new("label", -> { 1 + 1 })
 end
 
 describe Benchmark::IPS::Entry, "#set_cycles" do

@@ -2659,7 +2659,7 @@ module Crystal
       end
     end
 
-    private def visit_size_or_align_of(node)
+    private def visit_size_or_align_of(node, &)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2685,7 +2685,7 @@ module Crystal
       false
     end
 
-    private def visit_instance_size_or_align_of(node)
+    private def visit_instance_size_or_align_of(node, &)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1

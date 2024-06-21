@@ -131,6 +131,6 @@ lib LibC
   fun StackWalk64(
     machineType : DWORD, hProcess : HANDLE, hThread : HANDLE, stackFrame : STACKFRAME64*, contextRecord : Void*,
     readMemoryRoutine : PREAD_PROCESS_MEMORY_ROUTINE64, functionTableAccessRoutine : PFUNCTION_TABLE_ACCESS_ROUTINE64,
-    getModuleBaseRoutine : PGET_MODULE_BASE_ROUTINE64, translateAddress : PTRANSLATE_ADDRESS_ROUTINE64
+    getModuleBaseRoutine : PGET_MODULE_BASE_ROUTINE64, translateAddress : PTRANSLATE_ADDRESS_ROUTINE64,
   ) : BOOL
 end

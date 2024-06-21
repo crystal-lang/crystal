@@ -20,7 +20,7 @@ class Crystal::Repl
       @vars : Hash(String, {Int32, Type}),
       @self_type : Type?,
       @parent : ClosureContext?,
-      @bytesize : Int32
+      @bytesize : Int32,
     )
     end
   end
