@@ -69,13 +69,22 @@ class Exception
   end
 end
 
+# Raised when there is an error in the program logic.
+# This kind of error should lead directly to a fix in the code.
+class LogicError < Exception
+end
+
+# Raised when an error occurs while performing mathematical operations.
+class ArithmeticError < LogicError
+end
+
 # Raised when the given index is invalid.
 #
 # ```
 # a = [:foo, :bar]
 # a[2] # raises IndexError
 # ```
-class IndexError < Exception
+class IndexError < LogicError
   def initialize(message = "Index out of bounds")
     super(message)
   end
@@ -86,7 +95,7 @@ end
 # ```
 # [1, 2, 3].first(-4) # raises ArgumentError (attempt to take negative size)
 # ```
-class ArgumentError < Exception
+class ArgumentError < LogicError
   def initialize(message = "Argument error")
     super(message)
   end
@@ -97,7 +106,7 @@ end
 # ```
 # [1, "hi"][1].as(Int32) # raises TypeCastError (cast to Int32 failed)
 # ```
-class TypeCastError < Exception
+class TypeCastError < LogicError
   def initialize(message = "Type Cast error")
     super(message)
   end
@@ -115,7 +124,7 @@ end
 # h = {"foo" => "bar"}
 # h["baz"] # raises KeyError (Missing hash key: "baz")
 # ```
-class KeyError < Exception
+class KeyError < LogicError
 end
 
 # Raised when attempting to divide an integer by 0.
@@ -123,7 +132,7 @@ end
 # ```
 # 1 // 0 # raises DivisionByZeroError (Division by 0)
 # ```
-class DivisionByZeroError < Exception
+class DivisionByZeroError < ArithmeticError
   def initialize(message = "Division by 0")
     super(message)
   end
@@ -137,7 +146,7 @@ end
 # Int32::MIN - 1      # raises OverflowError (Arithmetic overflow)
 # Float64::MAX.to_f32 # raises OverflowError (Arithmetic overflow)
 # ```
-class OverflowError < Exception
+class OverflowError < ArithmeticError
   def initialize(message = "Arithmetic overflow")
     super(message)
   end
@@ -158,7 +167,7 @@ end
 # ```
 # "hello".index('x').not_nil! # raises NilAssertionError ("hello" does not contain 'x')
 # ```
-class NilAssertionError < Exception
+class NilAssertionError < LogicError
   def initialize(message = "Nil assertion failed")
     super(message)
   end
