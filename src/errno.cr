@@ -45,8 +45,17 @@ enum Errno
 
   # :nodoc:
   def unsafe_message(&)
-    pointer = LibC.strerror(value)
-    yield Bytes.new(pointer, LibC.strlen(pointer))
+    {% if LibC.has_method?(:strerror_r) %}
+      buffer = uninitialized UInt8[256]
+      if LibC.strerror_r(value, buffer, buffer.size) == 0
+        yield Bytes.new(buffer.to_unsafe, LibC.strlen(buffer))
+      else
+        yield "(???)".to_slice
+      end
+    {% else %}
+      pointer = LibC.strerror(value)
+      yield Bytes.new(pointer, LibC.strlen(pointer))
+    {% end %}
   end
 
   # returns the value of libc's errno.
