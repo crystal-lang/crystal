@@ -143,23 +143,21 @@ module Crystal
           # not using LibC::INVALID_HANDLE_VALUE because it doesn't exist (yet)
           return handle.address unless handle == LibC::HANDLE.new(-1.to_u64!)
 
-          error = uninitialized UInt16[256]
-          len = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, WinError.value, 0, error, error.size, nil)
-
-          # not using printf because filename and error are UTF-16 slices:
-          System.print_error "ERROR: failed to open "
-          System.print_error filename
-          System.print_error " for writing: "
-          System.print_error error.to_slice[0...len]
-          System.print_error "\n"
+          syscall_name = "CreateFileW"
+          error = WinError.value
         {% else %}
           fd = LibC.open(filename, LibC::O_CREAT | LibC::O_WRONLY | LibC::O_TRUNC | LibC::O_CLOEXEC, 0o644)
           return fd unless fd < 0
 
-          System.print_error "ERROR: failed to open %s for writing: %s\n", filename, LibC.strerror(Errno.value)
+          syscall_name = "open"
+          error = Errno.value
         {% end %}
 
-        LibC._exit(1)
+        System.print_error "ERROR: failed to open "
+        System.print_error filename
+        System.print_error " for writing\n"
+
+        System.panic(syscall_name, Errno.value)
       end
 
       private def self.parse_sections(slice)
