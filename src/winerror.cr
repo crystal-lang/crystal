@@ -61,7 +61,11 @@ enum WinError : UInt32
   #
   # On non-win32 platforms the result is always an empty string.
   def message : String
-    unsafe_message { |slice| String.from_utf16(slice).strip }
+    {% if flag?(:win32) %}
+      unsafe_message { |slice| String.from_utf16(slice).strip }
+    {% else %}
+      ""
+    {% end %}
   end
 
   # :nodoc:
