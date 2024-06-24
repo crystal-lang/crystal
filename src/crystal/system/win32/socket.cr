@@ -208,7 +208,11 @@ module Crystal::System::Socket
         return true
       end
 
-      operation.wait_for_wsa_result(read_timeout) do |error|
+      unless operation.wait_for_completion(read_timeout)
+        raise IO::TimeoutError.new("#{method} timed out")
+      end
+
+      operation.wsa_result do |error|
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
