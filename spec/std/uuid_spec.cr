@@ -277,7 +277,7 @@ describe "UUID" do
       uuid.variant.rfc9562?.should eq true
     end
 
-    it "generates UUIDs that are sortable with 1ms precision" do
+    non_wasm "generates UUIDs that are sortable with 1ms precision" do
       uuids = Array.new(10) do
         sleep 1.millisecond
         UUID.v7
@@ -285,5 +285,13 @@ describe "UUID" do
 
       uuids.should eq uuids.sort
     end
+  end
+end
+
+private def non_wasm(message, &block)
+  if {{flag? :wasi}}
+    pending message, &block
+  else
+    it message, &block
   end
 end
