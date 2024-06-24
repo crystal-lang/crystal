@@ -1,3 +1,5 @@
+require "./system/panic"
+
 module Crystal
   # :nodoc:
   module Tracing
