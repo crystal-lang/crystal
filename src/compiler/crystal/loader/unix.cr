@@ -183,7 +183,7 @@ class Crystal::Loader
   end
 
   def self.read_ld_conf(array = [] of String, path = "/etc/ld.so.conf") : Nil
-    return unless File.readable?(path)
+    return unless File::Info.readable?(path)
 
     File.each_line(path) do |line|
       next if line.empty? || line.starts_with?("#")

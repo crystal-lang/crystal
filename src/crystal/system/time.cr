@@ -3,7 +3,13 @@ module Crystal::System::Time
   # since `0001-01-01 00:00:00`.
   # def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
 
+  # Returns the current time from the monotonic clock in `{seconds,
+  # nanoseconds}`.
   # def self.monotonic : {Int64, Int32}
+
+  # Returns the current time from the monotonic clock in nanoseconds.
+  # Doesn't raise nor allocates GC HEAP memory.
+  # def self.ticks : UInt64
 
   # Returns a list of paths where time zone data should be looked up.
   # def self.zone_sources : Enumerable(String)

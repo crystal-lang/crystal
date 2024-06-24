@@ -41,7 +41,12 @@ class IO::FileDescriptor < IO
 
   def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
+    @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
+
+    # TODO: Refactor to avoid calling `GetFileType` twice on Windows (once in `system_closed?` and once in `system_info`)
     @closed = system_closed?
+
+    return if @closed
 
     if blocking.nil?
       blocking =
@@ -261,6 +266,16 @@ class IO::FileDescriptor < IO
 
   def pretty_print(pp)
     pp.text inspect
+  end
+
+  private def unbuffered_read(slice : Bytes) : Int32
+    system_read(slice)
+  end
+
+  private def unbuffered_write(slice : Bytes) : Nil
+    until slice.empty?
+      slice += system_write(slice)
+    end
   end
 
   private def unbuffered_rewind : Nil

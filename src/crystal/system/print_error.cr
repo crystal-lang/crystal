@@ -3,16 +3,49 @@ module Crystal::System
   # This is useful for error messages from components that are required for
   # IO to work (fibers, scheduler, event_loop).
   def self.print_error(message, *args)
-    print_error(message, *args) do |bytes|
-      {% if flag?(:unix) || flag?(:wasm32) %}
-        LibC.write 2, bytes, bytes.size
-      {% elsif flag?(:win32) %}
-        LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), bytes, bytes.size, out _, nil)
-      {% end %}
+    printf(message, *args) { |bytes| print_error(bytes) }
+  end
+
+  def self.print_error(bytes : Bytes) : Nil
+    {% if flag?(:unix) || flag?(:wasm32) %}
+      LibC.write 2, bytes, bytes.size
+    {% elsif flag?(:win32) %}
+      LibC.WriteFile(LibC.GetStdHandle(LibC::STD_ERROR_HANDLE), bytes, bytes.size, out _, nil)
+    {% end %}
+  end
+
+  # Print a UTF-16 slice as UTF-8 directly to stderr. Useful on Windows to print
+  # strings returned from the unicode variant of the Win32 API.
+  def self.print_error(bytes : Slice(UInt16)) : Nil
+    utf8 = uninitialized UInt8[512]
+    appender = utf8.to_unsafe.appender
+
+    String.each_utf16_char(bytes) do |char|
+      if appender.size > utf8.size - char.bytesize
+        # buffer is full (char won't fit)
+        print_error utf8.to_slice[0...appender.size]
+        appender = utf8.to_unsafe.appender
+      end
+
+      char.each_byte do |byte|
+        appender << byte
+      end
+    end
+
+    if appender.size > 0
+      print_error utf8.to_slice[0...appender.size]
     end
   end
 
-  # Minimal drop-in replacement for a C `printf` function. Yields successive
+  def self.print(handle : FileDescriptor::Handle, bytes : Bytes) : Nil
+    {% if flag?(:unix) || flag?(:wasm32) %}
+      LibC.write handle, bytes, bytes.size
+    {% elsif flag?(:win32) %}
+      LibC.WriteFile(Pointer(FileDescriptor::Handle).new(handle), bytes, bytes.size, out _, nil)
+    {% end %}
+  end
+
+  # Minimal drop-in replacement for C `printf` function. Yields successive
   # non-empty `Bytes` to the block, which should do the actual printing.
   #
   # *format* only supports the `%(l|ll)?[dpsux]` format specifiers; more should
@@ -23,9 +56,9 @@ module Crystal::System
   # corrupted heap, its implementation should be as low-level as possible,
   # avoiding memory allocations.
   #
-  # NOTE: C's `printf` is incompatible with Crystal's `sprintf`, because the
-  # latter does not support argument width specifiers nor `%p`.
-  def self.print_error(format, *args, &)
+  # NOTE: Crystal's `printf` only supports a subset of C's `printf` format specifiers.
+  # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms.
+  def self.printf(format, *args, &)
     format = to_string_slice(format)
     format_len = format.size
     ptr = format.to_unsafe
@@ -73,7 +106,6 @@ module Crystal::System
         end
       when 'p'
         read_arg(Pointer(Void)) do |arg|
-          # NOTE: MSVC uses `%X` rather than `0x%x`, we follow the latter on all platforms
           yield "0x".to_slice
           to_int_slice(arg.address, 16, false, 2) { |bytes| yield bytes }
         end
@@ -108,7 +140,7 @@ module Crystal::System
   end
 
   # simplified version of `Int#internal_to_s`
-  private def self.to_int_slice(num, base, signed, width, &)
+  protected def self.to_int_slice(num, base, signed, width, &)
     if num == 0
       yield "0".to_slice
       return
