@@ -122,13 +122,8 @@ module Crystal::IOCP
     end
 
     protected def schedule(&)
-      case @state
-      when .started?
-        done!
-        yield @fiber
-      else
-        raise Exception.new("Invalid state #{@state}")
-      end
+      done!
+      yield @fiber
     end
 
     def done!
