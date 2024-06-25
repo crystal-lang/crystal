@@ -114,6 +114,11 @@ class Socket < IO
     yield result if result.is_a?(Exception)
   end
 
+  @[Deprecated("Use `#connect(addr, Time::Span?, &)` instead.")]
+  def connect(addr, timeout : Number, &)
+    connect(addr, timeout.seconds)
+  end
+
   # Binds the socket to a local address.
   #
   # ```
