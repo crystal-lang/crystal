@@ -65,15 +65,11 @@ module Crystal::IOCP
     enum State
       STARTED
       DONE
-      CANCELLED
     end
 
     @overlapped = LibC::OVERLAPPED.new
     @fiber = Fiber.current
     @state : State = :started
-    property next : OverlappedOperation?
-    property previous : OverlappedOperation?
-    @@canceled = Thread::LinkedList(OverlappedOperation).new
 
     def initialize(@handle : LibC::HANDLE)
     end
@@ -84,11 +80,7 @@ module Crystal::IOCP
 
     def self.run(handle, &)
       operation = OverlappedOperation.new(handle)
-      begin
-        yield operation
-      ensure
-        operation.done
-      end
+      yield operation
     end
 
     def self.unbox(overlapped : LibC::OVERLAPPED*)
@@ -102,8 +94,6 @@ module Crystal::IOCP
 
     def wait_for_result(timeout, &)
       wait_for_completion(timeout)
-
-      raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
 
       result = LibC.GetOverlappedResult(@handle, self, out bytes, 0)
       if result.zero?
@@ -119,7 +109,6 @@ module Crystal::IOCP
     def wait_for_wsa_result(timeout, &)
       wait_for_completion(timeout)
 
-      raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(LibC::SOCKET.new(@handle.address), self, out bytes, false, pointerof(flags))
       if result.zero?
@@ -137,23 +126,8 @@ module Crystal::IOCP
       when .started?
         done!
         yield @fiber
-      when .cancelled?
-        @@canceled.delete(self)
       else
         raise Exception.new("Invalid state #{@state}")
-      end
-    end
-
-    protected def done
-      case @state
-      when .started?
-        # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
-        # > The application must not free or reuse the OVERLAPPED structure
-        # associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(@handle, self) != 0
-          @state = :cancelled
-          @@canceled.push(self) # to increase lifetime
-        end
       end
     end
 
@@ -214,7 +188,6 @@ module Crystal::IOCP
           raise IO::Error.from_os_error(method, error, target: target)
         end
       else
-        operation.done!
         return value
       end
 
@@ -244,7 +217,6 @@ module Crystal::IOCP
           raise IO::Error.from_os_error(method, error, target: target)
         end
       else
-        operation.done!
         return value
       end
 
