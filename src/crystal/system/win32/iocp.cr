@@ -118,10 +118,7 @@ module Crystal::IOCP
 
     def wait_for_wsa_result(timeout, &)
       wait_for_completion(timeout)
-      wsa_result { |error| yield error }
-    end
 
-    def wsa_result(&)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(LibC::SOCKET.new(@handle.address), self, out bytes, false, pointerof(flags))
