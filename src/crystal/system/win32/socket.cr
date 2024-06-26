@@ -146,7 +146,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      operation.wait_for_wsa_result(read_timeout || 1.seconds) do |error|
+      operation.wait_for_wsa_result(read_timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaeconnrefused?
           return ::Socket::ConnectError.from_os_error(method, error)
