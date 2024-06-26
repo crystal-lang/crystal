@@ -79,7 +79,8 @@ module Crystal::IOCP
     end
 
     def self.run(handle, &)
-      operation = OverlappedOperation.new(handle)
+      operation_storage = uninitialized ReferenceStorage(OverlappedOperation)
+      operation = OverlappedOperation.unsafe_construct(pointerof(operation_storage), handle)
       yield operation
     end
 
