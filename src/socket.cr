@@ -110,6 +110,7 @@ class Socket < IO
   # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
+    timeout = timeout.seconds unless timeout.is_a?(::Time::Span?)
     result = system_connect(addr, timeout)
     yield result if result.is_a?(Exception)
   end
