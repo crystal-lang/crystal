@@ -94,7 +94,7 @@ module Crystal::System::Thread
 
   private def system_suspend : Nil
     if LibC.SuspendThread(@system_handle) == -1
-      Crystal::System.panic("SuspendThread()")
+      Crystal::System.panic("SuspendThread()", WinError.value)
     end
   end
 
@@ -106,13 +106,13 @@ module Crystal::System::Thread
     thread_context.value.contextFlags = LibC::CONTEXT_FULL
 
     if LibC.GetThreadContext(@system_handle, thread_context) == -1
-      Crystal::System.panic("GetThreadContext()")
+      Crystal::System.panic("GetThreadContext()", WinError.value)
     end
   end
 
   private def system_resume : Nil
     if LibC.ResumeThread(@system_handle) == -1
-      Crystal::System.panic("ResumeThread()")
+      Crystal::System.panic("ResumeThread()", WinError.value)
     end
   end
 end

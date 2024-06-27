@@ -195,7 +195,7 @@ module Crystal::System::Thread
     @suspended.set(false)
 
     if LibC.pthread_kill(@system_handle, SIG_SUSPEND) == -1
-      System.panic("pthread_kill()")
+      System.panic("pthread_kill()", Errno.value)
     end
   end
 
@@ -207,7 +207,7 @@ module Crystal::System::Thread
 
   private def system_resume : Nil
     if LibC.pthread_kill(@system_handle, SIG_RESUME) == -1
-      System.panic("pthread_kill()")
+      System.panic("pthread_kill()", Errno.value)
     end
   end
 
