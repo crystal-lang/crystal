@@ -533,6 +533,9 @@ module Crystal
             result = {name: unit.name, reused: unit.reused_previous_compilation?}
             output.puts result.to_json
           end
+        rescue ex
+          result = { exception: { name: ex.class.name, message: ex.message, backtrace: ex.backtrace } }
+          output.puts result.to_json
         end
 
         overqueue = 1
@@ -554,13 +557,21 @@ module Crystal
             while (index = indexes.add(1)) < units.size
               input.puts index
 
-              response = output.gets(chomp: true).not_nil!
-              channel.send response
+              if response = output.gets(chomp: true)
+                channel.send response
+              else
+                Crystal::System.print_error "\nBUG: a codegen process failed\n"
+                exit 1
+              end
             end
 
             overqueued.times do
-              response = output.gets(chomp: true).not_nil!
-              channel.send response
+              if response = output.gets(chomp: true)
+                channel.send response
+              else
+                Crystal::System.print_error "\nBUG: a codegen process failed\n"
+                exit 1
+              end
             end
 
             input << '\n'
@@ -578,11 +589,18 @@ module Crystal
         end
 
         while response = channel.receive?
-          next unless wants_stats_or_progress
-
           result = JSON.parse(response)
-          all_reused << result["name"].as_s if result["reused"].as_bool
-          @progress_tracker.stage_progress += 1
+
+          if ex = result["exception"]?
+            Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
+            ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
+            exit 1
+          end
+
+          if wants_stats_or_progress
+            all_reused << result["name"].as_s if result["reused"].as_bool
+            @progress_tracker.stage_progress += 1
+          end
         end
 
         all_reused
