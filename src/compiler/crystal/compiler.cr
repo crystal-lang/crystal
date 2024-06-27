@@ -518,7 +518,7 @@ module Crystal
         end
         if @progress_tracker.stats?
           units.each do |unit|
-            all_reused << unit.name  && unit.reused_previous_compilation?
+            all_reused << unit.name && unit.reused_previous_compilation?
           end
         end
         return all_reused
