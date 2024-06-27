@@ -505,8 +505,6 @@ module Crystal
     private def codegen_many_units(program, units, target_triple)
       all_reused = [] of String
 
-      wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
-
       # Don't start more processes than compilation units
       n_threads = @n_threads.clamp(1..units.size)
 
@@ -516,7 +514,12 @@ module Crystal
       if n_threads == 1
         units.each do |unit|
           unit.compile
-          all_reused << unit.name if wants_stats_or_progress && unit.reused_previous_compilation?
+          @progress_tracker.stage_progress += 1
+        end
+        if @progress_tracker.stats?
+          units.each do |unit|
+            all_reused << unit.name  && unit.reused_previous_compilation?
+          end
         end
         return all_reused
       end
@@ -578,10 +581,10 @@ module Crystal
         end
 
         while response = channel.receive?
-          next unless wants_stats_or_progress
-
-          result = JSON.parse(response)
-          all_reused << result["name"].as_s if result["reused"].as_bool
+          if @progress_tracker.stats?
+            result = JSON.parse(response)
+            all_reused << result["name"].as_s if result["reused"].as_bool
+          end
           @progress_tracker.stage_progress += 1
         end
 
