@@ -534,7 +534,7 @@ module Crystal
             output.puts result.to_json
           end
         rescue ex
-          result = { exception: { name: ex.class.name, message: ex.message, backtrace: ex.backtrace } }
+          result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
           output.puts result.to_json
         end
 
