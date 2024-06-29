@@ -243,7 +243,7 @@ describe "at_exit" do
   end
 end
 
-describe "hardware exception" do
+pending_interpreted describe: "hardware exception" do
   it "reports invalid memory access", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-'CRYSTAL'
       puts Pointer(Int64).null.value

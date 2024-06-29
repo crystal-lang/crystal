@@ -55,7 +55,7 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  it "prints crash backtrace to stderr", tags: %w[slow] do
+  pending_interpreted "prints crash backtrace to stderr", tags: %w[slow] do
     sample = datapath("crash_backtrace_sample")
 
     _, output, error = compile_and_run_file(sample)

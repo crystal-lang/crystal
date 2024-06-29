@@ -1,8 +1,8 @@
 require "spec"
 
 {% if flag?(:interpreted) %}
-  def pending_interpreted(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    pending("#{description} [interpreted]", file, line, end_line)
+  def pending_interpreted(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, tags = nil, &block)
+    pending("#{description} [interpreted]", file, line, end_line, false, tags)
   end
 
   def pending_interpreted(*, describe, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
