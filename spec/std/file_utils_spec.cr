@@ -716,8 +716,7 @@ describe "FileUtils" do
     end
 
     {% if flag?(:unix) %}
-      # can't use backtick in interpreted code (#12241)
-      pending_interpreted "overwrites a destination named pipe" do
+      it "overwrites a destination named pipe" do
         with_tempfile("ln_sf_src", "ln_sf_dst_pipe_exists") do |path1, path2|
           test_with_string_and_path(path1, path2) do |arg1, arg2|
             FileUtils.touch([path1])

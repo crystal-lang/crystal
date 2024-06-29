@@ -3,8 +3,7 @@ require "system"
 
 describe System do
   describe "hostname" do
-    # can't use backtick in interpreted code (#12241)
-    pending_interpreted "returns current hostname" do
+    it "returns current hostname" do
       shell_hostname = `hostname`.strip
       pending! "`hostname` command was unsuccessful" unless $?.success?
 
@@ -14,8 +13,7 @@ describe System do
   end
 
   describe "cpu_count" do
-    # can't use backtick in interpreted code (#12241)
-    pending_interpreted "returns current CPU count" do
+    it "returns current CPU count" do
       shell_cpus =
         {% if flag?(:win32) %}
           ENV["NUMBER_OF_PROCESSORS"].to_i

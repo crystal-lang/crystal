@@ -3,8 +3,7 @@
 require "./spec_helper"
 require "signal"
 
-# interpreted code never receives signals (#12241)
-pending_interpreted describe: "Signal" do
+describe "Signal" do
   typeof(Signal::ABRT.reset)
   typeof(Signal::ABRT.ignore)
   typeof(Signal::ABRT.trap { 1 })
@@ -34,7 +33,8 @@ pending_interpreted describe: "Signal" do
       Signal::USR1.reset
     end
 
-    it "ignores a signal" do
+    # FIXME: Process.signal call always segfaults (x86_64-linux-gnu at least)
+    pending_interpreted "ignores a signal" do
       Signal::USR2.ignore
       Process.signal Signal::USR2, Process.pid
     end
