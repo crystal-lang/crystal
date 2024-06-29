@@ -13,8 +13,8 @@ require "spec"
     pending!(msg, file, line)
   end
 {% else %}
-  def pending_interpreted(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    it(description, file, line, end_line, &block)
+  def pending_interpreted(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, tags = nil, &block)
+    it(description, file, line, end_line, false, tags, &block)
   end
 
   def pending_interpreted(*, describe, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
