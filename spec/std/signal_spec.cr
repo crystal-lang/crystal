@@ -33,8 +33,7 @@ describe "Signal" do
       Signal::USR1.reset
     end
 
-    # FIXME: Process.signal call always segfaults (x86_64-linux-gnu at least)
-    pending_interpreted "ignores a signal" do
+    it "ignores a signal" do
       Signal::USR2.ignore
       Process.signal Signal::USR2, Process.pid
     end
