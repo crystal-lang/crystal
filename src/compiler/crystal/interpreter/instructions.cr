@@ -1663,6 +1663,17 @@ require "./repl"
         code:       fiber_resumable(context),
       },
 
+      interpreter_signal_descriptor: {
+        pop_values: [fd : Int32],
+        push:       true,
+        code:       signal_descriptor(fd),
+      },
+      interpreter_signal: {
+        pop_values: [signum : Int32, handler : Int32],
+        push:       true,
+        code:       signal(signum, handler),
+      },
+
       {% if flag?(:bits64) %}
         interpreter_intrinsics_memcpy: {
           pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
