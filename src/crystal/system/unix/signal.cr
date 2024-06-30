@@ -70,7 +70,7 @@ module Crystal::System::Signal
           h = case handler
               when LibC::SIG_DFL then 0
               when LibC::SIG_IGN then 1
-              else 2
+              else                    2
               end
           Crystal::Interpreter.signal(signal.value, h)
         {% else %}
