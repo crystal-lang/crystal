@@ -258,7 +258,7 @@ describe "hardware exception" do
     # FIXME: Pending as mitigation for https://github.com/crystal-lang/crystal/issues/7482
     pending "detects stack overflow on the main stack"
   {% else %}
-    pending_interpreted "detects stack overflow on the main stack", tags: %w[slow] do
+    it "detects stack overflow on the main stack", tags: %w[slow] do
       # This spec can take some time under FreeBSD where
       # the default stack size is 0.5G.  Setting a
       # smaller stack size with `ulimit -s 8192`
@@ -276,7 +276,7 @@ describe "hardware exception" do
     end
   {% end %}
 
-  pending_interpreted "detects stack overflow on a fiber stack", tags: %w[slow] do
+  it "detects stack overflow on a fiber stack", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-'CRYSTAL'
       def foo
         y = StaticArray(Int8, 512).new(0)
