@@ -59,5 +59,9 @@ lib LibC
   fun SwitchToThread : BOOL
   fun QueueUserAPC(pfnAPC : PAPCFUNC, hThread : HANDLE, dwData : ULONG_PTR) : DWORD
 
+  fun GetThreadContext(hThread : HANDLE, lpContext : CONTEXT*) : DWORD
+  fun ResumeThread(hThread : HANDLE) : DWORD
+  fun SuspendThread(hThread : HANDLE) : DWORD
+
   PROCESS_QUERY_INFORMATION = 0x0400
 end

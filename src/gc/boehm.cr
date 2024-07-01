@@ -161,6 +161,9 @@ lib LibGC
   alias WarnProc = LibC::Char*, Word ->
   fun set_warn_proc = GC_set_warn_proc(WarnProc)
   $warn_proc = GC_current_warn_proc : WarnProc
+
+  fun stop_world_external = GC_stop_world_external
+  fun start_world_external = GC_start_world_external
 end
 
 module GC
@@ -470,4 +473,14 @@ module GC
       GC.unlock_write
     end
   {% end %}
+
+  # :nodoc:
+  def self.stop_world : Nil
+    LibGC.stop_world_external
+  end
+
+  # :nodoc:
+  def self.start_world : Nil
+    LibGC.start_world_external
+  end
 end
