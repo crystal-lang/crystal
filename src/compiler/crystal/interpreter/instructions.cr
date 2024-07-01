@@ -1665,12 +1665,10 @@ require "./repl"
 
       interpreter_signal_descriptor: {
         pop_values: [fd : Int32],
-        push:       true,
         code:       signal_descriptor(fd),
       },
       interpreter_signal: {
         pop_values: [signum : Int32, handler : Int32],
-        push:       true,
         code:       signal(signum, handler),
       },
 

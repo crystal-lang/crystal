@@ -1183,7 +1183,6 @@ class Crystal::Repl::Interpreter
     {% else %}
       raise "BUG: interpreter doesn't support signals on this target"
     {% end %}
-    nil
   end
 
   private def signal(signum : Int32, handler : Int32) : Nil
@@ -1204,7 +1203,6 @@ class Crystal::Repl::Interpreter
     {% else %}
       raise "BUG: interpreter doesn't support signals on this target"
     {% end %}
-    nil
   end
 
   private def pry(ip, instructions, stack_bottom, stack)
