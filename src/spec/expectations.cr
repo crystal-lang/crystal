@@ -65,11 +65,19 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{@expected_value.pretty_inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.pretty_inspect} (object_id: #{actual_value.object_id})"
+      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: value.same? #{@expected_value.pretty_inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.pretty_inspect} (object_id: #{actual_value.object_id})"
+      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
+    end
+
+    private def identify(value)
+      if value.responds_to?(:object_id)
+        "object_id: #{value.object_id}"
+      else
+        value.to_unsafe
+      end
     end
   end
 
