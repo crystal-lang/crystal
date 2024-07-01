@@ -10,7 +10,9 @@ module GC
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size
-    LibC.malloc(size)
+    # libc malloc is not guaranteed to return cleared memory, so we need to
+    # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
+    LibC.malloc(size).tap(&.clear)
   end
 
   # :nodoc:
