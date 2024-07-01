@@ -631,8 +631,7 @@ describe "Dir" do
   end
 
   describe ".current" do
-    # can't use backtick in interpreted code (#12241)
-    pending_interpreted "matches shell" do
+    it "matches shell" do
       Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
     end
 
