@@ -469,7 +469,6 @@ module Crystal
 
     private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
       object_names = units.map &.object_filename
-
       target_triple = target_machine.triple
       reused = [] of String
 
@@ -477,12 +476,10 @@ module Crystal
         @progress_tracker.stage_progress_total = units.size
 
         if units.size == 1
-          first_unit = units.first
-          first_unit.compile
-          reused << first_unit.name if first_unit.reused_previous_compilation?
-          first_unit.emit(@emit_targets, emit_base_filename || output_filename)
+          sequential_codegen(units, reused)
+          units.first.emit(@emit_targets, emit_base_filename || output_filename)
         else
-          reused = codegen_many_units(program, units, target_triple)
+          codegen_many_units(program, units, target_triple, reused)
         end
       end
 
@@ -502,9 +499,7 @@ module Crystal
       {units, reused}
     end
 
-    private def codegen_many_units(program, units, target_triple)
-      all_reused = [] of String
-
+    private def codegen_many_units(program, units, target_triple, reused)
       # Don't start more processes than compilation units
       n_threads = @n_threads.clamp(1..units.size)
 
@@ -512,102 +507,108 @@ module Crystal
       # particularly useful for CI because there forking eventually leads to
       # "out of memory" errors.
       if n_threads == 1
-        units.each do |unit|
-          unit.compile
-          @progress_tracker.stage_progress += 1
-        end
-        if @progress_tracker.stats?
-          units.each do |unit|
-            all_reused << unit.name && unit.reused_previous_compilation?
-          end
-        end
-        return all_reused
+        sequential_codegen(units, reused)
+      else
+        {% if flag?(:preview_mt) %}
+          raise "Cannot fork compiler in multithread mode."
+        {% elsif LibC.has_method?("fork") %}
+          fork_codegen(units, n_threads, reused)
+        {% else %}
+          raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+        {% end %}
+      end
+    end
+
+    private def sequential_codegen(units, reused)
+      units.each do |unit|
+        unit.compile
+        @progress_tracker.stage_progress += 1
       end
 
-      {% if !LibC.has_method?("fork") %}
-        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
-      {% elsif flag?(:preview_mt) %}
-        raise "Cannot fork compiler in multithread mode"
-      {% else %}
-        workers = fork_workers(n_threads) do |input, output|
-          while i = input.gets(chomp: true).presence
-            unit = units[i.to_i]
-            unit.compile
-            result = {name: unit.name, reused: unit.reused_previous_compilation?}
-            output.puts result.to_json
-          end
-        rescue ex
-          result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
+      if @progress_tracker.stats?
+        units.compact_map do |unit|
+          reused << unit.name if unit.reused_previous_compilation?
+        end
+      end
+    end
+
+    private def fork_codegen(units, n_threads, reused)
+      workers = fork_workers(n_threads) do |input, output|
+        while i = input.gets(chomp: true).presence
+          unit = units[i.to_i]
+          unit.compile
+          result = {name: unit.name, reused: unit.reused_previous_compilation?}
           output.puts result.to_json
         end
+      rescue ex
+        result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
+        output.puts result.to_json
+      end
 
-        overqueue = 1
-        indexes = Atomic(Int32).new(0)
-        channel = Channel(String).new(n_threads)
-        completed = Channel(Nil).new(n_threads)
+      overqueue = 1
+      indexes = Atomic(Int32).new(0)
+      channel = Channel(String).new(n_threads)
+      completed = Channel(Nil).new(n_threads)
 
-        workers.each do |pid, input, output|
-          spawn do
-            overqueued = 0
-
-            overqueue.times do
-              if (index = indexes.add(1)) < units.size
-                input.puts index
-                overqueued += 1
-              end
-            end
-
-            while (index = indexes.add(1)) < units.size
-              input.puts index
-
-              if response = output.gets(chomp: true)
-                channel.send response
-              else
-                Crystal::System.print_error "\nBUG: a codegen process failed\n"
-                exit 1
-              end
-            end
-
-            overqueued.times do
-              if response = output.gets(chomp: true)
-                channel.send response
-              else
-                Crystal::System.print_error "\nBUG: a codegen process failed\n"
-                exit 1
-              end
-            end
-
-            input << '\n'
-            input.close
-            output.close
-
-            Process.new(pid).wait
-            completed.send(nil)
-          end
-        end
-
+      workers.each do |pid, input, output|
         spawn do
-          n_threads.times { completed.receive }
-          channel.close
-        end
+          overqueued = 0
 
-        while response = channel.receive?
-          result = JSON.parse(response)
-
-          if ex = result["exception"]?
-            Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
-            ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
-            exit 1
+          overqueue.times do
+            if (index = indexes.add(1)) < units.size
+              input.puts index
+              overqueued += 1
+            end
           end
 
-          if @progress_tracker.stats?
-            all_reused << result["name"].as_s if result["reused"].as_bool
+          while (index = indexes.add(1)) < units.size
+            input.puts index
+
+            if response = output.gets(chomp: true)
+              channel.send response
+            else
+              Crystal::System.print_error "\nBUG: a codegen process failed\n"
+              exit 1
+            end
           end
-          @progress_tracker.stage_progress += 1
+
+          overqueued.times do
+            if response = output.gets(chomp: true)
+              channel.send response
+            else
+              Crystal::System.print_error "\nBUG: a codegen process failed\n"
+              exit 1
+            end
+          end
+
+          input << '\n'
+          input.close
+          output.close
+
+          Process.new(pid).wait
+          completed.send(nil)
+        end
+      end
+
+      spawn do
+        n_threads.times { completed.receive }
+        channel.close
+      end
+
+      while response = channel.receive?
+        result = JSON.parse(response)
+
+        if ex = result["exception"]?
+          Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
+          ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
+          exit 1
         end
 
-        all_reused
-      {% end %}
+        if @progress_tracker.stats?
+          reused << result["name"].as_s if result["reused"].as_bool
+        end
+        @progress_tracker.stage_progress += 1
+      end
     end
 
     private def fork_workers(n_threads)
