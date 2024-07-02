@@ -296,7 +296,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            brew install ruby@3 libffi pkgconfig libtool
+            brew install ruby@3 libffi pkgconfig libtool automake
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
