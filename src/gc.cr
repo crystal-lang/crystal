@@ -36,6 +36,28 @@ fun __crystal_malloc_atomic64(size : UInt64) : Void*
 end
 
 # :nodoc:
+fun __crystal_calloc64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
+    end
+  {% end %}
+
+  GC.calloc(LibC::SizeT.new(size))
+end
+
+# :nodoc:
+fun __crystal_calloc_atomic64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
+    end
+  {% end %}
+
+  GC.calloc_atomic(LibC::SizeT.new(size))
+end
+
+# :nodoc:
 fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
   {% if flag?(:bits32) %}
     if size > UInt32::MAX
@@ -70,7 +92,8 @@ module GC
     expl_freed_bytes_since_gc : UInt64,
     obtained_from_os_bytes : UInt64
 
-  # Allocates and clears *size* bytes of memory.
+  # Allocates *size* bytes of memory.
+  # The returned memory may or may not be cleared.
   #
   # The resulting object may contain pointers and they will be tracked by the GC.
   #
@@ -80,12 +103,31 @@ module GC
   end
 
   # Allocates *size* bytes of pointer-free memory.
+  # The returned memory may or may not be cleared.
   #
   # The client promises that the resulting object will never contain any pointers.
   #
   # The memory is not cleared. It will be automatically deallocated when unreferenced.
   def self.malloc_atomic(size : Int) : Void*
     malloc_atomic(LibC::SizeT.new(size))
+  end
+
+  # Allocates and clears *size* bytes of memory.
+  #
+  # The resulting object may contain pointers and they will be tracked by the GC.
+  #
+  # The memory will be automatically deallocated when unreferenced.
+  def self.calloc(size : Int) : Void*
+    calloc(LibC::SizeT.new(size))
+  end
+
+  # Allocates and clears *size* bytes of pointer-free memory.
+  #
+  # The client promises that the resulting object will never contain any pointers.
+  #
+  # The memory is not cleared. It will be automatically deallocated when unreferenced.
+  def self.calloc_atomic(size : Int) : Void*
+    calloc_atomic(LibC::SizeT.new(size))
   end
 
   # Changes the allocated memory size of *pointer* to *size*.

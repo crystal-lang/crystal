@@ -9,6 +9,8 @@ module Crystal
   MAIN_NAME           = "__crystal_main"
   RAISE_NAME          = "__crystal_raise"
   RAISE_OVERFLOW_NAME = "__crystal_raise_overflow"
+  CALLOC_NAME         = "__crystal_calloc64"
+  CALLOC_ATOMIC_NAME  = "__crystal_calloc_atomic64"
   MALLOC_NAME         = "__crystal_malloc64"
   MALLOC_ATOMIC_NAME  = "__crystal_malloc_atomic64"
   REALLOC_NAME        = "__crystal_realloc64"
@@ -187,6 +189,8 @@ module Crystal
 
     @malloc_fun : LLVMTypedFunction?
     @malloc_atomic_fun : LLVMTypedFunction?
+    @calloc_fun : LLVMTypedFunction?
+    @calloc_atomic_fun : LLVMTypedFunction?
     @realloc_fun : LLVMTypedFunction?
     @raise_overflow_fun : LLVMTypedFunction?
     @c_malloc_fun : LLVMTypedFunction?
@@ -364,9 +368,8 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
-             @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
-             ONCE_INIT, ONCE
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, CALLOC_NAME, CALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
+             @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME, ONCE_INIT, ONCE
           @codegen.accept node
         end
 
@@ -2066,12 +2069,13 @@ module Crystal
       struct_type = llvm_struct_type(type)
       if type.passed_by_value?
         type_ptr = alloca struct_type
+        memset type_ptr, int8(0), size_t(struct_type.size)
       else
         if type.is_a?(InstanceVarContainer) && !type.struct? &&
            type.all_instance_vars.each_value.any? &.type.has_inner_pointers?
-          type_ptr = malloc struct_type
+          type_ptr = calloc struct_type
         else
-          type_ptr = malloc_atomic struct_type
+          type_ptr = calloc_atomic struct_type
         end
       end
 
@@ -2079,7 +2083,6 @@ module Crystal
     end
 
     def pre_initialize_aggregate(type, struct_type, ptr)
-      memset ptr, int8(0), size_t(struct_type.size)
       run_instance_vars_initializers(type, type, ptr)
 
       unless type.struct?
@@ -2142,6 +2145,26 @@ module Crystal
       generic_malloc(type) { crystal_malloc_atomic_fun }
     end
 
+    def calloc(type)
+      if crystal_calloc_fun
+        generic_malloc(type) { crystal_calloc_fun }
+      else
+        ptr = malloc(type)
+        memset ptr, int8(0), size_t(type.size)
+        ptr
+      end
+    end
+
+    def calloc_atomic(type)
+      if crystal_calloc_atomic_fun
+        generic_malloc(type) { crystal_calloc_atomic_fun }
+      else
+        ptr = malloc_atomic(type)
+        memset ptr, int8(0), size_t(type.size)
+        ptr
+      end
+    end
+
     def generic_malloc(type, &)
       size = type.size
 
@@ -2162,6 +2185,28 @@ module Crystal
       generic_array_malloc(type, count) { crystal_malloc_atomic_fun }
     end
 
+    def array_calloc(type, count)
+      if crystal_calloc_fun
+        generic_array_malloc(type, count) { crystal_calloc_fun }
+      else
+        size = builder.mul type.size, count
+        ptr = array_malloc(type, count)
+        memset ptr, int8(0), size_t(size)
+        ptr
+      end
+    end
+
+    def array_calloc_atomic(type, count)
+      if crystal_calloc_atomic_fun
+        generic_array_malloc(type, count) { crystal_calloc_atomic_fun }
+      else
+        size = builder.mul type.size, count
+        ptr = array_malloc_atomic(type, count)
+        memset ptr, int8(0), size_t(size)
+        ptr
+      end
+    end
+
     def generic_array_malloc(type, count, &)
       size = builder.mul type.size, count
 
@@ -2171,7 +2216,6 @@ module Crystal
         pointer = call c_malloc_fun, size_t(size)
       end
 
-      memset pointer, int8(0), size_t(size)
       pointer_cast pointer, type.pointer
     end
 
@@ -2188,6 +2232,24 @@ module Crystal
       @malloc_atomic_fun ||= typed_fun?(@main_mod, MALLOC_ATOMIC_NAME)
       if malloc_fun = @malloc_atomic_fun
         check_main_fun MALLOC_ATOMIC_NAME, malloc_fun
+      else
+        nil
+      end
+    end
+
+    def crystal_calloc_fun
+      @calloc_fun ||= typed_fun?(@main_mod, CALLOC_NAME)
+      if malloc_fun = @calloc_fun
+        check_main_fun CALLOC_NAME, malloc_fun
+      else
+        nil
+      end
+    end
+
+    def crystal_calloc_atomic_fun
+      @calloc_atomic_fun ||= typed_fun?(@main_mod, CALLOC_ATOMIC_NAME)
+      if malloc_fun = @calloc_atomic_fun
+        check_main_fun CALLOC_ATOMIC_NAME, malloc_fun
       else
         nil
       end
