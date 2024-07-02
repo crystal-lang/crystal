@@ -4,7 +4,7 @@
 # an invalid XML (for example, if invoking `end_element`
 # without a matching `start_element`, or trying to use
 # a non-string value as an object's field name)
-struct XML::Builder
+class XML::Builder
   private CDATA_END    = "]]>"
   private CDATA_ESCAPE = "]]]]><![CDATA[>"
 
@@ -15,7 +15,7 @@ struct XML::Builder
     @box = Box.box(io)
     buffer = LibXML.xmlOutputBufferCreateIO(
       ->(ctx, buffer, len) {
-        Box(IO).unbox(ctx).write(Slice.new(buffer, len))
+        Box(IO).unbox(ctx).write_string(Slice.new(buffer, len))
         len
       },
       ->(ctx) {
@@ -40,7 +40,7 @@ struct XML::Builder
 
   # Emits the start of the document, invokes the block,
   # and then emits the end of the document.
-  def document(version = nil, encoding = nil)
+  def document(version = nil, encoding = nil, &)
     start_document version, encoding
     yield.tap { end_document }
   end
@@ -70,14 +70,14 @@ struct XML::Builder
 
   # Emits the start of an element with the given *attributes*,
   # invokes the block and then emits the end of the element.
-  def element(__name__ : String, **attributes)
+  def element(__name__ : String, **attributes, &)
     element(__name__, attributes) do
       yield
     end
   end
 
   # :ditto:
-  def element(__name__ : String, attributes : Hash | NamedTuple)
+  def element(__name__ : String, attributes : Hash | NamedTuple, &)
     start_element __name__
     attributes(attributes)
     yield.tap { end_element }
@@ -89,32 +89,32 @@ struct XML::Builder
   end
 
   # :ditto:
-  def element(name : String, attributes : Hash | NamedTuple)
+  def element(name : String, attributes : Hash | NamedTuple) : Nil
     element(name, attributes) { }
   end
 
   # Emits the start of an element with namespace info with the given *attributes*,
   # invokes the block and then emits the end of the element.
-  def element(__prefix__ : String?, __name__ : String, __namespace_uri__ : String?, **attributes)
+  def element(__prefix__ : String?, __name__ : String, __namespace_uri__ : String?, **attributes, &)
     element(__prefix__, __name__, __namespace_uri__, attributes) do
       yield
     end
   end
 
   # :ditto:
-  def element(__prefix__ : String?, __name__ : String, __namespace_uri__ : String?, attributes : Hash | NamedTuple)
+  def element(__prefix__ : String?, __name__ : String, __namespace_uri__ : String?, attributes : Hash | NamedTuple, &)
     start_element __prefix__, __name__, __namespace_uri__
     attributes(attributes)
     yield.tap { end_element }
   end
 
   # Emits an element with namespace info with the given *attributes*.
-  def element(prefix : String?, name : String, namespace_uri : String?, **attributes)
+  def element(prefix : String?, name : String, namespace_uri : String?, **attributes) : Nil
     element(prefix, name, namespace_uri, attributes)
   end
 
   # :ditto:
-  def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple)
+  def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple) : Nil
     start_element(prefix, name, namespace_uri)
     attributes(attributes)
     end_element
@@ -137,7 +137,7 @@ struct XML::Builder
 
   # Emits the start of an attribute, invokes the block,
   # and then emits the end of the attribute.
-  def attribute(*args, **nargs)
+  def attribute(*args, **nargs, &)
     start_attribute *args, **nargs
     yield.tap { end_attribute }
   end
@@ -158,7 +158,7 @@ struct XML::Builder
   end
 
   # :ditto:
-  def attributes(attributes : Hash | NamedTuple)
+  def attributes(attributes : Hash | NamedTuple) : Nil
     attributes.each do |key, value|
       attribute key.to_s, value
     end
@@ -208,7 +208,7 @@ struct XML::Builder
 
   # Emits the start of a comment, invokes the block
   # and then emits the end of the comment.
-  def comment
+  def comment(&)
     start_comment
     yield.tap { end_comment }
   end
@@ -230,7 +230,7 @@ struct XML::Builder
 
   # Emits the start of a `DTD`, invokes the block
   # and then emits the end of the `DTD`.
-  def dtd(name : String, pubid : String, sysid : String) : Nil
+  def dtd(name : String, pubid : String, sysid : String, &) : Nil
     start_dtd name, pubid, sysid
     yield.tap { end_dtd }
   end
@@ -241,13 +241,13 @@ struct XML::Builder
   end
 
   # Emits a namespace.
-  def namespace(prefix, uri)
+  def namespace(prefix, uri) : Nil
     attribute "xmlns", prefix, nil, uri
   end
 
   # Forces content written to this writer to be flushed to
   # this writer's `IO`.
-  def flush
+  def flush : Nil
     call Flush
 
     @io.flush
@@ -275,7 +275,7 @@ struct XML::Builder
 
   # Sets the quote char to use, either `'` or `"`.
   def quote_char=(char : Char)
-    unless char == '\'' || char == '"'
+    unless char.in?('\'', '"')
       raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 
@@ -283,7 +283,7 @@ struct XML::Builder
   end
 
   private macro call(name, *args)
-    ret = LibXML.xmlTextWriter{{name}}(@writer, {{*args}})
+    ret = LibXML.xmlTextWriter{{name}}(@writer, {{args.splat}})
     check ret, {{@def.name.stringify}}
   end
 
@@ -322,7 +322,7 @@ module XML
   #
   # string # => "<?xml version=\"1.0\"?>\n<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
   # ```
-  def self.build(version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil)
+  def self.build(version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil, &)
     String.build do |str|
       build(str, version, encoding, indent, quote_char) do |xml|
         yield xml
@@ -346,7 +346,7 @@ module XML
   #
   # string # => "<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
   # ```
-  def self.build_fragment(*, indent = nil, quote_char = nil)
+  def self.build_fragment(*, indent = nil, quote_char = nil, &)
     String.build do |str|
       build_fragment(str, indent: indent, quote_char: quote_char) do |xml|
         yield xml
@@ -357,7 +357,7 @@ module XML
   # Writes XML document into the given `IO`. An `XML::Builder` is yielded to the block.
   #
   # Builds an XML document (see `#document`) including XML declaration (`<?xml?>`).
-  def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil) : Nil
+  def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil, &) : Nil
     build_fragment(io, indent: indent, quote_char: quote_char) do |xml|
       xml.start_document version, encoding
       yield xml
@@ -368,13 +368,13 @@ module XML
   # Writes XML fragment into the given `IO`. An `XML::Builder` is yielded to the block.
   #
   # Builds an XML fragment without XML declaration (`<?xml?>`).
-  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil) : Nil
+  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil, &) : Nil
     xml = XML::Builder.new(io)
     xml.indent = indent if indent
     xml.quote_char = quote_char if quote_char
     v = yield xml
 
-    # EndDocument is still necessary to ensure all all elements are closed, even
+    # EndDocument is still necessary to ensure all elements are closed, even
     # when StartDocument is omitted.
     xml.end_document
     xml.flush

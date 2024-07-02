@@ -7,15 +7,12 @@ module Crystal
   abstract class CodeError < Error
     property? color = false
     property? error_trace = false
+    property? warning = false
 
     @filename : String | VirtualFile | Nil
 
     def to_s(io) : Nil
       to_s_with_source(io, nil)
-    end
-
-    def warning=(warning)
-      @warning = !!warning
     end
 
     abstract def to_s_with_source(io : IO, source)
@@ -30,15 +27,15 @@ module Crystal
       if filename.is_a? VirtualFile
         loc = filename.expanded_location
         if loc
-          return true_filename loc.filename
+          true_filename loc.filename
         else
-          return ""
+          ""
         end
       else
         if filename
-          return filename
+          filename
         else
-          return ""
+          ""
         end
       end
     end
@@ -140,10 +137,13 @@ module Crystal
         decorator = line_number_decorator(line_number)
         lstripped_line = line.lstrip
         space_delta = line.chars.size - lstripped_line.chars.size
+        # Column number should start at `1`. We're using `0` to track bogus passed
+        # `column_number`.
+        final_column_number = (column_number - space_delta).clamp(0..)
 
         io << "\n\n"
         io << colorize(decorator).dim << colorize(lstripped_line.chomp).bold
-        append_error_indicator(io, decorator.chars.size, column_number - space_delta, size || 0)
+        append_error_indicator(io, decorator.chars.size, final_column_number, size || 0)
       end
     end
 
@@ -253,11 +253,12 @@ module Crystal
         source, _ = minimize_indentation(source.lines)
         io << Crystal.with_line_numbers(source, line_number, @color)
       else
-        from_index = [0, line_number - MACRO_LINES_TO_SHOW].max
-        source_slice = source.lines[from_index...line_number]
+        to_index = line_number.clamp(0..source.lines.size)
+        from_index = {0, to_index - MACRO_LINES_TO_SHOW}.max
+        source_slice = source.lines[from_index...to_index]
         source_slice, spaces_removed = minimize_indentation(source_slice)
 
-        io << Crystal.with_line_numbers(source_slice, line_number, @color, line_number_start = from_index + 1)
+        io << Crystal.with_line_numbers(source_slice, line_number, @color, from_index + 1)
         offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.chars.size - spaces_removed
         append_error_indicator(io, offset, @column_number, @size)
       end

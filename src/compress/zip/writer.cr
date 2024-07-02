@@ -45,20 +45,20 @@ class Compress::Zip::Writer
   end
 
   # Creates a new writer to the given *filename*.
-  def self.new(filename : String)
+  def self.new(filename : Path | String)
     new(::File.new(filename, "w"), sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, sync_close = false)
+  def self.open(io : IO, sync_close = false, &)
     writer = new(io, sync_close: sync_close)
     yield writer ensure writer.close
   end
 
   # Creates a new writer to the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String)
+  def self.open(filename : Path | String, &)
     writer = new(filename)
     yield writer ensure writer.close
   end
@@ -66,8 +66,8 @@ class Compress::Zip::Writer
   # Adds an entry that will have the given *filename* and current
   # time (`Time.utc`) and yields an `IO` to write that entry's
   # contents.
-  def add(filename : String)
-    add(Entry.new(filename)) do |io|
+  def add(filename : Path | String, &)
+    add(Entry.new(filename.to_s)) do |io|
       yield io
     end
   end
@@ -85,7 +85,7 @@ class Compress::Zip::Writer
   #
   # You can also set the Entry's time (which is `Time.utc` by default)
   #  and extra data before adding it to the zip stream.
-  def add(entry : Entry)
+  def add(entry : Entry, &)
     # bit 3: unknown compression size (not needed for STORED, by if left out it doesn't work...)
     entry.general_purpose_bit_flag |= (1 << 3)
     # bit 11: require UTF-8 set
@@ -151,14 +151,14 @@ class Compress::Zip::Writer
   end
 
   # Adds an entry that will have *string* as its contents.
-  def add(filename_or_entry : String | Entry, string : String)
+  def add(filename_or_entry : Path | String | Entry, string : String) : Nil
     add(filename_or_entry) do |io|
       io << string
     end
   end
 
   # Adds an entry that will have *bytes* as its contents.
-  def add(filename_or_entry : String | Entry, bytes : Bytes)
+  def add(filename_or_entry : Path | String | Entry, bytes : Bytes) : Nil
     add(filename_or_entry) do |io|
       io.write(bytes)
     end
@@ -167,7 +167,7 @@ class Compress::Zip::Writer
   # Adds an entry that will have its data copied from the given *data*.
   # If the given *data* is a `::File`, it is automatically closed
   # after data is copied from it.
-  def add(filename_or_entry : String | Entry, data : IO)
+  def add(filename_or_entry : Path | String | Entry, data : IO) : Nil
     add(filename_or_entry) do |io|
       IO.copy(data, io)
       data.close if data.is_a?(::File)
@@ -175,13 +175,13 @@ class Compress::Zip::Writer
   end
 
   # Adds a directory entry that will have the given *name*.
-  def add_dir(name)
+  def add_dir(name) : Nil
     name = name + '/' unless name.ends_with?('/')
     add(Entry.new(name)) { }
   end
 
   # Closes this zip writer.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

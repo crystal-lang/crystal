@@ -17,20 +17,40 @@ class JSON::Token
 
   property kind : Kind
   property string_value : String
-  property int_value : Int64
-  property float_value : Float64
+
+  def int_value : Int64
+    @int_value || raw_value.to_i64
+  rescue exc : ArgumentError
+    raise ParseException.new(exc.message, line_number, column_number)
+  end
+
+  def float_value : Float64
+    raw_value.to_f64
+  rescue exc : ArgumentError
+    raise ParseException.new(exc.message, line_number, column_number)
+  end
+
   property line_number : Int32
   property column_number : Int32
-  property raw_value : String
+  setter raw_value : String
+  setter int_value : Int64?
 
   def initialize
     @kind = :EOF
     @line_number = 0
     @column_number = 0
     @string_value = ""
-    @int_value = 0_i64
-    @float_value = 0.0
     @raw_value = ""
+    @int_value = nil
+  end
+
+  def raw_value
+    case @kind
+    when .int?
+      @int_value.try(&.to_s) || @raw_value
+    else
+      @raw_value
+    end
   end
 
   def to_s(io : IO) : Nil
@@ -42,7 +62,11 @@ class JSON::Token
     when .true?
       io << "true"
     when .int?
-      raw_value.to_s(io)
+      if int_value = @int_value
+        int_value.to_s(io)
+      else
+        raw_value.to_s(io)
+      end
     when .float?
       raw_value.to_s(io)
     when .string?

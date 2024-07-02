@@ -1,21 +1,15 @@
-struct XML::XPathContext
+class XML::XPathContext
+  getter errors = [] of XML::Error
+
   def initialize(node : Node)
     @ctx = LibXML.xmlXPathNewContext(node.to_unsafe.value.doc)
     @ctx.value.node = node.to_unsafe
   end
 
   def evaluate(search_path : String)
-    xpath = LibXML.xmlXPathEvalExpression(search_path, self)
-    unless xpath
-      {% if flag?(:arm) || flag?(:aarch64) %}
-        if errors = XML::Error.errors
-          raise errors.last
-        end
-      {% end %}
-      raise XML::Error.new("Error in '#{search_path}' expression", 0)
-    end
+    xpath = XML::Error.collect_generic(@errors) { LibXML.xmlXPathEvalExpression(search_path, self) }
 
-    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath.value
+    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath
 
     case xpath.value.type
     when LibXML::XPathObjectType::STRING
@@ -35,7 +29,7 @@ struct XML::XPathContext
     end
   end
 
-  def register_namespaces(namespaces)
+  def register_namespaces(namespaces) : Nil
     namespaces.each do |prefix, uri|
       register_namespace prefix, uri
     end
@@ -46,7 +40,7 @@ struct XML::XPathContext
     LibXML.xmlXPathRegisterNs(self, prefix, uri.to_s)
   end
 
-  def register_variables(variables)
+  def register_variables(variables) : Nil
     variables.each do |name, value|
       register_variable name, value
     end

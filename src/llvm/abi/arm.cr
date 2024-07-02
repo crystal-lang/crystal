@@ -2,21 +2,21 @@ require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/dfe8bd10fe6763e0a1d5d55fa2574ecba27d3e2e/src/librustc_trans/cabi_arm.rs
 class LLVM::ABI::ARM < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = compute_arg_types(atys, context)
     FunctionType.new(arg_tys, ret_ty)
   end
 
-  def align(type : Type)
+  def align(type : Type) : Int32
     align(type, 4)
   end
 
-  def size(type : Type)
+  def size(type : Type) : Int32
     size(type, 4)
   end
 
-  def register?(type)
+  def register?(type) : Bool
     case type.kind
     when Type::Kind::Integer, Type::Kind::Float, Type::Kind::Double, Type::Kind::Pointer
       true

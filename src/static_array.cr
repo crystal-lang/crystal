@@ -33,7 +33,8 @@
 # doesn't specify a type but a size. Its value can be an `Int32` literal or
 # constant.
 struct StaticArray(T, N)
-  include Indexable(T)
+  include Comparable(StaticArray)
+  include Indexable::Mutable(T)
 
   # Creates a new `StaticArray` with the given *args*. The type of the
   # static array will be the union of the type of the given *args*,
@@ -46,9 +47,10 @@ struct StaticArray(T, N)
   # ary.class # => StaticArray(Char | Int32, 2)
   # ```
   #
-  # See also: `Number.static_array`.
+  # * `Number.static_array` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args)
-    %array = uninitialized StaticArray(typeof({{*args}}), {{args.size}})
+    %array = uninitialized StaticArray(typeof({{args.splat}}), {{args.size}})
     {% for arg, i in args %}
       %array.to_unsafe[{{i}}] = {{arg}}
     {% end %}
@@ -62,7 +64,7 @@ struct StaticArray(T, N)
   # ```
   # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
-  def self.new(&block : Int32 -> T)
+  def self.new(& : Int32 -> T)
     array = uninitialized self
     N.times do |i|
       array.to_unsafe[i] = yield i
@@ -113,41 +115,18 @@ struct StaticArray(T, N)
     false
   end
 
+  def <=>(other : StaticArray)
+    to_slice <=> other.to_slice
+  end
+
   @[AlwaysInline]
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     to_unsafe[index]
   end
 
-  # Sets the given value at the given *index*.
-  #
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to set an element outside the array's range.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
-  # array[2] = 2                                    # => 2
-  # array                                           # => StaticArray[1, 2, 2]
-  # array[4] = 4                                    # raises IndexError
-  # ```
   @[AlwaysInline]
-  def []=(index : Int, value : T)
-    index = check_index_out_of_bounds index
+  def unsafe_put(index : Int, value : T)
     to_unsafe[index] = value
-  end
-
-  # Yields the current element at the given index and updates the value
-  # at the given *index* with the block's value.
-  # Raises `IndexError` if trying to set an element outside the array's range.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
-  # array.update(1) { |x| x * 2 }                   # => 4
-  # array                                           # => StaticArray[1, 4, 3]
-  # array.update(5) { |x| x * 2 }                   # raises IndexError
-  # ```
-  def update(index : Int)
-    index = check_index_out_of_bounds index
-    to_unsafe[index] = yield to_unsafe[index]
   end
 
   # Returns the size of `self`
@@ -156,79 +135,26 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.size # => 3
   # ```
-  def size
+  def size : Int32
     N
   end
 
-  # Replaces every element in `self` with the given *value*. Returns `self`.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
-  # array.fill(2)                       # => StaticArray[2, 2, 2]
-  # array                               # => StaticArray[2, 2, 2]
-  # ```
+  # :inherit:
   def fill(value : T) : self
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
-      if value == 0
-        to_unsafe.clear(size)
-        return self
-      end
-    {% end %}
-
-    fill { value }
-  end
-
-  # Yields each index of `self` to the given block and then assigns
-  # the block's value in that position. Returns `self`.
-  #
-  # ```
-  # array = StaticArray[2, 1, 1, 1]
-  # array.fill { |i| i * i } # => StaticArray[0, 1, 4, 9]
-  # array                    # => StaticArray[0, 1, 4, 9]
-  # ```
-  def fill(& : Int32 -> T) : self
-    size.times do |i|
-      to_unsafe[i] = yield i
-    end
+    # enable memset optimization
+    to_slice.fill(value)
     self
   end
 
-  # Fills the array by substituting all elements with the given value.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.[]= 2 # => nil
-  # array       # => StaticArray[2, 2, 2]
-  # ```
-  @[Deprecated("Use `#fill(value : T)` instead")]
-  def []=(value : T)
-    size.times do |i|
-      to_unsafe[i] = value
-    end
-  end
-
-  # Modifies `self` by randomizing the order of elements in the array
-  # using the given *random* number generator. Returns `self`.
-  #
-  # ```
-  # a = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
-  # a.shuffle!(Random.new(42))                  # => StaticArray[3, 2, 1]
-  # a                                           # => StaticArray[3, 2, 1]
-  # ```
-  def shuffle!(random = Random::DEFAULT)
-    to_slice.shuffle!(random)
+  # :inherit:
+  def fill(value : T, start : Int, count : Int) : self
+    to_slice.fill(value, start, count)
     self
   end
 
-  # Invokes the given block for each element of `self`, replacing the element
-  # with the value returned by the block. Returns `self`.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.map! { |x| x*x } # => StaticArray[1, 4, 9]
-  # ```
-  def map!
-    to_unsafe.map!(size) { |e| yield e }
+  # :inherit:
+  def fill(value : T, range : Range) : self
+    to_slice.fill(value, range)
     self
   end
 
@@ -238,35 +164,196 @@ struct StaticArray(T, N)
   # array = StaticArray[1, 2.5, "a"]
   # array.map &.to_s # => StaticArray["1", "2.5", "a"]
   # ```
-  def map(&block : T -> U) forall U
+  def map(&block : T -> U) : StaticArray(U, N) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i] }
-  end
-
-  # Like `map!`, but the block gets passed both the element and its index.
-  #
-  # Accepts an optional *offset* parameter, which tells it to start counting
-  # from there.
-  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
-    self
   end
 
   # Like `map`, but the block gets passed both the element and its index.
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, &block : (T, Int32) -> U) : StaticArray(U, N) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 
-  # Reverses the elements of this array in-place, then returns `self`.
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.reverse! # => StaticArray[3, 2, 1]
+  # a = StaticArray[3, 1, 2]
+  # a.sort # => StaticArray[1, 2, 3]
+  # a      # => StaticArray[3, 1, 2]
   # ```
-  def reverse!
-    to_slice.reverse!
+  #
+  # See `Indexable::Mutable#sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def sort : StaticArray(T, N)
+    # the return value of `dup` must be assigned to a variable first, otherwise
+    # `self` will be mutated if the `sort!` call is chained directly
+    ary = dup
+    ary.sort!
+  end
+
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # a.unstable_sort # => StaticArray[1, 2, 3]
+  # a               # => StaticArray[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def unstable_sort : StaticArray(T, N)
+    ary = dup
+    ary.unstable_sort!
+  end
+
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using a stable sort algorithm.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # b = a.sort { |a, b| b <=> a }
+  #
+  # b # => StaticArray[3, 2, 1]
+  # a # => StaticArray[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.=
+  def sort(&block : T, T -> U) : StaticArray(T, N) forall U
+    {% unless U <= Int32? %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
+    {% end %}
+
+    ary = dup
+    ary.sort!(&block)
+  end
+
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using an unstable sort algorithm.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # b = a.unstable_sort { |a, b| b <=> a }
+  #
+  # b # => StaticArray[3, 2, 1]
+  # a # => StaticArray[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
+    {% unless U <= Int32? %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
+    {% end %}
+
+    ary = dup
+    ary.unstable_sort!(&block)
+  end
+
+  # :inherit:
+  def sort! : self
+    to_slice.sort!
+    self
+  end
+
+  # :inherit:
+  def unstable_sort! : self
+    to_slice.unstable_sort!
+    self
+  end
+
+  # :inherit:
+  def sort!(&block : T, T -> U) : self forall U
+    {% unless U <= Int32? %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
+    {% end %}
+
+    to_slice.sort!(&block)
+    self
+  end
+
+  # :inherit:
+  def unstable_sort!(&block : T, T -> U) : self forall U
+    {% unless U <= Int32? %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
+    {% end %}
+
+    to_slice.unstable_sort!(&block)
+    self
+  end
+
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `T#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
+  #
+  # ```
+  # a = StaticArray["apple", "pear", "fig"]
+  # b = a.sort_by { |word| word.size }
+  # b # => StaticArray["fig", "pear", "apple"]
+  # a # => StaticArray["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is expendable, `#unstable_sort_by(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `Indexable::Mutable#sort_by!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def sort_by(&block : T -> _) : StaticArray(T, N)
+    ary = dup
+    ary.sort_by! { |e| yield(e) }
+  end
+
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
+  #
+  # ```
+  # a = StaticArray["apple", "pear", "fig"]
+  # b = a.unstable_sort_by { |word| word.size }
+  # b # => StaticArray["fig", "pear", "apple"]
+  # a # => StaticArray["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is necessary, use `#sort_by(&block : T -> _)` instead.
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def unstable_sort_by(&block : T -> _) : StaticArray(T, N)
+    ary = dup
+    ary.unstable_sort_by! { |e| yield(e) }
+  end
+
+  # :inherit:
+  def sort_by!(&block : T -> _) : self
+    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    N.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
+  # :inherit:
+  def unstable_sort_by!(&block : T -> _) : self
+    sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
+    N.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
+  # :inherit:
+  def rotate!(n : Int = 1) : self
+    to_slice.rotate!(n)
     self
   end
 
@@ -279,7 +366,7 @@ struct StaticArray(T, N)
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice
+  def to_slice : Slice(T)
     Slice.new(to_unsafe, size)
   end
 
@@ -322,7 +409,6 @@ struct StaticArray(T, N)
     array
   end
 
-  # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&

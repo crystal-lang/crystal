@@ -54,15 +54,15 @@ describe "Semantic: def" do
   end
 
   it "types simple recursion" do
-    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)") { int32 }
+    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types simple recursion 2" do
-    assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)") { int32 }
+    assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types mutual recursion" do
-    assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)") { int32 }
+    assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types empty body def" do
@@ -121,7 +121,7 @@ describe "Semantic: def" do
 
       foo 1 || 1.5
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
   end
 
   it "reports no overload matches 2" do
@@ -134,7 +134,7 @@ describe "Semantic: def" do
 
       foo(1 || 'a', 1 || 1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
   end
 
   it "reports no block given" do
@@ -179,6 +179,16 @@ describe "Semantic: def" do
       foo
       ",
       "can't restrict Char to Int64"
+  end
+
+  it "errors when default value is incompatible with non-type restriction" do
+    assert_error "
+      def foo(x : Tuple(_) = 'a')
+      end
+
+      foo
+      ",
+      "can't restrict Char to Tuple(_)"
   end
 
   it "types call with global scope" do
@@ -249,7 +259,9 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ), "no overload matches"
+      ),
+      "expected argument #1 to 'foo' to be Pointer(Node), not Node",
+      inject_primitives: true
   end
 
   it "says can only defined def on types and self" do
@@ -272,7 +284,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "method top-level foo must return Int32 but it is returning Char"
+      "method ::foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -311,7 +323,7 @@ describe "Semantic: def" do
       end
 
       foo
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "says compile-time type on error" do
@@ -363,7 +375,49 @@ describe "Semantic: def" do
 
       Foo.bar
       ),
-      "no overload matches 'foo'"
+      "expected argument #1 to 'foo' to be String, not Int32"
+  end
+
+  it "gives correct error for methods in Class" do
+    assert_error %(
+      class Class
+        def foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo(1)
+      ),
+      <<-ERROR
+      wrong number of arguments for 'Foo.foo' (given 1, expected 0)
+
+      Overloads are:
+       - Class#foo()
+      ERROR
+  end
+
+  it "gives correct error for methods in Class (2)" do
+    assert_error %(
+      class Class
+        def self.foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo(1)
+      ),
+      <<-ERROR
+      wrong number of arguments for 'Foo.foo' (given 1, expected 0)
+
+      Overloads are:
+       - Class#foo()
+      ERROR
   end
 
   it "errors if declares def inside if" do
@@ -477,6 +531,21 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
+  it "shows free variables if no overload matches" do
+    assert_error %(
+      class Foo(T)
+        def foo(x : T, y : U, z : V) forall U, V
+        end
+      end
+
+      Foo(Int32).new.foo("", "", "")
+      ),
+      <<-ERROR
+      Overloads are:
+       - Foo(T)#foo(x : T, y : U, z : V) forall U, V
+      ERROR
+  end
+
   it "can't use self in toplevel method" do
     assert_error %(
       def foo
@@ -488,12 +557,11 @@ describe "Semantic: def" do
   end
 
   it "points error at name (#6937)" do
-    ex = assert_error <<-CODE,
+    ex = assert_error <<-CRYSTAL,
       1.
         foobar
-      CODE
-      "undefined method",
-      inject_primitives: false
+      CRYSTAL
+      "undefined method"
     ex.line_number.should eq(2)
     ex.column_number.should eq(3)
     ex.size.should eq(6)

@@ -6,6 +6,12 @@ module Crystal
     struct Separator
     end
 
+    enum Alignment
+      Left
+      Right
+      Center
+    end
+
     class Column
       def initialize
         @max_size = 0
@@ -27,27 +33,25 @@ module Crystal
         end
 
         case cell.align
-        when :left
+        in .left?
           "%-#{available_width}s" % cell.text
-        when :right
+        in .right?
           "%+#{available_width}s" % cell.text
-        when :center
+        in .center?
           left = " " * ((available_width - cell.text.size) // 2)
           right = " " * (available_width - cell.text.size - left.size)
           "#{left}#{cell.text}#{right}"
-        else
-          raise "Unknown alignment: #{cell.align}"
         end
       end
     end
 
     class Cell
       property text : String
-      property align : Symbol
+      property align : Alignment
       property colspan : Int32
       property! column_index : Int32
 
-      def initialize(@text, @align, @colspan)
+      def initialize(@text, @align : Alignment, @colspan)
       end
     end
 
@@ -61,7 +65,7 @@ module Crystal
       @columns = [] of Column
     end
 
-    def build
+    def build(&)
       with self yield self
       render
     end
@@ -70,19 +74,19 @@ module Crystal
       @data << Separator.new
     end
 
-    def row
+    def row(&)
       @last_string_row = [] of Cell
       @data << last_string_row
       with self yield
     end
 
-    def cell(text, align = :left, colspan = 1)
+    def cell(text, align : Alignment = :left, colspan = 1)
       cell = Cell.new(text, align, colspan)
       last_string_row << cell
       column_for_last_cell.will_render(cell)
     end
 
-    def cell(align = :left, colspan = 1)
+    def cell(align : Alignment = :left, colspan = 1, &)
       cell(String::Builder.build { |io| yield io }, align, colspan)
     end
 

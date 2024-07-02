@@ -3,83 +3,405 @@ require "../types"
 
 # Here is the logic for deciding two things:
 #
-# 1. Whether a method should come before another one
-#    when considering overloads.
-#    This is what `restriction_of?` is for.
-# 2. What's the resulting type of filtering a type
-#    by a restriction.
+# 1. Whether a method should come before another one when considering overloads.
+#    This is what `compare_strictness` and `restriction_of?` are for.
+# 2. What's the resulting type of filtering a type by a restriction.
 #    This is what `restrict` is for.
 #
-# If `a.restriction_of?(b)` is true, it means that
-# `a` should come before `b` when considering restrictions.
-# This applies almost always to AST nodes, which are
-# sometimes resolved to see if a type inherits another
-# one (and so it should be considered before that type),
-# but can apply to types when arguments have a fixed
-# type (mostly for primitive methods, though we should
+# If `a.restriction_of?(b)` is true, it means that `a` should come before `b`
+# when considering restrictions. This applies almost always to AST nodes, which
+# are sometimes resolved to see if a type inherits another one (and so it should
+# be considered before that type), but can apply to types when arguments have a
+# fixed type (mostly for primitive methods and abstract defs, though we should
 # get rid of this to simplify things).
-# A similar logic applies to a `Def`, where this logic
-# is applied for each of the arguments, though here
-# the number of arguments, splat index and other factors
-# are considered.
-# If `a.restriction_of?(b) == true` and `b.restriction_of?(a) == true`,
-# for `a` and `b` being `Def`s, then it means `a` and `b` are equivalent,
-# and so when adding `b` to a types methods it will replace `a`.
 #
-# The method `restrict` is different in that the return
-# value is not a boolean, but a type, and computing it
-# might be a bit more expensive. For example when restricting
-# `Int32 | String` against `Int32`, the result is `Int32`.
+# A similar logic applies to a `Def`, where this logic is applied for each of
+# the arguments, though here the number of arguments, splat index and other
+# factors are considered. If `a.compare_strictness(b) == 0`, for `a` and `b`
+# being `Def`s, then it means `a` and `b` are equivalent, and so when adding `b`
+# to a type's methods it will replace `a`.
+#
+# The method `restrict` is different in that the return value is not a boolean,
+# but a type, and computing it might be a bit more expensive. For example when
+# restricting `Int32 | String` against `Int32`, the result is `Int32`.
 
 module Crystal
   class ASTNode
-    def restriction_of?(other : Underscore, owner)
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
       true
     end
 
-    def restriction_of?(other : ASTNode, owner)
+    def restriction_of?(other : ASTNode, owner, self_free_vars = nil, other_free_vars = nil)
       self == other
     end
 
-    def restriction_of?(other : Type, owner)
+    def restriction_of?(other : Type, owner, self_free_vars = nil, other_free_vars = nil)
       false
     end
 
-    def restriction_of?(other, owner)
+    def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       raise "BUG: called #{self}.restriction_of?(#{other})"
     end
   end
 
   class Self
-    def restriction_of?(type : Type, owner)
-      owner.restriction_of?(type, owner)
+    def restriction_of?(type : Type, owner, self_free_vars = nil, other_free_vars = nil)
+      owner.restriction_of?(type, owner, self_free_vars, other_free_vars)
     end
 
-    def restriction_of?(type : Self, owner)
+    def restriction_of?(type : Self, owner, self_free_vars = nil, other_free_vars = nil)
       true
     end
 
-    def restriction_of?(type : ASTNode, owner)
+    def restriction_of?(type : ASTNode, owner, self_free_vars = nil, other_free_vars = nil)
       false
     end
   end
 
   struct DefWithMetadata
-    def restriction_of?(other : DefWithMetadata, owner)
+    # Compares two defs based on overload order. Has a return value similar to
+    # `Comparable`; that is, `self.compare_strictness(other)` returns:
+    #
+    # * `-1` if `self` is a stricter def than *other*;
+    # * `1` if *other* is a stricter def than `self`;
+    # * `0` if `self` and *other* are equivalent defs;
+    # * `nil` if neither def is stricter than the other.
+    def compare_strictness(other : DefWithMetadata, self_owner, *, other_owner = self_owner)
+      unless self_owner.program.has_flag?("preview_overload_order")
+        return compare_strictness_old(other, self_owner, other_owner: other_owner)
+      end
+
+      # If one yields and the other doesn't, neither is stricter than the other
+      return nil unless self.yields == other.yields
+
+      # We don't check for incompatible defs from positional parameters here,
+      # because doing so would break transitivity, e.g.
+      #
+      #     def f(x = 0); end
+      #     def f(x, y, z = 0); end
+      #
+      # The two defs are indeed incompatible, but their order can be defined
+      # through the intermediate overload `def f(x, y = 0); end`.
+
+      self_named_args = self.named_arguments
+      other_named_args = other.named_arguments
+
+      # Required named parameter in self, no corresponding named parameter in
+      # other; neither is stricter than the other
+      unless other.def.double_splat
+        self_named_args.try &.each do |self_arg|
+          unless self_arg.default_value
+            unless other_named_args.try &.any?(&.external_name.== self_arg.external_name)
+              return nil
+            end
+          end
+        end
+      end
+
+      unless self.def.double_splat
+        other_named_args.try &.each do |other_arg|
+          unless other_arg.default_value
+            unless self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+              return nil
+            end
+          end
+        end
+      end
+
+      self_stricter = true
+      other_stricter = true
+
+      # Compare all corresponding parameters based on subsumption order
+      each_corresponding_param(other, self_named_args, other_named_args) do |self_arg, other_arg|
+        self_restriction = self_arg.type? || self_arg.restriction
+        other_restriction = other_arg.type? || other_arg.restriction
+
+        case {self_restriction, other_restriction}
+        when {nil, nil}
+          # Check other corresponding parameters
+        when {nil, _}
+          self_is_not_stricter
+        when {_, nil}
+          other_is_not_stricter
+        else
+          self_is_not_stricter unless self_restriction.restriction_of?(other_restriction, self_owner)
+          other_is_not_stricter unless other_restriction.restriction_of?(self_restriction, other_owner)
+        end
+      end
+
+      # The overload order is fully defined at this point if either def already
+      # isn't stricter than the other
+      return stricter_pair_to_num(self_stricter, other_stricter) if !self_stricter || !other_stricter
+
+      # Combine the specificities from positional and all named signatures
+      self_stricter, other_stricter = compare_specific_positional(other)
+
+      if self_named_args || other_named_args
+        self_named_args.try &.each do |self_arg|
+          other_arg = other_named_args.try &.find(&.external_name.== self_arg.external_name)
+          self_n, other_n = compare_specific_named(other, self_arg, other_arg)
+          self_is_not_stricter if !self_n
+          other_is_not_stricter if !other_n
+        end
+
+        other_named_args.try &.each do |other_arg|
+          next if self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+          self_n, other_n = compare_specific_named(other, nil, other_arg)
+          self_is_not_stricter if !self_n
+          other_is_not_stricter if !other_n
+        end
+      else
+        # If there are no named parameters at all, `(**ns)` is less specific than `()`
+        if self.def.double_splat && !other.def.double_splat
+          self_is_not_stricter
+        elsif other.def.double_splat && !self.def.double_splat
+          other_is_not_stricter
+        end
+      end
+
+      stricter_pair_to_num(self_stricter, other_stricter)
+    end
+
+    private macro self_is_not_stricter
+      self_stricter = false
+      return nil if !other_stricter
+    end
+
+    private macro other_is_not_stricter
+      other_stricter = false
+      return nil if !self_stricter
+    end
+
+    # Compares two defs based on whether one def's positional parameters are
+    # more specific than the other's.
+    #
+    # Required parameters are more specific than optional parameters, and single
+    # splat parameters are the least specific.
+    def compare_specific_positional(other : DefWithMetadata)
+      # If self has more required positional parameters than other, the last
+      # one in self must correspond to an optional or splat parameter in other,
+      # otherwise other has no corresponding parameter and `compare_strictness`
+      # would have already returned; hence, self is stricter than other in this
+      # case.
+      if self.min_size > other.min_size
+        self_is_stricter
+      elsif other.min_size > self.min_size
+        other_is_stricter
+      end
+
+      # Bare splats aren't single splat parameters
+      if self_splat_index = self.def.splat_index
+        self_splat_index = nil if self.def.args[self_splat_index].name.empty?
+      end
+      if other_splat_index = other.def.splat_index
+        other_splat_index = nil if other.def.args[other_splat_index].name.empty?
+      end
+
+      case {self_splat_index, other_splat_index}
+      in {nil, nil}
+        # Consider `(x0, x1 = 0, x2 = 0)` and `(y0, y1 = 0)`; both overloads can
+        # take 1 or 2 arguments, but only self could take 3, so other is stricter
+        # than self.
+        if self.max_size > other.max_size
+          other_is_stricter
+        elsif other.max_size > self.max_size
+          self_is_stricter
+        end
+      in {nil, Int32}
+        # other has a splat parameter, self doesn't; self is stricter than the other
+        self_is_stricter
+      in {Int32, nil}
+        # self has a splat parameter, other doesn't; other is stricter than self
+        other_is_stricter
+      in {Int32, Int32}
+        # Consider `(x0, *xs)` and `(y0, y1 = 0, *ys)`; here `y1` corresponds to
+        # `xs`, and splat parameter is less specific than optional parameter, so
+        # other is stricter than self.
+        if self_splat_index < other_splat_index
+          other_is_stricter
+        elsif other_splat_index < self_splat_index
+          self_is_stricter
+        end
+      end
+
+      no_differences
+    end
+
+    # Compares two defs based on whether one def's given named parameter is more
+    # specific than the other's.
+    def compare_specific_named(other : DefWithMetadata, self_arg : Arg?, other_arg : Arg?)
+      self_arg_required = self_arg && !self_arg.default_value
+      other_arg_required = other_arg && !other_arg.default_value
+
+      # `n` is required in self, but not required in other; `n`'s corresponding
+      # parameter in other must be optional or splat, so self is stricter than
+      # the other
+      if self_arg_required && !other_arg_required
+        self_is_stricter
+      elsif other_arg_required && !self_arg_required
+        other_is_stricter
+      end
+
+      self_arg_optional = self_arg && self_arg.default_value
+      other_arg_optional = other_arg && other_arg.default_value
+
+      case {self.def.double_splat, other.def.double_splat}
+      in {nil, nil}
+        # Consider `(*, n = 0)` and `()`; both overloads can take no named
+        # arguments, but only self could take `n`, so other is stricter than
+        # self.
+        if self_arg_optional && !other_arg_optional
+          other_is_stricter
+        elsif other_arg_optional && !self_arg_optional
+          self_is_stricter
+        end
+      in {nil, Arg}
+        # other has a splat parameter, self doesn't; self is stricter than the other
+        self_is_stricter
+      in {Arg, nil}
+        # self has a splat parameter, other doesn't; other is stricter than self
+        other_is_stricter
+      in {Arg, Arg}
+        # Consider `(*, **ms)` and `(*, n = 0, **ns)`; here `n` corresponds to
+        # `ms`, and splat parameter is less specific than optional parameter, so
+        # other is stricter than self.
+        if self_arg_optional && !other_arg_optional
+          self_is_stricter
+        elsif other_arg_optional && !self_arg_optional
+          other_is_stricter
+        end
+      end
+
+      no_differences
+    end
+
+    private macro self_is_stricter
+      return {true, false}
+    end
+
+    private macro other_is_stricter
+      return {false, true}
+    end
+
+    private macro no_differences
+      return {true, true}
+    end
+
+    # Yields each pair of corresponding parameters between `self` and *other*.
+    def each_corresponding_param(other : DefWithMetadata, self_named_args, other_named_args, &)
+      self_arg_index = 0
+      other_arg_index = 0
+
+      # Traverse through positional parameters, including single splats
+      while self_arg_index < self.def.args.size && other_arg_index < other.def.args.size
+        self_arg = self.def.args[self_arg_index]
+        self_splatting = (self_arg_index == self.def.splat_index)
+        break if self_splatting && self_arg.name.empty? # Start of named parameters
+
+        other_arg = other.def.args[other_arg_index]
+        other_splatting = (other_arg_index == other.def.splat_index)
+        break if other_splatting && other_arg.name.empty? # Start of named parameters
+
+        yield self_arg, other_arg
+
+        break if self_splatting && other_splatting # Both are splat parameters
+
+        self_arg_index += 1 unless self_splatting
+        other_arg_index += 1 unless other_splatting
+      end
+
+      # Traverse through named parameters
+      self_double_splat = self.def.double_splat
+      other_double_splat = other.def.double_splat
+
+      self_named_args.try &.each do |self_arg|
+        other_arg = other_named_args.try &.find(&.external_name.== self_arg.external_name)
+        other_arg ||= other_double_splat
+        next unless other_arg
+
+        yield self_arg, other_arg
+      end
+
+      if self_double_splat
+        # Pair self's double splat with any remaining named parameters in other
+        other_named_args.try &.each do |other_arg|
+          next if self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+
+          yield self_double_splat, other_arg
+        end
+
+        # Double splats themselves are also corresponding named parameters
+        if other_double_splat
+          yield self_double_splat, other_double_splat
+        end
+      end
+    end
+
+    def stricter_pair_to_num(self_stricter, other_stricter)
+      case {self_stricter, other_stricter}
+      in {true, true}   then 0
+      in {true, false}  then -1
+      in {false, true}  then 1
+      in {false, false} then nil
+      end
+    end
+
+    def named_arguments
+      if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
+        self.def.args[splat_index + 1..]
+      end
+    end
+
+    def compare_strictness_old(other : DefWithMetadata, self_owner, *, other_owner = self_owner)
+      self_stricter = old_restriction_of?(other, self_owner)
+      other_stricter = other.old_restriction_of?(self, other_owner)
+      stricter_pair_to_num(self_stricter, other_stricter)
+    end
+
+    # this is part of `Crystal::Def#min_max_args_sizes` before #10711, provided
+    # that `-Dpreview_overload_order` is not in effect
+    # TODO: figure out if this can be derived from `self.min_size`
+    def old_min_args_size
+      if splat_index = self.def.splat_index
+        args = self.def.args
+        unless args[splat_index].name.empty?
+          default_value_index = args.index(&.default_value)
+          min_size = default_value_index || args.size
+          min_size -= 1 unless default_value_index.try(&.< splat_index)
+          return min_size
+        end
+      end
+      self.min_size
+    end
+
+    def old_restriction_of?(other : DefWithMetadata, owner)
       # This is how multiple defs are sorted by 'restrictions' (?)
 
       # If one yields and the other doesn't, none is stricter than the other
       return false unless yields == other.yields
 
+      self_min_size = old_min_args_size
+      other_min_size = other.old_min_args_size
+
       # A def with more required arguments than the other comes first
-      if min_size > other.max_size
+      if self_min_size > other.max_size
         return true
-      elsif other.min_size > max_size
+      elsif other_min_size > max_size
         return false
       end
 
       self_splat_index = self.def.splat_index
       other_splat_index = other.def.splat_index
+
+      # If I double-splat but the other doesn't, I come later
+      if self.def.double_splat && !other.def.double_splat
+        return false
+      end
+
+      # If the other double-splats but I don't, I come first
+      if other.def.double_splat && !self.def.double_splat
+        return true
+      end
 
       # If I splat but the other doesn't, I come later
       if self_splat_index && !other_splat_index
@@ -92,10 +414,13 @@ module Crystal
       end
 
       if self_splat_index && other_splat_index
-        min = Math.min(min_size, other.min_size)
+        min = Math.min(self_min_size, other_min_size)
       else
         min = Math.min(max_size, other.max_size)
       end
+
+      self_free_vars = self.def.free_vars
+      other_free_vars = other.def.free_vars
 
       (0...min).each do |index|
         self_arg = self.def.args[index]
@@ -108,7 +433,7 @@ module Crystal
           # If this is a splat arg and the other not, this is not stricter than the other
           return false if index == self.def.splat_index
 
-          return false unless self_type.restriction_of?(other_type, owner)
+          return false unless self_type.restriction_of?(other_type, owner, self_free_vars, other_free_vars)
         end
       end
 
@@ -121,7 +446,7 @@ module Crystal
 
           if self_restriction && other_restriction
             # If both splat have restrictions, check which one is stricter
-            return false unless self_restriction.restriction_of?(other_restriction, owner)
+            return false unless self_restriction.restriction_of?(other_restriction, owner, self_free_vars, other_free_vars)
           elsif self_restriction
             # If only self has a restriction, it's stricter than the other
             return true
@@ -155,7 +480,7 @@ module Crystal
           return false if self_restriction == nil && other_restriction != nil
 
           if self_restriction && other_restriction
-            return false unless self_restriction.restriction_of?(other_restriction, owner)
+            return false unless self_restriction.restriction_of?(other_restriction, owner, self_free_vars, other_free_vars)
           end
         end
 
@@ -172,7 +497,7 @@ module Crystal
 
       # If both double splat have restrictions, check which one is stricter
       if self_double_splat_restriction && other_double_splat_restriction
-        return false unless self_double_splat_restriction.restriction_of?(other_double_splat_restriction, owner)
+        return false unless self_double_splat_restriction.restriction_of?(other_double_splat_restriction, owner, self_free_vars, other_free_vars)
       elsif self_double_splat_restriction
         # If only self has a restriction, it's stricter than the other
         return true
@@ -186,7 +511,7 @@ module Crystal
 
     def required_named_arguments
       if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
-        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
+        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by! &.external_name
       else
         nil
       end
@@ -223,7 +548,7 @@ module Crystal
 
     def required_named_arguments
       if (splat_index = self.splat_index) && splat_index != args.size - 1
-        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
+        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by! &.external_name
       else
         nil
       end
@@ -231,14 +556,19 @@ module Crystal
   end
 
   class Path
-    def restriction_of?(other : Path, owner)
-      return true if self == other
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
+      self_is_free_var = self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+      other_is_free_var = other_free_vars && other.single_name?.try { |name| other_free_vars.includes?(name) }
 
-      self_type = owner.lookup_path(self)
-      if self_type
-        other_type = owner.lookup_path(other)
-        if other_type
-          return self_type.restriction_of?(other_type, owner)
+      if self_is_free_var == other_is_free_var
+        # TODO: if both paths are free variables, we need to detect renamed
+        # variables properly instead of doing a plain name check
+        return true if self == other
+      end
+
+      if !self_is_free_var && (self_type = owner.lookup_path(self))
+        if !other_is_free_var && (other_type = owner.lookup_path(other))
+          return self_type.restriction_of?(other_type, owner, self_free_vars, other_free_vars)
         else
           return true
         end
@@ -247,20 +577,14 @@ module Crystal
       false
     end
 
-    def restriction_of?(other : Union, owner)
+    def restriction_of?(other : Union, owner, self_free_vars = nil, other_free_vars = nil)
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
       # `true` if this type is a restriction of any type in the union
-      other.types.any? { |o| self.restriction_of?(o, owner) }
+      other.types.any? { |o| self.restriction_of?(o, owner, self_free_vars, other_free_vars) }
     end
 
-    def restriction_of?(other : Generic, owner)
-      self_type = owner.lookup_path(self)
-      if self_type
-        other_type = owner.lookup_type?(other)
-        if other_type
-          return self_type.restriction_of?(other_type, owner)
-        end
-      end
-
+    def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
       # ```
       # def foo(param : T) forall T
       # end
@@ -268,26 +592,92 @@ module Crystal
       # def foo(param : Array(Foo))
       # end
       # ```
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
+      self_type = owner.lookup_path(self)
+      if self_type
+        other_type = owner.lookup_type?(other)
+        if other_type
+          return self_type.restriction_of?(other_type, owner, self_free_vars, other_free_vars)
+        end
+      end
+
       false
     end
 
-    def restriction_of?(other, owner)
+    def restriction_of?(other : NumberLiteral, owner, self_free_vars = nil, other_free_vars = nil)
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      # ```
+      case self_type = owner.lookup_path(self)
+      when Const
+        self_type.value == other
+      when NumberLiteral
+        self_type == other
+      else
+        false
+      end
+    end
+
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
+    def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       false
+    end
+  end
+
+  class NumberLiteral
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      # ```
+      case other_type = owner.lookup_path(other)
+      when Const
+        other_type.value == self
+      when NumberLiteral
+        other_type == self
+      else
+        false
+      end
     end
   end
 
   class Union
-    def restriction_of?(other : Path, owner)
-      # For a union to be considered before a path,
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
+    def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
+      # For a union to be considered before another restriction,
       # all types in the union must be considered before
-      # that path.
+      # that restriction.
       # For example when using all subtypes of a parent type.
-      types.all? &.restriction_of?(other, owner)
+      types.all? &.restriction_of?(other, owner, self_free_vars, other_free_vars)
     end
   end
 
   class Generic
-    def restriction_of?(other : Path, owner)
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
       # ```
       # def foo(param : Array(T)) forall T
       # end
@@ -302,7 +692,7 @@ module Crystal
       if self_type
         other_type = owner.lookup_path(other)
         if other_type
-          return self_type.restriction_of?(other_type, owner)
+          return self_type.restriction_of?(other_type, owner, self_free_vars, other_free_vars)
         end
       end
 
@@ -322,12 +712,32 @@ module Crystal
       true
     end
 
-    def restriction_of?(other : Generic, owner)
-      return true if self == other
+    def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
+      # The two `Foo(X)`s below are not equal because only one of them is bound
+      # and the other one is unbound, so we compare the free variables too:
+      # (`X` is an alias or a numeric constant)
+      #
+      # ```
+      # def foo(x : Foo(X)) forall X
+      # end
+      #
+      # def foo(x : Foo(X))
+      # end
+      # ```
+      #
+      # See also the todo in `Path#restriction_of?(Path)`
+      return true if self == other && self_free_vars == other_free_vars
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
+      # Special case: NamedTuple against NamedTuple
+      if (self_type = owner.lookup_type?(self)).is_a?(NamedTupleInstanceType)
+        if (other_type = owner.lookup_type?(other)).is_a?(NamedTupleInstanceType)
+          return self_type.restriction_of?(other_type, owner, self_free_vars, other_free_vars)
+        end
+      end
+
       type_vars.zip(other.type_vars) do |type_var, other_type_var|
-        return false unless type_var.restriction_of?(other_type_var, owner)
+        return false unless type_var.restriction_of?(other_type_var, owner, self_free_vars, other_free_vars)
       end
 
       true
@@ -335,7 +745,7 @@ module Crystal
   end
 
   class GenericClassType
-    def restriction_of?(other : GenericClassInstanceType, owner)
+    def restriction_of?(other : GenericClassInstanceType, owner, self_free_vars = nil, other_free_vars = nil)
       # ```
       # def foo(param : Array)
       # end
@@ -350,10 +760,14 @@ module Crystal
       # `SomeGeneric` is never a restriction of `SomeGeneric(X)`
       false
     end
+
+    def restrict(other : GenericClassType, context)
+      self == other ? self : super
+    end
   end
 
   class GenericClassInstanceType
-    def restriction_of?(other : GenericClassType, owner)
+    def restriction_of?(other : GenericClassType, owner, self_free_vars = nil, other_free_vars = nil)
       # ```
       # def foo(param : Array(Int32))
       # end
@@ -371,16 +785,16 @@ module Crystal
   end
 
   class Metaclass
-    def restriction_of?(other : Metaclass, owner)
-      name.restriction_of?(other.name, owner)
+    def restriction_of?(other : Metaclass, owner, self_free_vars = nil, other_free_vars = nil)
+      name.restriction_of?(other.name, owner, self_free_vars, other_free_vars)
     end
 
-    def restriction_of?(other : Path, owner)
-      other_type = owner.lookup_type(other)
-
-      # Special case: when comparing Foo.class to Class, Foo.class has precedence
-      if other_type == other_type.program.class_type
-        return true
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
+      if other_type = owner.lookup_type?(other)
+        # Special case: all metaclasses are subtypes of Class
+        if other_type.program.class_type.implements?(other_type)
+          return true
+        end
       end
 
       super
@@ -418,7 +832,8 @@ module Crystal
     end
 
     def restrict(other : Self, context)
-      restrict(context.instantiated_type.instance_type, context)
+      self_type = context.self_restriction_type || context.instantiated_type
+      restrict(self_type.instance_type, context)
     end
 
     def restrict(other : TypeOf, context)
@@ -443,7 +858,30 @@ module Crystal
       implements?(other.base_type) ? self : nil
     end
 
+    def restrict(other : GenericClassType, context)
+      parents.try &.each do |parent|
+        if parent.module?
+          return self if parent.restriction_of?(other, context.instantiated_type)
+        else
+          restricted = parent.restrict other, context
+          return self if restricted
+        end
+      end
+
+      nil
+    end
+
     def restrict(other : Union, context)
+      # Match all concrete types first
+      free_var_count = other.types.count do |other_type|
+        other_type.is_a?(Path) &&
+          (first_name = other_type.single_name?) &&
+          context.has_unbound_free_var?(first_name)
+      end
+      if free_var_count > 1
+        other.raise "can't specify more than one free var in union restriction"
+      end
+
       types = other.types.compact_map do |ident|
         restrict(ident, context).as(Type?)
       end
@@ -451,28 +889,25 @@ module Crystal
     end
 
     def restrict(other : Path, context)
-      single_name = other.names.size == 1
-      if single_name
-        first_name = other.names.first
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
+      if first_name = other.single_name?
+        if context.has_unbound_free_var?(first_name)
+          return context.bind_free_var(first_name, self)
         end
       end
 
-      if single_name
+      if first_name
         owner = context.instantiated_type
 
         # Special case: if we have an *uninstantiated* generic type like Foo(X)
         # and a restriction X, it matches, and we add X to the free vars.
         if owner.is_a?(GenericType)
-          first_name = other.names.first
           if owner.type_vars.includes?(first_name)
-            context.set_free_var(first_name, self)
+            context.bind_free_var(first_name, self)
             return self
           end
         end
 
-        ident_type = context.get_free_var(other.names.first)
+        ident_type = context.bound_free_var?(other.names.first)
       end
 
       had_ident_type = !!ident_type
@@ -486,10 +921,9 @@ module Crystal
         return restrict ident_type, context
       end
 
-      if single_name
-        first_name = other.names.first
+      if first_name
         if context.defining_type.type_var?(first_name)
-          return context.set_free_var(first_name, self)
+          return context.bind_free_var(first_name, self)
         end
       end
 
@@ -504,7 +938,29 @@ module Crystal
       # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
       generic_type = get_generic_type(other, context)
       if generic_type.is_a?(GenericUnionType)
-        return restrict(Union.new(other.type_vars), context)
+        types = [] of Type
+
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            splat_type = context.defining_type.lookup_type?(type_var.exp)
+            return nil unless splat_type
+            unless splat_type.is_a?(TupleInstanceType)
+              type_var.raise "argument to splat must be a tuple type, not #{splat_type}"
+            end
+
+            splat_type.tuple_types.each do |tuple_type|
+              if type = restrict(tuple_type, context)
+                types << type
+              end
+            end
+          else
+            if type = restrict(type_var, context)
+              types << type
+            end
+          end
+        end
+
+        return types.size > 0 ? program.type_merge_union_of(types) : nil
       end
 
       parents.try &.each do |parent|
@@ -545,31 +1001,31 @@ module Crystal
       raise "BUG: unsupported restriction: #{self} vs. #{other}"
     end
 
-    def restriction_of?(other : UnionType, owner)
-      other.union_types.any? { |subtype| restriction_of?(subtype, owner) }
+    def restriction_of?(other : UnionType, owner, self_free_vars = nil, other_free_vars = nil)
+      other.union_types.any? { |subtype| restriction_of?(subtype, owner, self_free_vars, other_free_vars) }
     end
 
-    def restriction_of?(other : VirtualType, owner)
+    def restriction_of?(other : VirtualType, owner, self_free_vars = nil, other_free_vars = nil)
       implements? other.base_type
     end
 
-    def restriction_of?(other : Type, owner)
+    def restriction_of?(other : Type, owner, self_free_vars = nil, other_free_vars = nil)
       if self == other
         return true
       end
 
-      parents.try &.any? &.restriction_of?(other, owner)
+      !!parents.try &.any? &.restriction_of?(other, owner, self_free_vars, other_free_vars)
     end
 
-    def restriction_of?(other : AliasType, owner)
+    def restriction_of?(other : AliasType, owner, self_free_vars = nil, other_free_vars = nil)
       if self == other
         true
       else
-        restriction_of?(other.remove_alias, owner)
+        restriction_of?(other.remove_alias, owner, self_free_vars, other_free_vars)
       end
     end
 
-    def restriction_of?(other : ASTNode, owner)
+    def restriction_of?(other : ASTNode, owner, self_free_vars = nil, other_free_vars = nil)
       raise "BUG: called #{self}.restriction_of?(#{other})"
     end
 
@@ -579,14 +1035,24 @@ module Crystal
   end
 
   class UnionType
-    def restriction_of?(type, owner)
-      self == type || union_types.all? &.restriction_of?(type, owner)
+    def restriction_of?(type, owner, self_free_vars = nil, other_free_vars = nil)
+      self == type || union_types.all? &.restriction_of?(type, owner, self_free_vars, other_free_vars)
     end
 
     def restrict(other : Union, context)
+      # Match all concrete types first
+      free_vars, other_types = other.types.partition do |other_type|
+        other_type.is_a?(Path) &&
+          (first_name = other_type.single_name?) &&
+          context.has_unbound_free_var?(first_name)
+      end
+      if free_vars.size > 1
+        other.raise "can't specify more than one free var in union restriction"
+      end
+
       types = [] of Type
       discarded = [] of Type
-      other.types.each do |other_type|
+      other_types.each do |other_type|
         self.union_types.each do |type|
           next if discarded.includes?(type)
 
@@ -594,6 +1060,23 @@ module Crystal
           if restricted
             types << restricted
             discarded << type
+          end
+        end
+      end
+
+      # If there is a free var, we match it last and it'll be the union of the
+      # remaining types in self
+      if free_var = free_vars.first?
+        # If we restrict `T` against `T | U forall U`, then `U` can be any type;
+        # the smallest type satisfying the restriction is Union() or NoReturn,
+        # but we don't want that, so we make this a substitution failure.
+        if discarded.size == self.union_types
+          return nil
+        end
+
+        if remaining_type = program.type_merge_union_of(self.union_types - discarded)
+          if restricted = remaining_type.restrict(free_var, context)
+            types << restricted
           end
         end
       end
@@ -626,21 +1109,24 @@ module Crystal
   end
 
   class GenericInstanceType
-    def restriction_of?(other : GenericType, owner)
+    def restriction_of?(other : GenericType, owner, self_free_vars = nil, other_free_vars = nil)
       return true if generic_type == other
       super
     end
 
-    def restriction_of?(other : GenericInstanceType, owner)
+    def restriction_of?(other : GenericInstanceType, owner, self_free_vars = nil, other_free_vars = nil)
       return super unless generic_type == other.generic_type
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
         if type_var.is_a?(Var) && other_type_var.is_a?(Var)
-          restricted = type_var.type == other_type_var.type
-          return nil unless restricted
+          # This overload can be called when the restriction node has a type due
+          # to e.g. AbstractDefChecker; generic instances shall behave like AST
+          # nodes when def restrictions are considered, i.e. all generic type
+          # variables are covariant.
+          return false unless type_var.type.implements?(other_type_var.type)
         else
-          return nil unless type_var == other_type_var
+          return false unless type_var == other_type_var
         end
       end
 
@@ -648,7 +1134,18 @@ module Crystal
     end
 
     def restrict(other : GenericType, context)
-      generic_type == other ? self : super
+      return self if generic_type == other
+
+      parents.try &.each do |parent|
+        if parent.module?
+          return self if parent.restriction_of?(other, context.instantiated_type)
+        else
+          restricted = parent.restrict other, context
+          return self if restricted
+        end
+      end
+
+      nil
     end
 
     def restrict(other : Generic, context)
@@ -658,29 +1155,47 @@ module Crystal
 
       generic_type = generic_type.as(GenericType)
 
-      if other.named_args
-        unless generic_type.is_a?(NamedTupleType)
-          other.raise "can only instantiate NamedTuple with named arguments"
-        end
-        # We match named tuples in NamedTupleInstanceType
+      # We match named tuples in NamedTupleInstanceType
+      if generic_type.is_a?(NamedTupleType)
         return nil
       end
 
+      if other.named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
+      end
+
       # Consider the case of a splat in the type vars
-      splat_index = other.type_vars.index &.is_a?(Splat)
-      if splat_index
+      splat_index = self.splat_index
+      splat_given = other.type_vars.any?(Splat)
+      if splat_index || splat_given
         types = Array(Type).new(type_vars.size)
         i = 0
         type_vars.each_value do |var|
           return nil unless var.is_a?(Var)
 
           var_type = var.type
-          if i == self.splat_index
+          if i == splat_index
             types.concat(var_type.as(TupleInstanceType).tuple_types)
           else
             types << var_type
           end
           i += 1
+        end
+
+        # We are `(A, B, *C)`, they are `(T)`; matching would always fail
+        if splat_index && !splat_given
+          min_needed = generic_type.type_vars.size - 1
+          if other.type_vars.size < min_needed
+            other.wrong_number_of "type vars", generic_type, other.type_vars.size, "#{min_needed}+"
+          end
+        end
+
+        # We are `(A)`, they are `(T, U, *V)`; matching would always fail
+        if !splat_index && splat_given
+          non_splat_count = other.type_vars.count { |type_var| !type_var.is_a?(Splat) }
+          if non_splat_count > generic_type.type_vars.size
+            other.wrong_number_of "type vars", generic_type, "#{non_splat_count}+", generic_type.type_vars.size
+          end
         end
 
         i = 0
@@ -712,7 +1227,7 @@ module Crystal
         return self
       end
 
-      if generic_type.type_vars.size != other.type_vars.size
+      if other.type_vars.size != generic_type.type_vars.size
         other.wrong_number_of "type vars", generic_type, other.type_vars.size, generic_type.type_vars.size
       end
 
@@ -732,14 +1247,14 @@ module Crystal
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
-        restricted = restrict_type_var(type_var, other_type_var, context, strict: true)
+        restricted = restrict_type_var(type_var, other_type_var, context)
         return super unless restricted
       end
 
       self
     end
 
-    def restrict_type_var(type_var, other_type_var, context, strict = false)
+    def restrict_type_var(type_var, other_type_var, context)
       if type_var.is_a?(NumberLiteral)
         case other_type_var
         when NumberLiteral
@@ -747,18 +1262,18 @@ module Crystal
             return type_var
           end
         when Path
-          if other_type_var.names.size == 1
-            name = other_type_var.names.first
-
+          if first_name = other_type_var.single_name?
             # If the free variable is already set to another
             # number, there's no match
-            existing = context.get_free_var(name)
-            if existing && existing != type_var
-              return nil
+            if existing = context.bound_free_var?(first_name)
+              return existing == type_var ? existing : nil
             end
 
-            context.set_free_var(name, type_var)
-            return type_var
+            # If the free variable is not yet bound, there is a match
+            if context.has_unbound_free_var?(first_name)
+              context.bind_free_var(first_name, type_var)
+              return type_var
+            end
           end
         else
           # Restriction is not possible (maybe return nil here?)
@@ -773,8 +1288,6 @@ module Crystal
 
       if type_var.is_a?(ASTNode)
         type_var.restriction_of?(other_type_var, context.instantiated_type)
-      elsif context.strict? || strict
-        type_var == other_type_var
       else
         # To prevent infinite recursion, it checks equality between
         # `type_var` and `other_type_var` directly before try to restrict
@@ -785,7 +1298,7 @@ module Crystal
   end
 
   class TupleInstanceType
-    def restriction_of?(other : TupleInstanceType, owner)
+    def restriction_of?(other : TupleInstanceType, owner, self_free_vars = nil, other_free_vars = nil)
       return true if self == other || self.implements?(other)
 
       false
@@ -795,11 +1308,13 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      generic_type = generic_type.as(TupleType)
+      if other.named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
+      end
 
       # Consider the case of a splat in the type vars
-      splat_index = other.type_vars.index &.is_a?(Splat)
-      if splat_index
+      splat_given = other.type_vars.any?(Splat)
+      if splat_given
         found_splat = false
         i = 0
         other.type_vars.each do |type_var|
@@ -845,7 +1360,7 @@ module Crystal
   end
 
   class NamedTupleInstanceType
-    def restriction_of?(other : NamedTupleInstanceType, owner)
+    def restriction_of?(other : NamedTupleInstanceType, owner, self_free_vars = nil, other_free_vars = nil)
       return true if self == other || self.implements?(other)
 
       false
@@ -855,9 +1370,13 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      other_named_args = other.named_args
-      unless other_named_args
+      unless other.type_vars.empty?
         other.raise "can only instantiate NamedTuple with named arguments"
+      end
+
+      # Check for empty named tuples
+      unless other_named_args = other.named_args
+        return self.entries.empty? ? self : nil
       end
 
       # Check that the names are the same
@@ -884,7 +1403,7 @@ module Crystal
   end
 
   class VirtualType
-    def restriction_of?(other : Type, owner)
+    def restriction_of?(other : Type, owner, self_free_vars = nil, other_free_vars = nil)
       other = other.base_type if other.is_a?(VirtualType)
       base_type.implements?(other) || other.implements?(base_type)
     end
@@ -919,14 +1438,11 @@ module Crystal
       elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        other.generic_types.each_value do |instance|
+        types = other.instantiated_types.compact_map do |instance|
           next if instance.unbound? || instance.abstract?
-
-          if instance.implements?(base_type)
-            return instance
-          end
+          instance.virtual_type if instance.implements?(base_type)
         end
-        nil
+        program.type_merge_union_of types
       else
         nil
       end
@@ -958,19 +1474,27 @@ module Crystal
     end
   end
 
+  class GenericModuleInstanceType
+    def restrict(other : Type, context)
+      super || including_types.try(&.restrict(other, context))
+    end
+  end
+
   class AliasType
-    def restriction_of?(other, owner)
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
+    def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       return true if self == other
 
-      remove_alias.restriction_of?(other, owner)
+      remove_alias.restriction_of?(other, owner, self_free_vars, other_free_vars)
     end
 
     def restrict(other : Path, context)
-      single_name = other.names.size == 1
-      if single_name
-        first_name = other.names.first
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
+      if first_name = other.single_name?
+        if context.has_unbound_free_var?(first_name)
+          return context.bind_free_var(first_name, self)
         end
       end
 
@@ -980,11 +1504,9 @@ module Crystal
           return self
         end
       else
-        single_name = other.names.size == 1
-        if single_name
-          first_name = other.names.first
+        if first_name = other.single_name?
           if context.defining_type.type_var?(first_name)
-            return context.set_free_var(first_name, self)
+            return context.bind_free_var(first_name, self)
           else
             other.raise_undefined_constant(context.defining_type)
           end
@@ -1016,12 +1538,18 @@ module Crystal
       super
     end
 
+    def restrict(other : AliasType, context)
+      other = other.remove_alias
+      return self if self == other
+      restrict(other, context)
+    end
+
     def restrict(other : Type, context)
       return self if self == other
 
       restricted = typedef.restrict(other, context)
       if restricted == typedef
-        return self
+        self
       elsif restricted.is_a?(UnionType)
         program.type_merge(restricted.union_types.map { |t| t == typedef ? self : t })
       else
@@ -1044,8 +1572,8 @@ module Crystal
       restricted ? self : nil
     end
 
-    def restriction_of?(other : VirtualMetaclassType, owner)
-      restriction_of?(other.base_type.metaclass, owner)
+    def restriction_of?(other : VirtualMetaclassType, owner, self_free_vars = nil, other_free_vars = nil)
+      restriction_of?(other.base_type.metaclass, owner, self_free_vars, other_free_vars)
     end
   end
 
@@ -1084,7 +1612,7 @@ module Crystal
       output = other.output
 
       # Consider the case of a splat in the type vars
-      if inputs && (splat_index = inputs.index &.is_a?(Splat))
+      if inputs && inputs.any?(Splat)
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)
@@ -1141,8 +1669,8 @@ module Crystal
       return super unless generic_type.is_a?(ProcType)
 
       # Consider the case of a splat in the type vars
-      splat_index = other.type_vars.index &.is_a?(Splat)
-      if splat_index
+      splat_given = other.type_vars.any?(Splat)
+      if splat_given
         proc_types = arg_types + [return_type]
 
         i = 0
@@ -1175,13 +1703,21 @@ module Crystal
       end
 
       other.type_vars.each_with_index do |other_type_var, i|
-        # If checking the return type, any type matches Nil
-        if i == other.type_vars.size - 1 && nil_type?(other_type_var, context)
-          # Also, all other types matched, so the matching type is this proc type
-          # except that it has a Nil return type
-          new_proc_arg_types = arg_types.dup
-          new_proc_arg_types << program.nil_type
-          return program.proc_of(new_proc_arg_types)
+        # If checking the return type
+        if i == other.type_vars.size - 1
+          # any type matches Nil
+          if nil_type?(other_type_var, context)
+            # Also, all other types matched, so the matching type is this proc type
+            # except that it has a Nil return type
+            new_proc_arg_types = arg_types.dup
+            new_proc_arg_types << program.nil_type
+            return program.proc_of(new_proc_arg_types)
+          end
+
+          if return_type.no_return?
+            # Ok, NoReturn can be "cast" to anything
+            next
+          end
         end
 
         proc_type = arg_types[i]? || return_type
@@ -1208,7 +1744,7 @@ module Crystal
       end
 
       # Disallow casting a function to another one accepting different argument count
-      return nil if arg_types.size != other.arg_types.size
+      return false if arg_types.size != other.arg_types.size
 
       arg_types.zip(other.arg_types) do |arg_type, other_arg_type|
         return false unless arg_type == other_arg_type
@@ -1218,66 +1754,70 @@ module Crystal
     end
   end
 
-  class NumberLiteralType
+  class AutocastType
+    # Returns true if the AST node associated with `self` denotes a value of the
+    # given *type*.
+    def matches_exactly?(type : Type) : Bool
+      false
+    end
+
+    # Returns true if the AST node associated with `self` denotes a value that
+    # may be interpreted in the given *type*, but is itself not of that type.
+    def matches_partially?(type : Type) : Bool
+      false
+    end
+
     def restrict(other, context)
-      if other.is_a?(IntegerType) || other.is_a?(FloatType)
-        # Check for an exact match, which can't produce an ambiguous call
-        if literal.type == other
+      if other.is_a?(Type)
+        if matches_exactly?(other)
           set_exact_match(other)
-          other
-        elsif !exact_match? && literal.can_be_autocast_to?(other)
+          return other
+        elsif !exact_match? && matches_partially?(other)
           add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
+          return other
         end
-      else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
       end
+
+      literal_type = literal.type?
+      type = literal_type.try(&.restrict(other, context)) || super(other, context)
+      if type == self
+        # if *other* is an AST node (e.g. `Path`) or a complex type (e.g.
+        # `UnionType`), `@match` may be set from recursive calls to `#restrict`,
+        # so we propagate any exact matches found during those calls
+        type = @match || literal_type
+      end
+      type
     end
 
     def compatible_with?(type)
-      literal.type == type || literal.can_be_autocast_to?(type)
+      matches_exactly?(type) || matches_partially?(type)
     end
   end
 
-  class SymbolLiteralType
-    def restrict(other, context)
-      case other
-      when SymbolType
-        set_exact_match(other)
-        other
-      when EnumType
-        if !exact_match? && other.find_member(literal.value)
-          add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
-        end
-      else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
-      end
+  class NumberAutocastType
+    def matches_exactly?(type : IntegerType | FloatType) : Bool
+      literal.type == type
     end
 
-    def compatible_with?(type)
-      case type
-      when SymbolType
-        true
-      when EnumType
-        !!(type.find_member(literal.value))
+    def matches_partially?(type : IntegerType | FloatType) : Bool
+      literal = self.literal
+
+      if literal.is_a?(NumberLiteral)
+        literal.representable_in?(type)
       else
-        false
+        literal_type = literal.type
+        (literal_type.is_a?(IntegerType) || literal_type.is_a?(FloatType)) && literal_type.subset_of?(type)
       end
+    end
+  end
+
+  class SymbolAutocastType
+    def matches_exactly?(type : SymbolType) : Bool
+      true
+    end
+
+    def matches_partially?(type : EnumType) : Bool
+      !type.find_member(literal.value).nil?
     end
   end
 end

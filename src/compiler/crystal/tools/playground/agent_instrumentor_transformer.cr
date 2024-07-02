@@ -1,5 +1,3 @@
-{% skip_file if flag?(:without_playground) %}
-
 module Crystal
   class Playground::AgentInstrumentorTransformer < Transformer
     class MacroDefNameCollector < Visitor
@@ -229,7 +227,7 @@ module Crystal
       node
     end
 
-    def ignoring_line_of_node(node)
+    def ignoring_line_of_node(node, &)
       old_ignore_line = @ignore_line
       @ignore_line = node.location.try(&.line_number)
       res = yield

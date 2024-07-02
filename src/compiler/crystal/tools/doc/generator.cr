@@ -1,3 +1,6 @@
+require "markd"
+require "crystal/syntax_highlighter/html"
+
 class Crystal::Doc::Generator
   getter program : Program
 
@@ -8,6 +11,7 @@ class Crystal::Doc::Generator
   FLAG_COLORS = {
     "BUG"          => "red",
     "DEPRECATED"   => "red",
+    "WARNING"      => "yellow",
     "EXPERIMENTAL" => "lime",
     "FIXME"        => "yellow",
     "NOTE"         => "purple",
@@ -86,11 +90,13 @@ class Crystal::Doc::Generator
     main_index = Main.new(raw_body, Type.new(self, @program), project_info)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+
+    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info)
   end
 
   def generate_sitemap(types)
     if sitemap_base_url = @sitemap_base_url
-      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, @sitemap_priority, @sitemap_changefreq)
     end
   end
 
@@ -140,7 +146,7 @@ class Crystal::Doc::Generator
     # Don't include lib types or types inside a lib type
     return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
 
-    type.locations.try &.any? do |type_location|
+    !!type.locations.try &.any? do |type_location|
       must_include? type_location
     end
   end
@@ -173,7 +179,7 @@ class Crystal::Doc::Generator
     return false if nodoc? const
     return true if crystal_builtin?(const)
 
-    const.locations.try &.any? { |location| must_include? location }
+    !!const.locations.try &.any? { |location| must_include? location }
   end
 
   def must_include?(location : Crystal::Location)
@@ -221,7 +227,7 @@ class Crystal::Doc::Generator
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
      "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
-     "LIBRARY_PATH"}.each do |name|
+     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -284,7 +290,7 @@ class Crystal::Doc::Generator
   end
 
   def summary(context, string)
-    line = fetch_doc_lines(string).lines.first? || ""
+    line = fetch_doc_lines(string.strip).lines.first? || ""
 
     dot_index = line =~ /\.($|\s)/
     if dot_index
@@ -309,10 +315,15 @@ class Crystal::Doc::Generator
   def doc(context, string)
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
-    markdown = String.build do |io|
-      Markdown.parse string, Markdown::DocRenderer.new(context, io)
-    end
+    markdown = render_markdown(context, string)
     generate_flags markdown
+  end
+
+  private def render_markdown(context, source)
+    options = ::Markd::Options.new
+    document = ::Markd::Parser.parse(source, options)
+    renderer = MarkdDocRenderer.new(context, options)
+    renderer.render(document).chomp
   end
 
   def fetch_doc_lines(doc : String) : String
@@ -382,9 +393,7 @@ class Crystal::Doc::Generator
       filename = location.filename
       next unless filename
 
-      url = project_info.source_url(location)
-      next unless url
-      location.url = url
+      location.url = project_info.source_url(location)
 
       # Prevent identical link generation in the "Defined in:" section in the docs because of macros
       next if locations.includes?(location)

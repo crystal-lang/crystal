@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
@@ -8,7 +9,7 @@ private class DequeTester
   @i : Int32
   @c : Array(Int32) | Deque(Int32) | Nil
 
-  def step
+  def step(&)
     @c = @deque
     yield
     @c = @array
@@ -29,12 +30,28 @@ private class DequeTester
     @c.not_nil!
   end
 
-  def test
+  def test(&)
     with self yield
   end
 end
 
 private alias RecursiveDeque = Deque(RecursiveDeque)
+
+# Yields multiple forms of `Deque{}`, `Deque{0}`, `Deque{0, 1}`, `Deque{0, 1, 2}`, ...,
+# `Deque{0, 1, 2, ..., max_size - 1}`. All deques have *max_size* as their
+# capacity; each deque is yielded *max_size* times with a different start
+# position in the internal buffer. Every deque is a fresh instance.
+private def each_queue_repr(max_size, &)
+  (0..max_size).each do |size|
+    max_size.times do |i|
+      x = Deque(Int32).new(max_size, 0)
+      x.rotate!(i)
+      x.pop(max_size - size)
+      x.fill &.itself
+      yield x
+    end
+  end
+end
 
 describe "Deque" do
   describe "implementation" do
@@ -148,7 +165,7 @@ describe "Deque" do
 
     it "compares other types" do
       a = Deque{1, 2, 3}
-      b = Deque{:foo, :bar}
+      b = Deque{true, false}
       c = "other type"
       (a == b).should be_false
       (b == c).should be_false
@@ -240,6 +257,44 @@ describe "Deque" do
       a = Deque{1, 2, 3}
       a.concat((4..1000))
       a.should eq(Deque.new((1..1000).to_a))
+    end
+
+    it "concats indexable" do
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = Array.new(10, &.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = Slice.new(10, &.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = StaticArray(Int32, 10).new(&.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+
+      each_queue_repr(16) do |a|
+        size = a.size
+        b = Deque.new(10, &.+(size))
+        a.concat(b).should be(a)
+        a.should eq(Deque.new(size + 10, &.itself))
+      end
+    end
+
+    it "concats itself" do
+      each_queue_repr(16) do |a|
+        size = a.size
+        a.concat(a).should be(a)
+        a.should eq(Deque.new((0...size).to_a * 2))
+      end
     end
   end
 
@@ -615,18 +670,7 @@ describe "Deque" do
   end
 
   describe "each iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.each
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "cycles" do
-      Deque{1, 2, 3}.cycle.first(8).join.should eq("12312312")
-    end
+    it_iterates "#each", [1, 2, 3], Deque{1, 2, 3}.each
 
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
@@ -641,20 +685,13 @@ describe "Deque" do
   end
 
   describe "each_index iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.each_index
-      iter.next.should eq(0)
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should be_a(Iterator::Stop)
-    end
+    it_iterates "#each_index", [0, 1, 2], Deque{1, 2, 3}.each_index
 
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
       count = 0
       it = a.each_index
-      a.each_index.each do
+      it.each do
         count += 1
         a.clear
       end
@@ -662,41 +699,8 @@ describe "Deque" do
     end
   end
 
-  describe "reverse each iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
+  it_iterates "#reverse_each", [3, 2, 1], Deque{1, 2, 3}.reverse_each
 
-  describe "cycle" do
-    it "cycles" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle do |x|
-        a << x
-        break if a.size == 9
-      end
-      a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles N times" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle(2) do |x|
-        a << x
-      end
-      a.should eq([1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles with iterator" do
-      Deque{1, 2, 3}.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
-    end
-
-    it "cycles with N and iterator" do
-      Deque{1, 2, 3}.cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
-    end
-  end
+  it_iterates "#cycle", [1, 2, 3, 1, 2, 3, 1, 2], Deque{1, 2, 3}.cycle, infinite: true
+  it_iterates "#cycle(limit)", [1, 2, 3, 1, 2, 3], Deque{1, 2, 3}.cycle(2)
 end

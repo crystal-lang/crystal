@@ -86,72 +86,64 @@ class Object
     hash(Crystal::Hasher.new).result
   end
 
-  # Returns a string representation of this object.
+  # Returns a nicely readable and concise string representation of this object,
+  # typically intended for users.
   #
-  # Descendants must usually **not** override this method. Instead,
-  # they must override `to_s(io)`, which must append to the given
-  # IO object.
+  # This method should usually **not** be overridden. It delegates to
+  # `#to_s(IO)` which can be overridden for custom implementations.
+  #
+  # Also see `#inspect`.
   def to_s : String
     String.build do |io|
       to_s io
     end
   end
 
-  # Appends a `String` representation of this object
-  # to the given `IO` object.
+  # Prints a nicely readable and concise string representation of this object,
+  # typically intended for users, to *io*.
   #
-  # An object must never append itself to the io argument,
-  # as this will in turn call `to_s(io)` on it.
+  # This method is called when an object is interpolated in a string literal:
+  # ```
+  # "foo #{bar} baz" # calls bar.to_io with the builder for this string
+  # ```
+  #
+  # `IO#<<` calls this method to append an object to itself:
+  # ```
+  # io << bar # calls bar.to_s(io)
+  # ```
+  #
+  # Thus implementations must not interpolate `self` in a string literal or call
+  # `io << self` which both would lead to an endless loop.
+  #
+  # Also see `#inspect(IO)`.
   abstract def to_s(io : IO) : Nil
 
-  # Returns a `String` representation of this object suitable
-  # to be embedded inside other expressions, sometimes providing
-  # more information about this object.
+  # Returns an unambiguous and information-rich string representation of this
+  # object, typically intended for developers.
   #
-  # `#inspect` (and `#inspect(io)`) are the methods used when
-  # you invoke `#to_s` or `#inspect` on an object that holds
-  # other objects and wants to show them. For example when you
-  # invoke `Array#to_s`, `#inspect` will be invoked on each element:
+  # This method should usually **not** be overridden. It delegates to
+  # `#inspect(IO)` which can be overridden for custom implementations.
   #
-  # ```
-  # ary = ["one", "two", "three, etc."]
-  # ary.inspect # => ["one", "two", "three, etc."]
-  # ```
-  #
-  # Note that if Array invoked `#to_s` on each of the elements
-  # above, the output would have been this:
-  #
-  # ```
-  # ary = ["one", "two", "three, etc."]
-  # # If inspect invoked to_s on each element...
-  # ary.inspect # => [one, two, three, etc.]
-  # ```
-  #
-  # Note that it's not clear how many elements the array has,
-  # or which are they, because `#to_s` doesn't guarantee that
-  # the string representation is clearly delimited (in the case
-  # of `String` the quotes are not shown).
-  #
-  # Also note that sometimes the output of `#inspect` will look
-  # like a Crystal expression that will compile, but this isn't
-  # always the case, nor is it necessary. Notably, `Reference#inspect`
-  # and `Struct#inspect` return values that don't compile.
-  #
-  # Classes must usually **not** override this method. Instead,
-  # they must override `inspect(io)`, which must append to the
-  # given `IO` object.
+  # Also see `#to_s`.
   def inspect : String
     String.build do |io|
       inspect io
     end
   end
 
-  # Appends a string representation of this object
-  # to the given `IO` object.
+  # Prints to *io* an unambiguous and information-rich string representation of this
+  # object, typically intended for developers.
   #
-  # Similar to `to_s(io)`, but usually appends more information
-  # about this object.
-  # See `#inspect`.
+  # It is similar to `#to_s(IO)`, but often provides more information. Ideally, it should
+  # contain sufficient information to be able to recreate an object with the same value
+  # (given an identical environment).
+  #
+  # For types that don't provide a custom implementation of this method,
+  # default implementation delegates to `#to_s(IO)`. This said, it is advisable to
+  # have an appropriate `#inspect` implementation on every type. Default
+  # implementations are provided by `Struct#inspect` and `Reference#inspect`.
+  #
+  # `::p` and `::p!` use this method to print an object in `STDOUT`.
   def inspect(io : IO) : Nil
     to_s io
   end
@@ -183,7 +175,7 @@ class Object
   #   .select { |x| x % 2 == 0 }.tap { |x| puts "evens: #{x.inspect}" }
   #   .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
   # ```
-  def tap
+  def tap(&)
     yield self
     self
   end
@@ -197,7 +189,7 @@ class Object
   # # First program argument in downcase, or nil
   # ARGV[0]?.try &.downcase
   # ```
-  def try
+  def try(&)
     yield self
   end
 
@@ -209,7 +201,7 @@ class Object
   # 10.in?(0, 1, 10)   # => true
   # 10.in?(:foo, :bar) # => false
   # ```
-  def in?(collection) : Bool
+  def in?(collection : Object) : Bool
     collection.includes?(self)
   end
 
@@ -219,8 +211,27 @@ class Object
   end
 
   # Returns `self`.
+  #
   # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
+  #
+  # This method can be used to remove `Nil` from a union type.
+  # However, it should be avoided if possible and is often considered a code smell.
+  # Usually, you can write code in a way that the compiler can safely exclude `Nil` types,
+  # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
+  # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
+  # Either way, consider instead raising a concrete exception with a descriptive message.
   def not_nil!
+    self
+  end
+
+  # :ditto:
+  #
+  # *message* has no effect. It is only used by `Nil#not_nil!(message = nil)`.
+  def not_nil!(message)
+    # FIXME: the above param-less overload cannot be expressed as an optional
+    # parameter here, because that would copy the receiver if it is a struct;
+    # see https://github.com/crystal-lang/crystal/issues/13263#issuecomment-1492885817
+    # and also #13265
     self
   end
 
@@ -234,15 +245,54 @@ class Object
     self
   end
 
-  # Returns a shallow copy of this object.
+  # Returns a shallow copy (“duplicate”) of this object.
   #
-  # As a convention, `clone` is the method used to create a deep copy of
-  # an object, but this logic isn't defined generically for every type
-  # because cycles could be involved, and the clone logic might not need
-  # to clone everything.
+  # In order to create a new object with the same value as an existing one, there
+  # are two possible routes:
+  #
+  # * create a *shallow copy* (`#dup`): Constructs a new object with all its
+  #   properties' values identical to the original object's properties. They
+  #   are shared references. That means for mutable values that changes to
+  #   either object's values will be present in both's.
+  # * create a *deep copy* (`#clone`): Constructs a new object with all its
+  #   properties' values being recursive deep copies of the original object's
+  #   properties.
+  #   There is no shared state and the new object is a completely independent
+  #   copy, including everything inside it. This may not be available for every
+  #   type.
+  #
+  # A shallow copy is only one level deep whereas a deep copy copies everything
+  # below.
+  #
+  # This distinction is only relevant for compound values. Primitive types
+  # do not have any properties that could be shared or cloned.
+  # In that case, `dup` and `clone` are exactly the same.
+  #
+  # The `#clone` method can't be defined on `Object`. It's not
+  # generically available for every type because cycles could be involved, and
+  # the clone logic might not need to clone everything.
   #
   # Many types in the standard library, like `Array`, `Hash`, `Set` and
   # `Deque`, and all primitive types, define `dup` and `clone`.
+  #
+  # Example:
+  #
+  # ```
+  # original = {"foo" => [1, 2, 3]}
+  # shallow_copy = original.dup
+  # deep_copy = original.clone
+  #
+  # # "foo" references the same array object for both original and shallow copy,
+  # # but not for a deep copy:
+  # original["foo"] << 4
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  #
+  # # Assigning new value does not share it to either copy:
+  # original["foo"] = [1]
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  # ```
   abstract def dup
 
   # Unsafely reinterprets the bytes of an object as being of another `type`.
@@ -406,7 +456,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -637,7 +687,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -919,7 +969,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}?
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -1036,7 +1086,7 @@ class Object
     # end
     # ```
     macro {{macro_prefix}}property!(*names)
-      {{macro_prefix}}getter! \{{*names}}
+      {{macro_prefix}}getter! \{{names.splat}}
 
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
@@ -1165,7 +1215,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -1243,22 +1293,43 @@ class Object
   # wrapper.capitalize     # => "Hello"
   # ```
   macro delegate(*methods, to object)
-    {% for method in methods %}
-      {% if method.id.ends_with?('=') && method.id != "[]=" %}
-        def {{method.id}}(arg)
-          {{object.id}}.{{method.id}} arg
-        end
-      {% else %}
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options)
-        end
+    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+      {% eq_operators = %w(<= >= == != []= ===) %}
+      {% for method in methods %}
+        {% if method.id.ends_with?('=') && !eq_operators.includes?(method.id.stringify) %}
+          def {{method.id}}(arg)
+            {{object.id}}.{{method.id}} arg
+          end
+        {% else %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options)
+          end
 
-        {% if method.id != "[]=" %}
           def {{method.id}}(*args, **options)
             {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
               yield *yield_args
             end
           end
+        {% end %}
+      {% end %}
+    {% else %}
+      {% for method in methods %}
+        {% if method.id.ends_with?('=') && method.id != "[]=" %}
+          def {{method.id}}(arg)
+            {{object.id}}.{{method.id}} arg
+          end
+        {% else %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options)
+          end
+
+          {% if method.id != "[]=" %}
+            def {{method.id}}(*args, **options)
+              {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+                yield *yield_args
+              end
+            end
+          {% end %}
         {% end %}
       {% end %}
     {% end %}
@@ -1327,8 +1398,8 @@ class Object
   # end
   # ```
   macro def_equals_and_hash(*fields)
-    def_equals {{*fields}}
-    def_hash {{*fields}}
+    def_equals {{fields.splat}}
+    def_hash {{fields.splat}}
   end
 
   # Forwards missing methods to *delegate*.
@@ -1380,7 +1451,7 @@ class Object
   end
 
   protected def self.set_crystal_type_id(ptr)
-    ptr.as(LibC::SizeT*).value = LibC::SizeT.new(crystal_instance_type_id)
+    ptr.as(Pointer(typeof(crystal_instance_type_id))).value = crystal_instance_type_id
     ptr
   end
 end

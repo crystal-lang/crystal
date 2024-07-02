@@ -10,7 +10,7 @@ describe "Semantic: proc" do
   end
 
   it "types proc call" do
-    assert_type("x = -> { 1 }; x.call()") { int32 }
+    assert_type("x = -> { 1 }; x.call()", inject_primitives: true) { int32 }
   end
 
   it "types int -> int proc literal" do
@@ -18,7 +18,19 @@ describe "Semantic: proc" do
   end
 
   it "types int -> int proc call" do
-    assert_type("f = ->(x : Int32) { x }; f.call(1)") { int32 }
+    assert_type("f = ->(x : Int32) { x }; f.call(1)", inject_primitives: true) { int32 }
+  end
+
+  it "types proc literal with return type (1)" do
+    assert_type("->(x : Int32) : Int32 { x }") { proc_of(int32, int32) }
+  end
+
+  it "types proc literal with return type (2)" do
+    assert_type("-> : Int32 | String { 1 }") { proc_of(union_of int32, string) }
+  end
+
+  it "types proc call with return type" do
+    assert_type("x = -> : Int32 | String { 1 }; x.call()", inject_primitives: true) { union_of int32, string }
   end
 
   it "types proc pointer" do
@@ -51,18 +63,30 @@ describe "Semantic: proc" do
   end
 
   it "types proc type spec" do
-    assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
+    assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)", inject_primitives: true) { pointer_of(proc_of(int32, int64)) }
+  end
+
+  it "allows passing proc type if it is a lib alias" do
+    assert_type("
+      lib LibC
+        alias Callback = Int32 -> Int32
+        fun foo(x : Callback) : Float64
+      end
+
+      f = ->(x : Int32) { x + 1 }
+      LibC.foo f
+      ", inject_primitives: true) { float64 }
   end
 
   it "allows passing proc type if it is typedef'd" do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32
-        fun foo(x : Callback) : Float64
+        fun foo : Callback
+        fun bar(x : Callback) : Float64
       end
 
-      f = ->(x : Int32) { x + 1 }
-      LibC.foo f
+      LibC.bar LibC.foo
       ") { float64 }
   end
 
@@ -89,7 +113,7 @@ describe "Semantic: proc" do
 
       f = -> { 1 }
       foo &f
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "passes proc pointer as block with arguments" do
@@ -100,7 +124,7 @@ describe "Semantic: proc" do
 
       f = ->(x : Int32) { x.to_f }
       foo &f
-      ") { float64 }
+      ", inject_primitives: true) { float64 }
   end
 
   it "binds proc literal to arguments and body" do
@@ -119,7 +143,7 @@ describe "Semantic: proc" do
       end
 
       foo ->(x : Int32) { x.to_f }
-      ") { float64 }
+      ", inject_primitives: true) { float64 }
   end
 
   it "has proc literal as restriction and works when output not specified" do
@@ -129,7 +153,7 @@ describe "Semantic: proc" do
       end
 
       foo ->(x : Int32) { x.to_f }
-      ") { nil_type }
+      ", inject_primitives: true) { nil_type }
   end
 
   it "has proc literal as restriction and errors if output is different" do
@@ -140,7 +164,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32) { x }
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32)"
   end
 
   it "has proc literal as restriction and errors if input is different" do
@@ -151,7 +175,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int64) { x.to_f }
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int64, Float64)", inject_primitives: true
   end
 
   it "has proc literal as restriction and errors if sizes are different" do
@@ -162,14 +186,14 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32, y : Int32) { x.to_f }
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32, Float64)", inject_primitives: true
   end
 
-  it "allows passing nil as proc callback" do
+  it "allows passing nil as proc callback if it is a lib alias" do
     assert_type("
       lib LibC
-        type Cb = Int32 ->
-        fun bla(Cb) : Int32
+        alias Cb = Int32 ->
+        fun bla(x : Cb) : Int32
       end
 
       LibC.bla(nil)
@@ -181,14 +205,14 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(Int32, Int32 -> Float64)
       ",
-      "can't cast")
+      "can't cast", inject_primitives: true)
   end
 
   it "allows casting a proc type to one with void argument" do
     assert_type("
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Void)
-      ") { proc_of [int32, void] }
+      ", inject_primitives: true) { proc_of [int32, void] }
   end
 
   it "disallows casting a proc type to one accepting less arguments" do
@@ -196,7 +220,7 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(-> Float64)
       ",
-      "can't cast Proc(Int32, Float64) to Proc(Float64)"
+      "can't cast Proc(Int32, Float64) to Proc(Float64)", inject_primitives: true
   end
 
   it "disallows casting a proc type to one accepting same size argument but different output" do
@@ -204,7 +228,7 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Int32)
       ",
-      "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)"
+      "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)", inject_primitives: true
   end
 
   it "disallows casting a proc type to one accepting same size argument but different input" do
@@ -212,13 +236,19 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(Float64 -> Float64)
       ",
-      "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)"
+      "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)", inject_primitives: true
+  end
+
+  it "errors if inferred return type doesn't match return type restriction (1)" do
+    assert_error "-> : Int32 { true }", "expected Proc to return Int32, not Bool"
+  end
+
+  it "errors if inferred return type doesn't match return type restriction (2)" do
+    assert_error "->(x : Int32) : Int32 { x || 'a' }", "expected Proc to return Int32, not (Char | Int32)"
   end
 
   it "types proc literal hard type inference (1)" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -258,7 +288,7 @@ describe "Semantic: proc" do
   end
 
   it "types nil or proc type" do
-    result = assert_type("1 == 1 ? nil : ->{}") { nilable proc_of(nil_type) }
+    result = assert_type("1 == 1 ? nil : ->{}", inject_primitives: true) { nilable proc_of(nil_type) }
     result.node.type.should be_a(NilableProcType)
   end
 
@@ -273,7 +303,7 @@ describe "Semantic: proc" do
       end
 
       foo ->{ LibC.exit }
-      ") { no_return }
+      ", inject_primitives: true) { no_return }
   end
 
   it "allows passing NoReturn type for any return type (2)" do
@@ -302,49 +332,73 @@ describe "Semantic: proc" do
       ") { proc_of(int32) }
   end
 
-  it "allows new on proc type" do
-    assert_type("
-      alias Func = Int32 -> Int32
-      Func.new { |x| x + 1 }
-      ") { proc_of(int32, int32) }
-  end
-
-  it "allows new on proc type that is a typedef" do
+  it "allows passing NoReturn type for any return type, with Proc notation (#12126)" do
     assert_type("
       lib LibC
-        type F = Int32 -> Int32
+        fun exit : NoReturn
+      end
+
+      def foo(f : Proc(Int32))
+        f.call
+      end
+
+      foo ->{ LibC.exit }
+      ", inject_primitives: true) { no_return }
+  end
+
+  it "allows new on proc type" do
+    assert_type("
+      #{proc_new}
+
+      alias Func = Int32 -> Int32
+      Func.new { |x| x + 1 }
+      ", inject_primitives: true) { proc_of(int32, int32) }
+  end
+
+  it "allows new on proc type that is a lib alias" do
+    assert_type("
+      #{proc_new}
+
+      lib LibC
+        alias F = Int32 -> Int32
       end
 
       LibC::F.new { |x| x + 1 }
-      ") { proc_of(int32, int32) }
+      ", inject_primitives: true) { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type with less block args" do
+  it "allows new on proc type with less block params" do
     assert_type("
+      #{proc_new}
+
       alias Func = Int32 -> Int32
       Func.new { 1 }
       ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on proc type" do
+  it "says wrong number of block params in new on proc type" do
     assert_error "
+      #{proc_new}
+
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
       ",
-      "wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
+      "wrong number of block parameters (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
     assert_error "
+      #{proc_new}
+
       alias Alias = Int32 -> Int32
       Alias.new &.to_f
       ",
-      "expected block to return Int32, not Float64"
+      "expected block to return Int32, not Float64", inject_primitives: true
   end
 
   it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
-      "function argument 'x' must have a type"
+      "parameter 'x' of Proc literal must have a type"
   end
 
   it "allows passing function to LibC without specifying types" do
@@ -354,7 +408,7 @@ describe "Semantic: proc" do
       end
 
       LibC.foo ->(x) { x + 1 }
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "allows passing function to LibC without specifying types, using a global method" do
@@ -368,7 +422,7 @@ describe "Semantic: proc" do
       end
 
       LibC.foo ->callback
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "allows passing function to LibC without specifying types, using a class method" do
@@ -384,7 +438,7 @@ describe "Semantic: proc" do
       end
 
       LibC.foo ->Foo.callback
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "allows writing a function type with Proc" do
@@ -400,7 +454,7 @@ describe "Semantic: proc" do
       end
 
       foo ->(x : Int32) { x + 1 }
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows using Proc as restriction (2)" do
@@ -410,7 +464,7 @@ describe "Semantic: proc" do
       end
 
       foo ->(x : Int32) { x + 1 }
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows using Proc as restriction (3)" do
@@ -420,7 +474,7 @@ describe "Semantic: proc" do
       end
 
       foo ->(x : Int32) { x + 1 }
-      )) { int32.metaclass }
+      ), inject_primitives: true) { int32.metaclass }
   end
 
   it "forwards block and computes correct type (bug)" do
@@ -435,7 +489,7 @@ describe "Semantic: proc" do
 
       foo { 1 }
       foo { "hello" }.call
-      )) { string }
+      ), inject_primitives: true) { string }
   end
 
   it "doesn't need to deduce type of block if return is void" do
@@ -487,8 +541,6 @@ describe "Semantic: proc" do
 
   it "types proc literal with a type that was never instantiated" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -504,8 +556,6 @@ describe "Semantic: proc" do
 
   it "types proc pointer with a type that was never instantiated" do
     assert_type(%(
-      require "prelude"
-
       class Foo
         def initialize(@x : Int32)
         end
@@ -634,7 +684,7 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "allows invoking a function with a generic subtype" do
+  it "allows invoking a function with a generic subtype (1)" do
     assert_type(%(
       module Moo
         def foo
@@ -653,7 +703,29 @@ describe "Semantic: proc" do
       foo = Foo(Int32).new
       f = func { |moo| moo.foo }
       f.call foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
+  end
+
+  it "allows invoking a function with a generic subtype (2)" do
+    assert_type(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      def func(&block : Moo(Int32) -> _)
+        block
+      end
+
+      foo = Foo(Int32).new
+      f = func { |moo| moo.foo }
+      f.call foo
+      ), inject_primitives: true) { int32 }
   end
 
   it "gets pointer to lib fun without specifying types" do
@@ -686,7 +758,7 @@ describe "Semantic: proc" do
 
       foo = Foo.new || Bar.new
       proc.call(foo)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows passing virtual type including module to proc" do
@@ -708,7 +780,7 @@ describe "Semantic: proc" do
 
       foo = Foo.new || Bar.new
       proc.call(foo)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -716,7 +788,14 @@ describe "Semantic: proc" do
       assert_error %(
         ->(x : #{type}) { }
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
+    end
+
+    it "disallows #{type} in proc return types" do
+      assert_error %(
+        -> : #{type} { }
+        ),
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in captured block" do
@@ -726,7 +805,7 @@ describe "Semantic: proc" do
 
         foo {}
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in proc pointer" do
@@ -736,8 +815,81 @@ describe "Semantic: proc" do
 
         ->foo(#{type})
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
+
+    it "disallows #{type} in proc notation parameter type" do
+      assert_error "x : #{type} ->", "can't use #{type} as a Proc argument type"
+    end
+
+    it "disallows #{type} in proc notation return type" do
+      assert_error "x : -> #{type}", "can't use #{type} as a Proc argument type"
+    end
+  end
+
+  it "allows metaclass in procs" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      ->(x : Foo.class) { x.new }
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc return types" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
+
+      -> : Foo.class { Foo }
+      CRYSTAL
+  end
+
+  it "allows metaclass in captured block" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      def foo(&block : Foo.class -> Foo)
+        block
+      end
+
+      foo { |x| x.new }
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc pointer" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      def foo(x : Foo.class)
+        x.new
+      end
+
+      ->foo(Foo.class)
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc notation parameter type" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, nil_type) }
+      class Foo
+      end
+
+      #{proc_new}
+
+      x : Foo.class -> = Proc(Foo.class, Nil).new { }
+      x
+      CRYSTAL
+  end
+
+  it "allows metaclass in proc notation return type" do
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
+      x : -> Foo.class = ->{ Foo }
+      x
+      CRYSTAL
   end
 
   it "..." do
@@ -747,7 +899,7 @@ describe "Semantic: proc" do
       end
 
       foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't crash on constant to proc pointer" do
@@ -763,8 +915,22 @@ describe "Semantic: proc" do
 
   it "sets proc type as void if explicitly told so, when using new" do
     assert_type(%(
+      #{proc_new}
+
       Proc(Int32, Void).new { 1 }
       )) { proc_of(int32, nil_type) }
+  end
+
+  it "unpacks tuple but doesn't override local variables, when using new (#9813)" do
+    assert_type(%(
+      #{proc_new}
+
+      i = 1
+      Proc(Tuple(Char), Nil).new do |(x)|
+
+      end.call({'a'})
+      i
+      ), inject_primitives: true) { int32 }
   end
 
   it "accesses T and R" do
@@ -796,7 +962,7 @@ describe "Semantic: proc" do
     assert_error %(
       ->(x : Int32) { }.call
       ),
-      "no overload matches"
+      "no overload matches", inject_primitives: true
   end
 
   it "finds method of object" do
@@ -906,7 +1072,7 @@ describe "Semantic: proc" do
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { nil }
       (a || b).call(1)
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "can assign proc that returns anything to proc that returns nil, with instance var (#3655)" do
@@ -1119,4 +1285,38 @@ describe "Semantic: proc" do
       Foo.foo
     )) { proc_of int32 }
   end
+
+  it "doesn't cause upcast bug (#8428)" do
+    assert_type(%(
+      def foo
+        if true
+          begin
+            ->{""}
+          rescue
+            return ->{}
+          end
+        end
+      end
+
+      foo
+    )) { union_of proc_of(string), proc_of(nil_type), nil_type }
+  end
+
+  it "types Proc(*T, Void) as Proc(*T, Nil)" do
+    assert_type(%(
+      #{proc_new}
+
+      Proc(Int32, Void).new { |x| x }
+      )) { proc_of(int32, nil_type) }
+  end
+end
+
+private def proc_new
+  <<-CRYSTAL
+  struct Proc
+    def self.new(&block : self)
+      block
+    end
+  end
+  CRYSTAL
 end

@@ -51,7 +51,7 @@ class CFG
   property :basic_block_map
 
   def create_node(name)
-    node = (@basic_block_map[name] ||= BasicBlock.new(name))
+    node = @basic_block_map.put_if_absent(name) { BasicBlock.new(name) }
     @start_node ||= node
     node
   end
@@ -267,8 +267,8 @@ class HavlakLoopFinder
 
       node_w = nodes[w].bb
       if node_w
-        node_w.in_edges.each do |nodeV|
-          v = number[nodeV]
+        node_w.in_edges.each do |node_v|
+          v = number[node_v]
           if v != UNVISITED
             if ancestor?(w, v, last)
               back_preds[w] << v

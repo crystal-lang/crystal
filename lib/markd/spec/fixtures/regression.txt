@@ -1,0 +1,149 @@
+# Regression tests
+
+Eating a character after a partially consumed tab.
+
+```````````````````````````````` example
+* foo
+→bar
+.
+<ul>
+<li>foo
+bar</li>
+</ul>
+````````````````````````````````
+
+Type 7 HTML block followed by whitespace (#98).
+
+```````````````````````````````` example
+<a>  
+x
+.
+<a>  
+x
+````````````````````````````````
+
+h2..h6 raw HTML blocks (jgm/CommonMark#430).
+
+```````````````````````````````` example
+<h1>lorem</h1>
+
+<h2>lorem</h2>
+
+<h3>lorem</h3>
+
+<h4>lorem</h4>
+
+<h5>lorem</h5>
+
+<h6>lorem</h6>
+.
+<h1>lorem</h1>
+<h2>lorem</h2>
+<h3>lorem</h3>
+<h4>lorem</h4>
+<h5>lorem</h5>
+<h6>lorem</h6>
+````````````````````````````````
+
+Issue #109 - tabs after setext header line
+
+
+```````````````````````````````` example
+hi
+--→
+.
+<h2>hi</h2>
+````````````````````````````````
+
+Issue #108 - Chinese punctuation not recognized
+
+```````````````````````````````` example
+**。**话
+.
+<p>**。**话</p>
+````````````````````````````````
+
+Issue jgm/cmark#177 - incorrect emphasis parsing
+
+```````````````````````````````` example
+a***b* c*
+.
+<p>a*<em><em>b</em> c</em></p>
+````````````````````````````````
+
+Issue jgm/CommonMark#468 - backslash at end of link definition
+
+
+```````````````````````````````` example
+[\]: test
+.
+<p>[]: test</p>
+````````````````````````````````
+
+Issue jgm/commonmark.js#121 - punctuation set different
+
+```````````````````````````````` example
+^_test_
+.
+<p>^<em>test</em></p>
+````````````````````````````````
+
+Issue #116 - tabs before and after ATX closing heading
+```````````````````````````````` example
+# foo→#→
+.
+<h1>foo</h1>
+````````````````````````````````
+
+commonmark/CommonMark#493 - escaped space not allowed in link destination.
+
+```````````````````````````````` example
+[link](a\ b)
+.
+<p>[link](a\ b)</p>
+````````````````````````````````
+
+Issue #527 - meta tags in inline contexts
+
+```````````````````````````````` example
+City:
+<span itemprop="contentLocation" itemscope itemtype="https://schema.org/City">
+  <meta itemprop="name" content="Springfield">
+</span>
+.
+<p>City:
+<span itemprop="contentLocation" itemscope itemtype="https://schema.org/City">
+<meta itemprop="name" content="Springfield">
+</span></p>
+````````````````````````````````
+
+Double-encoding.
+
+```````````````````````````````` example
+[XSS](javascript&amp;colon;alert%28&#039;XSS&#039;%29)
+.
+<p><a href="javascript&amp;colon;alert('XSS')">XSS</a></p>
+````````````````````````````````
+
+Issue commonamrk#517 - script, pre, style close tag without
+opener.
+
+```````````````````````````````` example
+</script>
+
+</pre>
+
+</style>
+.
+</script>
+</pre>
+</style>
+````````````````````````````````
+
+Issue #289.
+
+```````````````````````````````` example
+[a](<b) c>
+.
+<p>[a](&lt;b) c&gt;</p>
+````````````````````````````````

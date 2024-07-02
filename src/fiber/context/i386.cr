@@ -21,6 +21,8 @@ class Fiber
     {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
       #                %ecx           , %eax
       asm("
+      movl 8(%esp), %eax
+      movl 4(%esp), %ecx
       pushl %edi        // push 1st argument (because of initial resume)
       pushl %ebx        // push callee-saved registers on the stack
       pushl %ebp

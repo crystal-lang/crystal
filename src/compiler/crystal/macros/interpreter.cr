@@ -69,7 +69,7 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro, call)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
@@ -77,7 +77,7 @@ module Crystal
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
-                   @in_macro = false)
+                   @in_macro = false, @call : Call? = nil)
       @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
@@ -118,6 +118,7 @@ module Crystal
 
     def visit(node : MacroLiteral)
       @str << node.value
+      false
     end
 
     def visit(node : MacroVerbatim)
@@ -135,7 +136,8 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        return @last = var
+        @last = var
+        return false
       end
 
       # Try to consider the var as a top-level macro call.
@@ -150,7 +152,8 @@ module Crystal
       # and in this case the parser has no idea about this, so the only
       # solution is to do it now.
       if value = interpret_top_level_call?(Call.new(nil, node.name))
-        return @last = value
+        @last = value
+        return false
       end
 
       node.raise "undefined macro variable '#{node.name}'"
@@ -197,28 +200,11 @@ module Crystal
           {MacroId.new(entry.key), entry.value}
         end
       when RangeLiteral
-        exp.from.accept self
-        from = @last
-
-        unless from.is_a?(NumberLiteral)
-          node.raise "range begin #{exp.from} must evaluate to a NumberLiteral"
-        end
-
-        from = from.to_number.to_i
-
-        exp.to.accept self
-        to = @last
-
-        unless to.is_a?(NumberLiteral)
-          node.raise "range end #{exp.to} must evaluate to a NumberLiteral"
-        end
-
-        to = to.to_number.to_i
+        range = exp.interpret_to_range(self)
 
         element_var = node.vars[0]
         index_var = node.vars[1]?
 
-        range = Range.new(from, to, exp.exclusive?)
         range.each_with_index do |element, index|
           @vars[element_var.name] = NumberLiteral.new(element)
           if index_var
@@ -255,7 +241,7 @@ module Crystal
       visit_macro_for_array_like node, exp, exp.elements, &.itself
     end
 
-    def visit_macro_for_array_like(node, exp, entries)
+    def visit_macro_for_array_like(node, exp, entries, &)
       element_var = node.vars[0]
       index_var = node.vars[1]?
 
@@ -271,7 +257,7 @@ module Crystal
       @vars.delete index_var.name if index_var
     end
 
-    def visit_macro_for_hash_like(node, exp, entries)
+    def visit_macro_for_hash_like(node, exp, entries, &)
       key_var = node.vars[0]
       value_var = node.vars[1]?
       index_var = node.vars[2]?
@@ -311,6 +297,8 @@ module Crystal
       when Var
         node.value.accept self
         @vars[target.name] = @last
+      when Underscore
+        node.value.accept self
       else
         node.raise "can only assign to variables, not #{target.class_desc}"
       end
@@ -375,9 +363,13 @@ module Crystal
         args = node.args.map { |arg| accept arg }
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
+        # normalize needed for param unpacking
+        block = node.block.try { |b| @program.normalize(b) }
+
         begin
-          @last = receiver.interpret(node.name, args, named_args, node.block, self)
+          @last = receiver.interpret(node.name, args, named_args, block, self, node.name_location)
         rescue ex : MacroRaiseException
+          # Re-raise to avoid the logic in the other rescue blocks and to retain the original location
           raise ex
         rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
@@ -386,6 +378,7 @@ module Crystal
         end
       else
         # no receiver: special calls
+        # may raise `Crystal::TopLevelMacroRaiseException`
         interpret_top_level_call node
       end
 
@@ -430,7 +423,7 @@ module Crystal
     end
 
     def resolve?(node : Path)
-      if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
+      if (single_name = node.single_name?) && (match = @free_vars.try &.[single_name]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
@@ -440,6 +433,7 @@ module Crystal
 
       case matched_type
       when Const
+        @program.check_deprecated_constant(matched_type, node)
         matched_type.value
       when Type
         matched_type = matched_type.remove_alias
@@ -485,12 +479,12 @@ module Crystal
       end
     end
 
-    def resolve(node : Generic)
+    def resolve(node : Generic | Metaclass | ProcNotation)
       type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
       TypeNode.new(type)
     end
 
-    def resolve?(node : Generic)
+    def resolve?(node : Generic | Metaclass | ProcNotation)
       resolve(node)
     rescue Crystal::CodeError
       nil
@@ -522,22 +516,23 @@ module Crystal
     end
 
     def visit(node : Splat)
+      warnings.add_warning(node, "Deprecated use of splat operator. Use `#splat` instead")
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
+      warnings.add_warning(node, "Deprecated use of double splat operator. Use `#double_splat` instead")
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : IsA)
       node.obj.accept self
-      const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      macro_type = @program.lookup_macro_type(node.const)
+      @last = BoolLiteral.new(@last.macro_is_a?(macro_type))
       false
     end
 
@@ -546,11 +541,20 @@ module Crystal
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         @last = TypeNode.new(target.devirtualize)
+      when "@top_level"
+        @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
+      when "@caller"
+        @last = if call = @call
+                  ArrayLiteral.map [call], &.itself
+                else
+                  NilLiteral.new
+                end
       else
         node.raise "unknown macro instance var: '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TupleLiteral)

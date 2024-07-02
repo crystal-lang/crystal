@@ -1,3 +1,5 @@
+require "process/executable_path" # Process::PATH_DELIMITER
+
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
@@ -32,6 +34,7 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
+    {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
     GC.init
 
     status =
@@ -42,16 +45,26 @@ module Crystal
         1
       end
 
-    status = Crystal::AtExitHandlers.run status, ex
+    exit(status, ex)
+  end
+
+  # :nodoc:
+  def self.exit(status : Int32, exception : Exception?) : Int32
+    status = Crystal::AtExitHandlers.run status, exception
+
+    if exception
+      STDERR.print "Unhandled exception: "
+      exception.inspect_with_backtrace(STDERR)
+    end
+
     ignore_stdio_errors { STDOUT.flush }
     ignore_stdio_errors { STDERR.flush }
 
-    raise ex if ex
     status
   end
 
   # :nodoc:
-  def self.ignore_stdio_errors
+  def self.ignore_stdio_errors(&)
     yield
   rescue IO::Error
   end
@@ -110,6 +123,17 @@ end
 # Invokes `Crystal.main`.
 #
 # Can be redefined. See `Crystal.main` for examples.
+#
+# On Windows the actual entry point is `wmain`, but there is no need to redefine
+# that. See the file required below for details.
 fun main(argc : Int32, argv : UInt8**) : Int32
   Crystal.main(argc, argv)
 end
+
+{% if flag?(:win32) %}
+  require "./system/win32/wmain"
+{% end %}
+
+{% if flag?(:wasi) %}
+  require "./system/wasi/main"
+{% end %}

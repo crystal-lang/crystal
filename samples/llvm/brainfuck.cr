@@ -17,11 +17,11 @@ class Increment < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
-    cell_val = builder.load current_cell_ptr, "cell_value"
-    increment_amount = program.ctx.int(CELL_SIZE_IN_BYTES * 8).const_int(@amount)
+    cell_val = builder.load program.cell_type, current_cell_ptr, "cell_value"
+    increment_amount = program.cell_type.const_int(@amount)
     new_cell_val = builder.add cell_val, increment_amount, "cell_value"
     builder.store new_cell_val, current_cell_ptr
 
@@ -37,7 +37,7 @@ class DataIncrement < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
     increment_amount = program.ctx.int32.const_int(@amount)
     new_cell_index = builder.add cell_index, increment_amount, "new_cell_index"
 
@@ -52,11 +52,10 @@ class Read < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
-    getchar = program.mod.functions["getchar"]
-    input_char = builder.call getchar, "input_char"
+    input_char = program.call_c_function "getchar", name: "input_char"
     input_byte = builder.trunc input_char, program.ctx.int8, "input_byte"
     builder.store input_byte, current_cell_ptr
 
@@ -69,14 +68,13 @@ class Write < Instruction
     builder = program.builder
     builder.position_at_end bb
 
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
-    cell_val = builder.load current_cell_ptr, "cell_value"
+    cell_val = builder.load program.cell_type, current_cell_ptr, "cell_value"
     cell_val_as_char = builder.sext cell_val, program.ctx.int32, "cell_val_as_char"
 
-    putchar = program.mod.functions["putchar"]
-    builder.call putchar, cell_val_as_char
+    program.call_c_function "putchar", cell_val_as_char
 
     bb
   end
@@ -99,10 +97,10 @@ class Loop < Instruction
     loop_after = func.basic_blocks.append "loop_after"
 
     builder.position_at_end loop_header
-    cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
-    cell_val = builder.load current_cell_ptr, "cell_value"
-    zero = program.ctx.int(CELL_SIZE_IN_BYTES * 8).const_int(0)
+    cell_index = builder.load program.ctx.int32, program.cell_index_ptr, "cell_index"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
+    cell_val = builder.load program.cell_type, current_cell_ptr, "cell_value"
+    zero = program.cell_type.const_int(0)
     cell_val_is_zero = builder.icmp LLVM::IntPredicate::EQ, cell_val, zero
 
     builder.cond cell_val_is_zero, loop_after, loop_body_block
@@ -123,14 +121,19 @@ class Program
   getter ctx : LLVM::Context
   getter builder : LLVM::Builder
   getter instructions
+  getter cell_type : LLVM::Type
   getter! cells_ptr : LLVM::Value
   getter! cell_index_ptr : LLVM::Value
   getter! func : LLVM::Function
+
+  @func_types = {} of String => LLVM::Type
 
   def initialize(@instructions : Array(Instruction))
     @ctx = LLVM::Context.new
     @mod = @ctx.new_module("brainfuck")
     @builder = @ctx.new_builder
+
+    @cell_type = @ctx.int(CELL_SIZE_IN_BYTES * 8)
   end
 
   def self.new(source : String)
@@ -205,10 +208,21 @@ class Program
   end
 
   def declare_c_functions(mod)
-    mod.functions.add "calloc", [@ctx.int32, @ctx.int32], @ctx.void_pointer
-    mod.functions.add "free", [@ctx.void_pointer], @ctx.void
-    mod.functions.add "putchar", [@ctx.int32], @ctx.int32
-    mod.functions.add "getchar", ([] of LLVM::Type), @ctx.int32
+    declare_c_function mod, "calloc", [@ctx.int32, @ctx.int32], @ctx.void_pointer
+    declare_c_function mod, "free", [@ctx.void_pointer], @ctx.void
+    declare_c_function mod, "putchar", [@ctx.int32], @ctx.int32
+    declare_c_function mod, "getchar", ([] of LLVM::Type), @ctx.int32
+  end
+
+  def declare_c_function(mod, name, param_types, return_type)
+    func_type = LLVM::Type.function(param_types, return_type)
+    @func_types[name] = func_type
+    mod.functions.add name, func_type
+  end
+
+  def call_c_function(func_name, args = [] of LLVM::Value, name = "")
+    func = mod.functions[func_name]
+    @builder.call @func_types[func_name], func, args, name
   end
 
   def create_main(mod)
@@ -222,7 +236,7 @@ class Program
 
     calloc = mod.functions["calloc"]
     call_args = [@ctx.int32.const_int(NUM_CELLS), @ctx.int32.const_int(CELL_SIZE_IN_BYTES)]
-    @cells_ptr = builder.call calloc, call_args, "cells"
+    @cells_ptr = call_c_function "calloc", call_args, "cells"
 
     @cell_index_ptr = builder.alloca @ctx.int32, "cell_index_ptr"
     zero = @ctx.int32.const_int(0)
@@ -232,8 +246,7 @@ class Program
   def add_cells_cleanup(mod, bb)
     builder.position_at_end bb
 
-    free = mod.functions["free"]
-    builder.call free, cells_ptr
+    call_c_function "free", cells_ptr
 
     zero = @ctx.int32.const_int(0)
     builder.ret zero

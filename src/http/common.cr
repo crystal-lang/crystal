@@ -26,7 +26,7 @@ module HTTP
   record HeaderLine, name : String, value : String, bytesize : Int32
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE, &) : HTTP::Status?
     headers = Headers.new
 
     max_size = max_headers_size
@@ -128,7 +128,7 @@ module HTTP
     end
 
     name, value = parse_header(line)
-    return HeaderLine.new name: name, value: value, bytesize: line.bytesize
+    HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)
@@ -243,7 +243,7 @@ module HTTP
   )
 
   # :nodoc:
-  def self.header_name(slice : Bytes)
+  def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
     if slice.size < 20
@@ -261,36 +261,37 @@ module HTTP
     elsif body_io
       content_length = content_length(headers)
       if content_length
-        serialize_headers(io, headers)
+        headers.serialize(io)
+        io << "\r\n"
         copied = IO.copy(body_io, io)
         if copied != content_length
           raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
       elsif Client::Response.supports_chunked?(version)
         headers["Transfer-Encoding"] = "chunked"
-        serialize_headers(io, headers)
+        headers.serialize(io)
+        io << "\r\n"
         serialize_chunked_body(io, body_io)
       else
         body = body_io.gets_to_end
         serialize_headers_and_string_body(io, headers, body)
       end
     else
-      serialize_headers(io, headers)
+      headers.serialize(io)
+      io << "\r\n"
     end
   end
 
   def self.serialize_headers_and_string_body(io, headers, body)
     headers["Content-Length"] = body.bytesize.to_s
-    serialize_headers(io, headers)
+    headers.serialize(io)
+    io << "\r\n"
     io << body
   end
 
+  @[Deprecated("Use `HTTP::Headers#serialize` instead.")]
   def self.serialize_headers(io, headers)
-    headers.each do |name, values|
-      values.each do |value|
-        io << name << ": " << value << "\r\n"
-      end
-    end
+    headers.serialize(io)
     io << "\r\n"
   end
 
@@ -306,7 +307,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.content_length(headers)
+  def self.content_length(headers) : UInt64?
     length_headers = headers.get? "Content-Length"
     return nil unless length_headers
     first_header = length_headers[0]
@@ -317,7 +318,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.keep_alive?(message)
+  def self.keep_alive?(message) : Bool
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
       true
@@ -333,7 +334,7 @@ module HTTP
     end
   end
 
-  def self.expect_continue?(headers)
+  def self.expect_continue?(headers) : Bool
     headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
@@ -379,7 +380,7 @@ module HTTP
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
-  def self.dequote_string(str)
+  def self.dequote_string(str) : String
     data = str.to_slice
     quoted_pair_index = data.index('\\'.ord)
     return str unless quoted_pair_index
@@ -387,7 +388,7 @@ module HTTP
     String.build do |io|
       while quoted_pair_index
         io.write(data[0, quoted_pair_index])
-        io << data[quoted_pair_index + 1].chr
+        io << data[quoted_pair_index + 1].unsafe_chr
 
         data += quoted_pair_index + 2
         quoted_pair_index = data.index('\\'.ord)
@@ -409,19 +410,19 @@ module HTTP
   # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io)
+  def self.quote_string(string, io) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
-    string.each_byte do |byte|
-      case byte
-      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+    string.each_char do |char|
+      case char
+      when '\t', ' ', '"', '\\'
         io << '\\'
-      when 0x00..0x1F, 0x7F
-        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      when '\u{00}'..'\u{1F}', '\u{7F}'
+        raise ArgumentError.new("String contained invalid character #{char.inspect}")
       else
         # output byte as is
       end
-      io.write_byte byte
+      io << char
     end
   end
 
@@ -434,7 +435,7 @@ module HTTP
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string)
+  def self.quote_string(string) : String
     String.build do |io|
       quote_string(string, io)
     end

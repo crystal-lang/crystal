@@ -48,7 +48,7 @@ describe "Code gen: cast" do
         a.as(Char)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to Char failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Int32 to Char failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -72,9 +72,71 @@ describe "Code gen: cast" do
         a.as(Float64 | Char)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
+  end
+
+  it "upcasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64
+      a.as(Int32 | Int64 | Int128)
+      CRYSTAL
+  end
+
+  it "downcasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64 || 3_i128
+      a.as(Int32 | Int64)
+      CRYSTAL
+  end
+
+  it "sidecasts from union to union with different alignment" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      a = 1 || 2_i64
+      a.as(Int32 | Int128)
+      CRYSTAL
+  end
+
+  it "doesn't corrupt stack when downcasting union to union with different alignment (#14285)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      struct Time2
+        def initialize(@seconds : Int64)
+          @nanoseconds = uninitialized UInt32[3]
+        end
+
+        def <(other : Time2) : Bool
+          @seconds < other.@seconds
+        end
+      end
+
+      class Constraints::Range
+        def initialize(@min : Int128 | Time2 | Nil)
+        end
+      end
+
+      def validate(value : Time2, constraint) : Bool
+        min = constraint.@min
+        if min.is_a?(Time2?)
+          if min
+            if value < min
+              return false
+            end
+          end
+        end
+        true
+      end
+
+      value = Time2.new(123)
+      constraint = Constraints::Range.new(Time2.new(45))
+      validate(value, constraint)
+      CRYSTAL
   end
 
   it "casts from virtual to single type" do
@@ -120,7 +182,7 @@ describe "Code gen: cast" do
         a.as(CastSpecBaz)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -187,7 +249,7 @@ describe "Code gen: cast" do
         a.as(Nil)
         false
       rescue ex
-        ex.message.not_nil!.includes?("cast from Reference to Nil failed") && (ex.class == TypeCastError)
+        ex.message.not_nil!.includes?("Cast from Reference to Nil failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -410,5 +472,29 @@ describe "Code gen: cast" do
       x = foo.as(Foo)
       x.foo
       )).to_i.should eq(1)
+  end
+
+  it "can cast to metaclass (#11121)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      ))
+  end
+
+  it "cast virtual metaclass type to nilable virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).as?(Base | Impl).nil?
+      CRYSTAL
   end
 end

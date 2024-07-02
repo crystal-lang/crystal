@@ -10,11 +10,11 @@ describe "Semantic: NoReturn" do
   end
 
   it "types union of NoReturn and something else" do
-    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 1 ? LibC.exit : 1") { int32 }
+    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 1 ? LibC.exit : 1", inject_primitives: true) { int32 }
   end
 
   it "types union of NoReturns" do
-    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 2 ? LibC.exit : LibC.exit") { no_return }
+    assert_type("lib LibC; fun exit : NoReturn; end; 1 == 2 ? LibC.exit : LibC.exit", inject_primitives: true) { no_return }
   end
 
   it "types with no return even if code follows" do

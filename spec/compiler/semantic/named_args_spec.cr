@@ -8,7 +8,7 @@ describe "Semantic: named args" do
 
       foo 1, w: 3
       ),
-      "no argument named 'w'"
+      "no parameter named 'w'"
   end
 
   it "errors if named arg already specified" do
@@ -18,7 +18,7 @@ describe "Semantic: named args" do
 
       foo 1, x: 1
       ),
-      "argument 'x' already specified"
+      "argument for parameter 'x' already specified"
   end
 
   it "errors if named arg already specified, but multiple overloads (#7281)" do
@@ -43,7 +43,7 @@ describe "Semantic: named args" do
 
       Foo.new 1, w: 3
       ),
-      "no argument named 'w'"
+      "no parameter named 'w'"
   end
 
   it "errors if named arg already specified" do
@@ -55,7 +55,7 @@ describe "Semantic: named args" do
 
       Foo.new 1, x: 1
       ),
-      "argument 'x' already specified"
+      "argument for parameter 'x' already specified"
   end
 
   it "errors if doesn't pass named arg restriction" do
@@ -65,7 +65,7 @@ describe "Semantic: named args" do
 
       foo x: 1.5
       ),
-      "no overload matches"
+      "expected argument 'x' to 'foo' to be Int32, not Float64"
   end
 
   it "errors if named arg already specified but in same position" do
@@ -75,7 +75,7 @@ describe "Semantic: named args" do
 
       foo 1, headers: 2
       ),
-      "argument 'headers' already specified"
+      "argument for parameter 'headers' already specified"
   end
 
   it "sends one regular argument as named argument" do
@@ -95,7 +95,7 @@ describe "Semantic: named args" do
       end
 
       foo x: 1, y: 2
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "sends two regular arguments as named arguments in inverted position (1)" do
@@ -125,7 +125,7 @@ describe "Semantic: named args" do
 
       foo x: 1, y: 2
       ),
-      "no argument named 'x'"
+      "no parameter named 'x'"
   end
 
   it "errors if named arg matches splat argument" do
@@ -189,7 +189,7 @@ describe "Semantic: named args" do
 
       foo(x: 2)
       ),
-      "no overload matches"
+      "missing argument: y"
   end
 
   it "gives correct error message for missing args after *" do
@@ -279,7 +279,7 @@ describe "Semantic: named args" do
       end
 
       foo nil, y: 2
-      )) { bool }
+      ), inject_primitives: true) { bool }
   end
 
   it "matches specific overload with named arguments (2) (#2753)" do
@@ -295,7 +295,7 @@ describe "Semantic: named args" do
       end
 
       foo nil, z: 1, y: 2
-      )) { bool }
+      ), inject_primitives: true) { bool }
   end
 
   it "gives correct error message with external names (#3934)" do
@@ -316,7 +316,7 @@ describe "Semantic: named args" do
 
       bar(**{foo: true, baz: true})
       ),
-      "no argument named 'baz'"
+      "no parameter named 'baz'"
   end
 
   it "doesn't fail on named argument with NoReturn type (#7760)" do

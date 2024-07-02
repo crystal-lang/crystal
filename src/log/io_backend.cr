@@ -3,8 +3,8 @@ class Log::IOBackend < Log::Backend
   property io : IO
   property formatter : Formatter
 
-  {% if flag?(:win32) %}
-    # TODO: this constructor must go away once channels are fixed in Windows
+  {% if flag?(:wasm32) %}
+    # TODO: this constructor must go away once channels are fixed in Windows / WebAssembly
     def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec = DispatchMode::Sync)
       super(dispatcher)
     end
@@ -14,7 +14,7 @@ class Log::IOBackend < Log::Backend
     end
   {% end %}
 
-  def write(entry : Entry)
+  def write(entry : Entry) : Nil
     format(entry)
     io.puts
     io.flush
@@ -22,7 +22,7 @@ class Log::IOBackend < Log::Backend
 
   # Emits the *entry* to the given *io*.
   # It uses the `#formatter` to convert.
-  def format(entry : Entry)
+  def format(entry : Entry) : Nil
     @formatter.format(entry, io)
   end
 end

@@ -1,25 +1,29 @@
-{% unless flag?(:win32) %}
-  @[Link("pthread")]
-  lib LibC
-  end
+{% if flag?(:win32) %}
+  require "c/process"
 {% end %}
+require "crystal/tracing"
 
 module GC
   def self.init
   end
 
   # :nodoc:
-  def self.malloc(size : LibC::SizeT)
+  def self.malloc(size : LibC::SizeT) : Void*
+    Crystal.trace :gc, "malloc", size: size
+    # libc malloc is not guaranteed to return cleared memory, so we need to
+    # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
+    LibC.malloc(size).tap(&.clear)
+  end
+
+  # :nodoc:
+  def self.malloc_atomic(size : LibC::SizeT) : Void*
+    Crystal.trace :gc, "malloc", size: size, atomic: 1
     LibC.malloc(size)
   end
 
   # :nodoc:
-  def self.malloc_atomic(size : LibC::SizeT)
-    LibC.malloc(size)
-  end
-
-  # :nodoc:
-  def self.realloc(pointer : Void*, size : LibC::SizeT)
+  def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
+    Crystal.trace :gc, "realloc", size: size
     LibC.realloc(pointer, size)
   end
 
@@ -32,11 +36,12 @@ module GC
   def self.disable
   end
 
-  def self.free(pointer : Void*)
+  def self.free(pointer : Void*) : Nil
+    Crystal.trace :gc, "free"
     LibC.free(pointer)
   end
 
-  def self.is_heap_ptr(pointer : Void*)
+  def self.is_heap_ptr(pointer : Void*) : Bool
     false
   end
 
@@ -46,37 +51,49 @@ module GC
   def self.register_disappearing_link(pointer : Void**)
   end
 
-  def self.stats
-    zero = LibC::ULong.new(0)
-    Stats.new(zero, zero, zero, zero, zero)
+  def self.stats : GC::Stats
+    Stats.new(
+      # collections: 0,
+      # bytes_found: 0,
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      total_bytes: 0)
   end
 
   def self.prof_stats
-    zero = LibC::ULong.new(0)
     ProfStats.new(
-      heap_size: zero,
-      free_bytes: zero,
-      unmapped_bytes: zero,
-      bytes_since_gc: zero,
-      bytes_before_gc: zero,
-      non_gc_bytes: zero,
-      gc_no: zero,
-      markers_m1: zero,
-      bytes_reclaimed_since_gc: zero,
-      reclaimed_bytes_before_gc: zero)
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      bytes_before_gc: 0,
+      non_gc_bytes: 0,
+      gc_no: 0,
+      markers_m1: 0,
+      bytes_reclaimed_since_gc: 0,
+      reclaimed_bytes_before_gc: 0,
+      expl_freed_bytes_since_gc: 0,
+      obtained_from_os_bytes: 0)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
+  {% elsif !flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)
     end
 
     # :nodoc:
-    def self.pthread_join(thread : LibC::PthreadT) : Void*
-      ret = LibC.pthread_join(thread, out value)
-      raise RuntimeError.from_errno("pthread_join") unless ret == 0
-      value
+    def self.pthread_join(thread : LibC::PthreadT)
+      LibC.pthread_join(thread, nil)
     end
 
     # :nodoc:
@@ -86,7 +103,7 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.current_thread_stack_bottom
+  def self.current_thread_stack_bottom : {Void*, Void*}
     {Pointer(Void).null, Pointer(Void).null}
   end
 

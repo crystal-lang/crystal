@@ -1,4 +1,5 @@
 require "c/grp"
+require "../unix"
 
 module Crystal::System::Group
   private GETGR_R_SIZE_MAX = 1024 * 16
@@ -11,19 +12,13 @@ module Crystal::System::Group
     groupname.check_no_null_byte
 
     grp = uninitialized LibC::Group
-    grp_pointer = pointerof(grp)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
-      buf = Bytes.new(buf.size * 2)
-      ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
+    grp_pointer = Pointer(LibC::Group).null
+    System.retry_with_buffer("getgrnam_r", GETGR_R_SIZE_MAX) do |buf|
+      LibC.getgrnam_r(groupname, pointerof(grp), buf, buf.size, pointerof(grp_pointer)).tap do
+        # It's not necessary to check success with `ret == 0` because `grp_pointer` will be NULL on failure
+        return from_struct(grp) if grp_pointer
+      end
     end
-
-    raise RuntimeError.from_errno("getgrnam_r") if ret != 0
-
-    from_struct(grp) if grp_pointer
   end
 
   private def from_id?(groupid : String)
@@ -31,18 +26,12 @@ module Crystal::System::Group
     return unless groupid
 
     grp = uninitialized LibC::Group
-    grp_pointer = pointerof(grp)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
-      buf = Bytes.new(buf.size * 2)
-      ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
+    grp_pointer = Pointer(LibC::Group).null
+    System.retry_with_buffer("getgrgid_r", GETGR_R_SIZE_MAX) do |buf|
+      LibC.getgrgid_r(groupid, pointerof(grp), buf, buf.size, pointerof(grp_pointer)).tap do
+        # It's not necessary to check success with `ret == 0` because `grp_pointer` will be NULL on failure
+        return from_struct(grp) if grp_pointer
+      end
     end
-
-    raise RuntimeError.from_errno("getgrgid_r") if ret != 0
-
-    from_struct(grp) if grp_pointer
   end
 end

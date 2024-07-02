@@ -1,0 +1,49 @@
+name: WebAssembly CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  wasm32-test:
+    runs-on: ubuntu-latest
+    container: crystallang/crystal:1.12.2-build
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Install wasmtime
+        uses: mwilliamson/setup-wasmtime-action@v2
+        with:
+          wasmtime-version: "2.0.0"
+
+      - name: Install LLVM 13
+        run: |
+          apt-get update
+          apt-get install -y curl lsb-release wget software-properties-common gnupg
+          curl -O https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          ./llvm.sh 13
+          ln -s $(which wasm-ld-13) /usr/bin/wasm-ld
+
+      - name: Download wasm32 libs
+        run: |
+          mkdir wasm32-wasi-libs
+          curl -LO https://github.com/lbguilherme/wasm-libs/releases/download/0.0.3/wasm32-wasi-libs.tar.gz
+          echo "cd36f319f8f9f9cd08f723d10e6ec2b92f2e44d3ce3b20344b8041386d85c261  wasm32-wasi-libs.tar.gz" | sha256sum -c -
+          tar -f wasm32-wasi-libs.tar.gz -C wasm32-wasi-libs -xz
+          rm wasm32-wasi-libs.tar.gz
+
+      - name: Build spec/wasm32_std_spec.cr
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Dwithout_iconv -Dwithout_openssl
+        env:
+          CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
+
+      - name: Run wasm32_std_spec.wasm
+        run: |
+          wasmtime run wasm32_std_spec.wasm

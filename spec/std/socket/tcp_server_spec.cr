@@ -1,6 +1,8 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "./spec_helper"
 
-describe TCPServer do
+describe TCPServer, tags: "network" do
   describe ".new" do
     each_ip_family do |family, address|
       it "listens on local address" do
@@ -39,7 +41,13 @@ describe TCPServer do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
         end
-        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif flag?(:linux) && !flag?(:android) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
       end
 
       describe "reuse_port" do
@@ -82,15 +90,31 @@ describe TCPServer do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
     end
 
@@ -102,7 +126,7 @@ describe TCPServer do
     end
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:solaris) %}
     pending "settings"
   {% else %}
     it "settings" do
@@ -112,4 +136,18 @@ describe TCPServer do
       end
     end
   {% end %}
+
+  describe "accept" do
+    {% unless flag?(:win32) %}
+      it "sets close on exec flag" do
+        TCPServer.open("localhost", 0) do |server|
+          TCPSocket.open("localhost", server.local_address.port) do |client|
+            server.accept? do |sock|
+              sock.close_on_exec?.should be_true
+            end
+          end
+        end
+      end
+    {% end %}
+  end
 end

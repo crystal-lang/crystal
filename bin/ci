@@ -98,6 +98,7 @@ prepare_system() {
 }
 
 build() {
+  with_build_env 'bin/crystal scripts/print_regex_config.cr'
   with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
@@ -115,28 +116,48 @@ build() {
         i=$((i + 1))
       done
 
+      with_build_env 'make primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
       with_build_env 'make docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
+      with_build_env 'make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
       ;;
   esac
 
-  with_build_env 'find samples -name "*.cr" | xargs -tn 1 ./bin/crystal build --no-codegen'
+  with_build_env 'make samples'
+  with_build_env 'CRYSTAL_OPTS=--debug make samples'
 }
 
 format() {
-  with_build_env 'make clean crystal threads=1'
-  with_build_env './bin/crystal tool format --check samples spec src'
+  with_build_env 'make clean crystal format threads=1 check=1'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.35.1/crystal-0.35.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.35.1-1 crystal;popd'
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.12.2/crystal-1.12.2-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.12.2-1 crystal;popd'
+
+  # These commands may take a few minutes to run due to the large size of the repositories.
+  # This restriction has been made on GitHub's request because updating shallow
+  # clones is an extremely expensive operation due to the tree layout and
+  # traffic of Homebrew/homebrew-core and Homebrew/homebrew-cask. We don't do
+  # this for you automatically to avoid repeatedly performing an expensive
+  # unshallow operation in CI systems (which should instead be fixed to not use
+  # shallow clones). Sorry for the inconvenience!
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
+
   on_osx brew update --preinstall
   on_osx brew bundle --no-lock
+
+  # Install a recent bash version for nix-shell.
+  # macos ships with an ancient one.
+  if [ `uname` = "Darwin" ]; then
+    on_nix_shell "brew install bash"
+  fi
+  # initialize nix environment
+  on_nix_shell nix-shell
 
   # Note: brew link --force might show:
   #   Warning: Refusing to link macOS-provided software: llvm
@@ -168,7 +189,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.35.1}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:1.12.2}"
 
   case $ARCH in
     x86_64)
@@ -191,6 +212,7 @@ with_build_env() {
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
+    -e USE_PCRE1 \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 

@@ -11,19 +11,19 @@ module Crystal
     getter column_number : Int32
     getter size : Int32
 
-    def color=(color)
-      @color = !!color
+    def color=(@color : Bool)
       inner.try &.color=(color)
+      color
     end
 
-    def error_trace=(error_trace)
-      @error_trace = !!error_trace
+    def error_trace=(@error_trace : Bool)
       inner.try &.error_trace=(error_trace)
+      error_trace
     end
 
-    def warning=(warning)
-      super
+    def warning=(@warning : Bool)
       inner.try &.warning=(warning)
+      warning
     end
 
     def self.for_node(node, message, inner = nil)
@@ -39,14 +39,6 @@ module Crystal
     def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
       @error_trace = true
 
-      # If the inner exception is a macro raise, we replace this exception's
-      # message with that message. In this way the error message will
-      # look like a regular message produced by the compiler, and not
-      # because of an incorrect macro expansion.
-      if inner.is_a?(MacroRaiseException)
-        message = inner.message
-        @inner = nil
-      end
       super(message)
     end
 
@@ -140,7 +132,7 @@ module Crystal
 
     def default_message
       if line_number = @line_number
-        "#{@warning ? "warning" : "error"} in line #{@line_number}"
+        "#{@warning ? "warning" : "error"} in line #{line_number}"
       end
     end
 
@@ -234,14 +226,12 @@ module Crystal
 
     def print_nil_reason(nil_reason, io)
       case nil_reason.reason
-      when :used_before_initialized
+      in .used_before_initialized?
         io << "Instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
-      when :used_self_before_initialized
+      in .used_self_before_initialized?
         io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
-      when :initialized_in_rescue
+      in .initialized_in_rescue?
         io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
-      else
-        # TODO: we should probably change nil_reason to be an enum so we don't need this else branch
       end
     end
 
@@ -304,6 +294,9 @@ module Crystal
   class MacroRaiseException < TypeException
   end
 
+  class TopLevelMacroRaiseException < MacroRaiseException
+  end
+
   class SkipMacroException < ::Exception
     getter expanded_before_skip : String
     getter macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
@@ -314,25 +307,6 @@ module Crystal
   end
 
   class Program
-    def undefined_global_variable(node, similar_name)
-      common = String.build do |str|
-        str << "can't infer the type of global variable '#{node.name}'"
-        if similar_name
-          str << '\n'
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
-        end
-      end
-
-      msg = String.build do |str|
-        str << common
-        str << "\n\n"
-        str << undefined_variable_message("global", node.name)
-        str << "\n\n"
-        str << common
-      end
-      node.raise msg
-    end
-
     def undefined_class_variable(node, owner, similar_name)
       common = String.build do |str|
         str << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
@@ -345,9 +319,7 @@ module Crystal
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("class", node.name)
-        str << "\n\n"
-        str << common
+        str << undefined_variable_message("class variable", node.name, owner.devirtualize)
       end
       node.raise msg
     end
@@ -364,36 +336,29 @@ module Crystal
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("instance", node.name)
-        str << "\n\n"
-        str << common
+        str << undefined_variable_message("instance variable", node.name, owner.devirtualize)
       end
       node.raise msg
     end
 
-    def undefined_variable_message(kind, example_name)
+    def undefined_variable_message(kind, example_name, owner)
+      owner_keyword =
+        if owner.module?
+          "module"
+        elsif owner.struct?
+          "struct"
+        else
+          "class"
+        end
+
       <<-MSG
-      The type of a #{kind} variable, if not declared explicitly with
-      `#{example_name} : Type`, is inferred from assignments to it across
-      the whole program.
+      Could you add a type annotation like this
 
-      The assignments must look like this:
+          #{owner_keyword} #{owner}
+            #{example_name} : Type
+          end
 
-        1. `#{example_name} = 1` (or other literals), inferred to the literal's type
-        2. `#{example_name} = Type.new`, type is inferred to be Type
-        3. `#{example_name} = Type.method`, where `method` has a return type
-           annotation, type is inferred from it
-        4. `#{example_name} = arg`, with 'arg' being a method argument with a
-           type restriction 'Type', type is inferred to be Type
-        5. `#{example_name} = arg`, with 'arg' being a method argument with a
-           default value, type is inferred using rules 1, 2 and 3 from it
-        6. `#{example_name} = uninitialized Type`, type is inferred to be Type
-        7. `#{example_name} = LibSome.func`, and `LibSome` is a `lib`, type
-           is inferred from that fun.
-        8. `LibSome.func(out #{example_name})`, and `LibSome` is a `lib`, type
-           is inferred from that fun argument.
-
-      Other assignments have no effect on its type.
+      replacing `Type` with the expected type of `#{example_name}`?
       MSG
     end
   end

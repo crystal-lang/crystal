@@ -27,7 +27,7 @@ module HTTP::FormData
     #   part.headers["Content-Type"] # => "text/plain"
     # end
     # ```
-    def next
+    def next(&)
       raise FormData::Error.new("Parser has already finished parsing") unless has_next?
 
       while @multipart.has_next?
@@ -38,7 +38,7 @@ module HTTP::FormData
     end
 
     # True if `#next` can be called legally.
-    def has_next?
+    def has_next? : Bool
       @multipart.has_next?
     end
   end

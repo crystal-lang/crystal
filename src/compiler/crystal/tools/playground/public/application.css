@@ -51,6 +51,7 @@ h4 {
   top: 7px;
   left: 7px;
   transform: scale(0.66);
+  height: 1.7em;
 }
 
 @media only screen and (max-width: 992px) {
@@ -181,11 +182,6 @@ h4 {
 }
 .code-btn .icon { margin-right: 3px; }
 .code-btn .icon :before { font-size:14px;}
-
-.run-button {
-  padding-top: 5px;
-  padding-left: 2px;
-}
 
 .run-button-preloader {
   position: absolute;

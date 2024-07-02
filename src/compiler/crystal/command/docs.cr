@@ -16,7 +16,7 @@ class Crystal::Command
 
     compiler = new_compiler
 
-    OptionParser.parse(options) do |opts|
+    OptionParser.parse(@options) do |opts|
       opts.banner = <<-'BANNER'
         Usage: crystal docs [options]
 

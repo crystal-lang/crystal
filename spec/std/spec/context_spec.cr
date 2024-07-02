@@ -36,7 +36,22 @@ describe Spec::ExampleGroup do
 
       grand_child.report(:fail, "oops", "f.cr", 3, nil, nil)
 
-      root.@results[:fail].first.description.should eq("child grand_child oops")
+      root.results_for(:fail).first.description.should eq("child grand_child oops")
+    end
+  end
+
+  describe "#all_tags" do
+    it "should include ancestor tags" do
+      root = FakeRootContext.new
+      child = Spec::ExampleGroup.new(root, "child", "f.cr", 1, 10, false, Set{"A"})
+      grand_child = Spec::ExampleGroup.new(child, "grand_child", "f.cr", 2, 9, false, Set{"B"})
+      example = Spec::Example.new(grand_child, "example", "f.cr", 3, 8, false, Set{"C"}, nil)
+      other_group = Spec::ExampleGroup.new(root, "other_group", "f.cr", 11, 20, false, nil)
+
+      child.all_tags.should eq(Set{"A"})
+      grand_child.all_tags.should eq(Set{"A", "B"})
+      example.all_tags.should eq(Set{"A", "B", "C"})
+      other_group.all_tags.should be_empty
     end
   end
 end

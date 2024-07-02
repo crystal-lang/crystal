@@ -19,7 +19,7 @@ class Log::Builder
   @bindings = Array(Binding).new
 
   # Binds a *source* pattern to a *backend* for all logs that are of severity equal or higher to *level*.
-  def bind(source : String, level : Severity, backend : Backend)
+  def bind(source : String, level : Severity, backend : Backend) : Nil
     # TODO validate source is a valid path
 
     @mutex.synchronize do
@@ -36,7 +36,7 @@ class Log::Builder
 
   # :nodoc:
   # Removes an existing bind. It assumes there was a single bind with that backend.
-  def unbind(source : String, level : Severity, backend : Backend)
+  def unbind(source : String, level : Severity, backend : Backend) : Nil
     @mutex.synchronize do
       binding = Binding.new(source: source, level: level, backend: backend)
       @bindings.delete(binding) || raise ArgumentError.new("Non-existing binding #{source}, #{level}, #{backend}")
@@ -50,7 +50,7 @@ class Log::Builder
   end
 
   # Removes all existing bindings.
-  def clear
+  def clear : Nil
     @mutex.synchronize do
       @bindings.clear
       each_log do |log|
@@ -61,7 +61,7 @@ class Log::Builder
   end
 
   # Returns a `Log` for the given *source* with a severity level and
-  # backend according to the bindings in *self*.
+  # backend according to the bindings in `self`.
   # If new bindings are applied, the existing `Log` instances will be
   # reconfigured.
   # Calling this method multiple times with the same value will return
@@ -84,7 +84,7 @@ class Log::Builder
   end
 
   # :nodoc:
-  private def each_log
+  private def each_log(&)
     @logs.reject! { |_, log_ref| log_ref.value.nil? }
 
     @logs.each_value do |log_ref|
@@ -100,26 +100,24 @@ class Log::Builder
     when Nil
       log.backend = backend
       log.initial_level = level
-    when BroadcastBackend
-      current_backend.append(backend, level)
-      # initial_level needs to be recomputed since the append_backend
-      # might be called with the same backend as before but with a
-      # different (higher) level
-      log.initial_level = current_backend.min_level
-      current_backend.level = log.changed_level
+    when backend
+      # if the bind applies for the same backend, the last applied
+      # level should be used
+      log.initial_level = level
     else
-      if current_backend == backend
-        # if the bind applies for the same backend, the last applied
-        # level should be used
-        log.initial_level = level
-      else
+      broadcast = current_backend.as?(BroadcastBackend)
+      # If the current backend is not a broadcast backend , we need to
+      # auto-create a broadcast backend for distributing the different log backends.
+      # A broadcast backend explicitly added as a binding, must not be mutated,
+      # so that requires to create a new one as well.
+      if !broadcast || @bindings.any? { |binding| binding.backend.same?(current_backend) }
         broadcast = BroadcastBackend.new
         broadcast.append(current_backend, log.initial_level)
-        broadcast.append(backend, level)
-        broadcast.level = log.changed_level
         log.backend = broadcast
-        log.initial_level = broadcast.min_level
       end
+      broadcast.append(backend, level)
+      broadcast.level = log.changed_level
+      log.initial_level = broadcast.min_level
     end
   end
 
@@ -144,7 +142,7 @@ class Log::Builder
   end
 
   # :nodoc:
-  def close
+  def close : Nil
     @bindings.each &.backend.close
   end
 
@@ -158,5 +156,11 @@ class Log::Builder
       return true if source.starts_with?(prefix) && source[prefix.size] == '.'
     end
     false
+  end
+
+  # NOTE: workaround for https://github.com/crystal-lang/crystal/pull/14473
+  protected def cleanup_collected_log(log : Log) : Nil
+    ref = @logs.fetch(log.source) { return }
+    @logs.delete(log.source) if ref.value.nil? || ref.value == log
   end
 end
