@@ -337,6 +337,12 @@ module Crystal
         CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
+      {% if LibLLVM::IS_LT_170 %}
+        # initialize the legacy pass manager once in the main thread/process
+        # before we start codegen in threads (MT) or processes (fork)
+        init_llvm_legacy_pass_manager unless optimization_mode.o0?
+      {% end %}
+
       if @cross_compile
         cross_compile program, units, output_filename
       else
@@ -735,57 +741,48 @@ module Crystal
     end
 
     {% if LibLLVM::IS_LT_170 %}
+      property! pass_manager_builder : LLVM::PassManagerBuilder
+
+      private def init_llvm_legacy_pass_manager
+        registry = LLVM::PassRegistry.instance
+        registry.initialize_all
+
+        builder = LLVM::PassManagerBuilder.new
+        builder.size_level = 0
+
+        case optimization_mode
+        in .o3?
+          builder.opt_level = 3
+          builder.use_inliner_with_threshold = 275
+        in .o2?
+          builder.opt_level = 2
+          builder.use_inliner_with_threshold = 275
+        in .o1?
+          builder.opt_level = 1
+          builder.use_inliner_with_threshold = 150
+        in .o0?
+          # default behaviour, no optimizations
+        in .os?
+          builder.opt_level = 2
+          builder.size_level = 1
+          builder.use_inliner_with_threshold = 50
+        in .oz?
+          builder.opt_level = 2
+          builder.size_level = 2
+          builder.use_inliner_with_threshold = 5
+        end
+
+        @pass_manager_builder = builder
+      end
+
       private def optimize_with_pass_manager(llvm_mod)
         fun_pass_manager = llvm_mod.new_function_pass_manager
         pass_manager_builder.populate fun_pass_manager
         fun_pass_manager.run llvm_mod
+
+        module_pass_manager = LLVM::ModulePassManager.new
+        pass_manager_builder.populate module_pass_manager
         module_pass_manager.run llvm_mod
-      end
-
-      @module_pass_manager : LLVM::ModulePassManager?
-
-      private def module_pass_manager
-        @module_pass_manager ||= begin
-          mod_pass_manager = LLVM::ModulePassManager.new
-          pass_manager_builder.populate mod_pass_manager
-          mod_pass_manager
-        end
-      end
-
-      @pass_manager_builder : LLVM::PassManagerBuilder?
-
-      private def pass_manager_builder
-        @pass_manager_builder ||= begin
-          registry = LLVM::PassRegistry.instance
-          registry.initialize_all
-
-          builder = LLVM::PassManagerBuilder.new
-          builder.size_level = 0
-
-          case optimization_mode
-          in .o3?
-            builder.opt_level = 3
-            builder.use_inliner_with_threshold = 275
-          in .o2?
-            builder.opt_level = 2
-            builder.use_inliner_with_threshold = 275
-          in .o1?
-            builder.opt_level = 1
-            builder.use_inliner_with_threshold = 150
-          in .o0?
-            # default behaviour, no optimizations
-          in .os?
-            builder.opt_level = 2
-            builder.size_level = 1
-            builder.use_inliner_with_threshold = 50
-          in .oz?
-            builder.opt_level = 2
-            builder.size_level = 2
-            builder.use_inliner_with_threshold = 5
-          end
-
-          builder
-        end
       end
     {% end %}
 
