@@ -9,6 +9,8 @@ require "c/ntifs"
 require "c/winioctl"
 
 module Crystal::System::File
+  @system_append = false
+
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : FileDescriptor::Handle
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
@@ -52,10 +54,9 @@ module Crystal::System::File
                LibC::FILE_GENERIC_READ
              end
 
-    if flags.bits_set? LibC::O_APPEND
-      access |= LibC::FILE_APPEND_DATA
-      access &= ~LibC::FILE_WRITE_DATA
-    end
+    # do not handle `O_APPEND`, because Win32 append mode relies on removing
+    # `FILE_WRITE_DATA` which breaks file truncation and locking; instead,
+    # simply set the end of the file as the write offset in `#write_blocking`
 
     if flags.bits_set? LibC::O_TRUNC
       if flags.bits_set? LibC::O_CREAT
@@ -94,6 +95,14 @@ module Crystal::System::File
     end
 
     {access, disposition, attributes}
+  end
+
+  protected def system_set_mode(mode : String)
+    @system_append = true if mode.starts_with?('a')
+  end
+
+  private def write_blocking(handle, slice)
+    write_blocking(handle, slice, pos: @system_append ? UInt64::MAX : nil)
   end
 
   NOT_FOUND_ERRORS = {
