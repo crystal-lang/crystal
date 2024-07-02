@@ -561,11 +561,7 @@ class Object
           end
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
-            if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
-            else
-              value
-            end
+            {{var_prefix}}\{{name.var.id}}.not_nil!("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
@@ -573,11 +569,7 @@ class Object
           end
 
           def {{method_prefix}}\{{name.id}}
-            if (value = {{var_prefix}}\{{name.id}}).nil?
-              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
-            else
-              value
-            end
+            {{var_prefix}}\{{name.id}}.not_nil!("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
           end
         \{% end %}
       \{% end %}
