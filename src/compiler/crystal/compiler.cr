@@ -509,13 +509,7 @@ module Crystal
       if n_threads == 1
         sequential_codegen(units, reused)
       else
-        {% if flag?(:preview_mt) %}
-          raise "Cannot fork compiler in multithread mode."
-        {% elsif LibC.has_method?("fork") %}
-          fork_codegen(units, n_threads, reused)
-        {% else %}
-          raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
-        {% end %}
+        parallel_codegen(units, n_threads, reused)
       end
     end
 
@@ -530,6 +524,16 @@ module Crystal
           reused << unit.name if unit.reused_previous_compilation?
         end
       end
+    end
+
+    private def parallel_codegen(units, n_threads, reused)
+      {% if flag?(:preview_mt) %}
+        raise "Cannot fork compiler in multithread mode."
+      {% elsif LibC.has_method?("fork") %}
+        fork_codegen(units, n_threads, reused)
+      {% else %}
+        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+      {% end %}
     end
 
     private def fork_codegen(units, n_threads, reused)
