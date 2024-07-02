@@ -32,15 +32,19 @@ _Feature freeze: 2024-06-25_
 - *(macros)* Support short blocks in `#[]` operator call's macro interpolation ([#14523], thanks @HertzDevil)
 - *(macros)* Add macro methods for `Select` ([#14600], thanks @HertzDevil)
 - *(macros)* Add `TypeNode#private?`, `#public?` and `#visibility` ([#11696], thanks @Hadeweka)
+- *(macros)* Add `StringLiteral#to_utf16` ([#14676], thanks @ysbaddaden)
 - *(networking)* Relax type restriction of handlers in `HTTP::Server.new` to `Indexable(HTTP::Handler)` ([#14413], thanks @hugopl)
 - *(networking)* **[security]** OpenSSL: don't change default cipher suites ([#14655], thanks @ysbaddaden)
+- *(networking)* Allow parsing cookies with space in the value ([#14455], thanks @anton7c3)
 - *(runtime)* Allow `Atomic`s of pointer types ([#14401], thanks @HertzDevil)
 - *(runtime)* Add `Crystal::Tracing` for runtime tracing ([#14659], thanks @ysbaddaden)
 - *(system)* Add `EventLoop#run(blocking)` and `EventLoop#interrupt` ([#14568], thanks @ysbaddaden)
 - *(system)* Add `Crystal::System::Thread.current_thread?`, `#scheduler?` ([#14660], thanks @ysbaddaden)
+- *(system)* Add `Crystal::System.panic` ([#14733], thanks @ysbaddaden)
 - *(text)* Add `Regex::MatchOptions` overload for `String#index!` ([#14462], thanks @HertzDevil)
 - *(text)* Add `StringPool#get?` ([#14508], thanks @HertzDevil)
 - *(text)* Add `pkg_config` names for `pcre2` and `pcre` ([#14584], thanks @straight-shoota)
+- *(text)* Add UUID v7 ([#14732], thanks @jgaskins)
 - *(time)* Add `Time::Error` ([#14743], thanks @Blacksmoke16)
 
 [#14486]: https://github.com/crystal-lang/crystal/pull/14486
@@ -57,15 +61,19 @@ _Feature freeze: 2024-06-25_
 [#14523]: https://github.com/crystal-lang/crystal/pull/14523
 [#14600]: https://github.com/crystal-lang/crystal/pull/14600
 [#11696]: https://github.com/crystal-lang/crystal/pull/11696
+[#14676]: https://github.com/crystal-lang/crystal/pull/14676
 [#14413]: https://github.com/crystal-lang/crystal/pull/14413
 [#14655]: https://github.com/crystal-lang/crystal/pull/14655
+[#14455]: https://github.com/crystal-lang/crystal/pull/14455
 [#14401]: https://github.com/crystal-lang/crystal/pull/14401
 [#14659]: https://github.com/crystal-lang/crystal/pull/14659
 [#14568]: https://github.com/crystal-lang/crystal/pull/14568
 [#14660]: https://github.com/crystal-lang/crystal/pull/14660
+[#14733]: https://github.com/crystal-lang/crystal/pull/14733
 [#14462]: https://github.com/crystal-lang/crystal/pull/14462
 [#14508]: https://github.com/crystal-lang/crystal/pull/14508
 [#14584]: https://github.com/crystal-lang/crystal/pull/14584
+[#14732]: https://github.com/crystal-lang/crystal/pull/14732
 [#14743]: https://github.com/crystal-lang/crystal/pull/14743
 
 #### compiler
@@ -116,13 +124,20 @@ _Feature freeze: 2024-06-25_
 - *(networking)* **[security]** OpenSSL: don't set default ECDH curve ([#14656], thanks @ysbaddaden)
 - *(networking)* **[security]** OpenSSL: deprecate Mozilla's TLS Server recommendation ([#14657], thanks @ysbaddaden)
 - *(networking)* use `SOCK_CLOEXEC` with `FD_CLOEXEC` fallback ([#14672], thanks @ysbaddaden)
+- *(networking)* **[regression]** Fix regression on `Socket#connect` timeout type restriction ([#14755], thanks @straight-shoota)
+- *(networking)* Drop default timeout for `Socket#connect` on Windows ([#14756], thanks @straight-shoota)
+- *(networking)* don't hardcode alpn protocol byte size (OpenSSL) ([#14769], thanks @ysbaddaden)
 - *(numeric)* Fix `BigRational#format` ([#14525], thanks @meatball133)
+- *(numeric)* **[regression]** Restore leading zero in exponent for `printf("%e")` and `printf("%g")` ([#14695], thanks @straight-shoota)
 - *(runtime)* Fix enable docs for builtin constants ([#14571], thanks @straight-shoota)
+- *(runtime)* Fix `GC.malloc` for `gc_none` to clear memory ([#14746], thanks @straight-shoota)
 - *(specs)* Fix relative file paths in spec output ([#14725], thanks @straight-shoota)
-- *(system)* Fix calls to `retry_with_buffer` when big buffer is necessary ([#14622], thanks @BlobCodes)
 - *(system)* Fix using `System.retry_with_buffer` with stack buffer ([#14615], thanks @straight-shoota)
 - *(system)* Harmonize close on exec for `Socket` & `FileDescriptor` on Windows ([#14634], thanks @ysbaddaden)
 - *(system)* Use `dup3` and `pipe2` to set `O_CLOEXEC` when available ([#14673], thanks @ysbaddaden)
+- *(system)* Fix calls to `retry_with_buffer` when big buffer is necessary ([#14622], thanks @BlobCodes)
+- *(system)* Fix `Process.run` with closed IO ([#14698], thanks @straight-shoota)
+- *(system)* Prefer `strerror_r` over `strerror` for thread-safe errno ([#14764], thanks @ysbaddaden)
 - *(text)* Make `String#sub` raise `IndexError` if index is equal to size ([#14458], thanks @HertzDevil)
 - *(text)* Fix `libpcre2` version detection not working for `-RC{N}` versions ([#14478], thanks @Frityet)
 - *(text)* Fix `Regex#inspect` with non-literal-compatible options ([#14575], thanks @straight-shoota)
@@ -146,13 +161,20 @@ _Feature freeze: 2024-06-25_
 [#14656]: https://github.com/crystal-lang/crystal/pull/14656
 [#14657]: https://github.com/crystal-lang/crystal/pull/14657
 [#14672]: https://github.com/crystal-lang/crystal/pull/14672
+[#14755]: https://github.com/crystal-lang/crystal/pull/14755
+[#14756]: https://github.com/crystal-lang/crystal/pull/14756
+[#14769]: https://github.com/crystal-lang/crystal/pull/14769
 [#14525]: https://github.com/crystal-lang/crystal/pull/14525
+[#14695]: https://github.com/crystal-lang/crystal/pull/14695
 [#14571]: https://github.com/crystal-lang/crystal/pull/14571
+[#14746]: https://github.com/crystal-lang/crystal/pull/14746
 [#14725]: https://github.com/crystal-lang/crystal/pull/14725
-[#14622]: https://github.com/crystal-lang/crystal/pull/14622
 [#14615]: https://github.com/crystal-lang/crystal/pull/14615
 [#14634]: https://github.com/crystal-lang/crystal/pull/14634
 [#14673]: https://github.com/crystal-lang/crystal/pull/14673
+[#14622]: https://github.com/crystal-lang/crystal/pull/14622
+[#14698]: https://github.com/crystal-lang/crystal/pull/14698
+[#14764]: https://github.com/crystal-lang/crystal/pull/14764
 [#14458]: https://github.com/crystal-lang/crystal/pull/14458
 [#14478]: https://github.com/crystal-lang/crystal/pull/14478
 [#14575]: https://github.com/crystal-lang/crystal/pull/14575
@@ -162,16 +184,22 @@ _Feature freeze: 2024-06-25_
 
 - *(codegen)* Fix create new `target_machine` for every program ([#14694], thanks @straight-shoota)
 - *(codegen)* Make `ReferenceStorage(T)` non-atomic if `T` is non-atomic ([#14730], thanks @HertzDevil)
+- *(codegen)* Detect and error on failed codegen process ([#14762], thanks @ysbaddaden)
+- *(codegen)* stats and progress issues ([#14763], thanks @ysbaddaden)
 - *(debugger)* Fix LLDB `crystal_formatters.py` for Python 3 ([#14665], thanks @zw963)
 - *(parser)* Disallow assignments to calls with parentheses ([#14527], thanks @HertzDevil)
+- *(parser)* Fix parser validate UTF-8 on first input byte  ([#14750], thanks @straight-shoota)
 - *(semantic)* Fix type def reopening type from parent namespace ([#11208], thanks @straight-shoota)
 - *(semantic)* Fix `Crystal::Path#to_macro_id` for global path ([#14490], thanks @straight-shoota)
 - *(semantic)* Fix `Class#===` on metaclass ([#11162], thanks @makenowjust)
 
 [#14694]: https://github.com/crystal-lang/crystal/pull/14694
 [#14730]: https://github.com/crystal-lang/crystal/pull/14730
+[#14762]: https://github.com/crystal-lang/crystal/pull/14762
+[#14763]: https://github.com/crystal-lang/crystal/pull/14763
 [#14665]: https://github.com/crystal-lang/crystal/pull/14665
 [#14527]: https://github.com/crystal-lang/crystal/pull/14527
+[#14750]: https://github.com/crystal-lang/crystal/pull/14750
 [#11208]: https://github.com/crystal-lang/crystal/pull/11208
 [#14490]: https://github.com/crystal-lang/crystal/pull/14490
 [#11162]: https://github.com/crystal-lang/crystal/pull/11162
@@ -196,7 +224,7 @@ _Feature freeze: 2024-06-25_
 - *(concurrency)* Add `WaitGroup` to `docs_main.cr` ([#14624], thanks @straight-shoota)
 - *(networking)* Add type restriction `host : String` in `TCPSocket` and `Addrinfo` ([#14703], thanks @straight-shoota)
 - *(runtime)* Fix abstract def parameter name in `LibEvent::EventLoop#send_to` ([#14658], thanks @straight-shoota)
-- *(runtime)* Drop unused methods in `IO::Evented` ([#14666], thanks @straight-shoota)
+- *(runtime)* **[breaking]** Drop unused methods in `IO::Evented` ([#14666], thanks @straight-shoota)
 
 [#14709]: https://github.com/crystal-lang/crystal/pull/14709
 [#14624]: https://github.com/crystal-lang/crystal/pull/14624
@@ -230,6 +258,7 @@ _Feature freeze: 2024-06-25_
 
 #### stdlib
 
+- Remove unnecessary calls to `#unsafe_as(UInt64)` etc. ([#14686], thanks @straight-shoota)
 - *(concurrency)* Add `Thread.new` yields itself ([#14543], thanks @ysbaddaden)
 - *(crypto)* Replace calls to `StaticArray(UInt8, 1)#unsafe_as(UInt8)` ([#14685], thanks @straight-shoota)
 - *(files)* Remove calls to `LibC._setmode` ([#14419], thanks @HertzDevil)
@@ -254,13 +283,14 @@ _Feature freeze: 2024-06-25_
 - *(serialization)* Replace `type` declarations for void pointers with `alias` in `libxml2` ([#14494], thanks @straight-shoota)
 - *(serialization)* Refactor `JSON::Any#size` to use two branches instead of three ([#14533], thanks @meatball133)
 - *(specs)* Move `Spec` context state into `Spec::CLI` ([#14259], thanks @HertzDevil)
-- *(system)* Refactor `IOCP::OverlappedOperation` internalize `handle` and `wait_for_completion` ([#14724], thanks @straight-shoota)
 - *(system)* Rename `Crystal::System.print_error(fmt, *args, &)` to `printf` ([#14617], thanks @ysbaddaden)
 - *(system)* Refactor `Crystal::System.retry_with_buffer` calling `#to_slice` ([#14614], thanks @straight-shoota)
 - *(system)* Extract system implementation of `UNIXSocket.pair` as `Crystal::System::Socket.socketpair` ([#14675], thanks @ysbaddaden)
 - *(system)* Remove calls to `Pointer.new(Int)` ([#14683], thanks @straight-shoota)
 - *(system)* Cleanup for `IOCP::OverlappedOperation` ([#14723], thanks @straight-shoota)
+- *(system)* Refactor `IOCP::OverlappedOperation` internalize `handle` and `wait_for_completion` ([#14724], thanks @straight-shoota)
 
+[#14686]: https://github.com/crystal-lang/crystal/pull/14686
 [#14543]: https://github.com/crystal-lang/crystal/pull/14543
 [#14685]: https://github.com/crystal-lang/crystal/pull/14685
 [#14419]: https://github.com/crystal-lang/crystal/pull/14419
@@ -285,12 +315,12 @@ _Feature freeze: 2024-06-25_
 [#14494]: https://github.com/crystal-lang/crystal/pull/14494
 [#14533]: https://github.com/crystal-lang/crystal/pull/14533
 [#14259]: https://github.com/crystal-lang/crystal/pull/14259
-[#14724]: https://github.com/crystal-lang/crystal/pull/14724
 [#14617]: https://github.com/crystal-lang/crystal/pull/14617
 [#14614]: https://github.com/crystal-lang/crystal/pull/14614
 [#14675]: https://github.com/crystal-lang/crystal/pull/14675
 [#14683]: https://github.com/crystal-lang/crystal/pull/14683
 [#14723]: https://github.com/crystal-lang/crystal/pull/14723
+[#14724]: https://github.com/crystal-lang/crystal/pull/14724
 
 #### compiler
 
@@ -306,21 +336,25 @@ _Feature freeze: 2024-06-25_
 
 - *(collection)* Fix doc for `Set#proper_superset_of?` ([#14516], thanks @meatball133)
 - *(collection)* Fix result formatting in code example for `Indexable#[]?` ([#14721], thanks @meatball133)
+- *(concurrency)* Fix example for `WeakRef` by removing `ref.value` call ([#10846], thanks @hugopl)
 - *(networking)* Improve API docs for `Socket#send` ([#14638], thanks @straight-shoota)
 - *(networking)* Add documentation for `HTTP::WebSocket#stream` ([#14537], thanks @meatball133)
 - *(numeric)* Add documentation for complex methods inside Number ([#14538], thanks @meatball133)
 - *(runtime)* Add documentation for standard streams blocking behaviour ([#14577], thanks @straight-shoota)
 - *(serialization)* Fix docs for `CSV::Builder#row(&)` ([#14736], thanks @philipp-classen)
+- *(system)* **[breaking]** Undocument `IO::Evented` ([#14749], thanks @straight-shoota)
 - *(text)* Fix docs for `Char#ascii_number?` stating wrong minium base ([#14521], thanks @meatball133)
 - *(text)* Enhance documentation for regex options `NO_UTF_CHECK` ([#14542], thanks @straight-shoota)
 
 [#14516]: https://github.com/crystal-lang/crystal/pull/14516
 [#14721]: https://github.com/crystal-lang/crystal/pull/14721
+[#10846]: https://github.com/crystal-lang/crystal/pull/10846
 [#14638]: https://github.com/crystal-lang/crystal/pull/14638
 [#14537]: https://github.com/crystal-lang/crystal/pull/14537
 [#14538]: https://github.com/crystal-lang/crystal/pull/14538
 [#14577]: https://github.com/crystal-lang/crystal/pull/14577
 [#14736]: https://github.com/crystal-lang/crystal/pull/14736
+[#14749]: https://github.com/crystal-lang/crystal/pull/14749
 [#14521]: https://github.com/crystal-lang/crystal/pull/14521
 [#14542]: https://github.com/crystal-lang/crystal/pull/14542
 
@@ -328,9 +362,11 @@ _Feature freeze: 2024-06-25_
 
 #### stdlib
 
+- Remove incorrect uses of `describe` ([#14757], thanks @HertzDevil)
 - *(runtime)* Add specs for `Pointer::Appender` ([#14719], thanks @straight-shoota)
 - *(text)* Add test helper for `normalize/regex_spec` ([#14545], thanks @straight-shoota)
 
+[#14757]: https://github.com/crystal-lang/crystal/pull/14757
 [#14719]: https://github.com/crystal-lang/crystal/pull/14719
 [#14545]: https://github.com/crystal-lang/crystal/pull/14545
 
