@@ -539,7 +539,6 @@ module Crystal
         spawn do
           while unit = channel.receive?
             unit.compile(isolate_context: true)
-            next unless wants_stats_or_progress?
             mutex.synchronize { @progress_tracker.stage_progress += 1 }
           end
         ensure
