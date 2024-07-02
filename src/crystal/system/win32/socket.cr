@@ -142,7 +142,6 @@ module Crystal::System::Socket
           return ::Socket::Error.from_os_error("ConnectEx", error)
         end
       else
-        operation.done!
         return nil
       end
 
@@ -204,18 +203,15 @@ module Crystal::System::Socket
           return false
         end
       else
-        operation.done!
         return true
       end
 
-      unless operation.wait_for_completion(read_timeout)
-        raise IO::TimeoutError.new("#{method} timed out")
-      end
-
-      operation.wsa_result do |error|
+      operation.wait_for_wsa_result(read_timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
+        when .error_operation_aborted?
+          raise IO::TimeoutError.new("#{method} timed out")
         end
       end
 
