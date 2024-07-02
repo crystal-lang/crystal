@@ -705,9 +705,10 @@ module Crystal
 
       puts
       puts "Codegen (bc+obj):"
-      if units.size == reused
+      case reused
+      when units.size
         puts " - all previous .o files were reused"
-      elsif reused == 0
+      when .zero?
         puts " - no previous .o files were reused"
       else
         puts " - #{reused}/#{units.size} .o files were reused"
@@ -959,13 +960,13 @@ module Crystal
       end
 
       private def update_bitcode_cache
-        if memory_buffer = @memory_buffer
-          # Delete existing .o file. It cannot be used anymore.
-          File.delete?(object_name)
-          # Create the .bc file (for next compilations)
-          File.write(bc_name, memory_buffer.to_slice)
-          memory_buffer.dispose
-        end
+        return unless memory_buffer = @memory_buffer
+
+        # Delete existing .o file. It cannot be used anymore.
+        File.delete?(object_name)
+        # Create the .bc file (for next compilations)
+        File.write(bc_name, memory_buffer.to_slice)
+        memory_buffer.dispose
       end
 
       private def compile_to_object
