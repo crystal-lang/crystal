@@ -475,11 +475,16 @@ module Crystal
       @progress_tracker.stage("Codegen (bc+obj)") do
         @progress_tracker.stage_progress_total = units.size
 
-        if units.size == 1
+        n_threads = @n_threads.clamp(1..units.size)
+
+        if n_threads == 1
           sequential_codegen(units, reused)
-          units.first.emit(@emit_targets, emit_base_filename || output_filename)
         else
-          codegen_many_units(program, units, target_triple, reused)
+          parallel_codegen(units, n_threads, reused)
+        end
+
+        if units.size == 1
+          units.first.emit(@emit_targets, emit_base_filename || output_filename)
         end
       end
 
@@ -497,20 +502,6 @@ module Crystal
       end
 
       {units, reused}
-    end
-
-    private def codegen_many_units(program, units, target_triple, reused)
-      # Don't start more processes than compilation units
-      n_threads = @n_threads.clamp(1..units.size)
-
-      # If threads is 1 we can avoid fork/spawn/channels altogether. This is
-      # particularly useful for CI because there forking eventually leads to
-      # "out of memory" errors.
-      if n_threads == 1
-        sequential_codegen(units, reused)
-      else
-        parallel_codegen(units, n_threads, reused)
-      end
     end
 
     private def sequential_codegen(units, reused)
