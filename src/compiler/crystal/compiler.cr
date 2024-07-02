@@ -208,11 +208,11 @@ module Crystal
       program = new_program(source)
       node = parse program, source
       node = program.semantic node, cleanup: !no_cleanup?
-      result = codegen program, node, source, output_filename unless @no_codegen
+      units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
       print_macro_run_stats(program)
-      print_codegen_stats(result)
+      print_codegen_stats(units)
 
       Result.new program, node
     end
@@ -331,7 +331,7 @@ module Crystal
       if @cross_compile
         cross_compile program, units, output_filename
       else
-        result = with_file_lock(output_dir) do
+        units = with_file_lock(output_dir) do
           codegen program, units, output_filename, output_dir
         end
 
@@ -346,7 +346,7 @@ module Crystal
 
       CacheDir.instance.cleanup if @cleanup
 
-      result
+      units
     end
 
     private def with_file_lock(output_dir, &)
@@ -470,7 +470,6 @@ module Crystal
     private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
       object_names = units.map &.object_filename
       target_triple = target_machine.triple
-      reused = [] of String
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         @progress_tracker.stage_progress_total = units.size
@@ -478,9 +477,9 @@ module Crystal
         n_threads = @n_threads.clamp(1..units.size)
 
         if n_threads == 1
-          sequential_codegen(units, reused)
+          sequential_codegen(units)
         else
-          parallel_codegen(units, n_threads, reused)
+          parallel_codegen(units, n_threads)
         end
 
         if units.size == 1
@@ -501,33 +500,27 @@ module Crystal
         end
       end
 
-      {units, reused}
+      units
     end
 
-    private def sequential_codegen(units, reused)
+    private def sequential_codegen(units)
       units.each do |unit|
         unit.compile
         @progress_tracker.stage_progress += 1
       end
-
-      if @progress_tracker.stats?
-        units.compact_map do |unit|
-          reused << unit.name if unit.reused_previous_compilation?
-        end
-      end
     end
 
-    private def parallel_codegen(units, n_threads, reused)
+    private def parallel_codegen(units, n_threads)
       {% if flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode."
       {% elsif LibC.has_method?("fork") %}
-        fork_codegen(units, n_threads, reused)
+        fork_codegen(units, n_threads)
       {% else %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% end %}
     end
 
-    private def fork_codegen(units, n_threads, reused)
+    private def fork_codegen(units, n_threads)
       workers = fork_workers(n_threads) do |input, output|
         while i = input.gets(chomp: true).presence
           unit = units[i.to_i]
@@ -600,7 +593,11 @@ module Crystal
         end
 
         if @progress_tracker.stats?
-          reused << result["name"].as_s if result["reused"].as_bool
+          if result["reused"].as_bool
+            name = result["name"].as_s
+            unit = units.find { |unit| unit.name == name }.not_nil!
+            unit.reused_previous_compilation = true
+          end
         end
         @progress_tracker.stage_progress += 1
       end
@@ -655,24 +652,24 @@ module Crystal
       end
     end
 
-    private def print_codegen_stats(result)
+    private def print_codegen_stats(units)
       return unless @progress_tracker.stats?
-      return unless result
+      return unless units
 
-      units, reused = result
+      reused = units.count(&.reused_previous_compilation?)
 
       puts
       puts "Codegen (bc+obj):"
-      if units.size == reused.size
+      if units.size == reused
         puts " - all previous .o files were reused"
-      elsif reused.size == 0
+      elsif reused == 0
         puts " - no previous .o files were reused"
       else
-        puts " - #{reused.size}/#{units.size} .o files were reused"
-        not_reused = units.reject { |u| reused.includes?(u.name) }
+        puts " - #{reused}/#{units.size} .o files were reused"
         puts
         puts "These modules were not reused:"
-        not_reused.each do |unit|
+        units.each do |unit|
+          next if unit.reused_previous_compilation?
           puts " - #{unit.original_name} (#{unit.name}.bc)"
         end
       end
@@ -820,7 +817,7 @@ module Crystal
       getter name
       getter original_name
       getter llvm_mod
-      getter? reused_previous_compilation = false
+      property? reused_previous_compilation = false
       getter object_extension : String
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
