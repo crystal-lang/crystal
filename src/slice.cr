@@ -234,10 +234,10 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice[1, 3]?  # => Slice[11, 12, 13]
-  # slice[1, 33]? # => nil
+  # slice[1, 3]?   # => Slice[11, 12, 13]
+  # slice[1, 33]?  # => nil
   # slice[-3, 2]?  # => Slice[12, 13]
-  # slice[-3, 10]?  # => nil
+  # slice[-3, 10]? # => nil
   # ```
   def []?(start : Int, count : Int) : Slice(T)?
     # we skip the calculated count because the subslice must contain exactly
@@ -261,9 +261,9 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice[1, 3]  # => Slice[11, 12, 13]
-  # slice[1, 33] # raises IndexError
-  # slice[-3, 2] # => Slice[12, 13]
+  # slice[1, 3]   # => Slice[11, 12, 13]
+  # slice[1, 33]  # raises IndexError
+  # slice[-3, 2]  # => Slice[12, 13]
   # slice[-3, 10] # raises IndexError
   # ```
   def [](start : Int, count : Int) : Slice(T)
