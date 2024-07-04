@@ -132,7 +132,7 @@ module Crystal::IOCP
       @state = :done
     end
 
-    def cancel! : Bool
+    def try_cancel : Bool
       # Microsoft documentation:
       # The application must not free or reuse the OVERLAPPED structure
       # associated with the canceled I/O operations until they have completed
@@ -159,7 +159,7 @@ module Crystal::IOCP
       end
 
       unless @state.done?
-        if cancel!
+        if try_cancel
           Fiber.suspend
         end
       end
