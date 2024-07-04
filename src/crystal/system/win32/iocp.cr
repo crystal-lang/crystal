@@ -160,6 +160,8 @@ module Crystal::IOCP
 
       unless @state.done?
         if try_cancel
+          # Wait for cancellation to complete. We must not free the operation
+          # until it's completed.
           Fiber.suspend
         end
       end
