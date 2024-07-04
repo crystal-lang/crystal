@@ -222,8 +222,12 @@ struct Slice(T)
   end
 
   # Returns a new slice that starts at *start* elements from this slice's start,
-  # and of *count* size.
+  # and of exactly *count* size.
   #
+  # Negative *start* is added to `#size`, thus it's treated as index counting
+  # from the end of the array, `-1` designating the last element.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   # Returns `nil` if the new slice falls outside this slice.
   #
   # ```
@@ -232,6 +236,8 @@ struct Slice(T)
   #
   # slice[1, 3]?  # => Slice[11, 12, 13]
   # slice[1, 33]? # => nil
+  # slice[-3, 2]?  # => Slice[12, 13]
+  # slice[-3, 10]?  # => nil
   # ```
   def []?(start : Int, count : Int) : Slice(T)?
     # we skip the calculated count because the subslice must contain exactly
@@ -243,8 +249,12 @@ struct Slice(T)
   end
 
   # Returns a new slice that starts at *start* elements from this slice's start,
-  # and of *count* size.
+  # and of exactly *count* size.
   #
+  # Negative *start* is added to `#size`, thus it's treated as index counting
+  # from the end of the array, `-1` designating the last element.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   # Raises `IndexError` if the new slice falls outside this slice.
   #
   # ```
@@ -253,6 +263,8 @@ struct Slice(T)
   #
   # slice[1, 3]  # => Slice[11, 12, 13]
   # slice[1, 33] # raises IndexError
+  # slice[-3, 2] # => Slice[12, 13]
+  # slice[-3, 10] # raises IndexError
   # ```
   def [](start : Int, count : Int) : Slice(T)
     self[start, count]? || raise IndexError.new
