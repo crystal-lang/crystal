@@ -234,8 +234,10 @@ struct Slice(T)
   # slice[1, 33]? # => nil
   # ```
   def []?(start : Int, count : Int) : Slice(T)?
-    return unless 0 <= start <= @size
-    return unless 0 <= count <= @size - start
+    # we skip the calculated count because the subslice must contain exactly
+    # *count* elements
+    start, _ = Indexable.normalize_start_and_count(start, count, size) { return }
+    return unless count <= @size - start
 
     Slice.new(@pointer + start, count, read_only: @read_only)
   end
