@@ -296,12 +296,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            # We need ruby-install >= 0.8.3
-            brew install ruby-install
-
-            ruby-install ruby 2.7.3
-
-            brew install pkgconfig libtool
+            brew install ruby@3 libffi pkgconfig libtool
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
@@ -312,7 +307,6 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus
