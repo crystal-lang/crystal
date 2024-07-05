@@ -20,6 +20,10 @@ describe "NamedTuple" do
     t.class.should_not eq(NamedTuple(foo: Int32, bar: String))
   end
 
+  it "does NamedTuple.new, with hyphen in key" do
+    NamedTuple("a-b": String).new("a-b": "foo").should eq({"a-b": "foo"})
+  end
+
   it "does NamedTuple.from" do
     t = NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => 2})
     t.should eq({foo: 1, bar: 2})

@@ -70,7 +70,7 @@ struct NamedTuple
       {% begin %}
         {
           {% for key in T %}
-            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key }}))),
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key.symbolize }}))),
           {% end %}
         }
       {% end %}
