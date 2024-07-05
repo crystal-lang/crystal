@@ -222,9 +222,10 @@ record PullRequest,
 
     topics.sort_by! { |parts|
       topic_priority = case parts[0]
-                       when "tools" then 2
-                       when "lang"  then 1
-                       else              0
+                       when "infrastructure" then 3
+                       when "tools"          then 2
+                       when "lang"           then 1
+                       else                       0
                        end
       {-topic_priority, parts[0]}
     }
