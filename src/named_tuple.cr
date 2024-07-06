@@ -119,7 +119,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
+        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash[{{key.stringify}}] }),
       {% end %}
       )
     {% end %}

@@ -33,6 +33,10 @@ describe "NamedTuple" do
     t.should eq({"foo bar": 1, "baz qux": 2})
     t.class.should eq(NamedTuple("foo bar": Int32, "baz qux": Int32))
 
+    t = NamedTuple("\"": Int32, "\#{exit}": Int32).from({"\"" => 2, "\#{exit}" => 3})
+    t.should eq({"\"": 2, "\#{exit}": 3})
+    t.class.should eq(NamedTuple("\"": Int32, "\#{exit}": Int32))
+
     expect_raises ArgumentError do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1})
     end
@@ -74,6 +78,10 @@ describe "NamedTuple" do
     t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2} of String | Int32 | Symbol => Int32)
     t.should eq({foo: 1, bar: 2})
     t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {"\"": Int32, "\#{exit}": Int32}.from({"\"" => 2, "\#{exit}" => 3})
+    t.should eq({"\"": 2, "\#{exit}": 3})
+    t.class.should eq(NamedTuple("\"": Int32, "\#{exit}": Int32))
   end
 
   it "gets size" do
