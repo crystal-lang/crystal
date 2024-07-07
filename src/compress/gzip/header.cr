@@ -24,9 +24,10 @@ class Compress::Gzip::Header
 
   # :nodoc:
   def initialize(first_byte : UInt8, io : IO)
-    header = uninitialized UInt8[10]
-    header[0] = first_byte
-    io.read_fully(header.to_slice + 1)
+    header = [first_byte]
+    h = Bytes.new(9)
+    io.read_fully(h)
+    header.concat(h)
 
     if header[0] != ID1 || header[1] != ID2 || header[2] != DEFLATE
       raise Error.new("Invalid gzip header")
@@ -34,7 +35,7 @@ class Compress::Gzip::Header
 
     flg = Flg.new(header[3])
 
-    seconds = IO::ByteFormat::LittleEndian.decode(Int32, header.to_slice[4, 4])
+    seconds = IO::ByteFormat::LittleEndian.decode(Int32, header[4, 4].to_unsafe.to_slice(4))
     @modification_time = Time.unix(seconds).to_local
 
     xfl = header[8]
@@ -42,41 +43,29 @@ class Compress::Gzip::Header
 
     if flg.extra?
       xlen = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
+      header.concat(xlen.unsafe_as(StaticArray(UInt8, 2)))
       @extra = Bytes.new(xlen)
       io.read_fully(@extra)
+      header.concat(@extra)
     end
 
     if flg.name?
-      @name = io.gets('\0', chomp: true)
+      name = io.gets('\0').not_nil!
+      header.concat(name.bytes)
+      @name = name.chomp('\0')
     end
 
     if flg.comment?
-      @comment = io.gets('\0', chomp: true)
+      comment = io.gets('\0').not_nil!
+      header.concat(comment.bytes)
+      @comment = comment.chomp('\0')
     end
 
     if flg.hcrc?
       crc16 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
 
-      bytes = [] of UInt8
-      bytes.concat(header)
-
-      if flg.extra?
-        bytes.concat(Slice[xlen.not_nil!].unsafe_slice_of(UInt8))
-        bytes.concat(@extra)
-      end
-
-      if flg.name?
-        bytes.concat(@name.not_nil!.bytes)
-        bytes << 0_u8
-      end
-
-      if flg.comment?
-        bytes.concat(@comment.not_nil!.bytes)
-        bytes << 0_u8
-      end
-
-      crc32 = ::Digest::CRC32.checksum(bytes.to_unsafe.to_slice(bytes.size))
-      if Slice[crc32].unsafe_slice_of(UInt16)[0] != crc16
+      crc32 = ::Digest::CRC32.checksum(header.to_unsafe.to_slice(header.size))
+      if crc32.unsafe_as(StaticArray(UInt16, 2))[0] != crc16
         raise Error.new("Header CRC16 checksum mismatch")
       end
     end
