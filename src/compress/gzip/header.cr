@@ -56,7 +56,29 @@ class Compress::Gzip::Header
 
     if flg.hcrc?
       crc16 = io.read_bytes(UInt16, IO::ByteFormat::LittleEndian)
-      # TODO check crc16
+
+      bytes = [] of UInt8
+      bytes.concat(header)
+
+      if flg.extra?
+        bytes.concat(Slice[xlen.not_nil!].unsafe_slice_of(UInt8))
+        bytes.concat(@extra)
+      end
+
+      if flg.name?
+        bytes.concat(@name.not_nil!.bytes)
+        bytes << 0_u8
+      end
+
+      if flg.comment?
+        bytes.concat(@comment.not_nil!.bytes)
+        bytes << 0_u8
+      end
+
+      crc32 = ::Digest::CRC32.checksum(bytes.to_unsafe.to_slice(bytes.size))
+      if Slice[crc32].unsafe_slice_of(UInt16)[0] != crc16
+        raise Error.new("Header CRC16 checksum mismatch")
+      end
     end
   end
 
