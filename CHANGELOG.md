@@ -360,8 +360,8 @@
 - *(numeric)* Add documentation for complex methods inside Number ([#14538], thanks @meatball133)
 - *(runtime)* Add documentation for standard streams blocking behaviour ([#14577], thanks @straight-shoota)
 - *(serialization)* Fix docs for `CSV::Builder#row(&)` ([#14736], thanks @philipp-classen)
-- *(system)* Documentation:  Process.on_terminate example currently throws ([#14798], thanks @philipp-classen)
 - *(system)* **[breaking]** Undocument `IO::Evented` ([#14749], thanks @straight-shoota)
+- *(system)* Fix code example for `Process.on_terminate` ([#14798], thanks @philipp-classen)
 - *(text)* Fix docs for `Char#ascii_number?` stating wrong minium base ([#14521], thanks @meatball133)
 - *(text)* Enhance documentation for regex options `NO_UTF_CHECK` ([#14542], thanks @straight-shoota)
 
@@ -373,8 +373,8 @@
 [#14538]: https://github.com/crystal-lang/crystal/pull/14538
 [#14577]: https://github.com/crystal-lang/crystal/pull/14577
 [#14736]: https://github.com/crystal-lang/crystal/pull/14736
-[#14798]: https://github.com/crystal-lang/crystal/pull/14798
 [#14749]: https://github.com/crystal-lang/crystal/pull/14749
+[#14798]: https://github.com/crystal-lang/crystal/pull/14798
 [#14521]: https://github.com/crystal-lang/crystal/pull/14521
 [#14542]: https://github.com/crystal-lang/crystal/pull/14542
 
