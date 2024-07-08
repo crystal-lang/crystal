@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "crystal/rw_lock"
 require "file/error"
 
 struct Crystal::System::Process
@@ -127,6 +128,50 @@ struct Crystal::System::Process
     )
   end
 
+  # The RWLock is trying to protect against file descriptors leaking to
+  # sub-processes.
+  #
+  # There is a race condition in the POSIX standard between the creation of a
+  # file descriptor (`accept`, `dup`, `open`, `pipe`, `socket`) and setting the
+  # `FD_CLOEXEC` flag with `fcntl`. During the time window between those two
+  # syscalls, another thread may fork the process and exec another process,
+  # which will leak the file descriptor to that process.
+  #
+  # Most systems have long implemented non standard syscalls that prevent the
+  # race condition, except for Darwin that implements `O_CLOEXEC` but doesn't
+  # implement `SOCK_CLOEXEC` nor `accept4`, `dup3` or `pipe2`.
+  #
+  # NOTE: there may still be some potential leaks (e.g. calling `accept` on a
+  #       blocking socket).
+  {% if LibC.has_constant?(:SOCK_CLOEXEC) && LibC.has_method?(:accept4) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+    # we don't implement .lock_read so compilation will fail if we need to
+    # support another case, instead of silently skipping the rwlock!
+
+    def self.lock_write(&)
+      yield
+    end
+  {% else %}
+    @@rwlock = Crystal::RWLock.new
+
+    def self.lock_read(&)
+      @@rwlock.read_lock
+      begin
+        yield
+      ensure
+        @@rwlock.read_unlock
+      end
+    end
+
+    def self.lock_write(&)
+      @@rwlock.write_lock
+      begin
+        yield
+      ensure
+        @@rwlock.write_unlock
+      end
+    end
+  {% end %}
+
   def self.fork(*, will_exec = false)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
@@ -135,7 +180,7 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    case pid = LibC.fork
+    case pid = lock_write { LibC.fork }
     when 0
       # child:
       pid = nil
@@ -274,7 +319,7 @@ struct Crystal::System::Process
     argv = command_args.map &.check_no_null_byte.to_unsafe
     argv << Pointer(UInt8).null
 
-    LibC.execvp(command, argv)
+    lock_write { LibC.execvp(command, argv) }
   end
 
   def self.replace(command_args, env, clear_env, input, output, error, chdir)
@@ -292,6 +337,11 @@ struct Crystal::System::Process
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
+    if src_io.closed?
+      dst_io.close
+      return
+    end
+
     src_io = to_real_fd(src_io)
 
     dst_io.reopen(src_io)

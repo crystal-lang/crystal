@@ -28,6 +28,7 @@ lib LibC
   fun gmtime_r(timer : TimeT*, tp : Tm*) : Tm*
   fun localtime_r(timer : TimeT*, tp : Tm*) : Tm*
   fun mktime(tp : Tm*) : TimeT
+  fun nanosleep(req : Timespec*, rem : Timespec*) : Int
   fun tzset : Void
   fun timegm(tp : Tm*) : TimeT
 

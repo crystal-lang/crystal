@@ -69,6 +69,8 @@ module Crystal
         self.tuple_types.any? &.has_inner_pointers?
       when NamedTupleInstanceType
         self.entries.any? &.type.has_inner_pointers?
+      when ReferenceStorageType
+        self.reference_type.has_inner_pointers?
       when PrimitiveType
         false
       when EnumType

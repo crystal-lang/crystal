@@ -10,7 +10,7 @@ lib LibC
   MAP_SHARED            = 0x0001
   MAP_ANON              = 0x1000
   MAP_ANONYMOUS         = LibC::MAP_ANON
-  MAP_FAILED            = Pointer(Void).new(-1)
+  MAP_FAILED            = Pointer(Void).new(-1.to_u64!)
   POSIX_MADV_NORMAL     = LibC::MADV_NORMAL
   POSIX_MADV_RANDOM     = LibC::MADV_RANDOM
   POSIX_MADV_SEQUENTIAL = LibC::MADV_SEQUENTIAL
