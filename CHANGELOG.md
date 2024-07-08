@@ -22,7 +22,6 @@
 - *(concurrency)* Add `Thread.new` yields itself ([#14543], thanks @ysbaddaden)
 - *(concurrency)* Add support for `Atomic(Bool)` ([#14532], thanks @ysbaddaden)
 - *(concurrency)* Add `Thread.sleep(Time::Span)` ([#14715], thanks @ysbaddaden)
-- *(files)* **[deprecation]** Move `File.readable?`, `.writable?`, `.executable?` to `File::Info` ([#14484], thanks @straight-shoota)
 - *(files)* Implement `IO#tty?` in Win32 ([#14421], thanks @HertzDevil)
 - *(files)* Implement `File.readable?` and `.writable?` in Win32 ([#14420], thanks @HertzDevil)
 - *(files)* Make `File.readable?` and `.writable?` follow symlinks on Windows ([#14514], thanks @HertzDevil)
@@ -41,7 +40,7 @@
 - *(runtime)* Add `EventLoop::Socket` module ([#14643], thanks @straight-shoota)
 - *(runtime)* Add `EventLoop::FileDescriptor` module ([#14639], thanks @straight-shoota)
 - *(runtime)* Add `Crystal::Tracing` for runtime tracing ([#14659], thanks @ysbaddaden)
-- *(system)* **[security]** **[breaking]** Disable implicit execution of batch files ([#14557], thanks @straight-shoota)
+- *(system)* **[security]** **[breaking]** Disable implicit execution of batch files on Windows ([#14557], thanks @straight-shoota)
 - *(system)* Add `EventLoop#run(blocking)` and `EventLoop#interrupt` ([#14568], thanks @ysbaddaden)
 - *(system)* Add `Crystal::System::Time.ticks` ([#14620], thanks @ysbaddaden)
 - *(system)* Add `Crystal::System::Thread.current_thread?`, `#scheduler?` ([#14660], thanks @ysbaddaden)
@@ -59,7 +58,6 @@
 [#14543]: https://github.com/crystal-lang/crystal/pull/14543
 [#14532]: https://github.com/crystal-lang/crystal/pull/14532
 [#14715]: https://github.com/crystal-lang/crystal/pull/14715
-[#14484]: https://github.com/crystal-lang/crystal/pull/14484
 [#14421]: https://github.com/crystal-lang/crystal/pull/14421
 [#14420]: https://github.com/crystal-lang/crystal/pull/14420
 [#14514]: https://github.com/crystal-lang/crystal/pull/14514
@@ -124,6 +122,8 @@
 - *(collection)* **[breaking]** Never raise `IndexError` in `#[]?(Range)` ([#14444], thanks @HertzDevil)
 - *(collection)* **[breaking]** Fix `Set#to_a(&)` ([#14519], thanks @meatball133)
 - *(collection)* Fix `Hash#rehash` to reset `@first` ([#14606], thanks @straight-shoota)
+- *(collection)* Fix macro interpolation in `NamedTuple#from` ([#14790], thanks @HertzDevil)
+- *(collection)* **[regression]** Fix regression with `NamedTuple.new` when using key with a hyphen ([#14785], thanks @Blacksmoke16)
 - *(files)* Allow `#fsync` and `#flock_*` on `IO::FileDescriptor` ([#14432], thanks @HertzDevil)
 - *(files)* Make `IO::FileDescriptor#tty?` return false for NUL on Windows ([#14509], thanks @HertzDevil)
 - *(files)* Fix blockless `IO::FileDescriptor` echo and raw mode methods ([#14529], thanks @HertzDevil)
@@ -131,6 +131,8 @@
 - *(files)* Fix `IO#same_content?` accepting prefix on second stream ([#14664], thanks @straight-shoota)
 - *(files)* Fix overflow in `File#read_at` for large offsets on Windows ([#14708], thanks @HertzDevil)
 - *(files)* Fix `IO::FileDescriptor.new` for closed fd ([#14697], thanks @straight-shoota)
+- *(files)* Fix `IO::Delimited` reading into limited slice with peek ([#14772], thanks @straight-shoota)
+- *(files)* Fix `Compress::Gzip` extra field ([#14550], thanks @kojix2)
 - *(log)* delete source from builder cache when finalize ([#14475], thanks @ysbaddaden)
 - *(networking)* Fix `Socket#close` error handling on Windows ([#14517], thanks @HertzDevil)
 - *(networking)* Set UTF-8 charset on directory listing in `HTTP::StaticFileHandler` ([#14546], thanks @alexkutsan)
@@ -145,6 +147,7 @@
 - *(numeric)* **[regression]** Restore leading zero in exponent for `printf("%e")` and `printf("%g")` ([#14695], thanks @straight-shoota)
 - *(runtime)* Fix enable docs for builtin constants ([#14571], thanks @straight-shoota)
 - *(runtime)* Fix `GC.malloc` for `gc_none` to clear memory ([#14746], thanks @straight-shoota)
+- *(serialization)* Fix JSON discriminator for Bool `false` value ([#14779], thanks @dammer)
 - *(specs)* Fix relative file paths in spec output ([#14725], thanks @straight-shoota)
 - *(system)* Fix using `System.retry_with_buffer` with stack buffer ([#14615], thanks @straight-shoota)
 - *(system)* Harmonize close on exec for `Socket` & `FileDescriptor` on Windows ([#14634], thanks @ysbaddaden)
@@ -161,6 +164,8 @@
 [#14444]: https://github.com/crystal-lang/crystal/pull/14444
 [#14519]: https://github.com/crystal-lang/crystal/pull/14519
 [#14606]: https://github.com/crystal-lang/crystal/pull/14606
+[#14790]: https://github.com/crystal-lang/crystal/pull/14790
+[#14785]: https://github.com/crystal-lang/crystal/pull/14785
 [#14432]: https://github.com/crystal-lang/crystal/pull/14432
 [#14509]: https://github.com/crystal-lang/crystal/pull/14509
 [#14529]: https://github.com/crystal-lang/crystal/pull/14529
@@ -168,6 +173,8 @@
 [#14664]: https://github.com/crystal-lang/crystal/pull/14664
 [#14708]: https://github.com/crystal-lang/crystal/pull/14708
 [#14697]: https://github.com/crystal-lang/crystal/pull/14697
+[#14772]: https://github.com/crystal-lang/crystal/pull/14772
+[#14550]: https://github.com/crystal-lang/crystal/pull/14550
 [#14475]: https://github.com/crystal-lang/crystal/pull/14475
 [#14517]: https://github.com/crystal-lang/crystal/pull/14517
 [#14546]: https://github.com/crystal-lang/crystal/pull/14546
@@ -182,6 +189,7 @@
 [#14695]: https://github.com/crystal-lang/crystal/pull/14695
 [#14571]: https://github.com/crystal-lang/crystal/pull/14571
 [#14746]: https://github.com/crystal-lang/crystal/pull/14746
+[#14779]: https://github.com/crystal-lang/crystal/pull/14779
 [#14725]: https://github.com/crystal-lang/crystal/pull/14725
 [#14615]: https://github.com/crystal-lang/crystal/pull/14615
 [#14634]: https://github.com/crystal-lang/crystal/pull/14634
@@ -236,6 +244,7 @@
 
 - *(collection)* Drop obsolete workaround in `Range#reverse_each` ([#14709], thanks @yxhuvud)
 - *(concurrency)* Add `WaitGroup` to `docs_main.cr` ([#14624], thanks @straight-shoota)
+- *(files)* **[deprecation]** Move `File.readable?`, `.writable?`, `.executable?` to `File::Info` ([#14484], thanks @straight-shoota)
 - *(networking)* Drop `Crystal::System::Socket#system_send` ([#14637], thanks @straight-shoota)
 - *(networking)* Add type restriction `host : String` in `TCPSocket` and `Addrinfo` ([#14703], thanks @straight-shoota)
 - *(runtime)* Fix abstract def parameter name in `LibEvent::EventLoop#send_to` ([#14658], thanks @straight-shoota)
@@ -244,6 +253,7 @@
 
 [#14709]: https://github.com/crystal-lang/crystal/pull/14709
 [#14624]: https://github.com/crystal-lang/crystal/pull/14624
+[#14484]: https://github.com/crystal-lang/crystal/pull/14484
 [#14637]: https://github.com/crystal-lang/crystal/pull/14637
 [#14703]: https://github.com/crystal-lang/crystal/pull/14703
 [#14658]: https://github.com/crystal-lang/crystal/pull/14658
@@ -350,6 +360,7 @@
 - *(numeric)* Add documentation for complex methods inside Number ([#14538], thanks @meatball133)
 - *(runtime)* Add documentation for standard streams blocking behaviour ([#14577], thanks @straight-shoota)
 - *(serialization)* Fix docs for `CSV::Builder#row(&)` ([#14736], thanks @philipp-classen)
+- *(system)* Documentation:  Process.on_terminate example currently throws ([#14798], thanks @philipp-classen)
 - *(system)* **[breaking]** Undocument `IO::Evented` ([#14749], thanks @straight-shoota)
 - *(text)* Fix docs for `Char#ascii_number?` stating wrong minium base ([#14521], thanks @meatball133)
 - *(text)* Enhance documentation for regex options `NO_UTF_CHECK` ([#14542], thanks @straight-shoota)
@@ -362,6 +373,7 @@
 [#14538]: https://github.com/crystal-lang/crystal/pull/14538
 [#14577]: https://github.com/crystal-lang/crystal/pull/14577
 [#14736]: https://github.com/crystal-lang/crystal/pull/14736
+[#14798]: https://github.com/crystal-lang/crystal/pull/14798
 [#14749]: https://github.com/crystal-lang/crystal/pull/14749
 [#14521]: https://github.com/crystal-lang/crystal/pull/14521
 [#14542]: https://github.com/crystal-lang/crystal/pull/14542
@@ -371,18 +383,16 @@
 #### stdlib
 
 - Remove incorrect uses of `describe` ([#14757], thanks @HertzDevil)
+- *(files)* Add spec for `Compress::Gzip::Writer` with `extra` ([#14788], thanks @straight-shoota)
 - *(runtime)* Add specs for `Pointer::Appender` ([#14719], thanks @straight-shoota)
 - *(text)* Add test helper for `normalize/regex_spec` ([#14545], thanks @straight-shoota)
 
 [#14757]: https://github.com/crystal-lang/crystal/pull/14757
+[#14788]: https://github.com/crystal-lang/crystal/pull/14788
 [#14719]: https://github.com/crystal-lang/crystal/pull/14719
 [#14545]: https://github.com/crystal-lang/crystal/pull/14545
 
 ### Infrastructure
-
-- *(interpreter)* Run `primitives_spec` with the interpreter on CI ([#14438], thanks @HertzDevil)
-
-[#14438]: https://github.com/crystal-lang/crystal/pull/14438
 
 - Changelog for 1.13.0 ([#14712], thanks @straight-shoota)
 - Update previous Crystal release 1.12.1 ([#14480], thanks @straight-shoota)
@@ -398,8 +408,12 @@
 - Update previous Crystal release 1.12.2 ([#14647], thanks @straight-shoota)
 - Update distribution-scripts ([#14648], thanks @straight-shoota)
 - Update distribution-scripts ([#14714], thanks @straight-shoota)
+- Update distribution-scripts ([#14776], thanks @straight-shoota)
+- Fix changelog generator increase topic priority for `infrastructure` ([#14781], thanks @straight-shoota)
 - Remove `SetShouldExit` in Powershell wrapper ([#13769], thanks @straight-shoota)
+- *(ci)* Run `primitives_spec` with the interpreter on CI ([#14438], thanks @HertzDevil)
 - *(ci)* Add LLVM 18 to LLVM CI ([#14565], thanks @HertzDevil)
+- *(ci)* Update to Ruby 3 in macOS circleCI runner ([#14777], thanks @straight-shoota)
 - *(ci)* Distribute `shards.pdb` on Windows ([#14415], thanks @HertzDevil)
 - *(ci)* Drop Windows CI workaround for 1.12.0-dev ([#14483], thanks @HertzDevil)
 
@@ -417,8 +431,12 @@
 [#14647]: https://github.com/crystal-lang/crystal/pull/14647
 [#14648]: https://github.com/crystal-lang/crystal/pull/14648
 [#14714]: https://github.com/crystal-lang/crystal/pull/14714
+[#14776]: https://github.com/crystal-lang/crystal/pull/14776
+[#14781]: https://github.com/crystal-lang/crystal/pull/14781
 [#13769]: https://github.com/crystal-lang/crystal/pull/13769
+[#14438]: https://github.com/crystal-lang/crystal/pull/14438
 [#14565]: https://github.com/crystal-lang/crystal/pull/14565
+[#14777]: https://github.com/crystal-lang/crystal/pull/14777
 [#14415]: https://github.com/crystal-lang/crystal/pull/14415
 [#14483]: https://github.com/crystal-lang/crystal/pull/14483
 
