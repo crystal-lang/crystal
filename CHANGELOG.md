@@ -19,6 +19,7 @@
 - *(collection)* Add `Array#insert_all` ([#14486], thanks @summer-alice)
 - *(collection)* Improve compile time error for `#sort(&block : T, T -> U)` ([#14693], thanks @beta-ziliani)
 - *(concurrency)* Add `WaitGroup` synchronization primitive ([#14167], thanks @ysbaddaden)
+- *(concurrency)* Allow `Atomic`s of pointer types ([#14401], thanks @HertzDevil)
 - *(concurrency)* Add `Thread.new` yields itself ([#14543], thanks @ysbaddaden)
 - *(concurrency)* Add support for `Atomic(Bool)` ([#14532], thanks @ysbaddaden)
 - *(concurrency)* Add `Thread.sleep(Time::Span)` ([#14715], thanks @ysbaddaden)
@@ -36,7 +37,6 @@
 - *(networking)* Relax type restriction of handlers in `HTTP::Server.new` to `Indexable(HTTP::Handler)` ([#14413], thanks @hugopl)
 - *(networking)* **[security]** OpenSSL: don't change default cipher suites ([#14655], thanks @ysbaddaden)
 - *(networking)* Allow parsing cookies with space in the value ([#14455], thanks @anton7c3)
-- *(runtime)* Allow `Atomic`s of pointer types ([#14401], thanks @HertzDevil)
 - *(runtime)* Add `EventLoop::Socket` module ([#14643], thanks @straight-shoota)
 - *(runtime)* Add `EventLoop::FileDescriptor` module ([#14639], thanks @straight-shoota)
 - *(runtime)* Add `Crystal::Tracing` for runtime tracing ([#14659], thanks @ysbaddaden)
@@ -55,6 +55,7 @@
 [#14486]: https://github.com/crystal-lang/crystal/pull/14486
 [#14693]: https://github.com/crystal-lang/crystal/pull/14693
 [#14167]: https://github.com/crystal-lang/crystal/pull/14167
+[#14401]: https://github.com/crystal-lang/crystal/pull/14401
 [#14543]: https://github.com/crystal-lang/crystal/pull/14543
 [#14532]: https://github.com/crystal-lang/crystal/pull/14532
 [#14715]: https://github.com/crystal-lang/crystal/pull/14715
@@ -72,7 +73,6 @@
 [#14413]: https://github.com/crystal-lang/crystal/pull/14413
 [#14655]: https://github.com/crystal-lang/crystal/pull/14655
 [#14455]: https://github.com/crystal-lang/crystal/pull/14455
-[#14401]: https://github.com/crystal-lang/crystal/pull/14401
 [#14643]: https://github.com/crystal-lang/crystal/pull/14643
 [#14639]: https://github.com/crystal-lang/crystal/pull/14639
 [#14659]: https://github.com/crystal-lang/crystal/pull/14659
