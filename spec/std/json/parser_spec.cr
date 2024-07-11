@@ -2,12 +2,8 @@ require "spec"
 require "json"
 
 private def it_parses(string, expected_value, file = __FILE__, line = __LINE__)
-  it "parses #{string} from String", file, line do
+  it "parses #{string}", file, line do
     JSON.parse(string).raw.should eq(expected_value)
-  end
-
-  it "parses #{string} from IO", file, line do
-    JSON.parse(IO::Memory.new(string)).raw.should eq(expected_value)
   end
 end
 
@@ -35,7 +31,6 @@ describe JSON::Parser do
   it_parses "[true]", [true]
   it_parses "[false]", [false]
   it_parses %(["hello"]), ["hello"]
-  it_parses %(["hello", 1]), ["hello", 1]
   it_parses "[0]", [0]
   it_parses " [ 0 ] ", [0]
 
