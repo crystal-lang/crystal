@@ -1,4 +1,6 @@
-{% skip_file if flag?(:win32) %}
+{% skip_file if flag?(:win32) || flag?(:linux) || flag?(:solaris) %}
+# Windows: we use IOCP
+# Linux/Solaris: we use epoll
 
 require "crystal/thread_local_value"
 

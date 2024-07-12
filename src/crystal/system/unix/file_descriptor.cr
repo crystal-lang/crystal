@@ -1,5 +1,7 @@
 require "c/fcntl"
-require "io/evented"
+{% unless flag?(:linux) || flag?(:solaris) %}
+  require "io/evented"
+{% end %}
 require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
@@ -7,7 +9,9 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  include IO::Evented
+  {% unless flag?(:linux) || flag?(:solaris) %}
+    include IO::Evented
+  {% end %}
 
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
