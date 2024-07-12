@@ -1,0 +1,41 @@
+{% skip_file unless flag?(:linux) || flag?(:solaris) %}
+
+require "c/sys/epoll"
+
+struct Crystal::System::Epoll
+  def initialize
+    @epfd = LibC.epoll_create1(LibC::EPOLL_CLOEXEC)
+    raise RuntimeError.from_errno("epoll_create1") if @epfd == -1
+  end
+
+  def add(fd : Int32, epoll_event : LibC::EpollEvent*) : Nil
+    if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_ADD, fd, epoll_event) == -1
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_ADD)")
+    end
+  end
+
+  def modify(fd : Int32, epoll_event : LibC::EpollEvent*) : Nil
+    if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_MOD, fd, epoll_event) == -1
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_MOD)")
+    end
+  end
+
+  def delete(fd : Int32) : Nil
+    if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_DEL, fd, nil) == -1
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)")
+    end
+  end
+
+  # `timeout` is in milliseconds; -1 will wait indefinitely; 0 will never wait.
+  def wait(events : Slice(LibC::EpollEvent), timeout : Int32) : Slice(LibC::EpollEvent)
+    count = LibC.epoll_wait(@epfd, events.to_unsafe, events.size, timeout)
+    raise RuntimeError.from_errno("epoll_wait") if count == -1 && Errno.value != Errno::EINTR
+    events[0, count.clamp(0..)]
+  end
+
+  def close : Nil
+    if LibC.close(@epfd) == -1
+      raise RuntimeError.from_errno("close")
+    end
+  end
+end
