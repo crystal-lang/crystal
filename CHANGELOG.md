@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.13.1] (unreleased)
+
+[1.13.1]: https://github.com/crystal-lang/crystal/releases/1.13.1
+
+### other
+
+#### stdlib
+
+- *(serialization)* **[regression]** Revert "Optimize JSON parsing a bit" ([#14804], thanks @straight-shoota)
+
+[#14804]: https://github.com/crystal-lang/crystal/pull/14804
+
 ## [1.13.0] (2024-07-09)
 
 [1.13.0]: https://github.com/crystal-lang/crystal/releases/1.13.0
