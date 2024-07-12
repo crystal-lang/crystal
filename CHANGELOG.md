@@ -1,8 +1,14 @@
 # Changelog
 
-## [1.13.1] (unreleased)
+## [1.13.1] (2024-07-12)
 
 [1.13.1]: https://github.com/crystal-lang/crystal/releases/1.13.1
+
+### Infrastructure
+
+- Changelog for 1.13.1 ([#14806], thanks @straight-shoota)
+
+[#14806]: https://github.com/crystal-lang/crystal/pull/14806
 
 ### other
 
