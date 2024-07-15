@@ -176,8 +176,8 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
-    if LibC.CloseHandle(windows_handle) == 0
+  def file_descriptor_close(raise_on_error = true) : Nil
+    if LibC.CloseHandle(windows_handle) == 0 && raise_on_error
       raise IO::Error.from_winerror("Error closing file", target: self)
     end
   end

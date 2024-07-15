@@ -120,12 +120,13 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close : Nil
+  def file_descriptor_close(raise_on_error = true) : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
+    return if _fd == -1
 
-    if LibC.close(_fd) != 0
+    if LibC.close(_fd) != 0 && raise_on_error
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
