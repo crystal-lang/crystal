@@ -20,7 +20,6 @@ lib LibC
     u64 : UInt64
   end
 
-  @[Packed]
   struct EpollEvent
     events : UInt32
     data : EpollDataT
