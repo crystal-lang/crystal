@@ -6191,7 +6191,7 @@ module Crystal
         true
       when Call
         return false if node.has_parentheses?
-        return true if node.obj.nil? && node.args.empty? && node.block.nil?
+        return true if node.obj.nil? && node.args.empty? && node.named_args.nil? && node.block.nil?
         node.name == "[]" && node.dot_location.nil?
       else
         false
