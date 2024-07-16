@@ -276,6 +276,9 @@ module Crystal
     assert_syntax_error "a.b() += 1"
     assert_syntax_error "a.[]() += 1"
 
+    assert_syntax_error "a.[] 0 = 1"
+    assert_syntax_error "a.[] 0 += 1"
+
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
     it_parses "def foo ; 1 ; end", Def.new("foo", body: 1.int32)

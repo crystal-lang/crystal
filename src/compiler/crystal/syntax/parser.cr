@@ -6190,7 +6190,9 @@ module Crystal
       when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
-        !node.has_parentheses? && ((node.obj.nil? && node.args.empty? && node.block.nil?) || node.name == "[]")
+        return false if node.has_parentheses?
+        return true if node.obj.nil? && node.args.empty? && node.block.nil?
+        node.name == "[]" && node.dot_location.nil?
       else
         false
       end
