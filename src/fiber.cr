@@ -241,6 +241,7 @@ class Fiber
 
   # :nodoc:
   def cancel_timeout : Nil
+    return unless @timeout_select_action
     @timeout_select_action = nil
     @timeout_event.try &.delete
   end
