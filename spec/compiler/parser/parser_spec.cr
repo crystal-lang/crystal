@@ -2821,5 +2821,29 @@ module Crystal
       node = Parser.parse(source).as(Annotation).path
       node_source(source, node).should eq("::Foo")
     end
+
+    it "sets correct location of call dot" do
+      parser = Parser.new("a.b")
+      node = parser.parse.as(Call)
+      dot_location = node.dot_location.not_nil!
+      dot_location.line_number.should eq(1)
+      dot_location.column_number.should eq(2)
+    end
+
+    it "sets correct location of call dot in assignment" do
+      parser = Parser.new("a.b = c")
+      node = parser.parse.as(Call)
+      dot_location = node.dot_location.not_nil!
+      dot_location.line_number.should eq(1)
+      dot_location.column_number.should eq(2)
+    end
+
+    it "sets correct location of call dot in operator assignment" do
+      parser = Parser.new("a.b += c")
+      node = parser.parse.as(OpAssign).target.as(Call)
+      dot_location = node.dot_location.not_nil!
+      dot_location.line_number.should eq(1)
+      dot_location.column_number.should eq(2)
+    end
   end
 end

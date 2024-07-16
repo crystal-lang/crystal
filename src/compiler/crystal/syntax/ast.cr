@@ -647,6 +647,7 @@ module Crystal
     property block : Block?
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
+    property dot_location : Location?
     property name_location : Location?
     @name_size = -1
     property doc : String?

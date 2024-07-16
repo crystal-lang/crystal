@@ -678,6 +678,8 @@ module Crystal
             break
           end
         when .op_period?
+          dot_location = @token.location
+
           check_void_value atomic, location
 
           @wants_regex = false
@@ -761,6 +763,7 @@ module Crystal
               end
 
               atomic = Call.new(atomic, "#{name}=", arg).at(location).at_end(end_location)
+              atomic.dot_location = dot_location
               atomic.name_location = name_location
               next
             when .assignment_operator?
@@ -769,6 +772,7 @@ module Crystal
               next_token_skip_space_or_newline
               value = parse_op_assign
               call = Call.new(atomic, name).at(location)
+              call.dot_location = dot_location
               call.name_location = name_location
               atomic = OpAssign.new(call, method, value).at(location)
               atomic.name_location = op_name_location
@@ -790,6 +794,7 @@ module Crystal
             block = parse_block(block, stop_on_do: @stop_on_do)
             atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
             atomic.has_parentheses = has_parentheses
+            atomic.dot_location = dot_location
             atomic.name_location = name_location
             atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
