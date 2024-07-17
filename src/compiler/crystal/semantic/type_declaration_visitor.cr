@@ -193,8 +193,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
   def declare_c_struct_or_union_field(type, field_name, var, location)
     type.instance_vars[var.name] = var
-    type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location))
-    type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
+    type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location)).at(location)
+    type.add_def Def.new(field_name, body: InstanceVar.new(var.name)).at(location)
   end
 
   def declare_instance_var(node, var)
