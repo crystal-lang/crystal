@@ -14,6 +14,7 @@ class Crystal::Command
     sitemap_changefreq = "never"
     project_info = Doc::ProjectInfo.new
     include_all = false
+    include_private = false
     include_lib = false
 
     compiler = new_compiler
@@ -96,6 +97,10 @@ class Crystal::Command
         include_all = true
       end
 
+      opts.on("--include-private", "Include private methdos in docs") do
+        include_private = true
+      end
+
       opts.on("--include-lib", "Include C library bindings in docs") do
         include_lib = true
       end
@@ -152,7 +157,7 @@ class Crystal::Command
     Doc::Generator.new(
       result.program, included_dirs, output_directory, output_format,
       sitemap_base_url, sitemap_priority, sitemap_changefreq,
-      project_info, include_all, include_lib
+      project_info, include_all, include_private, include_lib
     ).run
 
     report_warnings

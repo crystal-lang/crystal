@@ -54,6 +54,10 @@ class Crystal::Doc::Macro
     false
   end
 
+  def visibility
+    @type.visibility
+  end
+
   def kind
     "macro "
   end

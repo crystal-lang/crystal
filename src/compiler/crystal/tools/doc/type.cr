@@ -72,6 +72,10 @@ class Crystal::Doc::Type
     @type.abstract?
   end
 
+  def visibility
+    @type.private? ? "private " : ""
+  end
+
   def parents_of?(type)
     return false unless type
 
@@ -193,7 +197,7 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            next unless def_with_metadata.def.visibility.public?
+            next unless def_with_metadata.def.visibility.public? || @generator.include_private
             next unless @generator.must_include? def_with_metadata.def
 
             defs << method(def_with_metadata.def, false)

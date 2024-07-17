@@ -158,6 +158,17 @@ class Crystal::Doc::Method
     @def.abstract?
   end
 
+  def visibility
+    case @def.visibility
+    in .public?
+      ""
+    in .protected?
+      "protected "
+    in .private?
+      "private "
+    end
+  end
+
   def return_type
     return_type = @def.return_type
 
