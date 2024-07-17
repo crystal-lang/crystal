@@ -126,6 +126,8 @@ class Crystal::Doc::Method
 
   def prefix
     case
+    when @type.lib?
+      "."
     when @type.program?
       ""
     when @class_method
@@ -174,6 +176,8 @@ class Crystal::Doc::Method
 
   def kind
     case
+    when @type.lib?
+      "fun "
     when @type.program?
       "def "
     when @class_method

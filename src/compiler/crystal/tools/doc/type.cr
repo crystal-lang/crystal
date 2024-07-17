@@ -28,7 +28,9 @@ class Crystal::Doc::Type
     when AnnotationType
       "annotation"
     when LibType
-      "module"
+      "lib"
+    when TypeDefType
+      "type"
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -144,6 +146,18 @@ class Crystal::Doc::Type
     @type.is_a?(Const)
   end
 
+  def type_def?
+    @type.is_a?(TypeDefType)
+  end
+
+  def lib?
+    @type.is_a?(LibType)
+  end
+
+  def fun_def?
+    @type.is_a?(FunDef)
+  end
+
   def alias_definition
     alias_def = @type.as?(AliasType).try(&.aliased_type)
     alias_def
@@ -151,6 +165,15 @@ class Crystal::Doc::Type
 
   def formatted_alias_definition
     type_to_html alias_definition.as(Crystal::Type)
+  end
+
+  def type_definition
+    type_def = @type.as?(TypeDefType).try(&.typedef)
+    type_def
+  end
+
+  def formatted_type_definition
+    type_to_html type_definition.as(Crystal::Type)
   end
 
   @types : Array(Type)?
