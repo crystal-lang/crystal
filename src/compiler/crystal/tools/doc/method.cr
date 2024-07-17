@@ -201,7 +201,9 @@ class Crystal::Doc::Method
   def id
     String.build do |io|
       io << to_s.delete(' ')
-      if @class_method
+      if @type.lib?
+        io << "-function"
+      elsif @class_method
         io << "-class-method"
       else
         io << "-instance-method"
@@ -342,7 +344,7 @@ class Crystal::Doc::Method
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?
       builder.field "location", location unless location.nil?
-      builder.field "def", self.def
+      builder.field @type.lib? ? "fun" : "def", self.def
     end
   end
 

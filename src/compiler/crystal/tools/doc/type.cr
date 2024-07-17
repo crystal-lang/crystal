@@ -191,7 +191,7 @@ class Crystal::Doc::Type
   def instance_methods
     @instance_methods ||= begin
       case @type
-      when Program
+      when Program, LibType
         [] of Method
       else
         defs = [] of Method
