@@ -13,6 +13,8 @@ class Crystal::Doc::Type
     case @type
     when Const
       "const"
+    when .extern_union?
+      "union"
     when .struct?
       "struct"
     when .class?, .metaclass?
