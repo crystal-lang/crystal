@@ -21,14 +21,14 @@ class Crystal::Doc::Generator
   FLAGS = FLAG_COLORS.keys
 
   def self.new(program : Program, included_dirs : Array(String))
-    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
+    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"), false)
   end
 
-  def initialize(@program : Program, @included_dirs : Array(String),
-                 @output_dir : String, @output_format : String,
-                 @sitemap_base_url : String?,
-                 @sitemap_priority : String, @sitemap_changefreq : String,
-                 @project_info : ProjectInfo)
+  def initialize(
+    @program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String,
+    @sitemap_base_url : String?, @sitemap_priority : String, @sitemap_changefreq : String,
+    @project_info : ProjectInfo, @include_all : Bool
+  )
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
   end
@@ -185,7 +185,7 @@ class Crystal::Doc::Generator
   def must_include?(location : Crystal::Location)
     case filename = location.filename
     when String
-      @included_dirs.any? { |included_dir| filename.starts_with? included_dir }
+      @include_all || @included_dirs.any? { |included_dir| filename.starts_with? included_dir }
     when VirtualFile
       must_include? filename.expanded_location
     else

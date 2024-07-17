@@ -13,6 +13,7 @@ class Crystal::Command
     sitemap_priority = "1.0"
     sitemap_changefreq = "never"
     project_info = Doc::ProjectInfo.new
+    include_all = false
 
     compiler = new_compiler
 
@@ -44,6 +45,7 @@ class Crystal::Command
       opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
         output_directory = value
       end
+
       opts.on("--format=FORMAT", "-f FORMAT", "Set the output format [#{VALID_OUTPUT_FORMATS.join(", ")}] (default: #{output_format})") do |value|
         if !VALID_OUTPUT_FORMATS.includes? value
           STDERR.puts "Invalid format '#{value}'"
@@ -87,6 +89,10 @@ class Crystal::Command
 
       opts.on("--prelude ", "Use given file as prelude") do |prelude|
         compiler.prelude = prelude
+      end
+
+      opts.on("--include-all", "Include documentation for entire namespace") do
+        include_all = true
       end
 
       opts.on("-s", "--stats", "Enable statistics output") do
@@ -138,7 +144,11 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq, project_info).run
+    Doc::Generator.new(
+      result.program, included_dirs, output_directory, output_format,
+      sitemap_base_url, sitemap_priority, sitemap_changefreq,
+      project_info, include_all
+    ).run
 
     report_warnings
     exit 1 if warnings_fail_on_exit?
