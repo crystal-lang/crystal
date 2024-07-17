@@ -575,6 +575,7 @@ module Crystal
     include SpecialVar
 
     property name : String
+    property doc : String?
 
     def initialize(@name : String)
     end

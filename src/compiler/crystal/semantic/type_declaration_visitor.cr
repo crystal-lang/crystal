@@ -186,15 +186,25 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     if type.lookup_instance_var?(var_name)
       node.raise "#{type.type_desc} #{type} already defines a field named '#{field_name}'"
     end
+
     ivar = MetaTypeVar.new(var_name, field_type)
+    ivar.doc = node.var.as(Var).doc
     ivar.owner = type
+
     declare_c_struct_or_union_field(type, field_name, ivar, node.location)
   end
 
   def declare_c_struct_or_union_field(type, field_name, var, location)
     type.instance_vars[var.name] = var
-    type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location)).at(location)
-    type.add_def Def.new(field_name, body: InstanceVar.new(var.name)).at(location)
+
+    setter = Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location)).at(location)
+    setter.doc = var.doc
+
+    getter = Def.new(field_name, body: InstanceVar.new(var.name)).at(location)
+    getter.doc = var.doc
+
+    type.add_def setter
+    type.add_def getter
   end
 
   def declare_instance_var(node, var)

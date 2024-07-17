@@ -6023,6 +6023,7 @@ module Crystal
     end
 
     def parse_c_struct_or_union_fields(exps)
+      doc = @token.doc
       vars = [Var.new(@token.value.to_s).at(@token.location).at_end(token_end_location)]
 
       next_token_skip_space_or_newline
@@ -6041,6 +6042,7 @@ module Crystal
       skip_statement_end
 
       vars.each do |var|
+        var.doc = doc
         exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
     end
