@@ -1,6 +1,7 @@
 {% skip_file unless flag?(:linux) || flag?(:solaris) %}
 
 require "./event_queue"
+require "c/sys/eventfd"
 
 # OPTIMIZE: set `Node` as `epoll_event.data.ptr` instead of setting
 # `epoll_event.data.fd` to skip searches
@@ -14,17 +15,16 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     # the epoll instance
     @epoll = System::Epoll.new
 
-    # pipe to interrupt a run
+    # notification to interrupt a run
     @interrupted = Atomic::Flag.new
-    @pipe = uninitialized LibC::Int[2]
-    ret = LibC.pipe2(@pipe, LibC::O_CLOEXEC)
-    raise RuntimeError.from_errno("pipe2") if ret == -1
+    @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
+    raise RuntimeError.from_errno("eventds") if @eventfd == -1
 
     # register permanent event
     epoll_event = uninitialized LibC::EpollEvent
     epoll_event.events = LibC::EPOLLIN
-    epoll_event.data.fd = @pipe[0]
-    @epoll.add(@pipe[0], pointerof(epoll_event))
+    epoll_event.data.fd = @eventfd
+    @epoll.add(@eventfd, pointerof(epoll_event))
   end
 
   {% if flag?(:preview_mt) %}
@@ -44,17 +44,17 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       LibC.close(@epoll.@epfd)
       @epoll = System::Epoll.new
 
-      # re-create pipe to interrupt a run
-      @pipe.each { |fd| LibC.close(fd) }
-      ret = LibC.pipe2(@pipe, LibC::O_CLOEXEC)
-      raise RuntimeError.from_errno("pipe2") if ret == -1
+      # re-create eventfd to interrupt a run
+      @eventfd.close
+      @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
+      raise RuntimeError.from_errno("eventfd") if eventfd == -1
 
       # re-register events:
       epoll_event = uninitialized LibC::EpollEvent
 
       epoll_event.events = LibC::EPOLLIN
-      epoll_event.data.fd = @pipe[0]
-      @epoll.add(@pipe[0], pointerof(epoll_event))
+      epoll_event.data.fd = @eventfd
+      @epoll.add(@eventfd, pointerof(epoll_event))
 
       @events.each do |node|
         epoll_event.events = LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
@@ -118,7 +118,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
         # LibC.dprintf 2, "%s\n", epoll_event.value.inspect
 
-        if epoll_event.value.data.fd == @pipe[0]
+        if epoll_event.value.data.fd == @eventfd
           handle_interruption
           next
         end
@@ -135,8 +135,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   private def handle_interruption : Nil
-    byte = 0_u8
-    LibC.read(@pipe[0], pointerof(byte), 1)
+    LibC.eventfd_read(@eventfd, out value)
     @interrupted.clear
   end
 
@@ -213,12 +212,8 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   def interrupt : Nil
-    # the atomic makes sure we only write 1 byte to the pipe, so we can assume
-    # there's only 1 byte to read when the pipe fd is triggered
-    return unless @interrupted.test_and_set
-
-    byte = 1_u8
-    LibC.write(@pipe[1], pointerof(byte), 1)
+    # the atomic makes sure we only write once
+    LibC.eventfd_write(@eventfd, 1) if @interrupted.test_and_set
   end
 
   # fiber
