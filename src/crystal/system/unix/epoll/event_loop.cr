@@ -27,11 +27,19 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     @epoll.add(@pipe[0], pointerof(epoll_event))
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:preview_mt) %}
+    def after_fork_before_exec : Nil
+      # must reset the mutexes since another thread may have acquired the lock
+      # of one event loop, which would prevent closing file descriptors for
+      # example.
+      Thread.unsafe_each do |thread|
+        break unless scheduler = thread.@scheduler
+        break unless event_loop = scheduler.@event_loop
+        event_loop.after_fork_before_exec_internal
+      end
+    end
+  {% else %}
     def after_fork : Nil
-      # re-create mutex: another thread may have hold the lock
-      @mutex = Thread::Mutex.new
-
       # re-create the epoll instance
       LibC.close(@epoll.@epfd)
       @epoll = System::Epoll.new
@@ -57,14 +65,6 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       end
     end
   {% end %}
-
-  def after_fork_before_exec : Nil
-    Thread.unsafe_each do |thread|
-      break unless scheduler = thread.@scheduler
-      break unless event_loop = scheduler.@event_loop
-      event_loop.after_fork_before_exec_internal
-    end
-  end
 
   protected def after_fork_before_exec_internal : Nil
     # re-create mutex: another thread may have hold the lock
