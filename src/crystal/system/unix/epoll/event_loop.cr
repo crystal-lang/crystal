@@ -29,6 +29,9 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
+      # re-create mutex: another thread may have hold the lock
+      @mutex = Thread::Mutex.new
+
       # re-create the epoll instance
       LibC.close(@epoll.@epfd)
       @epoll = System::Epoll.new
@@ -54,6 +57,19 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       end
     end
   {% end %}
+
+  def after_fork_before_exec : Nil
+    Thread.unsafe_each do |thread|
+      break unless scheduler = thread.@scheduler
+      break unless event_loop = scheduler.@event_loop
+      event_loop.after_fork_before_exec_internal
+    end
+  end
+
+  protected def after_fork_before_exec_internal : Nil
+    # re-create mutex: another thread may have hold the lock
+    @mutex = Thread::Mutex.new
+  end
 
   # {% if @top_level.has_constant?(:ExecutionContext) %}
   #  # prevents parallel runs of the event loop
