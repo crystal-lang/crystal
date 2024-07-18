@@ -3,9 +3,6 @@
 require "./event_queue"
 require "c/sys/eventfd"
 
-# OPTIMIZE: set `Node` as `epoll_event.data.ptr` instead of setting
-# `epoll_event.data.fd` to skip searches
-
 class Crystal::Epoll::EventLoop < Crystal::EventLoop
   def initialize
     # mutex prevents parallel access to the queues
@@ -20,10 +17,14 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
     raise RuntimeError.from_errno("eventds") if @eventfd == -1
 
+    @eventfd_event = Epoll::Event.interrupt(@eventfd)
+    @eventfd_node = EventQueue::Node.new(@eventfd)
+    @eventfd_node.add(@eventfd_event)
+
     # register permanent event
     epoll_event = uninitialized LibC::EpollEvent
     epoll_event.events = LibC::EPOLLIN
-    epoll_event.data.fd = @eventfd
+    epoll_event.data.ptr = @eventfd_node.as(Void*)
     @epoll.add(@eventfd, pointerof(epoll_event))
   end
 
@@ -45,22 +46,27 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       @epoll = System::Epoll.new
 
       # re-create eventfd to interrupt a run
+      @interrupted.clear
       @eventfd.close
       @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
-      raise RuntimeError.from_errno("eventfd") if eventfd == -1
+      raise RuntimeError.from_errno("eventds") if @eventfd == -1
+
+      @eventfd_event = Epoll::Event.interrupt(@eventfd)
+      @eventfd_node = EventQueue::Node.new(@eventfd)
+      @eventfd_node.add(@eventfd_event)
 
       # re-register events:
       epoll_event = uninitialized LibC::EpollEvent
 
       epoll_event.events = LibC::EPOLLIN
-      epoll_event.data.fd = @eventfd
+      epoll_event.data.ptr = @eventfd_node.as(Void*)
       @epoll.add(@eventfd, pointerof(epoll_event))
 
       @events.each do |node|
         epoll_event.events = LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
         epoll_event.events |= LibC::EPOLLIN if node.readers?
         epoll_event.events |= LibC::EPOLLOUT if node.writers?
-        epoll_event.data.fd = node.fd
+        epoll_event.data.ptr = node.as(Void*)
         @epoll.add(node.fd, pointerof(epoll_event))
       end
     end
@@ -115,28 +121,20 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     @mutex.synchronize do
       epoll_events.size.times do |i|
         epoll_event = epoll_events.to_unsafe + i
+        node = epoll_event.value.data.ptr.as(EventQueue::Node)
 
-        # LibC.dprintf 2, "%s\n", epoll_event.value.inspect
+        Crystal.trace :evloop, "event", fd: node.fd, events: epoll_event.value.events
 
-        if epoll_event.value.data.fd == @eventfd
-          handle_interruption
-          next
-        end
-
-        node = @events[epoll_event.value.data.fd]
-
-        if (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
+        if node.fd == @eventfd
+          LibC.eventfd_read(@eventfd, out _)
+          @interrupted.clear
+        elsif (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
           dequeue_all(node) # { |fiber| yield fiber }
         else
           process(node, epoll_event) # { |fiber| yield fiber }
         end
       end
     end
-  end
-
-  private def handle_interruption : Nil
-    LibC.eventfd_read(@eventfd, out value)
-    @interrupted.clear
   end
 
   private def dequeue_all(node)
@@ -148,6 +146,8 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
         Crystal::Scheduler.enqueue(event.value.fiber)
       in .sleep?, .io_timeout?, .select_timeout?
         raise "BUG: a timerfd file descriptor errored or got closed!"
+      in .interrupt?
+        raise "BUG: an eventfd file descriptor errored or got closed!"
       end
     end
     @events.delete(node)
@@ -521,7 +521,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     else
       epoll_event = uninitialized LibC::EpollEvent
       epoll_event.events = events | LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
-      epoll_event.data.fd = node.fd
+      epoll_event.data.ptr = node.as(Void*)
 
       if node.events == 0
         Crystal.trace :evloop, "epoll_ctl", op: "add", fd: node.fd, events: events
