@@ -10,6 +10,7 @@ struct Crystal::Epoll::Event
     IoTimeout
     Sleep
     SelectTimeout
+    Interrupt
   end
 
   getter fiber : Fiber
@@ -24,6 +25,13 @@ struct Crystal::Epoll::Event
   property! linked_event : Epoll::Event*
 
   include PointerLinkedList::Node
+
+  def self.interrupt(fd : Int32) : self*
+    event = Pointer(self).malloc(1)
+    fiber = uninitialized Fiber
+    event.value.initialize(fd, fiber, :interrupt)
+    event
+  end
 
   def initialize(@fd : Int32, @fiber : Fiber, @type : Type)
   end
