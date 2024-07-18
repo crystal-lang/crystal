@@ -46,7 +46,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       @epoll.add(@pipe[0], pointerof(epoll_event))
 
       @events.each do |node|
-        epoll_event.events = LibC::EPOLLET | LibC::EPOLLEXCLUSIVE
+        epoll_event.events = LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
         epoll_event.events |= LibC::EPOLLIN if node.readers?
         epoll_event.events |= LibC::EPOLLOUT if node.writers?
         epoll_event.data.fd = node.fd
@@ -488,7 +488,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       yield
     else
       epoll_event = uninitialized LibC::EpollEvent
-      epoll_event.events = events | LibC::EPOLLET | LibC::EPOLLEXCLUSIVE
+      epoll_event.events = events | LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
       epoll_event.data.fd = node.fd
 
       if node.events == 0
@@ -496,7 +496,11 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
         @epoll.add(node.fd, pointerof(epoll_event))
       else
         Crystal.trace :evloop, "epoll_ctl", op: "mod", fd: node.fd, events: events
+
+        # quirk: we can't call EPOLL_CTL_MOD with EPOLLEXCLUSIVE
         @epoll.modify(node.fd, pointerof(epoll_event))
+        # @epoll.delete(node.fd)
+        # @epoll.add(node.fd, pointerof(epoll_event))
       end
 
       node.events = events
