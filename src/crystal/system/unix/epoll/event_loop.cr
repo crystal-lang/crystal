@@ -135,8 +135,8 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
         raise "BUG: a timerfd file descriptor errored or got closed!"
       end
     end
-    @epoll.delete(node.fd)
     @events.delete(node)
+    @epoll.delete(node.fd)
   end
 
   private def process(node, epoll_event)
@@ -273,7 +273,19 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   def close(file_descriptor : System::FileDescriptor) : Nil
-    evented_close(file_descriptor.fd)
+    {% if flag?(:preview_mt) %}
+      # MT: one event loop may be waiting on the fd while another thread closes
+      # the fd, so we must iterate all event loops to remove all events before
+      # we close
+      # OPTIMIZE: blindly iterating each eventloop ain't very efficient...
+      Thread.unsafe_each do |thread|
+        break unless scheduler = thread.@scheduler
+        break unless event_loop = scheduler.@event_loop
+        event_loop.evented_close(file_descriptor.fd)
+      end
+    {% else %}
+      evented_close(file_descriptor.fd)
+    {% end %}
   end
 
   # socket
@@ -361,7 +373,16 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-    evented_close(socket.fd)
+    {% if flag?(:preview_mt) %}
+      # OPTIMIZE: iterating all eventloops ain't very efficient...
+      Thread.unsafe_each do |thread|
+        break unless scheduler = thread.@scheduler
+        break unless event_loop = scheduler.@event_loop
+        event_loop.evented_close(socket.fd)
+      end
+    {% else %}
+      evented_close(socket.fd)
+    {% end %}
   end
 
   # evented internals
@@ -390,7 +411,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     end
   end
 
-  private def evented_close(fd : Int32)
+  protected def evented_close(fd : Int32)
     # {% if @top_level.has_constant?(:ExecutionContext) %}
     #  runnables = ExecutionContext::Queue.new
 
