@@ -47,7 +47,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
       # re-create eventfd to interrupt a run
       @interrupted.clear
-      @eventfd.close
+      LibC.close(@eventfd)
       @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
       raise RuntimeError.from_errno("eventds") if @eventfd == -1
 
