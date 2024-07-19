@@ -34,8 +34,6 @@ struct Crystal::System::Epoll
   end
 
   def close : Nil
-    if LibC.close(@epfd) == -1
-      raise RuntimeError.from_errno("close")
-    end
+    LibC.close(@epfd)
   end
 end

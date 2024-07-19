@@ -1,10 +1,6 @@
 require "crystal/system/thread_linked_list"
 require "./fiber/context"
 
-{% if flag?(:linux) || flag?(:solaris) %}
-  require "crystal/system/unix/timerfd"
-{% end %}
-
 # :nodoc:
 @[NoInline]
 fun _fiber_get_stack_top : Void*
@@ -166,7 +162,6 @@ class Fiber
     Fiber.inactive(self)
 
     # Delete the resume event if it was used by `yield` or `sleep`
-    {% if flag?(:linux) || flag?(:solaris) %} @timerfd.try &.close {% end %}
     @resume_event.try &.free
     @timeout_event.try &.free
     @timeout_select_action = nil
@@ -227,16 +222,6 @@ class Fiber
   def enqueue : Nil
     Crystal::Scheduler.enqueue(self)
   end
-
-  {% if flag?(:linux) || flag?(:solaris) %}
-    # :nodoc:
-    def timerfd : Crystal::System::TimerFD
-      # we keep a single timerfd per fiber and use it for all event types (:sleep,
-      # :io_timeout and :fiber_timeout) because there can only be one event at any
-      # point in time; it avoids creating/closing timers continuously.
-      @timerfd ||= Crystal::System::TimerFD.new
-    end
-  {% end %}
 
   # :nodoc:
   def resume_event : Crystal::EventLoop::Event
