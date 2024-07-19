@@ -15,7 +15,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     # notification to interrupt a run
     @interrupted = Atomic::Flag.new
     @eventfd = System::EventFD.new
-    @eventfd_event = Epoll::Event.interrupt(@eventfd.fd)
+    @eventfd_event = Epoll::Event.system(@eventfd.fd)
     @eventfd_node = EventQueue::Node.new(@eventfd.fd)
     @eventfd_node.add(@eventfd_event)
 
@@ -47,7 +47,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       @interrupted.clear
       @eventfd.close
       @eventfd = System::EventFD.new
-      @eventfd_event = Epoll::Event.interrupt(@eventfd.fd)
+      @eventfd_event = Epoll::Event.system(@eventfd.fd)
       @eventfd_node.clear
       @eventfd_node.add(@eventfd_event)
 
@@ -142,8 +142,8 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
         Crystal::Scheduler.enqueue(event.value.fiber)
       in .sleep?, .io_timeout?, .select_timeout?
         raise "BUG: a timerfd file descriptor errored or got closed!"
-      in .interrupt?
-        raise "BUG: an eventfd file descriptor errored or got closed!"
+      in .system?
+        raise "BUG: a system file descriptor errored or got closed!"
       end
     end
     @events.delete(node)

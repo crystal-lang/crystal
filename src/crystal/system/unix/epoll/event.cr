@@ -10,7 +10,7 @@ struct Crystal::Epoll::Event
     IoTimeout
     Sleep
     SelectTimeout
-    Interrupt
+    System
   end
 
   getter fiber : Fiber
@@ -26,10 +26,12 @@ struct Crystal::Epoll::Event
 
   include PointerLinkedList::Node
 
-  def self.interrupt(fd : Int32) : self*
+  # Allocates a system event into the HEAP. A system event doesn't have an
+  # associated fiber.
+  def self.system(fd : Int32) : self*
     event = Pointer(self).malloc(1)
     fiber = uninitialized Fiber
-    event.value.initialize(fd, fiber, :interrupt)
+    event.value.initialize(fd, fiber, :system)
     event
   end
 
