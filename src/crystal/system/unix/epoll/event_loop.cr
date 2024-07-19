@@ -48,7 +48,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       @eventfd.close
       @eventfd = System::EventFD.new
       @eventfd_event = Epoll::Event.system(@eventfd.fd)
-      @eventfd_node.clear
+      @eventfd_node = EventQueue::Node.new(@eventfd.fd)
       @eventfd_node.add(@eventfd_event)
 
       # re-register events:
