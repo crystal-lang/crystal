@@ -1,13 +1,19 @@
 {% skip_file unless flag?(:linux) || flag?(:solaris) %}
 
 require "./event_queue"
+require "./timers"
 require "../eventfd"
+require "../timerfd"
 
 class Crystal::Epoll::EventLoop < Crystal::EventLoop
+  @eventfd_node : EventQueue::Node
+  @timerfd_node : EventQueue::Node
+
   def initialize
     # mutex prevents parallel access to the queues
     @mutex = Thread::Mutex.new
     @events = EventQueue.new
+    @timers = Epoll::Timers.new
 
     # the epoll instance
     @epoll = System::Epoll.new
@@ -16,14 +22,22 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     @interrupted = Atomic::Flag.new
     @eventfd = System::EventFD.new
     @eventfd_event = Epoll::Event.system(@eventfd.fd)
-    @eventfd_node = EventQueue::Node.new(@eventfd.fd)
-    @eventfd_node.add(@eventfd_event)
+    @eventfd_node = EventQueue::Node.new(@eventfd.fd).tap(&.add(@eventfd_event))
 
-    # register permanent event
+    # timer to go below the millisecond prevision of epoll_wait
+    @timerfd = System::TimerFD.new
+    @timerfd_event = Epoll::Event.system(@timerfd.fd)
+    @timerfd_node = EventQueue::Node.new(@timerfd.fd).tap(&.add(@timerfd_event))
+
+    # register system events (permanent)
     epoll_event = uninitialized LibC::EpollEvent
     epoll_event.events = LibC::EPOLLIN
+
     epoll_event.data.ptr = @eventfd_node.as(Void*)
     @epoll.add(@eventfd.fd, pointerof(epoll_event))
+
+    epoll_event.data.ptr = @timerfd_node.as(Void*)
+    @epoll.add(@timerfd.fd, pointerof(epoll_event))
   end
 
   {% if flag?(:preview_mt) %}
@@ -34,30 +48,44 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
       Thread.unsafe_each do |thread|
         break unless scheduler = thread.@scheduler
         break unless event_loop = scheduler.@event_loop
-        event_loop.after_fork_before_exec_internal
+
+        if event_loop.responds_to?(:after_fork_before_exec_internal)
+          event_loop.after_fork_before_exec_internal
+        end
       end
     end
   {% else %}
     def after_fork : Nil
+      # close inherited fds
+      @epoll.close
+      @eventfd.close
+      @timerfd.close
+
       # re-create the epoll instance
-      LibC.close(@epoll.@epfd)
       @epoll = System::Epoll.new
 
-      # re-create eventfd to interrupt a run
+      # re-create system events
       @interrupted.clear
-      @eventfd.close
+
       @eventfd = System::EventFD.new
       @eventfd_event = Epoll::Event.system(@eventfd.fd)
-      @eventfd_node = EventQueue::Node.new(@eventfd.fd)
-      @eventfd_node.add(@eventfd_event)
+      @eventfd_node = EventQueue::Node.new(@eventfd.fd).tap(&.add(@eventfd_event))
 
-      # re-register events:
+      @timerfd = System::TimerFD.new
+      @timerfd_event = Epoll::Event.system(@timerfd.fd)
+      @timerfd_node = EventQueue::Node.new(@timerfd.fd).tap(&.add(@timerfd_event))
+
+      # re-register system events
       epoll_event = uninitialized LibC::EpollEvent
-
       epoll_event.events = LibC::EPOLLIN
+
       epoll_event.data.ptr = @eventfd_node.as(Void*)
       @epoll.add(@eventfd.fd, pointerof(epoll_event))
 
+      epoll_event.data.ptr = @timerfd_node.as(Void*)
+      @epoll.add(@timerfd.fd, pointerof(epoll_event))
+
+      # re-register pending events
       @events.each do |node|
         epoll_event.events = LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
         epoll_event.events |= LibC::EPOLLIN if node.readers?
@@ -73,48 +101,31 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     @mutex = Thread::Mutex.new
   end
 
-  # {% if @top_level.has_constant?(:ExecutionContext) %}
-  #  # prevents parallel runs of the event loop
-  #  @run_mutex = Thread::Mutex.new
-
-  #  # Waits for events and returns a list of runnable fibers.
-  #  # Returns `nil` when there are no events to wait for.
-  #  #
-  #  # May return an empty list on spurious wakeup (we register both read & write
-  #  # IO events, so we may be notified about "ready to write" when we're
-  #  # "waiting for read").
-  #  def run(blocking : Bool) : ExecutionContext::Queue?
-  #    runnables = ExecutionContext::Queue.new
-
-  #    @run_mutex.synchronize do
-  #      return if @events.empty?
-  #      run_internal(blocking) { |fiber| runnables.push(fiber) }
-  #    end
-
-  #    runnables
-  #  end
-  # {% else %}
   def run(blocking : Bool) : Bool
     if @events.empty?
       false
     else
-      run_internal(blocking) # { |fiber| Crystal::Scheduler.enqueue(fiber) }
+      run_internal(blocking)
       true
     end
   end
-
-  # {% end %}
 
   private def run_internal(blocking : Bool) : Nil
     buffer = uninitialized LibC::EpollEvent[32]
 
     Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
 
+    if blocking && (time = @timers.next_ready?)
+      # epoll_wait only has milliseconds precision, so we use a timerfd for
+      # timeout; arm it to the next ready time
+      @timerfd.set(time)
+    end
+
     # wait for events (indefinitely when blocking)
     epoll_events = @epoll.wait(buffer.to_slice, timeout: blocking ? -1 : 0)
 
-    # process each fd
     @mutex.synchronize do
+      # process events
       epoll_events.size.times do |i|
         epoll_event = epoll_events.to_unsafe + i
         node = epoll_event.value.data.ptr.as(EventQueue::Node)
@@ -124,11 +135,18 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
         if node.fd == @eventfd.fd
           @eventfd.read
           @interrupted.clear
+        elsif node.fd == @timerfd.fd
+          # nothing special
         elsif (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
-          dequeue_all(node) # { |fiber| yield fiber }
+          dequeue_all(node)
         else
-          process(node, epoll_event) # { |fiber| yield fiber }
+          process(node, epoll_event)
         end
+      end
+
+      # process timers
+      @timers.dequeue_ready do |event|
+        process_timer(event)
       end
     end
   end
@@ -136,14 +154,11 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   private def dequeue_all(node)
     node.each do |event|
       case event.value.type
-      in .io_read?, .io_write?
-        cancel event.value.linked_event?
-        # yield event.value.fiber
+      when .io_read?, .io_write?
+        @timers.delete(event) if event.value.time?
         Crystal::Scheduler.enqueue(event.value.fiber)
-      in .sleep?, .io_timeout?, .select_timeout?
-        raise "BUG: a timerfd file descriptor errored or got closed!"
-      in .system?
-        raise "BUG: a system file descriptor errored or got closed!"
+      else
+        raise "BUG: a system file descriptor (fd=#{node.fd}) got closed!"
       end
     end
     @events.delete(node)
@@ -155,23 +170,14 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     writable = (epoll_event.value.events & LibC::EPOLLOUT) == LibC::EPOLLOUT
 
     if readable && (event = node.dequeue_reader?)
-      # wakeup one reader:
-      # for :io_read we want to avoid a "thundering herd" issue
-      # for :io_timeout, :select_timeout and :sleep there's only one reader
       readable = false
-
-      if process_reader?(event)
-        # yield event.value.fiber
-        Crystal::Scheduler.enqueue(event.value.fiber)
-      end
+      @timers.delete(event) if event.value.time?
+      Crystal::Scheduler.enqueue(event.value.fiber)
     end
 
     if writable && (event = node.dequeue_writer?)
-      # wakeup one writer only (avoid "tundering herd"), cancel timeout (if any)
       writable = false
-      cancel event.value.linked_event?
-
-      # yield event.value.fiber
+      @timers.delete(event) if event.value.time?
       Crystal::Scheduler.enqueue(event.value.fiber)
     end
 
@@ -184,27 +190,25 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     raise "BUG: #{node.fd} is ready for writing but no registered writer for #{node.fd}!\n" if writable
   end
 
-  private def process_reader?(event)
+  private def process_timer(event)
     case event.value.type
-    when .io_read?
-      # wakeup one reader, cancel timeout (if any)
-      cancel event.value.linked_event?
-    when .io_timeout?
-      # cancel linked read/write event
-      io_event = event.value.linked_event
-      io_event.value.timed_out!
-      cancel io_event
+    when .io_read?, .io_write?
+      # reached timeout: cancel the IO event
+      event.value.timed_out!
+      unsafe_dequeue_io_event(event)
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
       # atomic CAS
-      return false unless select_action = event.value.fiber.timeout_select_action
+      return unless select_action = event.value.fiber.timeout_select_action
       event.value.fiber.timeout_select_action = nil
-      return false unless select_action.time_expired?
+      return unless select_action.time_expired?
     when .sleep?
       # nothing special
+    else
+      raise "BUG: unexpected event in timers: #{event.value}"
     end
 
-    true
+    Crystal::Scheduler.enqueue(event.value.fiber)
   end
 
   def interrupt : Nil
@@ -218,22 +222,25 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
     include Crystal::EventLoop::Event
 
     def initialize(@event_loop : Crystal::Epoll::EventLoop, fiber : Fiber, type : Epoll::Event::Type)
-      @event = Epoll::Event.new(fiber.timerfd, fiber, type)
+      @event = Epoll::Event.new(-1, fiber, type)
     end
 
-    # sleeping or select timeout: arm timer & enqueue event
+    # sleep or select timeout
     def add(timeout : ::Time::Span?) : Nil
-      @event.timerfd.set(::Time.monotonic + timeout)
+      return unless timeout # FIXME: why can timeout be nil?!
+
+      @event.time = ::Time.monotonic + timeout
       @event_loop.enqueue(pointerof(@event))
     end
 
-    # select timeout has been cancelled: disarm timer & dequeue event
+    # select timeout has been cancelled
     def delete : Nil
-      @event.timerfd.cancel
       @event_loop.dequeue(pointerof(@event))
     end
 
+    # fiber died
     def free : Nil
+      @event_loop.dequeue(pointerof(@event))
     end
   end
 
@@ -419,21 +426,11 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   protected def evented_close(fd : Int32)
-    # {% if @top_level.has_constant?(:ExecutionContext) %}
-    #  runnables = ExecutionContext::Queue.new
-
-    #  @mutex.synchronize do
-    #    return unless node = @events[fd]?
-    #    dequeue_all(node) { |fiber| runnables.push(fiber) }
-    #  end
-
-    #  ExecutionContext.enqueue(runnables) unless runnables.empty?
-    # {% else %}
     @mutex.synchronize do
-      return unless node = @events[fd]?
-      dequeue_all(node) # { |fiber| Crystal::Scheduler.enqueue(fiber) }
+      if node = @events[fd]?
+        dequeue_all(node)
+      end
     end
-    # {% end %}
   end
 
   private def wait_readable(fd : Int32, timeout : Time::Span? = nil) : Nil
@@ -453,29 +450,10 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   private def wait(event_type : Epoll::Event::Type, fd : Int32, timeout : ::Time::Span?, &) : Nil
-    fiber = Fiber.current
-    io_event = Epoll::Event.new(fd, fiber, event_type)
-    io_timeout = uninitialized Epoll::Event
-
-    if timeout
-      timerfd = fiber.timerfd
-      timerfd.set(::Time.monotonic + timeout)
-
-      io_timeout = Epoll::Event.new(timerfd, fiber, :io_timeout)
-      io_timeout.linked_event = pointerof(io_event)
-      io_event.linked_event = pointerof(io_timeout)
-    end
-
-    @mutex.synchronize do
-      unsafe_enqueue pointerof(io_event)
-      unsafe_enqueue pointerof(io_timeout) if timeout
-    end
-
+    io_event = Epoll::Event.new(fd, Fiber.current, event_type, timeout)
+    enqueue pointerof(io_event)
     Fiber.suspend
-
-    if timeout && io_event.timed_out?
-      yield
-    end
+    yield if timeout && io_event.timed_out?
   end
 
   private def check_open(io : IO)
@@ -485,21 +463,37 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   # queue internals
 
   protected def enqueue(event : Epoll::Event*)
-    @mutex.synchronize { unsafe_enqueue(event) }
+    @mutex.synchronize do
+      case event.value.type
+      in .io_read?, .io_write?
+        node = @events.enqueue(event)
+        epoll_sync(node) { raise "unreachable" }
+        @timers.add(event) if event.value.time?
+      in .sleep?, .select_timeout?
+        @timers.add(event)
+      in .system?
+        raise "BUG: system event can't be enqueued #{event.value}"
+      end
+    end
   end
 
-  private def unsafe_enqueue(event : Epoll::Event*)
-    Crystal.trace :evloop, "unsafe_enqueue", fd: event.value.fd, type: event.value.type.to_s
-    node = @events.enqueue(event)
-    epoll_sync(node) { raise "unreachable" }
-  end
-
-  # similar to #cancel, except we don't disarm the timer (already done)
   protected def dequeue(event : Epoll::Event*)
     @mutex.synchronize do
-      node = @events.dequeue(event)
-      epoll_sync(node) { @events.delete(node) }
+      case event.value.type
+      in .io_read?, .io_write?
+        unsafe_dequeue_io_event(event)
+        @timers.delete(event) if event.value.time?
+      in .sleep?, .select_timeout?
+        @timers.delete(event)
+      in .system?
+        raise "BUG: system event can't be dequeued #{event.value}"
+      end
     end
+  end
+
+  private def unsafe_dequeue_io_event(event : Epoll::Event*)
+    node = @events.dequeue(event)
+    epoll_sync(node) { @events.delete(node) }
   end
 
   # unsafe, yields when there are no more events for fd
@@ -533,16 +527,5 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
       node.events = events
     end
-  end
-
-  private def cancel(event : Epoll::Event*)
-    event.value.timerfd?.try(&.cancel)
-
-    node = @events.dequeue(event)
-    epoll_sync(node) { @events.delete(node) }
-  end
-
-  @[AlwaysInline]
-  private def cancel(event : Nil)
   end
 end
