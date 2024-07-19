@@ -1,7 +1,7 @@
 {% skip_file unless flag?(:linux) || flag?(:solaris) %}
 
 require "./event_queue"
-require "c/sys/eventfd"
+require "../eventfd"
 
 class Crystal::Epoll::EventLoop < Crystal::EventLoop
   def initialize
@@ -14,18 +14,16 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
     # notification to interrupt a run
     @interrupted = Atomic::Flag.new
-    @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
-    raise RuntimeError.from_errno("eventds") if @eventfd == -1
-
-    @eventfd_event = Epoll::Event.interrupt(@eventfd)
-    @eventfd_node = EventQueue::Node.new(@eventfd)
+    @eventfd = System::EventFD.new
+    @eventfd_event = Epoll::Event.interrupt(@eventfd.fd)
+    @eventfd_node = EventQueue::Node.new(@eventfd.fd)
     @eventfd_node.add(@eventfd_event)
 
     # register permanent event
     epoll_event = uninitialized LibC::EpollEvent
     epoll_event.events = LibC::EPOLLIN
     epoll_event.data.ptr = @eventfd_node.as(Void*)
-    @epoll.add(@eventfd, pointerof(epoll_event))
+    @epoll.add(@eventfd.fd, pointerof(epoll_event))
   end
 
   {% if flag?(:preview_mt) %}
@@ -47,12 +45,10 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
       # re-create eventfd to interrupt a run
       @interrupted.clear
-      LibC.close(@eventfd)
-      @eventfd = LibC.eventfd(0, LibC::EFD_CLOEXEC)
-      raise RuntimeError.from_errno("eventds") if @eventfd == -1
-
-      @eventfd_event = Epoll::Event.interrupt(@eventfd)
-      @eventfd_node = EventQueue::Node.new(@eventfd)
+      @eventfd.close
+      @eventfd = System::EventFD.new
+      @eventfd_event = Epoll::Event.interrupt(@eventfd.fd)
+      @eventfd_node.clear
       @eventfd_node.add(@eventfd_event)
 
       # re-register events:
@@ -60,7 +56,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
       epoll_event.events = LibC::EPOLLIN
       epoll_event.data.ptr = @eventfd_node.as(Void*)
-      @epoll.add(@eventfd, pointerof(epoll_event))
+      @epoll.add(@eventfd.fd, pointerof(epoll_event))
 
       @events.each do |node|
         epoll_event.events = LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
@@ -125,8 +121,8 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
         Crystal.trace :evloop, "event", fd: node.fd, events: epoll_event.value.events
 
-        if node.fd == @eventfd
-          LibC.eventfd_read(@eventfd, out _)
+        if node.fd == @eventfd.fd
+          @eventfd.read
           @interrupted.clear
         elsif (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
           dequeue_all(node) # { |fiber| yield fiber }
@@ -213,7 +209,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
   def interrupt : Nil
     # the atomic makes sure we only write once
-    LibC.eventfd_write(@eventfd, 1) if @interrupted.test_and_set
+    @eventfd.write(1) if @interrupted.test_and_set
   end
 
   # fiber
