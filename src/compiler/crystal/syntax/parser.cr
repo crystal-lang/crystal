@@ -1652,6 +1652,8 @@ module Crystal
         call = call.as(Call)
 
         if @token.type.op_eq?
+          unexpected_token unless can_be_assigned?(call)
+
           next_token_skip_space
           if @token.type.op_lparen?
             next_token_skip_space
