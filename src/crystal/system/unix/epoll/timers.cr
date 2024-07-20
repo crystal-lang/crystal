@@ -4,6 +4,10 @@ struct Crystal::Epoll::Timers
     @list = Deque(Epoll::Event*).new
   end
 
+  def empty? : Bool
+    @list.empty?
+  end
+
   def next_ready? : Time::Span?
     @list.first?.try(&.value.time)
   end

@@ -102,7 +102,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   def run(blocking : Bool) : Bool
-    if @events.empty?
+    if @events.empty? && @timers.empty?
       false
     else
       run_internal(blocking)
