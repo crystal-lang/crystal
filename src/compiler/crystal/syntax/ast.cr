@@ -647,13 +647,13 @@ module Crystal
     property block : Block?
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
-    property dot_location : Location?
     property name_location : Location?
     @name_size = -1
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
+    property? args_in_brackets = false
     property? has_parentheses = false
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)

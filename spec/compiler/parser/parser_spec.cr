@@ -204,6 +204,8 @@ module Crystal
 
     it_parses "a = 1", Assign.new("a".var, 1.int32)
     it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
+    it_parses "a[] = 1", Call.new("a".call, "[]=", 1.int32)
+    it_parses "a.[] = 1", Call.new("a".call, "[]=", 1.int32)
 
     it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
@@ -528,11 +530,15 @@ module Crystal
     it_parses "foo &.+(2)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "+", 2.int32)))
     it_parses "foo &.bar.baz", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "bar"), "baz")))
     it_parses "foo(&.bar.baz)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "bar"), "baz")))
+    it_parses "foo &.block[]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]")))
     it_parses "foo &.block[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]", 0.int32)))
     it_parses "foo &.block=(0)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
     it_parses "foo &.block = 0", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
+    it_parses "foo &.block[] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 1.int32)))
     it_parses "foo &.block[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 0.int32, 1.int32)))
+    it_parses "foo &.[]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]")))
     it_parses "foo &.[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]", 0.int32)))
+    it_parses "foo &.[] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 1.int32)))
     it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
     it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.!)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Not.new(Var.new("__arg0"))))
@@ -2826,28 +2832,16 @@ module Crystal
       node_source(source, node).should eq("::Foo")
     end
 
-    it "sets correct location of call dot" do
+    it "sets args_in_brackets to false for `a.b`" do
       parser = Parser.new("a.b")
       node = parser.parse.as(Call)
-      dot_location = node.dot_location.not_nil!
-      dot_location.line_number.should eq(1)
-      dot_location.column_number.should eq(2)
+      node.args_in_brackets?.should be_false
     end
 
-    it "sets correct location of call dot in assignment" do
-      parser = Parser.new("a.b = c")
+    it "sets args_in_brackets to true for `a[b]`" do
+      parser = Parser.new("a[b]")
       node = parser.parse.as(Call)
-      dot_location = node.dot_location.not_nil!
-      dot_location.line_number.should eq(1)
-      dot_location.column_number.should eq(2)
-    end
-
-    it "sets correct location of call dot in operator assignment" do
-      parser = Parser.new("a.b += c")
-      node = parser.parse.as(OpAssign).target.as(Call)
-      dot_location = node.dot_location.not_nil!
-      dot_location.line_number.should eq(1)
-      dot_location.column_number.should eq(2)
+      node.args_in_brackets?.should be_true
     end
   end
 end
