@@ -735,6 +735,9 @@ module Crystal
 
             case @token.type
             when .op_eq?
+              atomic = Call.new(atomic, name)
+              unexpected_token unless can_be_assigned?(atomic)
+
               # Rewrite 'f.x = arg' as f.x=(arg)
               next_token
 
@@ -760,15 +763,20 @@ module Crystal
                 end_location = arg.end_location
               end
 
-              atomic = Call.new(atomic, "#{name}=", arg).at(location).at_end(end_location)
+              atomic.at(location).at_end(end_location)
+              atomic.name = "#{name}="
+              atomic.args = [arg] of ASTNode
               atomic.name_location = name_location
               next
             when .assignment_operator?
+              call = Call.new(atomic, name)
+              unexpected_token unless can_be_assigned?(call)
+
               op_name_location = @token.location
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              call = Call.new(atomic, name).at(location)
+              call.at(location)
               call.name_location = name_location
               atomic = OpAssign.new(call, method, value).at(location)
               atomic.name_location = op_name_location
@@ -6188,7 +6196,7 @@ module Crystal
       when Call
         return false if node.has_parentheses?
         no_args = node.args.empty? && node.named_args.nil? && node.block.nil?
-        return true if node.obj.nil? && no_args
+        return true if Lexer.ident?(node.name) && no_args
         node.name == "[]" && (node.args_in_brackets? || no_args)
       else
         false
