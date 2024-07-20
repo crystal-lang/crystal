@@ -2256,6 +2256,11 @@ module Crystal
     assert_syntax_error "foo &.[](0)=(1)"
     assert_syntax_error "foo &.[](0) = 1"
 
+    assert_syntax_error "foo &.bar.[] 0 =(1)"
+    assert_syntax_error "foo &.bar.[] 0 = 1"
+    assert_syntax_error "foo &.bar.[](0)=(1)"
+    assert_syntax_error "foo &.bar.[](0) = 1"
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
