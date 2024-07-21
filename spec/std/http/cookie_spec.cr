@@ -74,8 +74,8 @@ module HTTP
       cookie = HTTP::Cookie.new("hello", "world")
       cookie.destroy
 
-      assert cookie.value.empty?
-      assert cookie.expired?
+      cookie.value.empty?.should be_true
+      cookie.expired?.should be_true
     end
 
     describe "#name=" do
