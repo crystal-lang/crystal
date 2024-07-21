@@ -70,6 +70,14 @@ module HTTP
       end
     end
 
+    it "#destroy" do
+      cookie = HTTP::Cookie.new("hello", "world")
+      cookie.destroy
+
+      assert cookie.value.empty?
+      assert cookie.expired?
+    end
+
     describe "#name=" do
       it "raises on invalid name" do
         cookie = HTTP::Cookie.new("x", "")
