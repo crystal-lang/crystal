@@ -1506,15 +1506,17 @@ class String
     end
   end
 
-  # Returns a new `String` with the first letter after any space converted to uppercase and every
-  # other letter converted to lowercase.
+  # Returns a new `String` with the first letter after any space converted to uppercase and every other letter converted to lowercase.
+  # Optionally, if *underscore_to_space* is `true`, underscores (`_`) will be converted to a space and the following letter converted to uppercase.
   #
   # ```
-  # "hEllO tAb\tworld".titleize      # => "Hello Tab\tWorld"
-  # "  spaces before".titleize       # => "  Spaces Before"
-  # "x-men: the last stand".titleize # => "X-men: The Last Stand"
+  # "hEllO tAb\tworld".titleize                   # => "Hello Tab\tWorld"
+  # "  spaces before".titleize                    # => "  Spaces Before"
+  # "x-men: the last stand".titleize              # => "X-men: The Last Stand"
+  # "foo_bar".titleize                            # => "Foo_bar"
+  # "foo_bar".titleize(underscore_to_space: true) # => "Foo Bar"
   # ```
-  def titleize(options : Unicode::CaseOptions = :none) : String
+  def titleize(options : Unicode::CaseOptions = :none, *, underscore_to_space : Bool = false) : String
     return self if empty?
 
     if single_byte_optimizable? && (options.none? || options.ascii?)
@@ -1525,9 +1527,18 @@ class String
           byte = to_unsafe[i]
           if byte < 0x80
             char = byte.unsafe_chr
-            replaced_char = upcase_next ? char.upcase : char.downcase
+            replaced_char = if upcase_next
+                              upcase_next = false
+                              char.upcase
+                            elsif underscore_to_space && '_' == char
+                              upcase_next = true
+                              ' '
+                            else
+                              upcase_next = char.ascii_whitespace?
+                              char.downcase
+                            end
+
             buffer[i] = replaced_char.ord.to_u8!
-            upcase_next = char.ascii_whitespace?
           else
             buffer[i] = byte
             upcase_next = false
@@ -1541,22 +1552,27 @@ class String
   end
 
   # Writes a titleized version of `self` to the given *io*.
+  # Optionally, if *underscore_to_space* is `true`, underscores (`_`) will be converted to a space and the following letter converted to uppercase.
   #
   # ```
   # io = IO::Memory.new
   # "x-men: the last stand".titleize io
   # io.to_s # => "X-men: The Last Stand"
   # ```
-  def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+  def titleize(io : IO, options : Unicode::CaseOptions = :none, *, underscore_to_space : Bool = false) : Nil
     upcase_next = true
 
     each_char_with_index do |char, i|
       if upcase_next
+        upcase_next = false
         char.titlecase(options) { |c| io << c }
+      elsif underscore_to_space && '_' == char
+        upcase_next = true
+        io << ' '
       else
+        upcase_next = char.whitespace?
         char.downcase(options) { |c| io << c }
       end
-      upcase_next = char.whitespace?
     end
   end
 

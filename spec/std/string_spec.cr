@@ -724,6 +724,9 @@ describe "String" do
     it { assert_prints "  spáçes before".titleize, "  Spáçes Before" }
     it { assert_prints "testá-se múitô".titleize, "Testá-se Múitô" }
     it { assert_prints "iO iO".titleize(Unicode::CaseOptions::Turkic), "İo İo" }
+    it { assert_prints "foo_Bar".titleize, "Foo_bar" }
+    it { assert_prints "foo_bar".titleize, "Foo_bar" }
+    it { assert_prints "foo_bar".titleize(underscore_to_space: true), "Foo Bar" }
 
     it "handles multi-character mappings correctly (#13533)" do
       assert_prints "ﬄİ İﬄ ǳ Ǳ".titleize, "Ffli̇ İﬄ ǲ ǲ"
@@ -734,6 +737,12 @@ describe "String" do
       "a\xA0b".titleize.should eq("A\xA0b")
       String.build { |io| "\xB5!\xE0\xC1\xB5?".titleize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
       String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
+    end
+
+    describe "with IO" do
+      it { String.build { |io| "foo_Bar".titleize io }.should eq "Foo_bar" }
+      it { String.build { |io| "foo_bar".titleize io }.should eq "Foo_bar" }
+      it { String.build { |io| "foo_bar".titleize(io, underscore_to_space: true) }.should eq "Foo Bar" }
     end
   end
 
