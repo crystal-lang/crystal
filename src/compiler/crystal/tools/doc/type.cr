@@ -3,10 +3,10 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
-  PSEUDO_OBJECT_PREFIX = "CRYSTAL_PSEUDO__"
-  PSEUDO_OBJECT_NOTE   = <<-DOC
+  PSEUDO_CLASS_PREFIX = "CRYSTAL_PSEUDO__"
+  PSEUDO_CLASS_NOTE   = <<-DOC
 
-    NOTE: This is a pseudo-object provided directly by the Crystal compiler.
+    NOTE: This is a pseudo-class provided directly by the Crystal compiler.
     It cannot be reopened nor overridden.
     DOC
 
