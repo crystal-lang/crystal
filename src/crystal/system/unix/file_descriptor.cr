@@ -200,6 +200,14 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pipe(read_blocking, write_blocking)
+    pipe_fds = system_pipe
+    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+    w.sync = true
+    {r, w}
+  end
+
+  def self.system_pipe : StaticArray(LibC::Int, 2)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
 
     {% if LibC.has_method?(:pipe2) %}
@@ -216,11 +224,7 @@ module Crystal::System::FileDescriptor
       end
     {% end %}
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-
-    {r, w}
+    pipe_fds
   end
 
   def self.pread(fd, buffer, offset)
