@@ -1,7 +1,8 @@
-# NOTE: this is a struct because it's a mere pointer to a Deque
-struct Crystal::Epoll::Timers
+# NOTE: this is a struct because it only wraps a const pointer to a deque
+# allocated in the heap
+struct Crystal::Evented::Timers
   def initialize
-    @list = Deque(Epoll::Event*).new
+    @list = Deque(Evented::Event*).new
   end
 
   def empty? : Bool
@@ -27,7 +28,7 @@ struct Crystal::Epoll::Timers
     n.times { @list.shift }
   end
 
-  def add(event : Epoll::Event*) : Nil
+  def add(event : Evented::Event*) : Nil
     if @list.empty?
       @list << event
     elsif index = lookup(event.value.time)
@@ -37,7 +38,7 @@ struct Crystal::Epoll::Timers
     end
   end
 
-  def delete(event : Epoll::Event*) : Nil
+  def delete(event : Evented::Event*) : Nil
     @list.delete(event)
   end
 
