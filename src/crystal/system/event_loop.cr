@@ -3,6 +3,8 @@ abstract class Crystal::EventLoop
   def self.create : self
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
+    {% elsif flag?(:bsd) || flag?(:darwin) %}
+      Crystal::Kqueue::EventLoop.new
     {% elsif flag?(:linux) || flag?(:solaris) %}
       Crystal::Epoll::EventLoop.new
     {% elsif flag?(:unix) %}
@@ -74,6 +76,8 @@ end
 
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
+{% elsif flag?(:bsd) || flag?(:darwin) %}
+  require "./unix/kqueue/event_loop"
 {% elsif flag?(:linux) || flag?(:solaris) %}
   require "./unix/epoll/event_loop"
 {% elsif flag?(:unix) %}
