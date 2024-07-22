@@ -1,13 +1,13 @@
-{% skip_file unless flag?(:linux) || flag?(:solaris) %}
-
 require "./event"
 
 # NOTE: this is a struct because it only wraps a const pointer to a hash
-# allocated in the heap —no need to allocate an object and dereference 2
-# pointers when we can only dereference 1.
-struct Crystal::Epoll::EventQueue
+# allocated in the heap
+struct Crystal::Evented::EventQueue
   class Node
     property fd : Int32
+
+    # TODO: should be a flags enum that tells whether the currently registered
+    # events had readers and/or writers
     property events : Int32 = 0
 
     getter readers = PointerLinkedList(Event).new
@@ -15,6 +15,10 @@ struct Crystal::Epoll::EventQueue
 
     def initialize(@fd : Int32)
       @events = 0
+    end
+
+    def empty? : Bool
+      @readers.empty? && @writers.empty?
     end
 
     def readers? : Bool
