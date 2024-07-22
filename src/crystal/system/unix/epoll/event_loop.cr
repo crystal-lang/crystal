@@ -115,7 +115,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
 
     Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
 
-    if blocking && (time = @timers.next_ready?)
+    if blocking && (time = @mutex.synchronize { @timers.next_ready? })
       # epoll_wait only has milliseconds precision, so we use a timerfd for
       # timeout; arm it to the next ready time
       @timerfd.set(time)
@@ -497,7 +497,7 @@ class Crystal::Epoll::EventLoop < Crystal::EventLoop
   end
 
   # unsafe, yields when there are no more events for fd
-  private def epoll_sync(node)
+  private def epoll_sync(node, &)
     events = 0
     events |= LibC::EPOLLIN if node.readers?
     events |= LibC::EPOLLOUT if node.writers?
