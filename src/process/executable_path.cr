@@ -3,7 +3,11 @@
 # - http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 
 class Process
-  PATH_DELIMITER = {% if flag?(:windows) %} ';' {% else %} ':' {% end %}
+  {% if flag?(:windows) %}
+    PATH_DELIMITER = ';'
+  {% else %}
+    PATH_DELIMITER = ':'
+  {% end %}
 
   # :nodoc:
   INITIAL_PATH = ENV["PATH"]?
@@ -46,7 +50,7 @@ class Process
       # Windows doesn't have "executable" metadata for files, so it also doesn't have files that are "not executable".
       true
     {% else %}
-      File.executable?(path)
+      File::Info.executable?(path)
     {% end %}
   end
 
@@ -91,7 +95,7 @@ class Process
     end
 
     if path && !has_separator
-      path.split(PATH_DELIMITER).each do |path_entry|
+      path.split(PATH_DELIMITER) do |path_entry|
         yield Path.new(path_entry, name)
       end
     end

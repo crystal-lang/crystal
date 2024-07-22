@@ -226,6 +226,8 @@ module Crystal
         node.syntax_replacement = type
         node.bind_to type
       end
+
+      false
     end
 
     def visit(node : Generic)
@@ -353,6 +355,7 @@ module Crystal
 
     def visit(node : Self)
       node.type = the_self(node).instance_type
+      false
     end
 
     def visit(node : Var)
@@ -394,6 +397,7 @@ module Crystal
       else
         node.raise "read before assignment to local variable '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TypeDeclaration)
@@ -628,6 +632,8 @@ module Crystal
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to program.nil_var
       end
+
+      false
     end
 
     def visit(node : ReadInstanceVar)
@@ -1007,14 +1013,13 @@ module Crystal
     end
 
     def visit(node : Block)
-      return if node.visited?
+      return false if node.visited?
 
       node.visited = true
       node.context = current_non_block_context
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      arg_counter = 0
       body_exps = node.body.as?(Expressions).try(&.expressions)
 
       # Variables that we don't want to get their type merged
@@ -1025,26 +1030,30 @@ module Crystal
       ignored_vars_after_block = nil
 
       meta_vars = @meta_vars.dup
+
       node.args.each do |arg|
-        # The parser generates __argN block arguments for tuple unpacking,
-        # and they need a special treatment because they shouldn't override
-        # local variables. So we search the unpacked vars in the body.
-        if arg.name.starts_with?("__arg") && body_exps
-          ignored_vars_after_block = node.args.dup
-
-          while arg_counter < body_exps.size &&
-                (assign = body_exps[arg_counter]).is_a?(Assign) &&
-                (target = assign.target).is_a?(Var) &&
-                (call = assign.value).is_a?(Call) &&
-                (call_var = call.obj).is_a?(Var) &&
-                call_var.name == arg.name
-            bind_block_var(node, target, meta_vars, before_block_vars)
-            ignored_vars_after_block << Var.new(target.name)
-            arg_counter += 1
-          end
-        end
-
         bind_block_var(node, arg, meta_vars, before_block_vars)
+      end
+
+      # If the block has unpacking, like:
+      #
+      #     do |(x, y)|
+      #       ...
+      #     end
+      #
+      # it was transformed to unpack the block vars inside the body:
+      #
+      #     do |__temp_1|
+      #       x, y = __temp_1
+      #       ...
+      #     end
+      #
+      # We need to treat these variables as block arguments (so they don't override existing local variables).
+      if unpacks = node.unpacks
+        ignored_vars_after_block = node.args.dup
+        unpacks.each_value do |unpack|
+          handle_unpacked_block_argument(node, unpack, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
       end
 
       @block_nest += 1
@@ -1094,6 +1103,22 @@ module Crystal
       node.bind_to node.body
 
       false
+    end
+
+    def handle_unpacked_block_argument(node, arg, meta_vars, before_block_vars, ignored_vars_after_block)
+      case arg
+      when Var
+        bind_block_var(node, arg, meta_vars, before_block_vars)
+        ignored_vars_after_block << Var.new(arg.name)
+      when Underscore
+        # Nothing
+      when Splat
+        handle_unpacked_block_argument(node, arg.exp, meta_vars, before_block_vars, ignored_vars_after_block)
+      when Expressions
+        arg.expressions.each do |exp|
+          handle_unpacked_block_argument(node, exp, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
+      end
     end
 
     def bind_block_var(node, target, meta_vars, before_block_vars)
@@ -1611,6 +1636,7 @@ module Crystal
             ivars[node.name] = node_in_callstack(node)
           end
         end
+        false
       end
 
       def visit(node : Var)
@@ -1742,7 +1768,7 @@ module Crystal
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
-        return
+        return false
       end
 
       if needs_type_filters? && (var = get_expression_var(node.obj))
@@ -2041,7 +2067,7 @@ module Crystal
       unless node.has_breaks?
         if endless_while
           node.type = program.no_return
-          return
+          return false
         end
 
         filter_vars TypeFilters.not(cond_type_filters)
@@ -2266,19 +2292,23 @@ module Crystal
     def visit(node : Primitive)
       # If the method where this primitive is defined has a return type, use it
       if return_type = typed_def.return_type
-        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        node.type = (path_lookup || scope).lookup_type(return_type, free_vars: free_vars)
         return false
       end
 
       case node.name
       when "allocate"
         visit_allocate node
+      when "pre_initialize"
+        visit_pre_initialize node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
         visit_pointer_set node
       when "pointer_new"
         visit_pointer_new node
+      when "slice_literal"
+        visit_slice_literal node
       when "argc"
         # Already typed
       when "argv"
@@ -2302,6 +2332,8 @@ module Crystal
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
+
+      false
     end
 
     def visit_va_arg(node)
@@ -2367,6 +2399,42 @@ module Crystal
       end
     end
 
+    def visit_pre_initialize(node)
+      instance_type = scope.instance_type
+
+      case instance_type
+      when GenericClassType
+        node.raise "Can't pre-initialize instance of generic class #{instance_type} without specifying its type vars"
+      when UnionType
+        node.raise "Can't pre-initialize instance of a union type"
+      else
+        if instance_type.abstract?
+          if instance_type.virtual?
+            # This is the same as `.initialize`
+            base_type = instance_type.devirtualize
+
+            extra = Call.new(
+              nil,
+              "raise",
+              StringLiteral.new("Can't pre-initialize abstract class #{base_type}"),
+              global: true).at(node)
+            extra.accept self
+
+            # This `extra` will replace the Primitive node in CleanupTransformer later on.
+            node.extra = extra
+            node.type = @program.no_return
+            return
+          else
+            # If the type is not virtual then we know for sure that the type
+            # can't be instantiated, and we can produce a compile-time error.
+            node.raise "Can't pre-initialize abstract class #{instance_type}"
+          end
+        end
+
+        node.type = instance_type
+      end
+    end
+
     def visit_pointer_malloc(node)
       if scope.instance_type.is_a?(GenericClassType)
         node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
@@ -2396,6 +2464,51 @@ module Crystal
       end
 
       node.type = scope.instance_type
+    end
+
+    def visit_slice_literal(node)
+      call = self.call.not_nil!
+
+      case slice_type = scope.instance_type
+      when GenericClassType # Slice
+        call.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
+      when GenericClassInstanceType # Slice(T)
+        element_type = slice_type.type_vars["T"].type
+        kind = case element_type
+               when IntegerType
+                 element_type.kind
+               when FloatType
+                 element_type.kind
+               else
+                 call.raise "Only slice literals of primitive integer or float types can be created"
+               end
+
+        call.args.each do |arg|
+          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+        end
+
+        # create the internal constant `$Slice:n` to hold the slice contents
+        const_name = "$Slice:#{@program.const_slices.size}"
+        const_value = Nop.new
+        const_value.type = @program.static_array_of(element_type, call.args.size)
+        const = Const.new(@program, @program, const_name, const_value)
+        @program.types[const_name] = const
+        @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, call.args)
+
+        # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
+        pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
+        size_node = NumberLiteral.new(call.args.size.to_s, :i32).at(node)
+        read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
+        extra = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
+
+        extra.accept self
+        node.extra = extra
+        node.type = slice_type
+        call.expanded = extra
+      else
+        node.raise "BUG: Unknown scope for slice_literal primitive"
+      end
     end
 
     def visit_struct_or_union_set(node)
@@ -2523,6 +2636,30 @@ module Crystal
     end
 
     def visit(node : SizeOf)
+      visit_size_or_align_of(node) do |type|
+        @program.size_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : InstanceSizeOf)
+      visit_instance_size_or_align_of(node) do |type|
+        @program.instance_size_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : AlignOf)
+      visit_size_or_align_of(node) do |type|
+        @program.align_of(type.sizeof_type)
+      end
+    end
+
+    def visit(node : InstanceAlignOf)
+      visit_instance_size_or_align_of(node) do |type|
+        @program.instance_align_of(type.sizeof_type)
+      end
+    end
+
+    private def visit_size_or_align_of(node)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2530,15 +2667,15 @@ module Crystal
       type = node.exp.type?
 
       if type.is_a?(GenericType)
-        node.exp.raise "can't take sizeof uninstantiated generic type #{type}"
+        node.exp.raise "can't take #{sizeof_description(node)} of uninstantiated generic type #{type}"
       end
 
-      # Try to resolve the sizeof right now to a number literal
-      # (useful for sizeof inside as a generic type argument, but also
+      # Try to resolve the node right now to a number literal
+      # (useful for sizeof/alignof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && !node.exp.is_a?(TypeOf) &&
          !(type.module? || (type.abstract? && type.struct?))
-        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
+        expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2548,7 +2685,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf)
+    private def visit_instance_size_or_align_of(node)
       @in_type_args += 1
       node.exp.accept self
       @in_type_args -= 1
@@ -2556,14 +2693,14 @@ module Crystal
       type = node.exp.type?
 
       if type.is_a?(GenericType)
-        node.exp.raise "can't take instance_sizeof uninstantiated generic type #{type}"
+        node.exp.raise "can't take #{sizeof_description(node)} of uninstantiated generic type #{type}"
       end
 
       # Try to resolve the instance_sizeof right now to a number literal
-      # (useful for sizeof inside as a generic type argument, but also
+      # (useful for instance_sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && type.devirtualize.class? && !type.metaclass? && !type.struct? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
+        expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2571,6 +2708,19 @@ module Crystal
       node.type = @program.int32
 
       false
+    end
+
+    private def sizeof_description(node)
+      case node
+      in SizeOf
+        "size"
+      in AlignOf
+        "alignment"
+      in InstanceSizeOf
+        "instance size"
+      in InstanceAlignOf
+        "instance alignment"
+      end
     end
 
     def visit(node : OffsetOf)
@@ -2620,14 +2770,26 @@ module Crystal
       false
     end
 
+    private def allowed_type_in_rescue?(type : UnionType) : Bool
+      type.union_types.all? do |subtype|
+        allowed_type_in_rescue? subtype
+      end
+    end
+
+    private def allowed_type_in_rescue?(type : Crystal::Type) : Bool
+      type.implements?(@program.exception) || type.module?
+    end
+
     def visit(node : Rescue)
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.implements?(@program.exception)
-            type.raise "#{instance_type} is not a subclass of Exception"
+
+          unless self.allowed_type_in_rescue? instance_type
+            type.raise "#{instance_type} cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
           end
+
           instance_type
         end
       end
@@ -2901,31 +3063,38 @@ module Crystal
 
     def visit(node : Nop)
       node.type = @program.nil
+      false
     end
 
     def visit(node : NilLiteral)
       node.type = @program.nil
+      false
     end
 
     def visit(node : BoolLiteral)
       node.type = program.bool
+      false
     end
 
     def visit(node : NumberLiteral)
       node.type = program.type_from_literal_kind node.kind
+      false
     end
 
     def visit(node : CharLiteral)
       node.type = program.char
+      false
     end
 
     def visit(node : SymbolLiteral)
       node.type = program.symbol
       program.symbols.add node.value
+      false
     end
 
     def visit(node : StringLiteral)
       node.type = program.string
+      false
     end
 
     def visit(node : RegexLiteral)
@@ -3076,7 +3245,7 @@ module Crystal
     # # Helpers
 
     def free_vars
-      match_context.try &.free_vars
+      match_context.try &.bound_free_vars
     end
 
     def check_closured(var, mark_as_mutably_closured : Bool = false)

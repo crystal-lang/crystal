@@ -1,3 +1,5 @@
+require "process/executable_path" # Process::PATH_DELIMITER
+
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
@@ -32,6 +34,7 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
+    {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
     GC.init
 
     status =

@@ -192,11 +192,11 @@ module HTTP
     end
 
     private def read_crlf
-      char = @io.read_char
-      if char == '\r'
-        char = @io.read_char
+      char = @io.read_byte
+      if char === '\r'
+        char = @io.read_byte
       end
-      if char != '\n'
+      unless char === '\n'
         raise IO::Error.new("Invalid HTTP chunked content: expected CRLF")
       end
     end

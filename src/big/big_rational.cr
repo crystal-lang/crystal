@@ -43,36 +43,17 @@ struct BigRational < Number
     initialize(num, 1)
   end
 
-  # Creates a exact representation of float as rational.
-  def initialize(num : Float::Primitive)
-    # It ensures that `BigRational.new(f) == f`
-    # It relies on fact, that mantissa is at most 53 bits
-    frac, exp = Math.frexp num
-    ifrac = Math.ldexp(frac.to_f64, Float64::MANT_DIGITS).to_i64
-    exp -= Float64::MANT_DIGITS
-    initialize ifrac, 1
-    if exp >= 0
-      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
-    else
-      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
-    end
+  # Creates an exact representation of float as rational.
+  #
+  # Raises `ArgumentError` if *num* is not finite.
+  def self.new(num : Float::Primitive)
+    raise ArgumentError.new "Can only construct from a finite number" unless num.finite?
+    new { |mpq| LibGMP.mpq_set_d(mpq, num) }
   end
 
-  # :ditto:
-  def initialize(num : BigFloat)
-    frac, exp = Math.frexp num
-    prec = LibGMP.mpf_get_prec(frac)
-    # the mantissa has at most `prec + 1` bits, because the first fractional bit
-    # of `frac` is always 1, and `prec` variable bits follow
-    # TODO: use `Math.ldexp` after #11007
-    ifrac = BigFloat.new { |mpf| LibGMP.mpf_mul_2exp(mpf, frac, prec + 1) }.to_big_i
-    exp -= prec + 1
-    initialize ifrac, 1
-    if exp >= 0
-      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
-    else
-      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
-    end
+  # Creates an exact representation of float as rational.
+  def self.new(num : BigFloat)
+    new { |mpq| LibGMP.mpq_set_f(mpq, num) }
   end
 
   # Creates a `BigRational` from the given *num*.
@@ -97,11 +78,16 @@ struct BigRational < Number
   end
 
   def numerator : BigInt
-    BigInt.new { |mpz| LibGMP.mpq_get_num(mpz, self) }
+    # Returns `LibGMP.mpq_numref(self)`, whose C macro expansion effectively
+    # produces a raw member access. This is only as safe as copying `BigInt`s by
+    # value, as both involve copying `LibGMP::MPZ` around which has reference
+    # semantics, and `BigInt`s cannot be safely mutated in-place this way; see
+    # #9825 for details. Ditto for `#denominator`.
+    BigInt.new(@mpq._mp_num)
   end
 
   def denominator : BigInt
-    BigInt.new { |mpz| LibGMP.mpq_get_den(mpz, self) }
+    BigInt.new(@mpq._mp_den)
   end
 
   def <=>(other : BigRational)
@@ -113,11 +99,25 @@ struct BigRational < Number
   end
 
   def <=>(other : BigFloat)
-    to_big_f <=> other.to_big_f
+    self <=> other.to_big_r
   end
 
   def <=>(other : Int)
-    LibGMP.mpq_cmp(mpq, other.to_big_r)
+    Int.primitive_si_ui_check(other) do |si, ui, big_i|
+      {
+        si:    LibGMP.mpq_cmp_si(self, {{ si }}, 1),
+        ui:    LibGMP.mpq_cmp_ui(self, {{ ui }}, 1),
+        big_i: self <=> {{ big_i }},
+      }
+    end
+  end
+
+  def <=>(other : BigInt)
+    LibGMP.mpq_cmp_z(self, other)
+  end
+
+  def ==(other : BigRational) : Bool
+    LibGMP.mpq_equal(self, other) != 0
   end
 
   def +(other : BigRational) : BigRational
@@ -151,17 +151,83 @@ struct BigRational < Number
 
   Number.expand_div [BigInt, BigFloat, BigDecimal], BigRational
 
+  def //(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new((numerator * other.denominator) // (denominator * other.numerator))
+  end
+
+  def //(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator // (denominator * other))
+  end
+
+  def %(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new(
+      (numerator * other.denominator) % (denominator * other.numerator),
+      denominator * other.denominator,
+    )
+  end
+
+  def %(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator % (denominator * other), denominator)
+  end
+
+  def tdiv(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new((numerator * other.denominator).tdiv(denominator * other.numerator))
+  end
+
+  def tdiv(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator.tdiv(denominator * other))
+  end
+
+  def remainder(other : BigRational) : BigRational
+    check_division_by_zero other
+    BigRational.new(
+      (numerator * other.denominator).remainder(denominator * other.numerator),
+      denominator * other.denominator,
+    )
+  end
+
+  def remainder(other : Int) : BigRational
+    check_division_by_zero other
+    BigRational.new(numerator.remainder(denominator * other), denominator)
+  end
+
   def ceil : BigRational
-    diff = (denominator - numerator % denominator) % denominator
-    BigRational.new(numerator + diff, denominator)
+    BigRational.new(-(-numerator // denominator))
   end
 
   def floor : BigRational
-    BigRational.new(numerator - numerator % denominator, denominator)
+    BigRational.new(numerator // denominator)
   end
 
   def trunc : BigRational
-    self < 0 ? ceil : floor
+    BigRational.new(numerator.tdiv(denominator))
+  end
+
+  def round_away : BigRational
+    rem2 = numerator.remainder(denominator).abs * 2
+    x = BigRational.new(numerator.tdiv(denominator))
+    x += sign if rem2 >= denominator
+    x
+  end
+
+  def round_even : BigRational
+    rem2 = numerator.remainder(denominator).abs * 2
+    x = BigRational.new(numerator.tdiv(denominator))
+    x += sign if rem2 > denominator || (rem2 == denominator && x.numerator.odd?)
+    x
+  end
+
+  # :inherit:
+  def integer? : Bool
+    # since all `BigRational`s are canonicalized, the denominator must be
+    # positive and coprime with the numerator
+    denominator == 1
   end
 
   # Divides the rational by (2 ** *other*)
@@ -218,9 +284,6 @@ struct BigRational < Number
   def abs : BigRational
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
-
-  # TODO: improve this
-  def_hash to_f64
 
   # Returns the `Float64` representing this rational.
   def to_f : Float64
@@ -295,6 +358,13 @@ struct BigRational < Number
 
   def inspect(io : IO) : Nil
     to_s io
+  end
+
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    numerator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    io << '/'
+    denominator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
   end
 
   def clone
@@ -372,6 +442,12 @@ struct Float
   end
 end
 
+struct BigFloat
+  def <=>(other : BigRational)
+    -(other <=> self)
+  end
+end
+
 module Math
   # Calculates the square root of *value*.
   #
@@ -387,18 +463,13 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  private HASH_MODULUS_RAT_P = BigRational.new((1_u64 << HASH_BITS) - 1)
-  private HASH_MODULUS_RAT_N = -BigRational.new((1_u64 << HASH_BITS) - 1)
-
-  def float(value : BigRational)
-    rem = value
-    if value >= HASH_MODULUS_RAT_P || value <= HASH_MODULUS_RAT_N
-      num = value.numerator
-      denom = value.denominator
-      div = num.tdiv(denom)
-      floor = div.tdiv(HASH_MODULUS)
-      rem -= floor * HASH_MODULUS
+  def self.reduce_num(value : BigRational)
+    inverse = BigInt.new do |mpz|
+      if LibGMP.invert(mpz, value.denominator, HASH_MODULUS_INT_P) == 0
+        # inverse doesn't exist, i.e. denominator is a multiple of HASH_MODULUS
+        return value >= 0 ? HASH_INF_PLUS : HASH_INF_MINUS
+      end
     end
-    rem.to_big_f.hash
+    UInt64.mulmod(reduce_num(value.numerator.abs), inverse.to_u64!, HASH_MODULUS) &* value.sign
   end
 end

@@ -1,6 +1,6 @@
 require "spec"
 require "yaml"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def assert_built(expected, expect_document_end = false, *, file = __FILE__, line = __LINE__, &)
   # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).

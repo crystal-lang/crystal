@@ -37,7 +37,7 @@ struct Slice(T)
     {% if @type.name != "Slice(T)" && T < Number %}
       {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
+      %ptr = Pointer(typeof({{args.splat}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
@@ -272,7 +272,7 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
+    start, count = Indexable.range_to_index_and_count(range, size) || return nil
     self[start, count]?
   end
 
@@ -488,14 +488,14 @@ struct Slice(T)
     super(range) { |i| yield i }
   end
 
-  def copy_from(source : Pointer(T), count)
+  def copy_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.copy_from(source, count)
   end
 
-  def copy_to(target : Pointer(T), count)
+  def copy_to(target : Pointer(T), count) : Nil
     check_size(count)
 
     @pointer.copy_to(target, count)
@@ -513,7 +513,7 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.copy_to src # raises IndexError
   # ```
-  def copy_to(target : self)
+  def copy_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -524,18 +524,18 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def copy_from(source : self)
+  def copy_from(source : self) : Nil
     source.copy_to(self)
   end
 
-  def move_from(source : Pointer(T), count)
+  def move_from(source : Pointer(T), count) : Nil
     check_writable
     check_size(count)
 
     @pointer.move_from(source, count)
   end
 
-  def move_to(target : Pointer(T), count)
+  def move_to(target : Pointer(T), count) : Nil
     @pointer.move_to(target, count)
   end
 
@@ -554,7 +554,7 @@ struct Slice(T)
   # ```
   #
   # See also: `Pointer#move_to`.
-  def move_to(target : self)
+  def move_to(target : self) : Nil
     target.check_writable
     raise IndexError.new if target.size < size
 
@@ -566,7 +566,7 @@ struct Slice(T)
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def move_from(source : self)
+  def move_from(source : self) : Nil
     source.move_to(self)
   end
 
@@ -932,7 +932,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
 
     dup.sort! &block
@@ -954,7 +954,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1055,7 +1055,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
 
     Slice.merge_sort!(self, block)
@@ -1098,7 +1098,7 @@ struct Slice(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)

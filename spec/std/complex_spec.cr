@@ -1,6 +1,9 @@
 require "spec"
 require "complex"
 require "../support/number"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 
 # exact equality, including component signs
 private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
@@ -17,9 +20,8 @@ end
 describe "Complex" do
   describe "as numbers" do
     it_can_convert_between([Complex], [Complex])
-    it_can_convert_between({{BUILTIN_NUMBER_TYPES_LTE_64}}, [Complex])
-    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES_LTE_64}})
-    # TODO pending conversion between Int128
+    it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, [Complex])
+    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES}})
 
     division_between_returns {{BUILTIN_NUMBER_TYPES}}, [Complex], Complex
     division_between_returns [Complex], {{BUILTIN_NUMBER_TYPES}}, Complex
@@ -50,6 +52,10 @@ describe "Complex" do
       c = 4.2
       (a == b).should be_true
       (a == c).should be_false
+
+      {% unless flag?(:wasm32) %}
+        (a == BigDecimal.new(53, 1)).should be_false
+      {% end %}
     end
 
     it "number == complex" do
@@ -58,6 +64,10 @@ describe "Complex" do
       c = Complex.new(7.2, 0)
       (a == b).should be_true
       (a == c).should be_false
+
+      {% unless flag?(:wasm32) %}
+        (BigDecimal.new(72, 1) == c).should be_false
+      {% end %}
     end
   end
 

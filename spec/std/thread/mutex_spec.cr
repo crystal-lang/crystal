@@ -6,9 +6,10 @@
   {% skip_file %}
 {% end %}
 
-require "spec"
+require "../spec_helper"
 
-describe Thread::Mutex do
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread::Mutex do
   it "synchronizes" do
     a = 0
     mutex = Thread::Mutex.new

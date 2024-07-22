@@ -1,23 +1,30 @@
 require "spec"
 require "unicode"
 require "spec/helpers/iterate"
-require "../support/string"
+require "spec/helpers/string"
 
 describe "Char" do
-  describe "upcase" do
+  describe "#upcase" do
     it { 'a'.upcase.should eq('A') }
     it { '1'.upcase.should eq('1') }
+    it { assert_iterates_yielding ['F', 'F', 'L'], 'ﬄ'.upcase }
   end
 
-  describe "downcase" do
+  describe "#downcase" do
     it { 'A'.downcase.should eq('a') }
     it { '1'.downcase.should eq('1') }
-    it do
-      actual = [] of Char
-      'ß'.downcase(Unicode::CaseOptions::Fold) { |c| actual << c }
-      actual.should eq(['s', 's'])
-    end
+    it { assert_iterates_yielding ['i', '\u{0307}'], 'İ'.downcase }
+    it { assert_iterates_yielding ['s', 's'], 'ß'.downcase(Unicode::CaseOptions::Fold) }
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
+    it { 'ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') }
+    it { 'Ꭰ'.downcase(Unicode::CaseOptions::Fold).should eq('Ꭰ') }
+  end
+
+  describe "#titlecase" do
+    it { 'a'.titlecase.should eq('A') }
+    it { '1'.titlecase.should eq('1') }
+    it { '\u{10D0}'.titlecase.should eq('\u{10D0}') } # GEORGIAN LETTER AN
+    it { assert_iterates_yielding ['F', 'f', 'l'], 'ﬄ'.titlecase }
   end
 
   it "#succ" do
@@ -85,6 +92,13 @@ describe "Char" do
     it { 'Á'.lowercase?.should be_false }
     it { '1'.lowercase?.should be_false }
     it { ' '.lowercase?.should be_false }
+  end
+
+  describe "#titlecase?" do
+    it { 'ǲ'.titlecase?.should be_true }
+    it { 'ᾈ'.titlecase?.should be_true }
+    it { 'A'.titlecase?.should be_false }
+    it { 'a'.titlecase?.should be_false }
   end
 
   describe "ascii_letter?" do

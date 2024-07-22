@@ -39,6 +39,46 @@ require "./enumerable"
 # iter.size # => 0
 # ```
 #
+# ### Iterating step-by-step
+#
+# An iterator returns its next element on the method `#next`.
+# Its return type is a union of the iterator's element type and the `Stop` type:
+# `T | Iterator::Stop`.
+# The stop type is a sentinel value which indicates that the iterator has
+# reached its end. It usually needs to be handled and filtered out in order to
+# use the element value for anything useful.
+# Unlike `Nil` it's not an implicitly falsey type.
+#
+# ```
+# iter = (1..5).each
+#
+# # Unfiltered elements contain `Iterator::Stop` type
+# iter.next + iter.next # Error: expected argument #1 to 'Int32#+' to be Int32, not (Int32 | Iterator::Stop)
+#
+# # Type filtering eliminates the stop type
+# a = iter.next
+# b = iter.next
+# unless a.is_a?(Iterator::Stop) || b.is_a?(Iterator::Stop)
+#   a + b # => 3
+# end
+# ```
+#
+# `Iterator::Stop` is only present in the return type of `#next`. All other
+# methods remove it from their return types.
+#
+# Iterators can be used to build a loop.
+#
+# ```
+# iter = (1..5).each
+# sum = 0
+# while !(elem = iter.next).is_a?(Iterator::Stop)
+#   sum += elem
+# end
+# sum # => 15
+# ```
+#
+# ### Implementing an Iterator
+#
 # To implement an `Iterator` you need to define a `next` method that must return the next
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).
@@ -1283,18 +1323,14 @@ module Iterator(T)
     include IteratorWrapper
 
     def initialize(@iterator : I, @func : T -> U)
-      @hash = {} of U => Bool
+      @set = Set(U).new
     end
 
     def next
       while true
         value = wrapped_next
         transformed = @func.call value
-
-        unless @hash[transformed]?
-          @hash[transformed] = true
-          return value
-        end
+        return value if @set.add?(transformed)
       end
     end
   end
@@ -1322,7 +1358,7 @@ module Iterator(T)
   end
 
   private class WithIndexIterator(I, T, O)
-    include Iterator({T, Int32})
+    include Iterator({T, O})
     include IteratorWrapper
 
     def initialize(@iterator : I, @offset : O, @index : O = offset)
@@ -1455,21 +1491,22 @@ module Iterator(T)
   #
   # See also: `Enumerable#chunks`.
   def chunk(reuse = false, &block : T -> U) forall T, U
-    ChunkIterator(typeof(self), T, U).new(self, reuse, &block)
+    ChunkIterator(typeof(self), T, U, typeof(::Enumerable::Chunk.key_type(self, block))).new(self, reuse, &block)
   end
 
-  private class ChunkIterator(I, T, U)
-    include Iterator(Tuple(U, Array(T)))
+  private class ChunkIterator(I, T, U, V)
+    include Iterator(Tuple(V, Array(T)))
     @iterator : I
-    @init : {U, T}?
+    @init : {V, T}?
 
     def initialize(@iterator : Iterator(T), reuse, &@original_block : T -> U)
-      @acc = Enumerable::Chunk::Accumulator(T, U).new(reuse)
+      @acc = ::Enumerable::Chunk::Accumulator(T, V).new(reuse)
     end
 
     def next
       if init = @init
-        @acc.init(*init)
+        k, v = init
+        @acc.init(k, v)
         @init = nil
       end
 
@@ -1481,10 +1518,10 @@ module Iterator(T)
         else
           tuple = @acc.fetch
           if tuple
-            @init = {key, val}
+            @init = {key, val} unless key.is_a?(::Enumerable::Chunk::Drop.class)
             return tuple
           else
-            @acc.init(key, val)
+            @acc.init(key, val) unless key.is_a?(::Enumerable::Chunk::Drop.class)
           end
         end
       end
@@ -1492,13 +1529,8 @@ module Iterator(T)
       if tuple = @acc.fetch
         return tuple
       end
-      stop
-    end
 
-    private def init_state
-      @init = nil
-      @acc.reset
-      self
+      stop
     end
   end
 

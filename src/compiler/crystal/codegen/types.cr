@@ -69,6 +69,8 @@ module Crystal
         self.tuple_types.any? &.has_inner_pointers?
       when NamedTupleInstanceType
         self.entries.any? &.type.has_inner_pointers?
+      when ReferenceStorageType
+        self.reference_type.has_inner_pointers?
       when PrimitiveType
         false
       when EnumType
@@ -185,7 +187,7 @@ module Crystal
     property? no_init_flag = false
 
     def initialized_llvm_name
-      "#{llvm_name}:init"
+      "#{llvm_name}:const_init"
     end
 
     # Returns `true` if this constant's value is a simple literal, like

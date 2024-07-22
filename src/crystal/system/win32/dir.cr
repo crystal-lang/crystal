@@ -55,9 +55,11 @@ module Crystal::System::Dir
   def self.data_to_entry(data)
     name = String.from_utf16(data.cFileName.to_unsafe)[0]
     unless data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_REPARSE_POINT) && data.dwReserved0 == LibC::IO_REPARSE_TAG_SYMLINK
-      dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
+      dir = data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_DIRECTORY)
     end
-    Entry.new(name, dir)
+    native_hidden = data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_HIDDEN)
+    os_hidden = native_hidden && data.dwFileAttributes.bits_set?(LibC::FILE_ATTRIBUTE_SYSTEM)
+    Entry.new(name, dir, native_hidden, os_hidden)
   end
 
   def self.rewind(dir : DirHandle) : Nil
@@ -145,8 +147,8 @@ module Crystal::System::Dir
   end
 
   def self.create(path : String, mode : Int32) : Nil
-    if LibC._wmkdir(System.to_wstr(path)) == -1
-      raise ::File::Error.from_errno("Unable to create directory", file: path)
+    if LibC.CreateDirectoryW(System.to_wstr(path), nil) == 0
+      raise ::File::Error.from_winerror("Unable to create directory", file: path)
     end
   end
 
@@ -168,7 +170,17 @@ module Crystal::System::Dir
       raise ::File::Error.new("Cannot remove directory that is a reparse point: '#{path.inspect_unquoted}'", file: path)
     end
 
-    return true if LibC._wrmdir(win_path) == 0
-    raise ::File::Error.from_errno("Unable to remove directory", file: path)
+    # Windows cannot delete read-only files, so we unset the attribute here, but
+    # restore it afterwards if deletion still failed
+    read_only_removed = false
+    if attributes.bits_set?(LibC::FILE_ATTRIBUTE_READONLY)
+      if LibC.SetFileAttributesW(win_path, attributes & ~LibC::FILE_ATTRIBUTE_READONLY) != 0
+        read_only_removed = true
+      end
+    end
+
+    return true if LibC.RemoveDirectoryW(win_path) != 0
+    LibC.SetFileAttributesW(win_path, attributes) if read_only_removed
+    raise ::File::Error.from_winerror("Unable to remove directory", file: path)
   end
 end

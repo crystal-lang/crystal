@@ -43,16 +43,21 @@ lib LibC
   fun GetCurrentProcessId : DWORD
   fun OpenProcess(dwDesiredAccess : DWORD, bInheritHandle : BOOL, dwProcessId : DWORD) : HANDLE
   fun GetExitCodeProcess(hProcess : HANDLE, lpExitCode : DWORD*) : BOOL
+  fun ExitProcess(uExitCode : UInt) : NoReturn
   fun TerminateProcess(hProcess : HANDLE, uExitCode : UInt) : BOOL
   fun CreateProcessW(lpApplicationName : LPWSTR, lpCommandLine : LPWSTR,
                      lpProcessAttributes : SECURITY_ATTRIBUTES*, lpThreadAttributes : SECURITY_ATTRIBUTES*,
                      bInheritHandles : BOOL, dwCreationFlags : DWORD,
                      lpEnvironment : Void*, lpCurrentDirectory : LPWSTR,
                      lpStartupInfo : STARTUPINFOW*, lpProcessInformation : PROCESS_INFORMATION*) : BOOL
+  {% if LibC::WIN32_WINNT >= LibC::WIN32_WINNT_WIN10 %}
+    fun SetThreadDescription(hThread : HANDLE, lpThreadDescription : LPWSTR) : LONG
+  {% end %}
   fun SetThreadStackGuarantee(stackSizeInBytes : DWORD*) : BOOL
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
   fun SwitchToThread : BOOL
+  fun QueueUserAPC(pfnAPC : PAPCFUNC, hThread : HANDLE, dwData : ULONG_PTR) : DWORD
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end

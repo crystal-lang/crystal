@@ -212,6 +212,20 @@ class JSONAttrWithTimeEpoch
   property value : Time
 end
 
+class JSONAttrNilableWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time?
+end
+
+class JSONAttrDefaultWithTimeEpoch
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Time::EpochConverter)]
+  property value : Time = Time.unix(0)
+end
+
 class JSONAttrWithTimeEpochMillis
   include JSON::Serializable
 
@@ -405,7 +419,8 @@ class JSONVariableDiscriminatorValueType
   use_json_discriminator "type", {
                                          0 => JSONVariableDiscriminatorNumber,
     "1"                                    => JSONVariableDiscriminatorString,
-    true                                   => JSONVariableDiscriminatorBool,
+    true                                   => JSONVariableDiscriminatorBoolTrue,
+    false                                  => JSONVariableDiscriminatorBoolFalse,
     JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
     JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
@@ -417,7 +432,10 @@ end
 class JSONVariableDiscriminatorString < JSONVariableDiscriminatorValueType
 end
 
-class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
+class JSONVariableDiscriminatorBoolTrue < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorBoolFalse < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
@@ -791,6 +809,16 @@ describe "JSON mapping" do
     end
   end
 
+  it "converter with null value (#13655)" do
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value": null})).value.should be_nil
+    JSONAttrNilableWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
+  it "converter with default value" do
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value": null})).value.should eq Time.unix(0)
+    JSONAttrDefaultWithTimeEpoch.from_json(%({"value":1459859781})).value.should eq Time.unix(1459859781)
+  end
+
   it "uses Time::EpochConverter" do
     string = %({"value":1459859781})
     json = JSONAttrWithTimeEpoch.from_json(string)
@@ -1106,7 +1134,10 @@ describe "JSON mapping" do
       object_string.should be_a(JSONVariableDiscriminatorString)
 
       object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": true}))
-      object_bool.should be_a(JSONVariableDiscriminatorBool)
+      object_bool.should be_a(JSONVariableDiscriminatorBoolTrue)
+
+      object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": false}))
+      object_bool.should be_a(JSONVariableDiscriminatorBoolFalse)
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)

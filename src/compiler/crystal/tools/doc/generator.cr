@@ -1,4 +1,4 @@
-require "../../../../../lib/markd/src/markd"
+require "markd"
 require "crystal/syntax_highlighter/html"
 
 class Crystal::Doc::Generator
@@ -227,7 +227,7 @@ class Crystal::Doc::Generator
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
      "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
-     "LIBRARY_PATH"}.each do |name|
+     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -290,7 +290,7 @@ class Crystal::Doc::Generator
   end
 
   def summary(context, string)
-    line = fetch_doc_lines(string).lines.first? || ""
+    line = fetch_doc_lines(string.strip).lines.first? || ""
 
     dot_index = line =~ /\.($|\s)/
     if dot_index

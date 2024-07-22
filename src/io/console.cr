@@ -31,7 +31,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def noecho! : Nil
-    system_echo(false) { return }
+    system_echo(false)
   end
 
   # Enables character echoing on this `IO`.
@@ -40,7 +40,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def echo! : Nil
-    system_echo(true) { return }
+    system_echo(true)
   end
 
   # Yields `self` to the given block, enables character processing for the
@@ -75,7 +75,7 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def cooked! : Nil
-    system_raw(false) { return }
+    system_raw(false)
   end
 
   # Enables raw mode on this `IO`.
@@ -86,13 +86,13 @@ class IO::FileDescriptor < IO
   #
   # Raises `IO::Error` if this `IO` is not a terminal device.
   def raw! : Nil
-    system_raw(true) { return }
+    system_raw(true)
   end
 
   @[Deprecated]
   macro noecho_from_tc_mode!
     mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   @[Deprecated]
@@ -109,12 +109,12 @@ class IO::FileDescriptor < IO
                      Termios::LocalMode::ICANON |
                      Termios::LocalMode::ISIG |
                      Termios::LocalMode::IEXTEN).value
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   @[Deprecated]
   macro raw_from_tc_mode!
-    LibC.cfmakeraw(pointerof(mode))
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    Crystal::System::FileDescriptor.cfmakeraw(pointerof(mode))
+    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 end

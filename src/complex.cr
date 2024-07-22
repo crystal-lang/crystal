@@ -37,7 +37,7 @@ struct Complex
 
   # :ditto:
   def ==(other : Number)
-    self == other.to_c
+    @real == other && @imag.zero?
   end
 
   # :ditto:
@@ -59,32 +59,14 @@ struct Complex
     @real
   end
 
-  # Returns the value as a `Float32` if possible (the imaginary part should be exactly zero),
-  # raises otherwise.
-  def to_f32 : Float32
-    to_f64.to_f32
-  end
-
   # See `#to_f64`.
   def to_f
     to_f64
   end
 
-  # Returns the value as an `Int64` if possible (the imaginary part should be exactly zero),
-  # raises otherwise.
-  def to_i64 : Int64
-    to_f64.to_i64
-  end
-
-  delegate to_i32, to_i16, to_i8, to: to_i64
-
-  # Returns the value as an `UInt64` if possible (the imaginary part should be exactly zero),
-  # raises otherwise.
-  def to_u64 : UInt64
-    to_f64.to_u64
-  end
-
-  delegate to_u32, to_u16, to_u8, to: to_u64
+  delegate to_i128, to_i64, to_i32, to_i16, to_i8, to: to_f64
+  delegate to_u128, to_u64, to_u32, to_u16, to_u8, to: to_f64
+  delegate to_f32, to: to_f64
 
   # See `#to_i32`.
   def to_i
@@ -316,18 +298,23 @@ struct Complex
 end
 
 struct Number
+  # Returns a `Complex` object with the value of `self` as the real part.
   def to_c : Complex
     Complex.new(self, 0)
   end
 
+  # Returns a `Complex` object with the value of `self` as the imaginary part.
   def i : Complex
     Complex.new(0, self)
   end
 
   def ==(other : Complex)
-    to_c == other
+    other == self
   end
 
+  # [Cis](https://en.wikipedia.org/wiki/Cis_(mathematics)) is a mathematical notation representing `cos x + i sin x`.
+  #
+  # Returns a `Complex` object with real part `Math.cos(self)` and imaginary part `Math.sin(self)`, where `self` represents the angle in radians.
   def cis : Complex
     Complex.new(Math.cos(self), Math.sin(self))
   end

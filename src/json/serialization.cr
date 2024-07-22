@@ -219,8 +219,14 @@ module JSON
           {% for name, value in properties %}
             when {{value[:key]}}
               begin
-                {% if (value[:has_default] && !value[:nilable]) || value[:root] %}
-                  next if pull.read_null?
+                {% if value[:has_default] || value[:nilable] || value[:root] %}
+                  if pull.read_null?
+                    {% if value[:nilable] %}
+                      %var{name} = nil
+                      %found{name} = true
+                    {% end %}
+                    next
+                  end
                 {% end %}
 
                 %var{name} =
@@ -442,7 +448,7 @@ module JSON
           end
         end
 
-        unless discriminator_value
+        if discriminator_value.nil?
           raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
         end
 

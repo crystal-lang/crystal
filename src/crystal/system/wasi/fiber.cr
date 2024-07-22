@@ -1,5 +1,5 @@
 module Crystal::System::Fiber
-  def self.allocate_stack(stack_size) : Void*
+  def self.allocate_stack(stack_size, protect) : Void*
     LibC.malloc(stack_size)
   end
 

@@ -1,5 +1,5 @@
 require "spec"
-require "../support/string"
+require "spec/helpers/string"
 
 enum SpecEnum : Int8
   One
@@ -124,9 +124,40 @@ describe Enum do
   it "gets value with to_i" do
     SpecEnum::Two.to_i.should eq(1)
     SpecEnum::Two.to_i.should be_a(Int32)
+  end
+
+  it "gets value with to_i<bit>" do
+    SpecEnum::Two.to_i8.should eq(1)
+    SpecEnum::Two.to_i8.should be_a(Int8)
+
+    SpecEnum::Two.to_i16.should eq(1)
+    SpecEnum::Two.to_i16.should be_a(Int16)
+
+    SpecEnum::Two.to_i32.should eq(1)
+    SpecEnum::Two.to_i32.should be_a(Int32)
 
     SpecEnum::Two.to_i64.should eq(1)
     SpecEnum::Two.to_i64.should be_a(Int64)
+
+    SpecEnum::Two.to_i128.should eq(1)
+    SpecEnum::Two.to_i128.should be_a(Int128)
+  end
+
+  it "gets value with to_u<bit>" do
+    SpecEnum::Two.to_u8.should eq(1)
+    SpecEnum::Two.to_u8.should be_a(UInt8)
+
+    SpecEnum::Two.to_u16.should eq(1)
+    SpecEnum::Two.to_u16.should be_a(UInt16)
+
+    SpecEnum::Two.to_u32.should eq(1)
+    SpecEnum::Two.to_u32.should be_a(UInt32)
+
+    SpecEnum::Two.to_u64.should eq(1)
+    SpecEnum::Two.to_u64.should be_a(UInt64)
+
+    SpecEnum::Two.to_u128.should eq(1)
+    SpecEnum::Two.to_u128.should be_a(UInt128)
   end
 
   it "does +" do
@@ -288,6 +319,8 @@ describe Enum do
 
     SpecEnum2.parse("FORTY_FOUR").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("forty_four").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FORTY-FOUR").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("forty-four").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("FortyFour").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("FORTYFOUR").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("fortyfour").should eq(SpecEnum2::FORTY_FOUR)
@@ -301,9 +334,10 @@ describe Enum do
     SpecEnumWithCaseSensitiveMembers.parse("Foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
   end
 
-  it "parses?" do
+  it ".parse?" do
     SpecEnum.parse?("Two").should eq(SpecEnum::Two)
     SpecEnum.parse?("Four").should be_nil
+    SpecEnum.parse?("Fo-ur").should be_nil
   end
 
   it "clones" do

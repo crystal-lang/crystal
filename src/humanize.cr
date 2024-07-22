@@ -20,7 +20,7 @@ struct Number
   def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
     number = self
     # TODO: Optimize implementation for Int
-    if decimal_places
+    if decimal_places && (decimal_places < 0 || !number.is_a?(Float))
       number = number.round(decimal_places)
     end
 
@@ -38,20 +38,23 @@ struct Number
 
       if decimal_places && decimal_places >= 0
         string = "%.*f" % {decimal_places, number.abs}
+        integer, _, decimals = string.partition('.')
       else
         string = String.build do |io|
           # Make sure to avoid scientific notation of default Float#to_s
-          Float::Printer.print(number.abs, io, point_range: ..)
+          Float::Printer.shortest(number.abs, io, point_range: ..)
         end
         _, _, decimals = string.partition(".")
-        integer, _, _ = ("%f" % number.abs).partition(".")
-        string = "#{integer}.#{decimals}"
+        integer = "%.0f" % number.trunc.abs
       end
+    elsif number.is_a?(Int)
+      integer = number.abs.to_s
+      decimals = ""
     else
+      # TODO: optimize for BigDecimal
       string = number.abs.to_s
+      integer, _, decimals = string.partition('.')
     end
-
-    integer, _, decimals = string.partition('.')
 
     int_size = integer.size
     dec_size = decimals.size

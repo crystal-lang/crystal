@@ -657,6 +657,15 @@ describe "Lexer" do
   assert_syntax_error "'\\u{DFFF}'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error ":+1", "unexpected token"
 
+  it "invalid byte sequence" do
+    expect_raises(InvalidByteSequenceError, "Unexpected byte 0xff at position 0, malformed UTF-8") do
+      parse "\xFF"
+    end
+    expect_raises(InvalidByteSequenceError, "Unexpected byte 0xff at position 1, malformed UTF-8") do
+      parse " \xFF"
+    end
+  end
+
   assert_syntax_error "'\\1'", "invalid char escape sequence"
 
   it_lexes_string %("\\1"), String.new(Bytes[1])

@@ -126,7 +126,7 @@ describe TCPServer, tags: "network" do
     end
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:solaris) %}
     pending "settings"
   {% else %}
     it "settings" do
@@ -136,4 +136,18 @@ describe TCPServer, tags: "network" do
       end
     end
   {% end %}
+
+  describe "accept" do
+    {% unless flag?(:win32) %}
+      it "sets close on exec flag" do
+        TCPServer.open("localhost", 0) do |server|
+          TCPSocket.open("localhost", server.local_address.port) do |client|
+            server.accept? do |sock|
+              sock.close_on_exec?.should be_true
+            end
+          end
+        end
+      end
+    {% end %}
+  end
 end

@@ -16,8 +16,7 @@ class URI
     def self.parse(query : String) : self
       parsed = {} of String => Array(String)
       parse(query) do |key, value|
-        ary = parsed[key] ||= [] of String
-        ary.push value
+        parsed.put_if_absent(key) { [] of String } << value
       end
       Params.new(parsed)
     end
@@ -95,6 +94,23 @@ class URI
       end
     end
 
+    # Appends the given key value pairs as a url-encoded URI form/query to the given `io`.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # io = IO::Memory.new
+    # URI::Params.encode(io, {"foo" => "bar", "baz" => ["quux", "quuz"]})
+    # io.to_s # => "foo=bar&baz=quux&baz=quuz"
+    # ```
+    def self.encode(io : IO, hash : Hash(String, String | Array(String))) : Nil
+      build(io) do |builder|
+        hash.each do |key, value|
+          builder.add key, value
+        end
+      end
+    end
+
     # Returns the given key value pairs as a url-encoded URI form/query.
     #
     # ```
@@ -102,8 +118,25 @@ class URI
     #
     # URI::Params.encode({foo: "bar", baz: ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(named_tuple : NamedTuple)
+    def self.encode(named_tuple : NamedTuple) : String
       build do |builder|
+        named_tuple.each do |key, value|
+          builder.add key.to_s, value
+        end
+      end
+    end
+
+    # Appends the given key value pairs as a url-encoded URI form/query to the given `io`.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # io = IO::Memory.new
+    # URI::Params.encode(io, {foo: "bar", baz: ["quux", "quuz"]})
+    # io.to_s # => "foo=bar&baz=quux&baz=quuz"
+    # ```
+    def self.encode(io : IO, named_tuple : NamedTuple) : Nil
+      build(io) do |builder|
         named_tuple.each do |key, value|
           builder.add key.to_s, value
         end
@@ -142,6 +175,11 @@ class URI
       String.build do |io|
         yield Builder.new(io, space_to_plus: space_to_plus)
       end
+    end
+
+    # :ditto:
+    def self.build(io : IO, *, space_to_plus : Bool = true, & : Builder ->) : Nil
+      yield Builder.new(io, space_to_plus: space_to_plus)
     end
 
     protected getter raw_params
@@ -297,9 +335,9 @@ class URI
     # params.fetch_all("item") # => ["pencil", "book", "workbook", "keychain"]
     # ```
     def add(name, value)
-      raw_params[name] ||= [] of String
-      raw_params[name] = [] of String if raw_params[name] == [""]
-      raw_params[name] << value
+      params = raw_params.put_if_absent(name) { [] of String }
+      params.clear if params.size == 1 && params[0] == ""
+      params << value
     end
 
     # Sets all *values* for specified param *name* at once.
@@ -360,6 +398,44 @@ class URI
     # ```
     def delete_all(name) : Array(String)?
       raw_params.delete(name)
+    end
+
+    # Merges *params* into self.
+    #
+    # ```
+    # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # other_params = URI::Params.parse("foo=buzz&foo=extra")
+    # params.merge!(other_params).to_s # => "foo=buzz&foo=extra&qux=zoo"
+    # params.fetch_all("foo")          # => ["buzz", "extra"]
+    # ```
+    #
+    # See `#merge` for a non-mutating alternative
+    def merge!(params : URI::Params, *, replace : Bool = true) : URI::Params
+      if replace
+        @raw_params.merge!(params.raw_params) { |_, _first, second| second.dup }
+      else
+        @raw_params.merge!(params.raw_params) do |_, first, second|
+          first + second
+        end
+      end
+
+      self
+    end
+
+    # Merges *params* and self into a new instance.
+    # If *replace* is `false` values with the same key are concatenated.
+    # Otherwise the value in *params* overrides the one in self.
+    #
+    # ```
+    # params = URI::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # other_params = URI::Params.parse("foo=buzz&foo=extra")
+    # params.merge(other_params).to_s                 # => "foo=buzz&foo=extra&qux=zoo"
+    # params.merge(other_params, replace: false).to_s # => "foo=bar&foo=baz&foo=buzz&foo=extra&qux=zoo"
+    # ```
+    #
+    # See `#merge!` for a mutating alternative
+    def merge(params : URI::Params, *, replace : Bool = true) : URI::Params
+      dup.merge!(params, replace: replace)
     end
 
     # Serializes to string representation as http url-encoded form.

@@ -100,15 +100,15 @@ describe "FileUtils" do
       end
     end
 
-    pending_win32 "copies permissions" do
+    it "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        test_with_string_and_path(src_path, out_path) do |*args|
-          File.write(src_path, "foo")
-          File.chmod(src_path, 0o700)
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o444)
 
+        test_with_string_and_path(src_path, out_path) do |*args|
           FileUtils.cp(*args)
 
-          File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+          File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
           FileUtils.cmp(src_path, out_path).should be_true
 
           FileUtils.rm_rf(out_path)
@@ -678,7 +678,7 @@ describe "FileUtils" do
           File.symlink?(path2).should be_true
 
           expect_raises(File::NotFoundError, "Error resolving real path: '#{path2.inspect_unquoted}'") do
-            File.real_path(path2)
+            File.realpath(path2)
           end
           FileUtils.rm_rf(path2)
         end
@@ -710,6 +710,42 @@ describe "FileUtils" do
           FileUtils.ln_sf(arg1, arg2)
           File.symlink?(path1).should be_false
           File.symlink?(path2).should be_true
+          FileUtils.rm_rf([path1, path2])
+        end
+      end
+    end
+
+    {% if flag?(:unix) %}
+      # can't use backtick in interpreted code (#12241)
+      pending_interpreted "overwrites a destination named pipe" do
+        with_tempfile("ln_sf_src", "ln_sf_dst_pipe_exists") do |path1, path2|
+          test_with_string_and_path(path1, path2) do |arg1, arg2|
+            FileUtils.touch([path1])
+            `mkfifo #{path2}`
+            File.symlink?(path1).should be_false
+            File.symlink?(path2).should be_false
+
+            FileUtils.ln_sf(arg1, arg2)
+            File.symlink?(path1).should be_false
+            File.symlink?(path2).should be_true
+            FileUtils.rm_rf([path1, path2])
+          end
+        end
+      end
+    {% end %}
+
+    it "overwrites a destination dir in dir" do
+      with_tempfile("ln_sf_src", "ln_sf_dst_dir_exists") do |path1, path2|
+        test_with_string_and_path(path1, path2) do |arg1, arg2|
+          FileUtils.touch([path1])
+          dir_dest = File.join(path2, File.basename(path1))
+          Dir.mkdir_p(dir_dest)
+          File.symlink?(path1).should be_false
+          File.symlink?(path2).should be_false
+
+          FileUtils.ln_sf(arg1, arg2)
+          File.symlink?(path1).should be_false
+          File.symlink?(dir_dest).should be_true
           FileUtils.rm_rf([path1, path2])
         end
       end

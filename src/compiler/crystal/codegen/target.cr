@@ -51,10 +51,27 @@ class Crystal::Codegen::Target
 
   def pointer_bit_width
     case @architecture
-    when "x86_64", "aarch64"
+    when "aarch64", "x86_64"
       64
-    else
+    when "arm", "i386", "wasm32"
       32
+    when "avr"
+      16
+    else
+      raise "BUG: unknown Target#pointer_bit_width for #{@architecture} target architecture"
+    end
+  end
+
+  def size_bit_width
+    case @architecture
+    when "aarch64", "x86_64"
+      64
+    when "arm", "i386", "wasm32"
+      32
+    when "avr"
+      16
+    else
+      raise "BUG: unknown Target#size_bit_width for #{@architecture} target architecture"
     end
   end
 
@@ -70,10 +87,28 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .solaris?
+      "solaris"
     when .android?
       "android"
     else
       environment
+    end
+  end
+
+  def executable_extension
+    case
+    when windows? then ".exe"
+    when avr?     then ".elf"
+    else               ""
+    end
+  end
+
+  def object_extension
+    case
+    when windows?                  then ".obj"
+    when @architecture == "wasm32" then ".wasm"
+    else                                ".o"
     end
   end
 
@@ -113,6 +148,10 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def solaris?
+    @environment.starts_with?("solaris")
+  end
+
   def wasi?
     @environment.starts_with?("wasi")
   end
@@ -122,7 +161,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux? || wasi?
+    macos? || bsd? || linux? || wasi? || solaris?
   end
 
   def gnu?
@@ -149,7 +188,11 @@ class Crystal::Codegen::Target
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
-  def to_target_machine(cpu = "", features = "", release = false,
+  def avr?
+    @architecture == "avr"
+  end
+
+  def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
                         code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
     when "i386", "x86_64"
@@ -165,17 +208,29 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "avr"
+      LLVM.init_avr
+
+      if cpu.blank?
+        # the ABI call convention, codegen and the linker need to known the CPU model
+        raise Target::Error.new("AVR targets must declare a CPU model, for example --mcpu=atmega328p")
+      end
     when "wasm32"
       LLVM.init_webassembly
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end
 
-    opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
+    opt_level = case optimization_mode
+                in .o3?             then LLVM::CodeGenOptLevel::Aggressive
+                in .o2?, .os?, .oz? then LLVM::CodeGenOptLevel::Default
+                in .o1?             then LLVM::CodeGenOptLevel::Less
+                in .o0?             then LLVM::CodeGenOptLevel::None
+                end
 
     target = LLVM::Target.from_triple(self.to_s)
     machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
-    # We need to disable global isel until https://reviews.llvm.org/D80898 is released,
+    # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and jit compiler.
     # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270

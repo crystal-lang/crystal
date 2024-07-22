@@ -3,19 +3,13 @@
 require "spec"
 require "process"
 require "./spec_helper"
+require "../support/env"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
   {% else %}
-    case code
-    when 0
-      {"true", [] of String}
-    when 1
-      {"false", [] of String}
-    else
-      {"/bin/sh", {"-c", "exit #{code}"}}
-    end
+    {"/bin/sh", {"-c", "exit #{code}"}}
   {% end %}
 end
 
@@ -60,7 +54,8 @@ private def newline
   {% end %}
 end
 
-describe Process do
+# interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
+pending_interpreted describe: Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -68,9 +63,24 @@ describe Process do
       end
     end
 
-    pending_win32 "raises if command is not executable" do
+    it "accepts nilable string for `chdir` (#13767)" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.new("foobarbaz", chdir: nil.as(String?))
+      end
+    end
+
+    it "raises if command is not executable" do
       with_tempfile("crystal-spec-run") do |path|
         File.touch path
+        expect_raises({% if flag?(:win32) %} File::BadExecutableError {% else %} File::AccessDeniedError {% end %}, "Error executing process: '#{path.inspect_unquoted}'") do
+          Process.new(path)
+        end
+      end
+    end
+
+    it "raises if command is not executable" do
+      with_tempfile("crystal-spec-run") do |path|
+        Dir.mkdir path
         expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
           Process.new(path)
         end
@@ -171,8 +181,29 @@ describe Process do
       $?.exit_code.should eq(0)
     end
 
-    it "sets working directory" do
+    it "forwards closed io" do
+      closed_io = IO::Memory.new
+      closed_io.close
+      Process.run(*stdin_to_stdout_command, input: closed_io)
+      Process.run(*stdin_to_stdout_command, output: closed_io)
+      Process.run(*stdin_to_stdout_command, error: closed_io)
+    end
+
+    it "sets working directory with string" do
       parent = File.dirname(Dir.current)
+      command = {% if flag?(:win32) %}
+                  "cmd.exe /c echo %cd%"
+                {% else %}
+                  "pwd"
+                {% end %}
+      value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should eq "#{parent}#{newline}"
+    end
+
+    it "sets working directory with path" do
+      parent = Path.new File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
                   "cmd.exe /c echo %cd%"
                 {% else %}
@@ -209,6 +240,19 @@ describe Process do
       output.should eq "`echo hi`\n"
     end
 
+    describe "does not execute batch files" do
+      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+        it ext do
+          with_tempfile "process_run#{ext}" do |path|
+            File.write(path, "echo '#{ext}'\n")
+            expect_raises {{ flag?(:win32) ? File::BadExecutableError : File::AccessDeniedError }}, "Error executing process" do
+              Process.run(path)
+            end
+          end
+        end
+      end
+    end
+
     describe "environ" do
       it "clears the environment" do
         value = Process.run(*print_env_command, clear_env: true) do |proc|
@@ -239,75 +283,67 @@ describe Process do
       end
 
       it "deletes existing environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should_not match /(*ANYCRLF)^FOO=/m
         end
-        value.should_not match /(*ANYCRLF)^FOO=/m
-      ensure
-        ENV.delete("FOO")
       end
 
       {% if flag?(:win32) %}
         it "deletes existing environment variable case-insensitive" do
-          ENV["FOO"] = "bar"
-          value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
-            proc.output.gets_to_end
+          with_env("FOO": "bar") do
+            value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
+              proc.output.gets_to_end
+            end
+            value.should_not match /(*ANYCRLF)^FOO=/mi
           end
-          value.should_not match /(*ANYCRLF)^FOO=/mi
-        ensure
-          ENV.delete("FOO")
         end
       {% end %}
 
       it "preserves existing environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should match /(*ANYCRLF)^FOO=bar$/m
         end
-        value.should match /(*ANYCRLF)^FOO=bar$/m
-      ensure
-        ENV.delete("FOO")
       end
 
       it "preserves and sets an environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should match /(*ANYCRLF)^FOO=bar$/m
+          value.should match /(*ANYCRLF)^FOO2=bar2$/m
         end
-        value.should match /(*ANYCRLF)^FOO=bar$/m
-        value.should match /(*ANYCRLF)^FOO2=bar2$/m
-      ensure
-        ENV.delete("FOO")
       end
 
       it "overrides existing environment variable" do
-        ENV["FOO"] = "bar"
-        value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
-          proc.output.gets_to_end
+        with_env("FOO": "bar") do
+          value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
+            proc.output.gets_to_end
+          end
+          value.should match /(*ANYCRLF)^FOO=different$/m
         end
-        value.should match /(*ANYCRLF)^FOO=different$/m
-      ensure
-        ENV.delete("FOO")
       end
 
       {% if flag?(:win32) %}
         it "overrides existing environment variable case-insensitive" do
-          ENV["FOO"] = "bar"
-          value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
-            proc.output.gets_to_end
+          with_env("FOO": "bar") do
+            value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
+              proc.output.gets_to_end
+            end
+            value.should_not match /(*ANYCRLF)^FOO=/m
+            value.should match /(*ANYCRLF)^fOo=different$/m
           end
-          value.should_not match /(*ANYCRLF)^FOO=/m
-          value.should match /(*ANYCRLF)^fOo=different$/m
-        ensure
-          ENV.delete("FOO")
         end
       {% end %}
     end
 
-    # TODO: this spec gives "WaitForSingleObject: The handle is invalid."
-    # is this because standard streams on windows aren't async?
-    pending_win32 "can link processes together" do
+    it "can link processes together" do
       buffer = IO::Memory.new
       Process.run(*stdin_to_stdout_command) do |cat|
         Process.run(*stdin_to_stdout_command, input: cat.output, output: buffer) do
@@ -322,6 +358,14 @@ describe Process do
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
+  describe ".on_terminate" do
+    it "compiles" do
+      typeof(Process.on_terminate { })
       typeof(Process.ignore_interrupts!)
       typeof(Process.restore_interrupts!)
     end
@@ -392,14 +436,16 @@ describe Process do
     process.terminated?.should be_true
   end
 
-  pending_win32 ".pgid" do
-    process = Process.new(*standing_command)
-    Process.pgid(process.pid).should be_a(Int64)
-    process.terminate
-    Process.pgid.should eq(Process.pgid(Process.pid))
-  ensure
-    process.try(&.wait)
-  end
+  {% unless flag?(:win32) %}
+    it ".pgid" do
+      process = Process.new(*standing_command)
+      Process.pgid(process.pid).should be_a(Int64)
+      process.terminate
+      Process.pgid.should eq(Process.pgid(Process.pid))
+    ensure
+      process.try(&.wait)
+    end
+  {% end %}
 
   {% unless flag?(:preview_mt) || flag?(:win32) %}
     describe ".fork" do
@@ -428,7 +474,7 @@ describe Process do
 
   describe ".chroot" do
     {% if flag?(:unix) && !flag?(:android) %}
-      it "raises when unprivileged" do
+      it "raises when unprivileged", tags: %w[slow] do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
           # Try to drop privileges. Ignoring any errors because dropping is only
           # necessary for a privileged user and it doesn't matter when it fails
@@ -439,13 +485,13 @@ describe Process do
           begin
             Process.chroot(".")
             puts "FAIL"
-          rescue ex
-            puts ex.inspect
+          rescue ex : RuntimeError
+            puts ex.os_error
           end
         CRYSTAL
 
         status.success?.should be_true
-        output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+        output.should eq("EPERM\n")
       end
     {% end %}
   end

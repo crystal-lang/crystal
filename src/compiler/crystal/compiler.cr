@@ -3,8 +3,7 @@ require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
 {% if flag?(:msvc) %}
-  require "crystal/system/win32/visual_studio"
-  require "crystal/system/win32/windows_sdk"
+  require "./loader"
 {% end %}
 
 module Crystal
@@ -15,13 +14,19 @@ module Crystal
     Default     = LineNumbers
   end
 
+  enum FramePointers
+    Auto
+    Always
+    NonLeaf
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    private DEFAULT_LINKER = ENV["CC"]? || "cc"
-    private MSVC_LINKER    = ENV["CC"]? || "cl.exe"
+    DEFAULT_LINKER = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cc" }}
+    MSVC_LINKER    = ENV["CC"]? || {{ env("CRYSTAL_CONFIG_CC") || "cl.exe" }}
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -38,11 +43,14 @@ module Crystal
     # If `true`, doesn't generate an executable but instead
     # creates a `.o` file and outputs a command line to link
     # it in the target machine.
-    property cross_compile = false
+    property? cross_compile = false
 
     # Compiler flags. These will be true when checked in macro
     # code by the `flag?(...)` macro method.
     property flags = [] of String
+
+    # Controls generation of frame pointers.
+    property frame_pointers = FramePointers::Auto
 
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
@@ -79,14 +87,53 @@ module Crystal
     # the source file to compile.
     property prelude = "prelude"
 
-    # If `true`, runs LLVM optimizations.
-    property? release = false
+    # Optimization mode
+    enum OptimizationMode
+      # [default] no optimization, fastest compilation, slowest runtime
+      O0 = 0
+
+      # low, compilation slower than O0, runtime faster than O0
+      O1 = 1
+
+      # middle, compilation slower than O1, runtime faster than O1
+      O2 = 2
+
+      # high, slowest compilation, fastest runtime
+      # enables with --release flag
+      O3 = 3
+
+      # optimize for size, enables most O2 optimizations but aims for smaller
+      # code size
+      Os
+
+      # optimize aggressively for size rather than speed
+      Oz
+
+      def suffix
+        ".#{to_s.downcase}"
+      end
+
+      def self.from_level?(level : String) : self?
+        case level
+        when "0" then O0
+        when "1" then O1
+        when "2" then O2
+        when "3" then O3
+        when "s" then Os
+        when "z" then Oz
+        end
+      end
+    end
+
+    # Sets the Optimization mode.
+    property optimization_mode = OptimizationMode::O0
 
     # Sets the code model. Check LLVM docs to learn about this.
     property mcmodel = LLVM::CodeModel::Default
 
     # If `true`, generates a single LLVM module. By default
     # one LLVM module is created for each type in a program.
+    # --release automatically enable this option
     property? single_module = false
 
     # A `ProgressTracker` object which tracks compilation progress.
@@ -143,6 +190,8 @@ module Crystal
     # Whether to link statically
     property? static = false
 
+    property dependency_printer : DependencyPrinter? = nil
+
     # Program that was created for the last compilation.
     property! program : Program
 
@@ -190,12 +239,22 @@ module Crystal
       Result.new program, node
     end
 
+    # Set maximum level of optimization.
+    def release!
+      @optimization_mode = OptimizationMode::O3
+      @single_module = true
+    end
+
+    def release?
+      @optimization_mode.o3? && @single_module
+    end
+
     private def new_program(sources)
       @program = program = Program.new
       program.compiler = self
       program.filename = sources.first.filename
       program.codegen_target = codegen_target
-      program.target_machine = target_machine
+      program.target_machine = create_target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
@@ -242,8 +301,8 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}|#{@mcmodel}"
-      bc_flags_filename = "#{output_dir}/bc_flags"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}"
+      bc_flags_filename = "#{output_dir}/bc_flags#{optimization_mode.suffix}"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
         bc_flags_changed = previous_bc_flags != current_bc_flags
@@ -254,7 +313,8 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none?
+        program.codegen node, debug: debug, frame_pointers: frame_pointers,
+          single_module: @single_module || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -277,6 +337,10 @@ module Crystal
 
         {% if flag?(:darwin) %}
           run_dsymutil(output_filename) unless debug.none?
+        {% end %}
+
+        {% if flag?(:windows) %}
+          copy_dlls(program, output_filename) unless static?
         {% end %}
       end
 
@@ -302,20 +366,40 @@ module Crystal
       end
     end
 
+    private def copy_dlls(program, output_filename)
+      not_found = nil
+      output_directory = File.dirname(output_filename)
+
+      program.each_dll_path do |path, found|
+        if found
+          dest = File.join(output_directory, File.basename(path))
+          File.copy(path, dest) unless File.exists?(dest)
+        else
+          not_found ||= [] of String
+          not_found << path
+        end
+      end
+
+      if not_found
+        stderr << "Warning: The following DLLs are required at run time, but Crystal is unable to locate them in CRYSTAL_LIBRARY_PATH, the compiler's directory, or PATH: "
+        not_found.sort!.join(stderr, ", ")
+      end
+    end
+
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = output_filename + program.object_extension
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod if @release
+        optimize llvm_mod unless @optimization_mode.o0?
 
         unit.emit(@emit_targets, emit_base_filename || output_filename)
 
-        target_machine.emit_obj_to_file llvm_mod, object_name
+        target_machine.emit_obj_to_file llvm_mod, output_filename
       end
-
-      _, command, args = linker_command(program, [object_name], output_filename, nil)
+      object_names = [output_filename]
+      output_filename = output_filename.rchop(unit.object_extension)
+      _, command, args = linker_command(program, object_names, output_filename, nil)
       print_command(command, args)
     end
 
@@ -332,37 +416,26 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        linker = MSVC_LINKER
-        link_args = [] of String
-
-        # if the compiler and the target both have the `msvc` flag, we are not
-        # cross-compiling and therefore we should attempt detecting MSVC's
-        # standard paths
-        {% if flag?(:msvc) %}
-          if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
-            if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-              host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
-              target_bits = program.has_flag?("aarch64") ? "arm64" : program.has_flag?("bits64") ? "x64" : "x86"
-
-              # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
-              # that is normally expected on the MSVC developer command prompt
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("atlmfc", "lib", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("lib", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("ucrt", target_bits)}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
-
-              # use exact path for compiler instead of relying on `PATH`
-              # (letter case shouldn't matter in most cases but being exact doesn't hurt here)
-              target_bits = target_bits.sub("arm", "ARM")
-              linker = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s) unless ENV.has_key?("CC")
-            end
-          end
-        {% end %}
+        linker, link_args = program.msvc_compiler_and_flags
+        linker = Process.quote_windows(linker)
+        link_args.map! { |arg| Process.quote_windows(arg) }
 
         link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
         link_args << "/INCREMENTAL:NO /STACK:0x800000"
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
+
+        {% if flag?(:msvc) %}
+          unless @cross_compile
+            extra_suffix = static? ? "-static" : "-dynamic"
+            search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
+            if not_found = search_result.not_found?
+              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+            end
+
+            link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
+          end
+        {% end %}
 
         args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
         cmd = "#{linker} #{args}"
@@ -383,10 +456,13 @@ module Crystal
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
+      elsif program.has_flag? "avr"
+        link_flags = @link_flags || ""
+        link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
@@ -429,73 +505,139 @@ module Crystal
     private def codegen_many_units(program, units, target_triple)
       all_reused = [] of String
 
-      wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
+      # Don't start more processes than compilation units
+      n_threads = @n_threads.clamp(1..units.size)
 
-      # If threads is 1 and no stats/progress is needed we can avoid
-      # fork/spawn/channels altogether. This is particularly useful for
-      # CI because there forking eventually leads to "out of memory" errors.
-      if @n_threads == 1
+      # If threads is 1 we can avoid fork/spawn/channels altogether. This is
+      # particularly useful for CI because there forking eventually leads to
+      # "out of memory" errors.
+      if n_threads == 1
         units.each do |unit|
           unit.compile
-          all_reused << unit.name if wants_stats_or_progress && unit.reused_previous_compilation?
+          @progress_tracker.stage_progress += 1
+        end
+        if @progress_tracker.stats?
+          units.each do |unit|
+            all_reused << unit.name && unit.reused_previous_compilation?
+          end
         end
         return all_reused
       end
 
-      {% if !Crystal::System::Process.class.has_method?("fork") %}
+      {% if !LibC.has_method?("fork") %}
         raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
       {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
       {% else %}
-        jobs_count = 0
-        wait_channel = Channel(Array(String)).new(@n_threads)
+        workers = fork_workers(n_threads) do |input, output|
+          while i = input.gets(chomp: true).presence
+            unit = units[i.to_i]
+            unit.compile
+            result = {name: unit.name, reused: unit.reused_previous_compilation?}
+            output.puts result.to_json
+          end
+        rescue ex
+          result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
+          output.puts result.to_json
+        end
 
-        units.each_slice(Math.max(units.size // @n_threads, 1)) do |slice|
-          jobs_count += 1
+        overqueue = 1
+        indexes = Atomic(Int32).new(0)
+        channel = Channel(String).new(n_threads)
+        completed = Channel(Nil).new(n_threads)
+
+        workers.each do |pid, input, output|
           spawn do
-            # For stats output we want to count how many previous
-            # .o files were reused, mainly to detect performance regressions.
-            # Because we fork, we must communicate using a pipe.
-            reused = [] of String
-            if wants_stats_or_progress
-              pr, pw = IO.pipe
-              spawn do
-                pr.each_line do |line|
-                  unit = JSON.parse(line)
-                  reused << unit["name"].as_s if unit["reused"].as_bool
-                  @progress_tracker.stage_progress += 1
-                end
+            overqueued = 0
+
+            overqueue.times do
+              if (index = indexes.add(1)) < units.size
+                input.puts index
+                overqueued += 1
               end
             end
 
-            codegen_process = Crystal::System::Process.fork do
-              pipe_w = pw
-              slice.each do |unit|
-                unit.compile
-                if pipe_w
-                  unit_json = {name: unit.name, reused: unit.reused_previous_compilation?}.to_json
-                  pipe_w.puts unit_json
-                end
+            while (index = indexes.add(1)) < units.size
+              input.puts index
+
+              if response = output.gets(chomp: true)
+                channel.send response
+              else
+                Crystal::System.print_error "\nBUG: a codegen process failed\n"
+                exit 1
               end
             end
-            Process.new(codegen_process).wait
 
-            if pipe_w = pw
-              pipe_w.close
-              Fiber.yield
+            overqueued.times do
+              if response = output.gets(chomp: true)
+                channel.send response
+              else
+                Crystal::System.print_error "\nBUG: a codegen process failed\n"
+                exit 1
+              end
             end
 
-            wait_channel.send reused
+            input << '\n'
+            input.close
+            output.close
+
+            Process.new(pid).wait
+            completed.send(nil)
           end
         end
 
-        jobs_count.times do
-          reused = wait_channel.receive
-          all_reused.concat(reused)
+        spawn do
+          n_threads.times { completed.receive }
+          channel.close
+        end
+
+        while response = channel.receive?
+          result = JSON.parse(response)
+
+          if ex = result["exception"]?
+            Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
+            ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
+            exit 1
+          end
+
+          if @progress_tracker.stats?
+            all_reused << result["name"].as_s if result["reused"].as_bool
+          end
+          @progress_tracker.stage_progress += 1
         end
 
         all_reused
       {% end %}
+    end
+
+    private def fork_workers(n_threads)
+      workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
+
+      n_threads.times do
+        iread, iwrite = IO.pipe
+        oread, owrite = IO.pipe
+
+        iwrite.flush_on_newline = true
+        owrite.flush_on_newline = true
+
+        pid = Crystal::System::Process.fork do
+          iwrite.close
+          oread.close
+
+          yield iread, owrite
+
+          iread.close
+          owrite.close
+          exit 0
+        end
+
+        iread.close
+        owrite.close
+
+        workers << {pid, iwrite, oread}
+      end
+
+      workers
     end
 
     private def print_macro_run_stats(program)
@@ -541,7 +683,11 @@ module Crystal
     end
 
     getter(target_machine : LLVM::TargetMachine) do
-      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release, @mcmodel)
+      create_target_machine
+    end
+
+    def create_target_machine
+      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @optimization_mode, @mcmodel)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
       stderr.print "llc: "
@@ -549,50 +695,76 @@ module Crystal
       exit 1
     end
 
+    {% if LibLLVM::IS_LT_170 %}
+      private def optimize_with_pass_manager(llvm_mod)
+        fun_pass_manager = llvm_mod.new_function_pass_manager
+        pass_manager_builder.populate fun_pass_manager
+        fun_pass_manager.run llvm_mod
+        module_pass_manager.run llvm_mod
+      end
+
+      @module_pass_manager : LLVM::ModulePassManager?
+
+      private def module_pass_manager
+        @module_pass_manager ||= begin
+          mod_pass_manager = LLVM::ModulePassManager.new
+          pass_manager_builder.populate mod_pass_manager
+          mod_pass_manager
+        end
+      end
+
+      @pass_manager_builder : LLVM::PassManagerBuilder?
+
+      private def pass_manager_builder
+        @pass_manager_builder ||= begin
+          registry = LLVM::PassRegistry.instance
+          registry.initialize_all
+
+          builder = LLVM::PassManagerBuilder.new
+          builder.size_level = 0
+
+          case optimization_mode
+          in .o3?
+            builder.opt_level = 3
+            builder.use_inliner_with_threshold = 275
+          in .o2?
+            builder.opt_level = 2
+            builder.use_inliner_with_threshold = 275
+          in .o1?
+            builder.opt_level = 1
+            builder.use_inliner_with_threshold = 150
+          in .o0?
+            # default behaviour, no optimizations
+          in .os?
+            builder.opt_level = 2
+            builder.size_level = 1
+            builder.use_inliner_with_threshold = 50
+          in .oz?
+            builder.opt_level = 2
+            builder.size_level = 2
+            builder.use_inliner_with_threshold = 5
+          end
+
+          builder
+        end
+      end
+    {% end %}
+
     protected def optimize(llvm_mod)
       {% if LibLLVM::IS_LT_130 %}
-        optimize_with_old_pass_manager(llvm_mod)
+        optimize_with_pass_manager(llvm_mod)
       {% else %}
-        optimize_with_new_pass_manager(llvm_mod)
+        {% if LibLLVM::IS_LT_170 %}
+          # PassBuilder doesn't support Os and Oz before LLVM 17
+          if @optimization_mode.os? || @optimization_mode.oz?
+            return optimize_with_pass_manager(llvm_mod)
+          end
+        {% end %}
+
+        LLVM::PassBuilderOptions.new do |options|
+          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+        end
       {% end %}
-    end
-
-    private def optimize_with_old_pass_manager(llvm_mod)
-      fun_pass_manager = llvm_mod.new_function_pass_manager
-      pass_manager_builder.populate fun_pass_manager
-      fun_pass_manager.run llvm_mod
-      module_pass_manager.run llvm_mod
-    end
-
-    private def optimize_with_new_pass_manager(llvm_mod)
-      LLVM::PassBuilderOptions.new do |options|
-        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
-      end
-    end
-
-    @module_pass_manager : LLVM::ModulePassManager?
-
-    private def module_pass_manager
-      @module_pass_manager ||= begin
-        mod_pass_manager = LLVM::ModulePassManager.new
-        pass_manager_builder.populate mod_pass_manager
-        mod_pass_manager
-      end
-    end
-
-    @pass_manager_builder : LLVM::PassManagerBuilder?
-
-    private def pass_manager_builder
-      @pass_manager_builder ||= begin
-        registry = LLVM::PassRegistry.instance
-        registry.initialize_all
-
-        builder = LLVM::PassManagerBuilder.new
-        builder.opt_level = 3
-        builder.size_level = 0
-        builder.use_inliner_with_threshold = 275
-        builder
-      end
     end
 
     private def run_linker(linker_name, command, args)
@@ -653,7 +825,7 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
-      @object_extension : String
+      getter object_extension : String
 
       def initialize(@compiler : Compiler, program : Program, @name : String,
                      @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
@@ -679,7 +851,8 @@ module Crystal
           @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
-        @object_extension = program.object_extension
+        @name = "#{@name}#{@compiler.optimization_mode.suffix}"
+        @object_extension = compiler.codegen_target.object_extension
       end
 
       def compile
@@ -696,8 +869,8 @@ module Crystal
         # in the cache directory.
         #
         # On a next compilation of the same project, and if the compile
-        # flags didn't change (a combination of the target triple, mcpu,
-        # release and link flags, amongst others), we check if the new
+        # flags didn't change (a combination of the target triple, mcpu
+        # and link flags, amongst others), we check if the new
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
@@ -741,7 +914,7 @@ module Crystal
         end
 
         if must_compile
-          compiler.optimize llvm_mod if compiler.release?
+          compiler.optimize llvm_mod unless compiler.optimization_mode.o0?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
           File.rename(temporary_object_name, object_name)
         else

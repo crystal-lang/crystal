@@ -107,7 +107,16 @@ module Enumerable(T)
   # ```
   # [nil, true, 99].any? # => true
   # [nil, false].any?    # => false
+  # ([] of Int32).any?   # => false
   # ```
+  #
+  # * `#present?` does not consider truthiness of elements.
+  # * `#any?(&)` and `#any(pattern)` allow custom conditions.
+  #
+  # NOTE: `#any?` usually has the same semantics as `#present?`. They only
+  # differ if the element type can be falsey (i.e. `T <= Nil || T <= Pointer || T <= Bool`).
+  # It's typically advised to prefer `#present?` unless these specific truthiness
+  # semantics are required.
   def any? : Bool
     any? &.itself
   end
@@ -131,8 +140,8 @@ module Enumerable(T)
   #
   # See also: `Iterator#chunk`.
   def chunks(&block : T -> U) forall U
-    res = [] of Tuple(U, Array(T))
-    chunks_internal(block) { |k, v| res << {k, v} }
+    res = [] of Tuple(typeof(Chunk.key_type(self, block)), Array(T))
+    chunks_internal(block) { |*kv| res << kv }
     res
   end
 
@@ -166,7 +175,6 @@ module Enumerable(T)
       end
 
       def init(key, val)
-        return if key == Drop
         @key = key
 
         if @reuse
@@ -190,33 +198,44 @@ module Enumerable(T)
 
       def same_as?(key) : Bool
         return false unless @initialized
-        return false if key.in?(Alone, Drop)
+        return false if key.is_a?(Alone.class) || key.is_a?(Drop.class)
         @key == key
       end
 
-      def reset
-        @initialized = false
-        @data.clear
+      def acc(key, val, &)
+        if same_as?(key)
+          add(val)
+        else
+          if tuple = fetch
+            yield *tuple
+          end
+
+          init(key, val) unless key.is_a?(Drop.class)
+        end
       end
+    end
+
+    def self.key_type(ary, block)
+      ary.each do |item|
+        key = block.call(item)
+        ::raise "" if key.is_a?(Drop.class)
+        return key
+      end
+      ::raise ""
     end
   end
 
   private def chunks_internal(original_block : T -> U, &) forall U
-    acc = Chunk::Accumulator(T, U).new
+    acc = Chunk::Accumulator(T, typeof(Chunk.key_type(self, original_block))).new
     each do |val|
       key = original_block.call(val)
-      if acc.same_as?(key)
-        acc.add(val)
-      else
-        if tuple = acc.fetch
-          yield(*tuple)
-        end
-        acc.init(key, val)
+      acc.acc(key, val) do |*tuple|
+        yield *tuple
       end
     end
 
     if tuple = acc.fetch
-      yield(*tuple)
+      yield *tuple
     end
   end
 
@@ -416,6 +435,44 @@ module Enumerable(T)
     nil
   end
 
+  # Iterates over the collection, yielding every *n*th element, starting with the first.
+  #
+  # ```
+  # %w[Alice Bob Charlie David].each_step(2) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # User: Alice
+  # User: Charlie
+  # ```
+  #
+  # Accepts an optional *offset* parameter
+  #
+  # ```
+  # %w[Alice Bob Charlie David].each_step(2, offset: 1) do |user|
+  #   puts "User: #{user}"
+  # end
+  # ```
+  #
+  # Which would print:
+  #
+  # ```text
+  # User: Bob
+  # User: David
+  # ```
+  def each_step(n : Int, *, offset : Int = 0, & : T ->) : Nil
+    raise ArgumentError.new("Invalid n size: #{n}") if n <= 0
+    raise ArgumentError.new("Invalid offset size: #{offset}") if offset < 0
+    offset_mod = offset % n
+    each_with_index do |elem, i|
+      yield elem if i >= offset && i % n == offset_mod
+    end
+  end
+
   # Iterates over the collection, yielding both the elements and their index.
   #
   # ```
@@ -579,11 +636,7 @@ module Enumerable(T)
     h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
-      if h.has_key?(v)
-        h[v].push(e)
-      else
-        h[v] = [e]
-      end
+      h.put_if_absent(v) { Array(T).new } << e
     end
     h
   end
@@ -627,6 +680,22 @@ module Enumerable(T)
       (size - slice.size).times { slice << filled_up_with }
       yield slice
     end
+  end
+
+  # Returns an `Array` with chunks in the given size.
+  # Last chunk can be smaller depending on the number of remaining items.
+  #
+  # ```
+  # [1, 2, 3].in_slices_of(2) # => [[1, 2], [3]]
+  # ```
+  def in_slices_of(size : Int) : Array(Array(T))
+    raise ArgumentError.new("Size must be positive") if size <= 0
+
+    ary = Array(Array(T)).new
+    each_slice_internal(size, Array(T), false) do |slice|
+      ary << slice
+    end
+    ary
   end
 
   # Returns `true` if the collection contains *obj*, `false` otherwise.
@@ -1415,6 +1484,29 @@ module Enumerable(T)
     {a, b}
   end
 
+  # Returns a `Tuple` with two arrays. The first one contains the elements
+  # in the collection that are of the given *type*,
+  # and the second one that are **not** of the given *type*.
+  #
+  # ```
+  # ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
+  # ints           # => [1, 3]
+  # others         # => [true, nil, false, "string", 'c']
+  # typeof(ints)   # => Array(Int32)
+  # typeof(others) # => Array(String | Char | Nil)
+  # ```
+  def partition(type : U.class) forall U
+    a = [] of U
+    b = [] of typeof(begin
+      e = Enumerable.element_type(self)
+      e.is_a?(U) ? raise("") : e
+    end)
+    each do |e|
+      e.is_a?(U) ? a.push(e) : b.push(e)
+    end
+    {a, b}
+  end
+
   # Returns an `Array` with all the elements in the collection for which
   # the passed block is falsey.
   #
@@ -1564,15 +1656,33 @@ module Enumerable(T)
     count { true }
   end
 
-  # Returns `true` if `self` is empty, `false` otherwise.
+  # Returns `true` if `self` does not contain any element.
   #
   # ```
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
+  # [nil, false].empty?  # => false
   # ```
+  #
+  # * `#present?` returns the inverse.
   def empty? : Bool
     each { return false }
     true
+  end
+
+  # Returns `true` if `self` contains at least one element.
+  #
+  # ```
+  # ([] of Int32).present? # => false
+  # ([1]).present?         # => true
+  # [nil, false].present?  # => true
+  # ```
+  #
+  # * `#empty?` returns the inverse.
+  # * `#any?` considers only truthy elements.
+  # * `#any?(&)` and `#any(pattern)` allow custom conditions.
+  def present? : Bool
+    !empty?
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1860,7 +1970,7 @@ module Enumerable(T)
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    tally_by(&.itself)
+    tally_by(Hash(T, Int32).new, &.itself)
   end
 
   # Tallies the collection. Accepts a *hash* to count occurrences.
@@ -1883,9 +1993,20 @@ module Enumerable(T)
   # ```
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
-  def to_a
+  def to_a : Array(T)
     ary = [] of T
     each { |e| ary << e }
+    ary
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the collection.
+  #
+  # ```
+  # (1..5).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : T -> U) : Array(U) forall U
+    ary = [] of U
+    each { |e| ary << yield e }
     ary
   end
 

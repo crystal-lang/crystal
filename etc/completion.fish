@@ -1,5 +1,5 @@
-set -l crystal_commands init build docs env eval i interactive play run spec tool help version
-set -l tool_subcommands context expand format hierarchy implementations types
+set -l crystal_commands init build clear_cache docs env eval i interactive play run spec tool help version
+set -l tool_subcommands context expand flags format hierarchy implementations types
 
 complete -c crystal -s h -l help -d "Show help" -x
 
@@ -37,6 +37,8 @@ complete -c crystal -n "__fish_seen_subcommand_from build" -l target -d "Target 
 complete -c crystal -n "__fish_seen_subcommand_from build" -l verbose -d "Display executed commands"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l static -d "Link statically"
 complete -c crystal -n "__fish_seen_subcommand_from build" -l stdin-filename -d "Source file name to be read from STDIN"
+
+complete -c crystal -n "not __fish_seen_subcommand_from $crystal_commands" -a "clear_cache" -d "clear the compiler cache"
 
 complete -c crystal -n "not __fish_seen_subcommand_from $crystal_commands" -a "docs" -d "generate documentation"
 complete -c crystal -n "__fish_seen_subcommand_from docs" -l project-name -d "Set project name"
@@ -147,6 +149,18 @@ complete -c crystal -n "__fish_seen_subcommand_from context" -s p -l progress -d
 complete -c crystal -n "__fish_seen_subcommand_from context" -s t -l time -d "Enable execution time output"
 complete -c crystal -n "__fish_seen_subcommand_from context" -l stdin-filename -d "Source file name to be read from STDIN"
 
+complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "dependencies" -d "show tree of required source files" -x
+complete -c crystal -n "__fish_seen_subcommand_from context" -s i -l include -d "Include path in output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s e -l exclude -d "Exclude path in output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s D -l define -d "Define a compile-time flag"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s f -l format -d "Output format 'tree' (default), 'flat', 'dot', or 'mermaid'." -a "tree flat dot mermaid" -f
+complete -c crystal -n "__fish_seen_subcommand_from context" -l error-trace -d "Show full error trace"
+complete -c crystal -n "__fish_seen_subcommand_from context" -l no-color -d "Disable colored output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -l prelude -d "Use given file as prelude"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s s -l stats -d "Enable statistics output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s p -l progress -d "Enable progress output"
+complete -c crystal -n "__fish_seen_subcommand_from context" -s t -l time -d "Enable execution time output"
+
 complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "expand" -d "show macro expansion for given location" -x
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s D -l define -d "Define a compile-time flag"
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s c -l cursor -d "Cursor location with LOC as path/to/file.cr:line:column"
@@ -158,6 +172,8 @@ complete -c crystal -n "__fish_seen_subcommand_from expand" -s s -l stats -d "En
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s p -l progress -d "Enable progress output"
 complete -c crystal -n "__fish_seen_subcommand_from expand" -s t -l time -d "Enable execution time output"
 complete -c crystal -n "__fish_seen_subcommand_from expand" -l stdin-filename -d "Source file name to be read from STDIN"
+
+complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "flags" -d "print all macro 'flag?' values" -x
 
 complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "format" -d "format project, directories and/or files" -x
 complete -c crystal -n "__fish_seen_subcommand_from format" -l check -d "Checks that formatting code produces no changes"

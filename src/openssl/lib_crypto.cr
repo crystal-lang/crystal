@@ -3,7 +3,7 @@
     {% if flag?(:win32) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
-      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
         {% unless ssl_version %}
           {% config_path = "#{dir.id}\\openssl_VERSION" %}
           {% if config_version = read_file?(config_path) %}
@@ -35,6 +35,10 @@
   @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
+{% end %}
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
+  @[Link(dll: "libcrypto-3-x64.dll")]
 {% end %}
 lib LibCrypto
   alias Char = LibC::Char
@@ -263,6 +267,12 @@ lib LibCrypto
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
+
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    ERR_SYSTEM_FLAG = Int32::MAX.to_u32 + 1
+    ERR_SYSTEM_MASK = Int32::MAX.to_u32
+    ERR_REASON_MASK = 0x7FFFFF
+  {% end %}
 
   struct MD5Context
     a : UInt

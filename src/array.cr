@@ -127,12 +127,21 @@ class Array(T)
   #
   # ```
   # Array.new(3, 'a') # => ['a', 'a', 'a']
+  # ```
   #
+  # WARNING: The initial value is filled into the array as-is. It gets neither
+  # duplicated nor cloned. For types with reference semantics this means every
+  # item will point to the *same* object.
+  #
+  # ```
   # ary = Array.new(3, [1])
   # ary # => [[1], [1], [1]]
   # ary[0][0] = 2
   # ary # => [[2], [2], [2]]
   # ```
+  #
+  # * `.new(Int, & : Int32 -> T)` is an alternative that allows using a
+  #   different initial value for each position.
   def initialize(size : Int, value : T)
     if size < 0
       raise ArgumentError.new("Negative array size: #{size}")
@@ -256,7 +265,7 @@ class Array(T)
     return Array(T).new if self.empty? || other.empty?
 
     # Heuristic: for small arrays we do a linear scan, which is usually
-    # faster than creating an intermediate Hash.
+    # faster than creating an intermediate Set.
     if self.size + other.size <= SMALL_ARRAY_SIZE * 2
       ary = Array(T).new
       each do |elem|
@@ -265,20 +274,13 @@ class Array(T)
       return ary
     end
 
-    hash = other.to_lookup_hash
-    hash_size = hash.size
+    set = other.to_set
     Array(T).build(Math.min(size, other.size)) do |buffer|
-      i = 0
+      appender = buffer.appender
       each do |obj|
-        hash.delete(obj)
-        new_hash_size = hash.size
-        if hash_size != new_hash_size
-          hash_size = new_hash_size
-          buffer[i] = obj
-          i += 1
-        end
+        appender << obj if set.delete(obj)
       end
-      i
+      appender.size.to_i
     end
   end
 
@@ -292,7 +294,7 @@ class Array(T)
   # See also: `#uniq`.
   def |(other : Array(U)) : Array(T | U) forall U
     # Heuristic: if the combined size is small we just do a linear scan
-    # instead of using a Hash for lookup.
+    # instead of using a Set for lookup.
     if size + other.size <= SMALL_ARRAY_SIZE
       ary = Array(T | U).new
       each do |elem|
@@ -305,23 +307,15 @@ class Array(T)
     end
 
     Array(T | U).build(size + other.size) do |buffer|
-      hash = Hash(T, Bool).new
-      i = 0
+      set = Set(T).new
+      appender = buffer.appender
       each do |obj|
-        unless hash.has_key?(obj)
-          buffer[i] = obj
-          hash[obj] = true
-          i += 1
-        end
+        appender << obj if set.add?(obj)
       end
       other.each do |obj|
-        unless hash.has_key?(obj)
-          buffer[i] = obj
-          hash[obj] = true
-          i += 1
-        end
+        appender << obj if set.add?(obj)
       end
-      i
+      appender.size.to_i
     end
   end
 
@@ -356,7 +350,7 @@ class Array(T)
   # ```
   def -(other : Array(U)) : Array(T) forall U
     # Heuristic: if any of the arrays is small we just do a linear scan
-    # instead of using a Hash for lookup.
+    # instead of using a Set for lookup.
     if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
       ary = Array(T).new
       each do |elem|
@@ -366,9 +360,9 @@ class Array(T)
     end
 
     ary = Array(T).new(Math.max(size - other.size, 0))
-    hash = other.to_lookup_hash
+    set = other.to_set
     each do |obj|
-      ary << obj unless hash.has_key?(obj)
+      ary << obj unless set.includes?(obj)
     end
     ary
   end
@@ -751,30 +745,11 @@ class Array(T)
 
     resize_if_cant_insert(other_size)
 
-    concat_indexable(other)
+    insert_elements_at(other, @size)
 
     @size += other_size
 
     self
-  end
-
-  private def concat_indexable(other : Array | Slice | StaticArray)
-    (@buffer + @size).copy_from(other.to_unsafe, other.size)
-  end
-
-  private def concat_indexable(other : Deque)
-    ptr = @buffer + @size
-    Deque.half_slices(other) do |slice|
-      ptr.copy_from(slice.to_unsafe, slice.size)
-      ptr += slice.size
-    end
-  end
-
-  private def concat_indexable(other)
-    appender = (@buffer + @size).appender
-    other.each do |elem|
-      appender << elem
-    end
   end
 
   # :ditto:
@@ -1049,6 +1024,68 @@ class Array(T)
     @size += 1
 
     self
+  end
+
+  # Inserts all of the elements from *other* before the element at *index*.
+  #
+  # This method shifts the element currently at *index* (if any) and any
+  # subsequent elements to the right, increasing their indices. If the value
+  # of *index* is negative, counting starts from the end of the array.
+  # For example, `-1` indicates insertion after the last element, `-2` before
+  # the last element.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
+  #
+  # ```
+  # fruits = ["Apple"]
+  # newFruits = ["Dragonfruit", "Elderberry"]
+  #
+  # fruits.insert_all(1, newFruits)             # => ["Apple", "Dragonfruit", "Elderberry"]
+  # fruits.insert_all(-3, ["Banana", "Cherry"]) # => ["Apple", "Banana", "Cherry", "Dragonfruit", "Elderberry"]
+  #
+  # fruits.insert_all(6, ["invalid"])  # raises IndexError
+  # fruits.insert_all(-7, ["indices"]) # raises IndexError
+  # ```
+  def insert_all(index : Int, other : Indexable) : self
+    other_size = other.size
+
+    return self if other_size == 0
+
+    if index < 0
+      index += size + 1
+    end
+
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
+    resize_if_cant_insert(other_size)
+    (@buffer + index).move_to(@buffer + index + other_size, @size - index)
+
+    insert_elements_at(other, index)
+
+    @size += other_size
+
+    self
+  end
+
+  private def insert_elements_at(other : Array | Slice | StaticArray, index : Int) : Nil
+    (@buffer + index).copy_from(other.to_unsafe, other.size)
+  end
+
+  private def insert_elements_at(other : Deque, index : Int) : Nil
+    ptr = @buffer + index
+    Deque.half_slices(other) do |slice|
+      ptr.copy_from(slice.to_unsafe, slice.size)
+      ptr += slice.size
+    end
+  end
+
+  private def insert_elements_at(other, index : Int) : Nil
+    appender = (@buffer + index).appender
+    other.each do |elem|
+      appender << elem
+    end
   end
 
   def inspect(io : IO) : Nil
@@ -1621,7 +1658,7 @@ class Array(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
 
     dup.sort! &block
@@ -1643,7 +1680,7 @@ class Array(T)
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
 
     dup.unstable_sort!(&block)
@@ -1664,7 +1701,7 @@ class Array(T)
   # :inherit:
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
 
     to_unsafe_slice.sort!(&block)
@@ -1674,7 +1711,7 @@ class Array(T)
   # :inherit:
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
-      {% raise "Expected block to return Int32 or Nil, not #{U}" %}
+      {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}
 
     to_unsafe_slice.unstable_sort!(&block)
@@ -1858,7 +1895,7 @@ class Array(T)
     end
 
     # Heuristic: for a small array it's faster to do a linear scan
-    # than creating a Hash to find out duplicates.
+    # than creating a Set to find out duplicates.
     if size <= SMALL_ARRAY_SIZE
       ary = Array(T).new
       each do |elem|
@@ -1867,8 +1904,8 @@ class Array(T)
       return ary
     end
 
-    # Convert the Array into a Hash and then ask for its values
-    to_lookup_hash.values
+    # Convert the Array into a Set and then ask for its values
+    to_set.to_a
   end
 
   # Returns a new `Array` by removing duplicate values in `self`, using the block's
@@ -2174,10 +2211,6 @@ class Array(T)
   private def to_unsafe_slice(start : Int, count : Int)
     start, count = normalize_start_and_count(start, count)
     Slice.new(@buffer + start, count)
-  end
-
-  protected def to_lookup_hash
-    to_lookup_hash { |elem| elem }
   end
 
   protected def to_lookup_hash(& : T -> U) forall U

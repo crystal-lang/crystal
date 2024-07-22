@@ -78,7 +78,7 @@ module XML
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
-    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options) }
+    from_ptr { LibXML.htmlReadMemory(string, string.bytesize, nil, "utf-8", options) }
   end
 
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
@@ -92,7 +92,7 @@ module XML
       ->(ctx) { 0 },
       Box(IO).box(io),
       nil,
-      nil,
+      "utf-8",
       options,
     ) }
   end
@@ -104,6 +104,36 @@ module XML
     raise Error.new(LibXML.xmlGetLastError) unless doc
 
     Node.new(doc, errors)
+  end
+
+  protected def self.with_indent_tree_output(indent : Bool, &)
+    ptr = {% if flag?(:win32) %}
+            LibXML.__xmlIndentTreeOutput
+          {% else %}
+            pointerof(LibXML.xmlIndentTreeOutput)
+          {% end %}
+
+    old, ptr.value = ptr.value, indent ? 1 : 0
+    begin
+      yield
+    ensure
+      ptr.value = old
+    end
+  end
+
+  protected def self.with_tree_indent_string(string : String, &)
+    ptr = {% if flag?(:win32) %}
+            LibXML.__xmlTreeIndentString
+          {% else %}
+            pointerof(LibXML.xmlTreeIndentString)
+          {% end %}
+
+    old, ptr.value = ptr.value, string.to_unsafe
+    begin
+      yield
+    ensure
+      ptr.value = old
+    end
   end
 end
 

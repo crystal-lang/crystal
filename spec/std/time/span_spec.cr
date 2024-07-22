@@ -34,6 +34,23 @@ describe Time::Span do
     t1.to_s.should eq("1.01:00:00")
   end
 
+  it "initializes with type restrictions" do
+    t = Time::Span.new seconds: 1_u8, nanoseconds: 1_u8
+    t.should eq(Time::Span.new seconds: 1, nanoseconds: 1)
+
+    t = Time::Span.new seconds: 127_i8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 128)
+
+    t = Time::Span.new seconds: -128_i8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -129)
+
+    t = Time::Span.new seconds: 255_u8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 256)
+
+    t = Time::Span.new seconds: 0_u8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -1)
+  end
+
   it "initializes with big seconds value" do
     t = Time::Span.new hours: 0, minutes: 0, seconds: 1231231231231
     t.total_seconds.should eq(1231231231231)
@@ -341,5 +358,21 @@ describe Time::Span do
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
     1.1.weeks.should eq(7.7.days)
+  end
+
+  it "can substract big amount using microseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_microseconds.to_i64
+    past2 = jan_1_2k + delta.microseconds
+    past2.should eq(past)
+  end
+
+  it "can substract big amount using milliseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_milliseconds.to_i64
+    past2 = jan_1_2k + delta.milliseconds
+    past2.should eq(past)
   end
 end

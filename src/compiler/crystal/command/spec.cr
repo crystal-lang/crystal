@@ -24,7 +24,7 @@ class Crystal::Command
         puts opts
         puts
 
-        runtime_options = Spec.option_parser
+        runtime_options = Spec::CLI.new.option_parser
         runtime_options.banner = "Runtime options (passed to spec runner):"
         puts runtime_options
         exit
@@ -60,6 +60,7 @@ class Crystal::Command
           locations << {file, line}
         else
           if Dir.exists?(filename)
+            filename = ::Path[filename].to_posix
             target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
           elsif File.file?(filename)
             target_filenames << filename

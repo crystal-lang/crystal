@@ -428,5 +428,87 @@ module Crystal
 
       super
     end
+
+    # Turn block argument unpacking to multi assigns at the beginning
+    # of a block.
+    #
+    # So this:
+    #
+    #    foo do |(x, y), z|
+    #      x + y + z
+    #    end
+    #
+    # is transformed to:
+    #
+    #    foo do |__temp_1, z|
+    #      x, y = __temp_1
+    #      x + y + z
+    #    end
+    def transform(node : Block)
+      node = super
+
+      unpacks = node.unpacks
+      return node unless unpacks
+
+      # as `node` is mutated in-place, ensure it can only be mutated once
+      # we consider a block to be mutated if any unpack already has a
+      # corresponding block parameter with a name (as the fictitious packed
+      # parameters have empty names)
+      return node if unpacks.any? { |index, _| !node.args[index].name.empty? }
+
+      extra_expressions = [] of ASTNode
+      next_unpacks = [] of {String, Expressions}
+
+      unpacks.each do |index, expressions|
+        temp_name = program.new_temp_var_name
+        node.args[index] = Var.new(temp_name).at(node.args[index])
+
+        extra_expressions << block_unpack_multiassign(temp_name, expressions, next_unpacks)
+      end
+
+      if next_unpacks
+        while next_unpack = next_unpacks.shift?
+          var_name, expressions = next_unpack
+
+          extra_expressions << block_unpack_multiassign(var_name, expressions, next_unpacks)
+        end
+      end
+
+      body = node.body
+      case body
+      when Nop
+        node.body = Expressions.new(extra_expressions).at(node.body)
+      when Expressions
+        body.expressions = extra_expressions + body.expressions
+      else
+        extra_expressions << node.body
+        node.body = Expressions.new(extra_expressions).at(node.body)
+      end
+
+      node
+    end
+
+    private def block_unpack_multiassign(var_name, expressions, next_unpacks)
+      targets = expressions.expressions.map do |exp|
+        case exp
+        when Var
+          exp
+        when Underscore
+          exp
+        when Splat
+          exp
+        when Expressions
+          next_temp_name = program.new_temp_var_name
+
+          next_unpacks << {next_temp_name, exp}
+
+          Var.new(next_temp_name).at(exp)
+        else
+          raise "BUG: unexpected block var #{exp} (#{exp.class})"
+        end
+      end
+      values = [Var.new(var_name).at(expressions)] of ASTNode
+      MultiAssign.new(targets, values).at(expressions)
+    end
   end
 end

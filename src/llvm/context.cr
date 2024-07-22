@@ -51,6 +51,10 @@ class LLVM::Context
     Type.new LibLLVM.int_type_in_context(self, bits)
   end
 
+  def half : Type
+    Type.new LibLLVM.half_type_in_context(self)
+  end
+
   def float : Type
     Type.new LibLLVM.float_type_in_context(self)
   end
@@ -59,19 +63,31 @@ class LLVM::Context
     Type.new LibLLVM.double_type_in_context(self)
   end
 
-  def pointer : Type
+  def x86_fp80 : Type
+    Type.new LibLLVM.x86_fp80_type_in_context(self)
+  end
+
+  def fp128 : Type
+    Type.new LibLLVM.fp128_type_in_context(self)
+  end
+
+  def ppc_fp128 : Type
+    Type.new LibLLVM.ppc_fp128_type_in_context(self)
+  end
+
+  def pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
       {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
     {% else %}
-      Type.new LibLLVM.pointer_type_in_context(self, 0)
+      Type.new LibLLVM.pointer_type_in_context(self, address_space)
     {% end %}
   end
 
-  def void_pointer : Type
+  def void_pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
-      int8.pointer
+      int8.pointer(address_space)
     {% else %}
-      pointer
+      pointer(address_space)
     {% end %}
   end
 
@@ -100,11 +116,11 @@ class LLVM::Context
   end
 
   def md_string(value : String) : Value
-    LLVM::Value.new LibLLVM.md_string_in_context(self, value, value.bytesize)
+    LLVM::Value.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
   end
 
   def md_node(values : Array(Value)) : Value
-    Value.new LibLLVM.md_node_in_context(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+    Value.new LibLLVM.md_node_in_context2(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
   def parse_ir(buf : MemoryBuffer)

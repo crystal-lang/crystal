@@ -34,6 +34,14 @@ describe "Regex" do
     end
   end
 
+  it ".literal" do
+    Regex.literal("foo").should eq /foo/
+    Regex.literal("foo", i: true).should eq /foo/i
+    Regex.literal("foo", i: true, m: true).should eq /foo/im
+    Regex.literal("foo", i: true, m: true, x: true).should eq /foo/imx
+    Regex.literal("foo", x: true).should eq /foo/x
+  end
+
   it "#options" do
     /cat/.options.ignore_case?.should be_false
     /cat/i.options.ignore_case?.should be_true
@@ -122,6 +130,33 @@ describe "Regex" do
     it "skip invalid UTF check" do
       # no exception raised
       /f.o/.matches?("f\xFFo", options: Regex::MatchOptions::NO_UTF_CHECK)
+    end
+  end
+
+  describe "#match!" do
+    it "returns match data" do
+      md = /(?<bar>.)(?<foo>.)/.match!("Crystal")
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = /foo/.match!("foo")
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { /Crystal/.match!("foo") }
+      expect_raises(NilAssertionError) { $~ }
+    end
+
+    context "with options" do
+      it "Regex::Match options" do
+        expect_raises(Regex::Error, "Match not found") do
+          /foo/.match!(".foo", options: Regex::MatchOptions::ANCHORED)
+        end
+      end
     end
   end
 
@@ -273,7 +308,7 @@ describe "Regex" do
       end
     end
 
-    it "doesn't crash with a large single line string" do
+    pending_wasm32 "doesn't crash with a large single line string" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
@@ -414,15 +449,29 @@ describe "Regex" do
   end
 
   describe "#inspect" do
-    it "with options" do
-      /foo/.inspect.should eq("/foo/")
-      /foo/im.inspect.should eq("/foo/im")
-      /foo/imx.inspect.should eq("/foo/imx")
+    context "with literal-compatible options" do
+      it "prints flags" do
+        /foo/.inspect.should eq("/foo/")
+        /foo/im.inspect.should eq("/foo/im")
+        /foo/imx.inspect.should eq("/foo/imx")
+      end
+
+      it "escapes" do
+        %r(/).inspect.should eq("/\\//")
+        %r(\/).inspect.should eq("/\\//")
+      end
     end
 
-    it "escapes" do
-      %r(/).inspect.should eq("/\\//")
-      %r(\/).inspect.should eq("/\\//")
+    context "with non-literal-compatible options" do
+      it "prints flags" do
+        Regex.new("foo", :anchored).inspect.should eq %(Regex.new("foo", Regex::Options::ANCHORED))
+        Regex.new("foo", :no_utf_check).inspect.should eq %(Regex.new("foo", Regex::Options::NO_UTF8_CHECK))
+        Regex.new("foo", Regex::CompileOptions[IGNORE_CASE, ANCHORED]).inspect.should eq %(Regex.new("foo", Regex::Options[IGNORE_CASE, ANCHORED]))
+      end
+
+      it "escapes" do
+        Regex.new(%("), :anchored).inspect.should eq %(Regex.new("\\"", Regex::Options::ANCHORED))
+      end
     end
   end
 

@@ -1,3 +1,13 @@
+## RELPy v0.3.1
+
+### Bug fixs
+* Fix `REPLy` on Mac, caused by a wrong implementation of `ioctl`. Remake entirely the implementation of `Reply::Term::Size` in a more portable way. Inspired by (https://github.com/crystal-term/screen/blob/master/src/term-screen.cr.)
+
+### Internals
+* Compute the term-size only once for each input. Fix slow performance when the size is taken from `tput` (if `ioctl` fails).
+* Fix spec on windows due to '\n\r'.
+* Fix typo ('p' was duplicate in 'dupplicate').
+
 ## RELPy v0.3.0
 
 ### New features
@@ -46,7 +56,6 @@ that becomes 'ctrl-enter' on windows.
 ### Internal
 * Refactor: move word functions (`delete_word`, `move_word_forward`, etc.) from `Reader` to the `ExpressionEditor`.
 * Add this CHANGELOG.
-
 
 ## RELPy v0.1.0
 First version extracted from IC.

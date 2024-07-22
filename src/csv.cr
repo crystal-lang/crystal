@@ -181,7 +181,7 @@ class CSV
       headers = @headers = headers.map &.strip
       indices = @indices = {} of String => Int32
       headers.each_with_index do |header, index|
-        indices[header] ||= index
+        indices.put_if_absent(header, index)
       end
     end
     @traversed = false
@@ -265,15 +265,15 @@ class CSV
   # Returns the current row's value corresponding to the given *header_pattern*.
   # Raises `KeyError` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
-  def [](header_pattern : Regex) : String
-    row_internal[header_pattern]
+  def [](header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+    row_internal[header_pattern, options: options]
   end
 
   # Returns the current row's value corresponding to the given *header_pattern*.
   # Returns `nil` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
-  def []?(header_pattern : Regex) : String?
-    row_internal[header_pattern]?
+  def []?(header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
+    row_internal[header_pattern, options: options]?
   end
 
   # Returns a tuple of the current row's values at given indices
@@ -387,8 +387,8 @@ class CSV
     # Returns this row's value corresponding to the given *header_pattern*.
     # Raises `KeyError` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
-    def [](header_pattern : Regex) : String
-      value = self.[]?(header_pattern)
+    def [](header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
+      value = self.[]?(header_pattern, options: options)
       raise KeyError.new("Missing header pattern: #{header_pattern}") unless value
       value
     end
@@ -396,9 +396,9 @@ class CSV
     # Returns this row's value corresponding to the given *header_pattern*.
     # Returns `nil` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
-    def []?(header_pattern : Regex) : String?
+    def []?(header_pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String?
       csv.headers.each_with_index do |header, i|
-        if header =~ header_pattern
+        if header.matches?(header_pattern, options: options)
           return maybe_strip(@row[i]? || "")
         end
       end

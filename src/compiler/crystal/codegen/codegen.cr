@@ -69,8 +69,10 @@ module Crystal
       end
     end
 
-    def codegen(node, single_module = false, debug = Debug::Default)
-      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug
+    def codegen(node, single_module = false, debug = Debug::Default,
+                frame_pointers = FramePointers::Auto)
+      visitor = CodeGenVisitor.new self, node, single_module: single_module,
+        debug: debug, frame_pointers: frame_pointers
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
@@ -91,10 +93,7 @@ module Crystal
         # We need `sizeof(Void)` to be 1 because doing
         # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`,
         # that is, consider Void like the size of a byte.
-        1
-      elsif type.is_a?(BoolType)
-        # LLVM reports 0 for bool (i1) but it must be 1 because it does occupy memory
-        1
+        1_u64
       else
         llvm_typer.size_of(llvm_typer.llvm_type(type))
       end
@@ -102,6 +101,20 @@ module Crystal
 
     def instance_size_of(type)
       llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
+    end
+
+    def align_of(type)
+      if type.void?
+        # We need `alignof(Void)` to be 1 because it is effectively the smallest
+        # possible alignment for any type.
+        1_u32
+      else
+        llvm_typer.align_of(llvm_typer.llvm_type(type))
+      end
+    end
+
+    def instance_align_of(type)
+      llvm_typer.align_of(llvm_typer.llvm_struct_type(type))
     end
 
     def offset_of(type, element_index)
@@ -179,8 +192,10 @@ module Crystal
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
-      @single_module = !!single_module
+    def initialize(@program : Program, @node : ASTNode,
+                   @single_module : Bool = false,
+                   @debug = Debug::Default,
+                   @frame_pointers : FramePointers = :auto)
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")
@@ -238,6 +253,10 @@ module Crystal
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end
 
+      program.const_slices.each do |info|
+        define_slice_constant(info)
+      end
+
       @last = llvm_nil
       @fun_literal_count = 0
 
@@ -255,7 +274,7 @@ module Crystal
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
-      codgen_well_known_functions @node
+      codegen_well_known_functions @node
 
       initialize_predefined_constants
 
@@ -297,6 +316,34 @@ module Crystal
       llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
     end
 
+    def define_slice_constant(info : Program::ConstSliceInfo)
+      args = info.args.to_unsafe
+      kind = info.element_type
+      llvm_element_type = llvm_type(@program.type_from_literal_kind(kind))
+      llvm_elements = Array.new(info.args.size) do |i|
+        num = args[i].as(NumberLiteral)
+        case kind
+        in .i8?   then llvm_element_type.const_int(num.value.to_i8)
+        in .i16?  then llvm_element_type.const_int(num.value.to_i16)
+        in .i32?  then llvm_element_type.const_int(num.value.to_i32)
+        in .i64?  then llvm_element_type.const_int(num.value.to_i64)
+        in .i128? then llvm_element_type.const_int(num.value.to_i128)
+        in .u8?   then llvm_element_type.const_int(num.value.to_u8)
+        in .u16?  then llvm_element_type.const_int(num.value.to_u16)
+        in .u32?  then llvm_element_type.const_int(num.value.to_u32)
+        in .u64?  then llvm_element_type.const_int(num.value.to_u64)
+        in .u128? then llvm_element_type.const_int(num.value.to_u128)
+        in .f32?  then llvm_element_type.const_float(num.value)
+        in .f64?  then llvm_element_type.const_double(num.value)
+        end
+      end
+
+      global = @llvm_mod.globals.add(llvm_element_type.array(info.args.size), info.name)
+      global.linkage = LLVM::Linkage::Private
+      global.global_constant = true
+      global.initializer = llvm_element_type.const_array(llvm_elements)
+    end
+
     def data_layout
       @program.target_machine.data_layout
     end
@@ -331,7 +378,7 @@ module Crystal
       end
     end
 
-    def codgen_well_known_functions(node)
+    def codegen_well_known_functions(node)
       visitor = CodegenWellKnownFunctions.new(self)
       node.accept visitor
     end
@@ -454,18 +501,22 @@ module Crystal
 
     def visit(node : Nop)
       @last = llvm_nil
+      false
     end
 
     def visit(node : NilLiteral)
       @last = llvm_nil
+      false
     end
 
     def visit(node : BoolLiteral)
       @last = int1(node.value ? 1 : 0)
+      false
     end
 
     def visit(node : CharLiteral)
       @last = int32(node.value.ord)
+      false
     end
 
     def visit(node : NumberLiteral)
@@ -495,14 +546,17 @@ module Crystal
       in .f64?
         @last = float64(node.value)
       end
+      false
     end
 
     def visit(node : StringLiteral)
       @last = build_string_constant(node.value, node.value)
+      false
     end
 
     def visit(node : SymbolLiteral)
       @last = int(@symbols[node.value])
+      false
     end
 
     def visit(node : TupleLiteral)
@@ -796,6 +850,16 @@ module Crystal
       false
     end
 
+    def visit(node : AlignOf)
+      @last = trunc(llvm_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      false
+    end
+
+    def visit(node : InstanceAlignOf)
+      @last = trunc(llvm_struct_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      false
+    end
+
     def visit(node : Include)
       node.hook_expansions.try &.each do |hook|
         accept hook
@@ -1035,7 +1099,7 @@ module Crystal
 
       request_value(value)
 
-      return if value.no_returns?
+      return false if value.no_returns?
 
       last = @last
 
@@ -1049,7 +1113,7 @@ module Crystal
               read_class_var_ptr(target)
             when Var
               # Can't assign void
-              return if target.type.void?
+              return false if target.type.void?
 
               # If assigning to a special variable in a method that yields,
               # assign to that variable too.
@@ -1227,6 +1291,7 @@ module Crystal
       else
         node.raise "BUG: missing context var: #{node.name}"
       end
+      false
     end
 
     def visit(node : Global)
@@ -1235,6 +1300,7 @@ module Crystal
 
     def visit(node : ClassVar)
       @last = read_class_var(node)
+      false
     end
 
     def visit(node : InstanceVar)
@@ -1346,7 +1412,7 @@ module Crystal
 
       unless filtered_type
         @last = upcast llvm_nil, resulting_type, @program.nil
-        return
+        return false
       end
 
       non_nilable_type = node.non_nilable_type
@@ -1419,12 +1485,15 @@ module Crystal
 
     def codegen_type_filter(node, &)
       accept node.obj
-      obj_type = node.obj.type
 
-      type_id = type_id @last, obj_type
-      filtered_type = yield(obj_type).not_nil!
+      if @needs_value
+        obj_type = node.obj.type
 
-      @last = match_type_id obj_type, filtered_type, type_id
+        type_id = type_id @last, obj_type
+        filtered_type = yield(obj_type).not_nil!
+
+        @last = match_type_id obj_type, filtered_type, type_id
+      end
 
       false
     end
@@ -1448,7 +1517,7 @@ module Crystal
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
-        if @program.has_flag?("win32") && @program.has_flag?("preview_dll")
+        if @program.has_flag?("win32") && !@program.has_flag?("static")
           var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
         end
         var.thread_local = thread_local
@@ -1604,6 +1673,7 @@ module Crystal
 
     def visit(node : Unreachable)
       builder.unreachable
+      false
     end
 
     def check_proc_is_not_closure(value, type)
@@ -1989,6 +2059,7 @@ module Crystal
     def unreachable(file = __FILE__, line = __LINE__)
       debug_codegen_log(file, line) { "Reached the unreachable!" }
       builder.unreachable
+      false
     end
 
     def allocate_aggregate(type)
@@ -2004,15 +2075,19 @@ module Crystal
         end
       end
 
-      memset type_ptr, int8(0), struct_type.size
-      run_instance_vars_initializers(type, type, type_ptr)
+      pre_initialize_aggregate(type, struct_type, type_ptr)
+    end
+
+    def pre_initialize_aggregate(type, struct_type, ptr)
+      memset ptr, int8(0), size_t(struct_type.size)
+      run_instance_vars_initializers(type, type, ptr)
 
       unless type.struct?
-        type_id_ptr = aggregate_index(struct_type, type_ptr, 0)
+        type_id_ptr = aggregate_index(struct_type, ptr, 0)
         store type_id(type), type_id_ptr
       end
 
-      @last = type_ptr
+      @last = ptr
     end
 
     def allocate_tuple(type, &)
@@ -2051,7 +2126,7 @@ module Crystal
           context.vars = LLVMVars.new
           alloca_vars init.meta_vars
 
-          accept init.value
+          request_value(init.value)
 
           ivar_ptr = instance_var_ptr real_type, init.name, type_ptr
           assign ivar_ptr, ivar.type, init.value.type, @last
@@ -2073,7 +2148,7 @@ module Crystal
       if malloc_fun = yield
         pointer = call malloc_fun, size
       else
-        pointer = call_c_malloc size
+        pointer = call c_malloc_fun, size_t(size)
       end
 
       pointer_cast pointer, type.pointer
@@ -2093,10 +2168,10 @@ module Crystal
       if malloc_fun = yield
         pointer = call malloc_fun, size
       else
-        pointer = call_c_malloc size
+        pointer = call c_malloc_fun, size_t(size)
       end
 
-      memset pointer, int8(0), size
+      memset pointer, int8(0), size_t(size)
       pointer_cast pointer, type.pointer
     end
 
@@ -2136,53 +2211,49 @@ module Crystal
       end
     end
 
-    # We only use C's malloc in tests that don't require the prelude,
-    # so they don't require the GC. Outside tests these are not used,
-    # and __crystal_* functions are invoked instead.
-
-    def call_c_malloc(size)
-      size = trunc(size, llvm_context.int32) unless @program.bits64?
-      call c_malloc_fun, size
-    end
+    # Fallbacks to libc malloc and realloc when the expected __crystal_*
+    # functions aren't defined (e.g. empty prelude). We only use them in tests
+    # that don't require the prelude, so they don't require the GC.
+    #
+    # Outside tests the __crystal_* functions should have been defined and will
+    # be invoked instead.
 
     def c_malloc_fun
       malloc_fun = @c_malloc_fun = fetch_typed_fun(@main_mod, "malloc") do
-        size = @program.bits64? ? @main_llvm_context.int64 : @main_llvm_context.int32
-        LLVM::Type.function([size], @main_llvm_context.void_pointer)
+        LLVM::Type.function([main_llvm_context_size_t], @main_llvm_context.void_pointer)
       end
 
       check_main_fun "malloc", malloc_fun
     end
 
-    def call_c_realloc(buffer, size)
-      size = trunc(size, llvm_context.int32) unless @program.bits64?
-      call c_realloc_fun, [buffer, size]
-    end
-
     def c_realloc_fun
       realloc_fun = @c_realloc_fun = fetch_typed_fun(@main_mod, "realloc") do
-        size = @program.bits64? ? @main_llvm_context.int64 : @main_llvm_context.int32
-        LLVM::Type.function([@main_llvm_context.void_pointer, size], @main_llvm_context.void_pointer)
+        LLVM::Type.function([@main_llvm_context.void_pointer, main_llvm_context_size_t], @main_llvm_context.void_pointer)
       end
 
       check_main_fun "realloc", realloc_fun
     end
 
-    def memset(pointer, value, size)
-      len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
+    # can't use `#size_t` because it targets @llvm_context instead of
+    # @main_llvm_context which confuses LLVM that considers them as distinct
+    # types despite the dumped LLVM IR looking identical
+    private def main_llvm_context_size_t
+      @main_llvm_context.int(@program.size_bit_width)
+    end
 
+    def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
-      res = call c_memset_fun, [pointer, value, len_arg, int1(0)]
+      res = call c_memset_fun, [pointer, value, size, int1(0)]
       LibLLVM.set_instr_param_alignment(res, 1, 4)
 
       res
     end
 
-    def memcpy(dest, src, len, align, volatile)
+    def memcpy(dest, src, len, align, volatile, *, src_align = align)
       res = call c_memcpy_fun, [dest, src, len, volatile]
 
       LibLLVM.set_instr_param_alignment(res, 1, align)
-      LibLLVM.set_instr_param_alignment(res, 2, align)
+      LibLLVM.set_instr_param_alignment(res, 2, src_align)
 
       res
     end
@@ -2191,7 +2262,7 @@ module Crystal
       if realloc_fun = crystal_realloc_fun
         call realloc_fun, [buffer, size]
       else
-        call_c_realloc buffer, size
+        call c_realloc_fun, [buffer, size_t(size)]
       end
     end
 
@@ -2203,28 +2274,26 @@ module Crystal
 
     private def c_memset_fun
       name = {% if LibLLVM::IS_LT_150 %}
-               @program.bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+               "llvm.memset.p0i8.i#{@program.size_bit_width}"
              {% else %}
-               @program.bits64? ? "llvm.memset.p0.i64" : "llvm.memset.p0.i32"
+               "llvm.memset.p0.i#{@program.size_bit_width}"
              {% end %}
 
       fetch_typed_fun(@llvm_mod, name) do
-        len_type = @program.bits64? ? @llvm_context.int64 : @llvm_context.int32
-        arg_types = [@llvm_context.void_pointer, @llvm_context.int8, len_type, @llvm_context.int1]
+        arg_types = [@llvm_context.void_pointer, @llvm_context.int8, size_t, @llvm_context.int1]
         LLVM::Type.function(arg_types, @llvm_context.void)
       end
     end
 
     private def c_memcpy_fun
       name = {% if LibLLVM::IS_LT_150 %}
-               @program.bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+               "llvm.memcpy.p0i8.p0i8.i#{@program.size_bit_width}"
              {% else %}
-               @program.bits64? ? "llvm.memcpy.p0.p0.i64" : "llvm.memcpy.p0.p0.i32"
+               "llvm.memcpy.p0.p0.i#{@program.size_bit_width}"
              {% end %}
 
       fetch_typed_fun(@llvm_mod, name) do
-        len_type = @program.bits64? ? @llvm_context.int64 : @llvm_context.int32
-        arg_types = [@llvm_context.void_pointer, @llvm_context.void_pointer, len_type, @llvm_context.int1]
+        arg_types = [@llvm_context.void_pointer, @llvm_context.void_pointer, size_t, @llvm_context.int1]
         LLVM::Type.function(arg_types, @llvm_context.void)
       end
     end

@@ -1,6 +1,6 @@
 require "spec"
 require "big"
-require "../../support/string"
+require "spec/helpers/string"
 
 private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = __LINE__)
   it "converts to #{str}", file: file, line: line do
@@ -85,6 +85,20 @@ describe "BigFloat" do
       BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648.0")
       BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9.223372036854775808e+18")
     end
+
+    it "raises if creating from infinity" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::INFINITY) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::INFINITY, precision: 128) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::INFINITY, precision: 128) }
+    end
+
+    it "raises if creating from NaN" do
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::NAN) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float32::NAN, precision: 128) }
+      expect_raises(ArgumentError, "Can only construct from a finite number") { BigFloat.new(Float64::NAN, precision: 128) }
+    end
   end
 
   describe "#<=>" do
@@ -166,7 +180,20 @@ describe "BigFloat" do
   describe "#**" do
     it { ("1.34".to_big_f ** 2).should be_close("1.7956".to_big_f, 1e-12) }
     it { ("-0.05".to_big_f ** 10).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
-    it { (0.1234567890.to_big_f ** 3).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
+    it { ("0.1234567890".to_big_f ** 3).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
+
+    it { ("1.34".to_big_f ** 2.to_big_i).should be_close("1.7956".to_big_f, 1e-12) }
+    it { ("-0.05".to_big_f ** 10.to_big_i).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
+    it { ("0.1234567890".to_big_f ** 3.to_big_i).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
+
+    it { ("10".to_big_f ** -5).should be_close("0.00001".to_big_f, 1e-12) }
+    it { ("0.1".to_big_f ** -5).should be_close("100000".to_big_f, 1e-12) }
+
+    it { ("10".to_big_f ** (-5).to_big_i).should be_close("0.00001".to_big_f, 1e-12) }
+    it { ("0.1".to_big_f ** (-5).to_big_i).should be_close("100000".to_big_f, 1e-12) }
+    it { ("0".to_big_f ** 1.to_big_i).should eq(0.to_big_f) }
+    it { ("0".to_big_f ** 0.to_big_i).should eq(1.to_big_f) }
+    it { expect_raises(ArgumentError, "Cannot raise 0 to a negative power") { "0".to_big_f ** (-1).to_big_i } }
   end
 
   describe "#abs" do
@@ -500,6 +527,12 @@ describe "BigFloat" do
         end
       end
     end
+  end
+
+  describe "#integer?" do
+    it { BigFloat.zero.integer?.should be_true }
+    it { 1.to_big_f.integer?.should be_true }
+    it { 1.2.to_big_f.integer?.should be_false }
   end
 
   it "#hash" do

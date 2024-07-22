@@ -5,14 +5,25 @@ require "./html_parser_options"
 require "./save_options"
 
 @[Link("xml2", pkg_config: "libxml-2.0")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "libxml2.dll")]
+{% end %}
 lib LibXML
   alias Int = LibC::Int
 
-  $xmlIndentTreeOutput : Int
-  $xmlTreeIndentString : UInt8*
+  fun xmlInitParser
 
-  type Dtd = Void*
-  type Dict = Void*
+  # TODO: check if other platforms also support per-thread globals
+  {% if flag?(:win32) %}
+    fun __xmlIndentTreeOutput : Int*
+    fun __xmlTreeIndentString : UInt8**
+  {% else %}
+    $xmlIndentTreeOutput : Int
+    $xmlTreeIndentString : UInt8*
+  {% end %}
+
+  alias Dtd = Void*
+  alias Dict = Void*
 
   struct NS
     next : NS*
@@ -78,9 +89,9 @@ lib LibXML
     node_tab : Node**
   end
 
-  type InputBuffer = Void*
-  type XMLTextReader = Void*
-  type XMLTextReaderLocator = Void*
+  alias InputBuffer = Void*
+  alias XMLTextReader = Void*
+  alias XMLTextReaderLocator = Void*
 
   enum ParserSeverity
     VALIDITY_WARNING = 1
@@ -148,7 +159,7 @@ lib LibXML
   alias OutputWriteCallback = (Void*, UInt8*, Int) -> Int
   alias OutputCloseCallback = (Void*) -> Int
 
-  type SaveCtxPtr = Void*
+  alias SaveCtxPtr = Void*
 
   fun xmlSaveToIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoding : UInt8*, options : XML::SaveOptions) : SaveCtxPtr
   fun xmlSaveTree(ctx : SaveCtxPtr, node : Node*) : LibC::Long
@@ -165,7 +176,7 @@ lib LibXML
     error : Int
   end
 
-  type TextWriter = Void*
+  alias TextWriter = Void*
 
   fun xmlNewTextWriter(out : OutputBuffer*) : TextWriter
   fun xmlTextWriterStartDocument(TextWriter, version : UInt8*, encoding : UInt8*, standalone : UInt8*) : Int
@@ -313,6 +324,8 @@ lib LibXML
 
   fun xmlValidateNameValue(value : UInt8*) : Int
 end
+
+LibXML.xmlInitParser
 
 LibXML.xmlGcMemSetup(
   ->GC.free,

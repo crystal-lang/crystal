@@ -59,6 +59,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil, warnings : WarningCollection? = nil)
       @warnings = warnings || WarningCollection.new
       @reader = Char::Reader.new(string)
+      check_reader_error
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -335,18 +336,20 @@ module Crystal
               @token.type = :OP_PERCENT
             end
           when 'r'
-            case next_char
+            case peek_next_char
             when '(', '[', '{', '<', '|'
+              next_char
               delimited_pair :regex, current_char, closing_char, start
             else
-              raise "unknown %r char"
+              @token.type = :OP_PERCENT
             end
           when 'x'
-            case next_char
+            case peek_next_char
             when '(', '[', '{', '<', '|'
+              next_char
               delimited_pair :command, current_char, closing_char, start
             else
-              raise "unknown %x char"
+              @token.type = :OP_PERCENT
             end
           when 'w'
             case peek_next_char
@@ -584,8 +587,19 @@ module Crystal
             return check_ident_or_keyword(:abstract, start)
           end
         when 'l'
-          if char_sequence?('i', 'a', 's')
-            return check_ident_or_keyword(:alias, start)
+          if next_char == 'i'
+            case next_char
+            when 'a'
+              if next_char == 's'
+                return check_ident_or_keyword(:alias, start)
+              end
+            when 'g'
+              if char_sequence?('n', 'o', 'f')
+                return check_ident_or_keyword(:alignof, start)
+              end
+            else
+              # scan_ident
+            end
           end
         when 's'
           case peek_next_char
@@ -717,8 +731,19 @@ module Crystal
                 return check_ident_or_keyword(:include, start)
               end
             when 's'
-              if char_sequence?('t', 'a', 'n', 'c', 'e', '_', 's', 'i', 'z', 'e', 'o', 'f')
-                return check_ident_or_keyword(:instance_sizeof, start)
+              if char_sequence?('t', 'a', 'n', 'c', 'e', '_')
+                case next_char
+                when 's'
+                  if char_sequence?('i', 'z', 'e', 'o', 'f')
+                    return check_ident_or_keyword(:instance_sizeof, start)
+                  end
+                when 'a'
+                  if char_sequence?('l', 'i', 'g', 'n', 'o', 'f')
+                    return check_ident_or_keyword(:instance_alignof, start)
+                  end
+                else
+                  # scan_ident
+                end
               end
             else
               # scan_ident
@@ -1925,10 +1950,10 @@ module Crystal
             char = current_char
             whitespace = true
             beginning_of_line = false
-          elsif !delimiter_state && whitespace && (keyword = lookahead { check_macro_opening_keyword(beginning_of_line) })
+          elsif !delimiter_state && whitespace && (keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) })
             char = current_char
 
-            nest += 1 unless keyword == :abstract_def
+            nest += 1 unless keyword.abstract_def?
             whitespace = true
             beginning_of_line = false
             next
@@ -2006,7 +2031,12 @@ module Crystal
       end
     end
 
-    def check_macro_opening_keyword(beginning_of_line)
+    enum MacroKeywordState
+      AbstractDef
+      Other
+    end
+
+    def macro_starts_with_keyword?(beginning_of_line) : MacroKeywordState?
       case char = current_char
       when 'a'
         case next_char
@@ -2014,79 +2044,65 @@ module Crystal
           if char_sequence?('s', 't', 'r', 'a', 'c', 't') && next_char.whitespace?
             case next_char
             when 'd'
-              char_sequence?('e', 'f') && peek_not_ident_part_or_end_next_char && :abstract_def
+              MacroKeywordState::AbstractDef if char_sequence?('e', 'f') && peek_not_ident_part_or_end_next_char
             when 'c'
-              char_sequence?('l', 'a', 's', 's') && peek_not_ident_part_or_end_next_char && :abstract_class
+              MacroKeywordState::Other if char_sequence?('l', 'a', 's', 's') && peek_not_ident_part_or_end_next_char
             when 's'
-              char_sequence?('t', 'r', 'u', 'c', 't') && peek_not_ident_part_or_end_next_char && :abstract_struct
-            else
-              false
+              MacroKeywordState::Other if char_sequence?('t', 'r', 'u', 'c', 't') && peek_not_ident_part_or_end_next_char
             end
           end
         when 'n'
-          char_sequence?('n', 'o', 't', 'a', 't', 'i', 'o', 'n') && peek_not_ident_part_or_end_next_char && :annotation
-        else
-          false
+          MacroKeywordState::Other if char_sequence?('n', 'o', 't', 'a', 't', 'i', 'o', 'n') && peek_not_ident_part_or_end_next_char
         end
       when 'b'
-        char_sequence?('e', 'g', 'i', 'n') && peek_not_ident_part_or_end_next_char && :begin
+        MacroKeywordState::Other if char_sequence?('e', 'g', 'i', 'n') && peek_not_ident_part_or_end_next_char
       when 'c'
         case next_char
         when 'a'
-          char_sequence?('s', 'e') && peek_not_ident_part_or_end_next_char && :case
+          MacroKeywordState::Other if char_sequence?('s', 'e') && peek_not_ident_part_or_end_next_char
         when 'l'
-          char_sequence?('a', 's', 's') && peek_not_ident_part_or_end_next_char && :class
-        else
-          false
+          MacroKeywordState::Other if char_sequence?('a', 's', 's') && peek_not_ident_part_or_end_next_char
         end
       when 'd'
         case next_char
         when 'o'
-          peek_not_ident_part_or_end_next_char && :do
+          MacroKeywordState::Other if peek_not_ident_part_or_end_next_char
         when 'e'
-          next_char == 'f' && peek_not_ident_part_or_end_next_char && :def
-        else
-          false
+          MacroKeywordState::Other if next_char == 'f' && peek_not_ident_part_or_end_next_char
         end
       when 'f'
-        char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char && :fun
+        MacroKeywordState::Other if char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
       when 'i'
-        beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char && :if
+        MacroKeywordState::Other if beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char
       when 'l'
-        char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char && :lib
+        MacroKeywordState::Other if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
       when 'm'
         case next_char
         when 'a'
-          char_sequence?('c', 'r', 'o') && peek_not_ident_part_or_end_next_char && :macro
+          MacroKeywordState::Other if char_sequence?('c', 'r', 'o') && peek_not_ident_part_or_end_next_char
         when 'o'
-          char_sequence?('d', 'u', 'l', 'e') && peek_not_ident_part_or_end_next_char && :module
-        else
-          false
+          MacroKeywordState::Other if char_sequence?('d', 'u', 'l', 'e') && peek_not_ident_part_or_end_next_char
         end
       when 's'
         case next_char
         when 'e'
-          char_sequence?('l', 'e', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char && :select
+          MacroKeywordState::Other if char_sequence?('l', 'e', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
         when 't'
-          char_sequence?('r', 'u', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char && :struct
-        else
-          false
+          MacroKeywordState::Other if char_sequence?('r', 'u', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
         end
       when 'u'
-        next_char == 'n' && case next_char
-        when 'i'
-          char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char && :union
-        when 'l'
-          beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char && :unless
-        when 't'
-          beginning_of_line && char_sequence?('i', 'l') && peek_not_ident_part_or_end_next_char && :until
-        else
-          false
+        if next_char == 'n'
+          case next_char
+          when 'i'
+            MacroKeywordState::Other if char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
+          when 'l'
+            MacroKeywordState::Other if beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char
+          when 't'
+            MacroKeywordState::Other if beginning_of_line && char_sequence?('i', 'l') && peek_not_ident_part_or_end_next_char
+          end
         end
       when 'w'
-        beginning_of_line && char_sequence?('h', 'i', 'l', 'e') && peek_not_ident_part_or_end_next_char && :while
-      else
-        false
+        MacroKeywordState::Other if beginning_of_line && char_sequence?('h', 'i', 'l', 'e') && peek_not_ident_part_or_end_next_char
       end
     end
 
@@ -2203,8 +2219,8 @@ module Crystal
     def consume_non_braced_unicode_escape
       codepoint = 0
       4.times do
-        hex_value = char_to_hex(next_char) { expected_hexadecimal_character_in_unicode_escape }
-        codepoint = 16 * codepoint + hex_value
+        hex_value = next_char.to_i?(16) || expected_hexadecimal_character_in_unicode_escape
+        codepoint = 16 &* codepoint &+ hex_value
       end
       if 0xD800 <= codepoint <= 0xDFFF
         raise "invalid unicode codepoint (surrogate half)"
@@ -2233,8 +2249,8 @@ module Crystal
             expected_hexadecimal_character_in_unicode_escape
           end
         else
-          hex_value = char_to_hex(char) { expected_hexadecimal_character_in_unicode_escape }
-          codepoint = 16 * codepoint + hex_value
+          hex_value = char.to_i?(16) || expected_hexadecimal_character_in_unicode_escape
+          codepoint = 16 &* codepoint &+ hex_value
           found_digit = true
         end
       end
@@ -2346,18 +2362,6 @@ module Crystal
       set_token_raw_from_start(start)
 
       @token
-    end
-
-    def char_to_hex(char, &)
-      if '0' <= char <= '9'
-        char - '0'
-      elsif 'a' <= char <= 'f'
-        10 + (char - 'a')
-      elsif 'A' <= char <= 'F'
-        10 + (char - 'A')
-      else
-        yield
-      end
     end
 
     def consume_loc_pragma
@@ -2735,12 +2739,29 @@ module Crystal
       end
     end
 
+    private UNICODE_BIDI_CONTROL_CHARACTERS = {'\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'}
+
+    private FORBIDDEN_ESCAPES = UNICODE_BIDI_CONTROL_CHARACTERS.to_h { |ch| {ch, ch.unicode_escape} }
+
+    # used by the formatter
+    def self.escape_forbidden_characters(string)
+      string.each_char do |ch|
+        if ch.in?(UNICODE_BIDI_CONTROL_CHARACTERS)
+          return string.gsub(FORBIDDEN_ESCAPES)
+        end
+      end
+
+      string
+    end
+
     def next_char_no_column_increment
-      char = @reader.next_char
+      @reader.next_char.tap { check_reader_error }
+    end
+
+    private def check_reader_error
       if error = @reader.error
         ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
-      char
     end
 
     def next_char
@@ -2793,6 +2814,13 @@ module Crystal
     def next_token_never_a_symbol
       @wants_symbol = false
       next_token.tap { @wants_symbol = true }
+    end
+
+    def wants_def_or_macro_name(& : ->)
+      @wants_def_or_macro_name = true
+      yield
+    ensure
+      @wants_def_or_macro_name = false
     end
 
     def current_char

@@ -14,7 +14,6 @@ module LLVM
       LibLLVM.initialize_x86_target_mc
       LibLLVM.initialize_x86_asm_printer
       LibLLVM.initialize_x86_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without X86 target"
@@ -31,7 +30,6 @@ module LLVM
       LibLLVM.initialize_aarch64_target_mc
       LibLLVM.initialize_aarch64_asm_printer
       LibLLVM.initialize_aarch64_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without AArch64 target"
@@ -48,10 +46,25 @@ module LLVM
       LibLLVM.initialize_arm_target_mc
       LibLLVM.initialize_arm_asm_printer
       LibLLVM.initialize_arm_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without ARM target"
+    {% end %}
+  end
+
+  def self.init_avr : Nil
+    return if @@initialized_avr
+    @@initialized_avr = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
+      LibLLVM.initialize_avr_target_info
+      LibLLVM.initialize_avr_target
+      LibLLVM.initialize_avr_target_mc
+      LibLLVM.initialize_avr_asm_printer
+      LibLLVM.initialize_avr_asm_parser
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without AVR target"
     {% end %}
   end
 
@@ -65,13 +78,13 @@ module LLVM
       LibLLVM.initialize_webassembly_target_mc
       LibLLVM.initialize_webassembly_asm_printer
       LibLLVM.initialize_webassembly_asm_parser
-      # LibLLVM.link_in_jit
       LibLLVM.link_in_mc_jit
     {% else %}
       raise "ERROR: LLVM was built without WebAssembly target"
     {% end %}
   end
 
+  @[Deprecated("This method has no effect")]
   def self.start_multithreaded : Bool
     if multithreaded?
       true
@@ -80,6 +93,7 @@ module LLVM
     end
   end
 
+  @[Deprecated("This method has no effect")]
   def self.stop_multithreaded
     if multithreaded?
       LibLLVM.stop_multithreaded
@@ -92,12 +106,13 @@ module LLVM
 
   def self.default_target_triple : String
     chars = LibLLVM.get_default_target_triple
-    triple = string_and_dispose(chars)
-    if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
-      "x86_64-apple-macosx"
-    elsif triple =~ /aarch64-unknown-linux-android/
+    case triple = string_and_dispose(chars)
+    when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"
+    when .starts_with?("x86_64-pc-solaris")
+      # remove API version
+      "x86_64-pc-solaris"
     else
       triple
     end

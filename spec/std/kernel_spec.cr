@@ -2,7 +2,7 @@ require "spec"
 require "./spec_helper"
 
 describe "PROGRAM_NAME" do
-  it "works for UTF-8 name" do
+  it "works for UTF-8 name", tags: %w[slow] do
     with_tempfile("source_file") do |source_file|
       if ENV["IN_NIX_SHELL"]?
         pending! "Example is broken in Nix shell (#12332)"
@@ -20,7 +20,7 @@ describe "PROGRAM_NAME" do
 end
 
 describe "ARGV" do
-  it "accepts UTF-8 command-line arguments" do
+  it "accepts UTF-8 command-line arguments", tags: %w[slow] do
     with_tempfile("source_file") do |source_file|
       File.write(source_file, "ARGV.inspect(STDOUT)")
 
@@ -35,12 +35,12 @@ describe "ARGV" do
 end
 
 describe "exit" do
-  it "exits normally with status 0" do
+  it "exits normally with status 0", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit"
     status.success?.should be_true
   end
 
-  it "exits with given error code" do
+  it "exits with given error code", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit 42"
     status.success?.should be_false
     status.exit_code.should eq(42)
@@ -48,7 +48,7 @@ describe "exit" do
 end
 
 describe "at_exit" do
-  it "runs handlers on normal program ending" do
+  it "runs handlers on normal program ending", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "handler code."
@@ -59,7 +59,7 @@ describe "at_exit" do
     output.should eq("handler code.")
   end
 
-  it "runs handlers on explicit program ending" do
+  it "runs handlers on explicit program ending", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "handler code, exit code: #{exit_code}."
@@ -72,7 +72,7 @@ describe "at_exit" do
     output.should eq("handler code, exit code: 42.")
   end
 
-  it "runs handlers in reverse order" do
+  it "runs handlers in reverse order", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "first handler code."
@@ -87,7 +87,7 @@ describe "at_exit" do
     output.should eq("second handler code.first handler code.")
   end
 
-  it "runs all handlers maximum once" do
+  it "runs all handlers maximum once", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "first handler code."
@@ -109,7 +109,7 @@ describe "at_exit" do
     output.should eq("third handler code.second handler code, explicit exit!first handler code.")
   end
 
-  it "allows handlers to change the exit code with explicit `exit` call" do
+  it "allows handlers to change the exit code with explicit `exit` call", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "first handler code, exit code: #{exit_code}."
@@ -132,7 +132,7 @@ describe "at_exit" do
     output.should eq("third handler code, exit code: 0.second handler code, re-exiting.first handler code, exit code: 42.")
   end
 
-  it "allows handlers to change the exit code with explicit `exit` call (2)" do
+  it "allows handlers to change the exit code with explicit `exit` call (2)", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "first handler code, exit code: #{exit_code}."
@@ -157,7 +157,7 @@ describe "at_exit" do
     output.should eq("third handler code, exit code: 21.second handler code, re-exiting.first handler code, exit code: 42.")
   end
 
-  it "changes final exit code when an handler raises an error" do
+  it "changes final exit code when an handler raises an error", tags: %w[slow] do
     status, output, error = compile_and_run_source <<-'CRYSTAL'
       at_exit do |exit_code|
         print "first handler code, exit code: #{exit_code}."
@@ -181,7 +181,7 @@ describe "at_exit" do
     error.should contain("Error running at_exit handler: Raised from at_exit handler!")
   end
 
-  it "shows unhandled exceptions after at_exit handlers" do
+  it "shows unhandled exceptions after at_exit handlers", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-CRYSTAL
       at_exit do
         STDERR.print "first handler code."
@@ -198,7 +198,7 @@ describe "at_exit" do
     error.should contain("second handler code.first handler code.Unhandled exception: Kaboom!")
   end
 
-  it "can get unhandled exception in at_exit handler" do
+  it "can get unhandled exception in at_exit handler", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-CRYSTAL
       at_exit do |_, ex|
         STDERR.print ex.try &.message
@@ -211,7 +211,7 @@ describe "at_exit" do
     error.should contain("Kaboom!Unhandled exception: Kaboom!")
   end
 
-  it "allows at_exit inside at_exit" do
+  it "allows at_exit inside at_exit", tags: %w[slow] do
     status, output, _ = compile_and_run_source <<-CRYSTAL
       at_exit do
         print "1"
@@ -232,7 +232,7 @@ describe "at_exit" do
     output.should eq("3412")
   end
 
-  it "prints unhandled exception with cause" do
+  it "prints unhandled exception with cause", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-CRYSTAL
       raise Exception.new("secondary", cause: Exception.new("primary"))
     CRYSTAL
@@ -244,7 +244,7 @@ describe "at_exit" do
 end
 
 describe "hardware exception" do
-  it "reports invalid memory access" do
+  it "reports invalid memory access", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-'CRYSTAL'
       puts Pointer(Int64).null.value
     CRYSTAL
@@ -258,7 +258,7 @@ describe "hardware exception" do
     # FIXME: Pending as mitigation for https://github.com/crystal-lang/crystal/issues/7482
     pending "detects stack overflow on the main stack"
   {% else %}
-    it "detects stack overflow on the main stack" do
+    it "detects stack overflow on the main stack", tags: %w[slow] do
       # This spec can take some time under FreeBSD where
       # the default stack size is 0.5G.  Setting a
       # smaller stack size with `ulimit -s 8192`
@@ -276,7 +276,7 @@ describe "hardware exception" do
     end
   {% end %}
 
-  it "detects stack overflow on a fiber stack" do
+  it "detects stack overflow on a fiber stack", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-'CRYSTAL'
       def foo
         y = StaticArray(Int8, 512).new(0)

@@ -56,7 +56,7 @@ module Crystal::System::Dir
              else                                 false
              end
 
-    Entry.new(name, is_dir)
+    Entry.new(name, is_dir, false)
   end
 
   def self.rewind(dir) : Nil

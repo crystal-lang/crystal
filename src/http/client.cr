@@ -119,10 +119,6 @@ class HTTP::Client
   property? compress : Bool = true
 
   @io : IO?
-  @dns_timeout : Float64?
-  @connect_timeout : Float64?
-  @read_timeout : Float64?
-  @write_timeout : Float64?
   @reconnect = true
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
@@ -283,8 +279,9 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
+  @[Deprecated("Use `#read_timeout=(Time::Span)` instead")]
   def read_timeout=(read_timeout : Number)
-    @read_timeout = read_timeout.to_f
+    self.read_timeout = read_timeout.seconds
   end
 
   # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::TimeoutError`.
@@ -300,21 +297,18 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
-  def read_timeout=(read_timeout : Time::Span)
-    self.read_timeout = read_timeout.total_seconds
-  end
+  setter read_timeout : Time::Span?
 
   # Sets the write timeout - if any chunk of request is not written
   # within the number of seconds provided, `IO::TimeoutError` exception is raised.
+  @[Deprecated("Use `#write_timeout=(Time::Span)` instead")]
   def write_timeout=(write_timeout : Number)
-    @write_timeout = write_timeout.to_f
+    self.write_timeout = write_timeout.seconds
   end
 
   # Sets the write timeout - if any chunk of request is not written
   # within the provided `Time::Span`,  `IO::TimeoutError` exception is raised.
-  def write_timeout=(write_timeout : Time::Span)
-    self.write_timeout = write_timeout.total_seconds
-  end
+  setter write_timeout : Time::Span?
 
   # Sets the number of seconds to wait when connecting, before raising an `IO::TimeoutError`.
   #
@@ -329,8 +323,9 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
+  @[Deprecated("Use `#connect_timeout=(Time::Span)` instead")]
   def connect_timeout=(connect_timeout : Number)
-    @connect_timeout = connect_timeout.to_f
+    self.connect_timeout = connect_timeout.seconds
   end
 
   # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::TimeoutError`.
@@ -346,9 +341,7 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
-  def connect_timeout=(connect_timeout : Time::Span)
-    self.connect_timeout = connect_timeout.total_seconds
-  end
+  setter connect_timeout : Time::Span?
 
   # **This method has no effect right now**
   #
@@ -365,8 +358,9 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
+  @[Deprecated("Use `#dns_timeout=(Time::Span)` instead")]
   def dns_timeout=(dns_timeout : Number)
-    @dns_timeout = dns_timeout.to_f
+    self.dns_timeout = dns_timeout.seconds
   end
 
   # **This method has no effect right now**
@@ -384,9 +378,7 @@ class HTTP::Client
   #   puts "Timeout!"
   # end
   # ```
-  def dns_timeout=(dns_timeout : Time::Span)
-    self.dns_timeout = dns_timeout.total_seconds
-  end
+  setter dns_timeout : Time::Span?
 
   # Adds a callback to execute before each request. This is usually
   # used to set an authorization header. Any number of callbacks

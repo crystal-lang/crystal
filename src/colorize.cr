@@ -129,8 +129,7 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
-  # This will also be disabled if the environment variable `TERM` is "dumb" or `NO_COLOR` contains any value.
+  # NOTE: This is by default disabled if the environment variable `NO_COLOR` contains any value.
   class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
@@ -285,7 +284,7 @@ module Colorize
     Bright = 1
     # Dims the text color.
     Dim
-    # Underlines the text.
+    # Draws a line below the text.
     Underline
     # Makes the text blink slowly.
     Blink
@@ -293,16 +292,31 @@ module Colorize
     Reverse
     # Makes the text invisible.
     Hidden
+    # Italicizes the text.
+    Italic
+    # Makes the text blink quickly.
+    BlinkFast
+    # Crosses out the text.
+    Strikethrough
+    # Draws two lines below the text.
+    DoubleUnderline
+    # Draws a line above the text.
+    Overline
   end
 end
 
 private def each_code(mode : Colorize::Mode, &)
-  yield '1' if mode.bold?
-  yield '2' if mode.dim?
-  yield '4' if mode.underline?
-  yield '5' if mode.blink?
-  yield '7' if mode.reverse?
-  yield '8' if mode.hidden?
+  yield "1" if mode.bold?
+  yield "2" if mode.dim?
+  yield "3" if mode.italic?
+  yield "4" if mode.underline?
+  yield "5" if mode.blink?
+  yield "6" if mode.blink_fast?
+  yield "7" if mode.reverse?
+  yield "8" if mode.hidden?
+  yield "9" if mode.strikethrough?
+  yield "21" if mode.double_underline?
+  yield "53" if mode.overline?
 end
 
 # A colorized object. Colors and text decorations can be modified.

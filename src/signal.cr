@@ -40,8 +40,8 @@ require "crystal/system/signal"
 # The standard library provides several platform-agnostic APIs to achieve tasks
 # that are typically solved with signals on POSIX systems:
 #
-# * The portable API for responding to an interrupt signal (`INT.trap`) is
-#   `Process.on_interrupt`.
+# * The portable API for responding to a termination request is
+#   `Process.on_terminate`.
 # * The portable API for sending a `TERM` or `KILL` signal to a process is
 #   `Process#terminate`.
 # * The portable API for retrieving the exit signal of a process
@@ -96,7 +96,7 @@ enum Signal : Int32
   #
   # After executing this, whenever the current process receives the
   # corresponding signal, the passed function will be called (instead of the OS
-  # default). The handler will run in a signal-safe fiber thought the event
+  # default). The handler will run in a signal-safe fiber throughout the event
   # loop; there is no limit to what functions can be called, unlike raw signals
   # that run on the sigaltstack.
   #
@@ -105,7 +105,7 @@ enum Signal : Int32
   # check child processes using `Process.exists?`. Trying to use waitpid with a
   # zero or negative value won't work.
   #
-  # NOTE: `Process.on_interrupt` is preferred over `Signal::INT.trap` as a
+  # NOTE: `Process.on_terminate` is preferred over `Signal::INT.trap` as a
   # portable alternative which also works on Windows.
   def trap(&handler : Signal ->) : Nil
     {% if @type.has_constant?("CHLD") %}
@@ -115,6 +115,24 @@ enum Signal : Int32
       end
     {% end %}
     Crystal::System::Signal.trap(self, handler)
+  end
+
+  # Returns any existing handler for this signal
+  #
+  # ```
+  # Signal::USR1.trap { }
+  # prev_handler = Signal::USR1.trap_handler?
+  #
+  # Signal::USR1.trap do |signal|
+  #   prev_handler.try &.call(signal)
+  #   # ...
+  # end
+  # ```
+  def trap_handler?
+    {% if @type.has_constant?("CHLD") %}
+      return Crystal::System::Signal.child_handler if self == CHLD
+    {% end %}
+    Crystal::System::Signal.trap_handler?(self)
   end
 
   # Resets the handler for this signal to the OS default.

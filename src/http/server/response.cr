@@ -248,11 +248,11 @@ class HTTP::Server
         @closed = false
       end
 
-      private def unbuffered_read(slice : Bytes)
+      private def unbuffered_read(slice : Bytes) : Int32
         raise "Can't read from HTTP::Server::Response"
       end
 
-      private def unbuffered_write(slice : Bytes)
+      private def unbuffered_write(slice : Bytes) : Nil
         return if slice.empty?
 
         unless response.wrote_headers?
@@ -313,15 +313,15 @@ class HTTP::Server
         end
       end
 
-      private def unbuffered_close
+      private def unbuffered_close : Nil
         @closed = true
       end
 
-      private def unbuffered_rewind
+      private def unbuffered_rewind : Nil
         raise "Can't rewind to HTTP::Server::Response"
       end
 
-      private def unbuffered_flush
+      private def unbuffered_flush : Nil
         @io.flush
       rescue ex : IO::Error
         unbuffered_close

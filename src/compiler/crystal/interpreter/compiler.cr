@@ -389,8 +389,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     type = node.type.as(TupleInstanceType)
 
-    # A tuple potentially has the values packed (unaligned).
-    # The values in the stack are aligned, so we must adjust that:
+    # The elements inside a tuple do not follow the stack alignment.
+    # Each element expression is stack-aligned, so we must adjust that:
     # if the value in the stack has more bytes than needed, we pop
     # the extra ones; if it has less bytes that needed we pad the value
     # with zeros.
@@ -762,7 +762,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # particularly when outside of a method.
     if is_self && !scope.is_a?(Program) && !scope.passed_as_self?
       put_type scope, node: node
-      return
+      return false
     end
 
     local_var = lookup_local_var_or_closured_var(node.name)
@@ -1422,6 +1422,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : InstanceSizeOf)
+    return false unless @wants_value
+
+    put_i32 inner_instance_sizeof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : AlignOf)
+    return false unless @wants_value
+
+    put_i32 inner_alignof_type(node.exp), node: node
+
+    false
+  end
+
+  def visit(node : InstanceAlignOf)
+    return false unless @wants_value
+
+    put_i32 inner_instance_alignof_type(node.exp), node: node
+
+    false
+  end
+
   def visit(node : TypeNode)
     return false unless @wants_value
 
@@ -1663,7 +1687,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if node.upcast?
       upcast node.obj, obj_type, node.non_nilable_type
       upcast node.obj, node.non_nilable_type, node.type
-      return
+      return false
     end
 
     # Check if obj is a `to_type`
@@ -2010,7 +2034,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args = node.args
     obj_type = obj.try(&.type) || target_def.owner
 
-    if obj_type == @context.program
+    # TODO: should this use `Type#passed_as_self?` instead?
+    if obj_type == @context.program || obj_type.is_a?(FileModule)
       # Nothing
     elsif obj_type.passed_by_value?
       args_bytesize += sizeof(Pointer(UInt8))
@@ -3133,6 +3158,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% end %}
 
     call compiled_def, node: node
+    false
   end
 
   def visit(node : ASTNode)
@@ -3144,11 +3170,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     {% operands = instruction[:operands] || [] of Nil %}
 
     def {{name.id}}(
-      {% if operands.empty? %}
-        *, node : ASTNode?
-      {% else %}
-        {{*operands}}, *, node : ASTNode?
-      {% end %}
+      {{operands.splat(", ")}}*, node : ASTNode?
     ) : Nil
       node = @node_override || node
       @instructions.nodes[instructions_index] = node if node
@@ -3328,7 +3350,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def append(value : Int8)
-    append value.unsafe_as(UInt8)
+    append value.to_u8!
   end
 
   private def append(value : Symbol)
@@ -3343,6 +3365,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(value : UInt8)
     @instructions.instructions << value
+  end
+
+  private def append(value : Enum)
+    append(value.value)
   end
 
   # Many times we need to jump or branch to an instruction for which we don't
@@ -3364,25 +3390,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions.instructions.size
   end
 
-  private def aligned_sizeof_type(node : ASTNode) : Int32
-    @context.aligned_sizeof_type(node)
-  end
-
-  private def aligned_sizeof_type(type : Type?) : Int32
-    @context.aligned_sizeof_type(type)
-  end
-
-  private def inner_sizeof_type(node : ASTNode) : Int32
-    @context.inner_sizeof_type(node)
-  end
-
-  private def inner_sizeof_type(type : Type?) : Int32
-    @context.inner_sizeof_type(type)
-  end
-
-  private def aligned_instance_sizeof_type(type : Type) : Int32
-    @context.aligned_instance_sizeof_type(type)
-  end
+  private delegate inner_sizeof_type, inner_alignof_type, aligned_sizeof_type,
+    inner_instance_sizeof_type, inner_instance_alignof_type, aligned_instance_sizeof_type,
+    to: @context
 
   private def ivar_offset(type : Type, name : String) : Int32
     if type.extern_union?

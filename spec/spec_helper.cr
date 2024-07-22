@@ -8,8 +8,11 @@ require "compiler/requires"
 require "./support/syntax"
 require "./support/tempfile"
 require "./support/win32"
+require "./support/wasm32"
 
 class Crystal::Program
+  setter temp_var_counter
+
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
   end
@@ -77,12 +80,42 @@ def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
   SemanticResult.new(program, node)
 end
 
+def top_level_semantic(code : String, wants_doc = false, inject_primitives = false)
+  node = parse(code, wants_doc: wants_doc)
+  node = inject_primitives(node) if inject_primitives
+  top_level_semantic node, wants_doc: wants_doc
+end
+
+def top_level_semantic(node : ASTNode, wants_doc = false)
+  program = new_program
+  program.wants_doc = wants_doc
+  node = program.normalize node
+  node, _ = program.top_level_semantic node
+  SemanticResult.new(program, node)
+end
+
 def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  to_nodes_str = to_nodes.to_s.strip
+  to_nodes_str.should eq(to.strip), file: file, line: line
+
+  # first idempotency check: the result should be fully normalized
+  to_nodes_str2 = program.normalize(to_nodes).to_s.strip
+  unless to_nodes_str2 == to_nodes_str
+    fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
+  end
+
+  # second idempotency check: if the normalizer mutates the original node,
+  # further normalizations should not produce a different result
+  program.temp_var_counter = 0
+  to_nodes_str2 = program.normalize(from_nodes).to_s.strip
+  unless to_nodes_str2 == to_nodes_str
+    fail "Idempotency failed:\nBefore: #{to_nodes_str.inspect}\nAfter:  #{to_nodes_str2.inspect}", file: file, line: line
+  end
+
   to_nodes
 end
 
@@ -91,10 +124,16 @@ def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __L
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_expand(from_nodes, flags: flags, file: file, line: line) do |to_nodes|
+    to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  end
+end
+
+def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  yield to_nodes, program
 end
 
 def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)

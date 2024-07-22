@@ -464,7 +464,9 @@ module Crystal
         return expanded.transform self
       end
 
-      @program.check_call_to_deprecated_method(node)
+      unless @current_def.try(&.annotation(@program.deprecated_annotation))
+        @program.check_call_to_deprecated_method(node)
+      end
 
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
@@ -633,10 +635,12 @@ module Crystal
         if @a_def.vars.try &.[node.name]?.try &.closured?
           @vars << node
         end
+        false
       end
 
       def visit(node : InstanceVar)
         @vars << node
+        false
       end
 
       def visit(node : ASTNode)
@@ -1001,6 +1005,23 @@ module Crystal
       node
     end
 
+    def transform(node : InstanceAlignOf)
+      exp_type = node.exp.type?
+
+      if exp_type
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
+          node.exp.raise "instance_alignof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
+        end
+      end
+
+      if expanded = node.expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
     def transform(node : TupleLiteral)
       super
 
@@ -1057,7 +1078,7 @@ module Crystal
       # For `allocate` on a virtual abstract type we make `extra`
       # be a call to `raise` at runtime. Here we just replace the
       # "allocate" primitive with that raise call.
-      if node.name == "allocate" && extra
+      if node.name.in?("allocate", "pre_initialize") && extra
         return extra
       end
 

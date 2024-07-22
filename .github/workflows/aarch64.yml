@@ -12,13 +12,13 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-aarch64-musl
           path: |
@@ -30,9 +30,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -47,9 +47,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -63,13 +63,13 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: crystal-aarch64-gnu
           path: |
@@ -81,9 +81,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -98,9 +98,9 @@ jobs:
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download Crystal executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

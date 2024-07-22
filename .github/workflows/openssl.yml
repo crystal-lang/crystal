@@ -10,10 +10,10 @@ jobs:
   openssl3:
     runs-on: ubuntu-latest
     name: "OpenSSL 3.0"
-    container: crystallang/crystal:1.8.1-alpine
+    container: crystallang/crystal:1.12.2-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Uninstall openssl 1.1
         run: apk del openssl-dev
       - name: Upgrade alpine-keys
@@ -27,10 +27,10 @@ jobs:
   openssl111:
     runs-on: ubuntu-latest
     name: "OpenSSL 1.1.1"
-    container: crystallang/crystal:1.8.1-alpine
+    container: crystallang/crystal:1.12.2-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Uninstall openssl
         run: apk del openssl-dev
       - name: Install openssl 1.1.1
@@ -42,10 +42,10 @@ jobs:
   libressl34:
     runs-on: ubuntu-latest
     name: "LibreSSL 3.4"
-    container: crystallang/crystal:1.8.1-alpine
+    container: crystallang/crystal:1.12.2-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Uninstall openssl
         run: apk del openssl-dev openssl-libs-static
       - name: Upgrade alpine-keys

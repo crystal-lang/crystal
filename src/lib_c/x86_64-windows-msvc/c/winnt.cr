@@ -14,16 +14,23 @@ lib LibC
   alias HANDLE = Void*
   alias HMODULE = Void*
 
+  alias PAPCFUNC = ULONG_PTR ->
+
   INVALID_FILE_ATTRIBUTES      = DWORD.new!(-1)
   FILE_ATTRIBUTE_DIRECTORY     =  0x10
+  FILE_ATTRIBUTE_HIDDEN        =   0x2
   FILE_ATTRIBUTE_READONLY      =   0x1
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
+  FILE_ATTRIBUTE_SYSTEM        =   0x4
 
-  FILE_APPEND_DATA = 0x00000004
+  DELETE = 0x00010000_u32
 
-  DELETE                = 0x00010000
-  FILE_READ_ATTRIBUTES  =       0x80
-  FILE_WRITE_ATTRIBUTES =     0x0100
+  FILE_WRITE_DATA       = 0x00000002_u32
+  FILE_APPEND_DATA      = 0x00000004_u32
+  FILE_READ_ATTRIBUTES  = 0x00000080_u32
+  FILE_WRITE_ATTRIBUTES = 0x00000100_u32
+  FILE_GENERIC_READ     = 0x00120089_u32
+  FILE_GENERIC_WRITE    = 0x00120116_u32
 
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 0x4000
 
@@ -87,6 +94,51 @@ lib LibC
     # (STANDARD_RIGHTS_WRITE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY) & ~SYNCHRONIZE
     WRITE = 0x20006
   end
+
+  enum JOBOBJECTINFOCLASS
+    AssociateCompletionPortInformation = 7
+    ExtendedLimitInformation           = 9
+  end
+
+  struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+    perProcessUserTimeLimit : LARGE_INTEGER
+    perJobUserTimeLimit : LARGE_INTEGER
+    limitFlags : DWORD
+    minimumWorkingSetSize : SizeT
+    maximumWorkingSetSize : SizeT
+    activeProcessLimit : DWORD
+    affinity : ULONG_PTR
+    priorityClass : DWORD
+    schedulingClass : DWORD
+  end
+
+  struct IO_COUNTERS
+    readOperationCount : ULongLong
+    writeOperationCount : ULongLong
+    otherOperationCount : ULongLong
+    readTransferCount : ULongLong
+    writeTransferCount : ULongLong
+    otherTransferCount : ULongLong
+  end
+
+  struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    basicLimitInformation : JOBOBJECT_BASIC_LIMIT_INFORMATION
+    ioInfo : IO_COUNTERS
+    processMemoryLimit : SizeT
+    jobMemoryLimit : SizeT
+    peakProcessMemoryUsed : SizeT
+    peakJobMemoryUsed : SizeT
+  end
+
+  struct JOBOBJECT_ASSOCIATE_COMPLETION_PORT
+    completionKey : Void*
+    completionPort : HANDLE
+  end
+
+  JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK = 0x00001000
+
+  JOB_OBJECT_MSG_EXIT_PROCESS          = 7
+  JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS = 8
 
   struct CONTEXT
     p1Home : DWORD64
@@ -198,4 +250,104 @@ lib LibC
     protect : DWORD
     type : DWORD
   end
+
+  IMAGE_NT_SIGNATURE = 0x00004550 # PE00
+
+  struct IMAGE_DOS_HEADER
+    e_magic : WORD
+    e_cblp : WORD
+    e_cp : WORD
+    e_crlc : WORD
+    e_cparhdr : WORD
+    e_minalloc : WORD
+    e_maxalloc : WORD
+    e_ss : WORD
+    e_sp : WORD
+    e_csum : WORD
+    e_ip : WORD
+    e_cs : WORD
+    e_lfarlc : WORD
+    e_ovno : WORD
+    e_res : WORD[4]
+    e_oemid : WORD
+    e_oeminfo : WORD
+    e_res2 : WORD[10]
+    e_lfanew : LONG
+  end
+
+  struct IMAGE_FILE_HEADER
+    machine : WORD
+    numberOfSections : WORD
+    timeDateStamp : DWORD
+    pointerToSymbolTable : DWORD
+    numberOfSymbols : DWORD
+    sizeOfOptionalHeader : WORD
+    characteristics : WORD
+  end
+
+  struct IMAGE_DATA_DIRECTORY
+    virtualAddress : DWORD
+    size : DWORD
+  end
+
+  struct IMAGE_OPTIONAL_HEADER64
+    magic : WORD
+    majorLinkerVersion : BYTE
+    minorLinkerVersion : BYTE
+    sizeOfCode : DWORD
+    sizeOfInitializedData : DWORD
+    sizeOfUninitializedData : DWORD
+    addressOfEntryPoint : DWORD
+    baseOfCode : DWORD
+    imageBase : ULongLong
+    sectionAlignment : DWORD
+    fileAlignment : DWORD
+    majorOperatingSystemVersion : WORD
+    minorOperatingSystemVersion : WORD
+    majorImageVersion : WORD
+    minorImageVersion : WORD
+    majorSubsystemVersion : WORD
+    minorSubsystemVersion : WORD
+    win32VersionValue : DWORD
+    sizeOfImage : DWORD
+    sizeOfHeaders : DWORD
+    checkSum : DWORD
+    subsystem : WORD
+    dllCharacteristics : WORD
+    sizeOfStackReserve : ULongLong
+    sizeOfStackCommit : ULongLong
+    sizeOfHeapReserve : ULongLong
+    sizeOfHeapCommit : ULongLong
+    loaderFlags : DWORD
+    numberOfRvaAndSizes : DWORD
+    dataDirectory : IMAGE_DATA_DIRECTORY[16] # IMAGE_NUMBEROF_DIRECTORY_ENTRIES
+  end
+
+  struct IMAGE_NT_HEADERS64
+    signature : DWORD
+    fileHeader : IMAGE_FILE_HEADER
+    optionalHeader : IMAGE_OPTIONAL_HEADER64
+  end
+
+  struct IMAGE_IMPORT_BY_NAME
+    hint : WORD
+    name : CHAR[1]
+  end
+
+  union IMAGE_THUNK_DATA64_u1
+    forwarderString : ULongLong
+    function : ULongLong
+    ordinal : ULongLong
+    addressOfData : ULongLong
+  end
+
+  struct IMAGE_THUNK_DATA64
+    u1 : IMAGE_THUNK_DATA64_u1
+  end
+
+  IMAGE_ORDINAL_FLAG64 = 0x8000000000000000_u64
+
+  alias IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64
+  alias IMAGE_THUNK_DATA = IMAGE_THUNK_DATA64
+  IMAGE_ORDINAL_FLAG = IMAGE_ORDINAL_FLAG64
 end
