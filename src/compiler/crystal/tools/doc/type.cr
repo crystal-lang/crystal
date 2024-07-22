@@ -47,7 +47,7 @@ class Crystal::Doc::Type
       "Top Level Namespace"
     when NamedType
       if @generator.project_info.crystal_stdlib?
-        type.name.lchop(PSEUDO_OBJECT_PREFIX)
+        type.name.lchop(PSEUDO_CLASS_PREFIX)
       else
         type.name
       end
@@ -414,8 +414,8 @@ class Crystal::Doc::Type
   end
 
   def doc
-    if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_OBJECT_PREFIX)
-      (@type.doc || "") + PSEUDO_OBJECT_NOTE
+    if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_CLASS_PREFIX)
+      (@type.doc || "") + PSEUDO_CLASS_NOTE
     else
       @type.doc
     end
