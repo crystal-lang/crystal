@@ -415,7 +415,7 @@ class Crystal::Doc::Type
 
   def doc
     if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_CLASS_PREFIX)
-      (@type.doc || "") + PSEUDO_CLASS_NOTE
+      "#{@type.doc}#{PSEUDO_CLASS_NOTE}"
     else
       @type.doc
     end
