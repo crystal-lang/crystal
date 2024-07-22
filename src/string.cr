@@ -1527,16 +1527,13 @@ class String
           byte = to_unsafe[i]
           if byte < 0x80
             char = byte.unsafe_chr
-            replaced_char = if upcase_next
-                              upcase_next = false
-                              char.upcase
-                            elsif underscore_to_space && '_' == char
-                              upcase_next = true
-                              ' '
-                            else
-                              upcase_next = char.ascii_whitespace?
-                              char.downcase
-                            end
+            replaced_char, upcase_next = if upcase_next
+                                           {char.upcase, false}
+                                         elsif underscore_to_space && '_' == char
+                                           {' ', true}
+                                         else
+                                           {char.downcase, char.ascii_whitespace?}
+                                         end
 
             buffer[i] = replaced_char.ord.to_u8!
           else
@@ -1548,7 +1545,7 @@ class String
       end
     end
 
-    String.build(bytesize) { |io| titleize io, options }
+    String.build(bytesize) { |io| titleize io, options, underscore_to_space: underscore_to_space }
   end
 
   # Writes a titleized version of `self` to the given *io*.

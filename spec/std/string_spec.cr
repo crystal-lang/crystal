@@ -726,6 +726,7 @@ describe "String" do
     it { assert_prints "iO iO".titleize(Unicode::CaseOptions::Turkic), "İo İo" }
     it { assert_prints "foo_Bar".titleize, "Foo_bar" }
     it { assert_prints "foo_bar".titleize, "Foo_bar" }
+    it { assert_prints "testá_se múitô".titleize(underscore_to_space: true), "Testá Se Múitô" }
     it { assert_prints "foo_bar".titleize(underscore_to_space: true), "Foo Bar" }
 
     it "handles multi-character mappings correctly (#13533)" do
