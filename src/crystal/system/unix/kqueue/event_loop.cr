@@ -144,12 +144,14 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     case kevent.value.filter
     when LibC::EVFILT_READ
       if event = node.dequeue_reader?
+        @timers.delete(event) if event.value.time?
         Crystal::Scheduler.enqueue(event.value.fiber)
       else
         System.print_error "BUG: fd=%d is ready for reading but no registered reader!\n", node.fd
       end
     when LibC::EVFILT_WRITE
       if event = node.dequeue_writer?
+        @timers.delete(event) if event.value.time?
         Crystal::Scheduler.enqueue(event.value.fiber)
       else
         System.print_error "BUG: fd=%d is ready for writing but no registered writer!\n", node.fd
