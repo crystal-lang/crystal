@@ -1,8 +1,8 @@
 require "../time"
 
 lib LibC
-  EVFILT_READ  = -1_i16
-  EVFILT_WRITE = -2_i16
+  EVFILT_READ  =  -1_i16
+  EVFILT_WRITE =  -2_i16
   EVFILT_USER  = -10_i16
 
   EV_ADD     = 0x0001_u16

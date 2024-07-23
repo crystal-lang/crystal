@@ -8,7 +8,7 @@ struct Crystal::System::Kqueue
       {% if LibC.has_method?(:kqueue1) %}
         LibC.kqueue1(LibC::O_CLOEXEC)
       {% else %}
-        LibC.kqueue()
+        LibC.kqueue
       {% end %}
     raise RuntimeError.from_errno("kqueue1") if @kq == -1
   end
