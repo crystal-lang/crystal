@@ -22,7 +22,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
-      {% unless flag?(:darwin) || flag(:dragonfly) %}
+      {% unless flag?(:darwin) || flag?(:dragonfly) %}
         # kqueue isn't inherited by fork on darwin/dragonfly, but is on other BSD
         @kqueue.close
       {% end %}
@@ -36,7 +36,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       {% end %}
 
       @events.each do |node|
-        node.events = 0
+        node.registrations = :none
         system_sync(node) { raise "unreachable" }
       end
     end
@@ -177,13 +177,13 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     kevent = kevents.to_unsafe
     size = 0
 
-    if (node.events & LibC::EVFILT_READ) == LibC::EVFILT_READ
+    if node.registrations.read?
       System::Kqueue.set(kevent, node.fd, LibC::EVFILT_READ, LibC::EV_DELETE, udata: node)
       size += 1
       kevent += 1
     end
 
-    if (node.events & LibC::EVFILT_WRITE) == LibC::EVFILT_WRITE
+    if node.registrations.write?
       System::Kqueue.set(kevent, node.fd, LibC::EVFILT_WRITE, LibC::EV_DELETE, udata: node)
       size += 1
     end
@@ -200,14 +200,14 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       kevents = uninitialized LibC::Kevent[2]
       kevent = kevents.to_unsafe
       size = 0
-      events = 0
+      registrations = Evented::EventQueue::Node::Registrations::NONE
 
       if node.readers?
         System::Kqueue.set(kevent, node.fd, LibC::EVFILT_READ, LibC::EV_ADD, udata: node)
-        events |= LibC::EVFILT_READ
+        registrations |= :read
         size += 1
         kevent += 1
-      elsif (node.events & LibC::EVFILT_READ) == LibC::EVFILT_READ
+      elsif node.registrations.read?
         System::Kqueue.set(kevent, node.fd, LibC::EVFILT_READ, LibC::EV_DELETE, udata: node)
         size += 1
         kevent += 1
@@ -215,17 +215,17 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
       if node.writers?
         System::Kqueue.set(kevent, node.fd, LibC::EVFILT_WRITE, LibC::EV_ADD, udata: node)
-        events |= LibC::EVFILT_WRITE
+        registrations |= :write
         size += 1
-      elsif (node.events & LibC::EVFILT_WRITE) == LibC::EVFILT_WRITE
+      elsif node.registrations.write?
         System::Kqueue.set(kevent, node.fd, LibC::EVFILT_WRITE, LibC::EV_DELETE, udata: node)
         size += 1
       end
 
-      Crystal.trace :evloop, "kevent", op: "add", fd: node.fd, events: events
+      Crystal.trace :evloop, "kevent", op: "add", fd: node.fd, size: size, registrations: registrations.to_s
       @kqueue.kevent(kevents.to_slice[0, size])
 
-      node.events = events
+      node.registrations = registrations
     end
   end
 end

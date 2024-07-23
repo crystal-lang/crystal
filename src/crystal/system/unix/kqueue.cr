@@ -1,6 +1,8 @@
 require "c/sys/event"
 
 struct Crystal::System::Kqueue
+  @kq : LibC::Int
+
   def initialize
     @kq =
       {% if LibC.has_method?(:kqueue1) %}
@@ -39,7 +41,7 @@ struct Crystal::System::Kqueue
     end
     count = LibC.kevent(@kq, changes.to_unsafe, changes.size, events.to_unsafe, events.size, tsp)
     raise RuntimeError.from_errno("kevent") if count == -1 && Errno.value != Errno::EINTR
-    events[0, count]
+    events[0, count.clamp(0..)]
   end
 
   def close : Nil
