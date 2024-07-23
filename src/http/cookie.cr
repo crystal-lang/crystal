@@ -198,7 +198,7 @@ module HTTP
     # Browsers delete cookies that have expired.
     def destroy
       self.value = ""
-      self.expires = Time::UNIx_EPOCH
+      self.expires = Time::UNIX_EPOCH
       self.max_age = Time::Span.zero
     end
 
