@@ -73,8 +73,10 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       return unless select_action = event.value.fiber.timeout_select_action
       event.value.fiber.timeout_select_action = nil
       return unless select_action.time_expired?
+      event.value.fiber.@timeout_event.as(FiberEvent).clear
     when .sleep?
-      # nothing special
+      # cleanup
+      event.value.fiber.@resume_event.as(FiberEvent).clear
     else
       raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end
@@ -90,11 +92,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # fiber
 
   def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :sleep)
+    FiberEvent.new(fiber, :sleep)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(self, fiber, :select_timeout)
+    FiberEvent.new(fiber, :select_timeout)
   end
 
   # file descriptor
