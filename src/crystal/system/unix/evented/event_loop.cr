@@ -30,6 +30,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       # re-create mutex: another thread may have hold the lock
       @mutex = Thread::Mutex.new
     end
+  {% else %}
+    def after_fork : Nil
+      # NOTE: fixes an EPERM when calling `pthread_mutex_unlock` in #dequeue
+      # called from `Fiber#resume_event.free` when running std specs.
+      @mutex = Thread::Mutex.new
+    end
   {% end %}
 
   def run(blocking : Bool) : Bool

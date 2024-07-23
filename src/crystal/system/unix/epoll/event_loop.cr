@@ -30,6 +30,8 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
+      super
+
       # close inherited fds
       @epoll.close
       @eventfd.close

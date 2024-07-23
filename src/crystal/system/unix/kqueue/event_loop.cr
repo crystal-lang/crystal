@@ -22,6 +22,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
+      super
+
       {% unless flag?(:darwin) || flag?(:dragonfly) %}
         # kqueue isn't inherited by fork on darwin/dragonfly, but is inherited
         # on other BSD
