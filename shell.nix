@@ -90,4 +90,6 @@ pkgs.stdenv.mkDerivation rec {
   ];
 
   LLVM_CONFIG = "${llvmPackages.libllvm.dev}/bin/llvm-config";
+
+  MACOSX_DEPLOYMENT_TARGET = "10.11";
 }
