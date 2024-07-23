@@ -57,7 +57,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
       # re-register events
       @events.each do |node|
-        node.events = 0
+        node.registrations = :none
         system_sync(node) { raise "unreachable" }
       end
     end
@@ -150,8 +150,17 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   # unsafe, yields when there are no more events for fd
   private def system_sync(node : Evented::EventQueue::Node, &) : Nil
     events = 0
-    events |= LibC::EPOLLIN if node.readers?
-    events |= LibC::EPOLLOUT if node.writers?
+    registrations = Evented::EventQueue::Node::Registrations::NONE
+
+    if node.readers?
+      events |= LibC::EPOLLIN
+      registrations |= :read
+    end
+
+    if node.writers?
+      events |= LibC::EPOLLOUT
+      registrations |= :write
+    end
 
     if events == 0
       Crystal.trace :evloop, "epoll_ctl", op: "del", fd: node.fd
@@ -162,7 +171,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       epoll_event.events = events | LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
       epoll_event.data.ptr = node.as(Void*)
 
-      if node.events == 0
+      if node.registrations.none?
         Crystal.trace :evloop, "epoll_ctl", op: "add", fd: node.fd, events: events
         @epoll.add(node.fd, pointerof(epoll_event))
       else
@@ -174,7 +183,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
         # @epoll.add(node.fd, pointerof(epoll_event))
       end
 
-      node.events = events
+      node.registrations = registrations
     end
   end
 end

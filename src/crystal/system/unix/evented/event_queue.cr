@@ -4,17 +4,20 @@ require "./event"
 # allocated in the heap
 struct Crystal::Evented::EventQueue
   class Node
+    @[Flags]
+    enum Registrations
+      NONE  = 0
+      READ  = 1
+      WRITE = 2
+    end
+
     property fd : Int32
-
-    # TODO: should be a flags enum that tells whether the currently registered
-    # events had readers and/or writers
-    property events : Int32 = 0
-
+    property registrations : Registrations
     getter readers = PointerLinkedList(Event).new
     getter writers = PointerLinkedList(Event).new
 
     def initialize(@fd : Int32)
-      @events = 0
+      @registrations = Registrations::NONE
     end
 
     def empty? : Bool
@@ -63,7 +66,7 @@ struct Crystal::Evented::EventQueue
     def clear : Nil
       @readers.clear
       @writers.clear
-      @events = 0
+      @registrations = Registrations::NONE
     end
   end
 
