@@ -2,19 +2,20 @@ require "./*"
 
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def initialize
-    @mutex = ::Thread::Mutex.new
+    @mutex = Thread::Mutex.new
     @events = EventQueue.new
     @timers = Timers.new
   end
 
   {% if flag?(:preview_mt) %}
-    private def self.each(&)
-      ::Thread.unsafe_each do |thread|
+    protected def self.each(&)
+      Thread.unsafe_each do |thread|
         next unless scheduler = thread.@scheduler
         next unless event_loop = scheduler.@event_loop
         yield event_loop
       end
     end
+
     # must reset the mutexes since another thread may have acquired the lock of
     # one event loop, which would prevent closing file descriptors for example.
     def after_fork_before_exec : Nil

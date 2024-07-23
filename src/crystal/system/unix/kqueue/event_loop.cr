@@ -23,7 +23,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
       {% unless flag?(:darwin) || flag?(:dragonfly) %}
-        # kqueue isn't inherited by fork on darwin/dragonfly, but is on other BSD
+        # kqueue isn't inherited by fork on darwin/dragonfly, but is inherited
+        # on other BSD
         @kqueue.close
       {% end %}
       @kqueue = System::Kqueue.new
@@ -41,20 +42,6 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       end
     end
   {% end %}
-
-  private def create_pipe_event : Nil
-    {% if LibC.has_constant?(:pipe2) %}
-      ret = LibC.pipe2(@pipe, LibC::O_CLOEXEC)
-      raise IO::Error.from_errno("pipe2") if ret == -1
-    {% else %}
-      Process.lock do
-        ret = LibC.pipe(@pipe)
-        raise IO::Error.from_errno("pipe") if ret == -1
-        System::FileDescriptor.fcntl(@pipe[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
-        System::FileDescriptor.fcntl(@pipe[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
-      end
-    {% end %}
-  end
 
   private def run_internal(blocking : Bool) : Nil
     changes = uninitialized LibC::Kevent[0]
@@ -163,13 +150,14 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     return unless @interrupted.test_and_set
 
     {% if LibC.has_constant?(:EVFILT_USER) %}
-      @kqueue.kevent(INTERRUPT_IDENTIFIER,
-                     LibC::EVFILT_USER,
-                     LibC::EV_ADD | LibC::EV_ONESHOT,
-                     LibC::NOTE_FFCOPY | LibC::NOTE_TRIGGER | 1_u16)
+      @kqueue.kevent(
+        INTERRUPT_IDENTIFIER,
+        LibC::EVFILT_USER,
+        LibC::EV_ADD | LibC::EV_ONESHOT,
+        LibC::NOTE_FFCOPY | LibC::NOTE_TRIGGER | 1_u16)
     {% else %}
       byte = 1_u8
-      ret = LibC.write(@pipe[1], pointerof(byte), sizeof(byte))
+      ret = LibC.write(@pipe[1], pointerof(byte), sizeof(typeof(byte)))
       raise RuntimeError.from_errno("write") if ret == -1
     {% end %}
   end
