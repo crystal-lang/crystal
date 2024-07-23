@@ -76,6 +76,7 @@ module HTTP
 
       cookie.value.empty?.should be_true
       cookie.expired?.should be_true
+      cookie.max_age.should eq(Time::Span.zero)
     end
 
     describe "#name=" do
