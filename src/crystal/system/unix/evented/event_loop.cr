@@ -51,7 +51,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     node.each do |event|
       case event.value.type
       when .io_read?, .io_write?
-        @timers.delete(event) if event.value.time?
+        @timers.delete(event) if event.value.wake_at?
         Crystal::Scheduler.enqueue(event.value.fiber)
       else
         System.print_error "BUG: fd=%d got closed but it was an event loop system fd!\n", node.fd
@@ -325,7 +325,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       in .io_read?, .io_write?
         node = @events.enqueue(event)
         system_sync(node) { raise "unreachable" }
-        @timers.add(event) if event.value.time?
+        @timers.add(event) if event.value.wake_at?
       in .sleep?, .select_timeout?
         @timers.add(event)
       in .system?
@@ -339,7 +339,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       case event.value.type
       in .io_read?, .io_write?
         unsafe_dequeue_io_event(event)
-        @timers.delete(event) if event.value.time?
+        @timers.delete(event) if event.value.wake_at?
       in .sleep?, .select_timeout?
         @timers.delete(event)
       in .system?

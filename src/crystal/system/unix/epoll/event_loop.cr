@@ -112,13 +112,13 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
     if readable && (event = node.dequeue_reader?)
       readable = false
-      @timers.delete(event) if event.value.time?
+      @timers.delete(event) if event.value.wake_at?
       Crystal::Scheduler.enqueue(event.value.fiber)
     end
 
     if writable && (event = node.dequeue_writer?)
       writable = false
-      @timers.delete(event) if event.value.time?
+      @timers.delete(event) if event.value.wake_at?
       Crystal::Scheduler.enqueue(event.value.fiber)
     end
 

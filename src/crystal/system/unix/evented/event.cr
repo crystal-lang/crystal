@@ -10,7 +10,7 @@ struct Crystal::Evented::Event
   getter! fiber : Fiber
   getter type : Type
   getter fd : Int32
-  property! time : Time::Span
+  property! wake_at : Time::Span
   getter? timed_out : Bool = false
 
   include PointerLinkedList::Node
@@ -21,7 +21,7 @@ struct Crystal::Evented::Event
   end
 
   def initialize(@type : Type, @fd : Int32, @fiber : Fiber? = nil, timeout : Time::Span? = nil)
-    @time = Time.monotonic + timeout if timeout
+    @wake_at = Time.monotonic + timeout if timeout
   end
 
   def timed_out! : Bool
