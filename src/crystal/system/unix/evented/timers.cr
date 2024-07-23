@@ -10,7 +10,7 @@ struct Crystal::Evented::Timers
   end
 
   def next_ready? : Time::Span?
-    @list.first?.try(&.value.time)
+    @list.first?.try(&.value.wake_at)
   end
 
   def dequeue_ready(&) : Nil
@@ -20,7 +20,7 @@ struct Crystal::Evented::Timers
     n = 0
 
     @list.each do |event|
-      break if event.value.time > now
+      break if event.value.wake_at > now
       yield event
       n += 1
     end
@@ -31,7 +31,7 @@ struct Crystal::Evented::Timers
   def add(event : Evented::Event*) : Nil
     if @list.empty?
       @list << event
-    elsif index = lookup(event.value.time)
+    elsif index = lookup(event.value.wake_at)
       @list.insert(index, event)
     else
       @list.push(event)
@@ -42,9 +42,9 @@ struct Crystal::Evented::Timers
     @list.delete(event)
   end
 
-  private def lookup(time)
+  private def lookup(wake_at)
     @list.each_with_index do |event, index|
-      return index if event.value.time >= time
+      return index if event.value.wake_at >= wake_at
     end
   end
 end

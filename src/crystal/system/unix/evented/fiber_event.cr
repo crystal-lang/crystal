@@ -13,7 +13,7 @@ class Crystal::Evented::FiberEvent
   def add(timeout : Time::Span?) : Nil
     return unless timeout
 
-    @event.time = Time.monotonic + timeout
+    @event.wake_at = Time.monotonic + timeout
     (@event_loop = Crystal::EventLoop.current).enqueue(pointerof(@event))
   end
 
