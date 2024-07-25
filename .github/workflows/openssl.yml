@@ -14,12 +14,12 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
-      - name: Uninstall openssl 1.1
-        run: apk del openssl-dev
+      - name: Uninstall openssl
+        run: apk del openssl-dev python3 libxml2-static
       - name: Upgrade alpine-keys
         run: apk upgrade alpine-keys
       - name: Install openssl 3.0
-        run: apk add "openssl-dev=~3.0" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community
+        run: apk add "openssl-dev=~3.0" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.17/main
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
