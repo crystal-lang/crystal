@@ -12,7 +12,7 @@ env:
 
 jobs:
   x86_64-darwin-test:
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
