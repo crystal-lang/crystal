@@ -15,7 +15,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v4
       - name: Uninstall openssl
-        run: apk del openssl-dev python3 libxml2-static
+        run: apk del openssl-dev libxml2-static
       - name: Upgrade alpine-keys
         run: apk upgrade alpine-keys
       - name: Install openssl 3.0
