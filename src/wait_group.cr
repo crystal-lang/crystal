@@ -42,10 +42,25 @@ class WaitGroup
     end
   end
 
+  def self.wait
+    instance = new
+    yield instance
+    instance.wait
+  end
+
   def initialize(n : Int32 = 0)
     @waiting = Crystal::PointerLinkedList(Waiting).new
     @lock = Crystal::SpinLock.new
     @counter = Atomic(Int32).new(n)
+  end
+
+  def spawn(&block)
+    add
+    ::spawn do
+      block.call
+    ensure
+      done
+    end
   end
 
   # Increments the counter by how many fibers we want to wait for.
