@@ -237,6 +237,20 @@ struct Pointer(T)
   # ptr.value = 42
   # ptr.value # => 42
   # ```
+  #
+  # WARNING: The pointer must be appropriately aligned, i.e. `address` must be
+  # a multiple of `alignof(T)`. It is undefined behavior to load from a
+  # misaligned pointer. Such reads should instead be done via a cast to
+  # `Pointer(UInt8)`, which is guaranteed to have byte alignment:
+  #
+  # ```
+  # # raises SIGSEGV on X86 if `ptr` is misaligned
+  # x = ptr.as(UInt128*).value
+  #
+  # # okay, `ptr` can have any alignment
+  # x = uninitialized UInt128
+  # ptr.as(UInt8*).copy_to(pointerof(x).as(UInt8*), sizeof(typeof(x)))
+  # ```
   @[Primitive(:pointer_get)]
   def value : T
   end
@@ -247,6 +261,20 @@ struct Pointer(T)
   # ptr = Pointer(Int32).malloc(4)
   # ptr.value = 42
   # ptr.value # => 42
+  # ```
+  #
+  # WARNING: The pointer must be appropriately aligned, i.e. `address` must be
+  # a multiple of `alignof(T)`. It is undefined behavior to store to a
+  # misaligned pointer. Such writes should instead be done via a cast to
+  # `Pointer(UInt8)`, which is guaranteed to have byte alignment:
+  #
+  # ```
+  # # raises SIGSEGV on X86 if `ptr` is misaligned
+  # x = 123_u128
+  # ptr.as(UInt128*).value = x
+  #
+  # # okay, `ptr` can have any alignment
+  # ptr.as(UInt8*).copy_from(pointerof(x).as(UInt8*), sizeof(typeof(x)))
   # ```
   @[Primitive(:pointer_set)]
   def value=(value : T)
