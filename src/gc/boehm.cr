@@ -32,7 +32,7 @@ require "crystal/tracing"
   @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+{% if compare_versions(::Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "gc.dll")]
 {% end %}
 lib LibGC

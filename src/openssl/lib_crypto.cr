@@ -36,7 +36,7 @@
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 {% end %}
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+{% if compare_versions(::Crystal::VERSION, "1.11.0-dev") >= 0 %}
   # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
   @[Link(dll: "libcrypto-3-x64.dll")]
 {% end %}

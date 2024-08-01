@@ -69,7 +69,7 @@ describe "Number" do
       (-Float64::INFINITY).round(digits: -3).should eq -Float64::INFINITY
     end
 
-    {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+    {% if compare_versions(::Crystal::VERSION, "0.36.1") > 0 %}
       it "infinity Float32" do
         Float32::INFINITY.round.should eq Float32::INFINITY
         Float32::INFINITY.round(digits: 0).should eq Float32::INFINITY

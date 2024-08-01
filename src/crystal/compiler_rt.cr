@@ -86,7 +86,7 @@ require "./compiler_rt/divmod128.cr"
   {% end %}
 
   # https://github.com/llvm/llvm-project/commit/d6216e2cd1a5e07f8509215ee5422ff5ee358da8
-  {% if compare_versions(Crystal::LLVM_VERSION, "14.0.0") >= 0 %}
+  {% if compare_versions(::Crystal::LLVM_VERSION, "14.0.0") >= 0 %}
     # the following overflow comparisons must be identical to the ones in
     # `Crystal::CodeGenVisitor#codegen_out_of_range`
 

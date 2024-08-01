@@ -30,7 +30,7 @@ class Fiber
 
     {% if flag?(:armhf) %}
       #                r0             , r1
-      {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
+      {% if compare_versions(::Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
         asm("
           // declare the presence of a conservative FPU to the ASM compiler
           .fpu vfp
@@ -78,7 +78,7 @@ class Fiber
           " :: "r"(current_context), "r"(new_context))
       {% end %}
     {% elsif flag?(:arm) %}
-      {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
+      {% if compare_versions(::Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
         asm("
           stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + callee-saved registers
           str    sp, [r0, #0]           // current_context.stack_top = sp
