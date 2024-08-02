@@ -872,7 +872,8 @@ class Hash(K, V)
   # Marks an entry in `@entries` at `index` as deleted
   # *without* modifying any counters (`@size` and `@deleted_count`).
   private def delete_entry(index) : Nil
-    set_entry(index, Entry(K, V).deleted)
+    # sets `Entry#@hash` to 0 and removes stale references to key and value
+    (@entries + index).clear
   end
 
   # Marks an entry in `@entries` at `index` as deleted
@@ -2152,12 +2153,6 @@ class Hash(K, V)
     getter key, value, hash
 
     def initialize(@hash : UInt32, @key : K, @value : V)
-    end
-
-    def self.deleted
-      key = uninitialized K
-      value = uninitialized V
-      new(0_u32, key, value)
     end
 
     def deleted? : Bool
