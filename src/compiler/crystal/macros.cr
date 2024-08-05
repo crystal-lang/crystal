@@ -2869,6 +2869,7 @@ module Crystal::Macros
     # * `Pointer(T).malloc` is atomic if and only if `T` has no inner pointers;
     # * `T.allocate` is atomic if and only if `T` is a reference type and
     #   `ReferenceStorage(T)` has no inner pointers.
+    # NOTE: Like `#instance_vars` this method must be called from within a method. The result may be incorrect when used in top-level code.
     def has_inner_pointers? : BoolLiteral
     end
   end
