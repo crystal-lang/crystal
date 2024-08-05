@@ -2856,11 +2856,11 @@ module Crystal::Macros
 
     # Returns whether `self` contains any inner pointers.
     #
-    # Primitive types are expected to not contain pointers,
-    # except `Void`. `Proc` and `Pointer` are expected to contain pointers.
-    # For unions, structs and collection types (tuples, static array)
-    # it depends on the contained types. All other types, including classes are
-    # expected to contain inner pointers.
+    # Primitive types, except `Void`, are expected to not contain inner pointers.
+    # `Proc` and `Pointer` contain inner pointers.
+    # Unions, structs and collection types (tuples, static arrays)
+    # have inner pointers if any of their contained types has inner pointers.
+    # All other types, including classes, are expected to contain inner pointers.
     #
     # Types that do not have inner pointers may opt to use atomic allocations,
     # i.e. `GC.malloc_atomic` rather than `GC.malloc`. The compiler ensures
