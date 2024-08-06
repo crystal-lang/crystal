@@ -56,9 +56,12 @@ def Union.from_www_form(params : URI::Params, name : String)
       # Noop to allow next T to be tried.
     end
   {% end %}
-  raise ArgumentError.new "Invalid #{self}: #{params[name]}"
+  raise ArgumentError.new "Invalid #{self}: '#{params[name]}'."
 end
 
 # :nodoc:
 def Nil.from_www_form(value : String) : Nil
+  return if value.in? "", "null"
+
+  raise ArgumentError.new "Invalid Nil value: '#{value}'."
 end

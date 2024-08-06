@@ -47,9 +47,17 @@ describe ".from_www_form" do
     Time.from_www_form("20161116T095548-03:00").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
   end
 
-  it Nil do
-    Nil.from_www_form("").should be_nil
-    Nil.from_www_form("null").should be_nil
+  describe Nil do
+    it "valid values" do
+      Nil.from_www_form("").should be_nil
+      Nil.from_www_form("null").should be_nil
+    end
+
+    it "invalid value" do
+      expect_raises ArgumentError do
+        Nil.from_www_form("foo")
+      end
+    end
   end
 
   describe Number do
