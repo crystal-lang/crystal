@@ -272,18 +272,20 @@ struct Pointer(T)
     self
   end
 
-  # Compares *count* elements from this pointer and *other*, byte by byte.
+  # Compares *count* elements from this pointer and *other*, lexicographically.
   #
-  # Returns 0 if both pointers point to the same sequence of *count* bytes. Otherwise
-  # returns the difference between the first two differing bytes (treated as UInt8).
+  # Returns 0 if both pointers point to the same sequence of *count* bytes.
+  # Otherwise, if the first two differing bytes (treated as UInt8) from `self`
+  # and *other* are `x` and `y` respectively, returns a negative value if
+  # `x < y`, or a positive value if `x > y`.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 }  # [1, 2, 3, 4]
   # ptr2 = Pointer.malloc(4) { |i| i + 11 } # [11, 12, 13, 14]
   #
-  # ptr1.memcmp(ptr2, 4) # => -10
-  # ptr2.memcmp(ptr1, 4) # => 10
-  # ptr1.memcmp(ptr1, 4) # => 0
+  # ptr1.memcmp(ptr2, 4) < 0  # => true
+  # ptr2.memcmp(ptr1, 4) > 0  # => true
+  # ptr1.memcmp(ptr1, 4) == 0 # => true
   # ```
   def memcmp(other : Pointer(T), count : Int) : Int32
     LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
