@@ -999,14 +999,15 @@ class Crystal::Repl::Interpreter
 
   private macro stack_pop(t)
     %aligned_size = align(sizeof({{t}}))
-    %value = (stack - %aligned_size).as({{t}}*).value
+    %value = uninitialized {{t}}
+    (stack - %aligned_size).copy_to(pointerof(%value).as(UInt8*), sizeof({{t}}))
     stack_shrink_by(%aligned_size)
     %value
   end
 
   private macro stack_push(value)
     %temp = {{value}}
-    stack.as(Pointer(typeof({{value}}))).value = %temp
+    stack.copy_from(pointerof(%temp).as(UInt8*), sizeof(typeof({{value}})))
 
     %size = sizeof(typeof({{value}}))
     %aligned_size = align(%size)
