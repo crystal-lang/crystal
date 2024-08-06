@@ -604,7 +604,6 @@ class Regex
   # Regex.new("ab+c", :anchored).inspect # => Regex.new("ab+c", Regex::Options::ANCHORED)
   # ```
   def inspect(io : IO) : Nil
-    p! options, ~CompileOptions[IGNORE_CASE, MULTILINE, EXTENDED]
     if (options & ~CompileOptions[IGNORE_CASE, MULTILINE, EXTENDED]).none?
       inspect_literal(io)
     else
