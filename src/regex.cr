@@ -247,7 +247,7 @@ class Regex
     #
     # Equivalent to `MULTILINE | DOTALL` in PCRE and PCRE2.
     MULTILINE = 0x0000_0006
-    # Equivalent to `MULTILINE`in PCRE and PCRE2.
+    # Equivalent to `MULTILINE` in PCRE and PCRE2.
     MULTILINE_ONLY = 0x0000_0040
 
     DOTALL = 0x0000_0002
