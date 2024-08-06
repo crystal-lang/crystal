@@ -67,7 +67,6 @@ module Regex::PCRE2
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?       then LibPCRE2::CASELESS
-                when .multiline?         then LibPCRE2::DOTALL | LibPCRE2::MULTILINE
                 when .multiline_only?    then LibPCRE2::MULTILINE
                 when .dotall?            then LibPCRE2::DOTALL
                 when .extended?          then LibPCRE2::EXTENDED

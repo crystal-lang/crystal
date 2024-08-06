@@ -36,7 +36,6 @@ module Regex::PCRE
       if options.includes?(option)
         flag |= case option
                 when .ignore_case?       then LibPCRE::CASELESS
-                when .multiline?         then LibPCRE::DOTALL | LibPCRE::MULTILINE
                 when .multiline_only?    then LibPCRE::MULTILINE                  
                 when .dotall?            then LibPCRE::DOTALL
                 when .extended?          then LibPCRE::EXTENDED
