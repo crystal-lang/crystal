@@ -61,7 +61,7 @@ end
 
 # :nodoc:
 def Nil.from_www_form(value : String) : Nil
-  return if value.in? "", "null"
+  return if value.empty?
 
   raise ArgumentError.new "Invalid Nil value: '#{value}'."
 end

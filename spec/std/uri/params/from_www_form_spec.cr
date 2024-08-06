@@ -50,12 +50,11 @@ describe ".from_www_form" do
   describe Nil do
     it "valid values" do
       Nil.from_www_form("").should be_nil
-      Nil.from_www_form("null").should be_nil
     end
 
     it "invalid value" do
       expect_raises ArgumentError do
-        Nil.from_www_form("foo")
+        Nil.from_www_form("null").should be_nil
       end
     end
   end
