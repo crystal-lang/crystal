@@ -81,7 +81,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 13.4.1
+      xcode: 15.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
