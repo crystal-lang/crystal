@@ -243,8 +243,9 @@ struct Crystal::System::Process
         writer_pipe.write_bytes(Errno.value.to_i)
       rescue ex
         writer_pipe.write_byte(0)
-        writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
-        writer_pipe << ex.message
+        message = ex.inspect_with_backtrace
+        writer_pipe.write_bytes(message.bytesize)
+        writer_pipe << message
         writer_pipe.close
       ensure
         LibC._exit 127
