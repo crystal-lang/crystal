@@ -163,17 +163,15 @@ struct Range(B, E)
     yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
     current = end_value
 
-    # TODO: The macro interpolations are a workaround until #9324 is fixed.
-
     {% if B == Nil %}
       while true
         current = current.pred
-        {{ "yield current".id }}
+        yield current
       end
     {% else %}
       while begin_value.nil? || begin_value < current
         current = current.pred
-        {{ "yield current".id }}
+        yield current
       end
     {% end %}
   end

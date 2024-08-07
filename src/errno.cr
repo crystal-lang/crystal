@@ -40,10 +40,25 @@ enum Errno
 
   # Convert an Errno to an error message
   def message : String
-    String.new(LibC.strerror(value))
+    unsafe_message { |slice| String.new(slice) }
   end
 
-  # Returns the value of libc's errno.
+  # :nodoc:
+  def unsafe_message(&)
+    {% if LibC.has_method?(:strerror_r) %}
+      buffer = uninitialized UInt8[256]
+      if LibC.strerror_r(value, buffer, buffer.size) == 0
+        yield Bytes.new(buffer.to_unsafe, LibC.strlen(buffer))
+      else
+        yield "(???)".to_slice
+      end
+    {% else %}
+      pointer = LibC.strerror(value)
+      yield Bytes.new(pointer, LibC.strlen(pointer))
+    {% end %}
+  end
+
+  # returns the value of libc's errno.
   def self.value : self
     {% if flag?(:netbsd) || flag?(:openbsd) || flag?(:android) %}
       Errno.new LibC.__errno.value

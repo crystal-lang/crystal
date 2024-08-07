@@ -17,26 +17,6 @@ module Crystal::System::FileDescriptor
   STDOUT_HANDLE = 1
   STDERR_HANDLE = 2
 
-  private def system_read(slice : Bytes) : Int32
-    evented_read("Error reading file") do
-      LibC.read(fd, slice, slice.size).tap do |return_code|
-        if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for reading", target: self
-        end
-      end
-    end
-  end
-
-  private def system_write(slice : Bytes) : Int32
-    evented_write("Error writing file") do
-      LibC.write(fd, slice, slice.size).tap do |return_code|
-        if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing", target: self
-        end
-      end
-    end
-  end
-
   private def system_blocking?
     flags = fcntl(LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
@@ -111,34 +91,31 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?("dup3") %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
+    {% if LibC.has_method?(:dup3) %}
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, fd, flags) == -1
         raise IO::Error.from_errno("Could not reopen file descriptor")
       end
     {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC.dup2(other.fd, fd) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
+      Process.lock_read do
+        if LibC.dup2(other.fd, fd) == -1
+          raise IO::Error.from_errno("Could not reopen file descriptor")
+        end
+        self.close_on_exec = other.close_on_exec?
       end
     {% end %}
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    evented_reopen
+    event_loop.close(self)
   end
 
   private def system_close
     # Perform libevent cleanup before LibC.close.
     # Using a file descriptor after it has been closed is never defined and can
     # always lead to undefined results. This is not specific to libevent.
-    evented_close
+    event_loop.close(self)
 
     file_descriptor_close
   end
@@ -214,14 +191,23 @@ module Crystal::System::FileDescriptor
 
   def self.pipe(read_blocking, write_blocking)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC.pipe(pipe_fds) != 0
-      raise IO::Error.from_errno("Could not create pipe")
-    end
+
+    {% if LibC.has_method?(:pipe2) %}
+      if LibC.pipe2(pipe_fds, LibC::O_CLOEXEC) != 0
+        raise IO::Error.from_errno("Could not create pipe")
+      end
+    {% else %}
+      Process.lock_read do
+        if LibC.pipe(pipe_fds) != 0
+          raise IO::Error.from_errno("Could not create pipe")
+        end
+        fcntl(pipe_fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fcntl(pipe_fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      end
+    {% end %}
 
     r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
     w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    r.close_on_exec = true
-    w.close_on_exec = true
     w.sync = true
 
     {r, w}
@@ -247,12 +233,11 @@ module Crystal::System::FileDescriptor
     ret = LibC.ttyname_r(fd, path, 256)
     return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
 
-    clone_fd = LibC.open(path, LibC::O_RDWR)
+    clone_fd = LibC.open(path, LibC::O_RDWR | LibC::O_CLOEXEC)
     return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
 
     # We don't buffer output for TTY devices to see their output right away
     io = IO::FileDescriptor.new(clone_fd)
-    io.close_on_exec = true
     io.sync = true
     io
   end

@@ -89,7 +89,7 @@ class Process
   #   end
   # end
   #
-  # wait_channel.receive
+  # wait_channel.receive?
   # puts "bye"
   # ```
   def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
@@ -294,6 +294,14 @@ class Process
     when IO::FileDescriptor
       stdio
     when IO
+      if stdio.closed?
+        if dst_io == STDIN
+          return File.open(File::NULL, "r").tap(&.close)
+        else
+          return File.open(File::NULL, "w").tap(&.close)
+        end
+      end
+
       if dst_io == STDIN
         fork_io, process_io = IO.pipe(read_blocking: true)
 

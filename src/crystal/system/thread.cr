@@ -10,7 +10,11 @@ module Crystal::System::Thread
 
   # def self.current_thread : ::Thread
 
+  # def self.current_thread? : ::Thread?
+
   # def self.current_thread=(thread : ::Thread)
+
+  # def self.sleep(time : ::Time::Span) : Nil
 
   # private def system_join : Exception?
 
@@ -97,9 +101,20 @@ class Thread
     end
   end
 
+  # Blocks the current thread for the duration of *time*. Clock precision is
+  # dependent on the operating system and hardware.
+  def self.sleep(time : Time::Span) : Nil
+    Crystal::System::Thread.sleep(time)
+  end
+
   # Returns the Thread object associated to the running system thread.
   def self.current : Thread
     Crystal::System::Thread.current_thread
+  end
+
+  # :nodoc:
+  def self.current? : Thread?
+    Crystal::System::Thread.current_thread?
   end
 
   # Associates the Thread object to the running system thread.
@@ -121,6 +136,11 @@ class Thread
 
   # :nodoc:
   getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
+
+  # :nodoc:
+  def scheduler? : ::Crystal::Scheduler?
+    @scheduler
+  end
 
   protected def start
     Thread.threads.push(self)

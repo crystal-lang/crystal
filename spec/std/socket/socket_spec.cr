@@ -57,6 +57,9 @@ describe Socket, tags: "network" do
         client.family.should eq(Socket::Family::INET)
         client.type.should eq(Socket::Type::STREAM)
         client.protocol.should eq(Socket::Protocol::TCP)
+        {% unless flag?(:win32) %}
+          client.close_on_exec?.should be_true
+        {% end %}
       ensure
         client.close
       end

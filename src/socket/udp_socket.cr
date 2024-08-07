@@ -70,7 +70,7 @@ class UDPSocket < IPSocket
   def receive(max_message_size = 512) : {String, IPAddress}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, address = system_receive(Slice.new(buffer, max_message_size))
+      bytes_read, address = system_receive_from(Slice.new(buffer, max_message_size))
       {bytes_read, 0}
     end
     {message, address.as(IPAddress)}
@@ -88,7 +88,7 @@ class UDPSocket < IPSocket
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, IPAddress}
-    bytes_read, address = system_receive(message)
+    bytes_read, address = system_receive_from(message)
     {bytes_read, address.as(IPAddress)}
   end
 

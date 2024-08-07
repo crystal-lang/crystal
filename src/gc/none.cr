@@ -1,6 +1,7 @@
 {% if flag?(:win32) %}
   require "c/process"
 {% end %}
+require "crystal/tracing"
 
 module GC
   def self.init
@@ -8,16 +9,21 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    LibC.malloc(size)
+    Crystal.trace :gc, "malloc", size: size
+    # libc malloc is not guaranteed to return cleared memory, so we need to
+    # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
+    LibC.malloc(size).tap(&.clear)
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
+    Crystal.trace :gc, "malloc", size: size, atomic: 1
     LibC.malloc(size)
   end
 
   # :nodoc:
   def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
+    Crystal.trace :gc, "realloc", size: size
     LibC.realloc(pointer, size)
   end
 
@@ -31,6 +37,7 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
+    Crystal.trace :gc, "free"
     LibC.free(pointer)
   end
 
