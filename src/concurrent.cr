@@ -1,6 +1,7 @@
 require "fiber"
 require "channel"
 require "crystal/scheduler"
+require "crystal/tracing"
 
 # Blocks the current fiber for the specified number of seconds.
 #
@@ -59,6 +60,7 @@ end
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
+  Crystal.trace :sched, "spawn", fiber: fiber
   {% if flag?(:preview_mt) %} fiber.set_current_thread if same_thread {% end %}
   fiber.enqueue
   fiber

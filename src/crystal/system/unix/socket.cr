@@ -9,19 +9,18 @@ module Crystal::System::Socket
   alias Handle = Int32
 
   private def create_handle(family, type, protocol, blocking) : Handle
-    socktype = type.value
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      socktype |= LibC::SOCK_CLOEXEC
+      fd = LibC.socket(family, type.value | LibC::SOCK_CLOEXEC, protocol)
+      raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+      fd
+    {% else %}
+      Process.lock_read do
+        fd = LibC.socket(family, type, protocol)
+        raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+        Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fd
+      end
     {% end %}
-
-    fd = LibC.socket(family, socktype, protocol)
-    raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
-
-    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-      Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-    {% end %}
-
-    fd
   end
 
   private def initialize_handle(fd)
@@ -177,6 +176,26 @@ module Crystal::System::Socket
     r = LibC.fcntl fd, cmd, arg
     raise ::Socket::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+    fds = uninitialized Handle[2]
+
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      if LibC.socketpair(::Socket::Family::UNIX, type.value | LibC::SOCK_CLOEXEC, protocol, fds) == -1
+        raise ::Socket::Error.new("socketpair() failed")
+      end
+    {% else %}
+      Process.lock_read do
+        if LibC.socketpair(::Socket::Family::UNIX, type, protocol, fds) == -1
+          raise ::Socket::Error.new("socketpair() failed")
+        end
+        fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      end
+    {% end %}
+
+    {fds[0], fds[1]}
   end
 
   private def system_tty?

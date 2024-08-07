@@ -130,7 +130,7 @@ module Crystal::System::Socket
   # :nodoc:
   def overlapped_connect(socket, method, &)
     IOCP::OverlappedOperation.run(socket) do |operation|
-      result = yield operation.start
+      result = yield operation
 
       if result == 0
         case error = WinError.wsa_value
@@ -146,9 +146,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      IOCP.schedule_overlapped(read_timeout || 1.seconds)
-
-      operation.wsa_result(socket) do |error|
+      operation.wait_for_wsa_result(read_timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaeconnrefused?
           return ::Socket::ConnectError.from_os_error(method, error)
@@ -196,7 +194,7 @@ module Crystal::System::Socket
 
   def overlapped_accept(socket, method, &)
     IOCP::OverlappedOperation.run(socket) do |operation|
-      result = yield operation.start
+      result = yield operation
 
       if result == 0
         case error = WinError.wsa_value
@@ -210,11 +208,11 @@ module Crystal::System::Socket
         return true
       end
 
-      unless IOCP.schedule_overlapped(read_timeout)
+      unless operation.wait_for_completion(read_timeout)
         raise IO::TimeoutError.new("#{method} timed out")
       end
 
-      operation.wsa_result(socket) do |error|
+      operation.wsa_result do |error|
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
@@ -361,6 +359,10 @@ module Crystal::System::Socket
 
   def self.fcntl(fd, cmd, arg = 0)
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
+  end
+
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
   end
 
   private def system_tty?

@@ -61,17 +61,21 @@ enum WinError : UInt32
   #
   # On non-win32 platforms the result is always an empty string.
   def message : String
-    formatted_message
+    {% if flag?(:win32) %}
+      unsafe_message { |slice| String.from_utf16(slice).strip }
+    {% else %}
+      ""
+    {% end %}
   end
 
   # :nodoc:
-  def formatted_message : String
+  def unsafe_message(&)
     {% if flag?(:win32) %}
       buffer = uninitialized UInt16[256]
       size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, value, 0, buffer, buffer.size, nil)
-      String.from_utf16(buffer.to_slice[0, size]).strip
+      yield buffer.to_slice[0, size]
     {% else %}
-      ""
+      yield "".to_slice
     {% end %}
   end
 

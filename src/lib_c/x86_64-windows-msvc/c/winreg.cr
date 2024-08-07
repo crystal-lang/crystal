@@ -18,13 +18,13 @@ lib LibC
     QWORD_LITTLE_ENDIAN        = QWORD
   end
 
-  HKEY_CLASSES_ROOT     = Pointer(Void).new(0x80000000).as(HKEY)
-  HKEY_CURRENT_USER     = Pointer(Void).new(0x80000001).as(HKEY)
-  HKEY_LOCAL_MACHINE    = Pointer(Void).new(0x80000002).as(HKEY)
-  HKEY_USERS            = Pointer(Void).new(0x80000003).as(HKEY)
-  HKEY_PERFORMANCE_DATA = Pointer(Void).new(0x80000004).as(HKEY)
-  HKEY_CURRENT_CONFIG   = Pointer(Void).new(0x80000005).as(HKEY)
-  HKEY_DYN_DATA         = Pointer(Void).new(0x8000006).as(HKEY)
+  HKEY_CLASSES_ROOT     = Pointer(Void).new(0x80000000_u64).as(HKEY)
+  HKEY_CURRENT_USER     = Pointer(Void).new(0x80000001_u64).as(HKEY)
+  HKEY_LOCAL_MACHINE    = Pointer(Void).new(0x80000002_u64).as(HKEY)
+  HKEY_USERS            = Pointer(Void).new(0x80000003_u64).as(HKEY)
+  HKEY_PERFORMANCE_DATA = Pointer(Void).new(0x80000004_u64).as(HKEY)
+  HKEY_CURRENT_CONFIG   = Pointer(Void).new(0x80000005_u64).as(HKEY)
+  HKEY_DYN_DATA         = Pointer(Void).new(0x8000006_u64).as(HKEY)
 
   fun RegOpenKeyExW(hKey : HKEY, lpSubKey : LPWSTR, ulOptions : DWORD, samDesired : REGSAM, phkResult : HKEY*) : LSTATUS
   fun RegCloseKey(hKey : HKEY) : LSTATUS
