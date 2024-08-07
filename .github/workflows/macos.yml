@@ -12,8 +12,8 @@ env:
 
 jobs:
   darwin-test:
-    runs-on: "${{ matrix.runs-on }}"
-    name: "${{ matrix.arch }}"
+    runs-on: ${{ matrix.runs-on }}
+    name: ${{ matrix.arch }}
     strategy:
       matrix:
         include:
