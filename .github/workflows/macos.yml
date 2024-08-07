@@ -12,7 +12,15 @@ env:
 
 jobs:
   darwin-test:
-    runs-on: macos-14
+    runs-on: "${{ matrix.runs-on }}"
+    name: "CI ${{ matrix.name }}"
+    strategy:
+      matrix:
+        include:
+        - runs-on: macos-13
+          arch: x86_64-darwin
+        - runs-on: macos-14
+          arch: aarch64-darwin
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
