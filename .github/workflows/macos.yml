@@ -13,7 +13,7 @@ env:
 jobs:
   darwin-test:
     runs-on: "${{ matrix.runs-on }}"
-    name: "CI ${{ matrix.name }}"
+    name: "CI ${{ matrix.arch }}"
     strategy:
       matrix:
         include:
