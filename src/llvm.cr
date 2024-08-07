@@ -107,12 +107,6 @@ module LLVM
   def self.default_target_triple : String
     chars = LibLLVM.get_default_target_triple
     case triple = string_and_dispose(chars)
-    when .starts_with?("x86_64-apple-macosx"), .starts_with?("x86_64-apple-darwin")
-      # normalize on `macosx` and remove minimum deployment target version
-      "x86_64-apple-macosx"
-    when .starts_with?("aarch64-apple-macosx"), .starts_with?("aarch64-apple-darwin")
-      # normalize on `macosx` and remove minimum deployment target version
-      "aarch64-apple-macosx"
     when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"

@@ -1472,7 +1472,7 @@ require "./repl"
       symbol_to_s: {
         pop_values: [index : Int32],
         push:       true,
-        code:       @context.index_to_symbol(index).object_id.unsafe_as(UInt64),
+        code:       @context.index_to_symbol(index).object_id.to_u64!,
       },
       # >>> Symbol (1)
 

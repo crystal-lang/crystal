@@ -1,17 +1,11 @@
 require "c/ioapiset"
 require "crystal/system/print_error"
+require "./iocp"
 
 # :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::Iocp::EventLoop.new
-  end
-end
-
-# :nodoc:
-class Crystal::Iocp::EventLoop < Crystal::EventLoop
+class Crystal::IOCP::EventLoop < Crystal::EventLoop
   # This is a list of resume and timeout events managed outside of IOCP.
-  @queue = Deque(Crystal::Iocp::Event).new
+  @queue = Deque(Crystal::IOCP::Event).new
 
   @lock = Crystal::SpinLock.new
   @interrupted = Atomic(Bool).new(false)
@@ -69,7 +63,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
       end
 
       wait_time = blocking ? (next_event.wake_at - now).total_milliseconds : 0
-      timed_out = IO::Overlapped.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
+      timed_out = IOCP.wait_queued_completions(wait_time, alertable: blocking) do |fiber|
         # This block may run multiple times. Every single fiber gets enqueued.
         fiber.enqueue
       end
@@ -130,28 +124,28 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) {}, thread, LibC::ULONG_PTR.new(0))
   end
 
-  def enqueue(event : Crystal::Iocp::Event)
+  def enqueue(event : Crystal::IOCP::Event)
     unless @queue.includes?(event)
       @queue << event
     end
   end
 
-  def dequeue(event : Crystal::Iocp::Event)
+  def dequeue(event : Crystal::IOCP::Event)
     @queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(fiber)
+    Crystal::IOCP::Event.new(fiber)
   end
 
   def create_timeout_event(fiber) : Crystal::EventLoop::Event
-    Crystal::Iocp::Event.new(fiber, timeout: true)
+    Crystal::IOCP::Event.new(fiber, timeout: true)
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     handle = file_descriptor.windows_handle
-    file_descriptor.overlapped_operation(handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+    IOCP.overlapped_operation(file_descriptor, handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -160,7 +154,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     handle = file_descriptor.windows_handle
 
-    file_descriptor.overlapped_operation(handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    IOCP.overlapped_operation(file_descriptor, handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -180,7 +174,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def read(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = socket.wsa_overlapped_operation(socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+    bytes_read = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
       {ret, bytes_received}
@@ -192,7 +186,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def write(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes = socket.wsa_overlapped_operation(socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+    bytes = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
       ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -202,7 +196,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     wsabuf = wsa_buffer(slice)
-    bytes_written = socket.wsa_overlapped_operation(socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+    bytes_written = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
       ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -228,7 +222,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
     wsabuf = wsa_buffer(slice)
 
     flags = 0_u32
-    bytes_read = socket.wsa_overlapped_operation(socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+    bytes_read = IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
       ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
       {ret, bytes_received}
     end
@@ -239,7 +233,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
     socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
+      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
     end
   end
 
@@ -262,7 +256,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
         received_bytes = uninitialized UInt32
         Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
           output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
+          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped.to_unsafe)
       end
 
       if success
@@ -282,7 +276,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
   end
 end
 
-class Crystal::Iocp::Event
+class Crystal::IOCP::Event
   include Crystal::EventLoop::Event
 
   getter fiber

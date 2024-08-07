@@ -65,6 +65,18 @@ describe "ECR" do
     io.to_s.should eq("string with -%")
   end
 
+  it "does with <%% %>" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template7.ecr", io
+    io.to_s.should eq(<<-ECR)
+      <% if @name %>
+      Greetings, <%= @name %>!
+        <%- else -%>
+      Greetings!
+      <%- end -%>
+      ECR
+  end
+
   it ".render" do
     ECR.render("#{__DIR__}/../data/test_template2.ecr").should eq("123")
   end

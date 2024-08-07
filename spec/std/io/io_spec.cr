@@ -461,6 +461,30 @@ describe IO do
         io2 = IO::Memory.new("hella")
         IO.same_content?(io2, io1).should be_false
       end
+
+      it "refutes prefix match, one way" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello again")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, second way" do
+        io1 = IO::Memory.new("hello")
+        io2 = OneByOneIO.new("hello again")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, one way" do
+        io1 = OneByOneIO.new("hello again")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "refutes prefix match, second way" do
+        io1 = IO::Memory.new("hello again")
+        io2 = OneByOneIO.new("hello")
+        IO.same_content?(io1, io2).should be_false
+      end
     end
   end
 

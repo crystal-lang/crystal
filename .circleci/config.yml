@@ -8,11 +8,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "a9e0c6c12987b8b01b17e71c38f489e45937e1bf"
+    default: "96e431e170979125018bd4fd90111a3147477eec"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.12.2/crystal-1.12.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.13.1/crystal-1.13.1-1"
 
 defaults:
   environment: &env
@@ -296,12 +296,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            # We need ruby-install >= 0.8.3
-            brew install ruby-install
-
-            ruby-install ruby 2.7.3
-
-            brew install pkgconfig libtool
+            brew install ruby@3 libffi pkgconfig libtool automake
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
@@ -312,7 +307,6 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus

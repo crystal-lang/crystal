@@ -14,6 +14,8 @@ module Crystal::System::Thread
 
   # def self.current_thread=(thread : ::Thread)
 
+  # def self.sleep(time : ::Time::Span) : Nil
+
   # private def system_join : Exception?
 
   # private def system_close
@@ -97,6 +99,12 @@ class Thread
     if exception = @exception
       raise exception
     end
+  end
+
+  # Blocks the current thread for the duration of *time*. Clock precision is
+  # dependent on the operating system and hardware.
+  def self.sleep(time : Time::Span) : Nil
+    Crystal::System::Thread.sleep(time)
   end
 
   # Returns the Thread object associated to the running system thread.

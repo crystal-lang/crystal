@@ -3350,7 +3350,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def append(value : Int8)
-    append value.unsafe_as(UInt8)
+    append value.to_u8!
   end
 
   private def append(value : Symbol)

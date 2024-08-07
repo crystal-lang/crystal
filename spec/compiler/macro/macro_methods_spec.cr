@@ -591,6 +591,11 @@ module Crystal
         assert_macro %({{"hello world".titleize}}), %("Hello World")
       end
 
+      it "executes to_utf16" do
+        assert_macro %({{"hello".to_utf16}}), "(::Slice(::UInt16).literal(104_u16, 101_u16, 108_u16, 108_u16, 111_u16, 0_u16))[0, 5]"
+        assert_macro %({{"TEST 😐🐙 ±∀ の".to_utf16}}), "(::Slice(::UInt16).literal(84_u16, 69_u16, 83_u16, 84_u16, 32_u16, 55357_u16, 56848_u16, 55357_u16, 56345_u16, 32_u16, 177_u16, 8704_u16, 32_u16, 12398_u16, 0_u16))[0, 14]"
+      end
+
       it "executes to_i" do
         assert_macro %({{"1234".to_i}}), %(1234)
       end
@@ -2343,6 +2348,63 @@ module Crystal
       it "executes union_types (non-union)" do
         assert_macro("{{x.union_types}}", %([Int32])) do |program|
           {x: TypeNode.new(program.int32)}
+        end
+      end
+
+      describe "executes private?" do
+        it false do
+          assert_macro("{{x.private?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.private?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "public?" do
+        it false do
+          assert_macro("{{x.public?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.public?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "visibility" do
+        it :public do
+          assert_macro("{{x.visibility}}", ":public") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it :private do
+          assert_macro("{{x.visibility}}", ":private") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
         end
       end
     end

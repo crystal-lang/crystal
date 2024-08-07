@@ -181,6 +181,14 @@ pending_interpreted describe: Process do
       $?.exit_code.should eq(0)
     end
 
+    it "forwards closed io" do
+      closed_io = IO::Memory.new
+      closed_io.close
+      Process.run(*stdin_to_stdout_command, input: closed_io)
+      Process.run(*stdin_to_stdout_command, output: closed_io)
+      Process.run(*stdin_to_stdout_command, error: closed_io)
+    end
+
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       command = {% if flag?(:win32) %}

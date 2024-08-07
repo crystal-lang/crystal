@@ -2,6 +2,7 @@
 
 require "crystal/thread_local_value"
 
+# :nodoc:
 module IO::Evented
   @read_timed_out = false
   @write_timed_out = false

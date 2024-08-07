@@ -91,20 +91,17 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.has_method?("dup3") %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
+    {% if LibC.has_method?(:dup3) %}
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, fd, flags) == -1
         raise IO::Error.from_errno("Could not reopen file descriptor")
       end
     {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC.dup2(other.fd, fd) == -1
-        raise IO::Error.from_errno("Could not reopen file descriptor")
-      end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
+      Process.lock_read do
+        if LibC.dup2(other.fd, fd) == -1
+          raise IO::Error.from_errno("Could not reopen file descriptor")
+        end
+        self.close_on_exec = other.close_on_exec?
       end
     {% end %}
 
@@ -194,14 +191,23 @@ module Crystal::System::FileDescriptor
 
   def self.pipe(read_blocking, write_blocking)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC.pipe(pipe_fds) != 0
-      raise IO::Error.from_errno("Could not create pipe")
-    end
+
+    {% if LibC.has_method?(:pipe2) %}
+      if LibC.pipe2(pipe_fds, LibC::O_CLOEXEC) != 0
+        raise IO::Error.from_errno("Could not create pipe")
+      end
+    {% else %}
+      Process.lock_read do
+        if LibC.pipe(pipe_fds) != 0
+          raise IO::Error.from_errno("Could not create pipe")
+        end
+        fcntl(pipe_fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fcntl(pipe_fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      end
+    {% end %}
 
     r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
     w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    r.close_on_exec = true
-    w.close_on_exec = true
     w.sync = true
 
     {r, w}
@@ -227,12 +233,11 @@ module Crystal::System::FileDescriptor
     ret = LibC.ttyname_r(fd, path, 256)
     return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
 
-    clone_fd = LibC.open(path, LibC::O_RDWR)
+    clone_fd = LibC.open(path, LibC::O_RDWR | LibC::O_CLOEXEC)
     return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
 
     # We don't buffer output for TTY devices to see their output right away
     io = IO::FileDescriptor.new(clone_fd)
-    io.close_on_exec = true
     io.sync = true
     io
   end

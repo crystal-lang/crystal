@@ -1,5 +1,6 @@
 require "./lib_llvm"
 
+@[Experimental("The C API wrapped by this type is marked as experimental by LLVM.")]
 struct LLVM::DIBuilder
   private DW_TAG_structure_type = 19
 
