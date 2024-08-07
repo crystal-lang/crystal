@@ -30,6 +30,12 @@ module Crystal::Doc
   end
 
   record TypeTemplate, type : Type, types : Array(Type), project_info : ProjectInfo do
+    {% for method in ["ancestors", "included_modules", "extended_modules", "subclasses", "including_types"] %}
+      def {{method.id}}_with_docs
+        type.{{method.id}}.select { |related_type| related_type.in?(types) }
+    end
+    {% end %}
+
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
