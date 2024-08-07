@@ -2432,8 +2432,7 @@ module Crystal
           end
         end
 
-        # TODO: enable after #14845
-        pending "works on ReferenceStorage" do
+        it "works on ReferenceStorage" do
           assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
             reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
             klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
