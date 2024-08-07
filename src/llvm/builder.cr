@@ -239,11 +239,13 @@ class LLVM::Builder
     end
   {% end %}
 
-  def not(value, name = "")
-    # check_value(value)
+  {% for name in %w(not neg fneg) %}
+    def {{name.id}}(value, name = "")
+      # check_value(value)
 
-    Value.new LibLLVM.build_not(self, value, name)
-  end
+      Value.new LibLLVM.build_{{name.id}}(self, value, name)
+    end
+  {% end %}
 
   def unreachable
     Value.new LibLLVM.build_unreachable(self)
