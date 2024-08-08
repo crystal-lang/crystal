@@ -2853,5 +2853,24 @@ module Crystal::Macros
     # `self` is an ancestor of *other*.
     def >=(other : TypeNode) : BoolLiteral
     end
+
+    # Returns whether `self` contains any inner pointers.
+    #
+    # Primitive types, except `Void`, are expected to not contain inner pointers.
+    # `Proc` and `Pointer` contain inner pointers.
+    # Unions, structs and collection types (tuples, static arrays)
+    # have inner pointers if any of their contained types has inner pointers.
+    # All other types, including classes, are expected to contain inner pointers.
+    #
+    # Types that do not have inner pointers may opt to use atomic allocations,
+    # i.e. `GC.malloc_atomic` rather than `GC.malloc`. The compiler ensures
+    # that, for any type `T`:
+    #
+    # * `Pointer(T).malloc` is atomic if and only if `T` has no inner pointers;
+    # * `T.allocate` is atomic if and only if `T` is a reference type and
+    #   `ReferenceStorage(T)` has no inner pointers.
+    # NOTE: Like `#instance_vars` this method must be called from within a method. The result may be incorrect when used in top-level code.
+    def has_inner_pointers? : BoolLiteral
+    end
   end
 end
