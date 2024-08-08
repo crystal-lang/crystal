@@ -169,4 +169,31 @@ describe Socket, tags: "network" do
       socket.close_on_exec?.should be_true
     end
   {% end %}
+
+  describe "#finalize" do
+    it "flushes" do
+      port = unused_local_port
+      server = Socket.tcp(Socket::Family::INET)
+      server.bind("127.0.0.1", port)
+      server.listen
+
+      spawn do
+        client = server.not_nil!.accept
+        client.sync = false
+        client << "foo"
+        client.flush
+        client << "bar"
+        client.finalize
+      ensure
+        client.try(&.close) rescue nil
+      end
+
+      socket = Socket.tcp(Socket::Family::INET)
+      socket.connect(Socket::IPAddress.new("127.0.0.1", port))
+      socket.gets.should eq "foobar"
+    ensure
+      socket.try &.close
+      server.try &.close
+    end
+  end
 end
