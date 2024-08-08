@@ -366,6 +366,10 @@ module Crystal::System::Socket
   end
 
   def system_close
+    socket_close
+  end
+
+  private def socket_close
     handle = @volatile_fd.swap(LibC::INVALID_SOCKET)
 
     ret = LibC.closesocket(handle)
