@@ -23,6 +23,19 @@ module GC
   end
 
   # :nodoc:
+  def self.calloc(size : LibC::SizeT) : Void*
+    # Using `LibC.calloc` would be more efficient, but that is currently not defined.
+    ptr = LibC.malloc(size)
+    ptr.clear(size)
+    ptr
+  end
+
+  # :nodoc:
+  def self.calloc_atomic(size : LibC::SizeT) : Void*
+    calloc(size)
+  end
+
+  # :nodoc:
   def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
     Crystal.trace :gc, "realloc", size: size
     LibC.realloc(pointer, size)
