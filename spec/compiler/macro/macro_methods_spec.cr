@@ -2407,6 +2407,65 @@ module Crystal
           end
         end
       end
+
+      describe "#has_inner_pointers?" do
+        it "works on structs" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(klass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on references" do
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on ReferenceStorage" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+        end
+
+        it "works on primitive values" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.int32)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.void)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.pointer_of(program.int32))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.proc_of(program.void))}
+          end
+        end
+      end
     end
 
     describe "type declaration methods" do
