@@ -384,8 +384,8 @@ module Crystal::System::Socket
     end
   end
 
-  def system_close
-    system_close do |err|
+  def socket_close
+    socket_close do |err|
       raise ::Socket::Error.from_os_error("Error closing socket", err)
     end
   end
