@@ -995,13 +995,23 @@ struct Slice(T)
   # the result could also be `[b, a]`.
   #
   # If stability is expendable, `#unstable_sort!` provides a performance
-  # advantage over stable sort.
+  # advantage over stable sort. As an optimization, if `T` is any primitive
+  # integer type, `Char`, any enum type, any `Pointer` instance, `Symbol`, or
+  # `Time::Span`, then an unstable sort is automatically used.
   #
   # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def sort! : self
-    Slice.merge_sort!(self)
+    # If two values `x, y : T` have the same binary representation whenever they
+    # compare equal, i.e. `x <=> y == 0` implies
+    # `pointerof(x).memcmp(pointerof(y), 1) == 0`, then swapping the two values
+    # is a no-op and therefore a stable sort isn't required
+    {% if T.union_types.size == 1 && (T <= Int::Primitive || T <= Char || T <= Enum || T <= Pointer || T <= Symbol || T <= Time::Span) %}
+      unstable_sort!
+    {% else %}
+      Slice.merge_sort!(self)
 
-    self
+      self
+    {% end %}
   end
 
   # Sorts all elements in `self` based on the return value of the comparison
