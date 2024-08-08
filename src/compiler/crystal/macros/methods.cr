@@ -967,6 +967,12 @@ module Crystal
         interpret_check_args { @of.try(&.value) || Nop.new }
       when "type"
         interpret_check_args { @name || Nop.new }
+      when "delete"
+        interpret_check_args do |key|
+          entries.reject! { |e| e.key == key }
+
+          self
+        end
       when "clear"
         interpret_check_args do
           entries.clear
@@ -987,6 +993,17 @@ module Crystal
   class NamedTupleLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
+      when "delete"
+        interpret_check_args do |key|
+          case key
+          when SymbolLiteral, StringLiteral
+            entries.reject! { |e| e.key == key.value }
+          else
+            key.raise "argument to NamedTupleLiteral#delete must be a string or symbol, not #{key.class_desc}:\n\n#{key}"
+          end
+
+          self
+        end
       when "empty?"
         interpret_check_args { BoolLiteral.new(entries.empty?) }
       when "keys"
