@@ -236,7 +236,7 @@ class IO::FileDescriptor < IO
   def finalize
     return if closed? || !close_on_finalize?
 
-    close rescue nil
+    file_descriptor_close { } # ignore error
   end
 
   def closed? : Bool

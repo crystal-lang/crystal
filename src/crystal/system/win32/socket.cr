@@ -375,8 +375,14 @@ module Crystal::System::Socket
       when WinError::WSAEINTR, WinError::WSAEINPROGRESS
         # ignore
       else
-        raise ::Socket::Error.from_os_error("Error closing socket", err)
+        yield err
       end
+    end
+  end
+
+  def system_close
+    system_close do |err|
+      raise ::Socket::Error.from_os_error("Error closing socket", err)
     end
   end
 

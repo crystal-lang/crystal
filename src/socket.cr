@@ -422,7 +422,7 @@ class Socket < IO
   def finalize
     return if closed?
 
-    close rescue nil
+    socket_close { } # ignore error
   end
 
   def closed? : Bool

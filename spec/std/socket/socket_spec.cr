@@ -171,7 +171,7 @@ describe Socket, tags: "network" do
   {% end %}
 
   describe "#finalize" do
-    it "flushes" do
+    it "does not flush" do
       port = unused_local_port
       server = Socket.tcp(Socket::Family::INET)
       server.bind("127.0.0.1", port)
@@ -190,7 +190,8 @@ describe Socket, tags: "network" do
 
       socket = Socket.tcp(Socket::Family::INET)
       socket.connect(Socket::IPAddress.new("127.0.0.1", port))
-      socket.gets.should eq "foobar"
+
+      socket.gets.should eq "foo"
     ensure
       socket.try &.close
       server.try &.close

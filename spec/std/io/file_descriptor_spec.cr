@@ -64,7 +64,7 @@ describe IO::FileDescriptor do
       end
     end
 
-    it "flushes" do
+    it "does not flush" do
       with_tempfile "fd-finalize-flush" do |path|
         file = File.new(path, "w")
         file << "foo"
@@ -72,7 +72,7 @@ describe IO::FileDescriptor do
         file << "bar"
         file.finalize
 
-        File.read(path).should eq "foobar"
+        File.read(path).should eq "foo"
       ensure
         file.try(&.close) rescue nil
       end
