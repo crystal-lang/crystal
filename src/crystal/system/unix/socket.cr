@@ -1,10 +1,14 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
+{% unless flag?(:linux) || flag?(:solaris) %}
+  require "io/evented"
+{% end %}
 
 module Crystal::System::Socket
-  include IO::Evented
+  {% unless flag?(:linux) || flag?(:solaris) %}
+    include IO::Evented
+  {% end %}
 
   alias Handle = Int32
 

@@ -7,6 +7,7 @@ module Crystal
     enum Section
       GC
       Sched
+      Evloop
 
       def self.from_id(slice) : self
         {% begin %}
@@ -81,6 +82,9 @@ module Crystal
 
         def write(uint : Int::Unsigned) : Nil
           System.to_int_slice(uint, 10, false, 2) { |bytes| write(bytes) }
+        end
+
+        def write(x : Nil) : Nil
         end
 
         def to_slice : Bytes

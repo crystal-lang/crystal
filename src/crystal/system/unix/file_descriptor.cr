@@ -1,5 +1,7 @@
 require "c/fcntl"
-require "io/evented"
+{% unless flag?(:linux) || flag?(:solaris) %}
+  require "io/evented"
+{% end %}
 require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
@@ -7,7 +9,9 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  include IO::Evented
+  {% unless flag?(:linux) || flag?(:solaris) %}
+    include IO::Evented
+  {% end %}
 
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
@@ -120,12 +124,13 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close : Nil
+  def file_descriptor_close(raise_on_error = true) : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
+    return if _fd == -1
 
-    if LibC.close(_fd) != 0
+    if LibC.close(_fd) != 0 && raise_on_error
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
@@ -190,6 +195,14 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pipe(read_blocking, write_blocking)
+    pipe_fds = system_pipe
+    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+    w.sync = true
+    {r, w}
+  end
+
+  def self.system_pipe : StaticArray(LibC::Int, 2)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
 
     {% if LibC.has_method?(:pipe2) %}
@@ -206,11 +219,7 @@ module Crystal::System::FileDescriptor
       end
     {% end %}
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-
-    {r, w}
+    pipe_fds
   end
 
   def self.pread(fd, buffer, offset)
