@@ -9,7 +9,7 @@ require "c/ntifs"
 require "c/winioctl"
 
 module Crystal::System::File
-  # On Windows we cannot rely on the system mode `FILE_APPEND_DATA` and 
+  # On Windows we cannot rely on the system mode `FILE_APPEND_DATA` and
   # keep track of append mode explicitly. When writing data, this ensures to only
   # write at the end of the file.
   @system_append = false
