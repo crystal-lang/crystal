@@ -420,6 +420,7 @@ struct Pointer(T)
   # ptr = Pointer(Int32).new(5678)
   # ptr.address # => 5678
   # ```
+  @[Deprecated("Call `.new(UInt64)` directly instead")]
   def self.new(address : Int)
     new address.to_u64!
   end
