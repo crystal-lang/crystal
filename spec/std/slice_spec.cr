@@ -503,6 +503,20 @@ describe "Slice" do
     end
   end
 
+  it "#same?" do
+    slice = Slice[1, 2, 3]
+
+    slice.should be slice
+    slice.should_not be slice.dup
+    slice.should_not be Slice[1, 2, 3]
+
+    (slice + 1).should be slice + 1
+    slice.should_not be slice + 1
+
+    (slice[0, 2]).should be slice[0, 2]
+    slice.should_not be slice[0, 2]
+  end
+
   it "does macro []" do
     slice = Slice[1, 'a', "foo"]
     slice.should be_a(Slice(Int32 | Char | String))
