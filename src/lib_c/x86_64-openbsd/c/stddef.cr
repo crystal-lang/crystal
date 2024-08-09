@@ -1,3 +1,5 @@
+require "c_types"
+
 lib LibC
-  alias SizeT = ULong
+  alias SizeT = CTypes::SizeT
 end
