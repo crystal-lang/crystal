@@ -160,6 +160,19 @@ describe WaitGroup do
     extra.get.should eq(32)
   end
 
+  it "takes a block to WaitGroup.wait" do
+    fiber_count = 10
+    completed = Array.new(fiber_count) { false }
+
+    WaitGroup.wait do |wg|
+      fiber_count.times do |i|
+        wg.spawn { completed[i] = true }
+      end
+    end
+
+    completed.should eq [true] * 10
+  end
+
   # the test takes far too much time for the interpreter to complete
   {% unless flag?(:interpreted) %}
     it "stress add/done/wait" do
