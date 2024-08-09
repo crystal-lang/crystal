@@ -653,6 +653,7 @@ module Crystal
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
+    property? args_in_brackets = false
     property? has_parentheses = false
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
