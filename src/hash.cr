@@ -2148,6 +2148,7 @@ class Hash(K, V)
     hash
   end
 
+  # :nodoc:
   struct Entry(K, V)
     getter key, value, hash
 
