@@ -1,6 +1,8 @@
 require "spec"
 require "socket"
 
+CLOSE_ON_EXEC_AVAILABLE = {{ !flag?(:win32) }}
+
 module SocketSpecHelper
   class_getter?(supports_ipv6 : Bool) do
     TCPServer.open("::1", 0) { return true }
