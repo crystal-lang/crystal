@@ -96,7 +96,11 @@ struct LLVM::DIBuilder
   end
 
   def insert_declare_at_end(storage, var_info, expr, dl : LibLLVM::MetadataRef, block)
-    LibLLVM.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
+    {% if LibLLVM::IS_LT_190 %}
+      LibLLVM.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
+    {% else %}
+      LibLLVM.di_builder_insert_declare_record_at_end(self, storage, var_info, expr, dl, block)
+    {% end %}
   end
 
   def get_or_create_array(elements : Array(LibLLVM::MetadataRef))

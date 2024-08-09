@@ -116,7 +116,11 @@ lib LibLLVM
   fun const_int_get_zext_value = LLVMConstIntGetZExtValue(constant_val : ValueRef) : ULongLong
   fun const_int_get_sext_value = LLVMConstIntGetSExtValue(constant_val : ValueRef) : LongLong
 
-  fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : Char*, length : UInt, dont_null_terminate : Bool) : ValueRef
+  {% if LibLLVM::IS_LT_190 %}
+    fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : Char*, length : UInt, dont_null_terminate : Bool) : ValueRef
+  {% else %}
+    fun const_string_in_context2 = LLVMConstStringInContext2(c : ContextRef, str : Char*, length : SizeT, dont_null_terminate : Bool) : ValueRef
+  {% end %}
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt, packed : Bool) : ValueRef
   fun const_array = LLVMConstArray(element_ty : TypeRef, constant_vals : ValueRef*, length : UInt) : ValueRef
 

@@ -111,10 +111,17 @@ lib LibLLVM
 
   fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(target_metadata : MetadataRef, replacement : MetadataRef)
 
-  fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(
-    builder : DIBuilderRef, storage : ValueRef, var_info : MetadataRef,
-    expr : MetadataRef, debug_loc : MetadataRef, block : BasicBlockRef
-  ) : ValueRef
+  {% if LibLLVM::IS_LT_190 %}
+    fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(
+      builder : DIBuilderRef, storage : ValueRef, var_info : MetadataRef,
+      expr : MetadataRef, debug_loc : MetadataRef, block : BasicBlockRef
+    ) : ValueRef
+  {% else %}
+    fun di_builder_insert_declare_record_at_end = LLVMDIBuilderInsertDeclareRecordAtEnd(
+      builder : DIBuilderRef, storage : ValueRef, var_info : MetadataRef,
+      expr : MetadataRef, debug_loc : MetadataRef, block : BasicBlockRef
+    ) : DbgRecordRef
+  {% end %}
 
   fun di_builder_create_auto_variable = LLVMDIBuilderCreateAutoVariable(
     builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT, file : MetadataRef,
