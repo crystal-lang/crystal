@@ -1747,8 +1747,18 @@ class Hash(K, V)
   # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
   def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
-    each_with_object({} of K2 => V) do |(key, value), memo|
-      memo[yield(key, value)] = value
+    if size <= 4
+      # Building up an empty hash is faster than a pre-allocated one as long as
+      # the size is below 5.
+      each_with_object({} of K2 => V) do |(key, value), memo|
+        memo[yield(key, value)] = value
+      end
+    else
+      hash = Hash(K2, V).new(initial_capacity: size)
+      each do |key, value|
+        hash[yield(key, value)] = value
+      end
+      hash
     end
   end
 
@@ -1762,8 +1772,18 @@ class Hash(K, V)
   # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
-    each_with_object({} of K => V2) do |(key, value), memo|
-      memo[key] = yield(value, key)
+    if size <= 4
+      # Building up an empty hash is faster than a pre-allocated one as long as
+      # the size is below 5.
+      each_with_object({} of K => V2) do |(key, value), memo|
+        memo[key] = yield(value, key)
+      end
+    else
+      hash = Hash(K, V2).new(initial_capacity: size)
+      each do |key, value|
+        hash[key] = yield(value, key)
+      end
+      hash
     end
   end
 
