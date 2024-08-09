@@ -45,10 +45,10 @@
   <code><%= type.formatted_alias_definition %></code>
 <% end %>
 
-<%= OtherTypesTemplate.new("Included Modules", type, type.included_modules) %>
-<%= OtherTypesTemplate.new("Extended Modules", type, type.extended_modules) %>
-<%= OtherTypesTemplate.new("Direct Known Subclasses", type, type.subclasses) %>
-<%= OtherTypesTemplate.new("Direct including types", type, type.including_types) %>
+<%= OtherTypesTemplate.new("Included Modules", type, included_modules_with_docs) %>
+<%= OtherTypesTemplate.new("Extended Modules", type, extended_modules_with_docs) %>
+<%= OtherTypesTemplate.new("Direct Known Subclasses", type, subclasses_with_docs) %>
+<%= OtherTypesTemplate.new("Direct including types", type, including_types_with_docs) %>
 
 <% if locations = type.locations %>
   <h2>
@@ -99,7 +99,7 @@
 <%= MethodSummaryTemplate.new("Instance Method Summary", type.instance_methods) %>
 
 <div class="methods-inherited">
-  <% type.ancestors.each do |ancestor| %>
+  <% ancestors_with_docs.each do |ancestor| %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.instance_methods, "Instance") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.constructors, "Constructor") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.class_methods, "Class") %>
