@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
-  openssl3:
+  openssl3_0:
     runs-on: ubuntu-latest
     name: "OpenSSL 3.0"
     container: crystallang/crystal:1.13.1-alpine
@@ -20,6 +20,19 @@ jobs:
         run: apk upgrade alpine-keys
       - name: Install openssl 3.0
         run: apk add "openssl-dev=~3.0" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.17/main
+      - name: Check LibSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec --order=random spec/std/openssl/
+  openssl3_3:
+    runs-on: ubuntu-latest
+    name: "OpenSSL 3.3"
+    container: crystallang/crystal:1.13.1-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Install openssl 3.3
+        run: apk add "openssl-dev=~3.3" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.20/community
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
