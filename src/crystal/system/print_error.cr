@@ -23,7 +23,7 @@ module Crystal::System
     String.each_utf16_char(bytes) do |char|
       if appender.size > utf8.size - char.bytesize
         # buffer is full (char won't fit)
-        print_error utf8.to_slice[0...appender.size]
+        print_error appender.to_slice
         appender = utf8.to_unsafe.appender
       end
 
@@ -33,7 +33,7 @@ module Crystal::System
     end
 
     if appender.size > 0
-      print_error utf8.to_slice[0...appender.size]
+      print_error appender.to_slice
     end
   end
 
