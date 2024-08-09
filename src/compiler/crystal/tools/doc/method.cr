@@ -126,6 +126,8 @@ class Crystal::Doc::Method
 
   def prefix
     case
+    when @type.lib?
+      "."
     when @type.program?
       ""
     when @class_method
@@ -156,6 +158,17 @@ class Crystal::Doc::Method
     @def.abstract?
   end
 
+  def visibility
+    case @def.visibility
+    in .public?
+      ""
+    in .protected?
+      "protected "
+    in .private?
+      "private "
+    end
+  end
+
   def return_type
     return_type = @def.return_type
 
@@ -174,6 +187,8 @@ class Crystal::Doc::Method
 
   def kind
     case
+    when @type.lib?
+      "fun "
     when @type.program?
       "def "
     when @class_method
@@ -186,7 +201,9 @@ class Crystal::Doc::Method
   def id
     String.build do |io|
       io << to_s.delete(' ')
-      if @class_method
+      if @type.lib?
+        io << "-function"
+      elsif @class_method
         io << "-class-method"
       else
         io << "-instance-method"
@@ -327,7 +344,7 @@ class Crystal::Doc::Method
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?
       builder.field "location", location unless location.nil?
-      builder.field "def", self.def
+      builder.field @type.lib? ? "fun" : "def", self.def
     end
   end
 

@@ -13,6 +13,8 @@ class Crystal::Doc::Type
     case @type
     when Const
       "const"
+    when .extern_union?
+      "union"
     when .struct?
       "struct"
     when .class?, .metaclass?
@@ -28,7 +30,9 @@ class Crystal::Doc::Type
     when AnnotationType
       "annotation"
     when LibType
-      "module"
+      "lib"
+    when TypeDefType
+      "type"
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -68,6 +72,10 @@ class Crystal::Doc::Type
 
   def abstract?
     @type.abstract?
+  end
+
+  def visibility
+    @type.private? ? "private " : ""
   end
 
   def parents_of?(type)
@@ -144,6 +152,18 @@ class Crystal::Doc::Type
     @type.is_a?(Const)
   end
 
+  def type_def?
+    @type.is_a?(TypeDefType)
+  end
+
+  def lib?
+    @type.is_a?(LibType)
+  end
+
+  def fun_def?
+    @type.is_a?(FunDef)
+  end
+
   def alias_definition
     alias_def = @type.as?(AliasType).try(&.aliased_type)
     alias_def
@@ -151,6 +171,15 @@ class Crystal::Doc::Type
 
   def formatted_alias_definition
     type_to_html alias_definition.as(Crystal::Type)
+  end
+
+  def type_definition
+    type_def = @type.as?(TypeDefType).try(&.typedef)
+    type_def
+  end
+
+  def formatted_type_definition
+    type_to_html type_definition.as(Crystal::Type)
   end
 
   @types : Array(Type)?
@@ -164,13 +193,13 @@ class Crystal::Doc::Type
   def instance_methods
     @instance_methods ||= begin
       case @type
-      when Program
+      when Program, LibType
         [] of Method
       else
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            next unless def_with_metadata.def.visibility.public?
+            next unless def_with_metadata.def.visibility.public? || @generator.include_private
             next unless @generator.must_include? def_with_metadata.def
 
             defs << method(def_with_metadata.def, false)

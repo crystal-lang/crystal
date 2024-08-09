@@ -6,6 +6,7 @@ class Crystal::Doc::Generator
 
   @base_dir : String
   getter project_info
+  getter include_private
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
@@ -21,14 +22,14 @@ class Crystal::Doc::Generator
   FLAGS = FLAG_COLORS.keys
 
   def self.new(program : Program, included_dirs : Array(String))
-    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
+    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"), false, false, false)
   end
 
-  def initialize(@program : Program, @included_dirs : Array(String),
-                 @output_dir : String, @output_format : String,
-                 @sitemap_base_url : String?,
-                 @sitemap_priority : String, @sitemap_changefreq : String,
-                 @project_info : ProjectInfo)
+  def initialize(
+    @program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String,
+    @sitemap_base_url : String?, @sitemap_priority : String, @sitemap_changefreq : String,
+    @project_info : ProjectInfo, @include_all : Bool, @include_private : Bool, @include_lib : Bool
+  )
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
   end
@@ -134,7 +135,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : Crystal::Type)
-    return false if type.private?
+    return false if type.private? && !@include_private
     return false if nodoc? type
     return true if crystal_builtin?(type)
 
@@ -144,7 +145,11 @@ class Crystal::Doc::Generator
     end
 
     # Don't include lib types or types inside a lib type
-    return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
+    return false if (type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)) && !@include_lib
+
+    if (locations = type.locations).nil? || locations.empty?
+      return false
+    end
 
     !!type.locations.try &.any? do |type_location|
       must_include? type_location
@@ -185,7 +190,7 @@ class Crystal::Doc::Generator
   def must_include?(location : Crystal::Location)
     case filename = location.filename
     when String
-      @included_dirs.any? { |included_dir| filename.starts_with? included_dir }
+      @include_all || @included_dirs.any? { |included_dir| filename.starts_with? included_dir }
     when VirtualFile
       must_include? filename.expanded_location
     else
@@ -258,7 +263,7 @@ class Crystal::Doc::Generator
 
     parent.types?.try &.each_value do |type|
       case type
-      when Const, LibType
+      when Const
         next
       else
         types << type(type) if must_include? type
@@ -272,7 +277,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include?(type) && !type.private?
+      if type.is_a?(Const) && must_include?(type) && (!type.private? || @include_private)
         types << Constant.new(self, parent, type)
       end
     end
