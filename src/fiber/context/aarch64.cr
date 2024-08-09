@@ -38,7 +38,7 @@ class Fiber
     # Eventually reset LR to zero to avoid the ARM unwinder to mistake the
     # context switch as a regular call.
 
-    {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
+    {% if compare_versions(::Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
       asm("
       stp     d15, d14, [sp, #-22*8]!
       stp     d13, d12, [sp, #2*8]

@@ -1293,7 +1293,7 @@ class Object
   # wrapper.capitalize     # => "Hello"
   # ```
   macro delegate(*methods, to object)
-    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+    {% if compare_versions(::Crystal::VERSION, "1.12.0-dev") >= 0 %}
       {% eq_operators = %w(<= >= == != []= ===) %}
       {% for method in methods %}
         {% if method.id.ends_with?('=') && !eq_operators.includes?(method.id.stringify) %}

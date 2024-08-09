@@ -116,7 +116,7 @@ private class TestObject
   end
 
   # NOTE: these methods are a syntax error in older versions
-  {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+  {% if compare_versions(::Crystal::VERSION, "1.12.0-dev") >= 0 %}
     {% for op in EQ_OPERATORS %}
       def {{ op.id }}(*args, **opts)
         [args, opts]
@@ -225,7 +225,7 @@ describe Object do
       (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
 
-    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+    {% if compare_versions(::Crystal::VERSION, "1.12.0-dev") >= 0 %}
       {% for op in EQ_OPERATORS %}
         it "forwards \#{{ op.id }} with multiple parameters" do
           test_object = TestObject.new

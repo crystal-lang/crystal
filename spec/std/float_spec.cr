@@ -344,7 +344,7 @@ describe "Float" do
     (-0.0/0.0).finite?.should be_false
   end
 
-  {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+  {% if compare_versions(::Crystal::VERSION, "0.36.1") > 0 %}
     it "converts infinity" do
       Float32::INFINITY.to_f64.infinite?.should eq 1
       Float32::INFINITY.to_f32.infinite?.should eq 1

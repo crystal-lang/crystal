@@ -15,7 +15,7 @@
     {% llvm_ldflags = lines[2] %}
 
     @[Link("llvm")]
-    {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+    {% if compare_versions(::Crystal::VERSION, "1.11.0-dev") >= 0 %}
       @[Link(dll: "LLVM-C.dll")]
     {% end %}
     lib LibLLVM

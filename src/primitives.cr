@@ -91,7 +91,7 @@ class Reference
   # See also: `Reference.unsafe_construct`.
   @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
   @[Primitive(:pre_initialize)]
-  {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
+  {% if compare_versions(::Crystal::VERSION, "1.2.0") >= 0 %}
     def self.pre_initialize(address : Pointer)
       # This ensures `.pre_initialize` is instantiated for every subclass,
       # otherwise all calls will refer to the sole instantiation in

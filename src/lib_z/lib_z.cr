@@ -1,5 +1,5 @@
 @[Link("z")]
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+{% if compare_versions(::Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "zlib1.dll")]
 {% end %}
 lib LibZ

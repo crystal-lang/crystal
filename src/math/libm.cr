@@ -96,7 +96,7 @@ lib LibM
 
     @[Primitive(:interpreter_libm_powi_f64)]
     fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
-  {% elsif compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
+  {% elsif compare_versions(::Crystal::LLVM_VERSION, "13.0.0") < 0 %}
     fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
     fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
   {% else %}

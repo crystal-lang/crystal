@@ -18,7 +18,7 @@ class Fiber
   @[NoInline]
   @[Naked]
   def self.swapcontext(current_context, new_context) : Nil
-    {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
+    {% if compare_versions(::Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
       #                %ecx           , %eax
       asm("
       movl 8(%esp), %eax

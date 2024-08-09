@@ -72,7 +72,7 @@ describe "Primitives: reference" do
     end
 
     # see notes in `Reference.pre_initialize`
-    {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
+    {% if compare_versions(::Crystal::VERSION, "1.2.0") >= 0 %}
       it "works with virtual type" do
         foo_buffer = GC.malloc(instance_sizeof(Foo))
         foo = Foo.as(Base.class).pre_initialize(foo_buffer).should be_a(Foo)

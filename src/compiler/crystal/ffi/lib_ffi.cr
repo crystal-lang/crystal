@@ -1,6 +1,6 @@
 module Crystal
   @[Link("ffi")]
-  {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  {% if compare_versions(::Crystal::VERSION, "1.11.0-dev") >= 0 %}
     @[Link(dll: "libffi.dll")]
   {% end %}
   lib LibFFI
