@@ -49,7 +49,7 @@ module IO::Buffered
   # Set the buffer size of both the read and write buffer
   # Cannot be changed after any of the buffers have been allocated
   def buffer_size=(value)
-    if @in_buffer || @out_buffer
+    if (@in_buffer || @out_buffer) && (buffer_size != value)
       raise ArgumentError.new("Cannot change buffer_size after buffers have been allocated")
     end
     @buffer_size = value
