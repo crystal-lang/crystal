@@ -250,6 +250,13 @@ describe "Regex" do
         end
       end
 
+      describe "multiline_only" do
+        it "anchor" do
+          ((/^foo.*$/m).match("foo\nbar")).try(&.[](0)).should eq "foo\nbar"
+          ((Regex.new("^foo.*?", Regex::Options::MULTILINE_ONLY)).match("foo\nbar")).try(&.[](0)).should eq "foo"
+        end
+      end
+
       describe "extended" do
         it "ignores white space" do
           /foo   bar/.matches?("foobar").should be_false
