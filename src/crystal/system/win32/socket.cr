@@ -366,6 +366,10 @@ module Crystal::System::Socket
   end
 
   def system_close
+    socket_close
+  end
+
+  private def socket_close
     handle = @volatile_fd.swap(LibC::INVALID_SOCKET)
 
     ret = LibC.closesocket(handle)
@@ -375,8 +379,14 @@ module Crystal::System::Socket
       when WinError::WSAEINTR, WinError::WSAEINPROGRESS
         # ignore
       else
-        raise ::Socket::Error.from_os_error("Error closing socket", err)
+        yield err
       end
+    end
+  end
+
+  def socket_close
+    socket_close do |err|
+      raise ::Socket::Error.from_os_error("Error closing socket", err)
     end
   end
 

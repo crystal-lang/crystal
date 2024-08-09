@@ -208,6 +208,10 @@ module Crystal::System::Socket
     # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
 
+    socket_close
+  end
+
+  private def socket_close(&)
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     fd = @volatile_fd.swap(-1)
@@ -219,8 +223,14 @@ module Crystal::System::Socket
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise ::Socket::Error.from_errno("Error closing socket")
+        yield
       end
+    end
+  end
+
+  private def socket_close
+    socket_close do
+      raise ::Socket::Error.from_errno("Error closing socket")
     end
   end
 

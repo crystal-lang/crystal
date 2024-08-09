@@ -91,6 +91,14 @@ module Crystal::System::Socket
 
   # private def system_close
 
+  # Closes the internal handle without notifying the event loop.
+  # This is directly used after the fork of a process to close the
+  # parent's Crystal::System::Signal.@@pipe reference before re initializing
+  # the event loop. In the case of a fork that will exec there is even
+  # no need to initialize the event loop at all.
+  # Also used in `Socket#finalize`
+  # def socket_close
+
   private def event_loop : Crystal::EventLoop::Socket
     Crystal::EventLoop.current
   end
