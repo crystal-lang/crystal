@@ -192,6 +192,16 @@ module HTTP
       end
     end
 
+    # tell the browser to delete the cookie.
+    # Set its value to an empty string
+    # and set its expiration time to the past
+    # Browsers delete cookies that have expired.
+    def destroy
+      self.value = ""
+      self.expires = Time::UNIX_EPOCH
+      self.max_age = Time::Span.zero
+    end
+
     # :nodoc:
     module Parser
       module Regex
