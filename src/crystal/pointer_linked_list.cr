@@ -86,4 +86,8 @@ struct Crystal::PointerLinkedList(T)
     each { |node| yield node }
     @head = Pointer(T).null
   end
+
+  def clear : Nil
+    @head = Pointer(T).null
+  end
 end
