@@ -419,6 +419,14 @@ class Socket < IO
     self.class.fcntl fd, cmd, arg
   end
 
+  # Finalizes the socket resource.
+  #
+  # This involves releasing the handle to the operating system, i.e. closing it.
+  # It does *not* implicitly call `#flush`, so data waiting in the buffer may be
+  # lost. By default write buffering is disabled, though (`sync? == true`).
+  # It's recommended to always close the socket explicitly via `#close`.
+  #
+  # This method is a no-op if the file descriptor has already been closed.
   def finalize
     return if closed?
 
