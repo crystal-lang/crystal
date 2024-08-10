@@ -99,7 +99,10 @@ module Crystal
           argc = llvm_context.int32.const_int(0)
           argv = llvm_context.void_pointer.pointer.null
           ret = builder.call(main.type, main.func, [argc, argv])
-          builder.store(ret, func.params[0]) unless node.type.void? || node.type.nil_type?
+          unless node.type.void? || node.type.nil_type?
+            out_ptr = visitor.cast_to_pointer func.params[0], node.type
+            builder.store(ret, out_ptr)
+          end
           builder.ret
         end
       end
