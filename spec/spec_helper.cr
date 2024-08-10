@@ -284,7 +284,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : LLVM::GenericValue | SpecRunOutput
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
@@ -316,6 +316,18 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     end
   else
     new_program.run(code, filename: filename, debug: debug)
+  end
+end
+
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : T forall T
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
+
+  if code.includes?(%(require "prelude")) || flags
+    fail "TODO: support the prelude in OrcV2 codegen specs", file: file
+  else
+    new_program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end
 

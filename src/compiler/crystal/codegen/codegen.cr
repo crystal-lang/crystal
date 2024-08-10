@@ -17,7 +17,7 @@ module Crystal
   ONCE                = "__crystal_once"
 
   class Program
-    def run(code, filename = nil, debug = Debug::Default)
+    def run(code, filename : String? = nil, debug = Debug::Default)
       parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
@@ -67,6 +67,56 @@ module Crystal
       LLVM::JITCompiler.new(llvm_mod) do |jit|
         jit.run_function wrapper, [] of LLVM::GenericValue, llvm_context
       end
+    end
+
+    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default) forall T
+      parser = new_parser(code)
+      parser.filename = filename
+      node = parser.parse
+      node = normalize node
+      node = semantic node
+      evaluate node, T, debug: debug
+    end
+
+    def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
+      ts_ctx = LLVM::Orc::ThreadSafeContext.new
+      llvm_context = ts_ctx.context
+
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
+      visitor.accept node
+      visitor.process_finished_hooks
+      visitor.finish
+
+      llvm_mod = visitor.modules[""].mod
+      llvm_mod.target = target_machine.triple
+
+      main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
+
+      # void (*__evaluate_wrapper)(void*)
+      wrapper_type = LLVM::Type.function([llvm_context.void_pointer], llvm_context.void)
+      wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
+        func.basic_blocks.append "entry" do |builder|
+          argc = llvm_context.int32.const_int(0)
+          argv = llvm_context.void_pointer.pointer.null
+          ret = builder.call(main.type, main.func, [argc, argv])
+          builder.store(ret, func.params[0]) unless node.type.void? || node.type.nil_type?
+          builder.ret
+        end
+      end
+
+      llvm_mod.verify
+
+      lljit_builder = LLVM::Orc::LLJITBuilder.new
+      lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+      dylib = lljit.main_jit_dylib
+      tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
+      lljit.add_llvm_ir_module(dylib, tsm)
+
+      proc = Proc(T*, Nil).new(lljit.lookup("__evaluate_wrapper"), Pointer(Void).null)
+      result = uninitialized T
+      proc.call(pointerof(result))
+      result
     end
 
     def codegen(node, single_module = false, debug = Debug::Default,
@@ -195,9 +245,9 @@ module Crystal
     def initialize(@program : Program, @node : ASTNode,
                    @single_module : Bool = false,
                    @debug = Debug::Default,
-                   @frame_pointers : FramePointers = :auto)
+                   @frame_pointers : FramePointers = :auto,
+                   @llvm_context : LLVM::Context = LLVM::Context.new)
       @abi = @program.target_machine.abi
-      @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = @llvm_context.new_module("main_module")
       @main_mod = @llvm_mod
