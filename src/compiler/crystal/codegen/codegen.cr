@@ -69,6 +69,56 @@ module Crystal
       end
     end
 
+    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default) forall T
+      parser = new_parser(code)
+      parser.filename = filename
+      node = parser.parse
+      node = normalize node
+      node = semantic node
+      evaluate node, T, debug: debug
+    end
+
+    def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug
+      visitor.accept node
+      visitor.process_finished_hooks
+      visitor.finish
+
+      llvm_mod = visitor.modules[""].mod
+      llvm_mod.target = target_machine.triple
+
+      main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
+      llvm_context = llvm_mod.context
+
+      # void (*__evaluate_wrapper)(void*)
+      wrapper_type = LLVM::Type.function([llvm_context.void_pointer], llvm_context.void)
+      wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
+        func.basic_blocks.append "entry" do |builder|
+          argc = llvm_context.int32.const_int(0)
+          argv = llvm_context.void_pointer.pointer.null
+          ret = builder.call(main.type, main.func, [argc, argv])
+          unless node.type.void? || node.type.nil_type?
+            out_ptr = func.params[0]
+            {% if LibLLVM::IS_LT_150 %}
+              out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
+            {% end %}
+            builder.store(ret, out_ptr)
+          end
+          builder.ret
+        end
+      end
+
+      llvm_mod.verify
+
+      result = uninitialized T
+      LLVM::JITCompiler.new(llvm_mod) do |jit|
+        func_ptr = LibLLVM.get_function_address(jit, "__evaluate_wrapper")
+        func = Proc(T*, Nil).new(Pointer(Void).new(func_ptr), Pointer(Void).null)
+        func.call(pointerof(result))
+      end
+      result
+    end
+
     def codegen(node, single_module = false, debug = Debug::Default,
                 frame_pointers = FramePointers::Auto)
       visitor = CodeGenVisitor.new self, node, single_module: single_module,
