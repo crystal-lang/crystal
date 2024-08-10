@@ -8,4 +8,9 @@ class LLVM::Orc::JITDylib
   def to_unsafe
     @unwrap
   end
+
+  def link_symbols_from_current_process : Nil
+    LLVM.assert LibLLVM.orc_create_dynamic_library_search_generator_for_process(out dg, 0, nil, nil)
+    LibLLVM.orc_jit_dylib_add_generator(self, dg)
+  end
 end

@@ -116,6 +116,7 @@ module Crystal
       lljit = LLVM::Orc::LLJIT.new(lljit_builder)
 
       dylib = lljit.main_jit_dylib
+      dylib.link_symbols_from_current_process
       tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
       lljit.add_llvm_ir_module(dylib, tsm)
 
