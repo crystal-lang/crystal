@@ -100,7 +100,10 @@ module Crystal
           argv = llvm_context.void_pointer.pointer.null
           ret = builder.call(main.type, main.func, [argc, argv])
           unless node.type.void? || node.type.nil_type?
-            out_ptr = visitor.cast_to_pointer func.params[0], node.type
+            out_ptr = func.params[0]
+            {% if LibLLVM::IS_LT_150 %}
+              out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
+            {% end %}
             builder.store(ret, out_ptr)
           end
           builder.ret
