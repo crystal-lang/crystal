@@ -1,3 +1,5 @@
+{% skip_file if LibLLVM::IS_LT_110 %}
+
 @[Experimental("The C API wrapped by this type is marked as experimental by LLVM.")]
 class LLVM::Orc::ThreadSafeModule
   protected def initialize(@unwrap : LibLLVM::OrcThreadSafeModuleRef)
