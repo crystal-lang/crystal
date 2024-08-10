@@ -319,16 +319,20 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
   end
 end
 
-def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : T forall T
-  if inject_primitives
-    code = %(require "primitives"\n#{code})
-  end
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+  {% if LibLLVM::IS_LT_110 %}
+    run(code, filename: filename, inject_primitives: inject_primitives, debug: debug, flags: flags, file: file)
+  {% else %}
+    if inject_primitives
+      code = %(require "primitives"\n#{code})
+    end
 
-  if code.includes?(%(require "prelude")) || flags
-    fail "TODO: support the prelude in OrcV2 codegen specs", file: file
-  else
-    new_program.run(code, return_type: T, filename: filename, debug: debug)
-  end
+    if code.includes?(%(require "prelude")) || flags
+      fail "TODO: support the prelude in OrcV2 codegen specs", file: file
+    else
+      new_program.run(code, return_type: T, filename: filename, debug: debug)
+    end
+  {% end %}
 end
 
 def test_c(c_code, crystal_code, *, file = __FILE__, &)
