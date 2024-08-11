@@ -1200,7 +1200,7 @@ module Crystal
         assert_macro %({{{a: 1}.has_key?(:a)}}), "true"
         assert_macro %({{{a: nil}.has_key?("a")}}), "true"
         assert_macro %({{{a: nil}.has_key?("b")}}), "false"
-        assert_macro_error %({{{a: 1}.has_key?(true)}}), "argument to 'NamedTupleLiteral#has_key?' must be a symbol or string, not BoolLiteral"
+        assert_macro_error %({{{a: 1}.has_key?(true)}}), "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral or StringLiteral, not BoolLiteral"
       end
 
       it "creates a named tuple literal with a var" do
