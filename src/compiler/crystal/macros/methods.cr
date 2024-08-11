@@ -1092,7 +1092,7 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-            raise "argument to has_key? must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
+            raise "argument to 'NamedTupleLiteral#has_key?' must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
           end
 
           entry = entries.find &.key.==(key)
