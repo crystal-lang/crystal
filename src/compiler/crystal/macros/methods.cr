@@ -1092,7 +1092,6 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-
             raise "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not #{key.class_desc}"
           end
 
