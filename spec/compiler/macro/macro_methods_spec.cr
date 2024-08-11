@@ -1084,6 +1084,12 @@ module Crystal
         assert_macro %({{ {'z' => 6, 'a' => 9}.of_value }}), %()
       end
 
+      it "executes has_key?" do
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('z') }}), %(true)
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('x') }}), %(false)
+        assert_macro %({{ {'z' => nil, 'a' => 9}.has_key?('z') }}), %(true)
+      end
+
       it "executes type" do
         assert_macro %({{ x.type }}), %(Headers), {x: HashLiteral.new([] of HashLiteral::Entry, name: Path.new("Headers"))}
       end

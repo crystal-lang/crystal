@@ -800,6 +800,10 @@ module Crystal::Macros
     def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
+    # Similar to `Hash#has_hey?`
+    def has_key?(key : ASTNode) : BoolLiteral
+    end
+
     # Returns the type specified at the end of the Hash literal, if any.
     #
     # This refers to the key type after brackets in `{} of String => Int32`.
