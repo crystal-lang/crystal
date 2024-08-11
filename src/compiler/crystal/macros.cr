@@ -878,6 +878,10 @@ module Crystal::Macros
     # Adds or replaces a key.
     def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
     end
+
+    # Similar to `NamedTuple#has_key?`
+    def has_key?(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    end
   end
 
   # A range literal.

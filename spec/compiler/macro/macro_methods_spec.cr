@@ -1195,6 +1195,14 @@ module Crystal
         assert_macro %({% a = {a: 1}; a["a"] = 2 %}{{a["a"]}}), "2"
       end
 
+      it "executes has_key?" do
+        assert_macro %({{{a: 1}.has_key?("a")}}), "true"
+        assert_macro %({{{a: 1}.has_key?(:a)}}), "true"
+        assert_macro %({{{a: nil}.has_key?("a")}}), "true"
+        assert_macro %({{{a: nil}.has_key?("b")}}), "false"
+        assert_macro_error %({{{a: 1}.has_key?(true)}}), "argument to has_key? must be a symbol or string, not BoolLiteral"
+      end
+
       it "creates a named tuple literal with a var" do
         assert_macro %({% a = {a: x} %}{{a[:a]}}), "1", {x: 1.int32}
       end

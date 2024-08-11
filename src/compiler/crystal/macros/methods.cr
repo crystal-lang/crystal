@@ -1082,6 +1082,22 @@ module Crystal
 
           value
         end
+      when "has_key?"
+        interpret_check_args do |key|
+          case key
+          when SymbolLiteral
+            key = key.value
+          when MacroId
+            key = key.value
+          when StringLiteral
+            key = key.value
+          else
+            raise "argument to has_key? must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
+          end
+
+          entry = entries.find &.key.==(key)
+          BoolLiteral.new(entry != nil)
+        end
       else
         super
       end
