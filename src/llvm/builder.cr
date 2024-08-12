@@ -389,7 +389,7 @@ class LLVM::Builder
 
   def finalize
     return if @disposed
-    
+
     dispose
   end
 
