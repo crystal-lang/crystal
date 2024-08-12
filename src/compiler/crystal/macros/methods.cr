@@ -968,7 +968,7 @@ module Crystal
       when "has_key?"
         interpret_check_args do |key|
           entry = entries.find &.key.==(key)
-          BoolLiteral.new(entry != nil)
+          BoolLiteral.new(!entry.nil?)
         end
       when "type"
         interpret_check_args { @name || Nop.new }
@@ -1096,7 +1096,7 @@ module Crystal
           end
 
           entry = entries.find &.key.==(key)
-          BoolLiteral.new(entry != nil)
+          BoolLiteral.new(!entry.nil?)
         end
       else
         super
