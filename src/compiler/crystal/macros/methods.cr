@@ -1085,11 +1085,7 @@ module Crystal
       when "has_key?"
         interpret_check_args do |key|
           case key
-          when SymbolLiteral
-            key = key.value
-          when MacroId
-            key = key.value
-          when StringLiteral
+          when SymbolLiteral, MacroId, StringLiteral
             key = key.value
           else
             raise "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not #{key.class_desc}"
