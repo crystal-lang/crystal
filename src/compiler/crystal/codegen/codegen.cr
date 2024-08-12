@@ -112,8 +112,8 @@ module Crystal
 
       result = uninitialized T
       LLVM::JITCompiler.new(llvm_mod) do |jit|
-        func_ptr = LibLLVM.get_function_address(jit, "__evaluate_wrapper")
-        func = Proc(T*, Nil).new(Pointer(Void).new(func_ptr), Pointer(Void).null)
+        func_ptr = jit.function_address("__evaluate_wrapper")
+        func = Proc(T*, Nil).new(func_ptr, Pointer(Void).null)
         func.call(pointerof(result))
       end
       result
