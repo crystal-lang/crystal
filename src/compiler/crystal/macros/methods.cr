@@ -1047,11 +1047,7 @@ module Crystal
       when "[]"
         interpret_check_args do |key|
           case key
-          when SymbolLiteral
-            key = key.value
-          when MacroId
-            key = key.value
-          when StringLiteral
+          when SymbolLiteral, MacroId, StringLiteral
             key = key.value
           else
             raise "argument to [] must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
@@ -1063,11 +1059,7 @@ module Crystal
       when "[]="
         interpret_check_args do |key, value|
           case key
-          when SymbolLiteral
-            key = key.value
-          when MacroId
-            key = key.value
-          when StringLiteral
+          when SymbolLiteral, MacroId, StringLiteral
             key = key.value
           else
             raise "expected 'NamedTupleLiteral#[]=' first argument to be a SymbolLiteral or MacroId, not #{key.class_desc}"
