@@ -554,8 +554,7 @@ module Crystal
     end
 
     def interpret_compare(other : NumberLiteral)
-      # it should not be possible to obtain a NaN number literal
-      (to_number <=> other.to_number).not_nil!
+      to_number <=> other.to_number
     end
 
     def bool_bin_op(method, args, named_args, block, &)
@@ -3243,7 +3242,7 @@ end
 private record InterpretCompareWrapper, node : Crystal::ASTNode do
   include Comparable(self)
 
-  def <=>(other : self) : Int
+  def <=>(other : self)
     node.interpret_compare(other.node)
   end
 end
