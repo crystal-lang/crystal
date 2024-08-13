@@ -459,7 +459,7 @@ module Crystal
 
     def visit(node : Break)
       unless block_scope = @block_scopes.last?
-        node.raise "invalid next"
+        node.raise "invalid break"
       end
 
       if exp = node.exp
