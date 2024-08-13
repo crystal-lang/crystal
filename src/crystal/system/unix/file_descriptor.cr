@@ -120,7 +120,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close : Nil
+  def file_descriptor_close(&) : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
@@ -130,8 +130,14 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise IO::Error.from_errno("Error closing file", target: self)
+        yield
       end
+    end
+  end
+
+  def file_descriptor_close
+    file_descriptor_close do
+      raise IO::Error.from_errno("Error closing file", target: self)
     end
   end
 
