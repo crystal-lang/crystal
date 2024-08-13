@@ -33,8 +33,26 @@ describe ".from_www_form" do
     end
   end
 
-  it String do
-    String.from_www_form("John Doe").should eq "John Doe"
+  describe String do
+    it "scalar string" do
+      String.from_www_form("John Doe").should eq "John Doe"
+    end
+
+    it "with key" do
+      String.from_www_form(URI::Params.new({"name" => ["John Doe"]}), "name").should eq "John Doe"
+    end
+
+    it "with missing key" do
+      String.from_www_form(URI::Params.new({"" => ["John Doe"]}), "name").should be_nil
+    end
+
+    it "with alternate casing" do
+      String.from_www_form(URI::Params.new({"Name" => ["John Doe"]}), "name").should be_nil
+    end
+
+    it "empty value" do
+      String.from_www_form(URI::Params.new({"name" => [""]}), "name").should eq ""
+    end
   end
 
   it Enum do
