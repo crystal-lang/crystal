@@ -1007,9 +1007,9 @@ class Crystal::Repl::Interpreter
 
   private macro stack_push(value)
     %temp = {{value}}
-    stack.copy_from(pointerof(%temp).as(UInt8*), sizeof(typeof(%temp)))
-
     %size = sizeof(typeof(%temp))
+
+    stack.copy_from(pointerof(%temp).as(UInt8*), %size)
     %aligned_size = align(%size)
     stack += %size
     stack_grow_by(%aligned_size - %size)
