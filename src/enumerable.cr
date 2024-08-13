@@ -564,9 +564,9 @@ module Enumerable(T)
   # no element is found (defaults to `nil`).
   #
   # ```
-  # [1, 2, 3, 4].find { |i| i > 2 }     # => 3
-  # [1, 2, 3, 4].find { |i| i > 8 }     # => nil
-  # [1, 2, 3, 4].find(-1) { |i| i > 8 } # => -1
+  # [1, 2, 3, 4].find_value { |i| i > 2 }     # => true
+  # [1, 2, 3, 4].find_value { |i| i > 8 }     # => nil
+  # [1, 2, 3, 4].find_value(-1) { |i| i > 8 } # => -1
   # ```
   def find_value(if_none = nil, & : T ->)
     each do |i|
