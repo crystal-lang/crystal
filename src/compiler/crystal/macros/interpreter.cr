@@ -81,7 +81,7 @@ module Crystal
         FoundBreak
       end
 
-      property state = State::Continue
+      property state : State = State::Continue
     end
 
     def initialize(@program : Program,
