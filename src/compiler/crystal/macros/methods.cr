@@ -554,7 +554,8 @@ module Crystal
     end
 
     def interpret_compare(other : NumberLiteral)
-      to_number <=> other.to_number
+      # it should not be possible to obtain a NaN number literal
+      (to_number <=> other.to_number).not_nil!
     end
 
     def bool_bin_op(method, args, named_args, block, &)
@@ -3232,12 +3233,17 @@ end
 private def sort_by(object, klass, block, interpreter)
   block_arg = block.args.first?
 
-  klass.new(object.elements.sort { |x, y|
-    block_arg.try { |arg| interpreter.define_var(arg.name, x) }
-    x_result = interpreter.accept(block.body)
-    block_arg.try { |arg| interpreter.define_var(arg.name, y) }
-    y_result = interpreter.accept(block.body)
+  klass.new(object.elements.sort_by do |elem|
+    block_arg.try { |arg| interpreter.define_var(arg.name, elem) }
+    result = interpreter.accept(block.body)
+    InterpretCompareWrapper.new(result)
+  end)
+end
 
-    x_result.interpret_compare(y_result)
-  })
+private record InterpretCompareWrapper, node : Crystal::ASTNode do
+  include Comparable(self)
+
+  def <=>(other : self) : Int
+    node.interpret_compare(other.node)
+  end
 end
