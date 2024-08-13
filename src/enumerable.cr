@@ -558,6 +558,25 @@ module Enumerable(T)
     raise Enumerable::NotFoundError.new
   end
 
+  # Yields each value until the first truthy block result and returns that result.
+  #
+  # Accepts an optional parameter `if_none`, to set what gets returned if
+  # no element is found (defaults to `nil`).
+  #
+  # ```
+  # [1, 2, 3, 4].find { |i| i > 2 }     # => 3
+  # [1, 2, 3, 4].find { |i| i > 8 }     # => nil
+  # [1, 2, 3, 4].find(-1) { |i| i > 8 } # => -1
+  # ```
+  def find_value(if_none = nil, & : T ->)
+    each do |i|
+      if result = yield i
+        return result
+      end
+    end
+    if_none
+  end
+
   # Returns the first element in the collection,
   # If the collection is empty, calls the block and returns its value.
   #
