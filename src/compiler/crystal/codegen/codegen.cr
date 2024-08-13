@@ -79,8 +79,15 @@ module Crystal
     end
 
     def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
-      ts_ctx = LLVM::Orc::ThreadSafeContext.new
-      llvm_context = ts_ctx.context
+      llvm_context =
+        {% if LibLLVM::IS_LT_110 %}
+          LLVM::Context.new
+        {% else %}
+          begin
+            ts_ctx = LLVM::Orc::ThreadSafeContext.new
+            ts_ctx.context
+          end
+        {% end %}
 
       visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
       visitor.accept node
@@ -112,17 +119,28 @@ module Crystal
 
       llvm_mod.verify
 
-      lljit_builder = LLVM::Orc::LLJITBuilder.new
-      lljit = LLVM::Orc::LLJIT.new(lljit_builder)
-
-      dylib = lljit.main_jit_dylib
-      dylib.link_symbols_from_current_process
-      tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
-      lljit.add_llvm_ir_module(dylib, tsm)
-
-      proc = Proc(T*, Nil).new(lljit.lookup("__evaluate_wrapper"), Pointer(Void).null)
       result = uninitialized T
-      proc.call(pointerof(result))
+
+      {% if LibLLVM::IS_LT_110 %}
+        LLVM::JITCompiler.new(llvm_mod) do |jit|
+          func_ptr = jit.function_address("__evaluate_wrapper")
+          func = Proc(T*, Nil).new(func_ptr, Pointer(Void).null)
+          func.call(pointerof(result))
+        end
+      {% else %}
+        lljit_builder = LLVM::Orc::LLJITBuilder.new
+        lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+        dylib = lljit.main_jit_dylib
+        dylib.link_symbols_from_current_process
+        tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
+        lljit.add_llvm_ir_module(dylib, tsm)
+
+        func_ptr = lljit.lookup("__evaluate_wrapper")
+        func = Proc(T*, Nil).new(func_ptr, Pointer(Void).null)
+        func.call(pointerof(result))
+      {% end %}
+
       result
     end
 

@@ -53,18 +53,18 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.12.2/crystal-1.12.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:017lqbbavvhi34d3y3s8rqcpqwxp45apvzanlpaq7izhxhyb4h5s";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.13.1/crystal-1.13.1-1-darwin-universal.tar.gz";
+      sha256 = "sha256:0wrfv7bgqwfi76p9s48zg4j953kvjsj5cv59slhhc62lllx926zm";
     };
 
     aarch64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.12.2/crystal-1.12.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:017lqbbavvhi34d3y3s8rqcpqwxp45apvzanlpaq7izhxhyb4h5s";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.13.1/crystal-1.13.1-1-darwin-universal.tar.gz";
+      sha256 = "sha256:0wrfv7bgqwfi76p9s48zg4j953kvjsj5cv59slhhc62lllx926zm";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.12.2/crystal-1.12.2-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:0p1jxpdn9vc52qvf25x25a699l2hw4rmfz5snyylq84wrqpxbfvb";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.13.1/crystal-1.13.1-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:1dghcv8qgjcbq1r0d2saa21xzp4h7pkan6fnmn6hpickib678g7x";
     };
   }.${pkgs.stdenv.system});
 

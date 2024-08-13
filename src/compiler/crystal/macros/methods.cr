@@ -2013,6 +2013,8 @@ module Crystal
             SymbolLiteral.new("public")
           end
         end
+      when "has_inner_pointers?"
+        interpret_check_args { BoolLiteral.new(type.has_inner_pointers?) }
       else
         super
       end
