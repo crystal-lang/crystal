@@ -1055,7 +1055,7 @@ class Hash(K, V)
     self
   end
 
-  # Returns `true` of this Hash is comparing keys by `object_id`.
+  # Returns `true` if this Hash is comparing keys by `object_id`.
   #
   # See `compare_by_identity`.
   getter? compare_by_identity : Bool
