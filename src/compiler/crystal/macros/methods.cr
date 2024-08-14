@@ -3132,8 +3132,8 @@ end
 
 # Returns the result of evaluating the current macro method call's block, except
 # that, upon encountering a `break` expression, literally triggers a `break` in
-# the block enclosing this `interpret_block` call, with the AST node
-# corresponding to the result from the encountered expression as the argument.
+# the block enclosing this `interpret_block` call, forwarding the evaluated
+# argument to that encountered expression.
 #
 # When used together with `new_block_scope` and methods from `Enumerable`, this
 # allows macro methods to be implemented more or less like their non-macro
