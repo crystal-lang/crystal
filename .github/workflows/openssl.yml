@@ -75,7 +75,7 @@ jobs:
     container: crystallang/crystal:1.13.1-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Uninstall openssl
         run: apk del openssl-dev openssl-libs-static
       - name: Install libressl 3.5
@@ -90,7 +90,7 @@ jobs:
     container: crystallang/crystal:1.13.1-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Uninstall openssl
         run: apk del openssl-dev openssl-libs-static
       - name: Install libressl 3.8
