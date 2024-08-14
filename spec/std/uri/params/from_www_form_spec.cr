@@ -78,7 +78,7 @@ describe ".from_www_form" do
 
     it "invalid value" do
       expect_raises Time::Format::Error do
-        Time.from_www_form("").should be_nil
+        Time.from_www_form ""
       end
     end
   end
@@ -90,7 +90,7 @@ describe ".from_www_form" do
 
     it "invalid value" do
       expect_raises ArgumentError do
-        Nil.from_www_form("null").should be_nil
+        Nil.from_www_form "null"
       end
     end
   end
