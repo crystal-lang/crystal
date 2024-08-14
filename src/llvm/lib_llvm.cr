@@ -42,7 +42,7 @@
 
 # Supported library versions:
 #
-# * LLVM (8-18; aarch64 requires 12+)
+# * LLVM (8-18; aarch64 requires 13+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 {% begin %}
