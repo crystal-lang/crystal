@@ -139,7 +139,7 @@ describe ".from_www_form" do
   describe Union do
     it "valid" do
       String?.from_www_form(URI::Params.parse("name=John Doe"), "name").should eq "John Doe"
-      String?.from_www_form(URI::Params.parse("name="), "name").should be_nil
+      String?.from_www_form(URI::Params.parse("name="), "name").should eq ""
     end
 
     it "invalid" do
