@@ -85,7 +85,7 @@ module Crystal
       store type_id(value, @program.bool), union_type_id(struct_type, union_pointer)
 
       # To store a boolean in a union
-      # we sign-extend it to the size in bits of the union
+      # we zero-extend it to the size in bits of the union
       union_size = @llvm_typer.size_of(union_value_type)
       int_type = llvm_context.int((union_size * 8).to_i32)
 
