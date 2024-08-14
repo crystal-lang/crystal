@@ -11,6 +11,7 @@ describe ".from_www_form" do
   it Array do
     Array(Int32).from_www_form(URI::Params.new({"values" => ["1", "2"]}), "values").should eq [1, 2]
     Array(Int32).from_www_form(URI::Params.new({"values[]" => ["1", "2"]}), "values").should eq [1, 2]
+    Array(String).from_www_form(URI::Params.new({"values" => ["", ""]}), "values").should eq ["", ""]
   end
 
   describe Bool do
@@ -30,6 +31,7 @@ describe ".from_www_form" do
 
     it "any other value" do
       Bool.from_www_form("foo").should be_nil
+      Bool.from_www_form("").should be_nil
     end
   end
 
@@ -55,14 +57,30 @@ describe ".from_www_form" do
     end
   end
 
-  it Enum do
-    Color.from_www_form("green").should eq Color::Green
+  describe Enum do
+    it "valid value" do
+      Color.from_www_form("green").should eq Color::Green
+    end
+
+    it "invalid value" do
+      expect_raises ArgumentError do
+        Color.from_www_form ""
+      end
+    end
   end
 
-  it Time do
-    Time.from_www_form("2016-11-16T09:55:48-03:00").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
-    Time.from_www_form("2016-11-16T09:55:48-0300").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
-    Time.from_www_form("20161116T095548-03:00").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+  describe Time do
+    it "valid value" do
+      Time.from_www_form("2016-11-16T09:55:48-03:00").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+      Time.from_www_form("2016-11-16T09:55:48-0300").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+      Time.from_www_form("20161116T095548-03:00").to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+    end
+
+    it "invalid value" do
+      expect_raises Time::Format::Error do
+        Time.from_www_form("").should be_nil
+      end
+    end
   end
 
   describe Nil do
@@ -90,6 +108,12 @@ describe ".from_www_form" do
           Int32.from_www_form(" 123")
         end
       end
+
+      it "empty value" do
+        expect_raises ArgumentError do
+          Int16.from_www_form ""
+        end
+      end
     end
 
     describe Float do
@@ -103,12 +127,19 @@ describe ".from_www_form" do
           Float64.from_www_form(" 123.0")
         end
       end
+
+      it "empty value" do
+        expect_raises Exception do
+          Float64.from_www_form ""
+        end
+      end
     end
   end
 
   describe Union do
     it "valid" do
       String?.from_www_form(URI::Params.parse("name=John Doe"), "name").should eq "John Doe"
+      String?.from_www_form(URI::Params.parse("name="), "name").should be_nil
     end
 
     it "invalid" do
