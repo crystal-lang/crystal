@@ -3211,7 +3211,7 @@ module Crystal
 
         case @token.type
         when .macro_literal?
-          pieces << MacroLiteral.new(@token.value.to_s)
+          pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
           pieces << MacroExpression.new(parse_macro_expression)
           check_macro_expression_end
@@ -3475,7 +3475,8 @@ module Crystal
         end
       when Keyword::ELSIF
         unexpected_token if is_unless
-        a_else = parse_macro_if(start_location, macro_state, false)
+        start_loc = @token.location
+        a_else = parse_macro_if(start_location, macro_state, false).at(start_loc)
 
         if check_end
           check_ident :end
