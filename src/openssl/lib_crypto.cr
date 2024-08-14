@@ -1,3 +1,9 @@
+# Supported library versions:
+#
+# * openssl (1.1.0+)
+# * libressl
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#tls
 {% begin %}
   lib LibCrypto
     {% if flag?(:win32) %}

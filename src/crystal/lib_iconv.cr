@@ -4,6 +4,11 @@ require "c/stddef"
   {% raise "The `without_iconv` flag is preventing you to use the LibIconv module" %}
 {% end %}
 
+# Supported library versions:
+#
+# * libiconv-gnu
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#big-numbers
 @[Link("iconv")]
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "libiconv.dll")]

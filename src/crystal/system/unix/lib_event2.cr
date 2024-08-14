@@ -7,6 +7,11 @@ require "c/netdb"
   @[Link("rt")]
 {% end %}
 
+# Supported library versions:
+#
+# * libevent2
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-runtime-libraries
 {% if flag?(:openbsd) %}
   @[Link("event_core")]
   @[Link("event_extra")]

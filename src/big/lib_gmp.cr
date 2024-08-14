@@ -1,3 +1,9 @@
+# Supported library versions:
+#
+# * libgmp
+# * libmpir
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#big-numbers
 {% if flag?(:win32) %}
   @[Link("mpir")]
 {% else %}

@@ -40,6 +40,11 @@
   end
 {% end %}
 
+# Supported library versions:
+#
+# * LLVM (8-18; aarch64 requires 12+)
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 {% begin %}
   lib LibLLVM
     IS_180 = {{LibLLVM::VERSION.starts_with?("18.0")}}

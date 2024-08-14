@@ -4,6 +4,12 @@ require "./lib_crypto"
   {% raise "The `without_openssl` flag is preventing you to use the LibSSL module" %}
 {% end %}
 
+# Supported library versions:
+#
+# * openssl (1.1.0+)
+# * libressl
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#tls
 {% begin %}
   lib LibSSL
     {% if flag?(:win32) %}

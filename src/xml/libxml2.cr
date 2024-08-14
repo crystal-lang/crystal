@@ -4,6 +4,11 @@ require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
 
+# Supported library versions:
+#
+# * libxml2
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 @[Link("xml2", pkg_config: "libxml-2.0")]
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "libxml2.dll")]

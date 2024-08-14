@@ -1,3 +1,8 @@
+# Supported library versions:
+#
+# * libffi
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#compiler-dependencies
 module Crystal
   @[Link("ffi")]
   {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
