@@ -51,7 +51,6 @@ jobs:
       matrix:
         target:
           - aarch64-linux-android
-          - aarch64-windows-msvc # note: symbolic link
           - arm-linux-gnueabihf
           - i386-linux-gnu
           - i386-linux-musl
