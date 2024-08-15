@@ -212,4 +212,36 @@ describe Doc::Type do
       type.macros.map(&.name).should eq ["+", "~", "foo"]
     end
   end
+
+  describe "#subclasses" do
+    it "only include types with docs" do
+      program = semantic(<<-CRYSTAL, wants_doc: true).program
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        # :nodoc:
+        class Baz < Foo
+        end
+
+        module Mod1
+          class Bar < ::Foo
+          end
+        end
+
+        # :nodoc:
+        module Mod2
+          class Baz < ::Foo
+          end
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.subclasses.map(&.full_name).should eq ["Bar", "Mod1::Bar"]
+    end
+  end
+
 end
