@@ -17,7 +17,7 @@ module Crystal
   ONCE                = "__crystal_once"
 
   class Program
-    def run(code, filename = nil, debug = Debug::Default)
+    def run(code, filename : String? = nil, debug = Debug::Default)
       parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
@@ -79,7 +79,17 @@ module Crystal
     end
 
     def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug
+      llvm_context =
+        {% if LibLLVM::IS_LT_110 %}
+          LLVM::Context.new
+        {% else %}
+          begin
+            ts_ctx = LLVM::Orc::ThreadSafeContext.new
+            ts_ctx.context
+          end
+        {% end %}
+
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
@@ -88,7 +98,6 @@ module Crystal
       llvm_mod.target = target_machine.triple
 
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
-      llvm_context = llvm_mod.context
 
       # void (*__evaluate_wrapper)(void*)
       wrapper_type = LLVM::Type.function([llvm_context.void_pointer], llvm_context.void)
@@ -111,11 +120,27 @@ module Crystal
       llvm_mod.verify
 
       result = uninitialized T
-      LLVM::JITCompiler.new(llvm_mod) do |jit|
-        func_ptr = jit.function_address("__evaluate_wrapper")
+
+      {% if LibLLVM::IS_LT_110 %}
+        LLVM::JITCompiler.new(llvm_mod) do |jit|
+          func_ptr = jit.function_address("__evaluate_wrapper")
+          func = Proc(T*, Nil).new(func_ptr, Pointer(Void).null)
+          func.call(pointerof(result))
+        end
+      {% else %}
+        lljit_builder = LLVM::Orc::LLJITBuilder.new
+        lljit = LLVM::Orc::LLJIT.new(lljit_builder)
+
+        dylib = lljit.main_jit_dylib
+        dylib.link_symbols_from_current_process(lljit.global_prefix)
+        tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
+        lljit.add_llvm_ir_module(dylib, tsm)
+
+        func_ptr = lljit.lookup("__evaluate_wrapper")
         func = Proc(T*, Nil).new(func_ptr, Pointer(Void).null)
         func.call(pointerof(result))
-      end
+      {% end %}
+
       result
     end
 
@@ -245,9 +270,9 @@ module Crystal
     def initialize(@program : Program, @node : ASTNode,
                    @single_module : Bool = false,
                    @debug = Debug::Default,
-                   @frame_pointers : FramePointers = :auto)
+                   @frame_pointers : FramePointers = :auto,
+                   @llvm_context : LLVM::Context = LLVM::Context.new)
       @abi = @program.target_machine.abi
-      @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = @llvm_context.new_module("main_module")
       @main_mod = @llvm_mod
