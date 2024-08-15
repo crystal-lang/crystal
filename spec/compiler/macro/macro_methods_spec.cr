@@ -928,6 +928,16 @@ module Crystal
         assert_macro %({{["c".id, "b", "a".id].sort}}), %([a, "b", c])
       end
 
+      it "executes sort_by" do
+        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
+      end
+
+      it "calls block exactly once for each element in #sort_by" do
+        assert_macro <<-CRYSTAL, %(5)
+          {{ (i = 0; ["abc", "a", "ab", "abcde", "abcd"].sort_by { i += 1 }; i) }}
+          CRYSTAL
+      end
+
       it "executes uniq" do
         assert_macro %({{[1, 1, 1, 2, 3, 1, 2, 3, 4].uniq}}), %([1, 2, 3, 4])
       end
@@ -1018,10 +1028,6 @@ module Crystal
     describe HashLiteral do
       it "executes size" do
         assert_macro %({{{:a => 1, :b => 3}.size}}), "2"
-      end
-
-      it "executes sort_by" do
-        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
       end
 
       it "executes empty?" do
