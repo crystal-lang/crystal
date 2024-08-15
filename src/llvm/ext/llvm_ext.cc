@@ -2,6 +2,8 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm-c/TargetMachine.h>
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm-c/LLJIT.h>
 
 using namespace llvm;
 
@@ -143,6 +145,12 @@ LLVMBool LLVMExtTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
   bool Result = LLVMTargetMachineEmit(T, M, dest, codegen, ErrorMessage);
   dest.flush();
   return Result;
+}
+
+// Needed since JIT data layout must match that of all added LLVM modules if we
+// manually added `i128:128`
+void LLVMExtOrcLLJITBuilderSetDataLayout(LLVMOrcLLJITBuilderRef Builder, LLVMTargetDataRef td) {
+  reinterpret_cast<orc::LLJITBuilder *>(Builder)->setDataLayout(*unwrap(td));
 }
 #endif
 

@@ -35,4 +35,6 @@ lib LibLLVMExt
   fun set_target_machine_global_isel = LLVMExtSetTargetMachineGlobalISel(t : LibLLVM::TargetMachineRef, enable : LibLLVM::Bool)
 
   fun target_machine_emit_to_file = LLVMExtTargetMachineEmitToFile(t : LibLLVM::TargetMachineRef, m : LibLLVM::ModuleRef, filename : Char*, codegen : LLVM::CodeGenFileType, error_message : Char**) : LibLLVM::Bool
+
+  fun orc_lljit_builder_set_data_layout = LLVMExtOrcLLJITBuilderSetDataLayout(builder : LibLLVM::OrcLLJITBuilderRef, td : LibLLVM::TargetDataRef)
 end
