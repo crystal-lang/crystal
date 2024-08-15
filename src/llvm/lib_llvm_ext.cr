@@ -36,5 +36,7 @@ lib LibLLVMExt
 
   fun target_machine_emit_to_file = LLVMExtTargetMachineEmitToFile(t : LibLLVM::TargetMachineRef, m : LibLLVM::ModuleRef, filename : Char*, codegen : LLVM::CodeGenFileType, error_message : Char**) : LibLLVM::Bool
 
-  fun orc_lljit_builder_set_data_layout = LLVMExtOrcLLJITBuilderSetDataLayout(builder : LibLLVM::OrcLLJITBuilderRef, td : LibLLVM::TargetDataRef)
+  {% unless LibLLVM::IS_LT_110 %}
+    fun orc_lljit_builder_set_data_layout = LLVMExtOrcLLJITBuilderSetDataLayout(builder : LibLLVM::OrcLLJITBuilderRef, td : LibLLVM::TargetDataRef)
+  {% end %}
 end
