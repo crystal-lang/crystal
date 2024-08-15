@@ -274,4 +274,41 @@ describe Doc::Type do
       type.ancestors.map(&.full_name).should eq ["Baz", "Mod2::Baz"]
     end
   end
+
+  describe "#included_modules" do
+    it "only include types with docs" do
+      program = semantic(<<-CRYSTAL, wants_doc: true).program
+        # :nodoc:
+        module Mod3
+          module Baz
+          end
+        end
+
+        module Mod2
+          # :nodoc:
+          module Baz
+          end
+        end
+
+        module Mod1
+          module Baz
+          end
+        end
+
+        module Baz
+        end
+
+        class Foo
+          include Baz
+          include Mod1::Baz
+          include Mod2::Baz
+          include Mod3::Baz
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.included_modules.map(&.full_name).should eq ["Baz", "Mod1::Baz"]
+    end
+  end
 end
