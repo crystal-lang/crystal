@@ -244,4 +244,34 @@ describe Doc::Type do
     end
   end
 
+  describe "#ancestors" do
+    it "only include types with docs" do
+      program = semantic(<<-CRYSTAL, wants_doc: true).program
+        # :nodoc:
+        module Mod3
+          class Baz
+          end
+        end
+
+        class Mod2::Baz < Mod3::Baz
+        end
+
+        module Mod1
+          # :nodoc:
+          class Baz < Mod2::Baz
+          end
+        end
+
+        class Baz < Mod1::Baz
+        end
+
+        class Foo < Baz
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.ancestors.map(&.full_name).should eq ["Baz", "Mod2::Baz"]
+    end
+  end
 end
