@@ -26,7 +26,11 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OperandBundleDef, LLVMOperandBundleRef)
 
 #if LLVM_VERSION_GE(11, 0)
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#if LLVM_VERSION_GE(12, 0)
 #include <llvm-c/LLJIT.h>
+#else
+#include <llvm-c/Orc.h>
+#endif
 #endif
 
 #if !LLVM_VERSION_GE(10, 0)
