@@ -284,7 +284,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : LLVM::GenericValue | SpecRunOutput
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
