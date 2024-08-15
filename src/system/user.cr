@@ -45,6 +45,13 @@ class System::User
   private def initialize(@username, @id, @group_id, @name, @home_directory, @shell)
   end
 
+  # Returns the current real user of the current process
+  #
+  # Raises `NotFoundError` if the current user cannot be determined.
+  def self.current : System::User
+    find_current? || raise NotFoundError.new("Could not determine current user")
+  end
+
   # Returns the user associated with the given username.
   #
   # Raises `NotFoundError` if no such user exists.
