@@ -26,8 +26,16 @@ describe System::User do
   end
 
   describe ".find_by(*, id)" do
-    it "returns a user by id" do
+    it "returns a user by id when given a string id" do
       user = System::User.find_by(id: USER_ID)
+
+      user.should be_a(System::User)
+      user.id.should eq(USER_ID)
+      user.username.should eq(USER_NAME)
+    end
+
+    it "returns a user by id when given a UInt32 id" do
+      user = System::User.find_by(id: USER_ID.to_u32)
 
       user.should be_a(System::User)
       user.id.should eq(USER_ID)

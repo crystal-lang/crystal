@@ -62,14 +62,14 @@ class System::User
   # Returns the user associated with the given ID.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find_by(*, id : String) : System::User
+  def self.find_by(*, id : String | UInt32) : System::User
     find_by?(id: id) || raise NotFoundError.new("No such user: #{id}")
   end
 
   # Returns the user associated with the given ID.
   #
   # Returns `nil` if no such user exists.
-  def self.find_by?(*, id : String) : System::User?
+  def self.find_by?(*, id : String | UInt32) : System::User?
     from_id?(id)
   end
 
