@@ -594,8 +594,6 @@ describe "Codegen: is_a?" do
 
   it "resets truthy state after visiting nodes (bug)" do
     run(%(
-      require "prelude"
-
       a = 123
       if !1.is_a?(Int32)
         a = 456
@@ -782,8 +780,6 @@ describe "Codegen: is_a?" do
 
   it "codegens untyped var (#4009)" do
     codegen(%(
-      require "prelude"
-
       i = 1
       1 || i.is_a?(Int32) ? "" : i
       ))

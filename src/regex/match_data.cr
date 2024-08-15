@@ -210,7 +210,7 @@ class Regex
 
     # Like `#[](Range)`, but returns `nil` if the range's start is out of range.
     def []?(range : Range) : Array(String)?
-      self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]?
+      self[*Indexable.range_to_index_and_count(range, size) || return nil]?
     end
 
     # Returns count or less (if there aren't enough) matches starting at the

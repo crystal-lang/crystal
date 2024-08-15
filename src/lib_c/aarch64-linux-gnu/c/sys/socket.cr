@@ -48,6 +48,7 @@ lib LibC
   end
 
   fun accept(fd : Int, addr : Sockaddr*, addr_len : SocklenT*) : Int
+  fun accept4(fd : Int, addr : Sockaddr*, addr_len : SocklenT*, flags : Int) : Int
   fun bind(fd : Int, addr : Sockaddr*, len : SocklenT) : Int
   fun connect(fd : Int, addr : Sockaddr*, len : SocklenT) : Int
   fun getpeername(fd : Int, addr : Sockaddr*, len : SocklenT*) : Int

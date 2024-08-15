@@ -18,6 +18,13 @@ module Crystal
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
 
+    # Inside a comma-separated list of parameters or args, this becomes true and
+    # the outermost pair of parentheses are removed from type restrictions that
+    # are `ProcNotation` nodes, so `foo(x : (T, U -> V), W)` becomes
+    # `foo(x : T, U -> V, W)`. This is used by defs, lib funs, and calls to deal
+    # with the parsing rules for `->`. See #11966 and #14216 for more details.
+    getter? drop_parens_for_proc_notation = false
+
     private enum DefArgType
       NONE
       SPLAT
@@ -216,7 +223,7 @@ module Crystal
       else
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            append_indent
+            append_indent unless node.keyword.paren? && i == 0
             exp.accept self
             newline unless node.keyword.paren? && i == node.expressions.size - 1
           end
@@ -332,6 +339,7 @@ module Crystal
       visit_call node
     end
 
+    # Related: `Token::Kind#unary_operator?`
     UNARY_OPERATORS = {"+", "-", "~", "&+", "&-"}
 
     def visit_call(node, ignore_obj = false)
@@ -343,8 +351,23 @@ module Crystal
       node_obj = ignore_obj ? nil : node.obj
       block = node.block
 
+      short_block_call = nil
+      if block
+        # Check if this is foo &.bar
+        first_block_arg = block.args.first?
+        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
+          block_body = block.body
+          if block_body.is_a?(Call)
+            block_obj = block_body.obj
+            if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
+              short_block_call = block_body
+              block = nil
+            end
+          end
+        end
+      end
+
       need_parens = need_parens(node_obj)
-      call_args_need_parens = false
 
       @str << "::" if node.global?
       if node_obj.is_a?(ImplicitObj)
@@ -357,6 +380,13 @@ module Crystal
 
         @str << "["
         visit_args(node)
+
+        if short_block_call
+          @str << ", " if node.args.present? || node.named_args
+          @str << "&."
+          visit_call short_block_call, ignore_obj: true
+        end
+
         if node.name == "[]"
           @str << "]"
         else
@@ -367,12 +397,19 @@ module Crystal
 
         @str << "["
         visit_args(node, exclude_last: true)
+
+        if short_block_call
+          @str << ", " if node.args.size > 1 || node.named_args
+          @str << "&."
+          visit_call short_block_call, ignore_obj: true
+        end
+
         @str << "] = "
         node.args.last.accept self
-      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
+      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block && !short_block_call
         @str << node.name
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
+      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block && !short_block_call
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
@@ -391,39 +428,17 @@ module Crystal
           node.args.join(@str, ", ", &.accept self)
         else
           @str << node.name
+          in_parenthesis(node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args || short_block_call) do
+            visit_args(node)
 
-          call_args_need_parens = node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args
-
-          @str << '(' if call_args_need_parens
-          visit_args(node)
-        end
-      end
-
-      if block
-        # Check if this is foo &.bar
-        first_block_arg = block.args.first?
-        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
-          block_body = block.body
-          if block_body.is_a?(Call)
-            block_obj = block_body.obj
-            if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
-              if node.args.empty? && !node.named_args
-                unless call_args_need_parens
-                  @str << '('
-                  call_args_need_parens = true
-                end
-              else
-                @str << ", "
-              end
+            if short_block_call
+              @str << ", " if node.args.present? || node.named_args
               @str << "&."
-              visit_call block_body, ignore_obj: true
-              block = nil
+              visit_call short_block_call, ignore_obj: true
             end
           end
         end
       end
-
-      @str << ')' if call_args_need_parens
 
       if block
         @str << ' '
@@ -439,20 +454,20 @@ module Crystal
         break if exclude_last && i == node.args.size - 1
 
         @str << ", " if printed_arg
-        arg.accept self
+        drop_parens_for_proc_notation(arg, &.accept(self))
         printed_arg = true
       end
       if named_args = node.named_args
         named_args.each do |named_arg|
           @str << ", " if printed_arg
-          named_arg.accept self
+          drop_parens_for_proc_notation(named_arg, &.accept(self))
           printed_arg = true
         end
       end
       if block_arg = node.block_arg
         @str << ", " if printed_arg
         @str << '&'
-        block_arg.accept self
+        drop_parens_for_proc_notation(block_arg, &.accept(self))
       end
     end
 
@@ -634,19 +649,19 @@ module Crystal
         node.args.each_with_index do |arg, i|
           @str << ", " if printed_arg
           @current_arg_type = :splat if node.splat_index == i
-          arg.accept self
+          drop_parens_for_proc_notation(arg, &.accept(self))
           printed_arg = true
         end
         if double_splat = node.double_splat
           @current_arg_type = :double_splat
           @str << ", " if printed_arg
-          double_splat.accept self
+          drop_parens_for_proc_notation(double_splat, &.accept(self))
           printed_arg = true
         end
         if block_arg = node.block_arg
           @current_arg_type = :block_arg
           @str << ", " if printed_arg
-          block_arg.accept self
+          drop_parens_for_proc_notation(block_arg, &.accept(self))
         elsif node.block_arity
           @str << ", " if printed_arg
           @str << '&'
@@ -679,6 +694,8 @@ module Crystal
       if node.args.size > 0 || node.block_arg || node.double_splat
         @str << '('
         printed_arg = false
+        # NOTE: `drop_parens_for_proc_notation` needed here if macros support
+        # restrictions
         node.args.each_with_index do |arg, i|
           @str << ", " if printed_arg
           @current_arg_type = :splat if i == node.splat_index
@@ -829,17 +846,24 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
-      @str << '('
-      if inputs = node.inputs
-        inputs.join(@str, ", ", &.accept self)
-        @str << ' '
+      @str << '(' unless drop_parens_for_proc_notation?
+
+      # only drop the outermost pair of parentheses; this produces
+      # `foo(x : (T -> U) -> V, W)`, not
+      # `foo(x : ((T -> U) -> V), W)` nor `foo(x : T -> U -> V, W)`
+      drop_parens_for_proc_notation(false) do
+        if inputs = node.inputs
+          inputs.join(@str, ", ", &.accept self)
+          @str << ' '
+        end
+        @str << "->"
+        if output = node.output
+          @str << ' '
+          output.accept self
+        end
       end
-      @str << "->"
-      if output = node.output
-        @str << ' '
-        output.accept self
-      end
-      @str << ')'
+
+      @str << ')' unless drop_parens_for_proc_notation?
       false
     end
 
@@ -1146,7 +1170,9 @@ module Crystal
           if arg_name = arg.name.presence
             @str << arg_name << " : "
           end
-          arg.restriction.not_nil!.accept self
+          drop_parens_for_proc_notation(arg) do
+            arg.restriction.not_nil!.accept self
+          end
         end
         if node.varargs?
           @str << ", ..."
@@ -1354,18 +1380,20 @@ module Crystal
       @str << "select"
       newline
       node.whens.each do |a_when|
+        append_indent
         @str << "when "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         newline
         accept_with_indent a_when.body
       end
       if a_else = node.else
+        append_indent
         @str << "else"
         newline
         accept_with_indent a_else
       end
+      append_indent
       @str << "end"
-      newline
       false
     end
 
@@ -1544,7 +1572,7 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
-        append_indent if node.keyword.begin?
+        append_indent unless node.keyword.none?
         node.accept self
       end
       newline unless node.keyword.none?
@@ -1572,6 +1600,32 @@ module Crystal
       @inside_macro = 0
       yield
       @inside_macro = old_inside_macro
+    end
+
+    def drop_parens_for_proc_notation(drop : Bool = true, &)
+      old_drop_parens_for_proc_notation = @drop_parens_for_proc_notation
+      @drop_parens_for_proc_notation = drop
+      begin
+        yield
+      ensure
+        @drop_parens_for_proc_notation = old_drop_parens_for_proc_notation
+      end
+    end
+
+    def drop_parens_for_proc_notation(node : ASTNode, &)
+      outermost_type_is_proc_notation =
+        case node
+        when Arg
+          # def / fun parameters
+          node.restriction.is_a?(ProcNotation)
+        when TypeDeclaration
+          # call arguments
+          node.declared_type.is_a?(ProcNotation)
+        else
+          false
+        end
+
+      drop_parens_for_proc_notation(outermost_type_is_proc_notation) { yield node }
     end
 
     def to_s : String

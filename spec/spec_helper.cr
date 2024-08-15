@@ -124,10 +124,16 @@ def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __L
 end
 
 def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_expand(from_nodes, flags: flags, file: file, line: line) do |to_nodes|
+    to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  end
+end
+
+def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+  yield to_nodes, program
 end
 
 def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
@@ -278,7 +284,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) : LLVM::GenericValue | SpecRunOutput
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
@@ -310,6 +316,18 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     end
   else
     new_program.run(code, filename: filename, debug: debug)
+  end
+end
+
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
+
+  if code.includes?(%(require "prelude")) || flags
+    fail "TODO: support the prelude in typed codegen specs", file: file
+  else
+    new_program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end
 

@@ -51,10 +51,27 @@ class Crystal::Codegen::Target
 
   def pointer_bit_width
     case @architecture
-    when "x86_64", "aarch64"
+    when "aarch64", "x86_64"
       64
-    else
+    when "arm", "i386", "wasm32"
       32
+    when "avr"
+      16
+    else
+      raise "BUG: unknown Target#pointer_bit_width for #{@architecture} target architecture"
+    end
+  end
+
+  def size_bit_width
+    case @architecture
+    when "aarch64", "x86_64"
+      64
+    when "arm", "i386", "wasm32"
+      32
+    when "avr"
+      16
+    else
+      raise "BUG: unknown Target#size_bit_width for #{@architecture} target architecture"
     end
   end
 
@@ -70,6 +87,8 @@ class Crystal::Codegen::Target
       "openbsd"
     when .netbsd?
       "netbsd"
+    when .solaris?
+      "solaris"
     when .android?
       "android"
     else
@@ -80,6 +99,7 @@ class Crystal::Codegen::Target
   def executable_extension
     case
     when windows? then ".exe"
+    when avr?     then ".elf"
     else               ""
     end
   end
@@ -128,6 +148,10 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def solaris?
+    @environment.starts_with?("solaris")
+  end
+
   def wasi?
     @environment.starts_with?("wasi")
   end
@@ -137,7 +161,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux? || wasi?
+    macos? || bsd? || linux? || wasi? || solaris?
   end
 
   def gnu?
@@ -164,6 +188,10 @@ class Crystal::Codegen::Target
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
+  def avr?
+    @architecture == "avr"
+  end
+
   def to_target_machine(cpu = "", features = "", optimization_mode = Compiler::OptimizationMode::O0,
                         code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
@@ -180,6 +208,13 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "avr"
+      LLVM.init_avr
+
+      if cpu.blank?
+        # the ABI call convention, codegen and the linker need to known the CPU model
+        raise Target::Error.new("AVR targets must declare a CPU model, for example --mcpu=atmega328p")
+      end
     when "wasm32"
       LLVM.init_webassembly
     else
@@ -187,10 +222,10 @@ class Crystal::Codegen::Target
     end
 
     opt_level = case optimization_mode
-                in .o3? then LLVM::CodeGenOptLevel::Aggressive
-                in .o2? then LLVM::CodeGenOptLevel::Default
-                in .o1? then LLVM::CodeGenOptLevel::Less
-                in .o0? then LLVM::CodeGenOptLevel::None
+                in .o3?             then LLVM::CodeGenOptLevel::Aggressive
+                in .o2?, .os?, .oz? then LLVM::CodeGenOptLevel::Default
+                in .o1?             then LLVM::CodeGenOptLevel::Less
+                in .o0?             then LLVM::CodeGenOptLevel::None
                 end
 
     target = LLVM::Target.from_triple(self.to_s)

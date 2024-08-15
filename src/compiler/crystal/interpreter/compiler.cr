@@ -3350,7 +3350,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def append(value : Int8)
-    append value.unsafe_as(UInt8)
+    append value.to_u8!
   end
 
   private def append(value : Symbol)
@@ -3365,6 +3365,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(value : UInt8)
     @instructions.instructions << value
+  end
+
+  private def append(value : Enum)
+    append(value.value)
   end
 
   # Many times we need to jump or branch to an instruction for which we don't

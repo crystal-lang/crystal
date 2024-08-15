@@ -63,16 +63,15 @@ SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_ou
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
 CRYSTAL_CONFIG_PATH := $$ORIGIN\src
-SOURCE_DATE_EPOCH := $(shell git show -s --format=%ct HEAD)
+CRYSTAL_VERSION ?= $(shell type src\VERSION)
+SOURCE_DATE_EPOCH ?= $(shell type src/SOURCE_DATE_EPOCH || git show -s --format=%ct HEAD)
 export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
 export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
 LLVM_CONFIG ?=
 LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
-DEPS = $(LLVM_EXT_OBJ)
-CXXFLAGS += $(if $(debug),/MTd /Od,/MT)
-CRYSTAL_VERSION ?= $(shell type src\VERSION)
+CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
 
 prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
 BINDIR ?= $(prefix)
@@ -81,6 +80,13 @@ SRCDIR ?= $(prefix)\src
 DATADIR ?= $(prefix)
 
 colorize = $1
+
+DEPS = $(LLVM_EXT_OBJ)
+ifneq ($(LLVM_VERSION),)
+  ifeq ($(shell if $(firstword $(subst ., ,$(LLVM_VERSION))) GEQ 18 echo 0),0)
+    DEPS =
+  endif
+endif
 
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
@@ -198,7 +204,7 @@ $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
 
-$(O)\interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)\interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@$(call MKDIR, "$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr

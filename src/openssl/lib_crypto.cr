@@ -3,7 +3,7 @@
     {% if flag?(:win32) %}
       {% from_libressl = false %}
       {% ssl_version = nil %}
-      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+      {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
         {% unless ssl_version %}
           {% config_path = "#{dir.id}\\openssl_VERSION" %}
           {% if config_version = read_file?(config_path) %}
@@ -57,7 +57,10 @@ lib LibCrypto
 
   struct Bio
     method : Void*
-    callback : (Void*, Int, Char*, Int, Long, Long) -> Long
+    callback : BIO_callback_fn
+    {% if compare_versions(LIBRESSL_VERSION, "3.5.0") >= 0 %}
+      callback_ex : BIO_callback_fn_ex
+    {% end %}
     cb_arg : Char*
     init : Int
     shutdown : Int
@@ -71,6 +74,9 @@ lib LibCrypto
     num_read : ULong
     num_write : ULong
   end
+
+  alias BIO_callback_fn = (Bio*, Int, Char*, Int, Long, Long) -> Long
+  alias BIO_callback_fn_ex = (Bio*, Int, Char, SizeT, Int, Long, Int, SizeT*) -> Long
 
   PKCS5_SALT_LEN     =  8
   EVP_MAX_KEY_LENGTH = 32
@@ -267,6 +273,12 @@ lib LibCrypto
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
+
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    ERR_SYSTEM_FLAG = Int32::MAX.to_u32 + 1
+    ERR_SYSTEM_MASK = Int32::MAX.to_u32
+    ERR_REASON_MASK = 0x7FFFFF
+  {% end %}
 
   struct MD5Context
     a : UInt

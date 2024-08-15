@@ -9,14 +9,7 @@ private def exit_code_command(code)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
   {% else %}
-    case code
-    when 0
-      {"true", [] of String}
-    when 1
-      {"false", [] of String}
-    else
-      {"/bin/sh", {"-c", "exit #{code}"}}
-    end
+    {"/bin/sh", {"-c", "exit #{code}"}}
   {% end %}
 end
 
@@ -61,7 +54,8 @@ private def newline
   {% end %}
 end
 
-describe Process do
+# interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
+pending_interpreted describe: Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -187,6 +181,14 @@ describe Process do
       $?.exit_code.should eq(0)
     end
 
+    it "forwards closed io" do
+      closed_io = IO::Memory.new
+      closed_io.close
+      Process.run(*stdin_to_stdout_command, input: closed_io)
+      Process.run(*stdin_to_stdout_command, output: closed_io)
+      Process.run(*stdin_to_stdout_command, error: closed_io)
+    end
+
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
@@ -236,6 +238,19 @@ describe Process do
       output = proc.output.gets_to_end
       proc.wait
       output.should eq "`echo hi`\n"
+    end
+
+    describe "does not execute batch files" do
+      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+        it ext do
+          with_tempfile "process_run#{ext}" do |path|
+            File.write(path, "echo '#{ext}'\n")
+            expect_raises {{ flag?(:win32) ? File::BadExecutableError : File::AccessDeniedError }}, "Error executing process" do
+              Process.run(path)
+            end
+          end
+        end
+      end
     end
 
     describe "environ" do
@@ -343,6 +358,14 @@ describe Process do
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
+  describe ".on_terminate" do
+    it "compiles" do
+      typeof(Process.on_terminate { })
       typeof(Process.ignore_interrupts!)
       typeof(Process.restore_interrupts!)
     end
@@ -462,13 +485,13 @@ describe Process do
           begin
             Process.chroot(".")
             puts "FAIL"
-          rescue ex
-            puts ex.inspect
+          rescue ex : RuntimeError
+            puts ex.os_error
           end
         CRYSTAL
 
         status.success?.should be_true
-        output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+        output.should eq("EPERM\n")
       end
     {% end %}
   end

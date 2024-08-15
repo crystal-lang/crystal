@@ -83,6 +83,11 @@ enum WasiError : UInt16
     end
   end
 
+  # :nodoc:
+  def unsafe_message(&)
+    yield message.to_slice
+  end
+
   # Transforms this `WasiError` value to the equivalent `Errno` value.
   #
   # This is only defined for some values. If no transformation is defined for

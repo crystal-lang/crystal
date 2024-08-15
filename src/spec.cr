@@ -129,8 +129,8 @@ module Spec
       add_split_filter ENV["SPEC_SPLIT"]?
 
       {% unless flag?(:wasm32) %}
-        # TODO(wasm): Enable this once `Process.on_interrupt` is implemented
-        Process.on_interrupt { abort! }
+        # TODO(wasm): Enable this once `Process.on_terminate` is implemented
+        Process.on_terminate { abort! }
       {% end %}
 
       run

@@ -5,9 +5,10 @@ class IO::FileDescriptor < IO
   include Crystal::System::FileDescriptor
   include IO::Buffered
 
-  # The raw file-descriptor. It is defined to be an `Int`, but its size is
-  # platform-specific.
-  def fd : Int
+  @volatile_fd : Atomic(Handle)
+
+  # Returns the raw file-descriptor handle. Its type is platform-specific.
+  def fd : Handle
     @volatile_fd.get
   end
 
@@ -18,9 +19,34 @@ class IO::FileDescriptor < IO
   # will then fail.
   property? close_on_finalize : Bool
 
-  def initialize(fd, blocking = nil, *, @close_on_finalize = true)
+  # The time to wait when reading before raising an `IO::TimeoutError`.
+  property read_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#read_timeout=(Time::Span?)` instead.")]
+  def read_timeout=(read_timeout : Number) : Number
+    self.read_timeout = read_timeout.seconds
+    read_timeout
+  end
+
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
+  property write_timeout : Time::Span?
+
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
+  @[Deprecated("Use `#write_timeout=(Time::Span?)` instead.")]
+  def write_timeout=(write_timeout : Number) : Number
+    self.write_timeout = write_timeout.seconds
+    write_timeout
+  end
+
+  def initialize(fd : Handle, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
+    @closed = true # This is necessary so we can reference `self` in `system_closed?` (in case of an exception)
+
+    # TODO: Refactor to avoid calling `GetFileType` twice on Windows (once in `system_closed?` and once in `system_info`)
     @closed = system_closed?
+
+    return if @closed
 
     if blocking.nil?
       blocking =
@@ -36,7 +62,7 @@ class IO::FileDescriptor < IO
   end
 
   # :nodoc:
-  def self.from_stdio(fd) : self
+  def self.from_stdio(fd : Handle) : self
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
@@ -207,10 +233,21 @@ class IO::FileDescriptor < IO
     system_flock_unlock
   end
 
+  # Finalizes the file descriptor resource.
+  #
+  # This involves releasing the handle to the operating system, i.e. closing it.
+  # It does *not* implicitly call `#flush`, so data waiting in the buffer may be
+  # lost.
+  # It's recommended to always close the file descriptor explicitly via `#close`
+  # (or implicitly using the `.open` constructor).
+  #
+  # Resource release can be disabled with `close_on_finalize = false`.
+  #
+  # This method is a no-op if the file descriptor has already been closed.
   def finalize
     return if closed? || !close_on_finalize?
 
-    close rescue nil
+    file_descriptor_close { } # ignore error
   end
 
   def closed? : Bool
@@ -242,11 +279,21 @@ class IO::FileDescriptor < IO
     pp.text inspect
   end
 
-  private def unbuffered_rewind
+  private def unbuffered_read(slice : Bytes) : Int32
+    system_read(slice)
+  end
+
+  private def unbuffered_write(slice : Bytes) : Nil
+    until slice.empty?
+      slice += system_write(slice)
+    end
+  end
+
+  private def unbuffered_rewind : Nil
     self.pos = 0
   end
 
-  private def unbuffered_close
+  private def unbuffered_close : Nil
     return if @closed
 
     # Set before the @closed state so the pending
@@ -256,7 +303,7 @@ class IO::FileDescriptor < IO
     system_close
   end
 
-  private def unbuffered_flush
+  private def unbuffered_flush : Nil
     # Nothing
   end
 end

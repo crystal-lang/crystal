@@ -488,9 +488,6 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # TODO: check hash equality for numbers >= 2**63
-  def_hash to_i64!
-
   def to_s(base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
@@ -985,18 +982,14 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  private HASH_MODULUS_INT_P = BigInt.new((1_u64 << HASH_BITS) - 1)
-  private HASH_MODULUS_INT_N = -BigInt.new((1_u64 << HASH_BITS) - 1)
+  private HASH_MODULUS_INT_P = BigInt.new(HASH_MODULUS)
 
-  def int(value : BigInt)
-    # it should calculate `remainder(HASH_MODULUS)`
-    if LibGMP::UI == UInt64
-      v = LibGMP.tdiv_ui(value, HASH_MODULUS).to_i64
-      value < 0 ? -v : v
-    elsif value >= HASH_MODULUS_INT_P || value <= HASH_MODULUS_INT_N
-      value.unsafe_truncated_mod(HASH_MODULUS_INT_P).to_i64
-    else
-      value.to_i64
-    end
+  def self.reduce_num(value : BigInt)
+    {% if LibGMP::UI == UInt64 %}
+      v = LibGMP.tdiv_ui(value, HASH_MODULUS)
+      value < 0 ? &-v : v
+    {% else %}
+      value.remainder(HASH_MODULUS_INT_P).to_u64!
+    {% end %}
   end
 end

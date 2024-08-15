@@ -104,30 +104,59 @@ describe "Slice" do
 
   it "does []? with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
+
     slice1 = slice[1, 2]?
     slice1.should_not be_nil
     slice1 = slice1.not_nil!
     slice1.size.should eq(2)
+    slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
-    slice[-1, 1]?.should be_nil
+    slice2 = slice[-1, 1]?
+    slice2.should_not be_nil
+    slice2 = slice2.not_nil!
+    slice2.size.should eq(1)
+    slice2.to_unsafe.should eq(slice.to_unsafe + 3)
+
     slice[3, 2]?.should be_nil
     slice[0, 5]?.should be_nil
-    slice[3, -1]?.should be_nil
+    expect_raises(ArgumentError, "Negative count: -1") { slice[3, -1]? }
+  end
+
+  it "does []? with range" do
+    slice = Slice.new(4) { |i| i + 1 }
+
+    slice1 = slice[1..2]?
+    slice1.should_not be_nil
+    slice1 = slice1.not_nil!
+    slice1.size.should eq(2)
+    slice1.to_unsafe.should eq(slice.to_unsafe + 1)
+    slice1[0].should eq(2)
+    slice1[1].should eq(3)
+
+    slice[4..7]?.should be_nil
+    slice[3..4]?.should be_nil
+    slice[-2..4]?.should be_nil
+    slice[-6..-5]?.should be_nil
   end
 
   it "does [] with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
+
     slice1 = slice[1, 2]
     slice1.size.should eq(2)
+    slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
-    expect_raises(IndexError) { slice[-1, 1] }
+    slice2 = slice[-1, 1]
+    slice2.size.should eq(1)
+    slice2.to_unsafe.should eq(slice.to_unsafe + 3)
+
     expect_raises(IndexError) { slice[3, 2] }
     expect_raises(IndexError) { slice[0, 5] }
-    expect_raises(IndexError) { slice[3, -1] }
+    expect_raises(ArgumentError, "Negative count: -1") { slice[3, -1] }
   end
 
   it "does empty?" do
@@ -644,6 +673,7 @@ describe "Slice" do
     subslice = slice[2..4]
     subslice.read_only?.should be_false
     subslice.size.should eq(3)
+    subslice.to_unsafe.should eq(slice.to_unsafe + 2)
     subslice.should eq(Slice.new(3) { |i| i + 3 })
   end
 

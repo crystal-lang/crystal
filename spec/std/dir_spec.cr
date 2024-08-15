@@ -127,7 +127,7 @@ describe "Dir" do
 
     context "path exists" do
       it "fails when path is a file" do
-        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}'") do
           Dir.mkdir_p(datapath("test_file.txt"))
         end
       end
@@ -631,7 +631,8 @@ describe "Dir" do
   end
 
   describe ".current" do
-    it "matches shell" do
+    # can't use backtick in interpreted code (#12241)
+    pending_interpreted "matches shell" do
       Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
     end
 

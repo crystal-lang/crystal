@@ -13,7 +13,7 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.11.2-build
+      image: crystallang/crystal:1.13.1-build
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.11.2-build
+      image: crystallang/crystal:1.13.1-build
     name: Build interpreter
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.11.2-build
+      image: crystallang/crystal:1.13.1-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]
@@ -61,4 +61,25 @@ jobs:
         run: chmod +x .build/crystal
 
       - name: Run std_spec with interpreter
-        run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/interpreter_std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
+        run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
+
+  test-interpreter-primitives_spec:
+    needs: build-interpreter
+    runs-on: ubuntu-22.04
+    container:
+      image: crystallang/crystal:1.13.1-build
+    name: "Test primitives_spec with interpreter"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download compiler artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-interpreter
+          path: .build/
+
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+
+      - name: Run primitives_spec with interpreter
+        run: bin/crystal i spec/primitives_spec.cr -- --junit_output .junit/interpreter-primitives_spec.xml

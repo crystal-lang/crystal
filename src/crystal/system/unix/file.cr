@@ -24,6 +24,9 @@ module Crystal::System::File
     {fd, fd < 0 ? Errno.value : Errno::NONE}
   end
 
+  protected def system_set_mode(mode : String)
+  end
+
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     stat = uninitialized LibC::Stat
     if follow_symlinks
@@ -216,60 +219,6 @@ module Crystal::System::File
     code = LibC.ftruncate(fd, size)
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
-    end
-  end
-
-  private def system_flock_shared(blocking)
-    flock LibC::FlockOp::SH, blocking
-  end
-
-  private def system_flock_exclusive(blocking)
-    flock LibC::FlockOp::EX, blocking
-  end
-
-  private def system_flock_unlock
-    flock LibC::FlockOp::UN
-  end
-
-  private def flock(op : LibC::FlockOp, retry : Bool) : Nil
-    op |= LibC::FlockOp::NB
-
-    if retry
-      until flock(op)
-        sleep 0.1
-      end
-    else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
-    end
-  end
-
-  private def flock(op) : Bool
-    if 0 == LibC.flock(fd, op)
-      true
-    else
-      errno = Errno.value
-      if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
-        false
-      else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
-      end
-    end
-  end
-
-  private def system_fsync(flush_metadata = true) : Nil
-    ret =
-      if flush_metadata
-        LibC.fsync(fd)
-      else
-        {% if flag?(:dragonfly) %}
-          LibC.fsync(fd)
-        {% else %}
-          LibC.fdatasync(fd)
-        {% end %}
-      end
-
-    if ret != 0
-      raise IO::Error.from_errno("Error syncing file", target: self)
     end
   end
 end

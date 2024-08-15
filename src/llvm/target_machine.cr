@@ -37,6 +37,11 @@ class LLVM::TargetMachine
     LLVM.string_and_dispose(triple_c)
   end
 
+  def cpu : String
+    cpu_c = LibLLVM.get_target_machine_cpu(self)
+    LLVM.string_and_dispose(cpu_c)
+  end
+
   def emit_obj_to_file(llvm_mod, filename)
     emit_to_file llvm_mod, filename, LLVM::CodeGenFileType::ObjectFile
   end
@@ -71,6 +76,8 @@ class LLVM::TargetMachine
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
+    when /avr/
+      ABI::AVR.new(self, cpu)
     when /wasm32/
       ABI::Wasm32.new(self)
     else

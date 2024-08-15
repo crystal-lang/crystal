@@ -8,31 +8,33 @@ lib LibC
   SIGILL    = 4
   SIGTRAP   = 5
   SIGIOT    = LibC::SIGABRT
-  SIGABRT   =  6
-  SIGFPE    =  8
-  SIGKILL   =  9
-  SIGBUS    = 10
-  SIGSEGV   = 11
-  SIGSYS    = 12
-  SIGPIPE   = 13
-  SIGALRM   = 14
-  SIGTERM   = 15
-  SIGURG    = 16
-  SIGSTOP   = 17
-  SIGTSTP   = 18
-  SIGCONT   = 19
-  SIGCHLD   = 20
-  SIGTTIN   = 21
-  SIGTTOU   = 22
-  SIGIO     = 23
-  SIGXCPU   = 24
-  SIGXFSZ   = 25
-  SIGVTALRM = 26
-  SIGUSR1   = 30
-  SIGUSR2   = 31
-  SIGEMT    =  7
-  SIGINFO   = 29
-  SIGWINCH  = 28
+  SIGABRT   =   6
+  SIGFPE    =   8
+  SIGKILL   =   9
+  SIGBUS    =  10
+  SIGSEGV   =  11
+  SIGSYS    =  12
+  SIGPIPE   =  13
+  SIGALRM   =  14
+  SIGTERM   =  15
+  SIGURG    =  16
+  SIGSTOP   =  17
+  SIGTSTP   =  18
+  SIGCONT   =  19
+  SIGCHLD   =  20
+  SIGTTIN   =  21
+  SIGTTOU   =  22
+  SIGIO     =  23
+  SIGXCPU   =  24
+  SIGXFSZ   =  25
+  SIGVTALRM =  26
+  SIGUSR1   =  30
+  SIGUSR2   =  31
+  SIGEMT    =   7
+  SIGINFO   =  29
+  SIGWINCH  =  28
+  SIGRTMIN  =  65
+  SIGRTMAX  = 126
   SIGSTKSZ  = 2048 + 32768 # MINSIGSTKSZ + 32768
 
   SIG_SETMASK = 3
@@ -46,6 +48,7 @@ lib LibC
   end
 
   SA_ONSTACK = 0x0001
+  SA_RESTART = 0x0002
   SA_SIGINFO = 0x0040
 
   struct Sigval
@@ -84,6 +87,7 @@ lib LibC
 
   fun kill(x0 : PidT, x1 : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
+  fun pthread_kill(PthreadT, Int) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
   fun sigaction(x0 : Int, x1 : Sigaction*, x2 : Sigaction*) : Int
   fun sigaltstack(x0 : StackT*, x1 : StackT*) : Int
@@ -92,4 +96,5 @@ lib LibC
   fun sigaddset(SigsetT*, Int) : Int
   fun sigdelset(SigsetT*, Int) : Int
   fun sigismember(SigsetT*, Int) : Int
+  fun sigsuspend(SigsetT*) : Int
 end

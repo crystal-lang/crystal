@@ -7,16 +7,23 @@ require "process/shell"
 require "crystal/atomic_semaphore"
 
 struct Crystal::System::Process
+  {% if host_flag?(:windows) %}
+    HOST_PATH_DELIMITER = ';'
+  {% else %}
+    HOST_PATH_DELIMITER = ':'
+  {% end %}
+
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
   @job_object : LibC::HANDLE
-  @completion_key = IO::Overlapped::CompletionKey.new
+  @completion_key = IOCP::CompletionKey.new
 
-  @@interrupt_handler : Proc(Nil)?
+  @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
   @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
   @@setup_interrupt_handler = Atomic::Flag.new
+  @@last_interrupt = ::Process::ExitReason::Interrupted
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
@@ -30,7 +37,7 @@ struct Crystal::System::Process
       LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
       LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
         completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::Scheduler.event_loop.iocp,
+        completionPort: Crystal::EventLoop.current.iocp,
       ),
     )
 
@@ -74,7 +81,7 @@ struct Crystal::System::Process
     # stuck forever in that case?
     # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
     @completion_key.fiber = ::Fiber.current
-    Crystal::Scheduler.reschedule
+    ::Fiber.suspend
 
     # If the IOCP notification is delivered before the process fully exits,
     # wait for it
@@ -150,10 +157,26 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
-  def self.on_interrupt(&@@interrupt_handler : ->) : Nil
+  @[Deprecated("Use `#on_terminate` instead")]
+  def self.on_interrupt(&handler : ->) : Nil
+    on_terminate do |reason|
+      handler.call if reason.interrupted?
+    end
+  end
+
+  def self.on_terminate(&@@interrupt_handler : ::Process::ExitReason ->) : Nil
     restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
-      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
+      @@last_interrupt = case event_type
+                         when LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT
+                           ::Process::ExitReason::Interrupted
+                         when LibC::CTRL_CLOSE_EVENT
+                           ::Process::ExitReason::TerminalDisconnected
+                         when LibC::CTRL_LOGOFF_EVENT, LibC::CTRL_SHUTDOWN_EVENT
+                           ::Process::ExitReason::SessionEnded
+                         else
+                           next 0
+                         end
       @@interrupt_count.signal
       1
     end
@@ -186,8 +209,9 @@ struct Crystal::System::Process
 
         if handler = @@interrupt_handler
           non_nil_handler = handler # if handler is closured it will also have the Nil type
+          int_type = @@last_interrupt
           spawn do
-            non_nil_handler.call
+            non_nil_handler.call int_type
           rescue ex
             ex.inspect_with_backtrace(STDERR)
             STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
@@ -232,7 +256,7 @@ struct Crystal::System::Process
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
-    source_handle = FileDescriptor.windows_handle!(io.fd)
+    source_handle = io.windows_handle
 
     cur_proc = LibC.GetCurrentProcess
     if LibC.DuplicateHandle(cur_proc, source_handle, cur_proc, out new_handle, 0, true, LibC::DUPLICATE_SAME_ACCESS) == 0
@@ -285,6 +309,16 @@ struct Crystal::System::Process
       end
       command
     else
+      # Disable implicit execution of batch files (https://github.com/crystal-lang/crystal/issues/14536)
+      #
+      # > `CreateProcessW()` implicitly spawns `cmd.exe` when executing batch files (`.bat`, `.cmd`, etc.), even if the application didn’t specify them in the command line.
+      # > The problem is that the `cmd.exe` has complicated parsing rules for the command arguments, and programming language runtimes fail to escape the command arguments properly.
+      # > Because of this, it’s possible to inject commands if someone can control the part of command arguments of the batch file.
+      # https://flatt.tech/research/posts/batbadbut-you-cant-securely-execute-commands-on-windows/
+      if command.byte_slice?(-4, 4).try(&.downcase).in?(".bat", ".cmd")
+        raise ::File::Error.from_os_error("Error executing process", WinError::ERROR_BAD_EXE_FORMAT, file: command)
+      end
+
       command_args = [command]
       command_args.concat(args) if args
       command_args

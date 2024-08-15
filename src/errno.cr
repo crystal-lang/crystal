@@ -4,6 +4,8 @@ require "c/string"
 lib LibC
   {% if flag?(:netbsd) || flag?(:openbsd) || flag?(:android) %}
     fun __errno : Int*
+  {% elsif flag?(:solaris) %}
+    fun ___errno : Int*
   {% elsif flag?(:linux) || flag?(:dragonfly) %}
     fun __errno_location : Int*
   {% elsif flag?(:wasi) %}
@@ -38,13 +40,30 @@ enum Errno
 
   # Convert an Errno to an error message
   def message : String
-    String.new(LibC.strerror(value))
+    unsafe_message { |slice| String.new(slice) }
   end
 
-  # Returns the value of libc's errno.
+  # :nodoc:
+  def unsafe_message(&)
+    {% if LibC.has_method?(:strerror_r) %}
+      buffer = uninitialized UInt8[256]
+      if LibC.strerror_r(value, buffer, buffer.size) == 0
+        yield Bytes.new(buffer.to_unsafe, LibC.strlen(buffer))
+      else
+        yield "(???)".to_slice
+      end
+    {% else %}
+      pointer = LibC.strerror(value)
+      yield Bytes.new(pointer, LibC.strlen(pointer))
+    {% end %}
+  end
+
+  # returns the value of libc's errno.
   def self.value : self
     {% if flag?(:netbsd) || flag?(:openbsd) || flag?(:android) %}
       Errno.new LibC.__errno.value
+    {% elsif flag?(:solaris) %}
+      Errno.new LibC.___errno.value
     {% elsif flag?(:linux) || flag?(:dragonfly) %}
       Errno.new LibC.__errno_location.value
     {% elsif flag?(:wasi) %}
@@ -62,6 +81,8 @@ enum Errno
   def self.value=(errno : Errno)
     {% if flag?(:netbsd) || flag?(:openbsd) || flag?(:android) %}
       LibC.__errno.value = errno.value
+    {% elsif flag?(:solaris) %}
+      LibC.___errno.value = errno.value
     {% elsif flag?(:linux) || flag?(:dragonfly) %}
       LibC.__errno_location.value = errno.value
     {% elsif flag?(:darwin) || flag?(:freebsd) %}

@@ -297,6 +297,8 @@ module Crystal
       when Var
         node.value.accept self
         @vars[target.name] = @last
+      when Underscore
+        node.value.accept self
       else
         node.raise "can only assign to variables, not #{target.class_desc}"
       end

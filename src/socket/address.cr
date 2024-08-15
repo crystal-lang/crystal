@@ -386,6 +386,8 @@ class Socket
         end
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr16 = bytes
+      {% elsif flag?(:solaris) %}
+        addr._S6_un._S6_u16 = bytes
       {% elsif flag?(:win32) %}
         addr.u.word = bytes
       {% else %}
@@ -528,6 +530,8 @@ class Socket
         addr.s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
+      {% elsif flag?(:solaris) %}
+        addr._S6_un._S6_u8
       {% elsif flag?(:win32) %}
         addr.u.byte
       {% else %}

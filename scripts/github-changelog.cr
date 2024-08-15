@@ -19,15 +19,24 @@ require "http/client"
 require "json"
 
 abort "Missing GITHUB_TOKEN env variable" unless ENV["GITHUB_TOKEN"]?
-abort "Missing <milestone> argument" unless ARGV.first?
-
 api_token = ENV["GITHUB_TOKEN"]
-repository = "crystal-lang/crystal"
-milestone = ARGV.first
 
-def query_prs(api_token, repository, milestone)
+case ARGV.size
+when 0
+  abort "Missing <milestone> argument"
+when 1
+  repository = "crystal-lang/crystal"
+  milestone = ARGV.first
+when 2
+  repository = ARGV[0]
+  milestone = ARGV[1]
+else
+  abort "Too many arguments. Usage:\n  #{PROGRAM_NAME} [<GH repo ref>] <milestone>"
+end
+
+def query_prs(api_token, repository, milestone : String, cursor : String?)
   query = <<-GRAPHQL
-    query($milestone: String, $owner: String!, $repository: String!) {
+    query($milestone: String, $owner: String!, $repository: String!, $cursor: String) {
       repository(owner: $owner, name: $repository) {
         milestones(query: $milestone, first: 1) {
           nodes {
@@ -35,7 +44,7 @@ def query_prs(api_token, repository, milestone)
             description
             dueOn
             title
-            pullRequests(first: 300) {
+            pullRequests(first: 100, after: $cursor) {
               nodes {
                 number
                 title
@@ -50,6 +59,10 @@ def query_prs(api_token, repository, milestone)
                   }
                 }
               }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
             }
           }
         }
@@ -62,6 +75,7 @@ def query_prs(api_token, repository, milestone)
     owner:      owner,
     repository: name,
     milestone:  milestone,
+    cursor:     cursor,
   }
 
   response = HTTP::Client.post("https://api.github.com/graphql",
@@ -87,7 +101,7 @@ end
 
 record Milestone,
   closed_at : Time?,
-  description : String,
+  description : String?,
   due_on : Time?,
   title : String,
   pull_requests : Array(PullRequest) do
@@ -136,6 +150,9 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if regression?
+      io << "**[regression]** "
+    end
     if experimental?
       io << "**[experimental]** "
     end
@@ -143,11 +160,21 @@ record PullRequest,
       io << "**[deprecation]** "
     end
     io << title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "") << " ("
-    io << "[#" << number << "](" << permalink << ")"
+    link_ref(io)
     if author = self.author
       io << ", thanks @" << author
     end
     io << ")"
+  end
+
+  def link_ref(io)
+    io << "[#" << number << "]"
+  end
+
+  def print_ref_label(io)
+    link_ref(io)
+    io << ": " << permalink
+    io.puts
   end
 
   def <=>(other : self)
@@ -195,9 +222,10 @@ record PullRequest,
 
     topics.sort_by! { |parts|
       topic_priority = case parts[0]
-                       when "tools" then 2
-                       when "lang"  then 1
-                       else              0
+                       when "infrastructure" then 3
+                       when "tools"          then 2
+                       when "lang"           then 1
+                       else                       0
                        end
       {-topic_priority, parts[0]}
     }
@@ -209,6 +237,10 @@ record PullRequest,
 
   def breaking?
     labels.includes?("kind:breaking")
+  end
+
+  def regression?
+    labels.includes?("kind:regression")
   end
 
   def experimental?
@@ -269,20 +301,44 @@ record PullRequest,
   end
 end
 
-response = query_prs(api_token, repository, milestone)
-parser = JSON::PullParser.new(response.body)
-milestone = parser.on_key! "data" do
-  parser.on_key! "repository" do
-    parser.on_key! "milestones" do
-      parser.on_key! "nodes" do
-        parser.read_begin_array
-        milestone = Milestone.new(parser)
-        parser.read_end_array
-        milestone
+def query_milestone(api_token, repository, number)
+  cursor = nil
+  milestone = nil
+
+  while true
+    response = query_prs(api_token, repository, number, cursor)
+
+    parser = JSON::PullParser.new(response.body)
+    m = parser.on_key! "data" do
+      parser.on_key! "repository" do
+        parser.on_key! "milestones" do
+          parser.on_key! "nodes" do
+            parser.read_begin_array
+            Milestone.new(parser)
+          ensure
+            parser.read_end_array
+          end
+        end
       end
     end
+
+    if milestone
+      milestone.pull_requests.concat m.pull_requests
+    else
+      milestone = m
+    end
+
+    json = JSON.parse(response.body)
+    page_info = json.dig("data", "repository", "milestones", "nodes", 0, "pullRequests", "pageInfo")
+    break unless page_info["hasNextPage"].as_bool
+
+    cursor = page_info["endCursor"].as_s
   end
+
+  milestone
 end
+
+milestone = query_milestone(api_token, repository, milestone)
 
 sections = milestone.pull_requests.group_by(&.section)
 
@@ -308,32 +364,40 @@ if description = milestone.description.presence
   puts "_"
 end
 puts
-puts "[#{milestone.title}]: https://github.com/crystal-lang/crystal/releases/#{milestone.title}"
+puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
 puts
+
+def print_items(prs)
+  prs.each do |pr|
+    puts "- #{pr}"
+  end
+  puts
+
+  prs.each(&.print_ref_label(STDOUT))
+  puts
+end
 
 SECTION_TITLES.each do |id, title|
   prs = sections[id]? || next
   puts "### #{title}"
   puts
 
-  topics = prs.group_by(&.primary_topic)
+  if id == "infra"
+    prs.sort_by!(&.infra_sort_tuple)
+    print_items prs
+  else
+    topics = prs.group_by(&.primary_topic)
 
-  topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
+    topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
 
-  topic_titles.each do |topic_title|
-    topic_prs = topics[topic_title]? || next
+    topic_titles.each do |topic_title|
+      topic_prs = topics[topic_title]? || next
 
-    if id == "infra"
-      topic_prs.sort_by!(&.infra_sort_tuple)
-    else
-      topic_prs.sort!
       puts "#### #{topic_title}"
       puts
-    end
 
-    topic_prs.each do |pr|
-      puts "- #{pr}"
+      topic_prs.sort!
+      print_items topic_prs
     end
-    puts
   end
 end

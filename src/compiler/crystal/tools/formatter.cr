@@ -1464,9 +1464,9 @@ module Crystal
         write_token :OP_PERIOD
       end
 
-      @lexer.wants_def_or_macro_name = true
-      skip_space_or_newline
-      @lexer.wants_def_or_macro_name = false
+      @lexer.wants_def_or_macro_name do
+        skip_space_or_newline
+      end
 
       write node.name
 
@@ -1562,7 +1562,7 @@ module Crystal
 
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
-        wrote_newline = format_def_arg(wrote_newline, has_more, true) do
+        wrote_newline = format_def_arg(wrote_newline, has_more, found_first_newline && !has_more) do
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
@@ -1577,7 +1577,7 @@ module Crystal
       end
 
       if double_splat
-        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, true) do
+        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, found_first_newline) do
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -1651,7 +1651,7 @@ module Crystal
       yield
 
       # Write "," before skipping spaces to prevent inserting comment between argument and comma.
-      write "," if has_more || (write_trailing_comma && flag?("def_trailing_comma"))
+      write "," if has_more || (wrote_newline && @token.type.op_comma?) || (write_trailing_comma && flag?("def_trailing_comma"))
 
       just_wrote_newline = skip_space
       if @token.type.newline?
@@ -2541,13 +2541,14 @@ module Crystal
       write_token :OP_COLON_COLON if node.global?
 
       if obj
-        {Token::Kind::OP_BANG, Token::Kind::OP_PLUS, Token::Kind::OP_MINUS, Token::Kind::OP_TILDE, Token::Kind::OP_AMP_PLUS, Token::Kind::OP_AMP_MINUS}.each do |op|
-          if node.name == op.to_s && @token.type == op && node.args.empty?
-            write op
-            next_token_skip_space_or_newline
-            accept obj
-            return false
-          end
+        # This handles unary operators written in prefix notation.
+        # The relevant distinction is that the call has a receiver and the
+        # current token is not that object but a unary operator.
+        if @token.type.unary_operator? && node.name == @token.type.to_s && node.args.empty?
+          write @token.type
+          next_token_skip_space_or_newline
+          accept obj
+          return false
         end
 
         accept obj
@@ -2598,6 +2599,14 @@ module Crystal
               found_comment = skip_space_or_newline
               write_indent if found_comment
             end
+
+            # foo[&.bar]
+            if (block = node.block) && @token.type.op_amp?
+              has_args = !node.args.empty? || node.named_args
+              write "," if has_args
+              format_block(block, has_args)
+            end
+
             write_token :OP_RSQUARE
 
             if node.name == "[]?"
@@ -2670,10 +2679,11 @@ module Crystal
           return false
         end
 
-        @lexer.wants_def_or_macro_name = true
-        next_token
-        @lexer.wants_def_or_macro_name = false
+        @lexer.wants_def_or_macro_name do
+          next_token
+        end
         skip_space
+
         if (@token.type.newline?) || @wrote_newline
           base_indent = @indent + 2
           indent(base_indent) { consume_newlines }
@@ -2690,6 +2700,7 @@ module Crystal
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false, base_indent)
+        skip_space_or_newline
         write_token :OP_RSQUARE
         write_token :OP_QUESTION if node.name == "[]?"
         return false
@@ -2702,6 +2713,7 @@ module Crystal
         args = node.args
         last_arg = args.pop
         format_call_args(node, true, base_indent)
+        skip_space_or_newline
         write_token :OP_RSQUARE
         skip_space_or_newline
         write " ="
@@ -2770,8 +2782,13 @@ module Crystal
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
          expressions.keyword.paren? && expressions.expressions.size == 1
-        skip_space
-        node.args[0] = expressions.expressions[0]
+        # ...except do not transform `foo ()` into `foo()`, as the former is
+        # actually semantically equivalent to `foo(nil)`
+        arg = expressions.expressions[0]
+        unless arg.is_a?(Nop)
+          skip_space
+          node.args[0] = arg
+        end
       end
 
       if @token.type.op_lparen?
@@ -2978,8 +2995,6 @@ module Crystal
     end
 
     def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
-      skip_space
-
       if has_parentheses
         if @token.type.op_comma?
           next_token
@@ -3024,6 +3039,7 @@ module Crystal
         ends_with_newline = true
         next_token
       end
+      skip_space_or_newline
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
@@ -3103,9 +3119,9 @@ module Crystal
         write_token :OP_AMP
         skip_space_or_newline
         write "."
-        @lexer.wants_def_or_macro_name = true
-        next_token_skip_space_or_newline
-        @lexer.wants_def_or_macro_name = false
+        @lexer.wants_def_or_macro_name do
+          next_token_skip_space_or_newline
+        end
 
         body = node.body
         case body
@@ -3871,7 +3887,7 @@ module Crystal
         write_keyword :when
         skip_space_or_newline(@indent + 2)
         write " "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         found_comment = skip_space(@indent + 2)
         if @token.type.op_semicolon? || @token.keyword?(:then)
           sep = @token.type.op_semicolon? ? "; " : " then "
@@ -4226,6 +4242,7 @@ module Crystal
 
     def visit(node : ProcLiteral)
       write_token :OP_MINUS_GT
+      whitespace_after_op_minus_gt = @token.type.space?
       skip_space_or_newline
 
       a_def = node.def
@@ -4256,7 +4273,7 @@ module Crystal
         skip_space_or_newline
       end
 
-      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace")
+      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace") || whitespace_after_op_minus_gt
 
       is_do = false
       if @token.keyword?(:do)
@@ -4264,7 +4281,7 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop) && flag?("proc_literal_whitespace")
+        write " " if a_def.body.is_a?(Nop) && (flag?("proc_literal_whitespace") || @token.type.space?)
       end
       skip_space
 

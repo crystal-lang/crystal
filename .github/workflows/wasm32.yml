@@ -12,7 +12,7 @@ env:
 jobs:
   wasm32-test:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.11.2-build
+    container: crystallang/crystal:1.13.1-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -22,14 +22,14 @@ jobs:
         with:
           wasmtime-version: "2.0.0"
 
-      - name: Install LLVM 13
+      - name: Install LLVM
         run: |
           apt-get update
           apt-get install -y curl lsb-release wget software-properties-common gnupg
           curl -O https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          ./llvm.sh 13
-          ln -s $(which wasm-ld-13) /usr/bin/wasm-ld
+          ./llvm.sh 18
+          ln -s $(which wasm-ld-18) /usr/bin/wasm-ld
 
       - name: Download wasm32 libs
         run: |
