@@ -50,17 +50,33 @@ describe IO::FileDescriptor do
     end
   end
 
-  it "closes on finalize" do
-    pipes = [] of IO::FileDescriptor
-    assert_finalizes("fd") do
-      a, b = IO.pipe
-      pipes << b
-      a
+  describe "#finalize" do
+    it "closes" do
+      pipes = [] of IO::FileDescriptor
+      assert_finalizes("fd") do
+        a, b = IO.pipe
+        pipes << b
+        a
+      end
+
+      expect_raises(IO::Error) do
+        pipes.each do |p|
+          p.puts "123"
+        end
+      end
     end
 
-    expect_raises(IO::Error) do
-      pipes.each do |p|
-        p.puts "123"
+    it "does not flush" do
+      with_tempfile "fd-finalize-flush" do |path|
+        file = File.new(path, "w")
+        file << "foo"
+        file.flush
+        file << "bar"
+        file.finalize
+
+        File.read(path).should eq "foo"
+      ensure
+        file.try(&.close) rescue nil
       end
     end
   end

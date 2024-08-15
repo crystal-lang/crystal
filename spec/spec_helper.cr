@@ -319,6 +319,18 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   end
 end
 
+def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
+
+  if code.includes?(%(require "prelude")) || flags
+    fail "TODO: support the prelude in typed codegen specs", file: file
+  else
+    new_program.run(code, return_type: T, filename: filename, debug: debug)
+  end
+end
+
 def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
     yield run(%(

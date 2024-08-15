@@ -8,7 +8,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "96e431e170979125018bd4fd90111a3147477eec"
+    default: "da59efb2dfd70dcd7272eaecceffb636ef547427"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -81,7 +81,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 13.4.1
+      xcode: 15.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx

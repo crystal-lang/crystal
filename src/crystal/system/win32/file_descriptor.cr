@@ -52,8 +52,17 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def write_blocking(handle, slice)
-    ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, nil)
+  private def write_blocking(handle, slice, pos = nil)
+    overlapped = LibC::OVERLAPPED.new
+    if pos
+      overlapped.union.offset.offset = LibC::DWORD.new!(pos)
+      overlapped.union.offset.offsetHigh = LibC::DWORD.new!(pos >> 32)
+      overlapped_ptr = pointerof(overlapped)
+    else
+      overlapped_ptr = Pointer(LibC::OVERLAPPED).null
+    end
+
+    ret = LibC.WriteFile(handle, slice, slice.size, out bytes_written, overlapped_ptr)
     if ret.zero?
       case error = WinError.value
       when .error_access_denied?
@@ -178,6 +187,12 @@ module Crystal::System::FileDescriptor
 
   def file_descriptor_close
     if LibC.CloseHandle(windows_handle) == 0
+      yield
+    end
+  end
+
+  def file_descriptor_close
+    file_descriptor_close do
       raise IO::Error.from_winerror("Error closing file", target: self)
     end
   end

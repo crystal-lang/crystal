@@ -140,6 +140,13 @@ module LLVM
     string
   end
 
+  protected def self.assert(error : LibLLVM::ErrorRef)
+    if error
+      chars = LibLLVM.get_error_message(error)
+      raise String.new(chars).tap { LibLLVM.dispose_error_message(chars) }
+    end
+  end
+
   {% unless LibLLVM::IS_LT_130 %}
     def self.run_passes(module mod : Module, passes : String, target_machine : TargetMachine, options : PassBuilderOptions)
       LibLLVM.run_passes(mod, passes, target_machine, options)
