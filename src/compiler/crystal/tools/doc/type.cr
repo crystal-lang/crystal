@@ -248,6 +248,7 @@ class Crystal::Doc::Type
       included_modules = [] of Type
       @type.parents.try &.each do |parent|
         if parent.module?
+          next unless @generator.must_include? parent
           included_modules << @generator.type(parent)
         end
       end
