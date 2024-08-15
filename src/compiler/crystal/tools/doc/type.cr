@@ -263,6 +263,7 @@ class Crystal::Doc::Type
       extended_modules = [] of Type
       @type.metaclass.parents.try &.each do |parent|
         if parent.module?
+          next unless @generator.must_include? parent
           extended_modules << @generator.type(parent)
         end
       end
