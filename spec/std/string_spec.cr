@@ -321,6 +321,7 @@ describe "String" do
     it { expect_raises(ArgumentError) { "1__234".to_i } }
     it { expect_raises(ArgumentError) { "1_234".to_i } }
     it { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
+    it { expect_raises(ArgumentError) { "".to_i(whitespace: false) } }
     it { expect_raises(ArgumentError) { "0x123".to_i } }
     it { expect_raises(ArgumentError) { "0b123".to_i } }
     it { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
@@ -515,6 +516,7 @@ describe "String" do
     "nan".to_f?(whitespace: false).try(&.nan?).should be_true
     " nan".to_f?(whitespace: false).should be_nil
     "nan ".to_f?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "".to_f(whitespace: false) }
     "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
