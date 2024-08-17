@@ -967,8 +967,7 @@ module Crystal
         interpret_check_args { @of.try(&.value) || Nop.new }
       when "has_key?"
         interpret_check_args do |key|
-          entry = entries.find &.key.==(key)
-          BoolLiteral.new(!entry.nil?)
+          BoolLiteral.new(entries.any? &.key.==(key))
         end
       when "type"
         interpret_check_args { @name || Nop.new }
@@ -1083,8 +1082,7 @@ module Crystal
             raise "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not #{key.class_desc}"
           end
 
-          entry = entries.find &.key.==(key)
-          BoolLiteral.new(!entry.nil?)
+          BoolLiteral.new(entries.any? &.key.==(key))
         end
       else
         super
