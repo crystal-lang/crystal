@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+private def it_raises_on_null_byte(operation, file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, &block)
   it "errors on #{operation}", file, line, end_line do
     expect_raises(ArgumentError, "String contains null byte") do
       block.call
