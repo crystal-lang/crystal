@@ -10,7 +10,7 @@ module SocketSpecHelper
   end
 end
 
-def pending_ipv6(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+def pending_ipv6(description = "assert", file : String = __FILE__, line : Int32 = __LINE__, end_line : Int32 = __END_LINE__, &block)
   if SocketSpecHelper.supports_ipv6?
     it(description, file: file, line: line, end_line: end_line, &block)
   else
