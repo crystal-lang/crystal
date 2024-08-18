@@ -93,6 +93,8 @@ struct Exception::CallStack
                    {% elsif flag?(:i386) %}
                      # TODO: use WOW64_CONTEXT in place of CONTEXT
                      {% raise "x86 not supported" %}
+                   {% elsif flag?(:aarch64) %}
+                     LibC::IMAGE_FILE_MACHINE_ARM64
                    {% else %}
                      {% raise "Architecture not supported" %}
                    {% end %}
@@ -102,9 +104,15 @@ struct Exception::CallStack
     stack_frame.addrFrame.mode = LibC::ADDRESS_MODE::AddrModeFlat
     stack_frame.addrStack.mode = LibC::ADDRESS_MODE::AddrModeFlat
 
-    stack_frame.addrPC.offset = context.value.rip
-    stack_frame.addrFrame.offset = context.value.rbp
-    stack_frame.addrStack.offset = context.value.rsp
+    {% if flag?(:x86_64) %}
+      stack_frame.addrPC.offset = context.value.rip
+      stack_frame.addrFrame.offset = context.value.rbp
+      stack_frame.addrStack.offset = context.value.rsp
+    {% elsif flag?(:aarch64) %}
+      stack_frame.addrPC.offset = context.value.pc
+      stack_frame.addrFrame.offset = context.value.x[29]
+      stack_frame.addrStack.offset = context.value.sp
+    {% end %}
 
     last_frame = nil
     cur_proc = LibC.GetCurrentProcess

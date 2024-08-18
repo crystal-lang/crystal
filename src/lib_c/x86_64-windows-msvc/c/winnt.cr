@@ -140,54 +140,84 @@ lib LibC
   JOB_OBJECT_MSG_EXIT_PROCESS          = 7
   JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS = 8
 
-  struct CONTEXT
-    p1Home : DWORD64
-    p2Home : DWORD64
-    p3Home : DWORD64
-    p4Home : DWORD64
-    p5Home : DWORD64
-    p6Home : DWORD64
-    contextFlags : DWORD
-    mxCsr : DWORD
-    segCs : WORD
-    segDs : WORD
-    segEs : WORD
-    segFs : WORD
-    segGs : WORD
-    segSs : WORD
-    eFlags : DWORD
-    dr0 : DWORD64
-    dr1 : DWORD64
-    dr2 : DWORD64
-    dr3 : DWORD64
-    dr6 : DWORD64
-    dr7 : DWORD64
-    rax : DWORD64
-    rcx : DWORD64
-    rdx : DWORD64
-    rbx : DWORD64
-    rsp : DWORD64
-    rbp : DWORD64
-    rsi : DWORD64
-    rdi : DWORD64
-    r8 : DWORD64
-    r9 : DWORD64
-    r10 : DWORD64
-    r11 : DWORD64
-    r12 : DWORD64
-    r13 : DWORD64
-    r14 : DWORD64
-    r15 : DWORD64
-    rip : DWORD64
-    fltSave : UInt8[512]           # DUMMYUNIONNAME
-    vectorRegister : UInt8[16][26] # M128A[26]
-    vectorControl : DWORD64
-    debugControl : DWORD64
-    lastBranchToRip : DWORD64
-    lastBranchFromRip : DWORD64
-    lastExceptionToRip : DWORD64
-    lastExceptionFromRip : DWORD64
-  end
+  {% if flag?(:x86_64) %}
+    struct CONTEXT
+      p1Home : DWORD64
+      p2Home : DWORD64
+      p3Home : DWORD64
+      p4Home : DWORD64
+      p5Home : DWORD64
+      p6Home : DWORD64
+      contextFlags : DWORD
+      mxCsr : DWORD
+      segCs : WORD
+      segDs : WORD
+      segEs : WORD
+      segFs : WORD
+      segGs : WORD
+      segSs : WORD
+      eFlags : DWORD
+      dr0 : DWORD64
+      dr1 : DWORD64
+      dr2 : DWORD64
+      dr3 : DWORD64
+      dr6 : DWORD64
+      dr7 : DWORD64
+      rax : DWORD64
+      rcx : DWORD64
+      rdx : DWORD64
+      rbx : DWORD64
+      rsp : DWORD64
+      rbp : DWORD64
+      rsi : DWORD64
+      rdi : DWORD64
+      r8 : DWORD64
+      r9 : DWORD64
+      r10 : DWORD64
+      r11 : DWORD64
+      r12 : DWORD64
+      r13 : DWORD64
+      r14 : DWORD64
+      r15 : DWORD64
+      rip : DWORD64
+      fltSave : UInt8[512]           # DUMMYUNIONNAME
+      vectorRegister : UInt8[16][26] # M128A[26]
+      vectorControl : DWORD64
+      debugControl : DWORD64
+      lastBranchToRip : DWORD64
+      lastBranchFromRip : DWORD64
+      lastExceptionToRip : DWORD64
+      lastExceptionFromRip : DWORD64
+    end
+  {% elsif flag?(:aarch64) %}
+    struct ARM64_NT_NEON128_DUMMYSTRUCTNAME
+      low : ULongLong
+      high : LongLong
+    end
+
+    union ARM64_NT_NEON128
+      dummystructname : ARM64_NT_NEON128_DUMMYSTRUCTNAME
+      d : Double[2]
+      s : Float[4]
+      h : WORD[8]
+      b : BYTE[16]
+    end
+
+    struct CONTEXT
+      contextFlags : DWORD
+      cpsr : DWORD
+      x : DWORD64[31] # x29 = fp, x30 = lr
+      sp : DWORD64
+      pc : DWORD64
+      v : ARM64_NT_NEON128[32]
+      fpcr : DWORD
+      fpsr : DWORD
+      bcr : DWORD[8]
+      bvr : DWORD64[8]
+      wcr : DWORD[8]
+      wvr : DWORD64[8]
+    end
+  {% end %}
 
   {% if flag?(:x86_64) %}
     CONTEXT_AMD64 = DWORD.new!(0x00100000)
@@ -211,6 +241,14 @@ lib LibC
     CONTEXT_EXTENDED_REGISTERS = CONTEXT_i386 | 0x00000020
 
     CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS
+  {% elsif flag?(:aarch64) %}
+    CONTEXT_ARM64 = DWORD.new!(0x00400000)
+
+    CONTEXT_ARM64_CONTROL        = CONTEXT_ARM64 | 0x1
+    CONTEXT_ARM64_INTEGER        = CONTEXT_ARM64 | 0x2
+    CONTEXT_ARM64_FLOATING_POINT = CONTEXT_ARM64 | 0x4
+
+    CONTEXT_FULL = CONTEXT_ARM64_CONTROL | CONTEXT_ARM64_INTEGER | CONTEXT_ARM64_FLOATING_POINT
   {% end %}
 
   fun RtlCaptureContext(contextRecord : CONTEXT*)
