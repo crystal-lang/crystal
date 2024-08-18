@@ -44,6 +44,10 @@ git switch $branch 2>/dev/null || git switch -c $branch;
 echo "${VERSION}" > src/VERSION
 git add src/VERSION
 
+# Update shard.yml
+sed -i -E "s/version: .*/version: ${VERSION}/" shard.yml
+git add shard.yml
+
 # Write release date into src/SOURCE_DATE_EPOCH
 release_date=$(head -n1 $current_changelog | grep -o -P '(?<=\()[^)]+')
 echo "$(date --utc --date="${release_date}" +%s)" > src/SOURCE_DATE_EPOCH
