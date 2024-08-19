@@ -1090,6 +1090,12 @@ module Crystal
         assert_macro %({{ {'z' => 6, 'a' => 9}.of_value }}), %()
       end
 
+      it "executes has_key?" do
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('z') }}), %(true)
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('x') }}), %(false)
+        assert_macro %({{ {'z' => nil, 'a' => 9}.has_key?('z') }}), %(true)
+      end
+
       it "executes type" do
         assert_macro %({{ x.type }}), %(Headers), {x: HashLiteral.new([] of HashLiteral::Entry, name: Path.new("Headers"))}
       end
@@ -1193,6 +1199,14 @@ module Crystal
       it "executes []=" do
         assert_macro %({% a = {a: 1}; a[:a] = 2 %}{{a[:a]}}), "2"
         assert_macro %({% a = {a: 1}; a["a"] = 2 %}{{a["a"]}}), "2"
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{{a: 1}.has_key?("a")}}), "true"
+        assert_macro %({{{a: 1}.has_key?(:a)}}), "true"
+        assert_macro %({{{a: nil}.has_key?("a")}}), "true"
+        assert_macro %({{{a: nil}.has_key?("b")}}), "false"
+        assert_macro_error %({{{a: 1}.has_key?(true)}}), "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not BoolLiteral"
       end
 
       it "creates a named tuple literal with a var" do

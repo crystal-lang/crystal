@@ -965,6 +965,10 @@ module Crystal
         interpret_check_args { @of.try(&.key) || Nop.new }
       when "of_value"
         interpret_check_args { @of.try(&.value) || Nop.new }
+      when "has_key?"
+        interpret_check_args do |key|
+          BoolLiteral.new(entries.any? &.key.==(key))
+        end
       when "type"
         interpret_check_args { @name || Nop.new }
       when "clear"
@@ -1042,11 +1046,7 @@ module Crystal
       when "[]"
         interpret_check_args do |key|
           case key
-          when SymbolLiteral
-            key = key.value
-          when MacroId
-            key = key.value
-          when StringLiteral
+          when SymbolLiteral, MacroId, StringLiteral
             key = key.value
           else
             raise "argument to [] must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
@@ -1058,11 +1058,7 @@ module Crystal
       when "[]="
         interpret_check_args do |key, value|
           case key
-          when SymbolLiteral
-            key = key.value
-          when MacroId
-            key = key.value
-          when StringLiteral
+          when SymbolLiteral, MacroId, StringLiteral
             key = key.value
           else
             raise "expected 'NamedTupleLiteral#[]=' first argument to be a SymbolLiteral or MacroId, not #{key.class_desc}"
@@ -1076,6 +1072,17 @@ module Crystal
           end
 
           value
+        end
+      when "has_key?"
+        interpret_check_args do |key|
+          case key
+          when SymbolLiteral, MacroId, StringLiteral
+            key = key.value
+          else
+            raise "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not #{key.class_desc}"
+          end
+
+          BoolLiteral.new(entries.any? &.key.==(key))
         end
       else
         super
