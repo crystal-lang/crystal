@@ -71,6 +71,14 @@ describe "File" do
       end
     end
 
+    it "opens regular file as non-blocking" do
+      with_tempfile("regular") do |path|
+        File.open(path, "w", blocking: false) do |file|
+          file.blocking.should be_false
+        end
+      end
+    end
+
     {% if flag?(:unix) %}
       if File.exists?("/dev/tty")
         it "opens character device" do

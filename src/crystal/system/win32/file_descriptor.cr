@@ -89,6 +89,7 @@ module Crystal::System::FileDescriptor
 
   private def system_blocking_init(value)
     @system_blocking = value
+    Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
   end
 
   private def system_close_on_exec?
@@ -264,13 +265,11 @@ module Crystal::System::FileDescriptor
     w_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless write_blocking
     w_pipe = LibC.CreateNamedPipeA(pipe_name, w_pipe_flags, pipe_mode, 1, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nil)
     raise IO::Error.from_winerror("CreateNamedPipeA") if w_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::EventLoop.current.create_completion_port(w_pipe) unless write_blocking
 
     r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
     r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::EventLoop.current.create_completion_port(r_pipe) unless read_blocking
 
     r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
     w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
