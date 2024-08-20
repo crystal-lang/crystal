@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.13.2] (2024-08-20)
+
+[1.13.2]: https://github.com/crystal-lang/crystal/releases/1.13.2
+
+### Bugfixes
+
+#### stdlib
+
+- *(collection)* Fix explicitly clear deleted `Hash::Entry` ([#14862], thanks @HertzDevil)
+
+[#14862]: https://github.com/crystal-lang/crystal/pull/14862
+
+#### compiler
+
+- *(codegen)* Fix `ReferenceStorage(T)` atomic if `T` has no inner pointers ([#14845], thanks @HertzDevil)
+- *(codegen)* Fix misaligned store in `Bool` to union upcasts ([#14906], thanks @HertzDevil)
+- *(interpreter)* Fix misaligned stack access in the interpreter ([#14843], thanks @HertzDevil)
+
+[#14845]: https://github.com/crystal-lang/crystal/pull/14845
+[#14906]: https://github.com/crystal-lang/crystal/pull/14906
+[#14843]: https://github.com/crystal-lang/crystal/pull/14843
+
+### Infrastructure
+
+- Changelog for 1.13.2 ([#14914], thanks @straight-shoota)
+
+[#14914]: https://github.com/crystal-lang/crystal/pull/14914
+
 ## [1.13.1] (2024-07-12)
 
 [1.13.1]: https://github.com/crystal-lang/crystal/releases/1.13.1
