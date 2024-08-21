@@ -1,5 +1,11 @@
 require "spec"
 
+private module MyModule; end
+
+private class Foo
+  include MyModule
+end
+
 private record NoObjectId, to_unsafe : Int32 do
   def same?(other : self) : Bool
     to_unsafe == other.to_unsafe
@@ -36,6 +42,11 @@ describe "expectations" do
       a = NoObjectId.new(1)
       a.should be a
       a.should_not be NoObjectId.new(2)
+    end
+
+    it "works with module type (#14920)" do
+      a = Foo.new
+      a.as(MyModule).should be a.as(MyModule)
     end
   end
 
