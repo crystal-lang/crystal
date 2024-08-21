@@ -14,8 +14,8 @@ lib LibC
   EV_ERROR   = 0x4000_u16
 
   NOTE_NSECONDS = 0x00000008_u32
-  NOTE_FFCOPY  = 0xc0000000_u32
-  NOTE_TRIGGER = 0x01000000_u32
+  NOTE_FFCOPY   = 0xc0000000_u32
+  NOTE_TRIGGER  = 0x01000000_u32
 
   struct Kevent
     ident : SizeT # UintptrT

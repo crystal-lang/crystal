@@ -20,7 +20,6 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       @pipe = System::FileDescriptor.system_pipe
       @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
     {% end %}
-
   end
 
   {% unless flag?(:preview_mt) %}
