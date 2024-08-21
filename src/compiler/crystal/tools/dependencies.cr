@@ -124,7 +124,7 @@ module Crystal
       end
 
       private def print_indent
-        @io.print "  " * @stack.size unless @stack.empty?
+        @io.print "  " * @stack.size unless @stack.empty? || @format.flat?
       end
     end
 
