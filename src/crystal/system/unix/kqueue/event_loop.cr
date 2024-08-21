@@ -11,13 +11,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   def initialize
     super
 
+    # the kqueue instance
     @kqueue = System::Kqueue.new
 
+    # notification to interrupt a run
     @interrupted = Atomic::Flag.new
     {% unless LibC.has_constant?(:EVFILT_USER) %}
       @pipe = System::FileDescriptor.system_pipe
       @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
     {% end %}
+
   end
 
   {% unless flag?(:preview_mt) %}
@@ -38,65 +41,39 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
       {% end %}
 
-      @events.each do |node|
-        node.registrations = :none
-        system_sync(node) { raise "unreachable" }
-      end
+      system_set_timer(@timers.next_ready?)
+
+      # FIXME: must re-add all fds (but we don't know about 'em)
     end
   {% end %}
 
-  private def run_internal(blocking : Bool) : Nil
+  private def system_run(blocking : Bool) : Nil
     changes = uninitialized LibC::Kevent[0]
     buffer = uninitialized LibC::Kevent[32]
-    timeout = self.run_timeout(blocking)
 
-    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0, timeout: timeout.try(&.total_nanoseconds.to_i64)
+    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
+    timeout = blocking ? Time::Span.zero : nil
     kevents = @kqueue.kevent(changes.to_slice, buffer.to_slice, timeout)
 
-    @mutex.synchronize do
-      # process events
-      kevents.size.times do |i|
-        kevent = kevents.to_unsafe + i
+    # process events
+    kevents.size.times do |i|
+      kevent = kevents.to_unsafe + i
 
-        # handle system event first (it doesn't have a node)
-        next if process_interrupt?(kevent)
-
-        node = kevent.value.udata.as(Evented::EventQueue::Node)
-        Crystal.trace :evloop, "event", fd: node.fd, filter: kevent.value.filter
-
-        if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
-          dequeue_all(node)
-        elsif process_error?(kevent)
-          dequeue_all(node)
-        else
-          process_io_event(node, kevent)
-
-          # OPTIMIZE: sync all kevents with a *single* kevent syscall *after*
-          # processing all the kevents
-          system_sync(node) do
-            @events.delete(node)
-          end
-        end
-      end
-
-      # process timers
-      @timers.dequeue_ready do |event|
-        process_timer(event)
+      if process_interrupt?(kevent)
+        # nothing special
+      elsif kevent.value.filter == LibC::EVFILT_TIMER
+        # nothing special
+      else
+        process(kevent)
       end
     end
-  end
 
-  private def run_timeout(blocking)
-    return Time::Span.zero unless blocking
-
-    if time = @mutex.synchronize { @timers.next_ready? }
-      # wait until next timer / don't wait if next timer is already in the past
-      now = Time.monotonic
-      return time > now ? time - now : Time::Span.zero
+    # process timers
+    timers = PointerLinkedList(Evented::Event).new
+    @lock.sync do
+      @timers.dequeue_ready { |event| process_timer(event) }
     end
-
-    # wait indefinitely
-    nil
+    timers.each { |event| process_timer(event) }
   end
 
   private def process_interrupt?(kevent)
@@ -117,33 +94,35 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     false
   end
 
-  private def process_error?(kevent)
-    if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
-      case errno = Errno.new(kevent.value.data.to_i32!)
-      when Errno::EPERM, Errno::EPIPE
-        return true
-      else
-        raise RuntimeError.from_os_error("kevent", errno)
-      end
-    end
-    false
-  end
+  private def process(kevent : LibC::Kevent*) : Nil
+    pd = kevent.value.udata.as(Evented::PollDescriptor*)
 
-  private def process_io_event(node, kevent)
+    {% if flag?(:tracing) %}
+      Crystal.trace :evloop, "event", fd: pd.value.fd, filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
+    {% end %}
+
+    if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
+      # apparently some systems may report EOF on write with EVFILT_READ instead
+      # of EVFILT_WRITE, so let's wake all waiters:
+      pd.value.@readers.consume_each { |event| resume_io(event) }
+      pd.value.@writers.consume_each { |event| resume_io(event) }
+      return
+    end
+
     case kevent.value.filter
     when LibC::EVFILT_READ
-      if event = node.dequeue_reader?
-        @timers.delete(event) if event.value.wake_at?
-        Crystal::Scheduler.enqueue(event.value.fiber)
-      else
-        System.print_error "BUG: fd=%d is ready for reading but no registered reader!\n", node.fd
+      if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
+        # OPTIMIZE: pass errno (kevent.data) though PollDescriptor
+        pd.value.@readers.consume_each { |event| resume_io(event) }
+      elsif event = pd.value.@readers.ready!
+        resume_io(event)
       end
     when LibC::EVFILT_WRITE
-      if event = node.dequeue_writer?
-        @timers.delete(event) if event.value.wake_at?
-        Crystal::Scheduler.enqueue(event.value.fiber)
-      else
-        System.print_error "BUG: fd=%d is ready for writing but no registered writer!\n", node.fd
+      if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
+        # OPTIMIZE: pass errno (kevent.data) though PollDescriptor
+        pd.value.@readers.consume_each { |event| resume_io(event) }
+      elsif event = pd.value.@readers.ready!
+        resume_io(event)
       end
     end
   end
@@ -166,10 +145,42 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
   private def system_add(fd : Int32, ptr : Pointer) : Nil
     Crystal.trace :evloop, "kevent", op: "add", fd: fd
-    @kqueue.kevent(fd, LibC::EVFILT_READ | LibC::EVFILT_WRITE, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
+    @kqueue.kevent(
+      fd,
+      LibC::EVFILT_READ | LibC::EVFILT_WRITE,
+      LibC::EV_ADD | LibC::EV_CLEAR,
+      udata: ptr)
   end
 
-  private def system_del(io : System::FileDescriptor | ::Socket) : Nil
-    # nothing to do: close(2) does the job
+  private def system_del(fd : Int32) : Nil
+    # nothing to do: close(2) will do the job
+  end
+
+  private def system_set_timer(time : Time::Span?) : Nil
+    if time
+      flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
+      t = time - Time.monotonic
+      data =
+        {% if LibC.has_constant?(:NOTE_NSECONDS) %}
+          t.total_nanoseconds.to_i64!.clamp(0..)
+        {% else %}
+          # legacy BSD (and DragonFly) only have millisecond precision
+          t > 0 ? t.total_milliseconds.to_i64!.clamp(1..) : 0
+        {% end %}
+    else
+      flags = LibC::EV_DELETE
+      data = 0_u64
+    end
+
+    fflags =
+      {% if LibC.has_constant?(:NOTE_NSECONDS) %}
+        LibC::NOTE_NSECONDS
+      {% else %}
+        0
+      {% end %}
+
+    # use the evloop address as the unique identifier for the timer kevent
+    ident = LibC::SizeT.new!(self.as(Void*).address)
+    @kqueue.kevent(ident, LibC::EVFILT_TIMER, flags, fflags, data)
   end
 end
