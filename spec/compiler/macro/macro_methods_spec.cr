@@ -2654,6 +2654,14 @@ module Crystal
       end
     end
 
+    describe External do
+      it "executes is_a?" do
+        assert_macro %({{x.is_a?(External)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(Def)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(ASTNode)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+      end
+    end
+
     describe Primitive do
       it "executes name" do
         assert_macro %({{x.name}}), %(:abc), {x: Primitive.new("abc")}
