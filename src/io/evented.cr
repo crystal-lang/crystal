@@ -1,5 +1,6 @@
-{% skip_file if flag?(:win32) || flag?(:linux) || flag?(:solaris) %}
+{% skip_file if flag?(:win32) || flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
 # Windows: we use IOCP
+# BSD/Darwin: we use kqueue
 # Linux/Solaris: we use epoll
 
 require "crystal/thread_local_value"

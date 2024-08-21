@@ -1,5 +1,5 @@
 require "c/fcntl"
-{% unless flag?(:linux) || flag?(:solaris) %}
+{% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
   require "io/evented"
 {% end %}
 require "termios"
@@ -9,7 +9,7 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  {% unless flag?(:linux) || flag?(:solaris) %}
+  {% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
     include IO::Evented
   {% end %}
 
