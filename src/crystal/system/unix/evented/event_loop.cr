@@ -7,14 +7,14 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     @timers = Timers.new
   end
 
-  {% if flag?(:preview_mt) %}
-    # must reset the mutexes since another thread may have acquired the lock of
-    # one event loop, which would prevent closing file descriptors for example.
-    def after_fork_before_exec : Nil
-      {% if flag?(:preview_mt) %} @run_lock.clear {% end %}
-      @lock = SpinLock.new
-    end
-  {% else %}
+  # must reset the mutexes since another thread may have acquired the lock of
+  # one event loop, which would prevent closing file descriptors for example.
+  def after_fork_before_exec : Nil
+    {% if flag?(:preview_mt) %} @run_lock.clear {% end %}
+    @lock = SpinLock.new
+  end
+
+  {% unless flag?(:preview_mt) %}
     def after_fork : Nil
       # NOTE: fixes an EPERM when calling `pthread_mutex_unlock` in #dequeue
       # called from `Fiber#resume_event.free` when running std specs.
@@ -349,6 +349,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private abstract def system_run(blocking : Bool) : Nil
   private abstract def system_add(fd : Int32, ptr : Pointer) : Nil
-  private abstract def system_del(fd : Int32) : Nil
+  abstract def system_del(fd : Int32) : Nil
+  private abstract def system_close(fd : Int32) : Nil
   private abstract def system_set_timer(time : Time::Span?) : Nil
 end

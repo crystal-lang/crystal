@@ -21,6 +21,20 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
   end
 
+  def after_fork_before_exec : Nil
+    super
+
+    # O_CLOEXEC would close these automatically, _but_ we don't want to mess
+    # with the parent process fds (that could mess the parent evloop)
+    @epoll.close
+    @eventfd.close
+    @timerfd.close
+
+    # OPTIMIZE: this shouldn't be necessary but we open/close fds before exec
+    # and it will add/delete from the epoll instance
+    @epoll = System::Epoll.new
+  end
+
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
       super
@@ -125,6 +139,10 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   private def system_del(fd : Int32) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
     @epoll.delete(fd)
+  end
+
+  private def system_close(fd : Int32) : Nil
+    system_del(fd)
   end
 
   private def system_set_timer(time : Time::Span?) : Nil

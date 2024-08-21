@@ -185,14 +185,14 @@ struct Crystal::System::Process
       # child:
       pid = nil
       if will_exec
-        # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::System::Signal.after_fork_before_exec
-
         # some event loop need to fix their mutexes (to close some fd)
         current_event_loop = Crystal::EventLoop.current
         if current_event_loop.responds_to?(:after_fork_before_exec)
           current_event_loop.after_fork_before_exec
         end
+
+        # reset signal handlers, then sigmask (inherited on exec):
+        Crystal::System::Signal.after_fork_before_exec
 
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)

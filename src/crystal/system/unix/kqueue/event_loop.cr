@@ -22,6 +22,20 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
+  def after_fork_before_exec : Nil
+    super
+
+    {% unless flag?(:darwin) || flag?(:dragonfly) %}
+      # kqueue isn't inherited by fork on darwin/dragonfly, but is inherited
+      # on other BSD
+      @kqueue.close
+    {% end %}
+
+    # OPTIMIZE: this shouldn't be necessary but we open/close fds before exec,
+    # and it will add/delete from the kqueue instance
+    @kqueue = System::Kqueue.new
+  end
+
   {% unless flag?(:preview_mt) %}
     def after_fork : Nil
       super
@@ -152,6 +166,11 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def system_del(fd : Int32) : Nil
+    Crystal.trace :evloop, "kevent", op: "del", fd: fd
+    @kqueue.kevent(fd, LibC::EVFILT_READ | LibC::EVFILT_WRITE, LibC::EV_DELETE)
+  end
+
+  private def system_close(fd : Int32) : Nil
     # nothing to do: close(2) will do the job
   end
 

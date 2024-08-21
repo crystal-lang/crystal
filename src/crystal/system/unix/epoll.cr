@@ -14,7 +14,7 @@ struct Crystal::System::Epoll
 
   def add(fd : Int32, epoll_event : LibC::EpollEvent*) : Nil
     if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_ADD, fd, epoll_event) == -1
-      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_ADD)")
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_ADD)") unless Errno.value == Errno::EPERM
     end
   end
 
@@ -43,12 +43,7 @@ struct Crystal::System::Epoll
   # ENOENT (?)
   def delete(fd : Int32) : Nil
     if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_DEL, fd, nil) == -1
-      case Errno.value
-      when Errno::EPERM, Errno::ENOENT
-        # skip
-      else
-        raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)")
-      end
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)") unless Errno.value.in?(Errno::EPERM, Errno::ENOENT)
     end
   end
 
