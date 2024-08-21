@@ -164,60 +164,12 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
-  private def system_delete(node : Evented::EventQueue::Node) : Nil
-    kevents = uninitialized LibC::Kevent[2]
-    kevent = kevents.to_unsafe
-    size = 0
-
-    if node.registrations.read?
-      System::Kqueue.set(kevent, node.fd, LibC::EVFILT_READ, LibC::EV_DELETE, udata: node)
-      size += 1
-      kevent += 1
-    end
-
-    if node.registrations.write?
-      System::Kqueue.set(kevent, node.fd, LibC::EVFILT_WRITE, LibC::EV_DELETE, udata: node)
-      size += 1
-    end
-
-    Crystal.trace :evloop, "kevent", op: "del", fd: node.fd, size: size
-    @kqueue.kevent(kevents.to_slice[0, size])
+  private def system_add(fd : Int32, ptr : Pointer) : Nil
+    Crystal.trace :evloop, "kevent", op: "add", fd: fd
+    @kqueue.kevent(fd, LibC::EVFILT_READ | LibC::EVFILT_WRITE, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
   end
 
-  private def system_sync(node : Evented::EventQueue::Node) : Nil
-    if node.empty?
-      system_delete(node)
-      yield
-    else
-      kevents = uninitialized LibC::Kevent[2]
-      kevent = kevents.to_unsafe
-      size = 0
-      registrations = Evented::EventQueue::Node::Registrations::NONE
-
-      if node.readers?
-        System::Kqueue.set(kevent, node.fd, LibC::EVFILT_READ, LibC::EV_ADD, udata: node)
-        registrations |= :read
-        size += 1
-        kevent += 1
-      elsif node.registrations.read?
-        System::Kqueue.set(kevent, node.fd, LibC::EVFILT_READ, LibC::EV_DELETE, udata: node)
-        size += 1
-        kevent += 1
-      end
-
-      if node.writers?
-        System::Kqueue.set(kevent, node.fd, LibC::EVFILT_WRITE, LibC::EV_ADD, udata: node)
-        registrations |= :write
-        size += 1
-      elsif node.registrations.write?
-        System::Kqueue.set(kevent, node.fd, LibC::EVFILT_WRITE, LibC::EV_DELETE, udata: node)
-        size += 1
-      end
-
-      Crystal.trace :evloop, "kevent", op: "add", fd: node.fd, size: size, registrations: registrations.to_s
-      @kqueue.kevent(kevents.to_slice[0, size])
-
-      node.registrations = registrations
-    end
+  private def system_del(io : System::FileDescriptor | ::Socket) : Nil
+    # nothing to do: close(2) does the job
   end
 end

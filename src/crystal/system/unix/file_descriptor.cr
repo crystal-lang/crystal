@@ -34,7 +34,15 @@ module Crystal::System::FileDescriptor
     else
       new_flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+
+    unless new_flags == current_flags
+      fcntl(LibC::F_SETFL, new_flags)
+
+      unless value
+        evloop = EventLoop.current
+        evloop.add(self) if evloop.responds_to?(:add)
+      end
+    end
   end
 
   private def system_blocking_init(value)

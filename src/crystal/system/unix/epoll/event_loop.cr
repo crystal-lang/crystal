@@ -1,9 +1,8 @@
-{% skip_file unless flag?(:linux) || flag?(:solaris) %}
 
 require "../evented/event_loop"
 require "../epoll"
 require "../eventfd"
-require "../timerfd"
+#require "../timerfd"
 
 class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   def initialize
@@ -15,17 +14,11 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     # notification to interrupt a run
     @interrupted = Atomic::Flag.new
     @eventfd = System::EventFD.new
-    @eventfd_event = Evented::Event.new(:system, @eventfd.fd)
-    @eventfd_node = Evented::EventQueue::Node.new(@eventfd.fd)
-    @eventfd_node.add(pointerof(@eventfd_event))
-    system_add(@eventfd_node)
+    @epoll.add(@eventfd.fd, LibC::EPOLLIN, pointerof(@eventfd))
 
     # timer to go below the millisecond prevision of epoll_wait
-    @timerfd = System::TimerFD.new
-    @timerfd_event = Evented::Event.new(:system, @timerfd.fd)
-    @timerfd_node = Evented::EventQueue::Node.new(@timerfd.fd)
-    @timerfd_node.add(pointerof(@timerfd_event))
-    system_add(@timerfd_node)
+    #@timerfd = System::TimerFD.new
+    #@epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
   end
 
   {% unless flag?(:preview_mt) %}
@@ -35,100 +28,101 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       # close inherited fds
       @epoll.close
       @eventfd.close
-      @timerfd.close
+      #@timerfd.close
 
-      # re-create the epoll instance
+      # create new fds
       @epoll = System::Epoll.new
 
-      # re-create and re-register system events
       @interrupted.clear
-
-      # notification to interrupt a run
       @eventfd = System::EventFD.new
-      @eventfd_event = Evented::Event.new(:system, @eventfd.fd)
-      @eventfd_node = Evented::EventQueue::Node.new(@eventfd.fd)
-      @eventfd_node.add(pointerof(@eventfd_event))
-      system_add(@eventfd_node)
+      @epoll.add(@eventfd.fd, LibC::EPOLLIN, pointerof(@eventfd))
 
-      # timer to go below the millisecond prevision of epoll_wait
-      @timerfd = System::TimerFD.new
-      @timerfd_event = Evented::Event.new(:system, @timerfd.fd)
-      @timerfd_node = Evented::EventQueue::Node.new(@timerfd.fd)
-      @timerfd_node.add(pointerof(@timerfd_event))
-      system_add(@timerfd_node)
+      #@timerfd = System::TimerFD.new
+      #@epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
 
-      # re-register events
-      @events.each do |node|
-        node.registrations = :none
-        system_sync(node) { raise "unreachable" }
-      end
+      # FIXME: must re-add all fds (but we don't know about 'em)
     end
   {% end %}
 
   private def run_internal(blocking : Bool) : Nil
-    buffer = uninitialized LibC::EpollEvent[32]
-
-    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
-
-    if blocking && (time = @mutex.synchronize { @timers.next_ready? })
-      # epoll_wait only has milliseconds precision, so we use a timerfd for
-      # timeout; arm it to the next ready time
-      @timerfd.set(time)
+    # FIXME: with MT a thread may be blocked on the event loop, while another
+    # thread adds a timer that can be the next ready; in that case, we shall
+    # update @timerfd.set(time), add EvFILT_TIMER, or interrupt the event loop
+    if blocking
+      if time = @lock.sync { @timers.next_ready? }
+        # epoll_wait only has milliseconds precision, so we use a timerfd for
+        # timeout; arm it to the next ready time
+        # @timerfd.set(time)
+        # timeout = -1
+        t = (time - Time.monotonic).total_milliseconds
+        timeout = t < 0 ? 0 : t.clamp(1..).to_i
+      else
+        timeout = -1
+      end
+    else
+      timeout = 0
     end
+    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0, timeout: timeout
 
     # wait for events (indefinitely when blocking)
-    epoll_events = @epoll.wait(buffer.to_slice, timeout: blocking ? -1 : 0)
+    buffer = uninitialized LibC::EpollEvent[128]
+    epoll_events = @epoll.wait(buffer.to_slice, timeout)
 
-    @mutex.synchronize do
-      # process events
-      epoll_events.size.times do |i|
-        epoll_event = epoll_events.to_unsafe + i
-        node = epoll_event.value.data.ptr.as(Evented::EventQueue::Node)
+    # process events
+    epoll_events.size.times do |i|
+      epoll_event = epoll_events.to_unsafe + i
 
-        Crystal.trace :evloop, "event", fd: node.fd, events: epoll_event.value.events
-
-        if node.fd == @eventfd.fd
-          @eventfd.read
-          @interrupted.clear
-        elsif node.fd == @timerfd.fd
-          # nothing special
-        elsif (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
-          dequeue_all(node)
-        else
-          process(node, epoll_event)
-        end
-      end
-
-      # process timers
-      @timers.dequeue_ready do |event|
-        process_timer(event)
+      case epoll_event.value.data.ptr
+      when pointerof(@eventfd).as(Void*)
+        # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
+        Crystal.trace :evloop, "interrupted"
+        @eventfd.read
+        @interrupted.clear
+      #when pointerof(@timerfd).as(Void*)
+      #  # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
+      #  Crystal.trace :evloop, "timer"
+      else
+        process(epoll_event)
       end
     end
+
+    # process timers
+    timers = PointerLinkedList(Evented::Event).new
+    @lock.sync do
+      @timers.dequeue_ready { |event| timers.push(event) }
+    end
+    timers.each { |event| process_timer(event) }
   end
 
-  private def process(node, epoll_event)
-    readable = (epoll_event.value.events & LibC::EPOLLIN) == LibC::EPOLLIN
-    writable = (epoll_event.value.events & LibC::EPOLLOUT) == LibC::EPOLLOUT
+  private def process(epoll_event : LibC::EpollEvent*) : Nil
+    pd = epoll_event.value.data.ptr.as(Evented::PollDescriptor*)
 
-    if readable && (event = node.dequeue_reader?)
-      readable = false
-      @timers.delete(event) if event.value.wake_at?
-      Crystal::Scheduler.enqueue(event.value.fiber)
+    {% if flag?(:tracing) %}
+      Crystal.trace :evloop, "event", fd: pd.value.fd, events: epoll_event.value.events
+    {% end %}
+
+    if (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
+      pd.value.@readers.consume_each { |event| resume_io(event) }
+      pd.value.@writers.consume_each { |event| resume_io(event) }
+      return
     end
 
-    if writable && (event = node.dequeue_writer?)
-      writable = false
-      @timers.delete(event) if event.value.wake_at?
-      Crystal::Scheduler.enqueue(event.value.fiber)
+    # if (epoll_event.value.events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
+    #   pd.value.@readers.consume_each { |event| resume_io(event) }
+    #   return
+    # end
+
+    if (epoll_event.value.events & LibC::EPOLLIN) == LibC::EPOLLIN
+      if event = pd.value.@readers.ready!
+        resume_io(event)
+      end
     end
 
-    system_sync(node) do
-      @events.delete(node)
+    if (epoll_event.value.events & LibC::EPOLLOUT) == LibC::EPOLLOUT
+      if event = pd.value.@writers.ready!
+        resume_io(event)
+      end
     end
-
-    # validate data integrity
-    System.print_error "BUG: fd=%d is ready for reading but no registered reader!\n", node.fd if readable
-    System.print_error "BUG: fd=%d is ready for writing but no registered writer!\n", node.fd if writable
   end
 
   def interrupt : Nil
@@ -136,56 +130,17 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd.write(1) if @interrupted.test_and_set
   end
 
-  private def system_add(node : Evented::EventQueue::Node) : Nil
+  private def system_add(fd : Int32, ptr : Pointer) : Nil
     epoll_event = uninitialized LibC::EpollEvent
-    epoll_event.events = LibC::EPOLLIN
-    epoll_event.data.ptr = node.as(Void*)
-    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: node.fd
-    @epoll.add(node.fd, pointerof(epoll_event))
+    # epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
+    epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLET
+    epoll_event.data.ptr = ptr
+    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, ptr: ptr
+    @epoll.add(fd, pointerof(epoll_event))
   end
 
-  private def system_delete(node : Evented::EventQueue::Node) : Nil
-    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: node.fd
-    @epoll.delete(node.fd)
-  end
-
-  # unsafe, yields when there are no more events for fd
-  private def system_sync(node : Evented::EventQueue::Node, &) : Nil
-    events = 0
-    registrations = Evented::EventQueue::Node::Registrations::NONE
-
-    if node.readers?
-      events |= LibC::EPOLLIN
-      registrations |= :read
-    end
-
-    if node.writers?
-      events |= LibC::EPOLLOUT
-      registrations |= :write
-    end
-
-    if events == 0
-      Crystal.trace :evloop, "epoll_ctl", op: "del", fd: node.fd
-      @epoll.delete(node.fd)
-      yield
-    else
-      epoll_event = uninitialized LibC::EpollEvent
-      epoll_event.events = events | LibC::EPOLLET # | LibC::EPOLLEXCLUSIVE
-      epoll_event.data.ptr = node.as(Void*)
-
-      if node.registrations.none?
-        Crystal.trace :evloop, "epoll_ctl", op: "add", fd: node.fd, events: events
-        @epoll.add(node.fd, pointerof(epoll_event))
-      else
-        Crystal.trace :evloop, "epoll_ctl", op: "mod", fd: node.fd, events: events
-
-        # quirk: we can't call EPOLL_CTL_MOD with EPOLLEXCLUSIVE
-        @epoll.modify(node.fd, pointerof(epoll_event))
-        # @epoll.delete(node.fd)
-        # @epoll.add(node.fd, pointerof(epoll_event))
-      end
-
-      node.registrations = registrations
-    end
+  private def system_del(fd : Int32) : Nil
+    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
+    @epoll.delete(fd)
   end
 end

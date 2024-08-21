@@ -1,12 +1,12 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-{% unless flag?(:linux) || flag?(:solaris) %}
+{% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
   require "io/evented"
 {% end %}
 
 module Crystal::System::Socket
-  {% unless flag?(:linux) || flag?(:solaris) %}
+  {% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
     include IO::Evented
   {% end %}
 
@@ -28,6 +28,8 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(fd)
+    evloop = EventLoop.current
+    evloop.add(self) if evloop.responds_to?(:add)
   end
 
   # Tries to bind the socket to a local address.

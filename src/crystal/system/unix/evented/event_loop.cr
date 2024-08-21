@@ -2,86 +2,48 @@ require "./*"
 
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def initialize
-    @mutex = Thread::Mutex.new
-    @events = EventQueue.new
+    @run_lock = Atomic::Flag.new
+    @lock = SpinLock.new
     @timers = Timers.new
   end
 
   {% if flag?(:preview_mt) %}
-    protected def self.each(&)
-      Thread.unsafe_each do |thread|
-        next unless scheduler = thread.@scheduler
-        next unless event_loop = scheduler.@event_loop
-        yield event_loop
-      end
-    end
-
     # must reset the mutexes since another thread may have acquired the lock of
     # one event loop, which would prevent closing file descriptors for example.
     def after_fork_before_exec : Nil
-      EventLoop.each do |event_loop|
-        if event_loop.responds_to?(:after_fork_before_exec_internal)
-          event_loop.after_fork_before_exec_internal
-        end
-      end
-    end
-
-    protected def after_fork_before_exec_internal : Nil
-      # re-create mutex: another thread may have hold the lock
-      @mutex = Thread::Mutex.new
+      @run_lock.clear
+      @lock = SpinLock.new
     end
   {% else %}
     def after_fork : Nil
       # NOTE: fixes an EPERM when calling `pthread_mutex_unlock` in #dequeue
       # called from `Fiber#resume_event.free` when running std specs.
-      @mutex = Thread::Mutex.new
+      @run_lock.clear
+      @lock = SpinLock.new
     end
   {% end %}
 
+  # thread unsafe: must hold `@run_mutex` before calling!
   def run(blocking : Bool) : Bool
-    if @events.empty? && @timers.empty?
-      false
-    else
-      run_internal(blocking)
-      true
-    end
+    run_internal(blocking)
+    true
   end
 
-  private def dequeue_all(node)
-    node.each do |event|
-      case event.value.type
-      when .io_read?, .io_write?
-        @timers.delete(event) if event.value.wake_at?
-        Crystal::Scheduler.enqueue(event.value.fiber)
-      else
-        System.print_error "BUG: fd=%d got closed but it was an event loop system fd!\n", node.fd
+  def try_lock?(&) : Bool
+    if @run_lock.test_and_set
+      begin
+        yield
+        true
+      ensure
+        @run_lock.clear
       end
+    else
+      false
     end
-    @events.delete(node)
-    system_delete(node)
   end
 
-  private def process_timer(event)
-    case event.value.type
-    when .io_read?, .io_write?
-      # reached timeout: cancel the IO event
-      event.value.timed_out!
-      unsafe_dequeue_io_event(event)
-    when .select_timeout?
-      # always dequeue the event but only enqueue the fiber if we win the
-      # atomic CAS
-      return unless select_action = event.value.fiber.timeout_select_action
-      event.value.fiber.timeout_select_action = nil
-      return unless select_action.time_expired?
-      event.value.fiber.@timeout_event.as(FiberEvent).clear
-    when .sleep?
-      # cleanup
-      event.value.fiber.@resume_event.as(FiberEvent).clear
-    else
-      raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
-    end
-
-    Crystal::Scheduler.enqueue(event.value.fiber)
+  def try_run?(blocking : Bool) : Bool
+    try_lock? { run(blocking) }
   end
 
   def interrupt : Nil
@@ -101,10 +63,15 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # file descriptor
 
+  def add(file_descriptor : System::FileDescriptor) : Nil
+    {% if flag?(:tracing) %}
+      file_descriptor.@poll_descriptor.fd = file_descriptor.fd
+    {% end %}
+    system_add(file_descriptor.fd, pointerof(file_descriptor.@poll_descriptor))
+  end
+
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
-    size = evented_read(file_descriptor.fd, slice, file_descriptor.@read_timeout) do
-      check_open(file_descriptor)
-    end
+    size = evented_read(file_descriptor, slice, file_descriptor.@read_timeout)
 
     if size == -1
       if Errno.value == Errno::EBADF
@@ -118,9 +85,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
-    size = evented_write(file_descriptor.fd, slice, file_descriptor.@write_timeout) do
-      check_open(file_descriptor)
-    end
+    size = evented_write(file_descriptor, slice, file_descriptor.@write_timeout)
 
     if size == -1
       if Errno.value == Errno::EBADF
@@ -134,31 +99,26 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   def close(file_descriptor : System::FileDescriptor) : Nil
-    {% if flag?(:preview_mt) %}
-      # MT: one event loop may be waiting on the fd while another thread closes
-      # the fd, so we must iterate all event loops to remove all events before
-      # we close
-      # OPTIMIZE: blindly iterating each eventloop ain't very efficient...
-      EventLoop.each(&.evented_close(file_descriptor.fd))
-    {% else %}
-      evented_close(file_descriptor.fd)
-    {% end %}
+    evented_close(file_descriptor)
   end
 
   # socket
 
+  def add(socket : ::Socket) : Nil
+    {% if flag?(:tracing) %}
+      socket.@poll_descriptor.fd = socket.fd
+    {% end %}
+    system_add(socket.fd, pointerof(socket.@poll_descriptor))
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
-    size = evented_read(socket.fd, slice, socket.@read_timeout) do
-      check_open(socket)
-    end
+    size = evented_read(socket, slice, socket.@read_timeout)
     raise IO::Error.from_errno("read", target: socket) if size == -1
     size
   end
 
   def write(socket : ::Socket, slice : Bytes) : Int32
-    size = evented_write(socket.fd, slice, socket.@write_timeout) do
-      check_open(socket)
-    end
+    size = evented_write(socket, slice, socket.@write_timeout)
     raise IO::Error.from_errno("write", target: socket) if size == -1
     size
   end
@@ -186,7 +146,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       return if socket.closed?
 
       if Errno.value == Errno::EAGAIN
-        wait_readable(socket.fd, socket.@read_timeout) do
+        wait_readable(socket, socket.@read_timeout) do
           raise IO::TimeoutError.new("Accept timed out")
         end
         return if socket.closed?
@@ -205,7 +165,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(socket.fd, timeout) do
+        wait_writable(socket, timeout) do
           return IO::TimeoutError.new("Connect timed out")
         end
       else
@@ -233,7 +193,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       size = LibC.recvfrom(socket.fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
       if size == -1
         if Errno.value == Errno::EAGAIN
-          wait_readable(socket.fd, socket.@read_timeout)
+          wait_readable(socket, socket.@read_timeout)
           check_open(socket)
         else
           raise IO::Error.from_errno("recvfrom", target: socket)
@@ -245,119 +205,147 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   def close(socket : ::Socket) : Nil
-    {% if flag?(:preview_mt) %}
-      # MT: one event loop may be waiting on the fd while another thread closes
-      # the fd, so we must iterate all event loops to remove all events before
-      # we close
-      # OPTIMIZE: iterating all eventloops ain't very efficient...
-      EventLoop.each(&.evented_close(socket.fd))
-    {% else %}
-      evented_close(socket.fd)
-    {% end %}
+    evented_close(socket)
   end
 
   # evented internals
 
-  private def evented_read(fd : Int32, slice : Bytes, timeout : Time::Span?, &) : Int32
+  private def evented_read(io, slice, timeout) : Int32
     loop do
-      ret = LibC.read(fd, slice, slice.size)
+      ret = LibC.read(io.fd, slice, slice.size)
       if ret == -1 && Errno.value == Errno::EAGAIN
-        wait_readable(fd, timeout)
-        yield
+        wait_readable(io, timeout)
+        check_open(io)
       else
         return ret.to_i
       end
     end
   end
 
-  private def evented_write(fd : Int32, slice : Bytes, timeout : Time::Span?, &) : Int32
+  private def evented_write(io, slice : Bytes, timeout : Time::Span?) : Int32
     loop do
-      ret = LibC.write(fd, slice, slice.size)
+      ret = LibC.write(io.fd, slice, slice.size)
       if ret == -1 && Errno.value == Errno::EAGAIN
-        wait_writable(fd, timeout)
-        yield
+        wait_writable(io, timeout)
+        check_open(io)
       else
         return ret.to_i
       end
     end
   end
 
-  protected def evented_close(fd : Int32)
-    @mutex.synchronize do
-      if node = @events[fd]?
-        dequeue_all(node)
+  protected def evented_close(io)
+    system_del(io.fd)
+    io.@poll_descriptor.@readers.consume_each { |event| resume_io(event) }
+    io.@poll_descriptor.@writers.consume_each { |event| resume_io(event) }
+  end
+
+  private def wait_readable(io, timeout = nil) : Nil
+    wait(:io_read, io, pointerof(io.@poll_descriptor.@readers), timeout) { raise IO::TimeoutError.new("Read timed out") }
+  end
+
+  private def wait_readable(io, timeout = nil, &) : Nil
+    wait(:io_read, io, pointerof(io.@poll_descriptor.@readers), timeout) { yield }
+  end
+
+  private def wait_writable(io, timeout = nil) : Nil
+    wait(:io_write, io, pointerof(io.@poll_descriptor.@writers), timeout) { raise IO::TimeoutError.new("Write timed out") }
+  end
+
+  private def wait_writable(io, timeout = nil, &) : Nil
+    wait(:io_write, io, pointerof(io.@poll_descriptor.@writers), timeout) { yield }
+  end
+
+  private def wait(type : Evented::Event::Type, io, waiters, timeout, &)
+    event = Evented::Event.new(type, Fiber.current, pointerof(io.@poll_descriptor), timeout)
+
+    {% if flag?(:preview_mt) %}
+      return if waiters.value.ready?
+
+      waiters.value.@lock.sync do
+        return if waiters.value.ready?
+        waiters.value.@list.push(pointerof(event))
       end
+    {% else %}
+      waiters.value.@list.push(pointerof(event))
+    {% end %}
+
+    if event.wake_at?
+      add_timer(pointerof(event))
+
+      Fiber.suspend
+
+      if event.timed_out?
+        return yield
+      else
+        delete_timer(pointerof(event))
+      end
+    else
+      Fiber.suspend
     end
-  end
 
-  private def wait_readable(fd : Int32, timeout : Time::Span? = nil) : Nil
-    wait(:io_read, fd, timeout) { raise IO::TimeoutError.new("Read timed out") }
-  end
-
-  private def wait_readable(fd : Int32, timeout : Time::Span? = nil, &) : Nil
-    wait(:io_read, fd, timeout) { yield }
-  end
-
-  private def wait_writable(fd : Int32, timeout : Time::Span? = nil) : Nil
-    wait(:io_write, fd, timeout) { raise IO::TimeoutError.new("Write timed out") }
-  end
-
-  private def wait_writable(fd : Int32, timeout : Time::Span? = nil, &) : Nil
-    wait(:io_write, fd, timeout) { yield }
-  end
-
-  private def wait(event_type : Evented::Event::Type, fd : Int32, timeout : Time::Span?, &) : Nil
-    io_event = Evented::Event.new(event_type, fd, Fiber.current, timeout)
-    enqueue pointerof(io_event)
-    Fiber.suspend
-    yield if timeout && io_event.timed_out?
+    waiters.value.@ready.swap(false, :relaxed)
   end
 
   private def check_open(io : IO)
     raise IO::Error.new("Closed stream") if io.closed?
   end
 
-  # queue internals
+  # internals
 
-  protected def enqueue(event : Evented::Event*)
-    @mutex.synchronize do
-      case event.value.type
-      in .io_read?, .io_write?
-        node = @events.enqueue(event)
-        system_sync(node) { raise "unreachable" }
-        @timers.add(event) if event.value.wake_at?
-      in .sleep?, .select_timeout?
-        @timers.add(event)
-      in .system?
-        raise RuntimeError.new("BUG: system event can't be enqueued #{event.value}")
-      end
-    end
+  private abstract def run_internal(blocking : Bool) : Nil
+
+  # TODO: if a thread is blocked on the event loop *and* we add a timer that
+  # becomes the next redy (i.e. inserted at head aka index 0) then we must setup
+  # a timer to make sure the blocked evloop will resume at the new next ready.
+  protected def add_timer(event : Evented::Event*)
+    @lock.sync { @timers.add(event) }
   end
 
-  protected def dequeue(event : Evented::Event*)
-    @mutex.synchronize do
-      case event.value.type
-      in .io_read?, .io_write?
-        unsafe_dequeue_io_event(event)
-        @timers.delete(event) if event.value.wake_at?
-      in .sleep?, .select_timeout?
-        @timers.delete(event)
-      in .system?
-        raise RuntimeError.new("BUG: system event can't be dequeued #{event.value}")
-      end
-    end
+  protected def delete_timer(event : Evented::Event*)
+    @lock.sync { @timers.delete(event) }
   end
 
-  private def unsafe_dequeue_io_event(event : Evented::Event*)
-    node = @events.dequeue(event)
-    system_sync(node) { @events.delete(node) }
+  private def process_timer(event : Evented::Event*)
+    fiber = event.value.fiber
+
+    case event.value.type
+    when .io_read?
+      # reached timeout: cancel io event
+      event.value.timed_out!
+      event.value.pd.value.@readers.delete(event)
+    when .io_write?
+      # reached timeout: cancel io event
+      event.value.timed_out!
+      event.value.pd.value.@writers.delete(event)
+    when .select_timeout?
+      # always dequeue the event but only enqueue the fiber if we win the
+      # atomic CAS
+      return unless select_action = fiber.timeout_select_action
+      fiber.timeout_select_action = nil
+      return unless select_action.time_expired?
+      fiber.@timeout_event.as(FiberEvent).clear
+    when .sleep?
+      # cleanup
+      fiber.@resume_event.as(FiberEvent).clear
+    else
+      raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
+    end
+
+    Crystal::Scheduler.enqueue(fiber)
+  end
+
+  # Helper to resume the fiber associated to an IO event and remove the event
+  # from timers if applicable.
+  private def resume_io(event : Evented::Event*) : Nil
+    if event.value.wake_at?
+      @lock.sync { @timers.delete(event) }
+    end
+    Crystal::Scheduler.enqueue(event.value.fiber)
   end
 
   # system internals
 
-  # NOTE: can't enable the following abstract methods, because they break
-  # compilation
-
-  # private abstract def system_delete(node : Evented::EventQueue::Node) : Nil
-  # private abstract def system_sync(node : Evented::EventQueue::Node) : Nil
+  private abstract def system_add(fd : Int32, ptr : Pointer) : Nil
+  private abstract def system_del(fd : Int32) : Nil
 end

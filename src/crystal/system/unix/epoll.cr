@@ -8,10 +8,21 @@ struct Crystal::System::Epoll
     raise RuntimeError.from_errno("epoll_create1") if @epfd == -1
   end
 
+  def fd : Int32
+    @epfd
+  end
+
   def add(fd : Int32, epoll_event : LibC::EpollEvent*) : Nil
     if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_ADD, fd, epoll_event) == -1
       raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_ADD)")
     end
+  end
+
+  def add(fd : Int32, events : UInt32, ptr : Pointer) : Nil
+    epoll_event = uninitialized LibC::EpollEvent
+    epoll_event.events = events
+    epoll_event.data.ptr = ptr
+    add(fd, pointerof(epoll_event))
   end
 
   def modify(fd : Int32, epoll_event : LibC::EpollEvent*) : Nil
@@ -20,9 +31,16 @@ struct Crystal::System::Epoll
     end
   end
 
+  def modify(fd : Int32, events : UInt32, ptr : Pointer) : Nil
+    epoll_event = uninitialized LibC::EpollEvent
+    epoll_event.events = events
+    epoll_event.data.ptr = ptr
+    modify(fd, pointerof(epoll_event))
+  end
+
   def delete(fd : Int32) : Nil
     if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_DEL, fd, nil) == -1
-      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)")
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)") unless Errno.value == Errno::EPERM
     end
   end
 

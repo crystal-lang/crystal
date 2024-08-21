@@ -1,12 +1,16 @@
 abstract class Crystal::EventLoop
+  {% if flag?(:bsd) || flag?(:darwin) %}
+    @@singleton = Crystal::Kqueue::EventLoop.new
+  {% elsif flag?(:linux) || flag?(:solaris) %}
+    @@singleton = Crystal::Epoll::EventLoop.new
+  {% end %}
+
   # Creates an event loop instance
   def self.create : self
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
-    {% elsif flag?(:bsd) || flag?(:darwin) %}
-      Crystal::Kqueue::EventLoop.new
-    {% elsif flag?(:linux) || flag?(:solaris) %}
-      Crystal::Epoll::EventLoop.new
+    {% elsif flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
+      @@singleton
     {% elsif flag?(:unix) %}
       Crystal::LibEvent::EventLoop.new
     {% elsif flag?(:win32) %}
@@ -18,7 +22,11 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current : self
-    Crystal::Scheduler.event_loop
+    {% if flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
+      @@singleton
+    {% else %}
+      Crystal::Scheduler.event_loop
+    {% end %}
   end
 
   # Runs the loop.
