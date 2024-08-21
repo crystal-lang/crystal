@@ -2,7 +2,7 @@ require "./*"
 
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def initialize
-    @run_lock = Atomic::Flag.new
+    {% if flag?(:preview_mt) %} @run_lock = Atomic::Flag.new {% end %}
     @lock = SpinLock.new
     @timers = Timers.new
   end
@@ -11,44 +11,44 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     # must reset the mutexes since another thread may have acquired the lock of
     # one event loop, which would prevent closing file descriptors for example.
     def after_fork_before_exec : Nil
-      @run_lock.clear
+      {% if flag?(:preview_mt) %} @run_lock.clear {% end %}
       @lock = SpinLock.new
     end
   {% else %}
     def after_fork : Nil
       # NOTE: fixes an EPERM when calling `pthread_mutex_unlock` in #dequeue
       # called from `Fiber#resume_event.free` when running std specs.
-      @run_lock.clear
+      {% if flag?(:preview_mt) %} @run_lock.clear {% end %}
       @lock = SpinLock.new
     end
   {% end %}
 
   # thread unsafe: must hold `@run_mutex` before calling!
   def run(blocking : Bool) : Bool
-    run_internal(blocking)
+    system_run(blocking)
     true
   end
 
   def try_lock?(&) : Bool
-    if @run_lock.test_and_set
-      begin
-        yield
-        true
-      ensure
-        @run_lock.clear
+    {% if flag?(:preview_mt) %}
+      if @run_lock.test_and_set
+        begin
+          yield
+          true
+        ensure
+          @run_lock.clear
+        end
+      else
+        false
       end
-    else
-      false
-    end
+    {% else %}
+      yield
+      true
+    {% end %}
   end
 
   def try_run?(blocking : Bool) : Bool
     try_lock? { run(blocking) }
-  end
-
-  def interrupt : Nil
-    # the atomic makes sure we only write once
-    @eventfd.write(1) if @interrupted.test_and_set
   end
 
   # fiber
@@ -210,7 +210,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # evented internals
 
-  private def evented_read(io, slice, timeout) : Int32
+  private def evented_read(io, slice : Bytes, timeout : Time::Span?) : Int32
     loop do
       ret = LibC.read(io.fd, slice, slice.size)
       if ret == -1 && Errno.value == Errno::EAGAIN
@@ -293,17 +293,18 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # internals
 
-  private abstract def run_internal(blocking : Bool) : Nil
-
-  # TODO: if a thread is blocked on the event loop *and* we add a timer that
-  # becomes the next redy (i.e. inserted at head aka index 0) then we must setup
-  # a timer to make sure the blocked evloop will resume at the new next ready.
   protected def add_timer(event : Evented::Event*)
-    @lock.sync { @timers.add(event) }
+    @lock.sync do
+      is_next_ready = @timers.add(event)
+      system_set_timer(event.value.wake_at) if is_next_ready
+    end
   end
 
   protected def delete_timer(event : Evented::Event*)
-    @lock.sync { @timers.delete(event) }
+    @lock.sync do
+      was_next_ready = @timers.delete(event)
+      system_set_timer(@timers.next_ready?) if was_next_ready
+    end
   end
 
   private def process_timer(event : Evented::Event*)
@@ -311,11 +312,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
     case event.value.type
     when .io_read?
-      # reached timeout: cancel io event
+      # reached read timeout: cancel io event
       event.value.timed_out!
       event.value.pd.value.@readers.delete(event)
     when .io_write?
-      # reached timeout: cancel io event
+      # reached write timeout: cancel io event
       event.value.timed_out!
       event.value.pd.value.@writers.delete(event)
     when .select_timeout?
@@ -346,6 +347,8 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # system internals
 
+  private abstract def system_run(blocking : Bool) : Nil
   private abstract def system_add(fd : Int32, ptr : Pointer) : Nil
   private abstract def system_del(fd : Int32) : Nil
+  private abstract def system_set_timer(time : Time::Span?) : Nil
 end

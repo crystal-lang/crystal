@@ -1,8 +1,7 @@
-
 require "../evented/event_loop"
 require "../epoll"
 require "../eventfd"
-#require "../timerfd"
+require "../timerfd"
 
 class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   def initialize
@@ -16,9 +15,10 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd = System::EventFD.new
     @epoll.add(@eventfd.fd, LibC::EPOLLIN, pointerof(@eventfd))
 
-    # timer to go below the millisecond prevision of epoll_wait
-    #@timerfd = System::TimerFD.new
-    #@epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
+    # we use timerfd to go below the millisecond precision of epoll_wait; it
+    # also allows to avoid locking timers before every epoll_wait call
+    @timerfd = System::TimerFD.new
+    @epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
   end
 
   {% unless flag?(:preview_mt) %}
@@ -28,7 +28,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       # close inherited fds
       @epoll.close
       @eventfd.close
-      #@timerfd.close
+      @timerfd.close
 
       # create new fds
       @epoll = System::Epoll.new
@@ -37,36 +37,20 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       @eventfd = System::EventFD.new
       @epoll.add(@eventfd.fd, LibC::EPOLLIN, pointerof(@eventfd))
 
-      #@timerfd = System::TimerFD.new
-      #@epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
+      @timerfd = System::TimerFD.new
+      @epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
+      system_set_timer(@timers.next_ready?)
 
       # FIXME: must re-add all fds (but we don't know about 'em)
     end
   {% end %}
 
-  private def run_internal(blocking : Bool) : Nil
-    # FIXME: with MT a thread may be blocked on the event loop, while another
-    # thread adds a timer that can be the next ready; in that case, we shall
-    # update @timerfd.set(time), add EvFILT_TIMER, or interrupt the event loop
-    if blocking
-      if time = @lock.sync { @timers.next_ready? }
-        # epoll_wait only has milliseconds precision, so we use a timerfd for
-        # timeout; arm it to the next ready time
-        # @timerfd.set(time)
-        # timeout = -1
-        t = (time - Time.monotonic).total_milliseconds
-        timeout = t < 0 ? 0 : t.clamp(1..).to_i
-      else
-        timeout = -1
-      end
-    else
-      timeout = 0
-    end
-    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0, timeout: timeout
+  private def system_run(blocking : Bool) : Nil
+    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
 
     # wait for events (indefinitely when blocking)
     buffer = uninitialized LibC::EpollEvent[128]
-    epoll_events = @epoll.wait(buffer.to_slice, timeout)
+    epoll_events = @epoll.wait(buffer.to_slice, timeout: blocking ? -1 : 0)
 
     # process events
     epoll_events.size.times do |i|
@@ -78,9 +62,9 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
         Crystal.trace :evloop, "interrupted"
         @eventfd.read
         @interrupted.clear
-      #when pointerof(@timerfd).as(Void*)
-      #  # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
-      #  Crystal.trace :evloop, "timer"
+      when pointerof(@timerfd).as(Void*)
+        # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
+        Crystal.trace :evloop, "timer"
       else
         process(epoll_event)
       end
@@ -130,17 +114,26 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd.write(1) if @interrupted.test_and_set
   end
 
+  # TODO: add bindings for EPOLLRDHUP so we can enable it
   private def system_add(fd : Int32, ptr : Pointer) : Nil
     epoll_event = uninitialized LibC::EpollEvent
     # epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
     epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLET
     epoll_event.data.ptr = ptr
-    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, ptr: ptr
+    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd
     @epoll.add(fd, pointerof(epoll_event))
   end
 
   private def system_del(fd : Int32) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
     @epoll.delete(fd)
+  end
+
+  private def system_set_timer(time : Time::Span?) : Nil
+    if time
+      @timerfd.set(time)
+    else
+      @timerfd.cancel
+    end
   end
 end

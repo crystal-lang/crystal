@@ -9,10 +9,13 @@ struct Crystal::Evented::Timers
     @list.empty?
   end
 
+  # Returns the time at which the next timer is supposed to run.
   def next_ready? : Time::Span?
     @list.first?.try(&.value.wake_at)
   end
 
+  # Dequeues and yields each ready timer from the oldest to the most recent
+  # (i.e. time ascending).
   def dequeue_ready(&) : Nil
     return if @list.empty?
 
@@ -28,23 +31,34 @@ struct Crystal::Evented::Timers
     n.times { @list.shift }
   end
 
-  def add(event : Evented::Event*) : Nil
+  # Add a new timer into the list. Returns true if it is the next ready timer.
+  def add(event : Evented::Event*) : Bool
     if @list.empty?
       @list << event
+      true
     elsif index = lookup(event.value.wake_at)
       @list.insert(index, event)
+      index == 0
     else
       @list.push(event)
+      false
     end
-  end
-
-  def delete(event : Evented::Event*) : Nil
-    @list.delete(event)
   end
 
   private def lookup(wake_at)
     @list.each_with_index do |event, index|
       return index if event.value.wake_at >= wake_at
+    end
+  end
+
+  # Removes a timer from the list. Returns true if the it was the next ready
+  # timer.
+  def delete(event : Evented::Event*) : Bool
+    if index = @list.index(event)
+      @list.delete_at(index)
+      index == 0
+    else
+      false
     end
   end
 end
