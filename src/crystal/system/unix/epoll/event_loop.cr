@@ -91,10 +91,10 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       return
     end
 
-    # if (epoll_event.value.events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
-    #   pd.value.@readers.consume_each { |event| resume_io(event) }
-    #   return
-    # end
+    if (epoll_event.value.events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
+      pd.value.@readers.consume_each { |event| resume_io(event) }
+      return
+    end
 
     if (epoll_event.value.events & LibC::EPOLLIN) == LibC::EPOLLIN
       if event = pd.value.@readers.ready!
@@ -114,11 +114,9 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd.write(1) if @interrupted.test_and_set
   end
 
-  # TODO: add bindings for EPOLLRDHUP so we can enable it
   private def system_add(fd : Int32, ptr : Pointer) : Nil
     epoll_event = uninitialized LibC::EpollEvent
-    # epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
-    epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLET
+    epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
     epoll_event.data.ptr = ptr
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd
     @epoll.add(fd, pointerof(epoll_event))
