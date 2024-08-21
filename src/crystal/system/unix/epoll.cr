@@ -38,9 +38,17 @@ struct Crystal::System::Epoll
     modify(fd, pointerof(epoll_event))
   end
 
+  # OPTIMIZE: if we added a fd only when it would block (instead of immediately
+  # on open/accept), then maybe we could spare the errno checks for EPERM and
+  # ENOENT (?)
   def delete(fd : Int32) : Nil
     if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_DEL, fd, nil) == -1
-      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)") unless Errno.value == Errno::EPERM
+      case Errno.value
+      when Errno::EPERM, Errno::ENOENT
+        # skip
+      else
+        raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)")
+      end
     end
   end
 

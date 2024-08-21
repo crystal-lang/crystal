@@ -17,7 +17,7 @@ class Crystal::Evented::FiberEvent
 
   # select timeout has been cancelled
   def delete : Nil
-    return unless @event.wake_at
+    return unless @event.wake_at?
 
     @event.wake_at = nil
     Crystal::EventLoop.current.delete_timer(pointerof(@event))
