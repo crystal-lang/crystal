@@ -129,11 +129,8 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def system_add(fd : Int32, ptr : Pointer) : Nil
-    epoll_event = uninitialized LibC::EpollEvent
-    epoll_event.events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
-    epoll_event.data.ptr = ptr
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd
-    @epoll.add(fd, pointerof(epoll_event))
+    @epoll.add(fd, LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET, ptr)
   end
 
   private def system_del(fd : Int32) : Nil
