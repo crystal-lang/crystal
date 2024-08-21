@@ -16,6 +16,9 @@ minor_branch="${CRYSTAL_VERSION%.*}"
 next_minor="$((${minor_branch#*.} + 1))"
 echo "${CRYSTAL_VERSION%%.*}.${next_minor}.0-dev" > src/VERSION
 
+# Update shard.yml
+sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
+
 # Remove SOURCE_DATE_EPOCH (only used in source tree of a release)
 rm -f src/SOURCE_DATE_EPOCH
 

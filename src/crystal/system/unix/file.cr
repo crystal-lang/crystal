@@ -24,6 +24,9 @@ module Crystal::System::File
     {fd, fd < 0 ? Errno.value : Errno::NONE}
   end
 
+  protected def system_set_mode(mode : String)
+  end
+
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     stat = uninitialized LibC::Stat
     if follow_symlinks

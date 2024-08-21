@@ -89,7 +89,7 @@ class Process
   #   end
   # end
   #
-  # wait_channel.receive
+  # wait_channel.receive?
   # puts "bye"
   # ```
   def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil

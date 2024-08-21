@@ -57,7 +57,10 @@ lib LibCrypto
 
   struct Bio
     method : Void*
-    callback : (Void*, Int, Char*, Int, Long, Long) -> Long
+    callback : BIO_callback_fn
+    {% if compare_versions(LIBRESSL_VERSION, "3.5.0") >= 0 %}
+      callback_ex : BIO_callback_fn_ex
+    {% end %}
     cb_arg : Char*
     init : Int
     shutdown : Int
@@ -71,6 +74,9 @@ lib LibCrypto
     num_read : ULong
     num_write : ULong
   end
+
+  alias BIO_callback_fn = (Bio*, Int, Char*, Int, Long, Long) -> Long
+  alias BIO_callback_fn_ex = (Bio*, Int, Char, SizeT, Int, Long, Int, SizeT*) -> Long
 
   PKCS5_SALT_LEN     =  8
   EVP_MAX_KEY_LENGTH = 32

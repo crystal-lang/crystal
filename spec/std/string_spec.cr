@@ -321,6 +321,7 @@ describe "String" do
     it { expect_raises(ArgumentError) { "1__234".to_i } }
     it { expect_raises(ArgumentError) { "1_234".to_i } }
     it { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
+    it { expect_raises(ArgumentError) { "".to_i(whitespace: false) } }
     it { expect_raises(ArgumentError) { "0x123".to_i } }
     it { expect_raises(ArgumentError) { "0b123".to_i } }
     it { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
@@ -515,6 +516,7 @@ describe "String" do
     "nan".to_f?(whitespace: false).try(&.nan?).should be_true
     " nan".to_f?(whitespace: false).should be_nil
     "nan ".to_f?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "".to_f(whitespace: false) }
     "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
@@ -724,6 +726,10 @@ describe "String" do
     it { assert_prints "  spáçes before".titleize, "  Spáçes Before" }
     it { assert_prints "testá-se múitô".titleize, "Testá-se Múitô" }
     it { assert_prints "iO iO".titleize(Unicode::CaseOptions::Turkic), "İo İo" }
+    it { assert_prints "foo_Bar".titleize, "Foo_bar" }
+    it { assert_prints "foo_bar".titleize, "Foo_bar" }
+    it { assert_prints "testá_se múitô".titleize(underscore_to_space: true), "Testá Se Múitô" }
+    it { assert_prints "foo_bar".titleize(underscore_to_space: true), "Foo Bar" }
 
     it "handles multi-character mappings correctly (#13533)" do
       assert_prints "ﬄİ İﬄ ǳ Ǳ".titleize, "Ffli̇ İﬄ ǲ ǲ"
@@ -734,6 +740,12 @@ describe "String" do
       "a\xA0b".titleize.should eq("A\xA0b")
       String.build { |io| "\xB5!\xE0\xC1\xB5?".titleize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
       String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
+    end
+
+    describe "with IO" do
+      it { String.build { |io| "foo_Bar".titleize io }.should eq "Foo_bar" }
+      it { String.build { |io| "foo_bar".titleize io }.should eq "Foo_bar" }
+      it { String.build { |io| "foo_bar".titleize(io, underscore_to_space: true) }.should eq "Foo Bar" }
     end
   end
 
