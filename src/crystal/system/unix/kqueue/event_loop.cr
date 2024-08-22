@@ -62,10 +62,10 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
   private def system_run(blocking : Bool) : Nil
     changes = uninitialized LibC::Kevent[0]
-    buffer = uninitialized LibC::Kevent[32]
+    buffer = uninitialized LibC::Kevent[128]
 
     Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
-    timeout = blocking ? Time::Span.zero : nil
+    timeout = blocking ? nil : Time::Span.zero
     kevents = @kqueue.kevent(changes.to_slice, buffer.to_slice, timeout)
 
     # process events
@@ -125,16 +125,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     case kevent.value.filter
     when LibC::EVFILT_READ
       if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
-        # OPTIMIZE: pass errno (kevent.data) though PollDescriptor
+        # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
         pd.value.@readers.consume_each { |event| resume_io(event) }
       elsif event = pd.value.@readers.ready!
         resume_io(event)
       end
     when LibC::EVFILT_WRITE
       if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
-        # OPTIMIZE: pass errno (kevent.data) though PollDescriptor
-        pd.value.@readers.consume_each { |event| resume_io(event) }
-      elsif event = pd.value.@readers.ready!
+        # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
+        pd.value.@writers.consume_each { |event| resume_io(event) }
+      elsif event = pd.value.@writers.ready!
         resume_io(event)
       end
     end
@@ -158,19 +158,14 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
   private def system_add(fd : Int32, ptr : Pointer) : Nil
     Crystal.trace :evloop, "kevent", op: "add", fd: fd
-    @kqueue.kevent(
-      fd,
-      LibC::EVFILT_READ | LibC::EVFILT_WRITE,
-      LibC::EV_ADD | LibC::EV_CLEAR,
-      udata: ptr)
+    changes = uninitialized LibC::Kevent[2]
+    kevent = changes.to_unsafe
+    System::Kqueue.set(kevent, fd, LibC::EVFILT_READ, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
+    System::Kqueue.set(kevent + 1, fd, LibC::EVFILT_WRITE, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
+    @kqueue.kevent(changes.to_slice)
   end
 
   private def system_del(fd : Int32) : Nil
-    Crystal.trace :evloop, "kevent", op: "del", fd: fd
-    @kqueue.kevent(fd, LibC::EVFILT_READ | LibC::EVFILT_WRITE, LibC::EV_DELETE)
-  end
-
-  private def system_close(fd : Int32) : Nil
     # nothing to do: close(2) will do the job
   end
 
@@ -183,7 +178,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
           t.total_nanoseconds.to_i64!.clamp(0..)
         {% else %}
           # legacy BSD (and DragonFly) only have millisecond precision
-          t > 0 ? t.total_milliseconds.to_i64!.clamp(1..) : 0
+          t.positive? ? t.total_milliseconds.to_i64!.clamp(1..) : 0
         {% end %}
     else
       flags = LibC::EV_DELETE

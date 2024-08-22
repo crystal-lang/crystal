@@ -138,10 +138,6 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @epoll.delete(fd)
   end
 
-  private def system_close(fd : Int32) : Nil
-    system_del(fd)
-  end
-
   private def system_set_timer(time : Time::Span?) : Nil
     if time
       @timerfd.set(time)
