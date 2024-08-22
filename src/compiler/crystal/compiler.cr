@@ -411,7 +411,24 @@ module Crystal
       if program.has_flag? "msvc"
         lib_flags = program.lib_flags
         # Execute and expand `subcommands`.
-        lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
+        if expand
+          lib_flags = lib_flags.gsub(/`(.*?)`/) do
+            command = $1
+            begin
+              error_io = IO::Memory.new
+              output = Process.run(command, shell: true, output: :pipe, error: error_io) do |process|
+                process.output.gets_to_end
+              end
+              unless $?.success?
+                error_io.rewind
+                error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io.gets_to_end}"
+              end
+              output
+            rescue exc
+              error "Error executeing subcommand for linker flags: #{command.inspect}: #{exc}"
+            end
+          end
+        end
 
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
