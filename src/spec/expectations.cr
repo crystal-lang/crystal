@@ -73,11 +73,13 @@ module Spec
     end
 
     private def identify(value)
-      if value.responds_to?(:object_id)
-        "object_id: #{value.object_id}"
-      else
-        value.to_unsafe
+      if value.responds_to?(:to_unsafe)
+        if !value.responds_to?(:object_id)
+          return value.to_unsafe
+        end
       end
+
+      "object_id: #{value.object_id}"
     end
   end
 
