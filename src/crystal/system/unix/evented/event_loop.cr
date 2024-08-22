@@ -267,7 +267,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
         waiters.value.@list.push(pointerof(event))
       end
     {% else %}
-      waiters.value.@list.push(pointerof(event))
+       waiters.value.@list.push(pointerof(event))
     {% end %}
 
     if event.wake_at?
@@ -275,16 +275,14 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
       Fiber.suspend
 
-      if event.timed_out?
-        return yield
-      else
-        delete_timer(pointerof(event))
-      end
+      return yield if event.timed_out?
     else
       Fiber.suspend
     end
 
-    waiters.value.@ready.swap(false, :relaxed)
+    {% if flag?(:preview_mt) %}
+      waiters.value.@ready.set(false, :relaxed)
+    {% end %}
   end
 
   private def check_open(io : IO)
@@ -305,6 +303,22 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       was_next_ready = @timers.delete(event)
       system_set_timer(@timers.next_ready?) if was_next_ready
     end
+  end
+
+  private def process_timers : Nil
+    #events = PointerLinkedList(Event).new
+    size = 0
+
+    @lock.sync do
+      @timers.dequeue_ready do |event|
+        process_timer(event)
+        #events << event
+        size += 1
+      end
+      system_set_timer(@timers.next_ready?) unless size == 0
+    end
+
+    #events.each { |event| process_timer(event) }
   end
 
   private def process_timer(event : Evented::Event*)
@@ -339,9 +353,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # Helper to resume the fiber associated to an IO event and remove the event
   # from timers if applicable.
   private def resume_io(event : Evented::Event*) : Nil
-    if event.value.wake_at?
-      @lock.sync { @timers.delete(event) }
-    end
+    delete_timer(event) if event.value.wake_at?
     Crystal::Scheduler.enqueue(event.value.fiber)
   end
 

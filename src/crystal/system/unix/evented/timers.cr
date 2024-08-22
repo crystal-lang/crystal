@@ -28,6 +28,7 @@ struct Crystal::Evented::Timers
       n += 1
     end
 
+    # OPTIMIZE: consume the n entries at once
     n.times { @list.shift }
   end
 
@@ -51,8 +52,7 @@ struct Crystal::Evented::Timers
     end
   end
 
-  # Removes a timer from the list. Returns true if the it was the next ready
-  # timer.
+  # Removes a timer from the list. Returns true if it was the next ready timer.
   def delete(event : Evented::Event*) : Bool
     if index = @list.index(event)
       @list.delete_at(index)

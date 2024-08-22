@@ -20,12 +20,16 @@ module Crystal::Evented
 
     def ready! : Pointer(Event)?
       @lock.sync do
-        if event = @list.shift?
-          event
-        else
-          @ready.set(true, :relaxed)
-          nil
-        end
+        {% if flag?(:preview_mt) %}
+          if event = @list.shift?
+            event
+          else
+            @ready.set(true, :relaxed)
+            nil
+          end
+        {% else %}
+          @list.shift?
+        {% end %}
       end
     end
   end

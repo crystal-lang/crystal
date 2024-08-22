@@ -84,12 +84,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       end
     end
 
-    # process timers
-    timers = PointerLinkedList(Evented::Event).new
-    @lock.sync do
-      @timers.dequeue_ready { |event| timers.push(event) }
-    end
-    timers.each { |event| process_timer(event) }
+    process_timers
   end
 
   private def process(epoll_event : LibC::EpollEvent*) : Nil
