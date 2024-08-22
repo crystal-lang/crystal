@@ -421,7 +421,7 @@ module Crystal
               end
               unless $?.success?
                 error_io.rewind
-                error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io.gets_to_end}"
+                error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
               end
               output
             rescue exc
