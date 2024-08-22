@@ -425,7 +425,7 @@ module Crystal
               end
               output
             rescue exc
-              error "Error executeing subcommand for linker flags: #{command.inspect}: #{exc}"
+              error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
             end
           end
         end
