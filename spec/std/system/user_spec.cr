@@ -1,10 +1,19 @@
-{% skip_file if flag?(:win32) %}
-
 require "spec"
 require "system/user"
 
-USER_NAME         = {{ `id -un`.stringify.chomp }}
-USER_ID           = {{ `id -u`.stringify.chomp }}
+{% if flag?(:win32) %}
+  # `whoami` returns lowercase domain, `hostname` preserves case, Win32 APIs
+  # return uppercase; we assume the domain case is case-insensitive and always
+  # use uppercase
+  {% name, id = `whoami /USER /FO TABLE /NH`.stringify.chomp.split(" ") %}
+  {% domain, username = name.split("\\") %}
+  USER_NAME = {{ "#{domain.upcase.id}\\#{username.id}" }}
+  USER_ID   = {{ id }}
+{% else %}
+  USER_NAME = {{ `id -un`.stringify.chomp }}
+  USER_ID   = {{ `id -u`.stringify.chomp }}
+{% end %}
+
 INVALID_USER_NAME = "this_user_does_not_exist"
 INVALID_USER_ID   = {% if flag?(:android) %}"8888"{% else %}"1234567"{% end %}
 
