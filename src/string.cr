@@ -3349,11 +3349,21 @@ class String
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
     if single_byte_optimizable?
-      # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
-      # sequences and we can immediately reject any non-ASCII codepoint.
-      return unless search.ascii?
+      # With `single_byte_optimizable?` there are only ASCII characters and
+      # invalid UTF-8 byte sequences, and we can reject anything that is neither
+      # ASCII nor the replacement character.
+      case search
+      when .ascii?
+        return to_slice.fast_index(search.ord.to_u8!, offset)
+      when Char::REPLACEMENT
+        offset.upto(bytesize - 1) do |i|
+          if to_unsafe[i] >= 0x80
+            return i.to_i
+          end
+        end
+      end
 
-      return to_slice.fast_index(search.ord.to_u8, offset)
+      return nil
     end
 
     offset += size if offset < 0
@@ -3469,11 +3479,21 @@ class String
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if single_byte_optimizable?
-      # With `single_byte_optimizable?` there are only ASCII characters and invalid UTF-8 byte
-      # sequences and we can immediately reject any non-ASCII codepoint.
-      return unless search.ascii?
+      # With `single_byte_optimizable?` there are only ASCII characters and
+      # invalid UTF-8 byte sequences, and we can reject anything that is neither
+      # ASCII nor the replacement character.
+      case search
+      when .ascii?
+        return to_slice.rindex(search.ord.to_u8!, offset)
+      when Char::REPLACEMENT
+        offset.downto(0) do |i|
+          if to_unsafe[i] >= 0x80
+            return i.to_i
+          end
+        end
+      end
 
-      return to_slice.rindex(search.ord.to_u8, offset)
+      return nil
     end
 
     offset += size if offset < 0
