@@ -11,22 +11,9 @@ class XML::Error < Exception
     super(message)
   end
 
-  @@errors = [] of self
-
-  # :nodoc:
-  protected def self.add_errors(errors)
-    @@errors.concat(errors)
-  end
-
   @[Deprecated("This class accessor is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
   def self.errors : Array(XML::Error)?
-    if @@errors.empty?
-      nil
-    else
-      errors = @@errors.dup
-      @@errors.clear
-      errors
-    end
+    {% raise "`XML::Error.errors` is deprecated and its implementation was removed because it leaks memory when it's not used.\nSee https://github.com/crystal-lang/crystal/issues/14934 for details." %}
   end
 
   def self.collect(errors, &)
