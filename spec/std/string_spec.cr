@@ -1303,7 +1303,7 @@ describe "String" do
     end
   end
 
-  describe "byte_index" do
+  describe "#byte_index" do
     it { "foo".byte_index('o'.ord).should eq(1) }
     it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
     it { "foo".byte_index('a'.ord).should be_nil }
@@ -1337,6 +1337,11 @@ describe "String" do
       "foo foo".byte_index("oo", 2).should eq(5)
       "こんにちは世界".byte_index("ちは").should eq(9)
     end
+
+    # Check offset type
+    it { "foo".byte_index('o'.ord, 0_i64).should be_a(Int64) }
+    it { "foo".byte_index('o', 0_i64).should be_a(Int64) }
+    it { "foo".byte_index("o", 0_i64).should be_a(Int64) }
   end
 
   describe "includes?" do
