@@ -29,10 +29,6 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @epoll.close
     @eventfd.close
     @timerfd.close
-
-    # OPTIMIZE: this shouldn't be necessary but we open/close fds before exec
-    # and it will add/delete from the epoll instance
-    @epoll = System::Epoll.new
   end
 
   {% unless flag?(:preview_mt) %}

@@ -25,15 +25,17 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   def after_fork_before_exec : Nil
     super
 
+    # O_CLOEXEC would close these automatically, _but_ we don't want to mess
+    # with the parent process fds (that could mess the parent evloop)
+
     {% unless flag?(:darwin) || flag?(:dragonfly) %}
       # kqueue isn't inherited by fork on darwin/dragonfly, but is inherited
       # on other BSD
       @kqueue.close
     {% end %}
-
-    # OPTIMIZE: this shouldn't be necessary but we open/close fds before exec,
-    # and it will add/delete from the kqueue instance
-    @kqueue = System::Kqueue.new
+    {% unless LibC.has_constant?(:EVFILT_USER) %}
+      @pipe.each { |fd| LibC.close(fd) }
+    {% end %}
   end
 
   {% unless flag?(:preview_mt) %}
