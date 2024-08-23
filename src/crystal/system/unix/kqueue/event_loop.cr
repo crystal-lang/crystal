@@ -174,7 +174,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       # we can safely discard these errors since further read or write to these
       # file descriptors will fail with the same error and the evloop will never
       # try to wait.
-      unless Errno.value.in?(Errno::ENODEV, Errno::EPIPE)
+      unless Errno.value.in?(Errno::ENODEV, Errno::EPIPE, Errno::EINVAL)
         raise RuntimeError.from_errno("kevent")
       end
     end
