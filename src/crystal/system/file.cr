@@ -65,7 +65,7 @@ module Crystal::System::File
         io << suffix
       end
 
-      handle, errno = open(path, mode, perm)
+      handle, errno = open(path, mode, perm, blocking: true)
 
       if error_is_none?(errno)
         return {handle, path}
