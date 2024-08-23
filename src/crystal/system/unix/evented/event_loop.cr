@@ -267,7 +267,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
         waiters.value.@list.push(pointerof(event))
       end
     {% else %}
-       waiters.value.@list.push(pointerof(event))
+      waiters.value.@list.push(pointerof(event))
     {% end %}
 
     if event.wake_at?
@@ -306,19 +306,19 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   private def process_timers : Nil
-    #events = PointerLinkedList(Event).new
+    # events = PointerLinkedList(Event).new
     size = 0
 
     @lock.sync do
       @timers.dequeue_ready do |event|
         process_timer(event)
-        #events << event
+        # events << event
         size += 1
       end
       system_set_timer(@timers.next_ready?) unless size == 0
     end
 
-    #events.each { |event| process_timer(event) }
+    # events.each { |event| process_timer(event) }
   end
 
   private def process_timer(event : Evented::Event*)
