@@ -61,12 +61,11 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   {% end %}
 
   private def system_run(blocking : Bool) : Nil
-    changes = uninitialized LibC::Kevent[0]
     buffer = uninitialized LibC::Kevent[128]
 
     Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
     timeout = blocking ? nil : Time::Span.zero
-    kevents = @kqueue.kevent(changes.to_slice, buffer.to_slice, timeout)
+    kevents = @kqueue.wait(buffer.to_slice, timeout)
 
     # process events
     kevents.size.times do |i|
@@ -153,11 +152,27 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
   private def system_add(fd : Int32, ptr : Pointer) : Nil
     Crystal.trace :evloop, "kevent", op: "add", fd: fd
-    changes = uninitialized LibC::Kevent[2]
-    kevent = changes.to_unsafe
-    System::Kqueue.set(kevent, fd, LibC::EVFILT_READ, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
-    System::Kqueue.set(kevent + 1, fd, LibC::EVFILT_WRITE, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
-    @kqueue.kevent(changes.to_slice)
+
+    # register both read and write events
+    kevents = uninitialized LibC::Kevent[2]
+    2.times do |i|
+      kevent = kevents.to_unsafe + i
+      filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
+    end
+
+    @kqueue.kevent(kevents.to_slice) do
+      # we broadly add file descriptors to kqueue whenever we open them, but
+      # sometimes the other end is closed and registration can fail (e.g.
+      # stdio).
+      #
+      # we can safely discard these errors since further read or write to these
+      # file descriptors will fail with the same error and the evloop will never
+      # try to wait.
+      unless Errno.value.in?(Errno::ENODEV, Errno::EPIPE)
+        raise RuntimeError.from_errno("kevent")
+      end
+    end
   end
 
   private def system_del(fd : Int32) : Nil
@@ -189,6 +204,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
     # use the evloop address as the unique identifier for the timer kevent
     ident = LibC::SizeT.new!(self.as(Void*).address)
-    @kqueue.kevent(ident, LibC::EVFILT_TIMER, flags, fflags, data)
+    @kqueue.kevent(ident, LibC::EVFILT_TIMER, flags, fflags, data) do
+      raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT
+    end
   end
 end
