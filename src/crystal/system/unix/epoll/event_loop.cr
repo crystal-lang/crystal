@@ -62,6 +62,8 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     buffer = uninitialized LibC::EpollEvent[128]
     epoll_events = @epoll.wait(buffer.to_slice, timeout: blocking ? -1 : 0)
 
+    timer_triggered = false
+
     # process events
     epoll_events.size.times do |i|
       epoll_event = epoll_events.to_unsafe + i
@@ -75,12 +77,13 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       when pointerof(@timerfd).as(Void*)
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "timer"
+        timer_triggered = true
       else
         process(epoll_event)
       end
     end
 
-    process_timers
+    process_timers(timer_triggered)
   end
 
   private def process(epoll_event : LibC::EpollEvent*) : Nil

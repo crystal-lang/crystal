@@ -305,17 +305,19 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     end
   end
 
-  private def process_timers : Nil
+  private def process_timers(timer_triggered : Bool) : Nil
     # events = PointerLinkedList(Event).new
     size = 0
 
     @lock.sync do
       @timers.dequeue_ready do |event|
-        process_timer(event)
         # events << event
+        process_timer(event)
         size += 1
       end
-      system_set_timer(@timers.next_ready?) unless size == 0
+      unless size == 0 && timer_triggered
+        system_set_timer(@timers.next_ready?)
+      end
     end
 
     # events.each { |event| process_timer(event) }

@@ -69,6 +69,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     timeout = blocking ? nil : Time::Span.zero
     kevents = @kqueue.wait(buffer.to_slice, timeout)
 
+    timer_triggered = false
+
     # process events
     kevents.size.times do |i|
       kevent = kevents.to_unsafe + i
@@ -77,12 +79,13 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         # nothing special
       elsif kevent.value.filter == LibC::EVFILT_TIMER
         # nothing special
+        timer_triggered = true
       else
         process(kevent)
       end
     end
 
-    process_timers
+    process_timers(timer_triggered)
   end
 
   private def process_interrupt?(kevent)
