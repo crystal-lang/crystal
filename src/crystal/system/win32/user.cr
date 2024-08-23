@@ -116,28 +116,52 @@ module Crystal::System::User
       end
     end
 
-    lookup_full_name_server(name, domain) || name
-  end
-
-  private def self.lookup_full_name_server(name, domain)
     info = uninitialized LibC::USER_INFO_10*
     if LibC.NetUserGetInfo(Crystal::System.to_wstr(domain), Crystal::System.to_wstr(name), 10, pointerof(info).as(LibC::BYTE**)) == LibC::NERR_Success
       begin
         str, _ = String.from_utf16(info.value.usri10_full_name)
-        str
+        return str
       ensure
         LibC.NetApiBufferFree(info)
       end
     end
+
+    # domain worked neither as a domain nor as a server
+    # could be domain server unavailable
+    # pretend username is fullname
+    name
   end
 
+  # obtains the primary group SID for a user using this method:
+  # https://support.microsoft.com/en-us/help/297951/how-to-use-the-primarygroupid-attribute-to-find-the-primary-group-for
+  # The method follows this formula: domainRID + "-" + primaryGroupRID
   private def self.lookup_primary_group_id(name : String, domain : String) : String?
     domain_sid = name_to_sid(domain) || return
     return unless domain_sid.type.sid_type_domain?
 
     domain_sid_str = sid_to_s(domain_sid.sid)
+
+    # If the user has joined a domain use the RID of the default primary group
+    # called "Domain Users":
+    # https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
+    # SID: S-1-5-21domain-513
+    #
+    # The correct way to obtain the primary group of a domain user is
+    # probing the user primaryGroupID attribute in the server Active Directory:
+    # https://learn.microsoft.com/en-us/windows/win32/adschema/a-primarygroupid
+    #
+    # Note that the primary group of domain users should not be modified
+    # on Windows for performance reasons, even if it's possible to do that.
+    # The .NET Developer's Guide to Directory Services Programming - Page 409
+    # https://books.google.bg/books?id=kGApqjobEfsC&lpg=PA410&ots=p7oo-eOQL7&dq=primary%20group%20RID&hl=bg&pg=PA409#v=onepage&q&f=false
     return "#{domain_sid_str}-513" if domain_joined?
 
+    # For non-domain users call NetUserGetInfo() with level 4, which
+    # in this case would not have any network overhead.
+    # The primary group should not change from RID 513 here either
+    # but the group will be called "None" instead:
+    # https://www.adampalmer.me/iodigitalsec/2013/08/10/windows-null-session-enumeration/
+    # "Group 'None' (RID: 513)"
     info = uninitialized LibC::USER_INFO_4*
     if LibC.NetUserGetInfo(Crystal::System.to_wstr(domain), Crystal::System.to_wstr(name), 4, pointerof(info).as(LibC::BYTE**)) == LibC::NERR_Success
       begin
@@ -152,6 +176,15 @@ module Crystal::System::User
   private ProfileImagePath      = "ProfileImagePath".to_utf16
 
   private def self.lookup_home_directory(uid : String, username : String) : String?
+    # If this user has logged in at least once their home path should be stored
+    # in the registry under the specified SID. References:
+    # https://social.technet.microsoft.com/wiki/contents/articles/13895.how-to-remove-a-corrupted-user-profile-from-the-registry.aspx
+    # https://support.asperasoft.com/hc/en-us/articles/216127438-How-to-delete-Windows-user-profiles
+    #
+    # The registry is the most reliable way to find the home path as the user
+    # might have decided to move it outside of the default location,
+    # (e.g. C:\users). Reference:
+    # https://answers.microsoft.com/en-us/windows/forum/windows_7-security/how-do-i-set-a-home-directory-outside-cusers-for-a/aed68262-1bf4-4a4d-93dc-7495193a440f
     reg_home_dir = WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_PROFILE_LIST) do |key_handle|
       WindowsRegistry.open?(key_handle, uid.to_utf16) do |sub_handle|
         WindowsRegistry.get_string(sub_handle, ProfileImagePath)
@@ -159,6 +192,10 @@ module Crystal::System::User
     end
     return reg_home_dir if reg_home_dir
 
+    # If the home path does not exist in the registry, the user might
+    # have not logged in yet; fall back to using getProfilesDirectory().
+    # Find the username based on a SID and append that to the result of
+    # getProfilesDirectory(). The domain is not relevant here.
     # NOTE: the user has not logged in so this directory might not exist
     profile_dir = Crystal::System.retry_wstr_buffer do |buffer, small_buf|
       len = LibC::DWORD.new(buffer.size)
