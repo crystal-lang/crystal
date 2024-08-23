@@ -52,6 +52,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # FIXME: must re-add all fds (but we don't know about 'em)
+      raise "BUG: fork is unsupported in evented event-loop mode"
     end
   {% end %}
 
