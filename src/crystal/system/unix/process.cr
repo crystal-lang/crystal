@@ -356,7 +356,7 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
-      dst_io.close
+      dst_io.file_descriptor_close
       return
     end
 
