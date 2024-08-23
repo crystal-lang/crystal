@@ -102,7 +102,7 @@ module Crystal::System::FileDescriptor
     LibC.isatty(fd) == 1
   end
 
-  def file_descriptor_reopen(other : IO::FileDescriptor)
+  private def system_reopen(other : IO::FileDescriptor)
     {% if LibC.has_method?(:dup3) %}
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, fd, flags) == -1
@@ -116,10 +116,6 @@ module Crystal::System::FileDescriptor
         self.close_on_exec = other.close_on_exec?
       end
     {% end %}
-  end
-
-  private def system_reopen(other : IO::FileDescriptor)
-    file_descriptor_reopen(other)
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false

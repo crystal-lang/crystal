@@ -357,14 +357,16 @@ struct Crystal::System::Process
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
       dst_io.file_descriptor_close
-      return
+    else
+      src_io = to_real_fd(src_io)
+
+      # dst_io.reopen(src_io)
+      ret = LibC.dup2(src_io.fd, dst_io.fd)
+      raise IO::Error.from_errno("dup2") if ret == -1
+
+      dst_io.close_on_exec = false
+      dst_io.blocking = true
     end
-
-    src_io = to_real_fd(src_io)
-
-    dst_io.reopen(src_io)
-    dst_io.blocking = true
-    dst_io.close_on_exec = false
   end
 
   private def self.to_real_fd(fd : IO::FileDescriptor)
