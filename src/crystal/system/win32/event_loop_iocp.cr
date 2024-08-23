@@ -144,18 +144,15 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    handle = file_descriptor.windows_handle
-    IOCP.overlapped_operation(file_descriptor, handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
-      ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
+    IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+      ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    handle = file_descriptor.windows_handle
-
-    IOCP.overlapped_operation(file_descriptor, handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
-      ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+    IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
