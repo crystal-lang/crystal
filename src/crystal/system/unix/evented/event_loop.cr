@@ -363,6 +363,6 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private abstract def system_run(blocking : Bool) : Nil
   private abstract def system_add(fd : Int32, ptr : Pointer) : Nil
-  private abstract def system_del(fd : Int32) : Nil
+  abstract def system_del(fd : Int32) : Nil
   private abstract def system_set_timer(time : Time::Span?) : Nil
 end

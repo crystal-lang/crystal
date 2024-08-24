@@ -125,7 +125,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @epoll.add(fd, LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET, ptr)
   end
 
-  private def system_del(fd : Int32) : Nil
+  def system_del(fd : Int32) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
     @epoll.delete(fd)
   end

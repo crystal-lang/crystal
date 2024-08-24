@@ -430,6 +430,11 @@ class Socket < IO
   def finalize
     return if closed?
 
+    {% if Crystal.has_constant?(:Evented) %}
+      # TODO: don't raise
+      Crystal::EventLoop.current.system_del(fd)
+    {% end %}
+
     socket_close { } # ignore error
   end
 

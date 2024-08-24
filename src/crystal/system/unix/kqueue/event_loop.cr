@@ -185,7 +185,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     end
   end
 
-  private def system_del(fd : Int32) : Nil
+  def system_del(fd : Int32) : Nil
     # nothing to do: close(2) will do the job
   end
 

@@ -247,6 +247,11 @@ class IO::FileDescriptor < IO
   def finalize
     return if closed? || !close_on_finalize?
 
+    {% if Crystal.has_constant?(:Evented) %}
+      # TODO: don't raise
+      Crystal::EventLoop.current.system_del(fd)
+    {% end %}
+
     file_descriptor_close { } # ignore error
   end
 
