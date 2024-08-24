@@ -18,7 +18,9 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     @interrupted = Atomic::Flag.new
     {% unless LibC.has_constant?(:EVFILT_USER) %}
       @pipe = System::FileDescriptor.system_pipe
-      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
+      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD) do
+        raise RuntimeError.from_errno("kevent")
+      end
     {% end %}
   end
 
@@ -53,7 +55,9 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       {% unless LibC.has_constant?(:EVFILT_USER) %}
         @pipe.each { |fd| LibC.close(fd) }
         @pipe = System::FileDescriptor.system_pipe
-        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
+        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD) do
+          raise RuntimeError.from_errno("kevent")
+        end
       {% end %}
 
       system_set_timer(@timers.next_ready?)
