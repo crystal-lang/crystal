@@ -189,6 +189,20 @@ pending_interpreted describe: Process do
       Process.run(*stdin_to_stdout_command, error: closed_io)
     end
 
+    it "forwards non-blocking file" do
+      with_tempfile("non-blocking-process-input.txt", "non-blocking-process-output.txt") do |in_path, out_path|
+        File.open(in_path, "w+", blocking: false) do |input|
+          File.open(out_path, "w+", blocking: false) do |output|
+            input.puts "hello"
+            input.rewind
+            Process.run(*stdin_to_stdout_command, input: input, output: output)
+            output.rewind
+            output.gets_to_end.chomp.should eq("hello")
+          end
+        end
+      end
+    end
+
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
