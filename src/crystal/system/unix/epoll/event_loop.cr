@@ -102,10 +102,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
     if (epoll_event.value.events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
       pd.value.@readers.consume_each { |event| resume_io(event) }
-      return
-    end
-
-    if (epoll_event.value.events & LibC::EPOLLIN) == LibC::EPOLLIN
+    elsif (epoll_event.value.events & LibC::EPOLLIN) == LibC::EPOLLIN
       if event = pd.value.@readers.ready!
         resume_io(event)
       end
