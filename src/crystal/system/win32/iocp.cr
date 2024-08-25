@@ -175,8 +175,8 @@ module Crystal::IOCP
     OverlappedOperation.run(handle) do |operation|
       overlapped = operation.to_unsafe
       if seekable
-        overlapped.value.union.offset.offset = LibC::DWORD.new(original_offset)
-        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new(original_offset >> 32)
+        overlapped.value.union.offset.offset = LibC::DWORD.new!(original_offset)
+        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new!(original_offset >> 32)
       end
       result, value = yield operation
 
