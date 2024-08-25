@@ -1747,7 +1747,7 @@ class Hash(K, V)
   # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
   def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
-    copy = Hash(K2, V).new(initial_capacity: size <= 4 ? 0 : size)
+    copy = Hash(K2, V).new(initial_capacity: entries_capacity)
     each_with_object(copy) do |(key, value), memo|
       memo[yield(key, value)] = value
     end
@@ -1763,7 +1763,7 @@ class Hash(K, V)
   # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
-    copy = Hash(K, V2).new(initial_capacity: size <= 4 ? 0 : size)
+    copy = Hash(K, V2).new(initial_capacity: entries_capacity)
     each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
