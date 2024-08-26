@@ -13,19 +13,19 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     # notification to interrupt a run
     @interrupted = Atomic::Flag.new
     @eventfd = System::EventFD.new
-    @epoll.add(@eventfd.fd, LibC::EPOLLIN, pointerof(@eventfd))
+    @epoll.add(@eventfd.fd, LibC::EPOLLIN)
 
     # we use timerfd to go below the millisecond precision of epoll_wait; it
     # also allows to avoid locking timers before every epoll_wait call
     @timerfd = System::TimerFD.new
-    @epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
+    @epoll.add(@timerfd.fd, LibC::EPOLLIN)
   end
 
   def after_fork_before_exec : Nil
     super
 
-    # O_CLOEXEC would close these automatically, _but_ we don't want to mess
-    # with the parent process fds (that could mess the parent evloop)
+    # O_CLOEXEC would close these automatically, but we don't want to mess with
+    # the parent process fds (it would mess the parent evloop)
     @epoll.close
     @eventfd.close
     @timerfd.close
@@ -45,14 +45,15 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
       @interrupted.clear
       @eventfd = System::EventFD.new
-      @epoll.add(@eventfd.fd, LibC::EPOLLIN, pointerof(@eventfd))
+      @epoll.add(@eventfd.fd, LibC::EPOLLIN)
 
       @timerfd = System::TimerFD.new
-      @epoll.add(@timerfd.fd, LibC::EPOLLIN, pointerof(@timerfd))
+      @epoll.add(@timerfd.fd, LibC::EPOLLIN)
       system_set_timer(@timers.next_ready?)
 
       # FIXME: must re-add all fds (but we don't know about 'em)
       raise "BUG: fork is unsupported in evented event-loop mode"
+      # @arena.each_index { |fd| system_add(fd) }
     end
   {% end %}
 
@@ -69,13 +70,14 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     epoll_events.size.times do |i|
       epoll_event = epoll_events.to_unsafe + i
 
-      case epoll_event.value.data.ptr
-      when pointerof(@eventfd).as(Void*)
+      case epoll_event.value.data.fd
+      when @eventfd.fd
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "interrupted"
         @eventfd.read
+        # OPTIMIZE: only reset interrupted before a blocking wait
         @interrupted.clear
-      when pointerof(@timerfd).as(Void*)
+      when @timerfd.fd
         # TODO: panic if epoll_event.value.events != LibC::EPOLLIN (could be EPOLLERR or EPLLHUP)
         Crystal.trace :evloop, "timer"
         timer_triggered = true
@@ -88,27 +90,30 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def process(epoll_event : LibC::EpollEvent*) : Nil
-    pd = epoll_event.value.data.ptr.as(Evented::PollDescriptor*)
+    fd = epoll_event.value.data.fd
+    events = epoll_event.value.events
+    pd = @arena.get?(fd)
 
     {% if flag?(:tracing) %}
-      Crystal.trace :evloop, "event", fd: pd.value.fd, events: epoll_event.value.events
+      Crystal.trace :evloop, "event", fd: fd, events: events, pd: pd
     {% end %}
+    return unless pd
 
-    if (epoll_event.value.events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
+    if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
       pd.value.@readers.consume_each { |event| resume_io(event) }
       pd.value.@writers.consume_each { |event| resume_io(event) }
       return
     end
 
-    if (epoll_event.value.events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
+    if (events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
       pd.value.@readers.consume_each { |event| resume_io(event) }
-    elsif (epoll_event.value.events & LibC::EPOLLIN) == LibC::EPOLLIN
+    elsif (events & LibC::EPOLLIN) == LibC::EPOLLIN
       if event = pd.value.@readers.ready!
         resume_io(event)
       end
     end
 
-    if (epoll_event.value.events & LibC::EPOLLOUT) == LibC::EPOLLOUT
+    if (events & LibC::EPOLLOUT) == LibC::EPOLLOUT
       if event = pd.value.@writers.ready!
         resume_io(event)
       end
@@ -120,9 +125,9 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd.write(1) if @interrupted.test_and_set
   end
 
-  private def system_add(fd : Int32, ptr : Pointer) : Nil
+  private def system_add(fd : Int32) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd
-    @epoll.add(fd, LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET, ptr)
+    @epoll.add(fd, LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET)
   end
 
   def system_del(fd : Int32) : Nil

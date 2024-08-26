@@ -432,7 +432,7 @@ class Socket < IO
 
     {% if Crystal.has_constant?(:Evented) %}
       # TODO: don't raise
-      Crystal::EventLoop.current.system_del(fd)
+      Crystal::EventLoop.current.delete(self)
     {% end %}
 
     socket_close { } # ignore error

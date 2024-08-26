@@ -28,8 +28,6 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(fd)
-    evloop = EventLoop.current
-    evloop.add(self) if evloop.responds_to?(:add)
   end
 
   # Tries to bind the socket to a local address.

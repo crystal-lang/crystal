@@ -37,13 +37,5 @@ module Crystal::Evented
   struct PollDescriptor
     @readers = Waiters.new
     @writers = Waiters.new
-
-    {% if flag?(:tracing) %}
-      protected property fd : Int32 = -1 # will be replaced by Evented#add
-    {% end %}
   end
-end
-
-module Crystal::System::FileDescriptor
-  @poll_descriptor = Crystal::Evented::PollDescriptor.new
 end

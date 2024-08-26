@@ -37,11 +37,6 @@ module Crystal::System::FileDescriptor
 
     unless new_flags == current_flags
       fcntl(LibC::F_SETFL, new_flags)
-
-      unless value
-        evloop = EventLoop.current
-        evloop.add(self) if evloop.responds_to?(:add)
-      end
     end
   end
 

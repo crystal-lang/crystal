@@ -18,6 +18,13 @@ struct Crystal::System::Epoll
     end
   end
 
+  def add(fd : Int32, events : UInt32) : Nil
+    epoll_event = uninitialized LibC::EpollEvent
+    epoll_event.events = events
+    epoll_event.data.fd = fd
+    add(fd, pointerof(epoll_event))
+  end
+
   def add(fd : Int32, events : UInt32, ptr : Pointer) : Nil
     epoll_event = uninitialized LibC::EpollEvent
     epoll_event.events = events

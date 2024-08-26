@@ -249,7 +249,7 @@ class IO::FileDescriptor < IO
 
     {% if Crystal.has_constant?(:Evented) %}
       # TODO: don't raise
-      Crystal::EventLoop.current.system_del(fd)
+      Crystal::EventLoop.current.delete(self)
     {% end %}
 
     file_descriptor_close { } # ignore error

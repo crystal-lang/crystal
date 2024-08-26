@@ -1,10 +1,6 @@
 require "./event_loop/socket"
 
 module Crystal::System::Socket
-  {% if flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
-    @poll_descriptor = Crystal::Evented::PollDescriptor.new
-  {% end %}
-
   # Creates a file descriptor / socket handle
   # private def create_handle(family, type, protocol, blocking) : Handle
 

@@ -1,10 +1,18 @@
 require "./*"
+require "../../../arena"
 
+# OPTIMIZE: collect fibers & canceled timers, delete canceled timers when
+# processing timers, and eventually enqueue all fibers; it would avoid repeated
+# lock/unlock timers on each #resume_io and allow to replace individual fiber
+# enqueues with a single batch enqueue (simpler).
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def initialize
     {% if flag?(:preview_mt) %} @run_lock = Atomic::Flag.new {% end %}
     @lock = SpinLock.new
     @timers = Timers.new
+
+    # TODO: the arena should be global
+    @arena = Arena(PollDescriptor).new
   end
 
   # must reset the mutexes since another thread may have acquired the lock of
@@ -63,11 +71,10 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # file descriptor
 
-  def add(file_descriptor : System::FileDescriptor) : Nil
-    {% if flag?(:tracing) %}
-      file_descriptor.@poll_descriptor.fd = file_descriptor.fd
-    {% end %}
-    system_add(file_descriptor.fd, pointerof(file_descriptor.@poll_descriptor))
+  def delete(file_descriptor : System::FileDescriptor) : Nil
+    fd = file_descriptor.fd
+    @arena.free(fd)
+    system_del(fd)
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
@@ -104,11 +111,10 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # socket
 
-  def add(socket : ::Socket) : Nil
-    {% if flag?(:tracing) %}
-      socket.@poll_descriptor.fd = socket.fd
-    {% end %}
-    system_add(socket.fd, pointerof(socket.@poll_descriptor))
+  def delete(socket : ::Socket) : Nil
+    fd = socket.fd
+    @arena.free(fd)
+    system_del(fd)
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -235,29 +241,48 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   protected def evented_close(io)
-    system_del(io.fd)
-    io.@poll_descriptor.@readers.consume_each { |event| resume_io(event) }
-    io.@poll_descriptor.@writers.consume_each { |event| resume_io(event) }
+    if pd = @arena.get?(io.fd)
+      pd.value.@readers.consume_each { |event| resume_io(event) }
+      pd.value.@writers.consume_each { |event| resume_io(event) }
+      delete(io)
+    end
   end
 
   private def wait_readable(io, timeout = nil) : Nil
-    wait(:io_read, io, pointerof(io.@poll_descriptor.@readers), timeout) { raise IO::TimeoutError.new("Read timed out") }
+    pd = poll_descriptor(io)
+    waiters = pointerof(pd.value.@readers)
+    wait(:io_read, pd, waiters, timeout) { raise IO::TimeoutError.new("Read timed out") }
   end
 
   private def wait_readable(io, timeout = nil, &) : Nil
-    wait(:io_read, io, pointerof(io.@poll_descriptor.@readers), timeout) { yield }
+    pd = poll_descriptor(io)
+    waiters = pointerof(pd.value.@readers)
+    wait(:io_read, pd, waiters, timeout) { yield }
   end
 
   private def wait_writable(io, timeout = nil) : Nil
-    wait(:io_write, io, pointerof(io.@poll_descriptor.@writers), timeout) { raise IO::TimeoutError.new("Write timed out") }
+    pd = poll_descriptor(io)
+    waiters = pointerof(pd.value.@writers)
+    wait(:io_write, pd, waiters, timeout) { raise IO::TimeoutError.new("Write timed out") }
   end
 
   private def wait_writable(io, timeout = nil, &) : Nil
-    wait(:io_write, io, pointerof(io.@poll_descriptor.@writers), timeout) { yield }
+    pd = poll_descriptor(io)
+    waiters = pointerof(pd.value.@writers)
+    wait(:io_write, pd, waiters, timeout) { yield }
   end
 
-  private def wait(type : Evented::Event::Type, io, waiters, timeout, &)
-    event = Evented::Event.new(type, Fiber.current, pointerof(io.@poll_descriptor), timeout)
+  private def poll_descriptor(io : IO) : Pointer(PollDescriptor)
+    fd = io.fd
+
+    @arena.get_or_allocate(fd) do |pd|
+      # pd.value = PollDescriptor.new
+      system_add(fd)
+    end
+  end
+
+  private def wait(type : Evented::Event::Type, pd, waiters, timeout, &)
+    event = Evented::Event.new(type, Fiber.current, pd, timeout)
 
     {% if flag?(:preview_mt) %}
       return if waiters.value.ready?
@@ -362,7 +387,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # system internals
 
   private abstract def system_run(blocking : Bool) : Nil
-  private abstract def system_add(fd : Int32, ptr : Pointer) : Nil
-  abstract def system_del(fd : Int32) : Nil
+  private abstract def system_add(fd : Int32) : Nil
+  private abstract def system_del(fd : Int32) : Nil
   private abstract def system_set_timer(time : Time::Span?) : Nil
 end
