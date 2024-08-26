@@ -99,7 +99,7 @@ prepare_system() {
 
 build() {
   with_build_env 'bin/crystal scripts/print_regex_config.cr'
-  with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml SPEC_FLAGS=-v'
+  with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
     i386)
