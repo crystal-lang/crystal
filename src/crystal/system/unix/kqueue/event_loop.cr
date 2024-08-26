@@ -62,8 +62,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
       system_set_timer(@timers.next_ready?)
 
-      # FIXME: must re-add all fds (but we don't know about 'em)
-      raise "BUG: fork is unsupported in evented event-loop mode"
+      # re-add all registered fds
+      @arena.each_index { |fd| system_add(fd) }
     end
   {% end %}
 
@@ -112,11 +112,13 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def process(kevent : LibC::Kevent*) : Nil
-    pd = kevent.value.udata.as(Evented::PollDescriptor*)
+    fd = kevent.value.ident.to_i32!
+    pd = @arena.get?(fd)
 
     {% if flag?(:tracing) %}
-      Crystal.trace :evloop, "event", fd: pd.value.fd, filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
+      Crystal.trace :evloop, "event", fd: fd, filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags, pd: pd
     {% end %}
+    return unless pd
 
     if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
       # apparently some systems may report EOF on write with EVFILT_READ instead
@@ -160,7 +162,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
-  private def system_add(fd : Int32, ptr : Pointer) : Nil
+  private def system_add(fd : Int32) : Nil
     Crystal.trace :evloop, "kevent", op: "add", fd: fd
 
     # register both read and write events
@@ -168,7 +170,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     2.times do |i|
       kevent = kevents.to_unsafe + i
       filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: ptr)
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR)
     end
 
     @kqueue.kevent(kevents.to_slice) do
