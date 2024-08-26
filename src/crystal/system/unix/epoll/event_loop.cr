@@ -51,9 +51,8 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       @epoll.add(@timerfd.fd, LibC::EPOLLIN)
       system_set_timer(@timers.next_ready?)
 
-      # FIXME: must re-add all fds (but we don't know about 'em)
-      raise "BUG: fork is unsupported in evented event-loop mode"
-      # @arena.each_index { |fd| system_add(fd) }
+      # re-add all registered fds
+      @arena.each_index { |fd| system_add(fd) }
     end
   {% end %}
 

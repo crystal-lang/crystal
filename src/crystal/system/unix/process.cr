@@ -220,7 +220,6 @@ struct Crystal::System::Process
   # and `nil` inside the new child process.
   def self.fork(&)
     {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
-    {% raise("Process fork is unsupported with evented event-loop mode") if Crystal.has_constant?(:Evented) %}
 
     if pid = fork
       return pid

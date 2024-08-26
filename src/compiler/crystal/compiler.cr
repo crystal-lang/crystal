@@ -80,7 +80,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) || Crystal.has_constant?(:Evented) %} 1 {% else %} 8 {% end %}
+    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) %} 1 {% else %} 8 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -513,8 +513,6 @@ module Crystal
     private def parallel_codegen(units, n_threads)
       {% if flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode."
-      {% elsif Crystal.has_constant?(:Evented) %}
-        raise "Cannot fork compiler in evented event-loop mode."
       {% elsif LibC.has_method?("fork") %}
         fork_codegen(units, n_threads)
       {% else %}
