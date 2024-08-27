@@ -3,6 +3,7 @@ require "c/consoleapi"
 require "c/consoleapi2"
 require "c/winnls"
 require "crystal/system/win32/iocp"
+require "crystal/system/thread"
 
 module Crystal::System::FileDescriptor
   # Platform-specific type to represent a file descriptor handle to the operating
@@ -76,13 +77,24 @@ module Crystal::System::FileDescriptor
     bytes_written
   end
 
+  def emulated_blocking? : Bool?
+    # reading from STDIN is done via a separate thread (see
+    # `ConsoleUtils.read_console` below)
+    handle = windows_handle
+    if LibC.GetConsoleMode(handle, out _) != 0
+      if handle == LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+        return false
+      end
+    end
+  end
+
   # :nodoc:
   def system_blocking?
     @system_blocking
   end
 
   private def system_blocking=(blocking)
-    unless blocking == @system_blocking
+    unless blocking == self.blocking
       raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
     end
   end
@@ -315,7 +327,11 @@ module Crystal::System::FileDescriptor
       end
     end
 
+    # `blocking` must be set to `true` because the underlying handles never
+    # support overlapped I/O; instead, `#emulated_blocking?` should return
+    # `false` for `STDIN` as it uses a separate thread
     io = IO::FileDescriptor.new(handle.address, blocking: true)
+
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
     if console_handle
@@ -441,10 +457,56 @@ private module ConsoleUtils
   end
 
   private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+    @@mtx.synchronize do
+      @@read_requests << ReadRequest.new(
+        handle: handle,
+        slice: slice,
+        iocp: Crystal::EventLoop.current.iocp,
+        completion_key: Crystal::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
+      )
+      @@read_cv.signal
+    end
+
+    ::Fiber.suspend
+
+    @@mtx.synchronize do
+      @@bytes_read.shift
+    end
+  end
+
+  private def self.read_console_blocking(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
     if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
       raise IO::Error.from_winerror("ReadConsoleW")
     end
     units_read.to_i32
+  end
+
+  record ReadRequest, handle : LibC::HANDLE, slice : Slice(UInt16), iocp : LibC::HANDLE, completion_key : Crystal::IOCP::CompletionKey
+
+  @@read_cv = ::Thread::ConditionVariable.new
+  @@read_requests = Deque(ReadRequest).new
+  @@bytes_read = Deque(Int32).new
+  @@mtx = ::Thread::Mutex.new
+  @@reader_thread = ::Thread.new { reader_loop }
+
+  private def self.reader_loop
+    while true
+      request = @@mtx.synchronize do
+        loop do
+          if entry = @@read_requests.shift?
+            break entry
+          end
+          @@read_cv.wait(@@mtx)
+        end
+      end
+
+      bytes = read_console_blocking(request.handle, request.slice)
+
+      @@mtx.synchronize do
+        @@bytes_read << bytes
+        LibC.PostQueuedCompletionStatus(request.iocp, LibC::JOB_OBJECT_MSG_EXIT_PROCESS, request.completion_key.object_id, nil)
+      end
+    end
   end
 end
 

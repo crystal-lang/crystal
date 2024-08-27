@@ -17,7 +17,7 @@ struct Crystal::System::Process
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
   @job_object : LibC::HANDLE
-  @completion_key = IOCP::CompletionKey.new
+  @completion_key = IOCP::CompletionKey.new(:process_run)
 
   @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new

@@ -22,6 +22,12 @@ module Crystal::System::FileDescriptor
   # Also used in `IO::FileDescriptor#finalize`.
   # def file_descriptor_close
 
+  # Returns `true` or `false` if this file descriptor pretends to block or not
+  # to block the caller thread regardless of the underlying internal file
+  # descriptor's implementation. Currently used by console STDIN on Windows.
+  private def emulated_blocking? : Bool?
+  end
+
   private def system_read(slice : Bytes) : Int32
     event_loop.read(self, slice)
   end
