@@ -8,20 +8,34 @@ require "log/spec"
 
 private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
-  begin
-    spawn do
-      io = server.accept
+  server_done = Channel(Exception?).new
+
+  spawn do
+    io = server.accept
+    begin
       sleep read_time
       if write_response
         response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => content_type}, body: "OK")
         response.to_io(io)
         io.flush
       end
+    ensure
+      io.close
     end
+  rescue exc
+    server_done.send exc
+  else
+    server_done.send nil
+  end
 
+  begin
     yield server
   ensure
     server.close
+
+    if exc = server_done.receive
+      raise exc
+    end
   end
 end
 
@@ -312,15 +326,17 @@ module HTTP
     end
 
     it "doesn't read the body if request was HEAD" do
-      resp_get = test_server("localhost", 0, 0) do |server|
+      resp_get = nil
+
+      test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
-        break client.get("/")
+        resp_get = client.get("/")
       end
 
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         resp_head = client.head("/")
-        resp_head.headers.should eq(resp_get.headers)
+        resp_head.headers.should eq(resp_get.try &.headers)
         resp_head.body.should eq("")
       end
     end
