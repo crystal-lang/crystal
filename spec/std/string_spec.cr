@@ -969,7 +969,7 @@ describe "String" do
         it { "xyz\xFFxyz".index('\u{FFFD}', 2).should eq(3) }
         it { "xyz\xFFxyz".index('\u{FFFD}', 4).should be_nil }
         it { "日本\xFF語".index('\u{FFFD}', 2).should eq(2) }
-        it { "日本\xFF語".index('\u{FFFD}', 4).should be_nil }
+        it { "日本\xFF語".index('\u{FFFD}', 3).should be_nil }
 
         # Check offset type
         it { "foobarbaz".index('a', 5_i64).should eq(7) }
