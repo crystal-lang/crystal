@@ -1,6 +1,5 @@
 require "crystal/system/event_loop"
 require "crystal/system/print_error"
-require "./fiber_channel"
 require "fiber"
 require "fiber/stack_pool"
 require "crystal/system/thread"
@@ -32,12 +31,7 @@ class Crystal::Scheduler
       {% if flag?(:preview_mt) %}
         th = fiber.get_current_thread
         th ||= fiber.set_current_thread(scheduler.find_target_thread)
-
-        if th == thread
-          scheduler.enqueue(fiber)
-        else
-          th.scheduler.send_fiber(fiber)
-        end
+        th.scheduler.enqueue(fiber)
       {% else %}
         scheduler.enqueue(fiber)
       {% end %}
@@ -91,13 +85,8 @@ class Crystal::Scheduler
     {% end %}
   end
 
-  {% if flag?(:preview_mt) %}
-    private getter(fiber_channel : Crystal::FiberChannel) { Crystal::FiberChannel.new }
-  {% end %}
-
   @main : Fiber
   @lock = Crystal::SpinLock.new
-  @sleeping = false
 
   # :nodoc:
   def initialize(@thread : Thread)
@@ -188,7 +177,6 @@ class Crystal::Scheduler
     def run_loop
       spawn_stack_pool_collector
 
-      fiber_channel = self.fiber_channel
       loop do
         @lock.lock
 
@@ -197,29 +185,10 @@ class Crystal::Scheduler
           @lock.unlock
           resume(runnable)
         else
-          @sleeping = true
           @lock.unlock
-
-          Crystal.trace :sched, "mt:sleeping"
-          fiber = Crystal.trace(:sched, "mt:slept") { fiber_channel.receive }
-
-          @lock.lock
-          @sleeping = false
-          @runnables << Fiber.current
-          @lock.unlock
-          resume(fiber)
+          Fiber.yield
         end
       end
-    end
-
-    def send_fiber(fiber : Fiber)
-      @lock.lock
-      if @sleeping
-        fiber_channel.send(fiber)
-      else
-        @runnables << fiber
-      end
-      @lock.unlock
     end
 
     def self.init : Nil
