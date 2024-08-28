@@ -1129,7 +1129,7 @@ describe "String" do
         it { "xyz\xFFxyz".rindex('\u{FFFD}', 4).should eq(3) }
         it { "xyz\xFFxyz".rindex('\u{FFFD}', 2).should be_nil }
         it { "日本\xFF語".rindex('\u{FFFD}', 2).should eq(2) }
-        it { "日本\xFF語".index('\u{FFFD}', 4).should be_nil }
+        it { "日本\xFF語".rindex('\u{FFFD}', 1).should be_nil }
 
         # Check offset type
         it { "bbbb".rindex('b', 2_i64).should eq(2) }
