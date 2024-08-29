@@ -18,17 +18,10 @@ struct Crystal::System::Epoll
     end
   end
 
-  def add(fd : Int32, events : UInt32) : Nil
+  def add(fd : Int32, events : UInt32, u64 : UInt64) : Nil
     epoll_event = uninitialized LibC::EpollEvent
     epoll_event.events = events
-    epoll_event.data.fd = fd
-    add(fd, pointerof(epoll_event))
-  end
-
-  def add(fd : Int32, events : UInt32, ptr : Pointer) : Nil
-    epoll_event = uninitialized LibC::EpollEvent
-    epoll_event.events = events
-    epoll_event.data.ptr = ptr.as(Void*)
+    epoll_event.data.u64 = u64
     add(fd, pointerof(epoll_event))
   end
 
@@ -36,13 +29,6 @@ struct Crystal::System::Epoll
     if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_MOD, fd, epoll_event) == -1
       raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_MOD)")
     end
-  end
-
-  def modify(fd : Int32, events : UInt32, ptr : Pointer) : Nil
-    epoll_event = uninitialized LibC::EpollEvent
-    epoll_event.events = events
-    epoll_event.data.ptr = ptr.as(Void*)
-    modify(fd, pointerof(epoll_event))
   end
 
   # OPTIMIZE: if we added a fd only when it would block (instead of immediately

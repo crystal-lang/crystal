@@ -9,9 +9,9 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def initialize
     {% if flag?(:preview_mt) %} @run_lock = Atomic::Flag.new {% end %}
     @lock = SpinLock.new
-    @timers = Timers.new
 
-    # TODO: the arena should be global
+    # NOTE: timers and the arena are globals
+    @timers = Timers.new
     @arena = Arena(PollDescriptor).new
   end
 
@@ -73,7 +73,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(file_descriptor : System::FileDescriptor) : Nil
     fd = file_descriptor.fd
-    @arena.free(fd)
+    @arena.free(fd) { }
     system_del(fd)
   end
 
@@ -113,7 +113,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(socket : ::Socket) : Nil
     fd = socket.fd
-    @arena.free(fd)
+    @arena.free(fd) { }
     system_del(fd)
   end
 
@@ -241,72 +241,65 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   protected def evented_close(io)
-    if pd = @arena.get?(io.fd)
+    @arena.free(io.fd) do |pd|
       pd.value.@readers.consume_each { |event| resume_io(event) }
       pd.value.@writers.consume_each { |event| resume_io(event) }
-      delete(io)
     end
+    system_del(io.fd)
   end
 
   private def wait_readable(io, timeout = nil) : Nil
-    pd = poll_descriptor(io)
-    waiters = pointerof(pd.value.@readers)
-    wait(:io_read, pd, waiters, timeout) { raise IO::TimeoutError.new("Read timed out") }
+    wait(:io_read, io.fd, :readers, timeout) { raise IO::TimeoutError.new("Read timed out") }
   end
 
   private def wait_readable(io, timeout = nil, &) : Nil
-    pd = poll_descriptor(io)
-    waiters = pointerof(pd.value.@readers)
-    wait(:io_read, pd, waiters, timeout) { yield }
+    wait(:io_read, io.fd, :readers, timeout) { yield }
   end
 
   private def wait_writable(io, timeout = nil) : Nil
-    pd = poll_descriptor(io)
-    waiters = pointerof(pd.value.@writers)
-    wait(:io_write, pd, waiters, timeout) { raise IO::TimeoutError.new("Write timed out") }
+    wait(:io_write, io.fd, :writers, timeout) { raise IO::TimeoutError.new("Write timed out") }
   end
 
   private def wait_writable(io, timeout = nil, &) : Nil
-    pd = poll_descriptor(io)
-    waiters = pointerof(pd.value.@writers)
-    wait(:io_write, pd, waiters, timeout) { yield }
+    wait(:io_write, io.fd, :writers, timeout) { yield }
   end
 
-  private def poll_descriptor(io : IO) : Pointer(PollDescriptor)
-    fd = io.fd
-
-    @arena.get_or_allocate(fd) do |pd|
-      # pd.value = PollDescriptor.new
-      system_add(fd)
+  private macro wait(type, fd, waiters, timeout, &)
+    # lazily register the fd
+    %pd, %gen_index = @arena.lazy_allocate({{fd}}) do |_, gen_index|
+      system_add({{fd}}, gen_index)
     end
-  end
 
-  private def wait(type : Evented::Event::Type, pd, waiters, timeout, &)
-    event = Evented::Event.new(type, Fiber.current, pd, timeout)
+    # create an event (on the stack)
+    %event = Evented::Event.new({{type}}, Fiber.current, %gen_index, {{timeout}})
 
-    {% if flag?(:preview_mt) %}
-      return if waiters.value.ready?
+    # try to add the event to the waiting list
+    # don't wait if the waiter has already been marked ready (see Waiters#add)
+    return unless %pd.value.@{{waiters.id}}.add(pointerof(%event))
 
-      waiters.value.@lock.sync do
-        return if waiters.value.ready?
-        waiters.value.@list.push(pointerof(event))
-      end
-    {% else %}
-      waiters.value.@list.push(pointerof(event))
-    {% end %}
-
-    if event.wake_at?
-      add_timer(pointerof(event))
+    if %event.wake_at?
+      add_timer(pointerof(%event))
 
       Fiber.suspend
 
-      return yield if event.timed_out?
+      if %event.timed_out?
+        return {{yield}}
+      else
+        # nothing to do: either the timer triggered which means it was dequeued,
+        # or `#resume_io` was called to resume the IO and the timer got deleted
+        # from the timers before the fiber got reenqueued.
+        #
+        # TODO: consider a quick check to verify whether the event is still
+        # queued and panic when it happens: the event is put on the stack and we
+        # can't access after this method returns!
+      end
     else
       Fiber.suspend
     end
 
     {% if flag?(:preview_mt) %}
-      waiters.value.@ready.set(false, :relaxed)
+      # we can safely reset readyness here, since we're about to retry the actual syscall
+      %pd.value.@{{waiters.id}}.@ready.set(false, :relaxed)
     {% end %}
   end
 
@@ -330,6 +323,8 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     end
   end
 
+  # OPTIMIZE: Collect events with the lock then process them after releasing the
+  # lock, which should be thread-safe as long as @run_lock is locked.
   private def process_timers(timer_triggered : Bool) : Nil
     # events = PointerLinkedList(Event).new
     size = 0
@@ -340,6 +335,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
         process_timer(event)
         size += 1
       end
+
       unless size == 0 && timer_triggered
         system_set_timer(@timers.next_ready?)
       end
@@ -355,11 +351,13 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event
       event.value.timed_out!
-      event.value.pd.value.@readers.delete(event)
+      pd = @arena.get(event.value.gen_index)
+      pd.value.@readers.delete(event)
     when .io_write?
       # reached write timeout: cancel io event
       event.value.timed_out!
-      event.value.pd.value.@writers.delete(event)
+      pd = @arena.get(event.value.gen_index)
+      pd.value.@writers.delete(event)
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
       # atomic CAS
@@ -387,7 +385,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # system internals
 
   private abstract def system_run(blocking : Bool) : Nil
-  private abstract def system_add(fd : Int32) : Nil
+  private abstract def system_add(fd : Int32, gen_index : Int64) : Nil
   private abstract def system_del(fd : Int32) : Nil
   private abstract def system_set_timer(time : Time::Span?) : Nil
 end

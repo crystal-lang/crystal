@@ -8,14 +8,14 @@ struct Crystal::Evented::Event
   end
 
   getter! fiber : Fiber
-  getter! pd : Pointer(PollDescriptor) | Nil
+  getter! gen_index : Int64?
   getter type : Type
   getter! wake_at : Time::Span
   getter? timed_out : Bool = false
 
   include PointerLinkedList::Node
 
-  def initialize(@type, @fiber = nil, @pd = nil, timeout : Time::Span? = nil)
+  def initialize(@type, @fiber = nil, @gen_index = nil, timeout : Time::Span? = nil)
     @wake_at = Time.monotonic + timeout if timeout
   end
 
