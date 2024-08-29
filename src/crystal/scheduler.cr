@@ -186,7 +186,8 @@ class Crystal::Scheduler
           resume(runnable)
         else
           @lock.unlock
-          Fiber.yield
+          Crystal.trace :sched, "mt:sleeping"
+          Crystal.trace(:sched, "mt:slept") { Fiber.yield }
         end
       end
     end
