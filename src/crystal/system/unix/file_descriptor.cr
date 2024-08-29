@@ -128,6 +128,13 @@ module Crystal::System::FileDescriptor
   end
 
   def file_descriptor_close(&) : Nil
+    # that would usually be set by IO::Buffered#unbuffered_close but on unix
+    # systems we sometimes close file descriptors directly (i.e. signal/process
+    # pipes) and the IO object wouldn't be marked as closed, leading
+    # IO::FileDescriptor#finalize to try to close the fd again (pointless) and
+    # try to remove the fd from the evloop again with the invalid fd -1 (error)
+    @closed = true
+
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
