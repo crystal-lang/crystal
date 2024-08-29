@@ -15,7 +15,7 @@ struct Crystal::Evented::Event
 
   include PointerLinkedList::Node
 
-  def initialize(@type, @fiber = nil, @gen_index = nil, timeout : Time::Span? = nil)
+  def initialize(@type : Type, @fiber = nil, @gen_index = nil, timeout : Time::Span? = nil)
     @wake_at = Time.monotonic + timeout if timeout
   end
 
