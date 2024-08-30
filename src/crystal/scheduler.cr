@@ -31,7 +31,12 @@ class Crystal::Scheduler
       {% if flag?(:preview_mt) %}
         th = fiber.get_current_thread
         th ||= fiber.set_current_thread(scheduler.find_target_thread)
-        th.scheduler.enqueue(fiber)
+
+        if th == thread
+          scheduler.enqueue(fiber)
+        else
+          th.scheduler.send_fiber(fiber)
+        end
       {% else %}
         scheduler.enqueue(fiber)
       {% end %}
@@ -164,6 +169,8 @@ class Crystal::Scheduler
 
   {% if flag?(:preview_mt) %}
     @rr_target = 0
+    @wait_count = 0
+    @worker_fiber : Fiber?
 
     protected def find_target_thread
       if workers = @@workers
@@ -175,19 +182,33 @@ class Crystal::Scheduler
     end
 
     def run_loop
+      @worker_fiber = worker_fiber = Fiber.current
+
       spawn_stack_pool_collector
 
       loop do
         @lock.lock
 
         if runnable = @runnables.shift?
-          @runnables << Fiber.current
+          @runnables << worker_fiber
           @lock.unlock
           resume(runnable)
         else
+          @wait_count += 1
           @lock.unlock
           Crystal.trace :sched, "mt:sleeping"
-          Crystal.trace(:sched, "mt:slept") { Fiber.yield }
+          Crystal.trace(:sched, "mt:slept") { reschedule }
+        end
+      end
+    end
+
+    def send_fiber(fiber : Fiber)
+      @lock.sync do
+        @runnables << fiber
+        if @wait_count > 0
+          @wait_count -= 1
+          @runnables.unshift(@worker_fiber.not_nil!)
+          @event_loop.interrupt
         end
       end
     end
