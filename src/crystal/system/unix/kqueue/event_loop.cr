@@ -63,7 +63,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      @arena.each_index { |fd| system_add(fd) }
+      @arena.each { |fd, gen_index| system_add(fd, gen_index) }
     end
   {% end %}
 
@@ -112,13 +112,17 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def process(kevent : LibC::Kevent*) : Nil
-    fd = kevent.value.ident.to_i32!
-    pd = @arena.get?(fd)
+    gen_index = kevent.value.udata.address.to_i64!
+
+    Crystal.trace :evloop, "process", kevent: kevent.value.inspect
 
     {% if flag?(:tracing) %}
-      Crystal.trace :evloop, "event", fd: fd, filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags, pd: pd
+      fd = kevent.value.ident
+      Crystal.trace :evloop, "event", fd: fd, gen_index: gen_index,
+        filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
     {% end %}
-    return unless pd
+
+    pd = @arena.get(gen_index)
 
     if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
       # apparently some systems may report EOF on write with EVFILT_READ instead
@@ -162,15 +166,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
-  private def system_add(fd : Int32) : Nil
-    Crystal.trace :evloop, "kevent", op: "add", fd: fd
+  private def system_add(fd : Int32, gen_index : Int64) : Nil
+    Crystal.trace :evloop, "kevent", op: "add", fd: fd, gen_index: gen_index
 
     # register both read and write events
     kevents = uninitialized LibC::Kevent[2]
     2.times do |i|
       kevent = kevents.to_unsafe + i
       filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR)
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: Pointer(Void).new(gen_index.to_u64!))
+      Crystal.trace :evloop, "kevent.add", kevent: kevent.value.inspect
     end
 
     @kqueue.kevent(kevents.to_slice) do
