@@ -130,6 +130,8 @@ class Crystal::Command
     else
       if command.ends_with?(".cr")
         error "file '#{command}' does not exist"
+      elsif external_command = Process.find_executable("crystal-#{command}")
+        Process.exec(external_command, options, env: {"CRYSTAL" => Process.executable_path})
       else
         error "unknown command: #{command}"
       end
