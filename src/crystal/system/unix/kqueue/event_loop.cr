@@ -114,8 +114,6 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   private def process(kevent : LibC::Kevent*) : Nil
     gen_index = kevent.value.udata.address.to_i64!
 
-    Crystal.trace :evloop, "process", kevent: kevent.value.inspect
-
     {% if flag?(:tracing) %}
       fd = kevent.value.ident
       Crystal.trace :evloop, "event", fd: fd, gen_index: gen_index,
@@ -175,7 +173,6 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       kevent = kevents.to_unsafe + i
       filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
       System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: Pointer(Void).new(gen_index.to_u64!))
-      Crystal.trace :evloop, "kevent.add", kevent: kevent.value.inspect
     end
 
     @kqueue.kevent(kevents.to_slice) do
