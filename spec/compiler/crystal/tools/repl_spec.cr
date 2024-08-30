@@ -48,5 +48,22 @@ describe Crystal::Repl do
       repl_value.type.to_s.should eq("(Bool | Int32)")
       repl_value.runtime_type.to_s.should eq("Bool")
     end
+
+    it "VirtualType" do
+      repl = Crystal::Repl.new
+      repl.prelude = "primitives"
+      repl.load_prelude
+
+      repl.parse_and_interpret <<-CRYSTAL
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+      CRYSTAL
+      repl_value = success_value(repl.parse_and_interpret("Bar.new || Foo.new"))
+      repl_value.type.to_s.should eq("Foo+") # Maybe should Foo to match typeof
+      repl_value.runtime_type.to_s.should eq("Bar")
+    end
   end
 end

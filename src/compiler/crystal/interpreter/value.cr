@@ -68,8 +68,13 @@ struct Crystal::Repl::Value
   end
 
   def runtime_type : Crystal::Type
+    # Should match Crystal::Repl::Compiler#visit_primitive "class" case
+    # in src/compiler/crystal/interpreter/primitives.cr
     if type.is_a?(Crystal::UnionType)
       type_id = @pointer.as(Int32*).value
+      context.type_from_id(type_id)
+    elsif type.is_a?(Crystal::VirtualType)
+      type_id = @pointer.as(Void**).value.as(Int32*).value
       context.type_from_id(type_id)
     else
       type
