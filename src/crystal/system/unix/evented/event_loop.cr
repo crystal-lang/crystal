@@ -6,8 +6,11 @@ require "../../../arena"
 # lock/unlock timers on each #resume_io and allow to replace individual fiber
 # enqueues with a single batch enqueue (simpler).
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
+  {% if flag?(:preview_mt) %}
+    @run_lock = Atomic::Flag.new
+  {% end %}
+
   def initialize
-    {% if flag?(:preview_mt) %} @run_lock = Atomic::Flag.new {% end %}
     @lock = SpinLock.new
 
     # NOTE: timers and the arena are globals
