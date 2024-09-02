@@ -10,7 +10,6 @@ class Socket
     getter size : Int32
 
     @addr : LibC::SockaddrIn6
-    @next : LibC::Addrinfo*
 
     # Resolves a domain that best matches the given options.
     #
@@ -34,13 +33,10 @@ class Socket
       addrinfos = [] of Addrinfo
 
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
-        loop do
-          addrinfos << addrinfo.not_nil!
-          unless addrinfo = addrinfo.next?
-            return addrinfos
-          end
-        end
+        addrinfos << addrinfo
       end
+
+      addrinfos
     end
 
     # Resolves a domain that best matches the given options.
@@ -57,27 +53,28 @@ class Socket
     # The iteration will be stopped once the block returns something that isn't
     # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil, &)
+      exception = nil
+
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
-        loop do
-          value = yield addrinfo.not_nil!
+        value = yield addrinfo
 
-          if value.is_a?(Exception)
-            unless addrinfo = addrinfo.try(&.next?)
-              if value.is_a?(Socket::ConnectError)
-                raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
-              else
-                {% if flag?(:win32) && compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
-                  # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11047
-                  array = StaticArray(UInt8, 0).new(0)
-                {% end %}
-
-                raise value
-              end
-            end
-          else
-            return value
-          end
+        if value.is_a?(Exception)
+          exception = value
+        else
+          return value
         end
+      end
+
+      case exception
+      when Socket::ConnectError
+        raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", exception.os_error)
+      when Exception
+        {% if flag?(:win32) && compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
+          # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11047
+          array = StaticArray(UInt8, 0).new(0)
+        {% end %}
+
+        raise exception
       end
     end
 
@@ -179,8 +176,12 @@ class Socket
           raise Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)
         end
 
+        addrinfo = ptr
         begin
-          yield new(ptr)
+          while addrinfo
+            yield new(addrinfo)
+            addrinfo = addrinfo.value.ai_next
+          end
         ensure
           LibC.freeaddrinfo(ptr)
         end
@@ -232,7 +233,6 @@ class Socket
       @size = addrinfo.value.ai_addrlen.to_i
 
       @addr = uninitialized LibC::SockaddrIn6
-      @next = addrinfo.value.ai_next
 
       case @family
       when Family::INET6
@@ -262,12 +262,6 @@ class Socket
 
     def to_unsafe
       pointerof(@addr).as(LibC::Sockaddr*)
-    end
-
-    protected def next?
-      if addrinfo = @next
-        Addrinfo.new(addrinfo)
-      end
     end
   end
 end
