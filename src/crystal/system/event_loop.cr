@@ -3,12 +3,16 @@ abstract class Crystal::EventLoop
   def self.create : self
     {% if flag?(:wasi) %}
       Crystal::Wasi::EventLoop.new
-    {% elsif flag?(:bsd) || flag?(:darwin) %}
-      Crystal::Kqueue::EventLoop.new
-    {% elsif flag?(:linux) || flag?(:solaris) %}
-      Crystal::Epoll::EventLoop.new
     {% elsif flag?(:unix) %}
-      Crystal::LibEvent::EventLoop.new
+      {% if flag?(:evloop_libevent) %}
+        Crystal::LibEvent::EventLoop.new
+      {% elsif flag?(:bsd) || flag?(:darwin) %}
+        Crystal::Kqueue::EventLoop.new
+      {% elsif flag?(:linux) || flag?(:solaris) %}
+        Crystal::Epoll::EventLoop.new
+      {% else %}
+        Crystal::LibEvent::EventLoop.new
+      {% end %}
     {% elsif flag?(:win32) %}
       Crystal::IOCP::EventLoop.new
     {% else %}
@@ -76,12 +80,16 @@ end
 
 {% if flag?(:wasi) %}
   require "./wasi/event_loop"
-{% elsif flag?(:bsd) || flag?(:darwin) %}
-  require "./unix/kqueue/event_loop"
-{% elsif flag?(:linux) || flag?(:solaris) %}
-  require "./unix/epoll/event_loop"
 {% elsif flag?(:unix) %}
-  require "./unix/event_loop_libevent"
+  {% if flag?(:evloop_libevent) %}
+    require "./unix/event_loop_libevent"
+  {% elsif flag?(:bsd) || flag?(:darwin) %}
+    require "./unix/kqueue/event_loop"
+  {% elsif flag?(:linux) || flag?(:solaris) %}
+    require "./unix/epoll/event_loop"
+  {% else %}
+    require "./unix/event_loop_libevent"
+  {% end %}
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"
 {% else %}

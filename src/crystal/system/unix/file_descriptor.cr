@@ -1,7 +1,4 @@
 require "c/fcntl"
-{% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
-  require "io/evented"
-{% end %}
 require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
@@ -9,7 +6,7 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  {% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
+  {% if IO.has_constant?(:Evented) %}
     include IO::Evented
   {% end %}
 

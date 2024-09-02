@@ -1,12 +1,9 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-{% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
-  require "io/evented"
-{% end %}
 
 module Crystal::System::Socket
-  {% unless flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
+  {% if IO.has_constant?(:Evented) %}
     include IO::Evented
   {% end %}
 

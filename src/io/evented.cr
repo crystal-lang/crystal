@@ -1,4 +1,4 @@
-{% skip_file if flag?(:win32) || flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris) %}
+{% skip_file if !flag?(:evloop_libevent) && (flag?(:win32) || flag?(:bsd) || flag?(:darwin) || flag?(:linux) || flag?(:solaris)) %}
 # Windows: we use IOCP
 # BSD/Darwin: we use kqueue
 # Linux/Solaris: we use epoll

@@ -1,4 +1,5 @@
 require "./event_libevent"
+require "../../../io/evented"
 
 # :nodoc:
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
