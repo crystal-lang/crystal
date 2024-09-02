@@ -63,7 +63,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      @arena.each { |fd, gen_index| system_add(fd, gen_index) }
+      @@arena.each { |fd, gen_index| system_add(fd, gen_index) }
     end
   {% end %}
 
@@ -120,7 +120,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
     {% end %}
 
-    pd = @arena.get(gen_index)
+    pd = @@arena.get(gen_index)
 
     if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
       # apparently some systems may report EOF on write with EVFILT_READ instead
@@ -164,7 +164,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
-  private def system_add(fd : Int32, gen_index : Int64) : Nil
+  protected def system_add(fd : Int32, gen_index : Int64) : Nil
     Crystal.trace :evloop, "kevent", op: "add", fd: fd, gen_index: gen_index
 
     # register both read and write events
@@ -189,7 +189,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     end
   end
 
-  def system_del(fd : Int32) : Nil
+  protected def system_del(fd : Int32) : Nil
     # nothing to do: close(2) will do the job
   end
 

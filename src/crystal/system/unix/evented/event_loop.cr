@@ -10,12 +10,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     @run_lock = Atomic::Flag.new
   {% end %}
 
+  @@arena = Arena(PollDescriptor).new
+
   def initialize
     @lock = SpinLock.new
-
-    # NOTE: timers and the arena are globals
     @timers = Timers.new
-    @arena = Arena(PollDescriptor).new
   end
 
   # must reset the mutexes since another thread may have acquired the lock of
@@ -76,8 +75,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(file_descriptor : System::FileDescriptor) : Nil
     fd = file_descriptor.fd
-    @arena.free(fd) { }
-    system_del(fd)
+    @@arena.free(fd) { |pd| pd.value.release(fd) }
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
@@ -116,8 +114,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(socket : ::Socket) : Nil
     fd = socket.fd
-    @arena.free(fd) { }
-    system_del(fd)
+    @@arena.free(fd) { |pd| pd.value.release(fd) }
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -244,11 +241,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   protected def evented_close(io)
-    @arena.free(io.fd) do |pd|
+    @@arena.free(io.fd) do |pd|
       pd.value.@readers.consume_each { |event| resume_io(event) }
       pd.value.@writers.consume_each { |event| resume_io(event) }
+      pd.value.release(io.fd)
     end
-    system_del(io.fd)
   end
 
   private def wait_readable(io, timeout = nil) : Nil
@@ -269,8 +266,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private macro wait(type, fd, waiters, timeout, &)
     # lazily register the fd
-    %pd, %gen_index = @arena.lazy_allocate({{fd}}) do |_, gen_index|
-      system_add({{fd}}, gen_index)
+    %pd, %gen_index = @@arena.lazy_allocate({{fd}}) do |pd, gen_index|
+      # register the fd with the event loop (once), it should usually merely add
+      # the fd to the current evloop but may "transfer" the ownership from
+      # another event loop:
+      pd.value.take_ownership(self, {{fd}}, gen_index)
     end
 
     # create an event (on the stack)
@@ -354,12 +354,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event
       event.value.timed_out!
-      pd = @arena.get(event.value.gen_index)
+      pd = @@arena.get(event.value.gen_index)
       pd.value.@readers.delete(event)
     when .io_write?
       # reached write timeout: cancel io event
       event.value.timed_out!
-      pd = @arena.get(event.value.gen_index)
+      pd = @@arena.get(event.value.gen_index)
       pd.value.@writers.delete(event)
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
@@ -388,7 +388,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # system internals
 
   private abstract def system_run(blocking : Bool) : Nil
-  private abstract def system_add(fd : Int32, gen_index : Int64) : Nil
-  private abstract def system_del(fd : Int32) : Nil
+  protected abstract def system_add(fd : Int32, gen_index : Int64) : Nil
+  protected abstract def system_del(fd : Int32) : Nil
   private abstract def system_set_timer(time : Time::Span?) : Nil
 end

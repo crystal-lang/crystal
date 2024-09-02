@@ -53,7 +53,36 @@ module Crystal::Evented
   end
 
   struct PollDescriptor
+    @event_loop : Evented::EventLoop?
+    @lock = SpinLock.new
     @readers = Waiters.new
     @writers = Waiters.new
+
+    def take_ownership(event_loop : EventLoop, fd : Int32, gen_index : Int64) : Nil
+      @lock.sync do
+        current = @event_loop
+
+        if event_loop == current
+          raise "BUG: evloop already owns the poll-descriptor for fd=#{fd}"
+        end
+
+        # ensure we can't have cross enqueues after we transfer the fd, so we
+        # can optimize (all enqueues are local)
+        if current && @readers.@list.empty? && @writers.@list.empty?
+          raise RuntimeError.new("BUG: transfering fd=#{fd} to another evloop with pending reader/writer fibers")
+        end
+
+        @event_loop = event_loop
+        event_loop.system_add(fd, gen_index)
+        current.try(&.system_del(fd))
+      end
+    end
+
+    def release(fd : Int32) : Nil
+      @lock.sync do
+        current, @event_loop = @event_loop, nil
+        current.try(&.system_del(fd))
+      end
+    end
   end
 end
