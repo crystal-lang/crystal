@@ -95,6 +95,31 @@ lib LibC
     WRITE = 0x20006
   end
 
+  struct SID_IDENTIFIER_AUTHORITY
+    value : BYTE[6]
+  end
+
+  struct SID
+    revision : BYTE
+    subAuthorityCount : BYTE
+    identifierAuthority : SID_IDENTIFIER_AUTHORITY
+    subAuthority : DWORD[1]
+  end
+
+  enum SID_NAME_USE
+    SidTypeUser           = 1
+    SidTypeGroup
+    SidTypeDomain
+    SidTypeAlias
+    SidTypeWellKnownGroup
+    SidTypeDeletedAccount
+    SidTypeInvalid
+    SidTypeUnknown
+    SidTypeComputer
+    SidTypeLabel
+    SidTypeLogonSession
+  end
+
   enum JOBOBJECTINFOCLASS
     AssociateCompletionPortInformation = 7
     ExtendedLimitInformation           = 9

@@ -20,6 +20,8 @@ end
   require "./wasi/user"
 {% elsif flag?(:unix) %}
   require "./unix/user"
+{% elsif flag?(:win32) %}
+  require "./win32/user"
 {% else %}
   {% raise "No Crystal::System::User implementation available" %}
 {% end %}
