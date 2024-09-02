@@ -13,6 +13,19 @@ module Crystal::System::Addrinfo
   # def self.next_addrinfo(addrinfo : Handle) : Handle
 
   # def self.free_addrinfo(addrinfo : Handle)
+
+  def self.getaddrinfo(domain, service, family, type, protocol, timeout, & : ::Socket::Addrinfo ->)
+    addrinfo = root = getaddrinfo(domain, service, family, type, protocol, timeout)
+
+    begin
+      while addrinfo
+        yield ::Socket::Addrinfo.new(addrinfo)
+        addrinfo = next_addrinfo(addrinfo)
+      end
+    ensure
+      free_addrinfo(root)
+    end
+  end
 end
 
 {% if flag?(:wasi) %}

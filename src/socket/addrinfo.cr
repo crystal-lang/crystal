@@ -133,15 +133,8 @@ class Socket
       # > encoding [RFC3490] prior to name lookup.
       domain = URI::Punycode.to_ascii domain
 
-      addrinfo = root = Crystal::System::Addrinfo.getaddrinfo(domain, service, family, type, protocol, timeout)
-
-      begin
-        while addrinfo
-          yield new(addrinfo)
-          addrinfo = Crystal::System::Addrinfo.next_addrinfo(addrinfo)
-        end
-      ensure
-        Crystal::System::Addrinfo.free_addrinfo(root)
+      Crystal::System::Addrinfo.getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+        yield addrinfo
       end
     end
 
