@@ -1,7 +1,7 @@
 class Crystal::Evented::FiberEvent
   include Crystal::EventLoop::Event
 
-  def initialize(fiber : Fiber, type : Evented::Event::Type)
+  def initialize(@event_loop : EventLoop, fiber : Fiber, type : Evented::Event::Type)
     @event = Evented::Event.new(type, fiber)
   end
 
@@ -12,7 +12,7 @@ class Crystal::Evented::FiberEvent
     return unless timeout
 
     @event.wake_at = Time.monotonic + timeout
-    Crystal::EventLoop.current.add_timer(pointerof(@event))
+    @event_loop.add_timer(pointerof(@event))
   end
 
   # select timeout has been cancelled
@@ -20,7 +20,7 @@ class Crystal::Evented::FiberEvent
     return unless @event.wake_at?
 
     @event.wake_at = nil
-    Crystal::EventLoop.current.delete_timer(pointerof(@event))
+    @event_loop.delete_timer(pointerof(@event))
   end
 
   # fiber died

@@ -66,11 +66,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # fiber
 
   def create_resume_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(fiber, :sleep)
+    FiberEvent.new(self, fiber, :sleep)
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(fiber, :select_timeout)
+    FiberEvent.new(self, fiber, :select_timeout)
   end
 
   # file descriptor
@@ -244,8 +244,14 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   protected def evented_close(io)
     Evented.arena.free(io.fd) do |pd|
-      pd.value.@readers.consume_each { |event| resume_io(event) }
-      pd.value.@writers.consume_each { |event| resume_io(event) }
+      pd.value.@readers.consume_each do |event|
+        pd.value.@event_loop.try(&.resume_io(event))
+      end
+
+      pd.value.@writers.consume_each do |event|
+        pd.value.@event_loop.try(&.resume_io(event))
+      end
+
       pd.value.release(io.fd)
     end
   end
@@ -382,7 +388,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   # Helper to resume the fiber associated to an IO event and remove the event
   # from timers if applicable.
-  private def resume_io(event : Evented::Event*) : Nil
+  protected def resume_io(event : Evented::Event*) : Nil
     delete_timer(event) if event.value.wake_at?
     Crystal::Scheduler.enqueue(event.value.fiber)
   end
