@@ -87,6 +87,8 @@ class Crystal::Repl::Compiler
 
       pointer_add(inner_sizeof_type(element_type), node: node)
     when "class"
+      # Should match Crystal::Repl::Value#runtime_type
+      # in src/compiler/crystal/interpreter/value.cr
       obj = obj.not_nil!
       type = obj.type.remove_indirection
 
