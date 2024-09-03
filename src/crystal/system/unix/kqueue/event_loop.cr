@@ -193,6 +193,10 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     # nothing to do: close(2) will do the job
   end
 
+  protected def system_del(fd : Int32, &) : Nil
+    # nothing to do: close(2) will do the job
+  end
+
   private def system_set_timer(time : Time::Span?) : Nil
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR

@@ -84,5 +84,12 @@ module Crystal::Evented
         current.try(&.system_del(fd))
       end
     end
+
+    def release(fd : Int32, &) : Nil
+      @lock.sync do
+        current, @event_loop = @event_loop, nil
+        current.try(&.system_del(fd) { yield })
+      end
+    end
   end
 end

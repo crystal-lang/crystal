@@ -31,12 +31,16 @@ struct Crystal::System::Epoll
     end
   end
 
-  # OPTIMIZE: if we added a fd only when it would block (instead of immediately
-  # on open/accept), then maybe we could spare the errno checks for EPERM and
-  # ENOENT (?)
+  # OPTIMIZE: we might be able to spare the errno checks for EPERM and ENOENT
   def delete(fd : Int32) : Nil
-    if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_DEL, fd, nil) == -1
+    delete(fd) do
       raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)") unless Errno.value.in?(Errno::EPERM, Errno::ENOENT)
+    end
+  end
+
+  def delete(fd : Int32, &) : Nil
+    if LibC.epoll_ctl(@epfd, LibC::EPOLL_CTL_DEL, fd, nil) == -1
+      yield
     end
   end
 

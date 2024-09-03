@@ -136,6 +136,11 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @epoll.delete(fd)
   end
 
+  protected def system_del(fd : Int32, &) : Nil
+    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
+    @epoll.delete(fd) { yield }
+  end
+
   private def system_set_timer(time : Time::Span?) : Nil
     if time
       @timerfd.set(time)

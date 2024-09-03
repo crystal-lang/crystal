@@ -77,7 +77,9 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(file_descriptor : System::FileDescriptor) : Nil
     fd = file_descriptor.fd
-    Evented.arena.free(fd) { |pd| pd.value.release(fd) }
+    Evented.arena.free(fd) do |pd|
+      pd.value.release(fd) { } # ignore system error
+    end
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
@@ -116,7 +118,9 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(socket : ::Socket) : Nil
     fd = socket.fd
-    Evented.arena.free(fd) { |pd| pd.value.release(fd) }
+    Evented.arena.free(fd) do |pd|
+      pd.value.release(fd) { } # ignore system error
+    end
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -398,5 +402,6 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   private abstract def system_run(blocking : Bool) : Nil
   protected abstract def system_add(fd : Int32, gen_index : Int64) : Nil
   protected abstract def system_del(fd : Int32) : Nil
+  protected abstract def system_del(fd : Int32, &) : Nil
   private abstract def system_set_timer(time : Time::Span?) : Nil
 end
