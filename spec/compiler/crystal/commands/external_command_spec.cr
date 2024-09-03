@@ -1,0 +1,32 @@
+require "../../../spec_helper"
+
+describe Crystal::Command do
+  it "exec external commands" do
+    with_temp_executable "crystal-external" do |path|
+      with_tempfile "crystal-external.cr" do |source_file|
+        File.write source_file, <<-CRYSTAL
+          puts ENV["CRYSTAL"]?
+          puts PROGRAM_NAME
+          puts ARGV
+          CRYSTAL
+
+        Process.run(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal", ["build", source_file, "-o", path])
+      end
+
+      File.exists?(path).should be_true
+
+      process = Process.new(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal",
+        ["external", "foo", "bar"],
+        output: :pipe,
+        env: {"PATH" => File.dirname(path)}
+      )
+      output = process.output.gets_to_end
+      status = process.wait
+      status.success?.should be_true
+      lines = output.lines
+      lines[0].should match /crystal/
+      lines[1].should match /crystal-external/
+      lines[2].should eq %(["foo", "bar"])
+    end
+  end
+end
