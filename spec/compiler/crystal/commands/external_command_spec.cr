@@ -1,7 +1,7 @@
 require "../../../spec_helper"
 
 describe Crystal::Command do
-  it "exec external commands" do
+  it "exec external commands", tags: %w[slow] do
     with_temp_executable "crystal-external" do |path|
       with_tempfile "crystal-external.cr" do |source_file|
         File.write source_file, <<-CRYSTAL
