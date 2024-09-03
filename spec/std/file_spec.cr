@@ -236,136 +236,6 @@ describe "File" do
     end
   end
 
-  describe "executable?" do
-    it "gives true" do
-      crystal = Process.executable_path || pending! "Unable to locate compiler executable"
-      File.executable?(crystal).should be_true
-    end
-
-    it "gives false" do
-      File.executable?(datapath("test_file.txt")).should be_false
-    end
-
-    it "gives false when the file doesn't exist" do
-      File.executable?(datapath("non_existing_file.txt")).should be_false
-    end
-
-    it "gives false when a component of the path is a file" do
-      File.executable?(datapath("dir", "test_file.txt", "")).should be_false
-    end
-
-    it "follows symlinks" do
-      with_tempfile("good_symlink_x.txt", "bad_symlink_x.txt") do |good_path, bad_path|
-        crystal = Process.executable_path || pending! "Unable to locate compiler executable"
-        File.symlink(File.expand_path(crystal), good_path)
-        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
-
-        File.executable?(good_path).should be_true
-        File.executable?(bad_path).should be_false
-      end
-    end
-  end
-
-  describe "readable?" do
-    it "gives true" do
-      File.readable?(datapath("test_file.txt")).should be_true
-    end
-
-    it "gives false when the file doesn't exist" do
-      File.readable?(datapath("non_existing_file.txt")).should be_false
-    end
-
-    it "gives false when a component of the path is a file" do
-      File.readable?(datapath("dir", "test_file.txt", "")).should be_false
-    end
-
-    # win32 doesn't have a way to make files unreadable via chmod
-    {% unless flag?(:win32) %}
-      it "gives false when the file has no read permissions" do
-        with_tempfile("unreadable.txt") do |path|
-          File.write(path, "")
-          File.chmod(path, 0o222)
-          pending_if_superuser!
-          File.readable?(path).should be_false
-        end
-      end
-
-      it "gives false when the file has no permissions" do
-        with_tempfile("unaccessible.txt") do |path|
-          File.write(path, "")
-          File.chmod(path, 0o000)
-          pending_if_superuser!
-          File.readable?(path).should be_false
-        end
-      end
-
-      it "follows symlinks" do
-        with_tempfile("good_symlink_r.txt", "bad_symlink_r.txt", "unreadable.txt") do |good_path, bad_path, unreadable|
-          File.write(unreadable, "")
-          File.chmod(unreadable, 0o222)
-          pending_if_superuser!
-
-          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-          File.symlink(File.expand_path(unreadable), bad_path)
-
-          File.readable?(good_path).should be_true
-          File.readable?(bad_path).should be_false
-        end
-      end
-    {% end %}
-
-    it "gives false when the symbolic link destination doesn't exist" do
-      with_tempfile("missing_symlink_r.txt") do |missing_path|
-        File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
-        File.readable?(missing_path).should be_false
-      end
-    end
-  end
-
-  describe "writable?" do
-    it "gives true" do
-      File.writable?(datapath("test_file.txt")).should be_true
-    end
-
-    it "gives false when the file doesn't exist" do
-      File.writable?(datapath("non_existing_file.txt")).should be_false
-    end
-
-    it "gives false when a component of the path is a file" do
-      File.writable?(datapath("dir", "test_file.txt", "")).should be_false
-    end
-
-    it "gives false when the file has no write permissions" do
-      with_tempfile("readonly.txt") do |path|
-        File.write(path, "")
-        File.chmod(path, 0o444)
-        pending_if_superuser!
-        File.writable?(path).should be_false
-      end
-    end
-
-    it "follows symlinks" do
-      with_tempfile("good_symlink_w.txt", "bad_symlink_w.txt", "readonly.txt") do |good_path, bad_path, readonly|
-        File.write(readonly, "")
-        File.chmod(readonly, 0o444)
-        pending_if_superuser!
-
-        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-        File.symlink(File.expand_path(readonly), bad_path)
-
-        File.writable?(good_path).should be_true
-        File.writable?(bad_path).should be_false
-      end
-    end
-
-    it "gives false when the symbolic link destination doesn't exist" do
-      with_tempfile("missing_symlink_w.txt") do |missing_path|
-        File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
-        File.writable?(missing_path).should be_false
-      end
-    end
-  end
-
   describe "file?" do
     it "gives true" do
       File.file?(datapath("test_file.txt")).should be_true
@@ -700,6 +570,139 @@ describe "File" do
 
     it "tests unequal for file and directory" do
       File.info(datapath("dir")).should_not eq(File.info(datapath("test_file.txt")))
+    end
+
+    describe ".executable?" do
+      it "gives true" do
+        crystal = Process.executable_path || pending! "Unable to locate compiler executable"
+        File::Info.executable?(crystal).should be_true
+        File.executable?(crystal).should be_true # deprecated
+      end
+
+      it "gives false" do
+        File::Info.executable?(datapath("test_file.txt")).should be_false
+      end
+
+      it "gives false when the file doesn't exist" do
+        File::Info.executable?(datapath("non_existing_file.txt")).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File::Info.executable?(datapath("dir", "test_file.txt", "")).should be_false
+      end
+
+      it "follows symlinks" do
+        with_tempfile("good_symlink_x.txt", "bad_symlink_x.txt") do |good_path, bad_path|
+          crystal = Process.executable_path || pending! "Unable to locate compiler executable"
+          File.symlink(File.expand_path(crystal), good_path)
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+          File::Info.executable?(good_path).should be_true
+          File::Info.executable?(bad_path).should be_false
+        end
+      end
+    end
+
+    describe ".readable?" do
+      it "gives true" do
+        File::Info.readable?(datapath("test_file.txt")).should be_true
+        File.readable?(datapath("test_file.txt")).should be_true # deprecated
+      end
+
+      it "gives false when the file doesn't exist" do
+        File::Info.readable?(datapath("non_existing_file.txt")).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File::Info.readable?(datapath("dir", "test_file.txt", "")).should be_false
+      end
+
+      # win32 doesn't have a way to make files unreadable via chmod
+      {% unless flag?(:win32) %}
+        it "gives false when the file has no read permissions" do
+          with_tempfile("unreadable.txt") do |path|
+            File.write(path, "")
+            File.chmod(path, 0o222)
+            pending_if_superuser!
+            File::Info.readable?(path).should be_false
+          end
+        end
+
+        it "gives false when the file has no permissions" do
+          with_tempfile("unaccessible.txt") do |path|
+            File.write(path, "")
+            File.chmod(path, 0o000)
+            pending_if_superuser!
+            File::Info.readable?(path).should be_false
+          end
+        end
+
+        it "follows symlinks" do
+          with_tempfile("good_symlink_r.txt", "bad_symlink_r.txt", "unreadable.txt") do |good_path, bad_path, unreadable|
+            File.write(unreadable, "")
+            File.chmod(unreadable, 0o222)
+            pending_if_superuser!
+
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File.symlink(File.expand_path(unreadable), bad_path)
+
+            File::Info.readable?(good_path).should be_true
+            File::Info.readable?(bad_path).should be_false
+          end
+        end
+      {% end %}
+
+      it "gives false when the symbolic link destination doesn't exist" do
+        with_tempfile("missing_symlink_r.txt") do |missing_path|
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+          File::Info.readable?(missing_path).should be_false
+        end
+      end
+    end
+
+    describe ".writable?" do
+      it "gives true" do
+        File::Info.writable?(datapath("test_file.txt")).should be_true
+        File.writable?(datapath("test_file.txt")).should be_true # deprecated
+      end
+
+      it "gives false when the file doesn't exist" do
+        File::Info.writable?(datapath("non_existing_file.txt")).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File::Info.writable?(datapath("dir", "test_file.txt", "")).should be_false
+      end
+
+      it "gives false when the file has no write permissions" do
+        with_tempfile("readonly.txt") do |path|
+          File.write(path, "")
+          File.chmod(path, 0o444)
+          pending_if_superuser!
+          File::Info.writable?(path).should be_false
+        end
+      end
+
+      it "follows symlinks" do
+        with_tempfile("good_symlink_w.txt", "bad_symlink_w.txt", "readonly.txt") do |good_path, bad_path, readonly|
+          File.write(readonly, "")
+          File.chmod(readonly, 0o444)
+          pending_if_superuser!
+
+          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+          File.symlink(File.expand_path(readonly), bad_path)
+
+          File::Info.writable?(good_path).should be_true
+          File::Info.writable?(bad_path).should be_false
+        end
+      end
+
+      it "gives false when the symbolic link destination doesn't exist" do
+        with_tempfile("missing_symlink_w.txt") do |missing_path|
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+          File::Info.writable?(missing_path).should be_false
+        end
+      end
     end
   end
 
@@ -1366,15 +1369,15 @@ describe "File" do
     end
 
     it_raises_on_null_byte "readable?" do
-      File.readable?("foo\0bar")
+      File::Info.readable?("foo\0bar")
     end
 
     it_raises_on_null_byte "writable?" do
-      File.writable?("foo\0bar")
+      File::Info.writable?("foo\0bar")
     end
 
     it_raises_on_null_byte "executable?" do
-      File.executable?("foo\0bar")
+      File::Info.executable?("foo\0bar")
     end
 
     it_raises_on_null_byte "file?" do
