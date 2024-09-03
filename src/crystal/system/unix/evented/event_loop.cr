@@ -1,6 +1,10 @@
 require "./*"
 require "../../../arena"
 
+module Crystal::Evented
+  protected class_getter arena = Arena(PollDescriptor).new
+end
+
 # OPTIMIZE: collect fibers & canceled timers, delete canceled timers when
 # processing timers, and eventually enqueue all fibers; it would avoid repeated
 # lock/unlock timers on each #resume_io and allow to replace individual fiber
@@ -9,8 +13,6 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   {% if flag?(:preview_mt) %}
     @run_lock = Atomic::Flag.new
   {% end %}
-
-  @@arena = Arena(PollDescriptor).new
 
   def initialize
     @lock = SpinLock.new
@@ -75,7 +77,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(file_descriptor : System::FileDescriptor) : Nil
     fd = file_descriptor.fd
-    @@arena.free(fd) { |pd| pd.value.release(fd) }
+    Evented.arena.free(fd) { |pd| pd.value.release(fd) }
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
@@ -114,7 +116,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def delete(socket : ::Socket) : Nil
     fd = socket.fd
-    @@arena.free(fd) { |pd| pd.value.release(fd) }
+    Evented.arena.free(fd) { |pd| pd.value.release(fd) }
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -241,7 +243,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   protected def evented_close(io)
-    @@arena.free(io.fd) do |pd|
+    Evented.arena.free(io.fd) do |pd|
       pd.value.@readers.consume_each { |event| resume_io(event) }
       pd.value.@writers.consume_each { |event| resume_io(event) }
       pd.value.release(io.fd)
@@ -266,7 +268,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private macro wait(type, fd, waiters, timeout, &)
     # lazily register the fd
-    %pd, %gen_index = @@arena.lazy_allocate({{fd}}) do |pd, gen_index|
+    %pd, %gen_index = Evented.arena.lazy_allocate({{fd}}) do |pd, gen_index|
       # register the fd with the event loop (once), it should usually merely add
       # the fd to the current evloop but may "transfer" the ownership from
       # another event loop:
@@ -354,12 +356,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event
       event.value.timed_out!
-      pd = @@arena.get(event.value.gen_index)
+      pd = Evented.arena.get(event.value.gen_index)
       pd.value.@readers.delete(event)
     when .io_write?
       # reached write timeout: cancel io event
       event.value.timed_out!
-      pd = @@arena.get(event.value.gen_index)
+      pd = Evented.arena.get(event.value.gen_index)
       pd.value.@writers.delete(event)
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the

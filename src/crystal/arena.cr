@@ -1,6 +1,6 @@
 # OPTIMIZE: can the generation help to avoid the mutation lock (atomic)?
 # OPTIMIZE: consider a memory map (mmap, VirtualAlloc) with a maximum capacity
-struct Crystal::Arena(T)
+class Crystal::Arena(T)
   struct Allocation(T)
     property generation = 0_u32
     property? allocated = false

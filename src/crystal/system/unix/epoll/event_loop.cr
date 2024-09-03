@@ -52,7 +52,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      @@arena.each { |fd, gen_index| system_add(fd, gen_index) }
+      Evented.arena.each { |fd, gen_index| system_add(fd, gen_index) }
     end
   {% end %}
 
@@ -97,7 +97,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       Crystal.trace :evloop, "event", fd: fd, gen_index: gen_index, events: events
     {% end %}
 
-    pd = @@arena.get(gen_index)
+    pd = Evented.arena.get(gen_index)
 
     if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
       pd.value.@readers.consume_each { |event| resume_io(event) }
