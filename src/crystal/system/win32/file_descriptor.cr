@@ -217,7 +217,7 @@ module Crystal::System::FileDescriptor
     handle = windows_handle
     if retry
       until lock_file(handle, flags)
-        sleep 0.1
+        sleep 0.1.seconds
       end
     else
       lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
