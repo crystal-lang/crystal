@@ -120,10 +120,7 @@ end
       dwMaximumWindowSize : COORD
     end
 
-    STD_OUTPUT_HANDLE = -11
-
     fun GetConsoleScreenBufferInfo(hConsoleOutput : Void*, lpConsoleScreenBufferInfo : CONSOLE_SCREEN_BUFFER_INFO*) : Void
-    fun GetStdHandle(nStdHandle : UInt32) : Void*
   end
 {% else %}
   lib LibC

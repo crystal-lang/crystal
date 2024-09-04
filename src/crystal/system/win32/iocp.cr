@@ -168,8 +168,17 @@ module Crystal::IOCP
     end
   end
 
-  def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
+  def self.overlapped_operation(file_descriptor, method, timeout, *, offset = nil, writing = false, &)
+    handle = file_descriptor.windows_handle
+    seekable = LibC.SetFilePointerEx(handle, 0, out original_offset, IO::Seek::Current) != 0
+
     OverlappedOperation.run(handle) do |operation|
+      overlapped = operation.to_unsafe
+      if seekable
+        start_offset = offset || original_offset
+        overlapped.value.union.offset.offset = LibC::DWORD.new!(start_offset)
+        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new!(start_offset >> 32)
+      end
       result, value = yield operation
 
       if result == 0
@@ -181,15 +190,19 @@ module Crystal::IOCP
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: target
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: file_descriptor
         else
-          raise IO::Error.from_os_error(method, error, target: target)
+          raise IO::Error.from_os_error(method, error, target: file_descriptor)
         end
       else
+        # operation completed synchronously; seek forward by number of bytes
+        # read or written if handle is seekable, since overlapped I/O doesn't do
+        # it automatically
+        LibC.SetFilePointerEx(handle, value, nil, IO::Seek::Current) if seekable
         return value
       end
 
-      operation.wait_for_result(timeout) do |error|
+      byte_count = operation.wait_for_result(timeout) do |error|
         case error
         when .error_io_incomplete?, .error_operation_aborted?
           raise IO::TimeoutError.new("#{method} timed out")
@@ -200,6 +213,15 @@ module Crystal::IOCP
           return 0_u32
         end
       end
+
+      # operation completed asynchronously; seek to the original file position
+      # plus the number of bytes read or written (other operations might have
+      # moved the file pointer so we don't use `IO::Seek::Current` here), unless
+      # we are calling `Crystal::System::FileDescriptor.pread`
+      if seekable && !offset
+        LibC.SetFilePointerEx(handle, original_offset + byte_count, nil, IO::Seek::Set)
+      end
+      byte_count
     end
   end
 
