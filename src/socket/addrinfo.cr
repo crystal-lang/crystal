@@ -23,6 +23,9 @@ class Socket
     #   specified.
     # - *protocol* is the intended socket protocol (e.g. `Protocol::TCP`) and
     #   should be specified.
+    # - *timeout* is optional and specifies the maximum time to wait before
+    #   `IO::TimeoutError` is raised. Currently this is only supported on
+    #   Windows.
     #
     # Example:
     # ```
@@ -107,8 +110,11 @@ class Socket
         "Hostname lookup for #{domain} failed"
       end
 
-      def self.os_error_message(os_error : Errno, *, type, service, protocol, **opts)
-        case os_error.value
+      def self.os_error_message(os_error : Errno | WinError, *, type, service, protocol, **opts)
+        # when `EAI_NONAME` etc. is an integer then only `os_error.value` can
+        # match; when `EAI_NONAME` is a `WinError` then `os_error` itself can
+        # match
+        case os_error.is_a?(Errno) ? os_error.value : os_error
         when LibC::EAI_NONAME
           "No address found"
         when LibC::EAI_SOCKTYPE
@@ -116,12 +122,14 @@ class Socket
         when LibC::EAI_SERVICE
           "The requested service #{service} is not available for the requested socket type #{type}"
         else
-          {% unless flag?(:win32) %}
-            # There's no need for a special win32 branch because the os_error on Windows
-            # is of type WinError, which wouldn't match this overload anyways.
-
-            String.new(LibC.gai_strerror(os_error.value))
+          # Win32 also has this method, but `WinError` is already sufficient
+          {% if LibC.has_method?(:gai_strerror) %}
+            if os_error.is_a?(Errno)
+              return String.new(LibC.gai_strerror(os_error))
+            end
           {% end %}
+
+          super
         end
       end
     end
@@ -148,13 +156,13 @@ class Socket
     # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
     def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
-      resolve(domain, service, family, Type::STREAM, Protocol::TCP)
+      resolve(domain, service, family, Type::STREAM, Protocol::TCP, timeout)
     end
 
     # Resolves a domain for the TCP protocol with STREAM type, and yields each
     # possible `Addrinfo`. See `#resolve` for details.
     def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil, &)
-      resolve(domain, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
+      resolve(domain, service, family, Type::STREAM, Protocol::TCP, timeout) { |addrinfo| yield addrinfo }
     end
 
     # Resolves *domain* for the UDP protocol and returns an `Array` of possible
@@ -167,13 +175,13 @@ class Socket
     # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
     def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
-      resolve(domain, service, family, Type::DGRAM, Protocol::UDP)
+      resolve(domain, service, family, Type::DGRAM, Protocol::UDP, timeout)
     end
 
     # Resolves a domain for the UDP protocol with DGRAM type, and yields each
     # possible `Addrinfo`. See `#resolve` for details.
     def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil, &)
-      resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
+      resolve(domain, service, family, Type::DGRAM, Protocol::UDP, timeout) { |addrinfo| yield addrinfo }
     end
 
     # Returns an `IPAddress` matching this addrinfo.

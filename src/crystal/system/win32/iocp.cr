@@ -87,6 +87,7 @@ module Crystal::IOCP
     @overlapped = LibC::OVERLAPPED.new
     @fiber = Fiber.current
     @state : State = :started
+    setter handle : LibC::HANDLE
 
     def initialize(@handle : LibC::HANDLE)
     end
@@ -110,8 +111,16 @@ module Crystal::IOCP
       pointerof(@overlapped)
     end
 
+    def internal_high
+      @overlapped.internalHigh
+    end
+
+    def internal_high=(value)
+      @overlapped.internalHigh = value
+    end
+
     def wait_for_result(timeout, &)
-      wait_for_completion(timeout)
+      wait_for_completion(timeout) { try_cancel }
 
       result = LibC.GetOverlappedResult(@handle, self, out bytes, 0)
       if result.zero?
@@ -125,7 +134,7 @@ module Crystal::IOCP
     end
 
     def wait_for_wsa_result(timeout, &)
-      wait_for_completion(timeout)
+      wait_for_completion(timeout) { try_cancel }
 
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(LibC::SOCKET.new(@handle.address), self, out bytes, false, pointerof(flags))
@@ -137,6 +146,20 @@ module Crystal::IOCP
       end
 
       bytes
+    end
+
+    def wait_for_getaddrinfo_result(timeout, &)
+      wait_for_completion(timeout) { try_cancel_getaddrinfo }
+
+      result = LibC.GetAddrInfoExOverlappedResult(self)
+      unless result.zero?
+        error = WinError.new(result.to_u32!)
+        yield error
+
+        raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
+      end
+
+      @overlapped.union.pointer.as(LibC::ADDRINFOEXW**).value
     end
 
     protected def schedule(&)
@@ -168,7 +191,21 @@ module Crystal::IOCP
       true
     end
 
-    def wait_for_completion(timeout)
+    def try_cancel_getaddrinfo : Bool
+      ret = LibC.GetAddrInfoExCancel(pointerof(@handle))
+      unless ret.zero?
+        case error = WinError.new(ret.to_u32!)
+        when .wsa_invalid_handle?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
+        end
+      end
+      true
+    end
+
+    def wait_for_completion(timeout, & : -> Bool)
       if timeout
         sleep timeout
       else
@@ -176,7 +213,7 @@ module Crystal::IOCP
       end
 
       unless @state.done?
-        if try_cancel
+        if yield
           # Wait for cancellation to complete. We must not free the operation
           # until it's completed.
           Fiber.suspend
