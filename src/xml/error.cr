@@ -11,8 +11,17 @@ class XML::Error < Exception
     super(message)
   end
 
+  @@max_error_capacity = 5
+
   @[Deprecated("This class property is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
-  class_property max_error_capacity = 5
+  def self.max_error_capacity=(@@max_error_capacity)
+  end
+
+  @[Deprecated("This class property is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
+  def self.max_error_capacity
+    @@max_error_capacity
+  end
+
   @@errors = Deque(self).new(max_error_capacity)
 
   # :nodoc:
