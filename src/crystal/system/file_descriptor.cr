@@ -24,7 +24,10 @@ module Crystal::System::FileDescriptor
 
   # Returns `true` or `false` if this file descriptor pretends to block or not
   # to block the caller thread regardless of the underlying internal file
-  # descriptor's implementation. Currently used by console STDIN on Windows.
+  # descriptor's implementation. Returns `nil` if nothing needs to be done, i.e.
+  # `#blocking` is identical to `#system_blocking?`.
+  #
+  # Currently used by console STDIN on Windows.
   private def emulated_blocking? : Bool?
   end
 
