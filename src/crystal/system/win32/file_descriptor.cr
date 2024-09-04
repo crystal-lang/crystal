@@ -132,10 +132,6 @@ module Crystal::System::FileDescriptor
   end
 
   protected def windows_handle
-    FileDescriptor.windows_handle(fd)
-  end
-
-  def self.windows_handle(fd)
     LibC::HANDLE.new(fd)
   end
 
@@ -290,19 +286,26 @@ module Crystal::System::FileDescriptor
     {r, w}
   end
 
-  def self.pread(fd, buffer, offset)
-    handle = windows_handle(fd)
+  def self.pread(file, buffer, offset)
+    handle = file.windows_handle
 
-    overlapped = LibC::OVERLAPPED.new
-    overlapped.union.offset.offset = LibC::DWORD.new!(offset)
-    overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
-    if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
-      error = WinError.value
-      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error, target: self
+    if file.system_blocking?
+      overlapped = LibC::OVERLAPPED.new
+      overlapped.union.offset.offset = LibC::DWORD.new!(offset)
+      overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
+      if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
+        error = WinError.value
+        return 0_i64 if error == WinError::ERROR_HANDLE_EOF
+        raise IO::Error.from_os_error "Error reading file", error, target: file
+      end
+
+      bytes_read.to_i64
+    else
+      IOCP.overlapped_operation(file, "ReadFile", file.read_timeout, offset: offset) do |overlapped|
+        ret = LibC.ReadFile(handle, buffer, buffer.size, out byte_count, overlapped)
+        {ret, byte_count}
+      end.to_i64
     end
-
-    bytes_read.to_i64
   end
 
   def self.from_stdio(fd)

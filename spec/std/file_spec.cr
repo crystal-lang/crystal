@@ -122,6 +122,22 @@ describe "File" do
         end
       {% end %}
     {% end %}
+
+    it "reads non-blocking file" do
+      File.open(datapath("test_file.txt"), "r", blocking: false) do |f|
+        f.gets_to_end.should eq("Hello World\n" * 20)
+      end
+    end
+
+    it "writes and reads large non-blocking file" do
+      with_tempfile("non-blocking-io.txt") do |path|
+        File.open(path, "w+", blocking: false) do |f|
+          f.puts "Hello World\n" * 40000
+          f.pos = 0
+          f.gets_to_end.should eq("Hello World\n" * 40000)
+        end
+      end
+    end
   end
 
   it "reads entire file" do
@@ -1279,17 +1295,19 @@ describe "File" do
 
   it "reads at offset" do
     filename = datapath("test_file.txt")
-    File.open(filename) do |file|
-      file.read_at(6, 100) do |io|
-        io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
-      end
+    {true, false}.each do |blocking|
+      File.open(filename, blocking: blocking) do |file|
+        file.read_at(6, 100) do |io|
+          io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
+        end
 
-      file.read_at(0, 240) do |io|
-        io.gets_to_end.should eq(File.read(filename))
-      end
+        file.read_at(0, 240) do |io|
+          io.gets_to_end.should eq(File.read(filename))
+        end
 
-      file.read_at(6_i64, 5_i64) do |io|
-        io.gets_to_end.should eq("World")
+        file.read_at(6_i64, 5_i64) do |io|
+          io.gets_to_end.should eq("World")
+        end
       end
     end
   end
