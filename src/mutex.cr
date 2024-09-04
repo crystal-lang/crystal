@@ -38,9 +38,6 @@ class Mutex
   @[AlwaysInline]
   def lock : Nil
     if @state.swap(LOCKED, :acquire) == UNLOCKED
-      {% if flag?(:arm) %}
-        Atomic.fence(:acquire)
-      {% end %}
       @mutex_fiber = Fiber.current unless @protection.unchecked?
       return
     end
@@ -67,9 +64,6 @@ class Mutex
 
         if @state.get(:relaxed) == UNLOCKED
           if @state.swap(LOCKED, :acquire) == UNLOCKED
-            {% if flag?(:arm) %}
-              Atomic.fence(:acquire)
-            {% end %}
             @queue_count.sub(1)
 
             @mutex_fiber = Fiber.current unless @protection.unchecked?
@@ -79,7 +73,8 @@ class Mutex
 
         @queue.push Fiber.current
       end
-      Crystal::Scheduler.reschedule
+
+      Fiber.suspend
     end
 
     @mutex_fiber = Fiber.current unless @protection.unchecked?
@@ -94,9 +89,6 @@ class Mutex
         return false if i == 0
       end
     end
-    {% if flag?(:arm) %}
-      Atomic.fence(:acquire)
-    {% end %}
     true
   end
 

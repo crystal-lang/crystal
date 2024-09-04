@@ -586,11 +586,7 @@ module Crystal
     end
 
     def size_t
-      if @program.bits64?
-        @llvm_context.int64
-      else
-        @llvm_context.int32
-      end
+      @llvm_context.int(@program.size_bit_width)
     end
 
     @pointer_size : UInt64?

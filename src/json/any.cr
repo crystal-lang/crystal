@@ -73,9 +73,7 @@ struct JSON::Any
   # Raises if the underlying value is not an `Array` or `Hash`.
   def size : Int
     case object = @raw
-    when Array
-      object.size
-    when Hash
+    when Array, Hash
       object.size
     else
       raise "Expected Array or Hash for #size, not #{object.class}"

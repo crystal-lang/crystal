@@ -898,6 +898,20 @@ describe "Semantic: module" do
       )) { types["Foo"].types["Bar"].types["Baz"].metaclass }
   end
 
+  it "type def does not reopen type from parent namespace (#11181)" do
+    assert_type <<-CR, inject_primitives: false { types["Baz"].types["Foo"].types["Bar"].metaclass }
+      module Foo::Bar
+      end
+
+      module Baz
+        module Foo::Bar
+        end
+      end
+
+      Baz::Foo::Bar
+      CR
+  end
+
   it "correctly types type var in included module, with a restriction with a free var (bug)" do
     assert_type(%(
       module Moo(T)

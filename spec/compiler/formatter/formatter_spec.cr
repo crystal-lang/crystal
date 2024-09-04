@@ -1,8 +1,8 @@
 require "spec"
 require "../../../src/compiler/crystal/formatter"
 
-private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__)
-  it "formats #{input.inspect}", file, line do
+private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__, focus = false)
+  it "formats #{input.inspect}", file, line, focus: focus do
     output = "#{output}\n" unless strict
     result = Crystal.format(input, flags: flags)
     unless result == output
@@ -812,7 +812,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(x,
-              y)
+              y,)
         yield
       end
       CRYSTAL
@@ -888,7 +888,7 @@ describe Crystal::Formatter do
       end
       CRYSTAL
       def foo(
-        x
+        x,
       )
         yield
       end
@@ -900,6 +900,39 @@ describe Crystal::Formatter do
       end
       CRYSTAL
   end
+
+  # Allows trailing commas, but doesn't enforce them
+  assert_format <<-CRYSTAL
+    def foo(
+      a,
+      b
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    def foo(
+      a,
+      b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    macro foo(
+      a,
+      *b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    macro foo(
+      a,
+      **b,
+    )
+    end
+    CRYSTAL
 
   context "adds trailing comma to def multi-line normal, splat, and double splat parameters" do
     assert_format <<-CRYSTAL, <<-CRYSTAL, flags: %w[def_trailing_comma]
@@ -1118,6 +1151,41 @@ describe Crystal::Formatter do
       def foo(
         a,
       )
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, b)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, *args)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, *args, &block)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, **kwargs)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, **kwargs, &block)
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL, flags: %w[def_trailing_comma]
+      def foo(a, &block)
       end
       CRYSTAL
   end
@@ -1658,6 +1726,13 @@ describe Crystal::Formatter do
   assert_format "-> : Int32 {}", "-> : Int32 { }", flags: %w[proc_literal_whitespace]
   assert_format "->do\nend", "-> do\nend", flags: %w[proc_literal_whitespace]
 
+  # Allows whitespace around proc literal, but doesn't enforce them
+  assert_format "-> { }"
+  assert_format "-> { 1 }"
+  assert_format "->(x : Int32) { }"
+  assert_format "-> : Int32 { }"
+  assert_format "-> do\nend"
+
   assert_format "-> : Int32 {}"
   assert_format "-> : Int32 | String { 1 }"
   assert_format "-> : Array(Int32) {}"
@@ -1668,7 +1743,7 @@ describe Crystal::Formatter do
   assert_format "-> : {Int32} { String }"
   assert_format "-> : {x: Int32, y: String} {}"
   assert_format "->\n:\nInt32\n{\n}", "-> : Int32 {\n}"
-  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 {}"
+  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 { }"
   assert_format "->: Int32 do\nx\nend", "-> : Int32 do\n  x\nend"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
@@ -2016,6 +2091,19 @@ describe Crystal::Formatter do
 
   assert_format "foo &.@bar"
   assert_format "foo(&.@bar)"
+
+  assert_format "foo[&.bar]"
+  assert_format "foo[1, &.bar]"
+  assert_format "foo[x: 1, &.bar]"
+  assert_format "foo[&.bar]?"
+  assert_format "foo[1, &.bar]?"
+  assert_format "foo[x: 1, &.bar]?"
+  assert_format "foo[&.bar] = 1"
+  assert_format "foo[1, &.bar] = 1"
+  assert_format "foo[x: 1, &.bar] = 1"
+  assert_format "foo[&.bar] ||= 1"
+  assert_format "foo[1, &.bar] ||= 1"
+  assert_format "foo[x: 1, &.bar] ||= 1"
 
   assert_format "foo.[]"
   assert_format "foo.[1]"

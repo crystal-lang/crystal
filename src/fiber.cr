@@ -73,7 +73,9 @@ class Fiber
 
   # :nodoc:
   def self.unsafe_each(&)
-    fibers.unsafe_each { |fiber| yield fiber }
+    # nothing to iterate when @@fibers is nil + don't lazily allocate in a
+    # method called from a GC collection callback!
+    @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
   # Creates a new `Fiber` instance.
@@ -168,12 +170,12 @@ class Fiber
     {% unless flag?(:interpreted) %}
       Crystal::Scheduler.stack_pool.release(@stack)
     {% end %}
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
   end
 
   # Returns the current fiber.
   def self.current : Fiber
-    Crystal::Scheduler.current_fiber
+    Thread.current.current_fiber
   end
 
   # The fiber's proc is currently running or didn't fully save its context. The
@@ -223,12 +225,12 @@ class Fiber
 
   # :nodoc:
   def resume_event : Crystal::EventLoop::Event
-    @resume_event ||= Crystal::Scheduler.event_loop.create_resume_event(self)
+    @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
 
   # :nodoc:
   def timeout_event : Crystal::EventLoop::Event
-    @timeout_event ||= Crystal::Scheduler.event_loop.create_timeout_event(self)
+    @timeout_event ||= Crystal::EventLoop.current.create_timeout_event(self)
   end
 
   # :nodoc:
@@ -246,11 +248,11 @@ class Fiber
   # The current fiber will resume after a period of time.
   # The timeout can be cancelled with `cancel_timeout`
   def self.timeout(timeout : Time::Span?, select_action : Channel::TimeoutAction? = nil) : Nil
-    Crystal::Scheduler.current_fiber.timeout(timeout, select_action)
+    Fiber.current.timeout(timeout, select_action)
   end
 
   def self.cancel_timeout : Nil
-    Crystal::Scheduler.current_fiber.cancel_timeout
+    Fiber.current.cancel_timeout
   end
 
   # Yields to the scheduler and allows it to swap execution to other
@@ -283,6 +285,20 @@ class Fiber
   # ```
   def self.yield : Nil
     Crystal::Scheduler.yield
+  end
+
+  # Suspends execution of the current fiber indefinitely.
+  #
+  # Unlike `Fiber.yield` the current fiber is not automatically
+  # reenqueued and can only be resumed whith an explicit call to `#enqueue`.
+  #
+  # This is equivalent to `sleep` without a time.
+  #
+  # This method is meant to be used in concurrency primitives. It's particularly
+  # useful if the fiber needs to wait  for something to happen (for example an IO
+  # event, a message is ready in a channel, etc.) which triggers a re-enqueue.
+  def self.suspend : Nil
+    Crystal::Scheduler.reschedule
   end
 
   def to_s(io : IO) : Nil

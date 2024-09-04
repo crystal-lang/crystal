@@ -101,8 +101,8 @@ module Indexable(T)
   # ary[-1]? # => 'c'
   # ary[-2]? # => 'b'
   #
-  # ary[3]?  # nil
-  # ary[-4]? # nil
+  # ary[3]?  # => nil
+  # ary[-4]? # => nil
   # ```
   @[AlwaysInline]
   def []?(index : Int)
@@ -691,6 +691,17 @@ module Indexable(T)
 
       {length, size_known ? size : 0}
     end
+  end
+
+  # Returns an `Array` with all the elements in the collection.
+  #
+  # ```
+  # {1, 2, 3}.to_a # => [1, 2, 3]
+  # ```
+  def to_a : Array(T)
+    ary = Array(T).new(size)
+    each { |e| ary << e }
+    ary
   end
 
   # Returns an `Array` with the results of running *block* against each element of the collection.

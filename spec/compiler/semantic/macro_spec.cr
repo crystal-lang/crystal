@@ -1688,6 +1688,12 @@ describe "Semantic: macro" do
     method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
+  it "assigns to underscore" do
+    assert_no_errors <<-CRYSTAL
+      {% _ = 1 %}
+      CRYSTAL
+  end
+
   it "unpacks block parameters inside macros (#13742)" do
     assert_no_errors <<-CRYSTAL
       macro foo
@@ -1704,6 +1710,16 @@ describe "Semantic: macro" do
 
       foo
       foo
+      CRYSTAL
+  end
+
+  it "unpacks to underscore within block parameters inside macros" do
+    assert_type(<<-CRYSTAL) { bool }
+      {% begin %}
+        {% x = nil %}
+        {% [{1, true, 'a', ""}].each { |(_, y, _, _)| x = y } %}
+        {{ x }}
+      {% end %}
       CRYSTAL
   end
 
@@ -1736,6 +1752,15 @@ describe "Semantic: macro" do
         {% xs = [1, 2] %}
         {% a, b = xs %}
         { {{a}}, {{b}} }
+      {% end %}
+      CRYSTAL
+  end
+
+  it "assigns to underscore in MultiAssign" do
+    assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
+      {% begin %}
+        {% _, x, *_, y = [1, 'a', "", nil, true] %}
+        { {{x}}, {{y}} }
       {% end %}
       CRYSTAL
   end

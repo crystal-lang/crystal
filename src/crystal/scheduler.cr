@@ -24,26 +24,24 @@ class Crystal::Scheduler
     Thread.current.scheduler.@event_loop
   end
 
-  def self.current_fiber : Fiber
-    Thread.current.scheduler.@current
-  end
-
   def self.enqueue(fiber : Fiber) : Nil
-    thread = Thread.current
-    scheduler = thread.scheduler
+    Crystal.trace :sched, "enqueue", fiber: fiber do
+      thread = Thread.current
+      scheduler = thread.scheduler
 
-    {% if flag?(:preview_mt) %}
-      th = fiber.get_current_thread
-      th ||= fiber.set_current_thread(scheduler.find_target_thread)
+      {% if flag?(:preview_mt) %}
+        th = fiber.get_current_thread
+        th ||= fiber.set_current_thread(scheduler.find_target_thread)
 
-      if th == thread
+        if th == thread
+          scheduler.enqueue(fiber)
+        else
+          th.scheduler.send_fiber(fiber)
+        end
+      {% else %}
         scheduler.enqueue(fiber)
-      else
-        th.scheduler.send_fiber(fiber)
-      end
-    {% else %}
-      scheduler.enqueue(fiber)
-    {% end %}
+      {% end %}
+    end
   end
 
   def self.enqueue(fibers : Enumerable(Fiber)) : Nil
@@ -53,6 +51,7 @@ class Crystal::Scheduler
   end
 
   def self.reschedule : Nil
+    Crystal.trace :sched, "reschedule"
     Thread.current.scheduler.reschedule
   end
 
@@ -62,10 +61,13 @@ class Crystal::Scheduler
   end
 
   def self.sleep(time : Time::Span) : Nil
+    Crystal.trace :sched, "sleep", for: time.total_nanoseconds.to_i64!
     Thread.current.scheduler.sleep(time)
   end
 
   def self.yield : Nil
+    Crystal.trace :sched, "yield"
+
     # TODO: Fiber switching and libevent for wasm32
     {% unless flag?(:wasm32) %}
       Thread.current.scheduler.sleep(0.seconds)
@@ -98,10 +100,9 @@ class Crystal::Scheduler
   @sleeping = false
 
   # :nodoc:
-  def initialize(thread : Thread)
+  def initialize(@thread : Thread)
     @main = thread.main_fiber
     {% if flag?(:preview_mt) %} @main.set_current_thread(thread) {% end %}
-    @current = @main
     @runnables = Deque(Fiber).new
   end
 
@@ -114,6 +115,7 @@ class Crystal::Scheduler
   end
 
   protected def resume(fiber : Fiber) : Nil
+    Crystal.trace :sched, "resume", fiber: fiber
     validate_resumable(fiber)
 
     {% if flag?(:preview_mt) %}
@@ -124,7 +126,7 @@ class Crystal::Scheduler
       GC.set_stackbottom(fiber.@stack_bottom)
     {% end %}
 
-    current, @current = @current, fiber
+    current, @thread.current_fiber = @thread.current_fiber, fiber
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -151,21 +153,23 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        resume(runnable) unless runnable == @current
+        resume(runnable) unless runnable == @thread.current_fiber
         break
       else
-        @event_loop.run_once
+        Crystal.trace :sched, "event_loop" do
+          @event_loop.run(blocking: true)
+        end
       end
     end
   end
 
   protected def sleep(time : Time::Span) : Nil
-    @current.resume_event.add(time)
+    @thread.current_fiber.resume_event.add(time)
     reschedule
   end
 
   protected def yield(fiber : Fiber) : Nil
-    @current.resume_event.add(0.seconds)
+    @thread.current_fiber.resume_event.add(0.seconds)
     resume(fiber)
   end
 
@@ -195,7 +199,9 @@ class Crystal::Scheduler
         else
           @sleeping = true
           @lock.unlock
-          fiber = fiber_channel.receive
+
+          Crystal.trace :sched, "mt:sleeping"
+          fiber = Crystal.trace(:sched, "mt:slept") { fiber_channel.receive }
 
           @lock.lock
           @sleeping = false

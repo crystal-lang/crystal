@@ -26,6 +26,8 @@ jobs:
             llvm_ubuntu_version: "22.04"
           - llvm_version: "17.0.6"
             llvm_ubuntu_version: "22.04"
+          - llvm_version: "18.1.4"
+            llvm_ubuntu_version: "18.04"
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -56,7 +58,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.11.2"
+          crystal: "1.13.2"
 
       - name: Build libllvm_ext
         run: make -B deps

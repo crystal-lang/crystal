@@ -81,16 +81,19 @@ module Crystal
 
     def store_bool_in_union(target_type, union_pointer, value)
       struct_type = llvm_type(target_type)
+      union_value_type = struct_type.struct_element_types[1]
       store type_id(value, @program.bool), union_type_id(struct_type, union_pointer)
 
       # To store a boolean in a union
-      # we sign-extend it to the size in bits of the union
-      union_size = @llvm_typer.size_of(struct_type.struct_element_types[1])
+      # we zero-extend it to the size in bits of the union
+      union_size = @llvm_typer.size_of(union_value_type)
       int_type = llvm_context.int((union_size * 8).to_i32)
 
       bool_as_extended_int = builder.zext(value, int_type)
       casted_value_ptr = pointer_cast(union_value(struct_type, union_pointer), int_type.pointer)
-      store bool_as_extended_int, casted_value_ptr
+      inst = store bool_as_extended_int, casted_value_ptr
+      set_alignment(inst, @llvm_typer.align_of(union_value_type))
+      inst
     end
 
     def store_nil_in_union(target_type, union_pointer)
@@ -122,11 +125,10 @@ module Crystal
         @llvm_typer.size_of(from_value_type),
         @llvm_typer.size_of(to_value_type),
       }.min
-      size = @program.bits64? ? int64(size) : int32(size)
       memcpy(
         cast_to_void_pointer(union_value(to_llvm_type, union_pointer)),
         cast_to_void_pointer(union_value(from_llvm_type, value)),
-        size,
+        size_t(size),
         align: @llvm_typer.align_of(to_value_type),
         src_align: @llvm_typer.align_of(from_value_type),
         volatile: int1(0),

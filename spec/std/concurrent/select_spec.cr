@@ -99,7 +99,7 @@ describe "select" do
         x = b
       end
     ensure
-      Crystal::Scheduler.enqueue(main)
+      main.enqueue
     end
 
     sleep
@@ -253,19 +253,23 @@ describe "select" do
       end
     end
 
-    it "raises if channel was closed" do
-      ch = Channel(String).new
+    {% if flag?(:win32) && flag?(:aarch64) %}
+      pending "raises if channel was closed"
+    {% else %}
+      it "raises if channel was closed" do
+        ch = Channel(String).new
 
-      spawn_and_check(->{ ch.close }) do |w|
-        begin
-          select
-          when m = ch.receive
+        spawn_and_check(->{ ch.close }) do |w|
+          begin
+            select
+            when m = ch.receive
+            end
+          rescue Channel::ClosedError
+            w.check
           end
-        rescue Channel::ClosedError
-          w.check
         end
       end
-    end
+    {% end %}
   end
 
   context "non-blocking raise-on-close single-channel" do
@@ -295,20 +299,24 @@ describe "select" do
       end
     end
 
-    it "raises if channel was closed" do
-      ch = Channel(String).new
+    {% if flag?(:win32) && flag?(:aarch64) %}
+      pending "raises if channel was closed"
+    {% else %}
+      it "raises if channel was closed" do
+        ch = Channel(String).new
 
-      spawn_and_check(->{ ch.close }) do |w|
-        begin
-          select
-          when m = ch.receive
-          else
+        spawn_and_check(->{ ch.close }) do |w|
+          begin
+            select
+            when m = ch.receive
+            else
+            end
+          rescue Channel::ClosedError
+            w.check
           end
-        rescue Channel::ClosedError
-          w.check
         end
       end
-    end
+    {% end %}
   end
 
   context "blocking raise-on-close multi-channel" do
@@ -342,37 +350,41 @@ describe "select" do
       end
     end
 
-    it "raises if channel was closed (1)" do
-      ch = Channel(String).new
-      ch2 = Channel(Bool).new
+    {% if flag?(:win32) && flag?(:aarch64) %}
+      pending "raises if channel was closed"
+    {% else %}
+      it "raises if channel was closed (1)" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
-        begin
-          select
-          when m = ch.receive
-          when m = ch2.receive
+        spawn_and_check(->{ ch.close }) do |w|
+          begin
+            select
+            when m = ch.receive
+            when m = ch2.receive
+            end
+          rescue Channel::ClosedError
+            w.check
           end
-        rescue Channel::ClosedError
-          w.check
         end
       end
-    end
 
-    it "raises if channel was closed (2)" do
-      ch = Channel(String).new
-      ch2 = Channel(Bool).new
+      it "raises if channel was closed (2)" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
-        begin
-          select
-          when m = ch.receive
-          when m = ch2.receive
+        spawn_and_check(->{ ch2.close }) do |w|
+          begin
+            select
+            when m = ch.receive
+            when m = ch2.receive
+            end
+          rescue Channel::ClosedError
+            w.check
           end
-        rescue Channel::ClosedError
-          w.check
         end
       end
-    end
+    {% end %}
   end
 
   context "non-blocking raise-on-close multi-channel" do
@@ -422,39 +434,43 @@ describe "select" do
       end
     end
 
-    it "raises if channel was closed (1)" do
-      ch = Channel(String).new
-      ch2 = Channel(Bool).new
+    {% if flag?(:win32) && flag?(:aarch64) %}
+      pending "raises if channel was closed"
+    {% else %}
+      it "raises if channel was closed (1)" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch.close }) do |w|
-        begin
-          select
-          when m = ch.receive
-          when m = ch2.receive
-          else
+        spawn_and_check(->{ ch.close }) do |w|
+          begin
+            select
+            when m = ch.receive
+            when m = ch2.receive
+            else
+            end
+          rescue Channel::ClosedError
+            w.check
           end
-        rescue Channel::ClosedError
-          w.check
         end
       end
-    end
 
-    it "raises if channel was closed (2)" do
-      ch = Channel(String).new
-      ch2 = Channel(Bool).new
+      it "raises if channel was closed (2)" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
 
-      spawn_and_check(->{ ch2.close }) do |w|
-        begin
-          select
-          when m = ch.receive
-          when m = ch2.receive
-          else
+        spawn_and_check(->{ ch2.close }) do |w|
+          begin
+            select
+            when m = ch.receive
+            when m = ch2.receive
+            else
+            end
+          rescue Channel::ClosedError
+            w.check
           end
-        rescue Channel::ClosedError
-          w.check
         end
       end
-    end
+    {% end %}
   end
 
   context "blocking nil-on-close single-channel" do

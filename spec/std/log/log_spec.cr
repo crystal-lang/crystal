@@ -129,6 +129,12 @@ describe Log do
     Log.context.metadata.should eq(Log::Metadata.build({a: 1, b: 2}))
   end
 
+  it "context supports unsigned values" do
+    Log.context.set a: 1_u32, b: 2_u64
+
+    Log.context.metadata.should eq(Log::Metadata.build({a: 1_u32, b: 2_u64}))
+  end
+
   describe "emitter dsl" do
     it "can be used with message" do
       backend = Log::MemoryBackend.new

@@ -150,6 +150,9 @@ record PullRequest,
     if labels.includes?("breaking-change")
       io << "**[breaking]** "
     end
+    if regression?
+      io << "**[regression]** "
+    end
     if experimental?
       io << "**[experimental]** "
     end
@@ -219,9 +222,10 @@ record PullRequest,
 
     topics.sort_by! { |parts|
       topic_priority = case parts[0]
-                       when "tools" then 2
-                       when "lang"  then 1
-                       else              0
+                       when "infrastructure" then 3
+                       when "tools"          then 2
+                       when "lang"           then 1
+                       else                       0
                        end
       {-topic_priority, parts[0]}
     }
@@ -233,6 +237,10 @@ record PullRequest,
 
   def breaking?
     labels.includes?("kind:breaking")
+  end
+
+  def regression?
+    labels.includes?("kind:regression")
   end
 
   def experimental?
@@ -359,32 +367,37 @@ puts
 puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
 puts
 
+def print_items(prs)
+  prs.each do |pr|
+    puts "- #{pr}"
+  end
+  puts
+
+  prs.each(&.print_ref_label(STDOUT))
+  puts
+end
+
 SECTION_TITLES.each do |id, title|
   prs = sections[id]? || next
   puts "### #{title}"
   puts
 
-  topics = prs.group_by(&.primary_topic)
+  if id == "infra"
+    prs.sort_by!(&.infra_sort_tuple)
+    print_items prs
+  else
+    topics = prs.group_by(&.primary_topic)
 
-  topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
+    topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
 
-  topic_titles.each do |topic_title|
-    topic_prs = topics[topic_title]? || next
+    topic_titles.each do |topic_title|
+      topic_prs = topics[topic_title]? || next
 
-    if id == "infra"
-      topic_prs.sort_by!(&.infra_sort_tuple)
-    else
-      topic_prs.sort!
       puts "#### #{topic_title}"
       puts
-    end
 
-    topic_prs.each do |pr|
-      puts "- #{pr}"
+      topic_prs.sort!
+      print_items topic_prs
     end
-    puts
-
-    topic_prs.each(&.print_ref_label(STDOUT))
-    puts
   end
 end

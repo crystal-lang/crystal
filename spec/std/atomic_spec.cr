@@ -14,8 +14,24 @@ enum AtomicEnumFlags
   Three
 end
 
+private struct AtomicBooleans
+  @one = Atomic(Bool).new(false)
+  @two = Atomic(Bool).new(false)
+  @three = Atomic(Bool).new(false)
+end
+
 describe Atomic do
   describe "#compare_and_set" do
+    it "with bool" do
+      atomic = Atomic.new(true)
+
+      atomic.compare_and_set(false, true).should eq({true, false})
+      atomic.get.should eq(true)
+
+      atomic.compare_and_set(true, false).should eq({true, true})
+      atomic.get.should eq(false)
+    end
+
     it "with integer" do
       atomic = Atomic.new(1)
 
@@ -44,6 +60,16 @@ describe Atomic do
 
       atomic.compare_and_set(AtomicEnumFlags::One, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, true})
       atomic.get.should eq(AtomicEnumFlags::Three)
+    end
+
+    it "with pointer" do
+      atomic = Atomic.new(Pointer(Void).null)
+
+      atomic.compare_and_set(Pointer(Void).new(1), Pointer(Void).new(3)).should eq({Pointer(Void).null, false})
+      atomic.get.should eq(Pointer(Void).null)
+
+      atomic.compare_and_set(Pointer(Void).null, Pointer(Void).new(3)).should eq({Pointer(Void).null, true})
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with nilable reference" do
@@ -183,6 +209,16 @@ describe Atomic do
     atomic.get.should eq(AtomicEnum::Three)
   end
 
+  it "#max with pointer type" do
+    atomic = Atomic.new(Pointer(Void).new(2))
+    atomic.max(Pointer(Void).new(1)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(2))
+    atomic.max(Pointer(Void).new(3)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(3))
+    atomic.max(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(3))
+    atomic.get.should eq(Pointer(Void).new(UInt64::MAX))
+  end
+
   it "#min with signed" do
     atomic = Atomic.new(5)
     atomic.min(10).should eq(5)
@@ -209,11 +245,33 @@ describe Atomic do
     atomic.get.should eq(AtomicEnum::Minus)
   end
 
+  it "#min with pointer type" do
+    atomic = Atomic.new(Pointer(Void).new(2))
+    atomic.min(Pointer(Void).new(3)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(2))
+    atomic.min(Pointer(Void).new(1)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(1))
+    atomic.min(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(1))
+    atomic.get.should eq(Pointer(Void).new(1))
+  end
+
   describe "#set" do
+    it "with bool" do
+      atomic = Atomic.new(false)
+      atomic.set(true).should eq(true)
+      atomic.get.should eq(true)
+    end
+
     it "with integer" do
       atomic = Atomic.new(1)
       atomic.set(2).should eq(2)
       atomic.get.should eq(2)
+    end
+
+    it "with pointer type" do
+      atomic = Atomic.new(Pointer(Void).new(1))
+      atomic.set(Pointer(Void).new(3)).should eq(Pointer(Void).new(3))
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with nil (#4062)" do
@@ -236,14 +294,30 @@ describe Atomic do
   it "#lazy_set" do
     atomic = Atomic.new(1)
     atomic.lazy_set(2).should eq(2)
-    atomic.get.should eq(2)
+    atomic.lazy_get.should eq(2)
+
+    bool = Atomic.new(true)
+    bool.lazy_set(false).should eq(false)
+    bool.lazy_get.should eq(false)
   end
 
   describe "#swap" do
+    it "with bool" do
+      atomic = Atomic.new(true)
+      atomic.swap(false).should eq(true)
+      atomic.get.should eq(false)
+    end
+
     it "with integer" do
       atomic = Atomic.new(1)
       atomic.swap(2).should eq(1)
       atomic.get.should eq(2)
+    end
+
+    it "with pointer type" do
+      atomic = Atomic.new(Pointer(Void).new(1))
+      atomic.swap(Pointer(Void).new(3)).should eq(Pointer(Void).new(1))
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with reference type" do
@@ -278,6 +352,43 @@ describe Atomic do
       atomic = Atomic.new(1)
       atomic.swap(2, :acquire).should eq(1)
       atomic.get.should eq(2)
+    end
+  end
+
+  describe "atomic bool" do
+    it "sizeof" do
+      sizeof(Atomic(Bool)).should eq(1)
+      sizeof(AtomicBooleans).should eq(3)
+    end
+
+    it "gets and sets" do
+      booleans = AtomicBooleans.new
+
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(false)
+      booleans.@three.get.should eq(false)
+
+      booleans.@two.set(true)
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(true)
+      booleans.@three.get.should eq(false)
+
+      booleans.@one.set(true)
+      booleans.@three.set(true)
+      booleans.@one.get.should eq(true)
+      booleans.@two.get.should eq(true)
+      booleans.@three.get.should eq(true)
+
+      booleans.@one.set(false)
+      booleans.@three.set(false)
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(true)
+      booleans.@three.get.should eq(false)
+
+      booleans.@two.set(false)
+      booleans.@one.get.should eq(false)
+      booleans.@two.get.should eq(false)
+      booleans.@three.get.should eq(false)
     end
   end
 end

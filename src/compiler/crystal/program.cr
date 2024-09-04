@@ -279,7 +279,7 @@ module Crystal
       else
         build_commit_const = define_crystal_nil_constant "BUILD_COMMIT"
       end
-      build_commit_const.doc = <<-MD if wants_doc?
+      build_commit_const.doc = <<-MD
         The build commit identifier of the Crystal compiler.
         MD
 
@@ -311,11 +311,6 @@ module Crystal
 
         The value is defined by the environment variables `CRYSTAL_LIBRARY_PATH`.
         MD
-      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath, <<-MD
-        Colon-separated paths where the loader searches for dynamic libraries at runtime.
-
-        The value is defined by the environment variables `CRYSTAL_LIBRARY_RPATH`.
-        MD
       define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
         The version of the Crystal compiler.
         MD
@@ -341,9 +336,8 @@ module Crystal
     private def define_crystal_constant(name, value, doc = nil) : Const
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
-      if doc && wants_doc?
-        const.doc = doc
-      end
+      const.doc = doc
+
       predefined_constants << const
       const
     end

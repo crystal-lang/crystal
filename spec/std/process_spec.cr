@@ -181,6 +181,28 @@ pending_interpreted describe: Process do
       $?.exit_code.should eq(0)
     end
 
+    it "forwards closed io" do
+      closed_io = IO::Memory.new
+      closed_io.close
+      Process.run(*stdin_to_stdout_command, input: closed_io)
+      Process.run(*stdin_to_stdout_command, output: closed_io)
+      Process.run(*stdin_to_stdout_command, error: closed_io)
+    end
+
+    it "forwards non-blocking file" do
+      with_tempfile("non-blocking-process-input.txt", "non-blocking-process-output.txt") do |in_path, out_path|
+        File.open(in_path, "w+", blocking: false) do |input|
+          File.open(out_path, "w+", blocking: false) do |output|
+            input.puts "hello"
+            input.rewind
+            Process.run(*stdin_to_stdout_command, input: input, output: output)
+            output.rewind
+            output.gets_to_end.chomp.should eq("hello")
+          end
+        end
+      end
+    end
+
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
@@ -230,6 +252,19 @@ pending_interpreted describe: Process do
       output = proc.output.gets_to_end
       proc.wait
       output.should eq "`echo hi`\n"
+    end
+
+    describe "does not execute batch files" do
+      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+        it ext do
+          with_tempfile "process_run#{ext}" do |path|
+            File.write(path, "echo '#{ext}'\n")
+            expect_raises {{ flag?(:win32) ? File::BadExecutableError : File::AccessDeniedError }}, "Error executing process" do
+              Process.run(path)
+            end
+          end
+        end
+      end
     end
 
     describe "environ" do

@@ -20,11 +20,14 @@ module Benchmark
       @warmup_time : Time::Span
       @calculation_time : Time::Span
 
-      def initialize(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+      def initialize(calculation @calculation_time : Time::Span = 5.seconds, warmup @warmup_time : Time::Span = 2.seconds, interactive : Bool = STDOUT.tty?)
         @interactive = !!interactive
-        @warmup_time = warmup.seconds
-        @calculation_time = calculation.seconds
         @items = [] of Entry
+      end
+
+      @[Deprecated("Use `.new(Time::Span, Time::Span, Bool)` instead.")]
+      def self.new(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+        new(calculation.seconds, warmup.seconds, !!interactive)
       end
 
       # Adds code to be benchmarked

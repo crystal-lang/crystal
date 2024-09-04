@@ -1,5 +1,6 @@
 require "c/pthread"
 require "c/sched"
+require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::PthreadT
@@ -55,6 +56,12 @@ module Crystal::System::Thread
       end
     end
 
+    def self.current_thread? : ::Thread?
+      if ptr = LibC.pthread_getspecific(@@current_key)
+        ptr.as(::Thread)
+      end
+    end
+
     def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
       raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(ret)) unless ret == 0
@@ -63,7 +70,23 @@ module Crystal::System::Thread
   {% else %}
     @[ThreadLocal]
     class_property current_thread : ::Thread { ::Thread.new }
+
+    def self.current_thread? : ::Thread?
+      @@current_thread
+    end
   {% end %}
+
+  def self.sleep(time : ::Time::Span) : Nil
+    req = uninitialized LibC::Timespec
+    req.tv_sec = typeof(req.tv_sec).new(time.seconds)
+    req.tv_nsec = typeof(req.tv_nsec).new(time.nanoseconds)
+
+    loop do
+      return if LibC.nanosleep(pointerof(req), out rem) == 0
+      raise RuntimeError.from_errno("nanosleep() failed") unless Errno.value == Errno::EINTR
+      req = rem
+    end
+  end
 
   private def system_join : Exception?
     ret = GC.pthread_join(@system_handle)
@@ -131,6 +154,80 @@ module Crystal::System::Thread
     {% end %}
     name
   end
+
+  @suspended = Atomic(Bool).new(false)
+
+  def self.init_suspend_resume : Nil
+    install_sig_suspend_signal_handler
+    install_sig_resume_signal_handler
+  end
+
+  private def self.install_sig_suspend_signal_handler
+    action = LibC::Sigaction.new
+    action.sa_flags = LibC::SA_SIGINFO
+    action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
+      # notify that the thread has been interrupted
+      Thread.current_thread.@suspended.set(true)
+
+      # block all signals but SIG_RESUME
+      mask = LibC::SigsetT.new
+      LibC.sigfillset(pointerof(mask))
+      LibC.sigdelset(pointerof(mask), SIG_RESUME)
+
+      # suspend the thread until it receives the SIG_RESUME signal
+      LibC.sigsuspend(pointerof(mask))
+    end
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+    LibC.sigaction(SIG_SUSPEND, pointerof(action), nil)
+  end
+
+  private def self.install_sig_resume_signal_handler
+    action = LibC::Sigaction.new
+    action.sa_flags = 0
+    action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
+      # do nothing (a handler is still required to receive the signal)
+    end
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+    LibC.sigaction(SIG_RESUME, pointerof(action), nil)
+  end
+
+  private def system_suspend : Nil
+    @suspended.set(false)
+
+    if LibC.pthread_kill(@system_handle, SIG_SUSPEND) == -1
+      System.panic("pthread_kill()", Errno.value)
+    end
+  end
+
+  private def system_wait_suspended : Nil
+    until @suspended.get
+      Thread.yield_current
+    end
+  end
+
+  private def system_resume : Nil
+    if LibC.pthread_kill(@system_handle, SIG_RESUME) == -1
+      System.panic("pthread_kill()", Errno.value)
+    end
+  end
+
+  # the suspend/resume signals follow BDWGC
+
+  private SIG_SUSPEND =
+    {% if flag?(:linux) %}
+      LibC::SIGPWR
+    {% elsif LibC.has_constant?(:SIGRTMIN) %}
+      LibC::SIGRTMIN + 6
+    {% else %}
+      LibC::SIGXFSZ
+    {% end %}
+
+  private SIG_RESUME =
+    {% if LibC.has_constant?(:SIGRTMIN) %}
+      LibC::SIGRTMIN + 5
+    {% else %}
+      LibC::SIGXCPU
+    {% end %}
 end
 
 # In musl (alpine) the calls to unwind API segfaults

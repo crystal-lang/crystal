@@ -269,4 +269,21 @@ describe "UUID" do
       UUID.v5_x500(data).v5?.should eq(true)
     end
   end
+
+  describe "v7" do
+    it "generates a v7 UUID" do
+      uuid = UUID.v7
+      uuid.v7?.should eq true
+      uuid.variant.rfc9562?.should eq true
+    end
+
+    pending_wasm32 "generates UUIDs that are sortable with 1ms precision" do
+      uuids = Array.new(10) do
+        sleep 1.millisecond
+        UUID.v7
+      end
+
+      uuids.should eq uuids.sort
+    end
+  end
 end

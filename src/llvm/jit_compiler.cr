@@ -39,6 +39,10 @@ class LLVM::JITCompiler
     LibLLVM.get_pointer_to_global(self, value)
   end
 
+  def function_address(name : String) : Void*
+    Pointer(Void).new(LibLLVM.get_function_address(self, name.check_no_null_byte))
+  end
+
   def to_unsafe
     @unwrap
   end

@@ -376,6 +376,8 @@ module Crystal
           break
         when .op_eq?
           slash_is_regex!
+          break unless can_be_assigned?(atomic)
+
           if atomic.is_a?(Call) && atomic.name == "[]"
             next_token_skip_space_or_newline
 
@@ -385,8 +387,6 @@ module Crystal
             atomic.args << arg
             atomic.end_location = arg.end_location
           else
-            break unless can_be_assigned?(atomic)
-
             if atomic.is_a?(Path) && (inside_def? || inside_fun? || @is_constant_assignment)
               raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
@@ -2955,7 +2955,7 @@ module Crystal
       next_token_skip_space
       skip_statement_end
 
-      whens = [] of Select::When
+      whens = [] of When
 
       while true
         case @token.value
@@ -2978,7 +2978,7 @@ module Crystal
           body = parse_expressions
           skip_space_or_newline
 
-          whens << Select::When.new(condition, body)
+          whens << When.new(condition, body)
         when Keyword::ELSE
           if whens.size == 0
             unexpected_token "expecting when"
@@ -3211,7 +3211,7 @@ module Crystal
 
         case @token.type
         when .macro_literal?
-          pieces << MacroLiteral.new(@token.value.to_s)
+          pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
           pieces << MacroExpression.new(parse_macro_expression)
           check_macro_expression_end
@@ -3441,11 +3441,13 @@ module Crystal
       @in_macro_expression = false
 
       if !@token.type.op_percent_rcurly? && check_end
+        @in_macro_expression = true
         if is_unless
           node = parse_unless_after_condition cond, location
         else
           node = parse_if_after_condition cond, location, true
         end
+        @in_macro_expression = false
         skip_space_or_newline
         check :OP_PERCENT_RCURLY
         return MacroExpression.new(node, output: false).at_end(token_end_location)
@@ -3473,7 +3475,8 @@ module Crystal
         end
       when Keyword::ELSIF
         unexpected_token if is_unless
-        a_else = parse_macro_if(start_location, macro_state, false)
+        start_loc = @token.location
+        a_else = parse_macro_if(start_location, macro_state, false).at(start_loc)
 
         if check_end
           check_ident :end
@@ -6183,7 +6186,7 @@ module Crystal
       when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
-        (node.obj.nil? && node.args.size == 0 && node.block.nil?) || node.name == "[]"
+        !node.has_parentheses? && ((node.obj.nil? && node.args.empty? && node.block.nil?) || node.name == "[]")
       else
         false
       end

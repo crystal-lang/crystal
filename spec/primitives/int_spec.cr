@@ -131,6 +131,13 @@ describe "Primitives: Int" do
     end
   end
 
+  describe "#unsafe_chr" do
+    it "doesn't raise on overflow" do
+      (0x41_i64 - 0x100000000_i64).unsafe_chr.should eq('A')
+      0xFFFF_FFFF_0010_FFFF_u64.unsafe_chr.should eq('\u{10FFFF}')
+    end
+  end
+
   describe "#to_f" do
     it "raises on overflow for UInt128#to_f32" do
       expect_raises(OverflowError) { UInt128::MAX.to_f32 }
