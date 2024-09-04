@@ -79,9 +79,14 @@ module Crystal::IOCP
     end
 
     def self.run(handle, &)
-      operation_storage = uninitialized ReferenceStorage(OverlappedOperation)
-      operation = OverlappedOperation.unsafe_construct(pointerof(operation_storage), handle)
-      yield operation
+      # TODO: implement `pre_initialize` in the interpreter
+      {% if flag?(:interpreted) %}
+        yield OverlappedOperation.new(handle)
+      {% else %}
+        operation_storage = uninitialized ReferenceStorage(OverlappedOperation)
+        operation = OverlappedOperation.unsafe_construct(pointerof(operation_storage), handle)
+        yield operation
+      {% end %}
     end
 
     def self.unbox(overlapped : LibC::OVERLAPPED*)

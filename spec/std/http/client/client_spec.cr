@@ -6,6 +6,12 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending HTTP::Client
+  {% skip_file %}
+{% end %}
+
 private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin

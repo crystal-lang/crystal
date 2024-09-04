@@ -2,6 +2,12 @@ require "spec"
 require "socket"
 require "../../support/tempfile"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending UNIXSocket
+  {% skip_file %}
+{% end %}
+
 describe UNIXSocket do
   it "raises when path is too long" do
     with_tempfile("unix_socket-too_long-#{("a" * 2048)}.sock") do |path|
