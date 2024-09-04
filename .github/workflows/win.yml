@@ -296,6 +296,7 @@ jobs:
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\build"
           Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+          Add-Content $env:GITHUB_ENV "CRYSTAL_INTERPRETER_LOADER_INFO=1"
 
       - name: Run stdlib specs with interpreter
         run: bin\crystal i spec\std_spec.cr
