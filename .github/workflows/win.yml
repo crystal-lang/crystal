@@ -7,6 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
+  SPEC_SPLIT_DOTS: 160
   CI_LLVM_VERSION: "18.1.1"
 
 jobs:
@@ -265,16 +266,20 @@ jobs:
       - name: Build samples
         run: make -f Makefile.win samples
 
+  x86_64-windows-release:
+    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
+    uses: ./.github/workflows/win_build_portable.yml
+    with:
+      release: true
+      llvm_version: "18.1.1"
+
   x86_64-windows-test-interpreter:
     runs-on: windows-2022
-    needs: [x86_64-windows]
+    needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
         run: |
           git config --global core.autocrlf false
-
-      - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -282,7 +287,7 @@ jobs:
       - name: Download Crystal executable
         uses: actions/download-artifact@v4
         with:
-          name: crystal
+          name: crystal-release
           path: build
 
       - name: Restore LLVM
@@ -296,21 +301,12 @@ jobs:
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\build"
           Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
-          Add-Content $env:GITHUB_ENV "CRYSTAL_INTERPRETER_LOADER_INFO=1"
 
       - name: Run stdlib specs with interpreter
         run: bin\crystal i spec\std_spec.cr
 
       - name: Run primitives specs with interpreter
         run: bin\crystal i spec\primitives_spec.cr
-
-  x86_64-windows-release:
-    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
-    uses: ./.github/workflows/win_build_portable.yml
-    with:
-      release: true
-      llvm_version: "18.1.1"
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
