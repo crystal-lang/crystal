@@ -1,0 +1,325 @@
+all:
+
+-include Makefile.win.local # for optional local options e.g. threads
+
+# Recipes for this Makefile
+
+## Build the compiler
+##   $ make -f Makefile.win
+## Build the compiler with progress output
+##   $ make -f Makefile.win progress=1
+## Clean up built files then build the compiler
+##   $ make -f Makefile.win clean crystal
+## Build the compiler in release mode
+##   $ make -f Makefile.win crystal release=1 interpreter=1
+## Run tests
+##   $ make -f Makefile.win test
+## Run stdlib tests
+##   $ make -f Makefile.win std_spec
+## Run compiler tests
+##   $ make -f Makefile.win compiler_spec
+## Run generators (Unicode, SSL config, ...)
+##   $ make -B generate_data
+
+CRYSTAL ?= crystal ## which previous crystal compiler use
+LLVM_CONFIG ?=     ## llvm-config command path to use
+
+release ?=      ## Compile in release mode
+stats ?=        ## Enable statistics output
+progress ?=     ## Enable progress output
+threads ?=      ## Maximum number of threads to use
+debug ?=        ## Add symbolic debug info
+verbose ?=      ## Run specs in verbose mode
+junit_output ?= ## Path to output junit results
+static ?=       ## Enable static linking
+target ?=       ## Cross-compilation target
+interpreter ?=  ## Enable interpreter feature
+check ?=        ## Enable only check when running format
+order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
+
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
+
+SHELL := cmd.exe
+CXX := cl.exe
+RC := rc.exe
+
+GLOB = $(shell dir $1 /B /S)
+MKDIR = if not exist $1 mkdir $1
+CP = copy /B /Y $1 $2
+CPDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+INSTALL = copy /B /Y $1 $2
+INSTALLDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+MV = move /Y $1 $2
+RM = if exist $1 del /F /Q $1
+RMDIR = if exist $1 rd /S /Q $1
+
+O := .build
+SOURCES := $(call GLOB,src\\*.cr)
+SPEC_SOURCES := $(call GLOB,spec\\*.cr)
+override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
+SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives
+SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
+CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
+CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
+CRYSTAL_CONFIG_PATH := $$ORIGIN\src
+CRYSTAL_VERSION ?= $(shell type src\VERSION)
+SOURCE_DATE_EPOCH ?= $(or $(shell type src\SOURCE_DATE_EPOCH 2>NUL),$(shell git show -s --format=%ct HEAD))
+export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
+export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
+LLVM_CONFIG ?=
+LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version))
+LLVM_EXT_DIR = src\llvm\ext
+LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
+CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
+
+prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
+BINDIR ?= $(prefix)
+LIBDIR ?= $(prefix)\lib
+SRCDIR ?= $(prefix)\src
+DATADIR ?= $(prefix)
+
+colorize = $1
+
+DEPS = $(LLVM_EXT_OBJ)
+ifneq ($(LLVM_VERSION),)
+  ifeq ($(shell if $(firstword $(subst ., ,$(LLVM_VERSION))) GEQ 18 echo 0),0)
+    DEPS =
+  endif
+endif
+
+check_llvm_config = $(eval \
+	check_llvm_config := $(if $(LLVM_VERSION),\
+		$(info $(call colorize,Using $(LLVM_CONFIG) [version=$(LLVM_VERSION)])),\
+		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell type src\llvm\ext\llvm-versions.txt)))\
+	)
+
+.PHONY: all
+all: crystal ## Build all files (currently crystal only) [default]
+
+.PHONY: test
+test: spec ## Run tests
+
+.PHONY: spec
+spec: std_spec primitives_spec compiler_spec
+
+.PHONY: std_spec
+std_spec: $(O)\std_spec.exe ## Run standard library specs
+	$(O)\std_spec $(SPEC_FLAGS)
+
+.PHONY: compiler_spec
+compiler_spec: $(O)\compiler_spec.exe ## Run compiler specs
+	$(O)\compiler_spec $(SPEC_FLAGS)
+
+.PHONY: primitives_spec
+primitives_spec: $(O)\primitives_spec.exe ## Run primitives specs
+	$(O)\primitives_spec $(SPEC_FLAGS)
+
+.PHONY: interpreter_spec
+interpreter_spec: $(O)\interpreter_spec ## Run interpreter specs
+	$(O)\interpreter_spec $(SPEC_FLAGS)
+
+.PHONY: smoke_test
+smoke_test: ## Build specs as a smoke test
+smoke_test: $(O)\std_spec.exe $(O)\compiler_spec.exe $(O)\crystal.exe
+
+.PHONY: all_spec
+all_spec: $(O)\all_spec.exe ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
+	$(O)\all_spec $(SPEC_FLAGS)
+
+.PHONY: samples
+samples: ## Build example programs
+	$(MAKE) -C samples -f $(MAKEFILE_LIST)
+
+.PHONY: docs
+docs: ## Generate standard library documentation
+	$(call check_llvm_config)
+	.\bin\crystal docs src\docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
+
+.PHONY: crystal
+crystal: $(O)\crystal.exe ## Build the compiler
+
+.PHONY: deps llvm_ext
+deps: $(DEPS) ## Build dependencies
+llvm_ext: $(LLVM_EXT_OBJ)
+
+.PHONY: format
+format: ## Format sources
+	.\bin\crystal tool format$(if $(check), --check) src spec samples scripts
+
+.PHONY: generate_data
+generate_data: ## Run generator scripts for Unicode, SSL config, ...
+	$(MAKE) -B -f scripts/generate_data.mk
+
+.PHONY: install
+install: $(O)\crystal.exe ## Install the compiler at prefix
+	$(call MKDIR,"$(BINDIR)")
+	$(call INSTALL,"$(O)\crystal.exe","$(BINDIR)\crystal.exe")
+	$(call INSTALL,"$(O)\crystal.pdb","$(BINDIR)\crystal.pdb")
+
+	$(call MKDIR,"$(DATADIR)")
+	$(call INSTALLDIR,src,"$(DATADIR)\src")
+	$(call RM,"$(DATADIR)\$(LLVM_EXT_OBJ)")
+
+	$(call INSTALL,LICENSE,"$(DATADIR)\LICENSE.txt")
+
+.PHONY: uninstall
+uninstall: ## Uninstall the compiler from prefix
+	$(call RM,"$(DATADIR)\LICENSE.txt")
+
+	$(call RMDIR,"$(DATADIR)\src")
+
+	$(call RM,"$(BINDIR)\crystal.exe")
+	$(call RM,"$(BINDIR)\crystal.pdb")
+
+.PHONY: install_docs
+install_docs: docs ## Install docs at prefix
+	$(call MKDIR,"$(DATADIR)")
+	$(call INSTALLDIR,docs,"$(DATADIR)\docs")
+	$(call INSTALLDIR,samples,"$(DATADIR)\examples")
+
+.PHONY: uninstall_docs
+uninstall_docs: ## Uninstall docs from prefix
+	$(call RMDIR,"$(DATADIR)\docs")
+	$(call RMDIR,"$(DATADIR)\examples")
+
+$(O)\all_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	$(call check_llvm_config)
+	@$(call MKDIR,"$(O)")
+	$(call export_vars)
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\all_spec.cr
+
+$(O)\std_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	$(call check_llvm_config)
+	@$(call MKDIR,"$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\std_spec.cr
+
+$(O)\compiler_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	$(call check_llvm_config)
+	@$(call MKDIR,"$(O)")
+	$(call export_vars)
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\compiler_spec.cr --release
+
+$(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@$(call MKDIR,"$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
+
+$(O)\interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	$(eval interpreter=1)
+	@$(call MKDIR, "$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec\compiler\interpreter_spec.cr
+
+$(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
+	$(call check_llvm_config)
+	@$(call MKDIR,"$(O)")
+	$(call export_vars)
+	$(call export_build_vars)
+	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib $(if $(USE_PCRE1),-D use_pcre,-D use_pcre2) --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
+	$(call MV,"$(O)\crystal-next.exe","$@")
+	$(call MV,"$(O)\crystal-next.pdb","$(O)\crystal.pdb")
+
+$(O)\crystal.res: $(O)\crystal.rc
+	@$(call MKDIR,"$(O)")
+	$(RC) /nologo /Fo "$@" "$<"
+
+$(O)\crystal.rc: $(MAKEFILE_LIST)
+	@$(call MKDIR,"$(O)")
+	$(MAKE) -s -f $(MAKEFILE_LIST) rc > "$@"
+
+$(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
+	$(call check_llvm_config)
+	@rem Disable some harmless warnings:
+	@rem - warning C4244: 'initializing': conversion from '_Ty' to '_Ty2', possible loss of data
+	@rem - warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+	@rem - warning C4624: '...': destructor was implicitly defined as deleted
+	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(shell $(LLVM_CONFIG) --cxxflags)
+
+.PHONY: clean
+clean: clean_crystal ## Clean up built directories and files
+	$(call RM,"$(LLVM_EXT_OBJ)")
+
+.PHONY: clean_crystal
+clean_crystal: ## Clean up crystal built files
+	$(call RMDIR,"$(O)")
+	$(call RMDIR,docs)
+
+.PHONY: clean_cache
+clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
+	$(call RMDIR,"$(shell .\bin\crystal env CRYSTAL_CACHE_DIR)")
+
+.PHONY: rc
+rc: ## Write compiler resource script to standard output
+	$(eval comma := ,)
+	$(eval ver_comma := $(subst .,$(comma),$(subst -dev,,$(CRYSTAL_VERSION))))
+	$(eval source_date := $(shell git show -s --format=%cs HEAD))
+	$(eval source_year := $(firstword $(subst -, ,$(source_date))))
+	$(eval ver_full := $(CRYSTAL_VERSION)$(if $(CRYSTAL_CONFIG_BUILD_COMMIT), [$(CRYSTAL_CONFIG_BUILD_COMMIT)])$(if $(source_date), ($(source_date))))
+	@setlocal EnableDelayedExpansion &\
+	echo #include ^<windows.h^>&\
+	echo.&\
+	set "_dir=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))" &\
+	echo 1 ICON ^"!_dir:/=\\!src\\compiler\\crystal\\tools\\playground\\public\\favicon.ico^"&\
+	echo.&\
+	echo VS_VERSION_INFO VERSIONINFO&\
+	echo     PRODUCTVERSION $(ver_comma),0&\
+	echo     FILEVERSION    $(ver_comma),1&\
+	echo     FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK&\
+	echo     FILEFLAGS      $(if $(findstring -dev,$(CRYSTAL_VERSION)),VS_FF_PRERELEASE,0)&\
+	echo     FILEOS         VOS_NT_WINDOWS32&\
+	echo     FILETYPE       VFT_APP&\
+	echo     FILESUBTYPE    VFT2_UNKNOWN&\
+	echo BEGIN&\
+	echo     BLOCK "StringFileInfo"&\
+	echo     BEGIN&\
+	echo         BLOCK "040904B0"&\
+	echo         BEGIN&\
+	echo             VALUE "ProductName",      "Crystal"&\
+	echo             VALUE "ProductVersion",   "$(ver_full)"&\
+	echo             VALUE "FileVersion",      "$(ver_full)"&\
+	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --host-target))"&\
+	echo             VALUE "Comments",         "$(if $(LLVM_VERSION),LLVM $(LLVM_VERSION))"&\
+	echo             VALUE "InternalName",     "crystal.exe"&\
+	echo             VALUE "OriginalFilename", "crystal.exe"&\
+	echo             VALUE "CompanyName",      "Manas Technology Solutions"&\
+	echo             VALUE "LegalCopyright",   "Copyright 2012-$(source_year) Manas Technology Solutions"&\
+	echo         END&\
+	echo     END&\
+	echo     BLOCK "VarFileInfo"&\
+	echo     BEGIN&\
+	echo         VALUE "Translation", 0x0409, 0x04B0&\
+	echo     END&\
+	echo END
+
+.PHONY: help
+help: ## Show this help
+	@setlocal EnableDelayedExpansion &\
+	echo. &\
+	echo targets: &\
+	(for /F "usebackq tokens=1* delims=:" %%g in ($(MAKEFILE_LIST)) do (\
+		if not "%%h" == "" (\
+			set "_line=%%g                " &\
+			set "_rest=%%h" &\
+			set "_comment=!_rest:* ## =!" &\
+			if not "!_comment!" == "!_rest!"\
+				if "!_line:_rest=!" == "!_line!"\
+					echo   !_line:~0,16!!_comment!\
+		)\
+	)) &\
+	echo. &\
+	echo optional variables: &\
+	(for /F "usebackq tokens=1,3 delims=?#" %%g in ($(MAKEFILE_LIST)) do (\
+		if not "%%h" == "" (\
+			set "_var=%%g              " &\
+			echo   !_var:~0,14! %%h\
+		)\
+	)) &\
+	echo. &\
+	echo recipes: &\
+	(for /F "usebackq tokens=* delims=" %%g in ($(MAKEFILE_LIST)) do (\
+		set "_line=%%g" &\
+		if "!_line:~0,7!" == "##   $$ " (\
+			echo !_name! &\
+			echo  !_line:~2!\
+		) else if "!_line:~0,3!" == "## "\
+			set "_name=  !_line:~3!"\
+	))

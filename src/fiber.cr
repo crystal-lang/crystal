@@ -1,6 +1,5 @@
 require "crystal/system/thread_linked_list"
 require "./fiber/context"
-require "./fiber/stack_pool"
 
 # :nodoc:
 @[NoInline]
@@ -47,13 +46,10 @@ class Fiber
   # :nodoc:
   protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
 
-  # :nodoc:
-  class_getter stack_pool = StackPool.new
-
   @context : Context
   @stack : Void*
-  @resume_event : Crystal::Event?
-  @timeout_event : Crystal::Event?
+  @resume_event : Crystal::EventLoop::Event?
+  @timeout_event : Crystal::EventLoop::Event?
   # :nodoc:
   property timeout_select_action : Channel::TimeoutAction?
   protected property stack_bottom : Void*
@@ -62,7 +58,7 @@ class Fiber
   property name : String?
 
   @alive = true
-  @current_thread = Atomic(Thread?).new(nil)
+  {% if flag?(:preview_mt) %} @current_thread = Atomic(Thread?).new(nil) {% end %}
 
   # :nodoc:
   property next : Fiber?
@@ -76,8 +72,10 @@ class Fiber
   end
 
   # :nodoc:
-  def self.unsafe_each
-    fibers.unsafe_each { |fiber| yield fiber }
+  def self.unsafe_each(&)
+    # nothing to iterate when @@fibers is nil + don't lazily allocate in a
+    # method called from a GC collection callback!
+    @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
   # Creates a new `Fiber` instance.
@@ -87,7 +85,12 @@ class Fiber
   # *name* is an optional and used only as an internal reference.
   def initialize(@name : String? = nil, &@proc : ->)
     @context = Context.new
-    @stack, @stack_bottom = Fiber.stack_pool.checkout
+    @stack, @stack_bottom =
+      {% if flag?(:interpreted) %}
+        {Pointer(Void).null, Pointer(Void).null}
+      {% else %}
+        Crystal::Scheduler.stack_pool.checkout
+      {% end %}
 
     fiber_main = ->(f : Fiber) { f.run }
 
@@ -118,10 +121,19 @@ class Fiber
   # :nodoc:
   def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
-    @context = Context.new(_fiber_get_stack_top)
+
+    # TODO: should creating a new context for the main fiber also be platform specific?
+    # It's the same for all platforms except for the interpreted mode.
+    @context =
+      {% if flag?(:interpreted) %}
+        # In interpreted mode the stack_top variable actually points to a fiber
+        Context.new(Crystal::Interpreter.current_fiber)
+      {% else %}
+        Context.new(_fiber_get_stack_top)
+      {% end %}
     thread.gc_thread_handler, @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
-    @current_thread.set(thread)
+    {% if flag?(:preview_mt) %} @current_thread.set(thread) {% end %}
     Fiber.fibers.push(self)
   end
 
@@ -130,22 +142,24 @@ class Fiber
     GC.unlock_read
     @proc.call
   rescue ex
+    io = {% if flag?(:preview_mt) %}
+           IO::Memory.new(4096) # PIPE_BUF
+         {% else %}
+           STDERR
+         {% end %}
     if name = @name
-      STDERR.print "Unhandled exception in spawn(name: #{name}): "
+      io << "Unhandled exception in spawn(name: " << name << "): "
     else
-      STDERR.print "Unhandled exception in spawn: "
+      io << "Unhandled exception in spawn: "
     end
-    ex.inspect_with_backtrace(STDERR)
+    ex.inspect_with_backtrace(io)
+    {% if flag?(:preview_mt) %}
+      STDERR.write(io.to_slice)
+    {% end %}
     STDERR.flush
   ensure
-    {% if flag?(:preview_mt) %}
-      Crystal::Scheduler.enqueue_free_stack @stack
-    {% else %}
-      Fiber.stack_pool.release(@stack)
-    {% end %}
-
     # Remove the current fiber from the linked list
-    Fiber.fibers.delete(self)
+    Fiber.inactive(self)
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
@@ -153,30 +167,33 @@ class Fiber
     @timeout_select_action = nil
 
     @alive = false
-    Crystal::Scheduler.reschedule
+    {% unless flag?(:interpreted) %}
+      Crystal::Scheduler.stack_pool.release(@stack)
+    {% end %}
+    Fiber.suspend
   end
 
   # Returns the current fiber.
-  def self.current
-    Crystal::Scheduler.current_fiber
+  def self.current : Fiber
+    Thread.current.current_fiber
   end
 
   # The fiber's proc is currently running or didn't fully save its context. The
   # fiber can't be resumed.
-  def running?
+  def running? : Bool
     @context.resumable == 0
   end
 
   # The fiber's proc is currently not running and fully saved its context. The
   # fiber can be resumed safely.
-  def resumable?
+  def resumable? : Bool
     @context.resumable == 1
   end
 
   # The fiber's proc has terminated, and the fiber is now considered dead. The
   # fiber is impossible to resume, ever.
-  def dead?
-    @alive == false
+  def dead? : Bool
+    !@alive
   end
 
   # Immediately resumes execution of this fiber.
@@ -200,20 +217,20 @@ class Fiber
   # Adds this fiber to the scheduler's runnables queue for the current thread.
   #
   # This signals to the scheduler that the fiber is eligible for being resumed
-  # the next time it has the opportunity to reschedule to an other fiber. There
+  # the next time it has the opportunity to reschedule to another fiber. There
   # are no guarantees when that will happen.
-  def enqueue
+  def enqueue : Nil
     Crystal::Scheduler.enqueue(self)
   end
 
   # :nodoc:
-  def resume_event
-    @resume_event ||= Crystal::EventLoop.create_resume_event(self)
+  def resume_event : Crystal::EventLoop::Event
+    @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
 
   # :nodoc:
-  def timeout_event
-    @timeout_event ||= Crystal::EventLoop.create_timeout_event(self)
+  def timeout_event : Crystal::EventLoop::Event
+    @timeout_event ||= Crystal::EventLoop.current.create_timeout_event(self)
   end
 
   # :nodoc:
@@ -223,20 +240,19 @@ class Fiber
   end
 
   # :nodoc:
-  def cancel_timeout
+  def cancel_timeout : Nil
     @timeout_select_action = nil
     @timeout_event.try &.delete
   end
 
-  # The current fiber will resume after a period of time
-  # and have the property `timed_out` set to true.
+  # The current fiber will resume after a period of time.
   # The timeout can be cancelled with `cancel_timeout`
   def self.timeout(timeout : Time::Span?, select_action : Channel::TimeoutAction? = nil) : Nil
-    Crystal::Scheduler.current_fiber.timeout(timeout, select_action)
+    Fiber.current.timeout(timeout, select_action)
   end
 
-  def self.cancel_timeout
-    Crystal::Scheduler.current_fiber.cancel_timeout
+  def self.cancel_timeout : Nil
+    Fiber.current.cancel_timeout
   end
 
   # Yields to the scheduler and allows it to swap execution to other
@@ -267,8 +283,22 @@ class Fiber
   #   end
   # end
   # ```
-  def self.yield
+  def self.yield : Nil
     Crystal::Scheduler.yield
+  end
+
+  # Suspends execution of the current fiber indefinitely.
+  #
+  # Unlike `Fiber.yield` the current fiber is not automatically
+  # reenqueued and can only be resumed whith an explicit call to `#enqueue`.
+  #
+  # This is equivalent to `sleep` without a time.
+  #
+  # This method is meant to be used in concurrency primitives. It's particularly
+  # useful if the fiber needs to wait  for something to happen (for example an IO
+  # event, a message is ready in a channel, etc.) which triggers a re-enqueue.
+  def self.suspend : Nil
+    Crystal::Scheduler.reschedule
   end
 
   def to_s(io : IO) : Nil
@@ -285,8 +315,20 @@ class Fiber
   end
 
   # :nodoc:
-  def push_gc_roots
+  def push_gc_roots : Nil
     # Push the used section of the stack
     GC.push_stack @context.stack_top, @stack_bottom
   end
+
+  {% if flag?(:preview_mt) %}
+    # :nodoc:
+    def set_current_thread(thread = Thread.current) : Thread
+      @current_thread.set(thread)
+    end
+
+    # :nodoc:
+    def get_current_thread : Thread?
+      @current_thread.lazy_get
+    end
+  {% end %}
 end

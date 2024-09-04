@@ -8,13 +8,27 @@
 # directory, which usually is just `require "spec"` but could
 # be anything else (for example the `minitest` shard).
 
+# Gain access to OptionParser for spec runner to include it in the usage
+# instructions.
+require "spec/cli"
+
 class Crystal::Command
   private def spec
     compiler = new_compiler
     link_flags = [] of String
-    OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
+    parse_with_crystal_opts do |opts|
+      opts.banner = "Usage: crystal spec [options] [files] [runtime_options]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        puts
+
+        runtime_options = Spec::CLI.new.option_parser
+        runtime_options.banner = "Runtime options (passed to spec runner):"
+        puts runtime_options
+        exit
+      end
 
       opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
         link_flags << some_link_flags
@@ -46,6 +60,7 @@ class Crystal::Command
           locations << {file, line}
         else
           if Dir.exists?(filename)
+            filename = ::Path[filename].to_posix
             target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
           elsif File.file?(filename)
             target_filenames << filename
@@ -73,14 +88,15 @@ class Crystal::Command
 
     source_filename = File.expand_path("spec")
 
-    source = target_filenames.map { |filename|
-      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix}")
-    }.join('\n')
+    source = target_filenames.join('\n') do |filename|
+      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix.to_s.inspect_unquoted}")
+    end
     sources = [Compiler::Source.new(source_filename, source)]
 
     output_filename = Crystal.temp_executable "spec"
 
-    result = compiler.compile sources, output_filename
+    ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= Process.executable_path
+    compiler.compile sources, output_filename
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end

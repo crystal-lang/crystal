@@ -15,7 +15,7 @@ lib LibC
 
   DT_UNKNOWN =  0
   DT_DIR     =  4
-  DT_LINK    = 10
+  DT_LNK     = 10
 
   struct Dirent
     d_fileno : InoT
@@ -29,4 +29,5 @@ lib LibC
   fun opendir = __opendir30(x0 : Char*) : DIR*
   fun readdir = __readdir30(x0 : DIR*) : Dirent*
   fun rewinddir(x0 : DIR*) : Void
+  fun dirfd(dirp : DIR*) : Int
 end

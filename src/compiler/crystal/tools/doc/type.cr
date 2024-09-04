@@ -3,6 +3,13 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
+  PSEUDO_CLASS_PREFIX = "CRYSTAL_PSEUDO__"
+  PSEUDO_CLASS_NOTE   = <<-DOC
+
+    NOTE: This is a pseudo-class provided directly by the Crystal compiler.
+    It cannot be reopened nor overridden.
+    DOC
+
   getter type : Crystal::Type
 
   def initialize(@generator : Generator, type : Crystal::Type)
@@ -12,23 +19,23 @@ class Crystal::Doc::Type
   def kind
     case @type
     when Const
-      :const
+      "const"
     when .struct?
-      :struct
+      "struct"
     when .class?, .metaclass?
-      :class
+      "class"
     when .module?
-      :module
+      "module"
     when AliasType
-      :alias
+      "alias"
     when EnumType
-      :enum
+      "enum"
     when NoReturnType, VoidType
-      :struct
+      "struct"
     when AnnotationType
-      :annotation
+      "annotation"
     when LibType
-      :module
+      "module"
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -39,7 +46,11 @@ class Crystal::Doc::Type
     when Program
       "Top Level Namespace"
     when NamedType
-      type.name
+      if @generator.project_info.crystal_stdlib?
+        type.name.lchop(PSEUDO_CLASS_PREFIX)
+      else
+        type.name
+      end
     when NoReturnType
       "NoReturn"
     when VoidType
@@ -89,7 +100,7 @@ class Crystal::Doc::Type
   def superclass
     case type = @type
     when ClassType
-      superclass = type.superclass
+      superclass = type.superclass unless ast_node?
     when GenericClassInstanceType
       superclass = type.superclass
     end
@@ -103,11 +114,22 @@ class Crystal::Doc::Type
 
   def ancestors
     ancestors = [] of self
-    @type.ancestors.each do |ancestor|
-      ancestors << @generator.type(ancestor)
-      break if ancestor == @generator.program.object
+
+    unless ast_node?
+      @type.ancestors.each do |ancestor|
+        next unless @generator.must_include? ancestor
+        doc_type = @generator.type(ancestor)
+        ancestors << doc_type
+        break if ancestor == @generator.program.object || doc_type.ast_node?
+      end
     end
+
     ancestors
+  end
+
+  def ast_node?
+    type = @type
+    type.is_a?(ClassType) && type.full_name == "Crystal::Macros::ASTNode"
   end
 
   def locations
@@ -123,15 +145,15 @@ class Crystal::Doc::Type
   end
 
   def enum?
-    kind == :enum
+    @type.is_a?(EnumType)
   end
 
   def alias?
-    kind == :alias
+    @type.is_a?(AliasType)
   end
 
   def const?
-    kind == :const
+    @type.is_a?(Const)
   end
 
   def alias_definition
@@ -166,9 +188,14 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by! &.name.downcase
+        defs.sort_by! { |x| sort_order(x) }
       end
     end
+  end
+
+  private def sort_order(item)
+    # Sort operators first, then alphanumeric (case-insensitive).
+    {item.name[0].alphanumeric? ? 1 : 0, item.name.downcase}
   end
 
   @class_methods : Array(Method)?
@@ -191,7 +218,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by! &.name.downcase
+      class_methods.sort_by! { |x| sort_order(x) }
     end
   end
 
@@ -215,7 +242,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by! &.name.downcase
+      macros.sort_by! { |x| sort_order(x) }
     end
   end
 
@@ -232,6 +259,7 @@ class Crystal::Doc::Type
       included_modules = [] of Type
       @type.parents.try &.each do |parent|
         if parent.module?
+          next unless @generator.must_include? parent
           included_modules << @generator.type(parent)
         end
       end
@@ -246,6 +274,7 @@ class Crystal::Doc::Type
       extended_modules = [] of Type
       @type.metaclass.parents.try &.each do |parent|
         if parent.module?
+          next unless @generator.must_include? parent
           extended_modules << @generator.type(parent)
         end
       end
@@ -388,7 +417,11 @@ class Crystal::Doc::Type
   end
 
   def doc
-    @type.doc
+    if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_CLASS_PREFIX)
+      "#{@type.doc}#{PSEUDO_CLASS_NOTE}"
+    else
+      @type.doc
+    end
   end
 
   def lookup_path(path_or_names : Path | Array(String))
@@ -473,7 +506,7 @@ class Crystal::Doc::Type
     String.build { |io| node_to_html node, io }
   end
 
-  def node_to_html(node : Path, io, links = true)
+  def node_to_html(node : Path, io, html : HTMLOption = :all)
     match = lookup_path(node)
     if match
       # If the path is global, search a local path and
@@ -486,57 +519,65 @@ class Crystal::Doc::Type
         node.global = true unless remove_colons
       end
 
-      type_to_html match, io, node.to_s, links: links
+      type_to_html match, io, node.to_s, html: html
       node.global = true if remove_colons
     else
       io << node
     end
   end
 
-  def node_to_html(node : Generic, io, links = true)
-    node_to_html node.name, io, links: links
+  def node_to_html(node : Generic, io, html : HTMLOption = :all)
+    node_to_html node.name, io, html: html
     io << '('
     node.type_vars.join(io, ", ") do |type_var|
-      node_to_html type_var, io, links: links
+      node_to_html type_var, io, html: html
+    end
+    if (named_args = node.named_args) && !named_args.empty?
+      io << ", " unless node.type_vars.empty?
+      named_args.join(io, ", ") do |entry|
+        Symbol.quote_for_named_argument(io, entry.name)
+        io << ": "
+        node_to_html entry.value, io, html: html
+      end
     end
     io << ')'
   end
 
-  def node_to_html(node : ProcNotation, io, links = true)
+  def node_to_html(node : ProcNotation, io, html : HTMLOption = :all)
     if inputs = node.inputs
       inputs.join(io, ", ") do |input|
-        node_to_html input, io, links: links
+        node_to_html input, io, html: html
       end
     end
     io << " -> "
     if output = node.output
-      node_to_html output, io, links: links
+      node_to_html output, io, html: html
     end
   end
 
-  def node_to_html(node : Union, io, links = true)
+  def node_to_html(node : Union, io, html : HTMLOption = :all)
     # See if it's a nilable type
     if node.types.size == 2
       # See if first type is Nil
       if nil_type?(node.types[0])
-        return nilable_type_to_html node.types[1], io, links: links
+        return nilable_type_to_html node.types[1], io, html: html
       elsif nil_type?(node.types[1])
-        return nilable_type_to_html node.types[0], io, links: links
+        return nilable_type_to_html node.types[0], io, html: html
       end
     end
 
     node.types.join(io, " | ") do |elem|
-      node_to_html elem, io, links: links
+      node_to_html elem, io, html: html
     end
   end
 
-  private def nilable_type_to_html(node : ASTNode, io, links)
-    node_to_html node, io, links: links
+  private def nilable_type_to_html(node : ASTNode, io, html)
+    node_to_html node, io, html: html
     io << '?'
   end
 
-  private def nilable_type_to_html(type : Crystal::Type, io, text, links)
-    type_to_html(type, io, text, links: links)
+  private def nilable_type_to_html(type : Crystal::Type, io, text, html)
+    type_to_html(type, io, text, html: html)
     io << '?'
   end
 
@@ -544,14 +585,18 @@ class Crystal::Doc::Type
     return false unless node.is_a?(Path)
 
     match = lookup_path(node)
-    match && match.type == @generator.program.nil_type
+    !!match.try &.type == @generator.program.nil_type
   end
 
-  def node_to_html(node, io, links = true)
-    io << Highlighter.highlight(node.to_s)
+  def node_to_html(node, io, html : HTMLOption = :all)
+    if html.highlight?
+      io << SyntaxHighlighter::HTML.highlight!(node.to_s)
+    else
+      io << node
+    end
   end
 
-  def node_to_html(node : Underscore, io, links = true)
+  def node_to_html(node : Underscore, io, html : HTMLOption = :all)
     io << '_'
   end
 
@@ -560,14 +605,14 @@ class Crystal::Doc::Type
     String.build { |io| type_to_html(type, io) }
   end
 
-  def type_to_html(type : Crystal::UnionType, io, text = nil, links = true)
-    has_type_splat = type.union_types.any? &.is_a?(TypeSplat)
+  def type_to_html(type : Crystal::UnionType, io, text = nil, html : HTMLOption = :all)
+    has_type_splat = type.union_types.any?(TypeSplat)
 
     if !has_type_splat && type.union_types.size == 2
       if type.union_types[0].nil_type?
-        return nilable_type_to_html(type.union_types[1], io, text, links)
+        return nilable_type_to_html(type.union_types[1], io, text, html)
       elsif type.union_types[1].nil_type?
-        return nilable_type_to_html(type.union_types[0], io, text, links)
+        return nilable_type_to_html(type.union_types[0], io, text, html)
       end
     end
 
@@ -579,49 +624,45 @@ class Crystal::Doc::Type
     end
 
     type.union_types.join(io, separator) do |union_type|
-      type_to_html union_type, io, text, links: links
+      type_to_html union_type, io, text, html: html
     end
 
     io << ')' if has_type_splat
   end
 
-  def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, html : HTMLOption = :all)
     type.arg_types.join(io, ", ") do |arg_type|
-      type_to_html arg_type, io, links: links
+      type_to_html arg_type, io, html: html
     end
     io << " -> "
     return_type = type.return_type
-    type_to_html return_type, io, links: links unless return_type.void?
+    type_to_html return_type, io, html: html unless return_type.void?
   end
 
-  def type_to_html(type : Crystal::TupleInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::TupleInstanceType, io, text = nil, html : HTMLOption = :all)
     io << '{'
     type.tuple_types.join(io, ", ") do |tuple_type|
-      type_to_html tuple_type, io, links: links
+      type_to_html tuple_type, io, html: html
     end
     io << '}'
   end
 
-  def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, html : HTMLOption = :all)
     io << '{'
     type.entries.join(io, ", ") do |entry|
-      if Symbol.needs_quotes?(entry.name)
-        entry.name.inspect(io)
-      else
-        io << entry.name
-      end
+      Symbol.quote_for_named_argument(io, entry.name)
       io << ": "
-      type_to_html entry.type, io, links: links
+      type_to_html entry.type, io, html: html
     end
     io << '}'
   end
 
-  def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, html : HTMLOption = :all)
     has_link_in_type_vars = type.type_vars.any? { |(name, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
     generic_type = @generator.type(type.generic_type)
     must_be_included = generic_type.must_be_included?
 
-    if must_be_included && links
+    if must_be_included && html.links?
       io << %(<a href=")
       io << generic_type.path_from(self)
       io << %(">)
@@ -633,30 +674,30 @@ class Crystal::Doc::Type
       generic_type.full_name_without_type_vars(io)
     end
 
-    io << "</a>" if must_be_included && links && has_link_in_type_vars
+    io << "</a>" if must_be_included && html.links? && has_link_in_type_vars
 
     io << '('
     type.type_vars.values.join(io, ", ") do |type_var|
       case type_var
       when Var
-        type_to_html type_var.type, io, links: links
+        type_to_html type_var.type, io, html: html
       else
-        type_to_html type_var, io, links: links
+        type_to_html type_var, io, html: html
       end
     end
     io << ')'
 
-    io << "</a>" if must_be_included && links && !has_link_in_type_vars
+    io << "</a>" if must_be_included && html.links? && !has_link_in_type_vars
   end
 
-  def type_to_html(type : Crystal::VirtualType, io, text = nil, links = true)
-    type_to_html type.base_type, io, text, links: links
+  def type_to_html(type : Crystal::VirtualType, io, text = nil, html : HTMLOption = :all)
+    type_to_html type.base_type, io, text, html: html
   end
 
-  def type_to_html(type : Crystal::Type, io, text = nil, links = true)
+  def type_to_html(type : Crystal::Type, io, text = nil, html : HTMLOption = :all)
     type = @generator.type(type)
     if type.must_be_included?
-      if links
+      if html.links?
         io << %(<a href=")
         io << type.path_from(self)
         io << %(">)
@@ -666,7 +707,7 @@ class Crystal::Doc::Type
       else
         type.full_name(io)
       end
-      if links
+      if html.links?
         io << "</a>"
       end
     else
@@ -678,11 +719,11 @@ class Crystal::Doc::Type
     end
   end
 
-  def type_to_html(type : Type, io, text = nil, links = true)
-    type_to_html type.type, io, text, links: links
+  def type_to_html(type : Type, io, text = nil, html : HTMLOption = :all)
+    type_to_html type.type, io, text, html: html
   end
 
-  def type_to_html(type : ASTNode, io, text = nil, links = true)
+  def type_to_html(type : ASTNode, io, text = nil, html : HTMLOption = :all)
     type.to_s io
   end
 
@@ -760,10 +801,12 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "abstract", abstract?
-      builder.field "superclass" { superclass.try(&.to_json_simple(builder)) || builder.scalar(nil) }
-      builder.field "ancestors" do
-        builder.array do
-          ancestors.each &.to_json_simple(builder)
+      builder.field "superclass" { superclass.try &.to_json_simple(builder) } unless superclass.nil?
+      unless ancestors.empty?
+        builder.field "ancestors" do
+          builder.array do
+            ancestors.each &.to_json_simple(builder)
+          end
         end
       end
       builder.field "locations", locations
@@ -771,38 +814,46 @@ class Crystal::Doc::Type
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
-      builder.field "aliased", alias? ? alias_definition.to_s : nil
-      builder.field "aliased_html", alias? ? formatted_alias_definition : nil
+      builder.field "aliased", alias_definition.to_s if alias?
+      builder.field "aliased_html", formatted_alias_definition if alias?
       builder.field "const", const?
-      builder.field "constants", constants
-      builder.field "included_modules" do
-        builder.array do
-          included_modules.each &.to_json_simple(builder)
+      builder.field "constants", constants unless constants.empty?
+      unless included_modules.empty?
+        builder.field "included_modules" do
+          builder.array do
+            included_modules.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "extended_modules" do
-        builder.array do
-          extended_modules.each &.to_json_simple(builder)
+      unless extended_modules.empty?
+        builder.field "extended_modules" do
+          builder.array do
+            extended_modules.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "subclasses" do
-        builder.array do
-          subclasses.each &.to_json_simple(builder)
+      unless subclasses.empty?
+        builder.field "subclasses" do
+          builder.array do
+            subclasses.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "including_types" do
-        builder.array do
-          including_types.each &.to_json_simple(builder)
+      unless including_types.empty?
+        builder.field "including_types" do
+          builder.array do
+            including_types.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "namespace" { namespace.try(&.to_json_simple(builder)) || builder.scalar(nil) }
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
-      builder.field "class_methods", class_methods
-      builder.field "constructors", constructors
-      builder.field "instance_methods", instance_methods
-      builder.field "macros", macros
-      builder.field "types", types
+      builder.field "namespace" { namespace.try &.to_json_simple(builder) } unless namespace.nil?
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
+      builder.field "class_methods", class_methods unless class_methods.empty?
+      builder.field "constructors", constructors unless constructors.empty?
+      builder.field "instance_methods", instance_methods unless instance_methods.empty?
+      builder.field "macros", macros unless macros.empty?
+      builder.field "types", types unless types.empty?
     end
   end
 

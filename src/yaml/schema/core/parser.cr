@@ -6,45 +6,45 @@ class YAML::Schema::Core::Parser < YAML::Parser
     @anchors[anchor] = value
   end
 
-  def get_anchor(anchor)
+  def get_anchor(anchor) : YAML::Any
     @anchors.fetch(anchor) do
       @pull_parser.raise("Unknown anchor '#{anchor}'")
     end
   end
 
-  def new_documents
+  def new_documents : Array(YAML::Any)
     [] of YAML::Any
   end
 
-  def new_document
+  def new_document : YAML::Any
     Any.new([] of Any)
   end
 
-  def cast_document(document)
+  def cast_document(document) : YAML::Any
     document.as_a.first? || Any.new(nil)
   end
 
-  def new_sequence
+  def new_sequence : YAML::Any
     Any.new([] of Any)
   end
 
-  def new_mapping
+  def new_mapping : YAML::Any
     Any.new({} of Any => Any)
   end
 
-  def new_scalar
+  def new_scalar : YAML::Any
     Any.new(Core.parse_scalar(@pull_parser))
   end
 
-  def add_to_documents(documents, document)
+  def add_to_documents(documents, document) : Nil
     documents << document
   end
 
-  def add_to_document(document, node)
+  def add_to_document(document, node) : Nil
     document.as_a << node
   end
 
-  def add_to_sequence(sequence, node)
+  def add_to_sequence(sequence, node) : Nil
     sequence.as_a << node
   end
 
@@ -61,7 +61,6 @@ class YAML::Schema::Core::Parser < YAML::Parser
       key = parse_node
       raw_key = key.raw
 
-      location = @pull_parser.location
       value = parse_node
 
       if raw_key == "<<" && tag != "tag:yaml.org,2002:str"
@@ -87,7 +86,7 @@ class YAML::Schema::Core::Parser < YAML::Parser
     mapping
   end
 
-  def process_tag(tag)
+  def process_tag(tag, &)
     if value = process_collection_tag(@pull_parser, tag)
       yield value
     end

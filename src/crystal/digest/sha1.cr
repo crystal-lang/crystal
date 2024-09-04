@@ -2,7 +2,7 @@ require "digest/digest"
 
 # Implements the SHA1 digest algorithm.
 #
-# Warning: SHA1 is no longer a cryptographically secure hash, and should not be
+# WARNING: SHA1 is no longer a cryptographically secure hash, and should not be
 # used in security-related components, like password hashing. For passwords, see
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
@@ -42,7 +42,7 @@ class Crystal::Digest::SHA1 < ::Digest
       if @length_low == 0
         @length_high &+= 1
         if @length_high == 0
-          raise ArgumentError.new "Crypto.sha1: message too long"
+          raise ArgumentError.new "Message too long"
         end
       end
 
@@ -75,7 +75,7 @@ class Crystal::Digest::SHA1 < ::Digest
     {% end %}
 
     {% for t in (16...80) %}
-      w[{{t}}] = circular_shift(1, w[{{t - 3}}] ^ w[{{t - 8}}] ^ w[{{t - 14}}] ^ w[{{t - 16}}])
+      w[{{t}}] = (w[{{t - 3}}] ^ w[{{t - 8}}] ^ w[{{t - 14}}] ^ w[{{t - 16}}]).rotate_left(1)
     {% end %}
 
     a = @intermediate_hash[0]
@@ -85,39 +85,39 @@ class Crystal::Digest::SHA1 < ::Digest
     e = @intermediate_hash[4]
 
     {% for t in (0...20) %}
-      temp = circular_shift(5, a) &+
+      temp = a.rotate_left(5) &+
         ((b & c) | ((~b) & d)) &+ e &+ w[{{t}}] &+ k[0]
       e = d
       d = c
-      c = circular_shift(30, b)
+      c = b.rotate_left(30)
       b = a
       a = temp
     {% end %}
 
     {% for t in (20...40) %}
-      temp = circular_shift(5, a) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[1]
+      temp = a.rotate_left(5) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[1]
       e = d
       d = c
-      c = circular_shift(30, b)
+      c = b.rotate_left(30)
       b = a
       a = temp
     {% end %}
 
     {% for t in (40...60) %}
-      temp = circular_shift(5, a) &+
+      temp = a.rotate_left(5) &+
         ((b & c) | (b & d) | (c & d)) &+ e &+ w[{{t}}] &+ k[2]
       e = d
       d = c
-      c = circular_shift(30, b)
+      c = b.rotate_left(30)
       b = a
       a = temp
     {% end %}
 
     {% for t in (60...80) %}
-      temp = circular_shift(5, a) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[3]
+      temp = a.rotate_left(5) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[3]
       e = d
       d = c
-      c = circular_shift(30, b)
+      c = b.rotate_left(30)
       b = a
       a = temp
     {% end %}
@@ -129,10 +129,6 @@ class Crystal::Digest::SHA1 < ::Digest
     @intermediate_hash[4] &+= e
 
     @message_block_index = 0
-  end
-
-  private def circular_shift(bits, word)
-    (word << bits) | (word >> (32 - bits))
   end
 
   private def pad_message

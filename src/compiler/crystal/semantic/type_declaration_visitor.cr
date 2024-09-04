@@ -107,14 +107,16 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : FunDef)
     external = node.external
 
-    node.args.each do |arg|
+    node.args.each_with_index do |arg, index|
       restriction = arg.restriction.not_nil!
       arg_type = lookup_type(restriction)
       arg_type = check_allowed_in_lib(restriction, arg_type)
       if arg_type.remove_typedef.void?
-        restriction.raise "can't use Void as argument type"
+        restriction.raise "can't use Void as parameter type"
       end
-      external.args << Arg.new(arg.name, type: arg_type).at(arg.location)
+
+      # The external args were added in TopLevelVisitor
+      external.args[index].type = arg_type
     end
 
     node_return_type = node.return_type
@@ -130,8 +132,6 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     old_external = add_external external
     old_external.dead = true if old_external
-
-    current_type.add_def(external)
 
     if current_type.is_a?(Program)
       key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil

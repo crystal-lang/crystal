@@ -12,6 +12,8 @@
 # ->(x : Int32, y : Int32) { x + y } # Proc(Int32, Int32, Int32)
 # ```
 #
+# See [`Proc` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/proc.html) in the language reference.
+#
 # The types of the arguments (`T`) are mandatory, except when directly
 # sending a proc literal to a lib fun in C bindings.
 #
@@ -67,7 +69,7 @@
 # ```
 # module Ticker
 #   # The callback for the user doesn't have a Void*
-#   @@box : Pointer(Void)?
+#   @@box = Pointer(Void).null
 #
 #   def self.on_tick(&callback : Int32 ->)
 #     # Since Proc is a {Void*, Void*}, we can't turn that into a Void*, so we
@@ -102,6 +104,23 @@ struct Proc
     func = {pointer, closure_data}
     ptr = pointerof(func).as(self*)
     ptr.value
+  end
+
+  # Creates a `Proc` by capturing the given *block*.
+  #
+  # The block argument types are inferred from the `Proc`'s type arguments. The
+  # return type of the block must match the return type specified in the `Proc`
+  # type.
+  #
+  # ```
+  # gt = Proc(Int32, Int32, Bool).new do |x, y|
+  #   x > y
+  # end
+  # gt.call(3, 1) # => true
+  # gt.call(1, 2) # => false
+  # ```
+  def self.new(&block : self)
+    block
   end
 
   # Returns a new `Proc` that has its first arguments fixed to
@@ -151,15 +170,15 @@ struct Proc
     {{T.size}}
   end
 
-  def pointer
+  def pointer : Void*
     internal_representation[0]
   end
 
-  def closure_data
+  def closure_data : Void*
     internal_representation[1]
   end
 
-  def closure?
+  def closure? : Bool
     !closure_data.null?
   end
 

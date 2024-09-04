@@ -88,7 +88,7 @@ module Crystal
         SYMTAB_SHNDX  = 18
       end
 
-      @[Flags]
+      @[::Flags]
       enum Flags : UInt64
         WRITE            =        0x1
         ALLOC            =        0x2
@@ -146,7 +146,7 @@ module Crystal
     property! shnum : UInt16
     property! shstrndx : UInt16
 
-    def self.open(path)
+    def self.open(path, &)
       File.open(path, "r") do |file|
         yield new(file)
       end
@@ -160,6 +160,25 @@ module Crystal
 
     private def read_magic
       @io.read(magic = Bytes.new(4))
+
+      if MAGIC.empty?
+        # If constant initialization is not working (for example when an
+        # error occurred during runtime setup or a custom main function doesn't
+        # do the initialization), continuing the ELF reader results in a
+        # seg fault. This condition detects the uninitialized constant and
+        # and errors.
+        # A simple program to reproduce is:
+        # ```
+        # module Crystal
+        #   def self.main(&block)
+        #     raise "foo"
+        #   end
+        # end
+        # ```
+        Crystal::System.print_error "Error: %s\n", "Runtime is not initialized"
+        LibC.exit 1
+      end
+
       raise Error.new("Invalid magic number") unless magic == MAGIC
     end
 
@@ -210,7 +229,7 @@ module Crystal
     # Searches for a section then yield the `SectionHeader` and the IO object
     # ready for parsing if the section was found. Returns the valure returned by
     # the block or nil if the section wasn't found.
-    def read_section?(name : String)
+    def read_section?(name : String, &)
       if sh = section_headers.find { |sh| sh_name(sh.name) == name }
         @io.seek(sh.offset) do
           yield sh, @io

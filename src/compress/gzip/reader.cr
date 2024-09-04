@@ -65,20 +65,20 @@ class Compress::Gzip::Reader < IO
 
   # Creates a new reader from the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, sync_close = false)
+  def self.open(io : IO, sync_close = false, &)
     reader = new(io, sync_close: sync_close)
     yield reader ensure reader.close
   end
 
   # Creates a new reader from the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String)
+  def self.open(filename : String, &)
     reader = new(filename)
     yield reader ensure reader.close
   end
 
   # See `IO#read`.
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     return 0 if slice.empty?
@@ -129,16 +129,16 @@ class Compress::Gzip::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def unbuffered_write(slice : Bytes) : Nil
+  def unbuffered_write(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't write to Compress::Gzip::Reader")
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : NoReturn
     raise IO::Error.new "Can't flush Compress::Gzip::Reader"
   end
 
   # Closes this reader.
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -146,7 +146,7 @@ class Compress::Gzip::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind

@@ -54,9 +54,20 @@ describe "Semantic: splat" do
       "not yet supported"
   end
 
-  it "errors if splatting non-tuple type" do
+  it "errors if splatting non-tuple type in call arguments" do
     assert_error %(
       foo *1
+      ),
+      "argument to splat must be a tuple, not Int32"
+  end
+
+  it "errors if splatting non-tuple type in return values" do
+    assert_error %(
+      def foo
+        return *1
+      end
+
+      foo
       ),
       "argument to splat must be a tuple, not Int32"
   end
@@ -76,6 +87,16 @@ describe "Semantic: splat" do
       )) { tuple_of [int32] of TypeVar }
   end
 
+  it "forwards tuple in return statement" do
+    assert_type(%(
+      def foo(*args)
+        return args, *args
+      end
+
+      foo 1, 'a'
+      )) { tuple_of([tuple_of([int32, char]), int32, char]) }
+  end
+
   it "can splat after type filter left it as a tuple (#442)" do
     assert_type(%(
       def output(x, y)
@@ -88,7 +109,7 @@ describe "Semantic: splat" do
       else
         4
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if doesn't match splat with type restriction" do
@@ -146,7 +167,7 @@ describe "Semantic: splat" do
 
       foo
       ),
-      "no overload matches"
+      "wrong number of arguments for 'foo' (given 0, expected 1+)"
   end
 
   it "overloads with type restriction and splat (3)" do
@@ -318,7 +339,7 @@ describe "Semantic: splat" do
 
       bar 1, "a", 1.7
       ),
-      "no overload matches 'foo' with types Char, Int32, String, Float64"
+      "expected argument #1 to 'foo' to be Int, not Char"
   end
 
   it "doesn't crash on non-match (#2521)" do
@@ -467,7 +488,7 @@ describe "Semantic: splat" do
       )) { no_return.metaclass }
   end
 
-  it "matches splat in generic type" do
+  it "matches type splat with splat in generic type (1)" do
     assert_type(%(
       class Foo(*T)
       end
@@ -479,6 +500,108 @@ describe "Semantic: splat" do
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
       )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches type splat with splat in generic type (2)" do
+    assert_type(%(
+      class Foo(T, *U, V)
+        def t
+          {T, U, V}
+        end
+      end
+
+      def method(x : Foo(*A)) forall A
+        x.t
+      end
+
+      foo = Foo(Int32, Char, String, Bool).new
+      method(foo)
+      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches instantiated generic with splat in generic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Int32, String))
+        'a'
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      )) { char }
+  end
+
+  it "doesn't match splat in generic type with unsplatted tuple (#10164)" do
+    assert_error %(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Tuple(Int32, String)))
+        'a'
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "expected argument #1 to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
+  end
+
+  it "matches partially instantiated generic with splat in generic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Int32, T)) forall T
+        T
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      )) { string.metaclass }
+  end
+
+  it "errors with too few non-splat type arguments (1)" do
+    assert_error %(
+      class Foo(T, U, *V)
+      end
+
+      def method(x : Foo(Int32))
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+  end
+
+  it "errors with too few non-splat type arguments (2)" do
+    assert_error %(
+      class Foo(T, U, *V)
+      end
+
+      def method(x : Foo(A)) forall A
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+  end
+
+  it "errors with too many non-splat type arguments" do
+    assert_error %(
+      class Foo(A)
+      end
+
+      def method(x : Foo(T, U, *V)) forall T, U, V
+      end
+
+      foo = Foo(Int32).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(A) (given 2+, expected 1)"
   end
 
   it "errors if using two splat indices on restriction" do
@@ -623,35 +746,7 @@ describe "Semantic: splat" do
 
       foo(1)
       ),
-      "no overload matches"
-  end
-
-  it "matches typed before non-typed (1) (#3134)" do
-    assert_type(%(
-      def bar(*args)
-        "free"
-      end
-
-      def bar(*args : Int32)
-        1
-      end
-
-      {bar(1, 2), bar('a', 1)}
-      )) { tuple_of([int32, string]) }
-  end
-
-  it "matches typed before non-typed (1) (#3134)" do
-    assert_type(%(
-      def bar(*args : Int32)
-        1
-      end
-
-      def bar(*args)
-        "free"
-      end
-
-      {bar(1, 2), bar('a', 1)}
-      )) { tuple_of([int32, string]) }
+      "expected argument #1 to 'foo' to be Union(*T), not Int32"
   end
 
   describe Splat do
@@ -714,5 +809,22 @@ describe "Semantic: splat" do
       end
       i.should eq(4)
     end
+  end
+
+  it "doesn't shift a call's location" do
+    result = semantic <<-CRYSTAL
+      class Foo
+        def bar(x)
+          bar(*{"test"})
+        end
+      end
+      Foo.new.bar("test")
+      CRYSTAL
+    program = result.program
+    a_typ = program.types["Foo"].as(NonGenericClassType)
+    a_def = a_typ.def_instances.values[0]
+
+    a_def.location.should eq Location.new("", line_number: 2, column_number: 3)
+    a_def.body.location.should eq Location.new("", line_number: 3, column_number: 5)
   end
 end

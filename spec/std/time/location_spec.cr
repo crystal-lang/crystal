@@ -1,4 +1,5 @@
-require "./spec_helper"
+require "../spec_helper"
+require "../../support/time"
 
 class Time::Location
   describe Time::Location do
@@ -21,17 +22,26 @@ class Time::Location
           location.utc?.should be_false
           location.fixed?.should be_false
 
-          with_env("TZ", nil) do
+          with_tz(nil) do
             location.local?.should be_false
           end
 
-          with_env("TZ", "Europe/Berlin") do
+          with_tz("Europe/Berlin") do
             location.local?.should be_true
           end
 
           Location.load("Europe/Berlin", {ZONEINFO_ZIP}).should eq location
         end
       end
+
+      {% if flag?(:win32) %}
+        it "maps IANA timezone identifier to Windows name (#13166)" do
+          location = Location.load("Europe/Berlin")
+          location.name.should eq "Europe/Berlin"
+          location.utc?.should be_false
+          location.fixed?.should be_false
+        end
+      {% end %}
 
       it "invalid timezone identifier" do
         with_zoneinfo(datapath("zoneinfo")) do
@@ -57,9 +67,7 @@ class Time::Location
         with_zoneinfo do
           Location.load("UTC").should eq Location::UTC
           Location.load("").should eq Location::UTC
-
-          # Etc/UTC could be pointing to anything
-          Location.load("Etc/UTC").should_not eq Location::UTC
+          Location.load("Etc/UTC").should eq Location::UTC
         end
       end
 
@@ -156,6 +164,38 @@ class Time::Location
       end
     end
 
+    describe ".load_android" do
+      it "loads Europe/Berlin" do
+        Location.__clear_location_cache
+        location = Location.load_android("Europe/Berlin", {datapath("android_tzdata")}).should_not be_nil
+
+        location.name.should eq "Europe/Berlin"
+        standard_time = location.lookup(Time.utc(2017, 11, 22))
+        standard_time.name.should eq "CET"
+        standard_time.offset.should eq 3600
+        standard_time.dst?.should be_false
+
+        summer_time = location.lookup(Time.utc(2017, 10, 22))
+        summer_time.name.should eq "CEST"
+        summer_time.offset.should eq 7200
+        summer_time.dst?.should be_true
+
+        location.utc?.should be_false
+        location.fixed?.should be_false
+      end
+
+      it "loads new data if tzdata file was changed" do
+        tzdata_path = datapath("android_tzdata")
+        Location.__clear_location_cache
+        location1 = Location.load_android("Europe/Berlin", {tzdata_path})
+        File.touch(tzdata_path)
+        location2 = Location.load_android("Europe/Berlin", {tzdata_path})
+
+        location1.should eq location2
+        location1.should_not be location2
+      end
+    end
+
     it "UTC" do
       location = Location::UTC
       location.name.should eq "UTC"
@@ -185,7 +225,7 @@ class Time::Location
 
     describe ".load_local" do
       it "with unset TZ" do
-        with_env("TZ", nil) do
+        with_tz(nil) do
           # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
           # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
           # making the return value default to `UTC`.
@@ -195,12 +235,12 @@ class Time::Location
 
       it "with TZ" do
         with_zoneinfo do
-          with_env("TZ", "Europe/Berlin") do
+          with_tz("Europe/Berlin") do
             Location.load_local.name.should eq "Europe/Berlin"
           end
         end
         with_zoneinfo(datapath("zoneinfo")) do
-          with_env("TZ", "Foo/Bar") do
+          with_tz("Foo/Bar") do
             Location.load_local.name.should eq "Foo/Bar"
           end
         end
@@ -208,11 +248,43 @@ class Time::Location
 
       it "with empty TZ" do
         with_zoneinfo do
-          with_env("TZ", "") do
+          with_tz("") do
             Location.load_local.utc?.should be_true
           end
         end
       end
+
+      {% if flag?(:win32) %}
+        it "loads time zone information from registry" do
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(
+            bias: -60,
+            standardBias: 0,
+            daylightBias: -60,
+            standardDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 10, wDayOfWeek: 0, wDay: 5, wHour: 3, wMinute: 0, wSecond: 0, wMilliseconds: 0),
+            daylightDate: LibC::SYSTEMTIME.new(wYear: 0, wMonth: 3, wDayOfWeek: 0, wDay: 5, wHour: 2, wMinute: 0, wSecond: 0, wMilliseconds: 0),
+          )
+          info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "Central Europe Standard Time".to_utf16
+
+          with_system_time_zone(info) do
+            location = Location.load_local
+            location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
+          end
+        end
+
+        it "loads time zone without DST (#13502)" do
+          info = LibC::DYNAMIC_TIME_ZONE_INFORMATION.new(bias: -480)
+          info.standardName.to_slice.copy_from "China Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "China Daylight Time".to_utf16
+          info.timeZoneKeyName.to_slice.copy_from "China Standard Time".to_utf16
+
+          with_system_time_zone(info) do
+            location = Location.load_local
+            location.zones.should eq [Time::Location::Zone.new("CST", 28800, false)]
+          end
+        end
+      {% end %}
     end
 
     describe ".fixed" do

@@ -2,6 +2,8 @@
 #
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
+#
+# NOTE: To use `Headers`, you must explicitly import it with `require "http/headers"`
 struct HTTP::Headers
   include Enumerable({String, Array(String)})
 
@@ -67,12 +69,12 @@ struct HTTP::Headers
     @hash[wrap(key)] = value
   end
 
-  def [](key)
+  def [](key) : String
     values = @hash[wrap(key)]
     concat values
   end
 
-  def []?(key)
+  def []?(key) : String?
     fetch(key, nil)
   end
 
@@ -85,7 +87,7 @@ struct HTTP::Headers
   # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
-  def includes_word?(key, word)
+  def includes_word?(key, word) : Bool
     return false if word.empty?
 
     values = @hash[wrap(key)]?
@@ -118,53 +120,65 @@ struct HTTP::Headers
     false
   end
 
-  def add(key, value : String)
+  # Adds a header with *key* and *value* to the header set.  If a header with
+  # *key* already exists in the set, *value* is appended to the existing header.
+  #
+  # ```
+  # require "http/headers"
+  #
+  # headers = HTTP::Headers.new
+  # headers.add("Connection", "keep-alive")
+  # headers["Connection"] # => "keep-alive"
+  # headers.add("Connection", "Upgrade")
+  # headers["Connection"] # => "keep-alive,Upgrade"
+  # ```
+  def add(key, value : String) : self
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
-  def add(key, value : Array(String))
+  def add(key, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
-  def add?(key, value : String)
+  def add?(key, value : String) : Bool
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
-  def add?(key, value : Array(String))
+  def add?(key, value : Array(String)) : Bool
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
   end
 
-  def fetch(key, default)
+  def fetch(key, default) : String?
     fetch(wrap(key)) { default }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     values = @hash[wrap(key)]?
     values ? concat(values) : yield key
   end
 
-  def has_key?(key)
+  def has_key?(key) : Bool
     @hash.has_key? wrap(key)
   end
 
-  def empty?
+  def empty? : Bool
     @hash.empty?
   end
 
-  def delete(key)
+  def delete(key) : String?
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
 
-  def merge!(other)
+  def merge!(other) : self
     other.each do |key, value|
       self[wrap(key)] = value
     end
@@ -227,17 +241,17 @@ struct HTTP::Headers
     result.hash(hasher)
   end
 
-  def each
+  def each(&)
     @hash.each do |key, value|
       yield({key.name, cast(value)})
     end
   end
 
-  def get(key)
+  def get(key) : Array(String)
     cast @hash[wrap(key)]
   end
 
-  def get?(key)
+  def get?(key) : Array(String)?
     @hash[wrap(key)]?.try { |value| cast(value) }
   end
 
@@ -253,7 +267,7 @@ struct HTTP::Headers
     dup
   end
 
-  def same?(other : HTTP::Headers)
+  def same?(other : HTTP::Headers) : Bool
     object_id == other.object_id
   end
 
@@ -282,7 +296,7 @@ struct HTTP::Headers
   end
 
   def pretty_print(pp)
-    pp.list("HTTP::Headers{", @hash.keys.sort_by(&.name), "}") do |key|
+    pp.list("HTTP::Headers{", @hash.keys.sort_by!(&.name), "}") do |key|
       pp.group do
         key.name.pretty_print(pp)
         pp.text " =>"
@@ -299,8 +313,34 @@ struct HTTP::Headers
     end
   end
 
-  def valid_value?(value)
-    return invalid_value_char(value).nil?
+  # Serializes headers according to the HTTP protocol.
+  #
+  # Prints a list of HTTP header fields in the format described in [RFC 7230 §3.2](https://www.rfc-editor.org/rfc/rfc7230#section-3.2),
+  # with each field terminated by a CRLF sequence (`"\r\n"`).
+  #
+  # The serialization does *not* include a double CRLF sequence at the end.
+  #
+  # ```
+  # headers = HTTP::Headers{"foo" => "bar", "baz" => %w[qux qox]}
+  # headers.serialize # => "foo: bar\r\nbaz: qux\r\nbaz: qox\r\n"
+  # ```
+  def serialize : String
+    String.build do |io|
+      serialize(io)
+    end
+  end
+
+  # :ditto:
+  def serialize(io : IO) : Nil
+    each do |name, values|
+      values.each do |value|
+        io << name << ": " << value << "\r\n"
+      end
+    end
+  end
+
+  def valid_value?(value) : Bool
+    invalid_value_char(value).nil?
   end
 
   forward_missing_to @hash

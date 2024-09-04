@@ -108,7 +108,7 @@ describe "Semantic: new" do
       end
 
       Foo.new { 1 }.r
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "evaluates initialize default value at the instance scope (6) (#731)" do
@@ -129,7 +129,7 @@ describe "Semantic: new" do
       end
 
       Foo(Int32).new { 1 }.r
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if using self call in default argument (1)" do
@@ -223,5 +223,27 @@ describe "Semantic: new" do
       Bar.new
       ),
       "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+  end
+
+  it "uses correct receiver for `initialize` in namespaced generic classes (#4086)" do
+    assert_type %(
+      class Foo
+        class Baz(T)
+        end
+
+        module Bar
+          class Baz(T) < Foo
+            def initialize(x)
+            end
+
+            def foo
+              'a'
+            end
+          end
+        end
+      end
+
+      Foo::Bar::Baz(Int32).new(1).foo
+      ) { char }
   end
 end

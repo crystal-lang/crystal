@@ -32,13 +32,13 @@ class Compress::Deflate::Writer < IO
   # and closes it at its end.
   def self.open(io : IO, level : Int32 = Compress::Deflate::DEFAULT_COMPRESSION,
                 strategy : Compress::Deflate::Strategy = Compress::Deflate::Strategy::DEFAULT,
-                sync_close : Bool = false, dict : Bytes? = nil)
+                sync_close : Bool = false, dict : Bytes? = nil, &)
     writer = new(io, level: level, strategy: strategy, sync_close: sync_close, dict: dict)
     yield writer ensure writer.close
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise "Can't read from Flate::Writer"
   end
 
@@ -54,7 +54,7 @@ class Compress::Deflate::Writer < IO
   end
 
   # See `IO#flush`.
-  def flush
+  def flush : Nil
     return if @closed
 
     consume_output LibZ::Flush::SYNC_FLUSH
@@ -62,7 +62,7 @@ class Compress::Deflate::Writer < IO
   end
 
   # Closes this writer. Must be invoked after all data has been written.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 
@@ -77,11 +77,10 @@ class Compress::Deflate::Writer < IO
   end
 
   # Returns `true` if this IO is closed.
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end

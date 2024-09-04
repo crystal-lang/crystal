@@ -5,11 +5,11 @@
     <link rel="stylesheet" href="/vendor/materialize-v0.97.5/css/materialize.min.css">
     <link rel="stylesheet" href="/vendor/codemirror-5.38.0/lib/codemirror.css">
     <link rel="stylesheet" href="/vendor/codemirror-5.38.0/theme/neat.css">
-    <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
+    <link rel="stylesheet" href="/vendor/octicons-19.5.0/octicons.css">
     <link rel="stylesheet" href="/vendor/ansi_up-1.3.0/theme.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
-    <% each_resource(:css) do |res| %>
-      <link rel="stylesheet" type="text/css" href="<%= res.src %>">
+    <% styles.each do |path| %>
+      <link rel="stylesheet" type="text/css" href="<%= path %>">
     <% end %>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -22,13 +22,19 @@
           <div class="nav-wrapper white">
             <div class="col s12">
               <a href="/" class="brand-logo">
-                <img src="/icon.png" />
+                <img src="/icon.svg" />
               </a>
               <ul class="right">
                 <li><a href="/">Playground</a></li>
                 <li><a href="/workbook">Workbook</a></li>
                 <li><a href="/about">About</a></li>
-                <li><a href="/settings"><span class="f-16 octicon octicon-settings"></span></a></li>
+                <li>
+                  <a href="/settings">
+                    <svg viewBox="0 0 16 16" class="octicon">
+                      <use xlink:href="/vendor/octicons-19.5.0/octicons.svg#gear-16"></use>
+                    </svg>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -59,8 +65,8 @@
     <script type="text/javascript" src="/settings.js"></script>
     <script type="text/javascript" src="/session.js"></script>
     <script type="text/javascript" src="/application.js"></script>
-    <% each_resource(:js) do |res| %>
-      <script type="text/javascript" src="<%= res.src %>"></script>
+    <% scripts.each do |path| %>
+      <script type="text/javascript" src="<%= path %>"></script>
     <% end %>
   </body>
 </html>

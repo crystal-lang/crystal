@@ -15,6 +15,10 @@ there's no more room for discussion. We'll anyway close the issue after some day
 
 If something is missing from the language it might be that it's not yet implemented or that it was purposely left out. If in doubt, just ask.
 
+Substantial changes go through an [RFC process](https://github.com/crystal-lang/rfcs).
+
+The best place to start an open discussion about potential changes is the [Crystal forum](https://forum.crystal-lang.org/c/crystal-contrib/6).
+
 ### What's needed right now
 
 You can find a list of tasks that we consider suitable for a first time contribution at
@@ -40,7 +44,7 @@ Issue tracker labels are sorted by category: community, kind, pr, status and top
 
 These are the issues where help from the community is most welcome. See above for a description on `newcomer`, `to-research`, `to-design`, `to-implement` and `to-document`.
 
-Label `in-progress` is used to signal that someone from the community is already working on the issue (since Github does not allow for a non-team member to be _assigned_ to an issue).
+Label `in-progress` is used to signal that someone from the community is already working on the issue (since GitHub does not allow for a non-team member to be _assigned_ to an issue).
 
 The label `shard-idea` refers to a feature proposal that, albeit good, is better suited as a separate shard rather than as part of the core library; so if you are looking for a shard of your own to start working on, these issues are good starting points.
 
@@ -91,8 +95,6 @@ Additionally, all official documentation can be found on [the Crystal website](h
 1. Fork it ( https://github.com/crystal-lang/crystal/fork )
 2. Clone it
 
-Be sure to execute `make libcrystal` inside the cloned repository.
-
 Once in the cloned directory, and once you [installed Crystal](https://crystal-lang.org/install/),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
 as the standard library. Otherwise the barebones `crystal` executable uses the standard library that comes in
@@ -116,17 +118,20 @@ If you want to add/change something in the compiler,
 the first thing you will need to do is to [install the compiler](https://crystal-lang.org/install/).
 
 Once you have a compiler up and running, check that executing `crystal` on the command line prints its usage.
-Now you can setup your environment to compile Crystal itself, which is itself written in Crystal. Check out
-the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
-These set-up LLVM 3.6 and its required libraries.
+Now you can setup your environment to compile Crystal itself, which is itself written in Crystal.
 
-Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
-the specs. All specs should pass. You can use `make help` for a list of available make targets.
+The compiler needs [LLVM](https://llvm.org) and some other libraries. See [list of all required libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
+
+Executing `make crystal` builds the compiler into `.build/compiler` and you can run it using the wrapper script at `bin/crystal`.
+The script sets up the proper environment variables that the compiler can find the standard library source files in `src/`.
+
+`make compiler_spec` runs the compiler specs. `make std_spec` runs the standard library specs.
+`make primitives_spec` runs the specs for primitive methods with an up-to-date Crystal compiler.
+You can use `make help` for a list of available make targets.
 
 ## This guide
 
 If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
-
 
 ## Making good pull requests
 
@@ -140,6 +145,69 @@ fixup commits. Please do not amend previous commits and force push to the PR bra
 because reference to previous state is hidden.
 
 If changes introduced to `master` branch result in conflicts, it should be merged with a merge commit (`git fetch upstream/master; git merge upstream/master`).
+
+### Minimum requirements
+
+1. Describe reasons and result of the change in the pull request comment.
+2. Do not force push to a pull request. The development history should be easily traceable.
+3. Any change to a public API requires appropriate documentation: params (and particularly interesting combinations of them if the method is complex), results, interesting, self-contained examples.
+4. Any change to behaviour needs to be reflected and validated with specs.
+5. Any change affecting the compiler or performance-critical features in the standard library
+   should be checked with benchmarks how it affects performance.
+
+### Reviews
+
+Reviews are conducted by community members to validate a contribution and ensure quality standards are met.
+Approvals from Core Team members are required for accepting a pull requests. Other community members are encouraged to do reviews as well. Leave suggestions for improvements or approve a change when it looks good to you.
+
+1. Make sure the [formal minimum requirements](#minimum-requirements) are met, for the change itself and the PR. Cross check with the referenced issue(s).
+2. Check if CI is successful. If not, try to figure out what's wrong and add a comment about it. If a failure seems unrelated, maintainers can try to rerun the job.
+3. Leave inline comments when you want to request changes or ask for clarification. Suggestions are often understood as requirements, so make it clear if a proposal is optional or you're just asking for feedback.
+
+### Accepting a Pull Request
+
+The process of accepting a pull request entails the following check list:
+
+1. At least two approvals by Core Team members; one approval if the author is a Core Team member. Only approvals based on the most recent code version count (ignoring minor changes like fixing a typo).
+2. There are no outstanding questions nor requested changes in the pull request and associated issues.
+3. Title and description appropriately represent the final state of the change.
+4. Proper labels are applied (usually at least a `topic:` and `kind:` label).
+5. Change is based on a fairly recent commit of the `master` branch. When in doubt, merge `master` and wait for CI.
+6. CI is green.
+
+When these conditions are met, a Core Team member can mark the pull request as accepted by adding it to the current development milestone.
+This signals that the PR is scheduled to be merged soon and gives another chance for final reviews.
+
+The current [development milestone](https://github.com/crystal-lang/crystal/milestones) is typically the milestone for the next release.
+During the freeze period of a release, feature enhancements are added to the milestone of the next release.
+Freeze periods are announced on the community forums and usually span two weeks before the scheduled date of a minor release.
+
+### Merge Queue
+
+The current [development milestone](https://github.com/crystal-lang/crystal/milestones) serves as a merge queue. Open pull requests on that milestone
+are eligible for being merged.
+
+Pending pull requests should usually stay in the queue for at least one full business day, allowing other reviewers to take a final look at it.
+This wait time can be extended, for example for big changes or when there was a lot of recent activity in the discussion.
+Urgent bug and regression fixes can skip the line.
+
+If reasonable objection or questions arise while waiting for merge, the pull request must be removed from the milestone until they are resolved.
+
+It's good practice to have a single maintainer responsible for operating the merge queue.
+
+### Merging
+
+Before merging, make sure the pull request has been on the merge queue for some time (usually 1+ business days) and there has not been any
+more recent discussion that questions the current state of the change.
+If conditions are met, the pull request can finally be merged. Use squash merge to not pollute the version history of the main branch with
+details of the pull request process. For non-trivial changes, the merge commit should contain a short description.
+
+### For maintainers with push access
+
+1. Do not directly commit to the `master` branch. Always create a feature branch and pull request.
+2. Feature branches should typically be created in your fork. The main repo should only contain essential branches.
+   * CI changes affecting circle CI only run for branches on the main repo. They should be prefixed `ci/` to trigger a maintenance release.
+   * Long-running feature branches that accept contributions must be pushed to the main repo in order to allow PRs targeting that branch.
 
 ## Git pre-commit hook
 

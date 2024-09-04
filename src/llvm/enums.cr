@@ -1,183 +1,167 @@
 module LLVM
-  {% if LibLLVM.has_constant?(:AttributeRef) %}
-    @[Flags]
-    enum Attribute : UInt64
-      Alignment
-      AllocSize
-      AlwaysInline
-      ArgMemOnly
-      Builtin
-      ByVal
-      Cold
-      Convergent
-      Dereferenceable
-      DereferenceableOrNull
-      InAlloca
-      InReg
-      InaccessibleMemOnly
-      InaccessibleMemOrArgMemOnly
-      InlineHint
-      JumpTable
-      MinSize
-      Naked
-      Nest
-      NoAlias
-      NoBuiltin
-      NoCapture
-      NoDuplicate
-      NoFree
-      NoImplicitFloat
-      NoInline
-      NoRecurse
-      NoRedZone
-      NoReturn
-      NoSync
-      NoUnwind
-      NonLazyBind
-      NonNull
-      OptimizeForSize
-      OptimizeNone
-      ReadNone
-      ReadOnly
-      Returned
-      ImmArg
-      ReturnsTwice
-      SExt
-      SafeStack
-      SanitizeAddress
-      SanitizeMemory
-      SanitizeThread
-      StackAlignment
-      StackProtect
-      StackProtectReq
-      StackProtectStrong
-      StructRet
-      SwiftError
-      SwiftSelf
-      UWTable
-      WillReturn
-      WriteOnly
-      ZExt
+  @[Flags]
+  enum Attribute : UInt64
+    Alignment
+    AllocSize
+    AlwaysInline
+    ArgMemOnly
+    Builtin
+    ByVal
+    Cold
+    Convergent
+    Dereferenceable
+    DereferenceableOrNull
+    InAlloca
+    InReg
+    InaccessibleMemOnly
+    InaccessibleMemOrArgMemOnly
+    InlineHint
+    JumpTable
+    MinSize
+    Naked
+    Nest
+    NoAlias
+    NoBuiltin
+    NoCapture
+    NoDuplicate
+    NoFree
+    NoImplicitFloat
+    NoInline
+    NoRecurse
+    NoRedZone
+    NoReturn
+    NoSync
+    NoUnwind
+    NonLazyBind
+    NonNull
+    OptimizeForSize
+    OptimizeNone
+    ReadNone
+    ReadOnly
+    Returned
+    ImmArg
+    ReturnsTwice
+    SExt
+    SafeStack
+    SanitizeAddress
+    SanitizeMemory
+    SanitizeThread
+    StackAlignment
+    StackProtect
+    StackProtectReq
+    StackProtectStrong
+    StructRet
+    SwiftError
+    SwiftSelf
+    UWTable
+    WillReturn
+    WriteOnly
+    ZExt
 
-      @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
+    @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
+    @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
 
-      def each_kind(&block)
-        return if value == 0
-        \{% for member in @type.constants %}
-          \{% if member.stringify != "All" %}
-            if includes?(\{{@type}}::\{{member}})
-              yield @@kind_ids[\{{@type}}::\{{member}}]
-            end
-          \{% end %}
-        \{% end %}
-      end
-
-      private def self.kind_for_name(name : String)
-        LibLLVM.get_enum_attribute_kind_for_name(name, name.bytesize)
-      end
-
-      private def self.load_llvm_kinds_from_names
-        kinds = {} of Attribute => UInt32
-        kinds[Alignment] = kind_for_name("align")
-        kinds[AllocSize] = kind_for_name("allocsize")
-        kinds[AlwaysInline] = kind_for_name("alwaysinline")
-        kinds[ArgMemOnly] = kind_for_name("argmemonly")
-        kinds[Builtin] = kind_for_name("builtin")
-        kinds[ByVal] = kind_for_name("byval")
-        kinds[Cold] = kind_for_name("cold")
-        kinds[Convergent] = kind_for_name("convergent")
-        kinds[Dereferenceable] = kind_for_name("dereferenceable")
-        kinds[DereferenceableOrNull] = kind_for_name("dereferenceable_or_null")
-        kinds[InAlloca] = kind_for_name("inalloca")
-        kinds[InReg] = kind_for_name("inreg")
-        kinds[InaccessibleMemOnly] = kind_for_name("inaccessiblememonly")
-        kinds[InaccessibleMemOrArgMemOnly] = kind_for_name("inaccessiblemem_or_argmemonly")
-        kinds[InlineHint] = kind_for_name("inlinehint")
-        kinds[JumpTable] = kind_for_name("jumptable")
-        kinds[MinSize] = kind_for_name("minsize")
-        kinds[Naked] = kind_for_name("naked")
-        kinds[Nest] = kind_for_name("nest")
-        kinds[NoAlias] = kind_for_name("noalias")
-        kinds[NoBuiltin] = kind_for_name("nobuiltin")
-        kinds[NoCapture] = kind_for_name("nocapture")
-        kinds[NoDuplicate] = kind_for_name("noduplicate")
-        kinds[NoFree] = kind_for_name("nofree")
-        kinds[NoImplicitFloat] = kind_for_name("noimplicitfloat")
-        kinds[NoInline] = kind_for_name("noinline")
-        kinds[NoRecurse] = kind_for_name("norecurse")
-        kinds[NoRedZone] = kind_for_name("noredzone")
-        kinds[NoReturn] = kind_for_name("noreturn")
-        kinds[NoSync] = kind_for_name("nosync")
-        kinds[NoUnwind] = kind_for_name("nounwind")
-        kinds[NonLazyBind] = kind_for_name("nonlazybind")
-        kinds[NonNull] = kind_for_name("nonnull")
-        kinds[OptimizeForSize] = kind_for_name("optsize")
-        kinds[OptimizeNone] = kind_for_name("optnone")
-        kinds[ReadNone] = kind_for_name("readnone")
-        kinds[ReadOnly] = kind_for_name("readonly")
-        kinds[Returned] = kind_for_name("returned")
-        kinds[ImmArg] = kind_for_name("immarg")
-        kinds[ReturnsTwice] = kind_for_name("returns_twice")
-        kinds[SExt] = kind_for_name("signext")
-        kinds[SafeStack] = kind_for_name("safestack")
-        kinds[SanitizeAddress] = kind_for_name("sanitize_address")
-        kinds[SanitizeMemory] = kind_for_name("sanitize_memory")
-        kinds[SanitizeThread] = kind_for_name("sanitize_thread")
-        kinds[StackAlignment] = kind_for_name("alignstack")
-        kinds[StackProtect] = kind_for_name("ssp")
-        kinds[StackProtectReq] = kind_for_name("sspreq")
-        kinds[StackProtectStrong] = kind_for_name("sspstrong")
-        kinds[StructRet] = kind_for_name("sret")
-        kinds[SwiftError] = kind_for_name("swifterror")
-        kinds[SwiftSelf] = kind_for_name("swiftself")
-        kinds[UWTable] = kind_for_name("uwtable")
-        kinds[WillReturn] = kind_for_name("willreturn")
-        kinds[WriteOnly] = kind_for_name("writeonly")
-        kinds[ZExt] = kind_for_name("zeroext")
-        kinds
-      end
-
-      def self.kind_for(member)
-        @@kind_ids[member]
-      end
-
-      def self.from_kind(kind)
-        @@kind_ids.key_for(kind)
+    def each_kind(& : UInt32 ->)
+      each do |member|
+        yield @@kind_ids[member]
       end
     end
-  {% else %}
-    @[Flags]
-    enum Attribute : UInt32
-      ZExt            = 1 << 0
-      SExt            = 1 << 1
-      NoReturn        = 1 << 2
-      InReg           = 1 << 3
-      StructRet       = 1 << 4
-      NoUnwind        = 1 << 5
-      NoAlias         = 1 << 6
-      ByVal           = 1 << 7
-      Nest            = 1 << 8
-      ReadNone        = 1 << 9
-      ReadOnly        = 1 << 10
-      NoInline        = 1 << 11
-      AlwaysInline    = 1 << 12
-      OptimizeForSize = 1 << 13
-      StackProtect    = 1 << 14
-      StackProtectReq = 1 << 15
-      Alignment       = 31 << 16
-      NoCapture       = 1 << 21
-      NoRedZone       = 1 << 22
-      NoImplicitFloat = 1 << 23
-      Naked           = 1 << 24
-      InlineHint      = 1 << 25
-      StackAlignment  = 7 << 26
-      ReturnsTwice    = 1 << 29
-      UWTable         = 1 << 30
-      NonLazyBind     = 1 << 31
-      # AddressSafety = 1_u64 << 32,
-      # StackProtectStrong = 1_u64 << 33
+
+    private def self.kind_for_name(name : String)
+      LibLLVM.get_enum_attribute_kind_for_name(name, name.bytesize)
     end
-  {% end %}
+
+    private def self.load_llvm_kinds_from_names
+      kinds = {} of Attribute => UInt32
+      kinds[Alignment] = kind_for_name("align")
+      kinds[AllocSize] = kind_for_name("allocsize")
+      kinds[AlwaysInline] = kind_for_name("alwaysinline")
+      kinds[ArgMemOnly] = kind_for_name("argmemonly")
+      kinds[Builtin] = kind_for_name("builtin")
+      kinds[ByVal] = kind_for_name("byval")
+      kinds[Cold] = kind_for_name("cold")
+      kinds[Convergent] = kind_for_name("convergent")
+      kinds[Dereferenceable] = kind_for_name("dereferenceable")
+      kinds[DereferenceableOrNull] = kind_for_name("dereferenceable_or_null")
+      kinds[InAlloca] = kind_for_name("inalloca")
+      kinds[InReg] = kind_for_name("inreg")
+      kinds[InaccessibleMemOnly] = kind_for_name("inaccessiblememonly")
+      kinds[InaccessibleMemOrArgMemOnly] = kind_for_name("inaccessiblemem_or_argmemonly")
+      kinds[InlineHint] = kind_for_name("inlinehint")
+      kinds[JumpTable] = kind_for_name("jumptable")
+      kinds[MinSize] = kind_for_name("minsize")
+      kinds[Naked] = kind_for_name("naked")
+      kinds[Nest] = kind_for_name("nest")
+      kinds[NoAlias] = kind_for_name("noalias")
+      kinds[NoBuiltin] = kind_for_name("nobuiltin")
+      kinds[NoCapture] = kind_for_name("nocapture")
+      kinds[NoDuplicate] = kind_for_name("noduplicate")
+      kinds[NoFree] = kind_for_name("nofree")
+      kinds[NoImplicitFloat] = kind_for_name("noimplicitfloat")
+      kinds[NoInline] = kind_for_name("noinline")
+      kinds[NoRecurse] = kind_for_name("norecurse")
+      kinds[NoRedZone] = kind_for_name("noredzone")
+      kinds[NoReturn] = kind_for_name("noreturn")
+      kinds[NoSync] = kind_for_name("nosync")
+      kinds[NoUnwind] = kind_for_name("nounwind")
+      kinds[NonLazyBind] = kind_for_name("nonlazybind")
+      kinds[NonNull] = kind_for_name("nonnull")
+      kinds[OptimizeForSize] = kind_for_name("optsize")
+      kinds[OptimizeNone] = kind_for_name("optnone")
+      kinds[ReadNone] = kind_for_name("readnone")
+      kinds[ReadOnly] = kind_for_name("readonly")
+      kinds[Returned] = kind_for_name("returned")
+      kinds[ImmArg] = kind_for_name("immarg")
+      kinds[ReturnsTwice] = kind_for_name("returns_twice")
+      kinds[SExt] = kind_for_name("signext")
+      kinds[SafeStack] = kind_for_name("safestack")
+      kinds[SanitizeAddress] = kind_for_name("sanitize_address")
+      kinds[SanitizeMemory] = kind_for_name("sanitize_memory")
+      kinds[SanitizeThread] = kind_for_name("sanitize_thread")
+      kinds[StackAlignment] = kind_for_name("alignstack")
+      kinds[StackProtect] = kind_for_name("ssp")
+      kinds[StackProtectReq] = kind_for_name("sspreq")
+      kinds[StackProtectStrong] = kind_for_name("sspstrong")
+      kinds[StructRet] = kind_for_name("sret")
+      kinds[SwiftError] = kind_for_name("swifterror")
+      kinds[SwiftSelf] = kind_for_name("swiftself")
+      kinds[UWTable] = kind_for_name("uwtable")
+      kinds[WillReturn] = kind_for_name("willreturn")
+      kinds[WriteOnly] = kind_for_name("writeonly")
+      kinds[ZExt] = kind_for_name("zeroext")
+      kinds
+    end
+
+    private def self.load_llvm_typed_attributes
+      typed_attrs = [] of Attribute
+
+      unless LibLLVM::IS_LT_120
+        # LLVM 12 introduced mandatory type parameters for byval and sret
+        typed_attrs << ByVal
+        typed_attrs << StructRet
+      end
+
+      unless LibLLVM::IS_LT_130
+        # LLVM 13 manadates type params for inalloca
+        typed_attrs << InAlloca
+      end
+
+      typed_attrs
+    end
+
+    def self.kind_for(member)
+      @@kind_ids[member]
+    end
+
+    def self.from_kind(kind)
+      @@kind_ids.key_for(kind)
+    end
+
+    def self.requires_type?(kind)
+      member = from_kind(kind)
+      @@typed_attrs.includes?(member)
+    end
+  end
 
   # Attribute index are either ReturnIndex (0), FunctionIndex (-1) or a
   # parameter number ranging from 1 to N.
@@ -197,13 +181,23 @@ module LLVM
     Appending
     Internal
     Private
-    DLLImport
-    DLLExport
+    DLLImport # obsolete
+    DLLExport # obsolete
     ExternalWeak
     Ghost
     Common
     LinkerPrivate
     LinkerPrivateWeak
+  end
+
+  enum DLLStorageClass
+    Default
+
+    # Function to be imported from DLL.
+    DLLImport
+
+    # Function to be accessible from DLL.
+    DLLExport
   end
 
   enum IntPredicate
@@ -328,38 +322,87 @@ module LLVM
     HiUser         = 0xff
   end
 
-  enum AtomicOrdering
-    NotAtomic              = 0
-    Unordered              = 1
-    Monotonic              = 2
-    Acquire                = 4
-    Release                = 5
-    AcquireRelease         = 6
-    SequentiallyConsistent = 7
-  end
+  enum DwarfSourceLanguage
+    C89
+    C
+    Ada83
+    C_plus_plus
+    Cobol74
+    Cobol85
+    Fortran77
+    Fortran90
+    Pascal83
+    Modula2
 
-  enum AtomicRMWBinOp
-    Xchg
-    Add
-    Sub
-    And
-    Nand
-    Or
-    Xor
-    Max
-    Min
-    UMax
-    UMin
+    # New in DWARF v3:
+
+    Java
+    C99
+    Ada95
+    Fortran95
+    PLI
+    ObjC
+    ObjC_plus_plus
+    UPC
+    D
+
+    # New in DWARF v4:
+
+    Python
+
+    # New in DWARF v5:
+
+    OpenCL
+    Go
+    Modula3
+    Haskell
+    C_plus_plus_03
+    C_plus_plus_11
+    OCaml
+    Rust
+    C11
+    Swift
+    Julia
+    Dylan
+    C_plus_plus_14
+    Fortran03
+    Fortran08
+    RenderScript
+    BLISS
+
+    {% unless LibLLVM::IS_LT_160 %}
+      Kotlin
+      Zig
+      Crystal
+      C_plus_plus_17
+      C_plus_plus_20
+      C17
+      Fortran18
+      Ada2005
+      Ada2012
+    {% end %}
+
+    # Vendor extensions:
+
+    Mips_Assembler
+    GOOGLE_RenderScript
+    BORLAND_Delphi
   end
 
   enum DIFlags : UInt32
-    Zero                = 0
-    Private             = 1
-    Protected           = 2
-    Public              = 3
-    FwdDecl             = 1 << 2
-    AppleBlock          = 1 << 3
-    BlockByrefStruct    = 1 << 4
+    Zero       = 0
+    Private    = 1
+    Protected  = 2
+    Public     = 3
+    FwdDecl    = 1 << 2
+    AppleBlock = 1 << 3
+
+    {% if LibLLVM::IS_LT_100 %}
+      BlockByrefStruct = 1 << 4
+    {% else %}
+      ReservedBit4 = 1 << 4
+    {% end %}
+
     Virtual             = 1 << 5
     Artificial          = 1 << 6
     Explicit            = 1 << 7
@@ -377,14 +420,29 @@ module LLVM
     IntroducedVirtual   = 1 << 18
     BitField            = 1 << 19
     NoReturn            = 1 << 20
-    MainSubprogram      = 1 << 21
+
+    {% if LibLLVM::IS_LT_90 %}
+      MainSubprogram = 1 << 21
+    {% end %}
+
     PassByValue         = 1 << 22
     TypePassByReference = 1 << 23
     EnumClass           = 1 << 24
     Thunk               = 1 << 25
-    NonTrivial          = 1 << 26
-    BigEndian           = 1 << 27
-    LittleEndian        = 1 << 28
+
+    {% if LibLLVM::IS_LT_90 %}
+      Trivial = 1 << 26
+    {% else %}
+      NonTrivial = 1 << 26
+    {% end %}
+
+    BigEndian    = 1 << 27
+    LittleEndian = 1 << 28
+  end
+
+  enum InlineAsmDialect
+    ATT
+    Intel
   end
 
   struct Value
@@ -421,10 +479,6 @@ module LLVM
     end
   end
 
-  enum ModuleFlag : Int32
-    Warning = 2
-  end
-
   struct Metadata
     enum Type : UInt32
       Dbg                   =  0 # "dbg"
@@ -457,4 +511,13 @@ module LLVM
       PreserveAccessIndex   = 27 # "llvm.preserve.*.access.index"
     end
   end
+
+  enum UWTableKind
+    None    = 0 # No unwind table requested
+    Sync    = 1 # "Synchronous" unwind tables
+    Async   = 2 # "Asynchronous" unwind tables (instr precise)
+    Default = 2
+  end
 end
+
+require "./enums/*"

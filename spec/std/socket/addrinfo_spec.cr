@@ -1,7 +1,7 @@
 require "spec"
 require "socket"
 
-describe Socket::Addrinfo do
+describe Socket::Addrinfo, tags: "network" do
   describe ".resolve" do
     it "returns an array" do
       addrinfos = Socket::Addrinfo.resolve("localhost", 80, type: Socket::Type::STREAM)
@@ -63,5 +63,24 @@ describe Socket::Addrinfo do
       addrinfos = Socket::Addrinfo.udp("localhost", 80)
       typeof(addrinfos.first.ip_address).should eq(Socket::IPAddress)
     end
+  end
+
+  it "#inspect" do
+    addrinfos = Socket::Addrinfo.tcp("127.0.0.1", 12345)
+    addrinfos.first.inspect.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, STREAM, TCP)"
+
+    addrinfos = Socket::Addrinfo.udp("127.0.0.1", 12345)
+    addrinfos.first.inspect.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, DGRAM, UDP)"
+  end
+
+  describe "Error" do
+    {% unless flag?(:win32) || flag?(:wasm32) %}
+      # This method is not available on windows/wasm because windows/wasm support was introduced after deprecation.
+      it ".new (deprecated)" do
+        error = Socket::Addrinfo::Error.new(LibC::EAI_NONAME, "No address found", "foobar.com")
+        error.os_error.should eq Errno.new(LibC::EAI_NONAME)
+        error.message.not_nil!.should eq "Hostname lookup for foobar.com failed: No address found"
+      end
+    {% end %}
   end
 end

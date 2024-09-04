@@ -1,6 +1,7 @@
 # The top-level number type.
 struct Number
   include Comparable(Number)
+  include Steppable
 
   alias Primitive = Int::Primitive | Float::Primitive
 
@@ -38,7 +39,12 @@ struct Number
     new(1)
   end
 
-  # Returns self.
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.number(self)
+  end
+
+  # Returns `self`.
   def +
     self
   end
@@ -70,6 +76,13 @@ struct Number
   # ints = Int64[1, 2, 3]
   # ints.class # => Array(Int64)
   # ```
+  #
+  # This is similar to an array literal of the same item type:
+  #
+  # ```
+  # Int64[1, 2, 3, 4]     # : Array(Int64)
+  # [1, 2, 3, 4] of Int64 # : Array(Int64)
+  # ```
   macro [](*nums)
     Array({{@type}}).build({{nums.size}}) do |%buffer|
       {% for num, i in nums %}
@@ -91,6 +104,14 @@ struct Number
   # ints = Int64.slice(1, 2, 3)
   # ints.class # => Slice(Int64)
   # ```
+  #
+  # This is a convenient alternative to `Slice.[]` for designating a
+  # specific item type which also considers autocasting.
+  #
+  # ```
+  # Int64.slice(1, 2, 3, 4)           # : Slice(Int64)
+  # Slice[1_i64, 2_i64, 3_i64, 4_i64] # : Slice(Int64)
+  # ```
   macro slice(*nums, read_only = false)
     %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
@@ -109,6 +130,14 @@ struct Number
   # ints = Int64.static_array(1, 2, 3)
   # ints.class # => StaticArray(Int64, 3)
   # ```
+  #
+  # This is a convenvenient alternative to `StaticArray.[]` for designating a
+  # specific item type which also considers autocasting.
+  #
+  # ```
+  # Int64.static_array(1, 2, 3, 4)          # : StaticArray(Int64)
+  # StaticArray[1_i64, 2_i64, 3_i64, 4_i64] # : StaticArray(Int64)
+  # ```
   macro static_array(*nums)
     %array = uninitialized StaticArray({{@type}}, {{nums.size}})
     {% for num, i in nums %}
@@ -117,74 +146,12 @@ struct Number
     %array
   end
 
-  # Iterates from `self` to *limit* incrementing by the amount of *step* on each
-  # iteration.
-  # If *exclusive* is `true`, *limit* is excluded from the iteration.
+  # Performs a `#step` in the direction of the _limit_. For instance:
   #
   # ```
-  # ary = [] of Int32
-  # 1.step(to: 4, by: 2) do |x|
-  #   ary << x
-  # end
-  # ary                                        # => [1, 3]
-  # 1.step(to: 4, by: 2).to_a                  # => [1, 3]
-  # 1.step(to: 4, by: 1).to_a                  # => [1, 2, 3, 4]
-  # 1.step(to: 4, by: 1, exclusive: true).to_a # => [1, 2, 3]
+  # 10.step(to: 5).to_a # => [10, 9, 8, 7, 6, 5]
+  # 5.step(to: 10).to_a # => [5, 6, 7, 8, 9, 10]
   # ```
-  #
-  # The type of each iterated element is `typeof(self + step)`.
-  #
-  # If *to* is `nil`, iteration is open ended.
-  #
-  # The starting point (`self`) is always iterated as first element, with two
-  # exceptions:
-  # * if `self` and *to* don't compare (i.e. `(self <=> to).nil?`). Example:
-  #   `1.0.step(Float::NAN)`
-  # * if the direction of *to* differs from the direction of `by`. Example:
-  #   `1.step(to: 2, by: -1)`
-  #
-  # In those cases the iteration is empty.
-  def step(*, to limit = nil, by step, exclusive : Bool = false, &) : Nil
-    # type of current should be the result of adding `step`:
-    current = self + (step - step)
-
-    if limit == current
-      # Only yield current if it's also the limit.
-      # Step size doesn't matter in this case: `1.step(to: 1, by: 0)` yields `1`
-      yield current unless exclusive
-      return
-    end
-
-    raise ArgumentError.new("Zero step size") if step.zero?
-
-    direction = step.sign
-
-    if limit
-      # if limit and step size have different directions, we can't iterate
-      return unless (limit <=> current).try(&.sign) == direction
-
-      yield current
-
-      while true
-        # only proceed if difference to limit is at least as big as step size to
-        # avoid potential overflow errors.
-        sign = ((limit - step) <=> current).try(&.sign)
-        break unless sign == direction || (sign == 0 && !exclusive)
-
-        current += step
-        yield current
-      end
-    else
-      while true
-        yield current
-        current += step
-      end
-    end
-
-    self
-  end
-
-  # :ditto:
   def step(*, to limit = nil, exclusive : Bool = false, &) : Nil
     if limit
       direction = limit <=> self
@@ -197,13 +164,6 @@ struct Number
   end
 
   # :ditto:
-  def step(*, to limit = nil, by step, exclusive : Bool = false)
-    raise ArgumentError.new("Zero step size") if step.zero? && limit != self
-
-    StepIterator.new(self + (step - step), limit, step, exclusive: exclusive)
-  end
-
-  # :ditto:
   def step(*, to limit = nil, exclusive : Bool = false)
     if limit
       direction = limit <=> self
@@ -213,93 +173,13 @@ struct Number
     step(to: limit, by: step, exclusive: exclusive)
   end
 
-  class StepIterator(T, L, B)
-    include Iterator(T)
-
-    @current : T
-    @limit : L
-    @step : B
-    @at_start = true
-    @reached_end = false
-
-    def initialize(@current : T, @limit : L, @step : B, @exclusive : Bool)
-    end
-
-    def next
-      return stop if @reached_end
-      limit = @limit
-
-      if @at_start
-        @at_start = false
-
-        if limit
-          sign = (limit <=> @current).try(&.sign)
-          @reached_end = sign == 0
-
-          # iteration is empty if limit and step are in different directions
-          if (!@reached_end && sign != @step.sign) || (@reached_end && @exclusive)
-            @reached_end = true
-            return stop
-          end
-        end
-
-        @current
-      elsif limit
-        # compare distance to current with step size
-        case ((limit - @step) <=> @current).try(&.sign)
-        when @step.sign
-          # distance is more than step size, so iteration proceeds
-          @current += @step
-        when 0
-          # distance is exactly step size, so we're at the end
-          @reached_end = true
-          if @exclusive
-            stop
-          else
-            @current + @step
-          end
-        else
-          # we've either overshot the limit or the comparison failed, so we can't
-          # continue
-          @reached_end = true
-          stop
-        end
-      else
-        @current += @step
-      end
-    end
-
-    # Overrides `Enumerable#sum` to use more performant implementation on integer
-    # ranges.
-    def sum(initial)
-      return super if @reached_end
-
-      current = @current
-      limit = @limit
-      step = @step
-
-      if current.is_a?(Int) && limit.is_a?(Int) && step.is_a?(Int)
-        limit -= 1 if @exclusive
-        n = (limit - current) // step + 1
-        if n >= 0
-          limit = current + (n - 1) * step
-          initial + n * (current + limit) // 2
-        else
-          initial
-        end
-      else
-        super
-      end
-    end
-  end
-
   # Returns the absolute value of this number.
   #
   # ```
   # 123.abs  # => 123
   # -123.abs # => 123
   # ```
-  def abs
+  def abs : self
     self < 0 ? -self : self
   end
 
@@ -323,7 +203,7 @@ struct Number
   # 0.sign   # => 0
   # -42.sign # => -1
   # ```
-  def sign
+  def sign : Int32
     self < 0 ? -1 : (self == 0 ? 0 : 1)
   end
 
@@ -343,8 +223,8 @@ struct Number
   # Returns:
   # - `-1` if `self` is less than *other*
   # - `0` if `self` is equal to *other*
-  # - `-1` if `self` is greater than *other*
-  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  # - `1` if `self` is greater than *other*
+  # - `nil` if `self` is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
   def <=>(other) : Int32?
     # NaN can't be compared to other numbers
     return nil if self.is_a?(Float) && self.nan?
@@ -371,41 +251,120 @@ struct Number
     if digits < 0
       raise ArgumentError.new "digits should be non-negative"
     end
+    return self if zero?
 
     x = self.to_f
 
-    if x == 0
-      return x
+    if base == 10
+      log = Math.log10(self.abs)
+    elsif base == 2
+      log = Math.log2(self.abs)
+    else
+      log = Math.log2(self.abs) / Math.log2(base)
     end
 
-    y = if base == 10
-          10 ** ((Math.log10(self.abs) - digits + 1).floor)
-        elsif base == 2
-          2 ** ((Math.log2(self.abs) - digits + 1).floor)
-        else
-          base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
-        end
+    exponent = (log - digits + 1).floor
+    if exponent < 0
+      y = base ** -exponent
+      value = (x * y).round / y
+    else
+      y = base ** exponent
+      value = (x / y).round * y
+    end
 
-    self.class.new((x / y).round * y)
+    self.class.new(value)
   end
 
-  # Rounds this number to a given precision in decimal *digits*.
+  # Rounds this number to a given precision.
+  #
+  # Rounds to the specified number of *digits* after the decimal place,
+  # (or before if negative), in base *base*.
+  #
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
   #
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits = 0, base = 10)
-    x = self.to_f
+  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even)
     if digits < 0
-      y = base.to_f ** digits.abs
-      self.class.new((x / y).round * y)
+      multiplier = base.to_f ** digits.abs
+      shifted = self / multiplier
     else
-      y = base.to_f ** digits
-      self.class.new((x * y).round / y)
+      multiplier = base.to_f ** digits
+      shifted = self * multiplier
+    end
+
+    rounded = shifted.round(mode)
+
+    if digits < 0
+      result = rounded * multiplier
+    else
+      result = rounded / multiplier
+    end
+
+    self.class.new result
+  end
+
+  # Specifies rounding behaviour for numerical operations capable of discarding
+  # precision.
+  enum RoundingMode
+    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+    # rounds towards the even neighbor (Banker's rounding).
+    TIES_EVEN
+
+    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+    # rounds away from zero.
+    TIES_AWAY
+
+    # Rounds towards zero (truncate).
+    TO_ZERO
+
+    # Rounds towards positive infinity (ceil).
+    TO_POSITIVE
+
+    # Rounds towards negative infinity (floor).
+    TO_NEGATIVE
+  end
+
+  # Rounds `self` to an integer value using rounding *mode*.
+  #
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
+  def round(mode : RoundingMode = :ties_even) : self
+    case mode
+    in .to_zero?
+      trunc
+    in .to_positive?
+      ceil
+    in .to_negative?
+      floor
+    in .ties_away?
+      round_away
+    in .ties_even?
+      round_even
     end
   end
 
-  # Returns `true` if value is equal to zero.
+  # Returns `true` if `self` is an integer.
+  #
+  # Non-integer types may return `true` as long as `self` denotes a finite value
+  # without any fractional parts.
+  #
+  # ```
+  # 1.integer?       # => true
+  # 1.0.integer?     # => true
+  # 1.2.integer?     # => false
+  # (1 / 0).integer? # => false
+  # (0 / 0).integer? # => false
+  # ```
+  def integer? : Bool
+    self % 1 == 0
+  end
+
+  # Returns `true` if `self` is equal to zero.
   #
   # ```
   # 0.zero? # => true
@@ -413,5 +372,27 @@ struct Number
   # ```
   def zero? : Bool
     self == 0
+  end
+
+  # Returns `true` if `self` is greater than zero.
+  #
+  # ```
+  # -1.positive? # => false
+  # 0.positive?  # => false
+  # 1.positive?  # => true
+  # ```
+  def positive? : Bool
+    self > 0
+  end
+
+  # Returns `true` if `self` is less than zero.
+  #
+  # ```
+  # -1.negative? # => true
+  # 0.negative?  # => false
+  # 1.negative?  # => false
+  # ```
+  def negative? : Bool
+    self < 0
   end
 end

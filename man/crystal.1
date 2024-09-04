@@ -6,7 +6,7 @@
 .Sh NAME
 .Nm crystal
 .Nd Compiler for the Crystal language.
-.Sh SYNOPSYS
+.Sh SYNOPSIS
 .Nm
 command
 .Op switches
@@ -76,7 +76,7 @@ Creates a library skeleton
 Creates an application skeleton
 .El
 
-This initializes the lib/app project folder as a git repository, with a license file, a README file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
+This initializes the lib/app project folder as a git repository, with a license file, a README file, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 .Bd -literal -offset
 DIR  - directory where project will be generated
 .Pp
@@ -113,12 +113,12 @@ Generate the output with symbolic debug symbols.
 These are read when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for those tools.
 .It Fl -no-debug
 Generate the output without any symbolic debug symbols.
-.It Fl -lto Ar FLAG
-Use ThinLTO --lto=thin.
 .It Fl D Ar FLAG, Fl -define Ar FLAG
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -emit Op asm|llvm-bc|llvm-ir|obj
 Comma separated list of types of output for the compiler to emit. You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
+.It Fl -frame-pointers Op auto|always|non-leaf
+Control the preservation of frame pointers. The default value, --frame-pointers=auto, will preserve frame pointers on debug builds and try to omit them on release builds (certain platforms require them to stay enabled). --frame-pointers=always will always preserve them, and non-leaf will only force their preservation on non-leaf functions.
 .It Fl f Ar text|json, Fl -format Ar text|json
 Format of output. Defaults to text. The json format can be used to get a more parser-friendly output.
 .It Fl -error-trace
@@ -132,7 +132,7 @@ Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM
 Passing --mcpu native will pass the host CPU name to tune performance for the host.
 .It Fl -mattr Ar CPU
 Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
-.It Fl -mcmodel default|kernel|small|medium|large
+.It Fl -mcmodel Ar default|kernel|small|medium|large
 Specifies a specific code model to generate code for. This will pass a --code-model flag to LLVM.
 .It Fl -no-color
 Disable colored output.
@@ -142,8 +142,14 @@ Don't do code generation, just parse the file.
 Specify filename of output.
 .It Fl -prelude
 Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.It Fl O Ar LEVEL
+Optimization mode: 0 (default), 1, 2, 3. See
+.Sy OPTIMIZATIONS
+for details.
 .It Fl -release
-Turn on optimizations for the generated code, which are disabled by default.
+Compile in release mode. Equivalent to
+.Fl O3
+.Fl -single-module
 .It Fl -error-trace
 Show full stack trace. Disabled by default, as the full trace usually makes error messages less readable and not always deliver relevant information.
 .It Fl s, -stats
@@ -154,6 +160,9 @@ Print statistics about the progress for the current build.
 Print statistics about the execution time.
 .It Fl -single-module
 Generate a single LLVM module.
+By default, one LLVM module is created for each type in a program.
+.Fl -release
+implies this option.
 .It Fl -threads Ar NUM
 Maximum number of threads to use for code generation. The default is 8 threads.
 .It Fl -target Ar TRIPLE
@@ -234,6 +243,11 @@ Please see
 .Sm "ENVIRONMENT VARIABLES".
 .Pp
 .It
+.It Sy CRYSTAL_LIBRARY_PATH
+Please see
+.Sm "ENVIRONMENT VARIABLES".
+.Pp
+.It
 .It Sy CRYSTAL_PATH
 Please see
 .Sm "ENVIRONMENT VARIABLES".
@@ -262,8 +276,14 @@ Generate the output without any symbolic debug symbols.
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -error-trace
 Show full error trace.
+.It Fl O Ar LEVEL
+Optimization mode: 0 (default), 1, 2, 3. See
+.Sy OPTIMIZATIONS
+for details.
 .It Fl -release
-Turn on optimizations for the generated code, which are disabled by default.
+Compile in release mode. Equivalent to
+.Fl O3
+.Fl -single-module
 .It Fl s, -stats
 Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 .It Fl p, -progress
@@ -323,8 +343,14 @@ Generate the output without any symbolic debug symbols.
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -error-trace
 Show full error trace.
+.It Fl O Ar LEVEL
+Optimization mode: 0 (default), 1, 2, 3. See
+.Sy OPTIMIZATIONS
+for details.
 .It Fl -release
-Turn on optimizations for the generated code, which are disabled by default.
+Compile in release mode. Equivalent to
+.Fl O3
+.Fl -single-module
 .It Fl s, -stats
 Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 .It Fl p, -progress
@@ -343,14 +369,37 @@ Disable colored output.
 .Op --
 .Op arguments
 .Pp
-Run a tool. The available tools are: context, format, hierarchy, implementations, and types.
+Run a tool. The available tools are: context, dependencies, flags, format, hierarchy, implementations, and types.
 .Pp
 Tools:
 .Bl -tag -offset indent
 .It Cm context
 Show context for given location.
+.It Cm dependencies
+Show tree of required source files.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl D Ar FLAG, Fl -define= Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl f Ar FORMAT, Fl -format= Ar FORMAT
+Output format 'tree' (default), 'flat', 'dot', or 'mermaid'.
+.It Fl i Ar PATH, Fl -include= Ar PATH
+Include path in output.
+.It Fl e Ar PATH, Fl -exclude= Ar PATH
+Exclude path in output.
+.It Fl -error-trace
+Show full error trace.
+.It Fl -prelude
+Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.It Fl -verbose
+Show skipped and heads of filtered paths
+.El
 .It Cm expand
 Show macro expansion for given location.
+.It Cm flags
+Print all macro 'flag?' values
 .It Cm format
 Format project, directories and/or files with the coding style used in the standard library. You can use the
 .Fl -check
@@ -362,9 +411,59 @@ flag.
 .It Cm implementations
 Show implementations for a given call. Use
 .Fl -cursor
-to specify the cursor position. The format for the cursor position is file:line:column.
+ to specify the cursor position. The format for the cursor position is file:line:column.
 .It Cm types
 Show type of main variables of file.
+.It Cm unreachable
+Show methods that are never called. The text output is a list of lines with columns
+separated by tab.
+
+.Pp
+Output fields:
+
+.Bl -tag -width "1234567890" -compact
+.Pp
+.It Cm count
+sum of all calls to this method (only with
+.Fl -tallies
+ option; otherwise skipped)
+.It Cm location
+pathname, line and column, all separated by colon
+.It Cm name
+.It Cm lines
+length of the def in lines
+.It Cm annotations
+.El
+
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl D Ar FLAG, Fl -define= Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl f Ar FORMAT, Fl -format= Ar FORMAT
+Output format 'text' (default), 'json', or 'csv'.
+.It Fl -tallies
+Print reachable methods and their call counts as well.
+.It Fl -check
+Exit with error if there is any unreachable code.
+.It Fl i Ar PATH, Fl -include= Ar PATH
+Include path in output.
+.It Fl e Ar PATH, Fl -exclude= Ar PATH
+Exclude path in output (default:
+.Sy lib
+).
+.It Fl -error-trace
+Show full error trace.
+.It Fl -prelude
+Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.El
+.El
+.Pp
+.It
+.Cm clear_cache
+.Pp
+Clear the compiler cache (located at 'CRYSTAL_CACHE_DIR').
 .El
 .Pp
 .It Cm help, Fl -help, h
@@ -376,7 +475,33 @@ Show help. Option --help or -h can also be added to each command for command-spe
 Show version.
 .El
 .
-.Sh ENVIRONMENT VARIABLES
+.Sh OPTIMIZATIONS
+.Bl -tag -width "12345678" -compact
+.Pp
+The optimization level specifies the codegen effort for producing optimal code.
+It's a trade-off between compilation performance (decreasing per optimization level) and runtime performance (increasing per optimization level).
+.Pp
+Production builds should usually have the highest optimization level.
+Best results are achieved with
+.Fl -release
+ which also implies
+.Fl -single-module
+.Pp
+.It
+.It Fl O0
+No optimization (default)
+.It Fl O1
+Low optimization
+.It Fl O2
+Middle optimization
+.It Fl O3
+High optimization
+.It Fl \!Os
+Middle optimization with focus on file size
+.It Fl Oz
+Middle optimization aggressively focused on file size
+.
+.Sh ENVIRONMENT\ VARIABLES
 .Bl -tag -width "12345678" -compact
 .Pp
 .It
@@ -384,12 +509,21 @@ Show version.
 Defines path where Crystal caches partial compilation results for faster subsequent builds. This path is also used to temporarily store executables when Crystal programs are run with 'crystal run' rather than 'crystal build'.
 .Pp
 .It
+.It Sy CRYSTAL_LIBRARY_PATH
+Defines paths where Crystal searches for (binary) libraries. Multiple paths can be separated by ":".
+These paths are passed to the linker as `-L` flags.
+.Pp
+The pattern '$ORIGIN' at the start of the path expands to the directory where the compiler binary is located. For example, '$ORIGIN/../lib/crystal' resolves the standard library path relative to the compiler location in a generic way, independent of the absolute paths (assuming the relative location is correct).
+.Pp
+.It
 .It Sy CRYSTAL_PATH
-Defines paths where Crystal searches for required files.
+Defines paths where Crystal searches for required source files. Multiple paths can be separated by ":".
+.Pp
+The pattern '$ORIGIN' at the start of the path expands to the directory where the compiler binary is located. For example, '$ORIGIN/../share/crystal/src' resolves the standard library path relative to the compiler location in a generic way, independent of the absolute paths (assuming the relative location is correct).
 .Pp
 .It
 .It Sy CRYSTAL_OPTS
-Defines options for the Crystal compiler to be used besides the command line arguments. The syntax is identical to the command line arguments. This is hany when using Crystal in build setups, for example 'CRYSTAL_OPTS=--debug make build'.
+Defines options for the Crystal compiler to be used besides the command line arguments. The syntax is identical to the command line arguments. This is handy when using Crystal in build setups, for example 'CRYSTAL_OPTS=--debug make build'.
 .El
 .Sh SEE ALSO
 .Fn shards 1

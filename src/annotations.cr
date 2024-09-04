@@ -27,7 +27,7 @@ end
 annotation Flags
 end
 
-# A `lib` can be marked with `@[Link(lib : String, *, ldflags : String, framework : String, pkg_config : String)]`
+# A `lib` can be marked with `@[Link(lib : String, *, ldflags : String, static : Bool, framework : String, pkg_config : String, wasm_import_module : String, dll : String)]`
 # to declare the library that should be linked when compiling the program.
 #
 # At least one of the *lib*, *ldflags*, *framework* arguments needs to be specified.
@@ -44,6 +44,13 @@ end
 # 3. will pass `-lpcre` to the linker.
 #
 # `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker.
+#
+# `@[Link(dll: "gc.dll")]` will copy `gc.dll` to any built program. The DLL name
+# must use `.dll` as its file extension and cannot contain any directory
+# separators. The actual DLL is searched among `CRYSTAL_LIBRARY_PATH`, the
+# compiler's own directory, and `PATH` in that order; a warning is printed if
+# the DLL isn't found, although it might still run correctly if the DLLs are
+# available in other DLL search paths on the system.
 #
 # When an `-l` option is passed to the linker, it will lookup the libraries in
 # paths passed with the `-L` option. Any paths in `CRYSTAL_LIBRARY_PATH` are

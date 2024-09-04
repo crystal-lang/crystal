@@ -1,4 +1,58 @@
 class URI
+  # Encodes *string* so it can be safely placed as a potentially multi-segmented
+  # URI path, replacing special characters with URI escape sequences as needed.
+  #
+  # Unreserved characters such as ASCII letters, digits, and the characters
+  # `_.-~` are not encoded, as well as the character `/` which represent a
+  # segment separator in hierarchical paths ([RFC 3986 §3.3](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3)).
+  #
+  # ```
+  # require "uri"
+  #
+  # URI.encode_path("foo/bar/baz")  # => "foo/bar/baz"
+  # URI.encode_path("hello world!") # => "hello%20world%21"
+  # URI.encode_path("put: it+й")    # => "put%3A%20it%2B%D0%B9"
+  # ```
+  #
+  # * `.decode` is the reverse operation.
+  # * `.encode_path_segment` encodes a single path segment, escaping `/`.
+  def self.encode_path(string : String) : String
+    String.build { |io| encode_path(io, string) }
+  end
+
+  # :ditto:
+  def self.encode_path(io : IO, string : String) : Nil
+    self.encode(string, io) { |byte| URI.unreserved?(byte) || '/' === byte }
+  end
+
+  # Encodes *string* so it can be safely placed inside a URI path segment,
+  # replacing special characters (including `/`) with URI escape sequences as needed.
+  #
+  # Unreserved characters such as ASCII letters, digits, and the characters
+  # `_.-~` are not encoded (see `.unreserved?`).
+  #
+  # ```
+  # require "uri"
+  #
+  # URI.encode_path_segment("foo;bar;baz")  # => "foo%3Bbar%3Bbaz"
+  # URI.encode_path_segment("foo/bar/baz")  # => "foo%2Fbar%2Fbaz"
+  # URI.encode_path_segment("foo,bar,baz")  # => "foo%2Cbar%2Cbaz"
+  # URI.encode_path_segment("hello world!") # => "hello%20world%21"
+  # URI.encode_path_segment("put: it+й")    # => "put%3A%20it%2B%D0%B9"
+  # ```
+  #
+  # * `.decode` is the reverse operation.
+  # * `.encode_path` encodes a path consisting of multiple segments, not escaping `/`.
+  # * `.encode_www_form` escapes space character as `+`.
+  def self.encode_path_segment(string : String) : String
+    String.build { |io| encode_path_segment(io, string) }
+  end
+
+  # :ditto:
+  def self.encode_path_segment(io : IO, string : String) : Nil
+    self.encode(string, io) { |byte| URI.unreserved?(byte) }
+  end
+
   # URL-decodes *string*.
   #
   # ```
@@ -23,7 +77,11 @@ class URI
   # * `.encode` is the reverse operation.
   # * `.decode_www_form` encodes plus to space by default.
   def self.decode(string : String, *, plus_to_space : Bool = false) : String
-    String.build { |io| decode(string, io, plus_to_space: plus_to_space) }
+    if needs_decode?(string, plus_to_space: plus_to_space)
+      String.build { |io| decode!(string, io, plus_to_space: plus_to_space) { false } }
+    else
+      string
+    end
   end
 
   # URL-decodes a string and writes the result to *io*.
@@ -60,6 +118,7 @@ class URI
   #
   # * `.decode` is the reverse operation.
   # * `.encode_www_form` also escapes reserved characters.
+  @[Deprecated("Use `.encode_path` instead.")]
   def self.encode(string : String, *, space_to_plus : Bool = false) : String
     String.build { |io| encode(string, io, space_to_plus: space_to_plus) }
   end
@@ -67,6 +126,7 @@ class URI
   # URL-encodes *string* and writes the result to *io*.
   #
   # See `.encode(string : String, *, space_to_plus : Bool = false) : String` for details.
+  @[Deprecated("Use `.encode_path` instead.")]
   def self.encode(string : String, io : IO, *, space_to_plus : Bool = false) : Nil
     self.encode(string, io, space_to_plus: space_to_plus) { |byte| URI.reserved?(byte) || URI.unreserved?(byte) }
   end
@@ -137,7 +197,7 @@ class URI
   # ```
   #
   # * `.decode_www_form` is the reverse operation.
-  # * `.encode` does not escape reserved characters.
+  # * `.encode_path` escapes space character as `%20`.
   def self.encode_www_form(string : String, *, space_to_plus : Bool = true) : String
     String.build do |io|
       encode_www_form(string, io, space_to_plus: space_to_plus)
@@ -156,18 +216,30 @@ class URI
   end
 
   # Returns whether given byte is reserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
+  # [RFC 3986 §2.2](https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
   def self.reserved?(byte) : Bool
+    sub_delim?(byte) || gen_delim?(byte)
+  end
+
+  # :nodoc:
+  # Returns `true` if the byte is URI gen-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
+  def self.gen_delim?(byte)
+    byte.unsafe_chr.in?('#', '/', ':', '?', '@', '[', ']')
+  end
+
+  # :nodoc:
+  # Returns `true` if the byte is URI sub-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
+  def self.sub_delim?(byte) : Bool
     char = byte.unsafe_chr
     '&' <= char <= ',' ||
-      char.in?('!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '=')
+      char.in?('!', '$', ';', '=')
   end
 
   # Returns whether given byte is unreserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
+  # [RFC 3986 §2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3).
   #
   # Unreserved characters are ASCII letters, ASCII digits, `_`, `.`, `-` and `~`.
   def self.unreserved?(byte) : Bool
@@ -189,14 +261,37 @@ class URI
   # by either `.decode(string : String, *, plus_to_space : Bool = false) : String` or
   # `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
+    unless needs_decode?(string, plus_to_space: plus_to_space)
+      io.write_string(string.to_slice)
+      return
+    end
+
+    decode!(string, io, plus_to_space: plus_to_space) do |byte|
+      yield byte
+    end
+  end
+
+  # Similar to the above, but it assumes there will be chars to decode (% or +).
+  private def self.decode!(string : String, io : IO, *, plus_to_space : Bool, &block) : Nil
     i = 0
     bytesize = string.bytesize
-    while i < bytesize
-      byte = string.unsafe_byte_at(i)
-      char = byte.unsafe_chr
-      i = decode_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
+
+    if io.encoding == "UTF-8"
+      target_io = io
+    else
+      io_memory = IO::Memory.new(bytesize)
+      target_io = io_memory
     end
-    io
+
+    while i < bytesize
+      byte = string.to_unsafe[i]
+      char = byte.unsafe_chr
+      i = decode_one(string, bytesize, i, byte, char, target_io, plus_to_space) { |byte| yield byte }
+    end
+
+    if io_memory
+      io.write_string(io_memory.to_slice)
+    end
   end
 
   # URL-encodes *string* and writes the result to an `IO`.
@@ -210,18 +305,18 @@ class URI
   # as `+` and `+` is encoded as `%2B`.
   #
   # This method enables some customization, but typical use cases can be implemented
-  # by either `.encode(string : String, *, space_to_plus : Bool = false) : String` or
+  # by either `.encode_path(string : String) : String`, `.encode_path_segment(string : String) : String` or
   # `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`.
   def self.encode(string : String, io : IO, space_to_plus : Bool = false, &block) : Nil
     string.each_byte do |byte|
       char = byte.unsafe_chr
       if char == ' ' && space_to_plus
-        io.write_byte '+'.ord.to_u8
+        io << '+'
       elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
-        io.write_byte byte
+        io << char
       else
-        io.write_byte '%'.ord.to_u8
-        io.write_byte '0'.ord.to_u8 if byte < 16
+        io << '%'
+        io << '0' if byte < 16
         byte.to_s(io, 16, upcase: true)
       end
     end
@@ -235,7 +330,7 @@ class URI
 
   # :nodoc:
   # Unencodes one character. Private API
-  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false)
+  def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false, &)
     if plus_to_space && char == '+'
       io.write_byte ' '.ord.to_u8
       i += 1
@@ -244,7 +339,7 @@ class URI
 
     if char == '%' && i < bytesize - 2
       i += 1
-      first = string.unsafe_byte_at(i)
+      first = string.to_unsafe[i]
       first_num = first.unsafe_chr.to_i? 16
       unless first_num
         io.write_byte byte
@@ -252,7 +347,7 @@ class URI
       end
 
       i += 1
-      second = string.unsafe_byte_at(i)
+      second = string.to_unsafe[i]
       second_num = second.unsafe_chr.to_i? 16
       unless second_num
         io.write_byte byte
@@ -275,5 +370,12 @@ class URI
     io.write_byte byte
     i += 1
     i
+  end
+
+  # Checks if there's any chars that actually needs decoding.
+  # If not, decoding a string can be done much faster, because
+  # it's just the same string.
+  private def self.needs_decode?(string : String, *, plus_to_space : Bool) : Bool
+    string.includes?('%') || (plus_to_space && string.includes?('+'))
   end
 end

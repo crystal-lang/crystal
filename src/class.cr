@@ -54,7 +54,7 @@ class Class
   # Number > Number # => false
   # Number > Object # => false
   # ```
-  def >(other : T.class) forall T
+  def >(other : T.class) : Bool forall T
     # This is so that the method is expanded differently for each type
     {% @type %}
     other._lt(self)
@@ -95,7 +95,15 @@ class Class
   end
 
   def ===(other)
-    other.is_a?(self)
+    # This branch handles `Int32.class === 1` case.
+    # In this case, `@type` is `Class` and `other.is_a?(self)` means `other.is_a?(Object)`
+    # because type of `self` is an instance type of the scope type and the instance type of `Class` is `Object`.
+    # See https://github.com/crystal-lang/crystal/issues/10736.
+    {% if @type == Class %}
+      other.is_a?(Class)
+    {% else %}
+      other.is_a?(self)
+    {% end %}
   end
 
   # Returns the name of this class.
@@ -135,14 +143,18 @@ class Class
     typeof(t, u)
   end
 
-  # Returns `true` if this class is `Nil`.
+  # Returns `true` if `nil` is an instance of this type.
   #
   # ```
-  # Int32.nilable? # => false
-  # Nil.nilable?   # => true
+  # Int32.nilable?            # => false
+  # Nil.nilable?              # => true
+  # (Int32 | String).nilable? # => false
+  # (Int32 | Nil).nilable?    # => true
+  # NoReturn.nilable?         # => false
+  # Value.nilable?            # => true
   # ```
-  def nilable?
-    self == ::Nil
+  def nilable? : Bool
+    {{ @type >= Nil }}
   end
 
   def to_s(io : IO) : Nil

@@ -49,6 +49,61 @@ class Reference
   @[Primitive(:object_id)]
   def object_id : UInt64
   end
+
+  # Performs basic initialization so that the given *address* is ready for use
+  # as an object's instance data. Returns *address* cast to `self`'s type.
+  #
+  # More specifically, this is the part of object initialization that occurs
+  # after memory allocation and before calling one of the `#initialize`
+  # overloads. It zeroes the memory, sets up the type ID (necessary for dynamic
+  # dispatch), and then runs all inline instance variable initializers.
+  #
+  # *address* must point to a suitably aligned buffer of at least
+  # `instance_sizeof(self)` bytes.
+  #
+  # WARNING: This method is unsafe, as it assumes the caller is responsible for
+  # managing the memory at the given *address* manually.
+  #
+  # ```
+  # class Foo
+  #   getter i : Int64
+  #   getter str = "abc"
+  #
+  #   def initialize(@i)
+  #   end
+  #
+  #   def self.alloc_with_libc(i : Int64)
+  #     foo_buffer = LibC.malloc(instance_sizeof(Foo))
+  #     foo = Foo.pre_initialize(foo_buffer)
+  #     foo.i                  # => 0
+  #     foo.str                # => "abc"
+  #     (foo || "").is_a?(Foo) # => true
+  #
+  #     foo.initialize(i) # okay
+  #     foo
+  #   end
+  # end
+  #
+  # foo = Foo.alloc_with_libc(123_i64)
+  # foo.i # => 123
+  # ```
+  #
+  # See also: `Reference.unsafe_construct`.
+  @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
+  @[Primitive(:pre_initialize)]
+  {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
+    def self.pre_initialize(address : Pointer)
+      # This ensures `.pre_initialize` is instantiated for every subclass,
+      # otherwise all calls will refer to the sole instantiation in
+      # `Reference.class`. This is necessary when the receiver is a virtual
+      # metaclass type. Apparently this works even for primitives
+      \{% @type %}
+    end
+  {% else %}
+    # Primitives cannot have a body until 1.2.0 (#11147)
+    def self.pre_initialize(address : Pointer)
+    end
+  {% end %}
 end
 
 class Class
@@ -149,6 +204,13 @@ struct Pointer(T)
   # # ...
   # ptr[9] # => 0
   # ```
+  #
+  # The implementation uses `GC.malloc` if the compiler is aware that the
+  # allocated type contains inner address pointers. See
+  # `Crystal::Macros::TypeNode#has_inner_pointers?` for details.
+  #
+  # To override this implicit behaviour, `GC.malloc` and `GC.malloc_atomic`
+  # can be used directly instead.
   @[Primitive(:pointer_malloc)]
   def self.malloc(size : UInt64)
   end
@@ -171,6 +233,20 @@ struct Pointer(T)
   # ptr.value = 42
   # ptr.value # => 42
   # ```
+  #
+  # WARNING: The pointer must be appropriately aligned, i.e. `address` must be
+  # a multiple of `alignof(T)`. It is undefined behavior to load from a
+  # misaligned pointer. Such reads should instead be done via a cast to
+  # `Pointer(UInt8)`, which is guaranteed to have byte alignment:
+  #
+  # ```
+  # # raises SIGSEGV on X86 if `ptr` is misaligned
+  # x = ptr.as(UInt128*).value
+  #
+  # # okay, `ptr` can have any alignment
+  # x = uninitialized UInt128
+  # ptr.as(UInt8*).copy_to(pointerof(x).as(UInt8*), sizeof(typeof(x)))
+  # ```
   @[Primitive(:pointer_get)]
   def value : T
   end
@@ -181,6 +257,20 @@ struct Pointer(T)
   # ptr = Pointer(Int32).malloc(4)
   # ptr.value = 42
   # ptr.value # => 42
+  # ```
+  #
+  # WARNING: The pointer must be appropriately aligned, i.e. `address` must be
+  # a multiple of `alignof(T)`. It is undefined behavior to store to a
+  # misaligned pointer. Such writes should instead be done via a cast to
+  # `Pointer(UInt8)`, which is guaranteed to have byte alignment:
+  #
+  # ```
+  # # raises SIGSEGV on X86 if `ptr` is misaligned
+  # x = 123_u128
+  # ptr.as(UInt128*).value = x
+  #
+  # # okay, `ptr` can have any alignment
+  # ptr.as(UInt8*).copy_from(pointerof(x).as(UInt8*), sizeof(typeof(x)))
   # ```
   @[Primitive(:pointer_set)]
   def value=(value : T)
@@ -216,7 +306,7 @@ struct Pointer(T)
   end
 
   # Returns a new pointer whose address is this pointer's address
-  # incremented by `other * sizeof(T)`.
+  # incremented by `offset * sizeof(T)`.
   #
   # ```
   # ptr = Pointer(Int32).new(1234)
@@ -240,6 +330,25 @@ struct Pointer(T)
   # ```
   @[Primitive(:pointer_diff)]
   def -(other : self) : Int64
+  end
+end
+
+struct Slice(T)
+  # Constructs a read-only `Slice` constant from the given *args*. The slice
+  # contents are stored in the program's read-only data section.
+  #
+  # `T` must be one of the `Number::Primitive` types and cannot be a union. It
+  # also cannot be inferred. The *args* must all be number literals that fit
+  # into `T`'s range, as if they are autocasted into `T`.
+  #
+  # ```
+  # x = Slice(UInt8).literal(0, 1, 4, 9, 16, 25)
+  # x            # => Slice[0, 1, 4, 9, 16, 25]
+  # x.read_only? # => true
+  # ```
+  @[Experimental("Slice literals are still under development. Join the discussion at [#2886](https://github.com/crystal-lang/crystal/issues/2886).")]
+  @[Primitive(:slice_literal)]
+  def self.literal(*args)
   end
 end
 
@@ -282,14 +391,18 @@ end
                            } %}
         # Returns `self` converted to `{{type}}`.
         # Raises `OverflowError` in case of overflow.
-        @[Primitive(:convert)]
+        @[::Primitive(:convert)]
         @[Raises]
         def {{name.id}} : {{type}}
         end
 
         # Returns `self` converted to `{{type}}`.
-        # In case of overflow a wrapping is performed.
-        @[Primitive(:unchecked_convert)]
+        # In case of overflow
+        # {% if ints.includes?(num) %} a wrapping is performed.
+        # {% elsif type < Int %} the result is undefined.
+        # {% else %} infinity is returned.
+        # {% end %}
+        @[::Primitive(:unchecked_convert)]
         def {{name.id}}! : {{type}}
         end
       {% end %}
@@ -303,8 +416,9 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns `true` if `self` is {{desc.id}} *other*.
-          @[Primitive(:binary)]
+          # Returns `true` if `self` is {{desc.id}} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
+          # or if `self` and *other* are unordered{% end %}.
+          @[::Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end
         {% end %}
@@ -316,7 +430,8 @@ end
     struct {{int.id}}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
-      # chars (`0..0x10ffff`).
+      # chars (`0..0xd7ff` and `0xe000..0x10ffff`). In case of overflow
+      # a wrapping is performed.
       #
       # You should never use this method unless `chr` turns out to
       # be a bottleneck.
@@ -324,7 +439,7 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[Primitive(:convert)]
+      @[::Primitive(:unchecked_convert)]
       def unsafe_chr : Char
       end
 
@@ -332,50 +447,50 @@ end
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
           # Raises `OverflowError` in case of overflow.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           @[Raises]
           def {{op.id}}(other : {{int2.id}}) : self
           end
 
           # Returns the result of {{desc.id}} `self` and *other*.
           # In case of overflow a wrapping is performed.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def &{{op.id}}(other : {{int2.id}}) : self
           end
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def |(other : {{int2.id}}) : self
         end
 
         # Returns the result of performing a bitwise AND of `self`'s and *other*'s bits.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def &(other : {{int2.id}}) : self
         end
 
         # Returns the result of performing a bitwise XOR of `self`'s and *other*'s bits.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def ^(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_shl(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_shr(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_div(other : {{int2.id}}) : self
         end
 
         # :nodoc:
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def unsafe_mod(other : {{int2.id}}) : self
         end
       {% end %}
@@ -383,7 +498,7 @@ end
       {% for float in floats %}
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def {{op.id}}(other : {{float.id}}) : {{float.id}}
           end
         {% end %}
@@ -396,19 +511,19 @@ end
       {% for num in nums %}
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
-          @[Primitive(:binary)]
+          @[::Primitive(:binary)]
           def {{op.id}}(other : {{num.id}}) : self
           end
         {% end %}
 
         # Returns the float division of `self` and *other*.
-        @[Primitive(:binary)]
+        @[::Primitive(:binary)]
         def fdiv(other : {{num.id}}) : self
         end
       {% end %}
 
       # Returns the result of division `self` and *other*.
-      @[Primitive(:binary)]
+      @[::Primitive(:binary)]
       def /(other : {{float.id}}) : {{float.id}}
       end
     end

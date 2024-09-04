@@ -26,20 +26,20 @@ class Compress::Zlib::Writer < IO
 
   # Creates a new writer to the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, level = Zlib::DEFAULT_COMPRESSION, sync_close = false, dict : Bytes? = nil)
+  def self.open(io : IO, level = Zlib::DEFAULT_COMPRESSION, sync_close = false, dict : Bytes? = nil, &)
     writer = new(io, level: level, sync_close: sync_close, dict: dict)
     yield writer ensure writer.close
   end
 
   # Creates a new writer to the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String, level = Zlib::DEFAULT_COMPRESSION, dict : Bytes? = nil)
+  def self.open(filename : String, level = Zlib::DEFAULT_COMPRESSION, dict : Bytes? = nil, &)
     writer = new(filename, level: level, dict: dict)
     yield writer ensure writer.close
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't read from Gzip::Writer")
   end
 
@@ -59,7 +59,7 @@ class Compress::Zlib::Writer < IO
   # data has been written yet.
   #
   # See `IO#flush`.
-  def flush
+  def flush : Nil
     check_open
 
     write_header unless @wrote_header
@@ -67,7 +67,7 @@ class Compress::Zlib::Writer < IO
   end
 
   # Closes this writer. Must be invoked after all data has been written.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

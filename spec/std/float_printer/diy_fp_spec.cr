@@ -41,7 +41,7 @@ describe DiyFP do
   end
 
   it "multiply" do
-    fp1 = DiyFP.new(0x8000000000000000, 11)
+    fp1 = DiyFP.new(0x8000000000000000_u64, 11)
     fp2 = DiyFP.new(2_u64, 13)
     prod = fp1 * fp2
 
@@ -163,7 +163,7 @@ describe DiyFP do
 
     fp.exp.should eq -0x3FF - 52 + 1 - 63
     # This is a denormal; so no hidden bit
-    fp.frac.should eq 0x8000000000000000
+    fp.frac.should eq 0x8000000000000000_u64
   end
 
   it "normalizes max f64" do

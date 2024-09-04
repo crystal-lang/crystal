@@ -1,10 +1,269 @@
 require "./location"
 
 module Crystal
+  # All possible identifiers that may be considered keywords.
+  enum Keyword
+    ABSTRACT
+    ALIAS
+    ALIGNOF
+    ANNOTATION
+    AS
+    AS_QUESTION
+    ASM
+    BEGIN
+    BREAK
+    CASE
+    CLASS
+    DEF
+    DO
+    ELSE
+    ELSIF
+    END
+    ENSURE
+    ENUM
+    EXTEND
+    FALSE
+    FOR
+    FUN
+    IF
+    IN
+    INCLUDE
+    INSTANCE_ALIGNOF
+    INSTANCE_SIZEOF
+    IS_A_QUESTION
+    LIB
+    MACRO
+    MODULE
+    NEXT
+    NIL
+    NIL_QUESTION
+    OF
+    OFFSETOF
+    OUT
+    POINTEROF
+    PRIVATE
+    PROTECTED
+    REQUIRE
+    RESCUE
+    RESPONDS_TO_QUESTION
+    RETURN
+    SELECT
+    SELF
+    SIZEOF
+    STRUCT
+    SUPER
+    THEN
+    TRUE
+    TYPE
+    TYPEOF
+    UNINITIALIZED
+    UNION
+    UNLESS
+    UNTIL
+    VERBATIM
+    WHEN
+    WHILE
+    WITH
+    YIELD
+
+    def to_s
+      case self
+      when AS_QUESTION
+        "as?"
+      when IS_A_QUESTION
+        "is_a?"
+      when NIL_QUESTION
+        "nil?"
+      when RESPONDS_TO_QUESTION
+        "responds_to?"
+      else
+        super.downcase
+      end
+    end
+  end
+
   class Token
-    property type : Symbol
-    property value : Char | String | Symbol | Nil
-    property number_kind : Symbol
+    enum Kind
+      EOF
+      SPACE
+      NEWLINE
+
+      IDENT
+      CONST
+      INSTANCE_VAR
+      CLASS_VAR
+
+      CHAR
+      STRING
+      SYMBOL
+      NUMBER
+
+      UNDERSCORE
+      COMMENT
+
+      DELIMITER_START
+      DELIMITER_END
+
+      STRING_ARRAY_START
+      INTERPOLATION_START
+      SYMBOL_ARRAY_START
+      STRING_ARRAY_END
+
+      GLOBAL
+      GLOBAL_MATCH_DATA_INDEX
+
+      MAGIC_DIR
+      MAGIC_END_LINE
+      MAGIC_FILE
+      MAGIC_LINE
+
+      MACRO_LITERAL
+      MACRO_EXPRESSION_START
+      MACRO_CONTROL_START
+      MACRO_VAR
+      MACRO_END
+
+      # the following operator kinds should be sorted by their codepoints
+      # refer to `#to_s` for the constant names of each individual character
+
+      OP_BANG                     # !
+      OP_BANG_EQ                  # !=
+      OP_BANG_TILDE               # !~
+      OP_DOLLAR_QUESTION          # $?
+      OP_DOLLAR_TILDE             # $~
+      OP_PERCENT                  # %
+      OP_PERCENT_EQ               # %=
+      OP_PERCENT_RCURLY           # %}
+      OP_AMP                      # &
+      OP_AMP_AMP                  # &&
+      OP_AMP_AMP_EQ               # &&=
+      OP_AMP_STAR                 # &*
+      OP_AMP_STAR_STAR            # &**
+      OP_AMP_STAR_EQ              # &*=
+      OP_AMP_PLUS                 # &+
+      OP_AMP_PLUS_EQ              # &+=
+      OP_AMP_MINUS                # &-
+      OP_AMP_MINUS_EQ             # &-=
+      OP_AMP_EQ                   # &=
+      OP_LPAREN                   # (
+      OP_RPAREN                   # )
+      OP_STAR                     # *
+      OP_STAR_STAR                # **
+      OP_STAR_STAR_EQ             # **=
+      OP_STAR_EQ                  # *=
+      OP_PLUS                     # +
+      OP_PLUS_EQ                  # +=
+      OP_COMMA                    # ,
+      OP_MINUS                    # -
+      OP_MINUS_EQ                 # -=
+      OP_MINUS_GT                 # ->
+      OP_PERIOD                   # .
+      OP_PERIOD_PERIOD            # ..
+      OP_PERIOD_PERIOD_PERIOD     # ...
+      OP_SLASH                    # /
+      OP_SLASH_SLASH              # //
+      OP_SLASH_SLASH_EQ           # //=
+      OP_SLASH_EQ                 # /=
+      OP_COLON                    # :
+      OP_COLON_COLON              # ::
+      OP_SEMICOLON                # ;
+      OP_LT                       # <
+      OP_LT_LT                    # <<
+      OP_LT_LT_EQ                 # <<=
+      OP_LT_EQ                    # <=
+      OP_LT_EQ_GT                 # <=>
+      OP_EQ                       # =
+      OP_EQ_EQ                    # ==
+      OP_EQ_EQ_EQ                 # ===
+      OP_EQ_GT                    # =>
+      OP_EQ_TILDE                 # =~
+      OP_GT                       # >
+      OP_GT_EQ                    # >=
+      OP_GT_GT                    # >>
+      OP_GT_GT_EQ                 # >>=
+      OP_QUESTION                 # ?
+      OP_AT_LSQUARE               # @[
+      OP_LSQUARE                  # [
+      OP_LSQUARE_RSQUARE          # []
+      OP_LSQUARE_RSQUARE_EQ       # []=
+      OP_LSQUARE_RSQUARE_QUESTION # []?
+      OP_RSQUARE                  # ]
+      OP_CARET                    # ^
+      OP_CARET_EQ                 # ^=
+      OP_GRAVE                    # `
+      OP_LCURLY                   # {
+      OP_LCURLY_PERCENT           # {%
+      OP_LCURLY_LCURLY            # {{
+      OP_BAR                      # |
+      OP_BAR_EQ                   # |=
+      OP_BAR_BAR                  # ||
+      OP_BAR_BAR_EQ               # ||=
+      OP_RCURLY                   # }
+      OP_TILDE                    # ~
+
+      # non-flag enums are special since the `IO` overload relies on the
+      # `String`-returning overload instead of the other way round
+      def to_s : String
+        {% begin %}
+          {%
+            operator1 = {
+              "BANG" => "!", "DOLLAR" => "$", "PERCENT" => "%", "AMP" => "&", "LPAREN" => "(",
+              "RPAREN" => ")", "STAR" => "*", "PLUS" => "+", "COMMA" => ",", "MINUS" => "-",
+              "PERIOD" => ".", "SLASH" => "/", "COLON" => ":", "SEMICOLON" => ";", "LT" => "<",
+              "EQ" => "=", "GT" => ">", "QUESTION" => "?", "AT" => "@", "LSQUARE" => "[",
+              "RSQUARE" => "]", "CARET" => "^", "GRAVE" => "`", "LCURLY" => "{", "BAR" => "|",
+              "RCURLY" => "}", "TILDE" => "~",
+            }
+          %}
+
+          case self
+          {% for member in @type.constants %}
+          in {{ member.id }}
+            {% if member.starts_with?("OP_") %}
+              {% parts = member.split("_") %}
+              {{ parts.map { |ch| operator1[ch] || "" }.join("") }}
+            {% elsif member.starts_with?("MAGIC_") %}
+              {{ "__#{member[6..-1].id}__" }}
+            {% else %}
+              {{ member.stringify }}
+            {% end %}
+          {% end %}
+          end
+        {% end %}
+      end
+
+      def operator?
+        self.in?(OP_BANG..OP_TILDE)
+      end
+
+      def assignment_operator?
+        # += -= *= /= //= %= |= &= ^= **= <<= >>= ||= &&= &+= &-= &*=
+        case self
+        when .op_plus_eq?, .op_minus_eq?, .op_star_eq?, .op_slash_eq?, .op_slash_slash_eq?,
+             .op_percent_eq?, .op_bar_eq?, .op_amp_eq?, .op_caret_eq?, .op_star_star_eq?,
+             .op_lt_lt_eq?, .op_gt_gt_eq?, .op_bar_bar_eq?, .op_amp_amp_eq?, .op_amp_plus_eq?,
+             .op_amp_minus_eq?, .op_amp_star_eq?
+          true
+        else
+          false
+        end
+      end
+
+      # Returns true if the operator can be used in prefix notation.
+      #
+      # Related: `ToSVisitor::UNARY_OPERATORS`
+      def unary_operator?
+        self.in?(OP_BANG, OP_PLUS, OP_MINUS, OP_TILDE, OP_AMP_PLUS, OP_AMP_MINUS)
+      end
+
+      def magic?
+        magic_dir? || magic_end_line? || magic_file? || magic_line?
+      end
+    end
+
+    property type : Kind
+    property value : Char | String | Keyword | Nil
+    property number_kind : NumberKind
     property line_number : Int32
     property column_number : Int32
     property filename : String | VirtualFile | Nil
@@ -33,8 +292,17 @@ module Crystal
       setter control_nest
     end
 
+    enum DelimiterKind
+      STRING
+      REGEX
+      STRING_ARRAY
+      SYMBOL_ARRAY
+      COMMAND
+      HEREDOC
+    end
+
     record DelimiterState,
-      kind : Symbol,
+      kind : DelimiterKind,
       nest : Char | String,
       end : Char | String,
       open_count : Int32,
@@ -47,15 +315,15 @@ module Crystal
         DelimiterState.new(:string, '\0', '\0', 0, 0, true)
       end
 
-      def self.new(kind, nest, the_end)
+      def self.new(kind : DelimiterKind, nest, the_end)
         new kind, nest, the_end, 0, 0, true
       end
 
-      def self.new(kind, nest, the_end, allow_escapes : Bool)
+      def self.new(kind : DelimiterKind, nest, the_end, allow_escapes : Bool)
         new kind, nest, the_end, 0, 0, allow_escapes
       end
 
-      def self.new(kind, nest, the_end, open_count : Int32)
+      def self.new(kind : DelimiterKind, nest, the_end, open_count : Int32)
         new kind, nest, the_end, open_count, 0, true
       end
 
@@ -69,8 +337,8 @@ module Crystal
     end
 
     def initialize
-      @type = :EOF
-      @number_kind = :i32
+      @type = Kind::EOF
+      @number_kind = NumberKind::I32
       @line_number = 0
       @column_number = 0
       @delimiter_state = DelimiterState.default
@@ -94,16 +362,12 @@ module Crystal
     def location=(@location)
     end
 
-    def token?(token)
-      @type == :TOKEN && @value == token
-    end
-
     def keyword?
-      @type == :IDENT && @value.is_a?(Symbol)
+      @type.ident? && @value.is_a?(Keyword)
     end
 
-    def keyword?(keyword)
-      @type == :IDENT && @value == keyword
+    def keyword?(keyword : Keyword)
+      @type.ident? && @value == keyword
     end
 
     def copy_from(other)

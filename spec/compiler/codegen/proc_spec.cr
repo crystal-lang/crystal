@@ -9,6 +9,14 @@ describe "Code gen: proc" do
     run("f = ->(x : Int32) { x &+ 1 }; f.call(41)").to_i.should eq(42)
   end
 
+  it "call proc literal with return type" do
+    run(<<-CRYSTAL).to_b.should be_true
+      f = -> : Int32 | Float64 { 1 }
+      x = f.call
+      x.is_a?(Int32) && x == 1
+      CRYSTAL
+  end
+
   it "call proc pointer" do
     run("def foo; 1; end; x = ->foo; x.call").to_i.should eq(1)
   end
@@ -393,6 +401,12 @@ describe "Code gen: proc" do
 
   it "does new on proc type" do
     run("
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       alias Func = Int32 -> Int32
 
       a = 2
@@ -848,6 +862,59 @@ describe "Code gen: proc" do
     ))
   end
 
+  it "returns proc as function pointer inside top-level fun (#14691)" do
+    run(<<-CRYSTAL, Int32).should eq(8)
+      def raise(msg)
+        while true
+        end
+      end
+
+      fun add : Int32, Int32 -> Int32
+        ->(x : Int32, y : Int32) { x &+ y }
+      end
+
+      add.call(3, 5)
+      CRYSTAL
+  end
+
+  it "returns ProcPointer inside top-level fun (#14691)" do
+    run(<<-CRYSTAL, Int32).should eq(8)
+      def raise(msg)
+        while true
+        end
+      end
+
+      fun foo(x : Int32) : Int32
+        x &+ 5
+      end
+
+      fun bar : Int32 -> Int32
+        ->foo(Int32)
+      end
+
+      bar.call(3)
+      CRYSTAL
+  end
+
+  it "raises if returning closure from top-level fun (#14691)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      require "prelude"
+
+      @[Raises]
+      fun foo(x : Int32) : -> Int32
+        -> { x }
+      end
+
+      begin
+        foo(1)
+      rescue
+        true
+      else
+        false
+      end
+      CRYSTAL
+  end
+
   it "closures var on ->var.call (#8584)" do
     run(%(
       def bar(x)
@@ -882,6 +949,76 @@ describe "Code gen: proc" do
       )).to_i.should eq(1)
   end
 
+  it "saves receiver value of proc pointer `->var.foo`" do
+    run(%(
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      var = Foo.new(1)
+      proc = ->var.foo
+      var = Foo.new(2)
+      proc.call
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->@ivar.foo`" do
+    run(%(
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      class Test
+        @ivar = Foo.new(1)
+
+        def test
+          proc = ->@ivar.foo
+          @ivar = Foo.new(2)
+          proc.call
+        end
+      end
+
+      Test.new.test
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->@@cvar.foo`" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      class Test
+        @@cvar = Foo.new(1)
+
+        def self.test
+          proc = ->@@cvar.foo
+          @@cvar = Foo.new(2)
+          proc.call
+        end
+      end
+
+      Test.test
+      )).to_i.should eq(1)
+  end
+
   it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
     run(%(
       abstract struct Parent
@@ -905,7 +1042,7 @@ describe "Code gen: proc" do
       end
 
       Child1.new.as(Parent).get
-    ))
+    ), Proc(Int32, Int32, Int32))
   end
 
   it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do

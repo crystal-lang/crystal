@@ -34,19 +34,17 @@ class Crystal::Program
     parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, visibility, &.parse(mode)
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public)
-    begin
-      parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
-      parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
-      parser.macro_expansion_pragmas = macro_expansion_pragmas
-      parser.visibility = visibility
-      parser.def_nest = 1 if current_def && !current_def.is_a?(External)
-      parser.fun_nest = 1 if current_def && current_def.is_a?(External)
-      parser.type_nest = 1 if inside_type
-      parser.wants_doc = @program.wants_doc?
-      generated_node = yield parser
-      normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
-    end
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public, &)
+    parser = @program.new_parser(generated_source, var_scopes: [vars.dup])
+    parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
+    parser.macro_expansion_pragmas = macro_expansion_pragmas
+    parser.visibility = visibility
+    parser.def_nest = 1 if current_def && !current_def.is_a?(External)
+    parser.fun_nest = 1 if current_def && current_def.is_a?(External)
+    parser.type_nest = 1 if inside_type
+    parser.wants_doc = @program.wants_doc?
+    generated_node = yield parser
+    normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
   end
 
   record MacroRunResult, stdout : String, stderr : String, status : Process::Status
@@ -129,8 +127,7 @@ class Crystal::Program
         # When cross-compiling, the host compiler shouldn't copy the config for
         # the target compiler and use the system defaults instead.
         # TODO: Add configuration overrides for host compiler to CLI.
-        unless compiler.cross_compile
-          host_compiler.thin_lto = compiler.thin_lto
+        unless compiler.cross_compile?
           host_compiler.flags = compiler.flags
           host_compiler.dump_ll = compiler.dump_ll?
           host_compiler.link_flags = compiler.link_flags
@@ -148,7 +145,7 @@ class Crystal::Program
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
-      host_compiler.release = true
+      host_compiler.release!
 
       # Don't cleanup old directories after compiling: it might happen
       # that in doing so we remove the directory associated with the current

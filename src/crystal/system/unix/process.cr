@@ -2,13 +2,14 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "crystal/rw_lock"
 require "file/error"
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
 
   def initialize(@pid : LibC::PidT)
-    @channel = Crystal::SignalChildHandler.wait(@pid)
+    @channel = Crystal::System::SignalChildHandler.wait(@pid)
   end
 
   def release
@@ -22,8 +23,8 @@ struct Crystal::System::Process
     !@channel.closed? && Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    Crystal::System::Process.signal(@pid, LibC::SIGTERM)
+  def terminate(*, graceful)
+    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
   def self.exit(status)
@@ -42,7 +43,7 @@ struct Crystal::System::Process
 
   def self.pgid(pid)
     # Disallow users from depending on ppid(0) instead of `pgid`
-    raise RuntimeError.from_errno("getpgid", Errno::EINVAL) if pid == 0
+    raise RuntimeError.from_os_error("getpgid", Errno::EINVAL) if pid == 0
 
     ret = LibC.getpgid(pid)
     raise RuntimeError.from_errno("getpgid") if ret < 0
@@ -58,13 +59,60 @@ struct Crystal::System::Process
     raise RuntimeError.from_errno("kill") if ret < 0
   end
 
+  @[Deprecated("Use `#on_terminate` instead")]
+  def self.on_interrupt(&handler : ->) : Nil
+    ::Signal::INT.trap { |_signal| handler.call }
+  end
+
+  def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
+    sig_handler = Proc(::Signal, Nil).new do |signal|
+      int_type = case signal
+                 when .int?
+                   ::Process::ExitReason::Interrupted
+                 when .hup?
+                   ::Process::ExitReason::TerminalDisconnected
+                 when .term?
+                   ::Process::ExitReason::SessionEnded
+                 else
+                   ::Process::ExitReason::Interrupted
+                 end
+      handler.call int_type
+
+      # ignore prevents system defaults and clears registered interrupts
+      # hence we need to re-register
+      signal.ignore
+      Process.on_terminate &handler
+    end
+    ::Signal::INT.trap &sig_handler
+    ::Signal::HUP.trap &sig_handler
+    ::Signal::TERM.trap &sig_handler
+  end
+
+  def self.ignore_interrupts! : Nil
+    ::Signal::INT.ignore
+  end
+
+  def self.restore_interrupts! : Nil
+    ::Signal::INT.reset
+  end
+
+  def self.start_interrupt_loop : Nil
+    # do nothing; `Crystal::System::Signal.start_loop` takes care of this
+  end
+
   def self.exists?(pid)
     ret = LibC.kill(pid, 0)
     if ret == 0
       true
     else
-      return false if Errno.value == Errno::ESRCH
-      raise RuntimeError.from_errno("kill")
+      case Errno.value
+      when Errno::EPERM
+        true
+      when Errno::ESRCH
+        false
+      else
+        raise RuntimeError.from_errno("kill")
+      end
     end
   end
 
@@ -80,6 +128,50 @@ struct Crystal::System::Process
     )
   end
 
+  # The RWLock is trying to protect against file descriptors leaking to
+  # sub-processes.
+  #
+  # There is a race condition in the POSIX standard between the creation of a
+  # file descriptor (`accept`, `dup`, `open`, `pipe`, `socket`) and setting the
+  # `FD_CLOEXEC` flag with `fcntl`. During the time window between those two
+  # syscalls, another thread may fork the process and exec another process,
+  # which will leak the file descriptor to that process.
+  #
+  # Most systems have long implemented non standard syscalls that prevent the
+  # race condition, except for Darwin that implements `O_CLOEXEC` but doesn't
+  # implement `SOCK_CLOEXEC` nor `accept4`, `dup3` or `pipe2`.
+  #
+  # NOTE: there may still be some potential leaks (e.g. calling `accept` on a
+  #       blocking socket).
+  {% if LibC.has_constant?(:SOCK_CLOEXEC) && LibC.has_method?(:accept4) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+    # we don't implement .lock_read so compilation will fail if we need to
+    # support another case, instead of silently skipping the rwlock!
+
+    def self.lock_write(&)
+      yield
+    end
+  {% else %}
+    @@rwlock = Crystal::RWLock.new
+
+    def self.lock_read(&)
+      @@rwlock.read_lock
+      begin
+        yield
+      ensure
+        @@rwlock.read_unlock
+      end
+    end
+
+    def self.lock_write(&)
+      @@rwlock.write_lock
+      begin
+        yield
+      ensure
+        @@rwlock.write_unlock
+      end
+    end
+  {% end %}
+
   def self.fork(*, will_exec = false)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
@@ -88,13 +180,13 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    case pid = LibC.fork
+    case pid = lock_write { LibC.fork }
     when 0
       # child:
       pid = nil
       if will_exec
         # reset signal handlers, then sigmask (inherited on exec):
-        Crystal::Signal.after_fork_before_exec
+        Crystal::System::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
@@ -107,13 +199,35 @@ struct Crystal::System::Process
       # error:
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_errno("fork", errno)
+      raise RuntimeError.from_os_error("fork", errno)
     else
       # parent:
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
 
     pid
+  end
+
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork(&)
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    if pid = fork
+      return pid
+    end
+
+    begin
+      yield
+      LibC._exit 0
+    rescue ex
+      ex.inspect_with_backtrace STDERR
+      STDERR.flush
+      LibC._exit 1
+    ensure
+      LibC._exit 254 # not reached
+    end
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
@@ -129,8 +243,9 @@ struct Crystal::System::Process
         writer_pipe.write_bytes(Errno.value.to_i)
       rescue ex
         writer_pipe.write_byte(0)
-        writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
-        writer_pipe << ex.message
+        message = ex.inspect_with_backtrace
+        writer_pipe.write_bytes(message.bytesize)
+        writer_pipe << message
         writer_pipe.close
       ensure
         LibC._exit 127
@@ -167,16 +282,12 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Array(String)
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["/bin/sh", "-c", command, "--"]
+      shell_args = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
-          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+          raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
-
-        {% if flag?(:freebsd) || flag?(:dragonfly) %}
-          shell_args << ""
-        {% end %}
 
         shell_args.concat(args)
       end
@@ -209,7 +320,7 @@ struct Crystal::System::Process
     argv = command_args.map &.check_no_null_byte.to_unsafe
     argv << Pointer(UInt8).null
 
-    LibC.execvp(command, argv)
+    lock_write { LibC.execvp(command, argv) }
   end
 
   def self.replace(command_args, env, clear_env, input, output, error, chdir)
@@ -219,14 +330,19 @@ struct Crystal::System::Process
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
     case errno
-    when Errno::EACCES, Errno::ENOENT
-      raise ::File::Error.from_errno("Error executing process", errno, file: command)
+    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
-      raise IO::Error.from_errno("Error executing process: '#{command}'", errno)
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
     end
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
+    if src_io.closed?
+      dst_io.close
+      return
+    end
+
     src_io = to_real_fd(src_io)
 
     dst_io.reopen(src_io)

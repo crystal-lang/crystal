@@ -1,6 +1,8 @@
 require "spec"
 require "./spec_helper"
+require "../support/env"
 
+private HOME_ENV_KEY = {% if flag?(:win32) %} "USERPROFILE" {% else %} "HOME" {% end %}
 private BASE_POSIX   = "/default/base"
 private BASE_WINDOWS = "\\default\\base"
 private HOME_WINDOWS = "C:\\Users\\Crystal"
@@ -12,21 +14,26 @@ end
 
 private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
-    prev_home = ENV["HOME"]?
-
-    begin
-      ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
-
+    with_env({HOME_ENV_KEY => env_home}) do
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
-      path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
-    ensure
-      ENV["HOME"] = prev_home
+      base_arg = path.windows? ? Path.windows(base_arg) : Path.posix(base_arg) unless base_arg.is_a?(Path)
+      if home == true && env_home.nil?
+        myhome = path.windows? ? Path.windows(HOME_WINDOWS) : Path.posix(HOME_POSIX)
+      else
+        myhome = home
+      end
+      path.expand(base_arg, expand_base: !!expand_base, home: myhome)
     end
   end
 end
 
 private def it_joins_path(path, parts, posix, windows = posix, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %(resolving "#{parts}"), file, line, &.join(parts))
+  unless parts.is_a?(Enumerable)
+    # FIXME: Omitting the type cast results in Error: can't infer block return type, try to cast the block body with `as`.
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"] ), file, line, &.join([parts]).as(Path))
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"].each), file, line, &.join([parts].each).as(Path))
+  end
 end
 
 private def assert_paths(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
@@ -98,6 +105,9 @@ describe Path do
       Path.new(Path.new("foo"), "bar").should eq Path.new("foo", "bar")
       Path.new(Path.posix("foo"), "bar").should eq Path.new("foo", "bar")
       Path.new(Path.windows("foo"), "bar").should eq Path.new("foo", "bar")
+
+      # implicit conversion:
+      Path.windows("foo", Path.posix("bar\\baz")).should eq Path.windows("foo").join(Path.posix("bar\\baz").to_windows)
     end
   end
 
@@ -394,6 +404,11 @@ describe Path do
     assert_paths("\\\\some\\share\\foo", nil, "\\\\some\\share", &.drive)
     assert_paths("\\\\\\not-a\\share", nil, nil, &.drive)
     assert_paths("\\\\not-a\\\\share", nil, nil, &.drive)
+
+    assert_paths("\\\\some$\\share\\", nil, "\\\\some$\\share", &.drive)
+    assert_paths("\\\\%10%20\\share\\", nil, "\\\\%10%20\\share", &.drive)
+    assert_paths("\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1\\", nil, "\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1", &.drive)
+    assert_paths("\\\\127.0.0.1\\share\\", nil, "\\\\127.0.0.1\\share", &.drive)
   end
 
   describe "#root" do
@@ -577,6 +592,7 @@ describe Path do
     it_joins_path("c:\\", "Program Files", "c:\\/Program Files", "c:\\Program Files")
 
     it_joins_path("foo", Path.windows("bar\\baz"), "foo/bar/baz", "foo\\bar\\baz")
+    it_joins_path("foo", Path.posix("bar\\baz"), "foo/bar\\baz", "foo\\bar\uF05Cbaz")
     it_joins_path("foo", Path.posix("bar/baz"), "foo/bar/baz", "foo\\bar/baz")
   end
 
@@ -584,7 +600,7 @@ describe Path do
     describe "converts a pathname to an absolute pathname" do
       it_expands_path("", BASE_POSIX, BASE_WINDOWS)
       it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"})
-      it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"})
+      it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"}, base: nil)
     end
 
     describe "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
@@ -625,7 +641,7 @@ describe Path do
       it_expands_path("/some////path", "/some/path", "\\some\\path")
     end
 
-    describe "expand path with" do
+    describe "expand path with .." do
       it_expands_path("../../bin", "/bin", "\\bin", base: "/tmp/x")
       it_expands_path("../../bin", "/bin", "\\bin", base: "/tmp")
       it_expands_path("../../bin", "/bin", "\\bin", base: "/")
@@ -646,18 +662,18 @@ describe Path do
       it_expands_path("foo", "D:/foo", "D:foo", base: "D:")
       it_expands_path("/foo", "/foo", "D:\\foo", base: "D:")
       it_expands_path("\\foo", "D:/\\foo", "D:\\foo", base: "D:")
-      it_expands_path("foo", "D:\\/foo", "D:\\foo", base: Path.posix("D:\\"))
+      it_expands_path("foo", "D:\\/foo", "D\uF03A\uF05C\\foo", base: Path.posix("D:\\"))
       it_expands_path("foo", "D:/foo", "D:\\foo", base: Path.windows("D:\\"))
       it_expands_path("foo", "D:/foo", "D:\\foo", base: "D:/")
       it_expands_path("/foo", "/foo", "D:\\foo", base: "D:\\")
-      it_expands_path("\\foo", "D:\\/\\foo", "D:\\foo", base: Path.posix("D:\\"))
+      it_expands_path("\\foo", "D:\\/\\foo", "\\foo", base: Path.posix("D:\\"))
       it_expands_path("\\foo", "D:/\\foo", "D:\\foo", base: Path.windows("D:\\"))
       it_expands_path("/foo", "/foo", "D:\\foo", base: "D:/")
       it_expands_path("\\foo", "D:/\\foo", "D:\\foo", base: "D:/")
 
       it_expands_path("C:", "D:/C:", "C:", base: "D:")
       it_expands_path("C:", "D:/C:", "C:\\", base: "D:/")
-      it_expands_path("C:", "D:\\/C:", "C:\\", base: Path.posix("D:\\"))
+      it_expands_path("C:", "D:\\/C:", "C:D\uF03A\uF05C\\", base: Path.posix("D:\\"))
       it_expands_path("C:", "D:/C:", "C:\\", base: Path.windows("D:\\"))
       it_expands_path("C:/", "D:/C:/", "C:\\", base: "D:")
       it_expands_path("C:/", "D:/C:/", "C:\\", base: "D:/")
@@ -671,7 +687,7 @@ describe Path do
       it_expands_path("C:foo", "D:/C:foo", "C:foo", base: "D:")
       it_expands_path("C:/foo", "D:/C:/foo", "C:\\foo", base: "D:")
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:")
-      it_expands_path("C:foo", "D:\\/C:foo", "C:\\foo", base: Path.posix("D:\\"))
+      it_expands_path("C:foo", "D:\\/C:foo", "C:D\uF03A\uF05C\\foo", base: Path.posix("D:\\"))
       it_expands_path("C:foo", "D:/C:foo", "C:\\foo", base: Path.windows("D:\\"))
       it_expands_path("C:foo", "D:/C:foo", "C:\\foo", base: "D:/")
       it_expands_path("C:/foo", "D:\\/C:/foo", "C:\\foo", base: Path.posix("D:\\"))
@@ -680,6 +696,11 @@ describe Path do
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: Path.windows("D:\\"))
       it_expands_path("C:/foo", "D:/C:/foo", "C:\\foo", base: "D:/")
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:/")
+    end
+
+    describe "UNC path" do
+      it_expands_path("baz", "/foo/bar/baz", "\\\\foo\\bar\\baz", base: Path.windows("\\\\foo\\bar\\"))
+      it_expands_path("baz", "/foo$/bar/baz", "\\\\foo$\\bar\\baz", base: Path.windows("\\\\foo$\\bar\\"))
     end
 
     it "doesn't expand ~" do
@@ -731,6 +752,10 @@ describe Path do
     describe "ignores name starting with ~" do
       it_expands_path("~foo.txt", "/current/~foo.txt", "\\current\\~foo.txt", base: "/current", env_home: "/")
     end
+
+    describe %q(supports ~\ for Windows paths only) do
+      it_expands_path("~\\a", {BASE_POSIX, "~\\a"}, {HOME_WINDOWS, "a"}, home: true)
+    end
   end
 
   describe "#<=>" do
@@ -768,13 +793,29 @@ describe Path do
   end
 
   describe "#to_windows" do
-    assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows)
-    assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), &.to_windows)
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C\uF03A\uF05Cfoo\uF05Cbar"), Path.windows("C:\\foo\\bar"), label: "default: mappings=true", &.to_windows)
+
+    assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows(mappings: true))
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C\uF03A\uF05Cfoo\uF05Cbar"), Path.windows("C:\\foo\\bar"), &.to_windows(mappings: true))
+    assert_paths_raw(%("*/:<>?\\| ), Path.windows("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"), Path.windows(%("*/:<>?\\| )), &.to_windows(mappings: true))
+
+    assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows(mappings: false))
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), &.to_windows(mappings: false))
+    assert_paths_raw(%("*/:<>?\\| ), Path.windows(%("*/:<>?\\| )), &.to_windows(mappings: false))
   end
 
   describe "#to_posix" do
-    assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix)
-    assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix)
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), Path.posix("C:\\foo\\bar"), label: "default: mappings=true", &.to_posix)
+
+    assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix(mappings: true))
+    assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix(mappings: true))
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), Path.posix("C:\\foo\\bar"), &.to_posix(mappings: true))
+    assert_paths_raw("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020", Path.posix("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"), Path.posix(%("*/:<>?\\| )), &.to_posix(mappings: true))
+
+    assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix(mappings: false))
+    assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix(mappings: false))
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), &.to_posix(mappings: false))
+    assert_paths_raw("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020", Path.posix("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"), &.to_posix(mappings: false))
   end
 
   describe "#relative_to?" do
@@ -888,5 +929,26 @@ describe Path do
     assert_paths_raw("foo./", "foo.", &.stem)
     assert_paths_raw("foo.txt./", "foo.txt.", &.stem)
     assert_paths_raw("foo..txt/", "foo.", &.stem)
+  end
+
+  pending_wasm32 describe: ".home" do
+    it "uses home from environment variable if set" do
+      with_env({HOME_ENV_KEY => "foo/bar"}) do
+        Path.home.should eq(Path.new("foo/bar"))
+      end
+    end
+
+    # TODO: check that the cases below return the home of the current user (via #7829)
+    it "doesn't return empty string if environment variable is empty" do
+      with_env({HOME_ENV_KEY => ""}) do
+        Path.home.should_not eq(Path.new(""))
+      end
+    end
+
+    it "doesn't raise if environment variable is missing" do
+      with_env({HOME_ENV_KEY => nil}) do
+        Path.home.should be_a(Path)
+      end
+    end
   end
 end

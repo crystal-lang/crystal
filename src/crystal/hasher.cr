@@ -33,7 +33,7 @@ struct Crystal::Hasher
   # Do not output calculated hash value to user's console/form/
   # html/api response, etc. Use some from digest package instead.
 
-  # Based on https://github.com/python/cpython/blob/f051e43/Python/pyhash.c#L34
+  # Based on https://github.com/python/cpython/blob/371c970/Python/pyhash.c#L31
   #
   # For numeric types, the hash of a number x is based on the reduction
   # of x modulo the Mersen Prime P = 2**HASH_BITS - 1.  It's designed
@@ -75,12 +75,12 @@ struct Crystal::Hasher
   private HASH_BITS    = 61
   private HASH_MODULUS = (1_i64 << HASH_BITS) - 1
 
-  private HASH_NAN       =      0_u64
-  private HASH_INF_PLUS  = 314159_u64
-  private HASH_INF_MINUS = (-314159_i64).unsafe_as(UInt64)
+  HASH_NAN       =      0_u64
+  HASH_INF_PLUS  = 314159_u64
+  HASH_INF_MINUS = (-314159_i64).to_u64!
 
   @@seed = uninitialized UInt64[2]
-  Crystal::System::Random.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), sizeof(typeof(@@seed))))
+  Crystal::System::Random.random_bytes(@@seed.to_slice.to_unsafe_bytes)
 
   def initialize(@a : UInt64 = @@seed[0], @b : UInt64 = @@seed[1])
   end
@@ -88,13 +88,9 @@ struct Crystal::Hasher
   private C1 = 0xacd5ad43274593b9_u64
   private C2 = 0x6956abd6ed268a3d_u64
 
-  private def rotl32(v : UInt64)
-    (v << 32) | (v >> 32)
-  end
-
   private def permute(v : UInt64)
-    @a = rotl32(@a ^ v) &* C1
-    @b = (rotl32(@b) ^ v) &* C2
+    @a = (@a ^ v).rotate_left(32) &* C1
+    @b = (@b.rotate_left(32) ^ v) &* C2
     self
   end
 
@@ -109,30 +105,22 @@ struct Crystal::Hasher
     a &+ b
   end
 
-  def nil
-    @a &+= @b
-    @b &+= 1
-    self
+  def self.reduce_num(value : Int8 | Int16 | Int32)
+    value.to_u64!
   end
 
-  def bool(value)
-    (value ? 1 : 0).hash(self)
+  def self.reduce_num(value : UInt8 | UInt16 | UInt32)
+    value.to_u64
   end
 
-  def int(value : Int8 | Int16 | Int32)
-    permute(value.to_i64.unsafe_as(UInt64))
+  def self.reduce_num(value : Int::Unsigned)
+    value.remainder(HASH_MODULUS).to_u64
   end
 
-  def int(value : UInt8 | UInt16 | UInt32)
-    permute(value.to_u64)
-  end
-
-  def int(value : Int::Unsigned)
-    permute(value.remainder(HASH_MODULUS).to_u64)
-  end
-
-  def int(value : Int)
-    permute(value.remainder(HASH_MODULUS).to_i64.unsafe_as(UInt64))
+  def self.reduce_num(value : Int)
+    # The result of `remainder(HASH_MODULUS)` is a 64-bit integer,
+    # and thus guaranteed to fit into `UInt64`
+    value.remainder(HASH_MODULUS).to_u64!
   end
 
   # This function is for reference implementation, and it is used for `BigFloat`.
@@ -140,7 +128,7 @@ struct Crystal::Hasher
   # bitwise calculation.
   # Arguments `frac` and `exp` are result of equivalent `Math.frexp`, though
   # for `BigFloat` custom calculation used for more precision.
-  private def float_normalize_reference(value, frac, exp)
+  private def self.float_normalize_reference(value, frac, exp)
     if value < 0
       frac = -frac
     end
@@ -159,7 +147,7 @@ struct Crystal::Hasher
     {x, exp}
   end
 
-  private def float_normalize_wrap(value)
+  private def self.float_normalize_wrap(value, &)
     return HASH_NAN if value.nan?
     if value.infinite?
       return value > 0 ? HASH_INF_PLUS : HASH_INF_MINUS
@@ -171,11 +159,11 @@ struct Crystal::Hasher
     exp = exp >= 0 ? exp % HASH_BITS : HASH_BITS - 1 - ((-1 - exp) % HASH_BITS)
     x = ((x << exp) & HASH_MODULUS) | x >> (HASH_BITS - exp)
 
-    (x * (value < 0 ? -1 : 1)).to_i64.unsafe_as(UInt64)
+    (x * (value < 0 ? -1 : 1)).to_u64!
   end
 
-  def float(value : Float32)
-    normalized_hash = float_normalize_wrap(value) do |value|
+  def self.reduce_num(value : Float32)
+    float_normalize_wrap(value) do |value|
       # This optimized version works on every architecture where endianness
       # of Float32 and Int32 matches and float is IEEE754. All supported
       # architectures fall into this category.
@@ -191,11 +179,10 @@ struct Crystal::Hasher
       end
       {mantissa.to_i64, exp}
     end
-    permute(normalized_hash)
   end
 
-  def float(value : Float64)
-    normalized_hash = float_normalize_wrap(value) do |value|
+  def self.reduce_num(value : Float64)
+    float_normalize_wrap(value) do |value|
       # This optimized version works on every architecture where endianness
       # of Float64 and Int64 matches and float is IEEE754. All supported
       # architectures fall into this category.
@@ -212,15 +199,27 @@ struct Crystal::Hasher
 
       {mantissa.to_i64, exp}
     end
-    permute(normalized_hash)
   end
 
-  def float(value : Float)
-    normalized_hash = float_normalize_wrap(value) do |value|
+  def self.reduce_num(value : Float)
+    float_normalize_wrap(value) do |value|
       frac, exp = Math.frexp value
       float_normalize_reference(value, frac, exp)
     end
-    permute(normalized_hash)
+  end
+
+  def nil
+    @a &+= @b
+    @b &+= 1
+    self
+  end
+
+  def bool(value)
+    (value ? 1 : 0).hash(self)
+  end
+
+  def number(value : Number)
+    permute(Hasher.reduce_num(value))
   end
 
   def char(value)

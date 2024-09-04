@@ -1,116 +1,120 @@
-{% skip_file if flag?(:win32) %}
-
-require "termios"
-
 class IO::FileDescriptor < IO
-  # Turns off character echoing for the duration of the given block.
+  # Yields `self` to the given block, disables character echoing for the
+  # duration of the block, and returns the block's value.
+  #
   # This will prevent displaying back to the user what they enter on the terminal.
-  # Only call this when this IO is a TTY, such as a not redirected stdin.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
   #
   # ```
   # print "Enter password: "
   # password = STDIN.noecho &.gets.try &.chomp
   # puts
   # ```
-  def noecho
-    preserving_tc_mode("can't set IO#noecho") do |mode|
-      noecho_from_tc_mode!
-      yield self
-    end
+  def noecho(& : self -> _)
+    system_echo(false) { yield self }
   end
 
-  # Turns off character echoing for this IO.
+  # Yields `self` to the given block, enables character echoing for the
+  # duration of the block, and returns the block's value.
+  #
+  # This causes user input to be displayed as they are entered on the terminal.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def echo(& : self -> _)
+    system_echo(true) { yield self }
+  end
+
+  # Disables character echoing on this `IO`.
+  #
   # This will prevent displaying back to the user what they enter on the terminal.
-  # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def noecho!
-    if LibC.tcgetattr(fd, out mode) != 0
-      raise IO::Error.from_errno "can't set IO#noecho!"
-    end
-    noecho_from_tc_mode!
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def noecho! : Nil
+    system_echo(false)
   end
 
+  # Enables character echoing on this `IO`.
+  #
+  # This causes user input to be displayed as they are entered on the terminal.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def echo! : Nil
+    system_echo(true)
+  end
+
+  # Yields `self` to the given block, enables character processing for the
+  # duration of the block, and returns the block's value.
+  #
+  # The so called cooked mode is the standard behavior of a terminal,
+  # doing line wise editing by the terminal and only sending the input to
+  # the program on a newline.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def cooked(& : self -> _)
+    system_raw(false) { yield self }
+  end
+
+  # Yields `self` to the given block, enables raw mode for the duration of the
+  # block, and returns the block's value.
+  #
+  # In raw mode every keypress is directly sent to the program, no interpretation
+  # is done by the terminal. On Windows, this also enables ANSI input escape
+  # sequences.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def raw(& : self -> _)
+    system_raw(true) { yield self }
+  end
+
+  # Enables character processing on this `IO`.
+  #
+  # The so called cooked mode is the standard behavior of a terminal,
+  # doing line wise editing by the terminal and only sending the input to
+  # the program on a newline.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def cooked! : Nil
+    system_raw(false)
+  end
+
+  # Enables raw mode on this `IO`.
+  #
+  # In raw mode every keypress is directly sent to the program, no interpretation
+  # is done by the terminal. On Windows, this also enables ANSI input escape
+  # sequences.
+  #
+  # Raises `IO::Error` if this `IO` is not a terminal device.
+  def raw! : Nil
+    system_raw(true)
+  end
+
+  @[Deprecated]
   macro noecho_from_tc_mode!
     mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
-  # Enables character processing for the duration of the given block.
-  # The so called cooked mode is the standard behavior of a terminal,
-  # doing line wise editing by the terminal and only sending the input to
-  # the program on a newline.
-  # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def cooked
-    preserving_tc_mode("can't set IO#cooked") do |mode|
-      cooked_from_tc_mode!
-      yield self
-    end
-  end
-
-  # Enables character processing for this IO.
-  # The so called cooked mode is the standard behavior of a terminal,
-  # doing line wise editing by the terminal and only sending the input to
-  # the program on a newline.
-  # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def cooked!
-    if LibC.tcgetattr(fd, out mode) != 0
-      raise IO::Error.from_errno "can't set IO#cooked!"
-    end
-    cooked_from_tc_mode!
-  end
-
+  @[Deprecated]
   macro cooked_from_tc_mode!
     mode.c_iflag |= (Termios::InputMode::BRKINT |
-                    Termios::InputMode::ISTRIP |
-                    Termios::InputMode::ICRNL  |
-                    Termios::InputMode::IXON).value
+                     Termios::InputMode::ISTRIP |
+                     Termios::InputMode::ICRNL |
+                     Termios::InputMode::IXON).value
     mode.c_oflag |= Termios::OutputMode::OPOST.value
-    mode.c_lflag |= (Termios::LocalMode::ECHO   |
-                    Termios::LocalMode::ECHOE  |
-                    Termios::LocalMode::ECHOK  |
-                    Termios::LocalMode::ECHONL |
-                    Termios::LocalMode::ICANON |
-                    Termios::LocalMode::ISIG   |
-                    Termios::LocalMode::IEXTEN).value
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    mode.c_lflag |= (Termios::LocalMode::ECHO |
+                     Termios::LocalMode::ECHOE |
+                     Termios::LocalMode::ECHOK |
+                     Termios::LocalMode::ECHONL |
+                     Termios::LocalMode::ICANON |
+                     Termios::LocalMode::ISIG |
+                     Termios::LocalMode::IEXTEN).value
+    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
-  # Enables raw mode for the duration of the given block.
-  # In raw mode every keypress is directly sent to the program, no interpretation
-  # is done by the terminal.
-  # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def raw
-    preserving_tc_mode("can't set IO#raw") do |mode|
-      raw_from_tc_mode!
-      yield self
-    end
-  end
-
-  # Enables raw mode for this IO.
-  # In raw mode every keypress is directly sent to the program, no interpretation
-  # is done by the terminal.
-  # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def raw!
-    if LibC.tcgetattr(fd, out mode) != 0
-      raise IO::Error.from_errno "can't set IO#raw!"
-    end
-
-    raw_from_tc_mode!
-  end
-
+  @[Deprecated]
   macro raw_from_tc_mode!
-    LibC.cfmakeraw(pointerof(mode))
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
-  end
-
-  private def preserving_tc_mode(msg)
-    if LibC.tcgetattr(fd, out mode) != 0
-      raise IO::Error.from_errno msg
-    end
-    before = mode
-    begin
-      yield mode
-    ensure
-      LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(before))
-    end
+    Crystal::System::FileDescriptor.cfmakeraw(pointerof(mode))
+    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 end

@@ -14,8 +14,10 @@ lib LibC
   fun access(name : Char*, type : Int) : Int
   fun chdir(path : Char*) : Int
   fun chown(file : Char*, owner : UidT, group : GidT) : Int
+  fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(fd : Int) : Int
   fun dup2(fd : Int, fd2 : Int) : Int
+  fun dup3(fd : Int, fd2 : Int, flags : Int) : Int
   fun _exit(status : Int) : NoReturn
   fun execvp(file : Char*, argv : Char**) : Int
   fun fdatasync(fd : Int) : Int
@@ -28,6 +30,8 @@ lib LibC
   fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getuid : UidT
+  fun setuid(uid : UidT) : Int
   fun isatty(fd : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(file : Char*, owner : UidT, group : GidT) : Int
@@ -35,6 +39,7 @@ lib LibC
   fun lockf(fd : Int, cmd : Int, len : OffT) : Int
   fun lseek(fd : Int, offset : OffT, whence : Int) : OffT
   fun pipe(pipedes : StaticArray(Int, 2)) : Int
+  fun pipe2(pipedes : StaticArray(Int, 2), flags : Int) : Int
   fun read(fd : Int, buf : Void*, nbytes : SizeT) : SSizeT
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(path : Char*) : Int

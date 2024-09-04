@@ -1,8 +1,12 @@
-require "c/winnt"
-require "c/win_def"
-require "c/int_safe"
+require "c/winbase"
+require "c/sdkddkver"
 
 lib LibC
+  fun GetSystemTimeAsFileTime(time : FILETIME*)
+  {% if LibC::WIN32_WINNT >= LibC::WIN32_WINNT_WIN8 %}
+    fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
+  {% end %}
+
   fun GetNativeSystemInfo(system_info : SYSTEM_INFO*)
 
   struct PROCESSOR_INFO

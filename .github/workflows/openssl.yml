@@ -1,0 +1,40 @@
+name: OpenSSL CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  libssl_test:
+    runs-on: ubuntu-latest
+    name: "${{ matrix.pkg }}"
+    container: crystallang/crystal:1.13.2-alpine
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pkg: "openssl1.1-compat-dev=~1.1.1"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.18/community
+          - pkg: "openssl-dev=~3.0"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.17/main
+          - pkg: "openssl-dev=~3.3"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.20/main
+          - pkg: "libressl-dev=~3.4"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.15/community
+          - pkg: "libressl-dev=~3.5"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.16/community
+          - pkg: "libressl-dev=~3.8"
+            repository: http://dl-cdn.alpinelinux.org/alpine/v3.20/community
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Uninstall openssl and conflicts
+        run: apk del openssl-dev openssl-libs-static libxml2-static
+      - name: Install ${{ matrix.pkg }}
+        run: apk add "${{ matrix.pkg }}" --repository=${{ matrix.repository }}
+      - name: Print LibSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec --order=random spec/std/openssl/

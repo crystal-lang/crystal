@@ -38,8 +38,8 @@ lib LibC
 
   struct SockaddrStorage
     ss_family : SaFamilyT
+    __ss_padding : StaticArray(Char, 122)
     __ss_align : ULong
-    __ss_padding : StaticArray(Char, 120)
   end
 
   struct Linger
@@ -48,16 +48,17 @@ lib LibC
   end
 
   fun accept(fd : Int, addr : Sockaddr*, addr_len : SocklenT*) : Int
+  fun accept4(fd : Int, addr : Sockaddr*, addr_len : SocklenT*, flags : Int) : Int
   fun bind(fd : Int, addr : Sockaddr*, len : SocklenT) : Int
   fun connect(fd : Int, addr : Sockaddr*, len : SocklenT) : Int
   fun getpeername(fd : Int, addr : Sockaddr*, len : SocklenT*) : Int
   fun getsockname(fd : Int, addr : Sockaddr*, len : SocklenT*) : Int
   fun getsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT*) : Int
   fun listen(fd : Int, n : Int) : Int
-  fun recv(fd : Int, buf : Void*, n : Int, flags : Int) : SSizeT
-  fun recvfrom(fd : Int, buf : Void*, n : Int, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
-  fun send(fd : Int, buf : Void*, n : Int, flags : Int) : SSizeT
-  fun sendto(fd : Int, buf : Void*, n : Int, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
+  fun recv(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
+  fun recvfrom(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
+  fun send(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
+  fun sendto(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
   fun setsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(fd : Int, how : Int) : Int
   fun socket(domain : Int, type : Int, protocol : Int) : Int

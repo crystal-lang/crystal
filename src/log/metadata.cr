@@ -37,6 +37,10 @@ class Log::Metadata
     data
   end
 
+  def dup : self
+    self
+  end
+
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = @overridden_size = entries.size
     @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
@@ -55,17 +59,17 @@ class Log::Metadata
 
   # Returns a `Metadata` with the information of the argument.
   # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
-  def self.build(value : NamedTuple | Hash)
+  def self.build(value : NamedTuple | Hash) : self
     return @@empty if value.empty?
     Metadata.new(nil, value)
   end
 
   # :ditto:
-  def self.build(value : Metadata)
+  def self.build(value : Metadata) : Metadata
     value
   end
 
-  # Returns a `Log::Metadata` with all the entries of *self*
+  # Returns a `Log::Metadata` with all the entries of `self`
   # and *other*. If a key is defined in both, the values in *other* are used.
   def extend(other : NamedTuple | Hash) : Metadata
     return Metadata.build(other) if self.empty?
@@ -74,14 +78,14 @@ class Log::Metadata
     Metadata.new(self, other)
   end
 
-  def empty?
+  def empty? : Bool
     parent = @parent
 
     @size == 0 && (parent.nil? || parent.empty?)
   end
 
-  # Removes the reference to *parent*. Flattening the entries from it into *self*.
-  # *self* was originally allocated with enough entries to perform this action.
+  # Removes the reference to *parent*. Flattening the entries from it into `self`.
+  # `self` was originally allocated with enough entries to perform this action.
   #
   # If multiple threads execute defrag concurrently, the entries
   # will be recomputed, but the result should be the same.
@@ -136,7 +140,7 @@ class Log::Metadata
     fetch(key) { nil }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry[:value] : yield key
   end
@@ -175,7 +179,6 @@ class Log::Metadata
     true
   end
 
-  # :nodoc:
   def ==(other)
     false
   end
@@ -196,7 +199,7 @@ class Log::Metadata
   end
 
   struct Value
-    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
+    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, u: UInt32, u64: UInt64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
 
     # Creates `Log::Metadata` from the given *values*.
     # All keys are converted to `String`
@@ -213,7 +216,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value)
+    def self.to_metadata_value(value) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end

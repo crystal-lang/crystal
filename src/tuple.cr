@@ -13,6 +13,8 @@
 # tuple[2]                  # => 'x'
 # ```
 #
+# See [`Tuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/tuple.html) in the language reference.
+#
 # The compiler knows what types are in each position, so when indexing
 # a tuple with an integer literal the compiler will return
 # the value in that index and with the expected type, like in the above
@@ -22,6 +24,34 @@
 # Indexing with an integer value that is only known at runtime will return
 # a value whose type is the union of all the types in the tuple, and might raise
 # `IndexError`.
+#
+# Indexing with `#[]?` does not make the return value nilable if the index is
+# known to be within bounds:
+#
+# ```
+# tuple = {1, "hello", 'x'}
+# tuple[0]?         # => 1
+# typeof(tuple[0]?) # => Int32
+# ```
+#
+# Indexing with a range literal known at compile-time is also allowed, and the
+# returned value will have the correct sub-tuple type:
+#
+# ```
+# tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
+# sub = tuple[0..1]         # => {1, "hello"}
+# typeof(sub)               # => Tuple(Int32, String)
+# ```
+#
+# `Tuple`'s own instance classes may also be indexed in a similar manner,
+# returning their element types instead:
+#
+# ```
+# tuple = Tuple(Int32, String, Char)
+# tuple[0]   # => Int32
+# tuple[3]?  # => nil
+# tuple[1..] # => Tuple(String, Char)
+# ```
 #
 # Tuples are the preferred way to return fixed-size multiple return
 # values because no memory is needed to be allocated for them:
@@ -83,16 +113,15 @@ struct Tuple
       args
     {% elsif @type.name(generic_args: false) == "Tuple()" %}
       # special case: empty tuple
+      # TODO: check against `Tuple()` directly after 1.4.0
       args
     {% else %}
       # explicitly provided type vars
+      # following `typeof` is needed to access private types
       {% begin %}
         {
           {% for i in 0...@type.size %}
-            args[{{ i }}].as(typeof(begin
-              x = uninitialized self
-              x[{{ i }}]
-            end)),
+            args[{{ i }}].as(typeof(element_type({{ i }}))),
           {% end %}
         }
       {% end %}
@@ -151,11 +180,13 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0] # => 1 (Int32)
-  # tuple[3] # compile error: index out of bounds for tuple {Int32, String, Char}
+  # tuple[0]         # => 1
+  # typeof(tuple[0]) # => Int32
+  # tuple[3]         # Error: index out of bounds for Tuple(Int32, String, Char) (3 not in -3..2)
   #
   # i = 0
-  # tuple[i] # => 1 (Int32 | String | Char)
+  # tuple[i]         # => 1
+  # typeof(tuple[i]) # => (Char | Int32 | String)
   #
   # i = 3
   # tuple[i] # raises IndexError
@@ -164,15 +195,129 @@ struct Tuple
     at(index)
   end
 
-  # Returns the element at the given *index* or `nil` if out of bounds.
+  # Returns the element type at the given *index*. Read the type docs to
+  # understand the difference between indexing with a number literal or a
+  # variable.
+  #
+  # ```
+  # alias Foo = Tuple(Int32, String)
+  # Foo[0]      # => Int32
+  # Foo[0].zero # => 0
+  # Foo[2]      # Error: index out of bounds for Tuple(Int32, String).class (2 not in -2..1)
+  #
+  # i = 0
+  # Foo[i]      # => Int32
+  # Foo[i].zero # Error: undefined method 'zero' for String.class (compile-time type is (Int32.class | String.class))
+  #
+  # i = 2
+  # Foo[i] # raises IndexError
+  # ```
+  def self.[](index : Int)
+    self[index]? || raise IndexError.new
+  end
+
+  # Returns the element at the given *index* or `nil` if out of bounds. Read the
+  # type docs to understand the difference between indexing with a number
+  # literal or a variable.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0]? # => 1
-  # tuple[3]? # => nil
+  # tuple[0]?         # => 1
+  # typeof(tuple[0]?) # => Int32
+  # tuple[3]?         # => nil
+  # typeof(tuple[3]?) # => Nil
+  #
+  # i = 0
+  # tuple[i]?         # => 1
+  # typeof(tuple[i]?) # => (Char | Int32 | String | Nil)
+  #
+  # i = 3
+  # tuple[i]? # => nil
   # ```
   def []?(index : Int)
     at(index) { nil }
+  end
+
+  # Returns the element type at the given *index* or `nil` if out of bounds.
+  # Read the type docs to understand the difference between indexing with a
+  # number literal or a variable.
+  #
+  # ```
+  # alias Foo = Tuple(Int32, String)
+  # Foo[0]?         # => Int32
+  # Foo[0]?.zero    # => 0
+  # Foo[2]?         # => nil
+  # typeof(Foo[2]?) # => Nil
+  #
+  # i = 0
+  # Foo[i]?      # => Int32
+  # Foo[i]?.zero # Error: undefined method 'zero' for String.class (compile-time type is (Int32.class | String.class | Nil))
+  #
+  # i = 2
+  # Foo[i]? # => nil
+  # ```
+  def self.[]?(index : Int)
+    # following `typeof` is needed to access private types
+    {% begin %}
+      case index
+      {% for i in 0...T.size %}
+      when {{ i }}, {{ i - T.size }}
+        typeof(element_type({{ i }}))
+      {% end %}
+      end
+    {% end %}
+  end
+
+  # Returns all elements that are within the given *range*. *range* must be a
+  # range literal whose value is known at compile-time.
+  #
+  # Negative indices count backward from the end of the tuple (-1 is the last
+  # element). Additionally, an empty tuple is returned when the starting index
+  # for an element range is at the end of the tuple.
+  #
+  # Raises a compile-time error if `range.begin` is out of range.
+  #
+  # ```
+  # tuple = {1, "hello", 'x'}
+  # tuple[0..1] # => {1, "hello"}
+  # tuple[-2..] # => {"hello", 'x'}
+  # tuple[...1] # => {1}
+  # tuple[4..]  # Error: begin index out of bounds for Tuple(Int32, String, Char) (4 not in -3..3)
+  #
+  # i = 0
+  # tuple[i..2] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  #
+  # i = 0..2
+  # tuple[i] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  # ```
+  def [](range : Range)
+    {% raise "Tuple#[](Range) can only be called with range literals known at compile-time" %}
+  end
+
+  # Returns all element types that are within the given *range*. *range* must be
+  # a range literal whose value is known at compile-time.
+  #
+  # Negative indices count backward from the end of the tuple (-1 is the last
+  # element). Additionally, an empty tuple is returned when the starting index
+  # for an element range is at the end of the tuple.
+  #
+  # Raises a compile-time error if `range.begin` is out of range.
+  #
+  # ```
+  # alias Foo = Tuple(Int32, String, Char)
+  # Foo[0..1] # => Tuple(Int32, String)
+  # Foo[-2..] # => Tuple(String, Char)
+  # Foo[...1] # => Tuple(Int32)
+  # Foo[4..]  # Error: begin index out of bounds for Tuple(Int32, String, Char).class (4 not in -3..3)
+  #
+  # i = 0
+  # Foo[i..2] # Error: Tuple.[](Range) can only be called with range literals known at compile-time
+  #
+  # i = 0..2
+  # Foo[i] # Error: Tuple.[](Range) can only be called with range literals known at compile-time
+  # ```
+  def self.[](range : Range)
+    {% raise "Tuple.[](Range) can only be called with range literals known at compile-time" %}
   end
 
   # Returns the element at the given *index* or raises IndexError if out of bounds.
@@ -194,7 +339,7 @@ struct Tuple
   # tuple.at(0) { 10 } # => 1
   # tuple.at(3) { 10 } # => 10
   # ```
-  def at(index : Int)
+  def at(index : Int, &)
     index += size if index < 0
     {% for i in 0...T.size %}
       return self[{{i}}] if {{i}} == index
@@ -218,7 +363,7 @@ struct Tuple
   # "hello"
   # 'x'
   # ```
-  def each : Nil
+  def each(& : Union(*T) ->) : Nil
     {% for i in 0...T.size %}
       yield self[{{i}}]
     {% end %}
@@ -394,13 +539,49 @@ struct Tuple
     to_s
   end
 
-  def to_a
+  # Returns an `Array` with all the elements in the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}.to_a # => [1, 2, 3, 4, 5]
+  # ```
+  def to_a : Array(Union(*T))
+    {% if compare_versions(Crystal::VERSION, "1.1.0") < 0 %}
+      to_a(&.itself.as(Union(*T)))
+    {% else %}
+      to_a(&.itself)
+    {% end %}
+  end
+
+  # Returns an `Array` with the results of running *block* against each element of the tuple.
+  #
+  # ```
+  # {1, 2, 3, 4, 5}).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : Union(*T) -> _)
     Array(Union(*T)).build(size) do |buffer|
       {% for i in 0...T.size %}
-        buffer[{{i}}] = self[{{i}}]
+        buffer[{{i}}] = yield self[{{i}}]
       {% end %}
       size
     end
+  end
+
+  # Returns a `StaticArray` with the same elements.
+  #
+  # The element type is `Union(*T)`.
+  #
+  # ```
+  # {1, 'a', true}.to_static_array # => StaticArray[1, 'a', true]
+  # ```
+  @[AlwaysInline]
+  def to_static_array : StaticArray
+    {% begin %}
+      ary = uninitialized StaticArray(Union(*T), {{ T.size }})
+      each_with_index do |value, i|
+        ary.to_unsafe[i] = value
+      end
+      ary
+    {% end %}
   end
 
   # Appends a string representation of this tuple to the given `IO`.
@@ -425,7 +606,7 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map &.to_s # => {"1", "2.5", "a"}
   # ```
-  def map
+  def map(& : Union(*T) ->)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
@@ -444,7 +625,7 @@ struct Tuple
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0)
+  def map_with_index(offset = 0, &)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
@@ -486,11 +667,39 @@ struct Tuple
   # "hello"
   # 1
   # ```
-  def reverse_each
+  def reverse_each(& : Union(*T) ->)
     {% for i in 1..T.size %}
       yield self[{{T.size - i}}]
     {% end %}
     nil
+  end
+
+  # :inherit:
+  def reduce(&)
+    {% if T.empty? %}
+      raise Enumerable::EmptyError.new
+    {% else %}
+      memo = self[0]
+      {% for i in 1...T.size %}
+        memo = yield memo, self[{{ i }}]
+      {% end %}
+      memo
+    {% end %}
+  end
+
+  # :inherit:
+  def reduce(memo, &)
+    {% for i in 0...T.size %}
+      memo = yield memo, self[{{ i }}]
+    {% end %}
+    memo
+  end
+
+  # :inherit:
+  def reduce?(&)
+    {% unless T.empty? %}
+      reduce { |memo, elem| yield memo, elem }
+    {% end %}
   end
 
   # Returns the first element of this tuple. Doesn't compile
@@ -551,5 +760,19 @@ struct Tuple
     {% else %}
       self[{{T.size - 1}}]
     {% end %}
+  end
+
+  # Returns a value with the same type as the element at the given *index* of
+  # an instance of `self`. *index* must be an integer or range literal known at
+  # compile-time.
+  #
+  # The most common usage of this macro is to extract the appropriate element
+  # type in `Tuple`'s class methods. This macro works even if the corresponding
+  # element type is private.
+  #
+  # NOTE: there should never be a need to call this method outside the standard library.
+  private macro element_type(index)
+    x = uninitialized self
+    x[{{ index }}]
   end
 end

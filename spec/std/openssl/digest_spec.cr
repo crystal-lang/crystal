@@ -1,4 +1,5 @@
 require "spec"
+require "../spec_helper"
 require "../../../src/openssl"
 
 describe OpenSSL::Digest do
@@ -10,7 +11,7 @@ describe OpenSSL::Digest do
     it "should be able to calculate #{algorithm}" do
       digest = OpenSSL::Digest.new(algorithm)
       digest << "fooø"
-      digest.final.hexstring.should eq(expected)
+      digest.hexfinal.should eq(expected)
 
       digest.reset
       digest << "fooø"
@@ -51,7 +52,7 @@ describe OpenSSL::Digest do
     digest << r
     r.close
 
-    digest.final.hexstring.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae")
+    digest.hexfinal.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae")
   end
 
   describe ".dup" do

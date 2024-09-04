@@ -106,8 +106,6 @@ describe "Codegen: class var" do
 
   it "uses var in class var initializer" do
     run(%(
-      require "prelude"
-
       class Foo
         @@var : Int32
         @@var = begin
@@ -130,8 +128,6 @@ describe "Codegen: class var" do
 
   it "reads simple class var before another complex one" do
     run(%(
-      require "prelude"
-
       class Foo
         @@var2 : Int32
         @@var2 = @@var &+ 1
@@ -149,8 +145,6 @@ describe "Codegen: class var" do
 
   it "initializes class var of union with single type" do
     run(%(
-      require "prelude"
-
       class Foo
         @@var : Int32 | String
         @@var = 42
@@ -241,8 +235,6 @@ describe "Codegen: class var" do
 
   it "doesn't use nilable type for initializer" do
     run(%(
-      require "prelude"
-
       class Foo
         @@foo : Int32?
         @@foo = 42
@@ -261,8 +253,6 @@ describe "Codegen: class var" do
 
   it "codegens class var with begin and vars" do
     run(%(
-      require "prelude"
-
       class Foo
         @@foo : Int32
         @@foo = begin
@@ -282,8 +272,6 @@ describe "Codegen: class var" do
 
   it "codegens class var with type declaration begin and vars" do
     run(%(
-      require "prelude"
-
       class Foo
         @@foo : Int32 = begin
           a = 1
@@ -352,8 +340,6 @@ describe "Codegen: class var" do
 
   it "gets pointerof class var complex constant" do
     run(%(
-      require "prelude"
-
       z = Foo.foo
 
       class Foo
@@ -542,7 +528,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(1)
   end
 
-  it "codegens generic class class var" do
+  it "codegens generic class with class var" do
     run(%(
       class Foo(T)
         @@bar = 1
@@ -576,6 +562,19 @@ describe "Codegen: class var" do
     ))
 
     mod.to_s.should_not contain("x:init")
+  end
+
+  it "doesn't error if class var shares name with const (#7865)" do
+    run(<<-CRYSTAL).to_string.should eq("asdfgh")
+      require "prelude"
+
+      class Pattern
+        @@A = "asdf"
+        A = "\#{@@A}gh"
+      end
+
+      Pattern::A
+      CRYSTAL
   end
 
   it "catch infinite loop in class var initializer" do

@@ -27,7 +27,7 @@ describe "String UTF16" do
     end
 
     it "in the range U+D800..U+DFFF" do
-      encoded = "\u{D800}\u{DFFF}".to_utf16
+      encoded = String.new(Bytes[0xED, 0xA0, 0x80, 0xED, 0xBF, 0xBF]).to_utf16
       encoded.should eq(Slice[0xFFFD_u16, 0xFFFD_u16, 0xFFFD_u16, 0xFFFD_u16, 0xFFFD_u16, 0xFFFD_u16])
       encoded.unsafe_fetch(encoded.size).should eq 0_u16
     end

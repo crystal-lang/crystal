@@ -28,10 +28,6 @@ class Crystal::Call
 
     self.unbind_from old_target_defs if old_target_defs
     self.bind_to untyped_defs
-
-    if (parent_visitor = @parent_visitor) && (ptyped_def = parent_visitor.typed_def?) && untyped_defs.try(&.any?(&.raises?))
-      ptyped_def.raises = true
-    end
   end
 
   def check_lib_call_named_args(external)
@@ -57,11 +53,11 @@ class Crystal::Call
     named_args.each do |named_arg|
       found_index = external.args.index { |arg| arg.name == named_arg.name }
       unless found_index
-        named_arg.raise "no argument named '#{named_arg.name}'"
+        named_arg.raise "no parameter named '#{named_arg.name}'"
       end
 
       if covered[found_index]
-        named_arg.raise "argument '#{named_arg.name}' already specified"
+        named_arg.raise "argument for parameter '#{named_arg.name}' already specified"
       end
 
       covered[found_index] = true
@@ -115,7 +111,7 @@ class Crystal::Call
         arg_type = arg.type
         if arg_type.is_a?(PointerInstanceType)
           if arg_type.element_type.remove_typedef.void?
-            call_arg.raise "can't use out with Void* (argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
+            call_arg.raise "can't use out with Void* (parameter #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
           end
 
           if call_arg.exp.is_a?(Underscore)
@@ -127,7 +123,7 @@ class Crystal::Call
             parent_visitor.bind_meta_var(call_arg.exp)
           end
         else
-          call_arg.raise "argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
+          call_arg.raise "parameter #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
         end
       end
     end
