@@ -590,14 +590,14 @@ module XML
       4.times do
         XML::Reader.new(%(<people></foo>)).tap(&.read).expand?
       end
-      XML::Reader.new(%(<bar)).tap(&.read).expand?
+      XML::Reader.new(%(<)).tap(&.read).expand?
       XML::Reader.new(%(<people></foo>)).tap(&.read).expand?
 
       XML::Error.errors.try(&.map(&.to_s)).should eq [
         "Opening and ending tag mismatch: people line 1 and foo",
         "Opening and ending tag mismatch: people line 1 and foo",
         "Opening and ending tag mismatch: people line 1 and foo",
-        "Couldn't find end of Start Tag bar",
+        "StartTag: invalid element name",
         "Opening and ending tag mismatch: people line 1 and foo",
       ]
     end
