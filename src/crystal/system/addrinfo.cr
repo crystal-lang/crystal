@@ -5,9 +5,6 @@ module Crystal::System::Addrinfo
 
   # def system_ip_address : ::Socket::IPAddress
 
-  # only used by `#system_ip_address`?
-  # def to_unsafe
-
   # def self.getaddrinfo(domain, service, family, type, protocol, timeout) : Handle
 
   # def self.next_addrinfo(addrinfo : Handle) : Handle
