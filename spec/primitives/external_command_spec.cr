@@ -1,4 +1,4 @@
-require "../../../spec_helper"
+require "../spec_helper"
 
 describe Crystal::Command do
   it "exec external commands", tags: %w[slow] do
