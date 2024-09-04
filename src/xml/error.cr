@@ -11,11 +11,19 @@ class XML::Error < Exception
     super(message)
   end
 
-  @@errors = [] of self
+  @[Deprecated("This class property is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
+  class_property max_error_capacity = 5
+  @@errors = Deque(self).new(max_error_capacity)
 
   # :nodoc:
   protected def self.add_errors(errors)
-    @@errors.concat(errors)
+    new_errors_size = errors.size.clamp(..max_error_capacity)
+    remaining_size = max_error_capacity - new_errors_size
+    (@@errors.size - remaining_size).times { @@errors.shift }
+
+    errors.to_unsafe.to_slice(errors.size)[-new_errors_size, new_errors_size].each do |error|
+      @@errors.push error
+    end
   end
 
   @[Deprecated("This class accessor is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
@@ -23,7 +31,7 @@ class XML::Error < Exception
     if @@errors.empty?
       nil
     else
-      errors = @@errors.dup
+      errors = @@errors.to_a
       @@errors.clear
       errors
     end
