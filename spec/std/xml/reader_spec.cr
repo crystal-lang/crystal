@@ -587,18 +587,16 @@ module XML
         "Opening and ending tag mismatch: people line 1 and foo",
       ]
 
-      4.times do
-        XML::Reader.new(%(<people></foo>)).tap(&.read).expand?
+      %w[foo bar baz qux quux corge grault].each do |tag|
+        XML::Reader.new(%(<#{tag}></a>)).tap(&.read).expand?
       end
-      XML::Reader.new(%(<)).tap(&.read).expand?
-      XML::Reader.new(%(<people></foo>)).tap(&.read).expand?
 
       XML::Error.errors.try(&.map(&.to_s)).should eq [
-        "Opening and ending tag mismatch: people line 1 and foo",
-        "Opening and ending tag mismatch: people line 1 and foo",
-        "Opening and ending tag mismatch: people line 1 and foo",
-        "StartTag: invalid element name",
-        "Opening and ending tag mismatch: people line 1 and foo",
+        "Opening and ending tag mismatch: baz line 1 and a",
+        "Opening and ending tag mismatch: qux line 1 and a",
+        "Opening and ending tag mismatch: quux line 1 and a",
+        "Opening and ending tag mismatch: corge line 1 and a",
+        "Opening and ending tag mismatch: grault line 1 and a",
       ]
     end
   end
