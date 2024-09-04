@@ -108,8 +108,28 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x, @[Foo] **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
   expect_to_s "def foo(@[Foo] x, @[Bar] **args, @[Baz] &block)\nend"
-  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
-  expect_to_s "def foo(& : (->))\nend"
+
+  # 14216
+  expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend", "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(& : ->)\nend"
+  expect_to_s "def foo(& : (->))\nend", "def foo(& : ->)\nend"
+  expect_to_s "def foo(x : (T -> U) -> V, *args : (T -> U) -> V, y : (T -> U) -> V, **opts : (T -> U) -> V, & : (T -> U) -> V) : ((T -> U) -> V)\nend"
+  expect_to_s "foo(x : (T -> U) -> V, W)"
+  expect_to_s "foo[x : (T -> U) -> V, W]"
+  expect_to_s "foo[x : (T -> U) -> V, W] = 1"
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) -> V, W) : ((T -> U) -> V)\nend"
+
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U) | V)\nend"
+  expect_to_s "lib LibFoo\n  fun foo(x : Foo((T -> U)))\nend"
+  expect_to_s "lib LibFoo\n  fun foo(x : (T -> U).class)\nend"
+  expect_to_s "def foo(x : (T -> U) | V)\nend"
+  expect_to_s "def foo(x : Foo((T -> U)))\nend"
+  expect_to_s "def foo(x : (T -> U).class)\nend"
+  expect_to_s "foo(x : (T -> U) | V)"
+  expect_to_s "foo(x : Foo((T -> U)))"
+  expect_to_s "foo(x : (T -> U).class)"
+
   expect_to_s "macro foo(@[Foo] id)\nend"
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(@[Foo] **args)\nend"
@@ -143,10 +163,30 @@ describe "ASTNode#to_s" do
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
   expect_to_s %(lib Foo\nend)
   expect_to_s %(lib LibC\n  fun getchar(Int, Float)\nend)
-  expect_to_s %(fun foo(a : Void, b : Void, ...) : Void\n\nend)
+  expect_to_s %(fun foo(a : Void, b : Void, ...) : Void\nend)
+  expect_to_s %(fun foo\nend)
   expect_to_s %(lib Foo\n  struct Foo\n    a : Void\n    b : Void\n  end\nend)
   expect_to_s %(lib Foo\n  union Foo\n    a : Int\n    b : Int32\n  end\nend)
   expect_to_s %(lib Foo\n  FOO = 0\nend)
+  expect_to_s <<-CRYSTAL, <<-CRYSTAL
+    lib Foo
+      A = Pointer(Void).new(0)
+      struct B
+        x : Void*
+        y : Int[1]
+      end
+      fun c(Void*) : Char[2]*
+    end
+    CRYSTAL
+    lib Foo
+      A = Pointer(Void).new(0)
+      struct B
+        x : ::Pointer(Void)
+        y : ::StaticArray(Int, 1)
+      end
+      fun c(::Pointer(Void)) : ::Pointer(::StaticArray(Char, 2))
+    end
+    CRYSTAL
   expect_to_s %(lib LibC\n  fun getch = "get.char"\nend)
   expect_to_s %(lib Foo::Bar\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
@@ -170,6 +210,9 @@ describe "ASTNode#to_s" do
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
   expect_to_s %(begin\n  ()\nend)
+  expect_to_s %(begin\n  (1)\nend)
+  expect_to_s %(begin\n  (@x = x).is_a?(Foo)\nend)
+  expect_to_s %(begin\n  (1)\n  2\nend)
   expect_to_s %(if 1\n  begin\n    2\n  end\nelse\n  begin\n    3\n  end\nend)
   expect_to_s %(foo do\n  begin\n    bar\n  end\nend)
   expect_to_s %q("\e\0\""), %q("\e\u0000\"")
@@ -192,6 +235,12 @@ describe "ASTNode#to_s" do
   expect_to_s "1.+ do\nend"
   expect_to_s "1.[](2) do\nend"
   expect_to_s "1.[]="
+  expect_to_s "1[&.foo]"
+  expect_to_s "1[&.foo]?"
+  expect_to_s "1[&.foo] = 2"
+  expect_to_s "1[2, x: 3, &.foo]"
+  expect_to_s "1[2, x: 3, &.foo]?"
+  expect_to_s "1[2, x: 3, &.foo] = 4"
   expect_to_s "1.+(a: 2)"
   expect_to_s "1.+(&block)"
   expect_to_s "1.//(2, a: 3)"
@@ -210,8 +259,10 @@ describe "ASTNode#to_s" do
   expect_to_s "offsetof(Foo, @bar)"
   expect_to_s "def foo(**options, &block)\nend"
   expect_to_s "macro foo\n  123\nend"
-  expect_to_s "if true\n(  1)\nend"
-  expect_to_s "begin\n(  1)\nrescue\nend"
+  expect_to_s "if true\n  (1)\nend"
+  expect_to_s "if true\n  (1)\n  2\nend"
+  expect_to_s "begin\n  (1)\nrescue\nend"
+  expect_to_s "begin\n  (1)\n  2\nrescue\nend"
   expect_to_s %[他.说("你好")]
   expect_to_s %[他.说 = "你好"]
   expect_to_s %[あ.い, う.え.お = 1, 2]
@@ -234,4 +285,22 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
   expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
   expect_to_s "macro foo(x)\n  yield\nend"
+  expect_to_s <<-CRYSTAL
+    select
+    when foo
+      select
+      when bar
+        1
+      else
+        2
+      end
+    else
+      select
+      when baz
+        3
+      else
+        4
+      end
+    end
+    CRYSTAL
 end

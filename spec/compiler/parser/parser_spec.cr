@@ -267,6 +267,15 @@ module Crystal
     assert_syntax_error "a.b(), c.d = 1"
     assert_syntax_error "a.b, c.d() = 1"
 
+    assert_syntax_error "a() = 1"
+    assert_syntax_error "a {} = 1"
+    assert_syntax_error "a.b() = 1"
+    assert_syntax_error "a.[]() = 1"
+    assert_syntax_error "a() += 1"
+    assert_syntax_error "a {} += 1"
+    assert_syntax_error "a.b() += 1"
+    assert_syntax_error "a.[]() += 1"
+
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
     it_parses "def foo ; 1 ; end", Def.new("foo", body: 1.int32)
@@ -290,9 +299,13 @@ module Crystal
     assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
-    assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
-    assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
-    assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
+
+    # #10397
+    %w(<= >= == != []= ===).each do |operator|
+      it_parses "def #{operator}(other, file = 1); end", Def.new(operator, ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def #{operator}(*args, **opts); end", Def.new(operator, ["args".arg], splat_index: 0, double_splat: "opts".arg)
+      it_parses "def #{operator}(*args, **opts, &); end", Def.new(operator, ["args".arg], splat_index: 0, double_splat: "opts".arg, block_arg: Arg.new(""), block_arity: 0)
+    end
 
     # #5895, #6042, #5997
     %w(
@@ -624,10 +637,12 @@ module Crystal
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
     end
 
-    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
+    ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!=", "[]=", "!~"].each do |name|
       it_parses "foo.#{name}", Call.new("foo".call, name)
       it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
+      it_parses "foo.#{name}(1, 2) { 3 }", Call.new("foo".call, name, args: [1.int32, 2.int32] of ASTNode, block: Block.new(body: 3.int32))
+      it_parses "foo.#{name} do end", Call.new("foo".call, name, block: Block.new)
     end
 
     ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
@@ -768,6 +783,8 @@ module Crystal
 
     it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
     it_parses "Foo(X, instance_sizeof(Int32))", Generic.new("Foo".path, ["X".path, InstanceSizeOf.new("Int32".path)] of ASTNode)
+    it_parses "Foo(X, alignof(Int32))", Generic.new("Foo".path, ["X".path, AlignOf.new("Int32".path)] of ASTNode)
+    it_parses "Foo(X, instance_alignof(Int32))", Generic.new("Foo".path, ["X".path, InstanceAlignOf.new("Int32".path)] of ASTNode)
     it_parses "Foo(X, offsetof(Foo, @a))", Generic.new("Foo".path, ["X".path, OffsetOf.new("Foo".path, "@a".instance_var)] of ASTNode)
 
     it_parses "Foo(\n)", Generic.new("Foo".path, [] of ASTNode)
@@ -1095,8 +1112,12 @@ module Crystal
     it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
     it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
+    it_parses "{% if 1\n  x\nend %}", MacroExpression.new(If.new(1.int32, "x".var), output: false)
+    it_parses "{% x if 1 %}", MacroExpression.new(If.new(1.int32, "x".var), output: false)
     it_parses "{% unless 1; 2; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, Nop.new), output: false)
     it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
+    it_parses "{% unless 1\n  x\nend %}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
+    it_parses "{% x unless 1 %}", MacroExpression.new(Unless.new(1.int32, "x".var), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
     assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
@@ -1213,6 +1234,8 @@ module Crystal
 
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
+    it_parses "alignof(X)", AlignOf.new("X".path)
+    it_parses "instance_alignof(X)", InstanceAlignOf.new("X".path)
     it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
     it_parses "offsetof(X, 1)", OffsetOf.new("X".path, 1.int32)
     assert_syntax_error "offsetof(X, 1.0)", "expecting an integer offset, not '1.0'"
@@ -1254,6 +1277,8 @@ module Crystal
     # multiline pseudo methods (#8318)
     it_parses "sizeof(\n  Int32\n)", SizeOf.new(Path.new("Int32"))
     it_parses "instance_sizeof(\n  Int32\n)", InstanceSizeOf.new(Path.new("Int32"))
+    it_parses "alignof(\n  Int32\n)", AlignOf.new(Path.new("Int32"))
+    it_parses "instance_alignof(\n  Int32\n)", InstanceAlignOf.new(Path.new("Int32"))
     it_parses "typeof(\n  1\n)", TypeOf.new([1.int32] of ASTNode)
     it_parses "offsetof(\n  Foo,\n  @foo\n)", OffsetOf.new(Path.new("Foo"), InstanceVar.new("@foo"))
     it_parses "pointerof(\n  foo\n)", PointerOf.new("foo".call)
@@ -1435,9 +1460,9 @@ module Crystal
 
     it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
-    it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
-    it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
-    it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([Select::When.new("foo".call, 2.int32)], 3.int32)
+    it_parses "select\nwhen foo\n2\nend", Select.new([When.new("foo".call, 2.int32)])
+    it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([When.new("foo".call, 2.int32), When.new("bar".call, 4.int32)])
+    it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([When.new("foo".call, 2.int32)], 3.int32)
 
     assert_syntax_error "select\nwhen 1\n2\nend", "invalid select when expression: must be an assignment or call"
 
@@ -2240,6 +2265,7 @@ module Crystal
       assert_end_location "class Foo; end"
       assert_end_location "struct Foo; end"
       assert_end_location "module Foo; end"
+      assert_end_location "alias Foo = Bar"
       assert_end_location "->{ }"
       assert_end_location "macro foo;end"
       assert_end_location "macro foo; 123; end"
@@ -2493,6 +2519,24 @@ module Crystal
         name_location.column_number.should eq(12)
       end
 
+      it "sets location of top-level fun name" do
+        parser = Parser.new("fun foo; end")
+        node = parser.parse.as(FunDef)
+
+        name_location = node.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(5)
+      end
+
+      it "sets location of lib fun name" do
+        parser = Parser.new("lib Foo; fun foo; end")
+        node = parser.parse.as(LibDef).body.as(FunDef)
+
+        name_location = node.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(14)
+      end
+
       it "sets correct location of proc literal" do
         parser = Parser.new("->(\n  x : Int32,\n  y : String\n) { }")
         node = parser.parse.as(ProcLiteral)
@@ -2560,6 +2604,96 @@ module Crystal
         node.else_location.not_nil!.line_number.should eq(3)
         node.ensure_location.not_nil!.line_number.should eq(4)
         node.end_location.not_nil!.line_number.should eq(5)
+      end
+
+      it "sets correct locations of macro if / else" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% else %}
+            "not one"
+            "bar"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 7
+      end
+
+      it "sets correct locations of macro if / elsif" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% elsif 2 == val %}
+            "not one"
+            "bar"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 7
+      end
+
+      it "sets correct locations of macro if / else / elsif" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% elsif 2 == val %}
+            "not one"
+            "bar"
+          {% else %}
+            "biz"
+            "blah"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 10
       end
 
       it "sets correct location of trailing ensure" do

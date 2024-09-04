@@ -3,6 +3,13 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
+  PSEUDO_CLASS_PREFIX = "CRYSTAL_PSEUDO__"
+  PSEUDO_CLASS_NOTE   = <<-DOC
+
+    NOTE: This is a pseudo-class provided directly by the Crystal compiler.
+    It cannot be reopened nor overridden.
+    DOC
+
   getter type : Crystal::Type
 
   def initialize(@generator : Generator, type : Crystal::Type)
@@ -39,7 +46,11 @@ class Crystal::Doc::Type
     when Program
       "Top Level Namespace"
     when NamedType
-      type.name
+      if @generator.project_info.crystal_stdlib?
+        type.name.lchop(PSEUDO_CLASS_PREFIX)
+      else
+        type.name
+      end
     when NoReturnType
       "NoReturn"
     when VoidType
@@ -106,6 +117,7 @@ class Crystal::Doc::Type
 
     unless ast_node?
       @type.ancestors.each do |ancestor|
+        next unless @generator.must_include? ancestor
         doc_type = @generator.type(ancestor)
         ancestors << doc_type
         break if ancestor == @generator.program.object || doc_type.ast_node?
@@ -247,6 +259,7 @@ class Crystal::Doc::Type
       included_modules = [] of Type
       @type.parents.try &.each do |parent|
         if parent.module?
+          next unless @generator.must_include? parent
           included_modules << @generator.type(parent)
         end
       end
@@ -261,6 +274,7 @@ class Crystal::Doc::Type
       extended_modules = [] of Type
       @type.metaclass.parents.try &.each do |parent|
         if parent.module?
+          next unless @generator.must_include? parent
           extended_modules << @generator.type(parent)
         end
       end
@@ -403,7 +417,11 @@ class Crystal::Doc::Type
   end
 
   def doc
-    @type.doc
+    if (t = type).is_a?(NamedType) && t.name.starts_with?(PSEUDO_CLASS_PREFIX)
+      "#{@type.doc}#{PSEUDO_CLASS_NOTE}"
+    else
+      @type.doc
+    end
   end
 
   def lookup_path(path_or_names : Path | Array(String))

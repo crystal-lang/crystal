@@ -44,14 +44,17 @@ module Crystal
     def visit(node : Primitive)
       @str << "# primitive: "
       @str << node.name
+      false
     end
 
     def visit(node : MetaVar)
       @str << node.name
+      false
     end
 
     def visit(node : MetaMacroVar)
       @str << node.name
+      false
     end
 
     def visit(node : TypeFilteredNode)

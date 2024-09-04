@@ -10,13 +10,27 @@ module Crystal::System::Thread
 
   # def self.current_thread : ::Thread
 
+  # def self.current_thread? : ::Thread?
+
   # def self.current_thread=(thread : ::Thread)
+
+  # def self.sleep(time : ::Time::Span) : Nil
 
   # private def system_join : Exception?
 
   # private def system_close
 
   # private def stack_address : Void*
+
+  # private def system_name=(String) : String
+
+  # def self.init_suspend_resume : Nil
+
+  # private def system_suspend : Nil
+
+  # private def system_wait_suspended : Nil
+
+  # private def system_resume : Nil
 end
 
 {% if flag?(:wasi) %}
@@ -43,18 +57,33 @@ class Thread
   # Returns the Fiber representing the thread's main stack.
   getter! main_fiber : Fiber
 
+  # Returns the Fiber currently running on the thread.
+  property! current_fiber : Fiber
+
   # :nodoc:
   property next : Thread?
 
   # :nodoc:
   property previous : Thread?
 
+  getter name : String?
+
   def self.unsafe_each(&)
-    threads.unsafe_each { |thread| yield thread }
+    # nothing to iterate when @@threads is nil + don't lazily allocate in a
+    # method called from a GC collection callback!
+    @@threads.try(&.unsafe_each { |thread| yield thread })
+  end
+
+  def self.lock : Nil
+    threads.@mutex.lock
+  end
+
+  def self.unlock : Nil
+    threads.@mutex.unlock
   end
 
   # Creates and starts a new system thread.
-  def initialize(&@func : ->)
+  def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
   end
@@ -62,9 +91,9 @@ class Thread
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
-    @func = ->{}
+    @func = ->(t : Thread) {}
     @system_handle = Crystal::System::Thread.current_handle
-    @main_fiber = Fiber.new(stack_address, self)
+    @current_fiber = @main_fiber = Fiber.new(stack_address, self)
 
     Thread.threads.push(self)
   end
@@ -88,9 +117,20 @@ class Thread
     end
   end
 
+  # Blocks the current thread for the duration of *time*. Clock precision is
+  # dependent on the operating system and hardware.
+  def self.sleep(time : Time::Span) : Nil
+    Crystal::System::Thread.sleep(time)
+  end
+
   # Returns the Thread object associated to the running system thread.
   def self.current : Thread
     Crystal::System::Thread.current_thread
+  end
+
+  # :nodoc:
+  def self.current? : Thread?
+    Crystal::System::Thread.current_thread?
   end
 
   # Associates the Thread object to the running system thread.
@@ -104,16 +144,31 @@ class Thread
     Crystal::System::Thread.yield_current
   end
 
+  # Changes the name of the current thread.
+  def self.name=(name : String) : String
+    thread = Thread.current
+    thread.name = name
+  end
+
   # :nodoc:
-  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(main_fiber) }
+  getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
+
+  # :nodoc:
+  def scheduler? : ::Crystal::Scheduler?
+    @scheduler
+  end
 
   protected def start
     Thread.threads.push(self)
     Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address, self)
+    @current_fiber = @main_fiber = fiber = Fiber.new(stack_address, self)
+
+    if name = @name
+      self.system_name = name
+    end
 
     begin
-      @func.call
+      @func.call(self)
     rescue ex
       @exception = ex
     ensure
@@ -123,8 +178,32 @@ class Thread
     end
   end
 
+  protected def name=(@name : String)
+    self.system_name = name
+  end
+
   # Holds the GC thread handler
   property gc_thread_handler : Void* = Pointer(Void).null
+
+  def suspend : Nil
+    system_suspend
+  end
+
+  def wait_suspended : Nil
+    system_wait_suspended
+  end
+
+  def resume : Nil
+    system_resume
+  end
+
+  def self.stop_world : Nil
+    GC.stop_world
+  end
+
+  def self.start_world : Nil
+    GC.start_world
+  end
 end
 
 require "./thread_linked_list"

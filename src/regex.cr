@@ -194,6 +194,15 @@ require "./regex/match_data"
 #
 # PCRE2 supports other encodings, but Crystal strings are UTF-8 only, so Crystal
 # regular expressions are also UTF-8 only (by default).
+# Crystal strings are expected to contain only valid UTF-8 encodings, but that's
+# not guaranteed. There's a chance that a string *can* contain invalid bytes.
+# Especially data read from external sources must not be trusted to be valid encoding.
+# The regex engine demands valid UTF-8, so it checks the encoding for every
+# match. This can be unnecessary if the string is already validated (for example
+# via `String#valid_encoding?` or because it has already been used in a previous
+# regex match).
+# If that's the case, it's profitable to skip UTF-8 validation via `MatchOptions::NO_UTF_CHECK`
+# (or `CompileOptions::NO_UTF_CHECK` for the pattern).
 #
 # PCRE2 optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a `Regex` as a
@@ -263,6 +272,31 @@ class Regex
     ENDANCHORED = 0x8000_0000
 
     # Do not check the pattern for valid UTF encoding.
+    #
+    # This option is potentially dangerous and must only be used when the
+    # pattern is guaranteed to be valid (e.g. `String#valid_encoding?`).
+    # Failing to do so can lead to undefined behaviour in the regex library
+    # and may crash the entire process.
+    #
+    # NOTE: `String` is *supposed* to be valid UTF-8, but this is not guaranteed or
+    # enforced. Especially data originating from external sources should not be
+    # trusted.
+    #
+    # UTF validation is comparatively expensive, so skipping it can produce a
+    # significant performance improvement.
+    #
+    # ```
+    # pattern = "fo+"
+    # if pattern.valid_encoding?
+    #   regex = Regex.new(pattern, options: Regex::CompileOptions::NO_UTF_CHECK)
+    #   regex.match(foo)
+    # else
+    #   raise "Invalid UTF in regex pattern"
+    # end
+    # ```
+    #
+    # The standard library implicitly applies this option when it can be sure
+    # about the patterns's validity (e.g. on repeated matches in `String#gsub`).
     NO_UTF_CHECK = NO_UTF8_CHECK
 
     # Enable matching against subjects containing invalid UTF bytes.
@@ -310,6 +344,30 @@ class Regex
     NO_JIT
 
     # Do not check subject for valid UTF encoding.
+    #
+    # This option is potentially dangerous and must only be used when the
+    # subject is guaranteed to be valid (e.g. `String#valid_encoding?`).
+    # Failing to do so can lead to undefined behaviour in the regex library
+    # and may crash the entire process.
+    #
+    # NOTE: `String` is *supposed* to be valid UTF-8, but this is not guaranteed or
+    # enforced. Especially data originating from external sources should not be
+    # trusted.
+    #
+    # UTF validation is comparatively expensive, so skipping it can produce a
+    # significant performance improvement.
+    #
+    # ```
+    # subject = "foo"
+    # if subject.valid_encoding?
+    #   /foo/.match(subject, options: Regex::MatchOptions::NO_UTF_CHECK)
+    # else
+    #   raise "Invalid UTF in regex subject"
+    # end
+    # ```
+    #
+    # A good use case is when the same subject is matched multiple times, UTF
+    # validation only needs to happen once.
     #
     # This option has no effect if the pattern was compiled with
     # `CompileOptions::MATCH_INVALID_UTF` when using PCRE2 10.34+.
@@ -532,20 +590,58 @@ class Regex
     nil
   end
 
-  # Convert to `String` in literal format. Returns the source as a `String` in
-  # Regex literal format, delimited in forward slashes (`/`), with any
-  # optional flags included.
+  # Prints to *io* an unambiguous string representation of this regular expression object.
   #
+  # Uses the regex literal syntax with basic option flags if sufficient (i.e. no
+  # other options than `IGNORE_CASE`, `MULTILINE`, or `EXTENDED` are set).
+  # Otherwise the syntax presents a `Regex.new` call.
   # ```
-  # /ab+c/ix.inspect # => "/ab+c/ix"
+  # /ab+c/ix.inspect                     # => "/ab+c/ix"
+  # Regex.new("ab+c", :anchored).inspect # => Regex.new("ab+c", Regex::Options::ANCHORED)
   # ```
   def inspect(io : IO) : Nil
+    if (options & ~CompileOptions[IGNORE_CASE, MULTILINE, EXTENDED]).none?
+      inspect_literal(io)
+    else
+      inspect_extensive(io)
+    end
+  end
+
+  # Convert to `String` in literal format. Returns the source as a `String` in
+  # Regex literal format, delimited in forward slashes (`/`), with option flags
+  # included.
+  #
+  # Only `IGNORE_CASE`, `MULTILINE`, and `EXTENDED` options can be represented.
+  # Any other option value is ignored. Use `#inspect` instead for an unambiguous
+  # and correct representation.
+  #
+  # ```
+  # /ab+c/ix.inspect_literal                     # => "/ab+c/ix"
+  # Regex.new("ab+c", :anchored).inspect_literal # => "/ab+c/"
+  # ```
+  private def inspect_literal(io : IO) : Nil
     io << '/'
     Regex.append_source(source, io)
     io << '/'
     io << 'i' if options.ignore_case?
     io << 'm' if options.multiline?
     io << 'x' if options.extended?
+  end
+
+  # Prints to *io* an extensive string representation of this regular expression object.
+  # The result is unambiguous and mirrors a Crystal expression to recreate an equivalent
+  # instance.
+  #
+  # ```
+  # /ab+c/ix.inspect_literal                     # => Regex.new("ab+c", Regex::Options[IGNORE_CASE, EXTENDED])
+  # Regex.new("ab+c", :anchored).inspect_literal # => Regex.new("ab+c", Regex::Options::ANCHORED)
+  # ```
+  private def inspect_extensive(io : IO) : Nil
+    io << "Regex.new("
+    source.inspect(io)
+    io << ", "
+    options.inspect(io)
+    io << ")"
   end
 
   # Match at character index. Matches a regular expression against `String`

@@ -37,7 +37,7 @@ struct Complex
 
   # :ditto:
   def ==(other : Number)
-    self == other.to_c
+    @real == other && @imag.zero?
   end
 
   # :ditto:
@@ -298,18 +298,23 @@ struct Complex
 end
 
 struct Number
+  # Returns a `Complex` object with the value of `self` as the real part.
   def to_c : Complex
     Complex.new(self, 0)
   end
 
+  # Returns a `Complex` object with the value of `self` as the imaginary part.
   def i : Complex
     Complex.new(0, self)
   end
 
   def ==(other : Complex)
-    to_c == other
+    other == self
   end
 
+  # [Cis](https://en.wikipedia.org/wiki/Cis_(mathematics)) is a mathematical notation representing `cos x + i sin x`.
+  #
+  # Returns a `Complex` object with real part `Math.cos(self)` and imaginary part `Math.sin(self)`, where `self` represents the angle in radians.
   def cis : Complex
     Complex.new(Math.cos(self), Math.sin(self))
   end

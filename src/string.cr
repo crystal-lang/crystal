@@ -752,7 +752,8 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true, &)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+', 'i', 'I', 'n', 'N')
+    return unless first_char = self[0]?
+    return unless whitespace || '0' <= first_char <= '9' || first_char.in?('-', '+', 'i', 'I', 'n', 'N')
 
     v, endptr = yield
 
@@ -1506,15 +1507,17 @@ class String
     end
   end
 
-  # Returns a new `String` with the first letter after any space converted to uppercase and every
-  # other letter converted to lowercase.
+  # Returns a new `String` with the first letter after any space converted to uppercase and every other letter converted to lowercase.
+  # Optionally, if *underscore_to_space* is `true`, underscores (`_`) will be converted to a space and the following letter converted to uppercase.
   #
   # ```
-  # "hEllO tAb\tworld".titleize      # => "Hello Tab\tWorld"
-  # "  spaces before".titleize       # => "  Spaces Before"
-  # "x-men: the last stand".titleize # => "X-men: The Last Stand"
+  # "hEllO tAb\tworld".titleize                   # => "Hello Tab\tWorld"
+  # "  spaces before".titleize                    # => "  Spaces Before"
+  # "x-men: the last stand".titleize              # => "X-men: The Last Stand"
+  # "foo_bar".titleize                            # => "Foo_bar"
+  # "foo_bar".titleize(underscore_to_space: true) # => "Foo Bar"
   # ```
-  def titleize(options : Unicode::CaseOptions = :none) : String
+  def titleize(options : Unicode::CaseOptions = :none, *, underscore_to_space : Bool = false) : String
     return self if empty?
 
     if single_byte_optimizable? && (options.none? || options.ascii?)
@@ -1525,9 +1528,15 @@ class String
           byte = to_unsafe[i]
           if byte < 0x80
             char = byte.unsafe_chr
-            replaced_char = upcase_next ? char.upcase : char.downcase
+            replaced_char, upcase_next = if upcase_next
+                                           {char.upcase, false}
+                                         elsif underscore_to_space && '_' == char
+                                           {' ', true}
+                                         else
+                                           {char.downcase, char.ascii_whitespace?}
+                                         end
+
             buffer[i] = replaced_char.ord.to_u8!
-            upcase_next = char.ascii_whitespace?
           else
             buffer[i] = byte
             upcase_next = false
@@ -1537,26 +1546,31 @@ class String
       end
     end
 
-    String.build(bytesize) { |io| titleize io, options }
+    String.build(bytesize) { |io| titleize io, options, underscore_to_space: underscore_to_space }
   end
 
   # Writes a titleized version of `self` to the given *io*.
+  # Optionally, if *underscore_to_space* is `true`, underscores (`_`) will be converted to a space and the following letter converted to uppercase.
   #
   # ```
   # io = IO::Memory.new
   # "x-men: the last stand".titleize io
   # io.to_s # => "X-men: The Last Stand"
   # ```
-  def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+  def titleize(io : IO, options : Unicode::CaseOptions = :none, *, underscore_to_space : Bool = false) : Nil
     upcase_next = true
 
     each_char_with_index do |char, i|
       if upcase_next
+        upcase_next = false
         char.titlecase(options) { |c| io << c }
+      elsif underscore_to_space && '_' == char
+        upcase_next = true
+        io << ' '
       else
+        upcase_next = char.whitespace?
         char.downcase(options) { |c| io << c }
       end
-      upcase_next = char.whitespace?
     end
   end
 
@@ -2536,7 +2550,7 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    raise IndexError.new unless byte_index
+    raise IndexError.new unless byte_index && byte_index < bytesize
 
     width = char_bytesize_at(byte_index)
     replacement_width = replacement.bytesize
@@ -3334,8 +3348,22 @@ class String
   # ```
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
-      return to_slice.fast_index(search.ord.to_u8, offset)
+    if single_byte_optimizable?
+      # With `single_byte_optimizable?` there are only ASCII characters and
+      # invalid UTF-8 byte sequences, and we can reject anything that is neither
+      # ASCII nor the replacement character.
+      case search
+      when .ascii?
+        return to_slice.fast_index(search.ord.to_u8!, offset)
+      when Char::REPLACEMENT
+        offset.upto(bytesize - 1) do |i|
+          if to_unsafe[i] >= 0x80
+            return i.to_i
+          end
+        end
+      end
+
+      return nil
     end
 
     offset += size if offset < 0
@@ -3433,6 +3461,11 @@ class String
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
 
+  # :ditto:
+  def index!(search : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32
+    index(search, offset, options: options) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the _last_ appearance of *search* in the string,
   # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
@@ -3445,8 +3478,22 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && single_byte_optimizable?
-      return to_slice.rindex(search.ord.to_u8, offset)
+    if single_byte_optimizable?
+      # With `single_byte_optimizable?` there are only ASCII characters and
+      # invalid UTF-8 byte sequences, and we can reject anything that is neither
+      # ASCII nor the replacement character.
+      case search
+      when .ascii?
+        return to_slice.rindex(search.ord.to_u8!, offset)
+      when Char::REPLACEMENT
+        offset.downto(0) do |i|
+          if to_unsafe[i] >= 0x80
+            return i.to_i
+          end
+        end
+      end
+
+      return nil
     end
 
     offset += size if offset < 0
@@ -4198,7 +4245,6 @@ class String
     count = 0
     match_offset = slice_offset = 0
 
-    options = Regex::MatchOptions::None
     while match = separator.match_at_byte_index(self, match_offset, options: options)
       index = match.byte_begin(0)
       match_bytesize = match.byte_end(0) - index
@@ -4744,7 +4790,6 @@ class String
   def scan(pattern : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None, &) : self
     byte_offset = 0
 
-    options = Regex::MatchOptions::None
     while match = pattern.match_at_byte_index(self, byte_offset, options: options)
       index = match.byte_begin(0)
       $~ = match

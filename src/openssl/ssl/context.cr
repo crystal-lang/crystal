@@ -40,8 +40,6 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-    #
-    # It uses `CIPHERS_OLD` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
@@ -49,8 +47,6 @@ abstract class OpenSSL::SSL::Context
       {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_server"
       {% end %}
-
-      self.ciphers = CIPHERS_OLD
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -128,18 +124,12 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Server.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-    #
-    # It uses `CIPHERS_INTERMEDIATE` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
       {% if LibSSL.has_method?(:x509_verify_param_lookup) %}
         self.default_verify_param = "ssl_client"
       {% end %}
-
-      set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
-
-      self.ciphers = CIPHERS_INTERMEDIATE
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -188,7 +178,7 @@ abstract class OpenSSL::SSL::Context
       {% if LibSSL.has_method?(:ssl_ctx_set_alpn_select_cb) %}
         alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
           proto = Box(Bytes).unbox(data)
-          ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
+          ret = LibSSL.ssl_select_next_proto(o, olen, proto, proto.size, i, ilen)
           if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
             LibSSL::SSL_TLSEXT_ERR_NOACK
           else
@@ -294,19 +284,31 @@ abstract class OpenSSL::SSL::Context
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
   end
 
-  # Specify a list of TLS ciphers to use or discard.
+  # Specify a list of TLS ciphers to use or discard for TLSv1.2 and below.
   #
-  # This affects only TLSv1.2 and below. See `#security_level=` for some
-  # sensible system configuration.
+  # See `#security_level=` for some sensible system configuration.
+  #
+  # This method does not impact TLSv1.3 ciphersuites. Use `#cipher_suites=`
+  # to configure those.
+  #
+  # NOTE: The ciphers available to an application are determined by the
+  #       linked version of the system SSL library. A comprehensive list
+  #       of ciphers can be found in the
+  #       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#CIPHER-STRINGS).
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
     ciphers
   end
 
-  # Specify a list of TLS cipher suites to use or discard.
+  # Specify a list of TLS ciphersuites to use or discard for TLSv1.3.
   #
   # See `#security_level=` for some sensible system configuration.
+  #
+  # NOTE: The ciphersuites available to an application are determined by the
+  #       linked version of the system SSL library. A comprehensive list
+  #       of ciphersuites can be found in the
+  #       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#TLS-v1.3-cipher-suites).
   def cipher_suites=(cipher_suites : String)
     {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
@@ -318,36 +320,30 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Sets the current ciphers and ciphers suites to **modern** compatibility level as per Mozilla
-  # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`. See `#security_level=` for some
-  # sensible system configuration.
+  # recommendations. See `#security_level=` for some sensible system configuration.
+  #
+  # WARNING: Does nothing as of Crystal 1.13.
+  # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
+  @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
   def set_modern_ciphers
-    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
-      self.cipher_suites = CIPHER_SUITES_MODERN
-    {% else %}
-      self.ciphers = CIPHERS_MODERN
-    {% end %}
   end
 
   # Sets the current ciphers and ciphers suites to **intermediate** compatibility level as per Mozilla
-  # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`. See `#security_level=` for some
-  # sensible system configuration.
+  # recommendations. See `#security_level=` for some sensible system configuration.
+  #
+  # WARNING: Does nothing as of Crystal 1.13.
+  # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
+  @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
   def set_intermediate_ciphers
-    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
-      self.cipher_suites = CIPHER_SUITES_INTERMEDIATE
-    {% else %}
-      self.ciphers = CIPHERS_INTERMEDIATE
-    {% end %}
   end
 
   # Sets the current ciphers and ciphers suites to **old** compatibility level as per Mozilla
-  # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`. See `#security_level=` for some
-  # sensible system configuration.
+  # recommendations. See `#security_level=` for some sensible system configuration.
+  #
+  # WARNING: Does nothing as of Crystal 1.13.
+  # WARNING: Didn't work as expected as of OpenSSL 1.1 (didn't configure TLSv1.2 and below).
+  @[Deprecated("Deprecated with no replacement. Prefer #security_level, global system configuration or build your own from https://wiki.mozilla.org/Security/Server_Side_TLS")]
   def set_old_ciphers
-    {% if LibSSL.has_method?(:ssl_ctx_set_ciphersuites) %}
-      self.cipher_suites = CIPHER_SUITES_OLD
-    {% else %}
-      self.ciphers = CIPHERS_OLD
-    {% end %}
   end
 
   # Returns the security level used by this TLS context.

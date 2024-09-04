@@ -46,7 +46,8 @@ module Crystal
 
       @macro_types["Arg"] = NonGenericMacroType.new self, "Arg", ast_node
       @macro_types["ProcNotation"] = NonGenericMacroType.new self, "ProcNotation", ast_node
-      @macro_types["Def"] = NonGenericMacroType.new self, "Def", ast_node
+      @macro_types["Def"] = def_type = NonGenericMacroType.new self, "Def", ast_node
+      @macro_types["External"] = NonGenericMacroType.new self, "External", def_type
       @macro_types["Macro"] = NonGenericMacroType.new self, "Macro", ast_node
 
       @macro_types["UnaryExpression"] = unary_expression = NonGenericMacroType.new self, "UnaryExpression", ast_node
@@ -54,6 +55,8 @@ module Crystal
       @macro_types["PointerOf"] = NonGenericMacroType.new self, "PointerOf", unary_expression
       @macro_types["SizeOf"] = NonGenericMacroType.new self, "SizeOf", unary_expression
       @macro_types["InstanceSizeOf"] = NonGenericMacroType.new self, "InstanceSizeOf", unary_expression
+      @macro_types["AlignOf"] = NonGenericMacroType.new self, "AlignOf", unary_expression
+      @macro_types["InstanceAlignOf"] = NonGenericMacroType.new self, "InstanceAlignOf", unary_expression
       @macro_types["Out"] = NonGenericMacroType.new self, "Out", unary_expression
       @macro_types["Splat"] = NonGenericMacroType.new self, "Splat", unary_expression
       @macro_types["DoubleSplat"] = NonGenericMacroType.new self, "DoubleSplat", unary_expression
@@ -88,14 +91,18 @@ module Crystal
       @macro_types["Cast"] = NonGenericMacroType.new self, "Cast", ast_node
       @macro_types["NilableCast"] = NonGenericMacroType.new self, "NilableCast", ast_node
       @macro_types["MacroId"] = NonGenericMacroType.new self, "MacroId", ast_node
+      @macro_types["TypeNode"] = NonGenericMacroType.new self, "TypeNode", ast_node
+
+      @macro_types["MacroExpression"] = NonGenericMacroType.new self, "MacroExpression", ast_node
       @macro_types["MacroFor"] = NonGenericMacroType.new self, "MacroFor", ast_node
       @macro_types["MacroIf"] = NonGenericMacroType.new self, "MacroIf", ast_node
-      @macro_types["TypeNode"] = NonGenericMacroType.new self, "TypeNode", ast_node
+      @macro_types["MacroLiteral"] = NonGenericMacroType.new self, "MacroLiteral", ast_node
+      @macro_types["MacroVar"] = NonGenericMacroType.new self, "MacroVar", ast_node
+      @macro_types["MacroVerbatim"] = NonGenericMacroType.new self, "MacroVerbatim", unary_expression
 
       # bottom type
       @macro_types["NoReturn"] = @macro_no_return = NoReturnMacroType.new self
 
-      # unimplemented types (see https://github.com/crystal-lang/crystal/issues/3274#issuecomment-860092436)
       @macro_types["Self"] = NonGenericMacroType.new self, "Self", ast_node
       @macro_types["Underscore"] = NonGenericMacroType.new self, "Underscore", ast_node
       @macro_types["Select"] = NonGenericMacroType.new self, "Select", ast_node
@@ -115,10 +122,6 @@ module Crystal
       @macro_types["ExternalVar"] = NonGenericMacroType.new self, "ExternalVar", ast_node
       @macro_types["Include"] = NonGenericMacroType.new self, "Include", ast_node
       @macro_types["TypeDef"] = NonGenericMacroType.new self, "TypeDef", ast_node
-      @macro_types["MacroExpression"] = NonGenericMacroType.new self, "MacroExpression", ast_node
-      @macro_types["MacroLiteral"] = NonGenericMacroType.new self, "MacroLiteral", ast_node
-      @macro_types["MacroVar"] = NonGenericMacroType.new self, "MacroVar", ast_node
-      @macro_types["MacroVerbatim"] = NonGenericMacroType.new self, "MacroVerbatim", unary_expression
     end
 
     # Returns the macro type for a given AST node. This association is done

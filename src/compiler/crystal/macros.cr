@@ -442,6 +442,8 @@ module Crystal::Macros
     # Returns a `MacroId` that contains the documentation comments attached to this node, or an empty `MacroId` if there are none.
     # Each line is prefixed with a `#` character to allow the output to be used directly within another node's documentation comment.
     #
+    # A common use case is combining this method with the `@caller` macro instance variable in order to allow [merging macro expansion and call comments](https://crystal-lang.org/reference/syntax_and_semantics/macros/index.html#merging-expansion-and-call-comments).
+    #
     # WARNING: The return value will be empty when executed outside of the `crystal docs` command.
     def doc_comment : MacroId
     end
@@ -798,6 +800,10 @@ module Crystal::Macros
     def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
+    # Similar to `Hash#has_hey?`
+    def has_key?(key : ASTNode) : BoolLiteral
+    end
+
     # Returns the type specified at the end of the Hash literal, if any.
     #
     # This refers to the key type after brackets in `{} of String => Int32`.
@@ -871,6 +877,10 @@ module Crystal::Macros
 
     # Adds or replaces a key.
     def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `NamedTuple#has_key?`
+    def has_key?(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -1405,6 +1415,27 @@ module Crystal::Macros
     end
   end
 
+  # A fictitious node representing the body of a `Def` marked with
+  # `@[Primitive]`.
+  class Primitive < ASTNode
+    # Returns the name of the primitive.
+    #
+    # This is identical to the argument to the associated `@[Primitive]`
+    # annotation.
+    #
+    # ```
+    # module Foo
+    #   @[Primitive(:abc)]
+    #   def foo
+    #   end
+    # end
+    #
+    # {{ Foo.methods.first.body.name }} # => :abc
+    # ```
+    def name : SymbolLiteral
+    end
+  end
+
   # A macro definition.
   class Macro < ASTNode
     # Returns the name of this macro.
@@ -1452,11 +1483,43 @@ module Crystal::Macros
   end
 
   # A `sizeof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # sizeof({{ node.exp }})
+  # ```
   class SizeOf < UnaryExpression
   end
 
   # An `instance_sizeof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # instance_sizeof({{ node.exp }})
+  # ```
   class InstanceSizeOf < UnaryExpression
+  end
+
+  # A `alignof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # alignof({{ node.exp }})
+  # ```
+  class AlignOf < UnaryExpression
+  end
+
+  # An `instance_alignof` expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # instance_alignof({{ node.exp }})
+  # ```
+  class InstanceAlignOf < UnaryExpression
   end
 
   # An `out` expression.
@@ -1522,7 +1585,7 @@ module Crystal::Macros
     end
   end
 
-  # A `when` or `in` inside a `case`.
+  # A `when` or `in` inside a `case` or `select`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -1557,8 +1620,30 @@ module Crystal::Macros
   end
 
   # A `select` expression.
-  # class Select < ASTNode
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # select
+  # {% for when_clause in node.whens %}
+  #   {{ when_clause }}
+  # {% end %}
+  # {% else_clause = node.else %}
+  # {% unless else_clause.is_a?(Nop) %}
+  #   else
+  #     {{ else_clause }}
+  # {% end %}
   # end
+  # ```
+  class Select < ASTNode
+    # Returns the `when`s of this `select`.
+    def whens : ArrayLiteral(When)
+    end
+
+    # Returns the `else` of this `select`.
+    def else : ASTNode
+    end
+  end
 
   # Node that represents an implicit object in:
   #
@@ -1769,6 +1854,185 @@ module Crystal::Macros
     # Currently this is always a `Nop`, because annotation definitions cannot
     # contain anything at all.
     def body : Nop
+    end
+  end
+
+  # A lib definition.
+  #
+  # Every lib definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class LibDef < ASTNode
+    # Returns the keyword used to define this type.
+    #
+    # For `LibDef` this is always `lib`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # A struct or union definition inside a lib.
+  #
+  # Every type definition `node` is equivalent to:
+  #
+  # ```
+  # {% begin %}
+  #   {{ node.kind }} {{ node.name }}
+  #     {{ node.body }}
+  #   end
+  # {% end %}
+  # ```
+  class CStructOrUnionDef < ASTNode
+    # Returns whether this node defines a C union.
+    def union? : BoolLiteral
+    end
+
+    # Returns the keyword used to define this type.
+    #
+    # For `CStructOrUnionDef` this is either `struct` or `union`.
+    def kind : MacroId
+    end
+
+    # Returns the name of this type definition.
+    #
+    # *generic_args* has no effect. It exists solely to match the interface of
+    # other related AST nodes.
+    def name(*, generic_args : BoolLiteral = true) : Path
+    end
+
+    # Returns the body of this type definition.
+    def body : ASTNode
+    end
+  end
+
+  # A function declaration inside a lib, or a top-level C function definition.
+  #
+  # Every function `node` is equivalent to:
+  #
+  # ```
+  # fun {{ node.name }} {% if real_name = node.real_name %}= {{ real_name }}{% end %}(
+  #   {% for arg in node.args %} {{ arg }}, {% end %}
+  #   {% if node.variadic? %} ... {% end %}
+  # ) {% if return_type = node.return_type %}: {{ return_type }}{% end %}
+  # {% if node.has_body? %}
+  #   {{ body }}
+  # end
+  # {% end %}
+  # ```
+  class FunDef < ASTNode
+    # Returns the name of the function in Crystal.
+    def name : MacroId
+    end
+
+    # Returns the real C name of the function, if any.
+    def real_name : StringLiteral | Nop
+    end
+
+    # Returns the parameters of the function.
+    #
+    # This does not include the variadic parameter.
+    def args : ArrayLiteral(Arg)
+    end
+
+    # Returns whether the function is variadic.
+    def variadic? : BoolLiteral
+    end
+
+    # Returns the return type of the function, if specified.
+    def return_type : ASTNode | Nop
+    end
+
+    # Returns the body of the function, if any.
+    #
+    # Both top-level funs and lib funs may return a `Nop`. Instead, `#has_body?`
+    # can be used to distinguish between the two.
+    #
+    # ```
+    # macro body_class(x)
+    #   {{ (x.is_a?(LibDef) ? x.body : x).body.class_name }}
+    # end
+    #
+    # body_class(lib MyLib
+    #   fun foo
+    # end) # => "Nop"
+    #
+    # body_class(fun foo
+    # end) # => "Nop"
+    # ```
+    def body : ASTNode | Nop
+    end
+
+    # Returns whether this function has a body.
+    #
+    # Top-level funs have a body, whereas lib funs do not.
+    #
+    # ```
+    # macro has_body(x)
+    #   {{ (x.is_a?(LibDef) ? x.body : x).has_body? }}
+    # end
+    #
+    # has_body(lib MyLib
+    #   fun foo
+    # end) # => false
+    #
+    # has_body(fun foo
+    # end) # => true
+    # ```
+    def has_body? : BoolLiteral
+    end
+  end
+
+  # A typedef inside a lib.
+  #
+  # Every typedef `node` is equivalent to:
+  #
+  # ```
+  # type {{ node.name }} = {{ node.type }}
+  # ```
+  class TypeDef < ASTNode
+    # Returns the name of the typedef.
+    def name : Path
+    end
+
+    # Returns the name of the type this typedef is equivalent to.
+    def type : ASTNode
+    end
+  end
+
+  # An external variable declaration inside a lib.
+  #
+  # Every variable `node` is equivalent to:
+  #
+  # ```
+  # ${{ node.name }} {% if real_name = node.real_name %}= {{ real_name }}{% end %} : {{ node.type }}
+  # ```
+  class ExternalVar < ASTNode
+    # Returns the name of the variable in Crystal, without the preceding `$`.
+    def name : MacroId
+    end
+
+    # Returns the real C name of the variable, if any.
+    def real_name : StringLiteral | Nop
+    end
+
+    # Returns the name of the variable's type.
+    def type : ASTNode
     end
   end
 
@@ -2000,29 +2264,22 @@ module Crystal::Macros
     end
   end
 
-  # class LibDef < ASTNode
-  # end
+  # An `alias` statement.
+  #
+  # Every statement `node` is equivalent to:
+  #
+  # ```
+  # alias {{ node.name }} = {{ node.type }}
+  # ```
+  class Alias < ASTNode
+    # Returns the name of the alias.
+    def name : Path
+    end
 
-  # class FunDef < ASTNode
-  # end
-
-  # class TypeDef < ASTNode
-  # end
-
-  # abstract class CStructOrUnionDef < ASTNode
-  # end
-
-  # class StructDef < CStructOrUnionDef
-  # end
-
-  # class UnionDef < CStructOrUnionDef
-  # end
-
-  # class ExternalVar < ASTNode
-  # end
-
-  # class Alias < ASTNode
-  # end
+    # Returns the name of the type this alias is equivalent to.
+    def type : ASTNode
+    end
+  end
 
   # A metaclass in a type expression: `T.class`
   class Metaclass < ASTNode
@@ -2063,18 +2320,46 @@ module Crystal::Macros
     end
   end
 
-  # class TypeOf < ASTNode
-  # end
+  # A `typeof` expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # typeof({{ node.args.splat }})
+  # ```
+  class TypeOf < ASTNode
+    # Returns the arguments to this `typeof`.
+    def args : ArrayLiteral(ASTNode)
+    end
+  end
 
-  # A macro expression,
-  # surrounded by {{ ... }} (output = true)
-  # or by {% ... %} (output = false)
-  # class MacroExpression < ASTNode
-  # end
+  # A macro expression.
+  #
+  # Every expression *node* is equivalent to:
+  #
+  # ```
+  # {% if node.output? %}
+  #   \{{ {{ node.exp }} }}
+  # {% else %}
+  #   \{% {{ node.exp }} %}
+  # {% end %}
+  # ```
+  class MacroExpression < ASTNode
+    # Returns the expression inside this node.
+    def exp : ASTNode
+    end
 
-  # Free text that is part of a macro
-  # class MacroLiteral < ASTNode
-  # end
+    # Returns whether this node interpolates the expression's result.
+    def output? : BoolLiteral
+    end
+  end
+
+  # Free text that is part of a macro.
+  class MacroLiteral < ASTNode
+    # Returns the text of the literal.
+    def value : MacroId
+    end
+  end
 
   # An `if` inside a macro, e.g.
   #
@@ -2120,6 +2405,35 @@ module Crystal::Macros
     end
   end
 
+  # A macro fresh variable.
+  #
+  # Every variable `node` is equivalent to:
+  #
+  # ```
+  # {{ "%#{name}".id }}{% if expressions = node.expressions %}{{ "{#{expressions.splat}}".id }}{% end %}
+  # ```
+  class MacroVar < ASTNode
+    # Returns the name of the fresh variable.
+    def name : MacroId
+    end
+
+    # Returns the associated indices of the fresh variable.
+    def expressions : ArrayLiteral
+    end
+  end
+
+  # A verbatim expression.
+  #
+  # Every expression `node` is equivalent to:
+  #
+  # ```
+  # \{% verbatim do %}
+  #   {{ node.exp }}
+  # \{% end %}
+  # ```
+  class MacroVerbatim < UnaryExpression
+  end
+
   # The `_` expression. May appear in code, such as an assignment target, and in
   # type names.
   class Underscore < ASTNode
@@ -2138,6 +2452,75 @@ module Crystal::Macros
   # end
   # ```
   class MagicConstant < ASTNode
+  end
+
+  # An inline assembly expression.
+  #
+  # Every assembly `node` is equivalent to:
+  #
+  # ```
+  # asm(
+  #   {{ node.text }} :
+  #   {{ node.outputs.splat }} :
+  #   {{ node.inputs.splat }} :
+  #   {{ node.clobbers.splat }} :
+  #   {% if node.volatile? %} "volatile", {% end %}
+  #   {% if node.alignstack? %} "alignstack", {% end %}
+  #   {% if node.intel? %} "intel", {% end %}
+  #   {% if node.can_throw? %} "unwind", {% end %}
+  # )
+  # ```
+  class Asm < ASTNode
+    # Returns the template string for this assembly expression.
+    def text : StringLiteral
+    end
+
+    # Returns an array of output operands for this assembly expression.
+    def outputs : ArrayLiteral(AsmOperand)
+    end
+
+    # Returns an array of input operands for this assembly expression.
+    def inputs : ArrayLiteral(AsmOperand)
+    end
+
+    # Returns an array of clobbered register names for this assembly expression.
+    def clobbers : ArrayLiteral(StringLiteral)
+    end
+
+    # Returns whether the assembly expression contains side effects that are
+    # not listed in `#outputs`, `#inputs`, and `#clobbers`.
+    def volatile? : BoolLiteral
+    end
+
+    # Returns whether the assembly expression requires stack alignment code.
+    def alignstack? : BoolLiteral
+    end
+
+    # Returns `true` if the template string uses the Intel syntax, `false` if it
+    # uses the AT&T syntax.
+    def intel? : BoolLiteral
+    end
+
+    # Returns whether the assembly expression might unwind the stack.
+    def can_throw? : BoolLiteral
+    end
+  end
+
+  # An output or input operand for an `Asm` node.
+  #
+  # Every operand `node` is equivalent to:
+  #
+  # ```
+  # {{ node.constraint }}({{ node.exp }})
+  # ```
+  class AsmOperand < ASTNode
+    # Returns the constraint string of this operand.
+    def constraint : StringLiteral
+    end
+
+    # Returns the associated output or input argument of this operand.
+    def exp : ASTNode
+    end
   end
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
@@ -2449,6 +2832,18 @@ module Crystal::Macros
     def resolve? : TypeNode
     end
 
+    # Return `true` if `self` is private and `false` otherwise.
+    def private? : BoolLiteral
+    end
+
+    # Return `true` if `self` is public and `false` otherwise.
+    def public? : BoolLiteral
+    end
+
+    # Returns visibility of `self` as `:public` or `:private?`
+    def visibility : SymbolLiteral
+    end
+
     # Returns `true` if *other* is an ancestor of `self`.
     def <(other : TypeNode) : BoolLiteral
     end
@@ -2465,6 +2860,25 @@ module Crystal::Macros
     # Returns `true` if *other* is the same as `self` or if
     # `self` is an ancestor of *other*.
     def >=(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns whether `self` contains any inner pointers.
+    #
+    # Primitive types, except `Void`, are expected to not contain inner pointers.
+    # `Proc` and `Pointer` contain inner pointers.
+    # Unions, structs and collection types (tuples, static arrays)
+    # have inner pointers if any of their contained types has inner pointers.
+    # All other types, including classes, are expected to contain inner pointers.
+    #
+    # Types that do not have inner pointers may opt to use atomic allocations,
+    # i.e. `GC.malloc_atomic` rather than `GC.malloc`. The compiler ensures
+    # that, for any type `T`:
+    #
+    # * `Pointer(T).malloc` is atomic if and only if `T` has no inner pointers;
+    # * `T.allocate` is atomic if and only if `T` is a reference type and
+    #   `ReferenceStorage(T)` has no inner pointers.
+    # NOTE: Like `#instance_vars` this method must be called from within a method. The result may be incorrect when used in top-level code.
+    def has_inner_pointers? : BoolLiteral
     end
   end
 end

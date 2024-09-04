@@ -216,6 +216,12 @@ describe "Hash" do
       h.should eq({1 => v, 2 => ["2"]})
       h[1].should be(v)
     end
+
+    it "doesn't put duplicate keys (#14425)" do
+      h = {1 => 2}
+      h.put_if_absent(3) { h[3] = 4 }.should eq(4)
+      h.should eq({1 => 2, 3 => 4})
+    end
   end
 
   describe "update" do
@@ -269,6 +275,17 @@ describe "Hash" do
 
       h.update(3000) { |v| v + 42 }
       h[3000].should eq(3000 + 42)
+    end
+
+    it "doesn't create a duplicate key, if key does not exist and default block adds the given key (#14416)" do
+      h = Hash(String, Int32).new do |h, new_key|
+        h[new_key] = 1
+        new_key.size
+      end
+
+      h.update("new key") { |v| v * 6 }
+      h.size.should eq(1)
+      h["new key"].should eq(7 * 6)
     end
 
     it "inserts a new entry using the default value as input, if key does not exist" do
@@ -1376,16 +1393,26 @@ describe "Hash" do
     hash.@indices_size_pow2.should eq(12)
   end
 
-  it "rehashes" do
-    a = [1]
-    h = {a => 0}
-    (10..100).each do |i|
-      h[[i]] = i
+  describe "#rehash" do
+    it "rehashes" do
+      a = [1]
+      h = {a => 0}
+      (10..100).each do |i|
+        h[[i]] = i
+      end
+      a << 2
+      h[a]?.should be_nil
+      h.rehash
+      h[a].should eq(0)
     end
-    a << 2
-    h[a]?.should be_nil
-    h.rehash
-    h[a].should eq(0)
+
+    it "resets @first (#14602)" do
+      h = {"a" => 1, "b" => 2}
+      h.delete("a")
+      h.rehash
+      # We cannot test direct equivalence here because `Hash#==(Hash)` does not depend on `@first`
+      h.to_s.should eq %({"b" => 2})
+    end
   end
 
   describe "some edge cases while changing the implementation to open addressing" do

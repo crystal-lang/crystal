@@ -505,8 +505,6 @@ describe "Code gen: block" do
 
   it "can break without value from yielder that returns nilable (1)" do
     run(%(
-      require "prelude"
-
       def foo
         yield
         ""
@@ -522,8 +520,6 @@ describe "Code gen: block" do
 
   it "can break without value from yielder that returns nilable (2)" do
     run(%(
-      require "prelude"
-
       def foo
         yield
         ""
@@ -539,8 +535,6 @@ describe "Code gen: block" do
 
   it "break with value from yielder that returns a nilable" do
     run(%(
-      require "prelude"
-
       def foo
         yield
         ""
@@ -1046,8 +1040,6 @@ describe "Code gen: block" do
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated" do
     codegen(%(
-      require "prelude"
-
       class Bar
         def initialize(@bar : NoReturn)
         end
@@ -1076,8 +1068,6 @@ describe "Code gen: block" do
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated (2)" do
     codegen(%(
-      require "prelude"
-
       class Bar
         def initialize(@bar : NoReturn)
         end

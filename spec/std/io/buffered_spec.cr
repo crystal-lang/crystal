@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/string"
 
 private class BufferedWrapper < IO
   include IO::Buffered
@@ -19,12 +20,12 @@ private class BufferedWrapper < IO
     io
   end
 
-  private def unbuffered_read(slice : Bytes)
+  private def unbuffered_read(slice : Bytes) : Int32
     @called_unbuffered_read = true
     @io.read(slice)
   end
 
-  private def unbuffered_write(slice : Bytes)
+  private def unbuffered_write(slice : Bytes) : Nil
     @io.write(slice)
   end
 
@@ -176,22 +177,15 @@ describe "IO::Buffered" do
     io.read_char.should eq('界')
     io.read_char.should be_nil
 
-    io = IO::Memory.new
-    io.write Bytes[0xf8, 0xff, 0xff, 0xff]
-    io.rewind
-    io = BufferedWrapper.new(io)
+    {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+      BufferedWrapper.new(IO::Memory.new(Bytes{{ bytes }})).read_char.should eq({{ char }})
+    {% end %}
 
-    expect_raises(InvalidByteSequenceError) do
-      io.read_char
-    end
-
-    io = IO::Memory.new
-    io.write_byte 0x81_u8
-    io.rewind
-    io = BufferedWrapper.new(io)
-    expect_raises(InvalidByteSequenceError) do
-      p io.read_char
-    end
+    {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+      expect_raises(InvalidByteSequenceError) do
+        BufferedWrapper.new(IO::Memory.new(Bytes{{ bytes }})).read_char
+      end
+    {% end %}
   end
 
   it "reads byte" do

@@ -6,6 +6,8 @@ module Spec
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
 
+    protected abstract def cli : CLI
+
     def randomize(randomizer)
       children.each do |child|
         child.randomize(randomizer) if child.is_a?(ExampleGroup)
@@ -126,29 +128,24 @@ module Spec
     exception : Exception?
 
   # :nodoc:
-  def self.root_context
-    RootContext.instance
-  end
-
-  # :nodoc:
-  def self.current_context : Context
-    RootContext.current_context
+  class CLI
+    getter root_context : RootContext { RootContext.new(self) }
+    property current_context : Context { root_context }
   end
 
   # :nodoc:
   #
   # The root context is the main interface that the spec DSL interacts with.
   class RootContext < Context
-    class_getter instance = RootContext.new
-    class_getter current_context : Context = @@instance
-
     @results : Hash(Status, Array(Result))
+
+    protected getter cli : CLI
 
     def results_for(status : Status)
       @results[status]
     end
 
-    def initialize
+    def initialize(@cli : CLI)
       @results = Status.values.to_h { |status| {status, [] of Result} }
     end
 
@@ -167,7 +164,7 @@ module Spec
     end
 
     def report_formatters(result)
-      Spec.formatters.each(&.report(result))
+      cli.formatters.each(&.report(result))
     end
 
     def succeeded
@@ -175,11 +172,13 @@ module Spec
     end
 
     def finish(elapsed_time, aborted = false)
-      Spec.formatters.each(&.finish(elapsed_time, aborted))
-      Spec.formatters.each(&.print_results(elapsed_time, aborted))
+      cli.formatters.each(&.finish(elapsed_time, aborted))
+      if cli.formatters.any?(&.should_print_summary?)
+        print_summary(elapsed_time, aborted)
+      end
     end
 
-    def print_results(elapsed_time, aborted = false)
+    def print_summary(elapsed_time, aborted = false)
       pendings = results_for(:pending)
       unless pendings.empty?
         puts
@@ -191,6 +190,8 @@ module Spec
 
       failures = results_for(:fail)
       errors = results_for(:error)
+
+      cwd = Dir.current
 
       failures_and_errors = failures + errors
       unless failures_and_errors.empty?
@@ -217,23 +218,23 @@ module Spec
 
             if ex.is_a?(SpecError)
               puts
-              puts Spec.color("     # #{Spec.relative_file(ex.file)}:#{ex.line}", :comment)
+              puts Spec.color("     # #{Path[ex.file].relative_to(cwd)}:#{ex.line}", :comment)
             end
           end
         end
       end
 
-      if Spec.slowest
+      if cli.slowest
         puts
         results = results_for(:success) + results_for(:fail)
-        top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
+        top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..cli.slowest.not_nil!]
         top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
         percent = (top_n_time * 100) / elapsed_time.total_seconds
-        puts "Top #{Spec.slowest} slowest examples (#{top_n_time.humanize} seconds, #{percent.round(2)}% of total time):"
+        puts "Top #{cli.slowest} slowest examples (#{top_n_time.humanize} seconds, #{percent.round(2)}% of total time):"
         top_n.each do |res|
           puts "  #{res.description}"
           res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
-          puts "    #{res_elapsed.colorize.bold} seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          puts "    #{res_elapsed.colorize.bold} seconds #{Path[res.file].relative_to(cwd)}:#{res.line}"
         end
       end
 
@@ -252,14 +253,14 @@ module Spec
       puts "Aborted!".colorize.red if aborted
       puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
-      puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
+      puts Spec.color("Only running `focus: true`", :focus) if cli.focus?
 
       unless failures_and_errors.empty?
         puts
         puts "Failed examples:"
         puts
         failures_and_errors.each do |fail|
-          print Spec.color("crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}", :error)
+          print Spec.color("crystal spec #{Path[fail.file].relative_to(cwd)}:#{fail.line}", :error)
           puts Spec.color(" # #{fail.description}", :comment)
         end
       end
@@ -268,23 +269,23 @@ module Spec
     end
 
     def print_order_message
-      if randomizer_seed = Spec.randomizer_seed
+      if randomizer_seed = cli.randomizer_seed
         puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
       end
     end
 
     def describe(description, file, line, end_line, focus, tags, &block)
-      Spec.focus = true if focus
+      cli.focus = true if focus
 
-      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, tags)
-      @@current_context.children << context
+      context = Spec::ExampleGroup.new(cli.current_context, description, file, line, end_line, focus, tags)
+      cli.current_context.children << context
 
-      old_context = @@current_context
-      @@current_context = context
+      old_context = cli.current_context
+      cli.current_context = context
       begin
         block.call
       ensure
-        @@current_context = old_context
+        cli.current_context = old_context
       end
     end
 
@@ -298,22 +299,22 @@ module Spec
 
     private def add_example(description, file, line, end_line, focus, tags, block)
       check_nesting_spec(file, line) do
-        Spec.focus = true if focus
-        @@current_context.children <<
-          Example.new(@@current_context, description, file, line, end_line, focus, tags, block)
+        cli.focus = true if focus
+        cli.current_context.children <<
+          Example.new(cli.current_context, description, file, line, end_line, focus, tags, block)
       end
     end
 
-    @@spec_nesting = false
+    @spec_nesting = false
 
     def check_nesting_spec(file, line, &block)
-      raise NestingSpecError.new("Can't nest `it` or `pending`", file, line) if @@spec_nesting
+      raise NestingSpecError.new("Can't nest `it` or `pending`", file, line) if @spec_nesting
 
-      @@spec_nesting = true
+      @spec_nesting = true
       begin
         yield
       ensure
-        @@spec_nesting = false
+        @spec_nesting = false
       end
     end
 
@@ -333,13 +334,18 @@ module Spec
     end
 
     # :nodoc:
+    def cli : CLI
+      @parent.cli
+    end
+
+    # :nodoc:
     def run
-      Spec.formatters.each(&.push(self))
+      cli.formatters.each(&.push(self))
 
       ran = run_around_all_hooks(ExampleGroup::Procsy.new(self) { internal_run })
       ran || internal_run
 
-      Spec.formatters.each(&.pop)
+      cli.formatters.each(&.pop)
     end
 
     protected def report(status : Status, description, file, line, elapsed = nil, ex = nil)

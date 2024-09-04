@@ -8,11 +8,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "e15cbd3b6b3e1bac1b16905f1b1a15ba6ae4e554"
+    default: "da59efb2dfd70dcd7272eaecceffb636ef547427"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.10.1/crystal-1.10.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.13.2/crystal-1.13.2-1"
 
 defaults:
   environment: &env
@@ -39,7 +39,7 @@ defaults:
 jobs:
   test_linux:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -70,7 +70,7 @@ jobs:
 
   test_alpine:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -81,7 +81,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 13.4.1
+      xcode: 15.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -115,7 +115,8 @@ jobs:
 
   test_preview_mt:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
+    resource_class: large
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -263,7 +264,7 @@ jobs:
 
   dist_linux:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -295,12 +296,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            # We need ruby-install >= 0.8.3
-            brew install ruby-install
-
-            ruby-install ruby 2.7.3
-
-            brew install pkgconfig libtool
+            brew install ruby@3 libffi pkgconfig libtool automake
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
@@ -311,7 +307,6 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus
@@ -346,7 +341,7 @@ jobs:
 
   dist_docker:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -362,7 +357,7 @@ jobs:
 
   publish_docker:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -417,7 +412,7 @@ jobs:
 
   dist_docs:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -463,7 +458,7 @@ jobs:
 
   test_dist_linux_on_docker:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux

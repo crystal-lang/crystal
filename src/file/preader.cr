@@ -14,17 +14,17 @@ class File::PReader < IO
     @pos = 0
   end
 
-  def unbuffered_read(slice : Bytes) : Int64
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
 
-    bytes_read = Crystal::System::FileDescriptor.pread(@file.fd, slice[0, count], @offset + @pos)
+    bytes_read = Crystal::System::FileDescriptor.pread(@file, slice[0, count], @offset + @pos)
 
     @pos += bytes_read
 
-    bytes_read
+    bytes_read.to_i32
   end
 
   def unbuffered_write(slice : Bytes) : NoReturn

@@ -1,7 +1,7 @@
 {% begin %}
-  {% if flag?(:win32) && flag?(:preview_dll) %}
+  {% if flag?(:win32) && !flag?(:static) %}
     {% config = nil %}
-    {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+    {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
       {% config ||= read_file?("#{dir.id}/llvm_VERSION") %}
     {% end %}
 
@@ -15,6 +15,9 @@
     {% llvm_ldflags = lines[2] %}
 
     @[Link("llvm")]
+    {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+      @[Link(dll: "LLVM-C.dll")]
+    {% end %}
     lib LibLLVM
     end
   {% else %}
@@ -32,7 +35,7 @@
 
   @[Link(ldflags: {{ llvm_ldflags }})]
   lib LibLLVM
-    VERSION = {{ llvm_version.strip.gsub(/git/, "") }}
+    VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/rc.*/, "") }}
     BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
   end
 {% end %}

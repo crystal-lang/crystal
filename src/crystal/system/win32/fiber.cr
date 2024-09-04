@@ -13,7 +13,7 @@ module Crystal::System::Fiber
     system_info.dwPageSize + RESERVED_STACK_SIZE
   end
 
-  def self.allocate_stack(stack_size) : Void*
+  def self.allocate_stack(stack_size, protect) : Void*
     unless memory_pointer = LibC.VirtualAlloc(nil, stack_size, LibC::MEM_COMMIT | LibC::MEM_RESERVE, LibC::PAGE_READWRITE)
       raise RuntimeError.from_winerror("VirtualAlloc")
     end
@@ -21,9 +21,11 @@ module Crystal::System::Fiber
     # Detects stack overflows by guarding the top of the stack, similar to
     # `LibC.mprotect`. Windows will fail to allocate a new guard page for these
     # fiber stacks and trigger a stack overflow exception
-    if LibC.VirtualProtect(memory_pointer, @@total_reserved_size, LibC::PAGE_READWRITE | LibC::PAGE_GUARD, out _) == 0
-      LibC.VirtualFree(memory_pointer, 0, LibC::MEM_RELEASE)
-      raise RuntimeError.from_winerror("VirtualProtect")
+    if protect
+      if LibC.VirtualProtect(memory_pointer, @@total_reserved_size, LibC::PAGE_READWRITE | LibC::PAGE_GUARD, out _) == 0
+        LibC.VirtualFree(memory_pointer, 0, LibC::MEM_RELEASE)
+        raise RuntimeError.from_winerror("VirtualProtect")
+      end
     end
 
     memory_pointer

@@ -77,9 +77,6 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  # TODO: improve this
-  def_hash to_f64
-
   def self.default_precision
     LibGMP.mpf_get_default_prec
   end
@@ -118,16 +115,58 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, self) }
   end
 
+  def +(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_add_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_sub_ui(mpf, self, {{ neg_ui }}) },
+        big_i:  self + {{ big_i }},
+      }
+    end
+  end
+
   def +(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_add(mpf, self, other.to_big_f) }
+  end
+
+  def -(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_sub_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_add_ui(mpf, self, {{ neg_ui }}) },
+        big_i:  self - {{ big_i }},
+      }
+    end
   end
 
   def -(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, self, other.to_big_f) }
   end
 
+  def *(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_mul_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_mul_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  self + {{ big_i }},
+      }
+    end
+  end
+
   def *(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
+  end
+
+  def /(other : Int::Primitive) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
+    raise DivisionByZeroError.new if other == 0
+    Int.primitive_ui_check(other) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
+      }
+    end
   end
 
   def /(other : BigFloat) : BigFloat
@@ -451,6 +490,29 @@ struct Int
   def <=>(other : BigFloat)
     -(other <=> self)
   end
+
+  def -(other : BigFloat) : BigFloat
+    Int.primitive_ui_check(self) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, other); LibGMP.mpf_add_ui(mpf, mpf, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, other); LibGMP.mpf_sub_ui(mpf, mpf, {{ neg_ui }}) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, BigFloat.new(self), other) },
+      }
+    end
+  end
+
+  def /(other : BigFloat) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
+    raise DivisionByZeroError.new if other == 0
+
+    Int.primitive_ui_check(self) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_ui_div(mpf, {{ ui }}, other) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_ui_div(mpf, {{ neg_ui }}, other); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, BigFloat.new(self), other) },
+      }
+    end
+  end
 end
 
 struct Float
@@ -548,8 +610,8 @@ end
 
 # :nodoc:
 struct Crystal::Hasher
-  def float(value : BigFloat)
-    normalized_hash = float_normalize_wrap(value) do |value|
+  def self.reduce_num(value : BigFloat)
+    float_normalize_wrap(value) do |value|
       # more exact version of `Math.frexp`
       LibGMP.mpf_get_d_2exp(out exp, value)
       frac = BigFloat.new do |mpf|
@@ -561,6 +623,5 @@ struct Crystal::Hasher
       end
       float_normalize_reference(value, frac, exp)
     end
-    permute(normalized_hash)
   end
 end

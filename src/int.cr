@@ -193,6 +193,32 @@ struct Int
     {% end %}
   end
 
+  # :nodoc:
+  #
+  # Computes (x * y) % z, but without intermediate overflows.
+  # Precondition: `0 <= x < z && y >= 0`
+  def self.mulmod(x, y, z)
+    result = zero
+    while y > 0
+      if y.bits_set?(1)
+        # result = (result + x) % z
+        if result >= z &- x
+          result &-= z &- x
+        else
+          result &+= x
+        end
+      end
+      # x = (x + x) % z
+      if x >= z &- x
+        x &-= z &- x
+      else
+        x = x.unsafe_shl(1)
+      end
+      y = y.unsafe_shr(1)
+    end
+    result
+  end
+
   # Returns the result of shifting this number's bits *count* positions to the right.
   # Also known as arithmetic right shift.
   #
@@ -527,11 +553,6 @@ struct Int
     !even?
   end
 
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.int(self)
-  end
-
   def succ : self
     self + 1
   end
@@ -567,6 +588,20 @@ struct Int
   end
 
   # Calls the given block with each integer value from self down to `to`.
+  #
+  # ```
+  # 3.downto(1) do |i|
+  #   puts i
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 3
+  # 2
+  # 1
+  # ```
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
@@ -749,7 +784,7 @@ struct Int
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).
     chars = uninitialized UInt8[129]
-    ptr_end = chars.to_unsafe + 128
+    ptr_end = chars.to_unsafe + 129
     ptr = ptr_end
     num = self
 

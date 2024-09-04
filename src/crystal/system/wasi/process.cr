@@ -48,8 +48,13 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
+  @[Deprecated("Use `#on_terminate` instead")]
   def self.on_interrupt(&handler : ->) : Nil
     raise NotImplementedError.new("Process.on_interrupt")
+  end
+
+  def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
+    raise NotImplementedError.new("Process.on_terminate")
   end
 
   def self.ignore_interrupts! : Nil

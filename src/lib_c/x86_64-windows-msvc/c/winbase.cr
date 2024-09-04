@@ -4,6 +4,10 @@ require "c/int_safe"
 require "c/minwinbase"
 
 lib LibC
+  alias HLOCAL = Void*
+
+  fun LocalFree(hMem : HLOCAL)
+
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
   FORMAT_MESSAGE_FROM_STRING     = 0x00000400_u32
@@ -12,7 +16,9 @@ lib LibC
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
   FORMAT_MESSAGE_MAX_WIDTH_MASK  = 0x000000FF_u32
 
-  STD_ERROR_HANDLE = 0xFFFFFFF4_u32
+  STD_INPUT_HANDLE  = 0xFFFFFFF6_u32
+  STD_OUTPUT_HANDLE = 0xFFFFFFF5_u32
+  STD_ERROR_HANDLE  = 0xFFFFFFF4_u32
 
   fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
@@ -67,4 +73,7 @@ lib LibC
   end
 
   fun GetFileInformationByHandleEx(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
+
+  fun LookupAccountNameW(lpSystemName : LPWSTR, lpAccountName : LPWSTR, sid : SID*, cbSid : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
+  fun LookupAccountSidW(lpSystemName : LPWSTR, sid : SID*, name : LPWSTR, cchName : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
 end

@@ -1,6 +1,7 @@
 {% if flag?(:preview_mt) %}
   require "crystal/rw_lock"
 {% end %}
+require "crystal/tracing"
 
 # MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
 # The empty library is only available for POSIX compatibility. We don't need to link it.
@@ -21,11 +22,24 @@
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
-{% else %}
+{% elsif flag?(:interpreted) %}
+  # FIXME: We're not using the pkg-config name here because that would resolve the
+  # lib flags for libgc including `-lpthread` which the interpreter is not able
+  # to load on systems with modern libc where libpthread is only available as an
+  # (empty) static library.
   @[Link("gc")]
+{% else %}
+  @[Link("gc", pkg_config: "bdw-gc")]
 {% end %}
 
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "gc.dll")]
+{% end %}
 lib LibGC
+  {% unless flag?(:win32) %}
+    VERSION = {{ `pkg-config bdw-gc --silence-errors --modversion || printf "0.0.0"`.chomp.stringify }}
+  {% end %}
+
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
   {% if flag?(:win32) && flag?(:bits64) %}
@@ -93,14 +107,39 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) || flag?(:win32) %}
+  {% if flag?(:preview_mt) || flag?(:win32) || compare_versions(VERSION, "8.2.0") >= 0 %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
     $stackbottom = GC_stackbottom : Void*
   {% end %}
 
-  fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
+  alias OnHeapResizeProc = Word ->
+  fun set_on_heap_resize = GC_set_on_heap_resize(OnHeapResizeProc)
+  fun get_on_heap_resize = GC_get_on_heap_resize : OnHeapResizeProc
+
+  enum EventType
+    START # COLLECTION
+    MARK_START
+    MARK_END
+    RECLAIM_START
+    RECLAIM_END
+    END              # COLLECTION
+    PRE_STOP_WORLD   # STOPWORLD_BEGIN
+    POST_STOP_WORLD  # STOPWORLD_END
+    PRE_START_WORLD  # STARTWORLD_BEGIN
+    POST_START_WORLD # STARTWORLD_END
+    THREAD_SUSPENDED
+    THREAD_UNSUSPENDED
+  end
+
+  alias OnCollectionEventProc = EventType ->
+  fun set_on_collection_event = GC_set_on_collection_event(cb : OnCollectionEventProc)
+  fun get_on_collection_event = GC_get_on_collection_event : OnCollectionEventProc
+
+  alias OnThreadEventProc = EventType, Void* ->
+  fun set_on_thread_event = GC_set_on_thread_event(cb : OnThreadEventProc)
+  fun get_on_thread_event = GC_get_on_thread_event : OnThreadEventProc
 
   $gc_no = GC_gc_no : Word
   $bytes_found = GC_bytes_found : SignedWord
@@ -122,6 +161,9 @@ lib LibGC
   alias WarnProc = LibC::Char*, Word ->
   fun set_warn_proc = GC_set_warn_proc(WarnProc)
   $warn_proc = GC_current_warn_proc : WarnProc
+
+  fun stop_world_external = GC_stop_world_external
+  fun start_world_external = GC_start_world_external
 end
 
 module GC
@@ -131,17 +173,23 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    LibGC.malloc(size)
+    Crystal.trace :gc, "malloc", size: size do
+      LibGC.malloc(size)
+    end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    LibGC.malloc_atomic(size)
+    Crystal.trace :gc, "malloc", size: size, atomic: 1 do
+      LibGC.malloc_atomic(size)
+    end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
-    LibGC.realloc(ptr, size)
+    Crystal.trace :gc, "realloc", size: size do
+      LibGC.realloc(ptr, size)
+    end
   end
 
   def self.init : Nil
@@ -153,6 +201,14 @@ module GC
     LibGC.set_start_callback ->do
       GC.lock_write
     end
+
+    {% if flag?(:tracing) %}
+      if ::Crystal::Tracing.enabled?(:gc)
+        set_on_heap_resize_proc
+        set_on_collection_events_proc
+      end
+    {% end %}
+
     # By default the GC warns on big allocations/reallocations. This
     # is of limited use and pollutes program output with warnings.
     LibGC.set_warn_proc ->(msg, v) do
@@ -165,8 +221,53 @@ module GC
     end
   end
 
+  {% if flag?(:tracing) %}
+    @@on_heap_resize : LibGC::OnHeapResizeProc?
+    @@on_collection_event : LibGC::OnCollectionEventProc?
+
+    @@collect_start = 0_u64
+    @@mark_start = 0_u64
+    @@sweep_start = 0_u64
+
+    private def self.set_on_heap_resize_proc : Nil
+      @@on_heap_resize = LibGC.get_on_heap_resize
+
+      LibGC.set_on_heap_resize(->(new_size : LibGC::Word) {
+        Crystal.trace :gc, "heap_resize", size: new_size
+        @@on_heap_resize.try(&.call(new_size))
+      })
+    end
+
+    private def self.set_on_collection_events_proc : Nil
+      @@on_collection_event = LibGC.get_on_collection_event
+
+      LibGC.set_on_collection_event(->(event_type : LibGC::EventType) {
+        case event_type
+        when .start?
+          @@collect_start = Crystal::System::Time.ticks
+        when .mark_start?
+          @@mark_start = Crystal::System::Time.ticks
+        when .reclaim_start?
+          @@sweep_start = Crystal::System::Time.ticks
+        when .end?
+          duration = Crystal::System::Time.ticks - @@collect_start
+          Crystal.trace :gc, "collect", @@collect_start, duration: duration
+        when .mark_end?
+          duration = Crystal::System::Time.ticks - @@mark_start
+          Crystal.trace :gc, "collect:mark", @@mark_start, duration: duration
+        when .reclaim_end?
+          duration = Crystal::System::Time.ticks - @@sweep_start
+          Crystal.trace :gc, "collect:sweep", @@sweep_start, duration: duration
+        end
+        @@on_collection_event.try(&.call(event_type))
+      })
+    end
+  {% end %}
+
   def self.collect
-    LibGC.collect
+    Crystal.trace :gc, "collect" do
+      LibGC.collect
+    end
   end
 
   def self.enable
@@ -182,7 +283,9 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    LibGC.free(pointer)
+    Crystal.trace :gc, "free" do
+      LibGC.free(pointer)
+    end
   end
 
   def self.add_finalizer(object : Reference) : Nil
@@ -274,10 +377,11 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    {% if flag?(:preview_mt) || flag?(:win32) %}
+    {% if LibGC.has_method?(:get_my_stackbottom) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
     {% else %}
+      # support for legacy gc releases
       {Pointer(Void).null, LibGC.stackbottom}
     {% end %}
   end
@@ -289,10 +393,11 @@ module GC
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
     end
-  {% elsif flag?(:win32) %}
+  {% elsif LibGC.has_method?(:set_stackbottom) %}
     # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
-    # Windows when pushing all threads' stacks; instead `GC_set_stackbottom`
-    # must be used to associate the new bottom with the running thread
+    # Windows when pushing all threads' stacks; it also started crashing on
+    # Linux with libgc after v8.2.4; instead `GC_set_stackbottom` must be used
+    # to associate the new bottom with the running thread
     def self.set_stackbottom(stack_bottom : Void*)
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
@@ -300,6 +405,7 @@ module GC
       LibGC.set_stackbottom(nil, pointerof(sb))
     end
   {% else %}
+    # support for legacy gc releases
     def self.set_stackbottom(stack_bottom : Void*)
       LibGC.stackbottom = stack_bottom
     end
@@ -358,8 +464,7 @@ module GC
 
       {% if flag?(:preview_mt) %}
         Thread.unsafe_each do |thread|
-          if scheduler = thread.@scheduler
-            fiber = scheduler.@current
+          if fiber = thread.current_fiber?
             GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
           end
         end
@@ -368,4 +473,14 @@ module GC
       GC.unlock_write
     end
   {% end %}
+
+  # :nodoc:
+  def self.stop_world : Nil
+    LibGC.stop_world_external
+  end
+
+  # :nodoc:
+  def self.start_world : Nil
+    LibGC.start_world_external
+  end
 end

@@ -14,7 +14,7 @@ struct Exception::CallStack
 
   protected def self.load_debug_info_impl : Nil
     program = Process.executable_path
-    return unless program && File.readable? program
+    return unless program && File::Info.readable? program
     data = DlPhdrData.new(program)
 
     phdr_callback = LibC::DlPhdrCallback.new do |info, size, data|

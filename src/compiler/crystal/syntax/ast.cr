@@ -1202,6 +1202,18 @@ module Crystal
     end
   end
 
+  class AlignOf < UnaryExpression
+    def clone_without_location
+      AlignOf.new(@exp.clone)
+    end
+  end
+
+  class InstanceAlignOf < UnaryExpression
+    def clone_without_location
+      InstanceAlignOf.new(@exp.clone)
+    end
+  end
+
   class Out < UnaryExpression
     def clone_without_location
       Out.new(@exp.clone)
@@ -1310,6 +1322,10 @@ module Crystal
       @body = Expressions.from body
     end
 
+    def self.new(cond : ASTNode, body : ASTNode? = nil, exhaustive = false)
+      new([cond] of ASTNode, body, exhaustive)
+    end
+
     def accept_children(visitor)
       @conds.each &.accept visitor
       @body.accept visitor
@@ -1348,8 +1364,6 @@ module Crystal
   end
 
   class Select < ASTNode
-    record When, condition : ASTNode, body : ASTNode
-
     property whens : Array(When)
     property else : ASTNode?
 
@@ -1357,10 +1371,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @whens.each do |select_when|
-        select_when.condition.accept visitor
-        select_when.body.accept visitor
-      end
+      @whens.each &.accept visitor
       @else.try &.accept visitor
     end
 
@@ -1942,6 +1953,7 @@ module Crystal
     property real_name : String
     property doc : String?
     property? varargs : Bool
+    property name_location : Location?
 
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
     end
@@ -1953,7 +1965,13 @@ module Crystal
     end
 
     def clone_without_location
-      FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
+      clone = FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
+      clone.name_location = name_location
+      clone
+    end
+
+    def name_size
+      @name.size
     end
 
     def_equals_and_hash @name, @args, @return_type, @varargs, @body, @real_name

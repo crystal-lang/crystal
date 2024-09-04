@@ -22,6 +22,7 @@
 # x86_64-linux-musl
 # x86_64-netbsd
 # x86_64-openbsd
+# x86_64-solaris
 # x86_64-windows-msvc
 # ```
 #
@@ -50,7 +51,6 @@ jobs:
       matrix:
         target:
           - aarch64-linux-android
-          - aarch64-darwin
           - arm-linux-gnueabihf
           - i386-linux-gnu
           - i386-linux-musl
@@ -58,6 +58,7 @@ jobs:
           - x86_64-freebsd
           - x86_64-netbsd
           - x86_64-openbsd
+          - x86_64-solaris
 
     steps:
       - name: Download Crystal source

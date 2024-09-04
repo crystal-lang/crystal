@@ -126,7 +126,7 @@ class File < IO::FileDescriptor
 
   # This constructor is provided for subclasses to be able to initialize an
   # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
+  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
     self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking)
   end
@@ -157,10 +157,23 @@ class File < IO::FileDescriptor
   #
   # Line endings are preserved on all platforms. The `b` mode flag has no
   # effect; it is provided only for POSIX compatibility.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  #
+  # *blocking* is set to `true` by default because system event queues (e.g.
+  # epoll, kqueue) will always report the file descriptor of regular disk files
+  # as ready.
+  #
+  # *blocking* must be set to `false` on POSIX targets when the file to open
+  # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
+  # files depend on another process or thread to also be reading or writing, and
+  # system event queues will properly report readyness.
+  #
+  # *blocking* may also be set to `nil` in which case the blocking or
+  # non-blocking flag will be determined automatically, at the expense of an
+  # additional syscall.
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+    fd = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
+    new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid).tap { |f| f.system_set_mode(mode) }
   end
 
   getter path : String
@@ -275,6 +288,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.readable?("foo") # => true
   # ```
+  @[Deprecated("Use `File::Info.readable?` instead")]
   def self.readable?(path : Path | String) : Bool
     Crystal::System::File.readable?(path.to_s)
   end
@@ -285,6 +299,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.writable?("foo") # => true
   # ```
+  @[Deprecated("Use `File::Info.writable?` instead")]
   def self.writable?(path : Path | String) : Bool
     Crystal::System::File.writable?(path.to_s)
   end
@@ -295,6 +310,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.executable?("foo") # => false
   # ```
+  @[Deprecated("Use `File::Info.executable?` instead")]
   def self.executable?(path : Path | String) : Bool
     Crystal::System::File.executable?(path.to_s)
   end
@@ -712,8 +728,8 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
-    new filename, mode, perm, encoding, invalid
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true) : self
+    new filename, mode, perm, encoding, invalid, blocking
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
@@ -721,8 +737,8 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
-    file = new filename, mode, perm, encoding, invalid
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true, &)
+    file = new filename, mode, perm, encoding, invalid, blocking
     begin
       yield file
     ensure
@@ -736,8 +752,8 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
-  def self.read(filename : Path | String, encoding = nil, invalid = nil) : String
-    open(filename, "r") do |file|
+  def self.read(filename : Path | String, encoding = nil, invalid = nil, blocking = true) : String
+    open(filename, "r", blocking: blocking) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
@@ -765,8 +781,8 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
-    open(filename, "r", encoding: encoding, invalid: invalid) do |file|
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true, &)
+    open(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
       end
@@ -779,9 +795,9 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true) : Array(String)
+  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, blocking = true) : Array(String)
     lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
+    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp, blocking: blocking) do |line|
       lines << line
     end
     lines
@@ -804,8 +820,8 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
-    open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", blocking = true)
+    open(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
       case content
       when Bytes
         file.sync = true

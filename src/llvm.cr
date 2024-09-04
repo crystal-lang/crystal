@@ -52,6 +52,22 @@ module LLVM
     {% end %}
   end
 
+  def self.init_avr : Nil
+    return if @@initialized_avr
+    @@initialized_avr = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
+      LibLLVM.initialize_avr_target_info
+      LibLLVM.initialize_avr_target
+      LibLLVM.initialize_avr_target_mc
+      LibLLVM.initialize_avr_asm_printer
+      LibLLVM.initialize_avr_asm_parser
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without AVR target"
+    {% end %}
+  end
+
   def self.init_webassembly : Nil
     return if @@initialized_webassembly
     @@initialized_webassembly = true
@@ -91,15 +107,12 @@ module LLVM
   def self.default_target_triple : String
     chars = LibLLVM.get_default_target_triple
     case triple = string_and_dispose(chars)
-    when .starts_with?("x86_64-apple-macosx"), .starts_with?("x86_64-apple-darwin")
-      # normalize on `macosx` and remove minimum deployment target version
-      "x86_64-apple-macosx"
-    when .starts_with?("aarch64-apple-macosx"), .starts_with?("aarch64-apple-darwin")
-      # normalize on `macosx` and remove minimum deployment target version
-      "aarch64-apple-macosx"
     when .starts_with?("aarch64-unknown-linux-android")
       # remove API version
       "aarch64-unknown-linux-android"
+    when .starts_with?("x86_64-pc-solaris")
+      # remove API version
+      "x86_64-pc-solaris"
     else
       triple
     end
@@ -125,6 +138,13 @@ module LLVM
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
     string
+  end
+
+  protected def self.assert(error : LibLLVM::ErrorRef)
+    if error
+      chars = LibLLVM.get_error_message(error)
+      raise String.new(chars).tap { LibLLVM.dispose_error_message(chars) }
+    end
   end
 
   {% unless LibLLVM::IS_LT_130 %}

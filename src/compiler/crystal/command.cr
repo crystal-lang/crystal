@@ -41,6 +41,7 @@ class Crystal::Command
     Tool:
         context                  show context for given location
         expand                   show macro expansion for given location
+        flags                    print all macro `flag?` values
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         dependencies             show file dependency tree
@@ -58,7 +59,7 @@ class Crystal::Command
   @compiler : Compiler?
 
   def initialize(@options : Array(String))
-    @color = ENV["TERM"]? != "dumb"
+    @color = ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -177,6 +178,9 @@ class Crystal::Command
     when "format".starts_with?(tool)
       options.shift
       format
+    when "flags" == tool
+      options.shift
+      flags
     when "expand".starts_with?(tool)
       options.shift
       expand
@@ -308,7 +312,7 @@ class Crystal::Command
 
   private def exit_message(status)
     case status.exit_reason
-    when .aborted?
+    when .aborted?, .session_ended?, .terminal_disconnected?
       if status.signal_exit?
         signal = status.exit_signal
         if signal.kill?
@@ -345,14 +349,14 @@ class Crystal::Command
     hierarchy_exp : String?,
     cursor_location : String?,
     output_format : String,
-    combine_rpath : Bool,
     includes : Array(String),
     excludes : Array(String),
     verbose : Bool,
-    check : Bool do
+    check : Bool,
+    tallies : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
-      compiler.compile sources, output_filename, combine_rpath: combine_rpath
+      compiler.compile sources, output_filename
     end
 
     def top_level_semantic
@@ -367,6 +371,7 @@ class Crystal::Command
                               allowed_formats = ["text", "json"])
     compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
+    compiler.no_codegen = no_codegen
     link_flags = [] of String
     filenames = [] of String
     has_stdin_filename = false
@@ -381,6 +386,7 @@ class Crystal::Command
     includes = [] of String
     verbose = false
     check = false
+    tallies = false
 
     option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -396,6 +402,14 @@ class Crystal::Command
         end
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
+        end
+
+        opts.on("--frame-pointers auto|always|non-leaf", "Control the preservation of frame pointers") do |value|
+          if frame_pointers = FramePointers.parse?(value)
+            compiler.frame_pointers = frame_pointers
+          else
+            error "Invalid value `#{value}` for frame-pointers"
+          end
         end
       end
 
@@ -443,6 +457,10 @@ class Crystal::Command
       end
 
       if unreachable_command
+        opts.on("--tallies", "Print reachable methods and their call counts as well") do
+          tallies = true
+        end
+
         opts.on("--check", "Exits with error if there is any unreachable code") do |f|
           check = true
         end
@@ -502,9 +520,12 @@ class Crystal::Command
         opts.on("--release", "Compile in release mode (-O3 --single-module)") do
           compiler.release!
         end
-        opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
-          optimization_mode = level.to_i?.try { |v| Compiler::OptimizationMode.from_value?(v) }
-          compiler.optimization_mode = optimization_mode || raise Error.new("Invalid optimization mode: #{level}")
+        opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
+          if mode = Compiler::OptimizationMode.from_level?(level)
+            compiler.optimization_mode = mode
+          else
+            raise Error.new("Invalid optimization mode: O#{level}")
+          end
         end
       end
 
@@ -590,7 +611,7 @@ class Crystal::Command
       output_filename = "#{::Path[first_filename].stem}#{output_extension}"
 
       # Check if we'll overwrite the main source file
-      if !no_codegen && !run && first_filename == File.expand_path(output_filename)
+      if !compiler.no_codegen? && !run && first_filename == File.expand_path(output_filename)
         error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
       end
     end
@@ -602,7 +623,7 @@ class Crystal::Command
 
     error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
 
-    if !no_codegen && !run && Dir.exists?(output_filename)
+    if !compiler.no_codegen? && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
@@ -610,10 +631,9 @@ class Crystal::Command
       emit_base_filename = ::Path[sources.first.filename].stem
     end
 
-    combine_rpath = run && !no_codegen
     @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
       arguments, specified_output, hierarchy_exp, cursor_location, output_format.not_nil!,
-      combine_rpath, includes, excludes, verbose, check
+      includes, excludes, verbose, check, tallies
   end
 
   private def gather_sources(filenames)
@@ -621,6 +641,8 @@ class Crystal::Command
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end
+  rescue exc : IO::Error
+    error exc
   end
 
   private def setup_simple_compiler_options(compiler, opts)
@@ -640,8 +662,18 @@ class Crystal::Command
     opts.on("--release", "Compile in release mode (-O3 --single-module)") do
       compiler.release!
     end
-    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3") do |level|
-      compiler.optimization_mode = Compiler::OptimizationMode.from_value?(level.to_i) || raise Error.new("Unknown optimization mode #{level}")
+    opts.on("-O LEVEL", "Optimization mode: 0 (default), 1, 2, 3, s, z") do |level|
+      if mode = Compiler::OptimizationMode.from_level?(level)
+        compiler.optimization_mode = mode
+      else
+        raise Error.new("Invalid optimization mode: O#{level}")
+      end
+    end
+    opts.on("--single-module", "Generate a single LLVM module") do
+      compiler.single_module = true
+    end
+    opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
+      compiler.n_threads = n_threads.to_i? || raise Error.new("Invalid thread count: #{n_threads}")
     end
     opts.on("-s", "--stats", "Enable statistics output") do
       compiler.progress_tracker.stats = true
@@ -727,7 +759,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
+    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb" || ENV.has_key?("NO_COLOR")
     Crystal.error msg, @color, exit_code: exit_code
   end
 

@@ -46,7 +46,8 @@ SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_ou
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
-SOURCE_DATE_EPOCH ?= $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
+CRYSTAL_VERSION ?= $(shell cat src/VERSION)
+SOURCE_DATE_EPOCH ?= $(shell (cat src/SOURCE_DATE_EPOCH || (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile)) 2> /dev/null)
 ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
 endif
@@ -59,12 +60,10 @@ EXPORTS_BUILD := \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
-LLVM_VERSION := $(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --version 2> /dev/null))
+LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version 2> /dev/null))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
-DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
-CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
 DESTDIR ?=
 PREFIX ?= /usr/local
@@ -78,6 +77,13 @@ ifeq ($(or $(TERM),$(TERM),dumb),dumb)
   colorize = $(shell printf >&2 "$1")
 else
   colorize = $(shell printf >&2 "\033[33m$1\033[0m\n")
+endif
+
+DEPS = $(LLVM_EXT_OBJ)
+ifneq ($(LLVM_VERSION),)
+  ifeq ($(shell test $(firstword $(subst ., ,$(LLVM_VERSION))) -ge 18; echo $$?),0)
+    DEPS =
+  endif
 endif
 
 check_llvm_config = $(eval \
@@ -127,6 +133,7 @@ samples: ## Build example programs
 docs: ## Generate standard library documentation
 	$(call check_llvm_config)
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
+	cp -av doc/ docs/
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
@@ -182,7 +189,6 @@ install_docs: docs ## Install docs at DESTDIR
 
 	cp -av docs "$(DATADIR)/docs"
 	cp -av samples "$(DATADIR)/examples"
-	rm -rf "$(DATADIR)/examples/.gitignore"
 
 .PHONY: uninstall_docs
 uninstall_docs: ## Uninstall docs from DESTDIR
@@ -208,7 +214,7 @@ $(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
-$(O)/interpreter_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler/interpreter_spec.cr
@@ -230,6 +236,7 @@ man/%.gz: man/%
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
+	rm -rf man/*.gz
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files

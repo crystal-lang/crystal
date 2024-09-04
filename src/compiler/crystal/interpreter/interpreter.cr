@@ -999,16 +999,17 @@ class Crystal::Repl::Interpreter
 
   private macro stack_pop(t)
     %aligned_size = align(sizeof({{t}}))
-    %value = (stack - %aligned_size).as({{t}}*).value
+    %value = uninitialized {{t}}
+    (stack - %aligned_size).copy_to(pointerof(%value).as(UInt8*), sizeof(typeof(%value)))
     stack_shrink_by(%aligned_size)
     %value
   end
 
   private macro stack_push(value)
     %temp = {{value}}
-    stack.as(Pointer(typeof({{value}}))).value = %temp
+    %size = sizeof(typeof(%temp))
 
-    %size = sizeof(typeof({{value}}))
+    stack.copy_from(pointerof(%temp).as(UInt8*), %size)
     %aligned_size = align(%size)
     stack += %size
     stack_grow_by(%aligned_size - %size)
@@ -1154,6 +1155,7 @@ class Crystal::Repl::Interpreter
         nil
       end
     end
+    spawned_fiber.@context.resumable = 1
     spawned_fiber.as(Void*)
   end
 
@@ -1161,9 +1163,15 @@ class Crystal::Repl::Interpreter
     # current_fiber = current_context.as(Fiber*).value
     new_fiber = new_context.as(Fiber*).value
 
-    # We directly resume the next fiber.
-    # TODO: is this okay? We totally ignore the scheduler here!
+    # delegates the context switch to the interpreter's scheduler, so we update
+    # the current fiber reference, set the GC stack bottom, and so on (aka
+    # there's more to switching context than `Fiber.swapcontext`):
     new_fiber.resume
+  end
+
+  private def fiber_resumable(context : Void*) : LibC::Long
+    fiber = context.as(Fiber*).value
+    fiber.@context.resumable
   end
 
   private def pry(ip, instructions, stack_bottom, stack)

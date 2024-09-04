@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "../../support/env"
 
 private def declare_class_var(container : ClassVarContainer, name, var_type : Type, annotations = nil)
   var = MetaTypeVar.new(name)
@@ -119,6 +120,14 @@ module Crystal
 
         it "expands macro with id call on number" do
           assert_macro "{{x.id}}", %(1), {x: 1.int32}
+        end
+
+        it "expands macro with id call on path" do
+          assert_macro "{{x.id}}", %(Foo), {x: Path.new("Foo")}
+        end
+
+        it "expands macro with id call on global path" do
+          assert_macro "{{x.id}}", %(::Foo), {x: Path.new("Foo", global: true)}
         end
       end
 
@@ -582,6 +591,11 @@ module Crystal
         assert_macro %({{"hello world".titleize}}), %("Hello World")
       end
 
+      it "executes to_utf16" do
+        assert_macro %({{"hello".to_utf16}}), "(::Slice(::UInt16).literal(104_u16, 101_u16, 108_u16, 108_u16, 111_u16, 0_u16))[0, 5]"
+        assert_macro %({{"TEST 😐🐙 ±∀ の".to_utf16}}), "(::Slice(::UInt16).literal(84_u16, 69_u16, 83_u16, 84_u16, 32_u16, 55357_u16, 56848_u16, 55357_u16, 56345_u16, 32_u16, 177_u16, 8704_u16, 32_u16, 12398_u16, 0_u16))[0, 14]"
+      end
+
       it "executes to_i" do
         assert_macro %({{"1234".to_i}}), %(1234)
       end
@@ -914,6 +928,16 @@ module Crystal
         assert_macro %({{["c".id, "b", "a".id].sort}}), %([a, "b", c])
       end
 
+      it "executes sort_by" do
+        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
+      end
+
+      it "calls block exactly once for each element in #sort_by" do
+        assert_macro <<-CRYSTAL, %(5)
+          {{ (i = 0; ["abc", "a", "ab", "abcde", "abcd"].sort_by { i += 1 }; i) }}
+          CRYSTAL
+      end
+
       it "executes uniq" do
         assert_macro %({{[1, 1, 1, 2, 3, 1, 2, 3, 4].uniq}}), %([1, 2, 3, 4])
       end
@@ -1006,10 +1030,6 @@ module Crystal
         assert_macro %({{{:a => 1, :b => 3}.size}}), "2"
       end
 
-      it "executes sort_by" do
-        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
-      end
-
       it "executes empty?" do
         assert_macro %({{{:a => 1}.empty?}}), "false"
       end
@@ -1068,6 +1088,12 @@ module Crystal
 
       it "executes of_value (nop)" do
         assert_macro %({{ {'z' => 6, 'a' => 9}.of_value }}), %()
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('z') }}), %(true)
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('x') }}), %(false)
+        assert_macro %({{ {'z' => nil, 'a' => 9}.has_key?('z') }}), %(true)
       end
 
       it "executes type" do
@@ -1173,6 +1199,14 @@ module Crystal
       it "executes []=" do
         assert_macro %({% a = {a: 1}; a[:a] = 2 %}{{a[:a]}}), "2"
         assert_macro %({% a = {a: 1}; a["a"] = 2 %}{{a["a"]}}), "2"
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{{a: 1}.has_key?("a")}}), "true"
+        assert_macro %({{{a: 1}.has_key?(:a)}}), "true"
+        assert_macro %({{{a: nil}.has_key?("a")}}), "true"
+        assert_macro %({{{a: nil}.has_key?("b")}}), "false"
+        assert_macro_error %({{{a: 1}.has_key?(true)}}), "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not BoolLiteral"
       end
 
       it "creates a named tuple literal with a var" do
@@ -2336,6 +2370,122 @@ module Crystal
           {x: TypeNode.new(program.int32)}
         end
       end
+
+      describe "executes private?" do
+        it false do
+          assert_macro("{{x.private?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.private?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "public?" do
+        it false do
+          assert_macro("{{x.public?}}", "false") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it true do
+          assert_macro("{{x.public?}}", "true") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "visibility" do
+        it :public do
+          assert_macro("{{x.visibility}}", ":public") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it :private do
+          assert_macro("{{x.visibility}}", ":private") do |program|
+            klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+            klass.private = true
+
+            {x: TypeNode.new(klass)}
+          end
+        end
+      end
+
+      describe "#has_inner_pointers?" do
+        it "works on structs" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(klass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on references" do
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on ReferenceStorage" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+        end
+
+        it "works on primitive values" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.int32)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.void)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.pointer_of(program.int32))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.proc_of(program.void))}
+          end
+        end
+      end
     end
 
     describe "type declaration methods" do
@@ -2504,6 +2654,21 @@ module Crystal
       end
     end
 
+    describe External do
+      it "executes is_a?" do
+        assert_macro %({{x.is_a?(External)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(Def)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(ASTNode)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+      end
+    end
+
+    describe Primitive do
+      it "executes name" do
+        assert_macro %({{x.name}}), %(:abc), {x: Primitive.new("abc")}
+        assert_macro %({{x.name}}), %(:"x.y.z"), {x: Primitive.new("x.y.z")}
+      end
+    end
+
     describe "macro methods" do
       it "executes name" do
         assert_macro %({{x.name}}), "some_macro", {x: Macro.new("some_macro")}
@@ -2538,6 +2703,17 @@ module Crystal
       end
     end
 
+    describe MacroExpression do
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "nil", {x: MacroExpression.new(NilLiteral.new)}
+      end
+
+      it "executes output?" do
+        assert_macro %({{x.output?}}), "false", {x: MacroExpression.new(NilLiteral.new, output: false)}
+        assert_macro %({{x.output?}}), "true", {x: MacroExpression.new(1.int32, output: true)}
+      end
+    end
+
     describe "macro if methods" do
       it "executes cond" do
         assert_macro %({{x.cond}}), "true", {x: MacroIf.new(BoolLiteral.new(true), NilLiteral.new)}
@@ -2563,6 +2739,24 @@ module Crystal
 
       it "executes body" do
         assert_macro %({{x.body}}), "puts(bar)", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}
+      end
+    end
+
+    describe MacroLiteral do
+      it "executes value" do
+        assert_macro %({{x.value}}), "foo(1)", {x: MacroLiteral.new("foo(1)")}
+        assert_macro %({{x.value}}), "", {x: MacroLiteral.new("")}
+      end
+    end
+
+    describe MacroVar do
+      it "executes name" do
+        assert_macro %({{x.name}}), "foo", {x: MacroVar.new("foo")}
+      end
+
+      it "executes expressions" do
+        assert_macro %({{x.expressions}}), "[] of ::NoReturn", {x: MacroVar.new("foo")}
+        assert_macro %({{x.expressions}}), "[x, 1]", {x: MacroVar.new("bar", [Var.new("x"), 1.int32] of ASTNode)}
       end
     end
 
@@ -2607,6 +2801,18 @@ module Crystal
       it "executes name" do
         assert_macro %({{x.name}}), "Foo", {x: foo}
         assert_macro %({{x.name}}), "Bar(Int32)", {x: bar}
+      end
+    end
+
+    describe Alias do
+      node = Alias.new("Foo".path, Generic.new(Path.new(["Bar", "Baz"], global: true), ["T".path] of ASTNode))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: node}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz(T)), {x: node}
       end
     end
 
@@ -2762,6 +2968,12 @@ module Crystal
       end
     end
 
+    describe TypeOf do
+      it "executes args" do
+        assert_macro %({{x.args}}), "[1, 'a', Foo]", {x: TypeOf.new([1.int32, CharLiteral.new('a'), "Foo".path])}
+      end
+    end
+
     describe "case methods" do
       describe "when" do
         case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: false)
@@ -2809,6 +3021,19 @@ module Crystal
         it "executes exhaustive?" do
           assert_macro %({{x.exhaustive?}}), "true", {x: case_node}
         end
+      end
+    end
+
+    describe Select do
+      it "executes whens" do
+        assert_macro %({{x.whens}}), "[when foo\n  1\n]", {x: Select.new([When.new("foo".call, 1.int32)])}
+        assert_macro %({{x.whens}}), "[when x = y\n  1\n, when bar\n]", {x: Select.new([When.new(Assign.new("x".var, "y".var), 1.int32), When.new("bar".call)])}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "", {x: Select.new([When.new("foo".call)])}
+        assert_macro %({{x.else}}), "1", {x: Select.new([When.new("foo".call)], 1.int32)}
+        assert_macro %({{x.else}}), "nil", {x: Select.new([When.new("foo".call)], NilLiteral.new)}
       end
     end
 
@@ -3279,16 +3504,207 @@ module Crystal
       end
     end
 
+    describe LibDef do
+      lib_def = LibDef.new(Path.new("Foo", "Bar", global: true), FunDef.new("foo"))
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(lib), {x: lib_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(::Foo::Bar), {x: lib_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(::Foo::Bar), {x: lib_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(::Foo::Bar), {x: lib_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to LibDef#name must be a BoolLiteral, not NumberLiteral", {x: lib_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(fun foo), {x: lib_def}
+      end
+    end
+
+    describe CStructOrUnionDef do
+      c_struct_def = CStructOrUnionDef.new("Foo", TypeDeclaration.new("x".var, "Int".path))
+      c_union_def = CStructOrUnionDef.new("Bar", Include.new("Foo".path), union: true)
+
+      it "executes kind" do
+        assert_macro %({{x.kind}}), %(struct), {x: c_struct_def}
+        assert_macro %({{x.kind}}), %(union), {x: c_union_def}
+      end
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: c_struct_def}
+        assert_macro %({{x.name(generic_args: true)}}), %(Foo), {x: c_struct_def}
+        assert_macro %({{x.name(generic_args: false)}}), %(Foo), {x: c_struct_def}
+        assert_macro_error %({{x.name(generic_args: 99)}}), "named argument 'generic_args' to CStructOrUnionDef#name must be a BoolLiteral, not NumberLiteral", {x: c_struct_def}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(x : Int), {x: c_struct_def}
+        assert_macro %({{x.body}}), %(include Foo), {x: c_union_def}
+      end
+
+      it "executes union?" do
+        assert_macro %({{x.union?}}), %(false), {x: c_struct_def}
+        assert_macro %({{x.union?}}), %(true), {x: c_union_def}
+      end
+    end
+
+    describe FunDef do
+      lib_fun = FunDef.new("foo")
+      top_level_fun = FunDef.new("bar", [Arg.new("x", restriction: "Int32".path), Arg.new("", restriction: "Char".path)], "Void".path, true, 1.int32, "y.z")
+      top_level_fun2 = FunDef.new("baz", body: Nop.new)
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(foo), {x: lib_fun}
+        assert_macro %({{x.name}}), %(bar), {x: top_level_fun}
+      end
+
+      it "executes real_name" do
+        assert_macro %({{x.real_name}}), %(), {x: lib_fun}
+        assert_macro %({{x.real_name}}), %("y.z"), {x: top_level_fun}
+      end
+
+      it "executes args" do
+        assert_macro %({{x.args}}), %([]), {x: lib_fun}
+        assert_macro %({{x.args}}), %([x : Int32,  : Char]), {x: top_level_fun}
+      end
+
+      it "executes variadic?" do
+        assert_macro %({{x.variadic?}}), %(false), {x: lib_fun}
+        assert_macro %({{x.variadic?}}), %(true), {x: top_level_fun}
+      end
+
+      it "executes return_type" do
+        assert_macro %({{x.return_type}}), %(), {x: lib_fun}
+        assert_macro %({{x.return_type}}), %(Void), {x: top_level_fun}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), %(), {x: lib_fun}
+        assert_macro %({{x.body}}), %(1), {x: top_level_fun}
+        assert_macro %({{x.body}}), %(), {x: top_level_fun2}
+      end
+
+      it "executes has_body?" do
+        assert_macro %({{x.has_body?}}), %(false), {x: lib_fun}
+        assert_macro %({{x.has_body?}}), %(true), {x: top_level_fun}
+        assert_macro %({{x.has_body?}}), %(true), {x: top_level_fun2}
+      end
+    end
+
+    describe TypeDef do
+      type_def = TypeDef.new("Foo", Path.new("Bar", "Baz", global: true))
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: type_def}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(::Bar::Baz), {x: type_def}
+      end
+    end
+
+    describe ExternalVar do
+      external_var1 = ExternalVar.new("foo", Path.new("Bar", "Baz"))
+      external_var2 = ExternalVar.new("X", Generic.new(Path.global("Pointer"), ["Char".path] of ASTNode), real_name: "y.z")
+
+      it "executes name" do
+        assert_macro %({{x.name}}), %(foo), {x: external_var1}
+        assert_macro %({{x.name}}), %(X), {x: external_var2}
+      end
+
+      it "executes real_name" do
+        assert_macro %({{x.real_name}}), %(), {x: external_var1}
+        assert_macro %({{x.real_name}}), %("y.z"), {x: external_var2}
+      end
+
+      it "executes type" do
+        assert_macro %({{x.type}}), %(Bar::Baz), {x: external_var1}
+        assert_macro %({{x.type}}), %(::Pointer(Char)), {x: external_var2}
+      end
+    end
+
+    describe Asm do
+      asm1 = Asm.new("nop")
+      asm2 = Asm.new(
+        text: "foo",
+        outputs: [AsmOperand.new("=r", "x".var), AsmOperand.new("=r", "y".var)],
+        inputs: [AsmOperand.new("i", 1.int32), AsmOperand.new("r", 2.int32)],
+        clobbers: %w(rax memory),
+        volatile: true,
+        alignstack: true,
+        intel: true,
+        can_throw: true,
+      )
+
+      it "executes text" do
+        assert_macro %({{x.text}}), %("nop"), {x: asm1}
+        assert_macro %({{x.text}}), %("foo"), {x: asm2}
+      end
+
+      it "executes outputs" do
+        assert_macro %({{x.outputs}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.outputs}}), %(["=r"(x), "=r"(y)]), {x: asm2}
+      end
+
+      it "executes inputs" do
+        assert_macro %({{x.inputs}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.inputs}}), %(["i"(1), "r"(2)]), {x: asm2}
+      end
+
+      it "executes clobbers" do
+        assert_macro %({{x.clobbers}}), %([] of ::NoReturn), {x: asm1}
+        assert_macro %({{x.clobbers}}), %(["rax", "memory"]), {x: asm2}
+      end
+
+      it "executes volatile?" do
+        assert_macro %({{x.volatile?}}), %(false), {x: asm1}
+        assert_macro %({{x.volatile?}}), %(true), {x: asm2}
+      end
+
+      it "executes alignstack?" do
+        assert_macro %({{x.alignstack?}}), %(false), {x: asm1}
+        assert_macro %({{x.alignstack?}}), %(true), {x: asm2}
+      end
+
+      it "executes intel?" do
+        assert_macro %({{x.intel?}}), %(false), {x: asm1}
+        assert_macro %({{x.intel?}}), %(true), {x: asm2}
+      end
+
+      it "executes can_throw?" do
+        assert_macro %({{x.can_throw?}}), %(false), {x: asm1}
+        assert_macro %({{x.can_throw?}}), %(true), {x: asm2}
+      end
+    end
+
+    describe AsmOperand do
+      asm_operand1 = AsmOperand.new("=r", "x".var)
+      asm_operand2 = AsmOperand.new("i", 1.int32)
+
+      it "executes constraint" do
+        assert_macro %({{x.constraint}}), %("=r"), {x: asm_operand1}
+        assert_macro %({{x.constraint}}), %("i"), {x: asm_operand2}
+      end
+
+      it "executes exp" do
+        assert_macro %({{x.exp}}), %(x), {x: asm_operand1}
+        assert_macro %({{x.exp}}), %(1), {x: asm_operand2}
+      end
+    end
+
     describe "env" do
       it "has key" do
-        ENV["FOO"] = "foo"
-        assert_macro %({{env("FOO")}}), %("foo")
-        ENV.delete "FOO"
+        with_env("FOO": "foo") do
+          assert_macro %({{env("FOO")}}), %("foo")
+        end
       end
 
       it "doesn't have key" do
-        ENV.delete "FOO"
-        assert_macro %({{env("FOO")}}), %(nil)
+        with_env("FOO": nil) do
+          assert_macro %({{env("FOO")}}), %(nil)
+        end
       end
     end
 
@@ -3478,7 +3894,7 @@ module Crystal
         assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
           CRYSTAL
-          "No such file or directory"
+          "Error opening file with mode 'r'"
       end
     end
 
@@ -3493,7 +3909,7 @@ module Crystal
         assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
           CRYSTAL
-          "No such file or directory"
+          "Error opening file with mode 'r'"
       end
     end
   end
@@ -3565,7 +3981,7 @@ module Crystal
     # there are no macro methods with required named parameters
 
     it "uses correct name for top-level macro methods" do
-      assert_macro_error %({{flag?}}), "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)"
+      assert_macro_error %({{flag?}}), "wrong number of arguments for macro '::flag?' (given 0, expected 1)"
     end
   end
 

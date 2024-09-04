@@ -11,7 +11,7 @@ lib LibC
     lpDefaultChar : CHAR*, lpUsedDefaultChar : BOOL*
   ) : Int
 
-  # this is only for the delay-load helper, all other code should use
+  # this was for the now removed delay-load helper, all other code should use
   # `String#to_utf16` instead
   fun MultiByteToWideChar(
     codePage : UInt, dwFlags : DWORD, lpMultiByteStr : LPSTR,

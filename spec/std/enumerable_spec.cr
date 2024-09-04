@@ -1,6 +1,25 @@
 require "spec"
 require "spec/helpers/iterate"
 
+module SomeInterface; end
+
+private record One do
+  include SomeInterface
+end
+
+private record Two do
+  include SomeInterface
+end
+
+private struct InterfaceEnumerable
+  include Enumerable(SomeInterface)
+
+  def each(&)
+    yield One.new
+    yield Two.new
+  end
+end
+
 private class SpecEnumerable
   include Enumerable(Int32)
 
@@ -128,6 +147,20 @@ describe "Enumerable" do
       end
       called.should eq 6
       elements.should eq [1, 2, 1, 2, 1, 2]
+    end
+  end
+
+  describe "to_a" do
+    it "with a block" do
+      SpecEnumerable.new.to_a { |e| e*2 }.should eq [2, 4, 6]
+    end
+
+    it "without a block" do
+      SpecEnumerable.new.to_a.should eq [1, 2, 3]
+    end
+
+    it "without a block of an interface type" do
+      InterfaceEnumerable.new.to_a.should eq [One.new, Two.new]
     end
   end
 
@@ -1445,6 +1478,10 @@ describe "Enumerable" do
         hash.should eq(
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
         )
+      end
+
+      it "tallies an interface type" do
+        InterfaceEnumerable.new.tally.should eq({One.new => 1, Two.new => 1})
       end
     end
   end

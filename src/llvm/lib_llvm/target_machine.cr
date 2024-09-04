@@ -15,6 +15,7 @@ lib LibLLVM
   fun dispose_target_machine = LLVMDisposeTargetMachine(t : TargetMachineRef)
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : Char*
+  fun get_target_machine_cpu = LLVMGetTargetMachineCPU(t : TargetMachineRef) : Char*
   fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
   {% unless LibLLVM::IS_LT_180 %}
     fun set_target_machine_global_isel = LLVMSetTargetMachineGlobalISel(t : TargetMachineRef, enable : Bool)

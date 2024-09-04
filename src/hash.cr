@@ -266,14 +266,21 @@ class Hash(K, V)
   # Creates a new empty `Hash` with a *block* that handles missing keys.
   #
   # ```
-  # inventory = Hash(String, Int32).new(0)
-  # inventory["socks"] = 3
-  # inventory["pickles"] # => 0
+  # hash = Hash(String, String).new do |hash, key|
+  #   "some default value"
+  # end
+  #
+  # hash.size           # => 0
+  # hash["foo"] = "bar" # => "bar"
+  # hash.size           # => 1
+  # hash["baz"]         # => "some default value"
+  # hash.size           # => 1
+  # hash                # => {"foo" => "bar"}
   # ```
   #
   # WARNING: When the default block is invoked on a missing key, its return
   # value is *not* implicitly stored into the hash under that key. If you want
-  # that behaviour, you need to put it explicitly:
+  # that behaviour, you need to store it explicitly:
   #
   # ```
   # hash = Hash(String, Int32).new do |hash, key|
@@ -419,56 +426,6 @@ class Hash(K, V)
     end
   end
 
-  # Inserts a key-value pair. Assumes that the given key doesn't exist.
-  private def insert_new(key, value)
-    # Unless otherwise noted, this body should be identical to `#upsert`
-
-    if @entries.null?
-      @indices_size_pow2 = 3
-      @entries = malloc_entries(4)
-    end
-
-    hash = key_hash(key)
-
-    if @indices.null?
-      # don't call `#update_linear_scan` here
-
-      if !entries_full?
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-
-      resize
-
-      if @indices.null?
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-    end
-
-    index = fit_in_indices(hash)
-
-    while true
-      entry_index = get_index(index)
-
-      if entry_index == -1
-        if entries_full?
-          resize
-          index = fit_in_indices(hash)
-          next
-        end
-
-        set_index(index, entries_size)
-        add_entry_and_increment_size(hash, key, value)
-        return
-      end
-
-      # don't call `#get_entry` and `#entry_matches?` here
-
-      index = next_index(index)
-    end
-  end
-
   # Tries to update a key-value-hash triplet by doing a linear scan.
   # Returns an old `Entry` if it was updated, otherwise `nil`.
   private def update_linear_scan(key, value, hash) : Entry(K, V)?
@@ -511,6 +468,8 @@ class Hash(K, V)
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
       if entry_matches?(entry, hash, key)
+        # Mark this index slot as deleted
+        delete_index(index)
         delete_entry_and_update_counts(entry_index)
         return entry
       else
@@ -674,6 +633,9 @@ class Hash(K, V)
       new_entry_index += 1
     end
 
+    # Reset offset to first non-deleted entry
+    @first = 0
+
     # We have to mark entries starting from the final new index
     # as deleted so the GC can collect them.
     entries_to_clear = entries_size - new_entry_index
@@ -815,6 +777,35 @@ class Hash(K, V)
     end
   end
 
+  # Marks `@indices` at `index` as empty. Might also adjust subsequent index
+  # slots to ensure empty indices never appear before the natural position of
+  # any used index, in case of previous hash collisions.
+  private def delete_index(index) : Nil
+    # https://en.wikipedia.org/w/index.php?title=Open_addressing&oldid=1188919190#Example_pseudocode
+    i = index
+    set_index(i, -1)
+
+    j = i
+    while true
+      j = next_index(j)
+      entry_index = get_index(j)
+      break if entry_index == -1
+
+      entry = get_entry(entry_index)
+      k = fit_in_indices(entry.hash)
+
+      if i <= j
+        next if i < k && k <= j
+      else
+        next if k <= j || i < k
+      end
+
+      set_index(i, entry_index)
+      set_index(j, -1)
+      i = j
+    end
+  end
+
   # Returns the capacity of `@indices`.
   protected def indices_size
     1 << @indices_size_pow2
@@ -862,6 +853,16 @@ class Hash(K, V)
     @entries[index] = value
   end
 
+  # Returns the index into `@indices` for an existing *entry_index* into
+  # `@entries`.
+  private def index_for_entry_index(entry_index)
+    index = fit_in_indices(get_entry(entry_index).hash)
+    until get_index(index) == entry_index
+      index = next_index(index)
+    end
+    index
+  end
+
   # Adds an entry at the end and also increments this hash's size.
   private def add_entry_and_increment_size(hash, key, value) : Nil
     set_entry(entries_size, Entry(K, V).new(hash, key, value))
@@ -871,7 +872,8 @@ class Hash(K, V)
   # Marks an entry in `@entries` at `index` as deleted
   # *without* modifying any counters (`@size` and `@deleted_count`).
   private def delete_entry(index) : Nil
-    set_entry(index, Entry(K, V).deleted)
+    # sets `Entry#@hash` to 0 and removes stale references to key and value
+    (@entries + index).clear
   end
 
   # Marks an entry in `@entries` at `index` as deleted
@@ -1053,7 +1055,7 @@ class Hash(K, V)
     self
   end
 
-  # Returns `true` of this Hash is comparing keys by `object_id`.
+  # Returns `true` if this Hash is comparing keys by `object_id`.
   #
   # See `compare_by_identity`.
   getter? compare_by_identity : Bool
@@ -1126,7 +1128,7 @@ class Hash(K, V)
       entry.value
     else
       value = yield key
-      insert_new(key, value)
+      upsert(key, value)
       value
     end
   end
@@ -1163,7 +1165,7 @@ class Hash(K, V)
       entry.value
     elsif block = @block
       default_value = block.call(self, key)
-      insert_new(key, yield default_value)
+      upsert(key, yield default_value)
       default_value
     else
       raise KeyError.new "Missing hash key: #{key.inspect}"
@@ -1614,8 +1616,20 @@ class Hash(K, V)
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
   def reject!(& : K, V -> _)
-    each_entry_with_index do |entry, index|
-      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
+    # No indices allocated yet so we won't need `DELETED_INDEX` yet
+    if @indices.null?
+      each_entry_with_index do |entry, index|
+        if yield(entry.key, entry.value)
+          delete_entry_and_update_counts(index)
+        end
+      end
+    else
+      each_entry_with_index do |entry, index|
+        if yield(entry.key, entry.value)
+          delete_index(index_for_entry_index(index))
+          delete_entry_and_update_counts(index)
+        end
+      end
     end
     self
   end
@@ -1733,7 +1747,8 @@ class Hash(K, V)
   # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
   def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
-    each_with_object({} of K2 => V) do |(key, value), memo|
+    copy = Hash(K2, V).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
       memo[yield(key, value)] = value
     end
   end
@@ -1748,7 +1763,8 @@ class Hash(K, V)
   # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
-    each_with_object({} of K => V2) do |(key, value), memo|
+    copy = Hash(K, V2).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
   end
@@ -1903,6 +1919,7 @@ class Hash(K, V)
   def shift(&)
     first_entry = first_entry?
     if first_entry
+      delete_index(index_for_entry_index(@first)) unless @indices.null?
       delete_entry_and_update_counts(@first)
       {first_entry.key, first_entry.value}
     else
@@ -2055,16 +2072,30 @@ class Hash(K, V)
     pp.text "{...}" unless executed
   end
 
-  # Returns an array of tuples with key and values belonging to this Hash.
+  # Returns an `Array` of `Tuple(K, V)` with key and values belonging to this Hash.
   #
   # ```
   # h = {1 => 'a', 2 => 'b', 3 => 'c'}
   # h.to_a # => [{1, 'a'}, {2, 'b'}, {3, 'c'}]
   # ```
+  #
   # The order of the array follows the order the keys were inserted in the Hash.
   def to_a : Array({K, V})
+    to_a(&.itself)
+  end
+
+  # Returns an `Array` with the results of running *block* against tuples with key and values
+  # belonging to this Hash.
+  #
+  # ```
+  # h = {"first_name" => "foo", "last_name" => "bar"}
+  # h.to_a { |_k, v| v.capitalize } # => ["Foo", "Bar"]
+  # ```
+  #
+  # The order of the array follows the order the keys were inserted in the Hash.
+  def to_a(&block : {K, V} -> U) : Array(U) forall U
     to_a_impl do |entry|
-      {entry.key, entry.value}
+      yield ({entry.key, entry.value})
     end
   end
 
@@ -2120,16 +2151,11 @@ class Hash(K, V)
     hash
   end
 
+  # :nodoc:
   struct Entry(K, V)
     getter key, value, hash
 
     def initialize(@hash : UInt32, @key : K, @value : V)
-    end
-
-    def self.deleted
-      key = uninitialized K
-      value = uninitialized V
-      new(0_u32, key, value)
     end
 
     def deleted? : Bool

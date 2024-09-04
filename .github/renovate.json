@@ -12,5 +12,6 @@
       "matchManagers": ["github-actions"],
       "schedule": ["after 5am and before 8am on Wednesday"]
     }
-  ]
+  ],
+  "labels": ["topic:infrastructure/ci"]
 }

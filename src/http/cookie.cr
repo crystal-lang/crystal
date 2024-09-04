@@ -97,8 +97,8 @@ module HTTP
     private def validate_value(value)
       value.each_byte do |byte|
         # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
-        # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
-        if !byte.in?(0x21...0x7f) || byte.in?(0x22, 0x2c, 0x3b, 0x5c)
+        # all printable ASCII characters except ',', '"', ';' and '\\'
+        if !byte.in?(0x20...0x7f) || byte.in?(0x22, 0x2c, 0x3b, 0x5c)
           raise IO::Error.new("Invalid cookie value")
         end
       end
@@ -196,9 +196,9 @@ module HTTP
     module Parser
       module Regex
         CookieName     = /[^()<>@,;:\\"\/\[\]?={} \t\x00-\x1f\x7f]+/
-        CookieOctet    = /[!#-+\--:<-\[\]-~]/
+        CookieOctet    = /[!#-+\--:<-\[\]-~ ]/
         CookieValue    = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
-        CookiePair     = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
+        CookiePair     = /\s*(?<name>#{CookieName})\s*=\s*(?<value>#{CookieValue})\s*/
         DomainLabel    = /[A-Za-z0-9\-]+/
         DomainIp       = /(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/
         Time           = /(?:\d{2}:\d{2}:\d{2})/
@@ -230,9 +230,11 @@ module HTTP
       def parse_cookies(header, &)
         header.scan(CookieString).each do |pair|
           value = pair["value"]
-          if value.starts_with?('"')
+          if value.starts_with?('"') && value.ends_with?('"')
             # Unwrap quoted cookie value
             value = value.byte_slice(1, value.bytesize - 2)
+          else
+            value = value.strip
           end
           yield Cookie.new(pair["name"], value)
         end
@@ -251,8 +253,16 @@ module HTTP
         expires = parse_time(match["expires"]?)
         max_age = match["max_age"]?.try(&.to_i64.seconds)
 
+        # Unwrap quoted cookie value
+        cookie_value = match["value"]
+        if cookie_value.starts_with?('"') && cookie_value.ends_with?('"')
+          cookie_value = cookie_value.byte_slice(1, cookie_value.bytesize - 2)
+        else
+          cookie_value = cookie_value.strip
+        end
+
         Cookie.new(
-          match["name"], match["value"],
+          match["name"], cookie_value,
           path: match["path"]?,
           expires: expires,
           domain: match["domain"]?,

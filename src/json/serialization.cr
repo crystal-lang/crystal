@@ -448,7 +448,7 @@ module JSON
           end
         end
 
-        unless discriminator_value
+        if discriminator_value.nil?
           raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
         end
 

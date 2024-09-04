@@ -47,6 +47,7 @@ lib LibC
   end
 
   SA_ONSTACK = 0x0001
+  SA_RESTART = 0x0002
   SA_SIGINFO = 0x0040
 
   struct SiginfoT
@@ -76,6 +77,7 @@ lib LibC
 
   fun kill(x0 : PidT, x1 : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
+  fun pthread_kill(PthreadT, Int) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
   fun sigaction = __sigaction14(x0 : Int, x1 : Sigaction*, x2 : Sigaction*) : Int
   fun sigaltstack = __sigaltstack14(x0 : StackT*, x1 : StackT*) : Int
@@ -84,4 +86,5 @@ lib LibC
   fun sigaddset = __sigaddset14(SigsetT*, Int) : Int
   fun sigdelset = __sigdelset14(SigsetT*, Int) : Int
   fun sigismember = __sigismember14(SigsetT*, Int) : Int
+  fun sigsuspend(SigsetT*) : Int
 end

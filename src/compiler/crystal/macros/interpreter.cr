@@ -69,7 +69,7 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro, call)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
@@ -77,7 +77,7 @@ module Crystal
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
-                   @in_macro = false)
+                   @in_macro = false, @call : Call? = nil)
       @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
@@ -118,6 +118,7 @@ module Crystal
 
     def visit(node : MacroLiteral)
       @str << node.value
+      false
     end
 
     def visit(node : MacroVerbatim)
@@ -135,7 +136,8 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        return @last = var
+        @last = var
+        return false
       end
 
       # Try to consider the var as a top-level macro call.
@@ -150,7 +152,8 @@ module Crystal
       # and in this case the parser has no idea about this, so the only
       # solution is to do it now.
       if value = interpret_top_level_call?(Call.new(nil, node.name))
-        return @last = value
+        @last = value
+        return false
       end
 
       node.raise "undefined macro variable '#{node.name}'"
@@ -294,6 +297,8 @@ module Crystal
       when Var
         node.value.accept self
         @vars[target.name] = @last
+      when Underscore
+        node.value.accept self
       else
         node.raise "can only assign to variables, not #{target.class_desc}"
       end
@@ -540,9 +545,16 @@ module Crystal
         @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
+      when "@caller"
+        @last = if call = @call
+                  ArrayLiteral.map [call], &.itself
+                else
+                  NilLiteral.new
+                end
       else
         node.raise "unknown macro instance var: '#{node.name}'"
       end
+      false
     end
 
     def visit(node : TupleLiteral)

@@ -6,9 +6,10 @@
   {% skip_file %}
 {% end %}
 
-require "spec"
+require "../spec_helper"
 
-describe Thread::ConditionVariable do
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread::ConditionVariable do
   it "signals" do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
