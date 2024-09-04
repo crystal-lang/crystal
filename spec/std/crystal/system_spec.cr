@@ -28,7 +28,7 @@ describe "Crystal::System" do
 
     # TODO: investigate why this prints `(???)`
     pending_interpreted "supports %p" do
-      printf_to_s("%p,%p,%p", Pointer(Void).new(0x0_u64), Pointer(Void).new(0x1234_u64), Pointer(Void).new(UInt64::MAX)).should eq("0x0,0x1234,0xffffffffffffffff")
+      printf_to_s("%p,%p,%p", Pointer(Void).new(0x0), Pointer(Void).new(0x1234), Pointer(Void).new(UInt64::MAX)).should eq("0x0,0x1234,0xffffffffffffffff")
     end
 
     it "supports %s" do

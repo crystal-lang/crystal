@@ -54,7 +54,7 @@ describe "Pointer" do
 
   describe "realloc" do
     it "raises on negative count" do
-      p1 = Pointer(Int32).new(123_u64)
+      p1 = Pointer(Int32).new(123)
       expect_raises(ArgumentError) do
         p1.realloc(-1)
       end
@@ -190,12 +190,11 @@ describe "Pointer" do
   end
 
   it "creates from int" do
-    Pointer(Int32).new(1234).address.should eq(1234) # deprecated
-    Pointer(Int32).new(1234_u64).address.should eq(1234)
+    Pointer(Int32).new(1234).address.should eq(1234)
   end
 
   it "performs arithmetic with u64" do
-    p = Pointer(Int8).new(1234_u64)
+    p = Pointer(Int8).new(1234)
     d = 4_u64
     (p + d).address.should eq(1238)
     (p - d).address.should eq(1230)
@@ -206,7 +205,7 @@ describe "Pointer" do
   end
 
   it "performs arithmetic with u32" do
-    p = Pointer(Int8).new(1234_u64)
+    p = Pointer(Int8).new(1234)
     d = 4_u32
     (p + d).address.should eq(1238)
     (p - d).address.should eq(1230)
@@ -354,17 +353,17 @@ describe "Pointer" do
 
   it "does !" do
     (!Pointer(Int32).null).should be_true
-    (!Pointer(Int32).new(123_u64)).should be_false
+    (!Pointer(Int32).new(123)).should be_false
   end
 
   it "clones" do
-    ptr = Pointer(Int32).new(123_u64)
+    ptr = Pointer(Int32).new(123)
     ptr.clone.should eq(ptr)
   end
 
   {% if flag?(:bits32) %}
     it "raises on copy_from with size bigger than UInt32::MAX" do
-      ptr = Pointer(Int32).new(123_u64)
+      ptr = Pointer(Int32).new(123)
 
       expect_raises(ArgumentError) do
         ptr.copy_from(ptr, UInt32::MAX.to_u64 + 1)
@@ -372,7 +371,7 @@ describe "Pointer" do
     end
 
     it "raises on move_from with size bigger than UInt32::MAX" do
-      ptr = Pointer(Int32).new(123_u64)
+      ptr = Pointer(Int32).new(123)
 
       expect_raises(ArgumentError) do
         ptr.move_from(ptr, UInt32::MAX.to_u64 + 1)
@@ -380,7 +379,7 @@ describe "Pointer" do
     end
 
     it "raises on clear with size bigger than UInt32::MAX" do
-      ptr = Pointer(Int32).new(123_u64)
+      ptr = Pointer(Int32).new(123)
 
       expect_raises(ArgumentError) do
         ptr.clear(UInt32::MAX.to_u64 + 1)

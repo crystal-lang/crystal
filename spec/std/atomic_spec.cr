@@ -65,11 +65,11 @@ describe Atomic do
     it "with pointer" do
       atomic = Atomic.new(Pointer(Void).null)
 
-      atomic.compare_and_set(Pointer(Void).new(1_u64), Pointer(Void).new(3_u64)).should eq({Pointer(Void).null, false})
+      atomic.compare_and_set(Pointer(Void).new(1), Pointer(Void).new(3)).should eq({Pointer(Void).null, false})
       atomic.get.should eq(Pointer(Void).null)
 
-      atomic.compare_and_set(Pointer(Void).null, Pointer(Void).new(3_u64)).should eq({Pointer(Void).null, true})
-      atomic.get.should eq(Pointer(Void).new(3_u64))
+      atomic.compare_and_set(Pointer(Void).null, Pointer(Void).new(3)).should eq({Pointer(Void).null, true})
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with nilable reference" do
@@ -210,12 +210,12 @@ describe Atomic do
   end
 
   it "#max with pointer type" do
-    atomic = Atomic.new(Pointer(Void).new(2_u64))
-    atomic.max(Pointer(Void).new(1_u64)).should eq(Pointer(Void).new(2_u64))
-    atomic.get.should eq(Pointer(Void).new(2_u64))
-    atomic.max(Pointer(Void).new(3_u64)).should eq(Pointer(Void).new(2_u64))
-    atomic.get.should eq(Pointer(Void).new(3_u64))
-    atomic.max(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(3_u64))
+    atomic = Atomic.new(Pointer(Void).new(2))
+    atomic.max(Pointer(Void).new(1)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(2))
+    atomic.max(Pointer(Void).new(3)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(3))
+    atomic.max(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(3))
     atomic.get.should eq(Pointer(Void).new(UInt64::MAX))
   end
 
@@ -246,13 +246,13 @@ describe Atomic do
   end
 
   it "#min with pointer type" do
-    atomic = Atomic.new(Pointer(Void).new(2_u64))
-    atomic.min(Pointer(Void).new(3_u64)).should eq(Pointer(Void).new(2_u64))
-    atomic.get.should eq(Pointer(Void).new(2_u64))
-    atomic.min(Pointer(Void).new(1_u64)).should eq(Pointer(Void).new(2_u64))
-    atomic.get.should eq(Pointer(Void).new(1_u64))
-    atomic.min(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(1_u64))
-    atomic.get.should eq(Pointer(Void).new(1_u64))
+    atomic = Atomic.new(Pointer(Void).new(2))
+    atomic.min(Pointer(Void).new(3)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(2))
+    atomic.min(Pointer(Void).new(1)).should eq(Pointer(Void).new(2))
+    atomic.get.should eq(Pointer(Void).new(1))
+    atomic.min(Pointer(Void).new(UInt64::MAX)).should eq(Pointer(Void).new(1))
+    atomic.get.should eq(Pointer(Void).new(1))
   end
 
   describe "#set" do
@@ -269,9 +269,9 @@ describe Atomic do
     end
 
     it "with pointer type" do
-      atomic = Atomic.new(Pointer(Void).new(1_u64))
-      atomic.set(Pointer(Void).new(3_u64)).should eq(Pointer(Void).new(3_u64))
-      atomic.get.should eq(Pointer(Void).new(3_u64))
+      atomic = Atomic.new(Pointer(Void).new(1))
+      atomic.set(Pointer(Void).new(3)).should eq(Pointer(Void).new(3))
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with nil (#4062)" do
@@ -315,9 +315,9 @@ describe Atomic do
     end
 
     it "with pointer type" do
-      atomic = Atomic.new(Pointer(Void).new(1_u64))
-      atomic.swap(Pointer(Void).new(3_u64)).should eq(Pointer(Void).new(1_u64))
-      atomic.get.should eq(Pointer(Void).new(3_u64))
+      atomic = Atomic.new(Pointer(Void).new(1))
+      atomic.swap(Pointer(Void).new(3)).should eq(Pointer(Void).new(1))
+      atomic.get.should eq(Pointer(Void).new(3))
     end
 
     it "with reference type" do
