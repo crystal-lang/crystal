@@ -231,44 +231,47 @@ struct Crystal::System::Process
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
-    reader_pipe, writer_pipe = IO.pipe
+    r, w = FileDescriptor.system_pipe
 
     pid = self.fork(will_exec: true)
     if !pid
+      LibC.close(r)
       begin
-        reader_pipe.close
-        writer_pipe.close_on_exec = true
         self.try_replace(command_args, env, clear_env, input, output, error, chdir)
-        writer_pipe.write_byte(1)
-        writer_pipe.write_bytes(Errno.value.to_i)
+        byte = 1_u8
+        errno = Errno.value.to_i32
+        FileDescriptor.write_fully(w, pointerof(byte), 1)
+        FileDescriptor.write_fully(w, pointerof(errno), 4)
       rescue ex
-        writer_pipe.write_byte(0)
+        byte = 0_u8
         message = ex.inspect_with_backtrace
-        writer_pipe.write_bytes(message.bytesize)
-        writer_pipe << message
-        writer_pipe.close
+        FileDescriptor.write_fully(w, pointerof(byte), 1)
+        FileDescriptor.write_fully(w, message.to_unsafe, message.bytesize)
       ensure
+        LibC.close(w)
         LibC._exit 127
       end
     end
 
-    writer_pipe.close
+    LibC.close(w)
+    reader_pipe = IO::FileDescriptor.new(r, blocking: false)
+
     begin
       case reader_pipe.read_byte
       when nil
         # Pipe was closed, no error
       when 0
         # Error message coming
-        message_size = reader_pipe.read_bytes(Int32)
-        if message_size > 0
-          message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
-        end
-        reader_pipe.close
+        message = reader.gets_to_end
         raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
       when 1
         # Errno coming
-        errno = Errno.new(reader_pipe.read_bytes(Int32))
-        self.raise_exception_from_errno(command_args[0], errno)
+        # can't use IO#read_bytes(Int32) because we skipped system/network
+        # endianness check when writing the integer while read_bytes would;
+        # we thus read it in the same as order as written
+        buf = uninitialized StaticArray(UInt8, 4)
+        reader_pipe.read_fully(buf.to_slice)
+        raise_exception_from_errno(command_args[0], Errno.new(buf.unsafe_as(Int32)))
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end

@@ -252,6 +252,19 @@ module Crystal::System::FileDescriptor
     io
   end
 
+  def self.write_fully(fd : LibC::Int, ptr : Pointer, size : Int32)
+    write_fully Slice.new(ptr.as(UInt8*), size)
+  end
+
+  # Helper to fully write a slice to a given *fd*.
+  def self.write_fully(fd : LibC::Int, slice : Slice(UInt8))
+    until slice.size == 0
+      size = LibC.write(fd, slice, slice.size)
+      break if size == -1
+      slice += size
+    end
+  end
+
   private def system_echo(enable : Bool, mode = nil)
     new_mode = mode || FileDescriptor.tcgetattr(fd)
     flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
