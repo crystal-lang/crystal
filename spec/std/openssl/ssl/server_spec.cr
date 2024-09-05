@@ -136,7 +136,7 @@ describe OpenSSL::SSL::Server do
 
     OpenSSL::SSL::Server.open tcp_server, server_context do |server|
       spawn do
-        sleep 1
+        sleep 1.second
         OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
         end
       end

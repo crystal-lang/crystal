@@ -128,7 +128,7 @@ module Crystal::System::Socket
   end
 
   # :nodoc:
-  def overlapped_connect(socket, method, &)
+  def overlapped_connect(socket, method, timeout, &)
     IOCP::OverlappedOperation.run(socket) do |operation|
       result = yield operation
 
@@ -145,7 +145,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      operation.wait_for_wsa_result(read_timeout) do |error|
+      operation.wait_for_wsa_result(timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaeconnrefused?
           return ::Socket::ConnectError.from_os_error(method, error)

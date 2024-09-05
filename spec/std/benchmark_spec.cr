@@ -13,8 +13,8 @@ describe Benchmark::IPS::Job do
     # test several things to avoid running a benchmark over and over again in
     # the specs
     j = Benchmark::IPS::Job.new(0.001, 0.001, interactive: false)
-    a = j.report("a") { sleep 0.001 }
-    b = j.report("b") { sleep 0.002 }
+    a = j.report("a") { sleep 1.milliseconds }
+    b = j.report("b") { sleep 2.milliseconds }
 
     j.execute
 
