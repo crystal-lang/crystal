@@ -247,10 +247,7 @@ class IO::FileDescriptor < IO
   def finalize
     return if closed? || !close_on_finalize?
 
-    if event_loop.responds_to?(:delete)
-      event_loop.delete(self)
-    end
-
+    event_loop.delete(self)
     file_descriptor_close { } # ignore error
   end
 

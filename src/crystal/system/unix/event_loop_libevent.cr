@@ -94,6 +94,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
+  def delete(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
     evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
@@ -185,6 +188,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def delete(socket : ::Socket) : Nil
   end
 
   def evented_read(target, errno_msg : String, &) : Int32
