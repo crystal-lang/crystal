@@ -538,17 +538,15 @@ module Crystal
 
     private def mt_codegen(units, n_threads)
       channel = Channel(CompilationUnit).new(n_threads * 2)
-      wg = WaitGroup.new(n_threads)
+      wg = WaitGroup.new
       mutex = Mutex.new
 
       n_threads.times do
-        spawn do
+        wg.spawn do
           while unit = channel.receive?
             unit.compile(isolate_context: true)
             mutex.synchronize { @progress_tracker.stage_progress += 1 }
           end
-        ensure
-          wg.done
         end
       end
 
