@@ -536,17 +536,21 @@ end
 
 module Math
   # Returns the unbiased base 2 exponent of the given floating-point *value*.
+  #
+  # Raises `ArgumentError` if *value* is zero.
   def ilogb(value : BigFloat) : Int64
-    LibGMP.mpf_get_d_2exp(out exp, value)
-    (exp - 1).to_i64
+    raise ArgumentError.new "Cannot get exponent of zero" if value.zero?
+    leading_zeros = value.@mpf._mp_d[value.@mpf._mp_size.abs - 1].leading_zeros_count
+    8_i64 * sizeof(LibGMP::MpLimb) * value.@mpf._mp_exp - leading_zeros - 1
   end
 
   # Returns the unbiased radix-independent exponent of the given floating-point *value*.
   #
   # For `BigFloat` this is equivalent to `ilogb`.
+  #
+  # Raises `ArgumentError` is *value* is zero.
   def logb(value : BigFloat) : BigFloat
-    LibGMP.mpf_get_d_2exp(out exp, value)
-    (exp - 1).to_big_f
+    ilogb(value).to_big_f
   end
 
   # Multiplies the given floating-point *value* by 2 raised to the power *exp*.
