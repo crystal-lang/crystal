@@ -62,5 +62,13 @@ abstract class Crystal::EventLoop
 
     # Closes the socket.
     abstract def close(socket : ::Socket) : Nil
+
+    # Removes the socket from the event loop. Can be used to free up memory
+    # resources associated with the socket, as well as removing the socket from
+    # kernel data structures.
+    #
+    # Called by `::Socket#finalize` before closing the socket. Errors shall be
+    # silently ignored.
+    abstract def delete(socket : ::Socket) : Nil
   end
 end
