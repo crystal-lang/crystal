@@ -537,15 +537,23 @@ end
 module Math
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : BigFloat) : {BigFloat, Int64}
-    LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
+    # We compute this ourselves since `LibGMP.mpf_get_d_2exp` only returns a
+    # `LibC::Long` exponent, which is not sufficient for 32-bit `LibC::Long` and
+    # 32-bit `LibGMP::MpExp`, e.g. on 64-bit Windows.
+    # Since `0.5 <= frac.abs < 1.0`, the radix point should be just above the
+    # most significant limb, and there should be no leading zeros in that limb.
+    # Note that everything works when `value` is zero too
+    leading_zeros = value.@mpf._mp_d[value.@mpf._mp_size.abs - 1].leading_zeros_count
+    exp = 8_i64 * sizeof(LibGMP::MpLimb) * value.@mpf._mp_exp - leading_zeros
+
     frac = BigFloat.new do |mpf|
-      if exp >= 0
-        LibGMP.mpf_div_2exp(mpf, value, exp)
-      else
-        LibGMP.mpf_mul_2exp(mpf, value, -exp)
-      end
+      # remove leading zeros in the most significant limb
+      LibGMP.mpf_mul_2exp(mpf, value, leading_zeros)
+      # reset the exponent manually
+      mpf.value._mp_exp = 0
     end
-    {frac, exp.to_i64}
+
+    {frac, exp}
   end
 
   # Calculates the square root of *value*.
@@ -557,23 +565,5 @@ module Math
   # ```
   def sqrt(value : BigFloat) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
-  end
-end
-
-# :nodoc:
-struct Crystal::Hasher
-  def self.reduce_num(value : BigFloat)
-    float_normalize_wrap(value) do |value|
-      # more exact version of `Math.frexp`
-      LibGMP.mpf_get_d_2exp(out exp, value)
-      frac = BigFloat.new do |mpf|
-        if exp >= 0
-          LibGMP.mpf_div_2exp(mpf, value, exp)
-        else
-          LibGMP.mpf_mul_2exp(mpf, value, -exp)
-        end
-      end
-      float_normalize_reference(value, frac, exp)
-    end
   end
 end
