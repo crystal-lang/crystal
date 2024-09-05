@@ -1,3 +1,5 @@
+{% skip_file if flag?(:interpreted) %}
+
 require "../spec_helper"
 
 describe Crystal::Command do
