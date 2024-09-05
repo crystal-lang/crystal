@@ -158,7 +158,7 @@ module Crystal::System::FileDescriptor
 
     if retry
       until flock(op)
-        sleep 0.1
+        sleep 0.1.seconds
       end
     else
       flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
