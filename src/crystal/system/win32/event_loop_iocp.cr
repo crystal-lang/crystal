@@ -292,8 +292,8 @@ class Crystal::IOCP::Event
     free
   end
 
-  def add(timeout : Time::Span?) : Nil
-    @wake_at = timeout ? Time.monotonic + timeout : Time.monotonic
+  def add(timeout : Time::Span) : Nil
+    @wake_at = Time.monotonic + timeout
     Crystal::EventLoop.current.enqueue(self)
   end
 end
