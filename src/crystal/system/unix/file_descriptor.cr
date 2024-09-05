@@ -252,12 +252,13 @@ module Crystal::System::FileDescriptor
     io
   end
 
-  def self.write_fully(fd : LibC::Int, ptr : Pointer, size : Int32)
-    write_fully(fd, Slice.new(ptr.as(UInt8*), size))
+  # Helper to write *size* values at *pointer* to a given *fd*.
+  def self.write_fully(fd : LibC::Int, pointer : Pointer, size : Int32 = 1) : Nil
+    write_fully(fd, Slice.new(pointer, size).unsafe_slice_of(UInt8))
   end
 
   # Helper to fully write a slice to a given *fd*.
-  def self.write_fully(fd : LibC::Int, slice : Slice(UInt8))
+  def self.write_fully(fd : LibC::Int, slice : Slice(UInt8)) : Nil
     until slice.size == 0
       size = LibC.write(fd, slice, slice.size)
       break if size == -1

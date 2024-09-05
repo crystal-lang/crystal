@@ -240,13 +240,13 @@ struct Crystal::System::Process
         self.try_replace(command_args, env, clear_env, input, output, error, chdir)
         byte = 1_u8
         errno = Errno.value.to_i32
-        FileDescriptor.write_fully(w, pointerof(byte), 1)
-        FileDescriptor.write_fully(w, pointerof(errno), 4)
+        FileDescriptor.write_fully(w, pointerof(byte))
+        FileDescriptor.write_fully(w, pointerof(errno))
       rescue ex
         byte = 0_u8
         message = ex.inspect_with_backtrace
-        FileDescriptor.write_fully(w, pointerof(byte), 1)
-        FileDescriptor.write_fully(w, message.to_unsafe, message.bytesize)
+        FileDescriptor.write_fully(w, pointerof(byte))
+        FileDescriptor.write_fully(w, message.to_slice)
       ensure
         LibC.close(w)
         LibC._exit 127
