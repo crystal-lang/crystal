@@ -262,7 +262,7 @@ struct Crystal::System::Process
         # Pipe was closed, no error
       when 0
         # Error message coming
-        message = reader.gets_to_end
+        message = reader_pipe.gets_to_end
         raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
       when 1
         # Errno coming
