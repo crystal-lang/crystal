@@ -253,7 +253,7 @@ module Crystal::System::FileDescriptor
   end
 
   def self.write_fully(fd : LibC::Int, ptr : Pointer, size : Int32)
-    write_fully Slice.new(ptr.as(UInt8*), size)
+    write_fully(fd, Slice.new(ptr.as(UInt8*), size))
   end
 
   # Helper to fully write a slice to a given *fd*.
