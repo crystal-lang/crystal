@@ -4,6 +4,9 @@ require "./event_libevent"
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   private getter(event_base) { Crystal::LibEvent::Event::Base.new }
 
+  def after_fork_before_exec : Nil
+  end
+
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
