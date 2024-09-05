@@ -13,7 +13,7 @@ class XML::Error < Exception
 
   @[Deprecated("This class accessor is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
   def self.errors : Array(XML::Error)?
-    {% raise "`XML::Error.errors` is deprecated and its implementation was removed because it leaks memory when it's not used.\nSee https://github.com/crystal-lang/crystal/issues/14934 for details." %}
+    {% raise "`XML::Error.errors` was removed because it leaks memory when it's not used. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.\nSee https://github.com/crystal-lang/crystal/issues/14934 for details. " %}
   end
 
   def self.collect(errors, &)
