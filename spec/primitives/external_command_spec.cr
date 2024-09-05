@@ -18,7 +18,7 @@ describe Crystal::Command do
       process = Process.new(ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal",
         ["external", "foo", "bar"],
         output: :pipe,
-        env: {"PATH" => File.dirname(path)}
+        env: {"PATH" => {ENV["PATH"], File.dirname(path)}.join(Process::PATH_DELIMITER)}
       )
       output = process.output.gets_to_end
       status = process.wait
