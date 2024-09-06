@@ -462,7 +462,7 @@ struct BigFloat < Float
       # This value will be very close to an integer, which we then obtain with
       # `#round`.
       overflow_n = ((@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp))
-      exponent10.to_i64 + overflow_n.to_i64 * (256_i64 ** sizeof(LibGMP::MpExp))
+      exponent10.to_i64 + overflow_n.round.to_i64 * (256_i64 ** sizeof(LibGMP::MpExp))
     {% end %}
   end
 
