@@ -345,6 +345,11 @@ describe "BigFloat" do
     it { assert_prints (0.1).to_big_f.to_s, "0.100000000000000005551" }
     it { assert_prints Float64::MAX.to_big_f.to_s, "1.79769313486231570815e+308" }
     it { assert_prints Float64::MIN_POSITIVE.to_big_f.to_s, "2.22507385850720138309e-308" }
+
+    # least power of two with a base-10 exponent greater than Int32::MAX
+    (2.to_big_f ** 7133786264).to_s.should end_with("e+2147483648")
+    # least power of two with a base-10 exponent less than Int32::MIN
+    (2.to_big_f ** -7133786264).to_s.should end_with("e-2147483649")
   end
 
   describe "#inspect" do
