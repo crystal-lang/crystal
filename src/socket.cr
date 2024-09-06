@@ -430,7 +430,7 @@ class Socket < IO
   def finalize
     return if closed?
 
-    event_loop.remove(self)
+    event_loop?.try(&.remove(self))
     socket_close { } # ignore error
   end
 
