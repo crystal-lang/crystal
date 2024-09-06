@@ -129,6 +129,9 @@ struct Crystal::Wasi::Event
   def add(timeout : Time::Span) : Nil
   end
 
+  def add(timeout : Nil) : Nil
+  end
+
   def free : Nil
   end
 
