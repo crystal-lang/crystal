@@ -161,7 +161,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
   end
 
-  def delete(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   private def wsa_buffer(bytes)
@@ -275,7 +275,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   def close(socket : ::Socket) : Nil
   end
 
-  def delete(socket : ::Socket) : Nil
+  def remove(socket : ::Socket) : Nil
   end
 end
 

@@ -53,7 +53,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
-  def delete(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -88,7 +88,7 @@ class Crystal::Wasi::EventLoop < Crystal::EventLoop
     socket.evented_close
   end
 
-  def delete(socket : ::Socket) : Nil
+  def remove(socket : ::Socket) : Nil
   end
 
   def evented_read(target, errno_msg : String, &) : Int32

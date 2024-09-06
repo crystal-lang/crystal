@@ -26,6 +26,6 @@ abstract class Crystal::EventLoop
     #
     # Called by `::IO::FileDescriptor#finalize` before closing the file
     # descriptor. Errors shall be silently ignored.
-    abstract def delete(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    abstract def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 end
