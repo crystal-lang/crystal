@@ -56,8 +56,6 @@ require "./uri/params/serializable"
 require "./uuid"
 require "./uuid/json"
 require "./syscall"
-{% unless flag?(:win32) %}
-  require "./system/*"
-{% end %}
+require "./system/*"
 require "./wait_group"
 require "./docs_pseudo_methods"

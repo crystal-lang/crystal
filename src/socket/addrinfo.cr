@@ -1,15 +1,16 @@
 require "uri/punycode"
 require "./address"
+require "crystal/system/addrinfo"
 
 class Socket
   # Domain name resolver.
   struct Addrinfo
+    include Crystal::System::Addrinfo
+
     getter family : Family
     getter type : Type
     getter protocol : Protocol
     getter size : Int32
-
-    @addr : LibC::SockaddrIn6
 
     # Resolves a domain that best matches the given options.
     #
@@ -126,66 +127,15 @@ class Socket
     end
 
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout, &)
-      {% if flag?(:wasm32) %}
-        raise NotImplementedError.new "Socket::Addrinfo.getaddrinfo"
-      {% else %}
-        # RFC 3986 says:
-        # > When a non-ASCII registered name represents an internationalized domain name
-        # > intended for resolution via the DNS, the name must be transformed to the IDNA
-        # > encoding [RFC3490] prior to name lookup.
-        domain = URI::Punycode.to_ascii domain
+      # RFC 3986 says:
+      # > When a non-ASCII registered name represents an internationalized domain name
+      # > intended for resolution via the DNS, the name must be transformed to the IDNA
+      # > encoding [RFC3490] prior to name lookup.
+      domain = URI::Punycode.to_ascii domain
 
-        hints = LibC::Addrinfo.new
-        hints.ai_family = (family || Family::UNSPEC).to_i32
-        hints.ai_socktype = type
-        hints.ai_protocol = protocol
-        hints.ai_flags = 0
-
-        if service.is_a?(Int)
-          hints.ai_flags |= LibC::AI_NUMERICSERV
-        end
-
-        # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
-        # if AI_NUMERICSERV is set, and servname is NULL or 0.
-        {% if flag?(:darwin) %}
-          if service.in?(0, nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
-            hints.ai_flags |= LibC::AI_NUMERICSERV
-            service = "00"
-          end
-        {% end %}
-        {% if flag?(:win32) %}
-          if service.is_a?(Int) && service < 0
-            raise Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
-          end
-        {% end %}
-
-        ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
-        unless ret.zero?
-          {% if flag?(:unix) %}
-            # EAI_SYSTEM is not defined on win32
-            if ret == LibC::EAI_SYSTEM
-              raise Error.from_os_error nil, Errno.value, domain: domain
-            end
-          {% end %}
-
-          error = {% if flag?(:win32) %}
-                    WinError.new(ret.to_u32!)
-                  {% else %}
-                    Errno.new(ret)
-                  {% end %}
-          raise Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)
-        end
-
-        addrinfo = ptr
-        begin
-          while addrinfo
-            yield new(addrinfo)
-            addrinfo = addrinfo.value.ai_next
-          end
-        ensure
-          LibC.freeaddrinfo(ptr)
-        end
-      {% end %}
+      Crystal::System::Addrinfo.getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+        yield addrinfo
+      end
     end
 
     # Resolves *domain* for the TCP protocol and returns an `Array` of possible
@@ -226,29 +176,9 @@ class Socket
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
     end
 
-    protected def initialize(addrinfo : LibC::Addrinfo*)
-      @family = Family.from_value(addrinfo.value.ai_family)
-      @type = Type.from_value(addrinfo.value.ai_socktype)
-      @protocol = Protocol.from_value(addrinfo.value.ai_protocol)
-      @size = addrinfo.value.ai_addrlen.to_i
-
-      @addr = uninitialized LibC::SockaddrIn6
-
-      case @family
-      when Family::INET6
-        addrinfo.value.ai_addr.as(LibC::SockaddrIn6*).copy_to(pointerof(@addr).as(LibC::SockaddrIn6*), 1)
-      when Family::INET
-        addrinfo.value.ai_addr.as(LibC::SockaddrIn*).copy_to(pointerof(@addr).as(LibC::SockaddrIn*), 1)
-      else
-        # TODO: (asterite) UNSPEC and UNIX unsupported?
-      end
-    end
-
-    @ip_address : IPAddress?
-
     # Returns an `IPAddress` matching this addrinfo.
-    def ip_address : Socket::IPAddress
-      @ip_address ||= IPAddress.from(to_unsafe, size)
+    getter(ip_address : Socket::IPAddress) do
+      system_ip_address
     end
 
     def inspect(io : IO)
@@ -258,10 +188,6 @@ class Socket
       io << type << ", "
       io << protocol
       io << ")"
-    end
-
-    def to_unsafe
-      pointerof(@addr).as(LibC::Sockaddr*)
     end
   end
 end
