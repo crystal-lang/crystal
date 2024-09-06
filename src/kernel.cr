@@ -584,14 +584,14 @@ end
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
-        # clean ups (don't depend on event loop):
+        # reinit event loop first:
+        ->{ Crystal::EventLoop.current.after_fork },
+
+        # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
         ->Crystal::System::SignalChildHandler.after_fork,
 
-        # reinit event loop:
-        ->{ Crystal::EventLoop.current.after_fork },
-
-        # more clean ups (may depend on event loop):
+        # additional reinitialization
         ->Random::DEFAULT.new_seed,
       ] of -> Nil
     end

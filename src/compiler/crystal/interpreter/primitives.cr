@@ -178,6 +178,30 @@ class Crystal::Repl::Compiler
           pop(sizeof(Pointer(Void)), node: nil)
         end
       end
+    when "pre_initialize"
+      type =
+        if obj
+          discard_value(obj)
+          obj.type.instance_type
+        else
+          scope.instance_type
+        end
+
+      accept_call_members(node)
+
+      dup sizeof(Pointer(Void)), node: nil
+      reset_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
+
+      initializer_compiled_defs = @context.type_instance_var_initializers(type)
+      unless initializer_compiled_defs.empty?
+        initializer_compiled_defs.size.times do
+          dup sizeof(Pointer(Void)), node: nil
+        end
+
+        initializer_compiled_defs.each do |compiled_def|
+          call compiled_def, node: nil
+        end
+      end
     when "tuple_indexer_known_index"
       unless @wants_value
         accept_call_members(node)

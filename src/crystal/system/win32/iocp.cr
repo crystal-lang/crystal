@@ -6,7 +6,16 @@ require "crystal/system/thread_linked_list"
 module Crystal::IOCP
   # :nodoc:
   class CompletionKey
+    enum Tag
+      ProcessRun
+      StdinRead
+    end
+
     property fiber : Fiber?
+    getter tag : Tag
+
+    def initialize(@tag : Tag, @fiber : Fiber? = nil)
+    end
   end
 
   def self.wait_queued_completions(timeout, alertable = false, &)
@@ -39,26 +48,34 @@ module Crystal::IOCP
       # at the moment only `::Process#wait` uses a non-nil completion key; all
       # I/O operations, including socket ones, do not set this field
       case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
-      when Nil
+      in Nil
         operation = OverlappedOperation.unbox(entry.lpOverlapped)
         operation.schedule { |fiber| yield fiber }
-      else
-        case entry.dwNumberOfBytesTransferred
-        when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
+      in CompletionKey
+        if completion_key_valid?(completion_key, entry.dwNumberOfBytesTransferred)
+          # if `Process` exits before a call to `#wait`, this fiber will be
+          # reset already
           if fiber = completion_key.fiber
-            # this ensures the `::Process` doesn't keep an indirect reference to
-            # `::Thread.current`, as that leads to a finalization cycle
+            # this ensures existing references to `completion_key` do not keep
+            # an indirect reference to `::Thread.current`, as that leads to a
+            # finalization cycle
             completion_key.fiber = nil
-
             yield fiber
-          else
-            # the `Process` exits before a call to `#wait`; do nothing
           end
         end
       end
     end
 
     false
+  end
+
+  private def self.completion_key_valid?(completion_key, number_of_bytes_transferred)
+    case completion_key.tag
+    in .process_run?
+      number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
+    in .stdin_read?
+      true
+    end
   end
 
   class OverlappedOperation
@@ -168,15 +185,16 @@ module Crystal::IOCP
     end
   end
 
-  def self.overlapped_operation(file_descriptor, method, timeout, *, writing = false, &)
+  def self.overlapped_operation(file_descriptor, method, timeout, *, offset = nil, writing = false, &)
     handle = file_descriptor.windows_handle
     seekable = LibC.SetFilePointerEx(handle, 0, out original_offset, IO::Seek::Current) != 0
 
     OverlappedOperation.run(handle) do |operation|
       overlapped = operation.to_unsafe
       if seekable
-        overlapped.value.union.offset.offset = LibC::DWORD.new!(original_offset)
-        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new!(original_offset >> 32)
+        start_offset = offset || original_offset
+        overlapped.value.union.offset.offset = LibC::DWORD.new!(start_offset)
+        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new!(start_offset >> 32)
       end
       result, value = yield operation
 
@@ -215,8 +233,11 @@ module Crystal::IOCP
 
       # operation completed asynchronously; seek to the original file position
       # plus the number of bytes read or written (other operations might have
-      # moved the file pointer so we don't use `IO::Seek::Current` here)
-      LibC.SetFilePointerEx(handle, original_offset + byte_count, nil, IO::Seek::Set) if seekable
+      # moved the file pointer so we don't use `IO::Seek::Current` here), unless
+      # we are calling `Crystal::System::FileDescriptor.pread`
+      if seekable && !offset
+        LibC.SetFilePointerEx(handle, original_offset + byte_count, nil, IO::Seek::Set)
+      end
       byte_count
     end
   end

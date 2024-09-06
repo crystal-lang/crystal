@@ -65,14 +65,14 @@ describe HTTP::Server do
     while !server.listening?
       Fiber.yield
     end
-    sleep 0.1
+    sleep 0.1.seconds
 
     schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 
     # wait before closing the server
-    sleep 0.1
+    sleep 0.1.seconds
     server.close
 
     ch.receive.should eq SpecChannelStatus::End
