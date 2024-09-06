@@ -203,6 +203,14 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pipe(read_blocking, write_blocking)
+    pipe_fds = system_pipe
+    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+    w.sync = true
+    {r, w}
+  end
+
+  def self.system_pipe : StaticArray(LibC::Int, 2)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
 
     {% if LibC.has_method?(:pipe2) %}
@@ -219,11 +227,7 @@ module Crystal::System::FileDescriptor
       end
     {% end %}
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-
-    {r, w}
+    pipe_fds
   end
 
   def self.pread(file, buffer, offset)
@@ -253,6 +257,20 @@ module Crystal::System::FileDescriptor
     io = IO::FileDescriptor.new(clone_fd)
     io.sync = true
     io
+  end
+
+  # Helper to write *size* values at *pointer* to a given *fd*.
+  def self.write_fully(fd : LibC::Int, pointer : Pointer, size : Int32 = 1) : Nil
+    write_fully(fd, Slice.new(pointer, size).unsafe_slice_of(UInt8))
+  end
+
+  # Helper to fully write a slice to a given *fd*.
+  def self.write_fully(fd : LibC::Int, slice : Slice(UInt8)) : Nil
+    until slice.size == 0
+      size = LibC.write(fd, slice, slice.size)
+      break if size == -1
+      slice += size
+    end
   end
 
   private def system_echo(enable : Bool, mode = nil)
