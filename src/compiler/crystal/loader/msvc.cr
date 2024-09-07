@@ -133,15 +133,25 @@ class Crystal::Loader
   end
 
   def load_file?(path : String | ::Path) : Bool
+    # API sets shouldn't be linked directly from linker flags, but just in case
+    if api_set?(path)
+      return load_dll?(path.to_s)
+    end
+
     return false unless File.file?(path)
 
     # On Windows, each `.lib` import library may reference any number of `.dll`
     # files, whose base names may not match the library's. Thus it is necessary
     # to extract this information from the library archive itself.
-    System::LibraryArchive.imported_dlls(path).each do |dll|
-      dll_full_path = @dll_search_paths.try &.each do |search_path|
-        full_path = File.join(search_path, dll)
-        break full_path if File.file?(full_path)
+    System::LibraryArchive.imported_dlls(path).all? do |dll|
+      # API set names do not refer to physical filenames despite ending with
+      # `.dll`, and therefore should not use a path search:
+      # https://learn.microsoft.com/en-us/cpp/windows/universal-crt-deployment?view=msvc-170#local-deployment
+      unless api_set?(dll)
+        dll_full_path = @dll_search_paths.try &.each do |search_path|
+          full_path = File.join(search_path, dll)
+          break full_path if File.file?(full_path)
+        end
       end
       dll = dll_full_path || dll
 
@@ -152,13 +162,16 @@ class Crystal::Loader
       #
       # Note that the compiler's directory and PATH are effectively searched
       # twice when coming from the interpreter
-      handle = open_library(dll)
-      return false unless handle
-
-      @handles << handle
-      @loaded_libraries << (module_filename(handle) || dll)
+      load_dll?(dll)
     end
+  end
 
+  private def load_dll?(dll)
+    handle = open_library(dll)
+    return false unless handle
+
+    @handles << handle
+    @loaded_libraries << (module_filename(handle) || dll)
     true
   end
 
@@ -188,6 +201,12 @@ class Crystal::Loader
       LibC.FreeLibrary(handle)
     end
     @handles.clear
+  end
+
+  # Returns whether *dll* names an API set according to:
+  # https://learn.microsoft.com/en-us/windows/win32/apiindex/windows-apisets#api-set-contract-names
+  private def api_set?(dll)
+    dll.to_s.matches?(/^(?:api-|ext-)[a-zA-Z0-9-]*l\d+-\d+-\d+\.dll$/)
   end
 
   private def module_filename(handle)

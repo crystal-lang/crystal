@@ -2,6 +2,12 @@ require "./spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending Socket
+  {% skip_file %}
+{% end %}
+
 describe Socket, tags: "network" do
   describe ".unix" do
     it "creates a unix socket" do

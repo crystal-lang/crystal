@@ -114,7 +114,7 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
+          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
         uses: actions/checkout@v4
