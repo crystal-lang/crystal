@@ -130,6 +130,25 @@ module Crystal::IOCP
         end
       end
     end
+  end
+
+  class IOOverlappedOperation < OverlappedOperation
+    def initialize(@handle : LibC::HANDLE)
+    end
+
+    def wait_for_result(timeout, & : WinError ->)
+      wait_for_completion(timeout)
+
+      result = LibC.GetOverlappedResult(@handle, self, out bytes, 0)
+      if result.zero?
+        error = WinError.value
+        yield error
+
+        raise IO::Error.from_os_error("GetOverlappedResult", error)
+      end
+
+      bytes
+    end
 
     private def try_cancel : Bool
       # Microsoft documentation:
@@ -151,25 +170,6 @@ module Crystal::IOCP
     end
   end
 
-  class IOOverlappedOperation < OverlappedOperation
-    def initialize(@handle : LibC::HANDLE)
-    end
-
-    def wait_for_result(timeout, & : WinError ->)
-      wait_for_completion(timeout)
-
-      result = LibC.GetOverlappedResult(@handle, self, out bytes, 0)
-      if result.zero?
-        error = WinError.value
-        yield error
-
-        raise IO::Error.from_os_error("GetOverlappedResult", error)
-      end
-
-      bytes
-    end
-  end
-
   class WSAOverlappedOperation < OverlappedOperation
     def initialize(@handle : LibC::SOCKET)
     end
@@ -187,6 +187,25 @@ module Crystal::IOCP
       end
 
       bytes
+    end
+
+    private def try_cancel : Bool
+      # Microsoft documentation:
+      # The application must not free or reuse the OVERLAPPED structure
+      # associated with the canceled I/O operations until they have completed
+      # (this does not apply to asynchronous operations that finished
+      # synchronously, as nothing would be queued to the IOCP)
+      ret = LibC.CancelIoEx(Pointer(Void).new(@handle), self)
+      if ret.zero?
+        case error = WinError.value
+        when .error_not_found?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise RuntimeError.from_os_error("CancelIoEx", os_error: error)
+        end
+      end
+      true
     end
   end
 
