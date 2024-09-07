@@ -367,20 +367,24 @@ struct Crystal::System::Process
     end
   end
 
+  # Replaces the C standard streams' file descriptors, not Win32's, since
+  # `try_replace` uses the C `LibC._wexecvp` and only cares about the former
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    src_io = to_real_fd(src_io)
+    unless src_io.system_blocking?
+      raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
+    end
 
-    dst_io.reopen(src_io)
-    dst_io.blocking = true
-    dst_io.close_on_exec = false
-  end
+    dst_fd =
+      case dst_io
+      when ORIGINAL_STDIN  then 0
+      when ORIGINAL_STDOUT then 1
+      when ORIGINAL_STDERR then 2
+      else
+        raise "BUG: Invalid destination IO"
+      end
 
-  private def self.to_real_fd(fd : IO::FileDescriptor)
-    case fd
-    when STDIN  then ORIGINAL_STDIN
-    when STDOUT then ORIGINAL_STDOUT
-    when STDERR then ORIGINAL_STDERR
-    else             fd
+    if LibC._dup2(LibC._open_osfhandle(src_io.windows_handle, 0), dst_fd) == -1
+      raise RuntimeError.from_errno("Failed to replace C file descriptor")
     end
   end
 
