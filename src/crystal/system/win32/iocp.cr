@@ -85,6 +85,7 @@ module Crystal::IOCP
     end
 
     abstract def wait_for_result(timeout, & : WinError ->)
+    private abstract def try_cancel : Bool
 
     @overlapped = LibC::OVERLAPPED.new
     @fiber = Fiber.current
