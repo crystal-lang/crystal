@@ -3,6 +3,7 @@ require "c/stdint"
 lib LibC
   fun _wexecvp(cmdname : WCHAR*, argv : WCHAR**) : IntPtrT
   fun _open_osfhandle(osfhandle : HANDLE, flags : LibC::Int) : LibC::Int
+  fun _dup(fd : Int) : Int
   fun _dup2(fd1 : Int, fd2 : Int) : Int
 
   # unused

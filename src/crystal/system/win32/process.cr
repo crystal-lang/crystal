@@ -326,9 +326,9 @@ struct Crystal::System::Process
   end
 
   private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
-    reopen_io(input, ORIGINAL_STDIN)
-    reopen_io(output, ORIGINAL_STDOUT)
-    reopen_io(error, ORIGINAL_STDERR)
+    old_input_fd = reopen_io(input, ORIGINAL_STDIN)
+    old_output_fd = reopen_io(output, ORIGINAL_STDOUT)
+    old_error_fd = reopen_io(error, ORIGINAL_STDERR)
 
     ENV.clear if clear_env
     env.try &.each do |key, val|
@@ -351,11 +351,18 @@ struct Crystal::System::Process
     argv << Pointer(LibC::WCHAR).null
 
     LibC._wexecvp(command, argv)
+
+    # exec failed; restore the original C runtime file descriptors
+    errno = Errno.value
+    LibC._dup2(old_input_fd, 0)
+    LibC._dup2(old_output_fd, 1)
+    LibC._dup2(old_error_fd, 2)
+    errno
   end
 
   def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
-    try_replace(command_args, env, clear_env, input, output, error, chdir)
-    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0])
+    errno = try_replace(command_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command_args.is_a?(String) ? command_args : command_args[0], errno)
   end
 
   private def self.raise_exception_from_errno(command, errno = Errno.value)
@@ -368,13 +375,21 @@ struct Crystal::System::Process
   end
 
   # Replaces the C standard streams' file descriptors, not Win32's, since
-  # `try_replace` uses the C `LibC._wexecvp` and only cares about the former
+  # `try_replace` uses the C `LibC._wexecvp` and only cares about the former.
+  # Returns a duplicate of the original file descriptor
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    src_io = to_real_fd(src_io)
-
     unless src_io.system_blocking?
       raise IO::Error.new("Non-blocking streams are not supported in `Process.exec`", target: src_io)
     end
+
+    src_fd =
+      case src_io
+      when STDIN  then 0
+      when STDOUT then 1
+      when STDERR then 2
+      else
+        LibC._open_osfhandle(src_io.windows_handle, 0)
+      end
 
     dst_fd =
       case dst_io
@@ -385,18 +400,15 @@ struct Crystal::System::Process
         raise "BUG: Invalid destination IO"
       end
 
-    if LibC._dup2(LibC._open_osfhandle(src_io.windows_handle, 0), dst_fd) == -1
-      raise RuntimeError.from_errno("Failed to replace C file descriptor")
-    end
-  end
+    return src_fd if dst_fd == src_fd
 
-  private def self.to_real_fd(fd : IO::FileDescriptor)
-    case fd
-    when STDIN  then ORIGINAL_STDIN
-    when STDOUT then ORIGINAL_STDOUT
-    when STDERR then ORIGINAL_STDERR
-    else             fd
+    orig_src_fd = LibC._dup(src_fd)
+
+    if LibC._dup2(src_fd, dst_fd) == -1
+      raise IO::Error.from_errno("Failed to replace C file descriptor", target: dst_io)
     end
+
+    orig_src_fd
   end
 
   def self.chroot(path)
