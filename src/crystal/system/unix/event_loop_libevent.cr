@@ -4,6 +4,9 @@ require "./event_libevent"
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   private getter(event_base) { Crystal::LibEvent::Event::Base.new }
 
+  def after_fork_before_exec : Nil
+  end
+
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
@@ -91,6 +94,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_close
+  end
+
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -184,6 +190,9 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def remove(socket : ::Socket) : Nil
   end
 
   def evented_read(target, errno_msg : String, &) : Int32
