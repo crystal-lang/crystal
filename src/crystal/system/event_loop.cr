@@ -56,7 +56,7 @@ abstract class Crystal::EventLoop
     abstract def free : Nil
 
     # Adds a new timeout to this event.
-    abstract def add(timeout : Time::Span?) : Nil
+    abstract def add(timeout : Time::Span) : Nil
   end
 end
 
