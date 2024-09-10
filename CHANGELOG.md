@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.13.3] (2024-09-13)
+
+[1.13.3]: https://github.com/crystal-lang/crystal/releases/1.13.3
+
+### Bugfixes
+
+#### stdlib
+
+- **[regression]** Fix use global paths in macro bodies ([#14965], thanks @straight-shoota)
+- *(system)* **[regression]** Fix `Process.exec` stream redirection on Windows ([#14986], thanks @HertzDevil)
+- *(text)* **[regression]** Fix `String#index` and `#rindex` for `Char::REPLACEMENT` ([#14937], thanks @HertzDevil)
+
+[#14965]: https://github.com/crystal-lang/crystal/pull/14965
+[#14986]: https://github.com/crystal-lang/crystal/pull/14986
+[#14937]: https://github.com/crystal-lang/crystal/pull/14937
+
+### Infrastructure
+
+- Changelog for 1.13.3 ([#14990], thanks @straight-shoota)
+
+[#14990]: https://github.com/crystal-lang/crystal/pull/14990
+
 ## [1.13.2] (2024-08-20)
 
 [1.13.2]: https://github.com/crystal-lang/crystal/releases/1.13.2
