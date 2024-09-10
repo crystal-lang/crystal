@@ -21,10 +21,8 @@
 ### Infrastructure
 
 - Changelog for 1.13.3 ([#14991], thanks @straight-shoota)
-- Changelog for 1.13.3 ([#14990], thanks @straight-shoota)
 
 [#14991]: https://github.com/crystal-lang/crystal/pull/14991
-[#14990]: https://github.com/crystal-lang/crystal/pull/14990
 
 ## [1.13.2] (2024-08-20)
 
