@@ -340,6 +340,9 @@ class Crystal::CodeGenVisitor
 
     # Create self var if available
     if node_obj
+      # call `#remove_indirection` here so that the downcast call in
+      # `#visit(Var)` doesn't spend time expanding module types again and again
+      # (it should be the only use site of `node_obj.type`)
       new_vars["%self"] = LLVMVar.new(@last, node_obj.type.remove_indirection, true)
     end
 
