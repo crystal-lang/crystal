@@ -7,6 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
+  SPEC_SPLIT_DOTS: 160
   CI_LLVM_VERSION: "18.1.1"
 
 jobs:
@@ -266,12 +267,46 @@ jobs:
         run: make -f Makefile.win samples
 
   x86_64-windows-release:
-    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
     needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
       llvm_version: "18.1.1"
+
+  x86_64-windows-test-interpreter:
+    runs-on: windows-2022
+    needs: [x86_64-windows-release]
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-release
+          path: build
+
+      - name: Restore LLVM
+        uses: actions/cache/restore@v4
+        with:
+          path: llvm
+          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          Add-Content $env:GITHUB_PATH "$(pwd)\build"
+          Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+
+      - name: Run stdlib specs with interpreter
+        run: bin\crystal i spec\std_spec.cr
+
+      - name: Run primitives specs with interpreter
+        run: bin\crystal i spec\primitives_spec.cr
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))

@@ -234,7 +234,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def lock_file(handle, flags)
-    IOCP::OverlappedOperation.run(handle) do |operation|
+    IOCP::IOOverlappedOperation.run(handle) do |operation|
       result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, operation)
 
       if result == 0
@@ -260,7 +260,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def unlock_file(handle)
-    IOCP::OverlappedOperation.run(handle) do |operation|
+    IOCP::IOOverlappedOperation.run(handle) do |operation|
       result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, operation)
 
       if result == 0

@@ -234,7 +234,7 @@ describe "Semantic: warnings" do
         # NOTE tempfile might be created in symlinked folder
         # which affects how to match current dir /var/folders/...
         # with the real path /private/var/folders/...
-        path = File.real_path(path)
+        path = File.realpath(path)
 
         main_filename = File.join(path, "main.cr")
         output_filename = File.join(path, "main")
@@ -416,7 +416,7 @@ describe "Semantic: warnings" do
         # NOTE tempfile might be created in symlinked folder
         # which affects how to match current dir /var/folders/...
         # with the real path /private/var/folders/...
-        path = File.real_path(path)
+        path = File.realpath(path)
 
         main_filename = File.join(path, "main.cr")
         output_filename = File.join(path, "main")

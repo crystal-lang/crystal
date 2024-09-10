@@ -6,6 +6,12 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending HTTP::Client
+  {% skip_file %}
+{% end %}
+
 private def test_server(host, port, read_time = 0.seconds, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
@@ -351,7 +357,7 @@ module HTTP
       test_server("localhost", 0, 0.5.seconds, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSARecv timed out" {% else %} "Read timed out" {% end %}) do
-          client.read_timeout = 0.001
+          client.read_timeout = 1.millisecond
           client.get("/?sleep=1")
         end
       end
@@ -365,7 +371,7 @@ module HTTP
       test_server("localhost", 0, 0.seconds, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSASend timed out" {% else %} "Write timed out" {% end %}) do
-          client.write_timeout = 0.001
+          client.write_timeout = 1.millisecond
           client.post("/", body: "a" * 5_000_000)
         end
       end
@@ -374,7 +380,7 @@ module HTTP
     it "tests connect_timeout" do
       test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
-        client.connect_timeout = 0.5
+        client.connect_timeout = 0.5.seconds
         client.get("/")
       end
     end

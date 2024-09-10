@@ -298,8 +298,8 @@ module Spec
       # If the "log" module is required it is configured to emit no entries by default.
       def log_setup
         defined?(::Log) do
-          if Log.responds_to?(:setup)
-            Log.setup_from_env(default_level: :none)
+          if ::Log.responds_to?(:setup)
+            ::Log.setup_from_env(default_level: :none)
           end
         end
       end

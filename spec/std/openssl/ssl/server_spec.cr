@@ -3,6 +3,12 @@ require "socket"
 require "../../spec_helper"
 require "../../../support/ssl"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OpenSSL::SSL::Server
+  {% skip_file %}
+{% end %}
+
 describe OpenSSL::SSL::Server do
   it "sync_close" do
     TCPServer.open(0) do |tcp_server|

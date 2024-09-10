@@ -2,6 +2,12 @@ require "spec"
 require "socket"
 require "../../support/tempfile"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending UNIXSocket
+  {% skip_file %}
+{% end %}
+
 describe UNIXSocket do
   it "raises when path is too long" do
     with_tempfile("unix_socket-too_long-#{("a" * 2048)}.sock") do |path|
@@ -76,8 +82,8 @@ describe UNIXSocket do
     it "tests read and write timeouts" do
       UNIXSocket.pair do |left, right|
         # BUG: shrink the socket buffers first
-        left.write_timeout = 0.0001
-        right.read_timeout = 0.0001
+        left.write_timeout = 0.1.milliseconds
+        right.read_timeout = 0.1.milliseconds
         buf = ("a" * IO::DEFAULT_BUFFER_SIZE).to_slice
 
         expect_raises(IO::TimeoutError, "Write timed out") do

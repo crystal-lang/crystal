@@ -58,9 +58,11 @@ class Channel(T)
     end
 
     def time_expired(fiber : Fiber) : Nil
-      if @select_context.try &.try_trigger
-        fiber.enqueue
-      end
+      fiber.enqueue if time_expired?
+    end
+
+    def time_expired? : Bool
+      @select_context.try &.try_trigger || false
     end
   end
 end

@@ -185,6 +185,9 @@ struct Crystal::System::Process
       # child:
       pid = nil
       if will_exec
+        # notify event loop
+        Crystal::EventLoop.current.after_fork_before_exec
+
         # reset signal handlers, then sigmask (inherited on exec):
         Crystal::System::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))
@@ -231,44 +234,47 @@ struct Crystal::System::Process
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
-    reader_pipe, writer_pipe = IO.pipe
+    r, w = FileDescriptor.system_pipe
 
     pid = self.fork(will_exec: true)
     if !pid
+      LibC.close(r)
       begin
-        reader_pipe.close
-        writer_pipe.close_on_exec = true
         self.try_replace(command_args, env, clear_env, input, output, error, chdir)
-        writer_pipe.write_byte(1)
-        writer_pipe.write_bytes(Errno.value.to_i)
+        byte = 1_u8
+        errno = Errno.value.to_i32
+        FileDescriptor.write_fully(w, pointerof(byte))
+        FileDescriptor.write_fully(w, pointerof(errno))
       rescue ex
-        writer_pipe.write_byte(0)
+        byte = 0_u8
         message = ex.inspect_with_backtrace
-        writer_pipe.write_bytes(message.bytesize)
-        writer_pipe << message
-        writer_pipe.close
+        FileDescriptor.write_fully(w, pointerof(byte))
+        FileDescriptor.write_fully(w, message.to_slice)
       ensure
+        LibC.close(w)
         LibC._exit 127
       end
     end
 
-    writer_pipe.close
+    LibC.close(w)
+    reader_pipe = IO::FileDescriptor.new(r, blocking: false)
+
     begin
       case reader_pipe.read_byte
       when nil
         # Pipe was closed, no error
       when 0
         # Error message coming
-        message_size = reader_pipe.read_bytes(Int32)
-        if message_size > 0
-          message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
-        end
-        reader_pipe.close
+        message = reader_pipe.gets_to_end
         raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
       when 1
         # Errno coming
-        errno = Errno.new(reader_pipe.read_bytes(Int32))
-        self.raise_exception_from_errno(command_args[0], errno)
+        # can't use IO#read_bytes(Int32) because we skipped system/network
+        # endianness check when writing the integer while read_bytes would;
+        # we thus read it in the same as order as written
+        buf = uninitialized StaticArray(UInt8, 4)
+        reader_pipe.read_fully(buf.to_slice)
+        raise_exception_from_errno(command_args[0], Errno.new(buf.unsafe_as(Int32)))
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -339,15 +345,17 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
-      dst_io.close
-      return
+      dst_io.file_descriptor_close
+    else
+      src_io = to_real_fd(src_io)
+
+      # dst_io.reopen(src_io)
+      ret = LibC.dup2(src_io.fd, dst_io.fd)
+      raise IO::Error.from_errno("dup2") if ret == -1
+
+      dst_io.blocking = true
+      dst_io.close_on_exec = false
     end
-
-    src_io = to_real_fd(src_io)
-
-    dst_io.reopen(src_io)
-    dst_io.blocking = true
-    dst_io.close_on_exec = false
   end
 
   private def self.to_real_fd(fd : IO::FileDescriptor)

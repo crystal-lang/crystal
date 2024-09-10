@@ -643,7 +643,7 @@ describe "Dir" do
           Dir.mkdir_p path
           # Resolve any symbolic links in path caused by tmpdir being a link.
           # For example on macOS, /tmp is a symlink to /private/tmp.
-          path = File.real_path(path)
+          path = File.realpath(path)
 
           target_path = File.join(path, "target")
           link_path = File.join(path, "link")
