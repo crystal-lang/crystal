@@ -79,7 +79,7 @@ describe Socket, tags: "network" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
     port = unused_local_port
     server.bind("0.0.0.0", port)
-    server.read_timeout = 0.1
+    server.read_timeout = 0.1.seconds
     server.listen
 
     expect_raises(IO::TimeoutError) { server.accept }
