@@ -362,9 +362,11 @@ struct BigFloat < Float
   end
 
   def to_s(io : IO) : Nil
-    cstr = LibGMP.mpf_get_str(nil, out decimal_exponent, 10, 0, self)
+    cstr = LibGMP.mpf_get_str(nil, out orig_decimal_exponent, 10, 0, self)
     length = LibC.strlen(cstr)
     buffer = Slice.new(cstr, length)
+
+    decimal_exponent = fix_exponent_overflow(orig_decimal_exponent)
 
     # add negative sign
     if buffer[0]? == 45 # '-'
@@ -413,6 +415,55 @@ struct BigFloat < Float
       io << '+' if exp > 0
       (exp - 1).to_s(io)
     end
+  end
+
+  # The same `LibGMP::MpExp` is used in `LibGMP::MPF` to represent a
+  # `BigFloat`'s exponent in base `256 ** sizeof(LibGMP::MpLimb)`, and to return
+  # a base-10 exponent in `LibGMP.mpf_get_str`. The latter is around 9.6x the
+  # former when `MpLimb` is 32-bit, or around 19.3x when `MpLimb` is 64-bit.
+  # This means the base-10 exponent will overflow for the majority of `MpExp`'s
+  # domain, even though `BigFloat`s will work correctly in this exponent range
+  # otherwise. This method exists to recover the original exponent for `#to_s`.
+  #
+  # Note that if `MpExp` is 64-bit, which is the case for non-Windows 64-bit
+  # targets, then `mpf_get_str` will simply crash for values above
+  # `2 ** 0x1_0000_0000_0000_0080`; here `exponent10` is around 5.553e+18, and
+  # never overflows. Thus there is no need to check for overflow in that case.
+  private def fix_exponent_overflow(exponent10)
+    {% if LibGMP::MpExp == Int64 %}
+      exponent10
+    {% else %}
+      # When `self` is non-zero,
+      #
+      #     @mpf.@_mp_exp == Math.log(abs, 256.0 ** sizeof(LibGMP::MpLimb)).floor + 1
+      #     @mpf.@_mp_exp - 1 <= Math.log(abs, 256.0 ** sizeof(LibGMP::MpLimb)) < @mpf.@_mp_exp
+      #     @mpf.@_mp_exp - 1 <= Math.log10(abs) / Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) < @mpf.@_mp_exp
+      #     Math.log10(abs) >= (@mpf.@_mp_exp - 1) * Math.log10(256.0 ** sizeof(LibGMP::MpLimb))
+      #     Math.log10(abs) <   @mpf.@_mp_exp      * Math.log10(256.0 ** sizeof(LibGMP::MpLimb))
+      #
+      # And also,
+      #
+      #     exponent10 == Math.log10(abs).floor + 1
+      #     exponent10 - 1 <= Math.log10(abs) < exponent10
+      #
+      # When `exponent10` overflows, it differs from its real value by an
+      # integer multiple of `256.0 ** sizeof(LibGMP::MpExp)`. We have to recover
+      # the integer `overflow_n` such that:
+      #
+      #     LibGMP::MpExp::MIN <= exponent10 <= LibGMP::MpExp::MAX
+      #     Math.log10(abs) ~= exponent10 + overflow_n * 256.0 ** sizeof(LibGMP::MpExp)
+      #                     ~= @mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb))
+      #
+      # Because the possible intervals for the real `exponent10` are so far apart,
+      # it suffices to approximate `overflow_n` as follows:
+      #
+      #     overflow_n ~= (@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp)
+      #
+      # This value will be very close to an integer, which we then obtain with
+      # `#round`.
+      overflow_n = ((@mpf.@_mp_exp * Math.log10(256.0 ** sizeof(LibGMP::MpLimb)) - exponent10) / 256.0 ** sizeof(LibGMP::MpExp))
+      exponent10.to_i64 + overflow_n.round.to_i64 * (256_i64 ** sizeof(LibGMP::MpExp))
+    {% end %}
   end
 
   def clone
