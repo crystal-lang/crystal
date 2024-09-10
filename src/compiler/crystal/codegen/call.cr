@@ -359,6 +359,10 @@ class Crystal::CodeGenVisitor
 
     is_super = node.super?
 
+    # call `#remove_indirection` here so that the `match_type_id` below doesn't
+    # spend time expanding module types again and again
+    owner = owner.remove_indirection unless is_super
+
     with_cloned_context do
       context.vars = new_vars
 
