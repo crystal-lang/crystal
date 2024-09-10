@@ -479,7 +479,7 @@ pending_interpreted describe: Process do
   {% end %}
 
   describe ".exec" do
-    it "redirects STDIN and STDOUT to files" do
+    it "redirects STDIN and STDOUT to files", tags: %w[slow] do
       with_tempfile("crystal-exec-stdin", "crystal-exec-stdout") do |stdin_path, stdout_path|
         File.write(stdin_path, "foobar")
 
