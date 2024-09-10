@@ -340,7 +340,7 @@ class Crystal::CodeGenVisitor
 
     # Create self var if available
     if node_obj
-      new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
+      new_vars["%self"] = LLVMVar.new(@last, node_obj.type.remove_indirection, true)
     end
 
     # Get type if of args and create arg vars
