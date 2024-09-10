@@ -90,7 +90,6 @@ module Crystal::IOCP
     @overlapped = LibC::OVERLAPPED.new
     @fiber = Fiber.current
     @state : State = :started
-    setter handle : LibC::HANDLE
 
     def self.run(*args, **opts, &)
       operation_storage = uninitialized ReferenceStorage(self)
@@ -107,28 +106,6 @@ module Crystal::IOCP
       pointerof(@overlapped)
     end
 
-    def internal_high
-      @overlapped.internalHigh
-    end
-
-    def internal_high=(value)
-      @overlapped.internalHigh = value
-    end
-
-    def wait_for_getaddrinfo_result(timeout, &)
-      wait_for_completion(timeout) { try_cancel_getaddrinfo }
-
-      result = LibC.GetAddrInfoExOverlappedResult(self)
-      unless result.zero?
-        error = WinError.new(result.to_u32!)
-        yield error
-
-        raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
-      end
-
-      @overlapped.union.pointer.as(LibC::ADDRINFOEXW**).value
-    end
-
     protected def schedule(&)
       done!
       yield @fiber
@@ -139,20 +116,6 @@ module Crystal::IOCP
       @state = :done
     end
 
-    def try_cancel_getaddrinfo : Bool
-      ret = LibC.GetAddrInfoExCancel(pointerof(@handle))
-      unless ret.zero?
-        case error = WinError.new(ret.to_u32!)
-        when .wsa_invalid_handle?
-          # Operation has already completed, do nothing
-          return false
-        else
-          raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
-        end
-      end
-      true
-    end
-
     private def wait_for_completion(timeout)
       if timeout
         sleep timeout
@@ -161,7 +124,7 @@ module Crystal::IOCP
       end
 
       unless @state.done?
-        if yield
+        if try_cancel
           # Wait for cancellation to complete. We must not free the operation
           # until it's completed.
           Fiber.suspend
@@ -241,6 +204,42 @@ module Crystal::IOCP
           return false
         else
           raise RuntimeError.from_os_error("CancelIoEx", os_error: error)
+        end
+      end
+      true
+    end
+  end
+
+  class GetAddrInfoOverlappedOperation < OverlappedOperation
+    getter iocp
+    setter cancel_handle : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
+
+    def initialize(@iocp : LibC::HANDLE)
+    end
+
+    def wait_for_result(timeout, & : WinError ->)
+      wait_for_completion(timeout)
+
+      result = LibC.GetAddrInfoExOverlappedResult(self)
+      unless result.zero?
+        error = WinError.new(result.to_u32!)
+        yield error
+
+        raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
+      end
+
+      @overlapped.union.pointer.as(LibC::ADDRINFOEXW**).value
+    end
+
+    private def try_cancel : Bool
+      ret = LibC.GetAddrInfoExCancel(pointerof(@cancel_handle))
+      unless ret.zero?
+        case error = WinError.new(ret.to_u32!)
+        when .wsa_invalid_handle?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
         end
       end
       true

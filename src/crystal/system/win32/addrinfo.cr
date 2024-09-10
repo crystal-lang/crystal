@@ -43,18 +43,10 @@ module Crystal::System::Addrinfo
       end
     end
 
-    # we use `LibC::INVALID_HANDLE_VALUE` because there is no I/O handle
-    # associated with a GetAddrInfoExW call, but later we'll replace it with a
-    # cancellation handle
-    Crystal::IOCP::OverlappedOperation.run(LibC::INVALID_HANDLE_VALUE) do |operation|
-      # This assumes the `OVERLAPPED` struct's `internalHigh` field is unused,
-      # so that we could pass closure data to the completion routine
-      operation.internal_high = Crystal::EventLoop.current.iocp.address.to_u64!
-
+    Crystal::IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp) do |operation|
       completion_routine = LibC::LPLOOKUPSERVICE_COMPLETION_ROUTINE.new do |dwError, dwBytes, lpOverlapped|
-        orig_operation = Crystal::IOCP::OverlappedOperation.unbox(lpOverlapped)
-        iocp = LibC::HANDLE.new(orig_operation.internal_high)
-        LibC.PostQueuedCompletionStatus(iocp, 0, 0, lpOverlapped)
+        orig_operation = Crystal::IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
+        LibC.PostQueuedCompletionStatus(orig_operation.iocp, 0, 0, lpOverlapped)
       end
 
       # NOTE: we handle the timeout ourselves so we don't pass a `LibC::Timeval`
@@ -69,13 +61,13 @@ module Crystal::System::Addrinfo
         case error = WinError.new(result.to_u32!)
         when .wsa_io_pending?
           # used in `Crystal::IOCP::OverlappedOperation#try_cancel_getaddrinfo`
-          operation.handle = cancel_handle
+          operation.cancel_handle = cancel_handle
         else
           raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExW", error, domain: domain, type: type, protocol: protocol, service: service)
         end
       end
 
-      operation.wait_for_getaddrinfo_result(timeout) do |error|
+      operation.wait_for_result(timeout) do |error|
         case error
         when .wsa_e_cancelled?
           raise IO::TimeoutError.new("GetAddrInfoExW timed out")
