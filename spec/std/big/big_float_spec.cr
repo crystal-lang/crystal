@@ -554,6 +554,48 @@ describe "BigFloat" do
 end
 
 describe "BigFloat Math" do
+  it ".ilogb" do
+    Math.ilogb(0.2.to_big_f).should eq(-3)
+    Math.ilogb(123.45.to_big_f).should eq(6)
+    Math.ilogb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000)
+    Math.ilogb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000)
+    Math.ilogb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000)
+    expect_raises(ArgumentError) { Math.ilogb(0.to_big_f) }
+  end
+
+  it ".logb" do
+    Math.logb(0.2.to_big_f).should eq(-3.to_big_f)
+    Math.logb(123.45.to_big_f).should eq(6.to_big_f)
+    Math.logb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000.to_big_f)
+    Math.logb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000.to_big_f)
+    Math.logb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000.to_big_f)
+    expect_raises(ArgumentError) { Math.logb(0.to_big_f) }
+  end
+
+  it ".ldexp" do
+    Math.ldexp(0.2.to_big_f, 2).should eq(0.8.to_big_f)
+    Math.ldexp(0.2.to_big_f, -2).should eq(0.05.to_big_f)
+    Math.ldexp(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
+    Math.ldexp(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
+    Math.ldexp(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
+  end
+
+  it ".scalbn" do
+    Math.scalbn(0.2.to_big_f, 2).should eq(0.8.to_big_f)
+    Math.scalbn(0.2.to_big_f, -2).should eq(0.05.to_big_f)
+    Math.scalbn(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
+    Math.scalbn(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
+    Math.scalbn(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
+  end
+
+  it ".scalbln" do
+    Math.scalbln(0.2.to_big_f, 2).should eq(0.8.to_big_f)
+    Math.scalbln(0.2.to_big_f, -2).should eq(0.05.to_big_f)
+    Math.scalbln(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
+    Math.scalbln(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
+    Math.scalbln(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
+  end
+
   it ".frexp" do
     Math.frexp(0.to_big_f).should eq({0.0, 0})
     Math.frexp(1.to_big_f).should eq({0.5, 1})
@@ -572,6 +614,18 @@ describe "BigFloat Math" do
     Math.frexp(1.75 * 2.to_big_f ** -0x123456789).should eq({0.875, -0x123456788})
     Math.frexp(-(2.to_big_f ** 0x7FFFFFFF)).should eq({-0.5, 0x80000000})
     Math.frexp(-(2.to_big_f ** -0x100000000)).should eq({-0.5, -0xFFFFFFFF})
+  end
+
+  it ".copysign" do
+    Math.copysign(3.to_big_f, 2.to_big_f).should eq(3.to_big_f)
+    Math.copysign(3.to_big_f, 0.to_big_f).should eq(3.to_big_f)
+    Math.copysign(3.to_big_f, -2.to_big_f).should eq(-3.to_big_f)
+    Math.copysign(0.to_big_f, 2.to_big_f).should eq(0.to_big_f)
+    Math.copysign(0.to_big_f, 0.to_big_f).should eq(0.to_big_f)
+    Math.copysign(0.to_big_f, -2.to_big_f).should eq(0.to_big_f)
+    Math.copysign(-3.to_big_f, 2.to_big_f).should eq(3.to_big_f)
+    Math.copysign(-3.to_big_f, 0.to_big_f).should eq(3.to_big_f)
+    Math.copysign(-3.to_big_f, -2.to_big_f).should eq(-3.to_big_f)
   end
 
   it ".sqrt" do
