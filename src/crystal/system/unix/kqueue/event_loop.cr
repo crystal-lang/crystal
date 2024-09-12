@@ -30,11 +30,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     # O_CLOEXEC would close these automatically but we don't want to mess with
     # the parent process fds (that would mess the parent evloop)
 
-    {% unless flag?(:darwin) || flag?(:dragonfly) %}
-      # kqueue isn't inherited by fork on darwin/dragonfly, but is inherited on
-      # other BSD
-      @kqueue.close
-    {% end %}
+    # kqueue isn't inherited by fork on darwin/dragonfly, but we still close
+    @kqueue.close
 
     {% unless LibC.has_constant?(:EVFILT_USER) %}
       @pipe.each { |fd| LibC.close(fd) }
@@ -45,11 +42,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     def after_fork : Nil
       super
 
-      {% unless flag?(:darwin) || flag?(:dragonfly) %}
-        # kqueue isn't inherited by fork on darwin/dragonfly, but is inherited
-        # on other BSD
-        @kqueue.close
-      {% end %}
+      # kqueue isn't inherited by fork on darwin/dragonfly, but we still close
+      @kqueue.close
       @kqueue = System::Kqueue.new
 
       @interrupted.clear
