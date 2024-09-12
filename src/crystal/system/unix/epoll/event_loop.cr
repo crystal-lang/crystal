@@ -57,7 +57,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   {% end %}
 
   private def system_run(blocking : Bool) : Nil
-    Crystal.trace :evloop, "wait", blocking: blocking ? 1 : 0
+    Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
     # wait for events (indefinitely when blocking)
     buffer = uninitialized LibC::EpollEvent[128]
