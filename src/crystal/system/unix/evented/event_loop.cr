@@ -182,6 +182,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def remove(file_descriptor : System::FileDescriptor) : Nil
     Evented.arena.free(file_descriptor.fd) do |pd|
       pd.value.release(file_descriptor.fd) { } # ignore system error
+      file_descriptor.__evloop_data = -1_i64
     end
   end
 
@@ -287,6 +288,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   def remove(socket : ::Socket) : Nil
     Evented.arena.free(socket.fd) do |pd|
       pd.value.release(socket.fd) { } # ignore system error
+      socket.__evloop_data = -1_i64
     end
   end
 
