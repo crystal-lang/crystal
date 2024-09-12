@@ -55,6 +55,10 @@ class Crystal::Evented::Arena(T)
 
   @buffer : Slice(Entry(T))
 
+  {% unless flag?(:preview_mt) %}
+    @maximum = 0
+  {% end %}
+
   def initialize(capacity : Int32)
     pointer = self.class.mmap(LibC::SizeT.new(sizeof(Entry(T))) * capacity)
     @buffer = Slice.new(pointer.as(Pointer(Entry(T))), capacity)
@@ -111,6 +115,10 @@ class Crystal::Evented::Arena(T)
       gen_index = to_gen_index(index, entry)
 
       unless entry.value.allocated?
+        {% unless flag?(:preview_mt) %}
+          @maximum = index if index > @maximum
+        {% end %}
+
         entry.value.allocated = true
         yield pointer, gen_index
       end
@@ -153,19 +161,21 @@ class Crystal::Evented::Arena(T)
     end
   end
 
-  # Iterates all allocated objects, yields the actual index as well as the
-  # generation index.
-  def each(&) : Nil
-    pointer = @buffer.to_unsafe
+  {% unless flag?(:preview_mt) %}
+    # Iterates all allocated objects, yields the actual index as well as the
+    # generation index.
+    def each(&) : Nil
+      pointer = @buffer.to_unsafe
 
-    @buffer.size.times do |index|
-      entry = pointer + index
+      0.upto(@maximum) do |index|
+        entry = pointer + index
 
-      if entry.value.allocated?
-        yield index, to_gen_index(index, entry)
+        if entry.value.allocated?
+          yield index, to_gen_index(index, entry)
+        end
       end
     end
-  end
+  {% end %}
 
   private def to_gen_index(index : Int32, entry : Pointer(Entry(T))) : Int64
     (index.to_i64! << 32) | entry.value.generation.to_u64!
