@@ -32,16 +32,7 @@ struct Crystal::System::Process
 
     @job_object = LibC.CreateJobObjectW(nil, nil)
 
-    # enable IOCP notifications
-    config_job_object(
-      LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
-      LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
-        completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::EventLoop.current.iocp,
-      ),
-    )
-
-    # but not for any child processes
+    # disable IOCP notifications for any child processes
     config_job_object(
       LibC::JOBOBJECTINFOCLASS::ExtendedLimitInformation,
       LibC::JOBOBJECT_EXTENDED_LIMIT_INFORMATION.new(
@@ -71,6 +62,15 @@ struct Crystal::System::Process
   end
 
   def wait
+    # enable IOCP notifications
+    config_job_object(
+      LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
+      LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
+        completionKey: @completion_key.as(Void*),
+        completionPort: Crystal::EventLoop.current.iocp,
+      ),
+    )
+
     if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
