@@ -107,6 +107,10 @@ jobs:
         run: |
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+          # NOTE: the name of the libiconv DLL has changed, so we manually copy
+          # the new one to CRYSTAL_LIBRARY_PATH; remove after updating the base
+          # compiler to 1.14
+          cp dlls/iconv-2.dll libs/
 
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
@@ -129,6 +133,9 @@ jobs:
 
       - name: Gather Crystal binaries
         run: |
+          # TODO: remove after updating the base compiler to 1.14
+          rm libs/iconv-2.dll
+
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
           cp shards/bin/shards.exe crystal/
