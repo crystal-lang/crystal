@@ -1,7 +1,7 @@
 # Generational Arena.
 #
 # Allocates a `Slice` of `T` through `mmap`. `T` is supposed to be a struct, so
-# it can be embedded right into the memory.
+# it can be embedded right into the memory region.
 #
 # The arena allocates objects `T` at a predefined index. The object iself is
 # uninitialized (outside of having its memory initialized to zero). The object
@@ -32,7 +32,7 @@
 # TODO: we could use a growing/shrinking buffer (realloc) though it would
 # require a rwlock to borrow accesses during which we can mutate the pointed
 # memory, but growing/shrinking would need exclusive write access (it
-# reallocates, hence invalidate all pointers); resizing could be delayed and
+# reallocates, hence invalidates all pointers); resizing could be delayed and
 # thus shouldn't happen often + borrowing accesses should be as quick/small as
 # possible.
 class Crystal::Evented::Arena(T)
@@ -85,7 +85,7 @@ class Crystal::Evented::Arena(T)
   # Returns a pointer to the object allocated at *gen_idx* (generation index).
   #
   # Raises if the object isn't allocated.
-  # Raises if the generation has changed (i.e. the object has been freed then reallocated)
+  # Raises if the generation has changed (i.e. the object has been freed then reallocated).
   # Raises if *index* is negative.
   def get(gen_idx : Int64) : Pointer(T)
     index, generation = from_gen_index(gen_idx)

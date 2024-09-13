@@ -23,10 +23,16 @@ module Crystal::Evented
   # together in the same region, and polluting the IO object itself with specific
   # evloop data (except for the generation index).
   #
-  # We assume the fd is unique (OS guarantee) and that the OS will always reuse
-  # the lowest fds before growing, so the memory region should never grow too
-  # big without a good reason (i.e. we need that many fds at that time). This
-  # assumption allows the arena to not have to keep a list of free indexes.
+  # Takes advantage of the fd being unique per process and that the operating
+  # system will always reuse the lowest fd (POSIX compliance) and will only grow
+  # when the process needs that many file descriptors, so the allocated memory
+  # region won't grow larger than necessary. This assumption allows the arena to
+  # skip maintaining a list of free indexes.
+  #
+  # Some systems may deviate from the POSIX default, but all systems seem to
+  # follow it, as it allows optimizations to the OS (it can reuse already
+  # allocated resources), and either the man page explicitly says so (Linux), or
+  # they don't (BSD) and they must follow the POSIX definition.
   protected class_getter arena = Arena(PollDescriptor).new(max_fds)
 
   private def self.max_fds : Int32
@@ -43,7 +49,8 @@ end
 # polling based UNIX targets, such as epoll (linux), kqueue (bsd), or poll
 # (posix) syscalls. This class only implements the generic parts for the
 # external world to interact with the loop. A specific implementation is
-# required to handle the actual syscalls.
+# required to handle the actual syscalls. See `Crystal::Epoll::EventLoop` and
+# `Crystal::Kqueue::EventLoop`.
 #
 # The event loop registers the fd into the kernel data structures when an IO
 # operation would block, then keeps it there until the fd is closed.
@@ -107,7 +114,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     end
   {% end %}
 
-  # thread unsafe: must hold `@run_mutex` before calling!
+  # thread unsafe: must hold `@run_lock` before calling!
   def run(blocking : Bool) : Bool
     system_run(blocking)
     true
@@ -431,7 +438,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # fiber could be resumed twice!
   #
   # OPTIMIZE: collect events with the lock then process them after releasing the
-  # lock, which should be thread-safe as long as @run_lock is locked.
+  # lock, which should be thread-safe as long as `@run_lock` is locked.
   private def process_timers(timer_triggered : Bool) : Nil
     # events = PointerLinkedList(Event).new
     size = 0
