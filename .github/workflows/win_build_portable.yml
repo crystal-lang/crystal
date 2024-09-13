@@ -23,6 +23,7 @@ jobs:
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
+        id: install-crystal
         with:
           crystal: "1.13.2"
 
@@ -108,9 +109,9 @@ jobs:
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
           # NOTE: the name of the libiconv DLL has changed, so we manually copy
-          # the new one to CRYSTAL_LIBRARY_PATH; remove after updating the base
-          # compiler to 1.14
-          cp dlls/iconv-2.dll libs/
+          # the new one to the existing Crystal installation; remove after
+          # updating the base compiler to 1.14
+          cp dlls/iconv-2.dll ${{ steps.install-crystal.outputs.path }}
 
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
