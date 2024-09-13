@@ -54,7 +54,7 @@ end
 # one instance at a time. When trying to block from another loop, the fd will be
 # removed from its associated loop and added to the current one (this is
 # automatic). Trying to move a fd to another loop with pending waiters is
-# unsupported and will raise an exception. See `PollDescriptor#release`.
+# unsupported and will raise an exception. See `PollDescriptor#remove`.
 #
 # A timed event such as sleep or select timeout follows the following logic:
 #
@@ -181,7 +181,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def remove(file_descriptor : System::FileDescriptor) : Nil
     Evented.arena.free(file_descriptor.fd) do |pd|
-      pd.value.release(file_descriptor.fd) { } # ignore system error
+      pd.value.remove(file_descriptor.fd) { } # ignore system error
       file_descriptor.__evloop_data = -1_i64
     end
   end
@@ -287,7 +287,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   def remove(socket : ::Socket) : Nil
     Evented.arena.free(socket.fd) do |pd|
-      pd.value.release(socket.fd) { } # ignore system error
+      pd.value.remove(socket.fd) { } # ignore system error
       socket.__evloop_data = -1_i64
     end
   end
@@ -328,7 +328,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
         pd.value.@event_loop.try(&.resume_io(event))
       end
 
-      pd.value.release(io.fd)
+      pd.value.remove(io.fd)
       io.__evloop_data = -1_i64
     end
   end

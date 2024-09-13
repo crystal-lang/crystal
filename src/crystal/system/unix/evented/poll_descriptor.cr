@@ -33,16 +33,16 @@ struct Crystal::Evented::PollDescriptor
     end
   end
 
-  # Removes *fd* from the current event loop. Raises on errors.
-  def release(fd : Int32) : Nil
+  # Removes *fd* from its owner event loop. Raises on errors.
+  def remove(fd : Int32) : Nil
     @lock.sync do
       current, @event_loop = @event_loop, nil
       current.try(&.system_del(fd))
     end
   end
 
-  # Same as `#release` but yields on errors.
-  def release(fd : Int32, &) : Nil
+  # Same as `#remove` but yields on errors.
+  def remove(fd : Int32, &) : Nil
     @lock.sync do
       current, @event_loop = @event_loop, nil
       current.try(&.system_del(fd) { yield })
