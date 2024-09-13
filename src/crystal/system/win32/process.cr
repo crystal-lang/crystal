@@ -63,6 +63,7 @@ struct Crystal::System::Process
 
   def wait
     # enable IOCP notifications
+    @completion_key.fiber = ::Fiber.current
     config_job_object(
       LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
       LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
@@ -80,7 +81,6 @@ struct Crystal::System::Process
     # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
     # stuck forever in that case?
     # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
-    @completion_key.fiber = ::Fiber.current
     ::Fiber.suspend
 
     # If the IOCP notification is delivered before the process fully exits,
