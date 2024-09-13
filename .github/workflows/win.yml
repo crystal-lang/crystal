@@ -25,6 +25,7 @@ jobs:
         uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
         with:
           packages: make
+          install-dir: C:\cygwin64
           add-to-path: false
 
       - name: Download Crystal source
@@ -103,6 +104,7 @@ jobs:
         uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
         with:
           packages: make
+          install-dir: C:\cygwin64
           add-to-path: false
 
       - name: Download Crystal source
