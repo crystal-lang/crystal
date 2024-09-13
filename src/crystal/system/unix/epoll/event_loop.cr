@@ -131,12 +131,12 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @epoll.add(fd, events, u64: gen_index.unsafe_as(UInt64))
   end
 
-  protected def system_del(fd : Int32) : Nil
+  protected def system_del(fd : Int32, closing = true) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
     @epoll.delete(fd)
   end
 
-  protected def system_del(fd : Int32, &) : Nil
+  protected def system_del(fd : Int32, closing = true, &) : Nil
     Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
     @epoll.delete(fd) { yield }
   end

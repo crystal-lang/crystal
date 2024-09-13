@@ -29,7 +29,7 @@ struct Crystal::Evented::PollDescriptor
 
       @event_loop = event_loop
       event_loop.system_add(fd, gen_index)
-      current.try(&.system_del(fd))
+      current.try(&.system_del(fd, closing: false))
     end
   end
 

@@ -175,12 +175,28 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     end
   end
 
-  protected def system_del(fd : Int32) : Nil
-    # nothing to do: close(2) will do the job
+  protected def system_del(fd : Int32, closing = true) : Nil
+    system_del(fd, closing) do
+      raise RuntimeError.from_errno("kevent")
+    end
   end
 
-  protected def system_del(fd : Int32, &) : Nil
-    # nothing to do: close(2) will do the job
+  protected def system_del(fd : Int32, closing = true, &) : Nil
+    return if closing # nothing to do: close(2) will do the cleanup
+
+    Crystal.trace :evloop, "kevent", op: "del", fd: fd
+
+    # unregister both read and write events
+    kevents = uninitialized LibC::Kevent[2]
+    2.times do |i|
+      kevent = kevents.to_unsafe + i
+      filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE)
+    end
+
+    @kqueue.kevent(kevents.to_slice) do
+      raise RuntimeError.from_errno("kevent")
+    end
   end
 
   private def system_set_timer(time : Time::Span?) : Nil

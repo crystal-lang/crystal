@@ -498,10 +498,15 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   protected abstract def system_add(fd : Int32, gen_index : Int64) : Nil
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
-  protected abstract def system_del(fd : Int32) : Nil
+  #
+  # If *closing* is true, then it preceeds a call to `close(2)`. Some
+  # implementations may take advantage of close doing the book keeping.
+  #
+  # If *closing* is false then the fd must be deleted from the polling system.
+  protected abstract def system_del(fd : Int32, closing = true) : Nil
 
-  # Remove *fd* from the polling system. Must yield on error.
-  protected abstract def system_del(fd : Int32, &) : Nil
+  # Identical to `#system_del` but yields on error.
+  protected abstract def system_del(fd : Int32, closing = true, &) : Nil
 
   # Arm a timer to interrupt a run at *time*. Set to `nil` to disarm the timer.
   private abstract def system_set_timer(time : Time::Span?) : Nil
