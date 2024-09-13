@@ -354,7 +354,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     if (%gen_index = {{io}}.__evloop_data) >= 0
       %pd = Evented.arena.get(%gen_index)
     else
-      %pd, %gen_index = Evented.arena.allocate({{io}}.fd) do |pd, gen_index|
+      %pd, %gen_index = Evented.arena.lazy_allocate({{io}}.fd) do |pd, gen_index|
         # register the fd with the event loop (once), it should usually merely add
         # the fd to the current evloop but may "transfer" the ownership from
         # another event loop:

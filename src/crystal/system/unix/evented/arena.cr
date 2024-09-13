@@ -102,12 +102,16 @@ class Crystal::Evented::Arena(T)
     entry.value.pointer
   end
 
-  # Yields and allocates the object at *index* unless already allocated, then
-  # returns a pointer to the object at *index* and the generation index.
+  # Yields and allocates the object at *index* unless already allocated.
+  # Returns a pointer to the object at *index* and the generation index.
+  #
+  # Permits two threads to allocate the same object in parallel yet only allow
+  # one to initialize it; the other one will silently receive the pointer and
+  # the generation index.
   #
   # There are no generational checks.
   # Raises if *index* is negative.
-  def allocate(index : Int32, &) : {Pointer(T), Int64}
+  def lazy_allocate(index : Int32, &) : {Pointer(T), Int64}
     entry = at(index)
 
     entry.value.@lock.sync do
