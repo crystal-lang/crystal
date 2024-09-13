@@ -210,6 +210,42 @@ module Crystal::IOCP
     end
   end
 
+  class GetAddrInfoOverlappedOperation < OverlappedOperation
+    getter iocp
+    setter cancel_handle : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
+
+    def initialize(@iocp : LibC::HANDLE)
+    end
+
+    def wait_for_result(timeout, & : WinError ->)
+      wait_for_completion(timeout)
+
+      result = LibC.GetAddrInfoExOverlappedResult(self)
+      unless result.zero?
+        error = WinError.new(result.to_u32!)
+        yield error
+
+        raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
+      end
+
+      @overlapped.union.pointer.as(LibC::ADDRINFOEXW**).value
+    end
+
+    private def try_cancel : Bool
+      ret = LibC.GetAddrInfoExCancel(pointerof(@cancel_handle))
+      unless ret.zero?
+        case error = WinError.new(ret.to_u32!)
+        when .wsa_invalid_handle?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
+        end
+      end
+      true
+    end
+  end
+
   def self.overlapped_operation(file_descriptor, method, timeout, *, offset = nil, writing = false, &)
     handle = file_descriptor.windows_handle
     seekable = LibC.SetFilePointerEx(handle, 0, out original_offset, IO::Seek::Current) != 0

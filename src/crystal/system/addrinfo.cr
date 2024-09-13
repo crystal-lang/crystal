@@ -30,7 +30,11 @@ end
 {% elsif flag?(:unix) %}
   require "./unix/addrinfo"
 {% elsif flag?(:win32) %}
-  require "./win32/addrinfo"
+  {% if flag?(:win7) %}
+    require "./win32/addrinfo_win7"
+  {% else %}
+    require "./win32/addrinfo"
+  {% end %}
 {% else %}
   {% raise "No Crystal::System::Addrinfo implementation available" %}
 {% end %}

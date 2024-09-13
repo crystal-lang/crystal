@@ -208,4 +208,18 @@ lib LibC
     ai_addr : Sockaddr*
     ai_next : Addrinfo*
   end
+
+  struct ADDRINFOEXW
+    ai_flags : Int
+    ai_family : Int
+    ai_socktype : Int
+    ai_protocol : Int
+    ai_addrlen : SizeT
+    ai_canonname : LPWSTR
+    ai_addr : Sockaddr*
+    ai_blob : Void*
+    ai_bloblen : SizeT
+    ai_provider : GUID*
+    ai_next : ADDRINFOEXW*
+  end
 end
