@@ -171,16 +171,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     end
 
     @kqueue.kevent(kevents.to_slice) do
-      # we broadly add file descriptors to kqueue whenever we open them, but
-      # sometimes the other end is closed and registration can fail (e.g.
-      # stdio).
-      #
-      # we can safely discard these errors since further read or write to these
-      # file descriptors will fail with the same error and the evloop will never
-      # try to wait.
-      unless Errno.value.in?(Errno::ENODEV, Errno::EPIPE)
-        raise RuntimeError.from_errno("kevent")
-      end
+      raise RuntimeError.from_errno("kevent")
     end
   end
 

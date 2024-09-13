@@ -40,9 +40,9 @@ struct Crystal::System::Kqueue
   end
 
   # Helper to register multiple *changes*. Returns immediately.
-  def kevent(changes : Slice(LibC::Kevent)) : Nil
+  def kevent(changes : Slice(LibC::Kevent), &) : Nil
     ret = LibC.kevent(@kq, changes.to_unsafe, changes.size, nil, 0, nil)
-    yield if ret == -1 # && !Errno.value.in?(Errno::ENOENT, Errno::EPIPE, Errno::ENODEV)
+    yield if ret == -1
   end
 
   # Helper to wait for registered events to become active. Returns a subslice to

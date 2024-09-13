@@ -31,10 +31,7 @@ struct Crystal::System::Epoll
 
   def delete(fd : Int32) : Nil
     delete(fd) do
-      # OPTIMIZE: we might be able to spare the errno checks for EPERM and ENOENT
-      unless Errno.value.in?(Errno::EPERM, Errno::ENOENT)
-        raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)")
-      end
+      raise RuntimeError.from_errno("epoll_ctl(EPOLL_CTL_DEL)")
     end
   end
 
