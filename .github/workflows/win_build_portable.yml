@@ -134,9 +134,6 @@ jobs:
 
       - name: Gather Crystal binaries
         run: |
-          # TODO: remove after updating the base compiler to 1.14
-          rm libs/iconv-2.dll
-
           make -f Makefile.win install prefix=crystal
           mkdir crystal/lib
           cp shards/bin/shards.exe crystal/
