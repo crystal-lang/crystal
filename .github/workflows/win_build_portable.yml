@@ -68,7 +68,7 @@ jobs:
             libs/xml2-dynamic.lib
             dlls/pcre.dll
             dlls/pcre2-8.dll
-            dlls/libiconv.dll
+            dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi.dll
             dlls/zlib1.dll
