@@ -142,6 +142,7 @@ class Crystal::Evented::Arena(T)
       return unless entry.value.allocated?
 
       yield entry.value.pointer
+    ensure
       entry.value.free
     end
   end
