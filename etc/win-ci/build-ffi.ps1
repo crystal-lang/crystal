@@ -7,7 +7,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/HertzDevil/libffi.git -Ref v$Version
+Setup-Git -Path $BuildTree -Url https://github.com/crystal-lang/libffi.git -Ref v$Version
 
 Run-InDirectory $BuildTree {
     $args = "-DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
