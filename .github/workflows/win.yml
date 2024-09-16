@@ -228,16 +228,16 @@ jobs:
         if: steps.cache-llvm-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild X86,AArch64 -Dynamic
 
-  x86_64-windows:
+  x86_64-windows-release:
     needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
     uses: ./.github/workflows/win_build_portable.yml
     with:
-      release: false
+      release: true
       llvm_version: "18.1.1"
 
   x86_64-windows-test:
     runs-on: windows-2022
-    needs: [x86_64-windows]
+    needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -252,7 +252,7 @@ jobs:
       - name: Download Crystal executable
         uses: actions/download-artifact@v4
         with:
-          name: crystal
+          name: crystal-release
           path: build
 
       - name: Restore LLVM
@@ -279,13 +279,6 @@ jobs:
 
       - name: Build samples
         run: make -f Makefile.win samples
-
-  x86_64-windows-release:
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
-    uses: ./.github/workflows/win_build_portable.yml
-    with:
-      release: true
-      llvm_version: "18.1.1"
 
   x86_64-windows-test-interpreter:
     runs-on: windows-2022
