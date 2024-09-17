@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.13.3] (2024-09-13)
+## [1.13.3] (2024-09-18)
 
 [1.13.3]: https://github.com/crystal-lang/crystal/releases/1.13.3
 
@@ -21,8 +21,10 @@
 ### Infrastructure
 
 - Changelog for 1.13.3 ([#14991], thanks @straight-shoota)
+- *(ci)* Enable runners from `runs-on.com` for Aarch64 CI ([#15007], thanks @straight-shoota)
 
 [#14991]: https://github.com/crystal-lang/crystal/pull/14991
+[#15007]: https://github.com/crystal-lang/crystal/pull/15007
 
 ## [1.13.2] (2024-08-20)
 
