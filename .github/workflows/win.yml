@@ -21,6 +21,13 @@ jobs:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
+      - name: Set up Cygwin
+        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        with:
+          packages: make
+          install-dir: C:\cygwin64
+          add-to-path: false
+
       - name: Download Crystal source
         uses: actions/checkout@v4
 
@@ -50,7 +57,7 @@ jobs:
         run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3
@@ -93,6 +100,13 @@ jobs:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
+      - name: Set up Cygwin
+        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        with:
+          packages: make
+          install-dir: C:\cygwin64
+          add-to-path: false
+
       - name: Download Crystal source
         uses: actions/checkout@v4
 
@@ -112,7 +126,7 @@ jobs:
             libs/xml2-dynamic.lib
             dlls/pcre.dll
             dlls/pcre2-8.dll
-            dlls/libiconv.dll
+            dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi.dll
             dlls/zlib1.dll
@@ -131,7 +145,7 @@ jobs:
         run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Dynamic
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17 -Dynamic
       - name: Build libffi
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3 -Dynamic
