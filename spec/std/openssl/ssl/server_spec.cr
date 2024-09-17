@@ -3,6 +3,12 @@ require "socket"
 require "../../spec_helper"
 require "../../../support/ssl"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OpenSSL::SSL::Server
+  {% skip_file %}
+{% end %}
+
 describe OpenSSL::SSL::Server do
   it "sync_close" do
     TCPServer.open(0) do |tcp_server|
@@ -130,7 +136,7 @@ describe OpenSSL::SSL::Server do
 
     OpenSSL::SSL::Server.open tcp_server, server_context do |server|
       spawn do
-        sleep 1
+        sleep 1.second
         OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
         end
       end

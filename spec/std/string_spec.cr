@@ -321,6 +321,7 @@ describe "String" do
     it { expect_raises(ArgumentError) { "1__234".to_i } }
     it { expect_raises(ArgumentError) { "1_234".to_i } }
     it { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
+    it { expect_raises(ArgumentError) { "".to_i(whitespace: false) } }
     it { expect_raises(ArgumentError) { "0x123".to_i } }
     it { expect_raises(ArgumentError) { "0b123".to_i } }
     it { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
@@ -515,6 +516,7 @@ describe "String" do
     "nan".to_f?(whitespace: false).try(&.nan?).should be_true
     " nan".to_f?(whitespace: false).should be_nil
     "nan ".to_f?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "".to_f(whitespace: false) }
     "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
@@ -955,6 +957,8 @@ describe "String" do
       it { "日本語".index('本').should eq(1) }
       it { "bar".index('あ').should be_nil }
       it { "あいう_えお".index('_').should eq(3) }
+      it { "xyz\xFFxyz".index('\u{FFFD}').should eq(3) }
+      it { "日\xFF語".index('\u{FFFD}').should eq(1) }
 
       describe "with offset" do
         it { "foobarbaz".index('a', 5).should eq(7) }
@@ -962,6 +966,10 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+        it { "xyz\xFFxyz".index('\u{FFFD}', 2).should eq(3) }
+        it { "xyz\xFFxyz".index('\u{FFFD}', 4).should be_nil }
+        it { "日本\xFF語".index('\u{FFFD}', 2).should eq(2) }
+        it { "日本\xFF語".index('\u{FFFD}', 3).should be_nil }
 
         # Check offset type
         it { "foobarbaz".index('a', 5_i64).should eq(7) }
@@ -1104,6 +1112,8 @@ describe "String" do
       it { "foobar".rindex('g').should be_nil }
       it { "日本語日本語".rindex('本').should eq(4) }
       it { "あいう_えお".rindex('_').should eq(3) }
+      it { "xyz\xFFxyz".rindex('\u{FFFD}').should eq(3) }
+      it { "日\xFF語".rindex('\u{FFFD}').should eq(1) }
 
       describe "with offset" do
         it { "bbbb".rindex('b', 2).should eq(2) }
@@ -1116,6 +1126,10 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+        it { "xyz\xFFxyz".rindex('\u{FFFD}', 4).should eq(3) }
+        it { "xyz\xFFxyz".rindex('\u{FFFD}', 2).should be_nil }
+        it { "日本\xFF語".rindex('\u{FFFD}', 2).should eq(2) }
+        it { "日本\xFF語".rindex('\u{FFFD}', 1).should be_nil }
 
         # Check offset type
         it { "bbbb".rindex('b', 2_i64).should eq(2) }

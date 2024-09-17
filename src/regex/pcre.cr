@@ -6,7 +6,7 @@ module Regex::PCRE
     String.new(LibPCRE.version)
   end
 
-  class_getter version_number : {Int32, Int32} = begin
+  class_getter version_number : {Int32, Int32} do
     version = self.version
     dot = version.index('.') || raise RuntimeError.new("Invalid libpcre2 version")
     space = version.index(' ', dot) || raise RuntimeError.new("Invalid libpcre2 version")

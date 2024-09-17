@@ -110,7 +110,7 @@ describe Channel do
 
       it "raises if channel is closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(->{ sleep 0.2.seconds; ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.receive_select_action)
           end
@@ -129,7 +129,7 @@ describe Channel do
           end
         }
 
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(->{ sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
           r.should eq({1, 1, 1, 1})
         end
@@ -178,7 +178,7 @@ describe Channel do
 
       it "returns nil channel is closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(->{ sleep 0.2.seconds; ch.close }) do
           i, m = Channel.select(ch.receive_select_action?)
           m.should be_nil
         end
@@ -191,7 +191,7 @@ describe Channel do
           Channel.select(ch.receive_select_action?)
         }
 
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(->{ sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
           r.should eq({ {0, nil}, {0, nil}, {0, nil}, {0, nil} })
         end
@@ -273,7 +273,7 @@ describe Channel do
 
       it "raises if channel is closed while waiting" do
         ch = Channel(String).new
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(->{ sleep 0.2.seconds; ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.send_select_action("foo"))
           end
@@ -292,7 +292,7 @@ describe Channel do
           end
         }
 
-        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+        spawn_and_wait(->{ sleep 0.2.seconds; ch.close }) do
           r = parallel p.call, p.call, p.call, p.call
           r.should eq({1, 1, 1, 1})
         end

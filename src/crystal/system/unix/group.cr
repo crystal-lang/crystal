@@ -4,11 +4,22 @@ require "../unix"
 module Crystal::System::Group
   private GETGR_R_SIZE_MAX = 1024 * 16
 
-  private def from_struct(grp)
-    new(String.new(grp.gr_name), grp.gr_gid.to_s)
+  def initialize(@name : String, @id : String)
   end
 
-  private def from_name?(groupname : String)
+  def system_name
+    @name
+  end
+
+  def system_id
+    @id
+  end
+
+  private def self.from_struct(grp)
+    ::System::Group.new(String.new(grp.gr_name), grp.gr_gid.to_s)
+  end
+
+  def self.from_name?(groupname : String)
     groupname.check_no_null_byte
 
     grp = uninitialized LibC::Group
@@ -21,7 +32,7 @@ module Crystal::System::Group
     end
   end
 
-  private def from_id?(groupid : String)
+  def self.from_id?(groupid : String)
     groupid = groupid.to_u32?
     return unless groupid
 

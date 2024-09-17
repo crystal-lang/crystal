@@ -233,8 +233,11 @@ lib LibGMP
 
   # # Arithmetic
   fun mpf_add = __gmpf_add(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_add_ui = __gmpf_add_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_sub = __gmpf_sub(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_sub_ui = __gmpf_sub_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_mul = __gmpf_mul(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_mul_ui = __gmpf_mul_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_div = __gmpf_div(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_div_ui = __gmpf_div_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_ui_div = __gmpf_ui_div(rop : MPF*, op1 : UI, op2 : MPF*)

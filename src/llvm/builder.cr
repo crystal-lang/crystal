@@ -387,6 +387,10 @@ class LLVM::Builder
     LibLLVM.dispose_builder(@unwrap)
   end
 
+  def finalize
+    dispose
+  end
+
   # The next lines are for ease debugging when a types/values
   # are incorrectly used across contexts.
 
