@@ -4,7 +4,8 @@ require "../../spec_helper"
 require "../../../support/ssl"
 
 # TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
+# TODO: libssl 1.1.1 on aarch64 with gnu libc seems to be broken (#15005)
+{% if (flag?(:interpreted) && flag?(:win32)) || (flag?(:aarch64) && flag?(:gnu) && LibSSL::OPENSSL_VERSION != "0.0.0" && compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") <= 0) %}
   pending OpenSSL::SSL::Server
   {% skip_file %}
 {% end %}
