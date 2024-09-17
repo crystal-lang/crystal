@@ -9,12 +9,10 @@
 #### stdlib
 
 - **[regression]** Fix use global paths in macro bodies ([#14965], thanks @straight-shoota)
-- *(specs)* **[regression]** Fix `Expectations::Be` for module type ([#14926], thanks @straight-shoota)
 - *(system)* **[regression]** Fix `Process.exec` stream redirection on Windows ([#14986], thanks @HertzDevil)
 - *(text)* **[regression]** Fix `String#index` and `#rindex` for `Char::REPLACEMENT` ([#14937], thanks @HertzDevil)
 
 [#14965]: https://github.com/crystal-lang/crystal/pull/14965
-[#14926]: https://github.com/crystal-lang/crystal/pull/14926
 [#14986]: https://github.com/crystal-lang/crystal/pull/14986
 [#14937]: https://github.com/crystal-lang/crystal/pull/14937
 
