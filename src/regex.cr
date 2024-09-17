@@ -249,7 +249,7 @@ class Regex
     MULTILINE = 0x0000_0006
 
     # Equivalent to `MULTILINE` in PCRE and PCRE2.
-    MULTILINE_ONLY = 0x0000_0040
+    MULTILINE_ONLY = 0x0000_0004
 
     DOTALL = 0x0000_0002
 
