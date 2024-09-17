@@ -12,7 +12,7 @@ struct Crystal::Evented::PollDescriptor
 
   # Makes *event_loop* the new owner of *fd*.
   # Removes *fd* from the current event loop (if any).
-  def take_ownership(event_loop : EventLoop, fd : Int32, gen_index : Int64) : Nil
+  def take_ownership(event_loop : EventLoop, fd : Int32, index : Arena::Index) : Nil
     @lock.sync do
       current = @event_loop
 
@@ -28,7 +28,7 @@ struct Crystal::Evented::PollDescriptor
       end
 
       @event_loop = event_loop
-      event_loop.system_add(fd, gen_index)
+      event_loop.system_add(fd, index)
       current.try(&.system_del(fd, closing: false))
     end
   end

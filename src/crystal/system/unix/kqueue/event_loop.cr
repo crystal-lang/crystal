@@ -58,7 +58,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      Evented.arena.each { |fd, gen_index| system_add(fd, gen_index) }
+      Evented.arena.each { |fd, index| system_add(fd, index) }
     end
   {% end %}
 
@@ -107,15 +107,18 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def process(kevent : LibC::Kevent*) : Nil
-    gen_index = kevent.value.udata.address.to_i64!
+    index =
+      {% if flag?(:bits64) %}
+        Evented::Arena::Index.new(kevent.value.udata.address)
+      {% else %}
+        # assuming 32-bit target: rebuild the arena index
+        Evented::Arena::Index.new(kevent.value.ident.to_i32!, kevent.value.udata.address.to_u32!)
+      {% end %}
 
-    {% if flag?(:tracing) %}
-      fd = kevent.value.ident
-      Crystal.trace :evloop, "event", fd: fd, gen_index: gen_index,
-        filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
-    {% end %}
+    Crystal.trace :evloop, "event", fd: kevent.value.ident, index: index.to_i64,
+      filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
 
-    pd = Evented.arena.get(gen_index)
+    pd = Evented.arena.get(index)
 
     if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
       # apparently some systems may report EOF on write with EVFILT_READ instead
@@ -159,15 +162,23 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     {% end %}
   end
 
-  protected def system_add(fd : Int32, gen_index : Int64) : Nil
-    Crystal.trace :evloop, "kevent", op: "add", fd: fd, gen_index: gen_index
+  protected def system_add(fd : Int32, index : Evented::Arena::Index) : Nil
+    Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
 
     # register both read and write events
     kevents = uninitialized LibC::Kevent[2]
     2.times do |i|
       kevent = kevents.to_unsafe + i
       filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: Pointer(Void).new(gen_index.to_u64!))
+
+      udata =
+        {% if flag?(:bits64) %}
+          Pointer(Void).new(index.to_u64)
+        {% else %}
+          # assuming 32-bit target: pass the generation as udata (ident is the fd/index)
+          Pointer(Void).new(index.generation)
+        {% end %}
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: udata)
     end
 
     @kqueue.kevent(kevents.to_slice) do

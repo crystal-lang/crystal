@@ -52,7 +52,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
       system_set_timer(@timers.next_ready?)
 
       # re-add all registered fds
-      Evented.arena.each { |fd, gen_index| system_add(fd, gen_index) }
+      Evented.arena.each { |fd, index| system_add(fd, index) }
     end
   {% end %}
 
@@ -89,15 +89,12 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   end
 
   private def process(epoll_event : LibC::EpollEvent*) : Nil
-    gen_index = epoll_event.value.data.u64.unsafe_as(Int64)
+    index = Evented::Arena::Index.new(epoll_event.value.data.u64)
     events = epoll_event.value.events
 
-    {% if flag?(:tracing) %}
-      fd = (gen_index >> 32).to_i32!
-      Crystal.trace :evloop, "event", fd: fd, gen_index: gen_index, events: events
-    {% end %}
+    Crystal.trace :evloop, "event", fd: index.to_i, index: index.to_i64, events: events
 
-    pd = Evented.arena.get(gen_index)
+    pd = Evented.arena.get(index)
 
     if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
       pd.value.@readers.consume_each { |event| resume_io(event) }
@@ -125,10 +122,10 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     @eventfd.write(1) if @interrupted.test_and_set
   end
 
-  protected def system_add(fd : Int32, gen_index : Int64) : Nil
-    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, gen_index: gen_index
+  protected def system_add(fd : Int32, index : Evented::Arena::Index) : Nil
+    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, index: index.to_i64
     events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
-    @epoll.add(fd, events, u64: gen_index.unsafe_as(UInt64))
+    @epoll.add(fd, events, u64: index.to_u64)
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil

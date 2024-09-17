@@ -21,7 +21,7 @@ struct Crystal::Evented::Event
 
   # Arena index to access the associated `PollDescriptor` when processing an IO
   # event. Nil for timed events (sleep, select timeout).
-  getter! gen_index : Int64?
+  getter! index : Arena::Index?
 
   # The absolute time, against the monotonic clock, at which a timed event shall
   # trigger. Nil for IO events without a timeout.
@@ -33,7 +33,7 @@ struct Crystal::Evented::Event
   # The event can be added into different lists. See `Waiters` and `Timers`.
   include PointerLinkedList::Node
 
-  def initialize(@type : Type, @fiber, @gen_index = nil, timeout : Time::Span? = nil)
+  def initialize(@type : Type, @fiber, @index = nil, timeout : Time::Span? = nil)
     @wake_at = Time.monotonic + timeout if timeout
   end
 

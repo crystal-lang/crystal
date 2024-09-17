@@ -5,12 +5,12 @@
 #
 # The arena allocates objects `T` at a predefined index. The object iself is
 # uninitialized (outside of having its memory initialized to zero). The object
-# can be allocated and later retrieved using the generation index (Int64) that
-# contains both the actual index (Int32) and the generation number (UInt32).
-# Deallocating the object increases the generation number, which allows the
-# object to be reallocated later on. Trying to retrieve the allocation using the
-# generation index will fail if the generation number changed (it's a new
-# allocation).
+# can be allocated and later retrieved using the generation index
+# (Arena::Index) that contains both the actual index (Int32) and the generation
+# number (UInt32). Deallocating the object increases the generation number,
+# which allows the object to be reallocated later on. Trying to retrieve the
+# allocation using the generation index will fail if the generation number
+# changed (it's a new allocation).
 #
 # This arena isn't generic as it won't keep a list of free indexes. It assumes
 # that something else will maintain the uniqueness of indexes and reuse indexes
@@ -29,13 +29,50 @@
 # initialized to zero by default, then `#free` will also clear the memory, so
 # the next allocation shall be initialized to zero, too.
 #
-# TODO: we could use a growing/shrinking buffer (realloc) though it would
-# require a rwlock to borrow accesses during which we can mutate the pointed
-# memory, but growing/shrinking would need exclusive write access (it
-# reallocates, hence invalidates all pointers); resizing could be delayed and
-# thus shouldn't happen often + borrowing accesses should be as quick/small as
-# possible.
+# TODO: instead of the mmap that must preallocate a fixed chunk of virtual
+# memory, we could allocate individual blocks of memory, then access the actual
+# block at `index % size`. Pointers would still be valid (as long as the block
+# isn't collected). We wouldn't have to worry about maximum capacity, we could
+# still allocate blocks discontinuously & collect unused blocks during GC
+# collections.
 class Crystal::Evented::Arena(T)
+  INVALID_INDEX = Index.new(-1, 0)
+
+  struct Index
+    def initialize(index : Int32, generation : UInt32)
+      @data = (index.to_i64! << 32) | generation.to_u64!
+    end
+
+    def initialize(@data : Int64)
+    end
+
+    def initialize(data : UInt64)
+      @data = data.unsafe_as(Int64)
+    end
+
+    # Returns the generation number.
+    def generation : UInt32
+      @data.to_u32!
+    end
+
+    # Returns the actual index.
+    def to_i : Int32
+      (@data >> 32).to_i32!
+    end
+
+    def to_i64 : Int64
+      @data
+    end
+
+    def to_u64 : UInt64
+      @data.unsafe_as(UInt64)
+    end
+
+    def valid? : Bool
+      @data >= 0
+    end
+  end
+
   struct Entry(T)
     @lock = SpinLock.new # protects parallel allocate/free calls
     property? allocated = false
@@ -82,26 +119,6 @@ class Crystal::Evented::Arena(T)
     LibC.munmap(@buffer.to_unsafe, @buffer.bytesize)
   end
 
-  # Returns a pointer to the object allocated at *gen_idx* (generation index).
-  #
-  # Raises if the object isn't allocated.
-  # Raises if the generation has changed (i.e. the object has been freed then reallocated).
-  # Raises if *index* is negative.
-  def get(gen_idx : Int64) : Pointer(T)
-    index, generation = from_gen_index(gen_idx)
-    entry = at(index)
-
-    unless entry.value.allocated?
-      raise RuntimeError.new("#{self.class.name}: object not allocated at index #{index}")
-    end
-
-    unless (actual = entry.value.generation) == generation
-      raise RuntimeError.new("#{self.class.name}: object generation changed at index #{index} (#{generation} => #{actual})")
-    end
-
-    entry.value.pointer
-  end
-
   # Yields and allocates the object at *index* unless already allocated.
   # Returns a pointer to the object at *index* and the generation index.
   #
@@ -110,13 +127,13 @@ class Crystal::Evented::Arena(T)
   # the generation index.
   #
   # There are no generational checks.
-  # Raises if *index* is negative.
-  def lazy_allocate(index : Int32, &) : {Pointer(T), Int64}
+  # Raises if *index* is out of bounds.
+  def lazy_allocate(index : Int32, &) : {Pointer(T), Index}
     entry = at(index)
 
     entry.value.@lock.sync do
       pointer = entry.value.pointer
-      gen_index = to_gen_index(index, entry)
+      gen_index = Index.new(index, entry.value.generation)
 
       unless entry.value.allocated?
         {% unless flag?(:preview_mt) %}
@@ -131,20 +148,58 @@ class Crystal::Evented::Arena(T)
     end
   end
 
-  # Yields the object allocated at *index* then releases it.
-  # Does nothing if the object wasn't allocated.
+  # Returns a pointer to the object previously allocated at *index*.
+  #
+  # Raises if the object isn't allocated.
+  # Raises if the generation has changed (i.e. the object has been freed then reallocated).
+  # Raises if *index* is negative.
+  def get(index : Index) : Pointer(T)
+    entry = at(index.to_i)
+    entry.value.pointer
+  end
+
+  # Returns a pointer to the object previously allocated at *index*.
+  # Returns `nil` if the object isn't allocated or the generation has changed.
   #
   # Raises if *index* is negative.
-  def free(index : Int32, &) : Nil
-    return unless entry = at?(index)
+  def get?(index : Index) : Pointer(T)?
+    if entry = at?(index.to_i)
+      entry.value.pointer
+    end
+  end
+
+  # Yields the object previously allocated at *index* then releases it. Does
+  # nothing if the object isn't allocated or the generation has changed.
+  #
+  # Raises if *index* is negative.
+  def free(index : Index, &) : Nil
+    return unless entry = at?(index.to_i)
 
     entry.value.@lock.sync do
       return unless entry.value.allocated?
-
+      return unless entry.value.generation == index.generation
       yield entry.value.pointer
     ensure
       entry.value.free
     end
+  end
+
+  private def at(index : Index) : Pointer(Entry(T))
+    entry = at(index.to_i)
+    unless entry.value.allocated?
+      raise RuntimeError.new("#{self.class.name}: object not allocated at index #{index.to_i}")
+    end
+    unless entry.value.generation == generation
+      raise RuntimeError.new("#{self.class.name}: object generation changed at index #{index.to_i} (#{index.generation} => #{entry.value.generation})")
+    end
+    entry
+  end
+
+  private def at?(index : Index) : Pointer(Entry(T))
+    return unless entry = at?(index.to_i)
+    return unless entry.value.allocated?
+    return unless entry.value.generation == generation
+    entry
   end
 
   private def at(index : Int32) : Pointer(Entry(T))
@@ -176,17 +231,9 @@ class Crystal::Evented::Arena(T)
         entry = pointer + index
 
         if entry.value.allocated?
-          yield index, to_gen_index(index, entry)
+          yield index, Index.new(index, entry.value.generation)
         end
       end
     end
   {% end %}
-
-  private def to_gen_index(index : Int32, entry : Pointer(Entry(T))) : Int64
-    (index.to_i64! << 32) | entry.value.generation.to_u64!
-  end
-
-  private def from_gen_index(gen_index : Int64) : {Int32, UInt32}
-    {(gen_index >> 32).to_i32!, gen_index.to_u32!}
-  end
 end

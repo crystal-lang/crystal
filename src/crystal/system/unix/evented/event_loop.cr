@@ -3,12 +3,12 @@ require "./arena"
 
 module Crystal::System::FileDescriptor
   # user data (generation index for the arena)
-  property __evloop_data : Int64 = -1_i64
+  property __evloop_data : Evented::Arena::Index = Evented::Arena::INVALID_INDEX
 end
 
 module Crystal::System::Socket
   # user data (generation index for the arena)
-  property __evloop_data : Int64 = -1_i64
+  property __evloop_data : Evented::Arena::Index = Evented::Arena::INVALID_INDEX
 end
 
 module Crystal::Evented
@@ -187,10 +187,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   def remove(file_descriptor : System::FileDescriptor) : Nil
-    Evented.arena.free(file_descriptor.fd) do |pd|
-      pd.value.remove(file_descriptor.fd) { } # ignore system error
-      file_descriptor.__evloop_data = -1_i64
-    end
+    internal_remove(file_descriptor)
   end
 
   # socket interface, see Crystal::EventLoop::Socket
@@ -293,10 +290,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   def remove(socket : ::Socket) : Nil
-    Evented.arena.free(socket.fd) do |pd|
-      pd.value.remove(socket.fd) { } # ignore system error
-      socket.__evloop_data = -1_i64
-    end
+    internal_remove(socket)
   end
 
   # internals: IO
@@ -326,7 +320,10 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   protected def evented_close(io)
-    Evented.arena.free(io.fd) do |pd|
+    return unless (index = io.__evloop_data).valid?
+    io.__evloop_data = Arena::INVALID_INDEX
+
+    Evented.arena.free(index) do |pd|
       pd.value.@readers.consume_each do |event|
         pd.value.@event_loop.try(&.resume_io(event))
       end
@@ -336,7 +333,15 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
       end
 
       pd.value.remove(io.fd)
-      io.__evloop_data = -1_i64
+    end
+  end
+
+  private def internal_remove(io)
+    return unless (index = io.__evloop_data).valid?
+    io.__evloop_data = Arena::INVALID_INDEX
+
+    Evented.arena.free(index) do |pd|
+      pd.value.remove(io.fd) { } # ignore system error
     end
   end
 
@@ -358,20 +363,20 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private macro wait(type, io, waiters, timeout, &)
     # get or allocate the poll descriptor
-    if (%gen_index = {{io}}.__evloop_data) >= 0
-      %pd = Evented.arena.get(%gen_index)
+    if (%index = {{io}}.__evloop_data).valid?
+      %pd = Evented.arena.get(%index)
     else
-      %pd, %gen_index = Evented.arena.lazy_allocate({{io}}.fd) do |pd, gen_index|
+      %pd, %index = Evented.arena.lazy_allocate({{io}}.fd) do |pd, index|
         # register the fd with the event loop (once), it should usually merely add
         # the fd to the current evloop but may "transfer" the ownership from
         # another event loop:
-        {{io}}.__evloop_data = gen_index
-        pd.value.take_ownership(self, {{io}}.fd, gen_index)
+        {{io}}.__evloop_data = index
+        pd.value.take_ownership(self, {{io}}.fd, index)
       end
     end
 
     # create an event (on the stack)
-    %event = Evented::Event.new({{type}}, Fiber.current, %gen_index, {{timeout}})
+    %event = Evented::Event.new({{type}}, Fiber.current, %index, {{timeout}})
 
     # try to add the event to the waiting list
     # don't wait if the waiter has already been marked ready (see Waiters#add)
@@ -465,12 +470,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event
       event.value.timed_out!
-      pd = Evented.arena.get(event.value.gen_index)
+      pd = Evented.arena.get(event.value.index)
       pd.value.@readers.delete(event)
     when .io_write?
       # reached write timeout: cancel io event
       event.value.timed_out!
-      pd = Evented.arena.get(event.value.gen_index)
+      pd = Evented.arena.get(event.value.index)
       pd.value.@writers.delete(event)
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
@@ -497,12 +502,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # *blocking* is `true` the loop must wait for events to become ready (possibly
   # indefinitely); when `false` the loop shall return immediately.
   #
-  # The `PollDescriptor` of IO events can be retrieved using the *gen_index*
+  # The `PollDescriptor` of IO events can be retrieved using the *index*
   # from the system event's user data.
   private abstract def system_run(blocking : Bool) : Nil
 
-  # Add *fd* to the polling system, setting *gen_index* as user data.
-  protected abstract def system_add(fd : Int32, gen_index : Int64) : Nil
+  # Add *fd* to the polling system, setting *index* as user data.
+  protected abstract def system_add(fd : Int32, index : Index) : Nil
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #
