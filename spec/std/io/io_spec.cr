@@ -105,11 +105,11 @@ describe IO do
         write.puts "hello"
         slice = Bytes.new 1024
 
-        read.read_timeout = 1
+        read.read_timeout = 1.second
         read.read(slice).should eq(6)
 
         expect_raises(IO::TimeoutError) do
-          read.read_timeout = 0.0000001
+          read.read_timeout = 0.1.microseconds
           read.read(slice)
         end
       end
@@ -816,23 +816,26 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        it "gets ascii from socket (#9056)" do
-          server = TCPServer.new "localhost", 0
-          sock = TCPSocket.new "localhost", server.local_address.port
-          begin
-            sock.set_encoding("ascii")
-            spawn do
-              client = server.accept
-              message = client.gets
-              client << "#{message}\n"
+        # TODO: Windows networking in the interpreter requires #12495
+        {% unless flag?(:interpreted) || flag?(:win32) %}
+          it "gets ascii from socket (#9056)" do
+            server = TCPServer.new "localhost", 0
+            sock = TCPSocket.new "localhost", server.local_address.port
+            begin
+              sock.set_encoding("ascii")
+              spawn do
+                client = server.accept
+                message = client.gets
+                client << "#{message}\n"
+              end
+              sock << "K\n"
+              sock.gets.should eq("K")
+            ensure
+              server.close
+              sock.close
             end
-            sock << "K\n"
-            sock.gets.should eq("K")
-          ensure
-            server.close
-            sock.close
           end
-        end
+        {% end %}
       end
 
       describe "encode" do

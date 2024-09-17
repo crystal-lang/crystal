@@ -27,7 +27,7 @@ pending_interpreted describe: "Signal" do
       Process.signal Signal::USR1, Process.pid
       10.times do |i|
         break if ran
-        sleep 0.1
+        sleep 0.1.seconds
       end
       ran.should be_true
     ensure
@@ -52,7 +52,7 @@ pending_interpreted describe: "Signal" do
       end
 
       Process.signal Signal::USR1, Process.pid
-      sleep 0.1
+      sleep 0.1.seconds
       ran_first.should be_true
       ran_second.should be_true
     ensure

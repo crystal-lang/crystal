@@ -168,6 +168,13 @@ module Reply
       @auto_completion.default_display_selected_entry(io, entry)
     end
 
+    # Override to retrigger auto completion when condition is met.
+    #
+    # default: `false`
+    def auto_completion_retrigger_when(current_word : String) : Bool
+      false
+    end
+
     # Override to enable line re-indenting.
     #
     # This methods is called each time a character is entered.
@@ -240,8 +247,11 @@ module Reply
         if read.is_a?(CharReader::Sequence) && (read.tab? || read.enter? || read.alt_enter? || read.shift_tab? || read.escape? || read.backspace? || read.ctrl_c?)
         else
           if @auto_completion.open?
-            auto_complete_insert_char(read)
-            @editor.update
+            replacement = auto_complete_insert_char(read)
+            # Replace the current_word by the replacement word
+            @editor.update do
+              @editor.current_word = replacement if replacement
+            end
           end
         end
       end
@@ -362,12 +372,6 @@ module Reply
     end
 
     private def on_tab(shift_tab = false)
-      line = @editor.current_line
-
-      # Retrieve the word under the cursor
-      word_begin, word_end = @editor.current_word_begin_end
-      current_word = line[word_begin..word_end]
-
       if @auto_completion.open?
         if shift_tab
           replacement = @auto_completion.selection_previous
@@ -375,15 +379,7 @@ module Reply
           replacement = @auto_completion.selection_next
         end
       else
-        # Get whole expression before cursor, allow auto-completion to deduce the receiver type
-        expr = @editor.expression_before_cursor(x: word_begin)
-
-        # Compute auto-completion, return `replacement` (`nil` if no entry, full name if only one entry, or the begin match of entries otherwise)
-        replacement = @auto_completion.complete_on(current_word, expr)
-
-        if replacement && @auto_completion.entries.size >= 2
-          @auto_completion.open
-        end
+        replacement = compute_completions
       end
 
       # Replace the current_word by the replacement word
@@ -405,14 +401,40 @@ module Reply
       @editor.move_cursor_to_end
     end
 
-    private def auto_complete_insert_char(char)
+    private def compute_completions : String?
+      line = @editor.current_line
+
+      # Retrieve the word under the cursor
+      word_begin, word_end = @editor.current_word_begin_end
+      current_word = line[word_begin..word_end]
+
+      expr = @editor.expression_before_cursor(x: word_begin)
+
+      # Compute auto-completion, return `replacement` (`nil` if no entry, full name if only one entry, or the begin match of entries otherwise)
+      replacement = @auto_completion.complete_on(current_word, expr)
+
+      if replacement
+        if @auto_completion.entries.size >= 2
+          @auto_completion.open
+        else
+          @auto_completion.name_filter = replacement
+        end
+      end
+
+      replacement
+    end
+
+    private def auto_complete_insert_char(char) : String?
       if char.is_a? Char && !char.in?(@editor.word_delimiters)
-        @auto_completion.name_filter = @editor.current_word
+        @auto_completion.name_filter = current_word = @editor.current_word
+
+        return compute_completions if auto_completion_retrigger_when(current_word + char)
       elsif @editor.expression_scrolled? || char.is_a?(String)
         @auto_completion.close
       else
         @auto_completion.clear
       end
+      nil
     end
 
     private def auto_complete_remove_char

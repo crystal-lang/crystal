@@ -243,6 +243,8 @@ lib LibLLVM
   fun build_or = LLVMBuildOr(BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_xor = LLVMBuildXor(BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_not = LLVMBuildNot(BuilderRef, value : ValueRef, name : Char*) : ValueRef
+  fun build_neg = LLVMBuildNeg(BuilderRef, value : ValueRef, name : Char*) : ValueRef
+  fun build_fneg = LLVMBuildFNeg(BuilderRef, value : ValueRef, name : Char*) : ValueRef
 
   fun build_malloc = LLVMBuildMalloc(BuilderRef, ty : TypeRef, name : Char*) : ValueRef
   fun build_array_malloc = LLVMBuildArrayMalloc(BuilderRef, ty : TypeRef, val : ValueRef, name : Char*) : ValueRef

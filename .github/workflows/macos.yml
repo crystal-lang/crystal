@@ -11,18 +11,26 @@ env:
   CI_NIX_SHELL: true
 
 jobs:
-  x86_64-darwin-test:
-    runs-on: macos-13
+  darwin-test:
+    runs-on: ${{ matrix.runs-on }}
+    name: ${{ matrix.arch }}
+    strategy:
+      matrix:
+        include:
+        - runs-on: macos-13
+          arch: x86_64-darwin
+        - runs-on: macos-14
+          arch: aarch64-darwin
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v26
+      - uses: cachix/install-nix-action@v27
         with:
           install_url: https://releases.nixos.org/nix/nix-2.9.2/install
           extra_nix_config: |
             experimental-features = nix-command
-      - uses: cachix/cachix-action@v14
+      - uses: cachix/cachix-action@v15
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'

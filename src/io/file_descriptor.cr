@@ -66,7 +66,15 @@ class IO::FileDescriptor < IO
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
+  # Returns whether I/O operations on this file descriptor block the current
+  # thread. If false, operations might opt to suspend the current fiber instead.
+  #
+  # This might be different from the internal file descriptor. For example, when
+  # `STDIN` is a terminal on Windows, this returns `false` since the underlying
+  # blocking reads are done on a completely separate thread.
   def blocking
+    emulated = emulated_blocking?
+    return emulated unless emulated.nil?
     system_blocking?
   end
 
@@ -233,10 +241,22 @@ class IO::FileDescriptor < IO
     system_flock_unlock
   end
 
+  # Finalizes the file descriptor resource.
+  #
+  # This involves releasing the handle to the operating system, i.e. closing it.
+  # It does *not* implicitly call `#flush`, so data waiting in the buffer may be
+  # lost.
+  # It's recommended to always close the file descriptor explicitly via `#close`
+  # (or implicitly using the `.open` constructor).
+  #
+  # Resource release can be disabled with `close_on_finalize = false`.
+  #
+  # This method is a no-op if the file descriptor has already been closed.
   def finalize
     return if closed? || !close_on_finalize?
 
-    close rescue nil
+    event_loop?.try(&.remove(self))
+    file_descriptor_close { } # ignore error
   end
 
   def closed? : Bool

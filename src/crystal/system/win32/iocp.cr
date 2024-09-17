@@ -6,7 +6,16 @@ require "crystal/system/thread_linked_list"
 module Crystal::IOCP
   # :nodoc:
   class CompletionKey
+    enum Tag
+      ProcessRun
+      StdinRead
+    end
+
     property fiber : Fiber?
+    getter tag : Tag
+
+    def initialize(@tag : Tag, @fiber : Fiber? = nil)
+    end
   end
 
   def self.wait_queued_completions(timeout, alertable = false, &)
@@ -39,20 +48,19 @@ module Crystal::IOCP
       # at the moment only `::Process#wait` uses a non-nil completion key; all
       # I/O operations, including socket ones, do not set this field
       case completion_key = Pointer(Void).new(entry.lpCompletionKey).as(CompletionKey?)
-      when Nil
+      in Nil
         operation = OverlappedOperation.unbox(entry.lpOverlapped)
         operation.schedule { |fiber| yield fiber }
-      else
-        case entry.dwNumberOfBytesTransferred
-        when LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS
+      in CompletionKey
+        if completion_key_valid?(completion_key, entry.dwNumberOfBytesTransferred)
+          # if `Process` exits before a call to `#wait`, this fiber will be
+          # reset already
           if fiber = completion_key.fiber
-            # this ensures the `::Process` doesn't keep an indirect reference to
-            # `::Thread.current`, as that leads to a finalization cycle
+            # this ensures existing references to `completion_key` do not keep
+            # an indirect reference to `::Thread.current`, as that leads to a
+            # finalization cycle
             completion_key.fiber = nil
-
             yield fiber
-          else
-            # the `Process` exits before a call to `#wait`; do nothing
           end
         end
       end
@@ -61,49 +69,76 @@ module Crystal::IOCP
     false
   end
 
-  class OverlappedOperation
+  private def self.completion_key_valid?(completion_key, number_of_bytes_transferred)
+    case completion_key.tag
+    in .process_run?
+      number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
+    in .stdin_read?
+      true
+    end
+  end
+
+  abstract class OverlappedOperation
     enum State
       STARTED
       DONE
-      CANCELLED
     end
+
+    abstract def wait_for_result(timeout, & : WinError ->)
+    private abstract def try_cancel : Bool
 
     @overlapped = LibC::OVERLAPPED.new
     @fiber = Fiber.current
     @state : State = :started
-    property next : OverlappedOperation?
-    property previous : OverlappedOperation?
-    @@canceled = Thread::LinkedList(OverlappedOperation).new
 
-    def initialize(@handle : LibC::HANDLE)
+    def self.run(*args, **opts, &)
+      operation_storage = uninitialized ReferenceStorage(self)
+      operation = unsafe_construct(pointerof(operation_storage), *args, **opts)
+      yield operation
     end
 
-    def initialize(handle : LibC::SOCKET)
-      @handle = LibC::HANDLE.new(handle)
-    end
-
-    def self.run(handle, &)
-      operation = OverlappedOperation.new(handle)
-      begin
-        yield operation
-      ensure
-        operation.done
-      end
-    end
-
-    def self.unbox(overlapped : LibC::OVERLAPPED*)
-      start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
-      Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
+    def self.unbox(overlapped : LibC::OVERLAPPED*) : self
+      start = overlapped.as(Pointer(UInt8)) - offsetof(self, @overlapped)
+      Box(self).unbox(start.as(Pointer(Void)))
     end
 
     def to_unsafe
       pointerof(@overlapped)
     end
 
-    def wait_for_result(timeout, &)
-      wait_for_completion(timeout)
+    protected def schedule(&)
+      done!
+      yield @fiber
+    end
 
-      raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
+    private def done!
+      @fiber.cancel_timeout
+      @state = :done
+    end
+
+    private def wait_for_completion(timeout)
+      if timeout
+        sleep timeout
+      else
+        Fiber.suspend
+      end
+
+      unless @state.done?
+        if try_cancel
+          # Wait for cancellation to complete. We must not free the operation
+          # until it's completed.
+          Fiber.suspend
+        end
+      end
+    end
+  end
+
+  class IOOverlappedOperation < OverlappedOperation
+    def initialize(@handle : LibC::HANDLE)
+    end
+
+    def wait_for_result(timeout, & : WinError ->)
+      wait_for_completion(timeout)
 
       result = LibC.GetOverlappedResult(@handle, self, out bytes, 0)
       if result.zero?
@@ -116,15 +151,35 @@ module Crystal::IOCP
       bytes
     end
 
-    def wait_for_wsa_result(timeout, &)
-      wait_for_completion(timeout)
-      wsa_result { |error| yield error }
+    private def try_cancel : Bool
+      # Microsoft documentation:
+      # The application must not free or reuse the OVERLAPPED structure
+      # associated with the canceled I/O operations until they have completed
+      # (this does not apply to asynchronous operations that finished
+      # synchronously, as nothing would be queued to the IOCP)
+      ret = LibC.CancelIoEx(@handle, self)
+      if ret.zero?
+        case error = WinError.value
+        when .error_not_found?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise RuntimeError.from_os_error("CancelIoEx", os_error: error)
+        end
+      end
+      true
+    end
+  end
+
+  class WSAOverlappedOperation < OverlappedOperation
+    def initialize(@handle : LibC::SOCKET)
     end
 
-    def wsa_result(&)
-      raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
+    def wait_for_result(timeout, & : WinError ->)
+      wait_for_completion(timeout)
+
       flags = 0_u32
-      result = LibC.WSAGetOverlappedResult(LibC::SOCKET.new(@handle.address), self, out bytes, false, pointerof(flags))
+      result = LibC.WSAGetOverlappedResult(@handle, self, out bytes, false, pointerof(flags))
       if result.zero?
         error = WinError.wsa_value
         yield error
@@ -135,55 +190,73 @@ module Crystal::IOCP
       bytes
     end
 
-    protected def schedule(&)
-      case @state
-      when .started?
-        yield @fiber
-        done!
-      when .cancelled?
-        @@canceled.delete(self)
-      else
-        raise Exception.new("Invalid state #{@state}")
-      end
-    end
-
-    protected def done
-      case @state
-      when .started?
-        # https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
-        # > The application must not free or reuse the OVERLAPPED structure
-        # associated with the canceled I/O operations until they have completed
-        if LibC.CancelIoEx(@handle, self) != 0
-          @state = :cancelled
-          @@canceled.push(self) # to increase lifetime
+    private def try_cancel : Bool
+      # Microsoft documentation:
+      # The application must not free or reuse the OVERLAPPED structure
+      # associated with the canceled I/O operations until they have completed
+      # (this does not apply to asynchronous operations that finished
+      # synchronously, as nothing would be queued to the IOCP)
+      ret = LibC.CancelIoEx(Pointer(Void).new(@handle), self)
+      if ret.zero?
+        case error = WinError.value
+        when .error_not_found?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise RuntimeError.from_os_error("CancelIoEx", os_error: error)
         end
       end
-    end
-
-    def done!
-      @state = :done
-    end
-
-    def wait_for_completion(timeout)
-      if timeout
-        timeout_event = Crystal::IOCP::Event.new(Fiber.current)
-        timeout_event.add(timeout)
-      else
-        timeout_event = Crystal::IOCP::Event.new(Fiber.current, Time::Span::MAX)
-      end
-      # memoize event loop to make sure that we still target the same instance
-      # after wakeup (guaranteed by current MT model but let's be future proof)
-      event_loop = Crystal::EventLoop.current
-      event_loop.enqueue(timeout_event)
-
-      Fiber.suspend
-
-      event_loop.dequeue(timeout_event)
+      true
     end
   end
 
-  def self.overlapped_operation(target, handle, method, timeout, *, writing = false, &)
-    OverlappedOperation.run(handle) do |operation|
+  class GetAddrInfoOverlappedOperation < OverlappedOperation
+    getter iocp
+    setter cancel_handle : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
+
+    def initialize(@iocp : LibC::HANDLE)
+    end
+
+    def wait_for_result(timeout, & : WinError ->)
+      wait_for_completion(timeout)
+
+      result = LibC.GetAddrInfoExOverlappedResult(self)
+      unless result.zero?
+        error = WinError.new(result.to_u32!)
+        yield error
+
+        raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExOverlappedResult", error)
+      end
+
+      @overlapped.union.pointer.as(LibC::ADDRINFOEXW**).value
+    end
+
+    private def try_cancel : Bool
+      ret = LibC.GetAddrInfoExCancel(pointerof(@cancel_handle))
+      unless ret.zero?
+        case error = WinError.new(ret.to_u32!)
+        when .wsa_invalid_handle?
+          # Operation has already completed, do nothing
+          return false
+        else
+          raise Socket::Addrinfo::Error.from_os_error("GetAddrInfoExCancel", error)
+        end
+      end
+      true
+    end
+  end
+
+  def self.overlapped_operation(file_descriptor, method, timeout, *, offset = nil, writing = false, &)
+    handle = file_descriptor.windows_handle
+    seekable = LibC.SetFilePointerEx(handle, 0, out original_offset, IO::Seek::Current) != 0
+
+    IOOverlappedOperation.run(handle) do |operation|
+      overlapped = operation.to_unsafe
+      if seekable
+        start_offset = offset || original_offset
+        overlapped.value.union.offset.offset = LibC::DWORD.new!(start_offset)
+        overlapped.value.union.offset.offsetHigh = LibC::DWORD.new!(start_offset >> 32)
+      end
       result, value = yield operation
 
       if result == 0
@@ -195,18 +268,21 @@ module Crystal::IOCP
         when .error_io_pending?
           # the operation is running asynchronously; do nothing
         when .error_access_denied?
-          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: target
+          raise IO::Error.new "File not open for #{writing ? "writing" : "reading"}", target: file_descriptor
         else
-          raise IO::Error.from_os_error(method, error, target: target)
+          raise IO::Error.from_os_error(method, error, target: file_descriptor)
         end
       else
-        operation.done!
+        # operation completed synchronously; seek forward by number of bytes
+        # read or written if handle is seekable, since overlapped I/O doesn't do
+        # it automatically
+        LibC.SetFilePointerEx(handle, value, nil, IO::Seek::Current) if seekable
         return value
       end
 
-      operation.wait_for_result(timeout) do |error|
+      byte_count = operation.wait_for_result(timeout) do |error|
         case error
-        when .error_io_incomplete?
+        when .error_io_incomplete?, .error_operation_aborted?
           raise IO::TimeoutError.new("#{method} timed out")
         when .error_handle_eof?
           return 0_u32
@@ -215,11 +291,20 @@ module Crystal::IOCP
           return 0_u32
         end
       end
+
+      # operation completed asynchronously; seek to the original file position
+      # plus the number of bytes read or written (other operations might have
+      # moved the file pointer so we don't use `IO::Seek::Current` here), unless
+      # we are calling `Crystal::System::FileDescriptor.pread`
+      if seekable && !offset
+        LibC.SetFilePointerEx(handle, original_offset + byte_count, nil, IO::Seek::Set)
+      end
+      byte_count
     end
   end
 
   def self.wsa_overlapped_operation(target, socket, method, timeout, connreset_is_error = true, &)
-    OverlappedOperation.run(socket) do |operation|
+    WSAOverlappedOperation.run(socket) do |operation|
       result, value = yield operation
 
       if result == LibC::SOCKET_ERROR
@@ -230,13 +315,12 @@ module Crystal::IOCP
           raise IO::Error.from_os_error(method, error, target: target)
         end
       else
-        operation.done!
         return value
       end
 
-      operation.wait_for_wsa_result(timeout) do |error|
+      operation.wait_for_result(timeout) do |error|
         case error
-        when .wsa_io_incomplete?
+        when .wsa_io_incomplete?, .error_operation_aborted?
           raise IO::TimeoutError.new("#{method} timed out")
         when .wsaeconnreset?
           return 0_u32 unless connreset_is_error

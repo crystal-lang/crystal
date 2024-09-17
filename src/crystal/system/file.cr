@@ -65,7 +65,7 @@ module Crystal::System::File
         io << suffix
       end
 
-      handle, errno = open(path, mode, perm)
+      handle, errno = open(path, mode, perm, blocking: true)
 
       if error_is_none?(errno)
         return {handle, path}
@@ -87,13 +87,6 @@ module Crystal::System::File
   private def self.error_is_file_exists?(errno)
     errno.in?(Errno::EEXIST, WinError::ERROR_FILE_EXISTS)
   end
-
-  # Closes the internal file descriptor without notifying libevent.
-  # This is directly used after the fork of a process to close the
-  # parent's Crystal::System::Signal.@@pipe reference before re initializing
-  # the event loop. In the case of a fork that will exec there is even
-  # no need to initialize the event loop at all.
-  # def file_descriptor_close
 end
 
 {% if flag?(:wasi) %}

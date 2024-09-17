@@ -73,6 +73,7 @@ struct Crystal::MathInterpreter
         when "//" then left // right
         when "&"  then left & right
         when "|"  then left | right
+        when "^"  then left ^ right
         when "<<" then left << right
         when ">>" then left >> right
         when "%"  then left % right

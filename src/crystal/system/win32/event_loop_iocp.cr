@@ -144,24 +144,24 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    handle = file_descriptor.windows_handle
-    IOCP.overlapped_operation(file_descriptor, handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
-      ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
+    IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+      ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    handle = file_descriptor.windows_handle
-
-    IOCP.overlapped_operation(file_descriptor, handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
-      ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+    IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
+  end
+
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 
   private def wsa_buffer(bytes)
@@ -231,7 +231,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
-    socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
+    socket.overlapped_connect(socket.fd, "ConnectEx", timeout) do |overlapped|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
       Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
     end
@@ -274,6 +274,9 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
   end
+
+  def remove(socket : ::Socket) : Nil
+  end
 end
 
 class Crystal::IOCP::Event
@@ -295,8 +298,8 @@ class Crystal::IOCP::Event
     free
   end
 
-  def add(timeout : Time::Span?) : Nil
-    @wake_at = timeout ? Time.monotonic + timeout : Time.monotonic
+  def add(timeout : Time::Span) : Nil
+    @wake_at = Time.monotonic + timeout
     Crystal::EventLoop.current.enqueue(self)
   end
 end

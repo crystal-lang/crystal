@@ -928,6 +928,16 @@ module Crystal
         assert_macro %({{["c".id, "b", "a".id].sort}}), %([a, "b", c])
       end
 
+      it "executes sort_by" do
+        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
+      end
+
+      it "calls block exactly once for each element in #sort_by" do
+        assert_macro <<-CRYSTAL, %(5)
+          {{ (i = 0; ["abc", "a", "ab", "abcde", "abcd"].sort_by { i += 1 }; i) }}
+          CRYSTAL
+      end
+
       it "executes uniq" do
         assert_macro %({{[1, 1, 1, 2, 3, 1, 2, 3, 4].uniq}}), %([1, 2, 3, 4])
       end
@@ -1020,10 +1030,6 @@ module Crystal
         assert_macro %({{{:a => 1, :b => 3}.size}}), "2"
       end
 
-      it "executes sort_by" do
-        assert_macro %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), %(["a", "ab", "abc"])
-      end
-
       it "executes empty?" do
         assert_macro %({{{:a => 1}.empty?}}), "false"
       end
@@ -1082,6 +1088,12 @@ module Crystal
 
       it "executes of_value (nop)" do
         assert_macro %({{ {'z' => 6, 'a' => 9}.of_value }}), %()
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('z') }}), %(true)
+        assert_macro %({{ {'z' => 6, 'a' => 9}.has_key?('x') }}), %(false)
+        assert_macro %({{ {'z' => nil, 'a' => 9}.has_key?('z') }}), %(true)
       end
 
       it "executes type" do
@@ -1187,6 +1199,14 @@ module Crystal
       it "executes []=" do
         assert_macro %({% a = {a: 1}; a[:a] = 2 %}{{a[:a]}}), "2"
         assert_macro %({% a = {a: 1}; a["a"] = 2 %}{{a["a"]}}), "2"
+      end
+
+      it "executes has_key?" do
+        assert_macro %({{{a: 1}.has_key?("a")}}), "true"
+        assert_macro %({{{a: 1}.has_key?(:a)}}), "true"
+        assert_macro %({{{a: nil}.has_key?("a")}}), "true"
+        assert_macro %({{{a: nil}.has_key?("b")}}), "false"
+        assert_macro_error %({{{a: 1}.has_key?(true)}}), "expected 'NamedTupleLiteral#has_key?' first argument to be a SymbolLiteral, StringLiteral or MacroId, not BoolLiteral"
       end
 
       it "creates a named tuple literal with a var" do
@@ -2407,6 +2427,65 @@ module Crystal
           end
         end
       end
+
+      describe "#has_inner_pointers?" do
+        it "works on structs" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(klass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.struct)
+            klass.struct = true
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on references" do
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            {x: TypeNode.new(klass)}
+          end
+        end
+
+        it "works on ReferenceStorage" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.int32)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            reference_storage = GenericReferenceStorageType.new program, program, "ReferenceStorage", program.struct, ["T"]
+            klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+            klass.declare_instance_var("@var", program.string)
+            {x: TypeNode.new(reference_storage.instantiate([klass] of TypeVar))}
+          end
+        end
+
+        it "works on primitive values" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.int32)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.void)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.pointer_of(program.int32))}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(true)) do |program|
+            {x: TypeNode.new(program.proc_of(program.void))}
+          end
+        end
+      end
     end
 
     describe "type declaration methods" do
@@ -2572,6 +2651,14 @@ module Crystal
       it "executes visibility" do
         assert_macro %({{x.visibility}}), ":public", {x: Def.new("some_def")}
         assert_macro %({{x.visibility}}), ":private", {x: Def.new("some_def").tap { |d| d.visibility = Visibility::Private }}
+      end
+    end
+
+    describe External do
+      it "executes is_a?" do
+        assert_macro %({{x.is_a?(External)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(Def)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
+        assert_macro %({{x.is_a?(ASTNode)}}), "true", {x: External.new("foo", [] of Arg, Nop.new, "foo")}
       end
     end
 

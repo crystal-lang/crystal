@@ -7,6 +7,12 @@ require "../../support/fibers"
 require "../../support/ssl"
 require "../socket/spec_helper.cr"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending HTTP::WebSocket
+  {% skip_file %}
+{% end %}
+
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
 end
