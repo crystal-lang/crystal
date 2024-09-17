@@ -23,7 +23,7 @@ struct Crystal::Evented::PollDescriptor
       # ensure we can't have cross enqueues after we transfer the fd, so we
       # can optimize (all enqueues are local) and we don't end up with a timer
       # from evloop A to cancel an event from evloop B (currently unsafe)
-      if current && @readers.@list.empty? && @writers.@list.empty?
+      if current && !empty?
         raise RuntimeError.new("BUG: transfering fd=#{fd} to another evloop with pending reader/writer fibers")
       end
 
@@ -47,5 +47,11 @@ struct Crystal::Evented::PollDescriptor
       current, @event_loop = @event_loop, nil
       current.try(&.system_del(fd) { yield })
     end
+  end
+
+  # Returns true when there is at least one reader or writer. Returns false
+  # otherwise.
+  def empty? : Bool
+    @readers.@list.empty? && @writers.@list.empty?
   end
 end
