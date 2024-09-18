@@ -240,7 +240,7 @@ class Regex
     # flag that activates both behaviours, so here we do the same by
     # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
     # The same applies for PCRE2 except that the native values are 0x200 and 0x400.
-    # 
+    #
     # For the behaviour of `PCRE_MULTILINE` use `MULTILINE_ONLY`.
 
     # Multiline matching.
