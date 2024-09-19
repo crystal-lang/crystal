@@ -198,9 +198,7 @@ class XML::Reader
   end
 
   private def collect_errors(&)
-    Error.collect(@errors) { yield }.tap do
-      Error.add_errors(@errors)
-    end
+    Error.collect(@errors) { yield }
   end
 
   private def check_no_null_byte(attribute)
