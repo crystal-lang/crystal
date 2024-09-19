@@ -4,6 +4,12 @@ require "../../support/fibers"
 require "../../support/channel"
 require "../../support/tempfile"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending UNIXServer
+  {% skip_file %}
+{% end %}
+
 describe UNIXServer do
   describe ".new" do
     it "raises when path is too long" do

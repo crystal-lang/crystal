@@ -577,15 +577,5 @@ module XML
 
       reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
     end
-
-    it "adds errors to `XML::Error.errors` (deprecated)" do
-      XML::Error.errors # clear class error list
-
-      reader = XML::Reader.new(%(<people></foo>))
-      reader.read
-      reader.expand?
-
-      XML::Error.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
-    end
   end
 end

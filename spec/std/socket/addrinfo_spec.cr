@@ -22,6 +22,20 @@ describe Socket::Addrinfo, tags: "network" do
         end
       end
     end
+
+    it "raises helpful message on getaddrinfo failure" do
+      expect_raises(Socket::Addrinfo::Error, "Hostname lookup for badhostname failed: ") do
+        Socket::Addrinfo.resolve("badhostname", 80, type: Socket::Type::DGRAM)
+      end
+    end
+
+    {% if flag?(:win32) %}
+      it "raises timeout error" do
+        expect_raises(IO::TimeoutError) do
+          Socket::Addrinfo.resolve("badhostname", 80, type: Socket::Type::STREAM, timeout: 0.milliseconds)
+        end
+      end
+    {% end %}
   end
 
   describe ".tcp" do
@@ -37,11 +51,13 @@ describe Socket::Addrinfo, tags: "network" do
       end
     end
 
-    it "raises helpful message on getaddrinfo failure" do
-      expect_raises(Socket::Addrinfo::Error, "Hostname lookup for badhostname failed: ") do
-        Socket::Addrinfo.resolve("badhostname", 80, type: Socket::Type::DGRAM)
+    {% if flag?(:win32) %}
+      it "raises timeout error" do
+        expect_raises(IO::TimeoutError) do
+          Socket::Addrinfo.tcp("badhostname", 80, timeout: 0.milliseconds)
+        end
       end
-    end
+    {% end %}
   end
 
   describe ".udp" do
@@ -56,6 +72,14 @@ describe Socket::Addrinfo, tags: "network" do
         typeof(addrinfo).should eq(Socket::Addrinfo)
       end
     end
+
+    {% if flag?(:win32) %}
+      it "raises timeout error" do
+        expect_raises(IO::TimeoutError) do
+          Socket::Addrinfo.udp("badhostname", 80, timeout: 0.milliseconds)
+        end
+      end
+    {% end %}
   end
 
   describe "#ip_address" do

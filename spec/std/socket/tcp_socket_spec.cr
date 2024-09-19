@@ -3,6 +3,12 @@
 require "./spec_helper"
 require "../../support/win32"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending TCPSocket
+  {% skip_file %}
+{% end %}
+
 describe TCPSocket, tags: "network" do
   describe "#connect" do
     each_ip_family do |family, address|

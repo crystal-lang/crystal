@@ -47,7 +47,7 @@ module Spec::Methods
   # See `.it_iterates` for details.
   macro assert_iterates_yielding(expected, method, *, infinite = false, tuple = false)
     %remaining = ({{expected}}).size
-    %ary = [] of typeof(Enumerable.element_type({{ expected }}))
+    %ary = [] of typeof(::Enumerable.element_type({{ expected }}))
     {{ method.id }} do |{% if tuple %}*{% end %}x|
       if %remaining == 0
         if {{ infinite }}
@@ -73,11 +73,11 @@ module Spec::Methods
   #
   # See `.it_iterates` for details.
   macro assert_iterates_iterator(expected, method, *, infinite = false)
-    %ary = [] of typeof(Enumerable.element_type({{ expected }}))
+    %ary = [] of typeof(::Enumerable.element_type({{ expected }}))
     %iter = {{ method.id }}
     ({{ expected }}).size.times do
       %v = %iter.next
-      if %v.is_a?(Iterator::Stop)
+      if %v.is_a?(::Iterator::Stop)
         # Compare the actual value directly. Since there are less
         # then expected values, the expectation will fail and raise.
         %ary.should eq({{ expected }})
@@ -86,7 +86,7 @@ module Spec::Methods
       %ary << %v
     end
     unless {{ infinite }}
-      %iter.next.should be_a(Iterator::Stop)
+      %iter.next.should be_a(::Iterator::Stop)
     end
 
     %ary.should eq({{ expected }})

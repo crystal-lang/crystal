@@ -342,6 +342,30 @@ _Freeze period starts on 2024-09-25_
 [#15002]: https://github.com/crystal-lang/crystal/pull/15002
 [#14748]: https://github.com/crystal-lang/crystal/pull/14748
 
+## [1.13.3] (2024-09-18)
+
+[1.13.3]: https://github.com/crystal-lang/crystal/releases/1.13.3
+
+### Bugfixes
+
+#### stdlib
+
+- **[regression]** Fix use global paths in macro bodies ([#14965], thanks @straight-shoota)
+- *(system)* **[regression]** Fix `Process.exec` stream redirection on Windows ([#14986], thanks @HertzDevil)
+- *(text)* **[regression]** Fix `String#index` and `#rindex` for `Char::REPLACEMENT` ([#14937], thanks @HertzDevil)
+
+[#14965]: https://github.com/crystal-lang/crystal/pull/14965
+[#14986]: https://github.com/crystal-lang/crystal/pull/14986
+[#14937]: https://github.com/crystal-lang/crystal/pull/14937
+
+### Infrastructure
+
+- Changelog for 1.13.3 ([#14991], thanks @straight-shoota)
+- *(ci)* Enable runners from `runs-on.com` for Aarch64 CI ([#15007], thanks @straight-shoota)
+
+[#14991]: https://github.com/crystal-lang/crystal/pull/14991
+[#15007]: https://github.com/crystal-lang/crystal/pull/15007
+
 ## [1.13.2] (2024-08-20)
 
 [1.13.2]: https://github.com/crystal-lang/crystal/releases/1.13.2

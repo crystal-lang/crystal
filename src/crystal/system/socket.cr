@@ -99,6 +99,10 @@ module Crystal::System::Socket
   # Also used in `Socket#finalize`
   # def socket_close
 
+  private def event_loop? : Crystal::EventLoop::Socket?
+    Crystal::EventLoop.current?
+  end
+
   private def event_loop : Crystal::EventLoop::Socket
     Crystal::EventLoop.current
   end
