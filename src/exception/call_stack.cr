@@ -31,8 +31,11 @@ struct Exception::CallStack
   @callstack : Array(Void*)
   @backtrace : Array(String)?
 
-  def initialize
-    @callstack = CallStack.unwind
+  def initialize(@callstack : Array(Void*) = CallStack.unwind)
+  end
+
+  def self.empty
+    new([] of Void*)
   end
 
   def printable_backtrace : Array(String)
