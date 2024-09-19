@@ -58,7 +58,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.13.2"
+          crystal: "1.13.3"
 
       - name: Build libllvm_ext
         run: make -B deps
