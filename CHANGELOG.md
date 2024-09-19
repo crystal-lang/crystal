@@ -16,7 +16,7 @@ _Freeze period starts on 2024-09-25_
 
 #### stdlib
 
-- Support ARM64 Windows ([#14911], thanks @HertzDevil)
+- Add support for Windows on aarch64 ([#14911], thanks @HertzDevil)
 - *(collection)* **[breaking]** Add support for negative start index in `Slice#[start, count]` ([#14778], thanks @ysbaddaden)
 - *(collection)* Add `Slice#same?` ([#14728], thanks @straight-shoota)
 - *(concurrency)* Add `WaitGroup.wait` and `WaitGroup#spawn` ([#14837], thanks @jgaskins)
@@ -112,6 +112,7 @@ _Freeze period starts on 2024-09-25_
 - *(system)* Fix return type restriction for `ENV.fetch` ([#14919], thanks @straight-shoota)
 - *(system)* `#file_descriptor_close` should set `@closed` (UNIX) ([#14973], thanks @ysbaddaden)
 - *(system)* reinit event loop first after fork (UNIX) ([#14975], thanks @ysbaddaden)
+- *(text)* Fix avoid linking `libpcre` when unused ([#14891], thanks @kojix2)
 - *(text)* Add type restriction to `String#byte_index` `offset` parameter ([#14981], thanks @straight-shoota)
 
 [#14588]: https://github.com/crystal-lang/crystal/pull/14588
@@ -130,17 +131,16 @@ _Freeze period starts on 2024-09-25_
 [#14919]: https://github.com/crystal-lang/crystal/pull/14919
 [#14973]: https://github.com/crystal-lang/crystal/pull/14973
 [#14975]: https://github.com/crystal-lang/crystal/pull/14975
+[#14891]: https://github.com/crystal-lang/crystal/pull/14891
 [#14981]: https://github.com/crystal-lang/crystal/pull/14981
 
 #### compiler
 
 - *(cli)* Add error handling for linker flag sub commands ([#14932], thanks @straight-shoota)
-- *(codegen)* Fix avoid linking `libpcre` when unused ([#14891], thanks @kojix2)
 - *(codegen)* Allow returning `Proc`s from top-level funs ([#14917], thanks @HertzDevil)
 - *(codegen)* Fix CRT static-dynamic linking conflict in specs with C sources ([#14970], thanks @HertzDevil)
 
 [#14932]: https://github.com/crystal-lang/crystal/pull/14932
-[#14891]: https://github.com/crystal-lang/crystal/pull/14891
 [#14917]: https://github.com/crystal-lang/crystal/pull/14917
 [#14970]: https://github.com/crystal-lang/crystal/pull/14970
 
@@ -160,8 +160,10 @@ _Freeze period starts on 2024-09-25_
 
 #### stdlib
 
+- **[deprecation]** Deprecate `::sleep(Number)` ([#14962], thanks @HertzDevil)
 - *(runtime)* **[deprecation]** Deprecate `Pointer.new(Int)` ([#14875], thanks @straight-shoota)
 
+[#14962]: https://github.com/crystal-lang/crystal/pull/14962
 [#14875]: https://github.com/crystal-lang/crystal/pull/14875
 
 #### compiler
@@ -190,8 +192,10 @@ _Freeze period starts on 2024-09-25_
 
 #### compiler
 
+- Avoid unwinding the stack on hot path in method call lookups ([#15002], thanks @ggiraldez)
 - *(codegen)* Reduce calls to `Crystal::Type#remove_indirection` in module dispatch ([#14992], thanks @HertzDevil)
 
+[#15002]: https://github.com/crystal-lang/crystal/pull/15002
 [#14992]: https://github.com/crystal-lang/crystal/pull/14992
 
 ### Refactor
@@ -208,7 +212,7 @@ _Freeze period starts on 2024-09-25_
 - *(system)* Include `Crystal::System::Group` instead of extending it ([#14930], thanks @HertzDevil)
 - *(system)* Include `Crystal::System::User` instead of extending it ([#14929], thanks @HertzDevil)
 - *(system)* Fix: `Crystal::SpinLock` doesn't need to be allocated on the HEAP ([#14972], thanks @ysbaddaden)
-- *(system)* Don't involve evloop after fork in System::Process.spawn (UNIX) ([#14974], thanks @ysbaddaden)
+- *(system)* Don't involve evloop after fork in `System::Process.spawn` (UNIX) ([#14974], thanks @ysbaddaden)
 - *(system)* Refactor `EventLoop` interface for sleeps & select timeouts ([#14980], thanks @ysbaddaden)
 
 [#14805]: https://github.com/crystal-lang/crystal/pull/14805
@@ -328,18 +332,10 @@ _Freeze period starts on 2024-09-25_
 
 ### other
 
-#### stdlib
-
-- **[deprecation]** Deprecate `::sleep(Number)` ([#14962], thanks @HertzDevil)
-
-[#14962]: https://github.com/crystal-lang/crystal/pull/14962
-
 #### compiler
 
-- Avoid unwinding the stack on hot path in method call lookups ([#15002], thanks @ggiraldez)
 - *(codegen)* Compiler: enable parallel codegen with MT ([#14748], thanks @ysbaddaden)
 
-[#15002]: https://github.com/crystal-lang/crystal/pull/15002
 [#14748]: https://github.com/crystal-lang/crystal/pull/14748
 
 ## [1.13.3] (2024-09-18)
