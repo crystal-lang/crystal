@@ -81,7 +81,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         # nothing special
         timer_triggered = true
       else
-        process(kevent)
+        process_io(kevent)
       end
     end
 
@@ -106,7 +106,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     false
   end
 
-  private def process(kevent : LibC::Kevent*) : Nil
+  private def process_io(kevent : LibC::Kevent*) : Nil
     index =
       {% if flag?(:bits64) %}
         Evented::Arena::Index.new(kevent.value.udata.address)
@@ -123,8 +123,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
       # apparently some systems may report EOF on write with EVFILT_READ instead
       # of EVFILT_WRITE, so let's wake all waiters:
-      pd.value.@readers.consume_each { |event| resume_io(event) }
-      pd.value.@writers.consume_each { |event| resume_io(event) }
+      pd.value.@readers.consume_each { |event| unsafe_resume_io(event) }
+      pd.value.@writers.consume_each { |event| unsafe_resume_io(event) }
       return
     end
 
@@ -132,16 +132,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     when LibC::EVFILT_READ
       if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
         # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
-        pd.value.@readers.consume_each { |event| resume_io(event) }
-      elsif event = pd.value.@readers.ready!
-        resume_io(event)
+        pd.value.@readers.consume_each { |event| unsafe_resume_io(event) }
+      else
+        pd.value.@readers.ready { |event| unsafe_resume_io(event) }
       end
     when LibC::EVFILT_WRITE
       if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
         # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
-        pd.value.@writers.consume_each { |event| resume_io(event) }
-      elsif event = pd.value.@writers.ready!
-        resume_io(event)
+        pd.value.@writers.consume_each { |event| unsafe_resume_io(event) }
+      else
+        pd.value.@writers.ready { |event| unsafe_resume_io(event) }
       end
     end
   end

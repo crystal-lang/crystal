@@ -81,14 +81,14 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
         Crystal.trace :evloop, "timer"
         timer_triggered = true
       else
-        process(epoll_event)
+        process_io(epoll_event)
       end
     end
 
     process_timers(timer_triggered)
   end
 
-  private def process(epoll_event : LibC::EpollEvent*) : Nil
+  private def process_io(epoll_event : LibC::EpollEvent*) : Nil
     index = Evented::Arena::Index.new(epoll_event.value.data.u64)
     events = epoll_event.value.events
 
@@ -97,23 +97,19 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     pd = Evented.arena.get(index)
 
     if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
-      pd.value.@readers.consume_each { |event| resume_io(event) }
-      pd.value.@writers.consume_each { |event| resume_io(event) }
+      pd.value.@readers.consume_each { |event| unsafe_resume_io(event) }
+      pd.value.@writers.consume_each { |event| unsafe_resume_io(event) }
       return
     end
 
     if (events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
-      pd.value.@readers.consume_each { |event| resume_io(event) }
+      pd.value.@readers.consume_each { |event| unsafe_resume_io(event) }
     elsif (events & LibC::EPOLLIN) == LibC::EPOLLIN
-      if event = pd.value.@readers.ready!
-        resume_io(event)
-      end
+      pd.value.@readers.ready { |event| unsafe_resume_io(event) }
     end
 
     if (events & LibC::EPOLLOUT) == LibC::EPOLLOUT
-      if event = pd.value.@writers.ready!
-        resume_io(event)
-      end
+      pd.value.@writers.ready { |event| unsafe_resume_io(event) }
     end
   end
 

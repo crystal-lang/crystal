@@ -84,11 +84,6 @@ end
 # If the IO operation has a timeout, the event is also registered into `@timers`
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
-#
-# OPTIMIZE: collect fibers & canceled timers, delete canceled timers when
-# processing timers, and eventually enqueue all fibers; it would avoid repeated
-# lock/unlock timers on each #resume_io and allow to replace individual fiber
-# enqueues with a single batch enqueue (simpler).
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   {% if flag?(:preview_mt) %}
     @run_lock = Atomic::Flag.new # protects parallel runs
@@ -325,11 +320,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
     Evented.arena.free(index) do |pd|
       pd.value.@readers.consume_each do |event|
-        pd.value.@event_loop.try(&.resume_io(event))
+        pd.value.@event_loop.try(&.unsafe_resume_io(event))
       end
 
       pd.value.@writers.consume_each do |event|
-        pd.value.@event_loop.try(&.resume_io(event))
+        pd.value.@event_loop.try(&.unsafe_resume_io(event))
       end
 
       pd.value.remove(io.fd)
@@ -391,12 +386,8 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
         return {{yield}}
       else
         # nothing to do: either the timer triggered which means it was dequeued,
-        # or `#resume_io` was called to resume the IO and the timer got deleted
-        # from the timers before the fiber got reenqueued.
-        #
-        # TODO: consider a quick check to verify whether the event is still
-        # queued and panic when it happens: the event is put on the stack and we
-        # can't access it after this method returns!
+        # or `#unsafe_resume_io` was called to resume the IO and the timer got
+        # deleted from the timers before the fiber got reenqueued.
       end
     else
       Fiber.suspend
@@ -422,18 +413,37 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     end
   end
 
-  protected def delete_timer(event : Evented::Event*)
+  protected def delete_timer(event : Evented::Event*) : Bool
     @lock.sync do
-      was_next_ready = @timers.delete(event)
-      system_set_timer(@timers.next_ready?) if was_next_ready
+      if index = @timers.delete(event)
+        # update system timer if we deleted the next timer
+        system_set_timer(@timers.next_ready?) if index.zero?
+        return true
+      end
     end
+    false
   end
 
   # Helper to resume the fiber associated to an IO event and remove the event
-  # from timers if applicable.
-  protected def resume_io(event : Evented::Event*) : Nil
-    delete_timer(event) if event.value.wake_at?
-    Crystal::Scheduler.enqueue(event.value.fiber)
+  # from timers if applicable. Returns true if the fiber has been enqueued.
+  #
+  # Thread unsafe: we must hold the poll descriptor waiter lock for the whole
+  # duration of the dequeue/resume_io otherwise we might conflict with timers
+  # trying to cancel an IO event.
+  protected def unsafe_resume_io(event : Evented::Event*) : Bool
+    # we only partially own the poll descriptor; thanks to the lock we know that
+    # another thread won't dequeue it, yet it may still be in the timers queue,
+    # which at worst may be waiting on the lock to be released, so event* can be
+    # dereferenced safely.
+
+    if !event.value.wake_at? || delete_timer(event)
+      # no timeout or we canceled it: we fully own the event
+      Crystal::Scheduler.enqueue(event.value.fiber)
+      true
+    else
+      # failed to cancel the timeout so the timer owns the event (by rule)
+      false
+    end
   end
 
   # Process ready timers.
@@ -441,42 +451,47 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # Shall be called after processing IO events. IO events with a timeout that
   # have succeeded shall already have been removed from `@timers` otherwise the
   # fiber could be resumed twice!
-  #
-  # OPTIMIZE: collect events with the lock then process them after releasing the
-  # lock, which should be thread-safe as long as `@run_lock` is locked.
   private def process_timers(timer_triggered : Bool) : Nil
-    # events = PointerLinkedList(Event).new
+    # collect ready timers before processing them —this is safe— to avoids a
+    # deadlock situation when another thread tries to process a ready IO event
+    # (in poll descriptor waiters) with a timeout (same event* in timers)
+    buffer = uninitialized StaticArray(Pointer(Evented::Event), 128)
     size = 0
 
     @lock.sync do
       @timers.dequeue_ready do |event|
-        # events << event
-        process_timer(event)
-        size += 1
+        buffer.to_unsafe[size] = event
+        break if (size &+= 1) == buffer.size
       end
 
-      unless size == 0 && timer_triggered
+      if size > 0 || timer_triggered
         system_set_timer(@timers.next_ready?)
       end
     end
 
-    # events.each { |event| process_timer(event) }
+    buffer.to_slice[0, size].each do |event|
+      process_timer(event)
+    end
   end
 
   private def process_timer(event : Evented::Event*)
+    # we dequeued the event from timers, and by rule we own it, so event* can
+    # safely be dereferenced:
     fiber = event.value.fiber
 
     case event.value.type
     when .io_read?
-      # reached read timeout: cancel io event
-      event.value.timed_out!
+      # reached read timeout: cancel io event; by rule the timer always wins,
+      # even in case of conflict with #unsafe_resume_io we must resume the fiber
       pd = Evented.arena.get(event.value.index)
       pd.value.@readers.delete(event)
-    when .io_write?
-      # reached write timeout: cancel io event
       event.value.timed_out!
+    when .io_write?
+      # reached write timeout: cancel io event; by rule the timer always wins,
+      # even in case of conflict with #unsafe_resume_io we must resume the fiber
       pd = Evented.arena.get(event.value.index)
       pd.value.@writers.delete(event)
+      event.value.timed_out!
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the
       # atomic CAS

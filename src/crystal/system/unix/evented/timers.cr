@@ -4,10 +4,16 @@
 # Thread unsafe: parallel accesses much be protected.
 #
 # NOTE: this is a struct because it only wraps a const pointer to a deque
-# allocated in the heap
+# allocated in the heap.
 #
-# OPTIMIZE: consider a skiplist for quicker lookups + avoid memmove on `#add`
-# and `#delete`.
+# OPTIMIZE: consider a skiplist for faster lookups (add/delete).
+#
+# OPTIMIZE: we could avoid memmove on add/delete by allocating a buffer, putting
+# entries at whatever available index in the buffer, and linking entries in
+# order (using indices so we can realloc the buffer); we'd have to keep a list
+# of free indexes, too. It could be a good combo of unbounded linked list while
+# retaining some memory locality. It should even be compatible with a skiplist
+# (e.g. make entries a fixed height tower instead of prev/next node).
 struct Crystal::Evented::Timers
   def initialize
     @list = Deque(Evented::Event*).new
@@ -24,7 +30,7 @@ struct Crystal::Evented::Timers
 
   # Dequeues and yields each ready timer (their `#wake_at` is lower than
   # `Time.monotonic`) from the oldest to the most recent (i.e. time ascending).
-  def dequeue_ready(&) : Nil
+  def dequeue_ready(& : Evented::Event* -> Nil) : Nil
     return if @list.empty?
 
     now = Time.monotonic
@@ -60,13 +66,12 @@ struct Crystal::Evented::Timers
     end
   end
 
-  # Removes a timer from the list. Returns true if it was the next ready timer.
-  def delete(event : Evented::Event*) : Bool
+  # Remove a timer from the list. Returns the index at which the event was, and
+  # `nil` otherwise.
+  def delete(event : Evented::Event*) : Int32?
     if index = @list.index(event)
       @list.delete_at(index)
-      index == 0
-    else
-      false
+      index
     end
   end
 end

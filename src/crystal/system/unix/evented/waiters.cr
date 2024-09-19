@@ -10,9 +10,9 @@ struct Crystal::Evented::Waiters
 
   def add(event : Pointer(Event)) : Bool
     {% if flag?(:preview_mt) %}
-      # we check for readyness to avoid a race condition with another thread
-      # running the evloop and trying to wakeup a waiting fiber while we try to
-      # add a waiting fiber
+      # check for readiness since another thread running the evloop might be
+      # trying to dequeue an event while we're waiting on the lock (failure to
+      # notice notice the IO is ready)
       return false if ready?
 
       @lock.sync do
@@ -40,17 +40,25 @@ struct Crystal::Evented::Waiters
     @ready.swap(false, :relaxed)
   end
 
-  def ready! : Pointer(Event)?
+  def ready(& : Pointer(Event) -> Bool) : Nil
     @lock.sync do
       {% if flag?(:preview_mt) %}
-        if event = @list.shift?
-          event
-        else
-          @ready.set(true, :relaxed)
-          nil
+        # loop until the block succesfully processes an event (it may have to
+        # dequeue the timeout from timers)
+        loop do
+          if event = @list.shift?
+            break if yield event
+          else
+            # no event queued but another thread may be waiting for the lock to
+            # add an event: set as ready to resolve the race condition
+            @ready.set(true, :relaxed)
+            return
+          end
         end
       {% else %}
-        @list.shift?
+        if event = @list.shift?
+          yield event
+        end
       {% end %}
     end
   end
