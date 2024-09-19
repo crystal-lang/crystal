@@ -3715,7 +3715,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -4)  # => 13
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
   # ```
-  def byte_index(byte : Int, offset = 0) : Int32?
+  def byte_index(byte : Int, offset : Int32 = 0) : Int32?
     offset += bytesize if offset < 0
     return if offset < 0
 

@@ -1,6 +1,7 @@
 require "spec"
 require "uuid"
 require "spec/helpers/string"
+require "../support/wasm32"
 
 describe "UUID" do
   describe "#==" do
