@@ -60,7 +60,7 @@ jobs:
         run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.6
       - name: Build zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1
@@ -148,7 +148,7 @@ jobs:
         run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17 -Dynamic
       - name: Build libffi
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3 -Dynamic
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.6 -Dynamic
       - name: Build zlib
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1 -Dynamic
