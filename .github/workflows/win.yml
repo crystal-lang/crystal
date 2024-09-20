@@ -252,7 +252,7 @@ jobs:
       - name: Download Crystal executable
         uses: actions/download-artifact@v4
         with:
-          name: crystal-release
+          name: crystal
           path: build
 
       - name: Restore LLVM
@@ -294,7 +294,7 @@ jobs:
       - name: Download Crystal executable
         uses: actions/download-artifact@v4
         with:
-          name: crystal-release
+          name: crystal
           path: build
 
       - name: Restore LLVM
@@ -330,7 +330,7 @@ jobs:
       - name: Download Crystal executable
         uses: actions/download-artifact@v4
         with:
-          name: crystal-release
+          name: crystal
           path: etc/win-ci/portable
 
       - name: Restore LLVM
