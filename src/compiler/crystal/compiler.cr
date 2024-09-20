@@ -314,7 +314,7 @@ module Crystal
     private def codegen(program, node : ASTNode, sources, output_filename)
       {% if LibLLVM::IS_LT_130 %}
         if @codegen_target.architecture == "aarch64"
-          stderr.puts "Error: Target #{@codegen_target} is unavailable with LLVM 12 or lower."
+          stderr.puts "Error: Target #{@codegen_target} requires a Crystal compiler built with LLVM 13 or a later version."
           exit 1
         end
       {% end %}
