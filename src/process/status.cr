@@ -97,6 +97,7 @@ end
 class Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
+  @[Deprecated("Use `Process::Status#exit_code`")]
   def exit_status : Int32
     @exit_status.to_i32!
   end
@@ -203,13 +204,6 @@ class Process::Status
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_signal")
     {% end %}
-  end
-
-  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
-  # The other `Process::Status` methods extract the values from `exit_status`.
-  @[Deprecated("Use `Process::Status#exit_code`")]
-  def exit_status
-    @exit_status
   end
 
   # If `normal_exit?` is `true`, returns the exit code of the process.
