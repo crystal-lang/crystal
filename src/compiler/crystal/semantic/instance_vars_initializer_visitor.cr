@@ -66,6 +66,8 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       initializers << Initializer.new(current_type, target, value, MetaVars.new)
       node.type = @program.nil
       return
+    else
+      # TODO: can this happen?
     end
   end
 
@@ -92,11 +94,10 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       next if scope.is_a?(GenericType)
 
       # Check if we can autocast
-      if (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral)) &&
-         (scope_initializer = scope_initializers[index])
+      if value.supports_autocast?(!@program.has_flag?("no_number_autocast")) && (scope_initializer = scope_initializers[index])
         cloned_value = value.clone
         cloned_value.accept MainVisitor.new(program)
-        if casted_value = MainVisitor.check_automatic_cast(cloned_value, scope.lookup_instance_var(i.target.name).type)
+        if casted_value = MainVisitor.check_automatic_cast(@program, cloned_value, scope.lookup_instance_var(i.target.name).type)
           scope_initializer.value = casted_value
           next
         end

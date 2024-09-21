@@ -1,5 +1,7 @@
 require "../../../spec_helper"
 
+private ANNOTATION_COLORS = {"Deprecated" => "red", "Experimental" => "lime"}
+
 describe Doc::Generator do
   describe "#must_include_toplevel?" do
     it "returns false if program has nothing" do
@@ -99,30 +101,32 @@ describe Doc::Generator do
   end
 
   describe "#formatted_summary" do
-    describe "with a Deprecated annotation, and no docs" do
-      it "should generate just the Deprecated tag" do
-        program = Program.new
-        generator = Doc::Generator.new program, ["."]
-        doc_type = Doc::Type.new generator, program
+    ANNOTATION_COLORS.each do |ann, color|
+      describe "with a #{ann} annotation, and no docs" do
+        it "should generate just the #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+          doc_type = Doc::Type.new generator, program
 
-        a_def = Def.new "foo"
-        a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
-        doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_summary.should eq %(<p><span class="flag red">DEPRECATED</span>  don't use me</p>\n\n)
+          a_def = Def.new "foo"
+          a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          doc_method = Doc::Method.new generator, doc_type, a_def, false
+          doc_method.formatted_summary.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
+        end
       end
-    end
 
-    describe "with a Deprecated annotation, and docs" do
-      it "should generate both the docs and Deprecated tag" do
-        program = Program.new
-        generator = Doc::Generator.new program, ["."]
-        doc_type = Doc::Type.new generator, program
+      describe "with a #{ann} annotation, and docs" do
+        it "should generate both the docs and #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+          doc_type = Doc::Type.new generator, program
 
-        a_def = Def.new "foo"
-        a_def.doc = "Some Method"
-        a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
-        doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_summary.should eq %(<p>Some Method</p>\n\n<p><span class=\"flag red\">DEPRECATED</span>  don't use me</p>\n\n)
+          a_def = Def.new "foo"
+          a_def.doc = "Some Method"
+          a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          doc_method = Doc::Method.new generator, doc_type, a_def, false
+          doc_method.formatted_summary.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
+        end
       end
     end
 
@@ -159,33 +163,46 @@ describe Doc::Generator do
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.formatted_summary.should eq %(<p>Some Method</p>)
     end
+
+    it "should exclude whitespace before the summary line" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."]
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo"
+      a_def.doc = " \n\nSome Method\n\nMore Data"
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.formatted_summary.should eq %(<p>Some Method</p>)
+    end
   end
 
   describe "#formatted_doc" do
-    describe "with a Deprecated annotation, and no docs" do
-      it "should generate just the Deprecated tag" do
-        program = Program.new
-        generator = Doc::Generator.new program, ["."]
-        doc_type = Doc::Type.new generator, program
+    ANNOTATION_COLORS.each do |ann, color|
+      describe "with a #{ann} annotation, and no docs" do
+        it "should generate just the #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+          doc_type = Doc::Type.new generator, program
 
-        a_def = Def.new "foo"
-        a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
-        doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_doc.should eq %(<p><span class="flag red">DEPRECATED</span>  don't use me</p>\n\n)
+          a_def = Def.new "foo"
+          a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          doc_method = Doc::Method.new generator, doc_type, a_def, false
+          doc_method.formatted_doc.should eq %(<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
+        end
       end
-    end
 
-    describe "with a Deprecated annotation, and docs" do
-      it "should generate both the docs and Deprecated tag" do
-        program = Program.new
-        generator = Doc::Generator.new program, ["."]
-        doc_type = Doc::Type.new generator, program
+      describe "with a #{ann} annotation, and docs" do
+        it "should generate both the docs and #{ann} tag" do
+          program = Program.new
+          generator = Doc::Generator.new program, ["."]
+          doc_type = Doc::Type.new generator, program
 
-        a_def = Def.new "foo"
-        a_def.doc = "Some Method"
-        a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
-        doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p><span class=\"flag red\">DEPRECATED</span>  don't use me</p>\n\n)
+          a_def = Def.new "foo"
+          a_def.doc = "Some Method"
+          a_def.add_annotation(program.types[ann].as(Crystal::AnnotationType), Annotation.new(Crystal::Path.new(ann), ["lorem ipsum".string] of ASTNode))
+          doc_method = Doc::Method.new generator, doc_type, a_def, false
+          doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p><span class="flag #{color}">#{ann.upcase}</span>  lorem ipsum</p>)
+        end
       end
     end
 
@@ -220,7 +237,7 @@ describe Doc::Generator do
       a_def = Def.new "foo"
       a_def.doc = "Some Method\n\nMore Data"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p>More Data</p>)
+      doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p>More Data</p>)
     end
   end
 
@@ -229,7 +246,7 @@ describe Doc::Generator do
       program = Program.new
       generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
-      generator.is_crystal_repo = true
+      generator.project_info.name = "Crystal"
 
       pseudo_def = Def.new "__crystal_pseudo_typeof"
       pseudo_def.doc = "Foo"

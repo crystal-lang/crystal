@@ -1,7 +1,14 @@
-require "spec"
+require "../spec_helper"
 require "socket"
-require "../../support/errno"
+require "../../support/fibers"
+require "../../support/channel"
 require "../../support/tempfile"
+
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending UNIXServer
+  {% skip_file %}
+{% end %}
 
 describe UNIXServer do
   describe ".new" do
@@ -19,6 +26,7 @@ describe UNIXServer do
       with_tempfile("unix_server.sock") do |path|
         UNIXServer.open(path) do
           File.exists?(path).should be_true
+          File.info(path).type.socket?.should be_true
         end
 
         File.exists?(path).should be_false
@@ -39,7 +47,7 @@ describe UNIXServer do
         server = UNIXServer.new(path)
 
         begin
-          expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+          expect_raises(Socket::BindError) do
             UNIXServer.new(path)
           end
         ensure
@@ -53,7 +61,7 @@ describe UNIXServer do
         File.write(path, "")
         File.exists?(path).should be_true
 
-        expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+        expect_raises(Socket::BindError) do
           UNIXServer.new(path)
         end
 
@@ -78,12 +86,12 @@ describe UNIXServer do
     it "raises when server is closed" do
       with_tempfile("unix_server-closed.sock") do |path|
         server = UNIXServer.new(path)
-        ch = Channel(Symbol).new(1)
+        ch = Channel(SpecChannelStatus).new(1)
         exception = nil
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
-        spawn do
+        f = spawn do
           begin
             ch.send(:begin)
             server.accept
@@ -93,9 +101,13 @@ describe UNIXServer do
           ch.send(:end)
         end
 
-        ch.receive.should eq(:begin)
+        ch.receive.should eq SpecChannelStatus::Begin
+
+        # wait for the server to call accept
+        wait_until_blocked f
+
         server.close
-        ch.receive.should eq(:end)
+        ch.receive.should eq SpecChannelStatus::End
 
         exception.should be_a(IO::Error)
         exception.try(&.message).should eq("Closed stream")
@@ -119,23 +131,60 @@ describe UNIXServer do
     it "returns nil when server is closed" do
       with_tempfile("unix_server-accept2.sock") do |path|
         server = UNIXServer.new(path)
-        ch = Channel(Symbol).new(1)
-        ret = :initial
+        ch = Channel(SpecChannelStatus).new(1)
+        ret = "initial"
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
-        spawn do
+        f = spawn do
           ch.send :begin
           ret = server.accept?
           ch.send :end
         end
 
-        ch.receive.should eq(:begin)
+        ch.receive.should eq SpecChannelStatus::Begin
+
+        # wait for the server to call accept
+        wait_until_blocked f
+
         server.close
-        ch.receive.should eq(:end)
+        ch.receive.should eq SpecChannelStatus::End
 
         ret.should be_nil
       end
     end
+
+    {% unless flag?(:win32) %}
+      it "sets close on exec flag" do
+        with_tempfile("unix_socket-accept.sock") do |path|
+          UNIXServer.open(path) do |server|
+            UNIXSocket.open(path) do |client|
+              server.accept? do |sock|
+                sock.close_on_exec?.should be_true
+              end
+            end
+          end
+        end
+      end
+    {% end %}
   end
+
+  # Datagram socket type is not supported on Windows yet:
+  # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+  # https://github.com/microsoft/WSL/issues/5272
+  {% unless flag?(:win32) %}
+    describe "datagrams" do
+      it "can send and receive datagrams" do
+        with_tempfile("unix_dgram_server.sock") do |path|
+          UNIXServer.open(path, Socket::Type::DGRAM) do |s|
+            UNIXSocket.open(path, Socket::Type::DGRAM) do |c|
+              c.send("foobar")
+              msg, _addr = s.receive(512)
+              msg.should eq "foobar"
+            end
+          end
+        end
+      end
+    end
+  {% end %}
 end

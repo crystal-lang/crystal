@@ -24,7 +24,7 @@ class YAML::Nodes::Builder
 
   # Emits an alias to the given *anchor*.
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # nodes_builder = YAML::Nodes::Builder.new
@@ -48,7 +48,7 @@ class YAML::Nodes::Builder
   #
   # See [YAML Merge](https://yaml.org/type/merge.html).
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # nodes_builder = YAML::Nodes::Builder.new
@@ -85,7 +85,7 @@ class YAML::Nodes::Builder
 
   def sequence(anchor : String? = nil, tag : String? = nil,
                style : YAML::SequenceStyle = YAML::SequenceStyle::ANY,
-               reference = nil) : Nil
+               reference = nil, &) : Nil
     node = Sequence.new
     node.anchor = anchor
     node.tag = tag
@@ -102,7 +102,7 @@ class YAML::Nodes::Builder
 
   def mapping(anchor : String? = nil, tag : String? = nil,
               style : YAML::MappingStyle = YAML::MappingStyle::ANY,
-              reference = nil) : Nil
+              reference = nil, &) : Nil
     node = Mapping.new
     node.anchor = anchor
     node.tag = tag
@@ -125,10 +125,12 @@ class YAML::Nodes::Builder
       current << node
     when Mapping
       current << node
+    else
+      raise "Can't push into #{current.class}"
     end
   end
 
-  private def push_to_stack(node)
+  private def push_to_stack(node, &)
     push_node(node)
 
     old_current = @current

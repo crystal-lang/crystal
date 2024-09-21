@@ -20,7 +20,7 @@ class CSV::Parser
   end
 
   # Yields each of the remaining rows as an `Array(String)`.
-  def each_row : Nil
+  def each_row(&) : Nil
     while row = next_row
       yield row
     end
@@ -51,6 +51,11 @@ class CSV::Parser
     end
 
     next_row_internal(token, array)
+  end
+
+  # Rewinds this parser to the beginning.
+  def rewind : Nil
+    @lexer.rewind
   end
 
   private def next_row_internal(token, row)

@@ -45,7 +45,7 @@
 struct Struct
   # Returns `true` if this struct is equal to *other*.
   #
-  # Both structs's instance vars are compared to each other. Thus, two
+  # Both structs' instance vars are compared to each other. Thus, two
   # structs are considered equal if each of their instance variables are
   # equal. Subclasses should override this method to provide specific
   # equality semantics.
@@ -69,9 +69,9 @@ struct Struct
       {% for ivar in @type.instance_vars %}
         return false unless @{{ivar.id}} == other.@{{ivar.id}}
       {% end %}
-      return true
+      true
     else
-      return false
+      false
     end
   end
 

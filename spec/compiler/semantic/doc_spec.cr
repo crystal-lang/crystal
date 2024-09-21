@@ -62,35 +62,117 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for const when using ditto" do
-    result = semantic %(
-      # A number
-      ONE = 1
+  describe ":ditto:" do
+    it "stores doc for const" do
+      result = semantic %(
+        # A number
+        ONE = 1
 
-      # :ditto:
-      TWO = 2
-    ), wants_doc: true
-    program = result.program
-    program.types["ONE"].doc.should eq "A number"
-    program.types["TWO"].doc.should eq "A number"
-  end
+        # :ditto:
+        TWO = 2
+      ), wants_doc: true
+      program = result.program
+      program.types["ONE"].doc.should eq "A number"
+      program.types["TWO"].doc.should eq "A number"
+    end
 
-  it "stores doc for def when using ditto" do
-    result = semantic %(
-      class Foo
+    it "stores doc for def" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          def bar2
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar2").first
+      bar.doc.should eq("Hello")
+    end
+
+    it "stores doc for macro" do
+      result = semantic %(
         # Hello
-        def bar
+        macro bar
         end
 
-        # ditto
-        def bar2
+        # :ditto:
+        macro bar2
         end
-      end
-    ), wants_doc: true
-    program = result.program
-    foo = program.types["Foo"]
-    bar = foo.lookup_defs("bar2").first
-    bar.doc.should eq("Hello")
+      ), wants_doc: true
+      program = result.program
+      bar2 = program.lookup_macros("bar2").as(Array(Macro)).first
+      bar2.doc.should eq("Hello")
+    end
+
+    it "amend previous doc" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          #
+          # World
+          def bar2
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar2").first
+      bar.doc.should eq("Hello\n\nWorld")
+    end
+
+    it "amend previous doc (without empty line)" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          # World
+          def bar2
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar2").first
+      bar.doc.should eq("Hello\n\nWorld")
+    end
+
+    it ":ditto: references last non-ditto doc" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          #
+          # World
+          def bar2
+          end
+
+          # :ditto:
+          #
+          # Crystal
+          def bar3
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar3").first
+      bar.doc.should eq("Hello\n\nCrystal")
+    end
   end
 
   it "stores doc for def with visibility" do
@@ -107,7 +189,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it "stores doc for def with annotation" do
     result = semantic %(
       class Foo
         # Hello
@@ -122,7 +204,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it "stores doc for def with annotation" do
     result = semantic %(
       # Hello
       @[AlwaysInline]
@@ -223,8 +305,9 @@ describe "Semantic: doc" do
       end
     ), wants_doc: true
     program = result.program
+    ann = program.types["Flags"].as(Crystal::AnnotationType)
     foo = program.types["Foo"]
-    foo.has_attribute?("Flags").should be_true
+    foo.annotation(ann).should_not be_nil
     foo.doc.should eq("Hello")
     foo.locations.not_nil!.size.should eq(1)
   end
@@ -268,6 +351,24 @@ describe "Semantic: doc" do
     a = foo.types["A"]
     a.doc.should eq("Hello")
     a.locations.not_nil!.size.should eq(1)
+  end
+
+  it "stores location for implicit flag enum members" do
+    result = semantic %(
+      @[Flags]
+      enum Foo
+        A = 1
+        B = 2
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+
+    a_loc = foo.types["All"].locations.should_not be_nil
+    a_loc.should_not be_empty
+
+    b_loc = foo.types["None"].locations.should_not be_nil
+    b_loc.should_not be_empty
   end
 
   it "stores doc for constant" do
@@ -329,9 +430,24 @@ describe "Semantic: doc" do
 
       # Hello
       foo
-    ), wants_doc: true, inject_primitives: false
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
+    foo.doc.should eq("Hello")
+  end
+
+  it "stores doc for macro defined in macro call" do
+    result = semantic <<-CRYSTAL, wants_doc: true
+      macro def_foo
+        macro foo
+        end
+      end
+
+      # Hello
+      def_foo
+      CRYSTAL
+    program = result.program
+    foo = program.macros.not_nil!["foo"].first
     foo.doc.should eq("Hello")
   end
 
@@ -398,5 +514,165 @@ describe "Semantic: doc" do
     program = result.program
     type = program.types["MyClass1"]
     type.doc.should eq("Some description")
+  end
+
+  it "attaches doc to annotation in macro expansion (#9628)" do
+    result = semantic %(
+      macro ann
+        annotation MyAnnotation
+        end
+      end
+
+      # Some description
+      ann
+    ), wants_doc: true
+    program = result.program
+    type = program.types["MyAnnotation"]
+    type.doc.should eq("Some description")
+  end
+
+  context "doc before annotation" do
+    it "attached to struct/class" do
+      result = semantic %(
+        # Some description
+        @[Packed]
+        struct Foo
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to module" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        module Foo
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to enum" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        enum Foo
+          One
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to constant" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        Foo = 1
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to alias" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        alias Foo = Int32
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to def" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        def foo
+        end
+      ), wants_doc: true
+      program = result.program
+      a_def = program.lookup_defs("foo").first
+      a_def.doc.should eq("Some description")
+    end
+
+    it "attached to macro" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        macro foo
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.lookup_macros("foo").as(Array(Macro)).first
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to macro call" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        macro gen_type
+          class Foo; end
+        end
+
+        # Some description
+        @[Ann]
+        gen_type
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to macro call that produces multiple types" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        class Foo
+          macro getter(decl)
+            @{{decl.var.id}} : {{decl.type.id}}
+
+            def {{decl.var.id}} : {{decl.type.id}}
+              @{{decl.var.id}}
+            end
+          end
+
+          # Some description
+          @[Ann]
+          getter name : String?
+        end
+      ), wants_doc: true
+      program = result.program
+      a_def = program.types["Foo"].lookup_defs("name").first
+      a_def.doc.should eq("Some description")
+    end
   end
 end

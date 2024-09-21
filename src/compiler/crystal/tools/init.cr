@@ -2,12 +2,11 @@
 
 require "ecr/macros"
 require "option_parser"
+require "./git"
 
 module Crystal
   module Init
-    WHICH_GIT_COMMAND = "which git >/dev/null"
-
-    class Error < ::Exception
+    class Error < Crystal::Error
       def self.new(message, opts : OptionParser)
         new("#{message}\n#{opts}\n")
       end
@@ -22,21 +21,19 @@ module Crystal
     end
 
     def self.run(args)
-      begin
-        config = parse_args(args)
-        InitProject.new(config).run
-      rescue ex : Init::FilesConflictError
-        STDERR.puts "Cannot initialize Crystal project, the following files would be overwritten:"
-        ex.conflicting_files.each do |path|
-          STDERR.puts "   #{"file".colorize(:red)} #{path} #{"already exist".colorize(:red)}"
-        end
-        STDERR.puts "You can use --force to overwrite those files,"
-        STDERR.puts "or --skip-existing to skip existing files and generate the others."
-        exit 1
-      rescue ex : Init::Error
-        STDERR.puts "Cannot initialize Crystal project: #{ex}"
-        exit 1
+      config = parse_args(args)
+      InitProject.new(config).run
+    rescue ex : Init::FilesConflictError
+      STDERR.puts "Cannot initialize Crystal project, the following files would be overwritten:"
+      ex.conflicting_files.each do |path|
+        STDERR.puts "   #{"file".colorize(:red)} #{path} #{"already exist".colorize(:red)}"
       end
+      STDERR.puts "You can use --force to overwrite those files,"
+      STDERR.puts "or --skip-existing to skip existing files and generate the others."
+      exit 1
+    rescue ex : Init::Error
+      STDERR.puts "Cannot initialize Crystal project: #{ex}"
+      exit 1
     end
 
     def self.parse_args(args)
@@ -44,16 +41,17 @@ module Crystal
 
       OptionParser.parse(args) do |opts|
         opts.banner = <<-USAGE
-          Usage: crystal init TYPE NAME [DIR]
+          Usage: crystal init TYPE (DIR | NAME DIR)
+
+          Initializes a project folder as a git repository and default folder
+          structure for Crystal projects.
 
           TYPE is one of:
-              lib                      creates library skeleton
-              app                      creates application skeleton
+              lib                      Creates a library skeleton
+              app                      Creates an application skeleton
 
-          NAME - name of project to be generated,
-                 eg: example
-          DIR  - directory where project will be generated,
-                 default: NAME, eg: ./custom/path/example
+          DIR  - directory where project will be generated
+          NAME - name of project to be generated, default: basename of DIR
 
           USAGE
 
@@ -72,14 +70,24 @@ module Crystal
 
         opts.unknown_args do |args, after_dash|
           config.skeleton_type = fetch_skeleton_type(opts, args)
-          config.name = fetch_name(opts, args)
-          config.dir = fetch_directory(args, config.name)
+          dir = fetch_required_parameter(opts, args, "DIR")
+          if args.empty?
+            # crystal init TYPE DIR
+            config.dir = dir
+            config.name = config.expanded_dir.basename
+          else
+            # crystal init TYPE NAME DIR
+            config.name = dir
+            config.dir = args.shift
+          end
         end
       end
 
       if config.force && config.skip_existing
         raise Error.new "Cannot use --force and --skip-existing together"
       end
+
+      validate_name(config.name)
 
       config.author = fetch_author
       config.email = fetch_email
@@ -88,46 +96,20 @@ module Crystal
     end
 
     def self.fetch_author
-      if system(WHICH_GIT_COMMAND)
-        user_name = `git config --get user.name`.strip
-        user_name = nil if user_name.empty?
-      end
-      user_name || "your-name-here"
+      Crystal::Git.git_config("user.name") || "your-name-here"
     end
 
     def self.fetch_email
-      if system(WHICH_GIT_COMMAND)
-        user_email = `git config --get user.email`.strip
-        user_email = nil if user_email.empty?
-      end
-      user_email || "your-email-here"
+      Crystal::Git.git_config("user.email") || "your-email-here"
     end
 
     def self.fetch_github_name
-      if system(WHICH_GIT_COMMAND)
-        github_user = `git config --get github.user`.strip
-        github_user = nil if github_user.empty?
-      end
-      github_user || "your-github-user"
-    end
-
-    def self.fetch_name(opts, args)
-      fetch_required_parameter(opts, args, "NAME")
-    end
-
-    def self.fetch_directory(args, project_name)
-      directory = args.empty? ? project_name : args.shift
-
-      if File.file?(directory)
-        raise Error.new "#{directory.inspect} is a file"
-      end
-
-      directory
+      Crystal::Git.git_config("github.user") || "your-github-user"
     end
 
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
-      unless {"lib", "app"}.includes?(skeleton_type)
+      unless skeleton_type.in?("lib", "app")
         raise Error.new "Invalid TYPE value: #{skeleton_type}", opts
       end
       skeleton_type
@@ -138,6 +120,21 @@ module Crystal
         raise Error.new "Argument #{name} is missing", opts
       end
       args.shift
+    end
+
+    def self.validate_name(name)
+      case
+      when name.blank?                       then raise Error.new("NAME must not be empty")
+      when name.size > 50                    then raise Error.new("NAME must not be longer than 50 characters")
+      when name.each_char.any?(&.uppercase?) then raise Error.new("NAME should be all lower cased")
+      when !name[0].ascii_letter?            then raise Error.new("NAME must start with a letter")
+      when name.index("--")                  then raise Error.new("NAME must not have consecutive dashes")
+      when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
+      when !name.each_char.all? { |c| c.alphanumeric? || c.in?('-', '_') }
+        raise Error.new("NAME must only contain alphanumerical characters, underscores or dashes")
+      else
+        # name is valid
+      end
     end
 
     class Config
@@ -163,10 +160,15 @@ module Crystal
         @skip_existing = false
       )
       end
+
+      getter expanded_dir : ::Path { ::Path.new(dir).expand(home: true) }
+
+      getter github_repo : String { "#{github_name}/#{expanded_dir.basename}" }
     end
 
     abstract class View
       getter config : Config
+      getter full_path : ::Path
 
       @@views = [] of View.class
 
@@ -179,12 +181,17 @@ module Crystal
       end
 
       def initialize(@config)
+        @full_path = config.expanded_dir.join(path)
+      end
+
+      def overwriting?
+        File.exists?(full_path)
       end
 
       def render
-        overwriting = File.exists?(full_path)
+        overwriting = overwriting?
 
-        Dir.mkdir_p(File.dirname(full_path))
+        Dir.mkdir_p(full_path.dirname)
         File.write(full_path, to_s)
         puts log_message(overwriting) unless config.silent
       end
@@ -198,68 +205,75 @@ module Crystal
       end
 
       def module_name
-        config.name.split('-').map(&.camelcase).join("::")
+        View.module_name(config.name)
       end
 
-      abstract def full_path
+      def self.module_name(name)
+        name
+          .gsub(/[-_]([^a-z])/i, "\\1")
+          .split('-')
+          .compact_map do |name|
+            name.camelcase if name[0]?.try(&.ascii_letter?)
+          end
+          .join("::")
+      end
+
+      abstract def path
     end
 
     class InitProject
       getter config : Config
-      @views : Array(View)?
 
       def initialize(@config : Config)
       end
 
-      def overwrite_checks
-        overwriting_files = views.compact_map do |view|
-          path = view.full_path
-          File.exists?(path) ? path : nil
+      def overwrite_checks(views)
+        existing_views, new_views = views.partition(&.overwriting?)
+
+        if existing_views.any? && !config.skip_existing
+          raise FilesConflictError.new existing_views.map(&.path)
         end
 
-        if overwriting_files.any?
-          if config.skip_existing
-            views.reject! { |view| File.exists?(view.full_path) }
-          else
-            raise FilesConflictError.new overwriting_files
-          end
-        end
+        new_views
       end
 
       def run
-        overwrite_checks unless config.force
+        if (info = File.info?(config.expanded_dir)) && !info.directory?
+          raise Error.new "#{config.dir.inspect} is a #{info.type.to_s.downcase}"
+        end
+
+        views = self.views
+
+        unless config.force
+          views = overwrite_checks(views)
+        end
 
         views.each &.render
       end
 
-      def views
-        @views ||= View.views.map(&.new(config))
+      private def views
+        View.views.map(&.new(config))
       end
     end
 
     class GitInitView < View
       def render
-        return unless system(WHICH_GIT_COMMAND)
-        return command if config.silent
-        puts command
+        Crystal::Git.git_command(["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT)
       end
 
-      def full_path
-        "#{config.dir}/.git"
-      end
-
-      private def command
-        `git init #{config.dir}`
+      def path
+        ".git"
       end
     end
 
     TEMPLATE_DIR = "#{__DIR__}/init/template"
 
-    macro template(name, template_path, full_path)
+    macro template(name, template_path, destination_path)
       class {{name.id}} < View
-        ECR.def_to_s "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
-        def full_path
-          "#{config.dir}/#{{{full_path}}}"
+        ECR.def_to_s {{"#{TEMPLATE_DIR.id}/#{template_path.id}"}}
+
+        def path
+          {{destination_path}}
         end
       end
 
@@ -270,7 +284,6 @@ module Crystal
     template EditorconfigView, "editorconfig.ecr", ".editorconfig"
     template LicenseView, "license.ecr", "LICENSE"
     template ReadmeView, "readme.md.ecr", "README.md"
-    template TravisView, "travis.yml.ecr", ".travis.yml"
     template ShardView, "shard.yml.ecr", "shard.yml"
 
     template SrcExampleView, "example.cr.ecr", "src/#{config.name}.cr"

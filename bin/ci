@@ -46,12 +46,16 @@ on_os() {
   os="$1"
   shift
 
-  verify_environment
+  if [ -z "$CI_NIX_SHELL" ]; then
+    verify_environment
 
-  if [ "$TRAVIS_OS_NAME" = "$os" ]; then
-    echo "${@}"
-    eval "${@}"
-    return $?
+    if [ "$TRAVIS_OS_NAME" = "$os" ]; then
+      echo "${@}"
+      eval "${@}"
+      return $?
+    else
+      return 0
+    fi
   else
     return 0
   fi
@@ -65,14 +69,36 @@ on_osx() {
   fail_on_error on_os "osx" "${@}"
 }
 
+on_nix_shell_eval() {
+  if [ -n "$CI_NIX_SHELL" ]; then
+    echo "${@}"
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
+on_nix_shell() {
+  fail_on_error on_nix_shell_eval "${@}"
+}
+
+on_github() {
+  if [ "$GITHUB_ACTIONS" = "true" ]; then
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
 prepare_system() {
   on_linux 'echo '"'"'{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}'"'"' | sudo tee /etc/docker/daemon.json'
   on_linux sudo service docker restart
-
-  on_osx brew update
 }
 
 build() {
+  with_build_env 'bin/crystal scripts/print_regex_config.cr'
   with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
@@ -90,29 +116,49 @@ build() {
         i=$((i + 1))
       done
 
+      with_build_env 'make primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
       with_build_env 'make docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml'
+      with_build_env 'make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
       ;;
   esac
 
-  with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
+  with_build_env 'make samples'
+  with_build_env 'CRYSTAL_OPTS=--debug make samples'
 }
 
 format() {
-  with_build_env 'make clean crystal threads=1'
-  with_build_env './bin/crystal tool format --check samples spec src'
+  with_build_env 'make clean crystal format threads=1 check=1'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.32.1/crystal-0.32.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.32.1-1 crystal;popd'
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.13.3/crystal-1.13.3-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.13.3-1 crystal;popd'
 
-  on_osx brew install llvm@9 gmp libevent pcre openssl pkg-config
-  on_osx brew link --force llvm@9
+  # These commands may take a few minutes to run due to the large size of the repositories.
+  # This restriction has been made on GitHub's request because updating shallow
+  # clones is an extremely expensive operation due to the tree layout and
+  # traffic of Homebrew/homebrew-core and Homebrew/homebrew-cask. We don't do
+  # this for you automatically to avoid repeatedly performing an expensive
+  # unshallow operation in CI systems (which should instead be fixed to not use
+  # shallow clones). Sorry for the inconvenience!
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
+
+  on_osx brew update --preinstall
+  on_osx brew bundle --no-lock
+
+  # Install a recent bash version for nix-shell.
+  # macos ships with an ancient one.
+  if [ `uname` = "Darwin" ]; then
+    on_nix_shell "brew install bash"
+  fi
+  # initialize nix environment
+  on_nix_shell nix-shell
+
   # Note: brew link --force might show:
   #   Warning: Refusing to link macOS-provided software: llvm
   #
@@ -136,17 +182,21 @@ verify_version() {
 
 with_build_env() {
   command="$1"
+  on_github "echo '::group::$1'"
 
   # Ensure non GMT timezone
   export TZ="America/New_York"
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.32.1}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:1.13.3}"
 
   case $ARCH in
     x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
+      ;;
+    x86_64-musl)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
       ;;
     i386)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
@@ -161,6 +211,8 @@ with_build_env() {
     -v /etc/group:/etc/group \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
+    -e SPEC_SPLIT_DOTS \
+    -e USE_PCRE1 \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
@@ -170,6 +222,9 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
+  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
+
+  on_github echo "::endgroup::"
 }
 
 usage() {

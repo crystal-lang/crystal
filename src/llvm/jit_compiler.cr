@@ -9,10 +9,18 @@ class LLVM::JITCompiler
       raise LLVM.string_and_dispose(error)
     end
 
+    # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
+    # or we fixed generating values for 0 sized types.
+    # When removing this, also remove it from the ABI specs and Crystal::Codegen::Target.
+    # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270
+    # for background info
+    target_machine = LibLLVM.get_execution_engine_target_machine(@unwrap)
+    {{ LibLLVM::IS_LT_180 ? LibLLVMExt : LibLLVM }}.set_target_machine_global_isel(target_machine, 0)
+
     @finalized = false
   end
 
-  def self.new(mod)
+  def self.new(mod, &)
     jit = new(mod)
     yield jit ensure jit.dispose
   end
@@ -29,6 +37,10 @@ class LLVM::JITCompiler
 
   def get_pointer_to_global(value)
     LibLLVM.get_pointer_to_global(self, value)
+  end
+
+  def function_address(name : String) : Void*
+    Pointer(Void).new(LibLLVM.get_function_address(self, name.check_no_null_byte))
   end
 
   def to_unsafe

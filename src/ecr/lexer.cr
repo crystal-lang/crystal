@@ -1,7 +1,14 @@
 # :nodoc:
 class ECR::Lexer
   class Token
-    property type : Symbol
+    enum Type
+      String
+      Output
+      Control
+      EOF
+    end
+
+    property type : Type
     property value : String
     property line_number : Int32
     property column_number : Int32
@@ -25,7 +32,7 @@ class ECR::Lexer
     @column_number = 1
   end
 
-  def next_token
+  def next_token : Token
     copy_location_info_to_token
 
     case current_char
@@ -37,12 +44,8 @@ class ECR::Lexer
         next_char
         next_char
 
-        if current_char == '-'
-          @token.suppress_leading = true
-          next_char
-        else
-          @token.suppress_leading = false
-        end
+        suppress_leading = current_char == '-'
+        next_char if suppress_leading
 
         case current_char
         when '='
@@ -57,8 +60,10 @@ class ECR::Lexer
           copy_location_info_to_token
         end
 
-        return consume_control(is_output, is_escape)
+        return consume_control(is_output, is_escape, suppress_leading)
       end
+    else
+      # consume string
     end
 
     consume_string
@@ -77,16 +82,18 @@ class ECR::Lexer
         if peek_next_char == '%'
           break
         end
+      else
+        # keep going
       end
       next_char
     end
 
-    @token.type = :STRING
+    @token.type = :string
     @token.value = string_range(start_pos)
     @token
   end
 
-  private def consume_control(is_output, is_escape)
+  private def consume_control(is_output, is_escape, suppress_leading)
     start_pos = current_pos
     while true
       case current_char
@@ -115,8 +122,7 @@ class ECR::Lexer
           @column_number = column_number
 
           if is_end
-            @token.suppress_trailing = true
-            setup_control_token(start_pos, is_escape)
+            setup_control_token(start_pos, is_escape, suppress_leading, true)
             raise "Expecting '>' after '-%'" if current_char != '>'
             next_char
             break
@@ -124,24 +130,37 @@ class ECR::Lexer
         end
       when '%'
         if peek_next_char == '>'
-          @token.suppress_trailing = false
-          setup_control_token(start_pos, is_escape)
+          setup_control_token(start_pos, is_escape, suppress_leading, false)
           break
         end
+      else
+        # keep going
       end
       next_char
     end
 
-    @token.type = is_escape ? :STRING : (is_output ? :OUTPUT : :CONTROL)
+    if is_escape
+      @token.type = :string
+    elsif is_output
+      @token.type = :output
+    else
+      @token.type = :control
+    end
     @token
   end
 
-  private def setup_control_token(start_pos, is_escape)
-    @token.value = if is_escape
-                     "<%#{string_range(start_pos, current_pos + 2)}"
-                   else
-                     string_range(start_pos)
-                   end
+  private def setup_control_token(start_pos, is_escape, suppress_leading, suppress_trailing)
+    @token.suppress_leading = !is_escape && suppress_leading
+    @token.suppress_trailing = !is_escape && suppress_trailing
+    @token.value =
+      if is_escape
+        head = suppress_leading ? "<%-" : "<%"
+        tail = string_range(start_pos, current_pos + (suppress_trailing ? 3 : 2))
+        head + tail
+      else
+        string_range(start_pos)
+      end
+
     next_char
     next_char
   end

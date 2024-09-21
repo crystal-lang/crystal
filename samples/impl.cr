@@ -28,30 +28,29 @@ puts baz(Foo.new)
 
 Foo.new.lorem
 
-# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:16:8
+# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:17:8
 #
 # 2 implementations found
-# .../samples/impl.cr:3:3
-# .../samples/impl.cr:9:3
+# .../samples/impl.cr:4:3
+# .../samples/impl.cr:10:3
 
-# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:21:5
+# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:22:5
 #
 # 1 implementation found
-# .../samples/impl.cr:3:3
+# .../samples/impl.cr:4:3
 
-# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:24:7
+# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:25:7
 #
 # 1 implementation found
-# .../samples/impl.cr:14:1
+# .../samples/impl.cr:15:1
 
-# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:26:3
+# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:27:3
 #
 # 1 implementation found
-# .../src/kernel.cr:67:1
+# .../share/crystal/src/kernel.cr:369:1
 
-# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:28:9
+# ./crystal tool implementations samples/impl.cr --cursor samples/impl.cr:29:9
 #
 # 1 implementation found
 # .../samples/impl.cr:2:3
-#  ~> macro property: .../src/object.cr:364:5
-#  ~> macro getter: .../src/object.cr:207:7
+#  ~> macro property: expanded macro: macro_139913700784656:636:13

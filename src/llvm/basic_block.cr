@@ -19,7 +19,7 @@ struct LLVM::BasicBlock
   end
 
   def name
-    block_name = LibLLVMExt.basic_block_name(self)
-    block_name ? LLVM.string_and_dispose(block_name) : nil
+    block_name = LibLLVM.get_basic_block_name(self)
+    block_name ? String.new(block_name) : nil
   end
 end

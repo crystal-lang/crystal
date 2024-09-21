@@ -1,7 +1,7 @@
-CrystalDoc.searchIndex = (CrystalDoc.searchIndex || false);
-CrystalDoc.MAX_RESULTS_DISPLAY = 140;
+CrystalDocs.searchIndex = (CrystalDocs.searchIndex || false);
+CrystalDocs.MAX_RESULTS_DISPLAY = 140;
 
-CrystalDoc.runQuery = function(query) {
+CrystalDocs.runQuery = function(query) {
   function searchType(type, query, results) {
     var matches = [];
     var matchedFields = [];
@@ -29,7 +29,7 @@ CrystalDoc.runQuery = function(query) {
     }
     if (matches.length > 0) {
       results.push({
-        id: type.id,
+        id: type.html_id,
         result_type: "type",
         kind: type.kind,
         name: name,
@@ -41,25 +41,36 @@ CrystalDoc.runQuery = function(query) {
       });
     }
 
-    type.instance_methods.forEach(function(method) {
-      searchMethod(method, type, "instance_method", query, results);
-    })
-    type.class_methods.forEach(function(method) {
-      searchMethod(method, type, "class_method", query, results);
-    })
-    type.constructors.forEach(function(constructor) {
-      searchMethod(constructor, type, "constructor", query, results);
-    })
-    type.macros.forEach(function(macro) {
-      searchMethod(macro, type, "macro", query, results);
-    })
-    type.constants.forEach(function(constant){
-      searchConstant(constant, type, query, results);
-    });
-
-    type.types.forEach(function(subtype){
-      searchType(subtype, query, results);
-    });
+    if (type.instance_methods) {
+      type.instance_methods.forEach(function(method) {
+        searchMethod(method, type, "instance_method", query, results);
+      })
+    }
+    if (type.class_methods) {
+      type.class_methods.forEach(function(method) {
+        searchMethod(method, type, "class_method", query, results);
+      })
+    }
+    if (type.constructors) {
+      type.constructors.forEach(function(constructor) {
+        searchMethod(constructor, type, "constructor", query, results);
+      })
+    }
+    if (type.macros) {
+      type.macros.forEach(function(macro) {
+        searchMethod(macro, type, "macro", query, results);
+      })
+    }
+    if (type.constants) {
+      type.constants.forEach(function(constant){
+        searchConstant(constant, type, query, results);
+      });
+    }
+    if (type.types) {
+      type.types.forEach(function(subtype){
+        searchType(subtype, query, results);
+      });
+    }
   };
 
   function searchMethod(method, type, kind, query, results) {
@@ -71,13 +82,15 @@ CrystalDoc.runQuery = function(query) {
       matchedFields.push("name");
     }
 
-    method.args.forEach(function(arg){
-      var argMatches = query.matches(arg.external_name);
-      if (argMatches) {
-        matches = matches.concat(argMatches);
-        matchedFields.push("args");
-      }
-    });
+    if (method.args) {
+      method.args.forEach(function(arg){
+        var argMatches = query.matches(arg.external_name);
+        if (argMatches) {
+          matches = matches.concat(argMatches);
+          matchedFields.push("args");
+        }
+      });
+    }
 
     var docMatches = query.matches(type.doc);
     if(docMatches){
@@ -92,14 +105,14 @@ CrystalDoc.runQuery = function(query) {
         matches = matches.concat(typeMatches);
       }
       results.push({
-        id: method.id,
+        id: method.html_id,
         type: type.full_name,
         result_type: kind,
         name: method.name,
         full_name: type.full_name + "#" + method.name,
         args_string: method.args_string,
         summary: method.summary,
-        href: type.path + "#" + method.id,
+        href: type.path + "#" + method.html_id,
         matched_fields: matchedFields,
         matched_terms: matches
       });
@@ -141,11 +154,11 @@ CrystalDoc.runQuery = function(query) {
   }
 
   var results = [];
-  searchType(CrystalDoc.searchIndex.program, query, results);
+  searchType(CrystalDocs.searchIndex.program, query, results);
   return results;
 };
 
-CrystalDoc.rankResults = function(results, query) {
+CrystalDocs.rankResults = function(results, query) {
   function uniqueArray(ar) {
     var j = {};
 
@@ -167,42 +180,42 @@ CrystalDoc.rankResults = function(results, query) {
     var bOnlyDocs = bHasDocs && b.matched_fields.length == 1;
 
     if (a.result_type == "type" && b.result_type != "type" && !aOnlyDocs) {
-      if(CrystalDoc.DEBUG) { console.log("a is type b not"); }
+      if(CrystalDocs.DEBUG) { console.log("a is type b not"); }
       return -1;
     } else if (b.result_type == "type" && a.result_type != "type" && !bOnlyDocs) {
-      if(CrystalDoc.DEBUG) { console.log("b is type, a not"); }
+      if(CrystalDocs.DEBUG) { console.log("b is type, a not"); }
       return 1;
     }
     if (a.matched_fields.includes("name")) {
       if (b.matched_fields.includes("name")) {
-        var a_name = (CrystalDoc.prefixForType(a.result_type) || "") + ((a.result_type == "type") ? a.full_name : a.name);
-        var b_name = (CrystalDoc.prefixForType(b.result_type) || "") + ((b.result_type == "type") ? b.full_name : b.name);
+        var a_name = (CrystalDocs.prefixForType(a.result_type) || "") + ((a.result_type == "type") ? a.full_name : a.name);
+        var b_name = (CrystalDocs.prefixForType(b.result_type) || "") + ((b.result_type == "type") ? b.full_name : b.name);
         a_name = a_name.toLowerCase();
         b_name = b_name.toLowerCase();
         for(var i = 0; i < query.normalizedTerms.length; i++) {
           var term = query.terms[i].replace(/^::?|::?$/, "");
           var a_orig_index = a_name.indexOf(term);
           var b_orig_index = b_name.indexOf(term);
-          if(CrystalDoc.DEBUG) { console.log("term: " + term + " a: " + a_name + " b: " + b_name); }
-          if(CrystalDoc.DEBUG) { console.log(a_orig_index, b_orig_index, a_orig_index - b_orig_index); }
+          if(CrystalDocs.DEBUG) { console.log("term: " + term + " a: " + a_name + " b: " + b_name); }
+          if(CrystalDocs.DEBUG) { console.log(a_orig_index, b_orig_index, a_orig_index - b_orig_index); }
           if (a_orig_index >= 0) {
             if (b_orig_index >= 0) {
-              if(CrystalDoc.DEBUG) { console.log("both have exact match", a_orig_index > b_orig_index ? -1 : 1); }
+              if(CrystalDocs.DEBUG) { console.log("both have exact match", a_orig_index > b_orig_index ? -1 : 1); }
               if(a_orig_index != b_orig_index) {
-                if(CrystalDoc.DEBUG) { console.log("both have exact match at different positions", a_orig_index > b_orig_index ? 1 : -1); }
+                if(CrystalDocs.DEBUG) { console.log("both have exact match at different positions", a_orig_index > b_orig_index ? 1 : -1); }
                 return a_orig_index > b_orig_index ? 1 : -1;
               }
             } else {
-              if(CrystalDoc.DEBUG) { console.log("a has exact match, b not"); }
+              if(CrystalDocs.DEBUG) { console.log("a has exact match, b not"); }
               return -1;
             }
           } else if (b_orig_index >= 0) {
-            if(CrystalDoc.DEBUG) { console.log("b has exact match, a not"); }
+            if(CrystalDocs.DEBUG) { console.log("b has exact match, a not"); }
             return 1;
           }
         }
       } else {
-        if(CrystalDoc.DEBUG) { console.log("a has match in name, b not"); }
+        if(CrystalDocs.DEBUG) { console.log("a has match in name, b not"); }
         return -1;
       }
     } else if (
@@ -213,19 +226,19 @@ CrystalDoc.rankResults = function(results, query) {
     }
 
     if (matchedTermsDiff != 0 || (aHasDocs != bHasDocs)) {
-      if(CrystalDoc.DEBUG) { console.log("matchedTermsDiff: " + matchedTermsDiff, aHasDocs, bHasDocs); }
+      if(CrystalDocs.DEBUG) { console.log("matchedTermsDiff: " + matchedTermsDiff, aHasDocs, bHasDocs); }
       return matchedTermsDiff;
     }
 
     var matchedFieldsDiff = b.matched_fields.length - a.matched_fields.length;
     if (matchedFieldsDiff != 0) {
-      if(CrystalDoc.DEBUG) { console.log("matched to different number of fields: " + matchedFieldsDiff); }
+      if(CrystalDocs.DEBUG) { console.log("matched to different number of fields: " + matchedFieldsDiff); }
       return matchedFieldsDiff > 0 ? 1 : -1;
     }
 
     var nameCompare = a.name.localeCompare(b.name);
     if(nameCompare != 0){
-      if(CrystalDoc.DEBUG) { console.log("nameCompare resulted in: " + a.name + "<=>" + b.name + ": " + nameCompare); }
+      if(CrystalDocs.DEBUG) { console.log("nameCompare resulted in: " + a.name + "<=>" + b.name + ": " + nameCompare); }
       return nameCompare > 0 ? 1 : -1;
     }
 
@@ -234,7 +247,7 @@ CrystalDoc.rankResults = function(results, query) {
         var term = query.terms[i];
         var aIndex = a.args_string.indexOf(term);
         var bIndex = b.args_string.indexOf(term);
-        if(CrystalDoc.DEBUG) { console.log("index of " + term + " in args_string: " + aIndex + " - " + bIndex); }
+        if(CrystalDocs.DEBUG) { console.log("index of " + term + " in args_string: " + aIndex + " - " + bIndex); }
         if(aIndex >= 0){
           if(bIndex >= 0){
             if(aIndex != bIndex){
@@ -263,7 +276,7 @@ CrystalDoc.rankResults = function(results, query) {
   return results;
 };
 
-CrystalDoc.prefixForType = function(type) {
+CrystalDocs.prefixForType = function(type) {
   switch (type) {
     case "instance_method":
       return "#";
@@ -278,14 +291,14 @@ CrystalDoc.prefixForType = function(type) {
   }
 };
 
-CrystalDoc.displaySearchResults = function(results, query) {
+CrystalDocs.displaySearchResults = function(results, query) {
   function sanitize(html){
     return html.replace(/<(?!\/?code)[^>]+>/g, "");
   }
 
   // limit results
-  if (results.length > CrystalDoc.MAX_RESULTS_DISPLAY) {
-    results = results.slice(0, CrystalDoc.MAX_RESULTS_DISPLAY);
+  if (results.length > CrystalDocs.MAX_RESULTS_DISPLAY) {
+    results = results.slice(0, CrystalDocs.MAX_RESULTS_DISPLAY);
   }
 
   var $frag = document.createDocumentFragment();
@@ -293,12 +306,12 @@ CrystalDoc.displaySearchResults = function(results, query) {
   $resultsElem.innerHTML = "<!--" + JSON.stringify(query) + "-->";
 
   results.forEach(function(result, i) {
-    var url = CrystalDoc.base_path + result.href;
+    var url = CrystalDocs.base_path + result.href;
     var type = false;
 
     var title = query.highlight(result.result_type == "type" ? result.full_name : result.name);
 
-    var prefix = CrystalDoc.prefixForType(result.result_type);
+    var prefix = CrystalDocs.prefixForType(result.result_type);
     if (prefix) {
       title = "<b>" + prefix + "</b>" + title;
     }
@@ -347,10 +360,10 @@ CrystalDoc.displaySearchResults = function(results, query) {
 
   $resultsElem.appendChild($frag);
 
-  CrystalDoc.toggleResultsList(true);
+  CrystalDocs.toggleResultsList(true);
 };
 
-CrystalDoc.toggleResultsList = function(visible) {
+CrystalDocs.toggleResultsList = function(visible) {
   if (visible) {
     document.querySelector(".types-list").classList.add("hidden");
     document.querySelector(".search-results").classList.remove("hidden");
@@ -360,20 +373,20 @@ CrystalDoc.toggleResultsList = function(visible) {
   }
 };
 
-CrystalDoc.Query = function(string) {
+CrystalDocs.Query = function(string) {
   this.original = string;
   this.terms = string.split(/\s+/).filter(function(word) {
-    return CrystalDoc.Query.stripModifiers(word).length > 0;
+    return CrystalDocs.Query.stripModifiers(word).length > 0;
   });
 
-  var normalized = this.terms.map(CrystalDoc.Query.normalizeTerm);
+  var normalized = this.terms.map(CrystalDocs.Query.normalizeTerm);
   this.normalizedTerms = normalized;
 
   function runMatcher(field, matcher) {
     if (!field) {
       return false;
     }
-    var normalizedValue = CrystalDoc.Query.normalizeTerm(field);
+    var normalizedValue = CrystalDocs.Query.normalizeTerm(field);
 
     var matches = [];
     normalized.forEach(function(term) {
@@ -431,7 +444,7 @@ CrystalDoc.Query = function(string) {
         methodName = term.substring(i+1);
 
         if(termType != "") {
-          if(CrystalDoc.Query.normalizeTerm(type.full_name).indexOf(termType) < 0){
+          if(CrystalDocs.Query.normalizeTerm(type.full_name).indexOf(termType) < 0){
             return false;
           }
         }
@@ -457,10 +470,10 @@ CrystalDoc.Query = function(string) {
     );
   };
 };
-CrystalDoc.Query.normalizeTerm = function(term) {
+CrystalDocs.Query.normalizeTerm = function(term) {
   return term.toLowerCase();
 };
-CrystalDoc.Query.stripModifiers = function(term) {
+CrystalDocs.Query.stripModifiers = function(term) {
   switch (term[0]) {
     case "#":
     case ".":
@@ -472,34 +485,34 @@ CrystalDoc.Query.stripModifiers = function(term) {
   }
 }
 
-CrystalDoc.search = function(string) {
-  if(!CrystalDoc.searchIndex) {
-    console.log("CrystalDoc search index not initialized, delaying search");
+CrystalDocs.search = function(string) {
+  if(!CrystalDocs.searchIndex) {
+    console.log("CrystalDocs search index not initialized, delaying search");
 
-    document.addEventListener("CrystalDoc:loaded", function listener(){
-      document.removeEventListener("CrystalDoc:loaded", listener);
-      CrystalDoc.search(string);
+    document.addEventListener("CrystalDocs:loaded", function listener(){
+      document.removeEventListener("CrystalDocs:loaded", listener);
+      CrystalDocs.search(string);
     });
     return;
   }
 
-  document.dispatchEvent(new Event("CrystalDoc:searchStarted"));
+  document.dispatchEvent(new Event("CrystalDocs:searchStarted"));
 
-  var query = new CrystalDoc.Query(string);
-  var results = CrystalDoc.runQuery(query);
-  results = CrystalDoc.rankResults(results, query);
-  CrystalDoc.displaySearchResults(results, query);
+  var query = new CrystalDocs.Query(string);
+  var results = CrystalDocs.runQuery(query);
+  results = CrystalDocs.rankResults(results, query);
+  CrystalDocs.displaySearchResults(results, query);
 
-  document.dispatchEvent(new Event("CrystalDoc:searchPerformed"));
+  document.dispatchEvent(new Event("CrystalDocs:searchPerformed"));
 };
 
-CrystalDoc.initializeIndex = function(data) {
-  CrystalDoc.searchIndex = data;
+CrystalDocs.initializeIndex = function(data) {
+  CrystalDocs.searchIndex = data;
 
-  document.dispatchEvent(new Event("CrystalDoc:loaded"));
+  document.dispatchEvent(new Event("CrystalDocs:loaded"));
 };
 
-CrystalDoc.loadIndex = function() {
+CrystalDocs.loadIndex = function() {
   function loadJSON(file, callback) {
     var xobj = new XMLHttpRequest();
     xobj.overrideMimeType("application/json");
@@ -519,7 +532,7 @@ CrystalDoc.loadIndex = function() {
   }
 
   function parseJSON(json) {
-    CrystalDoc.initializeIndex(JSON.parse(json));
+    CrystalDocs.initializeIndex(JSON.parse(json));
   }
 
   for(var i = 0; i < document.scripts.length; i++){
@@ -542,5 +555,5 @@ CrystalDoc.loadIndex = function() {
 
 // Callback for jsonp
 function crystal_doc_search_index_callback(data) {
-  CrystalDoc.initializeIndex(data);
+  CrystalDocs.initializeIndex(data);
 }

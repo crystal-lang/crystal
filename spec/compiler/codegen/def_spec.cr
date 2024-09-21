@@ -164,7 +164,7 @@ describe "Code gen: def" do
     ")
   end
 
-  it "codegens with and witout default arguments" do
+  it "codegens with and without default arguments" do
     run("
       def foo(x = 1)
         x &+ 1
@@ -174,7 +174,7 @@ describe "Code gen: def" do
       ").to_i.should eq(5)
   end
 
-  it "codegens with and witout many default arguments" do
+  it "codegens with and without many default arguments" do
     run("
       def foo(x = 1, y = 2, z = 3)
         x &+ y &+ z

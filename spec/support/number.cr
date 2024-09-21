@@ -1,23 +1,17 @@
+require "spec/helpers/iterate"
+
 # Helper methods to describe the behavior of numbers of different types
-{% if flag?(:darwin) %}
-  BUILTIN_NUMBER_TYPES =
-    [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128, Float32, Float64]
-  BUILTIN_INTEGER_TYPES =
-    [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128]
-  BUILTIN_INTEGER_TYPES_128 =
-    [Int128, UInt128]
-{% else %}
-  BUILTIN_NUMBER_TYPES =
-    [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]
-  BUILTIN_INTEGER_TYPES =
-    [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64]
-  BUILTIN_INTEGER_TYPES_128 =
-    [] of Int.class
-{% end %}
+BUILTIN_NUMBER_TYPES =
+  [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128, Float32, Float64]
+BUILTIN_INTEGER_TYPES =
+  [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128]
+BUILTIN_INT_CONVERSIONS = {
+  to_i: Int32, to_u: UInt32,
+  to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
+  to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
+}
 BUILTIN_NUMBER_TYPES_LTE_64 =
   [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]
-BUILTIN_INTEGER_TYPES_LTE_64 =
-  [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64]
 BUILTIN_FLOAT_TYPES =
   [Float32, Float64]
 
@@ -86,5 +80,17 @@ macro floor_division_returns_lhs_type(a_types, b_types)
 end
 
 # TODO test to_X conversions return types
-# TODO test zero? comparission
-# TODO test <=> comparission between types
+# TODO test zero? comparisons
+# TODO test <=> comparisons between types
+
+# Calls either `Float64.parse_hexfloat` or `Float32.parse_hexfloat`. The default
+# is `Float64` unless *str* ends with `_f32`, in which case that suffix is
+# stripped and `Float32` is chosen.
+macro hexfloat(str)
+  {% raise "`str` must be a StringLiteral, not #{str.class_name}" unless str.is_a?(StringLiteral) %}
+  {% if str.ends_with?("_f32") %}
+    ::Float32.parse_hexfloat({{ str[0...-4] }})
+  {% else %}
+    ::Float64.parse_hexfloat({{ str }})
+  {% end %}
+end

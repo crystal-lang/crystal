@@ -1,5 +1,36 @@
 require "spec"
+require "spec/helpers/iterate"
 require "iterator"
+
+struct StructIter
+  include Iterator(Int32)
+
+  def initialize(@a : Int32, @b : Int32); end
+
+  def next
+    if @a > @b
+      stop
+    else
+      cur = @a
+      @a += 1
+      cur
+    end
+  end
+end
+
+private class MockIterator
+  include Iterator(Int32)
+
+  def initialize
+    @x = 0
+    @y = Slice(Int32).new(5)
+  end
+
+  def next
+    return stop if @x >= 3
+    @x += 1
+  end
+end
 
 describe Iterator do
   describe "Iterator.of" do
@@ -28,12 +59,95 @@ describe Iterator do
     end
   end
 
+  describe "#accumulate" do
+    context "prefix sums" do
+      it "returns prefix sums" do
+        iter = (1..4).each.accumulate
+        iter.next.should eq(1)
+        iter.next.should eq(3)
+        iter.next.should eq(6)
+        iter.next.should eq(10)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator stops immediately" do
+        (1..0).each.accumulate.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    context "prefix sums, with init" do
+      it "returns prefix sums" do
+        iter = (1..4).each.accumulate(5)
+        iter.next.should eq(5)
+        iter.next.should eq(6)
+        iter.next.should eq(8)
+        iter.next.should eq(11)
+        iter.next.should eq(15)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "preserves initial type" do
+        iter = {'a', 'b', 'c'}.each.accumulate("def")
+        iter.next.should eq("def")
+        iter.next.should eq("defa")
+        iter.next.should eq("defab")
+        iter.next.should eq("defabc")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator returns only initial value" do
+        iter = (1..0).each.accumulate(7)
+        iter.next.should eq(7)
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    context "generic cumulative fold" do
+      it "accumulates values" do
+        iter = (4..7).each.accumulate { |x, y| x * 10 + y }
+        iter.next.should eq(4)
+        iter.next.should eq(45)
+        iter.next.should eq(456)
+        iter.next.should eq(4567)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator stops immediately" do
+        (1..0).each.accumulate { raise "" }.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    context "generic cumulative fold, with init" do
+      it "accumulates values" do
+        iter = (4..7).each.accumulate(8) { |x, y| x * 10 + y }
+        iter.next.should eq(8)
+        iter.next.should eq(84)
+        iter.next.should eq(845)
+        iter.next.should eq(8456)
+        iter.next.should eq(84567)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "preserves initial type" do
+        iter = {4, 3, 2}.each.accumulate("X") { |x, y| x * y }
+        iter.next.should eq("X")
+        iter.next.should eq("XXXX")
+        iter.next.should eq("XXXXXXXXXXXX")
+        iter.next.should eq("XXXXXXXXXXXXXXXXXXXXXXXX")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator returns only initial value" do
+        iter = (1..0).each.accumulate(7) { raise "" }
+        iter.next.should eq(7)
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+  end
+
   describe "compact_map" do
     it "applies the function and removes nil values" do
-      iter = (1..3).each.compact_map { |e| e.odd? ? e : nil }
-      iter.next.should eq(1)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
+      assert_iterates_iterator [1, 3], (1..3).each.compact_map { |e| e.odd? ? e : nil }
     end
 
     it "sums after compact_map to_a" do
@@ -49,6 +163,11 @@ describe Iterator do
       iter.next.should eq('a')
       iter.next.should eq('b')
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    # NOTE: This spec would only fail in release mode.
+    it "does not experience tuple upcase bug of #13411" do
+      [{true}].each.chain([{1}].each).first(3).to_a.should eq [{true}, {1}]
     end
 
     describe "chain indeterminate number of iterators" do
@@ -177,6 +296,10 @@ describe Iterator do
       iter.next.should eq({4, 5})
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "doesn't include stop in return type" do
+      (1..3).each.cons_pair.to_a.should eq([{1, 2}, {2, 3}])
+    end
   end
 
   describe "cycle" do
@@ -192,7 +315,7 @@ describe Iterator do
     it "cycles an empty array" do
       ary = [] of Int32
       values = ary.each.cycle.to_a
-      values.empty?.should be_true
+      values.should be_empty
     end
 
     it "cycles N times" do
@@ -266,7 +389,7 @@ describe Iterator do
   end
 
   describe "in_groups_of" do
-    it "creats groups of one" do
+    it "creates groups of one" do
       iter = (1..3).each.in_groups_of(1)
       iter.next.should eq([1])
       iter.next.should eq([2])
@@ -274,7 +397,7 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
-    it "creats a group of two" do
+    it "creates a group of two" do
       iter = (1..3).each.in_groups_of(2)
       iter.next.should eq([1, 2])
       iter.next.should eq([3, nil])
@@ -299,7 +422,7 @@ describe Iterator do
       iter.to_a.should eq [[1, 2], [3, 'z']]
     end
 
-    it "creats a group of two with reuse = true" do
+    it "creates a group of two with reuse = true" do
       iter = (1..3).each.in_groups_of(2, reuse: true)
 
       a = iter.next
@@ -423,6 +546,10 @@ describe Iterator do
       iter.next.should eq([7, 8])
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "doesnt conflict with `::Slice` type" do
+      assert_iterates_iterator [1, 2, 3], MockIterator.new.each
+    end
   end
 
   describe "step" do
@@ -545,38 +672,10 @@ describe Iterator do
     end
   end
 
-  describe "with_index" do
-    it "does with_index from range" do
-      iter = (1..3).each.with_index
-      iter.next.should eq({1, 0})
-      iter.next.should eq({2, 1})
-      iter.next.should eq({3, 2})
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does with_index with offset from range" do
-      iter = (1..3).each.with_index(10)
-      iter.next.should eq({1, 10})
-      iter.next.should eq({2, 11})
-      iter.next.should eq({3, 12})
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does with_index from range, with block" do
-      tuples = [] of {Int32, Int32}
-      (1..3).each.with_index do |value, index|
-        tuples << {value, index}
-      end
-      tuples.should eq([{1, 0}, {2, 1}, {3, 2}])
-    end
-
-    it "does with_index from range, with block with offset" do
-      tuples = [] of {Int32, Int32}
-      (1..3).each.with_index(10) do |value, index|
-        tuples << {value, index}
-      end
-      tuples.should eq([{1, 10}, {2, 11}, {3, 12}])
-    end
+  describe "#with_index" do
+    it_iterates "with default offset", [{1, 0}, {2, 1}, {3, 2}], (1..3).each.with_index, tuple: true
+    it_iterates "with explicit offset", [{1, 10}, {2, 11}, {3, 12}], (1..3).each.with_index(10), tuple: true
+    it_iterates "with non-Int32 offset", [{1, Int64::MIN}, {2, Int64::MIN + 1}, {3, Int64::MIN + 2}], (1..3).each.with_index(Int64::MIN), tuple: true
   end
 
   describe "with object" do
@@ -586,6 +685,15 @@ describe Iterator do
       iter.next.should eq({2, "a"})
       iter.next.should eq({3, "a"})
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with object, with block" do
+      tuples = [] of {Int32, String}
+      object = "a"
+      (1..3).each.with_object(object) do |value, obj|
+        tuples << {value, obj}
+      end.should be(object)
+      tuples.should eq([{1, object}, {2, object}, {3, object}])
     end
   end
 
@@ -597,6 +705,17 @@ describe Iterator do
       iter.next.should eq({1, 'a'})
       iter.next.should eq({2, 'b'})
       iter.next.should eq({3, 'c'})
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "takes multiple Iterators" do
+      r1 = (1..4).each
+      r2 = ('a'..'c').each
+      r3 = ("U".."Z").each
+      iter = r1.zip(r2, r3)
+      iter.next.should eq({1, 'a', "U"})
+      iter.next.should eq({2, 'b', "V"})
+      iter.next.should eq({3, 'c', "W"})
       iter.next.should be_a(Iterator::Stop)
     end
   end
@@ -614,13 +733,13 @@ describe Iterator do
 
   describe "flatten" do
     it "flattens an iterator of mixed-type iterators" do
-      iter = [(1..2).each, ('a'..'b').each, {:c => 3}.each].each.flatten
+      iter = [(1..2).each, ('a'..'b').each, {"c" => 3}.each].each.flatten
 
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq('a')
       iter.next.should eq('b')
-      iter.next.should eq({:c, 3})
+      iter.next.should eq({"c", 3})
 
       iter.next.should be_a(Iterator::Stop)
     end
@@ -679,6 +798,18 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    it "flattens nested struct iterators with internal state being value types" do
+      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten
+
+      iter.next.should eq(11)
+      iter.next.should eq(12)
+      iter.next.should eq(13)
+      iter.next.should eq(21)
+      iter.next.should eq(22)
+      iter.next.should eq(23)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
     it "return iterator itself by rewind" do
       iter = [1, [2, 3], 4].each.flatten
 
@@ -696,6 +827,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned items" do
@@ -704,6 +836,7 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned iterators" do
@@ -715,6 +848,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned values" do
@@ -734,6 +868,21 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "flattens returned values of mixed element types in #to_a" do
+      iter = [1, 'a', ""].each.flat_map do |x|
+        case x
+        when Int32
+          x
+        when Char
+          [x, x]
+        else
+          [x, x].each
+        end
+      end
+      iter.to_a.should eq([1, 'a', 'a', "", ""])
     end
   end
 

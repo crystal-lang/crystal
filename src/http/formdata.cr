@@ -4,6 +4,8 @@ require "mime/multipart"
 # Contains utilities for parsing `multipart/form-data` messages, which are
 # commonly used for encoding HTML form data.
 #
+# NOTE: To use `FormData`, you must explicitly import it with `require "http"`
+#
 # ### Examples
 #
 # Commonly, you'll want to parse a from response from a HTTP request, and
@@ -77,7 +79,7 @@ require "mime/multipart"
 # end
 # ```
 module HTTP::FormData
-  # Parses a multipart/form-data message, yielding a `FormData::Parser`.
+  # Parses a multipart/form-data message, yielding a `FormData::Part`.
   #
   # ```
   # require "http"
@@ -90,14 +92,14 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Parser`
-  def self.parse(io, boundary)
+  def self.parse(io, boundary, &)
     parser = Parser.new(io, boundary)
     while parser.has_next?
       parser.next { |part| yield part }
     end
   end
 
-  # Parses a multipart/form-data message, yielding a `FormData::Parser`.
+  # Parses a multipart/form-data message, yielding a `FormData::Part`.
   #
   # ```
   # require "http"
@@ -113,7 +115,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Parser`
-  def self.parse(request : HTTP::Request)
+  def self.parse(request : HTTP::Request, &)
     body = request.body
     raise Error.new "Cannot extract form-data from HTTP request: body is empty" unless body
 
@@ -137,12 +139,10 @@ module HTTP::FormData
     name = nil
 
     parts = content_disposition.split(';')
-    type = parts[0]
+    type = parts.shift?
     raise Error.new("Invalid Content-Disposition: not form-data") unless type == "form-data"
-    (1...parts.size).each do |i|
-      part = parts[i]
-
-      key, value = part.split('=', 2)
+    parts.each do |part|
+      key, _, value = part.partition('=')
       key = key.strip
       value = value.strip
       if value[0] == '"'
@@ -162,6 +162,8 @@ module HTTP::FormData
         size = value.to_u64
       when "name"
         name = value
+      else
+        # not a field we are interested in
       end
     end
 
@@ -184,7 +186,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(io, boundary = MIME::Multipart.generate_boundary)
+  def self.build(io, boundary = MIME::Multipart.generate_boundary, &)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -210,7 +212,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(response : HTTP::Server::Response, boundary = MIME::Multipart.generate_boundary)
+  def self.build(response : HTTP::Server::Response, boundary = MIME::Multipart.generate_boundary, &)
     builder = Builder.new(response, boundary)
     yield builder
     builder.finish

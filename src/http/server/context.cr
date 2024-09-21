@@ -1,3 +1,6 @@
+require "../request"
+require "./response"
+
 class HTTP::Server
   # Instances of this class are passed to an `HTTP::Server` handler.
   class Context

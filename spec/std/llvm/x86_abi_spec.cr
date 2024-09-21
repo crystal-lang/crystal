@@ -1,4 +1,13 @@
+{% skip_file if flag?(:win32) %} # 32-bit windows is not supported
+
 require "spec"
+
+{% if flag?(:interpreted) %}
+  # TODO: figure out how to link against libstdc++ in interpreted code (#14398)
+  pending LLVM::ABI::X86
+  {% skip_file %}
+{% end %}
+
 require "llvm"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
@@ -13,6 +22,7 @@ private def abi
            {% end %}
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::X86.new(machine)
 end
 

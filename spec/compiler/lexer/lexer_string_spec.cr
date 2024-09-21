@@ -240,7 +240,7 @@ describe "Lexer string" do
     expect_raises Crystal::SyntaxException, "Unterminated heredoc" do
       loop do
         token = lexer.next_string_token state
-        break if token.type == :DELIMITER_END
+        break if token.type.delimiter_end?
       end
     end
   end
@@ -288,6 +288,10 @@ describe "Lexer string" do
   assert_syntax_error "\"\\uFEDZ\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{}\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{110000}\"", "invalid unicode codepoint (too large)"
+  assert_syntax_error "\"\\uD800\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\uDFFF\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\u{D800}\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\u{DFFF}\"", "invalid unicode codepoint (surrogate half)"
 
   it "lexes backtick string" do
     lexer = Lexer.new(%(`hello`))
@@ -304,6 +308,42 @@ describe "Lexer string" do
 
     tester.string_should_be_delimited_by('/', '/')
     tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped slash with /.../" do
+    lexer = Lexer.new(%(/\\//))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be("/")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped slash with %r(...)" do
+    lexer = Lexer.new(%(%r(\\/)))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('(', ')')
+    tester.next_string_token_should_be("/")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped space with /.../" do
+    lexer = Lexer.new(%(/\\ /))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be(" ")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with escaped space with %r(...)" do
+    lexer = Lexer.new(%(%r(\\ )))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('(', ')')
+    tester.next_string_token_should_be(" ")
     tester.string_should_end_correctly
   end
 

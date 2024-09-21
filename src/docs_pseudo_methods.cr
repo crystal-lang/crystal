@@ -50,7 +50,7 @@ end
 
 # Returns the instance size of the given class as number of bytes.
 #
-# *type* must be a constant or `typeof()` expresion. It cannot be evaluated at runtime.
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
 #
 # ```
 # instance_sizeof(String)    # => 16
@@ -78,14 +78,17 @@ end
 # Returns the byte offset of an instance variable in a struct or class type.
 #
 # *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
-# *variable*  must be the name of an instance variable of *type*, prefixed
-# by `@`.
+# *offset*  must be the name of an instance variable of *type*, prefixed by `@`,
+# or the index of an element in a Tuple, starting from 0, if *type* is a `Tuple`.
 # ```
-# offsetof(String, @bytesize)   # => 4
-# offsetof(Exception, @message) # => 8
-# offsetof(Time, @location)     # => 16
+# offsetof(String, @bytesize)       # => 4
+# offsetof(Exception, @message)     # => 8
+# offsetof(Time, @location)         # => 16
+# offsetof({Int32, Int8, Int32}, 0) # => 0
+# offsetof({Int32, Int8, Int32}, 1) # => 4
+# offsetof({Int32, Int8, Int32}, 2) # => 8
 # ```
-def __crystal_pseudo_offsetof(type : Class, variable) : Int32
+def __crystal_pseudo_offsetof(type : Class, offset) : Int32
 end
 
 class Object
@@ -151,7 +154,7 @@ class Object
   # typeof(a.as(Bool)) # Compile Error: can't cast (Int32 | String) to Bool
   #
   # typeof(a.as(String)) # => String
-  # a.as(String)         # Runtime Error: cast from Int32 to String failed
+  # a.as(String)         # Runtime Error: Cast from Int32 to String failed
   #
   # typeof(a.as(Int32 | Bool)) # => Int32
   # a.as(Int32 | Bool)         # => 1
@@ -173,7 +176,7 @@ class Object
   # typeof(a.as?(Int32)) # => Int32 | Nil
   # a.as?(Int32)         # => 1
   #
-  # typeof(a.as?(Bool)) # => Nil
+  # typeof(a.as?(Bool)) # => Bool | Nil
   # a.as?(Bool)         # => nil
   #
   # typeof(a.as?(String)) # => String | Nil
@@ -196,4 +199,34 @@ class Object
   # ```
   def __crystal_pseudo_responds_to?(name : Symbol) : Bool
   end
+end
+
+# Some expressions won't return to the current scope and therefore have no return type.
+# This is expressed as the special return type `NoReturn`.
+#
+# Typical examples for non-returning methods and keywords are `return`, `exit`, `raise`, `next`, and `break`.
+#
+# This is for example useful for deconstructing union types:
+#
+# ```
+# string = STDIN.gets
+# typeof(string)                        # => String?
+# typeof(raise "Empty input")           # => NoReturn
+# typeof(string || raise "Empty input") # => String
+# ```
+#
+# The compiler recognizes that in case string is Nil, the right hand side of the expression `string || raise` will be evaluated.
+# Since `typeof(raise "Empty input")` is `NoReturn` the execution would not return to the current scope in that case.
+# That leaves only `String` as resulting type of the expression.
+#
+# Every expression whose code paths all result in `NoReturn` will be `NoReturn` as well.
+# `NoReturn` does not show up in a union type because it would essentially be included in every expression's type.
+# It is only used when an expression will never return to the current scope.
+#
+# `NoReturn` can be explicitly set as return type of a method or function definition but will usually be inferred by the compiler.
+struct CRYSTAL_PSEUDO__NoReturn
+end
+
+# Similar in usage to `Nil`. `Void` is prefered for C lib bindings.
+struct CRYSTAL_PSEUDO__Void
 end

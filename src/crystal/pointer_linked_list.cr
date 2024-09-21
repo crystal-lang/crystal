@@ -7,8 +7,8 @@ struct Crystal::PointerLinkedList(T)
 
   module Node
     macro included
-      property previous : Pointer(self) = Pointer(self).null
-      property next : Pointer(self) = Pointer(self).null
+      property previous : ::Pointer(self) = ::Pointer(self).null
+      property next : ::Pointer(self) = ::Pointer(self).null
     end
   end
 
@@ -55,7 +55,7 @@ struct Crystal::PointerLinkedList(T)
   end
 
   # Removes and returns head from the list, yields if empty
-  def shift
+  def shift(&)
     unless empty?
       @head.tap { |t| delete(t) }
     else
@@ -69,7 +69,7 @@ struct Crystal::PointerLinkedList(T)
   end
 
   # Iterates the list.
-  def each : Nil
+  def each(&) : Nil
     return if empty?
 
     node = @head
@@ -79,5 +79,11 @@ struct Crystal::PointerLinkedList(T)
       break if _next == @head
       node = _next
     end
+  end
+
+  # Iterates the list before clearing it.
+  def consume_each(&) : Nil
+    each { |node| yield node }
+    @head = Pointer(T).null
   end
 end

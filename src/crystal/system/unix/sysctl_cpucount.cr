@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:openbsd) || flag?(:freebsd) %}
+{% skip_file unless flag?(:bsd) %}
 
 require "c/sysctl"
 

@@ -1,7 +1,15 @@
-require "./spec_helper"
-require "../../support/errno"
+{% skip_file if flag?(:wasm32) %}
 
-describe TCPSocket do
+require "./spec_helper"
+require "../../support/win32"
+
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending TCPSocket
+  {% skip_file %}
+{% end %}
+
+describe TCPSocket, tags: "network" do
   describe "#connect" do
     each_ip_family do |family, address|
       it "connects to server" do
@@ -28,7 +36,7 @@ describe TCPSocket do
       it "raises when connection is refused" do
         port = unused_local_port
 
-        expect_raises_errno(Errno::ECONNREFUSED, "Error connecting to '#{address}:#{port}'") do
+        expect_raises(Socket::ConnectError, "Error connecting to '#{address}:#{port}'") do
           TCPSocket.new(address, port)
         end
       end
@@ -37,11 +45,17 @@ describe TCPSocket do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPSocket.new(address, -12)
         end
-        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif flag?(:linux) && !flag?(:android) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
       end
 
       it "raises when port is zero" do
-        expect_raises_errno({% if flag?(:linux) %}Errno::ECONNREFUSED{% else %}Errno::EADDRNOTAVAIL{% end %}) do
+        expect_raises(Socket::ConnectError) do
           TCPSocket.new(address, 0)
         end
       end
@@ -53,21 +67,37 @@ describe TCPSocket do
 
         TCPServer.open("localhost", port) do |server|
           TCPSocket.open("localhost", port) do |client|
-            sock = server.accept
+            server.accept
           end
         end
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "No address found for doesnotexist.example.org.:12345 over TCP") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPSocket.new("doesnotexist.example.org.", 12345)
         end
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:00? over TCP/) do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPSocket.new("doesnotexist.example.org.", 0)
         end
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
     end
 
@@ -75,7 +105,7 @@ describe TCPSocket do
       port = unused_local_port
 
       TCPServer.open("0.0.0.0", port) do |server|
-        expect_raises_errno(Errno::ECONNREFUSED, "Error connecting to '::1:#{port}'") do
+        expect_raises(Socket::ConnectError, "Error connecting to '::1:#{port}'") do
           TCPSocket.new("::1", port)
         end
       end
@@ -129,7 +159,7 @@ describe TCPSocket do
       server.local_address.port
     end
 
-    expect_raises_errno(Errno::ECONNREFUSED, "Error connecting to 'localhost:#{port}'") do
+    expect_raises(Socket::ConnectError, "Error connecting to 'localhost:#{port}'") do
       TCPSocket.new("localhost", port)
     end
   end
@@ -146,6 +176,41 @@ describe TCPSocket do
         sock << "pong"
         client.gets(4).should eq("pong")
       end
+    end
+  end
+
+  it "sends and receives messages" do
+    port = unused_local_port
+
+    channel = Channel(Exception?).new
+    spawn do
+      TCPServer.open("::", port) do |server|
+        channel.send nil
+        sock = server.accept
+        sock.read_timeout = 3.second
+        sock.write_timeout = 3.second
+
+        sock.gets(4).should eq("ping")
+        sock << "pong"
+        channel.send nil
+      end
+    rescue exc
+      channel.send exc
+    end
+
+    if exc = channel.receive
+      raise exc
+    end
+
+    TCPSocket.open("localhost", port) do |client|
+      client.read_timeout = 3.second
+      client.write_timeout = 3.second
+      client << "ping"
+      client.gets(4).should eq("pong")
+    end
+
+    if exc = channel.receive
+      raise exc
     end
   end
 end

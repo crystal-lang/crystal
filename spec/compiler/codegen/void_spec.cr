@@ -25,6 +25,7 @@ describe "Code gen: void" do
           foo
         when 2
           raise \"oh no\"
+        else
         end
       end
 
@@ -47,6 +48,7 @@ describe "Code gen: void" do
           foo
         when 2
           raise \"oh no\"
+        else
         end
       end
 

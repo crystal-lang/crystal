@@ -554,13 +554,12 @@ describe "Code gen: macro" do
 
   it "can iterate union types" do
     run(%(
-      require "prelude"
       class Foo
         def initialize
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join('-')
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort.join("-") }}
         end
       end
       Foo.new.foo
@@ -578,7 +577,18 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type variables that are not types" do
+  it "can access type variables of a module" do
+    run(%(
+      module Foo(T)
+        def self.foo
+          {{ @type.type_vars.first.name.stringify }}
+        end
+      end
+      Foo(Int32).foo
+    )).to_string.should eq("Int32")
+  end
+
+  it "can access type variables that are not types" do
     run(%(
       class Foo(T)
         def foo
@@ -589,7 +599,7 @@ describe "Code gen: macro" do
     )).to_b.should eq(true)
   end
 
-  it "can acccess type variables of a tuple" do
+  it "can access type variables of a tuple" do
     run(%(
       struct Tuple
         def foo
@@ -602,10 +612,9 @@ describe "Code gen: macro" do
 
   it "can access type variables of a generic type" do
     run(%(
-      require "prelude"
       class Foo(T, K)
         def self.foo : String
-          {{ @type.type_vars.map(&.stringify) }}.join('-')
+          {{ @type.type_vars.map(&.stringify).join("-") }}
         end
       end
       Foo.foo
@@ -686,8 +695,6 @@ describe "Code gen: macro" do
 
   it "executes subclasses" do
     run(%(
-      require "prelude"
-
       class Foo
       end
 
@@ -700,15 +707,12 @@ describe "Code gen: macro" do
       class Qux < Baz
       end
 
-      names = {{ Foo.subclasses.map &.name }}
-      names.join('-')
+      {{ Foo.subclasses.map(&.name).join("-") }}
       )).to_string.should eq("Bar-Baz")
   end
 
   it "executes all_subclasses" do
     run(%(
-      require "prelude"
-
       class Foo
       end
 
@@ -718,8 +722,7 @@ describe "Code gen: macro" do
       class Baz < Bar
       end
 
-      names = {{ Foo.all_subclasses.map &.name }}
-      names.join('-')
+      {{ Foo.all_subclasses.map(&.name).join("-") }}
       )).to_string.should eq("Bar-Baz")
   end
 
@@ -759,7 +762,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Green")
   end
 
-  it "says that enum has Flags attribute" do
+  it "says that enum has Flags annotation" do
     run(%(
       @[Flags]
       enum Color
@@ -768,11 +771,11 @@ describe "Code gen: macro" do
         Blue
       end
 
-      {{Color.has_attribute?("Flags")}}
+      {{Color.annotation(Flags) ? true : false}}
       )).to_b.should be_true
   end
 
-  it "says that enum doesn't have Flags attribute" do
+  it "says that enum doesn't have Flags annotation" do
     run(%(
       enum Color
         Red
@@ -780,7 +783,7 @@ describe "Code gen: macro" do
         Blue
       end
 
-      {{Color.has_attribute?("Flags")}}
+      {{Color.annotation(Flags) ? true : false}}
       )).to_b.should be_false
   end
 
@@ -802,8 +805,6 @@ describe "Code gen: macro" do
 
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
     run(%(
-      require "prelude"
-
       class Object
         def class_name : String
           {{@type.name.stringify}}
@@ -1258,28 +1259,6 @@ describe "Code gen: macro" do
       end
 
       id(CONST)
-      )).to_i.should eq(1)
-  end
-
-  it "solves macro expression arguments before macro expansion (type)" do
-    run(%(
-      macro name(x)
-        {{x.name.stringify}}
-      end
-
-      name({{String}})
-      )).to_string.should eq("String")
-  end
-
-  it "solves macro expression arguments before macro expansion (constant)" do
-    run(%(
-      CONST = 1
-
-      macro id(x)
-        {{x}}
-      end
-
-      id({{CONST}})
       )).to_i.should eq(1)
   end
 
@@ -1837,5 +1816,78 @@ describe "Code gen: macro" do
 
       (Foo.new || Bar.new).foo
     )).to_string.should eq("Foo")
+  end
+
+  it "keeps heredoc contents inside macro" do
+    run(%(
+      macro foo
+        <<-FOO
+          %foo
+        FOO
+      end
+
+      foo
+    )).to_string.should eq("  %foo")
+  end
+
+  it "keeps heredoc contents with interpolation inside macro" do
+    run(%q(
+      require "prelude"
+
+      macro foo
+        %foo = 42
+        <<-FOO
+          #{ %foo }
+        FOO
+      end
+
+      foo
+    )).to_string.should eq("  42")
+  end
+
+  it "access to the program with @top_level" do
+    run(%(
+      class Foo
+        def bar
+          {{@top_level.name.stringify}}
+        end
+      end
+
+      Foo.new.bar
+      )).to_string.should eq("main")
+  end
+
+  it "responds correctly to has_constant? with @top_level" do
+    run(%(
+      FOO = 1
+      class Foo
+        def bar
+          {{@top_level.has_constant?("FOO")}}
+        end
+      end
+
+      Foo.new.bar
+      )).to_b.should eq(true)
+  end
+
+  it "does block unpacking inside macro expression (#13707)" do
+    run(%(
+      {% begin %}
+        {%
+          data = [{1, 2}, {3, 4}]
+          value = 0
+          data.each do |(k, v)|
+            value += k
+            value += v
+          end
+        %}
+        {{ value }}
+      {% end %}
+      )).to_i.should eq(10)
+  end
+
+  it "accepts compile-time flags" do
+    run("{{ flag?(:foo) ? 1 : 0 }}", flags: %w(foo)).to_i.should eq(1)
+    run("{{ flag?(:foo) ? 1 : 0 }}", Int32, flags: %w(foo)).should eq(1)
   end
 end

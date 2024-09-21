@@ -14,33 +14,36 @@ module Benchmark
   module IPS
     class Job
       # List of all entries in the benchmark.
-      # After #execute, these are populated with the resulting statistics.
+      # After `#execute`, these are populated with the resulting statistics.
       property items : Array(Entry)
 
       @warmup_time : Time::Span
       @calculation_time : Time::Span
 
-      def initialize(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+      def initialize(calculation @calculation_time : Time::Span = 5.seconds, warmup @warmup_time : Time::Span = 2.seconds, interactive : Bool = STDOUT.tty?)
         @interactive = !!interactive
-        @warmup_time = warmup.seconds
-        @calculation_time = calculation.seconds
         @items = [] of Entry
       end
 
+      @[Deprecated("Use `.new(Time::Span, Time::Span, Bool)` instead.")]
+      def self.new(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+        new(calculation.seconds, warmup.seconds, !!interactive)
+      end
+
       # Adds code to be benchmarked
-      def report(label = "", &action)
+      def report(label = "", &action) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item
       end
 
-      def execute
+      def execute : Nil
         run_warmup
         run_calculation
         run_comparison
       end
 
-      def report
+      def report : Nil
         max_label = ran_items.max_of &.label.size
         max_compare = ran_items.max_of &.human_compare.size
         max_bytes_per_op = ran_items.max_of &.bytes_per_op.humanize(base: 1024).size
@@ -100,7 +103,7 @@ module Benchmark
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
           item.calculate_stats(ips)
 
-          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_i
+          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_u64
 
           if @interactive
             run_comparison
@@ -115,7 +118,7 @@ module Benchmark
       end
 
       private def run_comparison
-        fastest = ran_items.max_by { |i| i.mean }
+        fastest = ran_items.max_by(&.mean)
         ran_items.each do |item|
           item.slower = (fastest.mean / item.mean).to_f
         end
@@ -129,7 +132,7 @@ module Benchmark
       # Code to be benchmarked
       property action : ->
 
-      # Number of cycles needed to run for approx 100ms
+      # Number of cycles needed to run `action` for approximately 100ms.
       # Calculated during the warmup stage
       property! cycles : Int32
 
@@ -152,7 +155,7 @@ module Benchmark
       property! slower : Float64
 
       # Number of bytes allocated per operation
-      property! bytes_per_op : Int32
+      property! bytes_per_op : UInt64
 
       @ran : Bool
       @ran = false
@@ -160,24 +163,24 @@ module Benchmark
       def initialize(@label : String, @action : ->)
       end
 
-      def ran?
+      def ran? : Bool
         @ran
       end
 
-      def call
+      def call : Nil
         action.call
       end
 
-      def call_for_100ms
+      def call_for_100ms : Nil
         cycles.times { action.call }
       end
 
-      def set_cycles(duration, iterations)
+      def set_cycles(duration, iterations) : Nil
         @cycles = (iterations / duration.total_milliseconds * 100).to_i
         @cycles = 1 if cycles <= 0
       end
 
-      def calculate_stats(samples)
+      def calculate_stats(samples) : Nil
         @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
@@ -186,11 +189,11 @@ module Benchmark
         @relative_stddev = 100.0 * (stddev / mean)
       end
 
-      def human_mean
+      def human_mean : String
         mean.humanize(precision: 2, significant: false, prefixes: Number::SI_PREFIXES_PADDED).rjust(7)
       end
 
-      def human_iteration_time
+      def human_iteration_time : String
         iteration_time = 1.0 / mean
 
         iteration_time.humanize(precision: 2, significant: false) do |magnitude, _|
@@ -199,7 +202,7 @@ module Benchmark
         end.rjust(8)
       end
 
-      def human_compare
+      def human_compare : String
         if slower == 1.0
           "fastest"
         else

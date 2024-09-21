@@ -23,7 +23,7 @@ describe "ECR" do
       %(__str__ << " 2 "),
       %(#<loc:push>#<loc:"foo.cr",2,25> end #<loc:pop>),
       %(__str__ << "\\n"),
-      %(#<loc:push>#<loc:\"foo.cr\",3,3> # skip #<loc:pop>),
+      %(#<loc:push>#<loc:"foo.cr",3,3> # skip #<loc:pop>),
       %(__str__ << " "),
       %(__str__ << "<% \\"string\\" %>"),
     ]
@@ -63,6 +63,18 @@ describe "ECR" do
     io = IO::Memory.new
     ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
     io.to_s.should eq("string with -%")
+  end
+
+  it "does with <%% %>" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template7.ecr", io
+    io.to_s.should eq(<<-ECR)
+      <% if @name %>
+      Greetings, <%= @name %>!
+        <%- else -%>
+      Greetings!
+      <%- end -%>
+      ECR
   end
 
   it ".render" do

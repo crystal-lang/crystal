@@ -19,23 +19,44 @@ module Spec
     def finish(elapsed_time, aborted)
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
+    def should_print_summary?
+      false
     end
   end
 
   # :nodoc:
   class DotFormatter < Formatter
+    @count = 0
+    @split = 0
+
+    def initialize(*args)
+      super
+
+      if split = ENV["SPEC_SPLIT_DOTS"]?
+        @split = split.to_i
+      end
+    end
+
     def report(result)
       @io << Spec.color(LETTERS[result.kind], result.kind)
+      split_lines
       @io.flush
+    end
+
+    private def split_lines
+      return unless @split > 0
+      if (@count += 1) >= @split
+        @io.puts
+        @count = 0
+      end
     end
 
     def finish(elapsed_time, aborted)
       @io.puts
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec.root_context.print_results(elapsed_time, aborted)
+    def should_print_summary?
+      true
     end
   end
 
@@ -90,23 +111,35 @@ module Spec
       @io.puts Spec.color(@last_description, result.kind)
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec.root_context.print_results(elapsed_time, aborted)
+    def should_print_summary?
+      true
     end
   end
 
-  @@formatters = [Spec::DotFormatter.new] of Spec::Formatter
-
   # :nodoc:
-  def self.formatters
-    @@formatters
+  class CLI
+    @formatters = [Spec::DotFormatter.new] of Spec::Formatter
+
+    def formatters
+      @formatters
+    end
+
+    def override_default_formatter(formatter)
+      @formatters[0] = formatter
+    end
+
+    def add_formatter(formatter)
+      @formatters << formatter
+    end
   end
 
+  @[Deprecated("This is an internal API.")]
   def self.override_default_formatter(formatter)
-    @@formatters[0] = formatter
+    @@cli.override_default_formatter(formatter)
   end
 
+  @[Deprecated("This is an internal API.")]
   def self.add_formatter(formatter)
-    @@formatters << formatter
+    @@cli.add_formatter(formatter)
   end
 end

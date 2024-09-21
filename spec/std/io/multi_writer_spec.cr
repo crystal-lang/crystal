@@ -54,13 +54,14 @@ describe "IO::MultiWriter" do
   describe "#flush" do
     it "writes to IO and File" do
       with_tempfile("multiple_writer_spec") do |path|
-        file = File.new(path, "w")
         io = IO::Memory.new
 
-        writer = IO::MultiWriter.new(io, file)
+        File.open(path, "w") do |file|
+          writer = IO::MultiWriter.new(io, file)
 
-        writer.puts "foo bar"
-        writer.flush
+          writer.puts "foo bar"
+          writer.flush
+        end
 
         io.to_s.should eq("foo bar\n")
         File.read(path).should eq("foo bar\n")

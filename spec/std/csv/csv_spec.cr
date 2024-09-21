@@ -13,7 +13,7 @@ describe CSV do
 
   it "works without headers" do
     csv = CSV.new("", headers: true)
-    csv.headers.empty?.should be_true
+    csv.headers.should be_empty
   end
 
   it "raises if trying to access before first row" do
@@ -154,6 +154,56 @@ describe CSV do
     CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
       csv.row.values_at("Name", "Age").should eq({"John", "20"})
       break
+    end
+  end
+
+  describe "rewind" do
+    describe "string based" do
+      it "without headers" do
+        csv = CSV.new("one,two\nthree,four", headers: false)
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+        csv.next
+        csv.row.to_a.should eq(%w(three four))
+        csv.rewind
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+      end
+
+      it "with headers" do
+        csv = CSV.new("one,two\nthree,four\nfive,six", headers: true)
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+        csv.next
+        csv.row.to_h.should eq({"one" => "five", "two" => "six"})
+        csv.rewind
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+      end
+    end
+
+    describe "IO based" do
+      it "without headers" do
+        csv = CSV.new(IO::Memory.new("one,two\nthree,four"), headers: false)
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+        csv.next
+        csv.row.to_a.should eq(%w(three four))
+        csv.rewind
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+      end
+
+      it "with headers" do
+        csv = CSV.new(IO::Memory.new("one,two\nthree,four\nfive,six"), headers: true)
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+        csv.next
+        csv.row.to_h.should eq({"one" => "five", "two" => "six"})
+        csv.rewind
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+      end
     end
   end
 end

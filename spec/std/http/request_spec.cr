@@ -15,45 +15,45 @@ module HTTP
     it "serialize GET" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
       request = Request.new "GET", "/", headers
 
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize GET (with query params)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
       request = Request.new "GET", "/greet?q=hello&name=world", headers
 
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize GET (with cookie)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
       request = Request.new "GET", "/", headers
       request.cookies << Cookie.new("foo", "bar")
 
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize GET (with cookies, from headers)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
       headers["Cookie"] = "foo=bar"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
 
       request = Request.new "GET", "/", headers
 
@@ -73,7 +73,7 @@ module HTTP
       io.clear
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize POST (with body)" do
@@ -131,28 +131,28 @@ module HTTP
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses GET (just \\n instead of \\r\\n)" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses GET with query params" do
         request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/greet")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses GET without \\r" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses empty string (EOF), returns nil" do
@@ -167,14 +167,14 @@ module HTTP
         request = Request.from_io(IO::Memory.new("GET   /   HTTP/1.1  \r\nHost: host.example.org\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses empty header" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org", "Referer" => ""})
       end
 
       it "parses GET with cookie" do
@@ -184,7 +184,7 @@ module HTTP
         request.cookies["a"].value.should eq("b")
 
         # Headers should not be modified (#2920)
-        request.headers.should eq({"Host" => "host.example.org", "Cookie" => "a=b"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org", "Cookie" => "a=b"})
       end
 
       it "headers are case insensitive" do
@@ -199,7 +199,7 @@ module HTTP
         request = Request.from_io(IO::Memory.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).as(Request)
         request.method.should eq("POST")
         request.path.should eq("/foo")
-        request.headers.should eq({"Content-Length" => "13"})
+        request.headers.should eq(HTTP::Headers{"Content-Length" => "13"})
         request.body.not_nil!.gets_to_end.should eq("thisisthebody")
       end
 
@@ -300,10 +300,10 @@ module HTTP
       it "is true in HTTP/1.0 if `Connection: keep-alive` header is present" do
         headers = HTTP::Headers.new
         headers["Connection"] = "keep-alive"
-        orignal_headers = headers.dup
+        original_headers = headers.dup
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.0"
         request.keep_alive?.should be_true
-        headers.should eq(orignal_headers)
+        headers.should eq(original_headers)
       end
 
       it "is true by default in HTTP/1.1" do
@@ -314,10 +314,10 @@ module HTTP
       it "is false in HTTP/1.1 if `Connection: close` header is present" do
         headers = HTTP::Headers.new
         headers["Connection"] = "close"
-        orignal_headers = headers.dup
+        original_headers = headers.dup
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.1"
         request.keep_alive?.should be_false
-        headers.should eq(orignal_headers)
+        headers.should eq(original_headers)
       end
     end
 
@@ -387,7 +387,7 @@ module HTTP
     end
 
     describe "#query_params" do
-      it "returns parsed HTTP::Params" do
+      it "returns parsed URI::Params" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
@@ -408,7 +408,7 @@ module HTTP
         params = request.query_params
 
         params["foo"] = "not-bar"
-        request.query.should eq("foo=not-bar&foo=baz&baz=qux")
+        request.query.should eq("foo=not-bar&baz=qux")
       end
 
       it "updates @resource when modified" do
@@ -416,7 +416,7 @@ module HTTP
         params = request.query_params
 
         params["foo"] = "not-bar"
-        request.resource.should eq("/api/v3/some/resource?foo=not-bar&foo=baz&baz=qux")
+        request.resource.should eq("/api/v3/some/resource?foo=not-bar&baz=qux")
       end
 
       it "updates serialized form when modified" do
@@ -427,7 +427,7 @@ module HTTP
 
         io = IO::Memory.new
         request.to_io(io)
-        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")
+        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&baz=qux HTTP/1.1\r\n\r\n")
       end
 
       it "is affected when #query is modified" do
@@ -438,12 +438,66 @@ module HTTP
         request.query = new_query
         request.query_params.to_s.should eq(new_query)
       end
+    end
 
-      it "gets request host from the headers" do
-        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
-        request.host.should eq("host.example.org")
+    describe "#form_params" do
+      it "returns can safely be called on get requests" do
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource HTTP/1.1\r\n\r\n")).as(Request)
+        request.form_params?.should eq(nil)
+        request.form_params.size.should eq(0)
       end
 
+      it "returns parsed HTTP::Params" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not eq(nil)
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
+      it "returns ignors invalid content-type" do
+        request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should eq(nil)
+        request.form_params.size.should eq(0)
+      end
+    end
+
+    describe "#hostname" do
+      it "gets request hostname from the headers" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
+        request.hostname.should eq("host.example.org")
+      end
+
+      it "#hostname" do
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org"})
+        request.hostname.should eq("host.example.org")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0"})
+        request.hostname.should eq("0.0.0.0")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]"})
+        request.hostname.should eq("1234:5678::1")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[::1]"})
+        request.hostname.should eq("::1")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000"})
+        request.hostname.should eq("host.example.org")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0:3000"})
+        request.hostname.should eq("0.0.0.0")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80"})
+        request.hostname.should eq("1234:5678::1")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[::1]:3000"})
+        request.hostname.should eq("::1")
+
+        request = Request.new("GET", "/")
+        request.hostname.should be_nil
+      end
+    end
+
+    describe "#host_with_port" do
       it "gets request host with port from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")
@@ -451,7 +505,7 @@ module HTTP
     end
 
     it "doesn't raise on request with multiple Content_length headers" do
-      io = IO::Memory.new <<-REQ
+      io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1
         Host: host
         Content-Length: 5
@@ -459,12 +513,12 @@ module HTTP
         Content-Type: text/plain
 
         abcde
-        REQ
+        HTTP
       HTTP::Request.from_io(io)
     end
 
     it "raises if request has multiple and differing content-length headers" do
-      io = IO::Memory.new <<-REQ
+      io = IO::Memory.new <<-HTTP
         GET / HTTP/1.1
         Host: host
         Content-Length: 5
@@ -472,7 +526,7 @@ module HTTP
         Content-Type: text/plain
 
         abcde
-        REQ
+        HTTP
       expect_raises(ArgumentError) do
         HTTP::Request.from_io(io)
       end

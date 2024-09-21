@@ -20,6 +20,18 @@ describe "Crypto::Bcrypt::Password" do
     it "parses digest" do
       password.digest.should eq("weXJt7sno2HdPVrMvVf06kGgAZvPkga")
     end
+
+    it "validates the hash string has the required amount of parts" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid hash string") do
+        Crypto::Bcrypt::Password.new("blarp")
+      end
+    end
+
+    it "raises on unsupported version (#11584)" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid hash version") do
+        Crypto::Bcrypt::Password.new("$-1$10$blarp")
+      end
+    end
   end
 
   describe "create" do
@@ -40,6 +52,10 @@ describe "Crypto::Bcrypt::Password" do
 
   describe "verify" do
     password = Crypto::Bcrypt::Password.create("secret", 4)
+    password2 = Crypto::Bcrypt::Password.new("$2$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
+    password2a = Crypto::Bcrypt::Password.new("$2a$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
+    password2b = Crypto::Bcrypt::Password.new("$2b$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
+    password2y = Crypto::Bcrypt::Password.new("$2y$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
 
     it "verifies password is incorrect" do
       (password.verify "wrong").should be_false
@@ -47,6 +63,19 @@ describe "Crypto::Bcrypt::Password" do
 
     it "verifies password is correct" do
       (password.verify "secret").should be_true
+    end
+
+    it "verifies password version 2 is correct (#11584)" do
+      (password2.verify "secret").should be_true
+    end
+    it "verifies password version 2a is correct (#11584)" do
+      (password2a.verify "secret").should be_true
+    end
+    it "verifies password version 2b is correct (#11584)" do
+      (password2b.verify "secret").should be_true
+    end
+    it "verifies password version 2y is correct" do
+      (password2y.verify "secret").should be_true
     end
   end
 end

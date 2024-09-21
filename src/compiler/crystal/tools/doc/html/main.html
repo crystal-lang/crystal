@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new("") %>
-  <meta id="repository-name" content="<%= repository_name %>">
-  <title>README - <%= repository_name %></title>
+  <%= HeadTemplate.new(project_info, nil) %>
+  <meta name="repository-name" content="<%= project_info.name %>">
+  <title><%= project_info.name %> <%= project_info.version %></title>
   <script type="text/javascript">
-  CrystalDoc.base_path = "";
+  CrystalDocs.base_path = "";
   </script>
 </head>
 <body>
 
-<%= SidebarTemplate.new(repository_name, types, nil) %>
+<%= Crystal::Doc::SVG_DEFS %>
+<%= Crystal::Doc::SIDEBAR_BUTTON %>
+<%= SidebarTemplate.new(project_info, types, nil) %>
 
 <div class="main-content">
 <%= body %>

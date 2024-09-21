@@ -35,13 +35,13 @@ module Spec
             MSG
         end
 
-        return <<-MSG
-          Expected size: #{expected_value.size}
-               got size: #{actual_value.size}
-          MSG
+        <<-MSG
+        Expected size: #{expected_value.size}
+              got size: #{actual_value.size}
+        MSG
       else
-        expected = expected_value.inspect
-        got = actual_value.inspect
+        expected = expected_value.pretty_inspect
+        got = actual_value.pretty_inspect
         if expected == got
           expected += " : #{@expected_value.class}"
           got += " : #{actual_value.class}"
@@ -51,7 +51,7 @@ module Spec
     end
 
     def negative_failure_message(actual_value)
-      "Expected: actual_value != #{@expected_value.inspect}\n     got: #{actual_value.inspect}"
+      "Expected: actual_value != #{@expected_value.pretty_inspect}\n     got: #{actual_value.pretty_inspect}"
     end
   end
 
@@ -65,11 +65,21 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
+      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: value.same? #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
+      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
+    end
+
+    private def identify(value)
+      if value.responds_to?(:to_unsafe)
+        if !value.responds_to?(:object_id)
+          return value.to_unsafe
+        end
+      end
+
+      "object_id: #{value.object_id}"
     end
   end
 
@@ -80,11 +90,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{actual_value.inspect} to be truthy"
+      "Expected: #{actual_value.pretty_inspect} to be truthy"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{actual_value.inspect} not to be truthy"
+      "Expected: #{actual_value.pretty_inspect} not to be truthy"
     end
   end
 
@@ -95,11 +105,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{actual_value.inspect} to be falsey"
+      "Expected: #{actual_value.pretty_inspect} to be falsey"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{actual_value.inspect} not to be falsey"
+      "Expected: #{actual_value.pretty_inspect} not to be falsey"
     end
   end
 
@@ -110,11 +120,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{actual_value.inspect} to be nil"
+      "Expected: #{actual_value.pretty_inspect} to be nil"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{actual_value.inspect} not to be nil"
+      "Expected: #{actual_value.pretty_inspect} not to be nil"
     end
   end
 
@@ -128,11 +138,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.pretty_inspect} to be within #{@delta} of #{@expected_value.pretty_inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.pretty_inspect} not to be within #{@delta} of #{@expected_value.pretty_inspect}"
     end
   end
 
@@ -143,56 +153,61 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} (#{actual_value.class}) to be a #{T}"
+      "Expected #{actual_value.pretty_inspect} (#{actual_value.class}) to be a #{T}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
+      "Expected #{actual_value.pretty_inspect} (#{actual_value.class}) not to be a #{T}"
     end
   end
 
   # :nodoc:
   struct Be(T)
+    enum Relation
+      LessThan
+      LessOrEqual
+      GreaterThan
+      GreaterOrEqual
+    end
+
     def self.<(other)
-      Be.new(other, :"<")
+      Be.new(other, :less_than)
     end
 
     def self.<=(other)
-      Be.new(other, :"<=")
+      Be.new(other, :less_or_equal)
     end
 
     def self.>(other)
-      Be.new(other, :">")
+      Be.new(other, :greater_than)
     end
 
     def self.>=(other)
-      Be.new(other, :">=")
+      Be.new(other, :greater_or_equal)
     end
 
-    def initialize(@expected_value : T, @op : Symbol)
+    def initialize(@expected_value : T, @op : Relation)
     end
 
     def match(actual_value)
       case @op
-      when :"<"
+      in .less_than?
         actual_value < @expected_value
-      when :"<="
+      in .less_or_equal?
         actual_value <= @expected_value
-      when :">"
+      in .greater_than?
         actual_value > @expected_value
-      when :">="
+      in .greater_or_equal?
         actual_value >= @expected_value
-      else
-        false
       end
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.pretty_inspect} to be #{@op} #{@expected_value.pretty_inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.pretty_inspect} not to be #{@op} #{@expected_value.pretty_inspect}"
     end
   end
 
@@ -206,11 +221,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{actual_value.inspect}\nto match: #{@expected_value.inspect}"
+      "Expected: #{actual_value.pretty_inspect}\nto match: #{@expected_value.pretty_inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: value #{actual_value.inspect}\n to not match: #{@expected_value.inspect}"
+      "Expected: value #{actual_value.pretty_inspect}\n to not match: #{@expected_value.pretty_inspect}"
     end
   end
 
@@ -224,11 +239,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected:   #{actual_value.inspect}\nto include: #{@expected_value.inspect}"
+      "Expected:   #{actual_value.pretty_inspect}\nto include: #{@expected_value.pretty_inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: value #{actual_value.inspect}\nto not include: #{@expected_value.inspect}"
+      "Expected: value #{actual_value.pretty_inspect}\nto not include: #{@expected_value.pretty_inspect}"
     end
   end
 
@@ -242,11 +257,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected:   #{actual_value.inspect}\nto start with: #{@expected_value.inspect}"
+      "Expected:   #{actual_value.pretty_inspect}\nto start with: #{@expected_value.pretty_inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: value #{actual_value.inspect}\nnot to start with: #{@expected_value.inspect}"
+      "Expected: value #{actual_value.pretty_inspect}\nnot to start with: #{@expected_value.pretty_inspect}"
     end
   end
 
@@ -260,11 +275,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected:   #{actual_value.inspect}\nto end with: #{@expected_value.inspect}"
+      "Expected:   #{actual_value.pretty_inspect}\nto end with: #{@expected_value.pretty_inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: value #{actual_value.inspect}\nnot to end with: #{@expected_value.inspect}"
+      "Expected: value #{actual_value.pretty_inspect}\nnot to end with: #{@expected_value.pretty_inspect}"
     end
   end
 
@@ -275,11 +290,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected: #{actual_value.inspect} to be empty"
+      "Expected: #{actual_value.pretty_inspect} to be empty"
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{actual_value.inspect} not to be empty"
+      "Expected: #{actual_value.pretty_inspect} not to be empty"
     end
   end
 
@@ -368,7 +383,7 @@ module Spec
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
     macro be_a(type)
-      Spec::BeAExpectation({{type}}).new
+      ::Spec::BeAExpectation({{type}}).new
     end
 
     # Runs the block and passes if it raises an exception of type *klass* and the error message matches.
@@ -377,43 +392,51 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    def expect_raises(klass : T.class, message = nil, file = __FILE__, line = __LINE__) forall T
-      yield
-    rescue ex : T
-      # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
-      if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
-        raise ex
+    {% if flag?(:wasm32) %}
+      def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
+        # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
       end
-
-      # `NestingSpecError` is treated as the same above.
-      if ex.is_a?(Spec::NestingSpecError) && klass != Spec::NestingSpecError
-        raise ex
-      end
-
-      ex_to_s = ex.to_s
-      case message
-      when Regex
-        unless (ex_to_s =~ message)
-          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-          fail "Expected #{klass} with message matching #{message.inspect}, " \
-               "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+    {% else %}
+      def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
+        yield
+      rescue ex : T
+        # We usually bubble Spec::AssertionFailed, unless this is the expected exception
+        if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
+          raise ex
         end
-      when String
-        unless ex_to_s.includes?(message)
-          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-          fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
-               "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
-        end
-      end
 
-      ex
-    rescue ex
-      backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-      fail "Expected #{klass}, got #<#{ex.class}: #{ex.to_s}> with backtrace:\n" \
-           "#{backtrace}", file, line
-    else
-      fail "Expected #{klass} but nothing was raised", file, line
-    end
+        # `NestingSpecError` is treated as the same above.
+        if ex.is_a?(Spec::NestingSpecError) && klass != Spec::NestingSpecError
+          raise ex
+        end
+
+        ex_to_s = ex.to_s
+        case message
+        when Regex
+          unless (ex_to_s =~ message)
+            backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+            fail "Expected #{klass} with message matching #{message.pretty_inspect}, " \
+                 "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          end
+        when String
+          unless ex_to_s.includes?(message)
+            backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+            fail "Expected #{klass} with #{message.pretty_inspect}, got #<#{ex.class}: " \
+                 "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          end
+        when Nil
+          # No need to check the message
+        end
+
+        ex
+      rescue ex
+        backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+        fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
+             "#{backtrace}", file, line
+      else
+        fail "Expected #{klass} but nothing was raised", file, line
+      end
+    {% end %}
   end
 
   module ObjectExtensions
@@ -428,21 +451,23 @@ module Spec
     # typeof(x) # => Int32
     # ```
     #
-    # See `Spec::Expecations` for available expectations.
-    def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) : T forall T
+    # See `Spec::Expectations` for available expectations.
+    def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) : T forall T
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
       else
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
     # Validates an expectation and fails the example if it does not match.
     #
-    # See `Spec::Expecations` for available expectations.
-    def should(expectation, file = __FILE__, line = __LINE__)
+    # See `Spec::Expectations` for available expectations.
+    def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       unless expectation.match self
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
@@ -458,10 +483,11 @@ module Spec
     # typeof(x) # => Int32
     # ```
     #
-    # See `Spec::Expecations` for available expectations.
-    def should_not(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
+    # See `Spec::Expectations` for available expectations.
+    def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       else
         self.is_a?(T) ? (raise "Bug: expected #{self} not to be a #{T}") : self
       end
@@ -478,10 +504,11 @@ module Spec
     # typeof(x) # => Int32
     # ```
     #
-    # See `Spec::Expecations` for available expectations.
-    def should_not(expectation : BeNilExpectation, file = __FILE__, line = __LINE__)
+    # See `Spec::Expectations` for available expectations.
+    def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       else
         self.not_nil!
       end
@@ -489,10 +516,11 @@ module Spec
 
     # Validates an expectation and fails the example if it matches.
     #
-    # See `Spec::Expecations` for available expectations.
-    def should_not(expectation, file = __FILE__, line = __LINE__)
+    # See `Spec::Expectations` for available expectations.
+    def should_not(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       end
     end
   end

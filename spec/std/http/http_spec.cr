@@ -1,5 +1,14 @@
 require "spec"
 require "http"
+require "spec/helpers/string"
+
+private def http_quote_string(io : IO, string)
+  HTTP.quote_string(string, io)
+end
+
+private def http_quote_string(string)
+  HTTP.quote_string(string)
+end
 
 describe HTTP do
   it "parses RFC 1123" do
@@ -44,7 +53,7 @@ describe HTTP do
     end
 
     it "with local time zone" do
-      time = Time.local(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.load("Europe/Berlin"))
+      time = Time.local(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.fixed(3600))
       HTTP.format_time(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
     end
   end
@@ -57,10 +66,10 @@ describe HTTP do
 
   describe ".quote_string" do
     it "quotes a string" do
-      HTTP.quote_string("foo!#():;?~").should eq("foo!#():;?~")
-      HTTP.quote_string(%q(foo"bar\baz)).should eq(%q(foo\"bar\\baz))
-      HTTP.quote_string("\t ").should eq("\\\t\\ ")
-      HTTP.quote_string("it works 😂😂😂👌👌👌😂😂😂").should eq("it\\ works\\ 😂😂😂👌👌👌😂😂😂")
+      assert_prints http_quote_string("foo!#():;?~"), "foo!#():;?~"
+      assert_prints http_quote_string(%q(foo"bar\baz)), %q(foo\"bar\\baz)
+      assert_prints http_quote_string("\t "), "\\\t\\ "
+      assert_prints http_quote_string("it works 😂😂😂👌👌👌😂😂😂"), "it\\ works\\ 😂😂😂👌👌👌😂😂😂"
     end
 
     it "raises on invalid characters" do

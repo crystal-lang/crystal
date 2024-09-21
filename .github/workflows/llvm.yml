@@ -1,0 +1,70 @@
+name: LLVM CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  llvm_test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - llvm_version: "13.0.0"
+            llvm_ubuntu_version: "20.04"
+          - llvm_version: "14.0.0"
+            llvm_ubuntu_version: "18.04"
+          - llvm_version: "15.0.6"
+            llvm_ubuntu_version: "18.04"
+          - llvm_version: "16.0.3"
+            llvm_ubuntu_version: "22.04"
+          - llvm_version: "17.0.6"
+            llvm_ubuntu_version: "22.04"
+          - llvm_version: "18.1.4"
+            llvm_ubuntu_version: "18.04"
+    name: "LLVM ${{ matrix.llvm_version }}"
+    steps:
+      - name: Checkout Crystal source
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: ./llvm
+          key: llvm-${{ matrix.llvm_version }}
+        if: "${{ !env.ACT }}"
+
+      - name: Install LLVM ${{ matrix.llvm_version }}
+        run: |
+          mkdir -p llvm
+          curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm_version }}/clang+llvm-${{ matrix.llvm_version }}-x86_64-linux-gnu-ubuntu-${{ matrix.llvm_ubuntu_version }}.tar.xz" > llvm.tar.xz
+          tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+
+      - name: Set up LLVM
+        run: |
+          sudo apt-get install -y libtinfo5
+          echo "PATH=$(pwd)/llvm/bin:$PATH" >> $GITHUB_ENV
+          echo "LLVM_CONFIG=$(pwd)/llvm/bin/llvm-config" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(pwd)/llvm/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.13.3"
+
+      - name: Build libllvm_ext
+        run: make -B deps
+
+      - name: Test compiler_spec
+        run: make compiler_spec junit_output=.junit/compiler_spec.xml
+
+      - name: Integration test
+        run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml

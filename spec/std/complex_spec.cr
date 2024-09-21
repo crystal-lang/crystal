@@ -1,13 +1,27 @@
 require "spec"
 require "complex"
 require "../support/number"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
+
+# exact equality, including component signs
+private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
+  z1.should eq(z2), file: file, line: line
+  Math.copysign(1.0, z1.real).should eq(Math.copysign(1.0, z2.real)), file: file, line: line
+  Math.copysign(1.0, z1.imag).should eq(Math.copysign(1.0, z2.imag)), file: file, line: line
+end
+
+private def assert_complex_nan(z : Complex, *, file = __FILE__, line = __LINE__)
+  z.real.nan?.should be_true, file: file, line: line
+  z.imag.nan?.should be_true, file: file, line: line
+end
 
 describe "Complex" do
   describe "as numbers" do
     it_can_convert_between([Complex], [Complex])
-    it_can_convert_between({{BUILTIN_NUMBER_TYPES_LTE_64}}, [Complex])
-    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES_LTE_64}})
-    # TODO pending conversion between Int128
+    it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, [Complex])
+    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES}})
 
     division_between_returns {{BUILTIN_NUMBER_TYPES}}, [Complex], Complex
     division_between_returns [Complex], {{BUILTIN_NUMBER_TYPES}}, Complex
@@ -38,6 +52,10 @@ describe "Complex" do
       c = 4.2
       (a == b).should be_true
       (a == c).should be_false
+
+      {% unless flag?(:wasm32) %}
+        (a == BigDecimal.new(53, 1)).should be_false
+      {% end %}
     end
 
     it "number == complex" do
@@ -46,17 +64,43 @@ describe "Complex" do
       c = Complex.new(7.2, 0)
       (a == b).should be_true
       (a == c).should be_false
+
+      {% unless flag?(:wasm32) %}
+        (BigDecimal.new(72, 1) == c).should be_false
+      {% end %}
     end
   end
 
   it "to_s" do
     Complex.new(1.25, 8.2).to_s.should eq("1.25 + 8.2i")
     Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
+
+    Complex.new(+0.0, +0.0).to_s.should eq("0.0 + 0.0i")
+    Complex.new(-0.0, -0.0).to_s.should eq("-0.0 - 0.0i")
+
+    Complex.new(+Float64::INFINITY, +Float64::INFINITY).to_s.should eq("Infinity + Infinityi")
+    Complex.new(-Float64::INFINITY, -Float64::INFINITY).to_s.should eq("-Infinity - Infinityi")
+
+    pos_nan = Math.copysign(Float64::NAN, 1)
+    neg_nan = Math.copysign(Float64::NAN, -1)
+    Complex.new(pos_nan, pos_nan).to_s.should eq("NaN + NaNi")
+    Complex.new(neg_nan, neg_nan).to_s.should eq("NaN + NaNi")
   end
 
   it "inspect" do
     Complex.new(1.25, 8.2).inspect.should eq("(1.25 + 8.2i)")
     Complex.new(1.25, -8.2).inspect.should eq("(1.25 - 8.2i)")
+
+    Complex.new(+0.0, +0.0).inspect.should eq("(0.0 + 0.0i)")
+    Complex.new(-0.0, -0.0).inspect.should eq("(-0.0 - 0.0i)")
+
+    Complex.new(+Float64::INFINITY, +Float64::INFINITY).inspect.should eq("(Infinity + Infinityi)")
+    Complex.new(-Float64::INFINITY, -Float64::INFINITY).inspect.should eq("(-Infinity - Infinityi)")
+
+    pos_nan = Math.copysign(Float64::NAN, 1)
+    neg_nan = Math.copysign(Float64::NAN, -1)
+    Complex.new(pos_nan, pos_nan).inspect.should eq("(NaN + NaNi)")
+    Complex.new(neg_nan, neg_nan).inspect.should eq("(NaN + NaNi)")
   end
 
   it "abs" do
@@ -67,8 +111,80 @@ describe "Complex" do
     Complex.new(-1.1, 9).abs2.should eq(82.21)
   end
 
-  it "sign" do
-    Complex.new(-1.4, 7.7).sign.should eq(Complex.new(-0.17888543819998315, 0.9838699100999074))
+  describe "sign" do
+    it "finite, non-zero" do
+      Complex.new(-1.4, 7.7).sign.should be_close(Complex.new(-0.17888543819998315, 0.9838699100999074), 1e-14)
+      Complex.new(1.4, -7.7).sign.should be_close(Complex.new(0.17888543819998315, -0.9838699100999074), 1e-14)
+    end
+
+    it "complex zero" do
+      assert_complex_eq Complex.new(+0.0, +0.0).sign, Complex.new(+0.0, +0.0)
+      assert_complex_eq Complex.new(+0.0, -0.0).sign, Complex.new(+0.0, -0.0)
+      assert_complex_eq Complex.new(-0.0, +0.0).sign, Complex.new(-0.0, +0.0)
+      assert_complex_eq Complex.new(-0.0, -0.0).sign, Complex.new(-0.0, -0.0)
+    end
+
+    it "real zero" do
+      assert_complex_eq Complex.new(+0.0, +2.0).sign, Complex.new(+0.0, +1.0)
+      assert_complex_eq Complex.new(+0.0, -2.0).sign, Complex.new(+0.0, -1.0)
+      assert_complex_eq Complex.new(-0.0, +2.0).sign, Complex.new(-0.0, +1.0)
+      assert_complex_eq Complex.new(-0.0, -2.0).sign, Complex.new(-0.0, -1.0)
+    end
+
+    it "imaginary zero" do
+      assert_complex_eq Complex.new(+2.0, +0.0).sign, Complex.new(+1.0, +0.0)
+      assert_complex_eq Complex.new(+2.0, -0.0).sign, Complex.new(+1.0, -0.0)
+      assert_complex_eq Complex.new(-2.0, +0.0).sign, Complex.new(-1.0, +0.0)
+      assert_complex_eq Complex.new(-2.0, -0.0).sign, Complex.new(-1.0, -0.0)
+    end
+
+    it "infinity" do
+      inf = Float64::INFINITY
+
+      # 1st quadrant
+      assert_complex_eq Complex.new(+inf, +0.0).sign, Complex.new(+1.0, +0.0)
+      assert_complex_eq Complex.new(+inf, +1.0).sign, Complex.new(+1.0, +0.0)
+      assert_complex_eq Complex.new(+1.0, +inf).sign, Complex.new(+0.0, +1.0)
+      assert_complex_eq Complex.new(+0.0, +inf).sign, Complex.new(+0.0, +1.0)
+
+      # 2nd quadrant
+      assert_complex_eq Complex.new(-0.0, +inf).sign, Complex.new(-0.0, +1.0)
+      assert_complex_eq Complex.new(-1.0, +inf).sign, Complex.new(-0.0, +1.0)
+      assert_complex_eq Complex.new(-inf, +1.0).sign, Complex.new(-1.0, +0.0)
+      assert_complex_eq Complex.new(-inf, +0.0).sign, Complex.new(-1.0, +0.0)
+
+      # 3rd quadrant
+      assert_complex_eq Complex.new(-inf, -0.0).sign, Complex.new(-1.0, -0.0)
+      assert_complex_eq Complex.new(-inf, -1.0).sign, Complex.new(-1.0, -0.0)
+      assert_complex_eq Complex.new(-1.0, -inf).sign, Complex.new(-0.0, -1.0)
+      assert_complex_eq Complex.new(-0.0, -inf).sign, Complex.new(-0.0, -1.0)
+
+      # 4th quadrant
+      assert_complex_eq Complex.new(+0.0, -inf).sign, Complex.new(+0.0, -1.0)
+      assert_complex_eq Complex.new(+1.0, -inf).sign, Complex.new(+0.0, -1.0)
+      assert_complex_eq Complex.new(+inf, -1.0).sign, Complex.new(+1.0, -0.0)
+      assert_complex_eq Complex.new(+inf, -0.0).sign, Complex.new(+1.0, -0.0)
+
+      # diagonals
+      sqr = Math.sqrt(0.5)
+      Complex.new(+inf, +inf).sign.should be_close(Complex.new(+sqr, +sqr), 1e-14)
+      Complex.new(-inf, +inf).sign.should be_close(Complex.new(-sqr, +sqr), 1e-14)
+      Complex.new(-inf, -inf).sign.should be_close(Complex.new(-sqr, -sqr), 1e-14)
+      Complex.new(+inf, -inf).sign.should be_close(Complex.new(+sqr, -sqr), 1e-14)
+    end
+
+    it "not-a-number" do
+      assert_complex_nan Complex.new(Float64::NAN, +0.0).sign
+      assert_complex_nan Complex.new(Float64::NAN, +1.0).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::INFINITY).sign
+      assert_complex_nan Complex.new(-0.0, Float64::NAN).sign
+      assert_complex_nan Complex.new(-1.0, Float64::NAN).sign
+      assert_complex_nan Complex.new(-Float64::INFINITY, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+    end
   end
 
   it "phase" do
@@ -80,7 +196,11 @@ describe "Complex" do
   end
 
   it "cis" do
-    2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+    {% if flag?(:aarch64) && flag?(:darwin) %}
+      2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.6754631805511511))
+    {% else %}
+      2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+    {% end %}
   end
 
   it "conj" do
@@ -91,34 +211,9 @@ describe "Complex" do
     Complex.new(1.5, -2.5).inv.should eq(Complex.new(0.17647058823529413, 0.29411764705882354))
   end
 
-  it "sqrt" do
-    Complex.new(1.32, 7.25).sqrt.should be_close(Complex.new(2.0843687106374236, 1.739135682425128), 1e-15)
-    Complex.new(7.11, -0.9).sqrt.should be_close(Complex.new(2.671772413453534, -0.1684275194002508), 1e-15)
-    Complex.new(-2.2, 6.22).sqrt.should be_close(Complex.new(1.4828360708935342, 2.0973323087062226), 1e-15)
-    Complex.new(-8.3, -1.11).sqrt.should be_close(Complex.new(0.1922159681400434, -2.8873771797962275), 1e-15)
-  end
-
-  it "exp" do
-    Complex.new(1.15, -5.1).exp.should be_close(Complex.new(1.1937266270566773, 2.923901365414129), 1e-15)
-  end
-
-  describe "logarithms" do
-    it "log" do
-      Complex.new(1.25, -4.7).log.should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
-    end
-
-    it "log2" do
-      Complex.new(-9.1, 3.2).log2.should eq(Complex.new(3.2699671225858946, +4.044523592551345))
-    end
-
-    it "log10" do
-      Complex.new(2.11, 1.21).log10.should eq(Complex.new(0.38602142355392594, +0.22612668967405536))
-    end
-  end
-
   describe "+" do
     it "+ complex" do
-      (+Complex.new(-5.43, -27.12)).should eq(Complex.new(5.43, 27.12))
+      (+Complex.new(-5.43, -27.12)).should eq(Complex.new(-5.43, -27.12))
     end
 
     it "complex + complex" do
@@ -191,10 +286,53 @@ describe "Complex" do
     c.hash.should eq(4_f64.hash)
   end
 
+  it "test zero" do
+    Complex.zero.should eq(Complex.new(0, 0))
+  end
+
   it "test zero?" do
     Complex.new(0, 0).zero?.should eq true
     Complex.new(0, 3.4).zero?.should eq false
     Complex.new(1.2, 0).zero?.should eq false
     Complex.new(1.2, 3.4).zero?.should eq false
+  end
+
+  it "test additive_identity" do
+    Complex.additive_identity.should eq(Complex.new(0, 0))
+  end
+
+  it "test multiplicative_identity" do
+    Complex.multiplicative_identity.should eq(Complex.new(1, 0))
+  end
+
+  it "rounds" do
+    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.12, 0.88))
+    (Complex.new(1.135, 0.865).round(2)).should eq(Complex.new(1.14, 0.86))
+    (Complex.new(1.125, 0.875).round(digits: 1)).should eq(Complex.new(1.1, 0.9))
+  end
+
+  describe "Math" do
+    it "exp" do
+      Math.exp(Complex.new(1.15, -5.1)).should be_close(Complex.new(1.1937266270566773, 2.923901365414129), 1e-15)
+    end
+
+    it "log" do
+      Math.log(Complex.new(1.25, -4.7)).should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
+    end
+
+    it "log2" do
+      Math.log2(Complex.new(-9.1, 3.2)).should eq(Complex.new(3.2699671225858946, +4.044523592551345))
+    end
+
+    it "log10" do
+      Math.log10(Complex.new(2.11, 1.21)).should eq(Complex.new(0.38602142355392594, +0.22612668967405536))
+    end
+
+    it "sqrt" do
+      Math.sqrt(Complex.new(1.32, 7.25)).should be_close(Complex.new(2.0843687106374236, 1.739135682425128), 1e-15)
+      Math.sqrt(Complex.new(7.11, -0.9)).should be_close(Complex.new(2.671772413453534, -0.1684275194002508), 1e-15)
+      Math.sqrt(Complex.new(-2.2, 6.22)).should be_close(Complex.new(1.4828360708935342, 2.0973323087062226), 1e-15)
+      Math.sqrt(Complex.new(-8.3, -1.11)).should be_close(Complex.new(0.1922159681400434, -2.8873771797962275), 1e-15)
+    end
   end
 end

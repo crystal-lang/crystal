@@ -2,8 +2,11 @@ require "../spec_helper"
 require "./spec_helper"
 
 describe Crystal::Config do
-  it ".default_target" do
-    Crystal::Config.default_target.should eq Crystal::Codegen::Target.new({{ `crystal --version`.lines[-1] }}.lstrip("Default target: "))
+  it ".host_target" do
+    {% begin %}
+      {% host_triple = Crystal.constant("HOST_TRIPLE") || Crystal::DESCRIPTION.lines[-1].gsub(/^Default target: /, "") %}
+      Crystal::Config.host_target.should eq Crystal::Codegen::Target.new({{ host_triple }})
+    {% end %}
   end
 
   {% if flag?(:linux) %}

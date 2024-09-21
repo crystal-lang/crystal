@@ -21,7 +21,7 @@
 module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a negative number.
-  def <(other : T)
+  def <(other : T) : Bool
     cmp = self <=> other
     cmp ? cmp < 0 : false
   end
@@ -52,7 +52,7 @@ module Comparable(T)
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value greater then `0`.
-  def >(other : T)
+  def >(other : T) : Bool
     cmp = self <=> other
     cmp ? cmp > 0 : false
   end
@@ -66,7 +66,7 @@ module Comparable(T)
 
   # The comparison operator. Returns `0` if the two objects are equal,
   # a negative number if this object is considered less than *other*,
-  # a positive number if this object is considered greter than *other*,
+  # a positive number if this object is considered greater than *other*,
   # or `nil` if the two objects are not comparable.
   #
   # Subclasses define this method to provide class-specific ordering.

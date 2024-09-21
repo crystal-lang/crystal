@@ -1,19 +1,20 @@
 require "./node"
 
-struct XML::Attributes
+class XML::Attributes
   include Enumerable(Node)
 
   def initialize(@node : Node)
   end
 
-  def empty?
+  def empty? : Bool
     return true unless @node.element?
 
     props = self.props
     props.null?
   end
 
-  def [](index : Int)
+  def [](index : Int) : XML::Node
+    # TODO: Optimize to avoid double iteration
     size = self.size
 
     index += size if index < 0
@@ -29,11 +30,11 @@ struct XML::Attributes
     raise IndexError.new
   end
 
-  def [](name : String)
+  def [](name : String) : XML::Node
     self[name]? || raise KeyError.new("Missing attribute: #{name}")
   end
 
-  def []?(name : String)
+  def []?(name : String) : XML::Node?
     find { |node| node.name == name }
   end
 
@@ -42,13 +43,13 @@ struct XML::Attributes
     value
   end
 
-  def delete(name : String)
+  def delete(name : String) : String?
     value = self[name]?.try &.content
     res = LibXML.xmlUnsetProp(@node, name)
     value if res == 0
   end
 
-  def each : Nil
+  def each(&) : Nil
     return unless @node.element?
 
     props = self.props
@@ -60,7 +61,7 @@ struct XML::Attributes
 
   def to_s(io : IO) : Nil
     io << '['
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 

@@ -1,4 +1,11 @@
 require "spec"
+
+{% if flag?(:interpreted) && !flag?(:win32) %}
+  # TODO: figure out how to link against libstdc++ in interpreted code (#14398)
+  pending LLVM::ABI::ARM
+  {% skip_file %}
+{% end %}
+
 require "llvm"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
@@ -9,6 +16,7 @@ private def abi
   triple = "arm-unknown-linux-gnueabihf"
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::ARM.new(machine)
 end
 

@@ -51,7 +51,7 @@ class Time::Location
   # the time zone database.
   #
   # See `Time::Location.load` for details.
-  class InvalidLocationNameError < Exception
+  class InvalidLocationNameError < Time::Error
     getter name, source
 
     def initialize(@name : String, @source : String? = nil)
@@ -63,7 +63,7 @@ class Time::Location
 
   # `InvalidTimezoneOffsetError` is raised if `Time::Location::Zone.new`
   # receives an invalid time zone offset.
-  class InvalidTimezoneOffsetError < Exception
+  class InvalidTimezoneOffsetError < Time::Error
     def initialize(offset : Int)
       super "Invalid time zone offset: #{offset}"
     end
@@ -94,7 +94,7 @@ class Time::Location
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
     # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
-      # Maximium offsets of IANA time zone database are -12:00 and +14:00.
+      # Maximum offsets of IANA time zone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
       raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
@@ -179,7 +179,7 @@ class Time::Location
     def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.unix(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s(io, "%F %T")
       if standard?
         io << " STD"
       else
@@ -223,7 +223,7 @@ class Time::Location
   # Creates a `Location` instance with fixed *offset* in seconds from UTC.
   #
   # The formatted *offset* is used as name.
-  def self.fixed(offset : Int32)
+  def self.fixed(offset : Int32) : self
     zone = Zone.new(nil, offset, false)
     new zone.name, [zone]
   end
@@ -236,10 +236,10 @@ class Time::Location
   #
   # *name* is understood to be a location name in the IANA Time
   # Zone database, such as `"America/New_York"`. As special cases,
-  # `"UTC"` and empty string (`""`) return `Location::UTC`, and
+  # `"UTC"`, `"Etc/UTC"` and empty string (`""`) return `Location::UTC`, and
   # `"Local"` returns `Location.local`.
   #
-  # The implementation uses a list of system-specifc paths to look for a time
+  # The implementation uses a list of system-specific paths to look for a time
   # zone database.
   # The first time zone database entry matching the given name that is
   # successfully loaded and parsed is returned.
@@ -277,7 +277,11 @@ class Time::Location
   # `Location`, unless the time zone database has been updated in between.
   def self.load(name : String) : Location
     case name
-    when "", "UTC"
+    when "", "UTC", "Etc/UTC"
+      # `UTC` is a special identifier, empty string represents a fallback mechanism.
+      # `Etc/UTC` is technically a tzdb identifier which could potentially point to anything.
+      # But we map it to `Location::UTC` directly for convenience which allows it to work
+      # without a copy of the database.
       UTC
     when "Local"
       local
@@ -295,6 +299,21 @@ class Time::Location
       end
 
       if location = load(name, Crystal::System::Time.zone_sources)
+        return location
+      end
+
+      {% if flag?(:android) %}
+        if location = load_android(name, Crystal::System::Time.android_tzdata_sources)
+          return location
+        end
+      {% end %}
+
+      # If none of the database sources contains a suitable location,
+      # try getting it from the operating system.
+      # This is only implemented on Windows. Unix systems usually have a
+      # copy of the time zone database available, and no system API
+      # for loading time zone information.
+      if location = Crystal::System::Time.load_iana_zone(name)
         return location
       end
 
@@ -324,7 +343,7 @@ class Time::Location
   # The environment variable `ENV["TZ"]` is consulted for finding the time zone
   # to use.
   #
-  # * `"UTC"` and empty string (`""`) return `Location::UTC`
+  # * `"UTC"`, `"Etc/UTC"` and empty string (`""`) return `Location::UTC`
   # * Any other value (such as `"Europe/Berlin"`) is tried to be resolved using
   #   `Location.load`.
   # * If `ENV["TZ"]` is not set, the system's local time zone data will be used
@@ -333,7 +352,7 @@ class Time::Location
   #   `Location::UTC` is returned.
   def self.load_local : Location
     case tz = ENV["TZ"]?
-    when "", "UTC"
+    when "", "UTC", "Etc/UTC"
       return UTC
     when Nil
       if localtime = Crystal::System::Time.load_localtime

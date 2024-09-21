@@ -9,7 +9,7 @@ module Crystal::System
       elsif small_buf && name_size > 0
         next name_size
       else
-        raise WinError.new("GetComputerNameExW")
+        raise RuntimeError.from_winerror("Could not get hostname")
       end
     end
   end

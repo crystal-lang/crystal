@@ -1,7 +1,7 @@
 require "spec"
 require "http/client/response"
 
-class HTTP::Client
+class HTTP::Client::Response
   describe Response do
     it "parses response with body" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
@@ -123,6 +123,12 @@ class HTTP::Client
       response.body.should eq("")
     end
 
+    it "parses response without body but Content-Length == 0, block form (#8461)" do
+      Response.from_io(IO::Memory.new("HTTP/1.1 301 OK\r\nContent-Length: 0\r\n\r\n")) do |response|
+        response.body_io.gets_to_end.should eq("")
+      end
+    end
+
     it "parses long request lines" do
       request = Response.from_io?(IO::Memory.new("HTTP/1.1 200 #{"OK" * 600_000}\r\n\r\n"))
       request.should eq(nil)
@@ -148,7 +154,7 @@ class HTTP::Client
 
       it "missing status" do
         expect_raises(Exception, "Invalid HTTP response") do
-          Response.from_io?(IO::Memory.new("HTTTP/1.0\n\nNot an HTTP response"))
+          Response.from_io?(IO::Memory.new("HTTP/1.0\n\nNot an HTTP response"))
         end
       end
 
@@ -217,7 +223,7 @@ class HTTP::Client
 
       io.clear
       response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=baz; path=/\r\nSet-Cookie: quux=baz; path=/\r\n\r\nhello")
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=baz\r\nSet-Cookie: quux=baz\r\n\r\nhello")
     end
 
     it "sets content length from body" do
@@ -298,6 +304,26 @@ class HTTP::Client
       response = Response.new(204, version: "HTTP/1.0", body: "", headers: HTTP::Headers{"Content-Length" => "0"})
       response.status_code.should eq(204)
       response.body.should eq("")
+    end
+
+    it "deletes Content-Encoding and Content-Length headers after gzip decompression" do
+      body = String.build do |io|
+        Compress::Gzip::Writer.open(io, &.print("hello"))
+      end
+      response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
+      response.body.should eq("hello")
+      response.headers["content-encoding"]?.should eq(nil)
+      response.headers["content-length"]?.should eq(nil)
+    end
+
+    it "deletes Content-Encoding and Content-Length headers after deflate decompression" do
+      body = String.build do |io|
+        Compress::Deflate::Writer.open(io, &.print("hello"))
+      end
+      response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: deflate\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
+      response.body.should eq("hello")
+      response.headers["content-encoding"]?.should eq(nil)
+      response.headers["content-length"]?.should eq(nil)
     end
 
     describe "success?" do

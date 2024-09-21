@@ -15,13 +15,17 @@ module Crystal
     end
 
     def self.description
-      formatted_sha = "[#{build_commit}] " if build_commit
-      <<-DOC
-        Crystal #{version} #{formatted_sha}(#{date})
+      String.build do |io|
+        io << "Crystal " << version
+        io << " [" << build_commit << "]" if build_commit
+        io << " (" << date << ")" unless date.empty?
 
-        LLVM: #{llvm_version}
-        Default target: #{self.default_target}
-        DOC
+        io << "\n\nThe compiler was not built in release mode." unless release_mode?
+
+        io << "\n\nLLVM: " << llvm_version
+        io << "\nDefault target: " << host_target
+        io << "\n"
+      end
     end
 
     def self.build_commit
@@ -32,14 +36,22 @@ module Crystal
     end
 
     def self.date
-      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
-      Time.unix(time).to_s("%Y-%m-%d")
+      source_date_epoch = {{ (t = env("SOURCE_DATE_EPOCH")) && !t.empty? ? t.to_i : nil }}
+      if source_date_epoch
+        Time.unix(source_date_epoch).to_s("%Y-%m-%d")
+      else
+        ""
+      end
     end
 
-    @@default_target : Crystal::Codegen::Target?
+    def self.release_mode?
+      {{ flag?(:release) }}
+    end
 
-    def self.default_target : Crystal::Codegen::Target
-      @@default_target ||= begin
+    @@host_target : Crystal::Codegen::Target?
+
+    def self.host_target : Crystal::Codegen::Target
+      @@host_target ||= begin
         target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
 
         if target.linux?
@@ -60,7 +72,7 @@ module Crystal
     def self.linux_runtime_libc
       ldd_version = String.build do |io|
         Process.run("ldd", {"--version"}, output: io, error: io)
-      rescue Errno
+      rescue
         # In case of an error (eg. `ldd` not available), we assume it's gnu.
         return "gnu"
       end

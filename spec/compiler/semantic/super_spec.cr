@@ -2,21 +2,154 @@ require "../../spec_helper"
 
 describe "Semantic: super" do
   it "types super without arguments" do
-    assert_type("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo") { int32 }
+    assert_type("
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          super
+        end
+      end
+
+      Bar.new.foo
+      ") { int32 }
   end
 
   it "types super without arguments and instance variable" do
-    result = assert_type("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; bar = Bar.new; bar.foo; bar") do
-      types["Bar"]
-    end
+    result = assert_type("
+      class Foo
+        def foo
+          @x = 1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          super
+        end
+      end
+
+      bar = Bar.new
+      bar.foo
+      bar
+      ") { types["Bar"] }
+
     mod, type = result.program, result.node.type.as(NonGenericClassType)
 
     superclass = type.superclass.as(NonGenericClassType)
     superclass.instance_vars["@x"].type.should eq(mod.nilable(mod.int32))
   end
 
-  it "types super without arguments but parent has arguments" do
-    assert_type("class Foo; def foo(x); x; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)") { int32 }
+  it "types super with forwarded arguments, parent has parameters" do
+    assert_type("
+      class Foo
+        def foo(x)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def foo(x)
+          super
+        end
+      end
+
+      Bar.new.foo(1)
+      ") { int32 }
+  end
+
+  it "types super with forwarded arguments, def has bare splat parameter (#8895)" do
+    assert_type("
+      class Foo
+        def foo(*, x)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def foo(*, x)
+          super
+        end
+      end
+
+      Bar.new.foo(x: 1)
+      ") { int32 }
+  end
+
+  it "types super with named arguments, def has bare splat parameter (#8895)" do
+    assert_type("
+      class Foo
+        def foo(*, x)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def foo(*, x)
+          super x: x || 'a'
+        end
+      end
+
+      Bar.new.foo(x: 1)
+      ") { union_of int32, char }
+  end
+
+  it "types super with named arguments, def has bare splat parameter (2) (#8895)" do
+    assert_type("
+      class Foo
+        def foo(x)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def foo(x)
+          super x: x || 'a'
+        end
+      end
+
+      Bar.new.foo(1)
+      ") { union_of int32, char }
+  end
+
+  it "types super with forwarded arguments, different internal names (#8895)" do
+    assert_type(%(
+      class Foo
+        def foo(*, x a)
+          a
+        end
+      end
+
+      class Bar < Foo
+        def foo(*, x b)
+          super
+        end
+      end
+
+      Bar.new.foo(x: 1)
+      )) { int32 }
+  end
+
+  it "types super with forwarded arguments, def has double splat parameter (#8895)" do
+    assert_type("
+      class Foo
+        def foo(**opts)
+          opts
+        end
+      end
+
+      class Bar < Foo
+        def foo(**opts)
+          super
+        end
+      end
+
+      Bar.new.foo(x: 1, y: 'a')
+      ") { named_tuple_of({"x": int32, "y": char}) }
   end
 
   it "types super when container method is defined in parent class" do
@@ -82,7 +215,7 @@ describe "Semantic: super" do
       end
 
       Bar.new.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types super when inside fun and forwards args" do
@@ -101,7 +234,7 @@ describe "Semantic: super" do
       end
 
       Bar.new.foo(1)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors no superclass method in top-level" do
@@ -176,7 +309,7 @@ describe "Semantic: super" do
 
       Bar.new(1, 2)
       ),
-      "no overload matches 'Foo#initialize'"
+      "expected argument #1 to 'Foo#initialize' to be Char, not Int32"
   end
 
   it "calls super in module method (1) (#556)" do

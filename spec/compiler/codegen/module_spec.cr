@@ -597,7 +597,7 @@ describe "Code gen: module" do
       )).to_i.should eq(10)
   end
 
-  it "codegend dispatch of union with module (#3647)" do
+  it "codegens dispatch of union with module (#3647)" do
     run(%(
       module Moo
       end

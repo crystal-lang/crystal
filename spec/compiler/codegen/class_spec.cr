@@ -116,10 +116,8 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "codgens virtual method of generic class" do
+  it "codegens virtual method of generic class" do
     run("
-      require \"char\"
-
       class Object
         def foo
           bar
@@ -313,6 +311,150 @@ describe "Code gen: class" do
       foo = Foo.new(1) || Bar.new(2)
       foo.@x
       )).to_i.should eq(1)
+  end
+
+  it "reads a union type instance var (reference union, first type)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Bool)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, true)
+      union = foo || bar
+      var = union.@x
+      if var.is_a?(Int32)
+        var
+      else
+        20
+      end
+      )).to_i.should eq(10)
+  end
+
+  it "reads a union type instance var (reference union, second type)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, 'a')
+      union = bar || foo
+      var = union.@x
+      if var.is_a?(Char)
+        var
+      else
+        'b'
+      end
+      )).to_i.should eq('a'.ord)
+  end
+
+  it "reads a union type instance var (mixed union, first type)" do
+    run(%(
+      struct Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Bool)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, true)
+      union = foo || bar
+      var = union.@x
+      if var.is_a?(Int32)
+        var
+      else
+        20
+      end
+      )).to_i.should eq(10)
+  end
+
+  it "reads a union type instance var (mixed union, second type)" do
+    run(%(
+      struct Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, 'a')
+      union = bar || foo
+      var = union.@x
+      if var.is_a?(Char)
+        var
+      else
+        'b'
+      end
+      )).to_i.should eq('a'.ord)
+  end
+
+  it "never considers read instance var as closure (#12181)" do
+    codegen(%(
+      class Foo
+        @x = 1
+      end
+
+      def bug
+        ->{
+          Foo.new.@x
+        }
+      end
+
+      bug
+      ))
   end
 
   it "runs with nilable instance var" do
@@ -715,8 +857,6 @@ describe "Code gen: class" do
 
   it "codegens singleton (#718)" do
     run(%(
-      require "prelude"
-
       class Singleton
         @@instance = new
 
@@ -1070,5 +1210,107 @@ describe "Code gen: class" do
 
       Foo(Int32).new.x
       )).to_i.should eq(42)
+  end
+
+  pending "codegens assignment of generic metaclasses (1) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo
+      x = Bar
+      x.name
+      )).to_string.should eq("Bar(T)")
+  end
+
+  pending "codegens assignment of generic metaclasses (2) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses (3) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo(Int32)
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses (4) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo(String)
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses, base is non-generic (1) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo; end
+      class Bar(T) < Foo; end
+
+      x = Foo
+      x = Bar
+      x.name
+      )).to_string.should eq("Bar(T)")
+  end
+
+  it "codegens assignment of generic metaclasses, base is non-generic (2) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo; end
+      class Bar(T) < Foo; end
+
+      x = Foo
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
   end
 end

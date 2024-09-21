@@ -164,10 +164,29 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(3)
   end
 
+  it "codegens proc that takes and returns large extern struct by value" do
+    run(<<-CRYSTAL).to_i.should eq(149)
+      @[Extern]
+      struct Foo
+        @unused = uninitialized Int64
+
+        def initialize(@x : Int32, @y : Int32, @z : Int32)
+        end
+      end
+
+      f = ->(foo : Foo) {
+        Foo.new(foo.@x, foo.@y &* 2, foo.@z &* 3)
+      }
+
+      foo = f.call(Foo.new(100, 20, 3))
+      foo.@x &+ foo.@y &+ foo.@z
+      CRYSTAL
+  end
+
   # These specs *should* also work for 32 bits, but for now we'll
   # make sure they work in 64 bits (they probably work in 32 bits too,
   # it's just that the specs need to be a bit different)
-  {% if flag?(:x86_64) %}
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
     it "codegens proc that takes an extern struct with C ABI" do
       test_c(
         %(
@@ -431,9 +450,9 @@ describe "Codegen: extern struct" do
       test_c(
         %(
             struct Struct {
-              long x;
-              long y;
-              long z;
+              long long x;
+              long long y;
+              long long z;
             };
 
             struct Struct foo(struct Struct (*callback)(struct Struct)) {

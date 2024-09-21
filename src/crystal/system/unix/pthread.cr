@@ -1,137 +1,100 @@
 require "c/pthread"
 require "c/sched"
+require "../panic"
 
-class Thread
-  # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  protected class_getter(threads) { Thread::LinkedList(Thread).new }
+module Crystal::System::Thread
+  alias Handle = LibC::PthreadT
 
-  @th : LibC::PthreadT
-  @exception : Exception?
-  @detached = Atomic(UInt8).new(0)
-  @main_fiber : Fiber?
-
-  # :nodoc:
-  property next : Thread?
-
-  # :nodoc:
-  property previous : Thread?
-
-  def self.unsafe_each
-    threads.unsafe_each { |thread| yield thread }
+  def to_unsafe
+    @system_handle
   end
 
-  # Starts a new system thread.
-  def initialize(&@func : ->)
-    @th = uninitialized LibC::PthreadT
+  private def init_handle
+    # NOTE: the thread may start before `pthread_create` returns, so
+    # `@system_handle` must be set as soon as possible; we cannot use a separate
+    # handle and assign it to `@system_handle`, which would have been too late
+    ret = GC.pthread_create(
+      thread: pointerof(@system_handle),
+      attr: Pointer(LibC::PthreadAttrT).null,
+      start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
+      arg: self.as(Void*),
+    )
 
-    ret = GC.pthread_create(pointerof(@th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
-      (data.as(Thread)).start
-      Pointer(Void).null
-    }, self.as(Void*))
-
-    if ret != 0
-      raise Errno.new("pthread_create", ret)
-    end
+    raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
   end
 
-  # Used once to initialize the thread object representing the main thread of
-  # the process (that already exists).
-  def initialize
-    @func = ->{}
-    @th = LibC.pthread_self
-    @main_fiber = Fiber.new(stack_address, self)
-
-    Thread.threads.push(self)
+  def self.current_handle : Handle
+    LibC.pthread_self
   end
 
-  private def detach
-    if @detached.compare_and_set(0, 1).last
-      yield
-    end
+  def self.yield_current : Nil
+    ret = LibC.sched_yield
+    raise RuntimeError.from_errno("sched_yield") unless ret == 0
   end
 
-  # Suspends the current thread until this thread terminates.
-  def join
-    detach { GC.pthread_join(@th) }
-
-    if exception = @exception
-      raise exception
-    end
-  end
-
-  {% if flag?(:android) || flag?(:openbsd) %}
-    # no thread local storage (TLS) for OpenBSD or Android,
-    # we use pthread's specific storage (TSS) instead:
+  # no thread local storage (TLS) for OpenBSD,
+  # we use pthread's specific storage (TSS) instead
+  #
+  # Android appears to support TLS to some degree, but executables fail with
+  # an underaligned TLS segment, see https://github.com/crystal-lang/crystal/issues/13951
+  {% if flag?(:openbsd) || flag?(:android) %}
     @@current_key : LibC::PthreadKeyT
 
     @@current_key = begin
       ret = LibC.pthread_key_create(out current_key, nil)
-      raise Errno.new("pthread_key_create", ret) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_key_create", Errno.new(ret)) unless ret == 0
       current_key
     end
 
-    # Returns the Thread object associated to the running system thread.
-    def self.current : Thread
+    def self.current_thread : ::Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
-        ptr.as(Thread)
+        ptr.as(::Thread)
       else
-        # Thread#start sets @@current as soon it starts. Thus we know
-        # that if @@current is not set then we are in the main thread
-        self.current = new
+        # Thread#start sets `Thread.current` as soon it starts. Thus we know
+        # that if `Thread.current` is not set then we are in the main thread
+        self.current_thread = ::Thread.new
       end
     end
 
-    # Associates the Thread object to the running system thread.
-    protected def self.current=(thread : Thread) : Thread
+    def self.current_thread? : ::Thread?
+      if ptr = LibC.pthread_getspecific(@@current_key)
+        ptr.as(::Thread)
+      end
+    end
+
+    def self.current_thread=(thread : ::Thread)
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
-      raise Errno.new("pthread_setspecific", ret) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_setspecific", Errno.new(ret)) unless ret == 0
       thread
     end
   {% else %}
     @[ThreadLocal]
-    @@current : Thread?
+    class_property current_thread : ::Thread { ::Thread.new }
 
-    # Returns the Thread object associated to the running system thread.
-    def self.current : Thread
-      # Thread#start sets @@current as soon it starts. Thus we know
-      # that if @@current is not set then we are in the main thread
-      @@current ||= new
-    end
-
-    # Associates the Thread object to the running system thread.
-    protected def self.current=(@@current : Thread) : Thread
+    def self.current_thread? : ::Thread?
+      @@current_thread
     end
   {% end %}
 
-  def self.yield
-    ret = LibC.sched_yield
-    raise Errno.new("sched_yield") unless ret == 0
-  end
+  def self.sleep(time : ::Time::Span) : Nil
+    req = uninitialized LibC::Timespec
+    req.tv_sec = typeof(req.tv_sec).new(time.seconds)
+    req.tv_nsec = typeof(req.tv_nsec).new(time.nanoseconds)
 
-  # Returns the Fiber representing the thread's main stack.
-  def main_fiber
-    @main_fiber.not_nil!
-  end
-
-  # :nodoc:
-  def scheduler
-    @scheduler ||= Crystal::Scheduler.new(main_fiber)
-  end
-
-  protected def start
-    Thread.threads.push(self)
-    Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address, self)
-
-    begin
-      @func.call
-    rescue ex
-      @exception = ex
-    ensure
-      Thread.threads.delete(self)
-      Fiber.inactive(fiber)
-      detach { GC.pthread_detach(@th) }
+    loop do
+      return if LibC.nanosleep(pointerof(req), out rem) == 0
+      raise RuntimeError.from_errno("nanosleep() failed") unless Errno.value == Errno::EINTR
+      req = rem
     end
+  end
+
+  private def system_join : Exception?
+    ret = GC.pthread_join(@system_handle)
+    RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
+  end
+
+  private def system_close
+    GC.pthread_detach(@system_handle)
   end
 
   private def stack_address : Void*
@@ -139,28 +102,28 @@ class Thread
 
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
-      address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
-    {% elsif flag?(:freebsd) %}
+      address = LibC.pthread_get_stackaddr_np(@system_handle) - LibC.pthread_get_stacksize_np(@system_handle)
+    {% elsif (flag?(:bsd) && !flag?(:openbsd)) || flag?(:solaris) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
         LibC.pthread_attr_destroy(pointerof(attr))
-        raise Errno.new("pthread_attr_init", ret)
+        raise RuntimeError.from_os_error("pthread_attr_init", Errno.new(ret))
       end
 
-      if LibC.pthread_attr_get_np(@th, pointerof(attr)) == 0
+      if LibC.pthread_attr_get_np(@system_handle, pointerof(attr)) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
-      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:linux) %}
-      if LibC.pthread_getattr_np(@th, out attr) == 0
+      if LibC.pthread_getattr_np(@system_handle, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
-      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:openbsd) %}
-      ret = LibC.pthread_stackseg_np(@th, out stack)
-      raise Errno.new("pthread_stackseg_np", ret) unless ret == 0
+      ret = LibC.pthread_stackseg_np(@system_handle, out stack)
+      raise RuntimeError.from_os_error("pthread_stackseg_np", Errno.new(ret)) unless ret == 0
 
       address =
         if LibC.pthread_main_np == 1
@@ -168,13 +131,117 @@ class Thread
         else
           stack.ss_sp - stack.ss_size
         end
+    {% else %}
+      {% raise "No `Crystal::System::Thread#stack_address` implementation available" %}
     {% end %}
 
     address
   end
 
-  # :nodoc:
-  def to_unsafe
-    @th
+  # Warning: must be called from the current thread itself, because Darwin
+  # doesn't allow to set the name of any thread but the current one!
+  private def system_name=(name : String) : String
+    {% if flag?(:darwin) %}
+      LibC.pthread_setname_np(name)
+    {% elsif flag?(:netbsd) %}
+      LibC.pthread_setname_np(@system_handle, name, nil)
+    {% elsif LibC.has_method?(:pthread_setname_np) %}
+      LibC.pthread_setname_np(@system_handle, name)
+    {% elsif LibC.has_method?(:pthread_set_name_np) %}
+      LibC.pthread_set_name_np(@system_handle, name)
+    {% else %}
+      {% raise "No `Crystal::System::Thread#system_name` implementation available" %}
+    {% end %}
+    name
   end
+
+  @suspended = Atomic(Bool).new(false)
+
+  def self.init_suspend_resume : Nil
+    install_sig_suspend_signal_handler
+    install_sig_resume_signal_handler
+  end
+
+  private def self.install_sig_suspend_signal_handler
+    action = LibC::Sigaction.new
+    action.sa_flags = LibC::SA_SIGINFO
+    action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
+      # notify that the thread has been interrupted
+      Thread.current_thread.@suspended.set(true)
+
+      # block all signals but SIG_RESUME
+      mask = LibC::SigsetT.new
+      LibC.sigfillset(pointerof(mask))
+      LibC.sigdelset(pointerof(mask), SIG_RESUME)
+
+      # suspend the thread until it receives the SIG_RESUME signal
+      LibC.sigsuspend(pointerof(mask))
+    end
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+    LibC.sigaction(SIG_SUSPEND, pointerof(action), nil)
+  end
+
+  private def self.install_sig_resume_signal_handler
+    action = LibC::Sigaction.new
+    action.sa_flags = 0
+    action.sa_sigaction = LibC::SigactionHandlerT.new do |_, _, _|
+      # do nothing (a handler is still required to receive the signal)
+    end
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+    LibC.sigaction(SIG_RESUME, pointerof(action), nil)
+  end
+
+  private def system_suspend : Nil
+    @suspended.set(false)
+
+    if LibC.pthread_kill(@system_handle, SIG_SUSPEND) == -1
+      System.panic("pthread_kill()", Errno.value)
+    end
+  end
+
+  private def system_wait_suspended : Nil
+    until @suspended.get
+      Thread.yield_current
+    end
+  end
+
+  private def system_resume : Nil
+    if LibC.pthread_kill(@system_handle, SIG_RESUME) == -1
+      System.panic("pthread_kill()", Errno.value)
+    end
+  end
+
+  # the suspend/resume signals follow BDWGC
+
+  private SIG_SUSPEND =
+    {% if flag?(:linux) %}
+      LibC::SIGPWR
+    {% elsif LibC.has_constant?(:SIGRTMIN) %}
+      LibC::SIGRTMIN + 6
+    {% else %}
+      LibC::SIGXFSZ
+    {% end %}
+
+  private SIG_RESUME =
+    {% if LibC.has_constant?(:SIGRTMIN) %}
+      LibC::SIGRTMIN + 5
+    {% else %}
+      LibC::SIGXCPU
+    {% end %}
 end
+
+# In musl (alpine) the calls to unwind API segfaults
+# when the binary is statically linked. This is because
+# some symbols like `pthread_once` are defined as "weak"
+# and, for some reason, not linked into the final binary.
+# Adding an explicit reference to the symbol ensures it's
+# included in the statically linked binary.
+{% if flag?(:musl) && flag?(:static) %}
+  lib LibC
+    fun pthread_once(Void*, Void*)
+  end
+
+  fun __crystal_static_musl_workaround
+    LibC.pthread_once(nil, nil)
+  end
+{% end %}

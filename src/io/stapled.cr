@@ -30,10 +30,10 @@ class IO::Stapled < IO
   end
 
   # Reads a slice from `reader`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
-    @reader.read(slice)
+    @reader.read(slice).to_i32
   end
 
   # Gets a string from `reader`.
@@ -55,6 +55,13 @@ class IO::Stapled < IO
     check_open
 
     @reader.skip(bytes_count)
+  end
+
+  # Skips `reader`.
+  def skip_to_end : Nil
+    check_open
+
+    @reader.skip_to_end
   end
 
   # Writes a byte to `writer`.
@@ -100,7 +107,7 @@ class IO::Stapled < IO
   #
   # Both endpoints and the underlying `IO`s are closed after the block
   # (even if `sync_close?` is `false`).
-  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false)
+  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false, &)
     IO.pipe(read_blocking, write_blocking) do |a_read, a_write|
       IO.pipe(read_blocking, write_blocking) do |b_read, b_write|
         a, b = new(a_read, b_write, true), new(b_read, a_write, true)

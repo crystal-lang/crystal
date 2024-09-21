@@ -15,20 +15,9 @@ class Crystal::Program
   record CompiledMacroRun, filename : String, elapsed : Time::Span, reused : Bool
   property compiled_macros_cache = {} of String => CompiledMacroRun
 
-  # Returns a new temporary file, which tries to be stored in the
-  # cache directory associated to a program. This file is then added
-  # to `tempfiles` so they can eventually be deleted.
-  def new_tempfile(basename)
-    filename = if cache_dir = @cache_dir
-                 File.join(cache_dir, basename)
-               else
-                 Crystal.tempfile(basename)
-               end
-    tempfiles << filename
-    filename
-  end
-
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
+    check_call_to_deprecated_macro a_macro, call
+
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
@@ -41,23 +30,21 @@ class Crystal::Program
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal)
-    parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, &.parse(mode)
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal, visibility : Visibility = :public)
+    parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, visibility, &.parse(mode)
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false)
-    begin
-      parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
-      parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
-      parser.macro_expansion_pragmas = macro_expansion_pragmas
-      parser.visibility = node.visibility
-      parser.def_nest = 1 if current_def && !current_def.is_a?(External)
-      parser.fun_nest = 1 if current_def && current_def.is_a?(External)
-      parser.type_nest = 1 if inside_type
-      parser.wants_doc = @program.wants_doc?
-      generated_node = yield parser
-      normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
-    end
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public, &)
+    parser = @program.new_parser(generated_source, var_scopes: [vars.dup])
+    parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
+    parser.macro_expansion_pragmas = macro_expansion_pragmas
+    parser.visibility = visibility
+    parser.def_nest = 1 if current_def && !current_def.is_a?(External)
+    parser.fun_nest = 1 if current_def && current_def.is_a?(External)
+    parser.type_nest = 1 if inside_type
+    parser.wants_doc = @program.wants_doc?
+    generated_node = yield parser
+    normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
   end
 
   record MacroRunResult, stdout : String, stderr : String, status : Process::Status
@@ -94,32 +81,19 @@ class Crystal::Program
     recorded_requires_path = File.join(program_dir, "recorded_requires")
     requires_path = File.join(program_dir, "requires")
 
-    # First, update times for the program dir, so it remains in the cache longer
-    # (this is specially useful if a macro run program is used by multiple programs)
-    now = Time.utc
-    File.utime(now, now, program_dir)
+    {% unless flag?(:win32) %}
+      # First, update times for the program dir, so it remains in the cache longer
+      # (this is specially useful if a macro run program is used by multiple programs)
+      now = Time.utc
+      File.utime(now, now, program_dir)
+    {% end %}
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
       elapsed_time = Time.monotonic - time
       return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
-    compiler = Compiler.new
-
-    # Although release takes longer, once the bc is cached in .crystal
-    # the subsequent times will make program execution faster.
-    compiler.release = true
-
-    # Don't cleanup old directories after compiling: it might happen
-    # that in doing so we remove the directory associated with the current
-    # compilation (for example if we have more than 10 macro runs, the current
-    # directory will be the oldest).
-    compiler.cleanup = false
-
-    # No need to generate debug info for macro run programs
-    compiler.debug = Crystal::Debug::None
-
-    result = compiler.compile Compiler::Source.new(filename, source), executable_path
+    result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
 
     # Write the new files from which 'filename' depends into the cache dir
     # (here we store how to obtain these files, because a require might use
@@ -141,6 +115,47 @@ class Crystal::Program
 
     elapsed_time = Time.monotonic - time
     CompiledMacroRun.new(executable_path, elapsed_time, false)
+  end
+
+  @host_compiler : Compiler?
+
+  # Creates a compiler instance with the host as target used for macro_run
+  # compilation.
+  def host_compiler
+    @host_compiler ||= Compiler.new.tap do |host_compiler|
+      if compiler = self.compiler
+        # When cross-compiling, the host compiler shouldn't copy the config for
+        # the target compiler and use the system defaults instead.
+        # TODO: Add configuration overrides for host compiler to CLI.
+        unless compiler.cross_compile?
+          host_compiler.flags = compiler.flags
+          host_compiler.dump_ll = compiler.dump_ll?
+          host_compiler.link_flags = compiler.link_flags
+          host_compiler.mcpu = compiler.mcpu
+          host_compiler.mattr = compiler.mattr
+          host_compiler.mcmodel = compiler.mcmodel
+          host_compiler.single_module = compiler.single_module?
+          host_compiler.static = compiler.static?
+        end
+
+        # Copy default settings that are not specific to host and target context:
+        host_compiler.n_threads = compiler.n_threads
+        host_compiler.prelude = compiler.prelude
+      end
+
+      # Although release takes longer, once the bc is cached in .crystal
+      # the subsequent times will make program execution faster.
+      host_compiler.release!
+
+      # Don't cleanup old directories after compiling: it might happen
+      # that in doing so we remove the directory associated with the current
+      # compilation (for example if we have more than 10 macro runs, the current
+      # directory will be the oldest).
+      host_compiler.cleanup = false
+
+      # No need to generate debug info for macro run programs
+      host_compiler.debug = Crystal::Debug::None
+    end
   end
 
   private def can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
@@ -169,7 +184,7 @@ class Crystal::Program
       begin
         files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
         required_files.concat(files) if files
-      rescue Crystal::CrystalPath::Error
+      rescue Crystal::CrystalPath::NotFoundError
         # Maybe the file is gone
         next
       end

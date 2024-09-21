@@ -17,7 +17,7 @@ module OpenSSL::SSL::HostnameValidation
   # The Common Name (CN) entry will only be used if no SAN entries are present
   # in the certificate, as per
   # [RFC 6125, Section 6.4.4](https://tools.ietf.org/html/rfc6125#section-6.4.4).
-  def self.validate_hostname(hostname : String, server_cert : LibCrypto::X509)
+  def self.validate_hostname(hostname : String, server_cert : LibCrypto::X509) : Result
     return Result::Error if server_cert.null?
     result = matches_subject_alternative_name(hostname, server_cert)
     result = matches_common_name(hostname, server_cert) if result.no_san_present?
@@ -27,52 +27,58 @@ module OpenSSL::SSL::HostnameValidation
   # Matches hostname against Subject Alternate Name (SAN) entries of certificate.
   #
   # Adapted from https://wiki.openssl.org/index.php/Hostname_validation
-  def self.matches_subject_alternative_name(hostname, server_cert : LibCrypto::X509)
+  def self.matches_subject_alternative_name(hostname, server_cert : LibCrypto::X509) : Result
     san_names = LibCrypto.x509_get_ext_d2i(server_cert, LibCrypto::NID_subject_alt_name, nil, nil)
     return Result::NoSANPresent if san_names.null?
 
-    LibCrypto.sk_num(san_names).times do |i|
-      current_name = LibCrypto.sk_value(san_names, i).as(LibCrypto::GENERAL_NAME*).value
+    begin
+      LibCrypto.sk_num(san_names).times do |i|
+        current_name = LibCrypto.sk_value(san_names, i).as(LibCrypto::GENERAL_NAME*).value
 
-      case current_name.type
-      when LibCrypto::GEN_DNS
-        dns_name = LibCrypto.asn1_string_data(current_name.value)
-        dns_name_len = LibCrypto.asn1_string_length(current_name.value)
-        return Result::MalformedCertificate if dns_name_len != LibC.strlen(dns_name)
+        case current_name.type
+        when LibCrypto::GEN_DNS
+          dns_name = LibCrypto.asn1_string_data(current_name.value)
+          dns_name_len = LibCrypto.asn1_string_length(current_name.value)
+          return Result::MalformedCertificate if dns_name_len != LibC.strlen(dns_name)
 
-        pattern = String.new(dns_name, dns_name_len)
-        return Result::MatchFound if matches_hostname?(pattern, hostname)
-      when LibCrypto::GEN_IPADD
-        data = LibCrypto.asn1_string_data(current_name.value)
-        len = LibCrypto.asn1_string_length(current_name.value)
+          pattern = String.new(dns_name, dns_name_len)
+          return Result::MatchFound if matches_hostname?(pattern, hostname)
+        when LibCrypto::GEN_IPADD
+          data = Slice.new(LibCrypto.asn1_string_data(current_name.value), LibCrypto.asn1_string_length(current_name.value))
 
-        case len
-        when 4
-          addr = uninitialized LibC::InAddr
-          if LibC.inet_pton(LibC::AF_INET, hostname, pointerof(addr).as(Void*)) > 0
-            return Result::MatchFound if addr == data.as(LibC::InAddr*).value
+          case data.size
+          when 4
+            if v4_fields = ::Socket::IPAddress.parse_v4_fields?(hostname)
+              return Result::MatchFound if v4_fields.to_slice == data
+            end
+          when 16
+            if v6_fields = ::Socket::IPAddress.parse_v6_fields?(hostname)
+              {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
+                v6_fields.map! &.byte_swap
+              {% end %}
+              return Result::MatchFound if v6_fields.to_slice.to_unsafe_bytes == data
+            end
+          else
+            # not a length we expect
           end
-        when 16
-          addr6 = uninitialized LibC::In6Addr
-          if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
-            return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
-          end
+        else
+          # not a type we expect
         end
       end
-    end
 
-    Result::MatchNotFound
-  ensure
-    LibCrypto.sk_pop_free(san_names, ->(ptr : Void*) {
-      LibCrypto.sk_free(ptr)
-    })
+      Result::MatchNotFound
+    ensure
+      LibCrypto.sk_pop_free(san_names, ->(ptr : Void*) {
+        LibCrypto.sk_free(ptr)
+      })
+    end
   end
 
   # Matches hostname from Common Name (CN) entry of certificate. Should only be
   # called if no SAN entries could be found in certificate.
   #
   # Adapted from https://wiki.openssl.org/index.php/Hostname_validation
-  def self.matches_common_name(hostname, server_cert : LibCrypto::X509)
+  def self.matches_common_name(hostname, server_cert : LibCrypto::X509) : Result
     subject = LibCrypto.x509_get_subject_name(server_cert)
 
     index = LibCrypto.x509_name_get_index_by_nid(subject, LibCrypto::NID_commonName, -1)
@@ -115,7 +121,7 @@ module OpenSSL::SSL::HostnameValidation
   # Adapted from cURL:
   # Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
   # https://github.com/curl/curl/blob/curl-7_41_0/lib/hostcheck.c
-  def self.matches_hostname?(pattern, hostname)
+  def self.matches_hostname?(pattern, hostname) : Bool
     pattern = pattern.chomp('.').downcase
     hostname = hostname.chomp('.').downcase
 
@@ -129,7 +135,7 @@ module OpenSSL::SSL::HostnameValidation
     end
 
     # fail match when hostname is an IP address
-    if ::Socket.ip?(hostname)
+    if ::Socket::IPAddress.valid?(hostname)
       return false
     end
 

@@ -22,6 +22,9 @@ class Crystal::RecursiveStructChecker
 
   def run
     check_types(@program)
+    @program.file_modules.each_value do |file_module|
+      check_types(file_module)
+    end
   end
 
   def check_types(type)
@@ -31,8 +34,8 @@ class Crystal::RecursiveStructChecker
   end
 
   def check_single(type)
-    return if @all_checked.includes?(type)
-    @all_checked << type
+    has_not_been_checked = @all_checked.add?(type)
+    return unless has_not_been_checked
 
     if struct?(type)
       target = type
@@ -54,7 +57,7 @@ class Crystal::RecursiveStructChecker
 
   def check_generic_instances(type)
     if type.struct? && type.is_a?(GenericType)
-      type.generic_types.each_value do |instance|
+      type.each_instantiated_type do |instance|
         check_single(instance)
       end
     end
@@ -180,7 +183,7 @@ class Crystal::RecursiveStructChecker
     type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.abstract?
   end
 
-  def push(path, type)
+  def push(path, type, &)
     if path.last? == type
       yield
     else

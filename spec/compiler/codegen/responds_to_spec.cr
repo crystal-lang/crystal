@@ -29,7 +29,7 @@ describe "Codegen: responds_to?" do
     run("class Reference; def foo; end; end; (1 == 2 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
   end
 
-  it "codegends responds_to? with generic class (1)" do
+  it "codegens responds_to? with generic class (1)" do
     run(%(
       class Foo(T)
         def foo
@@ -40,7 +40,7 @@ describe "Codegen: responds_to?" do
       )).to_b.should be_true
   end
 
-  it "codegends responds_to? with generic class (2)" do
+  it "codegens responds_to? with generic class (2)" do
     run(%(
       class Foo(T)
         def foo
@@ -49,6 +49,18 @@ describe "Codegen: responds_to?" do
 
       Foo(Int32).new.responds_to?(:bar)
       )).to_b.should be_false
+  end
+
+  it "doesn't error if result is discarded (#14113)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo
+        def foo
+        end
+      end
+
+      (Foo.new || "").responds_to?(:foo)
+      1
+      CRYSTAL
   end
 
   it "works with virtual type" do
@@ -133,6 +145,40 @@ describe "Codegen: responds_to?" do
       )).to_b.should be_false
   end
 
+  it "works with generic virtual superclass (1)" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar.new.as(Foo(Int32))
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with generic virtual superclass (2)" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar(Int32).new.as(Foo(Int32))
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
   it "works with module" do
     run(%(
       module Moo
@@ -160,6 +206,42 @@ describe "Codegen: responds_to?" do
 
       moo = ptr.value
       moo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with generic virtual module (1)" do
+    run(%(
+      module Foo(T)
+      end
+
+      class Bar
+        include Foo(Int32)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar.new.as(Foo(Int32))
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with generic virtual module (2) (#8334)" do
+    run(%(
+      module Foo(T)
+      end
+
+      class Bar(T)
+        include Foo(T)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar(Int32).new.as(Foo(Int32))
+      foo.responds_to?(:foo)
       )).to_b.should be_true
   end
 

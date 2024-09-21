@@ -18,8 +18,13 @@ module Spec
 
     # :nodoc:
     def run
-      Spec.root_context.check_nesting_spec(file, line) do
-        Spec.formatters.each(&.before_example(description))
+      @parent.cli.root_context.check_nesting_spec(file, line) do
+        @parent.cli.formatters.each(&.before_example(description))
+
+        if @parent.cli.dry_run?
+          @parent.report(:success, description, file, line)
+          return
+        end
 
         unless block = @block
           @parent.report(:pending, description, file, line)
@@ -29,12 +34,8 @@ module Spec
         non_nil_block = block
         start = Time.monotonic
 
-        Spec.run_before_each_hooks
-
         ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
         ran || internal_run(start, non_nil_block)
-
-        Spec.run_after_each_hooks
 
         # We do this to give a chance for signals (like CTRL+C) to be handled,
         # which currently are only handled when there's a fiber switch
@@ -50,10 +51,12 @@ module Spec
       @parent.report(:success, description, file, line, Time.monotonic - start)
     rescue ex : Spec::AssertionFailed
       @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
+      @parent.cli.abort! if @parent.cli.fail_fast?
+    rescue ex : Spec::ExamplePending
+      @parent.report(:pending, description, file, line, Time.monotonic - start)
     rescue ex
       @parent.report(:error, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
+      @parent.cli.abort! if @parent.cli.fail_fast?
     ensure
       @parent.run_after_each_hooks
     end

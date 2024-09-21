@@ -1,17 +1,7 @@
-# `Punycode` provides an interface for IDNA encoding (RFC 5980),
-# which is defined in RFC 3493
-#
-# Implementation based on Mathias Bynens `punnycode.js` project
-# https://github.com/bestiejs/punycode.js/
-#
-# RFC 3492:
-# Method to use non-ascii characters as host name of URI
-# https://www.ietf.org/rfc/rfc3492.txt
-#
-# RFC 5980:
-# Internationalized Domain Names in Application
-# https://www.ietf.org/rfc/rfc5980.txt
 class URI
+  # `Punycode` provides an interface for IDNA encoding ([RFC 5980](https://tools.ietf.org/html/rfc5980)), defined in [RFC 3492](https://tools.ietf.org/html/rfc3492).
+  #
+  # Implementation based on Mathias Bynens' [punnycode.js](https://github.com/bestiejs/punycode.js) project.
   class Punycode
     private BASE         =  36
     private TMIN         =   1
@@ -36,11 +26,11 @@ class URI
       k + (((BASE - TMIN + 1) * delta) // (delta + SKEW))
     end
 
-    def self.encode(string)
+    def self.encode(string) : String
       String.build { |io| encode string, io }
     end
 
-    def self.encode(string, io)
+    def self.encode(string, io) : Nil
       others = [] of Char
 
       string.each_char do |c|
@@ -97,7 +87,7 @@ class URI
       end
     end
 
-    def self.decode(string)
+    def self.decode(string) : String
       output, _, rest = string.rpartition(DELIMITER)
       output = output.chars
 
@@ -148,7 +138,7 @@ class URI
       output.join
     end
 
-    def self.to_ascii(string)
+    def self.to_ascii(string) : String
       return string if string.ascii_only?
 
       String.build do |io|

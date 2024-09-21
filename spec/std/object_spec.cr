@@ -11,6 +11,8 @@ private class StringWrapper
   end
 end
 
+private EQ_OPERATORS = %w(<= >= == != []= ===)
+
 private class TestObject
   getter getter1
   getter getter2 : Int32
@@ -112,24 +114,48 @@ private class TestObject
   def []=(key, value)
     {key, value}
   end
+
+  # NOTE: these methods are a syntax error in older versions
+  {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+    {% for op in EQ_OPERATORS %}
+      def {{ op.id }}(*args, **opts)
+        [args, opts]
+      end
+
+      def {{ op.id }}(*args, **opts, &)
+        [args, opts, yield]
+      end
+    {% end %}
+  {% end %}
+
+  annotation TestAnnotation
+  end
+
+  @[TestAnnotation]
+  property(x : Int32) { 1 }
+
+  def self.test_annotation_count
+    {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
+  end
+
+  def self.do_set_crystal_type_id(ptr)
+    set_crystal_type_id(ptr)
+  end
 end
 
 private class DelegatedTestObject
   delegate :property1=, to: @test_object
-  delegate :[]=, to: @test_object
+
+  {% for op in EQ_OPERATORS %}
+    delegate {{ op.id.symbolize }}, to: @test_object
+  {% end %}
 
   def initialize(@test_object : TestObject)
   end
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
 end
@@ -142,6 +168,28 @@ private class HashedTestObject
   end
 
   def_hash :a, :b
+end
+
+private struct NonReflexive
+  def ==(other)
+    false
+  end
+end
+
+private class DefEquals
+  def initialize
+    @x = NonReflexive.new
+  end
+
+  def_equals @x
+end
+
+private struct TestMutableStruct
+  getter x = 0
+
+  def foo
+    @x += 1
+  end
 end
 
 describe Object do
@@ -176,6 +224,22 @@ describe Object do
       delegated = DelegatedTestObject.new(test_object)
       (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
+
+    {% if compare_versions(Crystal::VERSION, "1.12.0-dev") >= 0 %}
+      {% for op in EQ_OPERATORS %}
+        it "forwards \#{{ op.id }} with multiple parameters" do
+          test_object = TestObject.new
+          delegated = DelegatedTestObject.new(test_object)
+          delegated.{{ op.id }}(1, 2, a: 3, b: 4).should eq [{1, 2}, {a: 3, b: 4}]
+        end
+
+        it "forwards \#{{ op.id }} with multiple parameters and block parameter" do
+          test_object = TestObject.new
+          delegated = DelegatedTestObject.new(test_object)
+          delegated.{{ op.id }}(1, 2, a: 3, b: 4) { 5 }.should eq [{1, 2}, {a: 3, b: 4}, 5]
+        end
+      {% end %}
+    {% end %}
   end
 
   describe "getter" do
@@ -444,13 +508,33 @@ describe Object do
     end
   end
 
+  describe "#in?" do
+    it "works with Enumerable-s" do
+      "foo".in?(["foo", "bar"]).should be_true
+      "bar".in?({"foo", "baz"}).should be_false
+      42.in?(0..100).should be_true
+      4242.in?(0..100).should be_false
+    end
+
+    it "works with splatted arguments" do
+      "baz".in?("foo", "bar").should be_false
+      1.in?(1, 10, 100).should be_true
+    end
+
+    it "works with other objects implementing #includes?" do
+      "o".in?("foo").should be_true
+      'o'.in?("foo").should be_true
+      'x'.in?("foo").should be_false
+    end
+  end
+
   it "#unsafe_as" do
     0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
   end
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do
@@ -461,5 +545,63 @@ describe Object do
     it "shouldn't return same hash for different property values" do
       HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
     end
+  end
+
+  it "applies annotation to lazy property (#9139)" do
+    TestObject.test_annotation_count.should eq(1)
+  end
+
+  describe "def_equals" do
+    it "compares by reference" do
+      x = DefEquals.new
+      y = DefEquals.new
+      (x == x).should be_true
+      (x == y).should be_false
+    end
+  end
+
+  describe "#not_nil!" do
+    it "basic" do
+      1.not_nil!
+      expect_raises(NilAssertionError, "Nil assertion failed") do
+        nil.not_nil!
+      end
+    end
+
+    it "removes Nil type" do
+      x = TestObject.new.as(TestObject?)
+      typeof(x.not_nil!).should eq TestObject
+      x.not_nil!.should be x
+    end
+
+    it "raises NilAssertionError" do
+      x = nil.as(TestObject?)
+      typeof(x.not_nil!).should eq TestObject
+      expect_raises(NilAssertionError, "Nil assertion failed") do
+        x.not_nil!
+      end
+    end
+
+    it "with message" do
+      x = TestObject.new
+      x.not_nil!("custom message").should be x
+      expect_raises(NilAssertionError, "custom message") do
+        nil.not_nil!("custom message")
+      end
+    end
+
+    it "does not copy its receiver when it is a value (#13263)" do
+      x = TestMutableStruct.new
+      x.not_nil!.foo.should eq(1)
+      x.not_nil!.foo.should eq(2)
+      x.foo.should eq(3)
+    end
+  end
+
+  it ".set_crystal_type_id" do
+    ary = StaticArray[Int32::MAX, Int32::MAX]
+    TestObject.do_set_crystal_type_id(pointerof(ary))
+    ary[0].should eq TestObject.crystal_instance_type_id
+    ary[1].should eq Int32::MAX
   end
 end

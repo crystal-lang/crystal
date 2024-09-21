@@ -10,7 +10,7 @@ lib LibC
   MAP_SHARED            = 0x01
   MAP_ANON              = LibC::MAP_ANONYMOUS
   MAP_ANONYMOUS         = 0x20
-  MAP_FAILED            = Pointer(Void).new(-1)
+  MAP_FAILED            = Pointer(Void).new(-1.to_u64!)
   POSIX_MADV_DONTNEED   =  4
   POSIX_MADV_NORMAL     =  0
   POSIX_MADV_RANDOM     =  1
@@ -24,7 +24,7 @@ lib LibC
   MADV_HUGEPAGE         = 14
   MADV_NOHUGEPAGE       = 15
 
-  fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : OffT) : Void*
+  fun mmap = mmap64(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : OffT) : Void*
   fun mprotect(addr : Void*, len : SizeT, prot : Int) : Int
   fun munmap(addr : Void*, len : SizeT) : Int
   fun madvise(addr : Void*, len : SizeT, advice : Int) : Int

@@ -30,7 +30,7 @@ class YAML::ParseContext
   # Tries to read an alias from `node` of type `T`. Invokes
   # the block if successful, and invokers must return this object
   # instead of deserializing their members.
-  def read_alias(node, type : T.class) forall T
+  def read_alias(node, type : T.class, &) forall T
     if ptr = read_alias_impl(node, T.crystal_instance_type_id, raise_on_alias: true)
       yield ptr.unsafe_as(T)
     end
@@ -38,7 +38,7 @@ class YAML::ParseContext
 
   # Similar to `read_alias` but doesn't raise if an alias exists
   # but an instance of type T isn't associated with the current anchor.
-  def read_alias?(node, type : T.class) forall T
+  def read_alias?(node, type : T.class, &) forall T
     if ptr = read_alias_impl(node, T.crystal_instance_type_id, raise_on_alias: false)
       yield ptr.unsafe_as(T)
     end
@@ -55,7 +55,7 @@ class YAML::ParseContext
         end
       end
 
-      raise("Error deserailizing alias") if raise_on_alias
+      raise("Error deserializing alias") if raise_on_alias
     end
 
     nil

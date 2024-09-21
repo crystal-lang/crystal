@@ -6,8 +6,8 @@
 #
 # An integer literal is an optional `+` or `-` sign, followed by
 # a sequence of digits and underscores, optionally followed by a suffix.
-# If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
-# in which the number fits:
+# If no suffix is present, the literal's type is `Int32`, or `Int64` if the
+# number doesn't fit into an `Int32`:
 #
 # ```
 # 1 # Int32
@@ -25,9 +25,13 @@
 # +10 # Int32
 # -20 # Int32
 #
-# 2147483648          # Int64
-# 9223372036854775808 # UInt64
+# 2147483648 # Int64
 # ```
+#
+# Literals without a suffix that are larger than `Int64::MAX` represent a
+# `UInt64` if the number fits, e.g. `9223372036854775808` and
+# `0x80000000_00000000`. This behavior is deprecated and will become an error in
+# the future.
 #
 # The underscore `_` before the suffix is optional.
 #
@@ -55,6 +59,8 @@
 # 0xFE012D # == 16646445
 # 0xfe012d # == 16646445
 # ```
+#
+# See [`Integer` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/integers.html) in the language reference.
 struct Int
   alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
@@ -62,14 +68,15 @@ struct Int
 
   # Returns a `Char` that has the unicode codepoint of `self`.
   #
-  # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).
+  # Raises `ArgumentError` if this integer's value doesn't fit a char's range
+  # (`0..0xd7ff` and `0xe000..0x10ffff`).
   #
   # ```
   # 97.chr # => 'a'
   # ```
-  def chr
-    unless 0 <= self <= Char::MAX_CODEPOINT
-      raise ArgumentError.new("#{self} out of char range")
+  def chr : Char
+    unless 0 <= self <= 0xd7ff || 0xe000 <= self <= Char::MAX_CODEPOINT
+      raise ArgumentError.new("0x#{self.to_s(16)} out of char range")
     end
     unsafe_chr
   end
@@ -145,7 +152,7 @@ struct Int
     {% end %}
   end
 
-  def fdiv(other)
+  def fdiv(other) : Float64
     to_f / other
   end
 
@@ -184,6 +191,32 @@ struct Int
         unsafe_mod other
       end
     {% end %}
+  end
+
+  # :nodoc:
+  #
+  # Computes (x * y) % z, but without intermediate overflows.
+  # Precondition: `0 <= x < z && y >= 0`
+  def self.mulmod(x, y, z)
+    result = zero
+    while y > 0
+      if y.bits_set?(1)
+        # result = (result + x) % z
+        if result >= z &- x
+          result &-= z &- x
+        else
+          result &+= x
+        end
+      end
+      # x = (x + x) % z
+      if x >= z &- x
+        x &-= z &- x
+      else
+        x = x.unsafe_shl(1)
+      end
+      y = y.unsafe_shr(1)
+    end
+    result
   end
 
   # Returns the result of shifting this number's bits *count* positions to the right.
@@ -237,24 +270,41 @@ struct Int
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
-  def abs
+  def abs : self
     self >= 0 ? self : -self
   end
 
-  def ceil
+  def round(mode : RoundingMode) : self
     self
   end
 
-  def floor
+  def ceil : self
     self
   end
 
-  def round
+  def floor : self
     self
   end
 
-  def trunc
+  def trunc : self
     self
+  end
+
+  # Returns `self`.
+  def round_even : self
+    self
+  end
+
+  # Returns `self`.
+  def round_away
+    self
+  end
+
+  # :inherit:
+  #
+  # Always returns `true` for `Int`.
+  def integer? : Bool
+    true
   end
 
   # Returns the value of raising `self` to the power of *exponent*.
@@ -352,16 +402,16 @@ struct Int
   def bits(range : Range)
     start_index = range.begin
     if start_index
-      raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
+      raise IndexError.new("Start index (#{start_index}) must be positive") if start_index < 0
     else
       start_index = 0
     end
 
     end_index = range.end
     if end_index
-      raise IndexError.new("end index (#{end_index}) must be positive") if end_index < 0
+      raise IndexError.new("End index (#{end_index}) must be positive") if end_index < 0
       end_index += 1 unless range.exclusive?
-      raise IndexError.new("end index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
+      raise IndexError.new("End index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
     else
       # if there is no end index then we only need to shift
       return self >> start_index
@@ -391,16 +441,68 @@ struct Int
   # 0b1101.bits_set?(0b0111) # => false
   # 0b1101.bits_set?(0b1100) # => true
   # ```
-  def bits_set?(mask)
+  def bits_set?(mask) : Bool
     (self & mask) == mask
   end
 
-  # Returns the greatest common divisor of `self` and `other`. Signed
-  # integers may raise overflow if either has value equal to `MIN` of
+  # Returns the number of bits of this int value.
+  #
+  # “The number of bits” means that the bit position of the highest bit
+  # which is different to the sign bit.
+  # (The bit position of the bit 2**n is n+1.)
+  # If there is no such bit (zero or minus one), zero is returned.
+  #
+  # I.e. This method returns `ceil(log2(self < 0 ? -self : self + 1))`.
+  #
+  # ```
+  # 0.bit_length # => 0
+  # 1.bit_length # => 1
+  # 2.bit_length # => 2
+  # 3.bit_length # => 2
+  # 4.bit_length # => 3
+  # 5.bit_length # => 3
+  #
+  # # The above is the same as
+  # 0b0.bit_length   # => 0
+  # 0b1.bit_length   # => 1
+  # 0b10.bit_length  # => 2
+  # 0b11.bit_length  # => 2
+  # 0b100.bit_length # => 3
+  # 0b101.bit_length # => 3
+  # ```
+  def bit_length : Int32
+    x = self < 0 ? ~self : self
+
+    if x.is_a?(Int::Primitive)
+      Int32.new(sizeof(self) * 8 - x.leading_zeros_count)
+    else
+      # Safe fallback for any non-primitive Int type
+      to_s(2).size
+    end
+  end
+
+  # :nodoc:
+  def next_power_of_two : self
+    one = self.class.new!(1)
+
+    bits = sizeof(self) * 8
+    shift = bits &- (self &- 1).leading_zeros_count
+    if self.is_a?(Int::Signed)
+      shift = 0 if shift >= bits &- 1
+    else
+      shift = 0 if shift == bits
+    end
+
+    result = one << shift
+    result >= self ? result : raise OverflowError.new
+  end
+
+  # Returns the greatest common divisor of `self` and *other*. Signed
+  # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
   #
   # ```
-  # 5.gcd(10) # => 2
+  # 5.gcd(10) # => 5
   # 5.gcd(7)  # => 1
   # ```
   def gcd(other : self) : self
@@ -411,60 +513,51 @@ struct Int
     return v if u == 0
     return u if v == 0
 
-    shift = self.class.zero
     # Let shift := lg K, where K is the greatest power of 2
     # dividing both u and v.
-    while (u | v) & 1 == 0
-      shift &+= 1
-      u = u.unsafe_shr 1
-      v = v.unsafe_shr 1
-    end
-    while u & 1 == 0
-      u = u.unsafe_shr 1
-    end
+    shift = (u | v).trailing_zeros_count
+    u = u.unsafe_shr(u.trailing_zeros_count)
+
     # From here on, u is always odd.
     loop do
       # remove all factors of 2 in v -- they are not common
-      # note: v is not zero, so while will terminate
-      while v & 1 == 0
-        v = v.unsafe_shr 1
-      end
+      v = v.unsafe_shr(v.trailing_zeros_count)
+
       # Now u and v are both odd. Swap if necessary so u <= v,
       # then set v = v - u (which is even).
       u, v = v, u if u > v
       v &-= u
       break if v.zero?
     end
+
     # restore common factors of 2
     u.unsafe_shl shift
   end
 
+  # Returns the least common multiple of `self` and *other*.
+  #
+  # Raises `OverflowError` in case of overflow.
   def lcm(other : Int)
-    (self * other).abs // gcd(other)
+    (self // gcd(other) * other).abs
   end
 
-  def divisible_by?(num)
+  def divisible_by?(num) : Bool
     remainder(num) == 0
   end
 
-  def even?
+  def even? : Bool
     divisible_by? 2
   end
 
-  def odd?
+  def odd? : Bool
     !even?
   end
 
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher.int(self)
-  end
-
-  def succ
+  def succ : self
     self + 1
   end
 
-  def pred
+  def pred : self
     self - 1
   end
 
@@ -472,7 +565,7 @@ struct Int
     i = self ^ self
     while i < self
       yield i
-      i += 1
+      i &+= 1
     end
   end
 
@@ -494,6 +587,21 @@ struct Int
     UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
+  # Calls the given block with each integer value from self down to `to`.
+  #
+  # ```
+  # 3.downto(1) do |i|
+  #   puts i
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 3
+  # 2
+  # 1
+  # ```
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
@@ -504,6 +612,7 @@ struct Int
     end
   end
 
+  # Get an iterator for counting down from self to `to`.
   def downto(to)
     DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
@@ -526,57 +635,156 @@ struct Int
     self % other
   end
 
+  # Returns the digits of a number in a given base.
+  # The digits are returned as an array with the least significant digit as the first array element.
+  #
+  # ```
+  # 12345.digits      # => [5, 4, 3, 2, 1]
+  # 12345.digits(7)   # => [4, 6, 6, 0, 5]
+  # 12345.digits(100) # => [45, 23, 1]
+  #
+  # -12345.digits(7) # => ArgumentError
+  # ```
+  def digits(base = 10) : Array(Int32)
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
+    if self == 0
+      return [0]
+    end
+
+    num = self
+
+    digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
+
+    ary = Array(Int32).new(digits_count)
+    while num != 0
+      ary << num.remainder(base).to_i
+      num = num.tdiv(base)
+    end
+    ary
+  end
+
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  def to_s : String
-    to_s(10)
-  end
-
-  def to_s(io : IO) : Nil
-    to_s(10, io)
-  end
-
-  def to_s(base : Int, upcase : Bool = false) : String
+  # Returns a string representation of this integer.
+  #
+  # *base* specifies the radix of the returned string, and must be either 62 or
+  # a number between 2 and 36. By default, digits above 9 are represented by
+  # ASCII lowercase letters (`a` for 10, `b` for 11, etc.), but uppercase
+  # letters may be used if *upcase* is `true`, unless base 62 is used. In that
+  # case, lowercase letters are used for 10 to 35, and uppercase ones for 36 to
+  # 61, and *upcase* must be `false`.
+  #
+  # *precision* specifies the minimum number of digits in the returned string.
+  # If there are fewer digits than this number, the string is left-padded by
+  # zeros. If `self` and *precision* are both zero, returns an empty string.
+  #
+  # ```
+  # 1234.to_s                   # => "1234"
+  # 1234.to_s(2)                # => "10011010010"
+  # 1234.to_s(16)               # => "4d2"
+  # 1234.to_s(16, upcase: true) # => "4D2"
+  # 1234.to_s(36)               # => "ya"
+  # 1234.to_s(62)               # => "jU"
+  # 1234.to_s(precision: 2)     # => "1234"
+  # 1234.to_s(precision: 6)     # => "001234"
+  # ```
+  def to_s(base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
 
-    case self
-    when 0
-      return "0"
-    when 1
-      return "1"
-    end
+    case {self, precision}
+    when {0, 0}
+      ""
+    when {0, 1}
+      "0"
+    when {1, 1}
+      "1"
+    else
+      internal_to_s(base, precision, upcase) do |ptr, count, negative|
+        # reuse the `chars` buffer in `internal_to_s` if possible
+        if precision <= count || precision <= 128
+          if precision > count
+            difference = precision - count
+            ptr -= difference
+            Slice.new(ptr, difference).fill('0'.ord.to_u8)
+            count += difference
+          end
 
-    internal_to_s(base, upcase) do |ptr, count|
-      String.new(ptr, count, count)
+          if negative
+            ptr -= 1
+            ptr.value = '-'.ord.to_u8
+            count += 1
+          end
+
+          String.new(ptr, count, count)
+        else
+          len = precision + (negative ? 1 : 0)
+          String.new(len) do |buffer|
+            if negative
+              buffer.value = '-'.ord.to_u8
+              buffer += 1
+            end
+
+            Slice.new(buffer, precision - count).fill('0'.ord.to_u8)
+            ptr.copy_to(buffer + precision - count, count)
+            {len, len}
+          end
+        end
+      end
     end
   end
 
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
+  # Appends a string representation of this integer to the given *io*.
+  #
+  # *base* specifies the radix of the written string, and must be either 62 or
+  # a number between 2 and 36. By default, digits above 9 are represented by
+  # ASCII lowercase letters (`a` for 10, `b` for 11, etc.), but uppercase
+  # letters may be used if *upcase* is `true`, unless base 62 is used. In that
+  # case, lowercase letters are used for 10 to 35, and uppercase ones for 36 to
+  # 61, and *upcase* must be `false`.
+  #
+  # *precision* specifies the minimum number of digits in the written string.
+  # If there are fewer digits than this number, the string is left-padded by
+  # zeros. If `self` and *precision* are both zero, returns an empty string.
+  def to_s(io : IO, base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
 
-    case self
-    when 0
+    case {self, precision}
+    when {0, 0}
+      # do nothing
+    when {0, 1}
       io << '0'
-      return
-    when 1
+    when {1, 1}
       io << '1'
-      return
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      io.write_utf8 Slice.new(ptr, count)
+    else
+      internal_to_s(base, precision, upcase) do |ptr, count, negative|
+        io << '-' if negative
+        if precision > count
+          (precision - count).times { io << '0' }
+        end
+        io.write_string Slice.new(ptr, count)
+      end
     end
   end
 
-  private def internal_to_s(base, upcase = false)
+  private def internal_to_s(base, precision, upcase = false, &)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
-    # representation, plus one byte for the trailing 0.
+    # representation, plus one byte for the negative sign (possibly used by the
+    # string-returning overload).
     chars = uninitialized UInt8[129]
-    ptr_end = chars.to_unsafe + 128
+    ptr_end = chars.to_unsafe + 129
     ptr = ptr_end
     num = self
 
@@ -590,19 +798,14 @@ struct Int
       num = num.tdiv(base)
     end
 
-    if neg
-      ptr -= 1
-      ptr.value = '-'.ord.to_u8
-    end
-
     count = (ptr_end - ptr).to_i32
-    yield ptr, count
+    yield ptr, count, neg
   end
 
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
-  def to_io(io : IO, format : IO::ByteFormat)
+  def to_io(io : IO, format : IO::ByteFormat) : Nil
     format.encode(self, io)
   end
 
@@ -636,7 +839,7 @@ struct Int
     def next
       if @index < @n
         value = @index
-        @index += 1
+        @index &+= 1
         value
       else
         stop
@@ -694,12 +897,23 @@ struct Int8
   MAX =  127_i8
 
   # Returns an `Int8` by invoking `to_i8` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int8.new "20"                        # => 20
+  # Int8.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int8: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int8` by invoking `to_i8` on *value*.
+  def self.new(value) : self
     value.to_i8
   end
 
   # Returns an `Int8` by invoking `to_i8!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i8!
   end
 
@@ -707,12 +921,121 @@ struct Int8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int8
     0_i8 - self
   end
 
-  def popcount
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int8
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int8
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
+    to_u8
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    to_u8!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt8
+    self < 0 ? 0_u8 &- self : to_u8!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
+  def popcount : Int8
     Intrinsics.popcount8(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self).to_i8!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12_i8.byte_swap # => 0x12
+  # ```
+  def byte_swap : self
+    self
   end
 
   # Returns the number of leading `0`-bits.
@@ -722,6 +1045,32 @@ struct Int8
 
   def trailing_zeros_count
     Intrinsics.counttrailing8(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_i8!).to_i8!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_i8!).to_i8!
   end
 
   def clone
@@ -734,12 +1083,23 @@ struct Int16
   MAX =  32767_i16
 
   # Returns an `Int16` by invoking `to_i16` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int16.new "20"                        # => 20
+  # Int16.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int16: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int16` by invoking `to_i16` on *value*.
+  def self.new(value) : self
     value.to_i16
   end
 
   # Returns an `Int16` by invoking `to_i16!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i16!
   end
 
@@ -747,12 +1107,121 @@ struct Int16
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int16
     0_i16 - self
   end
 
-  def popcount
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int16
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int16
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
+    to_u16
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    to_u16!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt16
+    self < 0 ? 0_u16 &- self : to_u16!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
+  def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self).to_i16!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_i16.byte_swap # => 0x3412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self).to_i16!
   end
 
   # Returns the number of leading `0`-bits.
@@ -762,6 +1231,32 @@ struct Int16
 
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_i16!).to_i16!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_i16!).to_i16!
   end
 
   def clone
@@ -774,12 +1269,23 @@ struct Int32
   MAX =  2147483647_i32
 
   # Returns an `Int32` by invoking `to_i32` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int32.new "20"                        # => 20
+  # Int32.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int32: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int32` by invoking `to_i32` on *value*.
+  def self.new(value) : self
     value.to_i32
   end
 
   # Returns an `Int32` by invoking `to_i32!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i32!
   end
 
@@ -787,12 +1293,121 @@ struct Int32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int32
     0 - self
   end
 
-  def popcount
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int32
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int32
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
+    to_u32
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    to_u32!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt32
+    self < 0 ? 0_u32 &- self : to_u32!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
+  def popcount : Int32
     Intrinsics.popcount32(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self).to_i32!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12345678_i32.byte_swap # => 0x78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self).to_i32!
   end
 
   # Returns the number of leading `0`-bits.
@@ -802,6 +1417,32 @@ struct Int32
 
   def trailing_zeros_count
     Intrinsics.counttrailing32(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_i32!).to_i32!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_i32!).to_i32!
   end
 
   def clone
@@ -814,12 +1455,23 @@ struct Int64
   MAX =  9223372036854775807_i64
 
   # Returns an `Int64` by invoking `to_i64` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int64.new "20"                        # => 20
+  # Int64.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int64: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int64` by invoking `to_i64` on *value*.
+  def self.new(value) : self
     value.to_i64
   end
 
   # Returns an `Int64` by invoking `to_i64!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i64!
   end
 
@@ -827,12 +1479,122 @@ struct Int64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int64
     0_i64 - self
   end
 
-  def popcount
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int64
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int64
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
+    to_u64
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    to_u64!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt64
+    self < 0 ? 0_u64 &- self : to_u64!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
+  def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self).to_i64!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12345678_i64.byte_swap         # => 0x7856341200000000
+  # 0x123456789ABCDEF0_i64.byte_swap # => -0xf21436587a9cbee
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self).to_i64!
   end
 
   # Returns the number of leading `0`-bits.
@@ -842,6 +1604,32 @@ struct Int64
 
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_i64!).to_i64!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_i64!).to_i64!
   end
 
   def clone
@@ -855,12 +1643,23 @@ struct Int128
   MAX = ~MIN
 
   # Returns an `Int128` by invoking `to_i128` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int128.new "20"                        # => 20
+  # Int128.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int128: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int128` by invoking `to_i128` on *value*.
+  def self.new(value) : self
     value.to_i128
   end
 
   # Returns an `Int128` by invoking `to_i128!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i128!
   end
 
@@ -873,8 +1672,117 @@ struct Int128
     Int128.new(0) - self
   end
 
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int128
+    self
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    to_u128
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    to_u128!
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : UInt128
+    self < 0 ? UInt128.new(0) &- self : to_u128!
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : self
+    -self
+  end
+
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self).to_i128!
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x123456789_i128.byte_swap # ＝> -0x7698badcff0000000000000000000000
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self).to_i128!
   end
 
   # Returns the number of leading `0`-bits.
@@ -884,6 +1792,32 @@ struct Int128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_i128!).to_i128!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_i128!).to_i128!
   end
 
   def clone
@@ -896,12 +1830,23 @@ struct UInt8
   MAX = 255_u8
 
   # Returns an `UInt8` by invoking `to_u8` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt8.new "20"                        # => 20
+  # UInt8.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt8: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt8` by invoking `to_u8` on *value*.
+  def self.new(value) : self
     value.to_u8
   end
 
   # Returns an `UInt8` by invoking `to_u8!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u8!
   end
 
@@ -909,12 +1854,125 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def abs
+  def &- : UInt8
+    0_u8 &- self
+  end
+
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int8
+    to_i8
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int8
+    to_i8!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt8
     self
   end
 
-  def popcount
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt8
+    self
+  end
+
+  def abs : self
+    self
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int8
+    0_i8 - self
+  end
+
+  def popcount : Int8
     Intrinsics.popcount8(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12_u8.byte_swap # => 0x12
+  # ```
+  def byte_swap : self
+    self
   end
 
   # Returns the number of leading `0`-bits.
@@ -924,6 +1982,32 @@ struct UInt8
 
   def trailing_zeros_count
     Intrinsics.counttrailing8(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_u8!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_u8!)
   end
 
   def clone
@@ -936,12 +2020,23 @@ struct UInt16
   MAX = 65535_u16
 
   # Returns an `UInt16` by invoking `to_u16` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt16.new "20"                        # => 20
+  # UInt16.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt16: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt16` by invoking `to_u16` on *value*.
+  def self.new(value) : self
     value.to_u16
   end
 
   # Returns an `UInt16` by invoking `to_u16!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u16!
   end
 
@@ -949,12 +2044,125 @@ struct UInt16
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def abs
+  def &- : UInt16
+    0_u16 &- self
+  end
+
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int16
+    to_i16
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int16
+    to_i16!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt16
     self
   end
 
-  def popcount
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt16
+    self
+  end
+
+  def abs : self
+    self
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int16
+    0_i16 - self
+  end
+
+  def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap # => 0x3412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -964,6 +2172,32 @@ struct UInt16
 
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_u16!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_u16!)
   end
 
   def clone
@@ -976,12 +2210,23 @@ struct UInt32
   MAX = 4294967295_u32
 
   # Returns an `UInt32` by invoking `to_u32` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt32.new "20"                        # => 20
+  # UInt32.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt32: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt32` by invoking `to_u32` on *value*.
+  def self.new(value) : self
     value.to_u32
   end
 
   # Returns an `UInt32` by invoking `to_u32!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u32!
   end
 
@@ -989,12 +2234,125 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def abs
+  def &- : UInt32
+    0_u32 &- self
+  end
+
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int32
+    to_i32
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int32
+    to_i32!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt32
     self
   end
 
-  def popcount
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt32
+    self
+  end
+
+  def abs : self
+    self
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int32
+    0_i32 - self
+  end
+
+  def popcount : Int32
     Intrinsics.popcount32(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x12345678_u32.byte_swap # => 0x78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1004,6 +2362,32 @@ struct UInt32
 
   def trailing_zeros_count
     Intrinsics.counttrailing32(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_u32!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_u32!)
   end
 
   def clone
@@ -1016,12 +2400,23 @@ struct UInt64
   MAX = 18446744073709551615_u64
 
   # Returns an `UInt64` by invoking `to_u64` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt64.new "20"                        # => 20
+  # UInt64.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt64: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt64` by invoking `to_u64` on *value*.
+  def self.new(value) : self
     value.to_u64
   end
 
   # Returns an `UInt64` by invoking `to_u64!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u64!
   end
 
@@ -1029,12 +2424,125 @@ struct UInt64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def abs
+  def &- : UInt64
+    0_u64 &- self
+  end
+
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int64
+    to_i64
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int64
+    to_i64!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt64
     self
   end
 
-  def popcount
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt64
+    self
+  end
+
+  def abs : self
+    self
+  end
+
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int64
+    0_i64 - self
+  end
+
+  def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x123456789ABCDEF0_u64.byte_swap # => 0xF0DEBC9A78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1044,6 +2552,32 @@ struct UInt64
 
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_u64!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_u64!)
   end
 
   def clone
@@ -1057,12 +2591,23 @@ struct UInt128
   MAX = ~MIN
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt128.new "20"                        # => 20
+  # UInt128.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt128: "  20  "
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt128` by invoking `to_u128` on *value*.
+  def self.new(value) : self
     value.to_u128
   end
 
   # Returns an `UInt128` by invoking `to_u128!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u128!
   end
 
@@ -1070,12 +2615,126 @@ struct UInt128
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    # TODO: use 0_u128 &- self
+    UInt128.new(0) &- self
+  end
+
+  # Returns `self` converted to a signed value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_u32.to_signed # => 1_i32
+  # 2_u16.to_signed # => 2_i16
+  # 3_i64.to_signed # => 3_i64
+  # ```
+  def to_signed : Int128
+    to_i128
+  end
+
+  # Returns `self` converted to a signed value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Signed`.
+  #
+  # ```
+  # 1_u32.to_signed!     # => 1_i32
+  # 65530_u16.to_signed! # => -6_i16
+  # 3_i64.to_signed!     # => 3_i64
+  # ```
+  def to_signed! : Int128
+    to_i128!
+  end
+
+  # Returns `self` converted to an unsigned value of the same size.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  # Raises `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.to_unsigned # => 1_u32
+  # 2_i16.to_unsigned # => 2_u16
+  # 3_u64.to_unsigned # => 3_u64
+  # ```
+  def to_unsigned : UInt128
+    self
+  end
+
+  # Returns `self` converted to an unsigned value of the same size, wrapping in
+  # case of overflow.
+  #
+  # Simply returns `self` unmodified if `self` is already an `Int::Unsigned`.
+  #
+  # ```
+  # 1_i32.to_unsigned!    # => 1_u32
+  # (-6_i16).to_unsigned! # => 65530_u16
+  # 3_u64.to_unsigned!    # => 3_u64
+  # ```
+  def to_unsigned! : UInt128
+    self
+  end
+
   def abs
     self
   end
 
+  # Returns the absolute value of `self` as an unsigned value of the same size.
+  #
+  # Returns `self` if `self` is already an `Int::Unsigned`. This method never
+  # overflows.
+  #
+  # ```
+  # 1_u32.abs_unsigned      # => 1_u32
+  # 2_i32.abs_unsigned      # => 2_u32
+  # -3_i8.abs_unsigned      # => 3_u8
+  # Int16::MIN.abs_unsigned # => 32768_u16
+  # ```
+  def abs_unsigned : self
+    self
+  end
+
+  # Returns the negative of `self` as a signed value of the same size.
+  #
+  # Returns `-self` if `self` is already an `Int::Signed`. Raises
+  # `OverflowError` in case of overflow.
+  #
+  # ```
+  # 1_i32.neg_signed      # => -1_i32
+  # 2_u16.neg_signed      # => -2_i16
+  # 128_u8.neg_signed     # => -128_i8
+  # Int16::MIN.neg_signed # raises OverflowError
+  # ```
+  def neg_signed : Int128
+    Int128.new(0) - self
+  end
+
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x123456789ABCDEF013579BDF2468ACE0_u128.byte_swap # ＝> 0xE0AC6824DF9B5713F0DEBC9A78563412
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1085,6 +2744,32 @@ struct UInt128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_u128!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_u128!)
   end
 
   def clone

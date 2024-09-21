@@ -1,15 +1,20 @@
 require "crystal/system/random"
 
-# Generates random numbers from a secure source provided by the system.
+# `Random::Secure` generates random numbers from a secure source provided by the system.
 #
-# For example `arc4random` is used on OpenBSD, whereas on Linux it uses
-# `getrandom` (if the kernel supports it) and fallbacks on reading from
-# `/dev/urandom` on UNIX systems.
+# It uses a [cryptographically secure pseudorandom number generator (CSPRNG)](https://en.wikipedia.org/wiki/Cryptographically_secure_pseudorandom_number_generator)
+# for cryptography and secure usages such as generating secret keys, or to seed
+# another pseudorandom number generator (PRNG).
 #
 # ```
 # Random::Secure.rand(6)            # => 4
 # [1, 5, 6].shuffle(Random::Secure) # => [6, 1, 5]
 # ```
+#
+# On BSD-based systems and macOS/Darwin, it uses [`arc4random`](https://man.openbsd.org/arc4random),
+# on Linux [`getrandom`](http://man7.org/linux/man-pages/man2/getrandom.2.html) (if the kernel supports it),
+# on Windows [`RtlGenRandom`](https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-rtlgenrandom),
+# and falls back to reading from `/dev/urandom` on UNIX systems.
 module Random::Secure
   extend Random
   extend self
@@ -18,11 +23,11 @@ module Random::Secure
     Crystal::System::Random.next_u
   end
 
-  def random_bytes(buf : Bytes)
+  def random_bytes(buf : Bytes) : Nil
     Crystal::System::Random.random_bytes(buf)
   end
 
-  {% for type in [UInt8, UInt16, UInt32, UInt64] %}
+  {% for type in [UInt8, UInt16, UInt32, UInt64, UInt128] %}
     # Generates a random integer of a given type. The number of bytes to
     # generate can be limited; by default it will generate as many bytes as
     # needed to fill the integer size.
@@ -50,7 +55,7 @@ module Random::Secure
     end
   {% end %}
 
-  {% for type in [Int8, Int16, Int32, Int64] %}
+  {% for type in [Int8, Int16, Int32, Int64, Int128] %}
     private def rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
       result = rand_type({{"U#{type}".id}}, needed_bytes)
       {{type}}.new!(result)

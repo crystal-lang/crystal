@@ -19,6 +19,12 @@ describe "Semantic: nilable cast" do
       )) { nil_type }
   end
 
+  it "types as? with NoReturn" do
+    assert_type(%(
+      1.as?(NoReturn)
+      )) { nil_type }
+  end
+
   it "does upcast" do
     assert_type(%(
       class Foo
@@ -46,5 +52,38 @@ describe "Semantic: nilable cast" do
         ""
       end
       )) { string }
+  end
+
+  it "casts to module" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Base
+      end
+
+      class Foo < Base
+        include Moo
+      end
+
+      class Bar < Base
+        include Moo
+      end
+
+      base = (Foo.new || Bar.new)
+      base.as?(Moo)
+      )) { union_of([types["Foo"], types["Bar"], nil_type] of Type) }
+  end
+
+  it "doesn't introduce type filter for nilable cast object (#12661)" do
+    assert_type(%(
+      val = 1 || false
+
+      if val.as?(Char)
+        true
+      else
+        val
+      end
+      )) { union_of(int32, bool) }
   end
 end

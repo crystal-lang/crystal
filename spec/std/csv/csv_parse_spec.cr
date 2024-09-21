@@ -50,19 +50,19 @@ describe CSV do
     end
 
     it "raises if single quote in the middle" do
-      expect_raises CSV::MalformedCSVError, "Unexpected quote at 1:4" do
+      expect_raises CSV::MalformedCSVError, "Unexpected quote at line 1, column 4" do
         CSV.parse(%(hel"lo))
       end
     end
 
     it "raises if command, newline or end doesn't follow quote" do
-      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at 2:6" do
+      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at line 2, column 6" do
         CSV.parse(%(foo\n"hel"a))
       end
     end
 
     it "raises if command, newline or end doesn't follow quote (2)" do
-      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at 2:6" do
+      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at line 2, column 6" do
         CSV.parse(%(\n"hel"a))
       end
     end
@@ -90,7 +90,7 @@ describe CSV do
   it "does CSV.each_row" do
     sum = 0
     CSV.each_row("1,2\n3,4\n") do |row|
-      sum += row.map(&.to_i).sum
+      sum += row.sum(&.to_i)
     end.should be_nil
     sum.should eq(10)
   end
@@ -98,7 +98,7 @@ describe CSV do
   it "does CSV.each_row with separator and quotes" do
     sum = 0
     CSV.each_row("1\t'2'\n3\t4\n", '\t', '\'') do |row|
-      sum += row.map(&.to_i).sum
+      sum += row.sum(&.to_i)
     end.should be_nil
     sum.should eq(10)
   end

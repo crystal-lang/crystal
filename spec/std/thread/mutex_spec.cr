@@ -1,16 +1,24 @@
-require "spec"
-require "../../support/errno"
+{% if flag?(:musl) %}
+  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
+  # they're disabled for now to reduce noise.
+  # See https://github.com/crystal-lang/crystal/issues/8738
+  pending Thread::Mutex
+  {% skip_file %}
+{% end %}
 
-describe Thread::Mutex do
+require "../spec_helper"
+
+# interpreter doesn't support threads yet (#14287)
+pending_interpreted describe: Thread::Mutex do
   it "synchronizes" do
     a = 0
     mutex = Thread::Mutex.new
 
-    threads = 10.times.map do
+    threads = Array.new(10) do
       Thread.new do
         mutex.synchronize { a += 1 }
       end
-    end.to_a
+    end
 
     threads.each(&.join)
     a.should eq(10)
@@ -20,15 +28,16 @@ describe Thread::Mutex do
     mutex = Thread::Mutex.new
     mutex.try_lock.should be_true
     mutex.try_lock.should be_false
-    expect_raises_errno(Errno::EDEADLK, "pthread_mutex_lock: ") { mutex.lock }
+    expect_raises(RuntimeError) { mutex.lock }
     mutex.unlock
+    Thread.new { mutex.synchronize { } }.join
   end
 
   it "won't unlock from another thread" do
     mutex = Thread::Mutex.new
     mutex.lock
 
-    expect_raises_errno(Errno::EPERM, "pthread_mutex_unlock: ") do
+    expect_raises(RuntimeError) do
       Thread.new { mutex.unlock }.join
     end
 

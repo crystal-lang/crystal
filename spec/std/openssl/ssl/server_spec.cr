@@ -3,6 +3,12 @@ require "socket"
 require "../../spec_helper"
 require "../../../support/ssl"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OpenSSL::SSL::Server
+  {% skip_file %}
+{% end %}
+
 describe OpenSSL::SSL::Server do
   it "sync_close" do
     TCPServer.open(0) do |tcp_server|
@@ -54,7 +60,7 @@ describe OpenSSL::SSL::Server do
 
   describe "#accept?" do
     it "accepts" do
-      tcp_server = TCPServer.new(0)
+      tcp_server = TCPServer.new("127.0.0.1", 0)
 
       server_context, client_context = ssl_context_pair
 
@@ -77,13 +83,60 @@ describe OpenSSL::SSL::Server do
     end
   end
 
+  describe "#accept" do
+    it "accepts and do handshake" do
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+
+      server_context, client_context = ssl_context_pair
+
+      OpenSSL::SSL::Server.open tcp_server, server_context do |server|
+        spawn do
+          client = server.accept
+          client.gets.should eq "Hello, SSL!"
+          client.puts "Hello back, SSL!"
+          client.close
+        end
+
+        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context) do |socket|
+          socket.puts "Hello, SSL!"
+          socket.flush
+          socket.gets.should eq "Hello back, SSL!"
+        end
+      end
+    end
+
+    it "doesn't to SSL handshake with start_immediately = false" do
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+
+      server_context, client_context = ssl_context_pair
+
+      OpenSSL::SSL::Server.open tcp_server, server_context do |server|
+        server.start_immediately = false
+
+        spawn do
+          client = server.accept
+          client.accept
+          client.gets.should eq "Hello, SSL!"
+          client.puts "Hello back, SSL!"
+          client.close
+        end
+
+        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context) do |socket|
+          socket.puts "Hello, SSL!"
+          socket.flush
+          socket.gets.should eq "Hello back, SSL!"
+        end
+      end
+    end
+  end
+
   it "detects SNI hostname" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
 
     OpenSSL::SSL::Server.open tcp_server, server_context do |server|
       spawn do
-        sleep 1
+        sleep 1.second
         OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
         end
       end

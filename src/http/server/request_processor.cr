@@ -1,6 +1,9 @@
-require "../server"
+require "./handler"
+require "log"
 
 class HTTP::Server::RequestProcessor
+  Log = ::Log.for("http.server")
+
   # Maximum permitted size of the request line in an HTTP request.
   property max_request_line_size = HTTP::MAX_REQUEST_LINE_SIZE
 
@@ -15,12 +18,11 @@ class HTTP::Server::RequestProcessor
     @wants_close = false
   end
 
-  def close
+  def close : Nil
     @wants_close = true
   end
 
-  def process(input, output, error = STDERR)
-    must_close = true
+  def process(input, output) : Nil
     response = Response.new(output)
 
     begin
@@ -34,32 +36,41 @@ class HTTP::Server::RequestProcessor
         # EOF
         break unless request
 
+        response.reset
+
         if request.is_a?(HTTP::Status)
           response.respond_with_status(request)
           return
         end
 
         response.version = request.version
-        response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
-        begin
+        Log.with_context do
           @handler.call(context)
+        rescue ex : ClientError
+          Log.debug(exception: ex.cause) { ex.message }
         rescue ex
-          response.respond_with_status(:internal_server_error)
-          error.puts "Unhandled exception on HTTP::Handler"
-          ex.inspect_with_backtrace(error)
+          Log.error(exception: ex) { "Unhandled exception on HTTP::Handler" }
+          unless response.closed?
+            unless response.wrote_headers?
+              response.respond_with_status(:internal_server_error)
+            end
+          end
           return
+        ensure
+          response.output.close
         end
 
-        if response.upgraded?
-          must_close = false
-          return
-        end
-
-        response.output.close
         output.flush
+
+        # If there is an upgrade handler, hand over
+        # the connection to it and return
+        if upgrade_handler = response.upgrade_handler
+          upgrade_handler.call(output)
+          return
+        end
 
         break unless request.keep_alive?
 
@@ -80,14 +91,8 @@ class HTTP::Server::RequestProcessor
           break unless body.closed?
         end
       end
-    rescue ex : Errno
+    rescue IO::Error
       # IO-related error, nothing to do
-    ensure
-      begin
-        input.close if must_close
-      rescue ex : Errno
-        # IO-related error, nothing to do
-      end
     end
   end
 end

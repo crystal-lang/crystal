@@ -1,5 +1,5 @@
 require "spec"
-require "http"
+require "http/formdata"
 
 describe HTTP::FormData::Parser do
   it "parses formdata" do

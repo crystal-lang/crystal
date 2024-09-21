@@ -36,7 +36,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     @class_vars = {} of ClassVarContainer => Hash(String, TypeDeclarationWithLocation)
 
     # A hash of all defined funs, so we can detect when
-    # a fun is redefined with a different signautre
+    # a fun is redefined with a different signature
     @externals = {} of String => External
   end
 
@@ -107,14 +107,16 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : FunDef)
     external = node.external
 
-    node.args.each do |arg|
+    node.args.each_with_index do |arg, index|
       restriction = arg.restriction.not_nil!
       arg_type = lookup_type(restriction)
       arg_type = check_allowed_in_lib(restriction, arg_type)
       if arg_type.remove_typedef.void?
-        restriction.raise "can't use Void as argument type"
+        restriction.raise "can't use Void as parameter type"
       end
-      external.args << Arg.new(arg.name, type: arg_type).at(arg.location)
+
+      # The external args were added in TopLevelVisitor
+      external.args[index].type = arg_type
     end
 
     node_return_type = node.return_type
@@ -130,8 +132,6 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     old_external = add_external external
     old_external.dead = true if old_external
-
-    current_type.add_def(external)
 
     if current_type.is_a?(Program)
       key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
@@ -151,6 +151,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, false)
+    else
+      raise "Unexpected TypeDeclaration var type: #{var.class}"
     end
 
     false
@@ -218,6 +220,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     when NonGenericModuleType
       declare_instance_var(owner, node, var)
       return
+    else
+      # Error, continue
     end
 
     node.raise "can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
@@ -253,6 +257,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, true)
+    else
+      # nothing (it's a var)
     end
     false
   end

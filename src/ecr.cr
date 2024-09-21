@@ -14,7 +14,10 @@
 #
 # A comment can be created the same as normal code: `<% # hello %>` or by the special
 # tag: `<%# hello %>`. An ECR tag can be inserted directly (i.e. the tag itself may be
-# escaped) by using a second `%` like so: `<%% a = b %>` or `<%%= foo %>`.
+# escaped) by using a second `%` like so: `<%% a = b %>` or `<%%= foo %>`. Dashes may
+# also be present in those escaped tags and have no effect on the surrounding text.
+#
+# NOTE: To use `ECR`, you must explicitly import it with `require "ecr"`
 #
 # Quick Example:
 #

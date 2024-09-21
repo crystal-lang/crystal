@@ -1,5 +1,6 @@
 require "spec"
 require "set"
+require "spec/helpers/iterate"
 
 describe "Set" do
   describe "an empty set" do
@@ -18,11 +19,11 @@ describe "Set" do
       set_from_array.size.should eq(3)
       set_from_array.to_a.sort.should eq([2, 4, 6])
 
-      set_from_tulpe = Set.new({1, "hello", 'x'})
-      set_from_tulpe.size.should eq(3)
-      set_from_tulpe.to_a.includes?(1).should be_true
-      set_from_tulpe.to_a.includes?("hello").should be_true
-      set_from_tulpe.to_a.includes?('x').should be_true
+      set_from_tuple = Set.new({1, "hello", 'x'})
+      set_from_tuple.size.should eq(3)
+      set_from_tuple.to_a.should contain(1)
+      set_from_tuple.to_a.should contain("hello")
+      set_from_tuple.to_a.should contain('x')
     end
   end
 
@@ -36,7 +37,7 @@ describe "Set" do
 
     it "returns self" do
       set = Set(Int32).new
-      set.add(1).should eq(set)
+      set.add(1).should be(set)
     end
   end
 
@@ -49,7 +50,7 @@ describe "Set" do
     it "returns false when object is in the set" do
       set = Set(Int32).new
       set.add?(1).should be_true
-      set.includes?(1).should be_true
+      set.should contain(1)
       set.add?(1).should be_false
     end
   end
@@ -59,13 +60,18 @@ describe "Set" do
       set = Set{1, 2, 3}
       set.delete 2
       set.size.should eq(2)
-      set.includes?(1).should be_true
-      set.includes?(3).should be_true
+      set.should contain(1)
+      set.should contain(3)
     end
 
-    it "returns self" do
+    it "returns true when the object was present" do
       set = Set{1, 2, 3}
-      set.delete(2).should eq(set)
+      set.delete(2).should be_true
+    end
+
+    it "returns false when the object was absent" do
+      set = Set{1, 2, 3}
+      set.delete(0).should be_false
     end
   end
 
@@ -124,7 +130,7 @@ describe "Set" do
 
     it "returns self" do
       set = Set{1, 4, 8}
-      set.concat([1, 9, 10]).should eq(Set{1, 4, 8, 9, 10})
+      set.concat([1, 9, 10]).should be(set)
     end
   end
 
@@ -280,6 +286,10 @@ describe "Set" do
     Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end
 
+  it "does support giving a block to to_a" do
+    Set{1, 2, 3}.to_a { |x| x + 1 }.should eq([2, 3, 4])
+  end
+
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
     Set{"foo"}.to_s.should eq(%(Set{"foo"}))
@@ -327,68 +337,62 @@ describe "Set" do
     i.should eq(4)
   end
 
-  it "gets each iterator" do
-    iter = Set{1, 2, 3}.each
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], Set{1, 2, 3}.each
 
-  it "check subset" do
+  it "#subset_of?" do
     set = Set{1, 2, 3}
     empty_set = Set(Int32).new
 
-    set.subset?(Set{1, 2, 3, 4}).should be_true
-    set.subset?(Set{1, 2, 3, "4"}).should be_true
-    set.subset?(Set{1, 2, 3}).should be_true
-    set.subset?(Set{1, 2}).should be_false
-    set.subset?(empty_set).should be_false
+    set.subset_of?(Set{1, 2, 3, 4}).should be_true
+    set.subset_of?(Set{1, 2, 3, "4"}).should be_true
+    set.subset_of?(Set{1, 2, 3}).should be_true
+    set.subset_of?(Set{1, 2}).should be_false
+    set.subset_of?(empty_set).should be_false
 
-    empty_set.subset?(Set{1}).should be_true
-    empty_set.subset?(empty_set).should be_true
+    empty_set.subset_of?(Set{1}).should be_true
+    empty_set.subset_of?(empty_set).should be_true
   end
 
-  it "check proper_subset" do
+  it "#proper_subset_of?" do
     set = Set{1, 2, 3}
     empty_set = Set(Int32).new
 
-    set.proper_subset?(Set{1, 2, 3, 4}).should be_true
-    set.proper_subset?(Set{1, 2, 3, "4"}).should be_true
-    set.proper_subset?(Set{1, 2, 3}).should be_false
-    set.proper_subset?(Set{1, 2}).should be_false
-    set.proper_subset?(empty_set).should be_false
+    set.proper_subset_of?(Set{1, 2, 3, 4}).should be_true
+    set.proper_subset_of?(Set{1, 2, 3, "4"}).should be_true
+    set.proper_subset_of?(Set{1, 2, 3}).should be_false
+    set.proper_subset_of?(Set{1, 2}).should be_false
+    set.proper_subset_of?(empty_set).should be_false
 
-    empty_set.proper_subset?(Set{1}).should be_true
-    empty_set.proper_subset?(empty_set).should be_false
+    empty_set.proper_subset_of?(Set{1}).should be_true
+    empty_set.proper_subset_of?(empty_set).should be_false
   end
 
-  it "check superset" do
+  it "#superset_of?" do
     set = Set{1, 2, "3"}
     empty_set = Set(Int32).new
 
-    set.superset?(empty_set).should be_true
-    set.superset?(Set{1, 2}).should be_true
-    set.superset?(Set{1, 2, "3"}).should be_true
-    set.superset?(Set{1, 2, 3}).should be_false
-    set.superset?(Set{1, 2, 3, 4}).should be_false
-    set.superset?(Set{1, 4}).should be_false
+    set.superset_of?(empty_set).should be_true
+    set.superset_of?(Set{1, 2}).should be_true
+    set.superset_of?(Set{1, 2, "3"}).should be_true
+    set.superset_of?(Set{1, 2, 3}).should be_false
+    set.superset_of?(Set{1, 2, 3, 4}).should be_false
+    set.superset_of?(Set{1, 4}).should be_false
 
-    empty_set.superset?(empty_set).should be_true
+    empty_set.superset_of?(empty_set).should be_true
   end
 
-  it "check proper_superset" do
+  it "#proper_superset_of?" do
     set = Set{1, 2, "3"}
     empty_set = Set(Int32).new
 
-    set.proper_superset?(empty_set).should be_true
-    set.proper_superset?(Set{1, 2}).should be_true
-    set.proper_superset?(Set{1, 2, "3"}).should be_false
-    set.proper_superset?(Set{1, 2, 3}).should be_false
-    set.proper_superset?(Set{1, 2, 3, 4}).should be_false
-    set.proper_superset?(Set{1, 4}).should be_false
+    set.proper_superset_of?(empty_set).should be_true
+    set.proper_superset_of?(Set{1, 2}).should be_true
+    set.proper_superset_of?(Set{1, 2, "3"}).should be_false
+    set.proper_superset_of?(Set{1, 2, 3}).should be_false
+    set.proper_superset_of?(Set{1, 2, 3, 4}).should be_false
+    set.proper_superset_of?(Set{1, 4}).should be_false
 
-    empty_set.proper_superset?(empty_set).should be_false
+    empty_set.proper_superset_of?(empty_set).should be_false
   end
 
   it "has object_id" do
@@ -402,13 +406,13 @@ describe "Set" do
       string = "foo"
       set = Set{string, "bar", "baz"}
       set.compare_by_identity?.should be_false
-      set.includes?(string).should be_true
+      set.should contain(string)
 
       set.compare_by_identity
       set.compare_by_identity?.should be_true
 
-      set.includes?("fo" + "o").should be_false
-      set.includes?(string).should be_true
+      set.should_not contain("fo" + "o")
+      set.should contain(string)
     end
 
     it "retains compare_by_identity on dup" do
@@ -419,6 +423,20 @@ describe "Set" do
     it "retains compare_by_identity on clone" do
       set = Set(String).new.compare_by_identity
       set.clone.compare_by_identity?.should be_true
+    end
+  end
+
+  describe "#rehash" do
+    it "rehashes" do
+      a = [1]
+      s = Set{a}
+      (10..100).each do |i|
+        s << [i]
+      end
+      a << 2
+      s.should_not contain(a)
+      s.rehash
+      s.should contain(a)
     end
   end
 end

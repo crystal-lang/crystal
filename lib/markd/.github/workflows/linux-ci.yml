@@ -1,0 +1,34 @@
+name: Linux CI
+on:
+  push:
+    paths-ignore:
+      - "benchmarks/**"
+    branches:
+      - "master"
+  pull_request:
+    branches: "*"
+
+jobs:
+  specs:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crystal: [ '1.0.0', '1.1.0', '1.2.0', 'latest', 'nightly' ]
+    name: Crystal ${{ matrix.crystal }} tests
+    steps:
+    - uses: actions/checkout@master
+    - uses: oprypin/install-crystal@v1
+      with:
+        crystal: ${{ matrix.crystal }}
+    - name: Install dependencies
+      run: shards install
+    - name: Run tests
+      run: crystal spec --error-on-warnings --error-trace
+    - name: Run code format check
+      run: |
+        if ! crystal tool format --check; then
+          crystal tool format
+          git diff
+          exit 1
+        fi

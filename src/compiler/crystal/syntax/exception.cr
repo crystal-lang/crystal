@@ -1,7 +1,7 @@
 require "../exception"
 
 module Crystal
-  class SyntaxException < Exception
+  class SyntaxException < CodeError
     include ErrorFormat
 
     getter line_number : Int32
@@ -11,10 +11,6 @@ module Crystal
 
     def initialize(message, @line_number, @column_number, @filename, @size = nil)
       super(message)
-    end
-
-    def color=(color)
-      @color = !!color
     end
 
     def has_location?
@@ -31,19 +27,24 @@ module Crystal
       end
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       msg = @message.to_s
       error_message_lines = msg.lines
-      default_message = "syntax error in #{@filename}:#{@line_number}"
 
       io << error_body(source, default_message)
       io << '\n'
-      io << colorize("Error: #{error_message_lines.shift}").yellow.bold
+      io << colorize("#{@warning ? "Warning" : "Error"}: #{error_message_lines.shift}").yellow.bold
       io << remaining error_message_lines
     end
 
-    def to_s_with_source(source, io)
-      append_to_s source, io
+    def default_message
+      if (filename = @filename) && (line_number = @line_number)
+        "#{@warning ? "warning" : "syntax error"} in #{filename}:#{line_number}"
+      end
+    end
+
+    def to_s_with_source(io : IO, source)
+      append_to_s io, source
     end
 
     def deepest_error_message

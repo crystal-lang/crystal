@@ -1,9 +1,10 @@
-window.CrystalDoc = (window.CrystalDoc || {});
+window.CrystalDocs = (window.CrystalDocs || {});
 
-CrystalDoc.base_path = (CrystalDoc.base_path || "");
+CrystalDocs.base_path = (CrystalDocs.base_path || "");
 
 <%= JsSearchTemplate.new %>
 <%= JsNavigatorTemplate.new %>
+<%= JsVersionsTemplate.new %>
 <%= JsUsageModal.new %>
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  var repositoryName = document.querySelector('#repository-name').getAttribute('content');
+  var repositoryName = document.querySelector('[name=repository-name]').getAttribute('content');
   var typesList = document.querySelector('.types-list');
   var searchInput = document.querySelector('.search-input');
   var parents = document.querySelectorAll('.types-list li.parent');
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var openTypes = typesList.querySelectorAll('.current');
     if (openTypes.length > 0) {
       var lastOpenType = openTypes[openTypes.length - 1];
-      lastOpenType.scrollIntoView();
+      lastOpenType.scrollIntoView(!(window.matchMedia('only screen and (max-width: 635px)')).matches);
     }
   }
 
@@ -62,28 +63,28 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   var leaveSearchScope = function(){
-    CrystalDoc.toggleResultsList(false);
+    CrystalDocs.toggleResultsList(false);
     window.focus();
   }
 
   var navigator = new Navigator(document.querySelector('.types-list'), searchInput, document.querySelector(".search-results"), leaveSearchScope);
 
-  CrystalDoc.loadIndex();
+  CrystalDocs.loadIndex();
   var searchTimeout;
   var lastSearchText = false;
   var performSearch = function() {
-    document.dispatchEvent(new Event("CrystalDoc:searchDebounceStarted"));
+    document.dispatchEvent(new Event("CrystalDocs:searchDebounceStarted"));
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
 
       if(text == "") {
-        CrystalDoc.toggleResultsList(false);
+        CrystalDocs.toggleResultsList(false);
       }else if(text == lastSearchText){
-        document.dispatchEvent(new Event("CrystalDoc:searchDebounceStopped"));
+        document.dispatchEvent(new Event("CrystalDocs:searchDebounceStopped"));
       }else{
-        CrystalDoc.search(text);
+        CrystalDocs.search(text);
         navigator.highlightFirst();
         searchInput.focus();
       }
@@ -98,8 +99,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // TODO: Add OpenSearch description
     var searchQuery = location.hash.substring(3);
     history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
-    searchInput.value = searchQuery;
-    document.addEventListener('CrystalDoc:loaded', performSearch);
+    searchInput.value = decodeURIComponent(searchQuery);
+    document.addEventListener('CrystalDocs:loaded', performSearch);
   }
 
   if (searchInput.value.length == 0) {
@@ -185,11 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
   var scrollToEntryFromLocationHash = function() {
     var hash = window.location.hash;
     if (hash) {
-      var targetAnchor = unescape(hash.substr(1));
-      var targetEl = document.querySelectorAll('.entry-detail[id="' + targetAnchor + '"]');
-
-      if (targetEl && targetEl.length > 0) {
-        targetEl[0].offsetParent.scrollTop = targetEl[0].offsetTop;
+      var targetAnchor = decodeURI(hash.substr(1));
+      var targetEl = document.getElementById(targetAnchor)
+      if (targetEl) {
+        targetEl.offsetParent.scrollTop = targetEl.offsetTop;
       }
     }
   };

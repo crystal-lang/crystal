@@ -1,0 +1,111 @@
+name: AArch64 CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  aarch64-musl-build:
+    runs-on: [runs-on, runner=2cpu-linux-arm64, "run-id=${{ github.run_id }}"]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Build Crystal
+        uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
+        with:
+          args: make crystal
+      - name: Upload Crystal executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: crystal-aarch64-musl
+          path: |
+            .build/crystal
+            src/llvm/ext/llvm_ext.o
+  aarch64-musl-test-stdlib:
+    needs: aarch64-musl-build
+    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-aarch64-musl
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run stdlib specs
+        uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
+        with:
+          args: make std_spec
+  aarch64-musl-test-compiler:
+    needs: aarch64-musl-build
+    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-aarch64-musl
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run compiler specs
+        uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
+        with:
+          args: make primitives_spec compiler_spec FLAGS=-Dwithout_ffi
+  aarch64-gnu-build:
+    runs-on: [runs-on, runner=2cpu-linux-arm64, "run-id=${{ github.run_id }}"]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Build Crystal
+        uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
+        with:
+          args: make crystal
+      - name: Upload Crystal executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: crystal-aarch64-gnu
+          path: |
+            .build/crystal
+            src/llvm/ext/llvm_ext.o
+  aarch64-gnu-test-stdlib:
+    needs: aarch64-gnu-build
+    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-aarch64-gnu
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run stdlib specs
+        uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
+        with:
+          args: make std_spec
+  aarch64-gnu-test-compiler:
+    needs: aarch64-gnu-build
+    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal-aarch64-gnu
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run compiler specs
+        uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
+        with:
+          args: make primitives_spec compiler_spec

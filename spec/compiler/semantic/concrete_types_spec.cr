@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-private def assert_concrete_types(str)
-  result = semantic_result("struct Witness;end\n\n#{str}", nil, inject_primitives: false)
+private def assert_concrete_types(str, &)
+  result = semantic("struct Witness;end\n\n#{str}")
   program = result.program
 
   type, expected_concrete_types = yield program.types, program
@@ -75,7 +75,7 @@ describe "Semantic: concrete_types" do
       class Bar < Base
       end
     )) do |t|
-      # abstract base class are required because the metaclass can allways be used: Base.method
+      # abstract base class are required because the metaclass can always be used: Base.method
       {t["Base"].virtual_type.metaclass, [t["Base"].metaclass, t["Foo"].metaclass, t["Bar"].metaclass]}
     end
   end

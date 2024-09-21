@@ -131,7 +131,7 @@ describe "Semantic: lib" do
       x = Pointer(Int32).malloc(1_u64)
       Lib.foo out x
       ),
-      "variable 'x' is already defined, `out` must be used to define a variable, use another name"
+      "variable 'x' is already defined, `out` must be used to define a variable, use another name", inject_primitives: true
   end
 
   it "allows invoking out with underscore " do
@@ -282,7 +282,7 @@ describe "Semantic: lib" do
 
       t = {y: 2.5, x: 3}
       LibC.foo **t
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "errors if missing link arguments" do
@@ -321,7 +321,7 @@ describe "Semantic: lib" do
       "'static' link argument must be a Bool"
   end
 
-  it "errors if foruth argument is not a bool" do
+  it "errors if fourth argument is not a bool" do
     assert_error %(
       @[Link("foo", "bar", true, 1)]
       lib LibFoo
@@ -345,7 +345,55 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', 'wasm_import_module', and 'dll')"
+  end
+
+  it "allows dll argument" do
+    assert_no_errors <<-CRYSTAL
+      @[Link(dll: "foo.dll")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_no_errors <<-CRYSTAL
+      @[Link(dll: "BAR.DLL")]
+      lib LibFoo
+      end
+      CRYSTAL
+  end
+
+  it "errors if dll argument contains directory separators" do
+    assert_error <<-CRYSTAL, "'dll' link argument must not include directory separators"
+      @[Link(dll: "foo/bar.dll")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must not include directory separators"
+      @[Link(dll: %q(foo\\bar.dll))]
+      lib LibFoo
+      end
+      CRYSTAL
+  end
+
+  it "errors if dll argument does not end with '.dll'" do
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "foo")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "foo.dylib")]
+      lib LibFoo
+      end
+      CRYSTAL
+
+    assert_error <<-CRYSTAL, "'dll' link argument must use a '.dll' file extension"
+      @[Link(dll: "")]
+      lib LibFoo
+      end
+      CRYSTAL
   end
 
   it "errors if lib already specified with positional argument" do
@@ -366,7 +414,7 @@ describe "Semantic: lib" do
       "'lib' link argument must be a String"
   end
 
-  it "clears attributes after lib" do
+  it "clears annotations after lib" do
     assert_type(%(
       @[Link("foo")]
       lib LibFoo
@@ -374,6 +422,24 @@ describe "Semantic: lib" do
       end
       1
       )) { int32 }
+  end
+
+  it "warns if @[Link(static: true)] is specified" do
+    assert_warning <<-CRYSTAL,
+      @[Link("foo", static: true)]
+      lib Foo
+      end
+      CRYSTAL
+      "warning in line 1\nWarning: specifying static linking for individual libraries is deprecated"
+  end
+
+  it "warns if Link annotations use positional arguments" do
+    assert_warning <<-CRYSTAL,
+      @[Link("foo", "bar")]
+      lib Foo
+      end
+      CRYSTAL
+      "warning in line 1\nWarning: using non-named arguments for Link annotations is deprecated"
   end
 
   it "allows invoking lib call without obj inside lib" do
@@ -404,15 +470,16 @@ describe "Semantic: lib" do
       "lib fun call is not supported in dispatch"
   end
 
-  it "allows passing nil or pointer to arg expecting pointer" do
-    assert_type(%(
+  it "disallows passing nil or pointer to arg expecting pointer" do
+    assert_error %(
       lib Foo
         fun foo(x : Int32*) : Int64
       end
 
       a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
       Foo.foo(a)
-      )) { int64 }
+      ),
+      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
   end
 
   it "correctly attached link flags if there's a macro if" do
@@ -476,7 +543,7 @@ describe "Semantic: lib" do
       "can't define method in lib LibC"
   end
 
-  it "reopens lib and adds more link attributes" do
+  it "reopens lib and adds more link annotations" do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -496,7 +563,7 @@ describe "Semantic: lib" do
     attrs[1].lib.should eq("SDLMain")
   end
 
-  it "reopens lib and adds same link attributes" do
+  it "reopens lib and adds same link annotations" do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -515,7 +582,7 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "gathers link attributes from macro expression" do
+  it "gathers link annotations from macro expression" do
     result = semantic(%(
       {% begin %}
         @[Link("SDL")]
@@ -532,23 +599,23 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "errors if using void as argument (related to #508)" do
+  it "errors if using void as parameter (related to #508)" do
     assert_error %(
       lib LibFoo
         fun foo(x : Void)
       end
       ),
-      "can't use Void as argument type"
+      "can't use Void as parameter type"
   end
 
-  it "errors if using void via typedef as argument (related to #508)" do
+  it "errors if using void via typedef as parameter (related to #508)" do
     assert_error %(
       lib LibFoo
         type Foo = Void
         fun foo(x : Foo)
       end
       ),
-      "can't use Void as argument type"
+      "can't use Void as parameter type"
   end
 
   it "can use tuple as fun return" do
@@ -584,7 +651,7 @@ describe "Semantic: lib" do
 
       a = 1_u8
       LibFoo.foo a
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "passes float as another integer type in variable" do
@@ -595,7 +662,7 @@ describe "Semantic: lib" do
 
       a = 1_f64
       LibFoo.foo a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "passes int as another integer type with literal" do
@@ -675,7 +742,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+      "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with void pointer through type" do
@@ -687,7 +754,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+      "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with non-pointer" do
@@ -698,7 +765,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
+      "parameter 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
   end
 
   it "errors if redefining fun with different signature (#2468)" do
@@ -723,7 +790,7 @@ describe "Semantic: lib" do
       "can't use named args with variadic function"
   end
 
-  it "errors if using unknown named arg" do
+  it "errors if using unknown named param" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -731,10 +798,10 @@ describe "Semantic: lib" do
 
       LibC.foo y: 1_u8, x: 1, z: 2
       ),
-      "no argument named 'z'"
+      "no parameter named 'z'"
   end
 
-  it "errors if argument already specified" do
+  it "errors if parameter already specified" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -742,7 +809,7 @@ describe "Semantic: lib" do
 
       LibC.foo 1, x: 2
       ),
-      "argument 'x' already specified"
+      "argument for parameter 'x' already specified"
   end
 
   it "errors if missing argument" do
@@ -942,5 +1009,19 @@ describe "Semantic: lib" do
       bar(LibFoo.foo)
       ),
       "passing Void return value of lib fun call has no effect"
+  end
+
+  it "can list lib functions at the top level (#12395)" do
+    assert_type(%(
+      lib LibFoo
+        fun foo
+      end
+
+      {% if LibFoo.methods.size == 1 %}
+        true
+      {% else %}
+        1
+      {% end %}
+      )) { bool }
   end
 end

@@ -1,4 +1,11 @@
 require "spec"
+
+{% if flag?(:interpreted) && !flag?(:win32) %}
+  # TODO: figure out how to link against libstdc++ in interpreted code (#14398)
+  pending LLVM::ABI::AArch64
+  {% skip_file %}
+{% end %}
+
 require "llvm"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
@@ -9,6 +16,7 @@ private def abi
   triple = "aarch64-unknown-linux-gnu"
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::AArch64.new(machine)
 end
 
@@ -132,7 +140,7 @@ class LLVM::ABI
           info.return_type.should eq(ArgType.direct(str, cast: ctx.int64.array(2)))
         end
 
-        test "does with structs between 64 and 128 bits" do |abi, ctx|
+        test "does with structs larger than 128 bits" do |abi, ctx|
           str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
           arg_types = [str]
           return_type = str
@@ -140,8 +148,20 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.arg_types[0].should eq(ArgType.indirect(str, nil))
           info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        end
+
+        test "does with homogeneous structs" do |abi, ctx|
+          str = ctx.struct([ctx.float, ctx.float, ctx.float, ctx.float])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.direct(str, ctx.float.array(4)))
+          info.return_type.should eq(ArgType.direct(str, ctx.float.array(4)))
         end
       end
     {% end %}

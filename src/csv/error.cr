@@ -11,7 +11,7 @@ class CSV
     getter column_number : Int32
 
     def initialize(message, @line_number, @column_number)
-      super("#{message} at #{@line_number}:#{@column_number}")
+      super("#{message} at line #{@line_number}, column #{@column_number}")
     end
   end
 end

@@ -1,96 +1,219 @@
-require "c/winbase"
+{% if flag?(:win32) %}
+  require "c/winbase"
+  require "c/errhandlingapi"
+  require "c/winsock2"
+{% end %}
 
-class WinError < Errno
-  # NOTE: `get_last_error` must be called BEFORE an instance of this class
-  # is malloced as it would change the "last error" to SUCCESS
-  def self.new(message)
-    new(message, LibC.GetLastError)
+# `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
+enum WinError : UInt32
+  # Returns the value of [`GetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror)
+  # which is used to retrieve the error code of the previously called win32 function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.value : self
+    {% if flag?(:win32) %}
+      WinError.new LibC.GetLastError
+    {% else %}
+      raise NotImplementedError.new("WinError.value")
+    {% end %}
   end
 
-  def initialize(message, code)
-    buffer = uninitialized UInt16[256]
-    size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
-    details = String.from_utf16(buffer.to_slice[0, size]).strip
-    super("#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code))
+  # Sets the value of [`SetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setlasterror)
+  # which signifies the error code of the previously called win32 function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.value=(winerror : self)
+    {% if flag?(:win32) %}
+      LibC.SetLastError(winerror.value)
+    {% else %}
+      raise NotImplementedError.new("WinError.value=")
+    {% end %}
   end
 
-  # https://github.com/python/cpython/blob/master/PC/generrmap.c
-  # https://github.com/python/cpython/blob/master/PC/errmap.h
-  def winerror_to_errno(winerror)
-    case winerror
-    when ERROR_FILE_NOT_FOUND            then Errno::ENOENT
-    when ERROR_PATH_NOT_FOUND            then Errno::ENOENT
-    when ERROR_TOO_MANY_OPEN_FILES       then Errno::EMFILE
-    when ERROR_ACCESS_DENIED             then Errno::EACCES
-    when ERROR_INVALID_HANDLE            then Errno::EBADF
-    when ERROR_ARENA_TRASHED             then Errno::ENOMEM
-    when ERROR_NOT_ENOUGH_MEMORY         then Errno::ENOMEM
-    when ERROR_INVALID_BLOCK             then Errno::ENOMEM
-    when ERROR_BAD_ENVIRONMENT           then Errno::E2BIG
-    when ERROR_BAD_FORMAT                then Errno::ENOEXEC
-    when ERROR_INVALID_DRIVE             then Errno::ENOENT
-    when ERROR_CURRENT_DIRECTORY         then Errno::EACCES
-    when ERROR_NOT_SAME_DEVICE           then Errno::EXDEV
-    when ERROR_NO_MORE_FILES             then Errno::ENOENT
-    when ERROR_WRITE_PROTECT             then Errno::EACCES
-    when ERROR_BAD_UNIT                  then Errno::EACCES
-    when ERROR_NOT_READY                 then Errno::EACCES
-    when ERROR_BAD_COMMAND               then Errno::EACCES
-    when ERROR_CRC                       then Errno::EACCES
-    when ERROR_BAD_LENGTH                then Errno::EACCES
-    when ERROR_SEEK                      then Errno::EACCES
-    when ERROR_NOT_DOS_DISK              then Errno::EACCES
-    when ERROR_SECTOR_NOT_FOUND          then Errno::EACCES
-    when ERROR_OUT_OF_PAPER              then Errno::EACCES
-    when ERROR_WRITE_FAULT               then Errno::EACCES
-    when ERROR_READ_FAULT                then Errno::EACCES
-    when ERROR_GEN_FAILURE               then Errno::EACCES
-    when ERROR_SHARING_VIOLATION         then Errno::EACCES
-    when ERROR_LOCK_VIOLATION            then Errno::EACCES
-    when ERROR_WRONG_DISK                then Errno::EACCES
-    when ERROR_SHARING_BUFFER_EXCEEDED   then Errno::EACCES
-    when ERROR_BAD_NETPATH               then Errno::ENOENT
-    when ERROR_NETWORK_ACCESS_DENIED     then Errno::EACCES
-    when ERROR_BAD_NET_NAME              then Errno::ENOENT
-    when ERROR_FILE_EXISTS               then Errno::EEXIST
-    when ERROR_CANNOT_MAKE               then Errno::EACCES
-    when ERROR_FAIL_I24                  then Errno::EACCES
-    when ERROR_NO_PROC_SLOTS             then Errno::EAGAIN
-    when ERROR_DRIVE_LOCKED              then Errno::EACCES
-    when ERROR_BROKEN_PIPE               then Errno::EPIPE
-    when ERROR_DISK_FULL                 then Errno::ENOSPC
-    when ERROR_INVALID_TARGET_HANDLE     then Errno::EBADF
-    when ERROR_WAIT_NO_CHILDREN          then Errno::ECHILD
-    when ERROR_CHILD_NOT_COMPLETE        then Errno::ECHILD
-    when ERROR_DIRECT_ACCESS_HANDLE      then Errno::EBADF
-    when ERROR_SEEK_ON_DEVICE            then Errno::EACCES
-    when ERROR_DIR_NOT_EMPTY             then Errno::ENOTEMPTY
-    when ERROR_NOT_LOCKED                then Errno::EACCES
-    when ERROR_BAD_PATHNAME              then Errno::ENOENT
-    when ERROR_MAX_THRDS_REACHED         then Errno::EAGAIN
-    when ERROR_LOCK_FAILED               then Errno::EACCES
-    when ERROR_ALREADY_EXISTS            then Errno::EEXIST
-    when ERROR_INVALID_STARTING_CODESEG  then Errno::ENOEXEC
-    when ERROR_INVALID_STACKSEG          then Errno::ENOEXEC
-    when ERROR_INVALID_MODULETYPE        then Errno::ENOEXEC
-    when ERROR_INVALID_EXE_SIGNATURE     then Errno::ENOEXEC
-    when ERROR_EXE_MARKED_INVALID        then Errno::ENOEXEC
-    when ERROR_BAD_EXE_FORMAT            then Errno::ENOEXEC
-    when ERROR_ITERATED_DATA_EXCEEDS_64k then Errno::ENOEXEC
-    when ERROR_INVALID_MINALLOCSIZE      then Errno::ENOEXEC
-    when ERROR_DYNLINK_FROM_INVALID_RING then Errno::ENOEXEC
-    when ERROR_IOPL_NOT_ENABLED          then Errno::ENOEXEC
-    when ERROR_INVALID_SEGDPL            then Errno::ENOEXEC
-    when ERROR_AUTODATASEG_EXCEEDS_64k   then Errno::ENOEXEC
-    when ERROR_RING2SEG_MUST_BE_MOVABLE  then Errno::ENOEXEC
-    when ERROR_RELOC_CHAIN_XEEDS_SEGLIM  then Errno::ENOEXEC
-    when ERROR_INFLOOP_IN_RELOC_CHAIN    then Errno::ENOEXEC
-    when ERROR_FILENAME_EXCED_RANGE      then Errno::ENOENT
-    when ERROR_NESTING_NOT_ALLOWED       then Errno::EAGAIN
-    when ERROR_NO_DATA                   then Errno::EPIPE
-    when ERROR_DIRECTORY                 then Errno::ENOTDIR
-    when ERROR_NOT_ENOUGH_QUOTA          then Errno::ENOMEM
-    else                                      Errno::EINVAL
+  # Returns the value of [`WSAGetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsagetlasterror)
+  # which is used to retrieve the error code of the previously called Windows Socket API function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.wsa_value
+    {% if flag?(:win32) %}
+      WinError.new LibC.WSAGetLastError.to_u32!
+    {% else %}
+      raise NotImplementedError.new("WinError.wsa_value")
+    {% end %}
+  end
+
+  # Sets the value of [`WSASetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasetlasterror)
+  # which signifies the error code of the previously called Windows Socket API function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.wsa_value=(winerror : self)
+    {% if flag?(:win32) %}
+      LibC.WSASetLastError(winerror.value)
+    {% else %}
+      raise NotImplementedError.new("WinError.value=")
+    {% end %}
+  end
+
+  # Returns the system error message associated with this error code.
+  #
+  # The message is retrieved via [`FormatMessageW`](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagew)
+  # using the current default `LANGID`.
+  #
+  # On non-win32 platforms the result is always an empty string.
+  def message : String
+    {% if flag?(:win32) %}
+      unsafe_message { |slice| String.from_utf16(slice).strip }
+    {% else %}
+      ""
+    {% end %}
+  end
+
+  # :nodoc:
+  def unsafe_message(&)
+    {% if flag?(:win32) %}
+      buffer = uninitialized UInt16[256]
+      size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, value, 0, buffer, buffer.size, nil)
+      yield buffer.to_slice[0, size]
+    {% else %}
+      yield "".to_slice
+    {% end %}
+  end
+
+  # :nodoc:
+  def formatted_message(*args : String) : String
+    {% if flag?(:win32) %}
+      buffer = uninitialized UInt16[512]
+      args = args.to_static_array.map do |arg|
+        Crystal::System.to_wstr(arg)
+      end
+      size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM | LibC::FORMAT_MESSAGE_ARGUMENT_ARRAY, nil, value, 0, buffer, buffer.size, args)
+      String.from_utf16(buffer.to_slice[0, size]).strip
+    {% else %}
+      ""
+    {% end %}
+  end
+
+  # Transforms this `WinError` value to the equivalent `Errno` value.
+  #
+  # This is only defined for some values. If no transformation is defined for
+  # a specific value, the default result is `Errno::EINVAL`.
+  def to_errno : Errno
+    # https://github.com/python/cpython/blob/1446024124fb98c3051199760380685f8a2fd127/PC/errmap.h
+
+    # Unwrap FACILITY_WIN32 HRESULT errors.
+    err = self
+    err = WinError.new(err.value & 0xFFFF) if err.value & 0xFFFF0000_u32 == 0x80070000_u32
+
+    case err
+    when ERROR_FILE_NOT_FOUND,
+         ERROR_PATH_NOT_FOUND,
+         ERROR_INVALID_DRIVE,
+         ERROR_NO_MORE_FILES,
+         ERROR_BAD_NETPATH,
+         ERROR_BAD_NET_NAME,
+         ERROR_BAD_PATHNAME,
+         ERROR_FILENAME_EXCED_RANGE
+      Errno::ENOENT
+    when ERROR_BAD_ENVIRONMENT
+      Errno::E2BIG
+    when ERROR_BAD_FORMAT,
+         ERROR_INVALID_STARTING_CODESEG,
+         ERROR_INVALID_STACKSEG,
+         ERROR_INVALID_MODULETYPE,
+         ERROR_INVALID_EXE_SIGNATURE,
+         ERROR_EXE_MARKED_INVALID,
+         ERROR_BAD_EXE_FORMAT,
+         ERROR_ITERATED_DATA_EXCEEDS_64k,
+         ERROR_INVALID_MINALLOCSIZE,
+         ERROR_DYNLINK_FROM_INVALID_RING,
+         ERROR_IOPL_NOT_ENABLED,
+         ERROR_INVALID_SEGDPL,
+         ERROR_AUTODATASEG_EXCEEDS_64k,
+         ERROR_RING2SEG_MUST_BE_MOVABLE,
+         ERROR_RELOC_CHAIN_XEEDS_SEGLIM,
+         ERROR_INFLOOP_IN_RELOC_CHAIN
+      Errno::ENOEXEC
+    when ERROR_INVALID_HANDLE,
+         ERROR_INVALID_TARGET_HANDLE,
+         ERROR_DIRECT_ACCESS_HANDLE
+      Errno::EBADF
+    when ERROR_WAIT_NO_CHILDREN,
+         ERROR_CHILD_NOT_COMPLETE
+      Errno::ECHILD
+    when ERROR_NO_PROC_SLOTS,
+         ERROR_MAX_THRDS_REACHED,
+         ERROR_NESTING_NOT_ALLOWED
+      Errno::EAGAIN
+    when ERROR_ARENA_TRASHED,
+         ERROR_NOT_ENOUGH_MEMORY,
+         ERROR_INVALID_BLOCK,
+         ERROR_NOT_ENOUGH_QUOTA
+      Errno::ENOMEM
+    when ERROR_ACCESS_DENIED,
+         ERROR_CURRENT_DIRECTORY,
+         ERROR_WRITE_PROTECT,
+         ERROR_BAD_UNIT,
+         ERROR_NOT_READY,
+         ERROR_BAD_COMMAND,
+         ERROR_CRC,
+         ERROR_BAD_LENGTH,
+         ERROR_SEEK,
+         ERROR_NOT_DOS_DISK,
+         ERROR_SECTOR_NOT_FOUND,
+         ERROR_OUT_OF_PAPER,
+         ERROR_WRITE_FAULT,
+         ERROR_READ_FAULT,
+         ERROR_GEN_FAILURE,
+         ERROR_SHARING_VIOLATION,
+         ERROR_LOCK_VIOLATION,
+         ERROR_WRONG_DISK,
+         ERROR_SHARING_BUFFER_EXCEEDED,
+         ERROR_NETWORK_ACCESS_DENIED,
+         ERROR_CANNOT_MAKE,
+         ERROR_FAIL_I24,
+         ERROR_DRIVE_LOCKED,
+         ERROR_SEEK_ON_DEVICE,
+         ERROR_NOT_LOCKED,
+         ERROR_LOCK_FAILED,
+         WinError.new(35)
+      Errno::EACCES
+    when ERROR_FILE_EXISTS,
+         ERROR_ALREADY_EXISTS
+      Errno::EEXIST
+    when ERROR_NOT_SAME_DEVICE
+      Errno::EXDEV
+    when ERROR_DIRECTORY
+      Errno::ENOTDIR
+    when ERROR_TOO_MANY_OPEN_FILES
+      Errno::EMFILE
+    when ERROR_DISK_FULL
+      Errno::ENOSPC
+    when ERROR_BROKEN_PIPE,
+         ERROR_NO_DATA
+      Errno::EPIPE
+    when ERROR_DIR_NOT_EMPTY
+      Errno::ENOTEMPTY
+    when ERROR_NO_UNICODE_TRANSLATION
+      Errno::EILSEQ
+    when WSAEINTR
+      Errno::EINTR
+    when WSAEBADF
+      Errno::EBADF
+    when WSAEACCES
+      Errno::EACCES
+    when WSAEFAULT
+      Errno::EFAULT
+    when WSAEINVAL
+      Errno::EINVAL
+    when WSAEMFILE
+      Errno::EMFILE
+    else
+      # Winsock error codes (10000-11999) are errno values.
+      if 10000 <= err.value < 12000
+        Errno.new(err.value.to_i32!)
+      else
+        Errno::EINVAL
+      end
     end
   end
 
@@ -2181,4 +2304,8 @@ class WinError < Errno
   ERROR_STATE_SETTING_NAME_SIZE_LIMIT_EXCEEDED                  = 15817_u32
   ERROR_STATE_CONTAINER_NAME_SIZE_LIMIT_EXCEEDED                = 15818_u32
   ERROR_API_UNAVAILABLE                                         = 15841_u32
+
+  WSA_IO_PENDING     = ERROR_IO_PENDING
+  WSA_IO_INCOMPLETE  = ERROR_IO_INCOMPLETE
+  WSA_INVALID_HANDLE = ERROR_INVALID_HANDLE
 end

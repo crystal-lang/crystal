@@ -9,7 +9,7 @@ class OAuth::AccessToken
     OAuth.authenticate(client, @token, @secret, consumer_key, consumer_secret, extra_params)
   end
 
-  def extra
+  def extra : Hash(String, String)
     @extra ||= {} of String => String
   end
 
@@ -18,7 +18,7 @@ class OAuth::AccessToken
     secret = nil
     extra = nil
 
-    HTTP::Params.parse(response) do |key, value|
+    URI::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value
