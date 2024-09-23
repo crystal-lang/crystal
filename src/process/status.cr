@@ -212,7 +212,7 @@ class Process::Status
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
     {% else %}
-      exit_status
+      @exit_status.to_i32!
     {% end %}
   end
 
