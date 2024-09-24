@@ -13,24 +13,6 @@ struct Crystal::System::Kqueue
     raise RuntimeError.from_errno("kqueue1") if @kq == -1
   end
 
-  # Registers *changes* and returns a subslice to *events*.
-  #
-  # Timeout is relative to now; blocks indefinitely if `nil`; returns
-  # immediately if zero.
-  def kevent(changes : Slice(LibC::Kevent), events : Slice(LibC::Kevent), timeout : ::Time::Span? = nil) : Slice(LibC::Kevent)
-    if timeout
-      ts = uninitialized LibC::Timespec
-      ts.tv_sec = typeof(ts.tv_sec).new!(timeout.@seconds)
-      ts.tv_nsec = typeof(ts.tv_nsec).new!(timeout.@nanoseconds)
-      tsp = pointerof(ts)
-    else
-      tsp = Pointer(LibC::Timespec).null
-    end
-    count = LibC.kevent(@kq, changes.to_unsafe, changes.size, events.to_unsafe, events.size, tsp)
-    raise RuntimeError.from_errno("kevent") if count == -1 && !Errno.value.in?(Errno::EINTR, Errno::ENOENT)
-    events[0, count.clamp(0..)]
-  end
-
   # Helper to register a single event. Returns immediately.
   def kevent(ident, filter, flags, fflags = 0, data = 0, udata = nil, &) : Nil
     kevent = uninitialized LibC::Kevent
@@ -45,14 +27,37 @@ struct Crystal::System::Kqueue
     yield if ret == -1
   end
 
-  # Helper to wait for registered events to become active. Returns a subslice to
+  # Waits for registered events to become active. Returns a subslice to
   # *events*.
   #
   # Timeout is relative to now; blocks indefinitely if `nil`; returns
   # immediately if zero.
   def wait(events : Slice(LibC::Kevent), timeout : ::Time::Span? = nil) : Slice(LibC::Kevent)
+    if timeout
+      ts = uninitialized LibC::Timespec
+      ts.tv_sec = typeof(ts.tv_sec).new!(timeout.@seconds)
+      ts.tv_nsec = typeof(ts.tv_nsec).new!(timeout.@nanoseconds)
+      tsp = pointerof(ts)
+    else
+      tsp = Pointer(LibC::Timespec).null
+    end
+
     changes = uninitialized LibC::Kevent[0]
-    kevent(changes.to_slice, events, timeout)
+    count = 0
+
+    loop do
+      count = LibC.kevent(@kq, changes.to_unsafe, changes.size, events.to_unsafe, events.size, tsp)
+      break unless count == -1
+
+      if Errno.value == Errno::EINTR
+        # retry when waiting indefinitely, return otherwise
+        break if timeout
+      else
+        raise RuntimeError.from_errno("kevent")
+      end
+    end
+
+    events[0, count.clamp(0..)]
   end
 
   def close : Nil

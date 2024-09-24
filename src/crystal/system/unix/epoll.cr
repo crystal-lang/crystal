@@ -43,8 +43,20 @@ struct Crystal::System::Epoll
 
   # `timeout` is in milliseconds; -1 will wait indefinitely; 0 will never wait.
   def wait(events : Slice(LibC::EpollEvent), timeout : Int32) : Slice(LibC::EpollEvent)
-    count = LibC.epoll_wait(@epfd, events.to_unsafe, events.size, timeout)
-    raise RuntimeError.from_errno("epoll_wait") if count == -1 && Errno.value != Errno::EINTR
+    count = 0
+
+    loop do
+      count = LibC.epoll_wait(@epfd, events.to_unsafe, events.size, timeout)
+      break unless count == -1
+
+      if Errno.value == Errno::EINTR
+        # retry when waiting indefinitely, return otherwise
+        break unless timeout == -1
+      else
+        raise RuntimeError.from_errno("epoll_wait")
+      end
+    end
+
     events[0, count.clamp(0..)]
   end
 
