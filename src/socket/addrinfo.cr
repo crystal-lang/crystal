@@ -4,6 +4,19 @@ require "crystal/system/addrinfo"
 
 class Socket
   # Domain name resolver.
+  #
+  # # Query Concurrency Behaviour
+  #
+  # On most platforms, DNS queries are currently resolved synchronously.
+  # Calling a resolve method blocks the entire thread until it returns.
+  # This can cause latencies, especially in single-threaded processes.
+  #
+  # DNS queries resolve asynchronously on the following platforms:
+  #
+  # * Windows 8 and higher
+  #
+  # NOTE: Follow the discussion in [Async DNS resolution (#13619)](https://github.com/crystal-lang/crystal/issues/13619)
+  # for more details.
   struct Addrinfo
     include Crystal::System::Addrinfo
 
