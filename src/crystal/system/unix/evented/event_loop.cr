@@ -85,10 +85,6 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
-  {% if flag?(:preview_mt) %}
-    @run_lock = Atomic::Flag.new # protects parallel runs
-  {% end %}
-
   def initialize
     @lock = SpinLock.new # protects parallel accesses to @timers
     @timers = Timers.new
@@ -97,44 +93,20 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   # reset the mutexes since another thread may have acquired the lock of one
   # event loop, which would prevent closing file descriptors for example.
   def after_fork_before_exec : Nil
-    {% if flag?(:preview_mt) %} @run_lock.clear {% end %}
     @lock = SpinLock.new
   end
 
   {% unless flag?(:preview_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
-      {% if flag?(:preview_mt) %} @run_lock.clear {% end %}
       @lock = SpinLock.new
     end
   {% end %}
 
-  # thread unsafe: must hold `@run_lock` before calling!
+  # NOTE: thread unsafe
   def run(blocking : Bool) : Bool
     system_run(blocking)
     true
-  end
-
-  def try_lock?(&) : Bool
-    {% if flag?(:preview_mt) %}
-      if @run_lock.test_and_set
-        begin
-          yield
-          true
-        ensure
-          @run_lock.clear
-        end
-      else
-        false
-      end
-    {% else %}
-      yield
-      true
-    {% end %}
-  end
-
-  def try_run?(blocking : Bool) : Bool
-    try_lock? { run(blocking) }
   end
 
   # fiber interface, see Crystal::EventLoop
