@@ -1,7 +1,7 @@
 # Supported library versions:
 #
-# * openssl (1.1.0+)
-# * libressl
+# * openssl (1.1.0–3.3+)
+# * libressl (2.0–3.8+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#tls
 {% begin %}
