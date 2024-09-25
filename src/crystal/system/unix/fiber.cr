@@ -21,6 +21,9 @@ module Crystal::System::Fiber
     pointer
   end
 
+  def self.reset_stack(stack : Void*, stack_size : Int, protect : Bool) : Nil
+  end
+
   def self.free_stack(stack : Void*, stack_size) : Nil
     LibC.munmap(stack, stack_size)
   end
