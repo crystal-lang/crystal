@@ -419,7 +419,8 @@ class JSONVariableDiscriminatorValueType
   use_json_discriminator "type", {
                                          0 => JSONVariableDiscriminatorNumber,
     "1"                                    => JSONVariableDiscriminatorString,
-    true                                   => JSONVariableDiscriminatorBool,
+    true                                   => JSONVariableDiscriminatorBoolTrue,
+    false                                  => JSONVariableDiscriminatorBoolFalse,
     JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
     JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
@@ -431,7 +432,10 @@ end
 class JSONVariableDiscriminatorString < JSONVariableDiscriminatorValueType
 end
 
-class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
+class JSONVariableDiscriminatorBoolTrue < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorBoolFalse < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
@@ -1130,7 +1134,10 @@ describe "JSON mapping" do
       object_string.should be_a(JSONVariableDiscriminatorString)
 
       object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": true}))
-      object_bool.should be_a(JSONVariableDiscriminatorBool)
+      object_bool.should be_a(JSONVariableDiscriminatorBoolTrue)
+
+      object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": false}))
+      object_bool.should be_a(JSONVariableDiscriminatorBoolFalse)
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)

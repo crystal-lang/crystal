@@ -115,16 +115,58 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, self) }
   end
 
+  def +(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_add_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_sub_ui(mpf, self, {{ neg_ui }}) },
+        big_i:  self + {{ big_i }},
+      }
+    end
+  end
+
   def +(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_add(mpf, self, other.to_big_f) }
+  end
+
+  def -(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_sub_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_add_ui(mpf, self, {{ neg_ui }}) },
+        big_i:  self - {{ big_i }},
+      }
+    end
   end
 
   def -(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, self, other.to_big_f) }
   end
 
+  def *(other : Int::Primitive) : BigFloat
+    Int.primitive_ui_check(other) do |ui, neg_ui, big_i|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_mul_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_mul_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  self + {{ big_i }},
+      }
+    end
+  end
+
   def *(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
+  end
+
+  def /(other : Int::Primitive) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
+    raise DivisionByZeroError.new if other == 0
+    Int.primitive_ui_check(other) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, {{ neg_ui }}); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, BigFloat.new(other)) },
+      }
+    end
   end
 
   def /(other : BigFloat) : BigFloat
@@ -448,6 +490,29 @@ struct Int
   def <=>(other : BigFloat)
     -(other <=> self)
   end
+
+  def -(other : BigFloat) : BigFloat
+    Int.primitive_ui_check(self) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, other); LibGMP.mpf_add_ui(mpf, mpf, {{ ui }}) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, other); LibGMP.mpf_sub_ui(mpf, mpf, {{ neg_ui }}) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, BigFloat.new(self), other) },
+      }
+    end
+  end
+
+  def /(other : BigFloat) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
+    raise DivisionByZeroError.new if other == 0
+
+    Int.primitive_ui_check(self) do |ui, neg_ui, _|
+      {
+        ui:     BigFloat.new { |mpf| LibGMP.mpf_ui_div(mpf, {{ ui }}, other) },
+        neg_ui: BigFloat.new { |mpf| LibGMP.mpf_ui_div(mpf, {{ neg_ui }}, other); LibGMP.mpf_neg(mpf, mpf) },
+        big_i:  BigFloat.new { |mpf| LibGMP.mpf_div(mpf, BigFloat.new(self), other) },
+      }
+    end
+  end
 end
 
 struct Float
@@ -472,15 +537,24 @@ end
 module Math
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : BigFloat) : {BigFloat, Int64}
-    LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
+    return {BigFloat.zero, 0_i64} if value.zero?
+
+    # We compute this ourselves since `LibGMP.mpf_get_d_2exp` only returns a
+    # `LibC::Long` exponent, which is not sufficient for 32-bit `LibC::Long` and
+    # 32-bit `LibGMP::MpExp`, e.g. on 64-bit Windows.
+    # Since `0.5 <= frac.abs < 1.0`, the radix point should be just above the
+    # most significant limb, and there should be no leading zeros in that limb.
+    leading_zeros = value.@mpf._mp_d[value.@mpf._mp_size.abs - 1].leading_zeros_count
+    exp = 8_i64 * sizeof(LibGMP::MpLimb) * value.@mpf._mp_exp - leading_zeros
+
     frac = BigFloat.new do |mpf|
-      if exp >= 0
-        LibGMP.mpf_div_2exp(mpf, value, exp)
-      else
-        LibGMP.mpf_mul_2exp(mpf, value, -exp)
-      end
+      # remove leading zeros in the most significant limb
+      LibGMP.mpf_mul_2exp(mpf, value, leading_zeros)
+      # reset the exponent manually
+      mpf.value._mp_exp = 0
     end
-    {frac, exp.to_i64}
+
+    {frac, exp}
   end
 
   # Calculates the square root of *value*.
@@ -492,23 +566,5 @@ module Math
   # ```
   def sqrt(value : BigFloat) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
-  end
-end
-
-# :nodoc:
-struct Crystal::Hasher
-  def self.reduce_num(value : BigFloat)
-    float_normalize_wrap(value) do |value|
-      # more exact version of `Math.frexp`
-      LibGMP.mpf_get_d_2exp(out exp, value)
-      frac = BigFloat.new do |mpf|
-        if exp >= 0
-          LibGMP.mpf_div_2exp(mpf, value, exp)
-        else
-          LibGMP.mpf_mul_2exp(mpf, value, -exp)
-        end
-      end
-      float_normalize_reference(value, frac, exp)
-    end
   end
 end

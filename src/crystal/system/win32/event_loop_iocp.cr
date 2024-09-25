@@ -144,18 +144,15 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    handle = file_descriptor.windows_handle
-    IOCP.overlapped_operation(file_descriptor, handle, "ReadFile", file_descriptor.read_timeout) do |overlapped|
-      ret = LibC.ReadFile(handle, slice, slice.size, out byte_count, overlapped)
+    IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+      ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    handle = file_descriptor.windows_handle
-
-    IOCP.overlapped_operation(file_descriptor, handle, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
-      ret = LibC.WriteFile(handle, slice, slice.size, out byte_count, overlapped)
+    IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+      ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
   end
@@ -231,9 +228,9 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
-    socket.overlapped_connect(socket.fd, "ConnectEx") do |overlapped|
+    socket.overlapped_connect(socket.fd, "ConnectEx", timeout) do |overlapped|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
+      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
     end
   end
 
@@ -256,7 +253,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
         received_bytes = uninitialized UInt32
         Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
           output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
+          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped.to_unsafe)
       end
 
       if success

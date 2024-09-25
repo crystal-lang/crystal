@@ -71,6 +71,14 @@ describe "File" do
       end
     end
 
+    it "opens regular file as non-blocking" do
+      with_tempfile("regular") do |path|
+        File.open(path, "w", blocking: false) do |file|
+          file.blocking.should be_false
+        end
+      end
+    end
+
     {% if flag?(:unix) %}
       if File.exists?("/dev/tty")
         it "opens character device" do
@@ -114,6 +122,22 @@ describe "File" do
         end
       {% end %}
     {% end %}
+
+    it "reads non-blocking file" do
+      File.open(datapath("test_file.txt"), "r", blocking: false) do |f|
+        f.gets_to_end.should eq("Hello World\n" * 20)
+      end
+    end
+
+    it "writes and reads large non-blocking file" do
+      with_tempfile("non-blocking-io.txt") do |path|
+        File.open(path, "w+", blocking: false) do |f|
+          f.puts "Hello World\n" * 40000
+          f.pos = 0
+          f.gets_to_end.should eq("Hello World\n" * 40000)
+        end
+      end
+    end
   end
 
   it "reads entire file" do
@@ -1049,6 +1073,41 @@ describe "File" do
     end
   end
 
+  it "does not overwrite existing content in append mode" do
+    with_tempfile("append-override.txt") do |filename|
+      File.write(filename, "0123456789")
+
+      File.open(filename, "a") do |file|
+        file.seek(5)
+        file.write "abcd".to_slice
+      end
+
+      File.read(filename).should eq "0123456789abcd"
+    end
+  end
+
+  it "truncates file opened in append mode (#14702)" do
+    with_tempfile("truncate-append.txt") do |path|
+      File.write(path, "0123456789")
+
+      File.open(path, "a") do |file|
+        file.truncate(4)
+      end
+
+      File.read(path).should eq "0123"
+    end
+  end
+
+  it "locks file opened in append mode (#14702)" do
+    with_tempfile("truncate-append.txt") do |path|
+      File.write(path, "0123456789")
+
+      File.open(path, "a") do |file|
+        file.flock_exclusive { }
+      end
+    end
+  end
+
   it "can navigate with pos" do
     File.open(datapath("test_file.txt")) do |file|
       file.pos = 3
@@ -1189,46 +1248,50 @@ describe "File" do
       end
     end
 
-    it "#flock_shared" do
-      File.open(datapath("test_file.txt")) do |file1|
-        File.open(datapath("test_file.txt")) do |file2|
-          file1.flock_shared do
-            file2.flock_shared(blocking: false) { }
+    {true, false}.each do |blocking|
+      context "blocking: #{blocking}" do
+        it "#flock_shared" do
+          File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
+            File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
+              file1.flock_shared do
+                file2.flock_shared(blocking: false) { }
+              end
+            end
           end
         end
-      end
-    end
 
-    it "#flock_shared soft blocking fiber" do
-      File.open(datapath("test_file.txt")) do |file1|
-        File.open(datapath("test_file.txt")) do |file2|
-          done = Channel(Nil).new
-          file1.flock_exclusive
+        it "#flock_shared soft blocking fiber" do
+          File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
+            File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
+              done = Channel(Nil).new
+              file1.flock_exclusive
 
-          spawn do
-            file1.flock_unlock
-            done.send nil
+              spawn do
+                file1.flock_unlock
+                done.send nil
+              end
+
+              file2.flock_shared
+              done.receive
+            end
           end
-
-          file2.flock_shared
-          done.receive
         end
-      end
-    end
 
-    it "#flock_exclusive soft blocking fiber" do
-      File.open(datapath("test_file.txt")) do |file1|
-        File.open(datapath("test_file.txt")) do |file2|
-          done = Channel(Nil).new
-          file1.flock_exclusive
+        it "#flock_exclusive soft blocking fiber" do
+          File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
+            File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
+              done = Channel(Nil).new
+              file1.flock_exclusive
 
-          spawn do
-            file1.flock_unlock
-            done.send nil
+              spawn do
+                file1.flock_unlock
+                done.send nil
+              end
+
+              file2.flock_exclusive
+              done.receive
+            end
           end
-
-          file2.flock_exclusive
-          done.receive
         end
       end
     end
@@ -1236,17 +1299,19 @@ describe "File" do
 
   it "reads at offset" do
     filename = datapath("test_file.txt")
-    File.open(filename) do |file|
-      file.read_at(6, 100) do |io|
-        io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
-      end
+    {true, false}.each do |blocking|
+      File.open(filename, blocking: blocking) do |file|
+        file.read_at(6, 100) do |io|
+          io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
+        end
 
-      file.read_at(0, 240) do |io|
-        io.gets_to_end.should eq(File.read(filename))
-      end
+        file.read_at(0, 240) do |io|
+          io.gets_to_end.should eq(File.read(filename))
+        end
 
-      file.read_at(6_i64, 5_i64) do |io|
-        io.gets_to_end.should eq("World")
+        file.read_at(6_i64, 5_i64) do |io|
+          io.gets_to_end.should eq("World")
+        end
       end
     end
   end

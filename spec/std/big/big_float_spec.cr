@@ -548,7 +548,23 @@ end
 
 describe "BigFloat Math" do
   it ".frexp" do
+    Math.frexp(0.to_big_f).should eq({0.0, 0})
+    Math.frexp(1.to_big_f).should eq({0.5, 1})
     Math.frexp(0.2.to_big_f).should eq({0.8, -2})
+    Math.frexp(2.to_big_f ** 63).should eq({0.5, 64})
+    Math.frexp(2.to_big_f ** 64).should eq({0.5, 65})
+    Math.frexp(2.to_big_f ** 200).should eq({0.5, 201})
+    Math.frexp(2.to_big_f ** -200).should eq({0.5, -199})
+    Math.frexp(2.to_big_f ** 0x7FFFFFFF).should eq({0.5, 0x80000000})
+    Math.frexp(2.to_big_f ** 0x80000000).should eq({0.5, 0x80000001})
+    Math.frexp(2.to_big_f ** 0xFFFFFFFF).should eq({0.5, 0x100000000})
+    Math.frexp(1.75 * 2.to_big_f ** 0x123456789).should eq({0.875, 0x12345678A})
+    Math.frexp(2.to_big_f ** -0x80000000).should eq({0.5, -0x7FFFFFFF})
+    Math.frexp(2.to_big_f ** -0x80000001).should eq({0.5, -0x80000000})
+    Math.frexp(2.to_big_f ** -0x100000000).should eq({0.5, -0xFFFFFFFF})
+    Math.frexp(1.75 * 2.to_big_f ** -0x123456789).should eq({0.875, -0x123456788})
+    Math.frexp(-(2.to_big_f ** 0x7FFFFFFF)).should eq({-0.5, 0x80000000})
+    Math.frexp(-(2.to_big_f ** -0x100000000)).should eq({-0.5, -0xFFFFFFFF})
   end
 
   it ".sqrt" do

@@ -110,6 +110,7 @@ class Socket < IO
   # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
+    timeout = timeout.seconds unless timeout.is_a?(::Time::Span?)
     result = system_connect(addr, timeout)
     yield result if result.is_a?(Exception)
   end
@@ -418,10 +419,18 @@ class Socket < IO
     self.class.fcntl fd, cmd, arg
   end
 
+  # Finalizes the socket resource.
+  #
+  # This involves releasing the handle to the operating system, i.e. closing it.
+  # It does *not* implicitly call `#flush`, so data waiting in the buffer may be
+  # lost. By default write buffering is disabled, though (`sync? == true`).
+  # It's recommended to always close the socket explicitly via `#close`.
+  #
+  # This method is a no-op if the file descriptor has already been closed.
   def finalize
     return if closed?
 
-    close rescue nil
+    socket_close { } # ignore error
   end
 
   def closed? : Bool

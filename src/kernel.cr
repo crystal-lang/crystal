@@ -584,14 +584,14 @@ end
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
-        # clean ups (don't depend on event loop):
+        # reinit event loop first:
+        ->{ Crystal::EventLoop.current.after_fork },
+
+        # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
         ->Crystal::System::SignalChildHandler.after_fork,
 
-        # reinit event loop:
-        -> { Crystal::EventLoop.current.after_fork },
-
-        # more clean ups (may depend on event loop):
+        # additional reinitialization
         ->Random::DEFAULT.new_seed,
       ] of -> Nil
     end
@@ -615,4 +615,17 @@ end
   {% else %}
     Crystal::System::Signal.setup_default_handlers
   {% end %}
+{% end %}
+
+# This is a temporary workaround to ensure there is always something in the IOCP
+# event loop being awaited, since both the interrupt loop and the fiber stack
+# pool collector are disabled in interpreted code. Without this, asynchronous
+# code that bypasses `Crystal::IOCP::OverlappedOperation` does not currently
+# work, see https://github.com/crystal-lang/crystal/pull/14949#issuecomment-2328314463
+{% if flag?(:interpreted) && flag?(:win32) %}
+  spawn(name: "Interpreter idle loop") do
+    while true
+      sleep 1.day
+    end
+  end
 {% end %}

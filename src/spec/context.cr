@@ -191,6 +191,8 @@ module Spec
       failures = results_for(:fail)
       errors = results_for(:error)
 
+      cwd = Dir.current
+
       failures_and_errors = failures + errors
       unless failures_and_errors.empty?
         puts
@@ -216,7 +218,7 @@ module Spec
 
             if ex.is_a?(SpecError)
               puts
-              puts Spec.color("     # #{Spec.relative_file(ex.file)}:#{ex.line}", :comment)
+              puts Spec.color("     # #{Path[ex.file].relative_to(cwd)}:#{ex.line}", :comment)
             end
           end
         end
@@ -232,7 +234,7 @@ module Spec
         top_n.each do |res|
           puts "  #{res.description}"
           res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
-          puts "    #{res_elapsed.colorize.bold} seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          puts "    #{res_elapsed.colorize.bold} seconds #{Path[res.file].relative_to(cwd)}:#{res.line}"
         end
       end
 
@@ -258,7 +260,7 @@ module Spec
         puts "Failed examples:"
         puts
         failures_and_errors.each do |fail|
-          print Spec.color("crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}", :error)
+          print Spec.color("crystal spec #{Path[fail.file].relative_to(cwd)}:#{fail.line}", :error)
           puts Spec.color(" # #{fail.description}", :comment)
         end
       end

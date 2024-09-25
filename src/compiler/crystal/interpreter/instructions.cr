@@ -1276,6 +1276,16 @@ require "./repl"
           ptr
         end,
       },
+      reset_class: {
+        operands:   [size : Int32, type_id : Int32],
+        pop_values: [pointer : Pointer(UInt8)],
+        push:       true,
+        code:       begin
+          pointer.clear(size)
+          pointer.as(Int32*).value = type_id
+          pointer
+        end,
+      },
       put_metaclass: {
         operands:   [size : Int32, union_type : Bool],
         push:       true,
@@ -1472,7 +1482,7 @@ require "./repl"
       symbol_to_s: {
         pop_values: [index : Int32],
         push:       true,
-        code:       @context.index_to_symbol(index).object_id.unsafe_as(UInt64),
+        code:       @context.index_to_symbol(index).object_id.to_u64!,
       },
       # >>> Symbol (1)
 

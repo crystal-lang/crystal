@@ -1,8 +1,8 @@
 require "spec"
 require "../../../src/compiler/crystal/formatter"
 
-private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__)
-  it "formats #{input.inspect}", file, line do
+private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__, focus = false)
+  it "formats #{input.inspect}", file, line, focus: focus do
     output = "#{output}\n" unless strict
     result = Crystal.format(input, flags: flags)
     unless result == output
@@ -744,8 +744,41 @@ describe Crystal::Formatter do
       end
       CRYSTAL
 
-    assert_format "macro f\n  yield\n  {{ yield }}\nend"
+    assert_format "macro f\n yield\n {{ yield }}\nend"
   end
+
+  # Allows trailing commas, but doesn't enforce them
+  assert_format <<-CRYSTAL
+    def foo(
+      a,
+      b
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    def foo(
+      a,
+      b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    macro foo(
+      a,
+      *b,
+    )
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
+    macro foo(
+      a,
+      **b,
+    )
+    end
+    CRYSTAL
 
   context "adds trailing comma to def multi-line normal, splat, and double splat parameters" do
     assert_format <<-CRYSTAL, <<-CRYSTAL
@@ -1538,8 +1571,16 @@ describe Crystal::Formatter do
   assert_format "->(x : Int32) {}", "->(x : Int32) { }"
   assert_format "-> : Int32 {}", "-> : Int32 { }"
   assert_format "->do\nend", "-> do\nend"
-
   assert_format "-> : Int32 {}", "-> : Int32 { }"
+
+  # Allows whitespace around proc literal, but doesn't enforce them
+  assert_format "-> { }"
+  assert_format "-> { 1 }"
+  assert_format "->(x : Int32) { }"
+  assert_format "-> : Int32 { }"
+  assert_format "-> do\nend"
+
+  assert_format "-> : Int32 {}"
   assert_format "-> : Int32 | String { 1 }"
   assert_format "-> : Array(Int32) {}", "-> : Array(Int32) { }"
   assert_format "-> : Int32? {}", "-> : Int32? { }"

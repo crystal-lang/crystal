@@ -21,6 +21,14 @@ lib LibC
     dwMilliseconds : DWORD,
     fAlertable : BOOL,
   ) : BOOL
+
+  fun PostQueuedCompletionStatus(
+    completionPort : HANDLE,
+    dwNumberOfBytesTransferred : DWORD,
+    dwCompletionKey : ULONG_PTR,
+    lpOverlapped : OVERLAPPED*,
+  ) : BOOL
+
   fun CancelIoEx(
     hFile : HANDLE,
     lpOverlapped : OVERLAPPED*,

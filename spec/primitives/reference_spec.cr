@@ -37,8 +37,7 @@ describe "Primitives: reference" do
     end
   end
 
-  # TODO: implement in the interpreter
-  pending_interpreted describe: ".pre_initialize" do
+  describe ".pre_initialize" do
     it "doesn't fail on complex ivar initializer if value is discarded (#14325)" do
       bar_buffer = GC.malloc(instance_sizeof(Outer))
       Outer.pre_initialize(bar_buffer)
@@ -55,7 +54,12 @@ describe "Primitives: reference" do
     it "sets type ID" do
       foo_buffer = GC.malloc(instance_sizeof(Foo))
       base = Foo.pre_initialize(foo_buffer).as(Base)
-      base.crystal_type_id.should eq(Foo.crystal_instance_type_id)
+      base.should be_a(Foo)
+      base.as(typeof(Foo.crystal_instance_type_id)*).value.should eq(Foo.crystal_instance_type_id)
+      {% unless flag?(:interpreted) %}
+        # FIXME: `Object#crystal_type_id` is incorrect for virtual types in the interpreter (#14967)
+        base.crystal_type_id.should eq(Foo.crystal_instance_type_id)
+      {% end %}
     end
 
     it "runs inline instance initializers" do
@@ -89,7 +93,7 @@ describe "Primitives: reference" do
     end
   end
 
-  pending_interpreted describe: ".unsafe_construct" do
+  describe ".unsafe_construct" do
     it "constructs an object in-place" do
       foo_buffer = GC.malloc(instance_sizeof(Foo))
       foo = Foo.unsafe_construct(foo_buffer, 123_i64)

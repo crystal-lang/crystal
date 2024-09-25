@@ -55,7 +55,12 @@ private def newline
 end
 
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
-pending_interpreted describe: Process do
+{% if flag?(:interpreted) && !flag?(:win32) %}
+  pending Process
+  {% skip_file %}
+{% end %}
+
+describe Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -179,6 +184,28 @@ pending_interpreted describe: Process do
     it "closes ios after block" do
       Process.run(*stdin_to_stdout_command) { }
       $?.exit_code.should eq(0)
+    end
+
+    it "forwards closed io" do
+      closed_io = IO::Memory.new
+      closed_io.close
+      Process.run(*stdin_to_stdout_command, input: closed_io)
+      Process.run(*stdin_to_stdout_command, output: closed_io)
+      Process.run(*stdin_to_stdout_command, error: closed_io)
+    end
+
+    it "forwards non-blocking file" do
+      with_tempfile("non-blocking-process-input.txt", "non-blocking-process-output.txt") do |in_path, out_path|
+        File.open(in_path, "w+", blocking: false) do |input|
+          File.open(out_path, "w+", blocking: false) do |output|
+            input.puts "hello"
+            input.rewind
+            Process.run(*stdin_to_stdout_command, input: input, output: output)
+            output.rewind
+            output.gets_to_end.chomp.should eq("hello")
+          end
+        end
+      end
     end
 
     it "sets working directory with string" do

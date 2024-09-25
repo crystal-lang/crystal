@@ -7,8 +7,8 @@ struct Crystal::PointerLinkedList(T)
 
   module Node
     macro included
-      property previous : Pointer(self) = Pointer(self).null
-      property next : Pointer(self) = Pointer(self).null
+      property previous : ::Pointer(self) = ::Pointer(self).null
+      property next : ::Pointer(self) = ::Pointer(self).null
     end
   end
 

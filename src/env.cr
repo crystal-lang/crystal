@@ -60,7 +60,7 @@ module ENV
 
   # Retrieves a value corresponding to the given *key*. Return the second argument's value
   # if the *key* does not exist.
-  def self.fetch(key, default) : String?
+  def self.fetch(key, default : T) : String | T forall T
     fetch(key) { default }
   end
 

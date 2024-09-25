@@ -9,19 +9,18 @@ module Crystal::System::Socket
   alias Handle = Int32
 
   private def create_handle(family, type, protocol, blocking) : Handle
-    socktype = type.value
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
-      socktype |= LibC::SOCK_CLOEXEC
+      fd = LibC.socket(family, type.value | LibC::SOCK_CLOEXEC, protocol)
+      raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+      fd
+    {% else %}
+      Process.lock_read do
+        fd = LibC.socket(family, type, protocol)
+        raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
+        Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fd
+      end
     {% end %}
-
-    fd = LibC.socket(family, socktype, protocol)
-    raise ::Socket::Error.from_errno("Failed to create socket") if fd == -1
-
-    {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
-      Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-    {% end %}
-
-    fd
   end
 
   private def initialize_handle(fd)
@@ -179,6 +178,26 @@ module Crystal::System::Socket
     r
   end
 
+  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+    fds = uninitialized Handle[2]
+
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      if LibC.socketpair(::Socket::Family::UNIX, type.value | LibC::SOCK_CLOEXEC, protocol, fds) == -1
+        raise ::Socket::Error.new("socketpair() failed")
+      end
+    {% else %}
+      Process.lock_read do
+        if LibC.socketpair(::Socket::Family::UNIX, type, protocol, fds) == -1
+          raise ::Socket::Error.new("socketpair() failed")
+        end
+        fcntl(fds[0], LibC::F_SETFD, LibC::FD_CLOEXEC)
+        fcntl(fds[1], LibC::F_SETFD, LibC::FD_CLOEXEC)
+      end
+    {% end %}
+
+    {fds[0], fds[1]}
+  end
+
   private def system_tty?
     LibC.isatty(fd) == 1
   end
@@ -189,6 +208,10 @@ module Crystal::System::Socket
     # always lead to undefined results. This is not specific to libevent.
     event_loop.close(self)
 
+    socket_close
+  end
+
+  private def socket_close(&)
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     fd = @volatile_fd.swap(-1)
@@ -200,8 +223,14 @@ module Crystal::System::Socket
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise ::Socket::Error.from_errno("Error closing socket")
+        yield
       end
+    end
+  end
+
+  private def socket_close
+    socket_close do
+      raise ::Socket::Error.from_errno("Error closing socket")
     end
   end
 

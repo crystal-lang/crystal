@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "crystal/rw_lock"
 require "file/error"
 
 struct Crystal::System::Process
@@ -127,6 +128,50 @@ struct Crystal::System::Process
     )
   end
 
+  # The RWLock is trying to protect against file descriptors leaking to
+  # sub-processes.
+  #
+  # There is a race condition in the POSIX standard between the creation of a
+  # file descriptor (`accept`, `dup`, `open`, `pipe`, `socket`) and setting the
+  # `FD_CLOEXEC` flag with `fcntl`. During the time window between those two
+  # syscalls, another thread may fork the process and exec another process,
+  # which will leak the file descriptor to that process.
+  #
+  # Most systems have long implemented non standard syscalls that prevent the
+  # race condition, except for Darwin that implements `O_CLOEXEC` but doesn't
+  # implement `SOCK_CLOEXEC` nor `accept4`, `dup3` or `pipe2`.
+  #
+  # NOTE: there may still be some potential leaks (e.g. calling `accept` on a
+  #       blocking socket).
+  {% if LibC.has_constant?(:SOCK_CLOEXEC) && LibC.has_method?(:accept4) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+    # we don't implement .lock_read so compilation will fail if we need to
+    # support another case, instead of silently skipping the rwlock!
+
+    def self.lock_write(&)
+      yield
+    end
+  {% else %}
+    @@rwlock = Crystal::RWLock.new
+
+    def self.lock_read(&)
+      @@rwlock.read_lock
+      begin
+        yield
+      ensure
+        @@rwlock.read_unlock
+      end
+    end
+
+    def self.lock_write(&)
+      @@rwlock.write_lock
+      begin
+        yield
+      ensure
+        @@rwlock.write_unlock
+      end
+    end
+  {% end %}
+
   def self.fork(*, will_exec = false)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
@@ -135,7 +180,7 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    case pid = LibC.fork
+    case pid = lock_write { LibC.fork }
     when 0
       # child:
       pid = nil
@@ -186,43 +231,47 @@ struct Crystal::System::Process
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
-    reader_pipe, writer_pipe = IO.pipe
+    r, w = FileDescriptor.system_pipe
 
     pid = self.fork(will_exec: true)
     if !pid
+      LibC.close(r)
       begin
-        reader_pipe.close
-        writer_pipe.close_on_exec = true
         self.try_replace(command_args, env, clear_env, input, output, error, chdir)
-        writer_pipe.write_byte(1)
-        writer_pipe.write_bytes(Errno.value.to_i)
+        byte = 1_u8
+        errno = Errno.value.to_i32
+        FileDescriptor.write_fully(w, pointerof(byte))
+        FileDescriptor.write_fully(w, pointerof(errno))
       rescue ex
-        writer_pipe.write_byte(0)
-        writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
-        writer_pipe << ex.message
-        writer_pipe.close
+        byte = 0_u8
+        message = ex.inspect_with_backtrace
+        FileDescriptor.write_fully(w, pointerof(byte))
+        FileDescriptor.write_fully(w, message.to_slice)
       ensure
+        LibC.close(w)
         LibC._exit 127
       end
     end
 
-    writer_pipe.close
+    LibC.close(w)
+    reader_pipe = IO::FileDescriptor.new(r, blocking: false)
+
     begin
       case reader_pipe.read_byte
       when nil
         # Pipe was closed, no error
       when 0
         # Error message coming
-        message_size = reader_pipe.read_bytes(Int32)
-        if message_size > 0
-          message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
-        end
-        reader_pipe.close
+        message = reader_pipe.gets_to_end
         raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
       when 1
         # Errno coming
-        errno = Errno.new(reader_pipe.read_bytes(Int32))
-        self.raise_exception_from_errno(command_args[0], errno)
+        # can't use IO#read_bytes(Int32) because we skipped system/network
+        # endianness check when writing the integer while read_bytes would;
+        # we thus read it in the same as order as written
+        buf = uninitialized StaticArray(UInt8, 4)
+        reader_pipe.read_fully(buf.to_slice)
+        raise_exception_from_errno(command_args[0], Errno.new(buf.unsafe_as(Int32)))
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -274,7 +323,7 @@ struct Crystal::System::Process
     argv = command_args.map &.check_no_null_byte.to_unsafe
     argv << Pointer(UInt8).null
 
-    LibC.execvp(command, argv)
+    lock_write { LibC.execvp(command, argv) }
   end
 
   def self.replace(command_args, env, clear_env, input, output, error, chdir)
@@ -292,11 +341,18 @@ struct Crystal::System::Process
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
-    src_io = to_real_fd(src_io)
+    if src_io.closed?
+      dst_io.file_descriptor_close
+    else
+      src_io = to_real_fd(src_io)
 
-    dst_io.reopen(src_io)
-    dst_io.blocking = true
-    dst_io.close_on_exec = false
+      # dst_io.reopen(src_io)
+      ret = LibC.dup2(src_io.fd, dst_io.fd)
+      raise IO::Error.from_errno("dup2") if ret == -1
+
+      dst_io.blocking = true
+      dst_io.close_on_exec = false
+    end
   end
 
   private def self.to_real_fd(fd : IO::FileDescriptor)

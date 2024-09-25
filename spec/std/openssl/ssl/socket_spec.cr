@@ -4,6 +4,12 @@ require "../../spec_helper"
 require "../../socket/spec_helper"
 require "../../../support/ssl"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OpenSSL::SSL::Socket
+  {% skip_file %}
+{% end %}
+
 describe OpenSSL::SSL::Socket do
   describe OpenSSL::SSL::Socket::Server do
     it "auto accept client by default" do

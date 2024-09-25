@@ -1885,4 +1885,9 @@ describe "Code gen: macro" do
       {% end %}
       )).to_i.should eq(10)
   end
+
+  it "accepts compile-time flags" do
+    run("{{ flag?(:foo) ? 1 : 0 }}", flags: %w(foo)).to_i.should eq(1)
+    run("{{ flag?(:foo) ? 1 : 0 }}", Int32, flags: %w(foo)).should eq(1)
+  end
 end
