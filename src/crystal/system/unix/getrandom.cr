@@ -102,7 +102,16 @@ module Crystal::System::Random
     loop do
       read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), Syscall::GRND_NONBLOCK)
       if read_bytes < 0
-        err = Errno.new(-read_bytes.to_i)
+        # TODO: Implement syscall for interpreter
+        # when using `LibC.getrandom` instead, the return value is always -1 and
+        # the error is set via `Errno.value` instead
+        err =
+          {% if flag?(:interpreted) %}
+            Errno.value
+          {% else %}
+            Errno.new(-read_bytes.to_i)
+          {% end %}
+
         if err.in?(Errno::EINTR, Errno::EAGAIN)
           ::Fiber.yield
         else
