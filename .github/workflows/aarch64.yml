@@ -26,7 +26,7 @@ jobs:
             src/llvm/ext/llvm_ext.o
   aarch64-musl-test-stdlib:
     needs: aarch64-musl-build
-    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    runs-on: [runs-on, runner=2cpu-linux-arm64, "family=m7g", ram=8, "run-id=${{ github.run_id }}"]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
@@ -43,7 +43,7 @@ jobs:
           args: make std_spec
   aarch64-musl-test-compiler:
     needs: aarch64-musl-build
-    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    runs-on: [runs-on, runner=2cpu-linux-arm64, "family=m7g", ram=8, "run-id=${{ github.run_id }}"]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
@@ -77,7 +77,7 @@ jobs:
             src/llvm/ext/llvm_ext.o
   aarch64-gnu-test-stdlib:
     needs: aarch64-gnu-build
-    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    runs-on: [runs-on, runner=2cpu-linux-arm64, "family=m7g", ram=8, "run-id=${{ github.run_id }}"]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
@@ -94,7 +94,7 @@ jobs:
           args: make std_spec
   aarch64-gnu-test-compiler:
     needs: aarch64-gnu-build
-    runs-on: [runs-on, runner=4cpu-linux-arm64, "family=m7g", ram=16, "run-id=${{ github.run_id }}"]
+    runs-on: [runs-on, runner=2cpu-linux-arm64, "family=m7g", ram=8, "run-id=${{ github.run_id }}"]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
