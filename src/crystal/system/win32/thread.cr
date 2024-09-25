@@ -76,7 +76,9 @@ module Crystal::System::Thread
     {% else %}
       tib = LibC.NtCurrentTeb
       high_limit = tib.value.stackBase
-      LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION))
+      if LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION)) == 0
+        raise RuntimeError.from_winerror("VirtualQuery")
+      end
       low_limit = mbi.allocationBase
       low_limit
     {% end %}
