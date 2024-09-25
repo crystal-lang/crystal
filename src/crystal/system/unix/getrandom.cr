@@ -13,7 +13,10 @@ require "./syscall"
 
     # TODO: Implement syscall for interpreter
     def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
-      LibC.getrandom(buf, buflen, flags)
+      # the syscall returns the negative of errno directly, the C function
+      # doesn't, so we mimic the syscall behavior
+      read_bytes = LibC.getrandom(buf, buflen, flags)
+      read_bytes >= 0 ? read_bytes : LibC::SSizeT.new(-Errno.value.value)
     end
   end
 {% end %}
@@ -102,16 +105,7 @@ module Crystal::System::Random
     loop do
       read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), Syscall::GRND_NONBLOCK)
       if read_bytes < 0
-        # TODO: Implement syscall for interpreter
-        # when using `LibC.getrandom` instead, the return value is always -1 and
-        # the error is set via `Errno.value` instead
-        err =
-          {% if flag?(:interpreted) %}
-            Errno.value
-          {% else %}
-            Errno.new(-read_bytes.to_i)
-          {% end %}
-
+        err = Errno.new(-read_bytes.to_i)
         if err.in?(Errno::EINTR, Errno::EAGAIN)
           ::Fiber.yield
         else
