@@ -172,6 +172,14 @@ describe Process do
       error.to_s.should eq("hello#{newline}")
     end
 
+    it "sends long output and error to IO" do
+      output = IO::Memory.new
+      error = IO::Memory.new
+      Process.run(*shell_command("echo #{"." * 8000}"), output: output, error: error)
+      output.to_s.should eq("." * 8000 + newline)
+      error.to_s.should be_empty
+    end
+
     it "controls process in block" do
       value = Process.run(*stdin_to_stdout_command, error: :inherit) do |proc|
         proc.input.puts "hello"
