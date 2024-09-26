@@ -51,7 +51,7 @@ module Crystal::System::Fiber
     LibC.GetNativeSystemInfo(out system_info)
     stack_commit_size = system_info.dwPageSize
     stack_commit_top = stack_bottom - stack_commit_size
-    if LibC.VirtualAlloc(stack_commit_top, stack_commit_size, LibC::MEM_COMMIT, LibC::PAGE_READWRITE) == 0
+    unless LibC.VirtualAlloc(stack_commit_top, stack_commit_size, LibC::MEM_COMMIT, LibC::PAGE_READWRITE)
       return false
     end
 
@@ -59,7 +59,7 @@ module Crystal::System::Fiber
     # overflow handler itself overflows the stack
     stack_guard_size = system_info.dwPageSize + RESERVED_STACK_SIZE
     stack_guard_top = stack_commit_top - stack_guard_size
-    if LibC.VirtualAlloc(stack_guard_top, stack_guard_size, LibC::MEM_COMMIT, LibC::PAGE_READWRITE | LibC::PAGE_GUARD) == 0
+    unless LibC.VirtualAlloc(stack_guard_top, stack_guard_size, LibC::MEM_COMMIT, LibC::PAGE_READWRITE | LibC::PAGE_GUARD)
       return false
     end
 
