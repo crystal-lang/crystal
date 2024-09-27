@@ -116,11 +116,26 @@ module Crystal::System::Thread
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:linux) %}
-      if LibC.pthread_getattr_np(@system_handle, out attr) == 0
-        LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
-      end
+      ret = LibC.pthread_getattr_np(@system_handle, out attr)
+      raise RuntimeError.from_os_error("pthread_getattr_np", Errno.new(ret)) unless ret == 0
+
+      LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out stack_size)
+
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise RuntimeError.from_os_error("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
+
+      # with musl-libc, the main thread does not respect `rlimit -Ss` and
+      # instead returns the same default stack size as non-default threads, so
+      # we obtain the rlimit to correct the stack address manually
+      {% if flag?(:musl) %}
+        if Thread.current_is_main?
+          if LibC.getrlimit(LibC::RLIMIT_STACK, out rlim) == 0
+            address = address + stack_size - rlim.rlim_cur
+          else
+            raise RuntimeError.from_errno("getrlimit")
+          end
+        end
+      {% end %}
     {% elsif flag?(:openbsd) %}
       ret = LibC.pthread_stackseg_np(@system_handle, out stack)
       raise RuntimeError.from_os_error("pthread_stackseg_np", Errno.new(ret)) unless ret == 0
@@ -137,6 +152,14 @@ module Crystal::System::Thread
 
     address
   end
+
+  {% if flag?(:musl) %}
+    @@main_handle : Handle = current_handle
+
+    def self.current_is_main?
+      current_handle == @@main_handle
+    end
+  {% end %}
 
   # Warning: must be called from the current thread itself, because Darwin
   # doesn't allow to set the name of any thread but the current one!
