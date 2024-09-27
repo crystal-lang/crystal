@@ -25,7 +25,7 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.13.2"
+          crystal: "1.13.3"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -145,5 +145,5 @@ jobs:
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
+          name: crystal
           path: crystal

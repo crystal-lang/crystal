@@ -11,5 +11,5 @@ lib LibC
 
   fun VirtualFree(lpAddress : Void*, dwSize : SizeT, dwFreeType : DWORD) : BOOL
   fun VirtualProtect(lpAddress : Void*, dwSize : SizeT, flNewProtect : DWORD, lpfOldProtect : DWORD*) : BOOL
-  fun VirtualQuery(lpAddress : Void*, lpBuffer : MEMORY_BASIC_INFORMATION*, dwLength : SizeT)
+  fun VirtualQuery(lpAddress : Void*, lpBuffer : MEMORY_BASIC_INFORMATION*, dwLength : SizeT) : SizeT
 end
