@@ -9,18 +9,33 @@ module Crystal::System::Thread
     @system_handle
   end
 
+  protected setter system_handle
+
   private def init_handle
-    # NOTE: the thread may start before `pthread_create` returns, so
-    # `@system_handle` must be set as soon as possible; we cannot use a separate
-    # handle and assign it to `@system_handle`, which would have been too late
+    # NOTE: `@system_handle` needs to be set here too, not just in
+    # `.thread_proc`, since the current thread might progress first; the value
+    # of `LibC.pthread_self` inside the new thread must be equal to this
+    # `@system_handle` after `pthread_create` returns
     ret = GC.pthread_create(
       thread: pointerof(@system_handle),
       attr: Pointer(LibC::PthreadAttrT).null,
-      start: ->(data : Void*) { data.as(::Thread).start; Pointer(Void).null },
+      start: ->Thread.thread_proc(Void*),
       arg: self.as(Void*),
     )
 
     raise RuntimeError.from_os_error("pthread_create", Errno.new(ret)) unless ret == 0
+  end
+
+  def self.thread_proc(data : Void*) : Void*
+    th = data.as(::Thread)
+
+    # `#start` calls `#stack_address`, which might read `@system_handle` before
+    # `GC.pthread_create` updates it in the original thread that spawned the
+    # current one, so we also assign to it here
+    th.system_handle = current_handle
+
+    th.start
+    Pointer(Void).null
   end
 
   def self.current_handle : Handle
