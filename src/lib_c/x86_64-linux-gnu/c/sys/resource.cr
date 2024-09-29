@@ -1,4 +1,17 @@
 lib LibC
+  alias RlimT = ULongLong
+
+  struct Rlimit
+    rlim_cur : RlimT
+    rlim_max : RlimT
+  end
+
+  fun getrlimit(Int, Rlimit*) : Int
+  fun setrlimit(Int, Rlimit*) : Int
+
+  RLIMIT_STACK  = 3
+  RLIMIT_NOFILE = 7
+
   struct RUsage
     ru_utime : Timeval
     ru_stime : Timeval

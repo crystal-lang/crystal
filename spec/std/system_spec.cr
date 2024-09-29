@@ -26,4 +26,25 @@ describe System do
       cpu_count.should eq(shell_cpus)
     end
   end
+
+  pending_win32 describe: "file_descriptor_limit" do
+    it "returns the current file descriptor limit" do
+      hard_fd_limit = `ulimit -Hn`.strip
+      $?.success?.should be_true
+      soft_fd_limit = `ulimit -Sn`.strip
+      $?.success?.should be_true
+
+      soft_limit, hard_limit = System.file_descriptor_limit
+      hard_limit.to_s.should eq hard_fd_limit
+      soft_limit.to_s.should eq soft_fd_limit
+    end
+
+    it "can set the limit" do
+      System.file_descriptor_limit = 512
+
+      soft_fd_limit = `ulimit -Sn`.strip
+      $?.success?.should be_true
+      soft_fd_limit.should eq "512"
+    end
+  end
 end

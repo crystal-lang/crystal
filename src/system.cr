@@ -22,4 +22,22 @@ module System
   def self.cpu_count : Int
     Crystal::System.cpu_count
   end
+
+  # Returns the soft and hard file descriptor limits for the current process
+  #
+  # ```
+  # System.file_descriptor_limit # => { 1024, 524288 }
+  # ```
+  def self.file_descriptor_limit
+    Crystal::System.file_descriptor_limit
+  end
+
+  # Sets the soft file descriptor limits for the current process
+  #
+  # ```
+  # System.file_descriptor_limit = 4096
+  # ```
+  def self.file_descriptor_limit=(limit : UInt32)
+    Crystal::System.file_descriptor_limit = limit
+  end
 end

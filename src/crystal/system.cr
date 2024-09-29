@@ -13,6 +13,7 @@ end
   require "./system/wasi/cpucount"
 {% elsif flag?(:unix) %}
   require "./system/unix/hostname"
+  require "./system/unix/file_descriptor_limit"
 
   {% if flag?(:bsd) %}
     require "./system/unix/sysctl_cpucount"
