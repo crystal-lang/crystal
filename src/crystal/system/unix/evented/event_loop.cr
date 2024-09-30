@@ -39,7 +39,7 @@ module Crystal::Evented
     if LibC.getrlimit(LibC::RLIMIT_NOFILE, out rlimit) == -1
       raise RuntimeError.from_errno("getrlimit(RLIMIT_NOFILE)")
     end
-    rlimit.rlim_max.clamp(..Int32::MAX).to_i32!
+    rlimit.rlim_cur.clamp(..Int32::MAX).to_i32!
   end
 end
 
