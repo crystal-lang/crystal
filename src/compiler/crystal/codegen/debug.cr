@@ -367,12 +367,28 @@ module Crystal
       old_debug_location = @current_debug_location
       set_current_debug_location location
       if builder.current_debug_location != llvm_nil && (ptr = alloca)
+        # FIXME: When debug records are used instead of debug intrinsics, it
+        # seems inserting them into an empty BasicBlock will instead place them
+        # in a totally different (next?) function where the variable doesn't
+        # exist, leading to a "function-local metadata used in wrong function"
+        # validation error. This might happen when e.g. all variables inside a
+        # block are closured. Ideally every debug record should immediately
+        # follow the variable it declares.
+        {% unless LibLLVM::IS_LT_190 %}
+          call(do_nothing_fun) if block.instructions.empty?
+        {% end %}
         di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location_metadata, block)
         set_current_debug_location old_debug_location
         true
       else
         set_current_debug_location old_debug_location
         false
+      end
+    end
+
+    private def do_nothing_fun
+      fetch_typed_fun(@llvm_mod, "llvm.donothing") do
+        LLVM::Type.function([] of LLVM::Type, @llvm_context.void)
       end
     end
 
