@@ -185,6 +185,9 @@ struct Crystal::System::Process
       # child:
       pid = nil
       if will_exec
+        # notify event loop
+        Crystal::EventLoop.current.after_fork_before_exec
+
         # reset signal handlers, then sigmask (inherited on exec):
         Crystal::System::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))

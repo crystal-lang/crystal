@@ -205,6 +205,8 @@ module Crystal
       types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
       types["Range"] = range = @range = GenericClassType.new self, self, "Range", struct_t, ["B", "E"]
       range.struct = true
+      types["Slice"] = slice = @slice = GenericClassType.new self, self, "Slice", struct_t, ["T"]
+      slice.struct = true
 
       types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
@@ -528,7 +530,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
-                     array static_array exception tuple named_tuple proc union enum range regex crystal
+                     array static_array exception tuple named_tuple proc union enum range slice regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation

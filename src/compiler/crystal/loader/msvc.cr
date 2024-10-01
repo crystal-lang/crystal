@@ -185,7 +185,6 @@ class Crystal::Loader
   end
 
   private def open_library(path : String)
-    # TODO: respect `@[Link(dll:)]`'s search order
     LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 

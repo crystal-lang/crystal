@@ -20,6 +20,8 @@ lib LibC
     lpVendorInfo : Char*
   end
 
+  NS_DNS = 12_u32
+
   INVALID_SOCKET = ~SOCKET.new(0)
   SOCKET_ERROR   = -1
 
@@ -110,6 +112,11 @@ lib LibC
   WSA_FLAG_OVERLAPPED = 0x01
 
   alias WSAOVERLAPPED_COMPLETION_ROUTINE = Proc(DWORD, DWORD, WSAOVERLAPPED*, DWORD, Void)
+
+  struct Timeval
+    tv_sec : Long
+    tv_usec : Long
+  end
 
   struct Linger
     l_onoff : UShort

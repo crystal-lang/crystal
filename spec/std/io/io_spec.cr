@@ -105,11 +105,11 @@ describe IO do
         write.puts "hello"
         slice = Bytes.new 1024
 
-        read.read_timeout = 1
+        read.read_timeout = 1.second
         read.read(slice).should eq(6)
 
         expect_raises(IO::TimeoutError) do
-          read.read_timeout = 0.0000001
+          read.read_timeout = 0.1.microseconds
           read.read(slice)
         end
       end

@@ -82,8 +82,8 @@ describe UNIXSocket do
     it "tests read and write timeouts" do
       UNIXSocket.pair do |left, right|
         # BUG: shrink the socket buffers first
-        left.write_timeout = 0.0001
-        right.read_timeout = 0.0001
+        left.write_timeout = 0.1.milliseconds
+        right.read_timeout = 0.1.milliseconds
         buf = ("a" * IO::DEFAULT_BUFFER_SIZE).to_slice
 
         expect_raises(IO::TimeoutError, "Write timed out") do

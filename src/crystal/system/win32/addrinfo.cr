@@ -1,5 +1,5 @@
 module Crystal::System::Addrinfo
-  alias Handle = LibC::Addrinfo*
+  alias Handle = LibC::ADDRINFOEXW*
 
   @addr : LibC::SockaddrIn6
 
@@ -30,7 +30,7 @@ module Crystal::System::Addrinfo
   end
 
   def self.getaddrinfo(domain, service, family, type, protocol, timeout) : Handle
-    hints = LibC::Addrinfo.new
+    hints = LibC::ADDRINFOEXW.new
     hints.ai_family = (family || ::Socket::Family::UNSPEC).to_i32
     hints.ai_socktype = type
     hints.ai_protocol = protocol
@@ -43,12 +43,39 @@ module Crystal::System::Addrinfo
       end
     end
 
-    ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
-    unless ret.zero?
-      error = WinError.new(ret.to_u32!)
-      raise ::Socket::Addrinfo::Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)
+    Crystal::IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp) do |operation|
+      completion_routine = LibC::LPLOOKUPSERVICE_COMPLETION_ROUTINE.new do |dwError, dwBytes, lpOverlapped|
+        orig_operation = Crystal::IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
+        LibC.PostQueuedCompletionStatus(orig_operation.iocp, 0, 0, lpOverlapped)
+      end
+
+      # NOTE: we handle the timeout ourselves so we don't pass a `LibC::Timeval`
+      # to Win32 here
+      result = LibC.GetAddrInfoExW(
+        Crystal::System.to_wstr(domain), Crystal::System.to_wstr(service.to_s), LibC::NS_DNS, nil, pointerof(hints),
+        out addrinfos, nil, operation, completion_routine, out cancel_handle)
+
+      if result == 0
+        return addrinfos
+      else
+        case error = WinError.new(result.to_u32!)
+        when .wsa_io_pending?
+          # used in `Crystal::IOCP::OverlappedOperation#try_cancel_getaddrinfo`
+          operation.cancel_handle = cancel_handle
+        else
+          raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExW", error, domain: domain, type: type, protocol: protocol, service: service)
+        end
+      end
+
+      operation.wait_for_result(timeout) do |error|
+        case error
+        when .wsa_e_cancelled?
+          raise IO::TimeoutError.new("GetAddrInfoExW timed out")
+        else
+          raise ::Socket::Addrinfo::Error.from_os_error("GetAddrInfoExW", error, domain: domain, type: type, protocol: protocol, service: service)
+        end
+      end
     end
-    ptr
   end
 
   def self.next_addrinfo(addrinfo : Handle) : Handle
@@ -56,6 +83,6 @@ module Crystal::System::Addrinfo
   end
 
   def self.free_addrinfo(addrinfo : Handle)
-    LibC.freeaddrinfo(addrinfo)
+    LibC.FreeAddrInfoExW(addrinfo)
   end
 end
