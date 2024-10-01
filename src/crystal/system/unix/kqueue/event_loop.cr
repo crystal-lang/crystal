@@ -70,7 +70,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     end
   {% end %}
 
-  private def system_run(blocking : Bool) : Nil
+  private def system_run(blocking : Bool, & : Fiber ->) : Nil
     buffer = uninitialized LibC::Kevent[128]
 
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
@@ -89,11 +89,12 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         # nothing special
         timer_triggered = true
       else
-        process_io(kevent)
+        process_io(kevent) { |fiber| yield fiber }
       end
     end
 
-    process_timers(timer_triggered)
+    # OPTIMIZE: only process timers when timer_triggered (?)
+    process_timers(timer_triggered) { |fiber| yield fiber }
   end
 
   private def process_interrupt?(kevent)
@@ -114,7 +115,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     false
   end
 
-  private def process_io(kevent : LibC::Kevent*) : Nil
+  private def process_io(kevent : LibC::Kevent*, &) : Nil
     index =
       {% if flag?(:bits64) %}
         Evented::Arena::Index.new(kevent.value.udata.address)
@@ -130,8 +131,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
         # apparently some systems may report EOF on write with EVFILT_READ instead
         # of EVFILT_WRITE, so let's wake all waiters:
-        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
-        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
+        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         return
       end
 
@@ -139,16 +140,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       when LibC::EVFILT_READ
         if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
           # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
-          pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
+          pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         else
-          pd.value.@readers.ready_one { |event| unsafe_resume_io(event) }
+          pd.value.@readers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         end
       when LibC::EVFILT_WRITE
         if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
           # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
-          pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
+          pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         else
-          pd.value.@writers.ready_one { |event| unsafe_resume_io(event) }
+          pd.value.@writers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         end
       end
     end
