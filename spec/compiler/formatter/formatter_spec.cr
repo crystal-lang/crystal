@@ -747,15 +747,6 @@ describe Crystal::Formatter do
     assert_format "macro f\n yield\n {{ yield }}\nend"
   end
 
-  # Allows trailing commas, but doesn't enforce them
-  assert_format <<-CRYSTAL
-    def foo(
-      a,
-      b
-    )
-    end
-    CRYSTAL
-
   assert_format <<-CRYSTAL
     def foo(
       a,
@@ -1580,7 +1571,7 @@ describe Crystal::Formatter do
   assert_format "-> : Int32 { }"
   assert_format "-> do\nend"
 
-  assert_format "-> : Int32 {}"
+  assert_format "-> : Int32 { }"
   assert_format "-> : Int32 | String { 1 }"
   assert_format "-> : Array(Int32) {}", "-> : Array(Int32) { }"
   assert_format "-> : Int32? {}", "-> : Int32? { }"

@@ -585,7 +585,7 @@ end
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
         # reinit event loop first:
-        ->{ Crystal::EventLoop.current.after_fork },
+        -> { Crystal::EventLoop.current.after_fork },
 
         # reinit signal handling:
         ->Crystal::System::Signal.after_fork,
