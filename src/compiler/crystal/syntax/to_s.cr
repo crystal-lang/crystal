@@ -223,7 +223,7 @@ module Crystal
       else
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            append_indent
+            append_indent unless node.keyword.paren? && i == 0
             exp.accept self
             newline unless node.keyword.paren? && i == node.expressions.size - 1
           end
@@ -1382,7 +1382,7 @@ module Crystal
       node.whens.each do |a_when|
         append_indent
         @str << "when "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         newline
         accept_with_indent a_when.body
       end
@@ -1572,7 +1572,7 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
-        append_indent if node.keyword.begin?
+        append_indent unless node.keyword.none?
         node.accept self
       end
       newline unless node.keyword.none?

@@ -1313,6 +1313,10 @@ module Crystal
           if check_special_new_call(node, obj.type?)
             return false
           end
+
+          if check_slice_literal_call(node, obj.type?)
+            return false
+          end
         end
 
         args.each &.accept(self)
@@ -1561,6 +1565,60 @@ module Crystal
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
+        end
+      end
+
+      false
+    end
+
+    def check_slice_literal_call(node, obj_type)
+      return false unless obj_type
+      return false unless obj_type.metaclass?
+
+      instance_type = obj_type.instance_type.remove_typedef
+
+      if node.name == "literal"
+        case instance_type
+        when GenericClassType # Slice
+          return false unless instance_type == @program.slice
+          node.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
+        when GenericClassInstanceType # Slice(T)
+          return false unless instance_type.generic_type == @program.slice
+
+          element_type = instance_type.type_vars["T"].type
+          kind = case element_type
+                 when IntegerType
+                   element_type.kind
+                 when FloatType
+                   element_type.kind
+                 else
+                   node.raise "Only slice literals of primitive integer or float types can be created"
+                 end
+
+          node.args.each do |arg|
+            arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+            arg.accept self
+            arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
+          end
+
+          # create the internal constant `$Slice:n` to hold the slice contents
+          const_name = "$Slice:#{@program.const_slices.size}"
+          const_value = Nop.new
+          const_value.type = @program.static_array_of(element_type, node.args.size)
+          const = Const.new(@program, @program, const_name, const_value)
+          @program.types[const_name] = const
+          @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, node.args)
+
+          # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
+          pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
+          size_node = NumberLiteral.new(node.args.size.to_s, :i32).at(node)
+          read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
+          expanded = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
+
+          expanded.accept self
+          node.bind_to expanded
+          node.expanded = expanded
+          return true
         end
       end
 
@@ -2308,7 +2366,7 @@ module Crystal
       when "pointer_new"
         visit_pointer_new node
       when "slice_literal"
-        visit_slice_literal node
+        node.raise "BUG: Slice literal should have been expanded"
       when "argc"
         # Already typed
       when "argv"
@@ -2464,51 +2522,6 @@ module Crystal
       end
 
       node.type = scope.instance_type
-    end
-
-    def visit_slice_literal(node)
-      call = self.call.not_nil!
-
-      case slice_type = scope.instance_type
-      when GenericClassType # Slice
-        call.raise "TODO: implement slice_literal primitive for Slice without generic arguments"
-      when GenericClassInstanceType # Slice(T)
-        element_type = slice_type.type_vars["T"].type
-        kind = case element_type
-               when IntegerType
-                 element_type.kind
-               when FloatType
-                 element_type.kind
-               else
-                 call.raise "Only slice literals of primitive integer or float types can be created"
-               end
-
-        call.args.each do |arg|
-          arg.raise "Expected NumberLiteral, got #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
-          arg.raise "Argument out of range for a Slice(#{element_type})" unless arg.representable_in?(element_type)
-        end
-
-        # create the internal constant `$Slice:n` to hold the slice contents
-        const_name = "$Slice:#{@program.const_slices.size}"
-        const_value = Nop.new
-        const_value.type = @program.static_array_of(element_type, call.args.size)
-        const = Const.new(@program, @program, const_name, const_value)
-        @program.types[const_name] = const
-        @program.const_slices << Program::ConstSliceInfo.new(const_name, kind, call.args)
-
-        # ::Slice.new(pointerof($Slice:n.@buffer), {{ args.size }}, read_only: true)
-        pointer_node = PointerOf.new(ReadInstanceVar.new(Path.new(const_name).at(node), "@buffer").at(node)).at(node)
-        size_node = NumberLiteral.new(call.args.size.to_s, :i32).at(node)
-        read_only_node = NamedArgument.new("read_only", BoolLiteral.new(true).at(node)).at(node)
-        extra = Call.new(Path.global("Slice").at(node), "new", [pointer_node, size_node], named_args: [read_only_node]).at(node)
-
-        extra.accept self
-        node.extra = extra
-        node.type = slice_type
-        call.expanded = extra
-      else
-        node.raise "BUG: Unknown scope for slice_literal primitive"
-      end
     end
 
     def visit_struct_or_union_set(node)
@@ -2770,14 +2783,26 @@ module Crystal
       false
     end
 
+    private def allowed_type_in_rescue?(type : UnionType) : Bool
+      type.union_types.all? do |subtype|
+        allowed_type_in_rescue? subtype
+      end
+    end
+
+    private def allowed_type_in_rescue?(type : Crystal::Type) : Bool
+      type.implements?(@program.exception) || type.module?
+    end
+
     def visit(node : Rescue)
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.implements?(@program.exception)
-            type.raise "#{instance_type} is not a subclass of Exception"
+
+          unless self.allowed_type_in_rescue? instance_type
+            type.raise "#{instance_type} cannot be used for `rescue`. Only subclasses of `Exception` and modules, or unions thereof, are allowed."
           end
+
           instance_type
         end
       end

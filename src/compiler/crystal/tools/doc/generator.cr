@@ -217,6 +217,8 @@ class Crystal::Doc::Generator
 
   def crystal_builtin?(type)
     return false unless project_info.crystal_stdlib?
+    # TODO: Enabling this allows links to `NoReturn` to work, but has two `NoReturn`s show up in the sidebar
+    # return true if type.is_a?(NamedType) && {"NoReturn", "Void"}.includes?(type.name)
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -227,7 +229,7 @@ class Crystal::Doc::Generator
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
      "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
-     "LIBRARY_PATH", "LIBRARY_RPATH"}.each do |name|
+     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 

@@ -205,6 +205,8 @@ module Crystal
       types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
       types["Range"] = range = @range = GenericClassType.new self, self, "Range", struct_t, ["B", "E"]
       range.struct = true
+      types["Slice"] = slice = @slice = GenericClassType.new self, self, "Slice", struct_t, ["T"]
+      slice.struct = true
 
       types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
@@ -279,7 +281,7 @@ module Crystal
       else
         build_commit_const = define_crystal_nil_constant "BUILD_COMMIT"
       end
-      build_commit_const.doc = <<-MD if wants_doc?
+      build_commit_const.doc = <<-MD
         The build commit identifier of the Crystal compiler.
         MD
 
@@ -311,11 +313,6 @@ module Crystal
 
         The value is defined by the environment variables `CRYSTAL_LIBRARY_PATH`.
         MD
-      define_crystal_string_constant "LIBRARY_RPATH", Crystal::CrystalLibraryPath.default_rpath, <<-MD
-        Colon-separated paths where the loader searches for dynamic libraries at runtime.
-
-        The value is defined by the environment variables `CRYSTAL_LIBRARY_RPATH`.
-        MD
       define_crystal_string_constant "VERSION", Crystal::Config.version, <<-MD
         The version of the Crystal compiler.
         MD
@@ -341,9 +338,8 @@ module Crystal
     private def define_crystal_constant(name, value, doc = nil) : Const
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
-      if doc && wants_doc?
-        const.doc = doc
-      end
+      const.doc = doc
+
       predefined_constants << const
       const
     end
@@ -534,7 +530,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
-                     array static_array exception tuple named_tuple proc union enum range regex crystal
+                     array static_array exception tuple named_tuple proc union enum range slice regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation

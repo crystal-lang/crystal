@@ -1322,6 +1322,10 @@ module Crystal
       @body = Expressions.from body
     end
 
+    def self.new(cond : ASTNode, body : ASTNode? = nil, exhaustive = false)
+      new([cond] of ASTNode, body, exhaustive)
+    end
+
     def accept_children(visitor)
       @conds.each &.accept visitor
       @body.accept visitor
@@ -1360,8 +1364,6 @@ module Crystal
   end
 
   class Select < ASTNode
-    record When, condition : ASTNode, body : ASTNode
-
     property whens : Array(When)
     property else : ASTNode?
 
@@ -1369,10 +1371,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @whens.each do |select_when|
-        select_when.condition.accept visitor
-        select_when.body.accept visitor
-      end
+      @whens.each &.accept visitor
       @else.try &.accept visitor
     end
 

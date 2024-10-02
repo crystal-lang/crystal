@@ -360,6 +360,13 @@ struct BigRational < Number
     to_s io
   end
 
+  # :inherit:
+  def format(io : IO, separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : Nil
+    numerator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    io << '/'
+    denominator.format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+  end
+
   def clone
     self
   end

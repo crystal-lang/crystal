@@ -130,6 +130,9 @@ class Crystal::Command
     else
       if command.ends_with?(".cr")
         error "file '#{command}' does not exist"
+      elsif external_command = Process.find_executable("crystal-#{command}")
+        options.shift
+        Process.exec(external_command, options, env: {"CRYSTAL" => Process.executable_path})
       else
         error "unknown command: #{command}"
       end
@@ -349,7 +352,6 @@ class Crystal::Command
     hierarchy_exp : String?,
     cursor_location : String?,
     output_format : String,
-    combine_rpath : Bool,
     includes : Array(String),
     excludes : Array(String),
     verbose : Bool,
@@ -357,7 +359,7 @@ class Crystal::Command
     tallies : Bool do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = emit_base_filename || output_filename.rchop(File.extname(output_filename))
-      compiler.compile sources, output_filename, combine_rpath: combine_rpath
+      compiler.compile sources, output_filename
     end
 
     def top_level_semantic
@@ -632,10 +634,9 @@ class Crystal::Command
       emit_base_filename = ::Path[sources.first.filename].stem
     end
 
-    combine_rpath = run && !compiler.no_codegen?
     @config = CompilerConfig.new compiler, sources, output_filename, emit_base_filename,
       arguments, specified_output, hierarchy_exp, cursor_location, output_format.not_nil!,
-      combine_rpath, includes, excludes, verbose, check, tallies
+      includes, excludes, verbose, check, tallies
   end
 
   private def gather_sources(filenames)

@@ -14,6 +14,17 @@ private def shell_command(command)
 end
 
 describe IO::FileDescriptor do
+  describe "#initialize" do
+    it "handles closed file descriptor gracefully" do
+      a, b = IO.pipe
+      a.close
+      b.close
+
+      fd = IO::FileDescriptor.new(a.fd)
+      fd.closed?.should be_true
+    end
+  end
+
   it "reopen STDIN with the right mode", tags: %w[slow] do
     code = %q(puts "#{STDIN.blocking} #{STDIN.info.type}")
     compile_source(code) do |binpath|
@@ -37,17 +48,33 @@ describe IO::FileDescriptor do
     end
   end
 
-  it "closes on finalize" do
-    pipes = [] of IO::FileDescriptor
-    assert_finalizes("fd") do
-      a, b = IO.pipe
-      pipes << b
-      a
+  describe "#finalize" do
+    it "closes" do
+      pipes = [] of IO::FileDescriptor
+      assert_finalizes("fd") do
+        a, b = IO.pipe
+        pipes << b
+        a
+      end
+
+      expect_raises(IO::Error) do
+        pipes.each do |p|
+          p.puts "123"
+        end
+      end
     end
 
-    expect_raises(IO::Error) do
-      pipes.each do |p|
-        p.puts "123"
+    it "does not flush" do
+      with_tempfile "fd-finalize-flush" do |path|
+        file = File.new(path, "w")
+        file << "foo"
+        file.flush
+        file << "bar"
+        file.finalize
+
+        File.read(path).should eq "foo"
+      ensure
+        file.try(&.close) rescue nil
       end
     end
   end
@@ -102,6 +129,65 @@ describe IO::FileDescriptor do
       end
     end
   end
+
+  {% unless flag?(:win32) %}
+    describe "close_on_exec" do
+      it "sets close on exec on the reopened standard descriptors" do
+        unless STDIN.fd == Crystal::System::FileDescriptor::STDIN_HANDLE
+          STDIN.close_on_exec?.should be_true
+        end
+
+        unless STDOUT.fd == Crystal::System::FileDescriptor::STDOUT_HANDLE
+          STDOUT.close_on_exec?.should be_true
+        end
+
+        unless STDERR.fd == Crystal::System::FileDescriptor::STDERR_HANDLE
+          STDERR.close_on_exec?.should be_true
+        end
+      end
+
+      it "is enabled by default (open)" do
+        File.open(datapath("test_file.txt")) do |file|
+          file.close_on_exec?.should be_true
+        end
+      end
+
+      it "is enabled by default (pipe)" do
+        IO::FileDescriptor.pipe.each do |fd|
+          fd.close_on_exec?.should be_true
+          fd.close_on_exec?.should be_true
+        end
+      end
+
+      it "can be disabled and reenabled" do
+        File.open(datapath("test_file.txt")) do |file|
+          file.close_on_exec = false
+          file.close_on_exec?.should be_false
+
+          file.close_on_exec = true
+          file.close_on_exec?.should be_true
+        end
+      end
+
+      it "is copied on reopen" do
+        File.open(datapath("test_file.txt")) do |file1|
+          file1.close_on_exec = true
+
+          File.open(datapath("test_file.ini")) do |file2|
+            file2.reopen(file1)
+            file2.close_on_exec?.should be_true
+          end
+
+          file1.close_on_exec = false
+
+          File.open(datapath("test_file.ini")) do |file3|
+            file3.reopen(file1)
+            file3.close_on_exec?.should be_false
+          end
+        end
+      end
+    end
+  {% end %}
 
   typeof(STDIN.noecho { })
   typeof(STDIN.noecho!)

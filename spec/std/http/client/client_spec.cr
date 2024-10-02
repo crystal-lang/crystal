@@ -6,7 +6,13 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
-private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true, &)
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending HTTP::Client
+  {% skip_file %}
+{% end %}
+
+private def test_server(host, port, read_time = 0.seconds, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
     spawn do
@@ -312,12 +318,12 @@ module HTTP
     end
 
     it "doesn't read the body if request was HEAD" do
-      resp_get = test_server("localhost", 0, 0) do |server|
+      resp_get = test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
         break client.get("/")
       end
 
-      test_server("localhost", 0, 0) do |server|
+      test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
         resp_head = client.head("/")
         resp_head.headers.should eq(resp_get.headers)
@@ -338,7 +344,7 @@ module HTTP
     end
 
     it "tests read_timeout" do
-      test_server("localhost", 0, 0) do |server|
+      test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.read_timeout = 1.second
         client.get("/")
@@ -348,10 +354,10 @@ module HTTP
       # it doesn't make sense to try to write because the client will already
       # timeout on read. Writing a response could lead on an exception in
       # the server if the socket is closed.
-      test_server("localhost", 0, 0.5, write_response: false) do |server|
+      test_server("localhost", 0, 0.5.seconds, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSARecv timed out" {% else %} "Read timed out" {% end %}) do
-          client.read_timeout = 0.001
+          client.read_timeout = 1.millisecond
           client.get("/?sleep=1")
         end
       end
@@ -362,19 +368,19 @@ module HTTP
       # it doesn't make sense to try to write because the client will already
       # timeout on read. Writing a response could lead on an exception in
       # the server if the socket is closed.
-      test_server("localhost", 0, 0, write_response: false) do |server|
+      test_server("localhost", 0, 0.seconds, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSASend timed out" {% else %} "Write timed out" {% end %}) do
-          client.write_timeout = 0.001
+          client.write_timeout = 1.millisecond
           client.post("/", body: "a" * 5_000_000)
         end
       end
     end
 
     it "tests connect_timeout" do
-      test_server("localhost", 0, 0) do |server|
+      test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
-        client.connect_timeout = 0.5
+        client.connect_timeout = 0.5.seconds
         client.get("/")
       end
     end

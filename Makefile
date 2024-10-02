@@ -46,7 +46,8 @@ SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_ou
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
-SOURCE_DATE_EPOCH ?= $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
+CRYSTAL_VERSION ?= $(shell cat src/VERSION)
+SOURCE_DATE_EPOCH ?= $(shell (cat src/SOURCE_DATE_EPOCH || (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile)) 2> /dev/null)
 ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
 endif
@@ -63,7 +64,6 @@ LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --version 2> /dev/nul
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 CXXFLAGS += $(if $(debug),-g -O0)
-CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
 DESTDIR ?=
 PREFIX ?= /usr/local

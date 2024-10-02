@@ -7,6 +7,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
+  SPEC_SPLIT_DOTS: 160
   CI_LLVM_VERSION: "18.1.1"
 
 jobs:
@@ -19,6 +20,13 @@ jobs:
 
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+
+      - name: Set up Cygwin
+        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        with:
+          packages: make
+          install-dir: C:\cygwin64
+          add-to-path: false
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -49,10 +57,10 @@ jobs:
         run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.6
       - name: Build zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1
@@ -92,6 +100,13 @@ jobs:
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
+      - name: Set up Cygwin
+        uses: cygwin/cygwin-install-action@006ad0b0946ca6d0a3ea2d4437677fa767392401 # v4
+        with:
+          packages: make
+          install-dir: C:\cygwin64
+          add-to-path: false
+
       - name: Download Crystal source
         uses: actions/checkout@v4
 
@@ -111,7 +126,7 @@ jobs:
             libs/xml2-dynamic.lib
             dlls/pcre.dll
             dlls/pcre2-8.dll
-            dlls/libiconv.dll
+            dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi.dll
             dlls/zlib1.dll
@@ -130,10 +145,10 @@ jobs:
         run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.43 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Dynamic
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.17 -Dynamic
       - name: Build libffi
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.3 -Dynamic
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.6 -Dynamic
       - name: Build zlib
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version 1.3.1 -Dynamic
@@ -213,16 +228,16 @@ jobs:
         if: steps.cache-llvm-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild X86,AArch64 -Dynamic
 
-  x86_64-windows:
+  x86_64-windows-release:
     needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
     uses: ./.github/workflows/win_build_portable.yml
     with:
-      release: false
+      release: true
       llvm_version: "18.1.1"
 
   x86_64-windows-test:
     runs-on: windows-2022
-    needs: [x86_64-windows]
+    needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -265,13 +280,40 @@ jobs:
       - name: Build samples
         run: make -f Makefile.win samples
 
-  x86_64-windows-release:
-    if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
-    needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-libs, x86_64-windows-llvm-dlls]
-    uses: ./.github/workflows/win_build_portable.yml
-    with:
-      release: true
-      llvm_version: "18.1.1"
+  x86_64-windows-test-interpreter:
+    runs-on: windows-2022
+    needs: [x86_64-windows-release]
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v4
+        with:
+          name: crystal
+          path: build
+
+      - name: Restore LLVM
+        uses: actions/cache/restore@v4
+        with:
+          path: llvm
+          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          Add-Content $env:GITHUB_PATH "$(pwd)\build"
+          Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+
+      - name: Run stdlib specs with interpreter
+        run: bin\crystal i spec\std_spec.cr
+
+      - name: Run primitives specs with interpreter
+        run: bin\crystal i spec\primitives_spec.cr
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
@@ -288,7 +330,7 @@ jobs:
       - name: Download Crystal executable
         uses: actions/download-artifact@v4
         with:
-          name: crystal-release
+          name: crystal
           path: etc/win-ci/portable
 
       - name: Restore LLVM

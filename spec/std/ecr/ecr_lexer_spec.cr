@@ -210,6 +210,87 @@ describe "ECR::Lexer" do
     token.type.should eq(t :eof)
   end
 
+  it "lexes with <%-% %> (#14734)" do
+    lexer = ECR::Lexer.new("hello <%-% foo %> bar")
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq("hello ")
+    token.column_number.should eq(1)
+    token.line_number.should eq(1)
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq("<%- foo %>")
+    token.line_number.should eq(1)
+    token.column_number.should eq(11)
+    token.suppress_leading?.should be_false
+    token.suppress_trailing?.should be_false
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq(" bar")
+    token.line_number.should eq(1)
+    token.column_number.should eq(18)
+
+    token = lexer.next_token
+    token.type.should eq(t :eof)
+  end
+
+  it "lexes with <%-%= %> (#14734)" do
+    lexer = ECR::Lexer.new("hello <%-%= foo %> bar")
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq("hello ")
+    token.column_number.should eq(1)
+    token.line_number.should eq(1)
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq("<%-= foo %>")
+    token.line_number.should eq(1)
+    token.column_number.should eq(11)
+    token.suppress_leading?.should be_false
+    token.suppress_trailing?.should be_false
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq(" bar")
+    token.line_number.should eq(1)
+    token.column_number.should eq(19)
+
+    token = lexer.next_token
+    token.type.should eq(t :eof)
+  end
+
+  it "lexes with <%% -%> (#14734)" do
+    lexer = ECR::Lexer.new("hello <%% foo -%> bar")
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq("hello ")
+    token.column_number.should eq(1)
+    token.line_number.should eq(1)
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq("<% foo -%>")
+    token.line_number.should eq(1)
+    token.column_number.should eq(10)
+    token.suppress_leading?.should be_false
+    token.suppress_trailing?.should be_false
+
+    token = lexer.next_token
+    token.type.should eq(t :string)
+    token.value.should eq(" bar")
+    token.line_number.should eq(1)
+    token.column_number.should eq(18)
+
+    token = lexer.next_token
+    token.type.should eq(t :eof)
+  end
+
   it "lexes with <% %> and correct location info" do
     lexer = ECR::Lexer.new("hi\nthere <% foo\nbar %> baz")
 

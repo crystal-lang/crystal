@@ -12,6 +12,13 @@ describe "Primitives: Slice" do
         slice.to_a.should eq([0, 1, 4, 9, 16, 25] of {{ num }})
         slice.read_only?.should be_true
       end
+
+      # TODO: these should probably return the same pointers
+      pending_interpreted "creates multiple literals" do
+        slice1 = Slice({{ num }}).literal(1, 2, 3)
+        slice2 = Slice({{ num }}).literal(1, 2, 3)
+        slice1.should eq(slice2)
+      end
     {% end %}
   end
 end

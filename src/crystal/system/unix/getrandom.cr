@@ -13,7 +13,10 @@ require "./syscall"
 
     # TODO: Implement syscall for interpreter
     def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
-      LibC.getrandom(buf, buflen, flags)
+      # the syscall returns the negative of errno directly, the C function
+      # doesn't, so we mimic the syscall behavior
+      read_bytes = LibC.getrandom(buf, buflen, flags)
+      read_bytes >= 0 ? read_bytes : LibC::SSizeT.new(-Errno.value.value)
     end
   end
 {% end %}
@@ -62,9 +65,9 @@ module Crystal::System::Random
     init unless @@initialized
 
     if @@getrandom_available
-      buf = uninitialized UInt8[1]
-      getrandom(buf.to_slice)
-      buf.unsafe_as(UInt8)
+      buf = uninitialized UInt8
+      getrandom(pointerof(buf).to_slice(1))
+      buf
     elsif urandom = @@urandom
       urandom.read_byte.not_nil!
     else

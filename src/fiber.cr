@@ -73,7 +73,9 @@ class Fiber
 
   # :nodoc:
   def self.unsafe_each(&)
-    fibers.unsafe_each { |fiber| yield fiber }
+    # nothing to iterate when @@fibers is nil + don't lazily allocate in a
+    # method called from a GC collection callback!
+    @@fibers.try(&.unsafe_each { |fiber| yield fiber })
   end
 
   # Creates a new `Fiber` instance.
@@ -168,7 +170,7 @@ class Fiber
     {% unless flag?(:interpreted) %}
       Crystal::Scheduler.stack_pool.release(@stack)
     {% end %}
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
   end
 
   # Returns the current fiber.
@@ -232,20 +234,21 @@ class Fiber
   end
 
   # :nodoc:
-  def timeout(timeout : Time::Span?, select_action : Channel::TimeoutAction? = nil) : Nil
+  def timeout(timeout : Time::Span, select_action : Channel::TimeoutAction) : Nil
     @timeout_select_action = select_action
     timeout_event.add(timeout)
   end
 
   # :nodoc:
   def cancel_timeout : Nil
+    return unless @timeout_select_action
     @timeout_select_action = nil
     @timeout_event.try &.delete
   end
 
   # The current fiber will resume after a period of time.
   # The timeout can be cancelled with `cancel_timeout`
-  def self.timeout(timeout : Time::Span?, select_action : Channel::TimeoutAction? = nil) : Nil
+  def self.timeout(timeout : Time::Span, select_action : Channel::TimeoutAction) : Nil
     Fiber.current.timeout(timeout, select_action)
   end
 
@@ -283,6 +286,20 @@ class Fiber
   # ```
   def self.yield : Nil
     Crystal::Scheduler.yield
+  end
+
+  # Suspends execution of the current fiber indefinitely.
+  #
+  # Unlike `Fiber.yield` the current fiber is not automatically
+  # reenqueued and can only be resumed whith an explicit call to `#enqueue`.
+  #
+  # This is equivalent to `sleep` without a time.
+  #
+  # This method is meant to be used in concurrency primitives. It's particularly
+  # useful if the fiber needs to wait  for something to happen (for example an IO
+  # event, a message is ready in a channel, etc.) which triggers a re-enqueue.
+  def self.suspend : Nil
+    Crystal::Scheduler.reschedule
   end
 
   def to_s(io : IO) : Nil

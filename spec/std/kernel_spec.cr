@@ -254,16 +254,12 @@ describe "hardware exception" do
     error.should_not contain("Stack overflow")
   end
 
-  {% if flag?(:musl) %}
-    # FIXME: Pending as mitigation for https://github.com/crystal-lang/crystal/issues/7482
-    pending "detects stack overflow on the main stack"
-  {% else %}
-    it "detects stack overflow on the main stack", tags: %w[slow] do
-      # This spec can take some time under FreeBSD where
-      # the default stack size is 0.5G.  Setting a
-      # smaller stack size with `ulimit -s 8192`
-      # will address this.
-      status, _, error = compile_and_run_source <<-'CRYSTAL'
+  it "detects stack overflow on the main stack", tags: %w[slow] do
+    # This spec can take some time under FreeBSD where
+    # the default stack size is 0.5G.  Setting a
+    # smaller stack size with `ulimit -s 8192`
+    # will address this.
+    status, _, error = compile_and_run_source <<-'CRYSTAL'
       def foo
         y = StaticArray(Int8, 512).new(0)
         foo
@@ -271,10 +267,9 @@ describe "hardware exception" do
       foo
     CRYSTAL
 
-      status.success?.should be_false
-      error.should contain("Stack overflow")
-    end
-  {% end %}
+    status.success?.should be_false
+    error.should contain("Stack overflow")
+  end
 
   it "detects stack overflow on a fiber stack", tags: %w[slow] do
     status, _, error = compile_and_run_source <<-'CRYSTAL'

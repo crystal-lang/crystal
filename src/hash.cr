@@ -468,6 +468,8 @@ class Hash(K, V)
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
       if entry_matches?(entry, hash, key)
+        # Mark this index slot as deleted
+        delete_index(index)
         delete_entry_and_update_counts(entry_index)
         return entry
       else
@@ -631,6 +633,9 @@ class Hash(K, V)
       new_entry_index += 1
     end
 
+    # Reset offset to first non-deleted entry
+    @first = 0
+
     # We have to mark entries starting from the final new index
     # as deleted so the GC can collect them.
     entries_to_clear = entries_size - new_entry_index
@@ -772,6 +777,35 @@ class Hash(K, V)
     end
   end
 
+  # Marks `@indices` at `index` as empty. Might also adjust subsequent index
+  # slots to ensure empty indices never appear before the natural position of
+  # any used index, in case of previous hash collisions.
+  private def delete_index(index) : Nil
+    # https://en.wikipedia.org/w/index.php?title=Open_addressing&oldid=1188919190#Example_pseudocode
+    i = index
+    set_index(i, -1)
+
+    j = i
+    while true
+      j = next_index(j)
+      entry_index = get_index(j)
+      break if entry_index == -1
+
+      entry = get_entry(entry_index)
+      k = fit_in_indices(entry.hash)
+
+      if i <= j
+        next if i < k && k <= j
+      else
+        next if k <= j || i < k
+      end
+
+      set_index(i, entry_index)
+      set_index(j, -1)
+      i = j
+    end
+  end
+
   # Returns the capacity of `@indices`.
   protected def indices_size
     1 << @indices_size_pow2
@@ -819,6 +853,16 @@ class Hash(K, V)
     @entries[index] = value
   end
 
+  # Returns the index into `@indices` for an existing *entry_index* into
+  # `@entries`.
+  private def index_for_entry_index(entry_index)
+    index = fit_in_indices(get_entry(entry_index).hash)
+    until get_index(index) == entry_index
+      index = next_index(index)
+    end
+    index
+  end
+
   # Adds an entry at the end and also increments this hash's size.
   private def add_entry_and_increment_size(hash, key, value) : Nil
     set_entry(entries_size, Entry(K, V).new(hash, key, value))
@@ -828,7 +872,8 @@ class Hash(K, V)
   # Marks an entry in `@entries` at `index` as deleted
   # *without* modifying any counters (`@size` and `@deleted_count`).
   private def delete_entry(index) : Nil
-    set_entry(index, Entry(K, V).deleted)
+    # sets `Entry#@hash` to 0 and removes stale references to key and value
+    (@entries + index).clear
   end
 
   # Marks an entry in `@entries` at `index` as deleted
@@ -1010,7 +1055,7 @@ class Hash(K, V)
     self
   end
 
-  # Returns `true` of this Hash is comparing keys by `object_id`.
+  # Returns `true` if this Hash is comparing keys by `object_id`.
   #
   # See `compare_by_identity`.
   getter? compare_by_identity : Bool
@@ -1571,8 +1616,20 @@ class Hash(K, V)
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
   def reject!(& : K, V -> _)
-    each_entry_with_index do |entry, index|
-      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
+    # No indices allocated yet so we won't need `DELETED_INDEX` yet
+    if @indices.null?
+      each_entry_with_index do |entry, index|
+        if yield(entry.key, entry.value)
+          delete_entry_and_update_counts(index)
+        end
+      end
+    else
+      each_entry_with_index do |entry, index|
+        if yield(entry.key, entry.value)
+          delete_index(index_for_entry_index(index))
+          delete_entry_and_update_counts(index)
+        end
+      end
     end
     self
   end
@@ -1690,7 +1747,8 @@ class Hash(K, V)
   # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
   def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
-    each_with_object({} of K2 => V) do |(key, value), memo|
+    copy = Hash(K2, V).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
       memo[yield(key, value)] = value
     end
   end
@@ -1705,7 +1763,8 @@ class Hash(K, V)
   # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
   def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
-    each_with_object({} of K => V2) do |(key, value), memo|
+    copy = Hash(K, V2).new(initial_capacity: entries_capacity)
+    each_with_object(copy) do |(key, value), memo|
       memo[key] = yield(value, key)
     end
   end
@@ -1860,6 +1919,7 @@ class Hash(K, V)
   def shift(&)
     first_entry = first_entry?
     if first_entry
+      delete_index(index_for_entry_index(@first)) unless @indices.null?
       delete_entry_and_update_counts(@first)
       {first_entry.key, first_entry.value}
     else
@@ -2091,16 +2151,11 @@ class Hash(K, V)
     hash
   end
 
+  # :nodoc:
   struct Entry(K, V)
     getter key, value, hash
 
     def initialize(@hash : UInt32, @key : K, @value : V)
-    end
-
-    def self.deleted
-      key = uninitialized K
-      value = uninitialized V
-      new(0_u32, key, value)
     end
 
     def deleted? : Bool

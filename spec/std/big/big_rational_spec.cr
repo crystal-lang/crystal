@@ -478,6 +478,14 @@ describe BigRational do
   describe "#inspect" do
     it { 123.to_big_r.inspect.should eq("123") }
   end
+
+  it "#format" do
+    br(100, 3).format.should eq("100/3")
+    br(1234567, 890123).format.should eq("1,234,567/890,123")
+    br(1234567, 890123).format(".", " ").should eq("1 234 567/890 123")
+    br(1234567, 890123).format(".", " ", group: 2).should eq("1 23 45 67/89 01 23")
+    br(1234567, 890123).format(",", ".", group: 4).should eq("123.4567/89.0123")
+  end
 end
 
 describe "BigRational Math" do

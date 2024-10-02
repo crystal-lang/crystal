@@ -22,6 +22,7 @@ jobs:
           - "16.0.6"
           - "17.0.6"
           - "18.1.5"
+          - "19.1.0"
 
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
@@ -64,7 +65,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.12.1"
+          crystal: "1.13.3"
 
       - name: Build libllvm_ext
         run: make -B deps

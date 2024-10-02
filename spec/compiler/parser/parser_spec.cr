@@ -1460,9 +1460,9 @@ module Crystal
 
     it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
-    it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
-    it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
-    it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([Select::When.new("foo".call, 2.int32)], 3.int32)
+    it_parses "select\nwhen foo\n2\nend", Select.new([When.new("foo".call, 2.int32)])
+    it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([When.new("foo".call, 2.int32), When.new("bar".call, 4.int32)])
+    it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([When.new("foo".call, 2.int32)], 3.int32)
 
     assert_syntax_error "select\nwhen 1\n2\nend", "invalid select when expression: must be an assignment or call"
 
@@ -2604,6 +2604,96 @@ module Crystal
         node.else_location.not_nil!.line_number.should eq(3)
         node.ensure_location.not_nil!.line_number.should eq(4)
         node.end_location.not_nil!.line_number.should eq(5)
+      end
+
+      it "sets correct locations of macro if / else" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% else %}
+            "not one"
+            "bar"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 7
+      end
+
+      it "sets correct locations of macro if / elsif" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% elsif 2 == val %}
+            "not one"
+            "bar"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 7
+      end
+
+      it "sets correct locations of macro if / else / elsif" do
+        parser = Parser.new(<<-CR)
+          {% if 1 == val %}
+            "one!"
+            "bar"
+          {% elsif 2 == val %}
+            "not one"
+            "bar"
+          {% else %}
+            "biz"
+            "blah"
+          {% end %}
+        CR
+
+        node = parser.parse.as MacroIf
+
+        location = node.cond.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.cond.end_location.should_not be_nil
+        location.line_number.should eq 1
+
+        location = node.then.location.should_not be_nil
+        location.line_number.should eq 1
+        location = node.then.end_location.should_not be_nil
+        location.line_number.should eq 4
+
+        location = node.else.location.should_not be_nil
+        location.line_number.should eq 4
+        location = node.else.end_location.should_not be_nil
+        location.line_number.should eq 10
       end
 
       it "sets correct location of trailing ensure" do

@@ -1562,7 +1562,7 @@ module Crystal
 
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
-        wrote_newline = format_def_arg(wrote_newline, has_more, true) do
+        wrote_newline = format_def_arg(wrote_newline, has_more, found_first_newline && !has_more) do
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
@@ -1577,7 +1577,7 @@ module Crystal
       end
 
       if double_splat
-        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, true) do
+        wrote_newline = format_def_arg(wrote_newline, block_arg || yields, found_first_newline) do
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -1651,7 +1651,7 @@ module Crystal
       yield
 
       # Write "," before skipping spaces to prevent inserting comment between argument and comma.
-      write "," if has_more || (write_trailing_comma && flag?("def_trailing_comma"))
+      write "," if has_more || (wrote_newline && @token.type.op_comma?) || (write_trailing_comma && flag?("def_trailing_comma"))
 
       just_wrote_newline = skip_space
       if @token.type.newline?
@@ -3887,7 +3887,7 @@ module Crystal
         write_keyword :when
         skip_space_or_newline(@indent + 2)
         write " "
-        a_when.condition.accept self
+        a_when.conds.first.accept self
         found_comment = skip_space(@indent + 2)
         if @token.type.op_semicolon? || @token.keyword?(:then)
           sep = @token.type.op_semicolon? ? "; " : " then "
@@ -4242,6 +4242,7 @@ module Crystal
 
     def visit(node : ProcLiteral)
       write_token :OP_MINUS_GT
+      whitespace_after_op_minus_gt = @token.type.space?
       skip_space_or_newline
 
       a_def = node.def
@@ -4272,7 +4273,7 @@ module Crystal
         skip_space_or_newline
       end
 
-      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace")
+      write " " if a_def.args.present? || return_type || flag?("proc_literal_whitespace") || whitespace_after_op_minus_gt
 
       is_do = false
       if @token.keyword?(:do)
@@ -4280,7 +4281,7 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop) && flag?("proc_literal_whitespace")
+        write " " if a_def.body.is_a?(Nop) && (flag?("proc_literal_whitespace") || @token.type.space?)
       end
       skip_space
 

@@ -22,7 +22,7 @@ describe LLVM do
   it ".default_target_triple" do
     triple = LLVM.default_target_triple
     {% if flag?(:darwin) %}
-      triple.should match(/-apple-macosx$/)
+      triple.should match(/-apple-(darwin|macosx)/)
     {% elsif flag?(:android) %}
       triple.should match(/-android$/)
     {% elsif flag?(:linux) %}

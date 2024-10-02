@@ -58,8 +58,12 @@ lib LibLLVM
   fun int_type_in_context = LLVMIntTypeInContext(c : ContextRef, num_bits : UInt) : TypeRef
   fun get_int_type_width = LLVMGetIntTypeWidth(integer_ty : TypeRef) : UInt
 
+  fun half_type_in_context = LLVMHalfTypeInContext(c : ContextRef) : TypeRef
   fun float_type_in_context = LLVMFloatTypeInContext(c : ContextRef) : TypeRef
   fun double_type_in_context = LLVMDoubleTypeInContext(c : ContextRef) : TypeRef
+  fun x86_fp80_type_in_context = LLVMX86FP80TypeInContext(c : ContextRef) : TypeRef
+  fun fp128_type_in_context = LLVMFP128TypeInContext(c : ContextRef) : TypeRef
+  fun ppc_fp128_type_in_context = LLVMPPCFP128TypeInContext(c : ContextRef) : TypeRef
 
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt, is_var_arg : Bool) : TypeRef
   fun is_function_var_arg = LLVMIsFunctionVarArg(function_ty : TypeRef) : Bool
@@ -112,7 +116,11 @@ lib LibLLVM
   fun const_int_get_zext_value = LLVMConstIntGetZExtValue(constant_val : ValueRef) : ULongLong
   fun const_int_get_sext_value = LLVMConstIntGetSExtValue(constant_val : ValueRef) : LongLong
 
-  fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : Char*, length : UInt, dont_null_terminate : Bool) : ValueRef
+  {% if LibLLVM::IS_LT_190 %}
+    fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : Char*, length : UInt, dont_null_terminate : Bool) : ValueRef
+  {% else %}
+    fun const_string_in_context2 = LLVMConstStringInContext2(c : ContextRef, str : Char*, length : SizeT, dont_null_terminate : Bool) : ValueRef
+  {% end %}
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt, packed : Bool) : ValueRef
   fun const_array = LLVMConstArray(element_ty : TypeRef, constant_vals : ValueRef*, length : UInt) : ValueRef
 
@@ -235,6 +243,8 @@ lib LibLLVM
   fun build_or = LLVMBuildOr(BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_xor = LLVMBuildXor(BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_not = LLVMBuildNot(BuilderRef, value : ValueRef, name : Char*) : ValueRef
+  fun build_neg = LLVMBuildNeg(BuilderRef, value : ValueRef, name : Char*) : ValueRef
+  fun build_fneg = LLVMBuildFNeg(BuilderRef, value : ValueRef, name : Char*) : ValueRef
 
   fun build_malloc = LLVMBuildMalloc(BuilderRef, ty : TypeRef, name : Char*) : ValueRef
   fun build_array_malloc = LLVMBuildArrayMalloc(BuilderRef, ty : TypeRef, val : ValueRef, name : Char*) : ValueRef

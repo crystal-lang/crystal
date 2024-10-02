@@ -1,11 +1,13 @@
 require "fiber"
 require "channel"
 require "crystal/scheduler"
+require "crystal/tracing"
 
 # Blocks the current fiber for the specified number of seconds.
 #
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
+@[Deprecated("Use `::sleep(Time::Span)` instead")]
 def sleep(seconds : Number) : Nil
   if seconds < 0
     raise ArgumentError.new "Sleep seconds must be positive"
@@ -41,7 +43,7 @@ end
 #
 # spawn do
 #   6.times do
-#     sleep 1
+#     sleep 1.second
 #     puts 1
 #   end
 #   ch.send(nil)
@@ -49,7 +51,7 @@ end
 #
 # spawn do
 #   3.times do
-#     sleep 2
+#     sleep 2.seconds
 #     puts 2
 #   end
 #   ch.send(nil)
@@ -59,6 +61,7 @@ end
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
+  Crystal.trace :sched, "spawn", fiber: fiber
   {% if flag?(:preview_mt) %} fiber.set_current_thread if same_thread {% end %}
   fiber.enqueue
   fiber

@@ -55,7 +55,12 @@ private def newline
 end
 
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
-pending_interpreted describe: Process do
+{% if flag?(:interpreted) && !flag?(:win32) %}
+  pending Process
+  {% skip_file %}
+{% end %}
+
+describe Process do
   describe ".new" do
     it "raises if command doesn't exist" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
@@ -181,6 +186,28 @@ pending_interpreted describe: Process do
       $?.exit_code.should eq(0)
     end
 
+    it "forwards closed io" do
+      closed_io = IO::Memory.new
+      closed_io.close
+      Process.run(*stdin_to_stdout_command, input: closed_io)
+      Process.run(*stdin_to_stdout_command, output: closed_io)
+      Process.run(*stdin_to_stdout_command, error: closed_io)
+    end
+
+    it "forwards non-blocking file" do
+      with_tempfile("non-blocking-process-input.txt", "non-blocking-process-output.txt") do |in_path, out_path|
+        File.open(in_path, "w+", blocking: false) do |input|
+          File.open(out_path, "w+", blocking: false) do |output|
+            input.puts "hello"
+            input.rewind
+            Process.run(*stdin_to_stdout_command, input: input, output: output)
+            output.rewind
+            output.gets_to_end.chomp.should eq("hello")
+          end
+        end
+      end
+    end
+
     it "sets working directory with string" do
       parent = File.dirname(Dir.current)
       command = {% if flag?(:win32) %}
@@ -230,6 +257,19 @@ pending_interpreted describe: Process do
       output = proc.output.gets_to_end
       proc.wait
       output.should eq "`echo hi`\n"
+    end
+
+    describe "does not execute batch files" do
+      %w[.bat .Bat .BAT .cmd .cmD .CmD].each do |ext|
+        it ext do
+          with_tempfile "process_run#{ext}" do |path|
+            File.write(path, "echo '#{ext}'\n")
+            expect_raises {{ flag?(:win32) ? File::BadExecutableError : File::AccessDeniedError }}, "Error executing process" do
+              Process.run(path)
+            end
+          end
+        end
+      end
     end
 
     describe "environ" do
@@ -444,6 +484,27 @@ pending_interpreted describe: Process do
   {% end %}
 
   describe ".exec" do
+    it "redirects STDIN and STDOUT to files", tags: %w[slow] do
+      with_tempfile("crystal-exec-stdin", "crystal-exec-stdout") do |stdin_path, stdout_path|
+        File.write(stdin_path, "foobar")
+
+        status, _, _ = compile_and_run_source <<-CRYSTAL
+          command = #{stdin_to_stdout_command[0].inspect}
+          args = #{stdin_to_stdout_command[1].to_a} of String
+          stdin_path = #{stdin_path.inspect}
+          stdout_path = #{stdout_path.inspect}
+          File.open(stdin_path) do |input|
+            File.open(stdout_path, "w") do |output|
+              Process.exec(command, args, input: input, output: output)
+            end
+          end
+          CRYSTAL
+
+        status.success?.should be_true
+        File.read(stdout_path).chomp.should eq("foobar")
+      end
+    end
+
     it "gets error from exec" do
       expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
         Process.exec("foobarbaz")

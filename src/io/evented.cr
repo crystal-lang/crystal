@@ -2,6 +2,7 @@
 
 require "crystal/thread_local_value"
 
+# :nodoc:
 module IO::Evented
   @read_timed_out = false
   @write_timed_out = false
@@ -11,56 +12,6 @@ module IO::Evented
 
   @read_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
   @write_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
-
-  def evented_read(slice : Bytes, errno_msg : String, &) : Int32
-    loop do
-      bytes_read = yield slice
-      if bytes_read != -1
-        # `to_i32` is acceptable because `Slice#size` is an Int32
-        return bytes_read.to_i32
-      end
-
-      if Errno.value == Errno::EAGAIN
-        wait_readable
-      else
-        raise IO::Error.from_errno(errno_msg, target: self)
-      end
-    end
-  ensure
-    resume_pending_readers
-  end
-
-  def evented_write(slice : Bytes, errno_msg : String, &) : Nil
-    return if slice.empty?
-
-    begin
-      loop do
-        # TODO: Investigate why the .to_i64 is needed as a workaround for #8230
-        bytes_written = (yield slice).to_i64
-        if bytes_written != -1
-          slice += bytes_written
-          return if slice.size == 0
-        else
-          if Errno.value == Errno::EAGAIN
-            wait_writable
-          else
-            raise IO::Error.from_errno(errno_msg, target: self)
-          end
-        end
-      end
-    ensure
-      resume_pending_writers
-    end
-  end
-
-  def evented_send(slice : Bytes, errno_msg : String, &) : Int32
-    bytes_written = yield slice
-    raise Socket::Error.from_errno(errno_msg) if bytes_written == -1
-    # `to_i32` is acceptable because `Slice#size` is an Int32
-    bytes_written.to_i32
-  ensure
-    resume_pending_writers
-  end
 
   # :nodoc:
   def resume_read(timed_out = false) : Nil
@@ -90,7 +41,7 @@ module IO::Evented
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     if @read_timed_out
       @read_timed_out = false
@@ -115,7 +66,7 @@ module IO::Evented
     writers = @writers.get { Deque(Fiber).new }
     writers << Fiber.current
     add_write_event(timeout)
-    Crystal::Scheduler.reschedule
+    Fiber.suspend
 
     if @write_timed_out
       @write_timed_out = false
@@ -128,10 +79,6 @@ module IO::Evented
   private def add_write_event(timeout = @write_timeout) : Nil
     event = @write_event.get { Crystal::EventLoop.current.create_fd_write_event(self) }
     event.add timeout
-  end
-
-  def evented_reopen : Nil
-    evented_close
   end
 
   def evented_close : Nil
@@ -148,13 +95,15 @@ module IO::Evented
     end
   end
 
-  private def resume_pending_readers
+  # :nodoc:
+  def evented_resume_pending_readers
     if (readers = @readers.get?) && !readers.empty?
       add_read_event
     end
   end
 
-  private def resume_pending_writers
+  # :nodoc:
+  def evented_resume_pending_writers
     if (writers = @writers.get?) && !writers.empty?
       add_write_event
     end
