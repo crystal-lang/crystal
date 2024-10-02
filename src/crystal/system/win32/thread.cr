@@ -1,5 +1,6 @@
 require "c/processthreadsapi"
 require "c/synchapi"
+require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::HANDLE
@@ -75,7 +76,9 @@ module Crystal::System::Thread
     {% else %}
       tib = LibC.NtCurrentTeb
       high_limit = tib.value.stackBase
-      LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION))
+      if LibC.VirtualQuery(tib.value.stackLimit, out mbi, sizeof(LibC::MEMORY_BASIC_INFORMATION)) == 0
+        raise RuntimeError.from_winerror("VirtualQuery")
+      end
       low_limit = mbi.allocationBase
       low_limit
     {% end %}
@@ -86,5 +89,32 @@ module Crystal::System::Thread
       LibC.SetThreadDescription(@system_handle, System.to_wstr(name))
     {% end %}
     name
+  end
+
+  def self.init_suspend_resume : Nil
+  end
+
+  private def system_suspend : Nil
+    if LibC.SuspendThread(@system_handle) == -1
+      Crystal::System.panic("SuspendThread()", WinError.value)
+    end
+  end
+
+  private def system_wait_suspended : Nil
+    # context must be aligned on 16 bytes but we lack a mean to force the
+    # alignment on the struct, so we overallocate then realign the pointer:
+    local = uninitialized UInt8[sizeof(Tuple(LibC::CONTEXT, UInt8[15]))]
+    thread_context = Pointer(LibC::CONTEXT).new(local.to_unsafe.address &+ 15_u64 & ~15_u64)
+    thread_context.value.contextFlags = LibC::CONTEXT_FULL
+
+    if LibC.GetThreadContext(@system_handle, thread_context) == -1
+      Crystal::System.panic("GetThreadContext()", WinError.value)
+    end
+  end
+
+  private def system_resume : Nil
+    if LibC.ResumeThread(@system_handle) == -1
+      Crystal::System.panic("ResumeThread()", WinError.value)
+    end
   end
 end

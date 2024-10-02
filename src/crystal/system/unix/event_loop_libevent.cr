@@ -4,6 +4,9 @@ require "./event_libevent"
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   private getter(event_base) { Crystal::LibEvent::Event::Base.new }
 
+  def after_fork_before_exec : Nil
+  end
+
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
@@ -70,7 +73,7 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    file_descriptor.evented_read("Error reading file_descriptor") do
+    evented_read(file_descriptor, "Error reading file_descriptor") do
       LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for reading", target: file_descriptor
@@ -80,7 +83,7 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
   end
 
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    file_descriptor.evented_write("Error writing file_descriptor") do
+    evented_write(file_descriptor, "Error writing file_descriptor") do
       LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing", target: file_descriptor
@@ -93,14 +96,17 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
+  def remove(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  end
+
   def read(socket : ::Socket, slice : Bytes) : Int32
-    socket.evented_read("Error reading socket") do
+    evented_read(socket, "Error reading socket") do
       LibC.recv(socket.fd, slice, slice.size, 0).to_i32
     end
   end
 
   def write(socket : ::Socket, slice : Bytes) : Int32
-    socket.evented_write("Error writing to socket") do
+    evented_write(socket, "Error writing to socket") do
       LibC.send(socket.fd, slice, slice.size, 0).to_i32
     end
   end
@@ -114,7 +120,7 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
-    bytes_read = socket.evented_read("Error receiving datagram") do
+    bytes_read = evented_read(socket, "Error receiving datagram") do
       LibC.recvfrom(socket.fd, slice, slice.size, 0, sockaddr, pointerof(addrlen))
     end
 
@@ -152,7 +158,17 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
         {% if LibC.has_method?(:accept4) %}
           LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
         {% else %}
-          LibC.accept(socket.fd, nil, nil)
+          # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
+          # can't call `Crystal::System::Socket.lock_read` because the socket
+          # might be in blocking mode and accept would block until the socket
+          # receives a connection.
+          #
+          # we could lock when `socket.blocking?` is false, but another thread
+          # could change the socket back to blocking mode between the condition
+          # check and the `accept` call.
+          fd = LibC.accept(socket.fd, nil, nil)
+          Crystal::System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+          fd
         {% end %}
 
       if client_fd == -1
@@ -167,9 +183,6 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
           raise ::Socket::Error.from_errno("accept")
         end
       else
-        {% unless LibC.has_method?(:accept4) %}
-          Crystal::System::Socket.fcntl(client_fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
-        {% end %}
         return client_fd
       end
     end
@@ -177,5 +190,45 @@ class Crystal::LibEvent::EventLoop < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.evented_close
+  end
+
+  def remove(socket : ::Socket) : Nil
+  end
+
+  def evented_read(target, errno_msg : String, &) : Int32
+    loop do
+      bytes_read = yield
+      if bytes_read != -1
+        # `to_i32` is acceptable because `Slice#size` is an Int32
+        return bytes_read.to_i32
+      end
+
+      if Errno.value == Errno::EAGAIN
+        target.wait_readable
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
+    end
+  ensure
+    target.evented_resume_pending_readers
+  end
+
+  def evented_write(target, errno_msg : String, &) : Int32
+    begin
+      loop do
+        bytes_written = yield
+        if bytes_written != -1
+          return bytes_written.to_i32
+        end
+
+        if Errno.value == Errno::EAGAIN
+          target.wait_writable
+        else
+          raise IO::Error.from_errno(errno_msg, target: target)
+        end
+      end
+    ensure
+      target.evented_resume_pending_writers
+    end
   end
 end

@@ -236,17 +236,22 @@ class Crystal::CodeGenVisitor
     # Check if this def must use the C calling convention and the return
     # value must be either casted or passed by sret
     if target_def.c_calling_convention? && target_def.abi_info?
+      return_type = target_def.body.type
+      if return_type.proc?
+        @last = check_proc_is_not_closure(@last, return_type)
+      end
+
       abi_info = abi_info(target_def)
-      ret_type = abi_info.return_type
-      if cast = ret_type.cast
+      abi_ret_type = abi_info.return_type
+      if cast = abi_ret_type.cast
         casted_last = pointer_cast @last, cast.pointer
         last = load cast, casted_last
         ret last
         return
       end
 
-      if (attr = ret_type.attr) && attr == LLVM::Attribute::StructRet
-        store load(llvm_type(target_def.body.type), @last), context.fun.params[0]
+      if (attr = abi_ret_type.attr) && attr == LLVM::Attribute::StructRet
+        store load(llvm_type(return_type), @last), context.fun.params[0]
         ret
         return
       end

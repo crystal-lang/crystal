@@ -9,7 +9,12 @@ require "c/ntifs"
 require "c/winioctl"
 
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : FileDescriptor::Handle
+  # On Windows we cannot rely on the system mode `FILE_APPEND_DATA` and
+  # keep track of append mode explicitly. When writing data, this ensures to only
+  # write at the end of the file.
+  @system_append = false
+
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -19,7 +24,7 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm))
+    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
     unless error.error_success?
       raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
     end
@@ -27,8 +32,8 @@ module Crystal::System::File
     handle
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {FileDescriptor::Handle, WinError}
-    access, disposition, attributes = self.posix_to_open_opts flags, perm
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking : Bool) : {FileDescriptor::Handle, WinError}
+    access, disposition, attributes = self.posix_to_open_opts flags, perm, blocking
 
     handle = LibC.CreateFileW(
       System.to_wstr(filename),
@@ -43,7 +48,7 @@ module Crystal::System::File
     {handle.address, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
   end
 
-  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions)
+  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
@@ -52,10 +57,9 @@ module Crystal::System::File
                LibC::FILE_GENERIC_READ
              end
 
-    if flags.bits_set? LibC::O_APPEND
-      access |= LibC::FILE_APPEND_DATA
-      access &= ~LibC::FILE_WRITE_DATA
-    end
+    # do not handle `O_APPEND`, because Win32 append mode relies on removing
+    # `FILE_WRITE_DATA` which breaks file truncation and locking; instead,
+    # simply set the end of the file as the write offset in `#write_blocking`
 
     if flags.bits_set? LibC::O_TRUNC
       if flags.bits_set? LibC::O_CREAT
@@ -73,7 +77,7 @@ module Crystal::System::File
       disposition = LibC::OPEN_EXISTING
     end
 
-    attributes = LibC::FILE_ATTRIBUTE_NORMAL
+    attributes = 0
     unless perm.owner_write?
       attributes |= LibC::FILE_ATTRIBUTE_READONLY
     end
@@ -93,7 +97,19 @@ module Crystal::System::File
       attributes |= LibC::FILE_FLAG_RANDOM_ACCESS
     end
 
+    unless blocking
+      attributes |= LibC::FILE_FLAG_OVERLAPPED
+    end
+
     {access, disposition, attributes}
+  end
+
+  protected def system_set_mode(mode : String)
+    @system_append = true if mode.starts_with?('a')
+  end
+
+  private def write_blocking(handle, slice)
+    write_blocking(handle, slice, pos: @system_append ? UInt64::MAX : nil)
   end
 
   NOT_FOUND_ERRORS = {

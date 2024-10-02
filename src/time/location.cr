@@ -51,7 +51,7 @@ class Time::Location
   # the time zone database.
   #
   # See `Time::Location.load` for details.
-  class InvalidLocationNameError < Exception
+  class InvalidLocationNameError < Time::Error
     getter name, source
 
     def initialize(@name : String, @source : String? = nil)
@@ -63,7 +63,7 @@ class Time::Location
 
   # `InvalidTimezoneOffsetError` is raised if `Time::Location::Zone.new`
   # receives an invalid time zone offset.
-  class InvalidTimezoneOffsetError < Exception
+  class InvalidTimezoneOffsetError < Time::Error
     def initialize(offset : Int)
       super "Invalid time zone offset: #{offset}"
     end

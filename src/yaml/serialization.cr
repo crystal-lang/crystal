@@ -156,11 +156,11 @@ module YAML
       # Define a `new` directly in the included type,
       # so it overloads well with other possible initializes
 
-      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      def self.new(ctx : ::YAML::ParseContext, node : ::YAML::Nodes::Node)
         new_from_yaml_node(ctx, node)
       end
 
-      private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      private def self.new_from_yaml_node(ctx : ::YAML::ParseContext, node : ::YAML::Nodes::Node)
         ctx.read_alias(node, self) do |obj|
           return obj
         end
@@ -170,7 +170,7 @@ module YAML
         ctx.record_anchor(node, instance)
 
         instance.initialize(__context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
-        GC.add_finalizer(instance) if instance.responds_to?(:finalize)
+        ::GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
 
@@ -178,7 +178,7 @@ module YAML
       # so it can compete with other possible initializes
 
       macro inherited
-        def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        def self.new(ctx : ::YAML::ParseContext, node : ::YAML::Nodes::Node)
           new_from_yaml_node(ctx, node)
         end
       end
@@ -409,17 +409,17 @@ module YAML
         {% mapping.raise "Mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
-      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      def self.new(ctx : ::YAML::ParseContext, node : ::YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
 
-        unless node.is_a?(YAML::Nodes::Mapping)
+        unless node.is_a?(::YAML::Nodes::Mapping)
           node.raise "Expected YAML mapping, not #{node.class}"
         end
 
         node.each do |key, value|
-          next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
+          next unless key.is_a?(::YAML::Nodes::Scalar) && value.is_a?(::YAML::Nodes::Scalar)
           next unless key.value == {{field.id.stringify}}
 
           discriminator_value = value.value

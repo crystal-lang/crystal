@@ -42,10 +42,44 @@ class WaitGroup
     end
   end
 
+  # Yields a `WaitGroup` instance and waits at the end of the block for all of
+  # the work enqueued inside it to complete.
+  #
+  # ```
+  # WaitGroup.wait do |wg|
+  #   items.each do |item|
+  #     wg.spawn { process item }
+  #   end
+  # end
+  # ```
+  def self.wait : Nil
+    instance = new
+    yield instance
+    instance.wait
+  end
+
   def initialize(n : Int32 = 0)
     @waiting = Crystal::PointerLinkedList(Waiting).new
     @lock = Crystal::SpinLock.new
     @counter = Atomic(Int32).new(n)
+  end
+
+  # Increment the counter by 1, perform the work inside the block in a separate
+  # fiber, decrementing the counter after it completes or raises. Returns the
+  # `Fiber` that was spawned.
+  #
+  # ```
+  # wg = WaitGroup.new
+  # wg.spawn { do_something }
+  # wg.wait
+  # ```
+  def spawn(&block) : Fiber
+    add
+    ::spawn do
+      block.call
+    ensure
+      done
+    end
   end
 
   # Increments the counter by how many fibers we want to wait for.

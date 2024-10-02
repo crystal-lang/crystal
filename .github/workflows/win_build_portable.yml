@@ -23,8 +23,9 @@ jobs:
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
+        id: install-crystal
         with:
-          crystal: "1.12.2"
+          crystal: "1.13.3"
 
       - name: Download Crystal source
         uses: actions/checkout@v4
@@ -68,7 +69,7 @@ jobs:
             libs/xml2-dynamic.lib
             dlls/pcre.dll
             dlls/pcre2-8.dll
-            dlls/libiconv.dll
+            dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi.dll
             dlls/zlib1.dll
@@ -107,6 +108,10 @@ jobs:
         run: |
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+          # NOTE: the name of the libiconv DLL has changed, so we manually copy
+          # the new one to the existing Crystal installation; remove after
+          # updating the base compiler to 1.14
+          cp dlls/iconv-2.dll ${{ steps.install-crystal.outputs.path }}
 
       - name: Build LLVM extensions
         run: make -f Makefile.win deps
@@ -114,7 +119,7 @@ jobs:
       - name: Build Crystal
         run: |
           bin/crystal.bat env
-          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }}
+          make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
         uses: actions/checkout@v4
@@ -140,5 +145,5 @@ jobs:
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.release && 'crystal-release' || 'crystal' }}
+          name: crystal
           path: crystal

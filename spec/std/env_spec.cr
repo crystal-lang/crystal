@@ -137,6 +137,10 @@ describe "ENV" do
         ENV.fetch("2")
       end
     end
+
+    it "fetches arbitrary default value" do
+      ENV.fetch("nonexistent", true).should be_true
+    end
   end
 
   it "handles unicode" do

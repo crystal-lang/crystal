@@ -73,7 +73,7 @@ struct Set(T)
     self
   end
 
-  # Returns `true` of this Set is comparing objects by `object_id`.
+  # Returns `true` if this Set is comparing objects by `object_id`.
   #
   # See `compare_by_identity`.
   def compare_by_identity? : Bool

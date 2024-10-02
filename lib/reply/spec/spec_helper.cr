@@ -94,6 +94,27 @@ module Reply
     getter auto_completion
   end
 
+  class SpecReaderWithAutoCompletionRetrigger < Reader
+    def initialize
+      super
+      self.word_delimiters.delete(':')
+    end
+
+    def auto_complete(current_word : String, expression_before : String)
+      if current_word.ends_with? "::"
+        return "title", ["#{current_word}foo", "#{current_word}foobar", "#{current_word}bar"]
+      else
+        return "title", %w(foo foobar bar)
+      end
+    end
+
+    def auto_completion_retrigger_when(current_word : String) : Bool
+      current_word.ends_with? ':'
+    end
+
+    getter auto_completion
+  end
+
   module SpecHelper
     def self.auto_completion(returning results)
       results = results.clone

@@ -128,9 +128,9 @@ module Crystal::System::Socket
   end
 
   # :nodoc:
-  def overlapped_connect(socket, method, &)
-    IOCP::OverlappedOperation.run(socket) do |operation|
-      result = yield operation.start
+  def overlapped_connect(socket, method, timeout, &)
+    IOCP::WSAOverlappedOperation.run(socket) do |operation|
+      result = yield operation
 
       if result == 0
         case error = WinError.wsa_value
@@ -142,13 +142,10 @@ module Crystal::System::Socket
           return ::Socket::Error.from_os_error("ConnectEx", error)
         end
       else
-        operation.done!
         return nil
       end
 
-      IOCP.schedule_overlapped(read_timeout || 1.seconds)
-
-      operation.wsa_result(socket) do |error|
+      operation.wait_for_result(timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaeconnrefused?
           return ::Socket::ConnectError.from_os_error(method, error)
@@ -195,8 +192,8 @@ module Crystal::System::Socket
   end
 
   def overlapped_accept(socket, method, &)
-    IOCP::OverlappedOperation.run(socket) do |operation|
-      result = yield operation.start
+    IOCP::WSAOverlappedOperation.run(socket) do |operation|
+      result = yield operation
 
       if result == 0
         case error = WinError.wsa_value
@@ -206,18 +203,15 @@ module Crystal::System::Socket
           return false
         end
       else
-        operation.done!
         return true
       end
 
-      unless IOCP.schedule_overlapped(read_timeout)
-        raise IO::TimeoutError.new("#{method} timed out")
-      end
-
-      operation.wsa_result(socket) do |error|
+      operation.wait_for_result(read_timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
+        when .error_operation_aborted?
+          raise IO::TimeoutError.new("#{method} timed out")
         end
       end
 
@@ -372,6 +366,10 @@ module Crystal::System::Socket
   end
 
   def system_close
+    socket_close
+  end
+
+  private def socket_close
     handle = @volatile_fd.swap(LibC::INVALID_SOCKET)
 
     ret = LibC.closesocket(handle)
@@ -381,8 +379,14 @@ module Crystal::System::Socket
       when WinError::WSAEINTR, WinError::WSAEINPROGRESS
         # ignore
       else
-        raise ::Socket::Error.from_os_error("Error closing socket", err)
+        yield err
       end
+    end
+  end
+
+  def socket_close
+    socket_close do |err|
+      raise ::Socket::Error.from_os_error("Error closing socket", err)
     end
   end
 
