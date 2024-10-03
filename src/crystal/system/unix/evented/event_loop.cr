@@ -291,11 +291,11 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     io.__evloop_data = Arena::INVALID_INDEX
 
     Evented.arena.free(index) do |pd|
-      pd.value.@readers.consume_each do |event|
+      pd.value.@readers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event))
       end
 
-      pd.value.@writers.consume_each do |event|
+      pd.value.@writers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event))
       end
 
@@ -313,7 +313,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   private def wait_readable(io, timeout = nil) : Nil
-    wait(:io_read, io, :readers, timeout) { raise IO::TimeoutError.new("Read timed out") }
+    wait_readable(io, timeout) { raise IO::TimeoutError.new("Read timed out") }
   end
 
   private def wait_readable(io, timeout = nil, &) : Nil
@@ -321,7 +321,7 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   private def wait_writable(io, timeout = nil) : Nil
-    wait(:io_write, io, :writers, timeout) { raise IO::TimeoutError.new("Write timed out") }
+    wait_writable(io, timeout) { raise IO::TimeoutError.new("Write timed out") }
   end
 
   private def wait_writable(io, timeout = nil, &) : Nil
@@ -364,12 +364,6 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     else
       Fiber.suspend
     end
-
-    {% if flag?(:preview_mt) %}
-      # we can safely reset readyness here, since we're about to retry the
-      # actual syscall
-      %pd.value.@{{waiters.id}}.@ready.set(false, :relaxed)
-    {% end %}
   end
 
   private def check_open(io : IO)

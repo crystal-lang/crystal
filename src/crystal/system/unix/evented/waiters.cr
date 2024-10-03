@@ -4,19 +4,31 @@
 # Thread safe: mutations are protected with a lock, and race conditions are
 # handled through the ready atomic.
 struct Crystal::Evented::Waiters
-  @ready = Atomic(Bool).new(false)
+  {% if flag?(:preview_mt) %}
+    @ready = false
+    @closed = false
+  {% end %}
   @lock = SpinLock.new
   @list = PointerLinkedList(Event).new
 
+  # Adds an event to the waiting list. May return false immediately if another
+  # thread marked the list as ready in parallel, returns true otherwise.
   def add(event : Pointer(Event)) : Bool
     {% if flag?(:preview_mt) %}
-      # check for readiness since another thread running the evloop might be
-      # trying to dequeue an event while we're waiting on the lock (failure to
-      # notice notice the IO is ready)
-      return false if ready?
-
       @lock.sync do
-        return false if ready?
+        if @closed
+          # another thread closed the fd or we received a fd error or hup event:
+          # the fd will never block again
+          return false
+        end
+
+        if @ready
+          # another thread readied the fd before the current thread got to add
+          # the event: don't block and resets @ready for the next loop
+          @ready = false
+          return false
+        end
+
         @list.push(event)
       end
     {% else %}
@@ -26,21 +38,13 @@ struct Crystal::Evented::Waiters
     true
   end
 
-  def delete(event) : Nil
+  def delete(event : Pointer(Event)) : Nil
     @lock.sync { @list.delete(event) }
   end
 
-  def consume_each(&) : Nil
-    @lock.sync do
-      @list.consume_each { |event| yield event }
-    end
-  end
-
-  def ready? : Bool
-    @ready.swap(false, :relaxed)
-  end
-
-  def ready(& : Pointer(Event) -> Bool) : Nil
+  # Removes one pending event or marks the list as ready when there are no
+  # pending events (we got notified of readiness before a thread enqueued).
+  def ready_one(& : Pointer(Event) -> Bool) : Nil
     @lock.sync do
       {% if flag?(:preview_mt) %}
         # loop until the block succesfully processes an event (it may have to
@@ -51,7 +55,7 @@ struct Crystal::Evented::Waiters
           else
             # no event queued but another thread may be waiting for the lock to
             # add an event: set as ready to resolve the race condition
-            @ready.set(true, :relaxed)
+            @ready = true
             return
           end
         end
@@ -59,6 +63,18 @@ struct Crystal::Evented::Waiters
         if event = @list.shift?
           yield event
         end
+      {% end %}
+    end
+  end
+
+  # Dequeues all pending events and marks the list as closed. This must be
+  # called when a fd is closed or an error or hup event occurred.
+  def ready_all(& : Pointer(Event) ->) : Nil
+    @lock.sync do
+      @list.consume_each { |event| yield event }
+
+      {% if flag?(:preview_mt) %}
+        @closed = true
       {% end %}
     end
   end

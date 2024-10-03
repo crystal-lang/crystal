@@ -30,7 +30,7 @@ struct Crystal::Evented::Event
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
 
-  # The event can be added into different lists. See `Waiters` and `Timers`.
+  # The event can be added to `Waiters` lists.
   include PointerLinkedList::Node
 
   def initialize(@type : Type, @fiber, @index = nil, timeout : Time::Span? = nil)
