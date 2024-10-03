@@ -306,6 +306,16 @@ module Crystal
     end
   end
 
+  # Raised when another exception is raised when calculating macro code coverage.
+  # Extends `SkipMacroException` to ensure it's also treated as a somewhat non-failure exception.
+  class SkipMacroCodeCoverageException < SkipMacroException
+    def initialize(exception : ::Exception)
+      super "", nil
+      @message = exception.message
+      @cause = exception
+    end
+  end
+
   class Program
     def undefined_class_variable(node, owner, similar_name)
       common = String.build do |str|

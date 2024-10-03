@@ -204,6 +204,8 @@ module Crystal
     # Program that was created for the last compilation.
     property! program : Program
 
+    def initialize(@collect_covered_macro_nodes : Bool = false); end
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -274,6 +276,7 @@ module Crystal
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
+      program.collect_covered_macro_nodes = @collect_covered_macro_nodes
       program
     end
 

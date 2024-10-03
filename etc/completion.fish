@@ -221,6 +221,19 @@ complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s p -l progres
 complete -c crystal -n "__fish_seen_subcommand_from unreachable" -s t -l time -d "Enable execution time output"
 complete -c crystal -n "__fish_seen_subcommand_from unreachable" -l stdin-filename -d "Source file name to be read from STDIN"
 
+complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "macro_code_coverage" -d "generate a macro code coverage report" -x
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s D -l define -d "Define a compile-time flag"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s f -l format -d "Output format codecov (default)" -a "codecov" -f
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -l error-trace -d "Show full error trace"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s i -l include -d "Include path"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s e -l exclude -d "Exclude path (default: lib)"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -l no-color -d "Disable colored output"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -l prelude -d "Use given file as prelude"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s s -l stats -d "Enable statistics output"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s p -l progress -d "Enable progress output"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -s t -l time -d "Enable execution time output"
+complete -c crystal -n "__fish_seen_subcommand_from macro_code_coverage" -l stdin-filename -d "Source file name to be read from STDIN"
+
 complete -c crystal -n "__fish_seen_subcommand_from tool; and not __fish_seen_subcommand_from $tool_subcommands" -a "types" -d "show type of main variables" -x
 complete -c crystal -n "__fish_seen_subcommand_from types" -s D -l define -d "Define a compile-time flag"
 complete -c crystal -n "__fish_seen_subcommand_from types" -s f -l format -d "Output format text (default) or json" -a "text json" -f

@@ -958,6 +958,10 @@ module Crystal
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
+          if entries.empty?
+            interpreter.collect_covered_node block.body, true, true
+          end
+
           entries.each do |entry|
             interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
@@ -970,6 +974,10 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
+
+          if entries.empty?
+            interpreter.collect_covered_node block.body, true, true
+          end
 
           ArrayLiteral.map(entries) do |entry|
             interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
@@ -1056,6 +1064,10 @@ module Crystal
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
+          if entries.empty?
+            interpreter.collect_covered_node block.body, true, true
+          end
+
           entries.each do |entry|
             interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
@@ -1068,6 +1080,10 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
+
+          if entries.empty?
+            interpreter.collect_covered_node block.body, true, true
+          end
 
           ArrayLiteral.map(entries) do |entry|
             interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
@@ -1164,7 +1180,13 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg = block.args.first?
 
-          interpret_to_range(interpreter).each do |num|
+          range = interpret_to_range(interpreter)
+
+          if range.empty?
+            interpreter.collect_covered_node block.body, true, true
+          end
+
+          range.each do |num|
             interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
             interpreter.accept block.body
           end
@@ -1175,14 +1197,14 @@ module Crystal
         interpret_check_args(uses_block: true) do
           block_arg = block.args.first?
 
-          interpret_map(interpreter) do |num|
+          interpret_map(block, interpreter) do |num|
             interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
             interpreter.accept block.body
           end
         end
       when "to_a"
         interpret_check_args do
-          interpret_map(interpreter) do |num|
+          interpret_map(nil, interpreter) do |num|
             NumberLiteral.new(num)
           end
         end
@@ -1191,8 +1213,14 @@ module Crystal
       end
     end
 
-    def interpret_map(interpreter, &)
-      ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
+    def interpret_map(block, interpreter, &)
+      range = interpret_to_range(interpreter)
+
+      if block && range.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
+
+      ArrayLiteral.map(range) do |num|
         yield num
       end
     end
@@ -2887,6 +2915,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
+
       Crystal::BoolLiteral.new(object.elements.any? do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept(block.body).truthy?
@@ -2895,6 +2927,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
   when "all?"
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
+
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
 
       Crystal::BoolLiteral.new(object.elements.all? do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
@@ -2923,6 +2959,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
+
       found = object.elements.find do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept(block.body).truthy?
@@ -2947,6 +2987,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
+
       object.elements.each do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept block.body
@@ -2958,6 +3002,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args[0]?
       index_arg = block.args[1]?
+
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
 
       object.elements.each_with_index do |elem, idx|
         interpreter.define_var(block_arg.name, elem) if block_arg
@@ -2971,6 +3019,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
+
       klass.map(object.elements) do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
         interpreter.accept block.body
@@ -2980,6 +3032,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args[0]?
       index_arg = block.args[1]?
+
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
 
       klass.map_with_index(object.elements) do |elem, idx|
         interpreter.define_var(block_arg.name, elem) if block_arg
@@ -2999,6 +3055,10 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
     interpret_check_args(node: object, min_count: 0, uses_block: true) do |memo|
       accumulate_arg = block.args.first?
       value_arg = block.args[1]?
+
+      if object.elements.empty?
+        interpreter.collect_covered_node block.body, true, true
+      end
 
       if memo
         object.elements.reduce(memo) do |accumulate, elem|
@@ -3264,6 +3324,10 @@ end
 private def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
 
+  if object.elements.empty?
+    interpreter.collect_covered_node block.body, true, true
+  end
+
   klass.new(object.elements.select do |elem|
     interpreter.define_var(block_arg.name, elem) if block_arg
     block_result = interpreter.accept(block.body).truthy?
@@ -3309,6 +3373,10 @@ end
 
 private def sort_by(object, klass, block, interpreter)
   block_arg = block.args.first?
+
+  if object.elements.empty?
+    interpreter.collect_covered_node block.body, true, true
+  end
 
   klass.new(object.elements.sort_by do |elem|
     block_arg.try { |arg| interpreter.define_var(arg.name, elem) }
