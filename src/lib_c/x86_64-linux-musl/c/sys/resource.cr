@@ -6,6 +6,8 @@ lib LibC
     rlim_max : RlimT
   end
 
+  RLIMIT_NOFILE = 7
+
   fun getrlimit(Int, Rlimit*) : Int
 
   RLIMIT_STACK = 3
@@ -33,15 +35,4 @@ lib LibC
   RUSAGE_CHILDREN = -1
 
   fun getrusage(who : Int, usage : RUsage*) : Int16
-
-  alias RlimT = ULongLong
-
-  struct Rlimit
-    rlim_cur : RlimT
-    rlim_max : RlimT
-  end
-
-  RLIMIT_NOFILE = 7
-
-  fun getrlimit(resource : Int, rlim : Rlimit*) : Int
 end
