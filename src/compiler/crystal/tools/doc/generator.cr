@@ -133,6 +133,11 @@ class Crystal::Doc::Generator
     must_include? type.type
   end
 
+  def must_include?(type : GenericInstanceType)
+    type = type(type.generic_type)
+    must_include? type
+  end
+
   def must_include?(type : Crystal::Type)
     return false if type.private?
     return false if nodoc? type
