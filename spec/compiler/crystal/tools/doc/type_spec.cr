@@ -298,17 +298,41 @@ describe Doc::Type do
         module Baz
         end
 
+        module Generics
+          module Mod1(T)
+          end
+
+          # :nodoc:
+          module Mod2(T)
+          end
+        end
+
         class Foo
           include Baz
           include Mod1::Baz
           include Mod2::Baz
           include Mod3::Baz
+          include Generics::Mod1(Int)
+          include Generics::Mod2(Int)
+        end
+
+        class Bar(T)
+          include Baz
+          include Mod1::Baz
+          include Mod2::Baz
+          include Mod3::Baz
+          include Generics::Mod1(T)
+          include Generics::Mod2(T)
         end
         CRYSTAL
 
       generator = Doc::Generator.new program, [""]
-      type = generator.type(program.types["Foo"])
-      type.included_modules.map(&.full_name).should eq ["Baz", "Mod1::Baz"]
+
+      foo = generator.type(program.types["Foo"])
+      foo.included_modules.map(&.full_name).should eq ["Baz", "Generics::Mod1", "Mod1::Baz"]
+
+      bar_t = generator.type(program.types["Bar"])
+      bar_t.included_modules.map(&.full_name).should eq ["Baz", "Generics::Mod1", "Mod1::Baz"]
     end
   end
 
@@ -335,17 +359,40 @@ describe Doc::Type do
         module Baz
         end
 
+        module Generics
+          module Mod1(T)
+          end
+
+          # :nodoc:
+          module Mod2(T)
+          end
+        end
+
         class Foo
           extend Baz
           extend Mod1::Baz
           extend Mod2::Baz
           extend Mod3::Baz
+          extend Generics::Mod1(Int)
+          extend Generics::Mod2(Int)
+        end
+
+        class Bar(T)
+          extend Baz
+          extend Mod1::Baz
+          extend Mod2::Baz
+          extend Mod3::Baz
+          extend Generics::Mod1(T)
+          extend Generics::Mod2(T)
         end
         CRYSTAL
 
       generator = Doc::Generator.new program, [""]
-      type = generator.type(program.types["Foo"])
-      type.extended_modules.map(&.full_name).should eq ["Baz", "Mod1::Baz"]
+      foo = generator.type(program.types["Foo"])
+      foo.extended_modules.map(&.full_name).should eq ["Baz", "Generics::Mod1", "Mod1::Baz"]
+
+      bar_t = generator.type(program.types["Bar"])
+      bar_t.extended_modules.map(&.full_name).should eq ["Baz", "Generics::Mod1", "Mod1::Baz"]
     end
   end
 end
