@@ -31,6 +31,7 @@ _Freeze period starts on 2024-09-25_
 - *(llvm)* Expose LLVM instruction builder for `neg` and `fneg` ([#14774], thanks @JarnaChao09)
 - *(llvm)* **[experimental]** Add minimal LLVM OrcV2 bindings ([#14887], thanks @HertzDevil)
 - *(llvm)* Add `LLVM::Builder#finalize` ([#14892], thanks @JarnaChao09)
+- *(llvm)* Support LLVM 19.1 ([#14842], thanks @HertzDevil)
 - *(macros)* Add `Crystal::Macros::TypeNode#has_inner_pointers?` ([#14847], thanks @HertzDevil)
 - *(macros)* Add `HashLiteral#has_key?` and `NamedTupleLiteral#has_key?` ([#14890], thanks @kamil-gwozdz)
 - *(numeric)* Implement floating-point manipulation functions for `BigFloat` ([#11007], thanks @HertzDevil)
@@ -60,6 +61,7 @@ _Freeze period starts on 2024-09-25_
 [#14774]: https://github.com/crystal-lang/crystal/pull/14774
 [#14887]: https://github.com/crystal-lang/crystal/pull/14887
 [#14892]: https://github.com/crystal-lang/crystal/pull/14892
+[#14842]: https://github.com/crystal-lang/crystal/pull/14842
 [#14847]: https://github.com/crystal-lang/crystal/pull/14847
 [#14890]: https://github.com/crystal-lang/crystal/pull/14890
 [#11007]: https://github.com/crystal-lang/crystal/pull/11007
@@ -90,13 +92,17 @@ _Freeze period starts on 2024-09-25_
 
 #### lang
 
+- Fix `Slice.literal` for multiple calls with identical signature ([#15009], thanks @HertzDevil)
 - *(macros)* Add location info to some `MacroIf` nodes ([#14885], thanks @Blacksmoke16)
 
+[#15009]: https://github.com/crystal-lang/crystal/pull/15009
 [#14885]: https://github.com/crystal-lang/crystal/pull/14885
 
 #### stdlib
 
 - *(collection)* Fix `Range#size` return type to `Int32` ([#14588], thanks @straight-shoota)
+- *(concurrency)* Update `DeallocationStack` for Windows context switch ([#15032], thanks @HertzDevil)
+- *(concurrency)* Fix race condition in `pthread_create` handle initialization ([#15043], thanks @HertzDevil)
 - *(files)* **[regression]** Fix `File#truncate` and `#lock` for Win32 append-mode files ([#14706], thanks @HertzDevil)
 - *(files)* **[breaking]** Avoid flush in finalizers for `Socket` and `IO::FileDescriptor` ([#14882], thanks @straight-shoota)
 - *(files)* Make `IO::Buffered#buffer_size=` idempotent ([#14855], thanks @jgaskins)
@@ -107,6 +113,8 @@ _Freeze period starts on 2024-09-25_
 - *(numeric)* Fix exponent wrapping in `Math.frexp(BigFloat)` for very large values ([#14971], thanks @HertzDevil)
 - *(numeric)* Fix exponent overflow in `BigFloat#to_s` for very large values ([#14982], thanks @HertzDevil)
 - *(numeric)* Add missing `@[Link(dll:)]` annotation to MPIR ([#15003], thanks @HertzDevil)
+- *(runtime)* Add missing return type of `LibC.VirtualQuery` ([#15036], thanks @HertzDevil)
+- *(runtime)* Fix main stack top detection on musl-libc ([#15047], thanks @HertzDevil)
 - *(serialization)* **[breaking]** Remove `XML::Error.errors` ([#14936], thanks @straight-shoota)
 - *(specs)* **[regression]** Fix `Expectations::Be` for module type ([#14926], thanks @straight-shoota)
 - *(system)* Fix return type restriction for `ENV.fetch` ([#14919], thanks @straight-shoota)
@@ -116,6 +124,8 @@ _Freeze period starts on 2024-09-25_
 - *(text)* Add type restriction to `String#byte_index` `offset` parameter ([#14981], thanks @straight-shoota)
 
 [#14588]: https://github.com/crystal-lang/crystal/pull/14588
+[#15032]: https://github.com/crystal-lang/crystal/pull/15032
+[#15043]: https://github.com/crystal-lang/crystal/pull/15043
 [#14706]: https://github.com/crystal-lang/crystal/pull/14706
 [#14882]: https://github.com/crystal-lang/crystal/pull/14882
 [#14855]: https://github.com/crystal-lang/crystal/pull/14855
@@ -126,6 +136,8 @@ _Freeze period starts on 2024-09-25_
 [#14971]: https://github.com/crystal-lang/crystal/pull/14971
 [#14982]: https://github.com/crystal-lang/crystal/pull/14982
 [#15003]: https://github.com/crystal-lang/crystal/pull/15003
+[#15036]: https://github.com/crystal-lang/crystal/pull/15036
+[#15047]: https://github.com/crystal-lang/crystal/pull/15047
 [#14936]: https://github.com/crystal-lang/crystal/pull/14936
 [#14926]: https://github.com/crystal-lang/crystal/pull/14926
 [#14919]: https://github.com/crystal-lang/crystal/pull/14919
@@ -139,44 +151,46 @@ _Freeze period starts on 2024-09-25_
 - *(cli)* Add error handling for linker flag sub commands ([#14932], thanks @straight-shoota)
 - *(codegen)* Allow returning `Proc`s from top-level funs ([#14917], thanks @HertzDevil)
 - *(codegen)* Fix CRT static-dynamic linking conflict in specs with C sources ([#14970], thanks @HertzDevil)
+- *(interpreter)* Fix Linux `getrandom` failure in interpreted code ([#15035], thanks @HertzDevil)
+- *(interpreter)* Fix undefined behavior in interpreter mixed union upcast ([#15042], thanks @HertzDevil)
 
 [#14932]: https://github.com/crystal-lang/crystal/pull/14932
 [#14917]: https://github.com/crystal-lang/crystal/pull/14917
 [#14970]: https://github.com/crystal-lang/crystal/pull/14970
+[#15035]: https://github.com/crystal-lang/crystal/pull/15035
+[#15042]: https://github.com/crystal-lang/crystal/pull/15042
 
 #### tools
 
 - *(dependencies)* Fix `crystal tool dependencies` format flat ([#14927], thanks @straight-shoota)
 - *(dependencies)* Fix `crystal tool dependencies` filters for Windows paths ([#14928], thanks @straight-shoota)
 - *(docs-generator)* Fix doc comment above annotation with macro expansion ([#14849], thanks @Blacksmoke16)
-- *(docs-generator)* Add nodoc filter to doc type methods ([#14910], thanks @spuun)
+- *(unreachable)* Fix `crystal tool unreachable` visiting circular hierarchies ([#15065], thanks @straight-shoota)
 
 [#14927]: https://github.com/crystal-lang/crystal/pull/14927
 [#14928]: https://github.com/crystal-lang/crystal/pull/14928
 [#14849]: https://github.com/crystal-lang/crystal/pull/14849
-[#14910]: https://github.com/crystal-lang/crystal/pull/14910
+[#15065]: https://github.com/crystal-lang/crystal/pull/15065
 
 ### Chores
 
 #### stdlib
 
+- **[deprecation]** Use `Time::Span` in `Benchmark.ips` ([#14805], thanks @HertzDevil)
 - **[deprecation]** Deprecate `::sleep(Number)` ([#14962], thanks @HertzDevil)
 - *(runtime)* **[deprecation]** Deprecate `Pointer.new(Int)` ([#14875], thanks @straight-shoota)
 
+[#14805]: https://github.com/crystal-lang/crystal/pull/14805
 [#14962]: https://github.com/crystal-lang/crystal/pull/14962
 [#14875]: https://github.com/crystal-lang/crystal/pull/14875
 
 #### compiler
 
+- *(interpreter)* Remove TODO in `Crystal::Loader` on Windows ([#14988], thanks @HertzDevil)
 - *(interpreter:repl)* Update REPLy version ([#14950], thanks @HertzDevil)
 
-[#14950]: https://github.com/crystal-lang/crystal/pull/14950
-
-#### other
-
-- Remove TODO in `Crystal::Loader` on Windows ([#14988], thanks @HertzDevil)
-
 [#14988]: https://github.com/crystal-lang/crystal/pull/14988
+[#14950]: https://github.com/crystal-lang/crystal/pull/14950
 
 ### Performance
 
@@ -185,29 +199,33 @@ _Freeze period starts on 2024-09-25_
 - *(collection)* Always use unstable sort for simple types ([#14825], thanks @HertzDevil)
 - *(collection)* Optimize `Hash#transform_{keys,values}` ([#14502], thanks @jgaskins)
 - *(numeric)* Optimize arithmetic between `BigFloat` and integers ([#14944], thanks @HertzDevil)
+- *(runtime)* **[regression]** Cache `Exception::CallStack.empty` to avoid repeat `Array` allocation ([#15025], thanks @straight-shoota)
 
 [#14825]: https://github.com/crystal-lang/crystal/pull/14825
 [#14502]: https://github.com/crystal-lang/crystal/pull/14502
 [#14944]: https://github.com/crystal-lang/crystal/pull/14944
+[#15025]: https://github.com/crystal-lang/crystal/pull/15025
 
 #### compiler
 
 - Avoid unwinding the stack on hot path in method call lookups ([#15002], thanks @ggiraldez)
 - *(codegen)* Reduce calls to `Crystal::Type#remove_indirection` in module dispatch ([#14992], thanks @HertzDevil)
+- *(codegen)* Compiler: enable parallel codegen with MT ([#14748], thanks @ysbaddaden)
 
 [#15002]: https://github.com/crystal-lang/crystal/pull/15002
 [#14992]: https://github.com/crystal-lang/crystal/pull/14992
+[#14748]: https://github.com/crystal-lang/crystal/pull/14748
 
 ### Refactor
 
 #### stdlib
 
-- **[deprecation]** Use `Time::Span` in `Benchmark.ips` ([#14805], thanks @HertzDevil)
 - *(concurrency)* Extract `select` from `src/channel.cr` ([#14912], thanks @straight-shoota)
 - *(concurrency)* Make `Crystal::IOCP::OverlappedOperation` abstract ([#14987], thanks @HertzDevil)
 - *(files)* Move `#evented_read`, `#evented_write` into `Crystal::LibEvent::EventLoop` ([#14883], thanks @straight-shoota)
 - *(networking)* Simplify `Socket::Addrinfo.getaddrinfo(&)` ([#14956], thanks @HertzDevil)
 - *(networking)* Add `Crystal::System::Addrinfo` ([#14957], thanks @HertzDevil)
+- *(runtime)* Add `Exception::CallStack.empty` ([#15017], thanks @straight-shoota)
 - *(system)* Refactor cancellation of `IOCP::OverlappedOperation` ([#14754], thanks @straight-shoota)
 - *(system)* Include `Crystal::System::Group` instead of extending it ([#14930], thanks @HertzDevil)
 - *(system)* Include `Crystal::System::User` instead of extending it ([#14929], thanks @HertzDevil)
@@ -215,12 +233,12 @@ _Freeze period starts on 2024-09-25_
 - *(system)* Don't involve evloop after fork in `System::Process.spawn` (UNIX) ([#14974], thanks @ysbaddaden)
 - *(system)* Refactor `EventLoop` interface for sleeps & select timeouts ([#14980], thanks @ysbaddaden)
 
-[#14805]: https://github.com/crystal-lang/crystal/pull/14805
 [#14912]: https://github.com/crystal-lang/crystal/pull/14912
 [#14987]: https://github.com/crystal-lang/crystal/pull/14987
 [#14883]: https://github.com/crystal-lang/crystal/pull/14883
 [#14956]: https://github.com/crystal-lang/crystal/pull/14956
 [#14957]: https://github.com/crystal-lang/crystal/pull/14957
+[#15017]: https://github.com/crystal-lang/crystal/pull/15017
 [#14754]: https://github.com/crystal-lang/crystal/pull/14754
 [#14930]: https://github.com/crystal-lang/crystal/pull/14930
 [#14929]: https://github.com/crystal-lang/crystal/pull/14929
@@ -243,6 +261,7 @@ _Freeze period starts on 2024-09-25_
 - *(collection)* **[breaking]** Hide `Hash::Entry` from public API docs ([#14881], thanks @Blacksmoke16)
 - *(collection)* Fix typos in docs for `Set` and `Hash` ([#14889], thanks @philipp-classen)
 - *(llvm)* Add `@[Experimental]` to `LLVM::DIBuilder` ([#14854], thanks @HertzDevil)
+- *(networking)* Add documentation about synchronous DNS resolution ([#15027], thanks @straight-shoota)
 - *(runtime)* Add docs about `Pointer`'s alignment requirement ([#14853], thanks @HertzDevil)
 - *(runtime)* Reword `Pointer#memcmp`'s documentation ([#14818], thanks @HertzDevil)
 - *(runtime)* Add documentation for `NoReturn` and `Void` ([#14817], thanks @nobodywasishere)
@@ -250,6 +269,7 @@ _Freeze period starts on 2024-09-25_
 [#14881]: https://github.com/crystal-lang/crystal/pull/14881
 [#14889]: https://github.com/crystal-lang/crystal/pull/14889
 [#14854]: https://github.com/crystal-lang/crystal/pull/14854
+[#15027]: https://github.com/crystal-lang/crystal/pull/15027
 [#14853]: https://github.com/crystal-lang/crystal/pull/14853
 [#14818]: https://github.com/crystal-lang/crystal/pull/14818
 [#14817]: https://github.com/crystal-lang/crystal/pull/14817
@@ -259,10 +279,12 @@ _Freeze period starts on 2024-09-25_
 #### stdlib
 
 - Remove some uses of deprecated overloads in standard library specs ([#14963], thanks @HertzDevil)
+- *(collection)* Disable `Tuple#to_static_array` spec on AArch64 ([#14844], thanks @HertzDevil)
 - *(serialization)* Add JSON parsing UTF-8 spec ([#14823], thanks @Blacksmoke16)
 - *(text)* Add specs for `String#index`, `#rindex` search for `Char::REPLACEMENT` ([#14946], thanks @straight-shoota)
 
 [#14963]: https://github.com/crystal-lang/crystal/pull/14963
+[#14844]: https://github.com/crystal-lang/crystal/pull/14844
 [#14823]: https://github.com/crystal-lang/crystal/pull/14823
 [#14946]: https://github.com/crystal-lang/crystal/pull/14946
 
@@ -278,16 +300,9 @@ _Freeze period starts on 2024-09-25_
 [#14886]: https://github.com/crystal-lang/crystal/pull/14886
 [#14904]: https://github.com/crystal-lang/crystal/pull/14904
 
-#### other
-
-- Disable `Tuple#to_static_array` spec on AArch64 ([#14844], thanks @HertzDevil)
-
-[#14844]: https://github.com/crystal-lang/crystal/pull/14844
-
 ### Infrastructure
 
 - Changelog for 1.14.0 ([#14969], thanks @straight-shoota)
-- Update previous Crystal release 1.13.3 ([#15016], thanks @straight-shoota)
 - Update previous Crystal release 1.13.1 ([#14810], thanks @straight-shoota)
 - Refactor GitHub changelog generator print special infra ([#14795], thanks @straight-shoota)
 - Update distribution-scripts ([#14877], thanks @straight-shoota)
@@ -295,6 +310,7 @@ _Freeze period starts on 2024-09-25_
 - Merge `release/1.13`@1.13.2 ([#14924], thanks @straight-shoota)
 - Update previous Crystal release 1.13.2 ([#14925], thanks @straight-shoota)
 - Merge `release/1.13`@1.13.3 ([#15012], thanks @straight-shoota)
+- Update previous Crystal release 1.13.3 ([#15016], thanks @straight-shoota)
 - **[regression]** Fix `SOURCE_DATE_EPOCH` in `Makefile.win` ([#14922], thanks @HertzDevil)
 - *(ci)* Update actions/checkout action to v4 - autoclosed ([#14896], thanks @renovate)
 - *(ci)* Update LLVM 18 for `wasm32-test` ([#14821], thanks @straight-shoota)
@@ -305,11 +321,13 @@ _Freeze period starts on 2024-09-25_
 - *(ci)* Update GitHub runner to `macos-14` ([#14833], thanks @straight-shoota)
 - *(ci)* Refactor SSL workflow with job matrix ([#14899], thanks @straight-shoota)
 - *(ci)* Drop the non-release Windows compiler artifact ([#15000], thanks @HertzDevil)
+- *(ci)* Fix compiler artifact name in WindowsCI ([#15021], thanks @straight-shoota)
+- *(ci)* Restrict CI runners from runs-on to 8GB ([#15030], thanks @straight-shoota)
+- *(ci)* Increase memory for stdlib CI runners from runs-on to 16GB ([#15044], thanks @straight-shoota)
 - *(ci)* Use Cygwin to build libiconv on Windows CI ([#14999], thanks @HertzDevil)
 - *(ci)* Use our own `libffi` repository on Windows CI ([#14998], thanks @HertzDevil)
 
 [#14969]: https://github.com/crystal-lang/crystal/pull/14969
-[#15016]: https://github.com/crystal-lang/crystal/pull/15016
 [#14810]: https://github.com/crystal-lang/crystal/pull/14810
 [#14795]: https://github.com/crystal-lang/crystal/pull/14795
 [#14877]: https://github.com/crystal-lang/crystal/pull/14877
@@ -317,6 +335,7 @@ _Freeze period starts on 2024-09-25_
 [#14924]: https://github.com/crystal-lang/crystal/pull/14924
 [#14925]: https://github.com/crystal-lang/crystal/pull/14925
 [#15012]: https://github.com/crystal-lang/crystal/pull/15012
+[#15016]: https://github.com/crystal-lang/crystal/pull/15016
 [#14922]: https://github.com/crystal-lang/crystal/pull/14922
 [#14896]: https://github.com/crystal-lang/crystal/pull/14896
 [#14821]: https://github.com/crystal-lang/crystal/pull/14821
@@ -327,16 +346,11 @@ _Freeze period starts on 2024-09-25_
 [#14833]: https://github.com/crystal-lang/crystal/pull/14833
 [#14899]: https://github.com/crystal-lang/crystal/pull/14899
 [#15000]: https://github.com/crystal-lang/crystal/pull/15000
+[#15021]: https://github.com/crystal-lang/crystal/pull/15021
+[#15030]: https://github.com/crystal-lang/crystal/pull/15030
+[#15044]: https://github.com/crystal-lang/crystal/pull/15044
 [#14999]: https://github.com/crystal-lang/crystal/pull/14999
 [#14998]: https://github.com/crystal-lang/crystal/pull/14998
-
-### other
-
-#### compiler
-
-- *(codegen)* Compiler: enable parallel codegen with MT ([#14748], thanks @ysbaddaden)
-
-[#14748]: https://github.com/crystal-lang/crystal/pull/14748
 
 ## [1.13.3] (2024-09-18)
 
