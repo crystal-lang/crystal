@@ -117,6 +117,7 @@ class Crystal::Doc::Type
 
     unless ast_node?
       @type.ancestors.each do |ancestor|
+        next if ancestor.module?
         next unless @generator.must_include? ancestor
         doc_type = @generator.type(ancestor)
         ancestors << doc_type
