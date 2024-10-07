@@ -312,7 +312,7 @@ describe Doc::Type do
     end
   end
 
-  describe "#extended_modules" do
+  describe "#included_modules" do
     it "only include types with docs" do
       program = semantic(<<-CRYSTAL, wants_doc: true).program
         # :nodoc:
