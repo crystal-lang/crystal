@@ -13,7 +13,7 @@ module Crystal
       type = self
       names.each_with_index do |name, idx|
         previous_type = type
-        type = previous_type.types?.try &.[name]?
+        type = previous_type.lookup_name(name)
         unless type
           best_match = Levenshtein.find(name.downcase) do |finder|
             previous_type.types?.try &.each_key do |type_name|
