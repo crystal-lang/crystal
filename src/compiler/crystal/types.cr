@@ -2062,7 +2062,7 @@ module Crystal
     def unbound?
       type_vars.each_value do |type_var|
         if type_var.is_a?(Var)
-          return true if type_var.type.unbound?
+          return true if type_var.type.unbound? || type_var.type.is_a?(GenericType)
         end
       end
       false
