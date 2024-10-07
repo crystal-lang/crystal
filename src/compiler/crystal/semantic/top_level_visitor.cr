@@ -193,9 +193,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if superclass.is_a?(GenericClassInstanceType)
         superclass.generic_type.add_subclass(type)
       end
+      scope.types[name] = type
     end
 
-    scope.types[name] = type
     node.resolved_type = type
 
     process_annotations(annotations) do |annotation_type, ann|
