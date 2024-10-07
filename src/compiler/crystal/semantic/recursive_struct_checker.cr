@@ -14,10 +14,8 @@
 # Because the type of `Test.@test` would be: `Test | Nil`.
 class Crystal::RecursiveStructChecker
   @program : Program
-  @all_checked : Set(Type)
 
   def initialize(@program)
-    @all_checked = Set(Type).new
   end
 
   def run
@@ -34,12 +32,6 @@ class Crystal::RecursiveStructChecker
   end
 
   def check_single(type)
-    has_not_been_checked = @all_checked.add?(type)
-    unless has_not_been_checked
-      raise "RecursiveStructChecker duplicate: #{type} (#{type.class})"
-      return
-    end
-
     if struct?(type)
       target = type
       checked = Set(Type).new

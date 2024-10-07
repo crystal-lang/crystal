@@ -24,7 +24,6 @@
 # ```
 class Crystal::AbstractDefChecker
   def initialize(@program : Program)
-    @all_checked = Set(Type).new
   end
 
   def run
@@ -41,12 +40,6 @@ class Crystal::AbstractDefChecker
   end
 
   def check_single(type)
-    if @all_checked.includes?(type)
-      ::raise "AbstractDefChecker duplicate: #{type} (#{type.class})"
-      return
-    end
-    @all_checked << type
-
     if type.abstract? || type.module?
       type.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
