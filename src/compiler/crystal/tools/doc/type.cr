@@ -334,9 +334,11 @@ class Crystal::Doc::Type
   private def gather_including_types(type)
     including_types = [] of Type
     type.raw_including_types.try &.each do |subtype|
-      if @generator.must_include? subtype
-        including_types << @generator.type(subtype)
+      if gen_subtype = subtype.as?(GenericInstanceType)
+        subtype = gen_subtype.generic_type.as(Crystal::Type)
       end
+      next unless @generator.must_include? subtype
+      including_types << @generator.type(subtype)
     end
     including_types.uniq!.sort_by! &.full_name.downcase
   end
