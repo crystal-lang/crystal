@@ -134,6 +134,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : GenericInstanceType)
+    return false unless type.unbound?
     type = type(type.generic_type)
     must_include? type
   end
