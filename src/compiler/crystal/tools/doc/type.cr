@@ -259,12 +259,18 @@ class Crystal::Doc::Type
       included_modules = [] of Type
       @type.parents.try &.each do |parent|
         if parent.module?
-          next unless @generator.must_include? parent
+          next unless include_included_module? parent
           included_modules << @generator.type(parent)
         end
       end
       included_modules.sort_by! &.full_name.downcase
     end
+  end
+
+  private def include_included_module?(type)
+    return true if @generator.must_include? type
+    return true if type.is_a?(GenericInstanceType)
+    false
   end
 
   @extended_modules : Array(Type)?
