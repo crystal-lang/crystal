@@ -41,7 +41,10 @@ class Crystal::AbstractDefChecker
   end
 
   def check_single(type)
-    return if @all_checked.includes?(type)
+    if @all_checked.includes?(type)
+      ::raise "AbstractDefChecker duplicate: #{type} (#{type.class})"
+      return
+    end
     @all_checked << type
 
     if type.abstract? || type.module?

@@ -35,7 +35,10 @@ class Crystal::RecursiveStructChecker
 
   def check_single(type)
     has_not_been_checked = @all_checked.add?(type)
-    return unless has_not_been_checked
+    unless has_not_been_checked
+      raise "RecursiveStructChecker duplicate: #{type} (#{type.class})"
+      return
+    end
 
     if struct?(type)
       target = type

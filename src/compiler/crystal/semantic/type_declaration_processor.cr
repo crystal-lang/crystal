@@ -627,7 +627,10 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def remove_duplicate_instance_vars_declarations(type : Type, duplicates_checked : Set(Type))
-    return unless duplicates_checked.add?(type)
+    unless duplicates_checked.add?(type)
+      raise "remove_duplicate_instance_vars_declarations duplicate: #{type} (#{type.class})"
+      return
+    end
 
     # If a class has an instance variable that already exists in a superclass, remove it.
     # Ideally we should process instance variables in a top-down fashion, but it's tricky
