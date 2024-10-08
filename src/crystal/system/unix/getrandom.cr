@@ -32,7 +32,7 @@ require "c/sys/random"
         loop do
           # pass GRND_NONBLOCK flag so that it fails with EAGAIN if the requested
           # entropy was not available
-          read_bytes = LibC.getrandom(buffer.to_unsafe, LibC::SizeT.new(buffer.size), LibC::GRND_NONBLOCK)
+          read_bytes = LibC.getrandom(buffer, buffer.size, LibC::GRND_NONBLOCK)
           break unless read_bytes == -1
 
           err = Errno.value
