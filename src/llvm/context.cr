@@ -108,7 +108,11 @@ class LLVM::Context
   end
 
   def const_string(string : String) : Value
-    Value.new LibLLVM.const_string_in_context(self, string, string.bytesize, 0)
+    {% if LibLLVM::IS_LT_190 %}
+      Value.new LibLLVM.const_string_in_context(self, string, string.bytesize, 0)
+    {% else %}
+      Value.new LibLLVM.const_string_in_context2(self, string, string.bytesize, 0)
+    {% end %}
   end
 
   def const_struct(values : Array(LLVM::Value), packed = false) : Value
