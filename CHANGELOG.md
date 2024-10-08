@@ -2,8 +2,6 @@
 
 ## [1.14.0] (2024-10-09)
 
-_Freeze period starts on 2024-09-25_
-
 [1.14.0]: https://github.com/crystal-lang/crystal/releases/1.14.0
 
 ### Features
