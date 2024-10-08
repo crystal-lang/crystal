@@ -112,6 +112,14 @@ describe "unreachable" do
       CRYSTAL
   end
 
+  it "handles circular hierarchy references (#14034)" do
+    assert_unreachable <<-CRYSTAL
+      class Foo
+        alias Bar = Foo
+      end
+      CRYSTAL
+  end
+
   it "finds initializer" do
     assert_unreachable <<-CRYSTAL
       class Foo

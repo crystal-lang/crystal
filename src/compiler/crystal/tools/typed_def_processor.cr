@@ -17,6 +17,15 @@ module Crystal::TypedDefProcessor
   end
 
   private def process_type(type : Type) : Nil
+    # Avoid visiting circular hierarchies. There's no use in processing
+    # alias types anyway.
+    # For example:
+    #
+    #     struct Foo
+    #        alias Bar = Foo
+    #     end
+    return if type.is_a?(AliasType) || type.is_a?(TypeDefType)
+
     if type.is_a?(NamedType) || type.is_a?(Program) || type.is_a?(FileModule)
       type.types?.try &.each_value do |inner_type|
         process_type inner_type

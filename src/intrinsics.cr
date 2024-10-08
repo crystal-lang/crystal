@@ -163,8 +163,13 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr128)] {% end %}
   fun fshr128 = "llvm.fshr.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
 
-  fun va_start = "llvm.va_start"(ap : Void*)
-  fun va_end = "llvm.va_end"(ap : Void*)
+  {% if compare_versions(Crystal::LLVM_VERSION, "19.1.0") < 0 %}
+    fun va_start = "llvm.va_start"(ap : Void*)
+    fun va_end = "llvm.va_end"(ap : Void*)
+  {% else %}
+    fun va_start = "llvm.va_start.p0"(ap : Void*)
+    fun va_end = "llvm.va_end.p0"(ap : Void*)
+  {% end %}
 
   {% if flag?(:i386) || flag?(:x86_64) %}
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
