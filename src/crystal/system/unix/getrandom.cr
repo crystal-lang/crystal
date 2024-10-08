@@ -23,16 +23,12 @@ require "c/sys/random"
       chunk_size = 256
 
       while buffer.size > 0
-        if buffer.size < chunk_size
-          chunk_size = buffer.size
-        end
-
         read_bytes = 0
 
         loop do
           # pass GRND_NONBLOCK flag so that it fails with EAGAIN if the requested
           # entropy was not available
-          read_bytes = LibC.getrandom(buffer, buffer.size, LibC::GRND_NONBLOCK)
+          read_bytes = LibC.getrandom(buffer, buffer.size.clamp(..chunk_size), LibC::GRND_NONBLOCK)
           break unless read_bytes == -1
 
           err = Errno.value
