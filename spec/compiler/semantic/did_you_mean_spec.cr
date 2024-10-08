@@ -75,6 +75,19 @@ describe "Semantic: did you mean" do
       "Did you mean 'Foo::Bar'?"
   end
 
+  it "says did you mean for nested class via alias" do
+    assert_error <<-CRYSTAL, "Did you mean 'Boo::Bar'?"
+      class Foo
+        class Bar
+        end
+      end
+
+      alias Boo = Foo
+
+      Boo::Baz.new
+      CRYSTAL
+  end
+
   it "says did you mean finds most similar in def" do
     assert_error "
       def barbaza
