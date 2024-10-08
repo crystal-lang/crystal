@@ -153,19 +153,21 @@ _Freeze period starts on 2024-09-25_
 - *(codegen)* Fix CRT static-dynamic linking conflict in specs with C sources ([#14970], thanks @HertzDevil)
 - *(interpreter)* Fix Linux `getrandom` failure in interpreted code ([#15035], thanks @HertzDevil)
 - *(interpreter)* Fix undefined behavior in interpreter mixed union upcast ([#15042], thanks @HertzDevil)
+- *(semantic)* Fix `TopLevelVisitor` adding existing `ClassDef` type to current scope ([#15067], thanks @straight-shoota)
 
 [#14932]: https://github.com/crystal-lang/crystal/pull/14932
 [#14917]: https://github.com/crystal-lang/crystal/pull/14917
 [#14970]: https://github.com/crystal-lang/crystal/pull/14970
 [#15035]: https://github.com/crystal-lang/crystal/pull/15035
 [#15042]: https://github.com/crystal-lang/crystal/pull/15042
+[#15067]: https://github.com/crystal-lang/crystal/pull/15067
 
 #### tools
 
 - *(dependencies)* Fix `crystal tool dependencies` format flat ([#14927], thanks @straight-shoota)
 - *(dependencies)* Fix `crystal tool dependencies` filters for Windows paths ([#14928], thanks @straight-shoota)
 - *(docs-generator)* Fix doc comment above annotation with macro expansion ([#14849], thanks @Blacksmoke16)
-- *(unreachable)* Fix `crystal tool unreachable` visiting circular hierarchies ([#15065], thanks @straight-shoota)
+- *(unreachable)* Fix `crystal tool unreachable` & co visiting circular hierarchies ([#15065], thanks @straight-shoota)
 
 [#14927]: https://github.com/crystal-lang/crystal/pull/14927
 [#14928]: https://github.com/crystal-lang/crystal/pull/14928
