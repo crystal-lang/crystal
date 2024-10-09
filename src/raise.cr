@@ -91,7 +91,7 @@ end
 
 {% if flag?(:interpreted) %}
   # interpreter does not need `__crystal_personality`
-{% elsif flag?(:win32) %}
+{% elsif flag?(:win32) && !flag?(:gnu) %}
   require "exception/lib_unwind"
 
   {% begin %}
@@ -199,7 +199,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:interpreted) || flag?(:win32) || flag?(:wasm32) %}
+{% unless flag?(:interpreted) || (flag?(:win32) && !flag?(:gnu)) || flag?(:wasm32) %}
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
@@ -244,7 +244,7 @@ def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
 
-{% if flag?(:win32) %}
+{% if flag?(:win32) && !flag?(:gnu) %}
   # :nodoc:
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
   def raise_without_backtrace(exception : Exception) : NoReturn

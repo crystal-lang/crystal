@@ -285,7 +285,7 @@ module Crystal
       @main = @llvm_mod.functions.add(MAIN_NAME, main_type)
       @fun_types = { {@llvm_mod, MAIN_NAME} => main_type }
 
-      if @program.has_flag? "windows"
+      if @program.has_flag?("windows") && !@program.has_flag?("gnu")
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
       else
