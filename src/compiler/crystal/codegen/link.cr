@@ -121,7 +121,7 @@ module Crystal
 
   class Program
     def lib_flags
-      has_flag?("windows") && !has_flag?("gnu") ? lib_flags_windows : lib_flags_posix
+      has_flag?("msvc") ? lib_flags_windows : lib_flags_posix
     end
 
     private def lib_flags_windows

@@ -285,7 +285,7 @@ module Crystal
       @main = @llvm_mod.functions.add(MAIN_NAME, main_type)
       @fun_types = { {@llvm_mod, MAIN_NAME} => main_type }
 
-      if @program.has_flag?("windows") && !@program.has_flag?("gnu")
+      if @program.has_flag?("msvc")
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
       else
@@ -2488,7 +2488,7 @@ module Crystal
   end
 
   def self.safe_mangling(program, name)
-    if program.has_flag?("windows") && !program.has_flag?("gnu")
+    if program.has_flag?("msvc")
       String.build do |str|
         name.each_char do |char|
           if char.ascii_alphanumeric? || char == '_'
