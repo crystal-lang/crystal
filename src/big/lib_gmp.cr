@@ -1,4 +1,4 @@
-{% if flag?(:win32) %}
+{% if flag?(:win32) && !flag?(:gnu) %}
   @[Link("mpir")]
   {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
     @[Link(dll: "mpir.dll")]
@@ -14,7 +14,7 @@ lib LibGMP
   # MPIR uses its own `mpir_si` and `mpir_ui` typedefs in places where GMP uses
   # the LibC types, when the function name has `si` or `ui`; we follow this
   # distinction
-  {% if flag?(:win32) && flag?(:bits64) %}
+  {% if flag?(:win32) && !flag?(:gnu) && flag?(:bits64) %}
     alias SI = LibC::LongLong
     alias UI = LibC::ULongLong
   {% else %}
@@ -26,7 +26,7 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = UI
 
-  {% if flag?(:win32) && flag?(:bits64) %}
+  {% if flag?(:win32) && !flag?(:gnu) && flag?(:bits64) %}
     alias MpExp = LibC::Long
     alias MpSize = LibC::LongLong
     alias MpLimb = LibC::ULongLong
@@ -151,7 +151,7 @@ lib LibGMP
 
   fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
   fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
-  {% if flag?(:win32) %}
+  {% if flag?(:win32) && !flag?(:gnu) %}
     fun fits_ui_p = __gmpz_fits_ui_p(op : MPZ*) : Int
     fun fits_si_p = __gmpz_fits_si_p(op : MPZ*) : Int
   {% end %}
