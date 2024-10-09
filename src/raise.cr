@@ -181,8 +181,10 @@ end
     0u64
   end
 {% else %}
-  # :nodoc:
-  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
+  {% mingw = flag?(:windows) && flag?(:gnu) %}
+  fun {{ mingw ? "__crystal_personality_imp".id : "__crystal_personality".id }}(
+    version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*,
+  ) : LibUnwind::ReasonCode
     start = LibUnwind.get_region_start(context)
     ip = LibUnwind.get_ip(context)
     lsd = LibUnwind.get_language_specific_data(context)
@@ -197,6 +199,23 @@ end
 
     return LibUnwind::ReasonCode::CONTINUE_UNWIND
   end
+
+  {% if mingw %}
+    lib LibC
+      alias EXCEPTION_DISPOSITION = Int
+      alias DISPATCHER_CONTEXT = Void
+    end
+
+    lib LibUnwind
+      alias PersonalityFn = Int32, Action, UInt64, Exception*, Void* -> ReasonCode
+
+      fun _GCC_specific_handler(ms_exc : LibC::EXCEPTION_RECORD64*, this_frame : Void*, ms_orig_context : LibC::CONTEXT*, ms_disp : LibC::DISPATCHER_CONTEXT*, gcc_per : PersonalityFn) : LibC::EXCEPTION_DISPOSITION
+    end
+
+    fun __crystal_personality(ms_exc : LibC::EXCEPTION_RECORD64*, this_frame : Void*, ms_orig_context : LibC::CONTEXT*, ms_disp : LibC::DISPATCHER_CONTEXT*) : LibC::EXCEPTION_DISPOSITION
+      LibUnwind._GCC_specific_handler(ms_exc, this_frame, ms_orig_context, ms_disp, ->__crystal_personality_imp)
+    end
+  {% end %}
 {% end %}
 
 {% unless flag?(:interpreted) || (flag?(:win32) && !flag?(:gnu)) || flag?(:wasm32) %}
