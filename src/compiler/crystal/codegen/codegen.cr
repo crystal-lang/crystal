@@ -2488,7 +2488,7 @@ module Crystal
   end
 
   def self.safe_mangling(program, name)
-    if program.has_flag?("windows")
+    if program.has_flag?("windows") && !program.has_flag?("gnu")
       String.build do |str|
         name.each_char do |char|
           if char.ascii_alphanumeric? || char == '_'
