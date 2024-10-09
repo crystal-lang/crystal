@@ -262,6 +262,7 @@
 - *(collection)* Fix typos in docs for `Set` and `Hash` ([#14889], thanks @philipp-classen)
 - *(llvm)* Add `@[Experimental]` to `LLVM::DIBuilder` ([#14854], thanks @HertzDevil)
 - *(networking)* Add documentation about synchronous DNS resolution ([#15027], thanks @straight-shoota)
+- *(networking)* Add `uri/json` to `docs_main` ([#15069], thanks @straight-shoota)
 - *(runtime)* Add docs about `Pointer`'s alignment requirement ([#14853], thanks @HertzDevil)
 - *(runtime)* Reword `Pointer#memcmp`'s documentation ([#14818], thanks @HertzDevil)
 - *(runtime)* Add documentation for `NoReturn` and `Void` ([#14817], thanks @nobodywasishere)
@@ -270,6 +271,7 @@
 [#14889]: https://github.com/crystal-lang/crystal/pull/14889
 [#14854]: https://github.com/crystal-lang/crystal/pull/14854
 [#15027]: https://github.com/crystal-lang/crystal/pull/15027
+[#15069]: https://github.com/crystal-lang/crystal/pull/15069
 [#14853]: https://github.com/crystal-lang/crystal/pull/14853
 [#14818]: https://github.com/crystal-lang/crystal/pull/14818
 [#14817]: https://github.com/crystal-lang/crystal/pull/14817
