@@ -575,6 +575,7 @@ module Crystal
     include SpecialVar
 
     property name : String
+    property doc : String?
 
     def initialize(@name : String)
     end
@@ -1979,6 +1980,7 @@ module Crystal
 
   class TypeDef < ASTNode
     property name : String
+    property doc : String?
     property type_spec : ASTNode
     property name_location : Location?
 
@@ -2002,6 +2004,7 @@ module Crystal
   class CStructOrUnionDef < ASTNode
     property name : String
     property body : ASTNode
+    property doc : String?
     property? union : Bool
 
     def initialize(@name, body = nil, @union = false)

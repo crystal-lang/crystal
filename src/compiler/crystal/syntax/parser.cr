@@ -5948,6 +5948,8 @@ module Crystal
     end
 
     def parse_type_def
+      doc = @token.doc
+
       next_token_skip_space_or_newline
       name = check_const
       name_location = @token.location
@@ -5960,11 +5962,15 @@ module Crystal
 
       typedef = TypeDef.new name, type
       typedef.name_location = name_location
+      typedef.doc = doc
+
       typedef
     end
 
     def parse_c_struct_or_union(union : Bool)
+      doc = @token.doc
       location = @token.location
+
       next_token_skip_space_or_newline
       name = check_const
       next_token_skip_statement_end
@@ -5973,7 +5979,10 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      CStructOrUnionDef.new(name, Expressions.from(body), union: union).at(location).at_end(end_location)
+      cstruct = CStructOrUnionDef.new(name, Expressions.from(body), union: union)
+      cstruct.doc = doc
+
+      cstruct.at(location).at_end(end_location)
     end
 
     def parse_c_struct_or_union_body
@@ -6015,6 +6024,7 @@ module Crystal
     end
 
     def parse_c_struct_or_union_fields(exps)
+      doc = @token.doc
       vars = [Var.new(@token.value.to_s).at(@token.location).at_end(token_end_location)]
 
       next_token_skip_space_or_newline
@@ -6033,6 +6043,7 @@ module Crystal
       skip_statement_end
 
       vars.each do |var|
+        var.doc = doc
         exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
     end
