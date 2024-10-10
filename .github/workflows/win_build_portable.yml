@@ -88,12 +88,6 @@ jobs:
             dlls/libssl-3-x64.dll
           key: win-openssl-dlls-3.1.0-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
-      - name: Restore LLVM
-        uses: actions/cache/restore@v4
-        with:
-          path: llvm
-          key: llvm-libs-${{ inputs.llvm_version }}-msvc
-          fail-on-cache-miss: true
       - name: Restore LLVM DLLs
         uses: actions/cache/restore@v4
         with:

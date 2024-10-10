@@ -238,14 +238,15 @@ jobs:
       - name: Restore LLVM
         uses: actions/cache/restore@v4
         with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
+          path: llvm-config.exe
+          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\build"
           Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
+          Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm-config.exe"
 
       - name: Run stdlib specs
         run: make -f Makefile.win std_spec
@@ -279,8 +280,8 @@ jobs:
       - name: Restore LLVM
         uses: actions/cache/restore@v4
         with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
+          path: llvm-config.exe
+          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
@@ -315,13 +316,14 @@ jobs:
       - name: Restore LLVM
         uses: actions/cache/restore@v4
         with:
-          path: llvm
-          key: llvm-libs-${{ env.CI_LLVM_VERSION }}-msvc
+          path: llvm-config.exe
+          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_PATH "$(pwd)\etc\win-ci\portable"
+          Add-Content $env:GITHUB_ENV "LLVM_CONFIG=$(pwd)\llvm-config.exe"
 
       - name: Build docs
         run: make -f Makefile.win install_docs prefix=etc\win-ci\portable
