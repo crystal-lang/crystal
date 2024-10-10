@@ -345,6 +345,7 @@ struct Crystal::System::Process
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
     if src_io.closed?
+      Crystal::EventLoop.current.remove(dst_io)
       dst_io.file_descriptor_close
     else
       src_io = to_real_fd(src_io)

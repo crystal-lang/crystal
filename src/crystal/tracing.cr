@@ -7,6 +7,7 @@ module Crystal
     enum Section
       GC
       Sched
+      Evloop
 
       def self.from_id(slice) : self
         {% begin %}

@@ -6,6 +6,8 @@ lib LibC
     rlim_max : RlimT
   end
 
+  RLIMIT_NOFILE = 7
+
   fun getrlimit(Int, Rlimit*) : Int
 
   RLIMIT_STACK = 3

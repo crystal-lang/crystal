@@ -22,4 +22,15 @@ lib LibC
   RUSAGE_CHILDREN = -1
 
   fun getrusage(who : Int, usage : RUsage*) : Int
+
+  alias RlimT = ULongLong
+
+  struct Rlimit
+    rlim_cur : RlimT
+    rlim_max : RlimT
+  end
+
+  RLIMIT_NOFILE = 5
+
+  fun getrlimit(resource : Int, rlim : Rlimit*) : Int
 end
