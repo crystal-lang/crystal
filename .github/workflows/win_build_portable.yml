@@ -107,7 +107,6 @@ jobs:
       - name: Set up environment
         run: |
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
-          echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
           # NOTE: the name of the libiconv DLL has changed, so we manually copy
           # the new one to the existing Crystal installation; remove after
           # updating the base compiler to 1.14
