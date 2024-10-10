@@ -8,13 +8,13 @@ lib LibC
   fun WideCharToMultiByte(
     codePage : UInt, dwFlags : DWORD, lpWideCharStr : LPWSTR,
     cchWideChar : Int, lpMultiByteStr : LPSTR, cbMultiByte : Int,
-    lpDefaultChar : CHAR*, lpUsedDefaultChar : BOOL*
+    lpDefaultChar : CHAR*, lpUsedDefaultChar : BOOL*,
   ) : Int
 
   # this was for the now removed delay-load helper, all other code should use
   # `String#to_utf16` instead
   fun MultiByteToWideChar(
     codePage : UInt, dwFlags : DWORD, lpMultiByteStr : LPSTR,
-    cbMultiByte : Int, lpWideCharStr : LPWSTR, cchWideChar : Int
+    cbMultiByte : Int, lpWideCharStr : LPWSTR, cchWideChar : Int,
   ) : Int
 end

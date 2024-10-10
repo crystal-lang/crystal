@@ -669,7 +669,7 @@ module Crystal
       end
     end
 
-    private def fork_workers(n_threads)
+    private def fork_workers(n_threads, &)
       workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
 
       n_threads.times do

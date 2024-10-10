@@ -113,7 +113,7 @@ class Crystal::Repl::Interpreter
   def initialize(
     @context : Context,
     # TODO: what if the stack is exhausted?
-    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*),
   )
     @local_vars = LocalVars.new(@context)
     @argv = [] of String

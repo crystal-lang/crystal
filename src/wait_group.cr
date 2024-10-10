@@ -52,7 +52,7 @@ class WaitGroup
   #   end
   # end
   # ```
-  def self.wait : Nil
+  def self.wait(&) : Nil
     instance = new
     yield instance
     instance.wait

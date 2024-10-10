@@ -121,7 +121,7 @@ class Crystal::IOCP::EventLoop < Crystal::EventLoop
     return unless thread
 
     # alert the thread to interrupt GetQueuedCompletionStatusEx
-    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) {}, thread, LibC::ULONG_PTR.new(0))
+    LibC.QueueUserAPC(->(ptr : LibC::ULONG_PTR) { }, thread, LibC::ULONG_PTR.new(0))
   end
 
   def enqueue(event : Crystal::IOCP::Event)

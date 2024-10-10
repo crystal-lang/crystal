@@ -75,7 +75,7 @@ describe OpenSSL::SSL::Socket do
       server_tests: ->(client : Server) {
         client.cipher.should_not be_empty
       },
-      client_tests: ->(client : Client) {}
+      client_tests: ->(client : Client) { }
     )
   end
 
@@ -84,7 +84,7 @@ describe OpenSSL::SSL::Socket do
       server_tests: ->(client : Server) {
         client.tls_version.should contain "TLS"
       },
-      client_tests: ->(client : Client) {}
+      client_tests: ->(client : Client) { }
     )
   end
 

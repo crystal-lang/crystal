@@ -194,7 +194,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
+  def file_descriptor_close(&)
     if LibC.CloseHandle(windows_handle) == 0
       yield
     end
