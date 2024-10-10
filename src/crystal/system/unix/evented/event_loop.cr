@@ -316,57 +316,64 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   private def wait_readable(io, timeout = nil) : Nil
-    wait_readable(io, timeout) { raise IO::TimeoutError.new("Read timed out") }
-  end
-
-  private def wait_readable(io, timeout = nil, &) : Nil
-    wait(:io_read, io, :readers, timeout) { yield }
+    wait_readable(io, timeout) do
+      raise IO::TimeoutError.new("Read timed out")
+    end
   end
 
   private def wait_writable(io, timeout = nil) : Nil
-    wait_writable(io, timeout) { raise IO::TimeoutError.new("Write timed out") }
+    wait_writable(io, timeout) do
+      raise IO::TimeoutError.new("Write timed out")
+    end
+  end
+
+  private def wait_readable(io, timeout = nil, &) : Nil
+    yield if wait(:io_read, io, timeout) do |pd, event|
+      # don't wait if the waiter has already been marked ready (see Waiters#add)
+      return unless pd.value.@readers.add(event)
+    end
   end
 
   private def wait_writable(io, timeout = nil, &) : Nil
-    wait(:io_write, io, :writers, timeout) { yield }
+    yield if wait(:io_write, io, timeout) do |pd, event|
+      # don't wait if the waiter has already been marked ready (see Waiters#add)
+      return unless pd.value.@writers.add(event)
+    end
   end
 
-  private macro wait(type, io, waiters, timeout, &)
+  private def wait(type : Evented::Event::Type, io, timeout, &)
     # get or allocate the poll descriptor
-    if (%index = {{io}}.__evloop_data).valid?
-      %pd = Evented.arena.get(%index)
+    if (index = io.__evloop_data).valid?
+      pd = Evented.arena.get(index)
     else
-      %pd, %index = Evented.arena.lazy_allocate({{io}}.fd) do |pd, index|
+      pd, index = Evented.arena.lazy_allocate(io.fd) do |pd, index|
         # register the fd with the event loop (once), it should usually merely add
         # the fd to the current evloop but may "transfer" the ownership from
         # another event loop:
-        {{io}}.__evloop_data = index
-        pd.value.take_ownership(self, {{io}}.fd, index)
+        io.__evloop_data = index
+        pd.value.take_ownership(self, io.fd, index)
       end
     end
 
     # create an event (on the stack)
-    %event = Evented::Event.new({{type}}, Fiber.current, %index, {{timeout}})
+    event = Evented::Event.new(type, Fiber.current, index, timeout)
 
-    # try to add the event to the waiting list
-    # don't wait if the waiter has already been marked ready (see Waiters#add)
-    return unless %pd.value.@{{waiters.id}}.add(pointerof(%event))
+    # add the event to the waiting list
+    yield pd, pointerof(event)
 
-    if %event.wake_at?
-      add_timer(pointerof(%event))
+    if event.wake_at?
+      add_timer(pointerof(event))
 
       Fiber.suspend
 
-      if %event.timed_out?
-        return {{yield}}
-      else
-        # nothing to do: either the timer triggered which means it was dequeued,
-        # or `#unsafe_resume_io` was called to resume the IO and the timer got
-        # deleted from the timers before the fiber got reenqueued.
-      end
-    else
-      Fiber.suspend
+      # no need to delete the timer: either it triggered which means it was
+      # dequeued, or `#unsafe_resume_io` was called to resume the IO and the
+      # timer got deleted from the timers before the fiber got reenqueued.
+      return event.timed_out?
     end
+
+    Fiber.suspend
+    false
   end
 
   private def check_open(io : IO)
