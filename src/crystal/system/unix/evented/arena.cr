@@ -47,7 +47,7 @@ class Crystal::Evented::Arena(T)
     end
 
     def initialize(data : UInt64)
-      @data = data.unsafe_as(Int64)
+      @data = data.to_i64!
     end
 
     # Returns the generation number.
@@ -56,7 +56,7 @@ class Crystal::Evented::Arena(T)
     end
 
     # Returns the actual index.
-    def to_i : Int32
+    def index : Int32
       (@data >> 32).to_i32!
     end
 
@@ -65,7 +65,7 @@ class Crystal::Evented::Arena(T)
     end
 
     def to_u64 : UInt64
-      @data.unsafe_as(UInt64)
+      @data.to_u64!
     end
 
     def valid? : Bool
@@ -93,6 +93,14 @@ class Crystal::Evented::Arena(T)
   @buffer : Slice(Entry(T))
 
   {% unless flag?(:preview_mt) %}
+    # Remember the maximum allocated fd ever;
+    #
+    # This is specific to `EventLoop#after_fork` that needs to iterate the arena
+    # for registered fds in epoll/kqueue to re-add them to the new epoll/kqueue
+    # instances. Without this upper limit we'd iterate the whole arena which
+    # would lead the kernel to try and allocate the whole mmap in physical
+    # memory (instead of virtual memory) which would at best be a waste, and a
+    # worst fill the memory (e.g. unlimited open files).
     @maximum = 0
   {% end %}
 
@@ -154,7 +162,7 @@ class Crystal::Evented::Arena(T)
   # Raises if the generation has changed (i.e. the object has been freed then reallocated).
   # Raises if *index* is negative.
   def get(index : Index) : Pointer(T)
-    entry = at(index.to_i)
+    entry = at(index)
     entry.value.pointer
   end
 
@@ -163,7 +171,7 @@ class Crystal::Evented::Arena(T)
   #
   # Raises if *index* is negative.
   def get?(index : Index) : Pointer(T)?
-    if entry = at?(index.to_i)
+    if entry = at?(index)
       entry.value.pointer
     end
   end
@@ -173,50 +181,43 @@ class Crystal::Evented::Arena(T)
   #
   # Raises if *index* is negative.
   def free(index : Index, &) : Nil
-    return unless entry = at?(index.to_i)
+    return unless entry = at?(index.index)
 
     entry.value.@lock.sync do
       return unless entry.value.allocated?
       return unless entry.value.generation == index.generation
-      yield entry.value.pointer
-    ensure
-      entry.value.free
+      begin
+        yield entry.value.pointer
+      ensure
+        entry.value.free
+      end
     end
   end
 
   private def at(index : Index) : Pointer(Entry(T))
-    entry = at(index.to_i)
+    entry = at(index.index)
     unless entry.value.allocated?
-      raise RuntimeError.new("#{self.class.name}: object not allocated at index #{index.to_i}")
+      raise RuntimeError.new("#{self.class.name}: object not allocated at index #{index.index}")
     end
-    unless entry.value.generation == generation
-      raise RuntimeError.new("#{self.class.name}: object generation changed at index #{index.to_i} (#{index.generation} => #{entry.value.generation})")
+    unless entry.value.generation == index.generation
+      raise RuntimeError.new("#{self.class.name}: object generation changed at index #{index.index} (#{index.generation} => #{entry.value.generation})")
     end
     entry
   end
 
-  private def at?(index : Index) : Pointer(Entry(T))
-    return unless entry = at?(index.to_i)
+  private def at?(index : Index) : Pointer(Entry(T))?
+    return unless entry = at?(index.index)
     return unless entry.value.allocated?
-    return unless entry.value.generation == generation
+    return unless entry.value.generation == index.generation
     entry
   end
 
   private def at(index : Int32) : Pointer(Entry(T))
-    if index.negative?
-      raise ArgumentError.new("#{self.class.name}: negative index #{index}")
-    end
-    if index >= @buffer.size
-      raise ArgumentError.new("#{self.class.name}: out of bounds index #{index} >= #{@buffer.size}")
-    end
-    @buffer.to_unsafe + index
+    (@buffer + index).to_unsafe
   end
 
   private def at?(index : Int32) : Pointer(Entry(T))?
-    if index.negative?
-      raise ArgumentError.new("#{self.class.name}: negative index #{index}")
-    end
-    if index < @buffer.size
+    if 0 <= index < @buffer.size
       @buffer.to_unsafe + index
     end
   end

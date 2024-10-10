@@ -92,7 +92,7 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
     index = Evented::Arena::Index.new(epoll_event.value.data.u64)
     events = epoll_event.value.events
 
-    Crystal.trace :evloop, "event", fd: index.to_i, index: index.to_i64, events: events
+    Crystal.trace :evloop, "event", fd: index.index, index: index.to_i64, events: events
 
     pd = Evented.arena.get(index)
 

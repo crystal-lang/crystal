@@ -12,27 +12,32 @@ module Crystal::System::Socket
 end
 
 module Crystal::Evented
-  # The choice of a generational arena permits to avoid pushing raw pointers into
-  # IO objects into kernel data structures that are unknown to the GC, and to
-  # safely check whether the allocation is still valid before trying to
-  # dereference the pointer. Since `PollDescriptor` also doesn't have pointers to
-  # the actual IO object, it won't prevent the GC from collecting lost IO objects
-  # (and spares us from using
+  # The generational arena:
   #
-  # To a lesser extent, it also allows to keep the `PollDescriptor` allocated
-  # together in the same region, and polluting the IO object itself with specific
-  # evloop data (except for the generation index).
+  # 1. decorrelates the fd from the IO since the evloop only really cares about
+  #    the fd state and to resume pending fibers (it could monitor a fd without
+  #    an IO object);
   #
-  # Takes advantage of the fd being unique per process and that the operating
-  # system will always reuse the lowest fd (POSIX compliance) and will only grow
-  # when the process needs that many file descriptors, so the allocated memory
-  # region won't grow larger than necessary. This assumption allows the arena to
-  # skip maintaining a list of free indexes.
+  # 2. permits to avoid pushing raw pointers to IO objects into kernel data
+  #    structures that are unknown to the GC, and to safely check whether the
+  #    allocation is still valid before trying to dereference the pointer. Since
+  #    `PollDescriptor` also doesn't have pointers to the actual IO object, it
+  #    won't prevent the GC from collecting lost IO objects (and spares us from
+  #    using weak references).
   #
-  # Some systems may deviate from the POSIX default, but all systems seem to
-  # follow it, as it allows optimizations to the OS (it can reuse already
-  # allocated resources), and either the man page explicitly says so (Linux), or
-  # they don't (BSD) and they must follow the POSIX definition.
+  # 3. to a lesser extent, it also allows to keep the `PollDescriptor` allocated
+  #    together in the same region, and polluting the IO object itself with
+  #    specific evloop data (except for the generation index).
+  #
+  # The implementation takes advantage of the fd being unique per process and
+  # that the operating system will always reuse the lowest fd (POSIX compliance)
+  # and will only grow when the process needs that many file descriptors, so the
+  # allocated memory region won't grow larger than necessary. This assumption
+  # allows the arena to skip maintaining a list of free indexes. Some systems
+  # may deviate from the POSIX default, but all systems seem to follow it, as it
+  # allows optimizations to the OS (it can reuse already allocated resources),
+  # and either the man page explicitly says so (Linux), or they don't (BSD) and
+  # they must follow the POSIX definition.
   protected class_getter arena = Arena(PollDescriptor).new(max_fds)
 
   private def self.max_fds : Int32
