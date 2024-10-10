@@ -101,12 +101,14 @@ jobs:
             libs/llvm_VERSION
             libs/llvm-dynamic.lib
             dlls/LLVM-C.dll
+            llvm-config.exe
           key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
         run: |
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo "LLVM_CONFIG=$(pwd)\llvm-config.exe" >> ${env:GITHUB_ENV}
           # NOTE: the name of the libiconv DLL has changed, so we manually copy
           # the new one to the existing Crystal installation; remove after
           # updating the base compiler to 1.14

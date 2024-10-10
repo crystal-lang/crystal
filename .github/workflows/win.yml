@@ -196,14 +196,17 @@ jobs:
         id: cache-llvm-dlls
         uses: actions/cache@v4
         with:
-          path: |
+          path: | # llvm-config is needed on CI only and not distributed
             libs/llvm_VERSION
             libs/llvm-dynamic.lib
             dlls/LLVM-C.dll
+            llvm-config.exe
           key: llvm-dlls-${{ env.CI_LLVM_VERSION }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
       - name: Build LLVM
         if: steps.cache-llvm-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild X86,AArch64 -Dynamic
+        run: |
+          .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version ${{ env.CI_LLVM_VERSION }} -TargetsToBuild X86,AArch64 -Dynamic
+          cp deps\llvm\build\Release\bin\llvm-config.exe .
 
   x86_64-windows-release:
     needs: [x86_64-windows-libs, x86_64-windows-dlls, x86_64-windows-llvm-dlls]
