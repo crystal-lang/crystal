@@ -168,6 +168,33 @@ struct Exception::CallStack
     end
   end
 
+  # TODO: needed only if `__crystal_raise` fails, check if this actually works
+  {% if flag?(:gnu) %}
+    def self.print_backtrace : Nil
+      backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+        last_frame = data.as(RepeatedFrame*)
+
+        ip = {% if flag?(:arm) %}
+              Pointer(Void).new(__crystal_unwind_get_ip(context))
+            {% else %}
+              Pointer(Void).new(LibUnwind.get_ip(context))
+            {% end %}
+
+        if last_frame.value.ip == ip
+          last_frame.value.incr
+        else
+          print_frame(last_frame.value) unless last_frame.value.ip.address == 0
+          last_frame.value = RepeatedFrame.new ip
+        end
+        LibUnwind::ReasonCode::NO_REASON
+      end
+
+      rf = RepeatedFrame.new(Pointer(Void).null)
+      LibUnwind.backtrace(backtrace_fn, pointerof(rf).as(Void*))
+      print_frame(rf)
+    end
+  {% end %}
+
   private def self.print_frame(repeated_frame)
     Crystal::System.print_error "[%p] ", repeated_frame.ip
     print_frame_location(repeated_frame)

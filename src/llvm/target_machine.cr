@@ -48,7 +48,7 @@ class LLVM::TargetMachine
   def abi
     triple = self.triple
     case triple
-    when /x86_64.+windows-msvc/
+    when /x86_64.+windows-(?:msvc|gnu)/
       ABI::X86_Win64.new(self)
     when /x86_64|amd64/
       ABI::X86_64.new(self)
