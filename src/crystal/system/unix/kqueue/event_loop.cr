@@ -2,15 +2,15 @@ require "../evented/event_loop"
 require "../kqueue"
 
 class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
+  # the following are arbitrary numbers to identify specific events
   INTERRUPT_IDENTIFIER = 9
+  TIMER_IDENTIFIER = 10
 
   {% unless LibC.has_constant?(:EVFILT_USER) %}
     @pipe = uninitialized LibC::Int[2]
   {% end %}
 
   def initialize
-    super
-
     # the kqueue instance
     @kqueue = System::Kqueue.new
 
@@ -96,10 +96,10 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       end
     {% else %}
       if kevent.value.filter == LibC::EVFILT_READ && kevent.value.ident == @pipe[0]
-        @interrupted.clear
-        byte = 0_u8
-        ret = LibC.read(@pipe[0], pointerof(byte), 1)
+        ident = 0
+        ret = LibC.read(@pipe[0], pointerof(ident), sizeof(Int32))
         raise RuntimeError.from_errno("read") if ret == -1
+        @interrupted.clear if ident == INTERRUPT_IDENTIFIER
         return true
       end
     {% end %}
@@ -156,8 +156,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         LibC::EV_ADD | LibC::EV_ONESHOT,
         LibC::NOTE_FFCOPY | LibC::NOTE_TRIGGER | 1_u16)
     {% else %}
-      byte = 1_u8
-      ret = LibC.write(@pipe[1], pointerof(byte), sizeof(typeof(byte)))
+      ident = INTERRUPT_IDENTIFIER
+      ret = LibC.write(@pipe[1], pointerof(ident), sizeof(Int32))
       raise RuntimeError.from_errno("write") if ret == -1
     {% end %}
   end
@@ -167,10 +167,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
     # register both read and write events
     kevents = uninitialized LibC::Kevent[2]
-    2.times do |i|
+    {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
       kevent = kevents.to_unsafe + i
-      filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
-
       udata =
         {% if flag?(:bits64) %}
           Pointer(Void).new(index.to_u64)
@@ -199,9 +197,8 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
     # unregister both read and write events
     kevents = uninitialized LibC::Kevent[2]
-    2.times do |i|
+    {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
       kevent = kevents.to_unsafe + i
-      filter = i == 0 ? LibC::EVFILT_READ : LibC::EVFILT_WRITE
       System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE)
     end
 
@@ -233,9 +230,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
         0
       {% end %}
 
-    # use the evloop address as the unique identifier for the timer kevent
-    ident = LibC::SizeT.new!(self.as(Void*).address)
-    @kqueue.kevent(ident, LibC::EVFILT_TIMER, flags, fflags, data) do
+    @kqueue.kevent(TIMER_IDENTIFIER, LibC::EVFILT_TIMER, flags, fflags, data) do
       raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT
     end
   end

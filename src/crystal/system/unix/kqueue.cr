@@ -10,7 +10,10 @@ struct Crystal::System::Kqueue
       {% else %}
         LibC.kqueue
       {% end %}
-    raise RuntimeError.from_errno("kqueue1") if @kq == -1
+    if @kq == -1
+      function_name = {% if LibC.has_method?(:kqueue1) %} "kqueue1" {% else %} "kqueue" {% end %}
+      raise RuntimeError.from_errno(function_name)
+    end
   end
 
   # Helper to register a single event. Returns immediately.
@@ -42,7 +45,7 @@ struct Crystal::System::Kqueue
       tsp = Pointer(LibC::Timespec).null
     end
 
-    changes = uninitialized LibC::Kevent[0]
+    changes = Slice(LibC::Kevent).empty
     count = 0
 
     loop do

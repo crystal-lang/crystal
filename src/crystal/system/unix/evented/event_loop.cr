@@ -90,10 +90,8 @@ end
 # before suspending the fiber, then after resume it will raise
 # `IO::TimeoutError` if the event timed out, and continue otherwise.
 abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
-  def initialize
-    @lock = SpinLock.new # protects parallel accesses to @timers
-    @timers = Timers.new
-  end
+  @lock = SpinLock.new # protects parallel accesses to @timers
+  @timers = Timers.new
 
   # reset the mutexes since another thread may have acquired the lock of one
   # event loop, which would prevent closing file descriptors for example.

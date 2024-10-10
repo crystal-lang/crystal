@@ -5,8 +5,6 @@ require "../timerfd"
 
 class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
   def initialize
-    super
-
     # the epoll instance
     @epoll = System::Epoll.new
 
