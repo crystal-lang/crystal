@@ -144,6 +144,19 @@ module Iterator(T)
     Stop::INSTANCE
   end
 
+  # Returns an empty iterator.
+  def self.empty
+    EmptyIterator(T).new
+  end
+
+  private struct EmptyIterator(T)
+    include Iterator(T)
+
+    def next
+      stop
+    end
+  end
+
   def self.of(element : T)
     SingletonIterator(T).new(element)
   end
