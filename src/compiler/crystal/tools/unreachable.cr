@@ -155,15 +155,6 @@ module Crystal
     property excludes = [] of String
 
     def process_type(type)
-      # Avoid visiting circular hierarchies. There's no use in processing
-      # alias types anyway.
-      # For example:
-      #
-      #     struct Foo
-      #        alias Bar = Foo
-      #     end
-      return if type.is_a?(AliasType) || type.is_a?(TypeDefType)
-
       if type.is_a?(ModuleType)
         track_unused_defs type
       end

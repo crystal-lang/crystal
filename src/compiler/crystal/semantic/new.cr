@@ -22,8 +22,6 @@ module Crystal
     end
 
     def define_default_new(type)
-      return if type.is_a?(AliasType) || type.is_a?(TypeDefType)
-
       type.types?.try &.each_value do |type|
         define_default_new_single(type)
       end
