@@ -239,7 +239,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: llvm-config.exe
-          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
+          key: llvm-dlls-${{ env.CI_LLVM_VERSION }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
@@ -281,7 +281,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: llvm-config.exe
-          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
+          key: llvm-dlls-${{ env.CI_LLVM_VERSION }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
@@ -317,7 +317,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: llvm-config.exe
-          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
+          key: llvm-dlls-${{ env.CI_LLVM_VERSION }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
           fail-on-cache-miss: true
 
       - name: Set up environment
