@@ -43,7 +43,7 @@ describe Crystal::Evented::Timers do
     timers.add(pointerof(event2))
 
     events = [] of Crystal::Evented::Event*
-    timers.dequeue_ready { |event|events << event }
+    timers.dequeue_ready { |event| events << event }
 
     events.should eq([
       pointerof(event1),

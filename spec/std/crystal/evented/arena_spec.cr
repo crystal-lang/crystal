@@ -47,8 +47,8 @@ describe Crystal::Evented::Arena do
 
     it "checks bounds" do
       arena = Crystal::Evented::Arena(Int32).new(32)
-      expect_raises(IndexError) { arena.lazy_allocate(-1) {} }
-      expect_raises(IndexError) { arena.lazy_allocate(33) {} }
+      expect_raises(IndexError) { arena.lazy_allocate(-1) { } }
+      expect_raises(IndexError) { arena.lazy_allocate(33) { } }
     end
   end
 
@@ -149,7 +149,7 @@ describe Crystal::Evented::Arena do
       called = 0
 
       _, index1 = arena.lazy_allocate(1) { }
-      arena.free(index1) { called += 1}
+      arena.free(index1) { called += 1 }
       called.should eq(1)
 
       _, index2 = arena.lazy_allocate(1) { }

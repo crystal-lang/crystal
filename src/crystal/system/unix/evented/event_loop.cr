@@ -329,16 +329,16 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private def wait_readable(io, timeout = nil, &) : Nil
     yield if wait(:io_read, io, timeout) do |pd, event|
-      # don't wait if the waiter has already been marked ready (see Waiters#add)
-      return unless pd.value.@readers.add(event)
-    end
+               # don't wait if the waiter has already been marked ready (see Waiters#add)
+               return unless pd.value.@readers.add(event)
+             end
   end
 
   private def wait_writable(io, timeout = nil, &) : Nil
     yield if wait(:io_write, io, timeout) do |pd, event|
-      # don't wait if the waiter has already been marked ready (see Waiters#add)
-      return unless pd.value.@writers.add(event)
-    end
+               # don't wait if the waiter has already been marked ready (see Waiters#add)
+               return unless pd.value.@writers.add(event)
+             end
   end
 
   private def wait(type : Evented::Event::Type, io, timeout, &)

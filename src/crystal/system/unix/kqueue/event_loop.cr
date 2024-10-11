@@ -3,8 +3,8 @@ require "../kqueue"
 
 class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
   # the following are arbitrary numbers to identify specific events
-  INTERRUPT_IDENTIFIER = 9
-  TIMER_IDENTIFIER = 10
+  INTERRUPT_IDENTIFIER =  9
+  TIMER_IDENTIFIER     = 10
 
   {% unless LibC.has_constant?(:EVFILT_USER) %}
     @pipe = uninitialized LibC::Int[2]
