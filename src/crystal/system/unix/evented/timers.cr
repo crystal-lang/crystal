@@ -66,12 +66,19 @@ struct Crystal::Evented::Timers
     end
   end
 
-  # Remove a timer from the list. Returns the index at which the event was, and
-  # `nil` otherwise.
-  def delete(event : Evented::Event*) : Int32?
+  # Remove a timer from the list. Returns a tuple(dequeued, was_next_ready) of
+  # booleans. The first bool tells whether the event was dequeued, in which case
+  # the second one tells if it was the next ready event.
+  def delete(event : Evented::Event*) : {Bool, Bool}
     if index = @list.index(event)
       @list.delete_at(index)
-      index
+      {true, index.zero?}
+    else
+      {false, false}
     end
+  end
+
+  def each(&) : Nil
+    @list.each { |event| yield event }
   end
 end
