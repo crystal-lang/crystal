@@ -1,6 +1,8 @@
 require "./stddef"
 
-@[Link("legacy_stdio_definitions")]
+{% if flag?(:msvc) %}
+  @[Link("legacy_stdio_definitions")]
+{% end %}
 lib LibC
   # unused
   fun printf(format : Char*, ...) : Int

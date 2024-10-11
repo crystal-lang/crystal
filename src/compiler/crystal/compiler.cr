@@ -354,7 +354,7 @@ module Crystal
           run_dsymutil(output_filename) unless debug.none?
         {% end %}
 
-        {% if flag?(:windows) %}
+        {% if flag?(:msvc) %}
           copy_dlls(program, output_filename) unless static?
         {% end %}
       end
@@ -492,6 +492,9 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+      elsif program.has_flag?("win32") && program.has_flag?("gnu")
+        link_flags = @link_flags || ""
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{program.lib_flags}), nil}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
