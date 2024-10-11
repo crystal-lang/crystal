@@ -60,9 +60,9 @@ class Crystal::CodeGenVisitor
     #
     # Note we codegen the ensure body three times! In practice this isn't a big deal, since ensure bodies are typically small.
 
-    windows = @program.has_flag? "windows"
+    msvc = @program.has_flag?("msvc")
 
-    context.fun.personality_function = windows_personality_fun.func if windows
+    context.fun.personality_function = windows_personality_fun.func if msvc
 
     # This is the block which is entered when the body raises an exception
     rescue_block = new_block "rescue"
@@ -109,7 +109,7 @@ class Crystal::CodeGenVisitor
 
       old_catch_pad = @catch_pad
 
-      if windows
+      if msvc
         # Windows structured exception handling must enter a catch_switch instruction
         # which decides which catch body block to enter. Crystal only ever generates one catch body
         # which is used for all exceptions. For more information on how structured exception handling works in LLVM,
@@ -138,7 +138,8 @@ class Crystal::CodeGenVisitor
         caught_exception = load exception_llvm_type, caught_exception_ptr
         exception_type_id = type_id(caught_exception, exception_type)
       else
-        # Unwind exception handling code - used on non-windows platforms - is a lot simpler.
+        # Unwind exception handling code - used on non-MSVC platforms (essentially the Itanium
+        # C++ ABI) - is a lot simpler.
         # First we generate the landing pad instruction, this returns a tuple of the libunwind
         # exception object and the type ID of the exception. This tuple is set up in the crystal
         # personality function in raise.cr
@@ -188,7 +189,7 @@ class Crystal::CodeGenVisitor
           # If the rescue restriction matches, codegen the rescue block.
           position_at_end this_rescue_block
 
-          # On windows, we are "inside" the catchpad block. It's difficult to track when to catch_ret when
+          # On MSVC, we are "inside" the catchpad block. It's difficult to track when to catch_ret when
           # codegenning the entire rescue body, so we catch_ret early and execute the rescue bodies "outside" the
           # rescue block.
           if catch_pad = @catch_pad
@@ -248,7 +249,7 @@ class Crystal::CodeGenVisitor
 
         # Codegen catchswitch+pad or landing pad as described above.
         # This code is simpler because we never need to extract the exception type
-        if windows
+        if msvc
           rescue_ensure_body = new_block "rescue_ensure_body"
           catch_switch = builder.catch_switch(old_catch_pad || LLVM::Value.null, @rescue_block || LLVM::BasicBlock.null, 1)
           builder.add_handler catch_switch, rescue_ensure_body
@@ -283,8 +284,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_re_raise(node, unwind_ex_obj)
-    if @program.has_flag? "windows"
-      # On windows we can re-raise by calling _CxxThrowException with two null arguments
+    if @program.has_flag?("msvc")
+      # On the MSVC C++ ABI we can re-raise by calling _CxxThrowException with two null arguments
       call windows_throw_fun, [llvm_context.void_pointer.null, llvm_context.void_pointer.null]
       unreachable
     else
