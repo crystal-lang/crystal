@@ -142,7 +142,7 @@ class Channel(T)
 
   private def self.each_skip_duplicates(ops_locks, &)
     # Avoid deadlocks from trying to lock the same lock twice.
-    # `ops_lock` is sorted by `lock_object_id`, so identical onces will be in
+    # `ops_lock` is sorted by `lock_object_id`, so identical ones will be in
     # a row and we skip repeats while iterating.
     last_lock_id = nil
     ops_locks.each do |op|
