@@ -69,6 +69,21 @@ describe Log do
     ])
   end
 
+  it "can emit logs at a given severity" do
+    backend = Log::MemoryBackend.new
+    log = Log.new("a", backend, :warn)
+
+    Log::Severity.values.each do |severity|
+      log.emit(severity) { "#{severity} message" } unless severity.none?
+    end
+
+    backend.entries.map { |e| {e.severity, e.message} }.should eq([
+      {s(:warn), "Warn message"},
+      {s(:error), "Error message"},
+      {s(:fatal), "Fatal message"},
+    ])
+  end
+
   it "level can be changed" do
     backend = Log::MemoryBackend.new
     log = Log.new("a", backend, :warn)

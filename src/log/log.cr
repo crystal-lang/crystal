@@ -57,22 +57,40 @@ class Log
     # end
     # ```
     def {{method.id}}(*, exception : Exception? = nil)
-      severity = Severity::{{severity}}
-      return unless level <= severity
-
-      return unless backend = @backend
-
-      dsl = Emitter.new(@source, severity, exception)
-      result = yield dsl
-
-      case result
-      when Entry
-        backend.dispatch result
-      when Nil
-        # emit nothing
-      else
-        backend.dispatch dsl.emit(result.to_s)
-      end
+      emit(:{{method.id}}, exception: exception) { |dsl| yield dsl }
     end
   {% end %}
+
+  # Logs a message if the logger's current severity is lower than or equal to
+  # the given severity.
+  #
+  # The block is not called unless the current severity level would emit a
+  # message.
+  #
+  # Blocks which return `nil` do not emit anything:
+  #
+  # ```
+  # Log.emit :debug do
+  #   if false
+  #     "Nothing will be logged."
+  #   end
+  # end
+  # ```
+  def emit(severity : Severity, *, exception : Exception? = nil)
+    return unless level <= severity
+
+    return unless backend = @backend
+
+    dsl = Emitter.new(@source, severity, exception)
+    result = yield dsl
+
+    case result
+    when Entry
+      backend.dispatch result
+    when Nil
+      # emit nothing
+    else
+      backend.dispatch dsl.emit(result.to_s)
+    end
+  end
 end
