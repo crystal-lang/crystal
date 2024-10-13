@@ -41,7 +41,8 @@ local -a exec_args; exec_args=(
   '(\*)'{-D+,--define=}'[define a compile-time flag]:' \
   '(--error-trace)--error-trace[show full error trace]' \
   '(-s --stats)'{-s,--stats}'[enable statistics output]' \
-  '(-t --time)'{-t,--time}'[enable execution time output]'
+  '(-t --time)'{-t,--time}'[enable execution time output]' \
+  '(-p --progress)'{-p,--progress}'[enable progress output]'
 )
 
 local -a format_args; format_args=(
@@ -61,9 +62,13 @@ local -a cursor_args; cursor_args=(
   '(-c --cursor)'{-c,--cursor}'[cursor location with LOC as path/to/file.cr:line:column]:LOC'
 )
 
-local -a include_exclude_args; cursor_args=(
+local -a include_exclude_args; include_exclude_args=(
   '(-i --include)'{-i,--include}'[Include path in output]' \
   '(-i --exclude)'{-i,--exclude}'[Exclude path in output]'
+)
+
+local -a stdin_filename_args; stdin_filename_args=(
+  '(--stdin-filename)--stdin-filename[source file name to be read from STDIN]'
 )
 
 local -a programfile; programfile='*:Crystal File:_files -g "*.cr(.)"'
@@ -163,12 +168,13 @@ _crystal-tool() {
 
       commands=(
         "context:show context for given location"
-        "dependencies:show tree of required source files"
         "expand:show macro expansion for given location"
         "flags:print all macro 'flag?' values"
         "format:format project, directories and/or files"
         "hierarchy:show type hierarchy"
+        "dependencies:show tree of required source files"
         "implementations:show implementations for given call in location"
+        "unreachable:show methods that are never called"
         "types:show type of main variables"
       )
 
@@ -187,6 +193,7 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
+            $stdin_filename_args \
             $cursor_args
         ;;
 
@@ -198,6 +205,7 @@ _crystal-tool() {
             $exec_args \
             '(-f --format)'{-f,--format}'[output format 'tree' (default), 'flat', 'dot', or 'mermaid']:' \
             $prelude_args \
+            $stdin_filename_args \
             $include_exclude_args
         ;;
 
@@ -209,12 +217,14 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
+            $stdin_filename_args \
             $cursor_args
         ;;
 
         (flags)
           _arguments \
             $programfile \
+            $no_color_args \
             $help_args
         ;;
 
@@ -223,8 +233,9 @@ _crystal-tool() {
             $programfile \
             $help_args \
             $no_color_args \
-            $format_args \
+            $include_exclude_args \
             '(--check)--check[checks that formatting code produces no changes]' \
+            '(--show-backtrace)--show-backtrace[show backtrace on a bug (used only for debugging)]'
         ;;
 
         (hierarchy)
@@ -235,6 +246,7 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
+            $stdin_filename_args \
             '(-e)-e[filter types by NAME regex]:'
         ;;
 
@@ -246,7 +258,22 @@ _crystal-tool() {
             $exec_args \
             $format_args \
             $prelude_args \
-            $cursor_args
+            $cursor_args \
+            $stdin_filename_args
+        ;;
+
+        (unreachable)
+          _arguments \
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $exec_args \
+            $include_exclude_args \
+            '(-f --format)'{-f,--format}'[output format: text (default), json, csv, codecov]:' \
+            $prelude_args \
+            '(--check)--check[exits with error if there is any unreachable code]' \
+            '(--tallies)--tallies[print reachable methods and their call counts as well]' \
+            $stdin_filename_args
         ;;
 
         (types)
@@ -256,7 +283,8 @@ _crystal-tool() {
             $no_color_args \
             $exec_args \
             $format_args \
-            $prelude_args
+            $prelude_args \
+            $stdin_filename_args
         ;;
       esac
     ;;
