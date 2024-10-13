@@ -518,7 +518,7 @@ module Crystal::Playground
       @port = address.port
       @host = address.address
 
-      puts "Listening on http://#{address}"
+      puts "Listening on \e]8;;http://#{address}\ahttp://#{address}\e]8;;\a"
       if address.unspecified?
         puts "WARNING running playground on #{address.address} is insecure."
       end
