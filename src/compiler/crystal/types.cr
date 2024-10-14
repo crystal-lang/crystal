@@ -373,6 +373,10 @@ module Crystal
       nil
     end
 
+    def lookup_name(name)
+      types?.try(&.[name]?)
+    end
+
     def parents
       nil
     end
@@ -2756,17 +2760,9 @@ module Crystal
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
       lookup_macro, lookup_macros, to: aliased_type
 
-    def types?
+    def lookup_name(name)
       process_value
-      if aliased_type = @aliased_type
-        aliased_type.types?
-      else
-        nil
-      end
-    end
-
-    def types
-      types?.not_nil!
+      @aliased_type.try(&.lookup_name(name))
     end
 
     def remove_alias
