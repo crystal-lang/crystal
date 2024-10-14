@@ -66,7 +66,7 @@ _crystal()
                 _crystal_compgen_options "${opts}" "${cur}"
             else
                 if [[ "${prev}" == "tool" ]] ; then
-                    local subcommands="context expand flags format hierarchy dependencies implementations unreachable types"
+                    local subcommands="context dependencies expand flags format hierarchy implementations types unreachable"
                     _crystal_compgen_options "${subcommands}" "${cur}"
                 else
                     _crystal_compgen_sources "${cur}"

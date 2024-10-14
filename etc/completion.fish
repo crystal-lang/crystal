@@ -1,5 +1,5 @@
 set -l crystal_commands init build clear_cache docs env eval i interactive play run spec tool help version
-set -l tool_subcommands context expand flags format hierarchy dependencies implementations unreachable types
+set -l tool_subcommands context dependencies expand flags format hierarchy implementations types unreachable
 
 complete -c crystal -s h -l help -d "Show help" -x
 
