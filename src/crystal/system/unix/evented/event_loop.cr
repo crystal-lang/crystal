@@ -392,13 +392,10 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   protected def delete_timer(event : Evented::Event*) : Bool
     @lock.sync do
       dequeued, was_next_ready = @timers.delete(event)
-      if dequeued
-        # update system timer if we deleted the next timer
-        system_set_timer(@timers.next_ready?) if was_next_ready
-        return true if dequeued
-      end
+      # update system timer if we deleted the next timer
+      system_set_timer(@timers.next_ready?) if was_next_ready
+      dequeued
     end
-    false
   end
 
   # Helper to resume the fiber associated to an IO event and remove the event
