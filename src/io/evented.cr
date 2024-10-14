@@ -1,9 +1,4 @@
-{% skip_file if flag?(:win32) %}
-
-{% unless flag?(:evloop_libevent) %}
-  {% skip_file if flag?(:android) || flag?(:linux) || flag?(:solaris) %}
-  {% skip_file if flag?(:bsd) || flag?(:darwin) %}
-{% end %}
+{% skip_file unless flag?(:evloop_libevent) || flag?(:wasi) %}
 
 require "crystal/thread_local_value"
 
