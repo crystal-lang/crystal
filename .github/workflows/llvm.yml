@@ -15,21 +15,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - llvm_version: "13.0.0"
-            llvm_filename: "clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz"
-          - llvm_version: "14.0.0"
-            llvm_filename: "clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-          - llvm_version: "15.0.6"
-            llvm_filename: "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-          - llvm_version: "16.0.3"
-            llvm_filename: "clang+llvm-16.0.3-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
-          - llvm_version: "17.0.6"
-            llvm_filename: "clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
-          - llvm_version: "18.1.4"
-            llvm_filename: "clang+llvm-18.1.4-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
-          - llvm_version: "19.1.0"
-            llvm_filename: "LLVM-19.1.0-Linux-X64.tar.xz"
+        llvm_version:
+          - "13.0.1"
+          - "14.0.6"
+          - "15.0.7"
+          - "16.0.6"
+          - "17.0.6"
+          - "18.1.5"
+          - "19.1.0"
+
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -40,19 +34,30 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./llvm
-          key: llvm-${{ matrix.llvm_version }}
+          key: llvm-libs-${{ matrix.llvm_version }}-${{ hashFiles('.github/workflows/llvm.yml') }}-linux
         if: "${{ !env.ACT }}"
 
-      - name: Install LLVM ${{ matrix.llvm_version }}
+      - name: Checkout LLVM source
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          path: llvm-src
+          ref: llvmorg-${{ matrix.llvm_version }}
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+
+      - name: Build LLVM
         run: |
-          mkdir -p llvm
-          curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm_version }}/${{ matrix.llvm_filename }}" > llvm.tar.xz
-          tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
+          mkdir -p llvm-src/build
+          cd llvm-src/build
+          cmake ../llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86;AArch64;WebAssembly" \
+            -DBUILD_SHARED_LIBS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ZSTD=OFF
+          cmake --build . -j8
+          cmake "-DCMAKE_INSTALL_PREFIX=$(pwd)/../../llvm" -P cmake_install.cmake
         if: steps.cache-llvm.outputs.cache-hit != 'true'
 
       - name: Set up LLVM
         run: |
-          sudo apt-get install -y libtinfo5
+          sudo apt-get install -y lld
           echo "PATH=$(pwd)/llvm/bin:$PATH" >> $GITHUB_ENV
           echo "LLVM_CONFIG=$(pwd)/llvm/bin/llvm-config" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$(pwd)/llvm/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
