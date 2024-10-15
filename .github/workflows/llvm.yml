@@ -17,17 +17,19 @@ jobs:
       matrix:
         include:
           - llvm_version: "13.0.0"
-            llvm_ubuntu_version: "20.04"
+            llvm_filename: "clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz"
           - llvm_version: "14.0.0"
-            llvm_ubuntu_version: "18.04"
+            llvm_filename: "clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
           - llvm_version: "15.0.6"
-            llvm_ubuntu_version: "18.04"
+            llvm_filename: "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
           - llvm_version: "16.0.3"
-            llvm_ubuntu_version: "22.04"
+            llvm_filename: "clang+llvm-16.0.3-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
           - llvm_version: "17.0.6"
-            llvm_ubuntu_version: "22.04"
+            llvm_filename: "clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
           - llvm_version: "18.1.4"
-            llvm_ubuntu_version: "18.04"
+            llvm_filename: "clang+llvm-18.1.4-x86_64-linux-gnu-ubuntu-18.04.tar.xz"
+          - llvm_version: "19.1.0"
+            llvm_filename: "LLVM-19.1.0-Linux-X64.tar.xz"
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -44,7 +46,7 @@ jobs:
       - name: Install LLVM ${{ matrix.llvm_version }}
         run: |
           mkdir -p llvm
-          curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm_version }}/clang+llvm-${{ matrix.llvm_version }}-x86_64-linux-gnu-ubuntu-${{ matrix.llvm_ubuntu_version }}.tar.xz" > llvm.tar.xz
+          curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm_version }}/${{ matrix.llvm_filename }}" > llvm.tar.xz
           tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
         if: steps.cache-llvm.outputs.cache-hit != 'true'
 
@@ -58,7 +60,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.13.1"
+          crystal: "1.14.0"
 
       - name: Build libllvm_ext
         run: make -B deps

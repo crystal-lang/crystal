@@ -165,14 +165,14 @@ class File < IO::FileDescriptor
   # *blocking* must be set to `false` on POSIX targets when the file to open
   # isn't a regular file but a character device (e.g. `/dev/tty`) or fifo. These
   # files depend on another process or thread to also be reading or writing, and
-  # system event queues will properly report readyness.
+  # system event queues will properly report readiness.
   #
   # *blocking* may also be set to `nil` in which case the blocking or
   # non-blocking flag will be determined automatically, at the expense of an
   # additional syscall.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, blocking = true)
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm: perm)
+    fd = Crystal::System::File.open(filename, mode, perm: perm, blocking: blocking)
     new(filename, fd, blocking: blocking, encoding: encoding, invalid: invalid).tap { |f| f.system_set_mode(mode) }
   end
 

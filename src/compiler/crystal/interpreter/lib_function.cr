@@ -19,7 +19,7 @@ class Crystal::Repl::LibFunction
     @def : External,
     @symbol : Void*,
     @call_interface : FFI::CallInterface,
-    @args_bytesizes : Array(Int32)
+    @args_bytesizes : Array(Int32),
   )
   end
 end

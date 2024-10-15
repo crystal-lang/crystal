@@ -13,7 +13,7 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.13.1-build
+      image: crystallang/crystal:1.14.0-build
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.13.1-build
+      image: crystallang/crystal:1.14.0-build
     name: Build interpreter
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.13.1-build
+      image: crystallang/crystal:1.14.0-build
     strategy:
       matrix:
         part: [0, 1, 2, 3]
@@ -67,7 +67,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-22.04
     container:
-      image: crystallang/crystal:1.13.1-build
+      image: crystallang/crystal:1.14.0-build
     name: "Test primitives_spec with interpreter"
     steps:
       - uses: actions/checkout@v4

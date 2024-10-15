@@ -113,8 +113,12 @@ lib LibUnwind
     struct Exception
       exception_class : LibC::SizeT
       exception_cleanup : LibC::SizeT
-      private1 : UInt64
-      private2 : UInt64
+      {% if flag?(:win32) && flag?(:gnu) %}
+        private_ : UInt64[6]
+      {% else %}
+        private1 : UInt64
+        private2 : UInt64
+      {% end %}
       exception_object : Void*
       exception_type_id : Int32
     end

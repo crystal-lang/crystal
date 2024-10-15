@@ -4,8 +4,11 @@
 # * libmpir
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#big-numbers
-{% if flag?(:win32) %}
+{% if flag?(:win32) && !flag?(:gnu) %}
   @[Link("mpir")]
+  {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+    @[Link(dll: "mpir.dll")]
+  {% end %}
 {% else %}
   @[Link("gmp")]
 {% end %}
@@ -17,7 +20,7 @@ lib LibGMP
   # MPIR uses its own `mpir_si` and `mpir_ui` typedefs in places where GMP uses
   # the LibC types, when the function name has `si` or `ui`; we follow this
   # distinction
-  {% if flag?(:win32) && flag?(:bits64) %}
+  {% if flag?(:win32) && !flag?(:gnu) && flag?(:bits64) %}
     alias SI = LibC::LongLong
     alias UI = LibC::ULongLong
   {% else %}
@@ -29,17 +32,19 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = UI
 
-  {% if flag?(:win32) && flag?(:bits64) %}
-    alias MpExp = LibC::Long
+  alias MpExp = LibC::Long
+
+  {% if flag?(:win32) && !flag?(:gnu) %}
     alias MpSize = LibC::LongLong
-    alias MpLimb = LibC::ULongLong
-  {% elsif flag?(:bits64) %}
-    alias MpExp = Int64
-    alias MpSize = LibC::Long
-    alias MpLimb = LibC::ULong
   {% else %}
-    alias MpExp = Int32
     alias MpSize = LibC::Long
+  {% end %}
+
+  # NOTE: this assumes GMP is configured by build time to define
+  # `_LONG_LONG_LIMB=1` on Windows
+  {% if flag?(:win32) %}
+    alias MpLimb = LibC::ULongLong
+  {% else %}
     alias MpLimb = LibC::ULong
   {% end %}
 
@@ -152,11 +157,12 @@ lib LibGMP
 
   # # Miscellaneous Functions
 
-  fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
-  fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
-  {% if flag?(:win32) %}
+  {% if flag?(:win32) && !flag?(:gnu) %}
     fun fits_ui_p = __gmpz_fits_ui_p(op : MPZ*) : Int
     fun fits_si_p = __gmpz_fits_si_p(op : MPZ*) : Int
+  {% else %}
+    fun fits_ulong_p = __gmpz_fits_ulong_p(op : MPZ*) : Int
+    fun fits_slong_p = __gmpz_fits_slong_p(op : MPZ*) : Int
   {% end %}
 
   # # Special Functions
@@ -239,8 +245,11 @@ lib LibGMP
 
   # # Arithmetic
   fun mpf_add = __gmpf_add(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_add_ui = __gmpf_add_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_sub = __gmpf_sub(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_sub_ui = __gmpf_sub_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_mul = __gmpf_mul(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_mul_ui = __gmpf_mul_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_div = __gmpf_div(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_div_ui = __gmpf_div_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_ui_div = __gmpf_ui_div(rop : MPF*, op1 : UI, op2 : MPF*)

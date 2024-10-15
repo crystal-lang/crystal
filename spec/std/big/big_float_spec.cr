@@ -345,6 +345,16 @@ describe "BigFloat" do
     it { assert_prints (0.1).to_big_f.to_s, "0.100000000000000005551" }
     it { assert_prints Float64::MAX.to_big_f.to_s, "1.79769313486231570815e+308" }
     it { assert_prints Float64::MIN_POSITIVE.to_big_f.to_s, "2.22507385850720138309e-308" }
+
+    it { (2.to_big_f ** 7133786264).to_s.should end_with("e+2147483648") }  # least power of two with a base-10 exponent greater than Int32::MAX
+    it { (2.to_big_f ** -7133786264).to_s.should end_with("e-2147483649") } # least power of two with a base-10 exponent less than Int32::MIN
+    it { (10.to_big_f ** 3000000000 * 1.5).to_s.should end_with("e+3000000000") }
+    it { (10.to_big_f ** -3000000000 * 1.5).to_s.should end_with("e-3000000000") }
+
+    {% unless flag?(:win32) && flag?(:gnu) %}
+      it { (10.to_big_f ** 10000000000 * 1.5).to_s.should end_with("e+10000000000") }
+      it { (10.to_big_f ** -10000000000 * 1.5).to_s.should end_with("e-10000000000") }
+    {% end %}
   end
 
   describe "#inspect" do
@@ -547,8 +557,95 @@ describe "BigFloat" do
 end
 
 describe "BigFloat Math" do
+  it ".ilogb" do
+    Math.ilogb(0.2.to_big_f).should eq(-3)
+    Math.ilogb(123.45.to_big_f).should eq(6)
+    Math.ilogb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000)
+
+    {% unless flag?(:win32) && flag?(:gnu) %}
+      Math.ilogb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000)
+      Math.ilogb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000)
+    {% end %}
+
+    expect_raises(ArgumentError) { Math.ilogb(0.to_big_f) }
+  end
+
+  it ".logb" do
+    Math.logb(0.2.to_big_f).should eq(-3.to_big_f)
+    Math.logb(123.45.to_big_f).should eq(6.to_big_f)
+    Math.logb(2.to_big_f ** 1_000_000_000).should eq(1_000_000_000.to_big_f)
+
+    {% unless flag?(:win32) && flag?(:gnu) %}
+      Math.logb(2.to_big_f ** 100_000_000_000).should eq(100_000_000_000.to_big_f)
+      Math.logb(2.to_big_f ** -100_000_000_000).should eq(-100_000_000_000.to_big_f)
+    {% end %}
+
+    expect_raises(ArgumentError) { Math.logb(0.to_big_f) }
+  end
+
+  it ".ldexp" do
+    Math.ldexp(0.2.to_big_f, 2).should eq(0.8.to_big_f)
+    Math.ldexp(0.2.to_big_f, -2).should eq(0.05.to_big_f)
+    Math.ldexp(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
+
+    {% unless flag?(:win32) && flag?(:gnu) %}
+      Math.ldexp(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
+      Math.ldexp(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
+    {% end %}
+  end
+
+  it ".scalbn" do
+    Math.scalbn(0.2.to_big_f, 2).should eq(0.8.to_big_f)
+    Math.scalbn(0.2.to_big_f, -2).should eq(0.05.to_big_f)
+    Math.scalbn(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
+
+    {% unless flag?(:win32) && flag?(:gnu) %}
+      Math.scalbn(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
+      Math.scalbn(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
+    {% end %}
+  end
+
+  it ".scalbln" do
+    Math.scalbln(0.2.to_big_f, 2).should eq(0.8.to_big_f)
+    Math.scalbln(0.2.to_big_f, -2).should eq(0.05.to_big_f)
+    Math.scalbln(1.to_big_f, 1_000_000_000).should eq(2.to_big_f ** 1_000_000_000)
+
+    {% unless flag?(:win32) && flag?(:gnu) %}
+      Math.scalbln(1.to_big_f, 100_000_000_000).should eq(2.to_big_f ** 100_000_000_000)
+      Math.scalbln(1.to_big_f, -100_000_000_000).should eq(0.5.to_big_f ** 100_000_000_000)
+    {% end %}
+  end
+
   it ".frexp" do
+    Math.frexp(0.to_big_f).should eq({0.0, 0})
+    Math.frexp(1.to_big_f).should eq({0.5, 1})
     Math.frexp(0.2.to_big_f).should eq({0.8, -2})
+    Math.frexp(2.to_big_f ** 63).should eq({0.5, 64})
+    Math.frexp(2.to_big_f ** 64).should eq({0.5, 65})
+    Math.frexp(2.to_big_f ** 200).should eq({0.5, 201})
+    Math.frexp(2.to_big_f ** -200).should eq({0.5, -199})
+    Math.frexp(2.to_big_f ** 0x7FFFFFFF).should eq({0.5, 0x80000000})
+    Math.frexp(2.to_big_f ** 0x80000000).should eq({0.5, 0x80000001})
+    Math.frexp(2.to_big_f ** 0xFFFFFFFF).should eq({0.5, 0x100000000})
+    Math.frexp(1.75 * 2.to_big_f ** 0x123456789).should eq({0.875, 0x12345678A})
+    Math.frexp(2.to_big_f ** -0x80000000).should eq({0.5, -0x7FFFFFFF})
+    Math.frexp(2.to_big_f ** -0x80000001).should eq({0.5, -0x80000000})
+    Math.frexp(2.to_big_f ** -0x100000000).should eq({0.5, -0xFFFFFFFF})
+    Math.frexp(1.75 * 2.to_big_f ** -0x123456789).should eq({0.875, -0x123456788})
+    Math.frexp(-(2.to_big_f ** 0x7FFFFFFF)).should eq({-0.5, 0x80000000})
+    Math.frexp(-(2.to_big_f ** -0x100000000)).should eq({-0.5, -0xFFFFFFFF})
+  end
+
+  it ".copysign" do
+    Math.copysign(3.to_big_f, 2.to_big_f).should eq(3.to_big_f)
+    Math.copysign(3.to_big_f, 0.to_big_f).should eq(3.to_big_f)
+    Math.copysign(3.to_big_f, -2.to_big_f).should eq(-3.to_big_f)
+    Math.copysign(0.to_big_f, 2.to_big_f).should eq(0.to_big_f)
+    Math.copysign(0.to_big_f, 0.to_big_f).should eq(0.to_big_f)
+    Math.copysign(0.to_big_f, -2.to_big_f).should eq(0.to_big_f)
+    Math.copysign(-3.to_big_f, 2.to_big_f).should eq(3.to_big_f)
+    Math.copysign(-3.to_big_f, 0.to_big_f).should eq(3.to_big_f)
+    Math.copysign(-3.to_big_f, -2.to_big_f).should eq(-3.to_big_f)
   end
 
   it ".sqrt" do

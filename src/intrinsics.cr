@@ -163,8 +163,13 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr128)] {% end %}
   fun fshr128 = "llvm.fshr.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
 
-  fun va_start = "llvm.va_start"(ap : Void*)
-  fun va_end = "llvm.va_end"(ap : Void*)
+  {% if compare_versions(Crystal::LLVM_VERSION, "19.1.0") < 0 %}
+    fun va_start = "llvm.va_start"(ap : Void*)
+    fun va_end = "llvm.va_end"(ap : Void*)
+  {% else %}
+    fun va_start = "llvm.va_start.p0"(ap : Void*)
+    fun va_end = "llvm.va_end.p0"(ap : Void*)
+  {% end %}
 
   {% if flag?(:i386) || flag?(:x86_64) %}
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
@@ -179,7 +184,7 @@ end
 
 module Intrinsics
   macro debugtrap
-    LibIntrinsics.debugtrap
+    ::LibIntrinsics.debugtrap
   end
 
   def self.pause
@@ -191,15 +196,15 @@ module Intrinsics
   end
 
   macro memcpy(dest, src, len, is_volatile)
-    LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, {{is_volatile}})
+    ::LibIntrinsics.memcpy({{dest}}, {{src}}, {{len}}, {{is_volatile}})
   end
 
   macro memmove(dest, src, len, is_volatile)
-    LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, {{is_volatile}})
+    ::LibIntrinsics.memmove({{dest}}, {{src}}, {{len}}, {{is_volatile}})
   end
 
   macro memset(dest, val, len, is_volatile)
-    LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
+    ::LibIntrinsics.memset({{dest}}, {{val}}, {{len}}, {{is_volatile}})
   end
 
   def self.read_cycle_counter
@@ -263,43 +268,43 @@ module Intrinsics
   end
 
   macro countleading8(src, zero_is_undef)
-    LibIntrinsics.countleading8({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading8({{src}}, {{zero_is_undef}})
   end
 
   macro countleading16(src, zero_is_undef)
-    LibIntrinsics.countleading16({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading16({{src}}, {{zero_is_undef}})
   end
 
   macro countleading32(src, zero_is_undef)
-    LibIntrinsics.countleading32({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading32({{src}}, {{zero_is_undef}})
   end
 
   macro countleading64(src, zero_is_undef)
-    LibIntrinsics.countleading64({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading64({{src}}, {{zero_is_undef}})
   end
 
   macro countleading128(src, zero_is_undef)
-    LibIntrinsics.countleading128({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.countleading128({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing8(src, zero_is_undef)
-    LibIntrinsics.counttrailing8({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing8({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing16(src, zero_is_undef)
-    LibIntrinsics.counttrailing16({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing16({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing32(src, zero_is_undef)
-    LibIntrinsics.counttrailing32({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing32({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing64(src, zero_is_undef)
-    LibIntrinsics.counttrailing64({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing64({{src}}, {{zero_is_undef}})
   end
 
   macro counttrailing128(src, zero_is_undef)
-    LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
+    ::LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
   end
 
   def self.fshl8(a, b, count) : UInt8
@@ -343,14 +348,14 @@ module Intrinsics
   end
 
   macro va_start(ap)
-    LibIntrinsics.va_start({{ap}})
+    ::LibIntrinsics.va_start({{ap}})
   end
 
   macro va_end(ap)
-    LibIntrinsics.va_end({{ap}})
+    ::LibIntrinsics.va_end({{ap}})
   end
 end
 
 macro debugger
-  Intrinsics.debugtrap
+  ::Intrinsics.debugtrap
 end

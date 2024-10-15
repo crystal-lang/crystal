@@ -93,6 +93,8 @@ struct Exception::CallStack
                    {% elsif flag?(:i386) %}
                      # TODO: use WOW64_CONTEXT in place of CONTEXT
                      {% raise "x86 not supported" %}
+                   {% elsif flag?(:aarch64) %}
+                     LibC::IMAGE_FILE_MACHINE_ARM64
                    {% else %}
                      {% raise "Architecture not supported" %}
                    {% end %}
@@ -102,9 +104,15 @@ struct Exception::CallStack
     stack_frame.addrFrame.mode = LibC::ADDRESS_MODE::AddrModeFlat
     stack_frame.addrStack.mode = LibC::ADDRESS_MODE::AddrModeFlat
 
-    stack_frame.addrPC.offset = context.value.rip
-    stack_frame.addrFrame.offset = context.value.rbp
-    stack_frame.addrStack.offset = context.value.rsp
+    {% if flag?(:x86_64) %}
+      stack_frame.addrPC.offset = context.value.rip
+      stack_frame.addrFrame.offset = context.value.rbp
+      stack_frame.addrStack.offset = context.value.rsp
+    {% elsif flag?(:aarch64) %}
+      stack_frame.addrPC.offset = context.value.pc
+      stack_frame.addrFrame.offset = context.value.x[29]
+      stack_frame.addrStack.offset = context.value.sp
+    {% end %}
 
     last_frame = nil
     cur_proc = LibC.GetCurrentProcess
@@ -159,6 +167,33 @@ struct Exception::CallStack
       print_frame(frame)
     end
   end
+
+  # TODO: needed only if `__crystal_raise` fails, check if this actually works
+  {% if flag?(:gnu) %}
+    def self.print_backtrace : Nil
+      backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+        last_frame = data.as(RepeatedFrame*)
+
+        ip = {% if flag?(:arm) %}
+              Pointer(Void).new(__crystal_unwind_get_ip(context))
+            {% else %}
+              Pointer(Void).new(LibUnwind.get_ip(context))
+            {% end %}
+
+        if last_frame.value.ip == ip
+          last_frame.value.incr
+        else
+          print_frame(last_frame.value) unless last_frame.value.ip.address == 0
+          last_frame.value = RepeatedFrame.new ip
+        end
+        LibUnwind::ReasonCode::NO_REASON
+      end
+
+      rf = RepeatedFrame.new(Pointer(Void).null)
+      LibUnwind.backtrace(backtrace_fn, pointerof(rf).as(Void*))
+      print_frame(rf)
+    end
+  {% end %}
 
   private def self.print_frame(repeated_frame)
     Crystal::System.print_error "[%p] ", repeated_frame.ip

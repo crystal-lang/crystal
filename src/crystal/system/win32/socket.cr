@@ -128,8 +128,8 @@ module Crystal::System::Socket
   end
 
   # :nodoc:
-  def overlapped_connect(socket, method, &)
-    IOCP::OverlappedOperation.run(socket) do |operation|
+  def overlapped_connect(socket, method, timeout, &)
+    IOCP::WSAOverlappedOperation.run(socket) do |operation|
       result = yield operation
 
       if result == 0
@@ -145,7 +145,7 @@ module Crystal::System::Socket
         return nil
       end
 
-      operation.wait_for_wsa_result(read_timeout) do |error|
+      operation.wait_for_result(timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaeconnrefused?
           return ::Socket::ConnectError.from_os_error(method, error)
@@ -192,7 +192,7 @@ module Crystal::System::Socket
   end
 
   def overlapped_accept(socket, method, &)
-    IOCP::OverlappedOperation.run(socket) do |operation|
+    IOCP::WSAOverlappedOperation.run(socket) do |operation|
       result = yield operation
 
       if result == 0
@@ -206,7 +206,7 @@ module Crystal::System::Socket
         return true
       end
 
-      operation.wait_for_wsa_result(read_timeout) do |error|
+      operation.wait_for_result(read_timeout) do |error|
         case error
         when .wsa_io_incomplete?, .wsaenotsock?
           return false
@@ -369,7 +369,7 @@ module Crystal::System::Socket
     socket_close
   end
 
-  private def socket_close
+  private def socket_close(&)
     handle = @volatile_fd.swap(LibC::INVALID_SOCKET)
 
     ret = LibC.closesocket(handle)

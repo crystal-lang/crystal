@@ -3,6 +3,7 @@ require "c/consoleapi"
 require "c/consoleapi2"
 require "c/winnls"
 require "crystal/system/win32/iocp"
+require "crystal/system/thread"
 
 module Crystal::System::FileDescriptor
   # Platform-specific type to represent a file descriptor handle to the operating
@@ -76,19 +77,31 @@ module Crystal::System::FileDescriptor
     bytes_written
   end
 
+  def emulated_blocking? : Bool?
+    # reading from STDIN is done via a separate thread (see
+    # `ConsoleUtils.read_console` below)
+    handle = windows_handle
+    if LibC.GetConsoleMode(handle, out _) != 0
+      if handle == LibC.GetStdHandle(LibC::STD_INPUT_HANDLE)
+        return false
+      end
+    end
+  end
+
   # :nodoc:
   def system_blocking?
     @system_blocking
   end
 
   private def system_blocking=(blocking)
-    unless blocking == @system_blocking
+    unless blocking == self.blocking
       raise IO::Error.new("Cannot reconfigure `IO::FileDescriptor#blocking` after creation")
     end
   end
 
   private def system_blocking_init(value)
     @system_blocking = value
+    Crystal::EventLoop.current.create_completion_port(windows_handle) unless value
   end
 
   private def system_close_on_exec?
@@ -119,10 +132,6 @@ module Crystal::System::FileDescriptor
   end
 
   protected def windows_handle
-    FileDescriptor.windows_handle(fd)
-  end
-
-  def self.windows_handle(fd)
     LibC::HANDLE.new(fd)
   end
 
@@ -185,7 +194,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
+  def file_descriptor_close(&)
     if LibC.CloseHandle(windows_handle) == 0
       yield
     end
@@ -210,41 +219,62 @@ module Crystal::System::FileDescriptor
   end
 
   private def flock(exclusive, retry)
-    flags = LibC::LOCKFILE_FAIL_IMMEDIATELY
+    flags = 0_u32
+    flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY if !retry || system_blocking?
     flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
 
     handle = windows_handle
-    if retry
+    if retry && system_blocking?
       until lock_file(handle, flags)
-        sleep 0.1
+        sleep 0.1.seconds
       end
     else
-      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
+      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked", target: self)
     end
   end
 
   private def lock_file(handle, flags)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # lock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 != LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      true
-    else
-      winerror = WinError.value
-      if winerror == WinError::ERROR_LOCK_VIOLATION
-        false
+    IOCP::IOOverlappedOperation.run(handle) do |operation|
+      result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, operation)
+
+      if result == 0
+        case error = WinError.value
+        when .error_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .error_lock_violation?
+          # synchronous failure
+          return false
+        else
+          raise IO::Error.from_os_error("LockFileEx", error, target: self)
+        end
       else
-        raise IO::Error.from_os_error("LockFileEx", winerror, target: self)
+        return true
       end
+
+      operation.wait_for_result(nil) do |error|
+        raise IO::Error.from_os_error("LockFileEx", error, target: self)
+      end
+
+      true
     end
   end
 
   private def unlock_file(handle)
-    # lpOverlapped must be provided despite the synchronous use of this method.
-    overlapped = LibC::OVERLAPPED.new
-    # unlock the entire file with offset 0 in overlapped and number of bytes set to max value
-    if 0 == LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
-      raise IO::Error.from_winerror("UnLockFileEx")
+    IOCP::IOOverlappedOperation.run(handle) do |operation|
+      result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, operation)
+
+      if result == 0
+        error = WinError.value
+        unless error.error_io_pending?
+          raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+        end
+      else
+        return
+      end
+
+      operation.wait_for_result(nil) do |error|
+        raise IO::Error.from_os_error("UnlockFileEx", error, target: self)
+      end
     end
   end
 
@@ -264,13 +294,11 @@ module Crystal::System::FileDescriptor
     w_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless write_blocking
     w_pipe = LibC.CreateNamedPipeA(pipe_name, w_pipe_flags, pipe_mode, 1, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nil)
     raise IO::Error.from_winerror("CreateNamedPipeA") if w_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::EventLoop.current.create_completion_port(w_pipe) unless write_blocking
 
     r_pipe_flags = LibC::FILE_FLAG_NO_BUFFERING
     r_pipe_flags |= LibC::FILE_FLAG_OVERLAPPED unless read_blocking
     r_pipe = LibC.CreateFileW(System.to_wstr(pipe_name), LibC::GENERIC_READ | LibC::FILE_WRITE_ATTRIBUTES, 0, nil, LibC::OPEN_EXISTING, r_pipe_flags, nil)
     raise IO::Error.from_winerror("CreateFileW") if r_pipe == LibC::INVALID_HANDLE_VALUE
-    Crystal::EventLoop.current.create_completion_port(r_pipe) unless read_blocking
 
     r = IO::FileDescriptor.new(r_pipe.address, read_blocking)
     w = IO::FileDescriptor.new(w_pipe.address, write_blocking)
@@ -279,19 +307,26 @@ module Crystal::System::FileDescriptor
     {r, w}
   end
 
-  def self.pread(fd, buffer, offset)
-    handle = windows_handle(fd)
+  def self.pread(file, buffer, offset)
+    handle = file.windows_handle
 
-    overlapped = LibC::OVERLAPPED.new
-    overlapped.union.offset.offset = LibC::DWORD.new!(offset)
-    overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
-    if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
-      error = WinError.value
-      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_os_error "Error reading file", error, target: self
+    if file.system_blocking?
+      overlapped = LibC::OVERLAPPED.new
+      overlapped.union.offset.offset = LibC::DWORD.new!(offset)
+      overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
+      if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
+        error = WinError.value
+        return 0_i64 if error == WinError::ERROR_HANDLE_EOF
+        raise IO::Error.from_os_error "Error reading file", error, target: file
+      end
+
+      bytes_read.to_i64
+    else
+      IOCP.overlapped_operation(file, "ReadFile", file.read_timeout, offset: offset) do |overlapped|
+        ret = LibC.ReadFile(handle, buffer, buffer.size, out byte_count, overlapped)
+        {ret, byte_count}
+      end.to_i64
     end
-
-    bytes_read.to_i64
   end
 
   def self.from_stdio(fd)
@@ -316,7 +351,11 @@ module Crystal::System::FileDescriptor
       end
     end
 
+    # `blocking` must be set to `true` because the underlying handles never
+    # support overlapped I/O; instead, `#emulated_blocking?` should return
+    # `false` for `STDIN` as it uses a separate thread
     io = IO::FileDescriptor.new(handle.address, blocking: true)
+
     # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
     # See https://crystal-lang.org/api/toplevel.html#STDERR
     if console_handle
@@ -438,14 +477,60 @@ private module ConsoleUtils
         appender << byte
       end
     end
-    @@buffer = @@utf8_buffer[0, appender.size]
+    @@buffer = appender.to_slice
   end
 
   private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+    @@mtx.synchronize do
+      @@read_requests << ReadRequest.new(
+        handle: handle,
+        slice: slice,
+        iocp: Crystal::EventLoop.current.iocp,
+        completion_key: Crystal::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
+      )
+      @@read_cv.signal
+    end
+
+    ::Fiber.suspend
+
+    @@mtx.synchronize do
+      @@bytes_read.shift
+    end
+  end
+
+  private def self.read_console_blocking(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
     if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
       raise IO::Error.from_winerror("ReadConsoleW")
     end
     units_read.to_i32
+  end
+
+  record ReadRequest, handle : LibC::HANDLE, slice : Slice(UInt16), iocp : LibC::HANDLE, completion_key : Crystal::IOCP::CompletionKey
+
+  @@read_cv = ::Thread::ConditionVariable.new
+  @@read_requests = Deque(ReadRequest).new
+  @@bytes_read = Deque(Int32).new
+  @@mtx = ::Thread::Mutex.new
+  @@reader_thread = ::Thread.new { reader_loop }
+
+  private def self.reader_loop
+    while true
+      request = @@mtx.synchronize do
+        loop do
+          if entry = @@read_requests.shift?
+            break entry
+          end
+          @@read_cv.wait(@@mtx)
+        end
+      end
+
+      bytes = read_console_blocking(request.handle, request.slice)
+
+      @@mtx.synchronize do
+        @@bytes_read << bytes
+        LibC.PostQueuedCompletionStatus(request.iocp, LibC::JOB_OBJECT_MSG_EXIT_PROCESS, request.completion_key.object_id, nil)
+      end
+    end
   end
 end
 

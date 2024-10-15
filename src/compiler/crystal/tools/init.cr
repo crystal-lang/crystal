@@ -157,7 +157,7 @@ module Crystal
         @github_name = "none",
         @silent = false,
         @force = false,
-        @skip_existing = false
+        @skip_existing = false,
       )
       end
 

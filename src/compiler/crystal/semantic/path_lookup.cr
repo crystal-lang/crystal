@@ -71,7 +71,7 @@ module Crystal
     # precedence than ancestors and the enclosing namespace.
     def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location) : Type | ASTNode | Nil
       # First search in our types
-      type = types?.try &.[name]?
+      type = lookup_name(name)
       if type
         if type.private? && !include_private
           return nil

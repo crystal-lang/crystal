@@ -1,5 +1,3 @@
-{% skip_file unless flag?(:unix) && !flag?(:netbsd) && !flag?(:openbsd) && !flag?(:linux) %}
-
 module Crystal::System::Random
   @@initialized = false
   @@urandom : ::File?

@@ -254,7 +254,7 @@ module Reply
       reader.auto_completion.verify(open: true, entries: %w(hello hey), name_filter: "h", selection_pos: 0)
       reader.editor.verify("42.hello")
 
-      SpecHelper.send(pipe_in, "\e\t") # shit_tab
+      SpecHelper.send(pipe_in, "\e\t") # shift_tab
       reader.auto_completion.verify(open: true, entries: %w(hello hey), name_filter: "h", selection_pos: 1)
       reader.editor.verify("42.hey")
 
@@ -294,6 +294,37 @@ module Reply
       SpecHelper.send(pipe_in, '\t')
       reader.auto_completion.verify(open: true, entries: %w(hello world= hey), selection_pos: 2)
       reader.editor.verify("hey")
+
+      SpecHelper.send(pipe_in, '\0')
+    end
+
+    it "retriggers auto-completion when current word ends with ':'" do
+      reader = SpecHelper.reader(SpecReaderWithAutoCompletionRetrigger)
+      pipe_out, pipe_in = IO.pipe
+
+      spawn do
+        reader.read_next(from: pipe_out)
+      end
+
+      SpecHelper.send(pipe_in, "fo")
+      SpecHelper.send(pipe_in, '\t')
+      reader.auto_completion.verify(open: true, entries: %w(foo foobar), name_filter: "fo")
+      reader.editor.verify("foo")
+
+      SpecHelper.send(pipe_in, ':')
+      SpecHelper.send(pipe_in, ':')
+      reader.auto_completion.verify(open: true, entries: %w(foo::foo foo::foobar foo::bar), name_filter: "foo::")
+      reader.editor.verify("foo::")
+
+      SpecHelper.send(pipe_in, 'b')
+      SpecHelper.send(pipe_in, '\t')
+      reader.auto_completion.verify(open: true, entries: %w(foo::bar), name_filter: "foo::b", selection_pos: 0)
+      reader.editor.verify("foo::bar")
+
+      SpecHelper.send(pipe_in, ':')
+      SpecHelper.send(pipe_in, ':')
+      reader.auto_completion.verify(open: true, entries: %w(foo::bar::foo foo::bar::foobar foo::bar::bar), name_filter: "foo::bar::")
+      reader.editor.verify("foo::bar::")
 
       SpecHelper.send(pipe_in, '\0')
     end

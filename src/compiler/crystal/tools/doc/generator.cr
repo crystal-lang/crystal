@@ -217,6 +217,8 @@ class Crystal::Doc::Generator
 
   def crystal_builtin?(type)
     return false unless project_info.crystal_stdlib?
+    # TODO: Enabling this allows links to `NoReturn` to work, but has two `NoReturn`s show up in the sidebar
+    # return true if type.is_a?(NamedType) && {"NoReturn", "Void"}.includes?(type.name)
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -248,13 +250,6 @@ class Crystal::Doc::Generator
 
   def collect_subtypes(parent)
     types = [] of Type
-
-    # AliasType has defined `types?` to be the types
-    # of the aliased type, but for docs we don't want
-    # to list the nested types for aliases.
-    if parent.is_a?(AliasType)
-      return types
-    end
 
     parent.types?.try &.each_value do |type|
       case type

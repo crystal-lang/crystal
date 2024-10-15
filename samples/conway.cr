@@ -78,7 +78,7 @@ struct ConwayMap
   end
 end
 
-PAUSE_MILLIS  =  20
+PAUSE         = 20.milliseconds
 DEFAULT_COUNT = 300
 INITIAL_MAP   = [
   "                        1           ",
@@ -99,6 +99,6 @@ spawn { gets; exit }
 1.upto(DEFAULT_COUNT) do |i|
   puts map
   puts "n = #{i}\tPress ENTER to exit"
-  sleep PAUSE_MILLIS * 0.001
+  sleep PAUSE
   map.next
 end

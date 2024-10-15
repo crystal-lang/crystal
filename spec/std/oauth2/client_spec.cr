@@ -3,6 +3,12 @@ require "oauth2"
 require "http/server"
 require "../http/spec_helper"
 
+# TODO: Windows networking in the interpreter requires #12495
+{% if flag?(:interpreted) && flag?(:win32) %}
+  pending OAuth2::Client
+  {% skip_file %}
+{% end %}
+
 describe OAuth2::Client do
   describe "authorization uri" do
     it "gets with default endpoint" do

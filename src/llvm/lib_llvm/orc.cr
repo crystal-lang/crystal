@@ -12,7 +12,7 @@ lib LibLLVM
 
   fun orc_create_dynamic_library_search_generator_for_process = LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(
     result : OrcDefinitionGeneratorRef*, global_prefx : Char,
-    filter : OrcSymbolPredicate, filter_ctx : Void*
+    filter : OrcSymbolPredicate, filter_ctx : Void*,
   ) : ErrorRef
 
   fun orc_jit_dylib_add_generator = LLVMOrcJITDylibAddGenerator(jd : OrcJITDylibRef, dg : OrcDefinitionGeneratorRef)

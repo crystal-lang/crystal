@@ -152,7 +152,7 @@ module Crystal
       abi : ABI,
       nargs : LibC::UInt,
       rtype : Type*,
-      atypes : Type**
+      atypes : Type**,
     ) : Status
 
     fun prep_cif_var = ffi_prep_cif_var(
@@ -161,7 +161,7 @@ module Crystal
       nfixedargs : LibC::UInt,
       varntotalargs : LibC::UInt,
       rtype : Type*,
-      atypes : Type**
+      atypes : Type**,
     ) : Status
 
     @[Raises]
@@ -169,7 +169,7 @@ module Crystal
       cif : Cif*,
       fn : Void*,
       rvalue : Void*,
-      avalue : Void**
+      avalue : Void**,
     ) : Void
 
     fun closure_alloc = ffi_closure_alloc(size : LibC::SizeT, code : Void**) : Closure*
@@ -179,7 +179,7 @@ module Crystal
       cif : Cif*,
       fun : ClosureFun,
       user_data : Void*,
-      code_loc : Void*
+      code_loc : Void*,
     ) : Status
   end
 end

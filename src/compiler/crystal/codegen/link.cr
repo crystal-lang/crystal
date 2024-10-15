@@ -121,7 +121,7 @@ module Crystal
 
   class Program
     def lib_flags
-      has_flag?("windows") ? lib_flags_windows : lib_flags_posix
+      has_flag?("msvc") ? lib_flags_windows : lib_flags_posix
     end
 
     private def lib_flags_windows
@@ -292,8 +292,6 @@ module Crystal
 
     private def add_link_annotations(types, annotations)
       types.try &.each_value do |type|
-        next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
-
         if type.is_a?(LibType) && type.used? && (link_annotations = type.link_annotations)
           annotations.concat link_annotations
         end
