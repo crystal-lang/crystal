@@ -1393,10 +1393,10 @@ module Crystal
       # Float64 mantissa has 52 bits
       case kind
       when .i8?, .u8?, .i16?, .u16?
-        # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+        # Less than 23 bits, so convertible to Float32 and Float64 without precision loss
         true
       when .i32?, .u32?
-        # Less than 52 bits, so convertable to Float64 without precision loss
+        # Less than 52 bits, so convertible to Float64 without precision loss
         other_type.kind.f64?
       else
         false

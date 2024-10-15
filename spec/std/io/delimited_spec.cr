@@ -259,7 +259,7 @@ describe "IO::Delimited" do
         io.gets_to_end.should eq("hello")
       end
 
-      it "handles the case of peek matching first byte, not having enough room, but later not matching (limted slice)" do
+      it "handles the case of peek matching first byte, not having enough room, but later not matching (limited slice)" do
         #                                 not a delimiter
         #                                    ---
         io = MemoryIOWithFixedPeek.new("abcdefgwijkfghhello")
