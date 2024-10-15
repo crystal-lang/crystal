@@ -24,6 +24,13 @@ struct Crystal::System::Kqueue
     yield if ret == -1
   end
 
+  # Helper to register a single event. Returns immediately.
+  def kevent(ident, filter, flags, fflags = 0, data = 0, udata = nil) : Nil
+    kevent(ident, filter, flags, fflags, data, udata) do
+      raise RuntimeError.from_errno("kevent")
+    end
+  end
+
   # Helper to register multiple *changes*. Returns immediately.
   def kevent(changes : Slice(LibC::Kevent), &) : Nil
     ret = LibC.kevent(@kq, changes.to_unsafe, changes.size, nil, 0, nil)

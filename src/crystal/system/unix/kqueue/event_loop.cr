@@ -16,11 +16,15 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
 
     # notification to interrupt a run
     @interrupted = Atomic::Flag.new
-    {% unless LibC.has_constant?(:EVFILT_USER) %}
+
+    {% if LibC.has_constant?(:EVFILT_USER) %}
+      @kqueue.kevent(
+        INTERRUPT_IDENTIFIER,
+        LibC::EVFILT_USER,
+        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
+    {% else %}
       @pipe = System::FileDescriptor.system_pipe
-      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD) do
-        raise RuntimeError.from_errno("kevent")
-      end
+      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
     {% end %}
   end
 
@@ -47,12 +51,16 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
       @kqueue = System::Kqueue.new
 
       @interrupted.clear
-      {% unless LibC.has_constant?(:EVFILT_USER) %}
+
+      {% if LibC.has_constant?(:EVFILT_USER) %}
+        @kqueue.kevent(
+          INTERRUPT_IDENTIFIER,
+          LibC::EVFILT_USER,
+          LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
+      {% else %}
         @pipe.each { |fd| LibC.close(fd) }
         @pipe = System::FileDescriptor.system_pipe
-        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD) do
-          raise RuntimeError.from_errno("kevent")
-        end
+        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
       {% end %}
 
       system_set_timer(@timers.next_ready?)
@@ -150,11 +158,7 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     return unless @interrupted.test_and_set
 
     {% if LibC.has_constant?(:EVFILT_USER) %}
-      @kqueue.kevent(
-        INTERRUPT_IDENTIFIER,
-        LibC::EVFILT_USER,
-        LibC::EV_ADD | LibC::EV_ONESHOT,
-        LibC::NOTE_FFCOPY | LibC::NOTE_TRIGGER | 1_u16)
+      @kqueue.kevent(INTERRUPT_IDENTIFIER, LibC::EVFILT_USER, 0, LibC::NOTE_TRIGGER)
     {% else %}
       ident = INTERRUPT_IDENTIFIER
       ret = LibC.write(@pipe[1], pointerof(ident), sizeof(Int32))
