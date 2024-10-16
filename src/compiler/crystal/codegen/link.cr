@@ -158,7 +158,11 @@ module Crystal
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
       CrystalLibraryPath.paths.each do |path|
-        flags << Process.quote_posix("-L#{path}")
+        # we use `quote` rather than `quote_posix` because these flags are
+        # evaluated on the compiler host system and Windows rules could be used
+        # for MinGW-w64
+        # TODO: what about the opposite? (e.g. MSVC on Wine on Linux)
+        flags << Process.quote("-L#{path}")
       end
 
       link_annotations.reverse_each do |ann|
@@ -173,11 +177,11 @@ module Crystal
         elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
           flags << flag
         elsif (lib_name = ann.lib)
-          flags << Process.quote_posix("-l#{lib_name}")
+          flags << Process.quote("-l#{lib_name}")
         end
 
         if framework = ann.framework
-          flags << "-framework" << Process.quote_posix(framework)
+          flags << "-framework" << Process.quote(framework)
         end
       end
 
