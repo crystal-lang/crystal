@@ -237,14 +237,28 @@ struct Complex
 
   # Divides `self` by *other*.
   def /(other : Complex) : Complex
-    if other.real <= other.imag
-      r = other.real / other.imag
-      d = other.imag + r * other.real
-      Complex.new((@real * r + @imag) / d, (@imag * r - @real) / d)
-    else
+    if other.real.nan? || other.imag.nan?
+      Complex.new(Float64::NAN, Float64::NAN)
+    elsif other.imag.abs < other.real.abs
       r = other.imag / other.real
       d = other.real + r * other.imag
-      Complex.new((@real + @imag * r) / d, (@imag - @real * r) / d)
+
+      if d.nan? || d == 0
+        Complex.new(Float64::NAN, Float64::NAN)
+      else
+        Complex.new((@real + @imag * r) / d, (@imag - @real * r) / d)
+      end
+    elsif other.imag == 0 # other.real == 0
+      Complex.new(@real / other.real, @imag / other.real)
+    else # 0 < other.real.abs <= other.imag.abs
+      r = other.real / other.imag
+      d = other.imag + r * other.real
+
+      if d.nan? || d == 0
+        Complex.new(Float64::NAN, Float64::NAN)
+      else
+        Complex.new((@real * r + @imag) / d, (@imag * r - @real) / d)
+      end
     end
   end
 
