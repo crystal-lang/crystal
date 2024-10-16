@@ -425,25 +425,7 @@ module Crystal
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "msvc"
         lib_flags = program.lib_flags
-        # Execute and expand `subcommands`.
-        if expand
-          lib_flags = lib_flags.gsub(/`(.*?)`/) do
-            command = $1
-            begin
-              error_io = IO::Memory.new
-              output = Process.run(command, shell: true, output: :pipe, error: error_io) do |process|
-                process.output.gets_to_end
-              end
-              unless $?.success?
-                error_io.rewind
-                error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
-              end
-              output
-            rescue exc
-              error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
-            end
-          end
-        end
+        lib_flags = expand_lib_flags(lib_flags) if expand
 
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
@@ -494,11 +476,56 @@ module Crystal
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       elsif program.has_flag?("win32") && program.has_flag?("gnu")
         link_flags = @link_flags || ""
-        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{program.lib_flags}), nil}
+        lib_flags = program.lib_flags
+        lib_flags = expand_lib_flags(lib_flags) if expand
+        cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags})
+
+        if cmd.size > 32000
+          # The command line would be too big, pass the args through a file instead.
+          # GCC response file does not interpret those args as shell-escaped
+          # arguments, we must rebuild the whole command line
+          args_filename = "#{output_dir}/linker_args.txt"
+          File.open(args_filename, "w") do |f|
+            object_names.each do |object_name|
+              f << object_name.gsub(GCC_RESPONSE_FILE_TR) << ' '
+            end
+            f << "-o " << output_filename.gsub(GCC_RESPONSE_FILE_TR) << ' '
+            f << link_flags << ' ' << lib_flags
+          end
+          cmd = "#{DEFAULT_LINKER} #{Process.quote_windows("@" + args_filename)}"
+        end
+
+        {DEFAULT_LINKER, cmd, nil}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+      end
+    end
+
+    private GCC_RESPONSE_FILE_TR = {
+      " ":  %q(\ ),
+      "'":  %q(\'),
+      "\"": %q(\"),
+      "\\": "\\\\",
+    }
+
+    private def expand_lib_flags(lib_flags)
+      lib_flags.gsub(/`(.*?)`/) do
+        command = $1
+        begin
+          error_io = IO::Memory.new
+          output = Process.run(command, shell: true, output: :pipe, error: error_io) do |process|
+            process.output.gets_to_end
+          end
+          unless $?.success?
+            error_io.rewind
+            error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+          end
+          output.chomp
+        rescue exc
+          error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+        end
       end
     end
 
