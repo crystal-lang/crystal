@@ -92,22 +92,22 @@ class Crystal::Epoll::EventLoop < Crystal::Evented::EventLoop
 
     Crystal.trace :evloop, "event", fd: index.index, index: index.to_i64, events: events
 
-    pd = Evented.arena.get(index)
+    Evented.arena.get?(index) do |pd|
+      if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
+        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
+        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
+        return
+      end
 
-    if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
-      pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
-      pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
-      return
-    end
+      if (events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
+        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
+      elsif (events & LibC::EPOLLIN) == LibC::EPOLLIN
+        pd.value.@readers.ready_one { |event| unsafe_resume_io(event) }
+      end
 
-    if (events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
-      pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
-    elsif (events & LibC::EPOLLIN) == LibC::EPOLLIN
-      pd.value.@readers.ready_one { |event| unsafe_resume_io(event) }
-    end
-
-    if (events & LibC::EPOLLOUT) == LibC::EPOLLOUT
-      pd.value.@writers.ready_one { |event| unsafe_resume_io(event) }
+      if (events & LibC::EPOLLOUT) == LibC::EPOLLOUT
+        pd.value.@writers.ready_one { |event| unsafe_resume_io(event) }
+      end
     end
   end
 

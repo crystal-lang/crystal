@@ -291,7 +291,6 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   protected def evented_close(io)
     return unless (index = io.__evloop_data).valid?
-    io.__evloop_data = Arena::INVALID_INDEX
 
     Evented.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
@@ -308,7 +307,6 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
 
   private def internal_remove(io)
     return unless (index = io.__evloop_data).valid?
-    io.__evloop_data = Arena::INVALID_INDEX
 
     Evented.arena.free(index) do |pd|
       pd.value.remove(io.fd) { } # ignore system error
@@ -342,24 +340,35 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
   end
 
   private def wait(type : Evented::Event::Type, io, timeout, &)
-    # get or allocate the poll descriptor
+    # prepare event (on the stack); we can't initialize it properly until we get
+    # the arena index below; we also can't use a nilable since `pointerof` would
+    # point to the union, not the event
+    event = uninitialized Evented::Event
+
+    # add the event to the waiting list; in case we can't access or allocate the
+    # poll descriptor into the arena, we merely return to let the caller handle
+    # the situation (maybe the IO got closed?)
     if (index = io.__evloop_data).valid?
-      pd = Evented.arena.get(index)
+      event = Evented::Event.new(type, Fiber.current, index, timeout)
+
+      return false unless Evented.arena.get?(index) do |pd|
+        yield pd, pointerof(event)
+      end
     else
-      pd, index = Evented.arena.lazy_allocate(io.fd) do |pd, index|
+      # OPTIMIZE: failing to allocate may be a simple conflict with 2 fibers
+      # starting to read or write on the same fd, we may want to detect any
+      # error situation instead of returning and retrying a syscall
+      return false unless Evented.arena.allocate_at?(io.fd) do |pd, index|
         # register the fd with the event loop (once), it should usually merely add
         # the fd to the current evloop but may "transfer" the ownership from
         # another event loop:
         io.__evloop_data = index
         pd.value.take_ownership(self, io.fd, index)
+
+        event = Evented::Event.new(type, Fiber.current, index, timeout)
+        yield pd, pointerof(event)
       end
     end
-
-    # create an event (on the stack)
-    event = Evented::Event.new(type, Fiber.current, index, timeout)
-
-    # add the event to the waiting list
-    yield pd, pointerof(event)
 
     if event.wake_at?
       add_timer(pointerof(event))
@@ -457,14 +466,12 @@ abstract class Crystal::Evented::EventLoop < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      pd = Evented.arena.get(event.value.index)
-      pd.value.@readers.delete(event)
+      Evented.arena.get?(event.value.index, &.value.@readers.delete(event))
       event.value.timed_out!
     when .io_write?
       # reached write timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      pd = Evented.arena.get(event.value.index)
-      pd.value.@writers.delete(event)
+      Evented.arena.get?(event.value.index, &.value.@writers.delete(event))
       event.value.timed_out!
     when .select_timeout?
       # always dequeue the event but only enqueue the fiber if we win the

@@ -23,7 +23,10 @@
 #
 # Thread safety: the memory region is pre-allocated (up to capacity) using mmap
 # (virtual allocation) and pointers are never invalidated. Individual
-# (de)allocations of objects are protected with a fine grained lock.
+# allocation, deallocation and regular accesses are protected by a fine grained
+# lock over each object: parallel accesses to the memory region are prohibited,
+# and pointers are expected to not outlive the block that yielded them (don't
+# capture them).
 #
 # Guarantees: `mmap` initializes the memory to zero, which means `T` objects are
 # initialized to zero by default, then `#free` will also clear the memory, so
@@ -127,65 +130,70 @@ class Crystal::Evented::Arena(T)
     LibC.munmap(@buffer.to_unsafe, @buffer.bytesize)
   end
 
-  # Yields and allocates the object at *index* unless already allocated.
-  # Returns a pointer to the object at *index* and the generation index.
+  # Allocates the object at *index* unless already allocated, then yields a
+  # pointer to the object at *index* and the current generation index to later
+  # retrieve and free the allocated object. Eventually returns the generation
+  # index.
   #
-  # Permits two threads to allocate the same object in parallel yet only allow
-  # one to initialize it; the other one will silently receive the pointer and
-  # the generation index.
+  # Does nothing if the object has already been allocated and returns `nil`.
   #
   # There are no generational checks.
   # Raises if *index* is out of bounds.
-  def lazy_allocate(index : Int32, &) : {Pointer(T), Index}
+  def allocate_at?(index : Int32, & : (Pointer(T), Index) ->) : Index?
     entry = at(index)
 
     entry.value.@lock.sync do
-      pointer = entry.value.pointer
+      return if entry.value.allocated?
+
+      {% unless flag?(:preview_mt) %}
+        @maximum = index if index > @maximum
+      {% end %}
+      entry.value.allocated = true
+
       gen_index = Index.new(index, entry.value.generation)
+      yield entry.value.pointer, gen_index
 
-      unless entry.value.allocated?
-        {% unless flag?(:preview_mt) %}
-          @maximum = index if index > @maximum
-        {% end %}
-
-        entry.value.allocated = true
-        yield pointer, gen_index
-      end
-
-      {pointer, gen_index}
+      gen_index
     end
   end
 
-  # Returns a pointer to the object previously allocated at *index*.
+  # Same as `#allocate_at?` but raises when already allocated.
+  def allocate_at(index : Int32, & : (Pointer(T), Index) ->) : Index?
+    allocate_at?(index) { |ptr, idx| yield ptr, idx } ||
+      raise RuntimeError.new("#{self.class.name}: already allocated index=#{index}")
+  end
+
+  # Yields a pointer to the object previously allocated at *index*.
   #
   # Raises if the object isn't allocated.
   # Raises if the generation has changed (i.e. the object has been freed then reallocated).
   # Raises if *index* is negative.
-  def get(index : Index) : Pointer(T)
-    entry = at(index)
-    entry.value.pointer
-  end
-
-  # Returns a pointer to the object previously allocated at *index*.
-  # Returns `nil` if the object isn't allocated or the generation has changed.
-  #
-  # Raises if *index* is negative.
-  def get?(index : Index) : Pointer(T)?
-    if entry = at?(index)
-      entry.value.pointer
+  def get(index : Index, &) : Nil
+    at(index) do |entry|
+      yield entry.value.pointer
     end
   end
 
-  # Yields the object previously allocated at *index* then releases it. Does
-  # nothing if the object isn't allocated or the generation has changed.
+  # Yields a pointer to the object previously allocated at *index* and returns
+  # true.
+  # Does nothing if the object isn't allocated or the generation has changed,
+  # and returns false.
+  #
+  # Raises if *index* is negative.
+  def get?(index : Index) : Bool
+    at?(index) do |entry|
+      yield entry.value.pointer
+      return true
+    end
+    false
+  end
+
+  # Yields the object previously allocated at *index* then releases it.
+  # Does nothing if the object isn't allocated or the generation has changed.
   #
   # Raises if *index* is negative.
   def free(index : Index, &) : Nil
-    return unless entry = at?(index.index)
-
-    entry.value.@lock.sync do
-      return unless entry.value.allocated?
-      return unless entry.value.generation == index.generation
+    at?(index) do |entry|
       begin
         yield entry.value.pointer
       ensure
@@ -194,22 +202,31 @@ class Crystal::Evented::Arena(T)
     end
   end
 
-  private def at(index : Index) : Pointer(Entry(T))
+  private def at(index : Index, &) : Nil
     entry = at(index.index)
-    unless entry.value.allocated?
-      raise RuntimeError.new("#{self.class.name}: object not allocated at index #{index.index}")
+    entry.value.@lock.lock
+
+    unless entry.value.allocated? && entry.value.generation == index.generation
+      entry.value.@lock.unlock
+      raise RuntimeError.new("#{self.class.name}: invalid reference index=#{index.index}:#{index.generation} current=#{index.index}:#{entry.value.generation}")
     end
-    unless entry.value.generation == index.generation
-      raise RuntimeError.new("#{self.class.name}: object generation changed at index #{index.index} (#{index.generation} => #{entry.value.generation})")
+
+    begin
+      yield entry
+    ensure
+      entry.value.@lock.unlock
     end
-    entry
   end
 
-  private def at?(index : Index) : Pointer(Entry(T))?
+  private def at?(index : Index, &) : Nil
     return unless entry = at?(index.index)
-    return unless entry.value.allocated?
-    return unless entry.value.generation == index.generation
-    entry
+
+    entry.value.@lock.sync do
+      return unless entry.value.allocated?
+      return unless entry.value.generation == index.generation
+
+      yield entry
+    end
   end
 
   private def at(index : Int32) : Pointer(Entry(T))

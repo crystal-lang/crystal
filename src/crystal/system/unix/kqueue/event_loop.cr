@@ -126,30 +126,30 @@ class Crystal::Kqueue::EventLoop < Crystal::Evented::EventLoop
     Crystal.trace :evloop, "event", fd: kevent.value.ident, index: index.to_i64,
       filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
 
-    pd = Evented.arena.get(index)
-
-    if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
-      # apparently some systems may report EOF on write with EVFILT_READ instead
-      # of EVFILT_WRITE, so let's wake all waiters:
-      pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
-      pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
-      return
-    end
-
-    case kevent.value.filter
-    when LibC::EVFILT_READ
-      if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
-        # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
+    Evented.arena.get?(index) do |pd|
+      if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
+        # apparently some systems may report EOF on write with EVFILT_READ instead
+        # of EVFILT_WRITE, so let's wake all waiters:
         pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
-      else
-        pd.value.@readers.ready_one { |event| unsafe_resume_io(event) }
-      end
-    when LibC::EVFILT_WRITE
-      if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
-        # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
         pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
-      else
-        pd.value.@writers.ready_one { |event| unsafe_resume_io(event) }
+        return
+      end
+
+      case kevent.value.filter
+      when LibC::EVFILT_READ
+        if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
+          # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
+          pd.value.@readers.ready_all { |event| unsafe_resume_io(event) }
+        else
+          pd.value.@readers.ready_one { |event| unsafe_resume_io(event) }
+        end
+      when LibC::EVFILT_WRITE
+        if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
+          # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
+          pd.value.@writers.ready_all { |event| unsafe_resume_io(event) }
+        else
+          pd.value.@writers.ready_one { |event| unsafe_resume_io(event) }
+        end
       end
     end
   end

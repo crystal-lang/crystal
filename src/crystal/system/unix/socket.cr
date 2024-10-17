@@ -25,6 +25,9 @@ module Crystal::System::Socket
   end
 
   private def initialize_handle(fd)
+    {% if Crystal.has_constant?(:Evented) %}
+      @__evloop_data = Crystal::Evented::Arena::INVALID_INDEX
+    {% end %}
   end
 
   # Tries to bind the socket to a local address.
