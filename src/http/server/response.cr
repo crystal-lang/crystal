@@ -255,7 +255,7 @@ class HTTP::Server
       private def unbuffered_write(slice : Bytes) : Nil
         return if slice.empty?
 
-        if response.headers.includes_word?("transfer-encoding", "chunked")
+        if response.headers["Transfer-Encoding"]? == "chunked"
           @chunked = true
         elsif !response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
@@ -291,7 +291,7 @@ class HTTP::Server
         status = response.status
         set_content_length = !(status.not_modified? || status.no_content? || status.informational?)
 
-        if !response.wrote_headers? && !response.headers.has_key?("transfer-encoding") && !response.headers.has_key?("Content-Length") && set_content_length
+        if !response.wrote_headers? && !response.headers.has_key?("Transfer-Encoding") && !response.headers.has_key?("Content-Length") && set_content_length
           response.content_length = @out_count
         end
 
