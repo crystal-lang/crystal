@@ -63,6 +63,30 @@ describe UNIXSocket do
     end
   end
 
+  it "#send, #receive" do
+    with_tempfile("unix_socket-receive.sock") do |path|
+      UNIXServer.open(path) do |server|
+        UNIXSocket.open(path) do |client|
+          server.accept do |sock|
+            client.send "ping"
+            message, address = sock.receive
+            message.should eq("ping")
+            typeof(address).should eq(Socket::UNIXAddress)
+            address.path.should eq ""
+
+            sock.send "pong"
+            message, address = client.receive
+            message.should eq("pong")
+            typeof(address).should eq(Socket::UNIXAddress)
+            # The value of path seems to be system-specific. Some implementations
+            # return the socket path, others an empty path.
+            ["", path].should contain address.path
+          end
+        end
+      end
+    end
+  end
+
   # `LibC.socketpair` is not supported in Winsock 2.0 yet:
   # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
   {% unless flag?(:win32) %}
