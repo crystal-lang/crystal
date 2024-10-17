@@ -216,7 +216,7 @@ struct Number
   #
   # See `Int#humanize_bytes` to format a file size.
   def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, &prefixes : (Int32, Float64) -> {Int32, _} | {Int32, _, Bool}) : Nil
-    if zero?
+    if zero? || (responds_to?(:infinite?) && self.infinite?) || (responds_to?(:nan?) && self.nan?)
       digits = 0
     else
       log = Math.log10(abs)
