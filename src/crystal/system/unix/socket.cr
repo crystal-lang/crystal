@@ -1,10 +1,11 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
 
 module Crystal::System::Socket
-  include IO::Evented
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
 
   alias Handle = Int32
 
