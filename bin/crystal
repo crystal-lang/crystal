@@ -137,7 +137,7 @@ SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
-export CRYSTAL_PATH="${CRYSTAL_PATH:-lib:$CRYSTAL_ROOT/src}"
+export CRYSTAL_PATH="${CRYSTAL_PATH:-./lib:$CRYSTAL_ROOT/src}"
 if [ -n "${CRYSTAL_PATH##*"$CRYSTAL_ROOT"/src*}" ]; then
   __warning_msg "CRYSTAL_PATH env variable does not contain $CRYSTAL_ROOT/src"
 fi
