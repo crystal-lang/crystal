@@ -265,6 +265,12 @@ describe "Complex" do
     it "complex / complex" do
       ((Complex.new(4, 6.2))/(Complex.new(0.5, 2.7))).should eq(Complex.new(2.485411140583554, -1.0212201591511936))
       ((Complex.new(4.1, 6.0))/(Complex.new(10, 2.2))).should eq(Complex.new(0.5169782525753529, 0.48626478443342236))
+
+      (1.to_c / -1.to_c).should eq(-1.to_c)
+      assert_complex_nan 1.to_c / Float64::NAN
+
+      (1.to_c / 0.to_c).real.abs.should eq(Float64::INFINITY)
+      (1.to_c / 0.to_c).imag.nan?.should be_true
     end
 
     it "complex / number" do
