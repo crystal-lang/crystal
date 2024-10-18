@@ -207,6 +207,14 @@ describe Number do
     it { assert_prints 1.0e+34.humanize, "10,000Q" }
     it { assert_prints 1.0e+35.humanize, "100,000Q" }
 
+    it { assert_prints Float32::INFINITY.humanize, "Infinity" }
+    it { assert_prints (-Float32::INFINITY).humanize, "-Infinity" }
+    it { assert_prints Float32::NAN.humanize, "NaN" }
+
+    it { assert_prints Float64::INFINITY.humanize, "Infinity" }
+    it { assert_prints (-Float64::INFINITY).humanize, "-Infinity" }
+    it { assert_prints Float64::NAN.humanize, "NaN" }
+
     it { assert_prints 1_234.567_890_123.humanize(precision: 2, significant: false), "1.23k" }
     it { assert_prints 123.456_789_012_3.humanize(precision: 2, significant: false), "123.46" }
     it { assert_prints 12.345_678_901_23.humanize(precision: 2, significant: false), "12.35" }
