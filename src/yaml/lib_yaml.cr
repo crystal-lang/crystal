@@ -1,5 +1,10 @@
 require "./enums"
 
+# Supported library versions:
+#
+# * libyaml
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 @[Link("yaml", pkg_config: "yaml-0.1")]
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "yaml.dll")]
