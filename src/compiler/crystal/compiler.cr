@@ -424,7 +424,7 @@ module Crystal
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "msvc"
-        lib_flags = program.lib_flags
+        lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
 
         object_arg = Process.quote_windows(object_names)
@@ -469,14 +469,14 @@ module Crystal
         {linker, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
+        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags(@cross_compile)}), object_names}
       elsif program.has_flag? "avr"
         link_flags = @link_flags || ""
         link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
-        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       elsif program.has_flag?("win32") && program.has_flag?("gnu")
         link_flags = @link_flags || ""
-        lib_flags = program.lib_flags
+        lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
         cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags})
 
@@ -499,7 +499,7 @@ module Crystal
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
+        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       end
     end
 
