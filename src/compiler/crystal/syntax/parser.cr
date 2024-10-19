@@ -3386,9 +3386,9 @@ module Crystal
 
         return MacroFor.new(vars, exp, body).at_end(token_end_location)
       when Keyword::IF
-        return parse_macro_if(start_location, macro_state)
+        return parse_macro_if(start_location, macro_state).at(location)
       when Keyword::UNLESS
-        return parse_macro_if(start_location, macro_state, is_unless: true)
+        return parse_macro_if(start_location, macro_state, is_unless: true).at(location)
       when Keyword::BEGIN
         next_token_skip_space
         check :OP_PERCENT_RCURLY
@@ -3494,7 +3494,7 @@ module Crystal
       end
 
       a_then, a_else = a_else, a_then if is_unless
-      MacroIf.new(cond, a_then, a_else).at(location).at_end(token_end_location)
+      MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
     end
 
     def parse_expression_inside_macro

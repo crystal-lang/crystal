@@ -2709,6 +2709,9 @@ module Crystal
         CR
 
         node = parser.parse.should be_a MacroIf
+        location = node.location.should_not be_nil
+        location.line_number.should eq 1
+        location.column_number.should eq 3
 
         then_node = node.then.should be_a Expressions
         then_node_location = then_node.location.should_not be_nil
