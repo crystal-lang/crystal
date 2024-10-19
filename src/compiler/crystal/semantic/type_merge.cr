@@ -25,8 +25,10 @@ module Crystal
         nodes.first.type?
       when 2
         # Merging two types is the most common case, so we optimize it
-        first, second = nodes
-        type_merge(first.type?, second.type?)
+        # We use `#each_cons_pair` to avoid any intermediate allocation
+        nodes.each_cons_pair do |first, second|
+          return type_merge(first.type?, second.type?)
+        end
       else
         combined_union_of compact_types(nodes, &.type?)
       end

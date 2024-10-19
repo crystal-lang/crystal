@@ -8,43 +8,11 @@ module Crystal
   # bytes) vs 2 pointers (16 bytes). The other downside is that since this is a
   # struct, we need to be careful with mutation.
   struct SmallNodeList
-    include Indexable(ASTNode)
+    include Enumerable(ASTNode)
 
     @first : ASTNode?
     @second : ASTNode?
     @tail : Array(ASTNode)?
-
-    def size
-      size = 0
-      size += 1 unless @first.nil?
-      size += 1 unless @second.nil?
-      if tail = @tail
-        size += tail.size
-      end
-      size
-    end
-
-    def unsafe_fetch(index : Int)
-      if first = @first
-        if index == 0
-          return first
-        else
-          index -= 1
-        end
-      end
-      if second = @second
-        if index == 0
-          return second
-        else
-          index -= 1
-        end
-      end
-      if tail = @tail
-        tail.unsafe_fetch(index)
-      else
-        raise IndexError.new
-      end
-    end
 
     def each(& : ASTNode ->)
       if first = @first
