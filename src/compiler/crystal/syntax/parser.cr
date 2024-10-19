@@ -3213,7 +3213,7 @@ module Crystal
         when .macro_literal?
           pieces << MacroLiteral.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .macro_expression_start?
-          pieces << MacroExpression.new(parse_macro_expression)
+          pieces << MacroExpression.new(parse_macro_expression).at(@token.location).at_end(token_end_location)
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
         when .macro_control_start?
@@ -3341,6 +3341,7 @@ module Crystal
     end
 
     def parse_macro_control(start_location, macro_state = Token::MacroState.default)
+      location = @token.location
       next_token_skip_space_or_newline
 
       case @token.value
@@ -3400,7 +3401,7 @@ module Crystal
         next_token_skip_space
         check :OP_PERCENT_RCURLY
 
-        return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
+        return MacroIf.new(BoolLiteral.new(true), body).at(location).at_end(token_end_location)
       when Keyword::ELSE, Keyword::ELSIF, Keyword::END
         return nil
       when Keyword::VERBATIM
@@ -3428,7 +3429,7 @@ module Crystal
       exps = parse_expressions
       @in_macro_expression = false
 
-      MacroExpression.new(exps, output: false).at_end(token_end_location)
+      MacroExpression.new(exps, output: false).at(location).at_end(token_end_location)
     end
 
     def parse_macro_if(start_location, macro_state, check_end = true, is_unless = false)
@@ -3493,7 +3494,7 @@ module Crystal
       end
 
       a_then, a_else = a_else, a_then if is_unless
-      MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
+      MacroIf.new(cond, a_then, a_else).at(location).at_end(token_end_location)
     end
 
     def parse_expression_inside_macro
