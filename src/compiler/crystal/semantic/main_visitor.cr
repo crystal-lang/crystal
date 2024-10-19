@@ -1283,7 +1283,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (node.dependencies.size == 0 || !node.type?)
           node.bind_to(expanded)
         end
 
