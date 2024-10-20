@@ -44,7 +44,7 @@ jobs:
         run: make -B deps
 
       - name: Test compiler_spec
-        run: make compiler_spec junit_output=.junit/compiler_spec.xml
+        run: EXPORT_CC='CC="cc -fuse-ld=lld"' make compiler_spec junit_output=.junit/compiler_spec.xml
 
       - name: Integration test
-        run: EXPORT_CC='CC="cc -fuse-ld=lld-${{ matrix.llvm_version }}"' make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
+        run: EXPORT_CC='CC="cc -fuse-ld=lld"' make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
