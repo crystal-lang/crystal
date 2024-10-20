@@ -48,7 +48,8 @@ CRYSTAL_CONFIG_BUILD_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 SOURCE_DATE_EPOCH ?= $(shell (cat src/SOURCE_DATE_EPOCH || (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile)) 2> /dev/null)
-ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
+check_lld := command -v ld.lld >/dev/null && case "$$(uname -s)" in MINGW32*|MINGW64*|Linux) echo 1;; esac
+ifeq ($(shell $(check_lld)),1)
   EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
 endif
 EXPORTS := \
