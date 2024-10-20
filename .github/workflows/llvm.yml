@@ -41,7 +41,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${{ matrix.llvm_version }}
-          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld
+          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld-${{ matrix.llvm_version }}
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
