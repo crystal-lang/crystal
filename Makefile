@@ -180,6 +180,13 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/"
 	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/crystal.fish"
 
+ifeq ($(WINDOWS),1)
+.PHONY: install_dlls
+install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
+	$(INSTALL) -d -m 0755 "$(BINDIR)/"
+	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(BINDIR)/"
+endif
+
 .PHONY: uninstall
 uninstall: ## Uninstall the compiler from DESTDIR
 	rm -f "$(BINDIR)/$(CRYSTAL_BIN)"
