@@ -16,20 +16,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - llvm_version: 13
-            runs-on: ubuntu-22.04
-          - llvm_version: 14
-            runs-on: ubuntu-22.04
-          - llvm_version: 15
-            runs-on: ubuntu-22.04
-          - llvm_version: 16
-            runs-on: ubuntu-22.04
-          - llvm_version: 17
-            runs-on: ubuntu-24.04
-          - llvm_version: 18
-            runs-on: ubuntu-24.04
-          - llvm_version: 19
-            runs-on: ubuntu-24.04
+          - {llvm_version: 13, runs-on: ubuntu-22.04., codename: jammy}
+          - {llvm_version: 14, runs-on: ubuntu-22.04., codename: jammy}
+          - {llvm_version: 15, runs-on: ubuntu-22.04., codename: jammy}
+          - {llvm_version: 16, runs-on: ubuntu-22.04., codename: jammy}
+          - {llvm_version: 17, runs-on: ubuntu-24.04., codename: noble}
+          - {llvm_version: 18, runs-on: ubuntu-24.04., codename: noble}
+          - {llvm_version: 19, runs-on: ubuntu-24.04., codename: noble}
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
@@ -38,9 +31,8 @@ jobs:
       - name: Install LLVM ${{ matrix.llvm_version }}
         run: |
           sudo apt remove llvm-* libllvm*
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh ${{ matrix.llvm_version }}
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/${{ matrix.codename }}/ llvm-toolchain-${{ matrix.codename }}-${{ matrix.llvm_version }} main
           sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld-${{ matrix.llvm_version }}
 
       - name: Install Crystal
