@@ -16,13 +16,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {llvm_version: 13, runs-on: ubuntu-22.04., codename: jammy}
-          - {llvm_version: 14, runs-on: ubuntu-22.04., codename: jammy}
-          - {llvm_version: 15, runs-on: ubuntu-22.04., codename: jammy}
-          - {llvm_version: 16, runs-on: ubuntu-22.04., codename: jammy}
-          - {llvm_version: 17, runs-on: ubuntu-24.04., codename: noble}
-          - {llvm_version: 18, runs-on: ubuntu-24.04., codename: noble}
-          - {llvm_version: 19, runs-on: ubuntu-24.04., codename: noble}
+          - {llvm_version: 13, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 14, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 15, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 16, runs-on: ubuntu-22.04, codename: jammy}
+          - {llvm_version: 17, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 18, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 19, runs-on: ubuntu-24.04, codename: noble}
     name: "LLVM ${{ matrix.llvm_version }}"
     steps:
       - name: Checkout Crystal source
