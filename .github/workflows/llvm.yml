@@ -33,7 +33,7 @@ jobs:
           sudo apt remove 'llvm-*' 'libllvm*'
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
           sudo apt-add-repository -y deb http://apt.llvm.org/${{ matrix.codename }}/ llvm-toolchain-${{ matrix.codename }}-${{ matrix.llvm_version }} main
-          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld-${{ matrix.llvm_version }}
+          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
@@ -44,7 +44,7 @@ jobs:
         run: make -B deps
 
       - name: Test compiler_spec
-        run: EXPORT_CC='CC="cc -fuse-ld=lld"' make compiler_spec junit_output=.junit/compiler_spec.xml
+        run: make compiler_spec junit_output=.junit/compiler_spec.xml
 
       - name: Integration test
-        run: EXPORT_CC='CC="cc -fuse-ld=lld"' make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
+        run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
