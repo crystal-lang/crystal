@@ -47,4 +47,4 @@ jobs:
         run: make compiler_spec junit_output=.junit/compiler_spec.xml
 
       - name: Integration test
-        run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
+        run: EXPORT_CC='CC="cc -fuse-ld=lld-${{ matrix.llvm_version }}"' make crystal std_spec threads=1 junit_output=.junit/std_spec.xml
