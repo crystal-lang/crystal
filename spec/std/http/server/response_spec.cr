@@ -76,6 +76,15 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 304 Not Modified\r\nContent-Length: 5\r\n\r\n")
   end
 
+  it "allow explicitly configuring a `Transfer-Encoding` response" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.headers["Transfer-Encoding"] = "chunked"
+    response.print "Hello"
+    response.close
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n")
+  end
+
   it "prints less then buffer's size" do
     io = IO::Memory.new
     response = Response.new(io)
