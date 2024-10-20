@@ -30,7 +30,7 @@ jobs:
 
       - name: Install LLVM ${{ matrix.llvm_version }}
         run: |
-          sudo apt remove llvm-* libllvm*
+          sudo apt remove 'llvm-*' 'libllvm*'
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
           sudo apt-add-repository -y deb http://apt.llvm.org/${{ matrix.codename }}/ llvm-toolchain-${{ matrix.codename }}-${{ matrix.llvm_version }} main
           sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld-${{ matrix.llvm_version }}
