@@ -256,7 +256,7 @@ struct Range(B, E)
   # Returns 0..0 if there is no overlap.
   #
   # ```
-  # (1..5).union(5..10) # => 1..10
+  # (1..5).union(5..10)   # => 1..10
   # (1...10).union(1..10) # => 1..10
   # ```
   def union(other : Range)
@@ -277,7 +277,7 @@ struct Range(B, E)
   # Returns 0..0 if there is no overlap.
   #
   # ```
-  # (2..10).intersection(0..8) # => 2..8
+  # (2..10).intersection(0..8)   # => 2..8
   # (1...10).intersection(7..12) # => 7...10
   # ```
   def intersection(other : Range)
@@ -286,7 +286,6 @@ struct Range(B, E)
     end
 
     larger = (self.end > other.end)
-
     if (!larger && self.excludes_end?) || (larger && other.excludes_end?)
       return (self.begin > other.begin ? self.begin : other.begin)...(self.end < other.end ? self.end : other.end)
     end
@@ -295,9 +294,9 @@ struct Range(B, E)
   end
 
   # Returns `true` if this range overlaps with another range.
-  # 
+  #
   # ```
-  # (1..10).overlaps?(5..9) # => true
+  # (1..10).overlaps?(5..9)    # => true
   # (1...10).overlaps?(10..11) # => false
   # ```
   def overlaps?(other : Range) : Bool
