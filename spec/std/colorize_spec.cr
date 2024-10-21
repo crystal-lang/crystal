@@ -97,6 +97,26 @@ describe "colorize" do
     colorize("hello").overline.to_s.should eq("\e[53mhello\e[0m")
   end
 
+  it "prints colorize ANSI escape codes" do
+    Colorize.with.bold.print.should eq("\e[1m")
+    Colorize.with.bright.print.should eq("\e[1m")
+    Colorize.with.dim.print.should eq("\e[0;2m")
+    Colorize.with.italic.print.should eq("\e[0;3m")
+    Colorize.with.underline.print.should eq("\e[0;4m")
+    Colorize.with.blink.print.should eq("\e[0;5m")
+    Colorize.with.blink_fast.print.should eq("\e[0;6m")
+    Colorize.with.reverse.print.should eq("\e[0;7m")
+    Colorize.with.hidden.print.should eq("\e[0;8m")
+    Colorize.with.strikethrough.print.should eq("\e[0;9m")
+    Colorize.with.double_underline.print.should eq("\e[0;21m")
+    Colorize.with.overline.print.should eq("\e[0;53m")
+  end
+
+  it "only prints colorize ANSI escape codes" do
+    colorize("hello").red.bold.print.should eq("\e[31;1m")
+    colorize("hello").bold.dim.underline.blink.reverse.hidden.print.should eq("\e[1;2;4;5;7;8m")
+  end
+
   it "colorizes mode combination" do
     colorize("hello").bold.dim.underline.blink.reverse.hidden.to_s.should eq("\e[1;2;4;5;7;8mhello\e[0m")
   end
