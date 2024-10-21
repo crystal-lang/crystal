@@ -328,16 +328,10 @@ module Crystal
       visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
-      while true
-        dependencies = node.dependencies.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
-        if dependencies.size > 0
-          node = dependencies.first
-          nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
-          owner_trace << node if node
-          visited.add node
-        else
-          break
-        end
+      while node = node.dependencies.find { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+        nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
+        owner_trace << node if node
+        visited.add node
       end
 
       MethodTraceException.new(owner, owner_trace, nil_reason, program.show_error_trace?)
