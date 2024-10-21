@@ -556,6 +556,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
+    attach_doc type, node, annotations
+
     node.resolved_type = type
 
     type.private = true if node.visibility.private?
@@ -626,9 +628,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.extern = true
       type.extern_union = node.union?
 
-      if location = node.location
-        type.add_location(location)
-      end
+      attach_doc type, node, annotations
 
       current_type.types[node.name] = type
     end
@@ -641,13 +641,20 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : TypeDef)
+    annotations = read_annotations
+
     type = current_type.types[node.name]?
     if type
       node.raise "#{node.name} is already defined"
     else
       typed_def_type = lookup_type(node.type_spec)
       typed_def_type = check_allowed_in_lib node.type_spec, typed_def_type
-      current_type.types[node.name] = TypeDefType.new @program, current_type, node.name, typed_def_type
+      type = TypeDefType.new @program, current_type, node.name, typed_def_type
+
+      attach_doc type, node, annotations
+
+      current_type.types[node.name] = type
+
       false
     end
   end
