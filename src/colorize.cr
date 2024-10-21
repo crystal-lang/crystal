@@ -460,6 +460,26 @@ struct Colorize::Object(T)
     end
   end
 
+  # Prints the ANSI escape codes for an object. Note that this has no effect on a `Colorize::Object` with content,
+  # only the escape codes.
+  #
+  # ```
+  # require "colorize"
+  #
+  # Colorize.with.red.print        # => "\e[31m"
+  # "hello world".green.bold.print # => "\e[32;1m"
+  # ```
+  def print : String
+    String.build do |io|
+      print io
+    end
+  end
+
+  # Same as `print` but writes to a given *io*.
+  def print(io : IO) : Nil
+    self.class.print(io, to_named_tuple)
+  end
+
   private def to_named_tuple
     {
       fore: @fore,
@@ -473,6 +493,12 @@ struct Colorize::Object(T)
     back: ColorANSI::Default.as(Color),
     mode: Mode::None,
   }
+
+  protected def self.print(io : IO, color : {fore: Color, back: Color, mode: Mode}) : Nil
+    last_color = @@last_color
+    append_start(io, color)
+    @@last_color = color
+  end
 
   protected def self.surround(io, color, &)
     last_color = @@last_color
