@@ -1,0 +1,91 @@
+name: MinGW-w64 CI
+
+on: [push, pull_request]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  x86_64-mingw-w64-cross-compile:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v4
+
+      - name: Install LLVM 18
+        run: |
+          sudo apt remove 'llvm-*' 'libllvm*'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main
+          sudo apt install -y llvm-18-dev
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: "1.14.0"
+
+      - name: Cross-compile Crystal
+        run: make && make -B target=x86_64-windows-gnu release=1
+
+      - name: Upload crystal.obj
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal-obj
+          path: .build/crystal.obj
+
+      - name: Upload standard library
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal-stdlib
+          path: src
+
+  x86_64-mingw-w64-link:
+    runs-on: windows-2022
+    needs: [x86_64-mingw-w64-cross-compile]
+    steps:
+      - name: Setup MSYS2
+        id: msys2
+        uses: msys2/setup-msys2@ddf331adaebd714795f1042345e6ca57bd66cea8 # v2.24.1
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-cc
+            mingw-w64-ucrt-x86_64-gc
+            mingw-w64-ucrt-x86_64-pcre2
+            mingw-w64-ucrt-x86_64-libiconv
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-llvm
+
+      - name: Download crystal.obj
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal-obj
+
+      - name: Download standard library
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal-stdlib
+          path: share/crystal/src
+
+      - name: Link Crystal executable
+        shell: msys2 {0}
+        run: |
+          mkdir bin
+          cc crystal.obj -o bin/crystal.exe \
+            $(pkg-config bdw-gc libpcre2-8 iconv zlib --libs) \
+            $(llvm-config --libs --system-libs --ldflags) \
+            -lDbgHelp -lole32 -lWS2_32 -Wl,--stack,0x800000
+          ldd bin/crystal.exe | grep -iv /c/windows/system32 | sed 's/.* => //; s/ (.*//' | xargs -t -i cp '{}' bin/
+
+      - name: Upload Crystal
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-mingw-w64-crystal
+          path: |
+            bin/
+            share/
