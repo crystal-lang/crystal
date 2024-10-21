@@ -16,7 +16,14 @@ if ! LLVM_CONFIG=$(command -v "$LLVM_CONFIG"); then
 fi
 
 if [ "$LLVM_CONFIG" ]; then
-  printf %s "$LLVM_CONFIG"
+  case "$(uname -s)" in
+    MINGW32_NT*|MINGW64_NT*)
+      printf "%s" "$(cygpath -w "$LLVM_CONFIG")"
+      ;;
+    *)
+      printf "%s" "$LLVM_CONFIG"
+      ;;
+  esac
 else
   printf "Error: Could not find location of llvm-config. Please specify path in environment variable LLVM_CONFIG.\n" >&2
   printf "Supported LLVM versions: $(cat "$(dirname $0)/llvm-versions.txt" | sed 's/\.0//g')\n" >&2

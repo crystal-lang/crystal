@@ -476,6 +476,7 @@ module Crystal
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       elsif program.has_flag?("win32") && program.has_flag?("gnu")
         link_flags = @link_flags || ""
+        link_flags += " -Wl,--stack,0x800000"
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
         cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags})
