@@ -5,6 +5,8 @@ on:
     branches:
       - master
 
+permissions: {}
+
 env:
   TRAVIS_OS_NAME: linux
 
