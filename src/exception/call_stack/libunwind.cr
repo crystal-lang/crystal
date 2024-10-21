@@ -122,32 +122,18 @@ struct Exception::CallStack
       end
     {% end %}
 
-    if frame = unsafe_decode_frame(repeated_frame.ip)
-      offset, sname, fname = frame
+    unsafe_decode_frame(repeated_frame.ip) do |offset, sname, fname|
       Crystal::System.print_error "%s +%lld in %s", sname, offset.to_i64, fname
-    else
-      Crystal::System.print_error "???"
+      return
     end
+
+    Crystal::System.print_error "???"
   end
 
-  protected def self.decode_frame(ip, original_ip = ip)
-    if LibC.dladdr(ip, out info) != 0
-      offset = original_ip - info.dli_saddr
-
-      if offset == 0
-        return decode_frame(ip - 1, original_ip)
-      end
-      return if info.dli_sname.null? && info.dli_fname.null?
-      if info.dli_sname.null?
-        symbol = "??"
-      else
-        symbol = String.new(info.dli_sname)
-      end
-      if info.dli_fname.null?
-        file = "??"
-      else
-        file = String.new(info.dli_fname)
-      end
+  protected def self.decode_frame(ip)
+    decode_frame(ip) do |offset, symbol, file|
+      symbol = symbol ? String.new(symbol) : "??"
+      file = file ? String.new(file) : "??"
       {offset, symbol, file}
     end
   end
@@ -155,19 +141,35 @@ struct Exception::CallStack
   # variant of `.decode_frame` that returns the C strings directly instead of
   # wrapping them in `String.new`, since the SIGSEGV handler cannot allocate
   # memory via the GC
-  protected def self.unsafe_decode_frame(ip)
-    original_ip = ip
-    while LibC.dladdr(ip, out info) != 0
-      offset = original_ip - info.dli_saddr
-      if offset == 0
-        ip -= 1
-        next
-      end
+  protected def self.unsafe_decode_frame(ip, &)
+    decode_frame(ip) do |offset, symbol, file|
+      symbol ||= "??".to_unsafe
+      file ||= "??".to_unsafe
+      yield offset, symbol, file
+    end
+  end
 
-      return if info.dli_sname.null? && info.dli_fname.null?
-      symbol = info.dli_sname || "??".to_unsafe
-      file = info.dli_fname || "??".to_unsafe
-      return {offset, symbol, file}
+  private def self.decode_frame(ip, &)
+    original_ip = ip
+    while true
+      retry = dladdr(ip) do |file, symbol, address|
+        offset = original_ip - address
+        if offset == 0
+          ip -= 1
+          true
+        elsif symbol.null? && file.null?
+          false
+        else
+          return yield offset, symbol, file
+        end
+      end
+      break unless retry
+    end
+  end
+
+  private def self.dladdr(ip, &)
+    if LibC.dladdr(ip, out info) != 0
+      yield info.dli_fname, info.dli_sname, info.dli_saddr
     end
   end
 end
