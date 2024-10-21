@@ -265,7 +265,6 @@ struct Range(B, E)
     end
 
     larger = (self.end > other.end)
-
     if (larger && self.excludes_end?) || (!larger && other.excludes_end?)
       return (self.begin < other.begin ? self.begin : other.begin)...(self.end > other.end ? self.end : other.end)
     end
