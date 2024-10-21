@@ -84,6 +84,8 @@ abstract class Crystal::SyntaxHighlighter
     space_before = false
 
     while true
+      previous_delimiter_state = lexer.token.delimiter_state
+
       token = lexer.next_token
 
       case token.type
@@ -105,6 +107,7 @@ abstract class Crystal::SyntaxHighlighter
           highlight_token token, last_is_def
         else
           highlight_delimiter_state lexer, token
+          token.delimiter_state = previous_delimiter_state
         end
       when .string_array_start?, .symbol_array_start?
         highlight_string_array lexer, token
